@@ -33,3 +33,9 @@ prisma/migrations/**/migration_lock.toml
 # Misc
 .DS_Store
 *.pem
+
+# clerk configuration (can include secrets)
+/.clerk/
+
+# Google OAuth client secret (nunca commitar – usar só no Supabase Dashboard)
+client_secret*.json

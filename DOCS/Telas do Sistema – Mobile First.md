@@ -128,56 +128,63 @@ Após confirmação:
 
 ---
 
-## 5️⃣ Perfil do Atleta (Tela mais rica)
+## 5️⃣ Perfil do Atleta (Tela gamificada – aluno e coach)
 
-**Topo**
+**Header**
 
-- Foto
-    
-- Nome
-    
-- Modalidade(s)
-    
-- Status:
-    
-    - Aluno / Atleta
-        
+- Botão voltar | Título “Perfil do Atleta”
+- **Nível** e **faixa** (cores: Branca → … → Dourado N)
+- **Barra de XP** (progresso até próxima faixa; progressão em dobro por nível)
 
-**Bloco: Resumo**
+**Bloco: Status gerais (core attributes)**
 
-- Frequência
-    
-- Última aula
-    
-- Coach principal
-    
+- Cartões: Técnico, Tático, Físico, Mental, Teórico
+- Cada um: ícone, score 1–10, barra de progresso (0–3 vermelho, 4–6 amarelo, 7–10 verde), Média Geral
 
-**Bloco: Histórico de Aulas**
+**Bloco: Gráfico radar**
 
-- Lista simples por data
-    
+- Eixos: os cinco atributos; tema Kingdom Fight (vermelho/preto); animação no carregamento (Recharts)
 
-**Bloco: Comentários do Coach**
+**Bloco: Detalhe por componente (accordion)**
 
-- Timeline cronológica
-    
-- Cada comentário:
-    
-    - Coach
-        
-    - Data
-        
-    - Texto
-        
-    - Visibilidade:
-        
-        - 🔒 Privado
-            
-        - 👤 Compartilhado
-            
+- Secções por dimensão; dentro de cada uma, grupos por modalidade (filtrado pela **modalidade principal do aluno**)
+- Cada critério: nome, pergunta/descrição, rating 1–5 estrelas, barra opcional
 
-**Botão flutuante**  
-➕ **Adicionar comentário**
+**Bloco: Missões ativas**
+
+- Missões do sistema (ex.: “Subir Físico para X”) + missões configuráveis (Admin) + missão “Realizar/Renovar avaliação física” (obrigatória a cada 6 meses)
+- Alvo, recompensa XP, indicador de progresso
+
+**Bloco: Feedback do coach**
+
+- Card de citação (avatar, texto)
+
+**Coach:** no perfil do atleta/aluno, link para **Avaliação física** (ficha anamnese) e estado da última avaliação (data, próxima renovação, liberação).
+
+**Bloco: Histórico de Aulas / Comentários do Coach**
+
+- Lista por data; timeline de comentários (Coach, data, texto, visibilidade). Botão ➕ Adicionar comentário.
+
+---
+
+## 5b️⃣ Tela: Avaliação Física (Coach)
+
+**Acesso:** Perfil do aluno ou Perfil do atleta (link para o aluno) → “Realizar avaliação física” / “Nova avaliação física”.
+
+**Formulário (10 secções):**
+
+1. Identificação do aluno (pré-preenchida: nome, nascimento, idade, sexo, altura, peso, contacto, email, data avaliação, instrutor)
+2. Objetivo do aluno (checkbox: condicionamento, defesa pessoal, competição, emagrecimento, ganho massa, lazer, outro)
+3. Histórico de saúde (condições médicas, medicação, lesões)
+4. PAR-Q (prontidão para exercício – Sim/Não; se SIM → encaminhar avaliação médica)
+5. Nível de atividade física (sedentário a muito ativo; experiência em artes marciais)
+6. Avaliação física (sinais vitais, mobilidade, postura)
+7. Testes físicos (flexões, abdominais, prancha, agachamentos, corrida opcional)
+8. Avaliação do instrutor (1–10: condição, mobilidade, coordenação, resistência, força + observações)
+9. Termo de responsabilidade (assinatura do aluno)
+10. Liberação (Apto / Apto com restrições / Necessita avaliação médica)
+
+**Regras:** Renovação obrigatória a cada 6 meses; quando vencida, a missão “Renovar avaliação física” aparece no dashboard do aluno.
 
 ---
 
@@ -252,7 +259,9 @@ Após confirmação:
     
 - Botão: Check-in
     
-- Frequência
+- Frequência / plano atual
+    
+- Link para **Perfil do Atleta** (Performance detalhada: faixas, XP, radar, missões, avaliação física)
     
 - Comentários recebidos (se compartilhados)
     
@@ -272,6 +281,8 @@ Após confirmação:
 - Aulas experimentais
     
 - Coaches
+    
+- **Missões** – Criar/eliminar missões configuráveis (nome, descrição, modalidade, faixa, XP, ordem); aplicáveis ao Perfil do Atleta do aluno.
     
 - **Remuneração de coaches (futuro):** configuração de regras e relatório mensal; ver doc *Remuneração de Coaches — Configurável (Futuro)*
     

@@ -166,6 +166,16 @@ Existem **3 portas principais** de entrada:
 
 ---
 
+## 5b. Fluxo de Entrada do Aluno (Cadastro → Plano → Avaliação Física)
+
+1. **Cadastro** – Aluno regista-se na plataforma.
+2. **Plano** – Seleciona/atribuição de plano (Admin ou no fluxo de matrícula).
+3. **Avaliação física** – Aluno deve **solicitar avaliação física**; é uma missão obrigatória para todos.
+4. **Instrutor** – Qualquer professor (coach) acede ao **perfil do aluno** e preenche a **Ficha de Anamnese e Avaliação Física Inicial** (identificação, objetivo, histórico saúde, PAR-Q, atividade, avaliação física, testes, avaliação 1–10, termo, liberação).
+5. **Renovação** – A avaliação física é **obrigatória a cada 6 meses**; quando a data de renovação vence, a missão “Renovar avaliação física” volta a aparecer no dashboard do aluno até estar em dia.
+
+---
+
 ## 6. Fluxo do Aluno Matriculado (Ciclo Contínuo)
 
 - Aluno acessa agenda
@@ -194,11 +204,13 @@ Se:
 
 Além do fluxo normal:
 
-- Coach registra avaliações periódicas
+- Coach registra avaliações periódicas (na aula; scores por dimensão: Técnico, Tático, Físico, Mental, Teórico)
     
-- Sistema gera histórico de evolução
+- Sistema calcula **XP** e **faixa** (cores: Branca → … → Dourado N); progressão em dobro de XP por nível
     
-- Atleta acompanha progresso
+- **Missões ativas:** subir dimensão X, missões configuráveis (Admin), avaliação física (realizar/renovar a cada 6 meses)
+    
+- Atleta vê **Perfil do Atleta** gamificado: header (nível, faixa, barra XP), stat cards, radar, detalhe por componente (filtrado pela modalidade principal), missões, feedback do coach
     
 - Base para:
     
@@ -261,9 +273,9 @@ Aluno → Agenda → Aula → QR Code → Coach confirma → Histórico
 
 Experimental → Aula → Atenção do coach → Pós-aula → Conversão
 
-Coach → Aula → Presença → Avaliação
+Coach → Aula → Presença → Avaliação | Perfil do aluno → Avaliação física (ficha anamnese; renovação 6 meses)
 
-Admin → Tudo organizado, sem papel
+Admin → Tudo organizado, sem papel | Missões (configuráveis por modalidade/faixa)
 
 ---
 

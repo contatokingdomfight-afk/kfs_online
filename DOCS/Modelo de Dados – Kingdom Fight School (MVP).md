@@ -52,20 +52,29 @@ Extensão do aluno quando entra em acompanhamento esportivo.
 **Relacionamentos**
 
 - 1 Student → 0..1 Athlete
-    
+- Athlete → AthleteMissionAward (XP por targets de dimensão já atribuídos)
+- Athlete → AthleteMissionCompletion (missões de modelo já concluídas)
 
 **Campos**
 
 - id
-    
 - studentId
-    
 - level → `INICIANTE | INTERMEDIARIO | AVANCADO`
-    
+- **xp** (integer, default 0) – gamificação: XP acumulado por missões (dimensão + missões configuráveis)
 - mainCoachId
-    
 - createdAt
-    
+
+---
+
+## 🎯 Gamificação (faixas, XP, missões)
+
+**Sistema de faixas (cores):** Branca → Branca/amarela → Amarela → … → Preta → Preta/Dourado → Dourado 1, 2, … N. Para subir de cor, o atleta acumula o dobro do XP da cor anterior (primeira subida: 1000 XP). Cálculo em `lib/belts.ts`.
+
+**AthleteMissionAward** – Registo de XP já atribuído por “atingir target X” numa dimensão (ex.: Técnico ≥ 4), para não duplicar ao reavaliar. Campos: athleteId, dimensionCode, targetScore, xpAwarded, createdAt. Unique (athleteId, dimensionCode, targetScore).
+
+**MissionTemplate** – Missões configuráveis no Admin: nome, descrição, modalidade (opcional = todas), faixa (beltIndex, opcional = qualquer), xpReward, sortOrder, isActive. O atleta vê apenas as que se aplicam à sua modalidade e faixa.
+
+**AthleteMissionCompletion** – Missões de modelo já concluídas pelo atleta (evita dar XP duas vezes). Campos: athleteId, missionTemplateId, completedAt, xpAwarded. Unique (athleteId, missionTemplateId).
 
 ---
 
@@ -218,6 +227,38 @@ Controle básico de mensalidade (alunos).
 
 ---
 
+## 🏥 StudentPhysicalAssessment (Avaliação física)
+
+Ficha de anamnese e avaliação física inicial/renovação. Obrigatória a cada 6 meses; disponível para todos os coaches no perfil do aluno.
+
+**Relacionamentos**
+
+- Student → StudentPhysicalAssessment (várias avaliações ao longo do tempo)
+- Coach → StudentPhysicalAssessment (instrutor que preencheu)
+
+**Campos**
+
+- id
+- studentId
+- coachId
+- assessedAt (date) – data da avaliação
+- nextDueAt (date) – data da próxima renovação (assessedAt + 6 meses)
+- clearance → `APTO | APTO_RESTRICOES | NECESSITA_AVALIACAO_MEDICA`
+- formData (jsonb) – resto da ficha (objetivos, histórico saúde, PAR-Q, atividade, sinais vitais, mobilidade, postura, testes físicos, avaliação instrutor 1–10, termo)
+- createdAt
+
+---
+
+## 📋 Outras entidades (referência)
+
+- **StudentProfile** – Dados do aluno: weightKg, heightCm, dateOfBirth, phone, medicalNotes, emergencyContact (usados na identificação da ficha de avaliação física).
+- **GeneralDimension** – Componentes gerais de avaliação (Técnico, Tático, Físico, Mental, Teórico); Admin pode adicionar mais.
+- **EvaluationComponent**, **EvaluationCriterion** – Critérios de avaliação por modalidade (Admin); usados no radar e no detalhe por componente.
+- **ModalityEvaluationConfig** – Configuração por modalidade (categorias + critérios em JSON).
+- **AthleteEvaluation** – Avaliação do atleta pelo coach na aula (scores dinâmicos ou legado gas/technique/strength/theory); alimenta o radar e o cálculo de XP por targets de dimensão.
+
+---
+
 ## 💶 Remuneração de coaches (futuro, configurável)
 
 **Não faz parte do MVP.** A plataforma será preparada para que a remuneração dos professores seja **configurável no futuro** (valores e regras definidos pela administração), sem fórmula fixa no código.
@@ -234,16 +275,13 @@ Quando a funcionalidade for implementada, poderá existir uma entidade de **conf
 # 🔗 RELACIONAMENTOS (Resumo Mental)
 
 - User → Student / Coach
-    
-- Student → Athlete (opcional)
-    
-- Coach → Lesson
-    
+- Student → Athlete (opcional); Student → StudentProfile; Student → StudentPhysicalAssessment
+- Athlete → AthleteMissionAward, AthleteMissionCompletion
+- Coach → Lesson; Coach → StudentPhysicalAssessment (avaliações que preencheu)
 - Student ↔ Lesson (Attendance)
-    
 - Coach → Comment
-    
 - Comment → Athlete ou Lesson
+- MissionTemplate → AthleteMissionCompletion
     
 
 ---

@@ -1,18 +1,7 @@
-import { SignIn } from "@clerk/nextjs";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+import { SignInForm } from "./SignInForm";
 
-export default function SignInPage() {
-  return (
-    <main className="min-h-screen bg-bg flex items-center justify-center p-4">
-      <SignIn
-        appearance={{
-          variables: {
-            colorPrimary: "#c1121f",
-            colorBackground: "var(--bg-secondary)",
-            colorText: "var(--text-primary)",
-            colorTextSecondary: "var(--text-secondary)",
-          },
-        }}
-      />
-    </main>
-  );
+export default async function SignInPage() {
+  const locale = await getLocaleFromCookies();
+  return <SignInForm initialLocale={locale as "pt" | "en"} />;
 }

@@ -1,11 +1,37 @@
-import type { Config } from "tailwindcss";
-
-export default {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   darkMode: ["class", '[data-theme="dark"]'],
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./lib/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  safelist: [
+    { pattern: /^(bg|text|border)-(bg|bg-secondary|text-primary|text-secondary|primary|danger|success|warning|border)$/ },
+    "min-h-screen",
+    "flex",
+    "flex-col",
+    "items-center",
+    "justify-center",
+    "p-4",
+    "p-6",
+    "rounded-md",
+    "px-4",
+    "py-3",
+    "text-sm",
+    "text-base",
+    "text-lg",
+    "text-xl",
+    "font-medium",
+    "font-semibold",
+    "gap-3",
+    "gap-4",
+    "mb-2",
+    "mb-4",
+    "mb-6",
+    "max-w-xs",
+    "w-full",
   ],
   theme: {
     extend: {
@@ -50,4 +76,4 @@ export default {
     },
   },
   plugins: [],
-} satisfies Config;
+};

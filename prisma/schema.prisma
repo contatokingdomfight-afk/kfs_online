@@ -55,14 +55,14 @@ enum PaymentStatus {
   LATE
 }
 
-// Utilizador (sincronizado com Clerk; role definido na plataforma)
+// Utilizador (sincronizado com Supabase Auth; role definido na plataforma)
 model User {
-  id          String   @id @default(cuid())
-  clerkUserId String   @unique
-  email       String
-  name        String?
-  role        Role
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  authUserId String   @unique // ID do Supabase Auth (auth.uid())
+  email      String
+  name       String?
+  role       Role
+  createdAt  DateTime @default(now())
 
   student Student?
   coach   Coach?
@@ -78,6 +78,20 @@ model Student {
   athlete     Athlete?
   attendances Attendance[]
   payments    Payment[]
+  physicalAssessments StudentPhysicalAssessment[]
+}
+
+model StudentPhysicalAssessment {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  coachId     String
+  coach       Coach    @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  assessedAt  DateTime @db.Date
+  nextDueAt   DateTime @db.Date
+  clearance   String   // APTO | APTO_RESTRICOES | NECESSITA_AVALIACAO_MEDICA
+  formData    Json     @default("{}")
+  createdAt   DateTime @default(now())
 }
 
 model Athlete {
@@ -85,9 +99,50 @@ model Athlete {
   studentId   String       @unique
   student     Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
   level       AthleteLevel @default(INICIANTE)
+  xp          Int          @default(0) // Gamificação: XP por conclusão de missões (avaliações)
   mainCoachId String?
   mainCoach   Coach?       @relation("AthleteMainCoach", fields: [mainCoachId], references: [id])
   createdAt   DateTime     @default(now())
+  missionAwards AthleteMissionAward[]
+  missionCompletions AthleteMissionCompletion[]
+}
+
+model AthleteMissionAward {
+  id            String   @id @default(cuid())
+  athleteId     String
+  athlete       Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  dimensionCode String
+  targetScore   Int
+  xpAwarded     Int      @default(50)
+  createdAt     DateTime @default(now())
+
+  @@unique([athleteId, dimensionCode, targetScore])
+}
+
+model MissionTemplate {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  modality    String?
+  beltIndex   Int?
+  xpReward    Int       @default(50)
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+  completions AthleteMissionCompletion[]
+}
+
+model AthleteMissionCompletion {
+  id               String         @id @default(cuid())
+  athleteId        String
+  athlete          Athlete        @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  missionTemplateId String
+  missionTemplate  MissionTemplate @relation(fields: [missionTemplateId], references: [id], onDelete: Cascade)
+  completedAt      DateTime       @default(now())
+  xpAwarded        Int            @default(0)
+
+  @@unique([athleteId, missionTemplateId])
 }
 
 model Coach {
@@ -97,9 +152,10 @@ model Coach {
   specialties String?  // ex: "Muay Thai, Boxing" – pode evoluir para JSON
   createdAt   DateTime @default(now())
 
-  lessons           Lesson[]
-  comments          Comment[]
-  athletesMainCoach  Athlete[] @relation("AthleteMainCoach")
+  lessons             Lesson[]
+  comments            Comment[]
+  athletesMainCoach   Athlete[] @relation("AthleteMainCoach")
+  physicalAssessments StudentPhysicalAssessment[]
 }
 
 model Lesson {
