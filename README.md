@@ -76,9 +76,43 @@ Com o email de administrador, na área **Admin** (canto superior direito) tens:
 
 Em qualquer uma destas vistas aparece o banner **"A ver como Aluno"** ou **"A ver como Professor"** com o botão **Voltar ao Admin**.
 
-## Deploy (Vercel + kingdomfight.com)
+## Deploy (Vercel)
 
-Guia completo em **DOCS/Deploy_Vercel_kingdomfight.md**: ligar o repositório à Vercel, configurar variáveis de ambiente, primeiro deploy e domínio **kingdomfight.com** (DNS na Hostinger).
+### 🚀 Deploy Rápido
+
+1. **Aceder à Vercel**: [vercel.com](https://vercel.com) → Login com GitHub
+2. **Importar Projeto**: Add New → Project → Selecionar `kfs_system`
+3. **Configurar Variáveis**: Ver `VARIAVEIS_AMBIENTE_VERCEL.txt` para lista completa
+4. **Deploy**: Clicar em "Deploy" e aguardar 2-5 minutos
+
+### 📚 Documentação Completa
+
+- **`VERCEL_DEPLOY.md`** - Guia completo passo a passo
+- **`GUIA_VISUAL_VERCEL.md`** - Guia visual com screenshots
+- **`VERCEL_CHECKLIST.md`** - Checklist rápido
+- **`VARIAVEIS_AMBIENTE_VERCEL.txt`** - Lista de todas as variáveis
+- **`LINKS_IMPORTANTES.md`** - Links úteis para todos os serviços
+
+### 🔑 Variáveis de Ambiente Essenciais
+
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://iozxildpnugqxzqkxntq.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+DATABASE_URL=postgresql://...
+
+# NextAuth
+NEXTAUTH_URL=https://seu-projeto.vercel.app
+NEXTAUTH_SECRET=... # Gerar com: node scripts/generate-nextauth-secret.js
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_... # Configurar após deploy
+```
+
+Ver `VARIAVEIS_AMBIENTE_VERCEL.txt` para instruções detalhadas de onde obter cada valor.
 
 ## Documentação
 
