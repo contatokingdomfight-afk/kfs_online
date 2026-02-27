@@ -1,0 +1,141 @@
+==============================================
+  VARIÁVEIS DE AMBIENTE PARA VERCEL
+  Projeto: KFS System
+  Data: 2026-02-27
+==============================================
+
+📋 COPIE E COLE ESTAS VARIÁVEIS NA VERCEL:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1️⃣  SUPABASE (Base de Dados)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NEXT_PUBLIC_SUPABASE_URL=https://iozxildpnugqxzqkxntq.supabase.co
+
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+[Obter em: Supabase → Settings → API → anon/public key]
+
+SUPABASE_SERVICE_ROLE_KEY=
+[Obter em: Supabase → Settings → API → service_role key]
+
+DATABASE_URL=
+[Obter em: Supabase → Settings → Database → Connection String → URI]
+[Formato: postgresql://postgres:[PASSWORD]@db.iozxildpnugqxzqkxntq.supabase.co:5432/postgres]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2️⃣  NEXTAUTH (Autenticação)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NEXTAUTH_URL=https://kfs-system.vercel.app
+[⚠️  Atualizar com o domínio real após deploy]
+
+NEXTAUTH_SECRET=FZXKrUx63ENRxVkQwuGoNNhQebeWw/iIcVuenF0hjts=
+[✅ Já gerado! Use este valor]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3️⃣  STRIPE (Pagamentos)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+[Obter em: Stripe → Developers → API keys → Publishable key]
+[Começa com: pk_test_...]
+
+STRIPE_SECRET_KEY=
+[Obter em: Stripe → Developers → API keys → Secret key]
+[Começa com: sk_test_...]
+
+STRIPE_WEBHOOK_SECRET=
+[⚠️  Configurar DEPOIS do primeiro deploy]
+[Obter em: Stripe → Developers → Webhooks → Criar endpoint]
+[Endpoint URL: https://seu-dominio.vercel.app/api/webhooks/stripe]
+[Evento: checkout.session.completed]
+[Começa com: whsec_...]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4️⃣  GOOGLE OAUTH (Opcional - para login Google)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GOOGLE_CLIENT_ID=
+[Obter em: Google Cloud Console → APIs & Services → Credentials]
+[Criar OAuth 2.0 Client ID]
+[Redirect URI: https://seu-dominio.vercel.app/api/auth/callback/google]
+
+GOOGLE_CLIENT_SECRET=
+[Obtido junto com o Client ID]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5️⃣  RESEND (Opcional - para envio de emails)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RESEND_API_KEY=
+[Obter em: Resend → API Keys]
+[Começa com: re_...]
+
+==============================================
+📝 INSTRUÇÕES DE USO
+==============================================
+
+1. Aceda a: https://vercel.com/dashboard
+2. Selecione o projeto: kfs-system
+3. Vá a: Settings → Environment Variables
+4. Para cada variável:
+   - Cole o "Key" (nome da variável)
+   - Cole o "Value" (valor da variável)
+   - Selecione: Production, Preview, Development
+   - Clique em "Add"
+
+⚠️  IMPORTANTE:
+- Variáveis que começam com NEXT_PUBLIC_ são públicas
+- Outras variáveis são privadas (server-side only)
+- STRIPE_WEBHOOK_SECRET só pode ser obtido APÓS o deploy
+- Após adicionar STRIPE_WEBHOOK_SECRET, fazer REDEPLOY
+
+==============================================
+🔗 LINKS RÁPIDOS
+==============================================
+
+Supabase Dashboard:
+https://supabase.com/dashboard/project/iozxildpnugqxzqkxntq
+
+Stripe Dashboard:
+https://dashboard.stripe.com
+
+Google Cloud Console:
+https://console.cloud.google.com
+
+Resend Dashboard:
+https://resend.com/dashboard
+
+Gerar novo NEXTAUTH_SECRET:
+node scripts/generate-nextauth-secret.js
+
+==============================================
+✅ CHECKLIST
+==============================================
+
+Antes do Deploy:
+[ ] NEXT_PUBLIC_SUPABASE_URL
+[ ] NEXT_PUBLIC_SUPABASE_ANON_KEY
+[ ] SUPABASE_SERVICE_ROLE_KEY
+[ ] DATABASE_URL
+[ ] NEXTAUTH_URL
+[ ] NEXTAUTH_SECRET
+[ ] NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+[ ] STRIPE_SECRET_KEY
+
+Depois do Deploy:
+[ ] STRIPE_WEBHOOK_SECRET (configurar e redeploy)
+[ ] GOOGLE_CLIENT_ID (opcional)
+[ ] GOOGLE_CLIENT_SECRET (opcional)
+[ ] RESEND_API_KEY (opcional)
+
+==============================================
+🆘 SUPORTE
+==============================================
+
+Problemas? Consulte:
+- VERCEL_DEPLOY.md (guia completo)
+- GUIA_VISUAL_VERCEL.md (passo a passo visual)
+- VERCEL_CHECKLIST.md (checklist rápido)
+
+==============================================
