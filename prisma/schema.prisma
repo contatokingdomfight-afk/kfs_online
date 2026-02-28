@@ -1,0 +1,222 @@
+// Kingdom Fight School – MVP
+// Modelo alinhado aos DOCS (Modelo de Dados)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ALUNO
+  COACH
+  ADMIN
+}
+
+enum StudentStatus {
+  ATIVO
+  INATIVO
+  EXPERIMENTAL
+}
+
+enum AthleteLevel {
+  INICIANTE
+  INTERMEDIARIO
+  AVANCADO
+}
+
+enum Modality {
+  MUAY_THAI
+  BOXING
+  KICKBOXING
+}
+
+enum AttendanceStatus {
+  PENDING
+  CONFIRMED
+  ABSENT
+}
+
+enum CommentTargetType {
+  ATHLETE
+  LESSON
+}
+
+enum CommentVisibility {
+  PRIVATE
+  SHARED
+}
+
+enum PaymentStatus {
+  PAID
+  LATE
+}
+
+// Utilizador (sincronizado com Supabase Auth; role definido na plataforma)
+model User {
+  id         String   @id @default(cuid())
+  authUserId String   @unique // ID do Supabase Auth (auth.uid())
+  email      String
+  name       String?
+  role       Role
+  createdAt  DateTime @default(now())
+
+  student Student?
+  coach   Coach?
+}
+
+model Student {
+  id        String        @id @default(cuid())
+  userId    String        @unique
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    StudentStatus @default(ATIVO)
+  createdAt DateTime      @default(now())
+
+  athlete     Athlete?
+  attendances Attendance[]
+  payments    Payment[]
+  physicalAssessments StudentPhysicalAssessment[]
+}
+
+model StudentPhysicalAssessment {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  coachId     String
+  coach       Coach    @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  assessedAt  DateTime @db.Date
+  nextDueAt   DateTime @db.Date
+  clearance   String   // APTO | APTO_RESTRICOES | NECESSITA_AVALIACAO_MEDICA
+  formData    Json     @default("{}")
+  createdAt   DateTime @default(now())
+}
+
+model Athlete {
+  id          String       @id @default(cuid())
+  studentId   String       @unique
+  student     Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  level       AthleteLevel @default(INICIANTE)
+  xp          Int          @default(0) // Gamificação: XP por conclusão de missões (avaliações)
+  mainCoachId String?
+  mainCoach   Coach?       @relation("AthleteMainCoach", fields: [mainCoachId], references: [id])
+  createdAt   DateTime     @default(now())
+  missionAwards AthleteMissionAward[]
+  missionCompletions AthleteMissionCompletion[]
+}
+
+model AthleteMissionAward {
+  id            String   @id @default(cuid())
+  athleteId     String
+  athlete       Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  dimensionCode String
+  targetScore   Int
+  xpAwarded     Int      @default(50)
+  createdAt     DateTime @default(now())
+
+  @@unique([athleteId, dimensionCode, targetScore])
+}
+
+model MissionTemplate {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  modality    String?
+  beltIndex   Int?
+  xpReward    Int       @default(50)
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+  completions AthleteMissionCompletion[]
+}
+
+model AthleteMissionCompletion {
+  id               String         @id @default(cuid())
+  athleteId        String
+  athlete          Athlete        @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  missionTemplateId String
+  missionTemplate  MissionTemplate @relation(fields: [missionTemplateId], references: [id], onDelete: Cascade)
+  completedAt      DateTime       @default(now())
+  xpAwarded        Int            @default(0)
+
+  @@unique([athleteId, missionTemplateId])
+}
+
+model Coach {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialties String?  // ex: "Muay Thai, Boxing" – pode evoluir para JSON
+  createdAt   DateTime @default(now())
+
+  lessons             Lesson[]
+  comments            Comment[]
+  athletesMainCoach   Athlete[] @relation("AthleteMainCoach")
+  physicalAssessments StudentPhysicalAssessment[]
+}
+
+model Lesson {
+  id             String    @id @default(cuid())
+  modality       Modality
+  date           DateTime  @db.Date
+  startTime      String    // "HH:mm"
+  endTime        String    // "HH:mm"
+  coachId        String
+  coach          Coach     @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  capacity       Int?
+  planningNotes  String?
+  createdAt      DateTime  @default(now())
+
+  attendances Attendance[]
+  trialClasses TrialClass[]
+}
+
+model Attendance {
+  id             String           @id @default(cuid())
+  lessonId       String
+  lesson         Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status         AttendanceStatus @default(PENDING)
+  isExperimental Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+
+  @@unique([lessonId, studentId])
+}
+
+model TrialClass {
+  id                String   @id @default(cuid())
+  name              String
+  contact           String
+  modality          Modality
+  lessonDate        DateTime @db.Date
+  lessonId          String?
+  lesson            Lesson?  @relation(fields: [lessonId], references: [id])
+  convertedToStudent Boolean @default(false)
+  createdAt         DateTime @default(now())
+}
+
+// Comentários do coach: targetType + targetId (polimórfico – Athlete ou Lesson)
+model Comment {
+  id             String             @id @default(cuid())
+  authorCoachId  String
+  authorCoach    Coach              @relation(fields: [authorCoachId], references: [id], onDelete: Cascade)
+  targetType     CommentTargetType
+  targetId       String             // ID do Athlete ou da Lesson
+  content        String
+  visibility     CommentVisibility  @default(PRIVATE)
+  createdAt      DateTime           @default(now())
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  studentId      String
+  student        Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount         Decimal       @db.Decimal(10, 2)
+  status         PaymentStatus
+  referenceMonth String        // "YYYY-MM"
+  createdAt      DateTime      @default(now())
+}
