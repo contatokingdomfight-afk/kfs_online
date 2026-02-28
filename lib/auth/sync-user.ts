@@ -39,8 +39,29 @@ export async function syncUser(supabaseUser: SupabaseUser) {
       name,
       role: "ALUNO",
     });
-    if (insertError) throw insertError;
-    userId = id;
+    
+    // Se der erro de duplicação, significa que outro request criou o user
+    // Buscar o user existente em vez de falhar
+    if (insertError) {
+      if (insertError.code === '23505') {
+        // Duplicate key - buscar o user que foi criado
+        const { data: existingUser } = await supabase
+          .from("User")
+          .select("id")
+          .eq("authUserId", authUserId)
+          .single();
+        
+        if (existingUser) {
+          userId = existingUser.id;
+        } else {
+          throw insertError;
+        }
+      } else {
+        throw insertError;
+      }
+    } else {
+      userId = id;
+    }
   }
 
   const { data: student } = await supabase
@@ -51,11 +72,16 @@ export async function syncUser(supabaseUser: SupabaseUser) {
 
   if (!student) {
     const studentId = crypto.randomUUID();
-    await supabase.from("Student").insert({
+    const { error: studentError } = await supabase.from("Student").insert({
       id: studentId,
       userId,
       status: "ATIVO",
     });
+    
+    // Ignorar erro de duplicação (race condition)
+    if (studentError && studentError.code !== '23505') {
+      throw studentError;
+    }
   }
 
   const { data: user } = await supabase
