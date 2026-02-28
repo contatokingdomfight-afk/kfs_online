@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores } from "@/lib/performance-utils";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
-import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
+import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
 import {
   PERFORMANCE_DETAIL_BY_DIMENSION,
@@ -27,10 +27,11 @@ export default async function DashboardPerformancePage() {
   const { data: modalitiesList } = await supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true });
   const modalityLabels = new Map<string, string>((modalitiesList ?? []).map((m) => [m.code, m.name ?? m.code]));
 
+  const allConfigs = await loadAllEvaluationConfigs(supabase);
   const configsForDetail: { modality: string; config: import("@/lib/evaluation-config").ModalityEvaluationConfigPayload }[] = [];
   const configByModality = new Map<string, ModalityConfig>();
   for (const mod of modalitiesList ?? []) {
-    const config = await loadEvaluationConfigForModality(supabase, mod.code);
+    const config = allConfigs.get(mod.code);
     if (config) {
       configByModality.set(mod.code, {
         criterionToCategory: getCriterionToCategory(config),

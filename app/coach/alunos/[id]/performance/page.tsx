@@ -4,7 +4,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
-import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
+import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import {
   type ModalityConfig,
   GENERAL_PERFORMANCE_AXES,
@@ -55,10 +55,11 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
   const { data: modalitiesList } = await supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true });
   const modalityLabels = new Map<string, string>((modalitiesList ?? []).map((m) => [m.code, m.name ?? m.code]));
 
+  const allConfigs = await loadAllEvaluationConfigs(supabase);
   const configsForDetail: { modality: string; config: import("@/lib/evaluation-config").ModalityEvaluationConfigPayload }[] = [];
   const configByModality = new Map<string, ModalityConfig>();
   for (const m of modalitiesList ?? []) {
-    const config = await loadEvaluationConfigForModality(supabase, m.code);
+    const config = allConfigs.get(m.code);
     if (config) {
       configByModality.set(m.code, {
         criterionToCategory: getCriterionToCategory(config),

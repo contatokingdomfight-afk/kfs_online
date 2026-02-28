@@ -16,6 +16,13 @@ const MODALITIES = [
   { value: "KICKBOXING", label: "Kickboxing" },
 ] as const;
 
+const LEVELS = [
+  { value: "", label: "— Qualquer nível" },
+  { value: "INICIANTE", label: "Iniciante" },
+  { value: "INTERMEDIARIO", label: "Intermediário" },
+  { value: "AVANCADO", label: "Avançado" },
+] as const;
+
 type Props = {
   courseId?: string;
   initialName?: string;
@@ -28,6 +35,7 @@ type Props = {
   initialIsActive?: boolean;
   initialPrice?: number | null;
   initialAvailableForPurchase?: boolean;
+  initialLevel?: string | null;
 };
 
 export function CursoForm({
@@ -42,6 +50,7 @@ export function CursoForm({
   initialIsActive = true,
   initialPrice = null,
   initialAvailableForPurchase = false,
+  initialLevel = null,
 }: Props) {
   const action = courseId ? updateCourse : createCourse;
   const [state, formAction] = useFormState(action, null as CourseFormResult | null);
@@ -102,6 +111,18 @@ export function CursoForm({
         </span>
         <select name="modality" className="input" defaultValue={initialModality ?? ""}>
           {MODALITIES.map(({ value, label }) => (
+            <option key={value || "any"} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          Nível (opcional)
+        </span>
+        <select name="level" className="input" defaultValue={initialLevel ?? ""}>
+          {LEVELS.map(({ value, label }) => (
             <option key={value || "any"} value={value}>
               {label}
             </option>

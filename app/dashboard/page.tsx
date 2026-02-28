@@ -10,7 +10,7 @@ import { getEarnedBadges } from "@/lib/gamification";
 import { VouNaoVouButtons } from "./VouNaoVouButtons";
 import { PerformanceRadar } from "@/components/PerformanceRadar";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
-import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
+import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
@@ -40,45 +40,46 @@ export default async function DashboardPage() {
   const studentId = await getCurrentStudentId();
 
   const { today, endOfWeek } = getThisWeekRange();
+  const weekStart = getWeekStartMonday();
+  const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Buscar schoolId do aluno
+  // Buscar dados do aluno uma vez (schoolId, planId, primaryModality)
   let studentSchoolId: string | null = null;
-  if (studentId) {
-    const { data: student } = await supabase.from("Student").select("schoolId").eq("id", studentId).single();
-    studentSchoolId = student?.schoolId || null;
-  }
-
   let allowedModalities: string[] = MODALITIES_LIST.slice();
+  let studentPlanId: string | null = null;
   if (studentId) {
-    const { data: student } = await supabase.from("Student").select("planId, primaryModality").eq("id", studentId).single();
-    if (student?.planId) {
-      const { data: plan } = await supabase.from("Plan").select("modality_scope").eq("id", student.planId).eq("is_active", true).single();
-      if (plan?.modality_scope === "NONE") allowedModalities = [];
-      else if (plan?.modality_scope === "SINGLE" && (student as { primaryModality?: string }).primaryModality)
-        allowedModalities = [(student as { primaryModality: string }).primaryModality];
+    const { data: student } = await supabase.from("Student").select("schoolId, planId, primaryModality").eq("id", studentId).single();
+    if (student) {
+      studentSchoolId = student.schoolId || null;
+      studentPlanId = student.planId || null;
+      if (student.planId) {
+        const { data: plan } = await supabase.from("Plan").select("modality_scope").eq("id", student.planId).eq("is_active", true).single();
+        if (plan?.modality_scope === "NONE") allowedModalities = [];
+        else if (plan?.modality_scope === "SINGLE" && (student as { primaryModality?: string }).primaryModality)
+          allowedModalities = [(student as { primaryModality: string }).primaryModality];
+      }
     }
   }
 
-  // Filtrar aulas pela escola do aluno
+  // Paralelizar: aulas, locations, weekThemes
   let lessonsQuery = supabase
     .from("Lesson")
     .select("id, modality, date, startTime, endTime, locationId")
     .gte("date", today)
     .lte("date", endOfWeek);
+  if (studentSchoolId) lessonsQuery = lessonsQuery.eq("schoolId", studentSchoolId);
 
-  if (studentSchoolId) {
-    lessonsQuery = lessonsQuery.eq("schoolId", studentSchoolId);
-  }
+  const [lessonsRes, locationsRes, weekThemesRes] = await Promise.all([
+    lessonsQuery.order("date", { ascending: true }).order("startTime", { ascending: true }),
+    supabase.from("Location").select("id, name"),
+    supabase.from("WeekTheme").select("modality, title, course_id").eq("week_start", weekStart).order("modality", { ascending: true }),
+  ]);
 
-  const { data: lessonsData } = await lessonsQuery
-    .order("date", { ascending: true })
-    .order("startTime", { ascending: true });
+  const lessonsData = lessonsRes.data ?? [];
+  const locationById = new Map((locationsRes.data ?? []).map((loc) => [loc.id, loc.name]));
+  const temaSemanaList = weekThemesRes.data ?? [];
 
-  // Buscar locations
-  const { data: locations } = await supabase.from("Location").select("id, name");
-  const locationById = new Map((locations ?? []).map((loc) => [loc.id, loc.name]));
-
-  const allLessons = lessonsData ?? [];
+  const allLessons = lessonsData;
   const lessons =
     allowedModalities.length === 0 ? [] : allowedModalities.length < MODALITIES_LIST.length ? allLessons.filter((l) => allowedModalities.includes(l.modality)) : allLessons;
   const nextLesson = lessons[0] ?? null;
@@ -97,13 +98,6 @@ export default async function DashboardPage() {
     });
   }
 
-  const weekStart = getWeekStartMonday();
-  const { data: weekThemes } = await supabase
-    .from("WeekTheme")
-    .select("modality, title, course_id")
-    .eq("week_start", weekStart)
-    .order("modality", { ascending: true });
-  const temaSemanaList = weekThemes ?? [];
 
   const GENERAL_LAST_N = 10;
   let generalPerformanceScores: Record<string, number> | null = null;
@@ -123,72 +117,90 @@ export default async function DashboardPage() {
     emergencyContact: string | null;
     updatedAt: string | null;
   } | null = null;
+  let pastAttendances: { lessonId: string; modality: string; date: string; startTime: string; endTime: string; status: string; locationName?: string }[] = [];
   if (studentId) {
-    const { data: student } = await supabase.from("Student").select("planId").eq("id", studentId).single();
-    if (student?.planId) {
-      const { data: plan } = await supabase.from("Plan").select("name, price_monthly, includes_digital_access").eq("id", student.planId).eq("is_active", true).single();
-      if (plan) {
-        hasDigitalAccess = plan.includes_digital_access === true;
-      }
-    }
-    attendanceByModality = await getAttendanceByModality(supabase, studentId);
-    const { data: athlete } = await supabase.from("Athlete").select("id").eq("studentId", studentId).single();
-    if (athlete) {
-      const { data: evalsRows } = await supabase
-        .from("AthleteEvaluation")
-        .select("gas, technique, strength, theory, scores, modality")
-        .eq("athleteId", athlete.id)
-        .order("created_at", { ascending: false })
-        .limit(GENERAL_LAST_N);
-      const evaluations = (evalsRows ?? []).map((e) => ({
-        gas: e.gas,
-        technique: e.technique,
-        strength: e.strength,
-        theory: e.theory,
-        scores: e.scores as Record<string, number> | null,
-        modality: e.modality,
-      }));
-
-      const configByModality = new Map<string, ModalityConfig>();
-      for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"]) {
-        const config = await loadEvaluationConfigForModality(supabase, mod);
-        if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
-      }
-
-      if (evaluations.length > 0) {
-        generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
-      }
-    }
-    earnedBadges = await getEarnedBadges(supabase, studentId);
-    const { data: profileRow } = await supabase
-      .from("StudentProfile")
-      .select("weightKg, heightCm, dateOfBirth, medicalNotes, emergencyContact, updatedAt")
-      .eq("studentId", studentId)
-      .maybeSingle();
-    if (profileRow) {
-      studentProfile = {
-        weightKg: profileRow.weightKg != null ? Number(profileRow.weightKg) : null,
-        heightCm: profileRow.heightCm != null ? Number(profileRow.heightCm) : null,
-        dateOfBirth: profileRow.dateOfBirth ?? null,
-        medicalNotes: profileRow.medicalNotes ?? null,
-        emergencyContact: profileRow.emergencyContact ?? null,
-        updatedAt: profileRow.updatedAt ?? null,
-      };
-    }
-    const { data: goalRow } = await supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single();
-    if (goalRow) attendanceGoal = goalRow.target_value ?? 10;
     const monthStart = new Date().toISOString().slice(0, 7) + "-01";
     const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10);
-    const { data: monthAtt } = await supabase.from("Attendance").select("lessonId").eq("studentId", studentId).eq("status", "CONFIRMED");
-    if (monthAtt?.length) {
-      const mLessonIds = [...new Set(monthAtt.map((a) => a.lessonId))];
-      const { data: monthLessons } = await supabase.from("Lesson").select("id, date").in("id", mLessonIds).gte("date", monthStart).lte("date", monthEnd);
-      currentMonthCount = monthLessons?.length ?? 0;
+    const sixWeeksAgo = new Date();
+    sixWeeksAgo.setDate(sixWeeksAgo.getDate() - 42);
+    const sixWeeksStr = sixWeeksAgo.toISOString().slice(0, 10);
+
+    // Paralelizar todas as queries independentes
+    const [
+      planRes,
+      attByMod,
+      athleteRes,
+      badgesRes,
+      profileRes,
+      goalRes,
+      confirmedAttRes,
+      purchasesRes,
+      coursesRes,
+      notifRes,
+      allConfigs,
+      pastAttRes,
+    ] = await Promise.all([
+      studentPlanId ? supabase.from("Plan").select("name, price_monthly, includes_digital_access").eq("id", studentPlanId).eq("is_active", true).single() : Promise.resolve({ data: null }),
+      getAttendanceByModality(supabase, studentId),
+      supabase.from("Athlete").select("id").eq("studentId", studentId).single(),
+      getEarnedBadges(supabase, studentId),
+      supabase.from("StudentProfile").select("weightKg, heightCm, dateOfBirth, medicalNotes, emergencyContact, updatedAt").eq("studentId", studentId).maybeSingle(),
+      supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
+      supabase.from("Attendance").select("lessonId").eq("studentId", studentId).eq("status", "CONFIRMED"),
+      supabase.from("CoursePurchase").select("courseId").eq("studentId", studentId),
+      supabase.from("Course").select("id, name, category, modality, included_in_digital_plan").eq("is_active", true).order("sort_order", { ascending: true }).order("name", { ascending: true }),
+      supabase.from("Notification").select("id, title, body, read_at, created_at").eq("studentId", studentId).order("created_at", { ascending: false }).limit(10),
+      loadAllEvaluationConfigs(supabase),
+      supabase.from("Attendance").select("lessonId, status").eq("studentId", studentId).order("createdAt", { ascending: false }).limit(50),
+    ]);
+
+    const plan = planRes.data;
+    if (plan) hasDigitalAccess = plan.includes_digital_access === true;
+    attendanceByModality = attByMod;
+    earnedBadges = badgesRes;
+    if (goalRes.data) attendanceGoal = goalRes.data.target_value ?? 10;
+    if (profileRes.data) {
+      const p = profileRes.data;
+      studentProfile = {
+        weightKg: p.weightKg != null ? Number(p.weightKg) : null,
+        heightCm: p.heightCm != null ? Number(p.heightCm) : null,
+        dateOfBirth: p.dateOfBirth ?? null,
+        medicalNotes: p.medicalNotes ?? null,
+        emergencyContact: p.emergencyContact ?? null,
+        updatedAt: p.updatedAt ?? null,
+      };
     }
-    const { data: purchases } = await supabase.from("CoursePurchase").select("courseId").eq("studentId", studentId);
-    const purchasedIds = new Set((purchases ?? []).map((p) => p.courseId));
-    const { data: allCourses } = await supabase.from("Course").select("id, name, category, modality, included_in_digital_plan").eq("is_active", true).order("sort_order", { ascending: true }).order("name", { ascending: true });
-    const accessible = (allCourses ?? []).filter(
+
+    const pastAttData = pastAttRes.data ?? [];
+    const pastLessonIds = pastAttData.length > 0 ? [...new Set(pastAttData.map((a) => a.lessonId))] : [];
+
+    const athlete = athleteRes.data;
+    const [evalsRes, pastLessonsRes] = await Promise.all([
+      athlete ? supabase.from("AthleteEvaluation").select("gas, technique, strength, theory, scores, modality").eq("athleteId", athlete.id).order("created_at", { ascending: false }).limit(GENERAL_LAST_N) : Promise.resolve({ data: [] }),
+      pastLessonIds.length > 0 ? supabase.from("Lesson").select("id, modality, date, startTime, endTime, locationId").in("id", pastLessonIds).lt("date", todayStr).order("date", { ascending: false }).limit(30) : Promise.resolve({ data: [] }),
+    ]);
+    const evalsRows = evalsRes.data ?? [];
+    const evaluations = evalsRows.map((e) => ({
+      gas: e.gas,
+      technique: e.technique,
+      strength: e.strength,
+      theory: e.theory,
+      scores: e.scores as Record<string, number> | null,
+      modality: e.modality,
+    }));
+    const configByModality = new Map<string, ModalityConfig>();
+    for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"]) {
+      const config = allConfigs.get(mod);
+      if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
+    }
+    if (evaluations.length > 0) {
+      generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
+    }
+
+    const confirmedAtt = confirmedAttRes.data ?? [];
+    const purchasedIds = new Set((purchasesRes.data ?? []).map((p) => p.courseId));
+    const allCoursesList = coursesRes.data ?? [];
+    const accessible = allCoursesList.filter(
       (c: { id: string; included_in_digital_plan?: boolean }) => (c.included_in_digital_plan && hasDigitalAccess) || purchasedIds.has(c.id)
     );
     const topModality = Object.entries(attendanceByModality).sort((a, b) => b[1] - a[1])[0]?.[0];
@@ -201,13 +213,8 @@ export default async function DashboardPage() {
       })
       .slice(0, 3)
       .map((c) => ({ id: c.id, name: c.name, category: c.category, modality: c.modality }));
-    const { data: notifRows } = await supabase
-      .from("Notification")
-      .select("id, title, body, read_at, created_at")
-      .eq("studentId", studentId)
-      .order("created_at", { ascending: false })
-      .limit(10);
-    notifications = (notifRows ?? []).map((n) => ({
+
+    notifications = (notifRes.data ?? []).map((n) => ({
       id: n.id,
       title: n.title,
       body: n.body ?? null,
@@ -221,27 +228,18 @@ export default async function DashboardPage() {
       notifications = notifications.map((n) => (unreadIds.includes(n.id) ? { ...n, read_at: readAt } : n));
     }
 
-    // Calcular progresso semanal (últimas 6 semanas)
-    const sixWeeksAgo = new Date();
-    sixWeeksAgo.setDate(sixWeeksAgo.getDate() - 42);
-    const { data: recentAtt } = await supabase
-      .from("Attendance")
-      .select("lessonId")
-      .eq("studentId", studentId)
-      .eq("status", "CONFIRMED");
-
-    if (recentAtt?.length) {
-      const recentLessonIds = [...new Set(recentAtt.map((a) => a.lessonId))];
-      const { data: recentLessons } = await supabase
+    // Mês atual e progresso semanal: uma query de Lesson para os lessonIds confirmados
+    if (confirmedAtt.length > 0) {
+      const allLessonIds = [...new Set(confirmedAtt.map((a) => a.lessonId))];
+      const { data: confirmedLessons } = await supabase
         .from("Lesson")
         .select("id, date")
-        .in("id", recentLessonIds)
-        .gte("date", sixWeeksAgo.toISOString().slice(0, 10))
-        .order("date", { ascending: true });
-
-      // Agrupar por semana
+        .in("id", allLessonIds)
+        .gte("date", sixWeeksStr);
+      const lessonsList = confirmedLessons ?? [];
+      currentMonthCount = lessonsList.filter((l) => l.date >= monthStart && l.date <= monthEnd).length;
       const weekCounts = new Map<string, number>();
-      (recentLessons ?? []).forEach((lesson) => {
+      lessonsList.forEach((lesson) => {
         const lessonDate = new Date(lesson.date + "T12:00:00");
         const dayOfWeek = lessonDate.getDay();
         const daysToMonday = (dayOfWeek + 6) % 7;
@@ -250,8 +248,6 @@ export default async function DashboardPage() {
         const weekKey = monday.toISOString().slice(0, 10);
         weekCounts.set(weekKey, (weekCounts.get(weekKey) || 0) + 1);
       });
-
-      // Criar array das últimas 6 semanas
       const weeks: Array<{ weekStart: string; count: number }> = [];
       for (let i = 5; i >= 0; i--) {
         const weekDate = new Date();
@@ -260,35 +256,15 @@ export default async function DashboardPage() {
         const daysToMonday = (dayOfWeek + 6) % 7;
         weekDate.setDate(weekDate.getDate() - daysToMonday);
         const weekKey = weekDate.toISOString().slice(0, 10);
-        weeks.push({
-          weekStart: weekKey,
-          count: weekCounts.get(weekKey) || 0,
-        });
+        weeks.push({ weekStart: weekKey, count: weekCounts.get(weekKey) || 0 });
       }
       weeklyProgress = weeks;
     }
-  }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  let pastAttendances: { lessonId: string; modality: string; date: string; startTime: string; endTime: string; status: string; locationName?: string }[] = [];
-  if (studentId) {
-    const { data: pastAtt } = await supabase
-      .from("Attendance")
-      .select("lessonId, status")
-      .eq("studentId", studentId)
-      .order("createdAt", { ascending: false })
-      .limit(50);
-    if (pastAtt?.length) {
-      const pastLessonIds = [...new Set((pastAtt ?? []).map((a) => a.lessonId))];
-      const { data: pastLessons } = await supabase
-        .from("Lesson")
-        .select("id, modality, date, startTime, endTime, locationId")
-        .in("id", pastLessonIds)
-        .lt("date", todayStr)
-        .order("date", { ascending: false })
-        .limit(30);
-      const lessonMap = new Map((pastLessons ?? []).map((l) => [l.id, l]));
-      pastAttendances = (pastAtt ?? [])
+    if (pastAttData.length > 0 && pastLessonIds.length > 0) {
+      const pastLessons = pastLessonsRes.data ?? [];
+      const lessonMap = new Map(pastLessons.map((l) => [l.id, l]));
+      pastAttendances = pastAttData
         .filter((a) => lessonMap.has(a.lessonId))
         .map((a) => {
           const l = lessonMap.get(a.lessonId)!;

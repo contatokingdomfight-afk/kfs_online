@@ -28,6 +28,7 @@ export async function createCourse(
   const priceStr = (formData.get("price") as string)?.trim();
   const price = priceStr ? parseFloat(priceStr) : null;
   const priceNum = price != null && !isNaN(price) && price >= 0 ? price : null;
+  const level = (formData.get("level") as string)?.trim() || null;
 
   if (!name) return { error: "Nome do curso é obrigatório." };
   if (!CATEGORIES.includes(category as (typeof CATEGORIES)[number])) return { error: "Categoria inválida." };
@@ -43,6 +44,7 @@ export async function createCourse(
     description,
     category,
     modality,
+    level,
     included_in_digital_plan: includedInDigital,
     video_url: videoUrl,
     sort_order: sortOrder,
@@ -82,6 +84,7 @@ export async function updateCourse(
   const priceStr = (formData.get("price") as string)?.trim();
   const price = priceStr ? parseFloat(priceStr) : null;
   const priceNum = price != null && !isNaN(price) && price >= 0 ? price : null;
+  const level = (formData.get("level") as string)?.trim() || null;
 
   if (!name) return { error: "Nome do curso é obrigatório." };
   if (!CATEGORIES.includes(category as (typeof CATEGORIES)[number])) return { error: "Categoria inválida." };
@@ -97,6 +100,7 @@ export async function updateCourse(
       description,
       category,
       modality,
+      level,
       included_in_digital_plan: includedInDigital,
       video_url: videoUrl,
       sort_order: sortOrder,

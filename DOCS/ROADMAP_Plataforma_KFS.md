@@ -206,11 +206,12 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 
 ### 14.2 Biblioteca de Conteúdo 360º
 
-- Catálogo de cursos e vídeos (Técnica, Mindset, Performance).
-- Upload/gestão de cursos pela escola (admin).
-- Acesso por plano (conforme Plan.includes_digital_access) ou por compra avulsa.
-- Página de curso com módulos e progresso do aluno (concluído / em progresso).
-- Filtros por categoria, modalidade, nível.
+- Catálogo de cursos e vídeos (Técnica, Mindset, Performance). **Feito**
+- Upload/gestão de cursos pela escola (admin). **Feito**
+- Acesso por plano (conforme Plan.includes_digital_access) ou por compra avulsa. **Feito**
+- Página de curso com módulos e progresso do aluno (concluído / em progresso). **Feito**
+- Filtros por categoria, modalidade, nível. **Feito**
+- Módulos por curso (múltiplos vídeos); progresso do aluno. **Feito**
 
 ### 14.3 Gamificação e presença (parcialmente feito)
 
@@ -258,4 +259,18 @@ Com base na especificação e na dependência entre módulos:
 
 ---
 
-*Última atualização sugerida: sempre que uma tarefa for concluída, mudar o estado de “Por fazer” para “Feito” e adicionar uma linha de nota se necessário. Documentação atualizada: Perfil do atleta gamificado, avaliação física (ficha anamnese, 6 meses), Admin Missões, modelo de dados (xp, MissionTemplate, StudentPhysicalAssessment).*
+## 17. Aplicação móvel e distribuição (após conclusão das atualizações)
+
+> **Prioridade:** Desenvolver apenas depois de concluídas todas as funcionalidades e atualizações previstas nas secções anteriores (Biblioteca, Sala Invertida, Receita adicional, Gamificação completa, etc.).
+
+| Item | Estado | Notas |
+|------|--------|--------|
+| PWA (Progressive Web App) | Por fazer | Manifest, Service Worker, meta tags; app instalável na tela inicial do telemóvel |
+| Capacitor (Android + iOS) | Por fazer | Embrulhar o web app em container nativo; publicar na Play Store e App Store |
+| Testes em dispositivos reais | Por fazer | Validar UX e performance em Android e iOS |
+
+**Ordem sugerida:** (1) PWA → (2) Capacitor → (3) Publicação nas lojas.
+
+---
+
+*Última atualização sugerida: sempre que uma tarefa for concluída, mudar o estado de “Por fazer” para “Feito” e adicionar uma linha de nota se necessário. Documentação atualizada: Perfil do atleta gamificado, avaliação física (ficha anamnese, 6 meses), Admin Missões, modelo de dados (xp, MissionTemplate, StudentPhysicalAssessment). Secção 17: PWA e apps móveis (Play Store / App Store) – a desenvolver após conclusão das atualizações.*

@@ -1,5 +1,25 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
 import { parseConfig, type ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
+
+/**
+ * Carrega as configurações de avaliação para MUAY_THAI, BOXING e KICKBOXING em paralelo.
+ * Usa cache de 5 minutos pois os dados raramente mudam.
+ */
+export async function loadAllEvaluationConfigs(
+  supabase: SupabaseClient
+): Promise<Map<string, ModalityEvaluationConfigPayload | null>> {
+  const mods = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
+  const entries = await unstable_cache(
+    async () => {
+      const configs = await Promise.all(mods.map((mod) => loadEvaluationConfigForModality(supabase, mod)));
+      return mods.map((mod, i) => [mod, configs[i]] as [string, ModalityEvaluationConfigPayload | null]);
+    },
+    ["evaluation-configs"],
+    { revalidate: 300 }
+  )();
+  return new Map(entries);
+}
 
 /**
  * Carrega a configuração de avaliação para uma modalidade.

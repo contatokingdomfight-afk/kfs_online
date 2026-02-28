@@ -11,6 +11,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   PERFORMANCE: "Performance",
 };
 
+const LEVEL_LABELS: Record<string, string> = {
+  INICIANTE: "Iniciante",
+  INTERMEDIARIO: "Intermediário",
+  AVANCADO: "Avançado",
+};
+
 export default async function AdminCursosPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
@@ -20,7 +26,7 @@ export default async function AdminCursosPage() {
   const supabase = result.client;
   const { data: courses } = await supabase
     .from("Course")
-    .select("id, name, description, category, modality, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase")
+    .select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
@@ -119,6 +125,9 @@ export default async function AdminCursosPage() {
                     <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
                       {MODALITY_LABELS[c.modality] ?? c.modality}
                     </span>
+                  )}
+                  {c.level && (
+                    <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{LEVEL_LABELS[c.level] ?? c.level}</span>
                   )}
                   {c.included_in_digital_plan && (
                     <span style={{ fontSize: 12, color: "var(--primary)" }}>Incl. plano digital</span>

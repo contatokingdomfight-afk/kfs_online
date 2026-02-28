@@ -43,3 +43,31 @@ export async function purchaseCourse(courseId: string): Promise<{ error?: string
   revalidatePath(`/dashboard/biblioteca/${courseId}`);
   return {};
 }
+
+export async function completeModule(moduleId: string, courseId: string): Promise<{ error?: string }> {
+  const studentId = await getCurrentStudentId();
+  if (!studentId) return { error: "Sessão inválida. Faça login como aluno." };
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("CourseProgress")
+    .select("id")
+    .eq("student_id", studentId)
+    .eq("module_id", moduleId)
+    .maybeSingle();
+  if (existing) return {}; // já concluído
+
+  const id = crypto.randomUUID();
+  const { error } = await supabase.from("CourseProgress").insert({
+    id,
+    student_id: studentId,
+    module_id: moduleId,
+  });
+
+  if (error) {
+    console.error("completeModule error:", error);
+    return { error: error.message };
+  }
+  revalidatePath(`/dashboard/biblioteca/${courseId}`);
+  return {};
+}

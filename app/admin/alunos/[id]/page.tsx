@@ -5,7 +5,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { EditarAlunoForm } from "./EditarAlunoForm";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
-import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
+import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import {
   type ModalityConfig,
   GENERAL_PERFORMANCE_AXES,
@@ -79,9 +79,10 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
       scores: e.scores as Record<string, number> | null,
       modality: e.modality,
     }));
+    const allConfigs = await loadAllEvaluationConfigs(supabase);
     const configByModality = new Map<string, ModalityConfig>();
     for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"]) {
-      const config = await loadEvaluationConfigForModality(supabase, mod);
+      const config = allConfigs.get(mod);
       if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
     }
     if (evaluations.length > 0) {
