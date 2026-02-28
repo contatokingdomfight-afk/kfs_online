@@ -1,0 +1,14 @@
+{
+  "login.title": "Entrar",
+  "login.subtitle": "Acesso à plataforma Kingdom Fight School",
+  "button.confirm": "Confirmar",
+  "button.save": "Guardar",
+  "button.cancel": "Cancelar",
+  "button.enter": "Entrar",
+  "lesson.planning": "Planeamento da aula",
+  "attendance.pending": "Aguardando confirmação",
+  "attendance.confirmed": "Presente",
+  "attendance.absent": "Ausente",
+  "comment.add": "Adicionar comentário",
+  "dashboard.title": "Kingdom Fight School"
+}
