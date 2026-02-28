@@ -44,6 +44,7 @@ export default async function CoachLayout({
         headerTitle="Kingdom Fight School"
         headerExtra={<span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>}
         viewAsBanner={showViewAsBanner ? <ViewAsBanner viewAs="coach" /> : undefined}
+        logoutLabel={locale === "pt" ? "Sair" : "Logout"}
       >
         {children}
       </ResponsiveShell>

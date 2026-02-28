@@ -42,6 +42,7 @@ export default async function DashboardLayout({
         headerTitle="Kingdom Fight School"
         viewAsBanner={dbUser.role === "ADMIN" && viewAs === "aluno" ? <ViewAsBanner viewAs="aluno" /> : undefined}
         mainClassName="dashboard-main"
+        logoutLabel={locale === "pt" ? "Sair" : "Logout"}
       >
         {children}
       </ResponsiveShell>

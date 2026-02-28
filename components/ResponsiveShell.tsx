@@ -14,6 +14,7 @@ type Props = {
   headerExtra?: React.ReactNode;
   viewAsBanner?: React.ReactNode;
   mainClassName?: string;
+  logoutLabel?: string;
   children: React.ReactNode;
 };
 
@@ -26,6 +27,7 @@ export function ResponsiveShell({
   headerExtra,
   viewAsBanner,
   mainClassName,
+  logoutLabel,
   children,
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -83,6 +85,7 @@ export function ResponsiveShell({
               links={sidebarLinks}
               initialTheme={initialTheme}
               initialLocale={initialLocale}
+              logoutLabel={logoutLabel}
             />
           </div>
         </div>

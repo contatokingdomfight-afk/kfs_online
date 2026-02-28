@@ -50,6 +50,7 @@ export default async function AdminLayout({
             <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
           </div>
         }
+        logoutLabel={locale === "pt" ? "Sair" : "Logout"}
       >
         {children}
       </ResponsiveShell>

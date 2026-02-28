@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ThemeLocaleSwitcher } from "@/components/ThemeLocaleSwitcher";
+import { LogoutButton } from "@/components/LogoutButton";
 import type { Theme } from "@/lib/theme-locale";
 import type { Locale } from "@/lib/theme-locale";
 
@@ -11,12 +12,14 @@ export function Sidebar({
   activeHref,
   initialTheme,
   initialLocale,
+  logoutLabel,
 }: {
   title: string;
   links: SidebarLink[];
   activeHref?: string;
   initialTheme: Theme;
   initialLocale: Locale;
+  logoutLabel?: string;
 }) {
   return (
     <aside
@@ -62,7 +65,10 @@ export function Sidebar({
           );
         })}
       </nav>
-      <ThemeLocaleSwitcher initialTheme={initialTheme} initialLocale={initialLocale} variant="inline" />
+      <div style={{ marginTop: "auto", paddingTop: 8, borderTop: "1px solid var(--border)" }}>
+        {logoutLabel && <LogoutButton label={logoutLabel} variant="sidebar" />}
+        <ThemeLocaleSwitcher initialTheme={initialTheme} initialLocale={initialLocale} variant="inline" />
+      </div>
     </aside>
   );
 }
