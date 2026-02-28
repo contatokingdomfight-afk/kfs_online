@@ -56,6 +56,11 @@ export default async function AdminHomePage() {
         </h2>
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
           <li>
+            <Link href="/admin/escolas" style={{ color: "var(--primary)", fontSize: "clamp(15px, 3.8vw, 17px)", textDecoration: "none", fontWeight: 500, display: "block", padding: "clamp(10px, 2.5vw, 12px) 0" }}>
+              {t("navSchools")} →
+            </Link>
+          </li>
+          <li>
             <Link href="/admin/alunos" style={{ color: "var(--primary)", fontSize: "clamp(15px, 3.8vw, 17px)", textDecoration: "none", fontWeight: 500, display: "block", padding: "clamp(10px, 2.5vw, 12px) 0" }}>
               {t("navStudents")} →
             </Link>

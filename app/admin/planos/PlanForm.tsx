@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormState } from "react-dom";
+import { useState, useEffect } from "react";
 import { createPlan, updatePlan, type PlanFormResult } from "./actions";
 
 const MODALITY_SCOPES = [
@@ -18,6 +19,7 @@ type Props = {
   initialModalityScope?: string;
   initialIsActive?: boolean;
   initialStripePriceId?: string;
+  initialSchoolId?: string;
 };
 
 export function PlanForm({
@@ -29,9 +31,29 @@ export function PlanForm({
   initialModalityScope = "SINGLE",
   initialIsActive = true,
   initialStripePriceId = "",
+  initialSchoolId = "",
 }: Props) {
   const action = planId ? updatePlan : createPlan;
   const [state, formAction] = useFormState(action, null as PlanFormResult | null);
+  const [schools, setSchools] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingSchools, setLoadingSchools] = useState(true);
+
+  useEffect(() => {
+    async function loadSchools() {
+      try {
+        const response = await fetch("/api/schools");
+        if (response.ok) {
+          const data = await response.json();
+          setSchools(data.schools || []);
+        }
+      } catch (error) {
+        console.error("Error loading schools:", error);
+      } finally {
+        setLoadingSchools(false);
+      }
+    }
+    loadSchools();
+  }, []);
 
   return (
     <form
@@ -45,6 +67,26 @@ export function PlanForm({
       }}
     >
       {planId && <input type="hidden" name="planId" value={planId} />}
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          Escola *
+        </span>
+        <select
+          name="schoolId"
+          defaultValue={initialSchoolId}
+          className="input"
+          required
+          disabled={loadingSchools || !!planId}
+        >
+          <option value="">Selecione uma escola</option>
+          {schools.map((school) => (
+            <option key={school.id} value={school.id}>
+              {school.name}
+            </option>
+          ))}
+        </select>
+        {planId && <p style={{ margin: "4px 0 0 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>A escola não pode ser alterada após criação.</p>}
+      </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Nome

@@ -71,10 +71,24 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     .maybeSingle();
 
   if (!student) {
+    // Buscar escola padrão (primeira escola ativa)
+    const { data: defaultSchool } = await supabase
+      .from("School")
+      .select("id")
+      .eq("isActive", true)
+      .order("createdAt", { ascending: true })
+      .limit(1)
+      .single();
+
+    if (!defaultSchool) {
+      throw new Error("Nenhuma escola ativa encontrada. Configure uma escola primeiro.");
+    }
+
     const studentId = crypto.randomUUID();
     const { error: studentError } = await supabase.from("Student").insert({
       id: studentId,
       userId,
+      schoolId: defaultSchool.id,
       status: "ATIVO",
     });
     

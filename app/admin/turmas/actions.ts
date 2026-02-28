@@ -13,6 +13,7 @@ export async function createLesson(formData: FormData) {
   const startTime = formData.get("startTime") as string | null;
   const endTime = formData.get("endTime") as string | null;
   const coachId = (formData.get("coachId") as string) || null;
+  const schoolId = (formData.get("schoolId") as string)?.trim() || null;
   const locationId = (formData.get("locationId") as string)?.trim() || null;
   const capacityStr = formData.get("capacity") as string | null;
   const planningNotes = (formData.get("planningNotes") as string) || null;
@@ -22,6 +23,9 @@ export async function createLesson(formData: FormData) {
   }
   if (!coachId) {
     return { error: "Seleciona um coach para a aula." };
+  }
+  if (!schoolId) {
+    return { error: "Seleciona uma escola para a aula." };
   }
 
   const capacity = capacityStr ? parseInt(capacityStr, 10) : null;
@@ -38,6 +42,7 @@ export async function createLesson(formData: FormData) {
     startTime,
     endTime,
     coachId: coachId || null,
+    schoolId,
     locationId: locationId || null,
     capacity: capacity ?? null,
     planningNotes: planningNotes || null,

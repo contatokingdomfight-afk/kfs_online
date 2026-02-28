@@ -31,6 +31,7 @@ export default async function AdminTurmasPage() {
 
   const { data: locations } = await supabase.from("Location").select("id, name").order("sortOrder", { ascending: true });
   const { data: modalities } = await supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true });
+  const { data: schools } = await supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true });
 
   return (
     <div style={{ maxWidth: "min(700px, 100%)" }}>
@@ -63,7 +64,7 @@ export default async function AdminTurmasPage() {
         <h2 style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Nova aula
         </h2>
-        <CreateLessonForm coaches={coaches ?? []} locations={locations ?? []} modalities={modalities ?? []} />
+        <CreateLessonForm coaches={coaches ?? []} locations={locations ?? []} modalities={modalities ?? []} schools={schools ?? []} />
       </section>
 
       <section>

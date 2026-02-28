@@ -138,7 +138,7 @@ export default async function DashboardPerformancePage() {
     <PerformanceFighterDashboard
       backHref="/dashboard"
       backLabel="Voltar ao início"
-      scores={generalPerformanceScores}
+      scores={generalPerformanceScores!}
       detailOrder={detailOrder}
       detailSource={detailSource}
       axes={[...GENERAL_PERFORMANCE_AXES]}

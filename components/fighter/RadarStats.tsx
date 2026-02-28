@@ -66,7 +66,7 @@ export function RadarStats({ scores, axes, maxScore = 10, embedded = false }: Pr
                 borderRadius: "var(--radius-md)",
               }}
               labelStyle={{ color: "var(--text-primary)" }}
-              formatter={(value: number) => [value.toFixed(1), "Score"]}
+              formatter={(value: number | undefined) => [(value ?? 0).toFixed(1), "Score"]}
             />
           </RadarChart>
         </ResponsiveContainer>

@@ -55,6 +55,25 @@ enum PaymentStatus {
   LATE
 }
 
+// Escola física (suporta múltiplas unidades)
+model School {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  city        String?
+  phone       String?
+  email       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  students    Student[]
+  coaches     Coach[]
+  lessons     Lesson[]
+  locations   Location[]
+  plans       Plan[]
+}
+
 // Utilizador (sincronizado com Supabase Auth; role definido na plataforma)
 model User {
   id         String   @id @default(cuid())
@@ -72,6 +91,8 @@ model Student {
   id        String        @id @default(cuid())
   userId    String        @unique
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId  String
+  school    School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   status    StudentStatus @default(ATIVO)
   createdAt DateTime      @default(now())
 
@@ -149,6 +170,9 @@ model Coach {
   id          String   @id @default(cuid())
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  studentId   String?  @unique // Permite que o coach também seja aluno
   specialties String?  // ex: "Muay Thai, Boxing" – pode evoluir para JSON
   createdAt   DateTime @default(now())
 
@@ -166,6 +190,8 @@ model Lesson {
   endTime        String    // "HH:mm"
   coachId        String
   coach          Coach     @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  schoolId       String
+  school         School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   capacity       Int?
   planningNotes  String?
   createdAt      DateTime  @default(now())
@@ -219,4 +245,28 @@ model Payment {
   status         PaymentStatus
   referenceMonth String        // "YYYY-MM"
   createdAt      DateTime      @default(now())
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Plan {
+  id                      String   @id @default(cuid())
+  name                    String
+  description             String?
+  priceMonthly            Decimal  @db.Decimal(10, 2)
+  schoolId                String
+  school                  School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  includesDigitalAccess   Boolean  @default(false)
+  modalityScope           String   @default("ALL") // NONE | SINGLE | ALL
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @default(now())
 }

@@ -11,6 +11,7 @@ import { VouNaoVouButtons } from "./VouNaoVouButtons";
 import { PerformanceRadar } from "@/components/PerformanceRadar";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
+import { getApplicableMissionTemplates } from "@/lib/missions";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 
@@ -40,6 +41,13 @@ export default async function DashboardPage() {
 
   const { today, endOfWeek } = getThisWeekRange();
 
+  // Buscar schoolId do aluno
+  let studentSchoolId: string | null = null;
+  if (studentId) {
+    const { data: student } = await supabase.from("Student").select("schoolId").eq("id", studentId).single();
+    studentSchoolId = student?.schoolId || null;
+  }
+
   let allowedModalities: string[] = MODALITIES_LIST.slice();
   if (studentId) {
     const { data: student } = await supabase.from("Student").select("planId, primaryModality").eq("id", studentId).single();
@@ -51,13 +59,24 @@ export default async function DashboardPage() {
     }
   }
 
-  const { data: lessonsData } = await supabase
+  // Filtrar aulas pela escola do aluno
+  let lessonsQuery = supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime")
+    .select("id, modality, date, startTime, endTime, locationId")
     .gte("date", today)
-    .lte("date", endOfWeek)
+    .lte("date", endOfWeek);
+
+  if (studentSchoolId) {
+    lessonsQuery = lessonsQuery.eq("schoolId", studentSchoolId);
+  }
+
+  const { data: lessonsData } = await lessonsQuery
     .order("date", { ascending: true })
     .order("startTime", { ascending: true });
+
+  // Buscar locations
+  const { data: locations } = await supabase.from("Location").select("id, name");
+  const locationById = new Map((locations ?? []).map((loc) => [loc.id, loc.name]));
 
   const allLessons = lessonsData ?? [];
   const lessons =
@@ -95,6 +114,7 @@ export default async function DashboardPage() {
   let recommendedCourses: { id: string; name: string; category: string; modality: string | null }[] = [];
   let hasDigitalAccess = false;
   let notifications: { id: string; title: string; body: string | null; read_at: string | null; created_at: string }[] = [];
+  let weeklyProgress: Array<{ weekStart: string; count: number }> = [];
   let studentProfile: {
     weightKg: number | null;
     heightCm: number | null;
@@ -129,7 +149,7 @@ export default async function DashboardPage() {
         modality: e.modality,
       }));
 
-      const configByModality = new Map<string, { criterionToCategory: Map<string, string> }>();
+      const configByModality = new Map<string, { criterionToCategory: Map<string, string>; criterionToDimensionCode?: Map<string, string> }>();
       for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"]) {
         const config = await loadEvaluationConfigForModality(supabase, mod);
         if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
@@ -200,6 +220,53 @@ export default async function DashboardPage() {
       await supabase.from("Notification").update({ read_at: readAt }).in("id", unreadIds);
       notifications = notifications.map((n) => (unreadIds.includes(n.id) ? { ...n, read_at: readAt } : n));
     }
+
+    // Calcular progresso semanal (últimas 6 semanas)
+    const sixWeeksAgo = new Date();
+    sixWeeksAgo.setDate(sixWeeksAgo.getDate() - 42);
+    const { data: recentAtt } = await supabase
+      .from("Attendance")
+      .select("lessonId")
+      .eq("studentId", studentId)
+      .eq("status", "CONFIRMED");
+
+    if (recentAtt?.length) {
+      const recentLessonIds = [...new Set(recentAtt.map((a) => a.lessonId))];
+      const { data: recentLessons } = await supabase
+        .from("Lesson")
+        .select("id, date")
+        .in("id", recentLessonIds)
+        .gte("date", sixWeeksAgo.toISOString().slice(0, 10))
+        .order("date", { ascending: true });
+
+      // Agrupar por semana
+      const weekCounts = new Map<string, number>();
+      (recentLessons ?? []).forEach((lesson) => {
+        const lessonDate = new Date(lesson.date + "T12:00:00");
+        const dayOfWeek = lessonDate.getDay();
+        const daysToMonday = (dayOfWeek + 6) % 7;
+        const monday = new Date(lessonDate);
+        monday.setDate(monday.getDate() - daysToMonday);
+        const weekKey = monday.toISOString().slice(0, 10);
+        weekCounts.set(weekKey, (weekCounts.get(weekKey) || 0) + 1);
+      });
+
+      // Criar array das últimas 6 semanas
+      const weeks: Array<{ weekStart: string; count: number }> = [];
+      for (let i = 5; i >= 0; i--) {
+        const weekDate = new Date();
+        weekDate.setDate(weekDate.getDate() - i * 7);
+        const dayOfWeek = weekDate.getDay();
+        const daysToMonday = (dayOfWeek + 6) % 7;
+        weekDate.setDate(weekDate.getDate() - daysToMonday);
+        const weekKey = weekDate.toISOString().slice(0, 10);
+        weeks.push({
+          weekStart: weekKey,
+          count: weekCounts.get(weekKey) || 0,
+        });
+      }
+      weeklyProgress = weeks;
+    }
   }
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -252,8 +319,225 @@ export default async function DashboardPage() {
     />
   );
 
+  // Buscar informações do atleta para estatísticas
+  let athleteStats: {
+    currentBelt: string | null;
+    currentXP: number;
+    nextLevelXP: number;
+    totalPresences: number;
+  } | null = null;
+
+  let activeMissions: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    xpReward: number;
+  }> = [];
+
+  if (studentId) {
+    const { data: athlete } = await supabase
+      .from("Athlete")
+      .select("id, currentBelt, currentXP")
+      .eq("studentId", studentId)
+      .single();
+
+    if (athlete) {
+      // Calcular XP necessário para próximo nível
+      const beltLevels = ["WHITE", "YELLOW", "ORANGE", "GREEN", "BLUE", "PURPLE", "BROWN", "BLACK", "BLACK_1", "BLACK_2", "BLACK_3", "GOLDEN"];
+      const currentIndex = beltLevels.indexOf(athlete.currentBelt || "WHITE");
+      const baseXP = 1000;
+      const nextLevelXP = currentIndex >= 0 ? baseXP * Math.pow(2, currentIndex) : baseXP;
+
+      // Contar total de presenças confirmadas
+      const { count: totalPresences } = await supabase
+        .from("Attendance")
+        .select("*", { count: "exact", head: true })
+        .eq("studentId", studentId)
+        .eq("status", "CONFIRMED");
+
+      athleteStats = {
+        currentBelt: athlete.currentBelt,
+        currentXP: athlete.currentXP || 0,
+        nextLevelXP,
+        totalPresences: totalPresences || 0,
+      };
+
+      // Buscar missões aplicáveis
+      const { data: student } = await supabase
+        .from("Student")
+        .select("primaryModality")
+        .eq("id", studentId)
+        .single();
+
+      const missions = await getApplicableMissionTemplates(
+        supabase,
+        athlete.id,
+        athlete.currentXP || 0,
+        student?.primaryModality || null
+      );
+
+      activeMissions = missions.slice(0, 3).map((m) => ({
+        id: m.id,
+        name: m.name,
+        description: m.description,
+        xpReward: m.xpReward,
+      }));
+    }
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
+      {/* Card de Estatísticas do Aluno */}
+      {athleteStats && (
+        <section>
+          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
+            {t("myStats")}
+          </h2>
+          <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "clamp(16px, 4vw, 20px)" }}>
+              {/* Faixa Atual */}
+              <div>
+                <p style={{ margin: "0 0 4px 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  {t("currentBelt")}
+                </p>
+                <p style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: "var(--primary)" }}>
+                  {athleteStats.currentBelt ? t(`belt_${athleteStats.currentBelt}` as any) : "—"}
+                </p>
+              </div>
+
+              {/* XP Atual */}
+              <div>
+                <p style={{ margin: "0 0 4px 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  XP
+                </p>
+                <p style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: "var(--primary)" }}>
+                  {athleteStats.currentXP.toLocaleString()}
+                </p>
+                <p style={{ margin: "2px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--text-secondary)" }}>
+                  / {athleteStats.nextLevelXP.toLocaleString()} {t("forNextLevel")}
+                </p>
+              </div>
+
+              {/* Total de Presenças */}
+              <div>
+                <p style={{ margin: "0 0 4px 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  {t("totalPresences")}
+                </p>
+                <p style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: "var(--success)" }}>
+                  {athleteStats.totalPresences}
+                </p>
+              </div>
+
+              {/* Meta do Mês */}
+              <div>
+                <p style={{ margin: "0 0 4px 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  {t("thisMonth")}
+                </p>
+                <p style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: currentMonthCount >= attendanceGoal ? "var(--success)" : "var(--warning)" }}>
+                  {currentMonthCount} / {attendanceGoal}
+                </p>
+                {currentMonthCount >= attendanceGoal && (
+                  <p style={{ margin: "2px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--success)" }}>
+                    ✓ {t("goalReached")}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Barra de Progresso XP */}
+            <div style={{ marginTop: "clamp(16px, 4vw, 20px)", paddingTop: "clamp(16px, 4vw, 20px)", borderTop: "1px solid var(--border)" }}>
+              <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+                {t("progressToNextBelt")}
+              </p>
+              <div style={{ width: "100%", height: 12, backgroundColor: "var(--surface)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
+                <div
+                  style={{
+                    width: `${Math.min((athleteStats.currentXP / athleteStats.nextLevelXP) * 100, 100)}%`,
+                    height: "100%",
+                    backgroundColor: "var(--primary)",
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+              <p style={{ margin: "4px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--text-secondary)", textAlign: "right" }}>
+                {Math.round((athleteStats.currentXP / athleteStats.nextLevelXP) * 100)}%
+              </p>
+            </div>
+
+            {/* Link para Perfil do Atleta */}
+            <Link
+              href="/dashboard/atleta"
+              className="btn btn-secondary"
+              style={{ marginTop: "clamp(12px, 3vw, 16px)", textDecoration: "none", textAlign: "center" }}
+            >
+              {t("viewAthleteProfile")} →
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* Missões em Destaque */}
+      {activeMissions.length > 0 && (
+        <section>
+          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
+            🎯 {t("featuredMissions")}
+          </h2>
+          <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+            {t("featuredMissionsDescription")}
+          </p>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
+            {activeMissions.map((mission) => (
+              <li key={mission.id}>
+                <div
+                  className="card"
+                  style={{
+                    padding: "clamp(16px, 4vw, 20px)",
+                    borderLeft: "4px solid var(--primary)",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 8 }}>
+                    <p style={{ margin: 0, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+                      {mission.name}
+                    </p>
+                    <span
+                      style={{
+                        fontSize: "clamp(13px, 3.2vw, 15px)",
+                        fontWeight: 600,
+                        color: "var(--primary)",
+                        backgroundColor: "var(--primary-light)",
+                        padding: "4px 12px",
+                        borderRadius: "var(--radius-full)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      +{mission.xpReward} XP
+                    </span>
+                  </div>
+                  {mission.description && (
+                    <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+                      {mission.description}
+                    </p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href="/dashboard/atleta"
+            style={{
+              display: "inline-block",
+              marginTop: "clamp(12px, 3vw, 16px)",
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              color: "var(--primary)",
+              textDecoration: "none",
+              fontWeight: 500,
+            }}
+          >
+            {t("viewAllMissions")} →
+          </Link>
+        </section>
+      )}
+
       <section>
         <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
           {t("agendaTitle")}
@@ -441,6 +725,56 @@ export default async function DashboardPage() {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* Gráfico de Progresso Semanal */}
+      {weeklyProgress.length > 0 && (
+        <section>
+          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
+            📈 {t("weeklyProgress")}
+          </h2>
+          <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+            <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+              {t("weeklyProgressDescription")}
+            </p>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: "clamp(8px, 2vw, 12px)", height: 200, padding: "0 0 clamp(8px, 2vw, 12px) 0" }}>
+              {weeklyProgress.map((week, index) => {
+                const maxCount = Math.max(...weeklyProgress.map((w) => w.count), 1);
+                const heightPercent = (week.count / maxCount) * 100;
+                const weekDate = new Date(week.weekStart + "T12:00:00");
+                const weekLabel = weekDate.toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", { day: "2-digit", month: "short" });
+
+                return (
+                  <div key={index} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: `${heightPercent}%`,
+                        backgroundColor: week.count > 0 ? "var(--primary)" : "var(--surface)",
+                        borderRadius: "var(--radius-md) var(--radius-md) 0 0",
+                        minHeight: week.count > 0 ? 20 : 8,
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "center",
+                        paddingTop: 8,
+                        transition: "all 0.3s ease",
+                      }}
+                    >
+                      {week.count > 0 && (
+                        <span style={{ fontSize: "clamp(12px, 3vw, 14px)", fontWeight: 600, color: "#fff" }}>
+                          {week.count}
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ fontSize: "clamp(10px, 2.5vw, 12px)", color: "var(--text-secondary)", textAlign: "center" }}>
+                      {weekLabel}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </section>
       )}
 

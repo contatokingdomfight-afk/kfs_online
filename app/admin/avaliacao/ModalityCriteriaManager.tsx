@@ -9,6 +9,19 @@ import {
   type CriterionResult,
 } from "./actions";
 
+function DeleteCriterionForm({ criterionId }: { criterionId: string }) {
+  const [deleteState, deleteAction] = useFormState(deleteCriterion, null);
+  return (
+    <form action={deleteAction} style={{ display: "inline" }}>
+      <input type="hidden" name="criterionId" value={criterionId} />
+      <button type="submit" className="btn btn-secondary" style={{ fontSize: "var(--text-xs)", padding: "0.3em 0.6em", color: "var(--danger)" }}>
+        Remover
+      </button>
+      {deleteState?.error && <span style={{ color: "var(--danger)", fontSize: "var(--text-xs)" }}>{deleteState.error}</span>}
+    </form>
+  );
+}
+
 export type DimensionBlock = {
   dimensionId: string;
   dimensionCode: string;
@@ -120,12 +133,7 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
                         <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-xs)", padding: "0.3em 0.6em" }} onClick={() => startEditCriterion(c)}>
                           Editar
                         </button>
-                        <form action={deleteCriterion} style={{ display: "inline" }}>
-                          <input type="hidden" name="criterionId" value={c.id} />
-                          <button type="submit" className="btn btn-secondary" style={{ fontSize: "var(--text-xs)", padding: "0.3em 0.6em", color: "var(--danger)" }}>
-                            Remover
-                          </button>
-                        </form>
+                        <DeleteCriterionForm criterionId={c.id} />
                       </div>
                     </div>
                   </>

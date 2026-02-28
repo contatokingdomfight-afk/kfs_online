@@ -17,7 +17,11 @@ export async function createCoach(
   const email = (formData.get("email") as string)?.trim();
   const name = (formData.get("name") as string)?.trim() || null;
   const specialties = (formData.get("specialties") as string)?.trim() || null;
+  const schoolId = (formData.get("schoolId") as string)?.trim();
+  const createStudentProfile = formData.get("createStudentProfile") === "true";
+
   if (!email) return { error: "Email é obrigatório." };
+  if (!schoolId) return { error: "Escola é obrigatória." };
 
   const supabase = createAdminClient();
 
@@ -52,9 +56,40 @@ export async function createCoach(
 
   if (userError) return { error: userError.message };
 
+  let studentId: string | null = null;
+
+  // Se solicitado, criar perfil de aluno para o coach
+  if (createStudentProfile) {
+    studentId = crypto.randomUUID();
+    const { error: studentError } = await supabase.from("Student").insert({
+      id: studentId,
+      userId,
+      schoolId,
+      status: "ATIVO",
+    });
+
+    if (studentError) {
+      // Se já existe student, buscar o ID
+      if (studentError.code === '23505') {
+        const { data: existingStudent } = await supabase
+          .from("Student")
+          .select("id")
+          .eq("userId", userId)
+          .single();
+        if (existingStudent) {
+          studentId = existingStudent.id;
+        }
+      } else {
+        return { error: studentError.message };
+      }
+    }
+  }
+
   const { error: coachError } = await supabase.from("Coach").insert({
     id: coachId,
     userId,
+    schoolId,
+    studentId,
     specialties,
   });
 

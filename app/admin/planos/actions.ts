@@ -19,12 +19,14 @@ export async function createPlan(
   const name = (formData.get("name") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
   const priceStr = (formData.get("price_monthly") as string)?.trim();
+  const schoolId = (formData.get("schoolId") as string)?.trim();
   const includesDigital = formData.get("includes_digital_access") === "on" || formData.get("includes_digital_access") === "true";
   const modalityScope = (formData.get("modality_scope") as string)?.trim() || "SINGLE";
   const isActive = formData.get("is_active") !== "off" && formData.get("is_active") !== "false";
   const stripePriceId = (formData.get("stripePriceId") as string)?.trim() || null;
 
   if (!name) return { error: "Nome do plano é obrigatório." };
+  if (!schoolId) return { error: "Escola é obrigatória." };
   const price = priceStr ? parseFloat(priceStr) : 0;
   if (isNaN(price) || price < 0) return { error: "Preço mensal deve ser um número ≥ 0." };
   if (!MODALITY_SCOPES.includes(modalityScope as (typeof MODALITY_SCOPES)[number])) {
@@ -39,6 +41,7 @@ export async function createPlan(
     name,
     description,
     price_monthly: price,
+    schoolId,
     includes_digital_access: includesDigital,
     modality_scope: modalityScope,
     is_active: isActive,

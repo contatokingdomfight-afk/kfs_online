@@ -1,21 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFormState } from "react-dom";
 import { createLocation, updateLocation, deleteLocation, type LocationResult } from "./actions";
 
-type Location = { id: string; name: string; address: string | null; sortOrder: number };
+type Location = { id: string; name: string; address: string | null; sortOrder: number; schoolId?: string };
+
+function DeleteLocationForm({ locationId }: { locationId: string }) {
+  const [deleteState, deleteAction] = useFormState(deleteLocation, null);
+  return (
+    <form action={deleteAction} style={{ display: "inline" }}>
+      <input type="hidden" name="locationId" value={locationId} />
+      <button type="submit" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)", color: "var(--danger)" }}>Remover</button>
+      {deleteState?.error && <span style={{ color: "var(--danger)", fontSize: "var(--text-xs)" }}>{deleteState.error}</span>}
+    </form>
+  );
+}
 
 export function LocaisManager({ locations: initialLocations }: { locations: Location[] }) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [newAddress, setNewAddress] = useState("");
+  const [newSchoolId, setNewSchoolId] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editAddress, setEditAddress] = useState("");
+  const [schools, setSchools] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingSchools, setLoadingSchools] = useState(true);
 
   const [createState, createAction] = useFormState(createLocation, null as LocationResult | null);
   const [updateState, updateAction] = useFormState(updateLocation, null as LocationResult | null);
+
+  useEffect(() => {
+    async function loadSchools() {
+      try {
+        const response = await fetch("/api/schools");
+        if (response.ok) {
+          const data = await response.json();
+          setSchools(data.schools || []);
+        }
+      } catch (error) {
+        console.error("Error loading schools:", error);
+      } finally {
+        setLoadingSchools(false);
+      }
+    }
+    loadSchools();
+  }, []);
 
   const startEdit = (loc: Location) => {
     setEditingId(loc.id);
@@ -66,10 +97,7 @@ export function LocaisManager({ locations: initialLocations }: { locations: Loca
               </div>
               <div style={{ display: "flex", gap: "var(--space-2)" }}>
                 <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)" }} onClick={() => startEdit(loc)}>Editar</button>
-                <form action={deleteLocation} style={{ display: "inline" }}>
-                  <input type="hidden" name="locationId" value={loc.id} />
-                  <button type="submit" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)", color: "var(--danger)" }}>Remover</button>
-                </form>
+                <DeleteLocationForm locationId={loc.id} />
               </div>
             </div>
           )}
@@ -83,9 +111,25 @@ export function LocaisManager({ locations: initialLocations }: { locations: Loca
             setAdding(false);
             setNewName("");
             setNewAddress("");
+            setNewSchoolId("");
           }}
           style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
         >
+          <select
+            name="schoolId"
+            className="input"
+            value={newSchoolId}
+            onChange={(e) => setNewSchoolId(e.target.value)}
+            required
+            disabled={loadingSchools}
+          >
+            <option value="">Selecione uma escola</option>
+            {schools.map((school) => (
+              <option key={school.id} value={school.id}>
+                {school.name}
+              </option>
+            ))}
+          </select>
           <input
             type="text"
             name="name"
@@ -105,7 +149,7 @@ export function LocaisManager({ locations: initialLocations }: { locations: Loca
           />
           <div style={{ display: "flex", gap: "var(--space-2)" }}>
             <button type="submit" className="btn btn-primary" style={{ fontSize: "var(--text-sm)" }}>Adicionar local</button>
-            <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)" }} onClick={() => { setAdding(false); setNewName(""); setNewAddress(""); }}>Cancelar</button>
+            <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)" }} onClick={() => { setAdding(false); setNewName(""); setNewAddress(""); setNewSchoolId(""); }}>Cancelar</button>
           </div>
         </form>
       ) : (

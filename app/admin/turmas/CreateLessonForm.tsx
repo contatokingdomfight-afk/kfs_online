@@ -6,8 +6,9 @@ import { createLesson } from "./actions";
 type Coach = { id: string; name: string };
 type Location = { id: string; name: string };
 type Modality = { code: string; name: string };
+type School = { id: string; name: string };
 
-export function CreateLessonForm({ coaches, locations, modalities }: { coaches: Coach[]; locations: Location[]; modalities: Modality[] }) {
+export function CreateLessonForm({ coaches, locations, modalities, schools }: { coaches: Coach[]; locations: Location[]; modalities: Modality[]; schools: School[] }) {
   const [state, formAction] = useFormState(
     async (_: unknown, formData: FormData) => {
       return await createLesson(formData);
@@ -100,6 +101,29 @@ export function CreateLessonForm({ coaches, locations, modalities }: { coaches: 
         </label>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+        <label style={{ flex: "1 1 180px", minWidth: 0 }}>
+          <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "var(--text-secondary)" }}>
+            Escola *
+          </span>
+          <select
+            name="schoolId"
+            required
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              backgroundColor: "#0b0b0b",
+              border: "1px solid #27272a",
+              borderRadius: 6,
+              color: "#ffffff",
+              fontSize: 14,
+            }}
+          >
+            <option value="">— Selecionar —</option>
+            {schools.map((school) => (
+              <option key={school.id} value={school.id}>{school.name}</option>
+            ))}
+          </select>
+        </label>
         <label style={{ flex: "1 1 180px", minWidth: 0 }}>
           <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "var(--text-secondary)" }}>
             Local

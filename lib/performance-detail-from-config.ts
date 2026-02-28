@@ -53,7 +53,7 @@ export function buildPerformanceDetailFromConfigs(
   }
 
   const result: Record<string, DimensionDetail> = {};
-  const orderedIds = [...DIMENSION_ORDER, ...Object.keys(byDim).filter((d) => !DIMENSION_ORDER.includes(d))];
+  const orderedIds = [...DIMENSION_ORDER, ...Object.keys(byDim).filter((d) => !DIMENSION_ORDER.includes(d as any))];
   for (const dim of orderedIds) {
     if (byDim[dim]?.groups.length) {
       result[dim] = {
@@ -69,7 +69,7 @@ export function buildPerformanceDetailFromConfigs(
 export function getDetailOrder(detailByDimension: Record<string, DimensionDetail>): string[] {
   const withContent = (dim: string) => detailByDimension[dim]?.groups?.length;
   const standard = DIMENSION_ORDER.filter((dim) => withContent(dim));
-  const others = Object.keys(detailByDimension).filter((d) => !DIMENSION_ORDER.includes(d));
+  const others = Object.keys(detailByDimension).filter((d) => !DIMENSION_ORDER.includes(d as any));
   return [...standard, ...others];
 }
 

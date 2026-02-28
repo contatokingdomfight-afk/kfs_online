@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
         if (invoice.billing_reason !== "subscription_cycle") break;
-        const subId = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id;
+        const subId = typeof (invoice as any).subscription === "string" ? (invoice as any).subscription : (invoice as any).subscription?.id;
         if (!subId) break;
         const sub = await stripe!.subscriptions.retrieve(subId);
         const studentId = sub.metadata?.studentId;

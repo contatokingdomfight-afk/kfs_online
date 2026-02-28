@@ -12,14 +12,17 @@ export async function createLocation(_prev: LocationResult | null, formData: For
 
   const name = (formData.get("name") as string)?.trim();
   const address = (formData.get("address") as string)?.trim() || null;
+  const schoolId = (formData.get("schoolId") as string)?.trim();
+
   if (!name) return { error: "Nome do local é obrigatório." };
+  if (!schoolId) return { error: "Escola é obrigatória." };
 
   const supabase = await createClient();
   const { data: max } = await supabase.from("Location").select("sortOrder").order("sortOrder", { ascending: false }).limit(1).single();
   const sortOrder = (max?.sortOrder ?? -1) + 1;
 
   const id = crypto.randomUUID();
-  const { error } = await supabase.from("Location").insert({ id, name, address, sortOrder });
+  const { error } = await supabase.from("Location").insert({ id, name, address, schoolId, sortOrder });
 
   if (error) {
     console.error("createLocation:", error);

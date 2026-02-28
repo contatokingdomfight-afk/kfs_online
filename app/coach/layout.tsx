@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getCoachStudentId } from "@/lib/auth/get-coach-student-id";
 import { getViewAsFromCookies } from "@/lib/view-as-server";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { ViewAsBanner } from "@/components/ViewAsBanner";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
+import Link from "next/link";
 
 export default async function CoachLayout({
   children,
@@ -15,10 +17,11 @@ export default async function CoachLayout({
   if (!dbUser) redirect("/sign-in");
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") redirect("/dashboard");
 
-  const [viewAs, theme, locale] = await Promise.all([
+  const [viewAs, theme, locale, coachStudentId] = await Promise.all([
     dbUser.role === "ADMIN" ? getViewAsFromCookies() : Promise.resolve(null),
     getThemeFromCookies(),
     getLocaleFromCookies(),
+    getCoachStudentId(),
   ]);
   const t = getTranslations(locale as "pt" | "en");
   const coachLinks = [
@@ -31,6 +34,9 @@ export default async function CoachLayout({
     { label: t("navAgenda"), href: "/coach/agenda" },
     { label: t("navStudents"), href: "/coach/alunos" },
     { label: t("navAthletesCoach"), href: "/coach/atletas" },
+    ...(coachStudentId
+      ? [{ label: t("myStudentArea"), href: "/dashboard" as string }]
+      : []),
   ];
   const showViewAsBanner = dbUser.role === "ADMIN";
 

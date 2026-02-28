@@ -16,7 +16,10 @@ export async function createStudent(
 
   const email = (formData.get("email") as string)?.trim();
   const name = (formData.get("name") as string)?.trim() || null;
+  const schoolId = (formData.get("schoolId") as string)?.trim();
+
   if (!email) return { error: "Email é obrigatório." };
+  if (!schoolId) return { error: "Escola é obrigatória." };
 
   const supabase = createAdminClient();
 
@@ -54,6 +57,7 @@ export async function createStudent(
   const { error: studentError } = await supabase.from("Student").insert({
     id: studentId,
     userId,
+    schoolId,
     status: "ATIVO",
   });
 

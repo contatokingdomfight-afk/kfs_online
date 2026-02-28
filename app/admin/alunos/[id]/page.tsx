@@ -78,7 +78,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
       scores: e.scores as Record<string, number> | null,
       modality: e.modality,
     }));
-    const configByModality = new Map<string, { criterionToCategory: Map<string, string> }>();
+    const configByModality = new Map<string, { criterionToCategory: Map<string, string>; criterionToDimensionCode?: Map<string, string> }>();
     for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"]) {
       const config = await loadEvaluationConfigForModality(supabase, mod);
       if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
@@ -123,7 +123,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
         <h2 style={{ margin: "0 0 12px 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Estatísticas de performance
         </h2>
-        {hasPerformance ? (
+        {hasPerformance && generalPerformanceScores ? (
           <>
             <p style={{ margin: "0 0 16px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
               Média das últimas {GENERAL_LAST_N} avaliações (escala 1–10).

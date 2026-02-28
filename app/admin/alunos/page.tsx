@@ -10,7 +10,7 @@ const STATUS_LABEL: Record<string, string> = {
   EXPERIMENTAL: "Experimental",
 };
 
-type SearchParams = Promise<{ status?: string; modality?: string }>;
+type SearchParams = Promise<{ status?: string; modality?: string; school?: string }>;
 
 export default async function AdminAlunosPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
@@ -19,14 +19,22 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   const params = await searchParams;
   const filterStatus = params.status ?? "all";
   const filterModality = params.modality ?? "all";
+  const filterSchool = params.school ?? "all";
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
+  // Buscar escolas para o filtro
+  const { data: schools } = await supabase
+    .from("School")
+    .select("id, name")
+    .eq("isActive", true)
+    .order("name", { ascending: true });
+
   const { data: studentsData } = await supabase
     .from("Student")
-    .select("id, userId, status, primaryModality, createdAt")
+    .select("id, userId, status, primaryModality, schoolId, createdAt")
     .order("createdAt", { ascending: false });
 
   const students = studentsData ?? [];
@@ -38,6 +46,9 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
     filtered = filtered.filter(
       (s) => (s as { primaryModality?: string | null }).primaryModality === filterModality
     );
+  }
+  if (filterSchool !== "all") {
+    filtered = filtered.filter((s) => s.schoolId === filterSchool);
   }
 
   const userIds = [...new Set(filtered.map((s) => s.userId))];
@@ -143,6 +154,39 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
               }}
             >
               {m.name}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: "clamp(16px, 4vw, 20px)" }}>
+        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-secondary)" }}>
+          Escola
+        </p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          <Link
+            href={`/admin/alunos${filterStatus !== "all" ? `?status=${filterStatus}` : ""}${filterModality !== "all" ? `${filterStatus !== "all" ? "&" : "?"}modality=${filterModality}` : ""}`}
+            className="btn"
+            style={{
+              textDecoration: "none",
+              backgroundColor: filterSchool === "all" ? "var(--primary)" : "var(--bg-secondary)",
+              color: filterSchool === "all" ? "#fff" : "var(--text-primary)",
+            }}
+          >
+            Todas
+          </Link>
+          {(schools ?? []).map((school) => (
+            <Link
+              key={school.id}
+              href={`/admin/alunos?school=${school.id}${filterStatus !== "all" ? `&status=${filterStatus}` : ""}${filterModality !== "all" ? `&modality=${filterModality}` : ""}`}
+              className="btn"
+              style={{
+                textDecoration: "none",
+                backgroundColor: filterSchool === school.id ? "var(--primary)" : "var(--bg-secondary)",
+                color: filterSchool === school.id ? "#fff" : "var(--text-primary)",
+              }}
+            >
+              {school.name}
             </Link>
           ))}
         </div>

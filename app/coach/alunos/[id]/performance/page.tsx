@@ -171,7 +171,7 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
     <PerformanceFighterDashboard
       backHref={`/coach/alunos/${studentId}`}
       backLabel="Voltar ao perfil do aluno"
-      scores={generalPerformanceScores}
+      scores={generalPerformanceScores!}
       detailOrder={detailOrder}
       detailSource={detailSource}
       axes={[...GENERAL_PERFORMANCE_AXES]}
