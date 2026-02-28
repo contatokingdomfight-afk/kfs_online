@@ -61,10 +61,6 @@ export function ThemeLocaleSwitcher({
           borderTop: "1px solid var(--border)",
         }
       : {
-          position: "fixed",
-          top: 12,
-          right: 12,
-          zIndex: 9999,
           display: "flex",
           alignItems: "center",
           gap: 12,
@@ -110,7 +106,16 @@ export function ThemeLocaleSwitcher({
   );
 
   return (
-    <div style={wrapper} role="group" aria-label="Tema e idioma">
+    <div
+      style={variant === "fixed" ? undefined : wrapper}
+      className={
+        variant === "fixed"
+          ? "fixed bottom-4 right-4 z-[9999] flex items-center gap-3 rounded-[10px] border border-[var(--border)] bg-[var(--bg-secondary)] p-2 shadow-md md:bottom-auto md:top-3 md:right-3"
+          : undefined
+      }
+      role="group"
+      aria-label="Tema e idioma"
+    >
       <div style={variant === "inline" ? { ...group, flexDirection: "column" as const, alignItems: "stretch", gap: 6 } : group}>
         <span style={groupLabel}>{t.theme}</span>
         <div style={{ display: "flex", gap: 6 }}>

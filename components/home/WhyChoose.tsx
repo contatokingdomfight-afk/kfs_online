@@ -4,8 +4,6 @@ type Content = {
   why1Desc: string;
   why2: string;
   why2Desc: string;
-  why3: string;
-  why3Desc: string;
   why4: string;
   why4Desc: string;
   why5: string;
@@ -15,7 +13,6 @@ type Content = {
 const items = [
   (c: Content) => ({ title: c.why1, desc: c.why1Desc, icon: "🥋" }),
   (c: Content) => ({ title: c.why2, desc: c.why2Desc, icon: "📋" }),
-  (c: Content) => ({ title: c.why3, desc: c.why3Desc, icon: "✝️" }),
   (c: Content) => ({ title: c.why4, desc: c.why4Desc, icon: "🤝" }),
   (c: Content) => ({ title: c.why5, desc: c.why5Desc, icon: "📈" }),
 ];
@@ -27,7 +24,7 @@ export function WhyChoose({ content }: { content: Content }) {
         <h2 className="text-center text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
           {content.whyTitle}
         </h2>
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid gap-6 sm:grid-cols-2">
           {items.map((fn, i) => {
             const { title, desc, icon } = fn(content);
             return (
