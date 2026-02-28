@@ -74,7 +74,7 @@ async function pushFile(filePath) {
     return; // skip unreadable
   }
 
-  const url = `https://api.github.com/repos/OseiasBeu/kfs_system/contents/${encodeURIComponent(filePath)}`;
+  const url = `https://api.github.com/repos/contatokingdomfight-afk/kfs_online/contents/${encodeURIComponent(filePath)}`;
   
   // GET para obter SHA (se existir)
   let sha = null;

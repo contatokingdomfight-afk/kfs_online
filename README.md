@@ -21,7 +21,7 @@ Plataforma de gestão e ensino da Kingdom Fight School (MVP). Mobile First.
    - Copiar `.env.example` para `.env`
    - Preencher `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Supabase → Project Settings → API)
    - Preencher `DATABASE_URL` (Supabase → Project Settings → Database → connection string)
-   - **Login com Google**: ver **DOCS/Login_Google_Supabase.md** (ativar provider no Supabase e configurar OAuth no Google Cloud)
+   - **Login com Google**: ver **DOCS/GOOGLE_OAUTH_SETUP.md** (guia completo de configuração)
 
 3. **Base de dados**
    ```bash
