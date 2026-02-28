@@ -205,6 +205,218 @@
 }
 
 /* ========================================
+   HOME PAGE - Mobile First UX
+   ======================================== */
+
+.home-page {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Sticky header - padding-right evita sobreposição com ThemeLocaleSwitcher */
+.home-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px 12px 16px;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(56px, env(safe-area-inset-right));
+  padding-top: max(12px, env(safe-area-inset-top));
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.home-logo {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-cta-btn {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 10px 16px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.home-cta-btn:active {
+  opacity: 0.9;
+}
+
+/* Hero */
+.home-hero {
+  max-width: min(480px, 92vw);
+  margin: 0 auto;
+  padding: 28px 20px 36px;
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
+  text-align: center;
+}
+
+.home-hero-title {
+  margin: 0 0 8px 0;
+  font-size: clamp(1.5rem, 5.5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.home-hero-lead {
+  margin: 0 0 6px 0;
+  font-size: clamp(1.05rem, 4vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.home-hero-sub {
+  margin: 0 0 24px 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.home-hero-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.home-btn-primary {
+  min-height: 48px;
+  font-size: 1rem;
+  padding: 14px 20px;
+  text-decoration: none;
+  width: 100%;
+}
+
+.home-hero-secondary {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.home-btn {
+  min-height: 48px;
+  padding: 12px 20px;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Sections */
+.home-section {
+  max-width: min(480px, 92vw);
+  margin: 0 auto;
+  padding: 24px 20px;
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
+  border-top: 1px solid var(--border);
+}
+
+.home-h2 {
+  margin: 0 0 12px 0;
+  font-size: clamp(1.125rem, 4.5vw, 1.375rem);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.home-p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.home-p-mb {
+  margin-bottom: 16px;
+}
+
+/* Values */
+.home-values {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-value-card {
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.home-value-title {
+  display: block;
+  font-size: 0.9375rem;
+  color: var(--primary);
+}
+
+.home-value-quote {
+  margin: 6px 0 0 0;
+  font-size: 0.875rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* Platform list */
+.home-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.9375rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.home-list li {
+  margin-bottom: 4px;
+}
+
+/* CTA section */
+.home-cta-section {
+  text-align: center;
+  padding-bottom: max(40px, env(safe-area-inset-bottom));
+}
+
+.home-cta-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+@media (min-width: 480px) {
+  .home-hero-secondary {
+    flex-wrap: nowrap;
+  }
+
+  .home-btn {
+    flex: none;
+  }
+}
+
+/* ========================================
    LAYOUT RESPONSIVO (Mobile First)
    ResponsiveShell + Sidebar
    ======================================== */
