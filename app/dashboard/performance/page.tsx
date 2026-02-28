@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
-import { GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores } from "@/lib/performance-utils";
+import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores } from "@/lib/performance-utils";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
@@ -28,7 +28,7 @@ export default async function DashboardPerformancePage() {
   const modalityLabels = new Map<string, string>((modalitiesList ?? []).map((m) => [m.code, m.name ?? m.code]));
 
   const configsForDetail: { modality: string; config: import("@/lib/evaluation-config").ModalityEvaluationConfigPayload }[] = [];
-  const configByModality = new Map<string, { criterionToCategory: Map<string, string>; criterionToDimensionCode?: Map<string, string> }>();
+  const configByModality = new Map<string, ModalityConfig>();
   for (const mod of modalitiesList ?? []) {
     const config = await loadEvaluationConfigForModality(supabase, mod.code);
     if (config) {

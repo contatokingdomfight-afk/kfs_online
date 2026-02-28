@@ -5,7 +5,7 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS, getWeekStartMonday } from "@/lib/lesson-utils";
-import { getAttendanceByModality, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores } from "@/lib/performance-utils";
+import { type ModalityConfig, getAttendanceByModality, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores } from "@/lib/performance-utils";
 import { getEarnedBadges } from "@/lib/gamification";
 import { VouNaoVouButtons } from "./VouNaoVouButtons";
 import { PerformanceRadar } from "@/components/PerformanceRadar";
@@ -149,7 +149,7 @@ export default async function DashboardPage() {
         modality: e.modality,
       }));
 
-      const configByModality = new Map<string, { criterionToCategory: Map<string, string>; criterionToDimensionCode?: Map<string, string> }>();
+      const configByModality = new Map<string, ModalityConfig>();
       for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"]) {
         const config = await loadEvaluationConfigForModality(supabase, mod);
         if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });

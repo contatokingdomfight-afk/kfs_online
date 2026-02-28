@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar, type SidebarLink } from "./Sidebar";
 import type { Theme, Locale } from "@/lib/theme-locale";
@@ -32,7 +32,16 @@ export function ResponsiveShell({
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pathname = usePathname();
-  useEffect(() => setDrawerOpen(false), [pathname]);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    menuBtnRef.current?.focus({ preventScroll: true });
+  };
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
 
   return (
     <div className="app-shell" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -60,7 +69,7 @@ export function ResponsiveShell({
             <button
               type="button"
               className="app-shell-drawer-close"
-              onClick={() => setDrawerOpen(false)}
+              onClick={closeDrawer}
               aria-label="Fechar menu"
               style={{
                 minWidth: "clamp(44px, 11vw, 48px)",
@@ -93,7 +102,7 @@ export function ResponsiveShell({
         {/* Overlay when drawer open (mobile only) */}
         <div
           className={`app-shell-overlay ${drawerOpen ? "app-shell-overlay--open" : ""}`}
-          onClick={() => setDrawerOpen(false)}
+          onClick={closeDrawer}
           aria-hidden="true"
         />
 
@@ -112,6 +121,7 @@ export function ResponsiveShell({
             }}
           >
             <button
+              ref={menuBtnRef}
               type="button"
               className="app-shell-menu-btn"
               onClick={() => setDrawerOpen(true)}
@@ -134,7 +144,7 @@ export function ResponsiveShell({
                 WebkitTapHighlightColor: "transparent",
               }}
             >
-              <svg width="clamp(20, 5vw, 24)" height="clamp(20, 5vw, 24)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ width: "clamp(20px, 5vw, 24px)", height: "clamp(20px, 5vw, 24px)" }}>
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <line x1="3" y1="12" x2="21" y2="12" />
                 <line x1="3" y1="18" x2="21" y2="18" />

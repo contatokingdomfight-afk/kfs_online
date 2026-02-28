@@ -215,6 +215,20 @@ export const messages = {
     libraryVideoOptional: "Vídeo da biblioteca (opcional)",
     noCourseOption: "— Nenhum / só título",
 
+    // Coach dashboard
+    coachStats: "Estatísticas",
+    coachTotalStudents: "Alunos na escola",
+    coachLessonsThisWeek: "Aulas esta semana",
+    coachPresencesToday: "Presenças hoje",
+    coachPresencesTodayEmpty: "Sem aulas hoje",
+    coachTodayPresences: "Presenças do dia",
+    coachNotEvaluatedTitle: "Alunos sem avaliação",
+    coachNotEvaluatedHint: "Estes alunos estiveram nas tuas aulas mas ainda não foram avaliados por ti neste período.",
+    coachGoToPresences: "Ir para presenças na aula →",
+    coachConfirmed: "confirmadas",
+    coachPending: "pendentes",
+    coachAbsent: "faltas",
+
     // Auth
     signOut: "Sair",
     email: "Email",
@@ -445,6 +459,19 @@ export const messages = {
     themeTitlePlaceholder: "E.g. Low kick defense",
     libraryVideoOptional: "Library video (optional)",
     noCourseOption: "— None / title only",
+
+    coachStats: "Statistics",
+    coachTotalStudents: "Students at school",
+    coachLessonsThisWeek: "Classes this week",
+    coachPresencesToday: "Presences today",
+    coachPresencesTodayEmpty: "No classes today",
+    coachTodayPresences: "Today's presences",
+    coachNotEvaluatedTitle: "Students not evaluated",
+    coachNotEvaluatedHint: "These students attended your classes but have not been evaluated by you in this period.",
+    coachGoToPresences: "Go to class presences →",
+    coachConfirmed: "confirmed",
+    coachPending: "pending",
+    coachAbsent: "absent",
 
     signOut: "Sign out",
     email: "Email",

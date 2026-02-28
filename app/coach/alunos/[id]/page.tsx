@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
 import {
+  type ModalityConfig,
   GENERAL_PERFORMANCE_AXES,
   computeGeneralPerformanceScores,
   getAttendanceByModality,
@@ -75,7 +76,7 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
       scores: e.scores as Record<string, number> | null,
       modality: e.modality,
     }));
-    const configByModality = new Map<string, { criterionToCategory: Map<string, string>; criterionToDimensionCode?: Map<string, string> }>();
+    const configByModality = new Map<string, ModalityConfig>();
     for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"]) {
       const config = await loadEvaluationConfigForModality(supabase, mod);
       if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });

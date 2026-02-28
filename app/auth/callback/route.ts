@@ -5,11 +5,12 @@ import type { NextRequest } from 'next/server'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const nextUrl = requestUrl.searchParams.get('next')
   const origin = requestUrl.origin
 
   if (code) {
     const supabase = await createClient()
-    
+
     try {
       await supabase.auth.exchangeCodeForSession(code)
     } catch (error) {
@@ -18,6 +19,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Redirecionar para dashboard após login bem-sucedido
-  return NextResponse.redirect(`${origin}/dashboard`)
+  const safeNext = nextUrl && nextUrl.startsWith('/') ? nextUrl : '/dashboard'
+  return NextResponse.redirect(`${origin}${safeNext}`)
 }

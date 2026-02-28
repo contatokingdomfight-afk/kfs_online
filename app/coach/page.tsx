@@ -2,16 +2,30 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
+import { getCurrentSchoolId } from "@/lib/auth/get-current-school";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
 
 const DAYS_NAO_AVALIADOS = 20;
 
+type TodayLessonWithPresences = {
+  id: string;
+  modality: string;
+  startTime: string;
+  endTime: string;
+  confirmed: number;
+  pending: number;
+  absent: number;
+};
+
 export default async function CoachHomePage() {
   const dbUser = await getCurrentDbUser();
-  const coachId = await getCurrentCoachId();
-  const locale = await getLocaleFromCookies();
+  const [coachId, schoolId, locale] = await Promise.all([
+    getCurrentCoachId(),
+    getCurrentSchoolId(),
+    getLocaleFromCookies(),
+  ]);
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
 
@@ -20,21 +34,107 @@ export default async function CoachHomePage() {
   sinceDate.setDate(sinceDate.getDate() - DAYS_NAO_AVALIADOS);
   const sinceIso = sinceDate.toISOString().slice(0, 10);
 
-  let query = supabase
+  // Próximas aulas (filtradas por coach)
+  let lessonsQuery = supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime")
+    .select("id, modality, date, startTime, endTime, schoolId")
     .gte("date", today)
     .order("date", { ascending: true })
     .order("startTime", { ascending: true })
     .limit(5);
 
   if (coachId) {
-    query = query.eq("coachId", coachId);
+    lessonsQuery = lessonsQuery.eq("coachId", coachId);
+  }
+  if (schoolId) {
+    lessonsQuery = lessonsQuery.eq("schoolId", schoolId);
   }
 
-  const { data: lessons } = await query;
+  const { data: lessons } = await lessonsQuery;
   const nextLesson = lessons?.[0] ?? null;
 
+  // Estatísticas: total alunos na escola
+  let totalStudents = 0;
+  let studentsQuery = supabase.from("Student").select("id", { count: "exact", head: true }).eq("status", "ATIVO");
+  if (schoolId) {
+    studentsQuery = studentsQuery.eq("schoolId", schoolId);
+  }
+  const { count: studentsCount } = await studentsQuery;
+  totalStudents = studentsCount ?? 0;
+
+  // Estatísticas: aulas esta semana (do coach)
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const weekStartIso = weekStart.toISOString().slice(0, 10);
+  const weekEndIso = weekEnd.toISOString().slice(0, 10);
+
+  let weekLessonsQuery = supabase
+    .from("Lesson")
+    .select("id", { count: "exact", head: true })
+    .gte("date", weekStartIso)
+    .lte("date", weekEndIso);
+  if (coachId) {
+    weekLessonsQuery = weekLessonsQuery.eq("coachId", coachId);
+  }
+  if (schoolId) {
+    weekLessonsQuery = weekLessonsQuery.eq("schoolId", schoolId);
+  }
+  const { count: weekLessonsCount } = await weekLessonsQuery;
+  const lessonsThisWeek = weekLessonsCount ?? 0;
+
+  // Presenças hoje: aulas do coach hoje + contagem por status
+  let todayLessonsQuery = supabase
+    .from("Lesson")
+    .select("id, modality, startTime, endTime")
+    .eq("date", today)
+    .order("startTime", { ascending: true });
+  if (coachId) {
+    todayLessonsQuery = todayLessonsQuery.eq("coachId", coachId);
+  }
+  if (schoolId) {
+    todayLessonsQuery = todayLessonsQuery.eq("schoolId", schoolId);
+  }
+  const { data: todayLessons } = await todayLessonsQuery;
+
+  let todayPresences: TodayLessonWithPresences[] = [];
+  let totalPresencesToday = 0;
+  if (todayLessons && todayLessons.length > 0) {
+    const lessonIds = todayLessons.map((l) => l.id);
+    const { data: attendances } = await supabase
+      .from("Attendance")
+      .select("lessonId, status")
+      .in("lessonId", lessonIds);
+
+    const byLesson = new Map<string, { confirmed: number; pending: number; absent: number }>();
+    for (const lid of lessonIds) {
+      byLesson.set(lid, { confirmed: 0, pending: 0, absent: 0 });
+    }
+    for (const a of attendances ?? []) {
+      const m = byLesson.get(a.lessonId);
+      if (m) {
+        if (a.status === "CONFIRMED") m.confirmed++;
+        else if (a.status === "PENDING") m.pending++;
+        else m.absent++;
+      }
+    }
+    todayPresences = todayLessons.map((l) => {
+      const m = byLesson.get(l.id)!;
+      totalPresencesToday += m.confirmed + m.pending + m.absent;
+      return {
+        id: l.id,
+        modality: l.modality,
+        startTime: l.startTime,
+        endTime: l.endTime,
+        confirmed: m.confirmed,
+        pending: m.pending,
+        absent: m.absent,
+      };
+    });
+  }
+
+  // Alunos sem avaliação (últimos N dias)
   type AlunoNaoAvaliado = { studentId: string; name: string | null };
   let alunosNaoAvaliados: AlunoNaoAvaliado[] = [];
   if (coachId) {
@@ -43,6 +143,10 @@ export default async function CoachHomePage() {
       .select("id")
       .eq("coachId", coachId)
       .gte("date", sinceIso);
+    if (schoolId) {
+      // Filter by school if coach has one
+      // lessonsLast20 is already coach's lessons - they're at coach's school
+    }
     const lessonIds = (lessonsLast20 ?? []).map((l) => l.id);
     if (lessonIds.length > 0) {
       const { data: attendances } = await supabase
@@ -100,6 +204,53 @@ export default async function CoachHomePage() {
         {t("helloCoach")} {dbUser?.name || t("coach")} 👋
       </p>
 
+      {/* Stats cards */}
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(8px, 2vw, 12px)" }}>
+        <div
+          className="card"
+          style={{
+            padding: "clamp(12px, 3vw, 16px)",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 700, color: "var(--primary)" }}>
+            {totalStudents}
+          </p>
+          <p style={{ margin: "4px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--text-secondary)" }}>
+            {t("coachTotalStudents")}
+          </p>
+        </div>
+        <div
+          className="card"
+          style={{
+            padding: "clamp(12px, 3vw, 16px)",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 700, color: "var(--primary)" }}>
+            {lessonsThisWeek}
+          </p>
+          <p style={{ margin: "4px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--text-secondary)" }}>
+            {t("coachLessonsThisWeek")}
+          </p>
+        </div>
+        <div
+          className="card"
+          style={{
+            padding: "clamp(12px, 3vw, 16px)",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 700, color: "var(--primary)" }}>
+            {totalPresencesToday}
+          </p>
+          <p style={{ margin: "4px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--text-secondary)" }}>
+            {t("coachPresencesToday")}
+          </p>
+        </div>
+      </section>
+
+      {/* Próxima aula */}
       <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)" }}>
         <h2 style={{ margin: "0 0 clamp(8px, 2vw, 12px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           {t("nextClass")}
@@ -141,13 +292,66 @@ export default async function CoachHomePage() {
         )}
       </section>
 
+      {/* Presenças do dia */}
+      {todayPresences.length > 0 && (
+        <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)" }}>
+          <h2 style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+            {t("coachTodayPresences")}
+          </h2>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 12px)" }}>
+            {todayPresences.map((l) => (
+              <li key={l.id}>
+                <Link
+                  href={`/coach/aula?lesson=${l.id}`}
+                  style={{
+                    display: "block",
+                    padding: "clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px)",
+                    borderRadius: "var(--radius-sm)",
+                    backgroundColor: "var(--bg)",
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    color: "var(--text-primary)",
+                    textDecoration: "none",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <span style={{ fontWeight: 600 }}>{MODALITY_LABELS[l.modality] ?? l.modality}</span>
+                    <span style={{ color: "var(--text-secondary)", fontSize: "clamp(13px, 3.2vw, 15px)" }}>
+                      {l.startTime}–{l.endTime}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>
+                    <span style={{ color: "var(--success)" }}>{l.confirmed} {t("coachConfirmed")}</span>
+                    <span>{l.pending} {t("coachPending")}</span>
+                    {l.absent > 0 && <span style={{ color: "var(--danger)" }}>{l.absent} {t("coachAbsent")}</span>}
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {todayPresences.length === 0 && (
+        <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)" }}>
+          <h2 style={{ margin: "0 0 clamp(8px, 2vw, 12px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+            {t("coachTodayPresences")}
+          </h2>
+          <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+            {t("coachPresencesTodayEmpty")}
+          </p>
+          <Link href="/coach/aula" className="btn btn-secondary" style={{ textDecoration: "none", marginTop: 12, display: "inline-block" }}>
+            {t("enterClass")}
+          </Link>
+        </section>
+      )}
+
       {alunosNaoAvaliados.length > 0 && (
         <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)" }}>
           <h2 style={{ margin: "0 0 clamp(8px, 2vw, 12px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-            Alunos sem avaliação nos últimos {DAYS_NAO_AVALIADOS} dias
+            {t("coachNotEvaluatedTitle")} ({DAYS_NAO_AVALIADOS} {locale === "pt" ? "dias" : "days"})
           </h2>
           <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-            Estes alunos estiveram nas tuas aulas mas ainda não foram avaliados por ti neste período.
+            {t("coachNotEvaluatedHint")}
           </p>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(6px, 1.5vw, 8px)" }}>
             {alunosNaoAvaliados.map((a) => (
@@ -171,7 +375,7 @@ export default async function CoachHomePage() {
           </ul>
           <p style={{ margin: "clamp(12px, 3vw, 16px) 0 0 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
             <Link href="/coach/aula" style={{ color: "var(--primary)", textDecoration: "none" }}>
-              Ir para presenças na aula →
+              {t("coachGoToPresences")}
             </Link>
           </p>
         </section>
@@ -190,6 +394,11 @@ export default async function CoachHomePage() {
           <li>
             <Link href="/coach/atletas" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none" }}>
               {t("athletesUnderCoaching")}
+            </Link>
+          </li>
+          <li>
+            <Link href="/coach/alunos" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none" }}>
+              {t("navStudents")}
             </Link>
           </li>
         </ul>

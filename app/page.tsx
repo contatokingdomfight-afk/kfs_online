@@ -1,8 +1,17 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 
-export default async function HomePage() {
+type Props = { searchParams: Promise<{ code?: string; next?: string }> };
+
+export default async function HomePage({ searchParams }: Props) {
+  const params = await searchParams;
+  if (params.code) {
+    const next = params.next ? `&next=${encodeURIComponent(params.next)}` : "";
+    redirect(`/auth/callback?code=${params.code}${next}`);
+  }
+
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
   return (

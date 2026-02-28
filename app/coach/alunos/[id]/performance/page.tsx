@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
 import {
+  type ModalityConfig,
   GENERAL_PERFORMANCE_AXES,
   computeGeneralPerformanceScores,
 } from "@/lib/performance-utils";
@@ -55,7 +56,7 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
   const modalityLabels = new Map<string, string>((modalitiesList ?? []).map((m) => [m.code, m.name ?? m.code]));
 
   const configsForDetail: { modality: string; config: import("@/lib/evaluation-config").ModalityEvaluationConfigPayload }[] = [];
-  const configByModality = new Map<string, { criterionToCategory: Map<string, string>; criterionToDimensionCode?: Map<string, string> }>();
+  const configByModality = new Map<string, ModalityConfig>();
   for (const m of modalitiesList ?? []) {
     const config = await loadEvaluationConfigForModality(supabase, m.code);
     if (config) {
