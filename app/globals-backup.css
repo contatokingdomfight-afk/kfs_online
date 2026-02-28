@@ -1,0 +1,313 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   KINGDOM FIGHT SCHOOL - DESIGN TOKENS
+   Baseado em: DOCS/DESIGN TOKENS OFICIAIS.md
+   ======================================== */
+
+@layer base {
+  /* Tokens de Cor - Dark Theme (default) */
+  :root,
+  :root[data-theme="dark"] {
+    --bg: #0b0b0b;
+    --bg-secondary: #141414;
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --primary: #c1121f;
+    --danger: #e11d48;
+    --success: #22c55e;
+    --warning: #facc15;
+    --border: #27272a;
+  }
+
+  /* Tokens de Cor - Light Theme */
+  :root[data-theme="light"] {
+    --bg: #ffffff;
+    --bg-secondary: #f4f4f5;
+    --text-primary: #09090b;
+    --text-secondary: #52525b;
+    --primary: #c1121f;
+    --danger: #be123c;
+    --success: #16a34a;
+    --warning: #eab308;
+    --border: #e4e4e7;
+  }
+
+  /* Tokens de Tipografia */
+  :root {
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+  }
+
+  /* Tokens de Espaçamento (8px system) */
+  :root {
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+  }
+
+  /* Tokens de Bordas & Forma */
+  :root {
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+  }
+
+  /* Tokens de Sombra */
+  :root {
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Base HTML */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg);
+    color: var(--text-primary);
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    font-family: "Inter", system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--text-primary);
+  }
+
+  /* Mobile viewport fix */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ========================================
+   COMPONENTES BASE (Mobile First)
+   ======================================== */
+
+@layer components {
+  /* Button - Componente base */
+  .btn {
+    @apply inline-flex items-center justify-center;
+    @apply font-semibold;
+    @apply transition-opacity duration-200;
+    @apply cursor-pointer;
+    @apply border-none outline-none;
+    font-size: clamp(16px, 4vw, 18px);
+    min-height: clamp(48px, 12vw, 56px);
+    padding: 0.75em 1.5em;
+    border-radius: var(--radius-md);
+    box-sizing: border-box;
+  }
+
+  .btn:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  .btn:active:not(:disabled) {
+    opacity: 0.95;
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: #fff;
+  }
+
+  .btn-secondary {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+
+  .btn-danger {
+    background-color: var(--danger);
+    color: #fff;
+  }
+
+  .btn-success {
+    background-color: var(--success);
+    color: #fff;
+  }
+
+  /* Input - Componente base */
+  .input {
+    @apply w-full;
+    @apply outline-none;
+    @apply transition-all duration-200;
+    font-size: clamp(16px, 4vw, 18px);
+    min-height: clamp(48px, 12vw, 56px);
+    padding: 0.75em 1em;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    box-sizing: border-box;
+  }
+
+  .input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+  }
+
+  .input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(193, 18, 31, 0.1);
+  }
+
+  .input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Card - Componente base */
+  .card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Container - Mobile First */
+  .container-mobile {
+    width: 100%;
+    max-width: min(480px, 96vw);
+    margin: 0 auto;
+    padding: var(--space-4);
+    box-sizing: border-box;
+  }
+}
+
+/* ========================================
+   LAYOUT RESPONSIVO (Mobile First)
+   ======================================== */
+
+/* Mobile: < 768px (default) */
+.app-layout {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 85vw;
+  z-index: 1001;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-sidebar--open {
+  transform: translateX(0);
+}
+
+.app-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.app-overlay--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-secondary);
+  min-height: 60px;
+}
+
+.app-content {
+  flex: 1;
+  padding: var(--space-4);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Desktop: >= 768px */
+@media (min-width: 768px) {
+  .app-layout {
+    flex-direction: row;
+  }
+
+  .app-sidebar {
+    position: static;
+    width: 260px;
+    max-width: none;
+    transform: none;
+    flex-shrink: 0;
+  }
+
+  .app-overlay {
+    display: none;
+  }
+
+  .menu-btn {
+    display: none;
+  }
+
+  .app-main {
+    flex: 1;
+  }
+}
+
+/* ========================================
+   UTILITÁRIOS MOBILE
+   ======================================== */
+
+.text-mobile-lg {
+  font-size: clamp(20px, 5vw, 28px);
+}
+
+.text-mobile-base {
+  font-size: clamp(16px, 4vw, 18px);
+}
+
+.text-mobile-sm {
+  font-size: clamp(14px, 3.5vw, 16px);
+}
+
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
