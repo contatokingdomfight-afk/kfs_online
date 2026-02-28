@@ -7,6 +7,7 @@ import { Stats } from "@/components/home/Stats";
 import { About } from "@/components/home/About";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { Plans } from "@/components/home/Plans";
+import { Founders } from "@/components/home/Founders";
 import { WhyChoose } from "@/components/home/WhyChoose";
 import { Testimonials } from "@/components/home/Testimonials";
 import { CTASection } from "@/components/home/CTASection";
@@ -54,6 +55,7 @@ export default async function HomePage({ searchParams }: Props) {
       <Hero content={content} />
       <Stats content={content} />
       <About content={content} />
+      <Founders content={content} />
       <HowItWorks content={content} />
       <Plans content={content} />
       <WhyChoose content={content} />

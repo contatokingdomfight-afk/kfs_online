@@ -17,10 +17,10 @@ export const homeContent = {
     ctaViewTrainings: "Ver Treinos",
 
     // Stats
-    statsYears: "+10 anos",
+    statsYears: "20+ anos",
     statsYearsLabel: "de experiência",
-    statsStudents: "+500",
-    statsStudentsLabel: "alunos formados",
+    statsStudents: "",
+    statsStudentsLabel: "Comunidade em evolução",
     statsMethod: "Metodologia",
     statsMethodLabel: "estruturada",
     statsModalities: "Muay Thai, Boxe, Kickboxing e mais",
@@ -92,6 +92,22 @@ export const homeContent = {
     ctaSub: "Dê o primeiro passo. Aula experimental gratuita.",
     ctaButton: "Começar Agora",
 
+    // Social
+    youtubeUrl: "https://www.youtube.com/@Kingdom_Fight",
+    instagramUrl: "https://www.instagram.com/kingdomfightschool",
+
+    // Founders
+    foundersTitle: "Os Fundadores",
+    foundersSubtitle: "Conheça quem criou a Kingdom Fight",
+    foundersVideoTitle: "A história da KFS",
+    foundersVideoUrl: "https://www.youtube.com/embed/eQWUG9Q61c4?start=3",
+    founder1Name: "Fundador 1",
+    founder1Role: "Co-fundador",
+    founder1Image: "",
+    founder2Name: "Fundador 2",
+    founder2Role: "Co-fundador",
+    founder2Image: "",
+
     // Footer
     footerLinks: "Links rápidos",
     footerAulaExp: "Aula Experimental",
@@ -108,10 +124,10 @@ export const homeContent = {
     ctaStart: "Start Now",
     ctaViewTrainings: "View Trainings",
 
-    statsYears: "+10 years",
+    statsYears: "20+ years",
     statsYearsLabel: "of experience",
-    statsStudents: "+500",
-    statsStudentsLabel: "students trained",
+    statsStudents: "",
+    statsStudentsLabel: "Community in evolution",
     statsMethod: "Structured",
     statsMethodLabel: "methodology",
     statsModalities: "Muay Thai, Boxing, Kickboxing and more",
@@ -176,6 +192,20 @@ export const homeContent = {
     ctaHeadline: "Your transformation starts now.",
     ctaSub: "Take the first step. Free trial class.",
     ctaButton: "Start Now",
+
+    youtubeUrl: "https://www.youtube.com/@Kingdom_Fight",
+    instagramUrl: "https://www.instagram.com/kingdomfightschool",
+
+    foundersTitle: "The Founders",
+    foundersSubtitle: "Meet the people who created Kingdom Fight",
+    foundersVideoTitle: "The KFS story",
+    foundersVideoUrl: "https://www.youtube.com/embed/eQWUG9Q61c4?start=3",
+    founder1Name: "Founder 1",
+    founder1Role: "Co-founder",
+    founder1Image: "",
+    founder2Name: "Founder 2",
+    founder2Role: "Co-founder",
+    founder2Image: "",
 
     footerLinks: "Quick links",
     footerAulaExp: "Trial Class",
