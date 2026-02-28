@@ -1,0 +1,182 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                    🚀 RESUMO DEPLOY VERCEL - KFS SYSTEM                     ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ⏱️  TEMPO ESTIMADO: 20-30 minutos                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ PASSO 1: PREPARAR INFORMAÇÕES (5 min)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 Abrir e ter prontos:
+
+  🗄️  Supabase Dashboard
+      https://supabase.com/dashboard/project/iozxildpnugqxzqkxntq
+      → Settings → API (copiar URL e keys)
+      → Settings → Database (copiar connection string)
+
+  💳 Stripe Dashboard
+      https://dashboard.stripe.com
+      → Developers → API keys (copiar publishable e secret)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ PASSO 2: GERAR NEXTAUTH_SECRET (1 min)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💻 No terminal:
+   cd c:\Users\Oseias\Documents\KFS_System
+   node scripts/generate-nextauth-secret.js
+
+📝 Copiar o valor gerado e guardar
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ PASSO 3: DEPLOY NA VERCEL (10 min)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 🌐 Ir a: https://vercel.com
+2. 🔐 Login com GitHub
+3. ➕ Add New → Project
+4. 📥 Importar: kfs_system
+5. ⚙️  Adicionar variáveis (ver abaixo)
+6. 🚀 Clicar em "Deploy"
+7. ⏳ Aguardar 2-5 minutos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ VARIÁVEIS DE AMBIENTE ESSENCIAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 🗄️  SUPABASE                                                                 │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ NEXT_PUBLIC_SUPABASE_URL=https://iozxildpnugqxzqkxntq.supabase.co           │
+│ NEXT_PUBLIC_SUPABASE_ANON_KEY=[copiar do Supabase → API]                    │
+│ SUPABASE_SERVICE_ROLE_KEY=[copiar do Supabase → API]                        │
+│ DATABASE_URL=[copiar do Supabase → Database → Connection String]            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 🔐 NEXTAUTH                                                                  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ NEXTAUTH_URL=https://kfs-system.vercel.app                                  │
+│ NEXTAUTH_SECRET=[valor gerado no Passo 2]                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 💳 STRIPE                                                                    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=[copiar do Stripe → API keys]            │
+│ STRIPE_SECRET_KEY=[copiar do Stripe → API keys]                             │
+│ STRIPE_WEBHOOK_SECRET=[configurar no Passo 4]                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ PASSO 4: CONFIGURAR STRIPE WEBHOOK (5 min)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 📋 Copiar URL do projeto: https://kfs-system.vercel.app
+2. 🌐 Ir a: Stripe → Developers → Webhooks
+3. ➕ Add endpoint: https://kfs-system.vercel.app/api/webhooks/stripe
+4. ✅ Selecionar evento: checkout.session.completed
+5. 📝 Copiar Signing Secret (whsec_...)
+6. 🔙 Voltar à Vercel → Settings → Environment Variables
+7. ➕ Adicionar: STRIPE_WEBHOOK_SECRET=[valor copiado]
+8. 🔄 Fazer Redeploy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ PASSO 5: CONFIGURAR BASE DE DADOS (5 min)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💻 No terminal:
+
+   # Instalar Vercel CLI
+   npm i -g vercel
+
+   # Login e link
+   vercel login
+   vercel link
+
+   # Pull variáveis e migrar
+   vercel env pull .env.local
+   npx prisma db push
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ PASSO 6: TESTAR (5 min)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Abrir: https://kfs-system.vercel.app
+✅ Criar conta de teste
+✅ Fazer login
+✅ Verificar dashboard
+✅ Testar checkout Stripe:
+   • Cartão: 4242 4242 4242 4242
+   • Data: 12/34
+   • CVC: 123
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 📚 DOCUMENTAÇÃO COMPLETA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ FICHEIRO                          │ DESCRIÇÃO                                │
+├───────────────────────────────────┼──────────────────────────────────────────┤
+│ INICIO_RAPIDO.md                  │ Guia rápido (este resumo expandido)     │
+│ VERCEL_DEPLOY.md                  │ Guia completo e detalhado                │
+│ GUIA_VISUAL_VERCEL.md             │ Guia passo a passo visual                │
+│ VERCEL_CHECKLIST.md               │ Checklist rápido                         │
+│ VARIAVEIS_AMBIENTE_VERCEL.txt     │ Lista completa de variáveis              │
+│ LINKS_IMPORTANTES.md              │ Links úteis para todos os serviços       │
+│ INDICE_DOCUMENTACAO.md            │ Índice de toda a documentação            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 🆘 PROBLEMAS COMUNS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Build falha com erro de Prisma
+   → Adicionar ao package.json → scripts:
+     "postinstall": "prisma generate"
+   → Fazer redeploy
+
+❌ Erro 500 em produção
+   → Vercel → Deployments → Functions (ver logs)
+   → Verificar todas as variáveis configuradas
+
+❌ Variáveis não funcionam
+   → Confirmar que públicas começam com NEXT_PUBLIC_
+   → Fazer redeploy após adicionar variáveis
+   → Verificar environment correto (Production)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ✅ CHECKLIST FINAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Deploy concluído com sucesso
+[ ] Todas as variáveis configuradas
+[ ] Stripe webhook configurado
+[ ] Base de dados migrada
+[ ] Testes básicos funcionam
+[ ] Login/registo funciona
+[ ] Dashboard carrega
+[ ] Checkout Stripe funciona
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 🔗 LINKS RÁPIDOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vercel:      https://vercel.com/dashboard
+Supabase:    https://supabase.com/dashboard/project/iozxildpnugqxzqkxntq
+Stripe:      https://dashboard.stripe.com
+GitHub:      https://github.com/OseiasBeu/kfs_system
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 DICA: Imprima este ficheiro ou guarde-o como referência rápida!
+
+📅 Data: 2026-02-27
+🔑 NEXTAUTH_SECRET já gerado: FZXKrUx63ENRxVkQwuGoNNhQebeWw/iIcVuenF0hjts=
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
