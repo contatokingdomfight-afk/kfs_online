@@ -1,9 +1,41 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
-import { getTranslations } from "@/lib/i18n";
+import { getHomeContent } from "@/lib/home-content";
+import { Hero } from "@/components/home/Hero";
+import { Stats } from "@/components/home/Stats";
+import { About } from "@/components/home/About";
+import { HowItWorks } from "@/components/home/HowItWorks";
+import { Plans } from "@/components/home/Plans";
+import { WhyChoose } from "@/components/home/WhyChoose";
+import { Testimonials } from "@/components/home/Testimonials";
+import { CTASection } from "@/components/home/CTASection";
+import { Footer } from "@/components/home/Footer";
+import { HomeHeader } from "@/components/home/HomeHeader";
 
 type Props = { searchParams: Promise<{ code?: string; next?: string }> };
+
+export const metadata: Metadata = {
+  title: "Kingdom Fight School | Treine com Propósito. Lute com Disciplina.",
+  description:
+    "Escola de artes marciais com base em valores cristãos. Muay Thai, Boxe, Kickboxing. Metodologia estruturada, treinadores experientes. Oeiras e Cascais.",
+  keywords: [
+    "artes marciais",
+    "Muay Thai",
+    "Boxe",
+    "Kickboxing",
+    "Kingdom Fight",
+    "Oeiras",
+    "Cascais",
+    "escola de luta",
+  ],
+  openGraph: {
+    title: "Kingdom Fight School | Treine com Propósito. Lute com Disciplina.",
+    description:
+      "Escola de artes marciais com base em valores cristãos. Metodologia estruturada, treinadores experientes.",
+    type: "website",
+  },
+};
 
 export default async function HomePage({ searchParams }: Props) {
   const params = await searchParams;
@@ -12,107 +44,22 @@ export default async function HomePage({ searchParams }: Props) {
     redirect(`/auth/callback?code=${params.code}${next}`);
   }
 
-  const locale = await getLocaleFromCookies();
-  const t = getTranslations(locale as "pt" | "en");
+  const locale = (await getLocaleFromCookies()) as "pt" | "en";
+  const content = getHomeContent(locale);
 
   return (
-    <main className="min-h-screen bg-bg home-page">
-      {/* Sticky header - mobile friendly */}
-      <header className="home-header">
-        <span className="home-logo">{t("appName")}</span>
-        <Link href="/aula-experimental" className="home-cta-btn">
-          {t("ctaTrial")}
-        </Link>
-      </header>
+    <main className="min-h-screen bg-[var(--bg)]">
+      <HomeHeader ctaLabel={content.headerCta} />
 
-      {/* Hero */}
-      <section className="home-hero">
-        <h1 className="home-hero-title">{t("appName")}</h1>
-        <p className="home-hero-lead">{t("homeHero")}</p>
-        <p className="home-hero-sub">{t("homeHeroSub")}</p>
-        <div className="home-hero-btns">
-          <Link href="/aula-experimental" className="btn btn-primary home-btn-primary">
-            {t("ctaTrial")}
-          </Link>
-          <div className="home-hero-secondary">
-            <Link href="/sign-in" className="btn btn-secondary home-btn">
-              {t("signIn")}
-            </Link>
-            <Link href="/sign-up" className="btn btn-secondary home-btn">
-              {t("signUp")}
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Sobre Nós */}
-      <section className="home-section">
-        <h2 className="home-h2">{t("homeAboutTitle")}</h2>
-        <p className="home-p">{t("homeAboutText")}</p>
-      </section>
-
-      {/* Missão */}
-      <section className="home-section">
-        <h2 className="home-h2">{t("homeMissionTitle")}</h2>
-        <p className="home-p">{t("homeMissionText")}</p>
-      </section>
-
-      {/* Visão */}
-      <section className="home-section">
-        <h2 className="home-h2">{t("homeVisionTitle")}</h2>
-        <p className="home-p">{t("homeVisionText")}</p>
-      </section>
-
-      {/* Valores */}
-      <section className="home-section">
-        <h2 className="home-h2">{t("homeValuesTitle")}</h2>
-        <div className="home-values">
-          <div className="home-value-card">
-            <strong className="home-value-title">{t("homeValue1")}</strong>
-            <p className="home-value-quote">&quot;{t("homeValue1Quote")}&quot;</p>
-          </div>
-          <div className="home-value-card">
-            <strong className="home-value-title">{t("homeValue2")}</strong>
-            <p className="home-value-quote">&quot;{t("homeValue2Quote")}&quot;</p>
-          </div>
-          <div className="home-value-card">
-            <strong className="home-value-title">{t("homeValue3")}</strong>
-            <p className="home-value-quote">&quot;{t("homeValue3Quote")}&quot;</p>
-          </div>
-          <div className="home-value-card">
-            <strong className="home-value-title">{t("homeValue4")}</strong>
-          </div>
-          <div className="home-value-card">
-            <strong className="home-value-title">{t("homeValue5")}</strong>
-          </div>
-        </div>
-      </section>
-
-      {/* Para que serve a plataforma */}
-      <section className="home-section">
-        <h2 className="home-h2">{t("homePlatformTitle")}</h2>
-        <p className="home-p home-p-mb">{t("homePlatformText")}</p>
-        <ul className="home-list">
-          <li>{t("homePlatformBullet1")}</li>
-          <li>{t("homePlatformBullet2")}</li>
-          <li>{t("homePlatformBullet3")}</li>
-          <li>{t("homePlatformBullet4")}</li>
-          <li>{t("homePlatformBullet5")}</li>
-        </ul>
-      </section>
-
-      {/* CTA final */}
-      <section className="home-section home-cta-section">
-        <h2 className="home-h2">{t("homeCtaTitle")}</h2>
-        <div className="home-cta-btns">
-          <Link href="/aula-experimental" className="btn btn-primary home-btn-primary">
-            {t("ctaTrial")}
-          </Link>
-          <Link href="/sign-in" className="btn btn-secondary home-btn-primary">
-            {t("signIn")}
-          </Link>
-        </div>
-      </section>
+      <Hero content={content} />
+      <Stats content={content} />
+      <About content={content} />
+      <HowItWorks content={content} />
+      <Plans content={content} />
+      <WhyChoose content={content} />
+      <Testimonials content={content} />
+      <CTASection content={content} />
+      <Footer content={content} />
     </main>
   );
 }
