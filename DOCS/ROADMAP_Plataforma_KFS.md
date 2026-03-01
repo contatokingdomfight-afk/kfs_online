@@ -253,7 +253,7 @@ Com base na especificação e na dependência entre módulos:
 
 1. **Biblioteca 360º** – Base para Sala Invertida e Receita adicional (cursos/vídeos).
 2. **Sala de Aula Invertida** – Tema da Semana + vídeo no app (usa Biblioteca).
-3. **Receita adicional** – Página de cursos/eventos com compra e inscrição (usa Biblioteca e Planos).
+3. **Receita adicional** – Feito. Página Loja (`/dashboard/loja`) com compra e inscrição; Admin vê compras/inscrições em Financeiro.
 4. **Dashboard de Performance** – Já implementado (Perfil do atleta gamificado: faixas, XP, radar, missões, detalhe por componente). Por fazer: sugestões de conteúdo (quando houver Biblioteca).
 5. **Gamificação** – Parcial: faixas/XP e missões (sistema + configuráveis). Por fazer: badges por check-ins e metas de assiduidade.
 

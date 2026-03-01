@@ -66,9 +66,16 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           Financeiro
         </h1>
         <Link
+          href="/admin/financeiro/compras"
+          className="btn"
+          style={{ marginLeft: "auto", textDecoration: "none", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}
+        >
+          Compras e inscrições
+        </Link>
+        <Link
           href="/admin/financeiro/novo"
           className="btn btn-primary"
-          style={{ marginLeft: "auto", textDecoration: "none" }}
+          style={{ textDecoration: "none" }}
         >
           Registar pagamento
         </Link>

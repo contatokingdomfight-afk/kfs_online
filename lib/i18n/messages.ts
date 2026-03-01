@@ -53,6 +53,7 @@ export const messages = {
     navHome: "Início",
     navLibrary: "Biblioteca",
     navEvents: "Eventos",
+    navStore: "Loja",
     navProfile: "Meus dados",
     yourPlan: "O teu plano",
     nextClass: "Próxima aula",
@@ -203,6 +204,14 @@ export const messages = {
     registering: "A inscrever…",
     registerConfirm: "Inscrever-me em \"{name}\" (€{price})? O pagamento será acertado na escola.",
 
+    // Loja (Cursos + Eventos)
+    storeTitle: "Loja",
+    storeDescription: "Cursos avulsos e eventos (Camps, Workshops). Compra ou inscreve-te e acerta o pagamento na escola.",
+    storeCoursesSection: "Cursos disponíveis",
+    storeEventsSection: "Eventos em breve",
+    storeAlreadyPurchased: "Já tens acesso",
+    storeEmpty: "Não há cursos nem eventos disponíveis para compra ou inscrição no momento.",
+
     // Admin home
     helloAdmin: "Olá,",
     viewAs: "Ver vista como",
@@ -330,6 +339,7 @@ export const messages = {
     navHome: "Home",
     navLibrary: "Library",
     navEvents: "Events",
+    navStore: "Store",
     navProfile: "My data",
     yourPlan: "Your plan",
     nextClass: "Next class",
@@ -475,6 +485,13 @@ export const messages = {
     registerMe: "Register",
     registering: "Registering…",
     registerConfirm: "Register for \"{name}\" (€{price})? Payment will be settled at the school.",
+
+    storeTitle: "Store",
+    storeDescription: "One-off courses and events (Camps, Workshops). Buy or register and settle payment at the school.",
+    storeCoursesSection: "Available courses",
+    storeEventsSection: "Upcoming events",
+    storeAlreadyPurchased: "You already have access",
+    storeEmpty: "No courses or events available for purchase or registration at the moment.",
 
     helloAdmin: "Hello,",
     viewAs: "View as",
