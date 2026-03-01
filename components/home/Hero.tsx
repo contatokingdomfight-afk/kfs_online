@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 type Content = {
-  heroHeadline: string;
+  heroHeadline1: string;
+  heroHeadline2: string;
   heroSubheadline: string;
   ctaStart: string;
   ctaViewTrainings: string;
@@ -20,7 +21,8 @@ export function Hero({ content }: { content: Content }) {
       />
       <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
         <h1 className="animate-fade-in text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl md:text-5xl lg:text-6xl">
-          {content.heroHeadline}
+          <span className="block">{content.heroHeadline1}</span>
+          <span className="block">{content.heroHeadline2}</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-base text-[var(--text-secondary)] sm:text-lg md:text-xl">
           {content.heroSubheadline}

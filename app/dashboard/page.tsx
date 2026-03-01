@@ -6,7 +6,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS, getWeekStartMonday } from "@/lib/lesson-utils";
 import { type ModalityConfig, getAttendanceByModality, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores } from "@/lib/performance-utils";
-import { getEarnedBadges } from "@/lib/gamification";
+import { getEarnedBadges, getNextBadgeProgress } from "@/lib/gamification";
 import { VouNaoVouButtons } from "./VouNaoVouButtons";
 import { PerformanceRadar } from "@/components/PerformanceRadar";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
@@ -103,6 +103,7 @@ export default async function DashboardPage() {
   let generalPerformanceScores: Record<string, number> | null = null;
   let attendanceByModality: Record<string, number> = {};
   let earnedBadges: { badgeCode: string; name: string; description: string; earnedAt: string }[] = [];
+  let nextBadge: { badgeCode: string; name: string; description: string; current: number; target: number; progressPct: number } | null = null;
   let attendanceGoal = 10;
   let currentMonthCount = 0;
   let recommendedCourses: { id: string; name: string; category: string; modality: string | null }[] = [];
@@ -131,6 +132,7 @@ export default async function DashboardPage() {
       attByMod,
       athleteRes,
       badgesRes,
+      nextBadgeRes,
       profileRes,
       goalRes,
       confirmedAttRes,
@@ -144,6 +146,7 @@ export default async function DashboardPage() {
       getAttendanceByModality(supabase, studentId),
       supabase.from("Athlete").select("id").eq("studentId", studentId).single(),
       getEarnedBadges(supabase, studentId),
+      getNextBadgeProgress(supabase, studentId),
       supabase.from("StudentProfile").select("weightKg, heightCm, dateOfBirth, medicalNotes, emergencyContact, updatedAt").eq("studentId", studentId).maybeSingle(),
       supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
       supabase.from("Attendance").select("lessonId").eq("studentId", studentId).eq("status", "CONFIRMED"),
@@ -158,6 +161,7 @@ export default async function DashboardPage() {
     if (plan) hasDigitalAccess = plan.includes_digital_access === true;
     attendanceByModality = attByMod;
     earnedBadges = badgesRes;
+    nextBadge = nextBadgeRes ?? null;
     if (goalRes.data) attendanceGoal = goalRes.data.target_value ?? 10;
     if (profileRes.data) {
       const p = profileRes.data;
@@ -409,11 +413,21 @@ export default async function DashboardPage() {
                 <p style={{ margin: "0 0 4px 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                   {t("thisMonth")}
                 </p>
-                <p style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: currentMonthCount >= attendanceGoal ? "var(--success)" : "var(--warning)" }}>
+                <p style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: currentMonthCount >= attendanceGoal ? "var(--success)" : "var(--primary)" }}>
                   {currentMonthCount} / {attendanceGoal}
                 </p>
+                <div style={{ marginTop: 6, height: 4, borderRadius: 2, backgroundColor: "var(--border)", overflow: "hidden" }}>
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${Math.min(100, (currentMonthCount / attendanceGoal) * 100)}%`,
+                      backgroundColor: currentMonthCount >= attendanceGoal ? "var(--success)" : "var(--primary)",
+                      transition: "width 0.3s ease",
+                    }}
+                  />
+                </div>
                 {currentMonthCount >= attendanceGoal && (
-                  <p style={{ margin: "2px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--success)" }}>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--success)" }}>
                     ✓ {t("goalReached")}
                   </p>
                 )}
@@ -860,9 +874,19 @@ export default async function DashboardPage() {
               <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                 {t("confirmedThisMonth")}
               </p>
-              <p style={{ margin: 0, fontSize: "clamp(24px, 6vw, 28px)", fontWeight: 700, color: "var(--primary)" }}>
+              <p style={{ margin: 0, fontSize: "clamp(24px, 6vw, 28px)", fontWeight: 700, color: currentMonthCount >= attendanceGoal ? "var(--success)" : "var(--primary)" }}>
                 {currentMonthCount} / {attendanceGoal} {t("classesCount")}
               </p>
+              <div style={{ marginTop: 10, height: 8, borderRadius: 4, backgroundColor: "var(--border)", overflow: "hidden" }}>
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${Math.min(100, (currentMonthCount / attendanceGoal) * 100)}%`,
+                    backgroundColor: currentMonthCount >= attendanceGoal ? "var(--success)" : "var(--primary)",
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
               {currentMonthCount >= attendanceGoal && (
                 <p style={{ margin: "8px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--success)" }}>
                   ✓ {t("goalReached")}
@@ -870,6 +894,37 @@ export default async function DashboardPage() {
               )}
             </div>
           </section>
+
+          {nextBadge && (
+            <section>
+              <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
+                {t("nextConquest")}
+              </h2>
+              <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
+                  🎯 {nextBadge.name}
+                </p>
+                {nextBadge.description && (
+                  <p style={{ margin: "4px 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+                    {nextBadge.description}
+                  </p>
+                )}
+                <p style={{ margin: 0, fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+                  {nextBadge.current} / {nextBadge.target}
+                </p>
+                <div style={{ marginTop: 8, height: 6, borderRadius: 3, backgroundColor: "var(--border)", overflow: "hidden" }}>
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${nextBadge.progressPct}%`,
+                      backgroundColor: "var(--primary)",
+                      transition: "width 0.3s ease",
+                    }}
+                  />
+                </div>
+              </div>
+            </section>
+          )}
 
           <section>
             <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>

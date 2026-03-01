@@ -11,7 +11,8 @@ export const homeContent = {
     headerCta: "Aula Experimental",
 
     // Hero
-    heroHeadline: "Treine com Propósito. Lute com Disciplina.",
+    heroHeadline1: "Treine com Propósito.",
+    heroHeadline2: "Lute com Disciplina.",
     heroSubheadline: "Transforme o seu corpo e mente através das artes marciais. Metodologia Kingdom — onde cada golpe tem significado.",
     ctaStart: "Começar Agora",
     ctaViewTrainings: "Ver Treinos",
@@ -119,7 +120,8 @@ export const homeContent = {
   en: {
     headerCta: "Trial Class",
 
-    heroHeadline: "Train with Purpose. Fight with Discipline.",
+    heroHeadline1: "Train with Purpose.",
+    heroHeadline2: "Fight with Discipline.",
     heroSubheadline: "Transform your body and mind through martial arts. Kingdom methodology — where every strike has meaning.",
     ctaStart: "Start Now",
     ctaViewTrainings: "View Trainings",

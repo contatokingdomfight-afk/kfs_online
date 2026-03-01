@@ -1,3 +1,4 @@
+/** Labels das modalidades. Ao adicionar nova modalidade aqui, os badges de gamificação (10, 20, 30... aulas) são gerados automaticamente. */
 export const MODALITY_LABELS: Record<string, string> = {
   MUAY_THAI: "Muay Thai",
   BOXING: "Boxing",

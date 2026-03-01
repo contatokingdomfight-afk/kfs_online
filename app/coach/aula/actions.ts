@@ -6,6 +6,7 @@ import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { revalidatePath } from "next/cache";
 import { sendCheckInConfirmation } from "@/lib/notifications/email";
 import { createPresenceConfirmedNotification } from "@/lib/notifications/in-app";
+import { grantBadgesIfEligible } from "@/lib/gamification";
 
 export async function setAttendanceStatusFromForm(
   _prev: { error?: string } | null,
@@ -45,6 +46,7 @@ export async function setAttendanceStatus(
       .eq("id", attendanceId)
       .single();
     if (att) {
+      await grantBadgesIfEligible(supabase, att.studentId);
       const { data: lesson } = await supabase
         .from("Lesson")
         .select("modality, date, startTime, endTime")
@@ -72,6 +74,7 @@ export async function setAttendanceStatus(
   }
 
   revalidatePath("/coach/aula");
+  revalidatePath("/dashboard");
   return {};
 }
 
