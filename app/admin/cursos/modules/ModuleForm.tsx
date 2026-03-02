@@ -52,10 +52,9 @@ export function ModuleForm({
         <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Descrição (opcional)</span>
         <textarea name="description" defaultValue={initialDescription} className="input" rows={2} style={{ resize: "vertical" }} />
       </label>
-      <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>URL do vídeo</span>
-        <input type="url" name="videoUrl" defaultValue={initialVideoUrl} className="input" placeholder="https://..." />
-      </label>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
+        Após criar o módulo, adicione unidades (vídeo ou texto) dentro dele.
+      </p>
       <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Ordem</span>
         <input type="number" name="sortOrder" defaultValue={initialSortOrder} className="input" min={0} step={1} />

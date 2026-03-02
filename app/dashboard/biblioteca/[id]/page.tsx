@@ -5,6 +5,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { ConcluirModuloButton } from "../ConcluirModuloButton";
+import { ConcluirUnidadeButton } from "../ConcluirUnidadeButton";
 
 /** Converte URL do YouTube (watch ou short) em URL de embed para iframe. */
 function toEmbedVideoUrl(url: string): string {
@@ -58,14 +59,31 @@ export default async function CursoDetailPage({ params }: Props) {
     hasPurchased = !!purchase;
   }
 
-  const [{ data: course }, { data: modules }, { data: progressRows }] = await Promise.all([
+  const [{ data: course }, { data: modules }, { data: progressRows }, { data: unitProgressRows }] = await Promise.all([
     supabase.from("Course").select("id, name, description, category, modality, included_in_digital_plan, video_url, is_active").eq("id", courseId).single(),
     supabase.from("CourseModule").select("id, name, description, video_url, sort_order").eq("course_id", courseId).order("sort_order", { ascending: true }),
     studentId ? supabase.from("CourseProgress").select("module_id").eq("student_id", studentId) : Promise.resolve({ data: [] as { module_id: string }[] }),
+    studentId ? supabase.from("CourseUnitProgress").select("unit_id").eq("student_id", studentId) : Promise.resolve({ data: [] as { unit_id: string }[] }),
   ]);
 
   const completedModuleIds = new Set((progressRows ?? []).map((p) => p.module_id));
+  const completedUnitIds = new Set((unitProgressRows ?? []).map((p) => p.unit_id));
   const moduleList = modules ?? [];
+
+  const moduleIds = moduleList.map((m) => m.id);
+  let unitsByModule = new Map<string, { id: string; name: string; description: string | null; content_type: string; video_url: string | null; text_content: string | null; sort_order: number }[]>();
+  if (moduleIds.length > 0) {
+    const { data: units } = await supabase
+      .from("CourseUnit")
+      .select("id, module_id, name, description, content_type, video_url, text_content, sort_order")
+      .in("module_id", moduleIds);
+    (units ?? []).forEach((u) => {
+      const list = unitsByModule.get(u.module_id) ?? [];
+      list.push(u);
+      unitsByModule.set(u.module_id, list);
+    });
+    unitsByModule.forEach((list) => list.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
+  }
 
   if (!course || !course.is_active) {
     return (
@@ -126,45 +144,131 @@ export default async function CursoDetailPage({ params }: Props) {
 
       {moduleList.length > 0 ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
-          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
-            {moduleList.filter((m) => completedModuleIds.has(m.id)).length} / {moduleList.length} módulos concluídos
-          </p>
-          {moduleList.map((mod, idx) => (
-            <div key={mod.id} className="card" style={{ padding: 0, overflow: "hidden" }}>
-              <div style={{ padding: "clamp(12px, 3vw, 16px)", borderBottom: "1px solid var(--border)" }}>
-                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                  <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
-                    {idx + 1}. {mod.name}
-                  </span>
-                  {studentId && (
-                    completedModuleIds.has(mod.id) ? (
-                      <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
-                    ) : (
-                      <ConcluirModuloButton moduleId={mod.id} courseId={courseId} />
-                    )
+          {(() => {
+            const totalUnits = [...unitsByModule.values()].reduce((s, list) => s + list.length, 0);
+            const completedUnits = [...unitsByModule.values()].reduce(
+              (s, list) => s + list.filter((u) => completedUnitIds.has(u.id)).length,
+              0
+            );
+            const legacyModules = moduleList.filter((m) => (unitsByModule.get(m.id) ?? []).length === 0 && m.video_url);
+            const completedLegacy = legacyModules.filter((m) => completedModuleIds.has(m.id)).length;
+            const totalForProgress = totalUnits + legacyModules.length;
+            const completedForProgress = completedUnits + completedLegacy;
+            return (
+              <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
+                {completedForProgress} / {totalForProgress} itens concluídos
+              </p>
+            );
+          })()}
+          {moduleList.map((mod, idx) => {
+            const units = unitsByModule.get(mod.id) ?? [];
+            const hasUnits = units.length > 0;
+            const isLegacy = !hasUnits && mod.video_url;
+
+            if (hasUnits) {
+              return (
+                <div key={mod.id} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <h3 style={{ margin: 0, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+                    Módulo {idx + 1}: {mod.name}
+                  </h3>
+                  {mod.description && (
+                    <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>{mod.description}</p>
                   )}
+                  {units.map((u, uIdx) => (
+                    <div key={u.id} className="card" style={{ padding: 0, overflow: "hidden" }}>
+                      <div style={{ padding: "clamp(12px, 3vw, 16px)", borderBottom: "1px solid var(--border)" }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                          <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                            {uIdx + 1}. {u.name}
+                          </span>
+                          {studentId &&
+                            (completedUnitIds.has(u.id) ? (
+                              <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
+                            ) : (
+                              <ConcluirUnidadeButton unitId={u.id} courseId={courseId} />
+                            ))}
+                        </div>
+                        {u.description && (
+                          <p style={{ margin: "6px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{u.description}</p>
+                        )}
+                      </div>
+                      {u.content_type === "VIDEO" && u.video_url ? (
+                        <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden" }}>
+                          <iframe
+                            src={toEmbedVideoUrl(u.video_url)}
+                            title={u.name}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                          />
+                        </div>
+                      ) : u.content_type === "TEXT" && u.text_content ? (
+                        <div
+                          style={{
+                            padding: "clamp(16px, 4vw, 20px)",
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            lineHeight: 1.6,
+                            color: "var(--text-primary)",
+                            whiteSpace: "pre-wrap",
+                          }}
+                        >
+                          {u.text_content}
+                        </div>
+                      ) : (
+                        <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                          <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>{t("videoComingSoon")}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
+              );
+            }
+
+            if (isLegacy) {
+              return (
+                <div key={mod.id} className="card" style={{ padding: 0, overflow: "hidden" }}>
+                  <div style={{ padding: "clamp(12px, 3vw, 16px)", borderBottom: "1px solid var(--border)" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                      <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                        {idx + 1}. {mod.name}
+                      </span>
+                      {studentId &&
+                        (completedModuleIds.has(mod.id) ? (
+                          <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
+                        ) : (
+                          <ConcluirModuloButton moduleId={mod.id} courseId={courseId} />
+                        ))}
+                    </div>
+                    {mod.description && (
+                      <p style={{ margin: "6px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{mod.description}</p>
+                    )}
+                  </div>
+                  <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden" }}>
+                    <iframe
+                      src={toEmbedVideoUrl(mod.video_url!)}
+                      title={mod.name}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                    />
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div key={mod.id} className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                <h3 style={{ margin: 0, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+                  Módulo {idx + 1}: {mod.name}
+                </h3>
                 {mod.description && (
-                  <p style={{ margin: "6px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{mod.description}</p>
+                  <p style={{ margin: "8px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{mod.description}</p>
                 )}
+                <p style={{ margin: "12px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>Sem unidades ainda.</p>
               </div>
-              {mod.video_url ? (
-                <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden" }}>
-                  <iframe
-                    src={toEmbedVideoUrl(mod.video_url)}
-                    title={mod.name}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
-                  />
-                </div>
-              ) : (
-                <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-                  <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>{t("videoComingSoon")}</p>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <>

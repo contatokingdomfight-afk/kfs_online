@@ -7,6 +7,8 @@ import { CursoForm } from "../CursoForm";
 import { DeleteCursoButton } from "./DeleteCursoButton";
 import { ModuleForm } from "../modules/ModuleForm";
 import { DeleteModuleButton } from "../modules/DeleteModuleButton";
+import { UnitForm } from "../modules/units/UnitForm";
+import { DeleteUnitButton } from "../modules/units/DeleteUnitButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -23,6 +25,21 @@ export default async function AdminCursosEditarPage({ params }: Props) {
     supabase.from("Course").select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase").eq("id", courseId).single(),
     supabase.from("CourseModule").select("id, name, description, video_url, sort_order").eq("course_id", courseId).order("sort_order", { ascending: true }),
   ]);
+
+  const moduleIds = (modules ?? []).map((m) => m.id);
+  let unitsByModule = new Map<string, { id: string; module_id: string; name: string; description: string | null; content_type: string; video_url: string | null; text_content: string | null; sort_order: number }[]>();
+  if (moduleIds.length > 0) {
+    const { data: units } = await supabase
+      .from("CourseUnit")
+      .select("id, module_id, name, description, content_type, video_url, text_content, sort_order")
+      .in("module_id", moduleIds);
+    (units ?? []).forEach((u) => {
+      const list = unitsByModule.get(u.module_id) ?? [];
+      list.push(u);
+      unitsByModule.set(u.module_id, list);
+    });
+    unitsByModule.forEach((list) => list.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
+  }
 
   if (!course) {
     return (
@@ -70,37 +87,63 @@ export default async function AdminCursosEditarPage({ params }: Props) {
         initialAvailableForPurchase={course.available_for_purchase ?? false}
         initialLevel={course.level}
       />
-      {/* Módulos do curso (Biblioteca 360º) */}
+      {/* Módulos e Unidades do curso */}
       <div style={{ marginTop: "clamp(24px, 6vw, 32px)" }}>
         <h2 style={{ margin: "0 0 12px 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Módulos / Aulas
+          Módulos e Unidades
         </h2>
         <p style={{ margin: "0 0 16px 0", fontSize: 14, color: "var(--text-secondary)" }}>
-          Adicione módulos com vídeos. Se não houver módulos, o curso usa o vídeo principal acima.
+          Cada módulo pode ter várias unidades. Cada unidade pode ser um vídeo ou texto para leitura.
         </p>
         {(modules ?? []).length > 0 && (
-          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px 0", display: "flex", flexDirection: "column", gap: 8 }}>
-            {(modules ?? []).map((m) => (
-              <li
-                key={m.id}
-                className="card"
-                style={{
-                  padding: "12px 16px",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 8,
-                }}
-              >
-                <div>
-                  <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{m.name}</span>
-                  {m.video_url && <span style={{ fontSize: 12, color: "var(--text-secondary)", marginLeft: 8 }}>Vídeo</span>}
+          <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
+            {(modules ?? []).map((m, idx) => {
+              const units = unitsByModule.get(m.id) ?? [];
+              return (
+                <div key={m.id} className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
+                    <span style={{ fontWeight: 600, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-primary)" }}>
+                      Módulo {idx + 1}: {m.name}
+                    </span>
+                    <DeleteModuleButton moduleId={m.id} courseId={course.id} moduleName={m.name} />
+                  </div>
+                  {m.description && (
+                    <p style={{ margin: "0 0 12px 0", fontSize: 14, color: "var(--text-secondary)" }}>{m.description}</p>
+                  )}
+                  {units.length > 0 && (
+                    <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px 0", display: "flex", flexDirection: "column", gap: 8 }}>
+                      {units.map((u, uIdx) => (
+                        <li
+                          key={u.id}
+                          style={{
+                            padding: "10px 12px",
+                            background: "var(--surface)",
+                            borderRadius: "var(--radius-md)",
+                            display: "flex",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 8,
+                          }}
+                        >
+                          <div>
+                            <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>
+                              {uIdx + 1}. {u.name}
+                            </span>
+                            <span style={{ fontSize: 12, color: "var(--text-secondary)", marginLeft: 8 }}>
+                              {u.content_type === "VIDEO" ? "Vídeo" : "Texto"}
+                            </span>
+                          </div>
+                          <DeleteUnitButton unitId={u.id} courseId={course.id} unitName={u.name} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <UnitForm courseId={course.id} moduleId={m.id} initialSortOrder={units.length} />
                 </div>
-                <DeleteModuleButton moduleId={m.id} courseId={course.id} moduleName={m.name} />
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         )}
         <ModuleForm courseId={course.id} />
       </div>
