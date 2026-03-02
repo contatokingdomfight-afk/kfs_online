@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { DeleteCursoButton } from "./DeleteCursoButton";
 import { CollapsibleCourseDetails } from "./CollapsibleCourseDetails";
 import { ModuleCard } from "./ModuleCard";
-import { ModuleForm } from "../modules/ModuleForm";
+import { AddModuleSection } from "./AddModuleSection";
 import { CoCreatorForm } from "@/app/coach/cursos/[id]/CoCreatorForm";
 
 type Props = { params: Promise<{ id: string }> };
@@ -100,10 +100,12 @@ export default async function AdminCursosEditarPage({ params }: Props) {
           Um curso tem <strong>módulos</strong>. Cada módulo tem <strong>unidades</strong>. Cada unidade é um <strong>vídeo</strong> ou um <strong>texto</strong> para leitura.
         </p>
 
-        {/* 1) Adicionar módulo — primeiro */}
-        <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
-          <ModuleForm courseId={course.id} initialSortOrder={(modules ?? []).length} />
-        </div>
+        {/* 1) Adicionar módulo — recolhível (aberto se ainda não há módulos) */}
+        <AddModuleSection
+          courseId={course.id}
+          initialSortOrder={(modules ?? []).length}
+          hasModules={(modules ?? []).length > 0}
+        />
 
         {/* 2) Lista de módulos (cada um com as suas unidades e botão para adicionar unidade) */}
         {(modules ?? []).length > 0 && (

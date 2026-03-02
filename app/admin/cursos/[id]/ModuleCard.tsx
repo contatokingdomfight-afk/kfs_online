@@ -105,27 +105,54 @@ export function ModuleCard({ courseId, module, index, units }: Props) {
             <button
               type="button"
               onClick={() => setShowAddUnit(true)}
-              className="btn"
               style={{
                 fontSize: 14,
-                padding: "8px 14px",
+                padding: "10px 16px",
                 background: "var(--primary)",
                 color: "#fff",
                 border: "none",
                 borderRadius: "var(--radius-md)",
                 cursor: "pointer",
+                fontWeight: 500,
               }}
             >
               + Adicionar unidade (vídeo ou texto)
             </button>
           ) : (
-            <div style={{ marginTop: 8 }}>
-              <UnitForm courseId={courseId} moduleId={module.id} initialSortOrder={units.length} />
+            <div
+              style={{
+                marginTop: 16,
+                paddingTop: 16,
+                borderTop: "1px dashed var(--border, #e5e7eb)",
+              }}
+            >
+              <p style={{ margin: "0 0 12px 0", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
+                Nova unidade
+              </p>
+              <div
+                style={{
+                  padding: "clamp(14px, 3.5vw, 18px)",
+                  background: "var(--bg)",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--border, #e5e7eb)",
+                }}
+              >
+                <UnitForm
+                  courseId={courseId}
+                  moduleId={module.id}
+                  initialSortOrder={units.length}
+                  initialName=""
+                  initialDescription=""
+                  initialContentType="VIDEO"
+                  initialVideoUrl=""
+                  initialTextContent=""
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => setShowAddUnit(false)}
                 style={{
-                  marginTop: 8,
+                  marginTop: 10,
                   fontSize: 13,
                   background: "none",
                   border: "none",
