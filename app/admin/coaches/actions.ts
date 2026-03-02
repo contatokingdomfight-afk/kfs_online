@@ -111,10 +111,11 @@ export async function updateCoach(_prev: UpdateCoachResult | null, formData: For
 
   const name = (formData.get("name") as string)?.trim() || null;
   const specialties = (formData.get("specialties") as string)?.trim() || null;
+  const canCreateCourses = formData.get("can_create_courses") === "on";
 
   const supabase = createAdminClient();
 
-  const { data: coach } = await supabase.from("Coach").select("id, userId").eq("id", coachId).single();
+  const { data: coach } = await supabase.from("Coach").select("id, userId, studentId").eq("id", coachId).single();
   if (!coach) return { error: "Coach não encontrado." };
 
   if (name !== undefined) {
@@ -129,7 +130,36 @@ export async function updateCoach(_prev: UpdateCoachResult | null, formData: For
 
   if (coachError) return { error: coachError.message };
 
+  if (coach.studentId) {
+    const { error: studentError } = await supabase
+      .from("Student")
+      .update({ can_create_courses: canCreateCourses })
+      .eq("id", coach.studentId);
+    if (studentError) return { error: studentError.message };
+  }
+
   revalidatePath("/admin/coaches");
-  revalidatePath(`/admin/coaches/${coach.id}`);
+  revalidatePath(`/admin/coaches/${coachId}`);
+  return {};
+}
+
+export type ToggleCoursePermissionResult = { error?: string };
+
+export async function toggleCoursePermission(
+  _prev: ToggleCoursePermissionResult | null,
+  formData: FormData
+): Promise<ToggleCoursePermissionResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const studentId = (formData.get("studentId") as string)?.trim();
+  const value = formData.get("value") === "true";
+  if (!studentId) return { error: "ID inválido." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("Student").update({ can_create_courses: value }).eq("id", studentId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/coaches");
   return {};
 }

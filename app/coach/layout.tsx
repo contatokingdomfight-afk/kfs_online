@@ -6,7 +6,7 @@ import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-se
 import { getTranslations } from "@/lib/i18n";
 import { ViewAsBanner } from "@/components/ViewAsBanner";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
-import Link from "next/link";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
 export default async function CoachLayout({
   children,
@@ -17,12 +17,20 @@ export default async function CoachLayout({
   if (!dbUser) redirect("/sign-in");
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") redirect("/dashboard");
 
-  const [viewAs, theme, locale, coachStudentId] = await Promise.all([
+  const result = getAdminClientOrNull();
+  const supabase = result.client;
+
+  const [viewAs, theme, locale, coachStudentId, studentRes] = await Promise.all([
     dbUser.role === "ADMIN" ? getViewAsFromCookies() : Promise.resolve(null),
     getThemeFromCookies(),
     getLocaleFromCookies(),
     getCoachStudentId(),
+    supabase
+      ? supabase.from("Student").select("can_create_courses").eq("userId", dbUser.id).single()
+      : Promise.resolve({ data: null }),
   ]);
+
+  const canCreateCourses = studentRes?.data?.can_create_courses ?? false;
   const t = getTranslations(locale as "pt" | "en");
   const coachLinks = [
     ...(dbUser.role === "ADMIN"
@@ -34,6 +42,9 @@ export default async function CoachLayout({
     { label: t("navAgenda"), href: "/coach/agenda" },
     { label: t("navStudents"), href: "/coach/alunos" },
     { label: t("navAthletesCoach"), href: "/coach/atletas" },
+    ...(canCreateCourses
+      ? [{ label: "Meus Cursos", href: "/coach/cursos" as string }]
+      : []),
     ...(coachStudentId
       ? [{ label: t("myStudentArea"), href: "/dashboard" as string }]
       : []),

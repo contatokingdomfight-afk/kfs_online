@@ -16,7 +16,7 @@ export default async function AdminCoachEditarPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: coach } = await supabase.from("Coach").select("id, userId, specialties").eq("id", coachId).single();
+  const { data: coach } = await supabase.from("Coach").select("id, userId, specialties, studentId").eq("id", coachId).single();
 
   if (!coach) {
     return (
@@ -29,7 +29,14 @@ export default async function AdminCoachEditarPage({ params }: Props) {
     );
   }
 
-  const { data: user } = await supabase.from("User").select("id, name, email").eq("id", coach.userId).single();
+  const [{ data: user }, studentRes] = await Promise.all([
+    supabase.from("User").select("id, name, email").eq("id", coach.userId).single(),
+    coach.studentId
+      ? supabase.from("Student").select("id, can_create_courses").eq("id", coach.studentId).single()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const student = studentRes.data;
 
   return (
     <div style={{ maxWidth: "min(420px, 100%)" }}>
@@ -56,6 +63,8 @@ export default async function AdminCoachEditarPage({ params }: Props) {
         coachId={coachId}
         initialName={user?.name ?? ""}
         initialSpecialties={coach.specialties ?? ""}
+        studentId={student?.id ?? null}
+        initialCanCreateCourses={student?.can_create_courses ?? false}
       />
     </div>
   );

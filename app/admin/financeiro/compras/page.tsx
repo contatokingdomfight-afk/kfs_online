@@ -40,7 +40,7 @@ export default async function ComprasInscricoesPage() {
 
   const [studentsRes, coursesRes, eventsRes] = await Promise.all([
     studentIds.length > 0 ? supabase.from("Student").select("id, userId").in("id", studentIds) : Promise.resolve({ data: [] }),
-    courseIds.length > 0 ? supabase.from("Course").select("id, name").in("id", courseIds) : Promise.resolve({ data: [] }),
+    courseIds.length > 0 ? supabase.from("Course").select("id, name, price, coach_revenue_pct, creator_student_id").in("id", courseIds) : Promise.resolve({ data: [] }),
     eventIds.length > 0 ? supabase.from("Event").select("id, name, event_date").in("id", eventIds) : Promise.resolve({ data: [] }),
   ]);
 
@@ -49,7 +49,22 @@ export default async function ComprasInscricoesPage() {
   const { data: users } = userIds.length > 0 ? await supabase.from("User").select("id, name, email").in("id", userIds) : { data: [] };
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
   const studentToUser = new Map(students.map((s) => [s.id, userById.get(s.userId)]));
-  const courseById = new Map((coursesRes.data ?? []).map((c) => [c.id, c]));
+  const courseById = new Map((coursesRes.data ?? []).map((c: { id: string; name: string; price?: number | null; coach_revenue_pct?: number | null; creator_student_id?: string | null }) => [c.id, c]));
+
+  // Buscar nomes dos coaches criadores dos cursos
+  const creatorIds = [...new Set((coursesRes.data ?? []).filter((c: { creator_student_id?: string | null }) => c.creator_student_id).map((c: { creator_student_id?: string | null }) => c.creator_student_id as string))];
+  let creatorNameById = new Map<string, string>();
+  if (creatorIds.length > 0) {
+    const { data: creators } = await supabase.from("Student").select("id, userId").in("id", creatorIds);
+    const creatorUserIds = (creators ?? []).map((s: { id: string; userId: string }) => s.userId);
+    if (creatorUserIds.length > 0) {
+      const { data: creatorUsers } = await supabase.from("User").select("id, name").in("id", creatorUserIds);
+      const userNameById = new Map((creatorUsers ?? []).map((u: { id: string; name: string | null }) => [u.id, u.name ?? "—"]));
+      (creators ?? []).forEach((s: { id: string; userId: string }) => {
+        creatorNameById.set(s.id, userNameById.get(s.userId) ?? "—");
+      });
+    }
+  }
   const eventById = new Map((eventsRes.data ?? []).map((e) => [e.id, e]));
 
   function formatDate(d: string | null | undefined): string {
@@ -101,6 +116,12 @@ export default async function ComprasInscricoesPage() {
             {purchases.map((p) => {
               const u = studentToUser.get(p.studentId);
               const course = courseById.get(p.courseId);
+              const amount = Number(p.amount ?? course?.price ?? 0);
+              const coachPct = course?.coach_revenue_pct ?? 0;
+              const isCoachCourse = !!course?.creator_student_id;
+              const coachEarns = isCoachCourse ? (amount * coachPct) / 100 : 0;
+              const kfsEarns = isCoachCourse ? amount - coachEarns : amount;
+              const coachName = course?.creator_student_id ? creatorNameById.get(course.creator_student_id) : null;
               return (
                 <li key={p.id} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -111,9 +132,19 @@ export default async function ComprasInscricoesPage() {
                       {course?.name ?? p.courseId}
                     </span>
                     <span style={{ marginLeft: "auto", fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 600, color: "var(--primary)" }}>
-                      €{Number(p.amount ?? 0).toFixed(0)}
+                      €{amount.toFixed(0)}
                     </span>
                   </div>
+                  {isCoachCourse && (
+                    <div style={{ display: "flex", gap: 12, marginTop: 6, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 13, padding: "2px 8px", borderRadius: "var(--radius-md)", background: "var(--surface)", color: "var(--text-secondary)" }}>
+                        Coach {coachName ? `(${coachName})` : ""}: <strong style={{ color: "var(--primary)" }}>€{coachEarns.toFixed(2)}</strong> ({coachPct}%)
+                      </span>
+                      <span style={{ fontSize: 13, padding: "2px 8px", borderRadius: "var(--radius-md)", background: "var(--surface)", color: "var(--text-secondary)" }}>
+                        KFS: <strong>€{kfsEarns.toFixed(2)}</strong> ({100 - coachPct}%)
+                      </span>
+                    </div>
+                  )}
                   <p style={{ margin: "4px 0 0 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>
                     {formatDate(p.createdAt)} · {STATUS_LABEL[p.status] ?? p.status}
                   </p>
