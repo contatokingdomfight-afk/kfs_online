@@ -73,6 +73,13 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           Compras e inscrições
         </Link>
         <Link
+          href="/admin/financeiro/coaches"
+          className="btn"
+          style={{ textDecoration: "none", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}
+        >
+          Pagamentos a coaches
+        </Link>
+        <Link
           href="/admin/financeiro/novo"
           className="btn btn-primary"
           style={{ textDecoration: "none" }}

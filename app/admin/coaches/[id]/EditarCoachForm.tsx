@@ -7,11 +7,12 @@ type Props = {
   coachId: string;
   initialName: string;
   initialSpecialties: string;
+  initialHourlyRate: number | null;
   studentId: string | null;
   initialCanCreateCourses: boolean;
 };
 
-export function EditarCoachForm({ coachId, initialName, initialSpecialties, studentId, initialCanCreateCourses }: Props) {
+export function EditarCoachForm({ coachId, initialName, initialSpecialties, initialHourlyRate, studentId, initialCanCreateCourses }: Props) {
   const [state, formAction] = useFormState(updateCoach, null as UpdateCoachResult | null);
 
   return (
@@ -49,6 +50,24 @@ export function EditarCoachForm({ coachId, initialName, initialSpecialties, stud
           className="input"
           placeholder="ex: Muay Thai, Boxing"
         />
+      </label>
+
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          Valor por hora de aula (€)
+        </span>
+        <input
+          type="number"
+          name="hourly_rate"
+          defaultValue={initialHourlyRate ?? ""}
+          className="input"
+          placeholder="ex: 25.00"
+          min="0"
+          step="0.01"
+        />
+        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+          Utilizado para calcular o pagamento mensal por aulas lecionadas.
+        </span>
       </label>
 
       {studentId && (

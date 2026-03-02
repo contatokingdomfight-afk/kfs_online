@@ -112,6 +112,8 @@ export async function updateCoach(_prev: UpdateCoachResult | null, formData: For
   const name = (formData.get("name") as string)?.trim() || null;
   const specialties = (formData.get("specialties") as string)?.trim() || null;
   const canCreateCourses = formData.get("can_create_courses") === "on";
+  const hourlyRateRaw = (formData.get("hourly_rate") as string)?.trim();
+  const hourlyRate = hourlyRateRaw ? parseFloat(hourlyRateRaw) : null;
 
   const supabase = createAdminClient();
 
@@ -125,7 +127,7 @@ export async function updateCoach(_prev: UpdateCoachResult | null, formData: For
 
   const { error: coachError } = await supabase
     .from("Coach")
-    .update({ specialties })
+    .update({ specialties, hourly_rate: hourlyRate })
     .eq("id", coachId);
 
   if (coachError) return { error: coachError.message };

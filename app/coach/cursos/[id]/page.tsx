@@ -4,6 +4,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { CoachCursoForm } from "../CoachCursoForm";
+import { CoCreatorForm } from "./CoCreatorForm";
 import { ModuleForm } from "@/app/admin/cursos/modules/ModuleForm";
 import { DeleteModuleButton } from "@/app/admin/cursos/modules/DeleteModuleButton";
 import { UnitForm } from "@/app/admin/cursos/modules/units/UnitForm";
@@ -28,7 +29,7 @@ export default async function CoachEditarCursoPage({ params }: Props) {
 
   if (!student?.can_create_courses) redirect("/coach/cursos");
 
-  const [{ data: course }, { data: modules }] = await Promise.all([
+  const [{ data: course }, { data: modules }, { data: coCreatorsRaw }] = await Promise.all([
     supabase
       .from("Course")
       .select("id, name, description, category, modality, level, price, available_for_purchase, is_active, creator_student_id, coach_revenue_pct")
@@ -39,9 +40,36 @@ export default async function CoachEditarCursoPage({ params }: Props) {
       .select("id, name, description, sort_order")
       .eq("course_id", courseId)
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("CourseCreator")
+      .select("id, student_id, revenue_pct")
+      .eq("course_id", courseId),
   ]);
 
   if (!course || course.creator_student_id !== student.id) redirect("/coach/cursos");
+
+  // Resolver nomes dos co-criadores
+  const coCreatorStudentIds = (coCreatorsRaw ?? []).map((cc) => cc.student_id);
+  let coCreatorStudentUsers: { studentId: string; name: string; email: string }[] = [];
+  if (coCreatorStudentIds.length > 0) {
+    const { data: coCreatorStudents } = await supabase
+      .from("Student")
+      .select("id, userId")
+      .in("id", coCreatorStudentIds);
+    const ccUserIds = (coCreatorStudents ?? []).map((s) => s.userId);
+    if (ccUserIds.length > 0) {
+      const { data: ccUsers } = await supabase.from("User").select("id, name, email").in("id", ccUserIds);
+      coCreatorStudentUsers = (coCreatorStudents ?? []).map((s) => {
+        const u = (ccUsers ?? []).find((u) => u.id === s.userId);
+        return { studentId: s.id, name: u?.name ?? "", email: u?.email ?? "" };
+      });
+    }
+  }
+  const coCreators = (coCreatorsRaw ?? []).map((cc) => {
+    const info = coCreatorStudentUsers.find((x) => x.studentId === cc.student_id);
+    return { id: cc.id, student_id: cc.student_id, revenue_pct: cc.revenue_pct, userName: info?.name ?? "", userEmail: info?.email ?? "" };
+  });
+  const usedPct = coCreators.reduce((sum, cc) => sum + cc.revenue_pct, 0);
 
   const moduleIds = (modules ?? []).map((m) => m.id);
   const unitsByModule = new Map<string, { id: string; module_id: string; name: string; content_type: string; sort_order: number }[]>();
@@ -100,6 +128,25 @@ export default async function CoachEditarCursoPage({ params }: Props) {
         {course.price && (
           <span> · Preço: <strong style={{ color: "var(--text-primary)" }}>€{Number(course.price).toFixed(0)}</strong></span>
         )}
+      </div>
+
+      <div
+        style={{
+          padding: "clamp(14px, 3.5vw, 16px)",
+          background: "var(--surface)",
+          borderRadius: "var(--radius-md)",
+          borderLeft: "3px solid var(--accent, var(--primary))",
+          marginBottom: "clamp(16px, 4vw, 20px)",
+        }}
+      >
+        <h3 style={{ margin: "0 0 12px 0", fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          Co-criadores do curso
+        </h3>
+        <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "var(--text-secondary)" }}>
+          Convida outros coaches para co-criarem este curso. Define o % de receita de cada um (sobre os teus 65%).
+          KFS retém sempre <strong>35%</strong>.
+        </p>
+        <CoCreatorForm courseId={course.id} coCreators={coCreators} usedPct={usedPct} />
       </div>
 
       <CoachCursoForm

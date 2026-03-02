@@ -16,7 +16,7 @@ export default async function AdminCoachEditarPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: coach } = await supabase.from("Coach").select("id, userId, specialties, studentId").eq("id", coachId).single();
+  const { data: coach } = await supabase.from("Coach").select("id, userId, specialties, studentId, hourly_rate").eq("id", coachId).single();
 
   if (!coach) {
     return (
@@ -63,6 +63,7 @@ export default async function AdminCoachEditarPage({ params }: Props) {
         coachId={coachId}
         initialName={user?.name ?? ""}
         initialSpecialties={coach.specialties ?? ""}
+        initialHourlyRate={coach.hourly_rate != null ? Number(coach.hourly_rate) : null}
         studentId={student?.id ?? null}
         initialCanCreateCourses={student?.can_create_courses ?? false}
       />

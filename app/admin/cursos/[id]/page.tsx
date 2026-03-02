@@ -9,6 +9,7 @@ import { ModuleForm } from "../modules/ModuleForm";
 import { DeleteModuleButton } from "../modules/DeleteModuleButton";
 import { UnitForm } from "../modules/units/UnitForm";
 import { DeleteUnitButton } from "../modules/units/DeleteUnitButton";
+import { CoCreatorForm } from "@/app/coach/cursos/[id]/CoCreatorForm";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -21,9 +22,10 @@ export default async function AdminCursosEditarPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const [{ data: course }, { data: modules }] = await Promise.all([
-    supabase.from("Course").select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase").eq("id", courseId).single(),
+  const [{ data: course }, { data: modules }, { data: coCreatorsRaw }] = await Promise.all([
+    supabase.from("Course").select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase, creator_student_id, coach_revenue_pct").eq("id", courseId).single(),
     supabase.from("CourseModule").select("id, name, description, video_url, sort_order").eq("course_id", courseId).order("sort_order", { ascending: true }),
+    supabase.from("CourseCreator").select("id, student_id, revenue_pct").eq("course_id", courseId),
   ]);
 
   const moduleIds = (modules ?? []).map((m) => m.id);
@@ -40,6 +42,23 @@ export default async function AdminCursosEditarPage({ params }: Props) {
     });
     unitsByModule.forEach((list) => list.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
   }
+
+  // Resolver nomes dos co-criadores
+  const coCreatorStudentIds = (coCreatorsRaw ?? []).map((cc) => cc.student_id);
+  let coCreators: { id: string; student_id: string; revenue_pct: number; userName: string; userEmail: string }[] = [];
+  if (coCreatorStudentIds.length > 0) {
+    const { data: coCreatorStudents } = await supabase.from("Student").select("id, userId").in("id", coCreatorStudentIds);
+    const ccUserIds = (coCreatorStudents ?? []).map((s) => s.userId);
+    if (ccUserIds.length > 0) {
+      const { data: ccUsers } = await supabase.from("User").select("id, name, email").in("id", ccUserIds);
+      coCreators = (coCreatorsRaw ?? []).map((cc) => {
+        const st = (coCreatorStudents ?? []).find((s) => s.id === cc.student_id);
+        const u = st ? (ccUsers ?? []).find((u) => u.id === st.userId) : null;
+        return { id: cc.id, student_id: cc.student_id, revenue_pct: cc.revenue_pct, userName: u?.name ?? "", userEmail: u?.email ?? "" };
+      });
+    }
+  }
+  const usedPct = coCreators.reduce((sum, cc) => sum + cc.revenue_pct, 0);
 
   if (!course) {
     return (
@@ -87,6 +106,21 @@ export default async function AdminCursosEditarPage({ params }: Props) {
         initialAvailableForPurchase={course.available_for_purchase ?? false}
         initialLevel={course.level}
       />
+      {/* Co-criadores do curso */}
+      {course.creator_student_id && (
+        <div style={{ marginTop: "clamp(24px, 6vw, 32px)" }}>
+          <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
+            Co-criadores
+          </h2>
+          <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "var(--text-secondary)" }}>
+            Coaches que co-criam este curso e os seus percentuais de receita (sobre os 65% do coach).
+          </p>
+          <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+            <CoCreatorForm courseId={course.id} coCreators={coCreators} usedPct={usedPct} />
+          </div>
+        </div>
+      )}
+
       {/* Módulos e Unidades do curso */}
       <div style={{ marginTop: "clamp(24px, 6vw, 32px)" }}>
         <h2 style={{ margin: "0 0 12px 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>

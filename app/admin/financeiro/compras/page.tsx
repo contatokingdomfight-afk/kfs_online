@@ -38,10 +38,11 @@ export default async function ComprasInscricoesPage() {
   const courseIds = [...new Set(purchases.map((p) => p.courseId))];
   const eventIds = [...new Set(registrations.map((r) => r.eventId))];
 
-  const [studentsRes, coursesRes, eventsRes] = await Promise.all([
+  const [studentsRes, coursesRes, eventsRes, coCreatorsRes] = await Promise.all([
     studentIds.length > 0 ? supabase.from("Student").select("id, userId").in("id", studentIds) : Promise.resolve({ data: [] }),
-    courseIds.length > 0 ? supabase.from("Course").select("id, name, price, coach_revenue_pct, creator_student_id").in("id", courseIds) : Promise.resolve({ data: [] }),
+    courseIds.length > 0 ? supabase.from("Course").select("id, name, price, creator_student_id").in("id", courseIds) : Promise.resolve({ data: [] }),
     eventIds.length > 0 ? supabase.from("Event").select("id, name, event_date").in("id", eventIds) : Promise.resolve({ data: [] }),
+    courseIds.length > 0 ? supabase.from("CourseCreator").select("id, course_id, student_id, revenue_pct").in("course_id", courseIds) : Promise.resolve({ data: [] }),
   ]);
 
   const students = studentsRes.data ?? [];
@@ -49,23 +50,32 @@ export default async function ComprasInscricoesPage() {
   const { data: users } = userIds.length > 0 ? await supabase.from("User").select("id, name, email").in("id", userIds) : { data: [] };
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
   const studentToUser = new Map(students.map((s) => [s.id, userById.get(s.userId)]));
-  const courseById = new Map((coursesRes.data ?? []).map((c: { id: string; name: string; price?: number | null; coach_revenue_pct?: number | null; creator_student_id?: string | null }) => [c.id, c]));
+  const courseById = new Map((coursesRes.data ?? []).map((c) => [c.id, c]));
+  const eventById = new Map((eventsRes.data ?? []).map((e) => [e.id, e]));
 
-  // Buscar nomes dos coaches criadores dos cursos
-  const creatorIds = [...new Set((coursesRes.data ?? []).filter((c: { creator_student_id?: string | null }) => c.creator_student_id).map((c: { creator_student_id?: string | null }) => c.creator_student_id as string))];
-  let creatorNameById = new Map<string, string>();
-  if (creatorIds.length > 0) {
-    const { data: creators } = await supabase.from("Student").select("id, userId").in("id", creatorIds);
-    const creatorUserIds = (creators ?? []).map((s: { id: string; userId: string }) => s.userId);
-    if (creatorUserIds.length > 0) {
-      const { data: creatorUsers } = await supabase.from("User").select("id, name").in("id", creatorUserIds);
-      const userNameById = new Map((creatorUsers ?? []).map((u: { id: string; name: string | null }) => [u.id, u.name ?? "—"]));
-      (creators ?? []).forEach((s: { id: string; userId: string }) => {
-        creatorNameById.set(s.id, userNameById.get(s.userId) ?? "—");
+  // Construir mapa de co-criadores por curso
+  const coCreatorsList = coCreatorsRes.data ?? [];
+  const coCreatorsByCourse = new Map<string, { student_id: string; revenue_pct: number }[]>();
+  for (const cc of coCreatorsList) {
+    const list = coCreatorsByCourse.get(cc.course_id) ?? [];
+    list.push({ student_id: cc.student_id, revenue_pct: cc.revenue_pct });
+    coCreatorsByCourse.set(cc.course_id, list);
+  }
+
+  // Resolver nomes dos co-criadores (Student -> User)
+  const allCoCreatorStudentIds = [...new Set(coCreatorsList.map((cc) => cc.student_id))];
+  let coCreatorNameByStudentId = new Map<string, string>();
+  if (allCoCreatorStudentIds.length > 0) {
+    const { data: ccStudents } = await supabase.from("Student").select("id, userId").in("id", allCoCreatorStudentIds);
+    const ccUserIds = (ccStudents ?? []).map((s) => s.userId);
+    if (ccUserIds.length > 0) {
+      const { data: ccUsers } = await supabase.from("User").select("id, name").in("id", ccUserIds);
+      const ccUserNameById = new Map((ccUsers ?? []).map((u) => [u.id, u.name ?? "—"]));
+      (ccStudents ?? []).forEach((s) => {
+        coCreatorNameByStudentId.set(s.id, ccUserNameById.get(s.userId) ?? "—");
       });
     }
   }
-  const eventById = new Map((eventsRes.data ?? []).map((e) => [e.id, e]));
 
   function formatDate(d: string | null | undefined): string {
     if (!d) return "—";
@@ -117,11 +127,12 @@ export default async function ComprasInscricoesPage() {
               const u = studentToUser.get(p.studentId);
               const course = courseById.get(p.courseId);
               const amount = Number(p.amount ?? course?.price ?? 0);
-              const coachPct = course?.coach_revenue_pct ?? 0;
-              const isCoachCourse = !!course?.creator_student_id;
-              const coachEarns = isCoachCourse ? (amount * coachPct) / 100 : 0;
-              const kfsEarns = isCoachCourse ? amount - coachEarns : amount;
-              const coachName = course?.creator_student_id ? creatorNameById.get(course.creator_student_id) : null;
+              const creators = coCreatorsByCourse.get(p.courseId) ?? [];
+              const isCoachCourse = creators.length > 0 || !!course?.creator_student_id;
+              const totalCoachPct = creators.reduce((sum, cc) => sum + cc.revenue_pct, 0);
+              const kfsPct = isCoachCourse ? 100 - totalCoachPct : 100;
+              const kfsEarns = (amount * kfsPct) / 100;
+
               return (
                 <li key={p.id} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -135,13 +146,29 @@ export default async function ComprasInscricoesPage() {
                       €{amount.toFixed(0)}
                     </span>
                   </div>
-                  {isCoachCourse && (
-                    <div style={{ display: "flex", gap: 12, marginTop: 6, flexWrap: "wrap" }}>
+                  {isCoachCourse && creators.length > 0 && (
+                    <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                      {creators.map((cc) => {
+                        const coachEarns = (amount * cc.revenue_pct) / 100;
+                        const name = coCreatorNameByStudentId.get(cc.student_id) ?? "—";
+                        return (
+                          <span key={cc.student_id} style={{ fontSize: 13, padding: "2px 8px", borderRadius: "var(--radius-md)", background: "var(--surface)", color: "var(--text-secondary)" }}>
+                            {name}: <strong style={{ color: "var(--primary)" }}>€{coachEarns.toFixed(2)}</strong> ({cc.revenue_pct}%)
+                          </span>
+                        );
+                      })}
                       <span style={{ fontSize: 13, padding: "2px 8px", borderRadius: "var(--radius-md)", background: "var(--surface)", color: "var(--text-secondary)" }}>
-                        Coach {coachName ? `(${coachName})` : ""}: <strong style={{ color: "var(--primary)" }}>€{coachEarns.toFixed(2)}</strong> ({coachPct}%)
+                        KFS: <strong>€{kfsEarns.toFixed(2)}</strong> ({kfsPct}%)
+                      </span>
+                    </div>
+                  )}
+                  {isCoachCourse && creators.length === 0 && (
+                    <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 13, padding: "2px 8px", borderRadius: "var(--radius-md)", background: "var(--surface)", color: "var(--text-secondary)" }}>
+                        Coach: <strong style={{ color: "var(--primary)" }}>€{((amount * 65) / 100).toFixed(2)}</strong> (65%)
                       </span>
                       <span style={{ fontSize: 13, padding: "2px 8px", borderRadius: "var(--radius-md)", background: "var(--surface)", color: "var(--text-secondary)" }}>
-                        KFS: <strong>€{kfsEarns.toFixed(2)}</strong> ({100 - coachPct}%)
+                        KFS: <strong>€{((amount * 35) / 100).toFixed(2)}</strong> (35%)
                       </span>
                     </div>
                   )}

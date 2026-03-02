@@ -45,6 +45,7 @@ export default async function CoachLayout({
     ...(canCreateCourses
       ? [{ label: "Meus Cursos", href: "/coach/cursos" as string }]
       : []),
+    { label: "Financeiro", href: "/coach/financeiro" as string },
     ...(coachStudentId
       ? [{ label: t("myStudentArea"), href: "/dashboard" as string }]
       : []),
