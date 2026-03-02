@@ -5,10 +5,8 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { DeleteCursoButton } from "./DeleteCursoButton";
 import { CollapsibleCourseDetails } from "./CollapsibleCourseDetails";
+import { ModuleCard } from "./ModuleCard";
 import { ModuleForm } from "../modules/ModuleForm";
-import { DeleteModuleButton } from "../modules/DeleteModuleButton";
-import { UnitForm } from "../modules/units/UnitForm";
-import { DeleteUnitButton } from "../modules/units/DeleteUnitButton";
 import { CoCreatorForm } from "@/app/coach/cursos/[id]/CoCreatorForm";
 
 type Props = { params: Promise<{ id: string }> };
@@ -93,65 +91,34 @@ export default async function AdminCursosEditarPage({ params }: Props) {
         Editar curso
       </p>
 
-      {/* Módulos e Unidades — em primeiro lugar, foco após criar o curso */}
+      {/* Conteúdo: Curso → Módulos → Unidades */}
       <div style={{ marginBottom: "clamp(24px, 6vw, 32px)" }}>
-        <h2 style={{ margin: "0 0 12px 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Módulos e Unidades
+        <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          Conteúdo do curso
         </h2>
-        <p style={{ margin: "0 0 16px 0", fontSize: 14, color: "var(--text-secondary)" }}>
-          Cada módulo pode ter várias unidades. Cada unidade pode ser um vídeo ou texto para leitura.
+        <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+          Um curso tem <strong>módulos</strong>. Cada módulo tem <strong>unidades</strong>. Cada unidade é um <strong>vídeo</strong> ou um <strong>texto</strong> para leitura.
         </p>
+
+        {/* 1) Adicionar módulo — primeiro */}
+        <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
+          <ModuleForm courseId={course.id} initialSortOrder={(modules ?? []).length} />
+        </div>
+
+        {/* 2) Lista de módulos (cada um com as suas unidades e botão para adicionar unidade) */}
         {(modules ?? []).length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
-            {(modules ?? []).map((m, idx) => {
-              const units = unitsByModule.get(m.id) ?? [];
-              return (
-                <div key={m.id} className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
-                    <span style={{ fontWeight: 600, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-primary)" }}>
-                      Módulo {idx + 1}: {m.name}
-                    </span>
-                    <DeleteModuleButton moduleId={m.id} courseId={course.id} moduleName={m.name} />
-                  </div>
-                  {m.description && (
-                    <p style={{ margin: "0 0 12px 0", fontSize: 14, color: "var(--text-secondary)" }}>{m.description}</p>
-                  )}
-                  {units.length > 0 && (
-                    <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px 0", display: "flex", flexDirection: "column", gap: 8 }}>
-                      {units.map((u, uIdx) => (
-                        <li
-                          key={u.id}
-                          style={{
-                            padding: "10px 12px",
-                            background: "var(--surface)",
-                            borderRadius: "var(--radius-md)",
-                            display: "flex",
-                            flexWrap: "wrap",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 8,
-                          }}
-                        >
-                          <div>
-                            <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>
-                              {uIdx + 1}. {u.name}
-                            </span>
-                            <span style={{ fontSize: 12, color: "var(--text-secondary)", marginLeft: 8 }}>
-                              {u.content_type === "VIDEO" ? "Vídeo" : "Texto"}
-                            </span>
-                          </div>
-                          <DeleteUnitButton unitId={u.id} courseId={course.id} unitName={u.name} />
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <UnitForm courseId={course.id} moduleId={m.id} initialSortOrder={units.length} />
-                </div>
-              );
-            })}
+          <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
+            {(modules ?? []).map((m, idx) => (
+              <ModuleCard
+                key={m.id}
+                courseId={course.id}
+                module={{ id: m.id, name: m.name, description: m.description, sort_order: m.sort_order ?? 0 }}
+                index={idx}
+                units={(unitsByModule.get(m.id) ?? []).map((u) => ({ id: u.id, module_id: u.module_id, name: u.name, content_type: u.content_type, sort_order: u.sort_order ?? 0 }))}
+              />
+            ))}
           </div>
         )}
-        <ModuleForm courseId={course.id} />
       </div>
 
       {/* Dados do curso — recolhível, para não ocupar o ecrã */}
