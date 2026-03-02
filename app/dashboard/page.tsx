@@ -72,7 +72,7 @@ export default async function DashboardPage() {
   const [lessonsRes, locationsRes, weekThemesRes] = await Promise.all([
     lessonsQuery.order("date", { ascending: true }).order("startTime", { ascending: true }),
     supabase.from("Location").select("id, name"),
-    supabase.from("WeekTheme").select("modality, title, course_id").eq("week_start", weekStart).order("modality", { ascending: true }),
+    supabase.from("WeekTheme").select("modality, title, course_id, video_url").eq("week_start", weekStart).order("modality", { ascending: true }),
   ]);
 
   const lessonsData = lessonsRes.data ?? [];
@@ -570,6 +570,80 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      {/* Tema da Semana — em destaque logo após a próxima aula, UX responsiva */}
+      {temaSemanaList.length > 0 && (
+        <section style={{ marginTop: "clamp(8px, 2vw, 12px)" }}>
+          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(8px, 2vw, 12px)", color: "var(--text-primary)" }}>
+            {t("weekThemeTitle")}
+          </h2>
+          <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+            {t("weekThemeDescription")}
+          </p>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
+            {temaSemanaList.map((item) => (
+              <li key={item.modality}>
+                <div
+                  className="card"
+                  style={{
+                    padding: "clamp(16px, 4vw, 20px)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "clamp(10px, 2.5vw, 12px)",
+                  }}
+                >
+                  <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+                    {MODALITY_LABELS[item.modality] ?? item.modality}
+                  </span>
+                  <span style={{ fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+                    {item.title}
+                  </span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                    {item.course_id && (
+                      <Link
+                        href={`/dashboard/biblioteca/${item.course_id}`}
+                        className="btn btn-primary"
+                        style={{
+                          textDecoration: "none",
+                          textAlign: "center",
+                          minHeight: 44,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                        }}
+                      >
+                        {t("viewTheoryVideo")} →
+                      </Link>
+                    )}
+                    {(item as { video_url?: string | null }).video_url && (
+                      <a
+                        href={(item as { video_url: string }).video_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn"
+                        style={{
+                          textAlign: "center",
+                          minHeight: 44,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                          background: "var(--surface)",
+                          color: "var(--text-primary)",
+                          textDecoration: "none",
+                        }}
+                      >
+                        Ver vídeo →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {restOfWeek.length > 0 && (
         <>
           <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
@@ -600,56 +674,6 @@ export default async function DashboardPage() {
         </>
       )}
       </section>
-
-      {temaSemanaList.length > 0 && (
-        <section>
-          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
-            {t("weekThemeTitle")}
-          </h2>
-          <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-            {t("weekThemeDescription")}
-          </p>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
-            {temaSemanaList.map((item) => (
-              <li key={item.modality}>
-                <div
-                  className="card"
-                  style={{
-                    padding: "clamp(14px, 3.5vw, 18px)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8,
-                  }}
-                >
-                  <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-                    {MODALITY_LABELS[item.modality] ?? item.modality}
-                  </span>
-                  <span style={{ fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                    {item.title}
-                  </span>
-                  {item.course_id && (
-                    <Link
-                      href={`/dashboard/biblioteca/${item.course_id}`}
-                      className="btn btn-primary"
-                      style={{
-                        marginTop: 4,
-                        textDecoration: "none",
-                        textAlign: "center",
-                        minHeight: 44,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {t("viewTheoryVideo")} →
-                    </Link>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       {notifications.length > 0 && (
         <section>

@@ -36,14 +36,19 @@ export function getThisWeekRange(): { today: string; endOfWeek: string } {
   return { today: toYYYYMMDD(today), endOfWeek: toYYYYMMDD(endOfWeek) };
 }
 
-/** Segunda-feira da semana atual em YYYY-MM-DD (para Tema da Semana). */
-export function getWeekStartMonday(): string {
-  const d = new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d.setDate(diff));
+/** Segunda-feira da semana de uma data em YYYY-MM-DD. */
+export function getWeekStartMondayForDate(d: Date): string {
+  const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = copy.getDay();
+  const diff = copy.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(copy.getFullYear(), copy.getMonth(), diff);
   const y = monday.getFullYear();
   const m = monday.getMonth() + 1;
   const dayNum = monday.getDate();
   return `${y}-${String(m).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+}
+
+/** Segunda-feira da semana atual em YYYY-MM-DD (para Tema da Semana). */
+export function getWeekStartMonday(): string {
+  return getWeekStartMondayForDate(new Date());
 }

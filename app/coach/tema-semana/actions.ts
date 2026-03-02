@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { getWeekStartMonday } from "@/lib/lesson-utils";
+import { getWeekStartMonday, getWeekStartMondayForDate } from "@/lib/lesson-utils";
 
 const MODALITIES = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 
@@ -21,13 +21,15 @@ export async function saveWeekTheme(
   const modality = (formData.get("modality") as string)?.trim();
   const title = (formData.get("title") as string)?.trim();
   const courseId = (formData.get("course_id") as string)?.trim() || null;
+  const videoUrl = (formData.get("video_url") as string)?.trim() || null;
+  const weekParam = (formData.get("week_start") as string)?.trim();
 
   if (!modality || !MODALITIES.includes(modality as (typeof MODALITIES)[number])) {
     return { error: "Modalidade inválida." };
   }
   if (!title) return { error: "Título do tema é obrigatório." };
 
-  const weekStart = getWeekStartMonday();
+  const weekStart = weekParam ? getWeekStartMondayForDate(new Date(weekParam)) : getWeekStartMonday();
   const supabase = await createClient();
 
   const { error } = await supabase.from("WeekTheme").upsert(
@@ -35,7 +37,8 @@ export async function saveWeekTheme(
       modality,
       week_start: weekStart,
       title,
-      course_id: courseId,
+      course_id: courseId || null,
+      video_url: videoUrl,
     },
     { onConflict: "modality,week_start" }
   );
