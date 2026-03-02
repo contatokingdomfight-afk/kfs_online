@@ -116,3 +116,51 @@ export async function updateStudent(
   revalidatePath(`/admin/alunos/${student.id}`);
   return { success: true };
 }
+
+export type SetFullAccessResult = { error?: string; success?: boolean };
+
+/** Atribui ao aluno um plano com acesso total (plataforma digital + todas as modalidades). */
+export async function setStudentFullAccess(
+  _prev: SetFullAccessResult | null,
+  formData: FormData
+): Promise<SetFullAccessResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const studentId = (formData.get("studentId") as string)?.trim();
+  if (!studentId) return { error: "ID do aluno inválido." };
+
+  const supabase = createAdminClient();
+
+  const { data: student } = await supabase
+    .from("Student")
+    .select("id, schoolId")
+    .eq("id", studentId)
+    .single();
+
+  if (!student) return { error: "Aluno não encontrado." };
+
+  const { data: fullPlan } = await supabase
+    .from("Plan")
+    .select("id")
+    .eq("schoolId", student.schoolId)
+    .eq("is_active", true)
+    .eq("includes_digital_access", true)
+    .eq("modality_scope", "ALL")
+    .limit(1)
+    .maybeSingle();
+
+  if (!fullPlan) {
+    return {
+      error:
+        "Nenhum plano com acesso total (plataforma + ginásio) encontrado para esta escola. Crie um plano com «Inclui plataforma digital» e «Todas as modalidades» em Admin → Planos.",
+    };
+  }
+
+  const { error } = await supabase.from("Student").update({ planId: fullPlan.id }).eq("id", studentId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/alunos");
+  revalidatePath(`/admin/alunos/${studentId}`);
+  return { success: true };
+}

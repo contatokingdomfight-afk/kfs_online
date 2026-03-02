@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
-import { updateStudent, type UpdateStudentResult } from "../actions";
+import { updateStudent, setStudentFullAccess, type UpdateStudentResult, type SetFullAccessResult } from "../actions";
 import { getTranslations } from "@/lib/i18n";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModal";
 
@@ -29,8 +30,14 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
     return updateStudent(prev, formData);
   };
   const [state, formAction] = useFormState(wrappedAction, null as UpdateStudentResult | null);
+  const [fullAccessState, fullAccessFormAction] = useFormState(setStudentFullAccess, null as SetFullAccessResult | null);
+  const router = useRouter();
 
   const showSuccess = Boolean(state?.success && !state?.error && !userDismissed);
+
+  useEffect(() => {
+    if (fullAccessState?.success) router.refresh();
+  }, [fullAccessState?.success, router]);
 
   return (
     <>
@@ -52,6 +59,39 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
       }}
     >
       <input type="hidden" name="studentId" value={studentId} />
+
+      <div
+        style={{
+          padding: "clamp(12px, 3vw, 14px)",
+          background: "var(--surface)",
+          borderRadius: "var(--radius-md)",
+          borderLeft: "3px solid var(--primary)",
+        }}
+      >
+        <p style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+          Acesso rápido
+        </p>
+        <form action={fullAccessFormAction}>
+          <input type="hidden" name="studentId" value={studentId} />
+          <button
+            type="submit"
+            className="btn btn-primary"
+            style={{ fontSize: 14, padding: "8px 14px" }}
+          >
+            Atribuir acesso total (plataforma + ginásio)
+          </button>
+        </form>
+        <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+          Atribui um plano com plataforma digital e todas as modalidades. Requer um plano desse tipo na escola do aluno.
+        </p>
+        {fullAccessState?.success && (
+          <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Acesso total atribuído.</p>
+        )}
+        {fullAccessState?.error && (
+          <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{fullAccessState.error}</p>
+        )}
+      </div>
+
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Nome
