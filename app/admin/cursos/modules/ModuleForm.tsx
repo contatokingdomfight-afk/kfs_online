@@ -10,7 +10,6 @@ type Props = {
   moduleId?: string;
   initialName?: string;
   initialDescription?: string;
-  initialVideoUrl?: string;
   initialSortOrder?: number;
   onSuccess?: () => void;
 };
@@ -20,7 +19,6 @@ export function ModuleForm({
   moduleId,
   initialName = "",
   initialDescription = "",
-  initialVideoUrl = "",
   initialSortOrder = 0,
 }: Props) {
   const router = useRouter();

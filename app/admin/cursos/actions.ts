@@ -21,7 +21,6 @@ export async function createCourse(
   const category = (formData.get("category") as string)?.trim() || "TECHNIQUE";
   const modality = (formData.get("modality") as string)?.trim() || null;
   const includedInDigital = formData.get("included_in_digital_plan") === "on" || formData.get("included_in_digital_plan") === "true";
-  const videoUrl = (formData.get("video_url") as string)?.trim() || null;
   const sortOrderStr = (formData.get("sort_order") as string)?.trim();
   const isActive = formData.get("is_active") !== "off" && formData.get("is_active") !== "false";
   const availableForPurchase = formData.get("available_for_purchase") === "on" || formData.get("available_for_purchase") === "true";
@@ -46,7 +45,6 @@ export async function createCourse(
     modality,
     level,
     included_in_digital_plan: includedInDigital,
-    video_url: videoUrl,
     sort_order: sortOrder,
     is_active: isActive,
     available_for_purchase: availableForPurchase,
@@ -59,7 +57,7 @@ export async function createCourse(
   }
 
   revalidatePath("/admin/cursos");
-  redirect("/admin/cursos");
+  redirect(`/admin/cursos/${id}`);
 }
 
 export async function updateCourse(
@@ -77,7 +75,6 @@ export async function updateCourse(
   const category = (formData.get("category") as string)?.trim() || "TECHNIQUE";
   const modality = (formData.get("modality") as string)?.trim() || null;
   const includedInDigital = formData.get("included_in_digital_plan") === "on" || formData.get("included_in_digital_plan") === "true";
-  const videoUrl = (formData.get("video_url") as string)?.trim() || null;
   const sortOrderStr = (formData.get("sort_order") as string)?.trim();
   const isActive = formData.get("is_active") !== "off" && formData.get("is_active") !== "false";
   const availableForPurchase = formData.get("available_for_purchase") === "on" || formData.get("available_for_purchase") === "true";
@@ -102,7 +99,6 @@ export async function updateCourse(
       modality,
       level,
       included_in_digital_plan: includedInDigital,
-      video_url: videoUrl,
       sort_order: sortOrder,
       is_active: isActive,
       available_for_purchase: availableForPurchase,

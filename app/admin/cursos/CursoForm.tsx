@@ -30,7 +30,6 @@ type Props = {
   initialCategory?: string;
   initialModality?: string | null;
   initialIncludedInDigital?: boolean;
-  initialVideoUrl?: string | null;
   initialSortOrder?: number;
   initialIsActive?: boolean;
   initialPrice?: number | null;
@@ -45,7 +44,6 @@ export function CursoForm({
   initialCategory = "TECHNIQUE",
   initialModality = null,
   initialIncludedInDigital = true,
-  initialVideoUrl = "",
   initialSortOrder = 0,
   initialIsActive = true,
   initialPrice = null,
@@ -128,18 +126,6 @@ export function CursoForm({
             </option>
           ))}
         </select>
-      </label>
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          URL do vídeo
-        </span>
-        <input
-          type="url"
-          name="video_url"
-          defaultValue={initialVideoUrl ?? ""}
-          className="input"
-          placeholder="https://..."
-        />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>

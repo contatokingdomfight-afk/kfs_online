@@ -99,7 +99,6 @@ export default async function AdminCursosEditarPage({ params }: Props) {
         initialCategory={course.category ?? "TECHNIQUE"}
         initialModality={course.modality}
         initialIncludedInDigital={course.included_in_digital_plan ?? true}
-        initialVideoUrl={course.video_url}
         initialSortOrder={course.sort_order ?? 0}
         initialIsActive={course.is_active ?? true}
         initialPrice={course.price != null ? Number(course.price) : null}
