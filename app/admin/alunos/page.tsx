@@ -92,9 +92,12 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
           className="btn btn-primary"
           style={{ marginLeft: "auto", textDecoration: "none" }}
         >
-          Novo aluno
+          Convidar aluno
         </Link>
       </div>
+      <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+        Convidar envia um email ao futuro aluno para se registar; depois aparece na lista com status Ativo ou Experimental.
+      </p>
 
       <div style={{ marginBottom: "clamp(16px, 4vw, 20px)" }}>
         <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-secondary)" }}>

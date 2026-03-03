@@ -2,7 +2,6 @@ import Link from "next/link";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { setViewAsAndRedirect } from "./actions";
 
 export default async function AdminHomePage() {
   const dbUser = await getCurrentDbUser();
@@ -14,41 +13,6 @@ export default async function AdminHomePage() {
       <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-secondary)" }}>
         {t("helloAdmin")} {dbUser?.name || t("admin")}.
       </p>
-
-      <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)" }}>
-        <h2 style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          {t("viewAs")}
-        </h2>
-        <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-          {t("viewAsHint")}
-        </p>
-        <form action={setViewAsAndRedirect} style={{ display: "flex", flexWrap: "wrap", gap: "clamp(10px, 2.5vw, 12px)" }}>
-          <button
-            type="submit"
-            name="viewAs"
-            value="aluno"
-            className="btn btn-primary"
-            style={{
-              width: "auto",
-              minWidth: "clamp(140px, 35vw, 180px)",
-            }}
-          >
-            {t("viewAsStudent")}
-          </button>
-          <button
-            type="submit"
-            name="viewAs"
-            value="coach"
-            className="btn btn-secondary"
-            style={{
-              width: "auto",
-              minWidth: "clamp(140px, 35vw, 180px)",
-            }}
-          >
-            {t("viewAsCoach")}
-          </button>
-        </form>
-      </section>
 
       <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
         <h2 style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
