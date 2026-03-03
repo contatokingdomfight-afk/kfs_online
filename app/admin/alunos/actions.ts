@@ -164,3 +164,78 @@ export async function setStudentFullAccess(
   revalidatePath(`/admin/alunos/${studentId}`);
   return { success: true };
 }
+
+export type PromoteStudentResult = { error?: string; success?: boolean };
+
+/**
+ * Promove o utilizador do aluno a Professor (COACH) ou Administrador (ADMIN).
+ * Apenas ADMIN pode executar. Ao promover a Professor, cria o registo Coach e associa à escola do aluno.
+ */
+export async function promoteStudentToRole(
+  _prev: PromoteStudentResult | null,
+  formData: FormData
+): Promise<PromoteStudentResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const studentId = (formData.get("studentId") as string)?.trim();
+  const newRole = formData.get("newRole") as string | null;
+  if (!studentId || (newRole !== "COACH" && newRole !== "ADMIN")) {
+    return { error: "Parâmetros inválidos." };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: student } = await supabase
+    .from("Student")
+    .select("id, userId, schoolId")
+    .eq("id", studentId)
+    .single();
+
+  if (!student) return { error: "Aluno não encontrado." };
+
+  const { data: user } = await supabase
+    .from("User")
+    .select("id, role")
+    .eq("id", student.userId)
+    .single();
+
+  if (!user) return { error: "Utilizador não encontrado." };
+  if (user.role !== "ALUNO") {
+    return { error: "Só é possível promover utilizadores com perfil Aluno. Este utilizador já tem perfil " + user.role + "." };
+  }
+
+  const { error: userUpdateError } = await supabase
+    .from("User")
+    .update({ role: newRole })
+    .eq("id", student.userId);
+
+  if (userUpdateError) return { error: userUpdateError.message };
+
+  if (newRole === "COACH") {
+    const { data: existingCoach } = await supabase
+      .from("Coach")
+      .select("id")
+      .eq("userId", student.userId)
+      .maybeSingle();
+
+    if (!existingCoach) {
+      const coachId = crypto.randomUUID();
+      const { error: coachError } = await supabase.from("Coach").insert({
+        id: coachId,
+        userId: student.userId,
+        schoolId: student.schoolId,
+        studentId: student.id,
+      });
+      if (coachError) {
+        await supabase.from("User").update({ role: "ALUNO" }).eq("id", student.userId);
+        return { error: coachError.message };
+      }
+    }
+  }
+
+  revalidatePath("/admin/alunos");
+  revalidatePath(`/admin/alunos/${studentId}`);
+  revalidatePath("/admin/coaches");
+  return { success: true };
+}

@@ -51,7 +51,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     );
   }
 
-  const { data: user } = await supabase.from("User").select("id, name, email").eq("id", student.userId).single();
+  const { data: user } = await supabase.from("User").select("id, name, email, role").eq("id", student.userId).single();
 
   const { data: plans } = await supabase
     .from("Plan")
@@ -203,6 +203,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
             planOptions={planOptions}
             modalityOptions={modalityOptions ?? []}
             statusLabels={STATUS_LABEL}
+            currentUserRole={user?.role ?? "ALUNO"}
           />
         </div>
       </details>

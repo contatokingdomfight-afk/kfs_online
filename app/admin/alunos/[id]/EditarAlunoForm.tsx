@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
-import { updateStudent, setStudentFullAccess, type UpdateStudentResult, type SetFullAccessResult } from "../actions";
+import { updateStudent, setStudentFullAccess, promoteStudentToRole, type UpdateStudentResult, type SetFullAccessResult, type PromoteStudentResult } from "../actions";
 import { getTranslations } from "@/lib/i18n";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModal";
 
@@ -19,10 +19,11 @@ type Props = {
   planOptions: PlanOption[];
   modalityOptions: ModalityOption[];
   statusLabels: Record<string, string>;
+  currentUserRole: string;
   initialLocale?: "pt" | "en";
 };
 
-export function EditarAlunoForm({ studentId, initialName, initialStatus, initialPlanId, initialPrimaryModality, planOptions, modalityOptions, statusLabels, initialLocale = "pt" }: Props) {
+export function EditarAlunoForm({ studentId, initialName, initialStatus, initialPlanId, initialPrimaryModality, planOptions, modalityOptions, statusLabels, currentUserRole, initialLocale = "pt" }: Props) {
   const t = getTranslations(initialLocale);
   const [userDismissed, setUserDismissed] = useState(false);
   const wrappedAction = async (prev: UpdateStudentResult | null, formData: FormData) => {
@@ -31,13 +32,18 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
   };
   const [state, formAction] = useFormState(wrappedAction, null as UpdateStudentResult | null);
   const [fullAccessState, fullAccessFormAction] = useFormState(setStudentFullAccess, null as SetFullAccessResult | null);
+  const [promoteState, promoteFormAction] = useFormState(promoteStudentToRole, null as PromoteStudentResult | null);
   const router = useRouter();
 
   const showSuccess = Boolean(state?.success && !state?.error && !userDismissed);
+  const canPromote = currentUserRole === "ALUNO";
 
   useEffect(() => {
     if (fullAccessState?.success) router.refresh();
   }, [fullAccessState?.success, router]);
+  useEffect(() => {
+    if (promoteState?.success) router.refresh();
+  }, [promoteState?.success, router]);
 
   return (
     <>
@@ -91,6 +97,46 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
           <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{fullAccessState.error}</p>
         )}
       </div>
+
+      {canPromote && (
+        <div
+          style={{
+            padding: "clamp(12px, 3vw, 14px)",
+            background: "var(--surface)",
+            borderRadius: "var(--radius-md)",
+            borderLeft: "3px solid var(--text-secondary)",
+          }}
+        >
+          <p style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+            Alterar perfil
+          </p>
+          <p style={{ margin: "0 0 10px 0", fontSize: 12, color: "var(--text-secondary)" }}>
+            Promover este utilizador (aluno) a Professor ou Administrador. Apenas disponível para perfis Aluno.
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <form action={promoteFormAction} style={{ display: "inline" }}>
+              <input type="hidden" name="studentId" value={studentId} />
+              <input type="hidden" name="newRole" value="COACH" />
+              <button type="submit" className="btn" style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}>
+                Promover a Professor
+              </button>
+            </form>
+            <form action={promoteFormAction} style={{ display: "inline" }}>
+              <input type="hidden" name="studentId" value={studentId} />
+              <input type="hidden" name="newRole" value="ADMIN" />
+              <button type="submit" className="btn" style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}>
+                Promover a Administrador
+              </button>
+            </form>
+          </div>
+          {promoteState?.success && (
+            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Perfil alterado com sucesso.</p>
+          )}
+          {promoteState?.error && (
+            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{promoteState.error}</p>
+          )}
+        </div>
+      )}
 
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
