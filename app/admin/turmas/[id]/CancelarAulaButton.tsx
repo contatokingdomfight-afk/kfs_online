@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { deleteLesson } from "../actions";
 
 type Props = { lessonId: string };
 
 export function CancelarAulaButton({ lessonId }: Props) {
+  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,8 +21,10 @@ export function CancelarAulaButton({ lessonId }: Props) {
       if (result?.error) {
         setError(result.error);
         setPending(false);
+        return;
       }
-      // Se sucesso, deleteLesson faz redirect para /admin/turmas
+      if (result?.success !== true) return;
+      router.push("/admin/turmas");
     } catch {
       setError("Erro ao cancelar aula.");
       setPending(false);

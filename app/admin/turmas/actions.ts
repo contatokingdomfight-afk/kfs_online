@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 const RECURRING_WEEKS = 12; // ao criar aula recorrente, criar as próximas N semanas
 
@@ -142,7 +141,7 @@ export async function updateLesson(
   return { success: true };
 }
 
-export type DeleteLessonResult = { error?: string };
+export type DeleteLessonResult = { error?: string; success?: boolean };
 
 export async function deleteLesson(lessonId: string): Promise<DeleteLessonResult> {
   const dbUser = await getCurrentDbUser();
@@ -165,5 +164,5 @@ export async function deleteLesson(lessonId: string): Promise<DeleteLessonResult
   revalidatePath("/admin/presenca");
   revalidatePath("/coach");
   revalidatePath("/coach/agenda");
-  redirect("/admin/turmas");
+  return { success: true };
 }

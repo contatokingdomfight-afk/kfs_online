@@ -89,6 +89,7 @@ export default async function AdminTurmasPage() {
             {lessons.map((lesson) => {
               const locationName = (lesson as { locationId?: string }).locationId ? locations?.find((l) => l.id === (lesson as { locationId: string }).locationId)?.name : null;
               const modalityName = (modalities ?? []).find((m) => m.code === lesson.modality)?.name ?? lesson.modality;
+              const coachName = (coaches ?? []).find((c) => c.id === lesson.coachId)?.name ?? null;
               return (
               <li key={lesson.id} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -98,6 +99,11 @@ export default async function AdminTurmasPage() {
                   {(lesson as { isOneOff?: boolean }).isOneOff && (
                     <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
                       Aula única
+                    </span>
+                  )}
+                  {coachName && (
+                    <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+                      · {coachName}
                     </span>
                   )}
                   {locationName && (
