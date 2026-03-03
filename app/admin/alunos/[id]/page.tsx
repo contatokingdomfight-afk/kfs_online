@@ -66,9 +66,10 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     ...(modalityRefs ?? []),
   ];
   const studentPlan = (plans ?? []).find((p) => p.id === student.planId);
-  const isPresencialMma = studentPlan?.name && String(studentPlan.name).includes("Presencial MMA");
+  const planName = studentPlan?.name ? String(studentPlan.name) : "";
+  const isPlanWithoutModality = planName.includes("Presencial MMA") || planName.includes("Kingdom Online");
   const rawPrimary = (student as { primaryModality?: string | null }).primaryModality ?? null;
-  const initialPrimaryModality = isPresencialMma || rawPrimary == null || rawPrimary === "" ? "" : rawPrimary;
+  const initialPrimaryModality = isPlanWithoutModality || rawPrimary == null || rawPrimary === "" ? "" : rawPrimary;
 
   // Performance: athlete + evaluations → radar
   let generalPerformanceScores: Record<string, number> | null = null;

@@ -92,10 +92,11 @@ export async function updateStudent(
 
   const supabase = createAdminClient();
 
-  // Se o plano for Presencial MMA (ou Kingdom Presencial MMA), modalidade principal = Todas (guardamos NULL; FK aponta para ModalityRef)
+  // Planos sem modalidade única: Presencial MMA = Todas; Kingdom Online = apenas digital (sem modalidade)
   if (planId) {
     const { data: plan } = await supabase.from("Plan").select("name").eq("id", planId).single();
-    if (plan?.name && String(plan.name).includes("Presencial MMA")) {
+    const planName = plan?.name ? String(plan.name) : "";
+    if (planName.includes("Presencial MMA") || planName.includes("Kingdom Online")) {
       newPrimaryModality = null;
     }
   }
