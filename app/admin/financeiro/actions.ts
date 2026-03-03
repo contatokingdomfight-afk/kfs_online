@@ -6,6 +6,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getRenewalsPending, generateMonthlyPayments, type GenerateMonthlyPaymentsResult } from "@/lib/renewals";
 
+export type { GenerateMonthlyPaymentsResult };
 export type CreatePaymentResult = { error?: string };
 
 export async function createPayment(
