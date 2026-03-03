@@ -576,6 +576,13 @@
   }
 }
 
+/* Admin dashboard: esconder gráfico de presenças no mês no mobile (KPI "Receita do mês" permanece) */
+@media (max-width: 767px) {
+  .admin-chart-attendance {
+    display: none !important;
+  }
+}
+
 /* ========================================
    Efeito de clique (tap feedback) – UX
    ======================================== */

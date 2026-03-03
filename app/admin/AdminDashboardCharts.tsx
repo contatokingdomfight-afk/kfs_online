@@ -60,7 +60,8 @@ export function AdminDashboardCharts(props: Props) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(24px, 6vw, 32px)", minWidth: 0 }}>
-      <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0, overflow: "hidden" }}>
+      {/* Escondido no mobile para evitar quebra; KPI "Receita do mês" permanece visível na secção de KPIs */}
+      <section className="card admin-chart-attendance" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0, overflow: "hidden" }}>
         <h3 style={{ margin: "0 0 16px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Presenças no mês ({schoolName})
         </h3>

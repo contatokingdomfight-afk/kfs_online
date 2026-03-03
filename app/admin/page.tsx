@@ -29,7 +29,7 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Se
   const modalityCodes = stats.studentsByModality.map((m) => m.modalityCode).filter((c) => c !== "");
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)", minWidth: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)", minWidth: 0, overflowX: "hidden" }}>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "clamp(12px, 3vw, 16px)", justifyContent: "space-between" }}>
         <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-secondary)" }}>
           {t("helloAdmin")} {dbUser?.name || t("admin")}.
@@ -80,7 +80,7 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Se
         />
       </Suspense>
 
-      <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+      <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0 }}>
         <h2 style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
           {t("management")}
         </h2>
