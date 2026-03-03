@@ -5,9 +5,16 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { NovoPagamentoForm } from "./NovoPagamentoForm";
 
-export default async function AdminFinanceiroNovoPage() {
+type SearchParams = Promise<{ studentId?: string; referenceMonth?: string; amount?: string }>;
+
+export default async function AdminFinanceiroNovoPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+
+  const params = await searchParams;
+  const defaultStudentId = params.studentId?.trim() ?? "";
+  const defaultRef = params.referenceMonth?.trim() || "";
+  const defaultAmount = params.amount?.trim() ?? "";
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -22,7 +29,8 @@ export default async function AdminFinanceiroNovoPage() {
   }));
 
   const refMonth = new Date();
-  const defaultRef = `${refMonth.getFullYear()}-${String(refMonth.getMonth() + 1).padStart(2, "0")}`;
+  const fallbackRef = `${refMonth.getFullYear()}-${String(refMonth.getMonth() + 1).padStart(2, "0")}`;
+  const referenceMonth = /^\d{4}-\d{2}$/.test(defaultRef) ? defaultRef : fallbackRef;
 
   return (
     <div style={{ maxWidth: "min(420px, 100%)" }}>
@@ -42,7 +50,12 @@ export default async function AdminFinanceiroNovoPage() {
       <h1 style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
         Registar pagamento
       </h1>
-      <NovoPagamentoForm studentOptions={options} defaultReferenceMonth={defaultRef} />
+      <NovoPagamentoForm
+        studentOptions={options}
+        defaultReferenceMonth={referenceMonth}
+        defaultStudentId={defaultStudentId}
+        defaultAmount={defaultAmount}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { syncUser } from "@/lib/auth/sync-user";
+import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
@@ -31,13 +31,9 @@ export default async function DashboardPage() {
     PERFORMANCE: t("categoryPerformance"),
   };
 
-  const {
-    data: { user: supabaseUser },
-  } = await supabase.auth.getUser();
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser) return null;
 
-  if (!supabaseUser) return null;
-
-  const dbUser = await syncUser(supabaseUser);
   const studentId = await getCurrentStudentId();
 
   const { today, endOfWeek } = getThisWeekRange();

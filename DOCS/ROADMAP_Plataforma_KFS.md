@@ -81,7 +81,7 @@
 | Criar plano | Feito | `/admin/planos/novo` |
 | Editar plano | Feito | `/admin/planos/[id]` |
 | Planos iniciais (Online, Presencial I/II, FULL) | Feito | Inseridos na migration |
-| Renovação / cobrança recorrente na app | Por fazer | Hoje o financeiro regista pagamentos manualmente; automatização é futura |
+| Renovação / mensalidades | Feito | Admin Financeiro: “Renovações do mês” + gerar mensalidades; cron opcional para gerar no início do mês |
 
 ---
 
@@ -143,8 +143,8 @@
 | Item | Estado | Notas |
 |------|--------|--------|
 | Listar pagamentos | Feito | Com filtro |
-| Registar pagamento | Feito | `/admin/financeiro/novo` (aluno, valor, mês, status) |
-| Ligar pagamento a plano / renovação automática | Por fazer | Opcional; hoje é registo manual |
+| Registar pagamento | Feito | `/admin/financeiro/novo` (aluno, valor, mês, status); query params para pré-preencher |
+| Renovação automática / mensalidades | Feito | Secção “Renovações do mês”: lista de alunos com plano sem pagamento; botão “Gerar mensalidades” (cria Payment LATE); cron GET /api/cron/generate-monthly-payments |
 
 ---
 

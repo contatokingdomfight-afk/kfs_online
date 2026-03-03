@@ -9,9 +9,13 @@ type StudentOption = { id: string; label: string };
 export function NovoPagamentoForm({
   studentOptions,
   defaultReferenceMonth,
+  defaultStudentId = "",
+  defaultAmount = "",
 }: {
   studentOptions: StudentOption[];
   defaultReferenceMonth: string;
+  defaultStudentId?: string;
+  defaultAmount?: string;
 }) {
   const [state, formAction] = useFormState(createPayment, null as CreatePaymentResult | null);
 
@@ -30,7 +34,7 @@ export function NovoPagamentoForm({
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Aluno *
         </span>
-        <select name="studentId" required className="input">
+        <select name="studentId" required className="input" defaultValue={defaultStudentId}>
           <option value="">— Escolher —</option>
           {studentOptions.map((o) => (
             <option key={o.id} value={o.id}>
@@ -63,6 +67,7 @@ export function NovoPagamentoForm({
           step="0.01"
           className="input"
           placeholder="0.00"
+          defaultValue={defaultAmount}
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>

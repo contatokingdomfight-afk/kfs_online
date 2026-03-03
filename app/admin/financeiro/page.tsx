@@ -3,6 +3,8 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
+import { getRenewalsPending } from "@/lib/renewals";
+import { RenewalsSection } from "./RenewalsSection";
 
 const STATUS_LABEL: Record<string, string> = {
   PAID: "Pago",
@@ -21,6 +23,10 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
+
+  const refMonth = new Date();
+  const currentMonth = `${refMonth.getFullYear()}-${String(refMonth.getMonth() + 1).padStart(2, "0")}`;
+  const renewalsPending = await getRenewalsPending(supabase, currentMonth);
 
   const { data: payments } = await supabase
     .from("Payment")
@@ -123,6 +129,8 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           Em atraso
         </Link>
       </div>
+
+      <RenewalsSection referenceMonth={currentMonth} pending={renewalsPending} />
 
       {filtered.length === 0 ? (
         <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>

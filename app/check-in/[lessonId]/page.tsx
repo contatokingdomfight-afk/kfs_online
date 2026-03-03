@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
-import { syncUser } from "@/lib/auth/sync-user";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { markPresence } from "@/app/dashboard/actions";
@@ -15,18 +15,12 @@ export default async function CheckInPage({ params }: Props) {
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
 
-  const {
-    data: { user: supabaseUser },
-  } = await supabase.auth.getUser();
-
-  if (!supabaseUser) {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser) {
     redirect(`/sign-in?next=${encodeURIComponent(`/check-in/${lessonId}`)}`);
   }
 
-  const dbUser = await syncUser(supabaseUser);
   const studentId = await getCurrentStudentId();
-
-  if (!dbUser) redirect("/sign-in");
   if (!studentId) {
     return (
       <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
