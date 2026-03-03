@@ -13,7 +13,7 @@ import {
   getAttendanceByModality,
 } from "@/lib/performance-utils";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
-import { MODALITY_LABELS, PRIMARY_MODALITY_ALL } from "@/lib/lesson-utils";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 
 const GENERAL_LAST_N = 10;
@@ -62,14 +62,13 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   const planOptions = (plans ?? []).map((p) => ({ id: p.id, label: `${p.name} (€${Number(p.price_monthly).toFixed(0)}/mês)` }));
   const modalityRefs = await getCachedModalityRefs(supabase);
   const modalityOptions = [
-    { code: PRIMARY_MODALITY_ALL, name: MODALITY_LABELS[PRIMARY_MODALITY_ALL] ?? "Todas as modalidades" },
+    { code: "", name: "Todas as modalidades" },
     ...(modalityRefs ?? []),
   ];
   const studentPlan = (plans ?? []).find((p) => p.id === student.planId);
   const isPresencialMma = studentPlan?.name && String(studentPlan.name).includes("Presencial MMA");
-  const initialPrimaryModality = isPresencialMma
-    ? PRIMARY_MODALITY_ALL
-    : ((student as { primaryModality?: string | null }).primaryModality ?? "");
+  const rawPrimary = (student as { primaryModality?: string | null }).primaryModality ?? null;
+  const initialPrimaryModality = isPresencialMma || rawPrimary == null || rawPrimary === "" ? "" : rawPrimary;
 
   // Performance: athlete + evaluations → radar
   let generalPerformanceScores: Record<string, number> | null = null;

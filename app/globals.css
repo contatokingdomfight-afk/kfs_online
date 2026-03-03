@@ -103,7 +103,6 @@
   .btn {
     @apply inline-flex items-center justify-center;
     @apply font-semibold;
-    @apply transition-opacity duration-200;
     @apply cursor-pointer;
     @apply border-none outline-none;
     font-size: var(--text-sm);
@@ -111,6 +110,7 @@
     padding: 0.5em 1em;
     border-radius: var(--radius-md);
     box-sizing: border-box;
+    transition: opacity 0.2s ease, transform 0.15s ease;
   }
 
   .btn:hover:not(:disabled) {
@@ -119,6 +119,7 @@
 
   .btn:active:not(:disabled) {
     opacity: 0.95;
+    transform: scale(0.97);
   }
 
   .btn:disabled {
@@ -507,7 +508,8 @@
     display: none !important;
   }
 
-  .app-shell-menu-btn {
+  .app-shell-menu-btn,
+  .app-shell-drawer-close {
     display: none !important;
   }
 
@@ -536,6 +538,37 @@
 .touch-target {
   min-height: 44px;
   min-width: 44px;
+}
+
+/* ========================================
+   Efeito de clique (tap feedback) – UX
+   ======================================== */
+
+/* Links do menu lateral: leve “afundar” ao toque/clique */
+.app-sidebar-nav-link {
+  transition: background-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+.app-sidebar-nav-link:active:not(:disabled) {
+  transform: scale(0.98);
+  opacity: 0.9;
+  background-color: var(--bg) !important;
+}
+
+/* Botão hamburger e botão fechar do drawer (mobile) */
+.app-shell-menu-btn,
+.app-shell-drawer-close {
+  transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
+}
+.app-shell-menu-btn:active,
+.app-shell-drawer-close:active {
+  transform: scale(0.92);
+  opacity: 0.85;
+}
+.app-shell-menu-btn:active {
+  background-color: var(--border) !important;
+}
+.app-shell-drawer-close:active {
+  background-color: var(--border) !important;
 }
 
 /* ========================================

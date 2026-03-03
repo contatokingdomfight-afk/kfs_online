@@ -46,6 +46,7 @@ export function Sidebar({
             <Link
               key={href}
               href={href}
+              className="app-sidebar-nav-link"
               style={{
                 display: "flex",
                 alignItems: "center",

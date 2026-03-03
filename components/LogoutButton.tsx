@@ -40,6 +40,7 @@ export function LogoutButton({ label, variant = "sidebar" }: Props) {
       type="button"
       onClick={handleLogout}
       disabled={loading}
+      className="app-sidebar-nav-link"
       style={{
         display: "flex",
         alignItems: "center",

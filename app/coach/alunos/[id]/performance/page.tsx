@@ -88,7 +88,7 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
     rankInfo = { level: rank.level, rankIndex: rank.rankIndex, xpCurrent: rank.xpCurrent, xpNext: rank.xpNext };
 
     const primaryModality = (student.primaryModality as string | null) ?? null;
-    primaryModalityLabel = primaryModality ? (modalityLabels.get(primaryModality) ?? MODALITY_LABELS[primaryModality] ?? primaryModality) : null;
+    primaryModalityLabel = primaryModality ? (modalityLabels.get(primaryModality) ?? MODALITY_LABELS[primaryModality] ?? primaryModality) : "Todas as modalidades";
 
     customMissions = (await getApplicableMissionTemplates(supabase, athlete.id, xp, primaryModality)).map(
       (t) => ({ id: t.id, name: t.name, description: t.description, xpReward: t.xpReward })

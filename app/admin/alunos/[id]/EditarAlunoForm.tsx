@@ -195,9 +195,8 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
           Para planos &quot;Uma modalidade&quot;: define qual aula o aluno vê na agenda.
         </span>
         <select name="primaryModality" className="input" defaultValue={initialPrimaryModality || ""}>
-          <option value="">Nenhuma (ou plano inclui todas)</option>
           {modalityOptions.map((m) => (
-            <option key={m.code} value={m.code}>{m.name}</option>
+            <option key={m.code || "all"} value={m.code}>{m.name}</option>
           ))}
         </select>
       </label>
