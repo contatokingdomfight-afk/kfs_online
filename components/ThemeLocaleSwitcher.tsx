@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   setThemeCookieValue,
@@ -27,6 +28,8 @@ const label: Record<Locale, { theme: string; light: string; dark: string; lang: 
   },
 };
 
+const MOBILE_BREAKPOINT = 768;
+
 export function ThemeLocaleSwitcher({
   initialTheme,
   initialLocale,
@@ -38,6 +41,16 @@ export function ThemeLocaleSwitcher({
 }) {
   const router = useRouter();
   const t = label[initialLocale];
+  const [isDesktop, setIsDesktop] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${MOBILE_BREAKPOINT}px)`);
+    setIsDesktop(mq.matches);
+    const handler = () => setIsDesktop(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   function setTheme(theme: Theme) {
     document.cookie = setThemeCookieValue(theme);
@@ -105,6 +118,23 @@ export function ThemeLocaleSwitcher({
     <div style={{ width: 1, height: 20, backgroundColor: "var(--border)" }} />
   );
 
+  const showMinimized = variant === "fixed" && !isDesktop && !isExpanded;
+
+  if (variant === "fixed" && showMinimized) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsExpanded(true)}
+        className="fixed bottom-4 right-4 z-[9999] flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] shadow-md md:bottom-auto md:top-3 md:right-3"
+        style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+        aria-label="Abrir tema e idioma"
+        title="Tema e idioma"
+      >
+        <span style={{ fontSize: 20 }} aria-hidden>⚙</span>
+      </button>
+    );
+  }
+
   return (
     <div
       style={variant === "fixed" ? undefined : wrapper}
@@ -116,6 +146,17 @@ export function ThemeLocaleSwitcher({
       role="group"
       aria-label="Tema e idioma"
     >
+      {variant === "fixed" && !isDesktop && (
+        <button
+          type="button"
+          onClick={() => setIsExpanded(false)}
+          className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--bg)] text-[var(--text-secondary)] hover:bg-[var(--bg)]"
+          aria-label="Recolher"
+          title="Recolher"
+        >
+          <span style={{ fontSize: 14, lineHeight: 1 }}>−</span>
+        </button>
+      )}
       <div style={variant === "inline" ? { ...group, flexDirection: "column" as const, alignItems: "stretch", gap: 6 } : group}>
         <span style={groupLabel}>{t.theme}</span>
         <div style={{ display: "flex", gap: 6 }}>

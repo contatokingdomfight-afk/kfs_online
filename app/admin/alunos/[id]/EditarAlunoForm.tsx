@@ -54,91 +54,103 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
         message={t("savedSuccessMessage")}
         closeLabel={t("closeConfirm")}
       />
-    <form
-      action={formAction}
-      className="card"
-      style={{
-        padding: "clamp(20px, 5vw, 24px)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "clamp(16px, 4vw, 20px)",
-      }}
-    >
-      <input type="hidden" name="studentId" value={studentId} />
 
+      {/* Acesso rápido: form fora do formulário principal para evitar forms aninhados (HTML inválido) */}
       <div
+        className="card"
         style={{
-          padding: "clamp(12px, 3vw, 14px)",
-          background: "var(--surface)",
-          borderRadius: "var(--radius-md)",
-          borderLeft: "3px solid var(--primary)",
+          padding: "clamp(20px, 5vw, 24px)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "clamp(16px, 4vw, 20px)",
+          marginBottom: "clamp(16px, 4vw, 20px)",
         }}
       >
-        <p style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
-          Acesso rápido
-        </p>
-        <form action={fullAccessFormAction}>
-          <input type="hidden" name="studentId" value={studentId} />
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ fontSize: 14, padding: "8px 14px" }}
-          >
-            Atribuir acesso total (plataforma + ginásio)
-          </button>
-        </form>
-        <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
-          Atribui um plano com plataforma digital e todas as modalidades. Requer um plano desse tipo na escola do aluno.
-        </p>
-        {fullAccessState?.success && (
-          <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Acesso total atribuído.</p>
-        )}
-        {fullAccessState?.error && (
-          <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{fullAccessState.error}</p>
-        )}
-      </div>
-
-      {canPromote && (
         <div
           style={{
             padding: "clamp(12px, 3vw, 14px)",
             background: "var(--surface)",
             borderRadius: "var(--radius-md)",
-            borderLeft: "3px solid var(--text-secondary)",
+            borderLeft: "3px solid var(--primary)",
           }}
         >
           <p style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
-            Alterar perfil
+            Acesso rápido
           </p>
-          <p style={{ margin: "0 0 10px 0", fontSize: 12, color: "var(--text-secondary)" }}>
-            Promover este utilizador (aluno) a Professor ou Administrador. Apenas disponível para perfis Aluno.
+          <form action={fullAccessFormAction}>
+            <input type="hidden" name="studentId" value={studentId} />
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{ fontSize: 14, padding: "8px 14px" }}
+            >
+              Atribuir acesso total (plataforma + ginásio)
+            </button>
+          </form>
+          <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+            Atribui um plano com plataforma digital e todas as modalidades. Requer um plano desse tipo na escola do aluno.
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <form action={promoteFormAction} style={{ display: "inline" }}>
-              <input type="hidden" name="studentId" value={studentId} />
-              <input type="hidden" name="newRole" value="COACH" />
-              <button type="submit" className="btn" style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}>
-                Promover a Professor
-              </button>
-            </form>
-            <form action={promoteFormAction} style={{ display: "inline" }}>
-              <input type="hidden" name="studentId" value={studentId} />
-              <input type="hidden" name="newRole" value="ADMIN" />
-              <button type="submit" className="btn" style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}>
-                Promover a Administrador
-              </button>
-            </form>
-          </div>
-          {promoteState?.success && (
-            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Perfil alterado com sucesso.</p>
+          {fullAccessState?.success && (
+            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Acesso total atribuído.</p>
           )}
-          {promoteState?.error && (
-            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{promoteState.error}</p>
+          {fullAccessState?.error && (
+            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{fullAccessState.error}</p>
           )}
         </div>
-      )}
 
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {canPromote && (
+          <div
+            style={{
+              padding: "clamp(12px, 3vw, 14px)",
+              background: "var(--surface)",
+              borderRadius: "var(--radius-md)",
+              borderLeft: "3px solid var(--text-secondary)",
+            }}
+          >
+            <p style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              Alterar perfil
+            </p>
+            <p style={{ margin: "0 0 10px 0", fontSize: 12, color: "var(--text-secondary)" }}>
+              Promover este utilizador (aluno) a Professor ou Administrador. Apenas disponível para perfis Aluno.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <form action={promoteFormAction} style={{ display: "inline" }}>
+                <input type="hidden" name="studentId" value={studentId} />
+                <input type="hidden" name="newRole" value="COACH" />
+                <button type="submit" className="btn" style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}>
+                  Promover a Professor
+                </button>
+              </form>
+              <form action={promoteFormAction} style={{ display: "inline" }}>
+                <input type="hidden" name="studentId" value={studentId} />
+                <input type="hidden" name="newRole" value="ADMIN" />
+                <button type="submit" className="btn" style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}>
+                  Promover a Administrador
+                </button>
+              </form>
+            </div>
+            {promoteState?.success && (
+              <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Perfil alterado com sucesso.</p>
+            )}
+            {promoteState?.error && (
+              <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{promoteState.error}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      <form
+        action={formAction}
+        className="card"
+        style={{
+          padding: "clamp(20px, 5vw, 24px)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "clamp(16px, 4vw, 20px)",
+        }}
+      >
+        <input type="hidden" name="studentId" value={studentId} />
+        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Nome
         </span>
