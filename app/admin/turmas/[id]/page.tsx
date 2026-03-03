@@ -18,7 +18,7 @@ export default async function AdminTurmaEditarPage({ params }: Props) {
 
   const { data: lesson } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, coachId, locationId, capacity, planningNotes")
+    .select("id, modality, date, startTime, endTime, coachId, locationId, capacity, planningNotes, isOneOff")
     .eq("id", lessonId)
     .single();
 
@@ -70,6 +70,11 @@ export default async function AdminTurmaEditarPage({ params }: Props) {
       </h1>
       <p style={{ margin: "0 0 clamp(20px, 5vw, 24px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
         {modalityName} · {formatLessonDate(dateStr)} {lesson.startTime}–{lesson.endTime}
+        {(lesson as { isOneOff?: boolean }).isOneOff && (
+          <span style={{ marginLeft: 8, fontSize: 12, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
+            Aula única
+          </span>
+        )}
       </p>
       <EditarAulaForm
         lessonId={lessonId}

@@ -194,6 +194,7 @@ model Lesson {
   school         School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   capacity       Int?
   planningNotes  String?
+  isOneOff       Boolean   @default(false) // true = aula única (evento); false = recorrente semanal
   createdAt      DateTime  @default(now())
 
   attendances Attendance[]

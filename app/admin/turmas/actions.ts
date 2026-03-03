@@ -5,6 +5,8 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+const RECURRING_WEEKS = 12; // ao criar aula recorrente, criar as próximas N semanas
+
 export async function createLesson(formData: FormData) {
   const supabase = await createClient();
 
@@ -17,6 +19,7 @@ export async function createLesson(formData: FormData) {
   const locationId = (formData.get("locationId") as string)?.trim() || null;
   const capacityStr = formData.get("capacity") as string | null;
   const planningNotes = (formData.get("planningNotes") as string) || null;
+  const isOneOff = formData.get("isOneOff") === "on"; // checkbox: marcado = aula única
 
   if (!modality || !date || !startTime || !endTime) {
     return { error: "Preencha modalidade, data, hora início e hora fim." };
@@ -33,20 +36,44 @@ export async function createLesson(formData: FormData) {
     return { error: "Capacidade deve ser um número positivo." };
   }
 
-  const id = crypto.randomUUID();
+  const baseDate = new Date(date + "T12:00:00");
+  const dayOfWeek = baseDate.getDay();
+  const count = isOneOff ? 1 : RECURRING_WEEKS;
 
-  const { error } = await supabase.from("Lesson").insert({
-    id,
-    modality,
-    date,
-    startTime,
-    endTime,
-    coachId: coachId || null,
-    schoolId,
-    locationId: locationId || null,
-    capacity: capacity ?? null,
-    planningNotes: planningNotes || null,
-  });
+  const rows: {
+    id: string;
+    modality: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    coachId: string;
+    schoolId: string;
+    locationId: string | null;
+    capacity: number | null;
+    planningNotes: string | null;
+    isOneOff: boolean;
+  }[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const d = new Date(baseDate);
+    d.setDate(d.getDate() + i * 7);
+    const dateStr = d.toISOString().slice(0, 10);
+    rows.push({
+      id: crypto.randomUUID(),
+      modality: modality!,
+      date: dateStr,
+      startTime: startTime!,
+      endTime: endTime!,
+      coachId: coachId!,
+      schoolId,
+      locationId: locationId || null,
+      capacity: capacity ?? null,
+      planningNotes: planningNotes || null,
+      isOneOff: isOneOff || count === 1,
+    });
+  }
+
+  const { error } = await supabase.from("Lesson").insert(rows);
 
   if (error) {
     console.error("createLesson error:", error);
@@ -55,7 +82,14 @@ export async function createLesson(formData: FormData) {
 
   revalidatePath("/admin/turmas");
   revalidatePath("/admin");
-  return { success: true };
+  return {
+    success: true,
+    created: count,
+    message:
+      count === 1
+        ? "Aula criada."
+        : `${count} aulas criadas (recorrência semanal até ${rows[rows.length - 1]!.date}).`,
+  };
 }
 
 export type UpdateLessonResult = { error?: string; success?: boolean };
