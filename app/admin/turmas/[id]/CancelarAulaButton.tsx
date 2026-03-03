@@ -3,17 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteLesson } from "../actions";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 type Props = { lessonId: string };
 
 export function CancelarAulaButton({ lessonId }: Props) {
   const router = useRouter();
+  const [modalOpen, setModalOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleClick() {
-    const ok = typeof window !== "undefined" && window.confirm("Tem certeza que deseja cancelar esta aula? Esta ação não pode ser desfeita.");
-    if (!ok) return;
+  async function handleConfirm() {
     setError(null);
     setPending(true);
     try {
@@ -24,6 +24,7 @@ export function CancelarAulaButton({ lessonId }: Props) {
         return;
       }
       if (result?.success !== true) return;
+      setModalOpen(false);
       router.push("/admin/turmas");
     } catch {
       setError("Erro ao cancelar aula.");
@@ -35,7 +36,7 @@ export function CancelarAulaButton({ lessonId }: Props) {
     <div style={{ marginTop: "clamp(20px, 5vw, 24px)" }}>
       <button
         type="button"
-        onClick={handleClick}
+        onClick={() => setModalOpen(true)}
         disabled={pending}
         className="btn"
         style={{
@@ -52,6 +53,17 @@ export function CancelarAulaButton({ lessonId }: Props) {
           {error}
         </p>
       )}
+      <ConfirmModal
+        open={modalOpen}
+        onClose={() => !pending && setModalOpen(false)}
+        onConfirm={handleConfirm}
+        title="Cancelar aula"
+        message="Tem certeza que deseja cancelar esta aula? Esta ação não pode ser desfeita."
+        confirmLabel="Sim, cancelar aula"
+        cancelLabel="Não, manter"
+        variant="danger"
+        loading={pending}
+      />
     </div>
   );
 }

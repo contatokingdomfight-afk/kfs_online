@@ -490,14 +490,21 @@
   box-sizing: border-box;
 }
 
-/* Desktop: >= 768px */
+/* Desktop: >= 768px – sidebar fixo ao lado do conteúdo */
 @media (min-width: 768px) {
+  .app-shell > div {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
   .app-shell-drawer {
     position: static;
     width: 260px;
     max-width: none;
     transform: none;
     flex-shrink: 0;
+    border-right: 1px solid var(--border);
   }
 
   .app-shell-drawer--open {
@@ -516,6 +523,28 @@
   .app-shell-drawer-close,
   .app-shell-drawer .app-shell-drawer-header {
     display: none !important;
+  }
+
+  .app-shell-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .app-shell-main > main {
+    flex: 1;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    padding-left: clamp(var(--space-4), 5vw, 32px);
+    padding-right: clamp(var(--space-4), 5vw, 32px);
+  }
+
+  .app-shell-header {
+    padding-left: clamp(var(--space-4), 5vw, 32px);
+    padding-right: clamp(var(--space-4), 5vw, 32px);
   }
 }
 
@@ -538,6 +567,13 @@
 .touch-target {
   min-height: 44px;
   min-width: 44px;
+}
+
+/* Admin dashboard: KPIs em 2 colunas no mobile, mais colunas no desktop */
+@media (min-width: 640px) {
+  .admin-dashboard-kpis {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
 }
 
 /* ========================================

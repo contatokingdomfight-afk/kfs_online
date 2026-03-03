@@ -153,7 +153,7 @@ export function ResponsiveShell({
             <h1 style={{ margin: 0, fontSize: "clamp(17px, 4.2vw, 20px)", fontWeight: 600, flex: 1 }}>{headerTitle}</h1>
             {headerExtra}
           </header>
-          <main className={mainClassName} style={{ flex: 1, overflow: "auto", minHeight: 0 }}>{children}</main>
+          <main className={mainClassName} style={{ flex: 1, overflow: "auto", minHeight: 0, minWidth: 0 }}>{children}</main>
         </div>
       </div>
     </div>

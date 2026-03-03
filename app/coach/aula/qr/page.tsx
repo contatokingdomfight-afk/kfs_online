@@ -1,14 +1,27 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import QRCode from "qrcode";
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+function getBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  try {
+    const h = headers();
+    const host = h.get("host");
+    const proto = h.get("x-forwarded-proto") || "https";
+    if (host) return `${proto}://${host}`;
+  } catch {
+    // headers() can throw in some contexts
+  }
+  return "http://localhost:3000";
+}
 
 type Props = { searchParams: Promise<{ lesson?: string }> };
 
 export default async function CoachAulaQrPage({ searchParams }: Props) {
+  const baseUrl = getBaseUrl();
   const supabase = await createClient();
   const { today, endOfWeek } = getThisWeekRange();
   const params = await searchParams;

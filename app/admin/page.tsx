@@ -29,7 +29,7 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Se
   const modalityCodes = stats.studentsByModality.map((m) => m.modalityCode).filter((c) => c !== "");
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)", minWidth: 0 }}>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "clamp(12px, 3vw, 16px)", justifyContent: "space-between" }}>
         <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-secondary)" }}>
           {t("helloAdmin")} {dbUser?.name || t("admin")}.
@@ -39,27 +39,27 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Se
         </Suspense>
       </div>
 
-      {/* KPIs */}
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "clamp(12px, 3vw, 16px)" }}>
-        <div className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
+      {/* KPIs – grid responsivo: mobile 2 colunas, desktop auto-fill */}
+      <section className="admin-dashboard-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "clamp(10px, 2.5vw, 16px)" }}>
+        <div className="card" style={{ padding: "clamp(12px, 3vw, 18px)", minWidth: 0 }}>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>Alunos totais</div>
-          <div style={{ fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 700, color: "var(--text-primary)" }}>{stats.totalStudents}</div>
+          <div style={{ fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 700, color: "var(--text-primary)" }}>{stats.totalStudents}</div>
         </div>
         {stats.studentsByModality.map((m) => (
-          <div key={m.modalityCode || "sem"} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
+          <div key={m.modalityCode || "sem"} className="card" style={{ padding: "clamp(12px, 3vw, 18px)", minWidth: 0 }}>
             <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>{m.modalityName}</div>
-            <div style={{ fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 700, color: "var(--text-primary)" }}>{m.count}</div>
+            <div style={{ fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 700, color: "var(--text-primary)" }}>{m.count}</div>
           </div>
         ))}
-        <div className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
+        <div className="card" style={{ padding: "clamp(12px, 3vw, 18px)", minWidth: 0 }}>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>Receita do mês</div>
-          <div style={{ fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 700, color: "var(--success)" }}>
+          <div style={{ fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 700, color: "var(--success)" }}>
             {Number(stats.revenueCurrentMonth).toFixed(0)} €
           </div>
         </div>
-        <div className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>Receita acum. (últimos 12 meses)</div>
-          <div style={{ fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 700, color: "var(--text-primary)" }}>
+        <div className="card" style={{ padding: "clamp(12px, 3vw, 18px)", minWidth: 0 }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>Receita acum. (12 meses)</div>
+          <div style={{ fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 700, color: "var(--text-primary)" }}>
             {stats.revenueAccumulatedMonths.reduce((s, r) => s + r.revenue, 0).toFixed(0)} €
           </div>
         </div>

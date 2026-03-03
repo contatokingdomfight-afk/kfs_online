@@ -59,12 +59,12 @@ export function AdminDashboardCharts(props: Props) {
   }));
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(24px, 6vw, 32px)" }}>
-      <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(24px, 6vw, 32px)", minWidth: 0 }}>
+      <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0, overflow: "hidden" }}>
         <h3 style={{ margin: "0 0 16px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Presenças no mês ({schoolName})
         </h3>
-        <div style={{ width: "100%", height: 280 }}>
+        <div style={{ width: "100%", minWidth: 0, height: 280 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={attendanceChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -91,14 +91,14 @@ export function AdminDashboardCharts(props: Props) {
         </div>
       </section>
 
-      <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+      <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0, overflow: "hidden" }}>
         <h3 style={{ margin: "0 0 16px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Receita por mês ({schoolName})
         </h3>
         {revenueChartData.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>Sem dados de pagamentos.</p>
         ) : (
-          <div style={{ width: "100%", height: 260 }}>
+          <div style={{ width: "100%", minWidth: 0, height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
