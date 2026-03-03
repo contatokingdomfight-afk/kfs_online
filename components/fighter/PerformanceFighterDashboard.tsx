@@ -2,12 +2,12 @@
 
 import { FighterHeader } from "./FighterHeader";
 import { StatCard } from "./StatCard";
-import { RadarStats } from "./RadarStats";
+import { RadarStats } from "./RadarStatsDynamic";
 import { AttributeAccordion } from "./AttributeAccordion";
 import { MissionCard, type Mission } from "./MissionCard";
 import { CoachFeedback } from "./CoachFeedback";
 import type { DimensionDetail } from "@/lib/performance-detail-structure";
-import type { RadarAxis } from "./RadarStats";
+import type { RadarAxis } from "./RadarStatsDynamic";
 import { XP_PER_MISSION } from "@/lib/xp-missions";
 
 const AXIS_ICONS: Record<string, string> = {

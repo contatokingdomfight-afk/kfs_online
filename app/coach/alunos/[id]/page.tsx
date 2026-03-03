@@ -11,7 +11,7 @@ import {
   computeGeneralPerformanceScores,
   getAttendanceByModality,
 } from "@/lib/performance-utils";
-import { RadarStats } from "@/components/fighter/RadarStats";
+import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 const GENERAL_LAST_N = 10;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -48,8 +49,7 @@ export default async function CoachAlunosPage({ searchParams }: { searchParams: 
 
   const userById = new Map((usersData ?? []).map((u) => [u.id, u]));
 
-  const { data: modalitiesList } = await supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true });
-  const modalitiesForFilter = modalitiesList ?? [];
+  const modalitiesForFilter = await getCachedModalityRefs(supabase);
 
   return (
     <div style={{ maxWidth: "min(700px, 100%)" }}>

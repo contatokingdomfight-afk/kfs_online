@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
+import { getCachedLocations } from "@/lib/cached-reference-data";
 import { AttendanceRow } from "./AttendanceRow";
 
 export default async function CoachAulaPage({
@@ -24,11 +25,9 @@ export default async function CoachAulaPage({
 
   const lessons = lessonsData ?? [];
   const locationIds = [...new Set((lessons as { locationId?: string }[]).map((l) => l.locationId).filter(Boolean))];
-  const { data: locations } =
-    locationIds.length > 0
-      ? await supabase.from("Location").select("id, name").in("id", locationIds)
-      : { data: [] as { id: string; name: string }[] };
-  const locationById = new Map((locations ?? []).map((loc) => [loc.id, loc.name]));
+  const allLocations = await getCachedLocations(supabase);
+  const locations = locationIds.length > 0 ? allLocations.filter((l) => locationIds.includes(l.id)) : [];
+  const locationById = new Map(locations.map((loc) => [loc.id, loc.name]));
   const lessonId =
     selectedLessonId && lessons.some((l) => l.id === selectedLessonId)
       ? selectedLessonId

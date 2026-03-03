@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { formatLessonDate } from "@/lib/lesson-utils";
 import { EditarAulaForm } from "./EditarAulaForm";
 import { CancelarAulaButton } from "./CancelarAulaButton";
+import { getCachedLocations, getCachedModalityRefs } from "@/lib/cached-reference-data";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -41,9 +42,11 @@ export default async function AdminTurmaEditarPage({ params }: Props) {
     name: userById.get(c.userId)?.name ?? userById.get(c.userId)?.email ?? c.id,
   }));
 
-  const { data: locationOptions } = await supabase.from("Location").select("id, name").order("sortOrder", { ascending: true });
-  const { data: modalityOptions } = await supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true });
-  const modalityName = (modalityOptions ?? []).find((m) => m.code === lesson.modality)?.name ?? lesson.modality;
+  const [locationOptions, modalityOptions] = await Promise.all([
+    getCachedLocations(supabase),
+    getCachedModalityRefs(supabase),
+  ]);
+  const modalityName = modalityOptions.find((m) => m.code === lesson.modality)?.name ?? lesson.modality;
 
   const dateStr = typeof lesson.date === "string" ? lesson.date.slice(0, 10) : lesson.date;
 

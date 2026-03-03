@@ -21,6 +21,7 @@ import {
 } from "@/lib/performance-detail-from-config";
 import { getRankFromXp } from "@/lib/xp-missions";
 import { getApplicableMissionTemplates } from "@/lib/missions";
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 
 const GENERAL_LAST_N = 10;
 
@@ -52,13 +53,13 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
     );
   }
 
-  const { data: modalitiesList } = await supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true });
-  const modalityLabels = new Map<string, string>((modalitiesList ?? []).map((m) => [m.code, m.name ?? m.code]));
+  const modalitiesList = await getCachedModalityRefs(supabase);
+  const modalityLabels = new Map<string, string>(modalitiesList.map((m) => [m.code, m.name ?? m.code]));
 
   const allConfigs = await loadAllEvaluationConfigs(supabase);
   const configsForDetail: { modality: string; config: import("@/lib/evaluation-config").ModalityEvaluationConfigPayload }[] = [];
   const configByModality = new Map<string, ModalityConfig>();
-  for (const m of modalitiesList ?? []) {
+  for (const m of modalitiesList) {
     const config = allConfigs.get(m.code);
     if (config) {
       configByModality.set(m.code, {

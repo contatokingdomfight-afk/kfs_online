@@ -7,7 +7,7 @@ import { getAttendanceByModality } from "@/lib/performance-utils";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { EditarAtletaForm } from "./EditarAtletaForm";
 import { ComentariosAtleta } from "./ComentariosAtleta";
-import { PerformanceRadar } from "@/components/PerformanceRadar";
+import { PerformanceRadar } from "@/components/PerformanceRadarDynamic";
 import { AvaliacaoAtleta } from "./AvaliacaoAtleta";
 import { computeMovingAverage, getRadarAxes } from "@/lib/evaluation-config";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";

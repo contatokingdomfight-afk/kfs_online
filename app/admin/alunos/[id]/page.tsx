@@ -12,8 +12,9 @@ import {
   computeGeneralPerformanceScores,
   getAttendanceByModality,
 } from "@/lib/performance-utils";
-import { RadarStats } from "@/components/fighter/RadarStats";
+import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 
 const GENERAL_LAST_N = 10;
 
@@ -59,7 +60,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     .eq("is_active", true)
     .order("price_monthly", { ascending: true });
   const planOptions = (plans ?? []).map((p) => ({ id: p.id, label: `${p.name} (€${Number(p.price_monthly).toFixed(0)}/mês)` }));
-  const { data: modalityOptions } = await supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true });
+  const modalityOptions = await getCachedModalityRefs(supabase);
 
   // Performance: athlete + evaluations → radar
   let generalPerformanceScores: Record<string, number> | null = null;
@@ -201,7 +202,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
             initialPlanId={student.planId ?? ""}
             initialPrimaryModality={(student as { primaryModality?: string | null }).primaryModality ?? ""}
             planOptions={planOptions}
-            modalityOptions={modalityOptions ?? []}
+            modalityOptions={modalityOptions}
             statusLabels={STATUS_LABEL}
             currentUserRole={user?.role ?? "ALUNO"}
           />

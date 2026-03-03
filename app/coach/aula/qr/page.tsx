@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
+import { getCachedLocations } from "@/lib/cached-reference-data";
 import QRCode from "qrcode";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -23,11 +24,9 @@ export default async function CoachAulaQrPage({ searchParams }: Props) {
 
   const lessons = lessonsData ?? [];
   const locationIds = [...new Set((lessons as { locationId?: string }[]).map((l) => l.locationId).filter(Boolean))];
-  const { data: locations } =
-    locationIds.length > 0
-      ? await supabase.from("Location").select("id, name").in("id", locationIds)
-      : { data: [] as { id: string; name: string }[] };
-  const locationById = new Map((locations ?? []).map((loc) => [loc.id, loc.name]));
+  const allLocations = await getCachedLocations(supabase);
+  const locations = locationIds.length > 0 ? allLocations.filter((l) => locationIds.includes(l.id)) : [];
+  const locationById = new Map(locations.map((loc) => [loc.id, loc.name]));
 
   const selectedId =
     lessonId && lessons.some((l) => l.id === lessonId) ? lessonId : lessons[0]?.id ?? null;

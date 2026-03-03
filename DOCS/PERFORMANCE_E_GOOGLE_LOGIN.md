@@ -55,9 +55,18 @@ A plataforma estava lenta ao mudar de página ou ao fazer ações (muitas chamad
 - **Cache de dados pouco voláteis:** As configurações de avaliação já usam `unstable_cache` (5 min). Para listas como `Location` ou `ModalityRef` (pouco voláteis), considerar o mesmo com TTL 60–300 s.
 - **Streaming (Suspense):** O dashboard do aluno continua a fazer muitas queries num único request. Dividir a página em componentes que fazem fetch próprio e envolvê-los em `<Suspense>` permite mostrar primeiro o “above the fold” (próxima aula, presenças) e streamar o resto (estatísticas, missões, performance, notificações).
 - **Lazy de componentes pesados:** Componentes com muitas dependências (ex.: gráficos Recharts) podem ser carregados com `next/dynamic` e `loading` para não bloquear o first paint.
-- **Índices na BD:** Garantir índices em colunas usadas em `WHERE` e `ORDER BY` (ex.: `Lesson.date`, `Lesson.schoolId`, `Attendance.studentId`, `Student.userId`, `Athlete.studentId`).
+- **Índices na BD:** Implementado em `prisma/migrations/add_performance_indexes.sql`: `Lesson.date`, `Lesson.schoolId+date`, `Attendance.studentId`, `Attendance.studentId+status`.
 - **Supabase:** Se a latência à BD for alta, rever a região do projeto Supabase (proximidade ao servidor Next.js) e o plano (conexões e recursos).
 
 ---
 
-*Última atualização: callback OAuth, cache getCurrentDbUser, loading.tsx, reutilização de Athlete/Student no dashboard.*
+## 5. Melhorias implementadas (2026-03)
+
+- **Índices:** Migration `add_performance_indexes.sql` com índices em Lesson (date, schoolId+date) e Attendance (studentId, studentId+status).
+- **next/dynamic:** `PerformanceRadar` e `RadarStats` carregados via `PerformanceRadarDynamic` e `RadarStatsDynamic` (ssr: false, loading placeholder) para reduzir first-load JS.
+- **Cache Location/ModalityRef:** `lib/cached-reference-data.ts` com `getCachedLocations(supabase)` e `getCachedModalityRefs(supabase)` (unstable_cache, revalidate 300s). Usado em dashboard, admin (turmas, alunos), coach (aula, alunos, performance).
+- **Streaming (Suspense):** Dashboard do aluno: a página faz apenas o fetch da agenda (aulas da semana, locais, tema da semana, presenças). O bloco “abaixo da dobra” (estatísticas, missões, notificações, histórico, progresso semanal, performance, conquistas, etc.) está em `<Suspense>` com o componente async `DashboardRestContent`, que faz o seu próprio fetch. A agenda é enviada primeiro (streaming); o resto é enviado quando o servidor termina de renderizar `DashboardRestContent`.
+
+---
+
+*Última atualização: índices, next/dynamic, cache Location/ModalityRef, Suspense no dashboard.*

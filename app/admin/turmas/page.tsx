@@ -4,6 +4,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { CreateLessonForm } from "./CreateLessonForm";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
+import { getCachedLocations, getCachedModalityRefs } from "@/lib/cached-reference-data";
 
 export default async function AdminTurmasPage() {
   const dbUser = await getCurrentDbUser();
@@ -29,8 +30,10 @@ export default async function AdminTurmasPage() {
     };
   });
 
-  const { data: locations } = await supabase.from("Location").select("id, name").order("sortOrder", { ascending: true });
-  const { data: modalities } = await supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true });
+  const [locations, modalities] = await Promise.all([
+    getCachedLocations(supabase),
+    getCachedModalityRefs(supabase),
+  ]);
   const { data: schools } = await supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true });
 
   return (
