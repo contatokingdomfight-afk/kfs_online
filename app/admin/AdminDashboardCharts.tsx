@@ -72,7 +72,7 @@ export function AdminDashboardCharts(props: Props) {
               <YAxis tick={{ fill: "var(--text-secondary)", fontSize: 11 }} stroke="var(--border)" />
               <Tooltip
                 contentStyle={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
-                formatter={(value: number) => [value, ""]}
+                formatter={(value: number | undefined) => [value ?? 0, ""]}
                 labelFormatter={(label) => `Dia ${label}`}
               />
               <Legend />
@@ -106,7 +106,7 @@ export function AdminDashboardCharts(props: Props) {
                 <YAxis tick={{ fill: "var(--text-secondary)", fontSize: 11 }} stroke="var(--border)" tickFormatter={(v) => `${v} €`} />
                 <Tooltip
                   contentStyle={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
-                  formatter={(value: number) => [`${Number(value).toFixed(2)} €`, "Receita"]}
+                  formatter={(value: number | undefined) => [`${Number(value ?? 0).toFixed(2)} €`, "Receita"]}
                 />
                 <Line type="monotone" dataKey="revenue" stroke="var(--primary)" strokeWidth={2} dot={{ fill: "var(--primary)" }} name="Receita" />
               </LineChart>
