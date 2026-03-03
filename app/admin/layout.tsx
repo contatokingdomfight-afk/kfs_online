@@ -52,6 +52,7 @@ export default async function AdminLayout({
           </div>
         }
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
+        mainClassName="admin-main"
       >
         {children}
       </ResponsiveShell>

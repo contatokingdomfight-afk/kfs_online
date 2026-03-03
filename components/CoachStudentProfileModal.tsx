@@ -64,6 +64,7 @@ export function CoachStudentProfileModal(props: Props) {
       role="dialog"
       aria-modal={true}
       aria-labelledby="modal-title"
+      className="coach-profile-modal-overlay"
       style={{
         position: "fixed",
         inset: 0,
@@ -77,9 +78,10 @@ export function CoachStudentProfileModal(props: Props) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="card"
+        className="card coach-profile-modal-card"
         style={{
           maxWidth: "min(480px, 100%)",
+          width: "100%",
           maxHeight: "90vh",
           overflow: "auto",
           padding: "clamp(20px, 5vw, 24px)",

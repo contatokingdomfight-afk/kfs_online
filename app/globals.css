@@ -542,6 +542,13 @@
     padding-right: clamp(var(--space-4), 5vw, 32px);
   }
 
+  /* Admin: área principal com largura total no desktop */
+  .app-shell-main > main.admin-main {
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
   .app-shell-header {
     padding-left: clamp(var(--space-4), 5vw, 32px);
     padding-right: clamp(var(--space-4), 5vw, 32px);
@@ -580,6 +587,16 @@
 @media (max-width: 767px) {
   .admin-chart-attendance {
     display: none !important;
+  }
+}
+
+/* Modal Perfil e avaliação (coach): mais largura no mobile */
+@media (max-width: 480px) {
+  .coach-profile-modal-overlay {
+    padding: 10px !important;
+  }
+  .coach-profile-modal-card {
+    max-width: 100% !important;
   }
 }
 
