@@ -22,6 +22,7 @@ import {
 import { getRankFromXp } from "@/lib/xp-missions";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 const GENERAL_LAST_N = 10;
 
@@ -87,7 +88,7 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
     rankInfo = { level: rank.level, rankIndex: rank.rankIndex, xpCurrent: rank.xpCurrent, xpNext: rank.xpNext };
 
     const primaryModality = (student.primaryModality as string | null) ?? null;
-    primaryModalityLabel = primaryModality ? (modalityLabels.get(primaryModality) ?? primaryModality) : null;
+    primaryModalityLabel = primaryModality ? (modalityLabels.get(primaryModality) ?? MODALITY_LABELS[primaryModality] ?? primaryModality) : null;
 
     customMissions = (await getApplicableMissionTemplates(supabase, athlete.id, xp, primaryModality)).map(
       (t) => ({ id: t.id, name: t.name, description: t.description, xpReward: t.xpReward })

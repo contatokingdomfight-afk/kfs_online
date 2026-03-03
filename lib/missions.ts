@@ -41,7 +41,8 @@ export async function getApplicableMissionTemplates(
   return templates
     .filter((t) => {
       if (completedIds.has(t.id)) return false;
-      if (t.modality != null && t.modality !== primaryModality) return false;
+      // primaryModality "ALL" = todas as modalidades (ex.: plano Presencial MMA) → não filtrar por modalidade
+      if (t.modality != null && primaryModality !== "ALL" && t.modality !== primaryModality) return false;
       // beltIndex no template = faixa mínima (ex.: 4 = Verde ou superior)
       if (t.beltIndex != null && beltIndex < t.beltIndex) return false;
       return true;

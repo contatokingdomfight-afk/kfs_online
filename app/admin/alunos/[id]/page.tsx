@@ -13,7 +13,7 @@ import {
   getAttendanceByModality,
 } from "@/lib/performance-utils";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
-import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { MODALITY_LABELS, PRIMARY_MODALITY_ALL } from "@/lib/lesson-utils";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 
 const GENERAL_LAST_N = 10;
@@ -60,7 +60,16 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     .eq("is_active", true)
     .order("price_monthly", { ascending: true });
   const planOptions = (plans ?? []).map((p) => ({ id: p.id, label: `${p.name} (€${Number(p.price_monthly).toFixed(0)}/mês)` }));
-  const modalityOptions = await getCachedModalityRefs(supabase);
+  const modalityRefs = await getCachedModalityRefs(supabase);
+  const modalityOptions = [
+    { code: PRIMARY_MODALITY_ALL, name: MODALITY_LABELS[PRIMARY_MODALITY_ALL] ?? "Todas as modalidades" },
+    ...(modalityRefs ?? []),
+  ];
+  const studentPlan = (plans ?? []).find((p) => p.id === student.planId);
+  const isPresencialMma = studentPlan?.name && String(studentPlan.name).includes("Presencial MMA");
+  const initialPrimaryModality = isPresencialMma
+    ? PRIMARY_MODALITY_ALL
+    : ((student as { primaryModality?: string | null }).primaryModality ?? "");
 
   // Performance: athlete + evaluations → radar
   let generalPerformanceScores: Record<string, number> | null = null;
@@ -93,7 +102,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   const attendanceByModality = await getAttendanceByModality(supabase, studentId);
   const hasPerformance = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
 
-  const modalityNameFor = (code: string) => (modalityOptions ?? []).find((m) => m.code === code)?.name ?? MODALITY_LABELS[code] ?? code;
+  const modalityNameFor = (code: string) => modalityOptions.find((m) => m.code === code)?.name ?? MODALITY_LABELS[code] ?? code;
 
   return (
     <div style={{ maxWidth: "min(420px, 100%)" }}>
@@ -200,7 +209,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
             initialName={user?.name ?? ""}
             initialStatus={student.status}
             initialPlanId={student.planId ?? ""}
-            initialPrimaryModality={(student as { primaryModality?: string | null }).primaryModality ?? ""}
+            initialPrimaryModality={initialPrimaryModality}
             planOptions={planOptions}
             modalityOptions={modalityOptions}
             statusLabels={STATUS_LABEL}

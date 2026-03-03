@@ -1,5 +1,9 @@
+/** Valor especial: todas as modalidades (ex.: plano Presencial MMA). */
+export const PRIMARY_MODALITY_ALL = "ALL";
+
 /** Labels das modalidades. Ao adicionar nova modalidade aqui, os badges de gamificação (10, 20, 30... aulas) são gerados automaticamente. */
 export const MODALITY_LABELS: Record<string, string> = {
+  [PRIMARY_MODALITY_ALL]: "Todas as modalidades",
   MUAY_THAI: "Muay Thai",
   BOXING: "Boxing",
   KICKBOXING: "Kickboxing",

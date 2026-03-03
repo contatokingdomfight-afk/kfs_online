@@ -88,9 +88,17 @@ export async function updateStudent(
   const primaryModality = (formData.get("primaryModality") as string)?.trim() || null;
   const validStatuses = ["ATIVO", "INATIVO", "EXPERIMENTAL"];
   const newStatus = status && validStatuses.includes(status) ? status : undefined;
-  const newPrimaryModality = !primaryModality || primaryModality === "" ? null : primaryModality;
+  let newPrimaryModality = !primaryModality || primaryModality === "" ? null : primaryModality;
 
   const supabase = createAdminClient();
+
+  // Se o plano for Presencial MMA (ou Kingdom Presencial MMA), modalidade principal = Todas as modalidades (ALL)
+  if (planId) {
+    const { data: plan } = await supabase.from("Plan").select("name").eq("id", planId).single();
+    if (plan?.name && String(plan.name).includes("Presencial MMA")) {
+      newPrimaryModality = "ALL";
+    }
+  }
 
   const { data: student } = await supabase
     .from("Student")
