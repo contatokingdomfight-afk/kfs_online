@@ -1,18 +1,84 @@
 import Link from "next/link";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { getAdminDashboardStats } from "@/lib/admin-dashboard-stats";
+import { AdminSchoolFilter } from "./AdminSchoolFilter";
+import { AdminDashboardCharts } from "./AdminDashboardCharts";
+import { Suspense } from "react";
 
-export default async function AdminHomePage() {
+type SearchParams = Promise<{ school?: string }>;
+
+export default async function AdminHomePage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
+  const params = await searchParams;
+  const schoolId = (params.school?.trim() || null) || null;
+
+  const result = getAdminClientOrNull();
+  if (!result.client) return <AdminConfigMissing errorType={result.error} />;
+  const stats = await getAdminDashboardStats(result.client, schoolId);
+
+  const modalityNames: Record<string, string> = {};
+  stats.studentsByModality.forEach((m) => {
+    modalityNames[m.modalityCode] = m.modalityName;
+  });
+  const modalityCodes = stats.studentsByModality.map((m) => m.modalityCode).filter((c) => c !== "");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
-      <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-secondary)" }}>
-        {t("helloAdmin")} {dbUser?.name || t("admin")}.
-      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "clamp(12px, 3vw, 16px)", justifyContent: "space-between" }}>
+        <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-secondary)" }}>
+          {t("helloAdmin")} {dbUser?.name || t("admin")}.
+        </p>
+        <Suspense fallback={<span style={{ color: "var(--text-secondary)" }}>Escola: …</span>}>
+          <AdminSchoolFilter schools={stats.schools} currentSchoolId={schoolId} />
+        </Suspense>
+      </div>
+
+      {/* KPIs */}
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "clamp(12px, 3vw, 16px)" }}>
+        <div className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>Alunos totais</div>
+          <div style={{ fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 700, color: "var(--text-primary)" }}>{stats.totalStudents}</div>
+        </div>
+        {stats.studentsByModality.map((m) => (
+          <div key={m.modalityCode || "sem"} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>{m.modalityName}</div>
+            <div style={{ fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 700, color: "var(--text-primary)" }}>{m.count}</div>
+          </div>
+        ))}
+        <div className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>Receita do mês</div>
+          <div style={{ fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 700, color: "var(--success)" }}>
+            {Number(stats.revenueCurrentMonth).toFixed(0)} €
+          </div>
+        </div>
+        <div className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>Receita acum. (últimos 12 meses)</div>
+          <div style={{ fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 700, color: "var(--text-primary)" }}>
+            {stats.revenueAccumulatedMonths.reduce((s, r) => s + r.revenue, 0).toFixed(0)} €
+          </div>
+        </div>
+      </section>
+
+      {/* Gráficos */}
+      <Suspense fallback={<div className="card" style={{ padding: 24, color: "var(--text-secondary)" }}>A carregar gráficos…</div>}>
+        <AdminDashboardCharts
+          schools={stats.schools}
+          currentSchoolId={schoolId}
+          totalStudents={stats.totalStudents}
+          studentsByModality={stats.studentsByModality}
+          revenueCurrentMonth={stats.revenueCurrentMonth}
+          revenueAccumulatedMonths={stats.revenueAccumulatedMonths}
+          attendanceByDay={stats.attendanceByDay}
+          modalityCodes={modalityCodes}
+          modalityNames={modalityNames}
+        />
+      </Suspense>
 
       <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
         <h2 style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
