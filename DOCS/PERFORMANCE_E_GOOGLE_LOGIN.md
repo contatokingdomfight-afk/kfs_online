@@ -42,14 +42,22 @@ A plataforma estava lenta ao mudar de página ou ao fazer ações (muitas chamad
 
 ---
 
-## 3. Recomendações futuras (opcional)
+## 3. Menos round-trips no dashboard do aluno
 
-- **Cache de dados pouco voláteis:** Para dados que mudam raramente (ex.: configurações de avaliação, lista de modalidades), considerar `unstable_cache` (Next.js) com TTL de 60–300 segundos para reduzir leituras à BD.
-- **Streaming:** O dashboard do aluno faz muitas queries; manter o uso de `Promise.all` onde já existe e, se necessário, dividir a página em componentes que fazem `Suspense` para o conteúdo mais pesado carregar depois do “above the fold”.
+### Alterações feitas
+- **Reutilização do Athlete:** O dashboard do aluno fazia duas chamadas à tabela `Athlete` (uma no batch principal para avaliações, outra depois para estatísticas e missões). Passámos a pedir `id, currentBelt, currentXP` já no primeiro batch e a reutilizar esse resultado para o bloco de estatísticas (faixa, XP, total de presenças) e missões, eliminando uma query e uma query extra a `Student` para `primaryModality`.
+- **primaryModality:** O `primaryModality` do aluno passou a ser lido na primeira query a `Student` (junto com `schoolId`, `planId`) e guardado em `studentPrimaryModality`, evitando uma segunda leitura a `Student` no bloco de missões.
+
+---
+
+## 4. Recomendações futuras (opcional)
+
+- **Cache de dados pouco voláteis:** As configurações de avaliação já usam `unstable_cache` (5 min). Para listas como `Location` ou `ModalityRef` (pouco voláteis), considerar o mesmo com TTL 60–300 s.
+- **Streaming (Suspense):** O dashboard do aluno continua a fazer muitas queries num único request. Dividir a página em componentes que fazem fetch próprio e envolvê-los em `<Suspense>` permite mostrar primeiro o “above the fold” (próxima aula, presenças) e streamar o resto (estatísticas, missões, performance, notificações).
 - **Lazy de componentes pesados:** Componentes com muitas dependências (ex.: gráficos Recharts) podem ser carregados com `next/dynamic` e `loading` para não bloquear o first paint.
-- **Índices na BD:** Garantir índices em colunas usadas em `WHERE` e `ORDER BY` (ex.: `Lesson.date`, `Attendance.studentId`, `Student.userId`).
+- **Índices na BD:** Garantir índices em colunas usadas em `WHERE` e `ORDER BY` (ex.: `Lesson.date`, `Lesson.schoolId`, `Attendance.studentId`, `Student.userId`, `Athlete.studentId`).
 - **Supabase:** Se a latência à BD for alta, rever a região do projeto Supabase (proximidade ao servidor Next.js) e o plano (conexões e recursos).
 
 ---
 
-*Última atualização: alterações no callback OAuth, cache de getCurrentDbUser e loading.tsx.*
+*Última atualização: callback OAuth, cache getCurrentDbUser, loading.tsx, reutilização de Athlete/Student no dashboard.*

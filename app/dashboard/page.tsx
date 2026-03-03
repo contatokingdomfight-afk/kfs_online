@@ -44,11 +44,13 @@ export default async function DashboardPage() {
   let studentSchoolId: string | null = null;
   let allowedModalities: string[] = MODALITIES_LIST.slice();
   let studentPlanId: string | null = null;
+  let studentPrimaryModality: string | null = null;
   if (studentId) {
     const { data: student } = await supabase.from("Student").select("schoolId, planId, primaryModality").eq("id", studentId).single();
     if (student) {
       studentSchoolId = student.schoolId || null;
       studentPlanId = student.planId || null;
+      studentPrimaryModality = (student as { primaryModality?: string }).primaryModality ?? null;
       if (student.planId) {
         const { data: plan } = await supabase.from("Plan").select("modality_scope").eq("id", student.planId).eq("is_active", true).single();
         if (plan?.modality_scope === "NONE") allowedModalities = [];
@@ -116,6 +118,7 @@ export default async function DashboardPage() {
     updatedAt: string | null;
   } | null = null;
   let pastAttendances: { lessonId: string; modality: string; date: string; startTime: string; endTime: string; status: string; locationName?: string }[] = [];
+  let athleteFromBatch: { id: string; currentBelt: string | null; currentXP: number | null } | null = null;
   if (studentId) {
     const monthStart = new Date().toISOString().slice(0, 7) + "-01";
     const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10);
@@ -141,7 +144,7 @@ export default async function DashboardPage() {
     ] = await Promise.all([
       studentPlanId ? supabase.from("Plan").select("name, price_monthly, includes_digital_access").eq("id", studentPlanId).eq("is_active", true).single() : Promise.resolve({ data: null }),
       getAttendanceByModality(supabase, studentId),
-      supabase.from("Athlete").select("id").eq("studentId", studentId).single(),
+      supabase.from("Athlete").select("id, currentBelt, currentXP").eq("studentId", studentId).single(),
       getEarnedBadges(supabase, studentId),
       getNextBadgeProgress(supabase, studentId),
       supabase.from("StudentProfile").select("weightKg, heightCm, dateOfBirth, medicalNotes, emergencyContact, updatedAt").eq("studentId", studentId).maybeSingle(),
@@ -176,6 +179,7 @@ export default async function DashboardPage() {
     const pastLessonIds = pastAttData.length > 0 ? [...new Set(pastAttData.map((a) => a.lessonId))] : [];
 
     const athlete = athleteRes.data;
+    athleteFromBatch = athleteRes.data;
     const [evalsRes, pastLessonsRes] = await Promise.all([
       athlete ? supabase.from("AthleteEvaluation").select("gas, technique, strength, theory, scores, modality").eq("athleteId", athlete.id).order("created_at", { ascending: false }).limit(GENERAL_LAST_N) : Promise.resolve({ data: [] }),
       pastLessonIds.length > 0 ? supabase.from("Lesson").select("id, modality, date, startTime, endTime, locationId").in("id", pastLessonIds).lt("date", todayStr).order("date", { ascending: false }).limit(30) : Promise.resolve({ data: [] }),
@@ -296,7 +300,7 @@ export default async function DashboardPage() {
     />
   );
 
-  // Buscar informações do atleta para estatísticas
+  // Estatísticas do atleta e missões (reutiliza athleteFromBatch do primeiro batch de queries)
   let athleteStats: {
     currentBelt: string | null;
     currentXP: number;
@@ -311,55 +315,38 @@ export default async function DashboardPage() {
     xpReward: number;
   }> = [];
 
-  if (studentId) {
-    const { data: athlete } = await supabase
-      .from("Athlete")
-      .select("id, currentBelt, currentXP")
+  if (studentId && athleteFromBatch) {
+    const athlete = athleteFromBatch;
+    const beltLevels = ["WHITE", "YELLOW", "ORANGE", "GREEN", "BLUE", "PURPLE", "BROWN", "BLACK", "BLACK_1", "BLACK_2", "BLACK_3", "GOLDEN"];
+    const currentIndex = beltLevels.indexOf(athlete.currentBelt || "WHITE");
+    const baseXP = 1000;
+    const nextLevelXP = currentIndex >= 0 ? baseXP * Math.pow(2, currentIndex) : baseXP;
+
+    const { count: totalPresences } = await supabase
+      .from("Attendance")
+      .select("*", { count: "exact", head: true })
       .eq("studentId", studentId)
-      .single();
+      .eq("status", "CONFIRMED");
 
-    if (athlete) {
-      // Calcular XP necessário para próximo nível
-      const beltLevels = ["WHITE", "YELLOW", "ORANGE", "GREEN", "BLUE", "PURPLE", "BROWN", "BLACK", "BLACK_1", "BLACK_2", "BLACK_3", "GOLDEN"];
-      const currentIndex = beltLevels.indexOf(athlete.currentBelt || "WHITE");
-      const baseXP = 1000;
-      const nextLevelXP = currentIndex >= 0 ? baseXP * Math.pow(2, currentIndex) : baseXP;
+    athleteStats = {
+      currentBelt: athlete.currentBelt,
+      currentXP: athlete.currentXP || 0,
+      nextLevelXP,
+      totalPresences: totalPresences || 0,
+    };
 
-      // Contar total de presenças confirmadas
-      const { count: totalPresences } = await supabase
-        .from("Attendance")
-        .select("*", { count: "exact", head: true })
-        .eq("studentId", studentId)
-        .eq("status", "CONFIRMED");
-
-      athleteStats = {
-        currentBelt: athlete.currentBelt,
-        currentXP: athlete.currentXP || 0,
-        nextLevelXP,
-        totalPresences: totalPresences || 0,
-      };
-
-      // Buscar missões aplicáveis
-      const { data: student } = await supabase
-        .from("Student")
-        .select("primaryModality")
-        .eq("id", studentId)
-        .single();
-
-      const missions = await getApplicableMissionTemplates(
-        supabase,
-        athlete.id,
-        athlete.currentXP || 0,
-        student?.primaryModality || null
-      );
-
-      activeMissions = missions.slice(0, 3).map((m) => ({
-        id: m.id,
-        name: m.name,
-        description: m.description,
-        xpReward: m.xpReward,
-      }));
-    }
+    const missions = await getApplicableMissionTemplates(
+      supabase,
+      athlete.id,
+      athlete.currentXP || 0,
+      studentPrimaryModality
+    );
+    activeMissions = missions.slice(0, 3).map((m) => ({
+      id: m.id,
+      name: m.name,
+      description: m.description,
+      xpReward: m.xpReward,
+    }));
   }
 
   return (
