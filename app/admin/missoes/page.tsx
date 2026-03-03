@@ -4,6 +4,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { AdicionarMissaoForm } from "./AdicionarMissaoForm";
 import { DeleteMissionButton } from "./DeleteMissionButton";
+import { SeedMissionsForm } from "./SeedMissionsForm";
 import { getBeltName } from "@/lib/belts";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,8 @@ export default async function AdminMissoesPage() {
         O atleta vê apenas as missões que se aplicam à sua faixa e modalidade. As missões de dimensão
         (ex.: &quot;Subir Técnico para 5&quot;) são geradas automaticamente a partir das avaliações.
       </p>
+
+      <SeedMissionsForm />
 
       <div className="mb-8">
         <AdicionarMissaoForm modalityOptions={modalityOptions} />

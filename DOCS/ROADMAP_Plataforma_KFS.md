@@ -37,8 +37,12 @@
 | Mostrar plano atual no dashboard | Feito | Card “O teu plano” com nome e preço (quando atribuído) |
 | Dashboard de performance (Perfil do atleta gamificado) | Feito | Faixas (cores), XP, radar, stat cards, detalhe por componente, missões |
 | Gráfico radar / “Avatar” de evolução | Feito | Técnico, Tático, Físico, Mental, Teórico (Recharts) |
-| Missões ativas (sistema + configuráveis) | Feito | Admin /admin/missoes; por modalidade e faixa; XP por conclusão |
-| Sugestões de conteúdo no dashboard | Por fazer | Com base em assiduidade e avaliações (quando houver Biblioteca) |
+| Missões ativas (sistema + configuráveis) | Feito | Admin /admin/missoes; por modalidade e faixa; XP por conclusão; importar missões padrão (seed) |
+| Sugestões de conteúdo no dashboard | Feito | Cursos recomendados por modalidade principal; link para biblioteca |
+| Conquistas (badges) | Feito | Página /dashboard/conquistas; grelha de badges fixos; próxima conquista; link no sidebar |
+| Meta do mês (assiduidade) | Feito | Configuração em Admin Configurações; barra de progresso e celebração no dashboard |
+| Meta de saúde (IMC) | Feito | Card no dashboard quando há peso+altura; faixa OMS e sugestão “atingir/manter faixa saudável” |
+| Metas de avaliação | Feito | Até 2 eixos do radar a melhorar (ex.: “Subir Técnico para 8”) no dashboard |
 
 ---
 
@@ -63,6 +67,7 @@
 | Convidar aluno (novo) | Feito | Email; cria User + Student |
 | Editar aluno (nome, status) | Feito | Em `/admin/alunos/[id]` |
 | Atribuir plano ao aluno | Feito | Select de planos na edição do aluno |
+| Atalho «Acesso total» (plataforma + ginásio) | Feito | Botão na edição do aluno; atribui plano com digital + todas as modalidades |
 
 ---
 
@@ -96,6 +101,8 @@
 | Listar missões configuráveis | Feito | `/admin/missoes` |
 | Criar missão (nome, descrição, modalidade, faixa, XP, ordem) | Feito | Formulário em /admin/missoes |
 | Eliminar missão | Feito | Com confirmação |
+| Importar missões padrão (seed) | Feito | Botão “Importar missões padrão”; 62 missões do DOCS/MISSOES.md; evita duplicados por nome |
+| Faixa mínima nas missões | Feito | beltIndex = faixa mínima (ex.: “Verde ou superior” mostra a partir de Verde) |
 
 ---
 
@@ -126,7 +133,8 @@
 |------|--------|--------|
 | Listar coaches | Feito | `/admin/coaches` |
 | Convidar coach (novo) | Feito | `/admin/coaches/novo` |
-| Editar coach (nome, especialidades) | Feito | `/admin/coaches/[id]` |
+| Editar coach (nome, especialidades, valor/hora) | Feito | `/admin/coaches/[id]`; hourly_rate para pagamento por aulas |
+| Autorizar coach a criar cursos | Feito | Checkbox can_create_courses no perfil do aluno do coach |
 
 ---
 
@@ -152,7 +160,7 @@
 | Avaliação física (ficha anamnese) | Feito | /coach/alunos/[id]/avaliacao-fisica; 10 secções; renovação 6 meses; missão no dashboard aluno |
 | Página da aula (presenças, confirmação) | Feito | `/coach/aula?lesson=...` |
 | Página QR da aula | Feito | `/coach/aula/qr` |
-| Definir “Tema da Semana” | Por fazer | Ver “Sala de Aula Invertida” abaixo |
+| Definir “Tema da Semana” | Feito | /coach/tema-semana; por semana e modalidade; URL vídeo opcional; navegação entre semanas |
 
 ---
 
@@ -186,11 +194,11 @@
 | Comment | Feito | authorCoachId, targetType, targetId, content, visibility |
 | Payment | Feito | studentId, amount, status, referenceMonth |
 | Plan | Feito | name, description, price_monthly, includes_digital_access, modality_scope, is_active |
-| Conteúdos / Cursos (Biblioteca) | Por fazer | Tabelas e lógica para cursos, módulos, vídeos |
-| Badges / Conquistas | Por fazer | Tabela e regras de atribuição |
-| Metas de assiduidade | Por fazer | Configuração e progresso |
-| Tema da Semana | Por fazer | Tabela ou campo em Lesson/turma + associação a conteúdo |
-| Eventos (Camps, Workshops) | Por fazer | Inscrições e pagamentos/registos |
+| Conteúdos / Cursos (Biblioteca) | Feito | Course, CourseModule, CourseUnit; progresso do aluno; loja e compras |
+| Badges / Conquistas | Feito | StudentBadge; lib/gamification (badges fixos + por modalidade); página Conquistas |
+| Metas de assiduidade | Feito | AttendanceGoal (meta global mensal); configuração em Admin Configurações; progresso no dashboard |
+| Tema da Semana | Feito | WeekTheme (week_start, modality, title, course_id, video_url); coach define; aluno vê no dashboard |
+| Eventos (Camps, Workshops) | Feito | Loja com produtos tipo EVENT; inscrição e pagamento; Admin vê em Financeiro |
 
 ---
 
@@ -213,24 +221,18 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 - Filtros por categoria, modalidade, nível. **Feito**
 - Módulos por curso (múltiplos vídeos); progresso do aluno. **Feito**
 
-### 14.3 Gamificação e presença (parcialmente feito)
+### 14.3 Gamificação e presença
 
-- **Feito:** Sistema de faixas (cores) e XP; missões ativas (subir dimensão X + missões configuráveis no Admin); missão “Avaliação física”; conclusão de avaliação na aula atribui XP por targets de dimensão.
-- **Por fazer:** Badges/conquistas por check-ins (5 aulas, 10 aulas, 3 semanas seguidas, por modalidade); metas de assiduidade (X aulas por mês); progresso da meta no dashboard.
+- **Feito:** Sistema de faixas (cores) e XP; missões ativas (subir dimensão X + missões configuráveis no Admin); missão “Avaliação física”; conclusão de avaliação na aula atribui XP por targets de dimensão; **badges/conquistas** (primeira aula, 5/10/25/50/100 aulas, 3/5 semanas seguidas, por modalidade); **meta de assiduidade** (X aulas/mês configurável, barra e celebração no dashboard); **página Conquistas** (/dashboard/conquistas) com grelha de badges e próxima conquista; **meta de saúde (IMC)** e **metas de avaliação** (melhorar eixos do radar) no dashboard; **seed de 62 missões** (Admin → Importar missões padrão); faixa mínima nas missões (ex.: Verde ou superior).
+- **Por fazer (opcional):** Battle Pass por temporada; reset automático de missões mensais; recompensas reais (camiseta, desconto).
 
 ### 14.4 Sala de Aula Invertida
 
-- Coach define “Tema da Semana” (por turma/modalidade).
-- Aluno vê o tema e o vídeo de teoria no app.
-- Associação tema ↔ vídeo da biblioteca (ou vídeo dedicado).
+- **Feito:** Coach define “Tema da Semana” em /coach/tema-semana (por semana e modalidade; título, curso opcional, URL vídeo opcional); navegação entre semanas; aluno vê no dashboard (card “Tema da Semana” com link para curso e/ou “Ver vídeo”).
 
 ### 14.5 Receita adicional (Cursos, Camps, Workshops)
 
-- Página “Cursos e Eventos” (ou “Loja”) na plataforma.
-- Listagem de cursos avulsos, Camps, Workshops com preço.
-- Alunos sem acesso pelo plano podem “Comprar” ou “Inscrever-me” (eventos com data).
-- Registo da compra/inscrição e integração com o módulo Financeiro.
-- Desbloquear acesso ao conteúdo ou ao evento após compra/inscrição.
+- **Feito:** Página Loja (/dashboard/loja) com produtos (cursos avulsos, eventos); “Comprar” / “Inscrever-me”; CoursePurchase e registo no Financeiro; desbloqueio de acesso ao conteúdo/evento.
 
 ---
 
@@ -241,7 +243,7 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 | Modalidades: Jiu-Jitsu (BJJ), MMA | Por fazer | Hoje: Muay Thai, Boxing, Kickboxing |
 | Biometria (mencionada no plano) | Por fazer | Métricas além de presença; depende de definição de produto |
 | Notificações (email/push) | Feito | Resend: confirmação de presença (coach confirma); cron lembrete aulas (GET /api/cron/lesson-reminders). |
-| Remuneração de coaches (configurável) | Por fazer | Doc dedicado; dados já existem (Lesson, Attendance) |
+| Remuneração de coaches (configurável) | Feito | Coach.hourly_rate; /admin/financeiro/coaches (resumo mensal); /coach/financeiro (painel do coach) |
 | Internacionalização (PT/EN) | Feito | Cookie kfs-locale; getTranslations(locale); mensagens em lib/i18n; sidebar e landing traduzidos. |
 | Dark / Light mode | Feito | data-theme no html; tokens em globals.css; ThemeLocaleSwitcher no sidebar e na landing. |
 
@@ -251,11 +253,12 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 
 Com base na especificação e na dependência entre módulos:
 
-1. **Biblioteca 360º** – Base para Sala Invertida e Receita adicional (cursos/vídeos).
-2. **Sala de Aula Invertida** – Tema da Semana + vídeo no app (usa Biblioteca).
-3. **Receita adicional** – Feito. Página Loja (`/dashboard/loja`) com compra e inscrição; Admin vê compras/inscrições em Financeiro.
-4. **Dashboard de Performance** – Já implementado (Perfil do atleta gamificado: faixas, XP, radar, missões, detalhe por componente). Por fazer: sugestões de conteúdo (quando houver Biblioteca).
-5. **Gamificação** – Parcial: faixas/XP e missões (sistema + configuráveis). Por fazer: badges por check-ins e metas de assiduidade.
+1. **Biblioteca 360º** – Feito.
+2. **Sala de Aula Invertida** – Feito (Tema da Semana + vídeo no dashboard).
+3. **Receita adicional (Loja)** – Feito.
+4. **Dashboard de Performance** – Feito (inclui sugestões de cursos recomendados).
+5. **Gamificação** – Feito (badges, conquistas, meta assiduidade, meta IMC, metas avaliação, seed de missões).
+6. **Próximos passos (opcional):** Battle Pass / temporadas; reset mensal de missões; PWA e app nativo (secção 17); renovação automática de planos; notificações push.
 
 ---
 
@@ -273,4 +276,4 @@ Com base na especificação e na dependência entre módulos:
 
 ---
 
-*Última atualização sugerida: sempre que uma tarefa for concluída, mudar o estado de “Por fazer” para “Feito” e adicionar uma linha de nota se necessário. Documentação atualizada: Perfil do atleta gamificado, avaliação física (ficha anamnese, 6 meses), Admin Missões, modelo de dados (xp, MissionTemplate, StudentPhysicalAssessment). Secção 17: PWA e apps móveis (Play Store / App Store) – a desenvolver após conclusão das atualizações.*
+*Última atualização: Gamificação completa (conquistas, meta IMC, metas avaliação, seed 62 missões, faixa mínima); Sala de Aula Invertida; Biblioteca/Loja/Eventos; remuneração coaches; roadmap alinhado ao estado atual. Próximos passos opcionais: Battle Pass, PWA/Capacitor, renovação automática.*

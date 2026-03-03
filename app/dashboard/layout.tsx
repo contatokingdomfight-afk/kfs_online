@@ -26,6 +26,7 @@ export default async function DashboardLayout({
   const t = getTranslations(locale as "pt" | "en");
   const sidebarLinks = [
     { label: t("navHome"), href: "/dashboard" },
+    { label: t("navConquests"), href: "/dashboard/conquistas" },
     { label: t("navStore"), href: "/dashboard/loja" },
     { label: t("navLibrary"), href: "/dashboard/biblioteca" },
     { label: t("navEvents"), href: "/dashboard/eventos" },

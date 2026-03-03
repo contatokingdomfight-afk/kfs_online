@@ -7,6 +7,7 @@ import { getTranslations } from "@/lib/i18n";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS, getWeekStartMonday } from "@/lib/lesson-utils";
 import { type ModalityConfig, getAttendanceByModality, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores } from "@/lib/performance-utils";
 import { getEarnedBadges, getNextBadgeProgress } from "@/lib/gamification";
+import { getBMIGoalSuggestion, getBMICategoryLabel } from "@/lib/bmi";
 import { VouNaoVouButtons } from "./VouNaoVouButtons";
 import { PerformanceRadar } from "@/components/PerformanceRadar";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
@@ -894,7 +895,18 @@ export default async function DashboardPage() {
             <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
               {t("monthGoal")}
             </h2>
-            <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+            <div
+              className="card"
+              style={{
+                padding: "clamp(16px, 4vw, 20px)",
+                borderLeft: currentMonthCount >= attendanceGoal ? "4px solid var(--success)" : undefined,
+              }}
+            >
+              {currentMonthCount >= attendanceGoal && (
+                <p style={{ margin: "0 0 8px 0", fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--success)" }}>
+                  🎉 {locale === "pt" ? "Parabéns!" : "Congratulations!"}
+                </p>
+              )}
               <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                 {t("confirmedThisMonth")}
               </p>
@@ -918,6 +930,67 @@ export default async function DashboardPage() {
               )}
             </div>
           </section>
+
+          {studentProfile?.weightKg != null && studentProfile?.heightCm != null && (() => {
+            const suggestion = getBMIGoalSuggestion(Number(studentProfile.weightKg), Number(studentProfile.heightCm));
+            if (!suggestion) return null;
+            const categoryLabel = getBMICategoryLabel(suggestion.category, locale as "pt" | "en");
+            const goalText = t(suggestion.messageKey);
+            return (
+              <section key="health-goal">
+                <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
+                  {t("healthGoal")}
+                </h2>
+                <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                  <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+                    {t("healthGoalIntro")}
+                  </p>
+                  <p style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 700, color: "var(--text-primary)" }}>
+                    IMC {suggestion.currentBMI} · {categoryLabel}
+                  </p>
+                  <p style={{ margin: "8px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500 }}>
+                    {goalText}
+                  </p>
+                </div>
+              </section>
+            );
+          })()}
+
+          {generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0 && (() => {
+            const maxScore = 10;
+            const axes = GENERAL_PERFORMANCE_AXES.map((a) => ({ id: a.id, label: a.label, score: generalPerformanceScores![a.id] ?? 0 }));
+            const toImprove = axes.filter((e) => e.score < maxScore).sort((a, b) => a.score - b.score).slice(0, 2);
+            if (toImprove.length === 0) return null;
+            return (
+              <section key="evaluation-goals">
+                <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
+                  {t("evaluationGoals")}
+                </h2>
+                <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+                  {t("evaluationGoalsIntro")}
+                </p>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 10px)" }}>
+                  {toImprove.map((e) => {
+                    const nextVal = Math.min(maxScore, Math.ceil(e.score) + 1);
+                    const msg = t("improveAxisTo").replace("{axis}", e.label).replace("{value}", String(nextVal));
+                    return (
+                      <li key={e.id} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
+                        <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
+                          🎯 {msg}
+                        </p>
+                        <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+                          {e.label}: {e.score.toFixed(1)} / {maxScore}
+                        </p>
+                        <div style={{ marginTop: 8, height: 6, borderRadius: 3, backgroundColor: "var(--border)", overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${Math.min(100, (e.score / maxScore) * 100)}%`, backgroundColor: "var(--primary)" }} />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          })()}
 
           {nextBadge && (
             <section>
@@ -951,9 +1024,17 @@ export default async function DashboardPage() {
           )}
 
           <section>
-            <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
-              {t("conquests")}
-            </h2>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "clamp(8px, 2vw, 12px)", marginBottom: "clamp(12px, 3vw, 16px)" }}>
+              <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
+                {t("conquests")}
+              </h2>
+              <Link
+                href="/dashboard/conquistas"
+                style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500, textDecoration: "none" }}
+              >
+                {t("viewAllConquests")} →
+              </Link>
+            </div>
             {earnedBadges.length === 0 ? (
               <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
                 <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>

@@ -261,3 +261,47 @@ export async function getEarnedBadges(
     };
   });
 }
+
+export type FixedBadgeWithProgress = {
+  code: string;
+  name: string;
+  description: string;
+  earned: boolean;
+  earnedAt: string | null;
+  current: number;
+  target: number;
+  progressPct: number;
+};
+
+/** Retorna todos os badges fixos com estado (ganho ou progresso). Para a página Conquistas. */
+export async function getAllFixedBadgesWithProgress(
+  supabase: SupabaseClient,
+  studentId: string
+): Promise<FixedBadgeWithProgress[]> {
+  await grantBadgesIfEligible(supabase, studentId);
+  const [stats, { data: rows }] = await Promise.all([
+    computeBadgeStats(supabase, studentId),
+    supabase.from("StudentBadge").select("badgeCode, earnedAt").eq("studentId", studentId),
+  ]);
+  const earnedByCode = new Map<string, string>((rows ?? []).map((r) => [r.badgeCode, r.earnedAt]));
+
+  return FIXED_THRESHOLDS.map((b) => {
+    const def = getBadgeDefinition(b.code);
+    const earnedAt = earnedByCode.get(b.code) ?? null;
+    let current = 0;
+    const target = b.threshold;
+    if (b.type === "total") current = stats.totalClasses;
+    else if (b.type === "weeks") current = stats.consecutiveWeeks;
+    const progressPct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+    return {
+      code: b.code,
+      name: def.name,
+      description: def.description,
+      earned: earnedAt != null,
+      earnedAt,
+      current,
+      target,
+      progressPct,
+    };
+  });
+}

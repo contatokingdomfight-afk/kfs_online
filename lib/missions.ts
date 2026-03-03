@@ -42,7 +42,8 @@ export async function getApplicableMissionTemplates(
     .filter((t) => {
       if (completedIds.has(t.id)) return false;
       if (t.modality != null && t.modality !== primaryModality) return false;
-      if (t.beltIndex != null && t.beltIndex !== beltIndex) return false;
+      // beltIndex no template = faixa mínima (ex.: 4 = Verde ou superior)
+      if (t.beltIndex != null && beltIndex < t.beltIndex) return false;
       return true;
     })
     .map((t) => ({

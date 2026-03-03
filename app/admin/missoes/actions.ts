@@ -3,8 +3,58 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { revalidatePath } from "next/cache";
+import { SEED_MISSIONS } from "./seed-missions-data";
 
 export type MissionResult = { error?: string; success?: boolean };
+
+export type SeedMissionsResult = { error?: string; inserted?: number; skipped?: number };
+
+/** Importa as missões padrão do DOCS/MISSOES.md. Só insere se o nome ainda não existir. */
+export async function seedMissionsFromDoc(): Promise<SeedMissionsResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Sem permissão." };
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase.from("MissionTemplate").select("name");
+  const existingNames = new Set((existing ?? []).map((r) => r.name.trim().toLowerCase()));
+
+  let inserted = 0;
+  let skipped = 0;
+  for (let i = 0; i < SEED_MISSIONS.length; i++) {
+    const m = SEED_MISSIONS[i];
+    const key = m.name.trim().toLowerCase();
+    if (existingNames.has(key)) {
+      skipped++;
+      continue;
+    }
+    const { error } = await supabase.from("MissionTemplate").insert({
+      name: m.name,
+      description: m.description,
+      modality: m.modality,
+      beltIndex: m.beltIndex,
+      xpReward: m.xpReward,
+      sortOrder: i,
+      isActive: true,
+    });
+    if (error) {
+      console.error("seedMissionsFromDoc:", error);
+      return { error: error.message, inserted, skipped };
+    }
+    inserted++;
+    existingNames.add(key);
+  }
+
+  revalidatePath("/admin/missoes");
+  return { inserted, skipped };
+}
+
+/** Wrapper para useFormState (recebe prev e formData). */
+export async function runSeedMissions(
+  _prev: SeedMissionsResult | null,
+  _formData: FormData
+): Promise<SeedMissionsResult> {
+  return seedMissionsFromDoc();
+}
 
 export async function createMission(
   _prev: MissionResult | null,
