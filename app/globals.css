@@ -623,10 +623,9 @@
   background-color: var(--bg) !important;
 }
 
-/* Botão Sair no menu lateral: hover discreto */
+/* Botão Sair no menu lateral: mesmo estilo dos links, hover suave */
 .app-sidebar-logout-btn:hover:not(:disabled) {
-  color: var(--text-primary);
-  background-color: var(--bg-secondary);
+  background-color: var(--bg) !important;
 }
 .app-sidebar-logout-btn:active:not(:disabled) {
   opacity: 0.9;

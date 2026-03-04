@@ -44,21 +44,21 @@ export function LogoutButton({ label, variant = "sidebar" }: Props) {
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
         minHeight: "clamp(44px, 11vw, 48px)",
-        padding: "12px 16px",
+        padding: "12px 20px",
         fontSize: "clamp(14px, 3.5vw, 16px)",
         fontWeight: 500,
-        color: "var(--text-secondary)",
+        color: "var(--text-primary)",
         backgroundColor: "transparent",
         border: "none",
-        borderRadius: "var(--radius-md)",
+        borderLeft: "4px solid transparent",
+        boxSizing: "border-box",
+        borderRadius: "0 var(--radius-md) var(--radius-md) 0",
         cursor: loading ? "not-allowed" : "pointer",
         opacity: loading ? 0.6 : 1,
         width: "100%",
         textAlign: "left",
-        transition: "color 0.15s ease, opacity 0.15s ease",
+        transition: "background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease",
       }}
     >
       {loading ? "A sair..." : label}
