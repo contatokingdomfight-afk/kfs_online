@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
-import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
+import { formatLessonDate } from "@/lib/lesson-utils";
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { FormularioExperimental } from "./FormularioExperimental";
 
 type SearchParams = Promise<{ sucesso?: string }>;
+
+export type LessonSlot = { id: string; date: string; label: string };
 
 export default async function AulaExperimentalPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -15,18 +18,33 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
   const supabase = result.client;
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data: lessons } = await supabase
-    .from("Lesson")
-    .select("id, modality, date, startTime, endTime")
-    .gte("date", today)
-    .order("date", { ascending: true })
-    .order("startTime", { ascending: true })
-    .limit(30);
+  const [modalities, lessonsRes] = await Promise.all([
+    getCachedModalityRefs(supabase),
+    supabase
+      .from("Lesson")
+      .select("id, modality, date, startTime, endTime")
+      .gte("date", today)
+      .order("date", { ascending: true })
+      .order("startTime", { ascending: true })
+      .limit(120),
+  ]);
 
-  const lessonOptions = (lessons ?? []).map((l) => ({
-    id: l.id,
-    label: `${MODALITY_LABELS[l.modality] ?? l.modality} · ${formatLessonDate(l.date)} ${l.startTime}–${l.endTime}`,
-  }));
+  const lessons = lessonsRes.data ?? [];
+  const modalityOptions = (modalities ?? []).map((m) => ({ value: m.code, label: m.name }));
+
+  const lessonsByModality: Record<string, LessonSlot[]> = {};
+  for (const m of modalityOptions) {
+    lessonsByModality[m.value] = [];
+  }
+  for (const l of lessons) {
+    const mod = l.modality ?? "OTHER";
+    if (!lessonsByModality[mod]) lessonsByModality[mod] = [];
+    lessonsByModality[mod].push({
+      id: l.id,
+      date: l.date,
+      label: `${formatLessonDate(l.date)} ${l.startTime}–${l.endTime}`,
+    });
+  }
 
   if (sucesso) {
     return (
@@ -67,7 +85,7 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
         <p className="text-mobile-base mb-6" style={{ color: "var(--text-secondary)", lineHeight: 1.5 }}>
           Preenche os dados e escolhe a modalidade e data. Entraremos em contacto para confirmar a tua vaga.
         </p>
-        <FormularioExperimental lessonOptions={lessonOptions} />
+        <FormularioExperimental modalityOptions={modalityOptions} lessonsByModality={lessonsByModality} />
       </div>
     </main>
   );

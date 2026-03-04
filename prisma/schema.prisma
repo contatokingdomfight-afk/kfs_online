@@ -215,15 +215,16 @@ model Attendance {
 }
 
 model TrialClass {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   name              String
   contact           String
   modality          Modality
-  lessonDate        DateTime @db.Date
+  lessonDate        DateTime  @db.Date
   lessonId          String?
-  lesson            Lesson?  @relation(fields: [lessonId], references: [id])
-  convertedToStudent Boolean @default(false)
-  createdAt         DateTime @default(now())
+  lesson            Lesson?   @relation(fields: [lessonId], references: [id])
+  acceptedAt        DateTime? // pedido aceite (antes de converter em aluno)
+  convertedToStudent Boolean  @default(false)
+  createdAt         DateTime  @default(now())
 }
 
 // Comentários do coach: targetType + targetId (polimórfico – Athlete ou Lesson)

@@ -19,14 +19,17 @@ export async function createEvent(
   const name = (formData.get("name") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
   const type = (formData.get("type") as string)?.trim();
-  const eventDate = (formData.get("event_date") as string)?.trim();
+  const startDate = (formData.get("start_date") as string)?.trim();
+  const endDate = (formData.get("end_date") as string)?.trim();
   const priceStr = (formData.get("price") as string)?.trim();
   const maxParticipantsStr = (formData.get("max_participants") as string)?.trim();
   const isActive = formData.get("is_active") !== "off" && formData.get("is_active") !== "false";
 
   if (!name) return { error: "Nome do evento é obrigatório." };
   if (!type || !EVENT_TYPES.includes(type as (typeof EVENT_TYPES)[number])) return { error: "Tipo inválido." };
-  if (!eventDate) return { error: "Data do evento é obrigatória." };
+  if (!startDate) return { error: "Data de início é obrigatória." };
+  if (!endDate) return { error: "Data de fim é obrigatória." };
+  if (startDate > endDate) return { error: "A data de fim deve ser igual ou posterior à data de início." };
   const price = priceStr ? parseFloat(priceStr) : 0;
   if (isNaN(price) || price < 0) return { error: "Preço inválido." };
   const maxParticipants = maxParticipantsStr ? parseInt(maxParticipantsStr, 10) : null;
@@ -37,7 +40,9 @@ export async function createEvent(
     name,
     description,
     type,
-    event_date: eventDate,
+    start_date: startDate,
+    end_date: endDate,
+    event_date: startDate,
     price,
     max_participants: maxParticipants,
     is_active: isActive,
@@ -65,14 +70,17 @@ export async function updateEvent(
   const name = (formData.get("name") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
   const type = (formData.get("type") as string)?.trim();
-  const eventDate = (formData.get("event_date") as string)?.trim();
+  const startDate = (formData.get("start_date") as string)?.trim();
+  const endDate = (formData.get("end_date") as string)?.trim();
   const priceStr = (formData.get("price") as string)?.trim();
   const maxParticipantsStr = (formData.get("max_participants") as string)?.trim();
   const isActive = formData.get("is_active") !== "off" && formData.get("is_active") !== "false";
 
   if (!name) return { error: "Nome do evento é obrigatório." };
   if (!type || !EVENT_TYPES.includes(type as (typeof EVENT_TYPES)[number])) return { error: "Tipo inválido." };
-  if (!eventDate) return { error: "Data do evento é obrigatória." };
+  if (!startDate) return { error: "Data de início é obrigatória." };
+  if (!endDate) return { error: "Data de fim é obrigatória." };
+  if (startDate > endDate) return { error: "A data de fim deve ser igual ou posterior à data de início." };
   const price = priceStr ? parseFloat(priceStr) : 0;
   if (isNaN(price) || price < 0) return { error: "Preço inválido." };
   const maxParticipants = maxParticipantsStr ? parseInt(maxParticipantsStr, 10) : null;
@@ -85,7 +93,9 @@ export async function updateEvent(
       name,
       description,
       type,
-      event_date: eventDate,
+      start_date: startDate,
+      end_date: endDate,
+      event_date: startDate,
       price,
       max_participants: maxParticipants,
       is_active: isActive,

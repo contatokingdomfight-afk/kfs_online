@@ -22,7 +22,7 @@ export default async function AdminEventosEditarPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from("Event")
-    .select("id, name, description, type, event_date, price, max_participants, is_active")
+    .select("id, name, description, type, event_date, start_date, end_date, price, max_participants, is_active")
     .eq("id", eventId)
     .single();
 
@@ -86,7 +86,8 @@ export default async function AdminEventosEditarPage({ params }: Props) {
         initialName={event.name}
         initialDescription={event.description ?? ""}
         initialType={event.type}
-        initialEventDate={event.event_date}
+        initialStartDate={(event as { start_date?: string }).start_date ?? event.event_date ?? ""}
+        initialEndDate={(event as { end_date?: string }).end_date ?? event.event_date ?? ""}
         initialPrice={Number(event.price)}
         initialMaxParticipants={event.max_participants}
         initialIsActive={event.is_active ?? true}

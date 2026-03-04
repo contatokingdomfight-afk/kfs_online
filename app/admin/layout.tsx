@@ -29,8 +29,11 @@ export default async function AdminLayout({
     { label: t("navEventsAdmin"), href: "/admin/eventos" },
     { label: t("navSettings"), href: "/admin/configuracoes" },
     { label: t("navPresence"), href: "/admin/presenca" },
-    { label: t("navGeneralDimensions"), href: "/admin/componentes-gerais" },
-    { label: t("navEvaluationCriteria"), href: "/admin/avaliacao" },
+    {
+      label: t("navEvaluationCriteria"),
+      href: "/admin/avaliacao",
+      children: [{ label: t("navGeneralDimensions"), href: "/admin/componentes-gerais" }],
+    },
     { label: t("navMissions"), href: "/admin/missoes" },
     { label: t("navFinance"), href: "/admin/financeiro" },
     { label: t("navTrials"), href: "/admin/experimentais" },

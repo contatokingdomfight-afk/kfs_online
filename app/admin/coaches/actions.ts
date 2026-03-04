@@ -145,6 +145,50 @@ export async function updateCoach(_prev: UpdateCoachResult | null, formData: For
   return {};
 }
 
+export async function setCoachActive(
+  _prev: { error?: string } | null,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const coachId = (formData.get("coachId") as string)?.trim();
+  const active = formData.get("active") === "true";
+  if (!coachId) return { error: "ID do coach inválido." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("Coach").update({ is_active: active }).eq("id", coachId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/coaches");
+  revalidatePath(`/admin/coaches/${coachId}`);
+  return {};
+}
+
+export async function deleteCoach(
+  _prev: { error?: string } | null,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const coachId = (formData.get("coachId") as string)?.trim();
+  if (!coachId) return { error: "ID do coach inválido." };
+
+  const supabase = createAdminClient();
+  const { data: coach } = await supabase.from("Coach").select("id, userId").eq("id", coachId).single();
+  if (!coach) return { error: "Coach não encontrado." };
+
+  const { error: deleteError } = await supabase.from("Coach").delete().eq("id", coachId);
+  if (deleteError) return { error: deleteError.message };
+
+  await supabase.from("User").update({ role: "USER" }).eq("id", coach.userId);
+
+  revalidatePath("/admin/coaches");
+  revalidatePath(`/admin/coaches/${coachId}`);
+  redirect("/admin/coaches");
+}
+
 export type ToggleCoursePermissionResult = { error?: string };
 
 export async function toggleCoursePermission(

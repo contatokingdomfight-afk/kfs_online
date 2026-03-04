@@ -13,7 +13,10 @@ type Props = {
   initialName?: string;
   initialDescription?: string;
   initialType?: string;
-  initialEventDate?: string;
+  /** Data de início (YYYY-MM-DD). */
+  initialStartDate?: string;
+  /** Data de fim (YYYY-MM-DD). */
+  initialEndDate?: string;
   initialPrice?: number;
   initialMaxParticipants?: number | null;
   initialIsActive?: boolean;
@@ -24,7 +27,8 @@ export function EventForm({
   initialName = "",
   initialDescription = "",
   initialType = "WORKSHOP",
-  initialEventDate = "",
+  initialStartDate = "",
+  initialEndDate = "",
   initialPrice = 0,
   initialMaxParticipants = null,
   initialIsActive = true,
@@ -84,12 +88,24 @@ export function EventForm({
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          Data do evento
+          Data de início
         </span>
         <input
           type="date"
-          name="event_date"
-          defaultValue={initialEventDate}
+          name="start_date"
+          defaultValue={initialStartDate}
+          className="input"
+          required
+        />
+      </label>
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          Data de fim
+        </span>
+        <input
+          type="date"
+          name="end_date"
+          defaultValue={initialEndDate}
           className="input"
           required
         />

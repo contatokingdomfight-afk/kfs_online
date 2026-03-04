@@ -46,6 +46,40 @@ export async function createTrialClass(
   redirect("/admin/experimentais");
 }
 
+export type AcceptTrialResult = { error?: string };
+
+export async function acceptTrialRequest(
+  _prev: AcceptTrialResult | null,
+  formData: FormData
+): Promise<AcceptTrialResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const trialId = (formData.get("trialId") as string)?.trim();
+  if (!trialId) return { error: "Inscrição inválida." };
+
+  const supabase = createAdminClient();
+
+  const { data: trial } = await supabase
+    .from("TrialClass")
+    .select("id, acceptedAt, convertedToStudent")
+    .eq("id", trialId)
+    .single();
+  if (!trial) return { error: "Inscrição não encontrada." };
+  if (trial.convertedToStudent) return { error: "Já foi convertida em aluno." };
+  if (trial.acceptedAt) return { error: "Pedido já foi aceite." };
+
+  const { error: updateError } = await supabase
+    .from("TrialClass")
+    .update({ acceptedAt: new Date().toISOString() })
+    .eq("id", trialId);
+
+  if (updateError) return { error: updateError.message };
+
+  revalidatePath("/admin/experimentais");
+  redirect("/admin/experimentais");
+}
+
 export type ConvertTrialResult = { error?: string };
 
 export async function convertTrialToStudent(

@@ -17,11 +17,14 @@ type Course = {
   available_for_purchase: boolean | null;
 };
 
+type ModalityOption = { code: string; name: string };
+
 type Props = {
   course: Course;
+  modalities?: ModalityOption[];
 };
 
-export function CollapsibleCourseDetails({ course }: Props) {
+export function CollapsibleCourseDetails({ course, modalities }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -68,6 +71,7 @@ export function CollapsibleCourseDetails({ course }: Props) {
             initialPrice={course.price != null ? Number(course.price) : null}
             initialAvailableForPurchase={course.available_for_purchase ?? false}
             initialLevel={course.level}
+            modalities={modalities}
           />
         </div>
       )}

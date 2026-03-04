@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { redirect } from "next/navigation";
 import { DeleteCursoButton } from "./DeleteCursoButton";
 import { CollapsibleCourseDetails } from "./CollapsibleCourseDetails";
@@ -20,11 +21,15 @@ export default async function AdminCursosEditarPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const [{ data: course }, { data: modules }, { data: coCreatorsRaw }] = await Promise.all([
+  const [courseResult, modulesResult, coCreatorsResult, modalities] = await Promise.all([
     supabase.from("Course").select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase, creator_student_id, coach_revenue_pct").eq("id", courseId).single(),
     supabase.from("CourseModule").select("id, name, description, video_url, sort_order").eq("course_id", courseId).order("sort_order", { ascending: true }),
     supabase.from("CourseCreator").select("id, student_id, revenue_pct").eq("course_id", courseId),
+    getCachedModalityRefs(supabase),
   ]);
+  const { data: course } = courseResult;
+  const { data: modules } = modulesResult;
+  const { data: coCreatorsRaw } = coCreatorsResult;
 
   const moduleIds = (modules ?? []).map((m) => m.id);
   let unitsByModule = new Map<string, { id: string; module_id: string; name: string; description: string | null; content_type: string; video_url: string | null; text_content: string | null; sort_order: number }[]>();
@@ -139,6 +144,7 @@ export default async function AdminCursosEditarPage({ params }: Props) {
             price: course.price,
             available_for_purchase: course.available_for_purchase,
           }}
+          modalities={modalities ?? []}
         />
       </div>
 

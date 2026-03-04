@@ -14,8 +14,8 @@ export const homeContent = {
     heroHeadline1: "Treine com Propósito.",
     heroHeadline2: "Lute com Disciplina.",
     heroSubheadline: "Transforme o seu corpo e mente através das artes marciais. Metodologia Kingdom — onde cada golpe tem significado.",
-    ctaStart: "Começar Agora",
-    ctaViewTrainings: "Ver Treinos",
+    ctaStart: "Aula Experimental",
+    ctaViewTrainings: "Login",
 
     // Stats
     statsYears: "20+ anos",
@@ -123,8 +123,8 @@ export const homeContent = {
     heroHeadline1: "Train with Purpose.",
     heroHeadline2: "Fight with Discipline.",
     heroSubheadline: "Transform your body and mind through martial arts. Kingdom methodology — where every strike has meaning.",
-    ctaStart: "Start Now",
-    ctaViewTrainings: "View Trainings",
+    ctaStart: "Trial Class",
+    ctaViewTrainings: "Log in",
 
     statsYears: "20+ years",
     statsYearsLabel: "of experience",

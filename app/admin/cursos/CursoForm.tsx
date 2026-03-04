@@ -9,19 +9,14 @@ const CATEGORIES = [
   { value: "PERFORMANCE", label: "Performance" },
 ] as const;
 
-const MODALITIES = [
-  { value: "", label: "— Qualquer / Geral" },
-  { value: "MUAY_THAI", label: "Muay Thai" },
-  { value: "BOXING", label: "Boxing" },
-  { value: "KICKBOXING", label: "Kickboxing" },
-] as const;
-
 const LEVELS = [
   { value: "", label: "— Qualquer nível" },
   { value: "INICIANTE", label: "Iniciante" },
   { value: "INTERMEDIARIO", label: "Intermediário" },
   { value: "AVANCADO", label: "Avançado" },
 ] as const;
+
+type ModalityOption = { code: string; name: string };
 
 type Props = {
   courseId?: string;
@@ -35,6 +30,8 @@ type Props = {
   initialPrice?: number | null;
   initialAvailableForPurchase?: boolean;
   initialLevel?: string | null;
+  /** Modalidades cadastradas (Admin → Modalidades). Se não for passado, usa lista mínima. */
+  modalities?: ModalityOption[];
 };
 
 export function CursoForm({
@@ -49,8 +46,17 @@ export function CursoForm({
   initialPrice = null,
   initialAvailableForPurchase = false,
   initialLevel = null,
+  modalities: modalitiesProp,
 }: Props) {
   const action = courseId ? updateCourse : createCourse;
+  const modalityOptions: { value: string; label: string }[] = modalitiesProp?.length
+    ? [{ value: "", label: "— Qualquer / Geral" }, ...modalitiesProp.map((m) => ({ value: m.code, label: m.name }))]
+    : [
+        { value: "", label: "— Qualquer / Geral" },
+        { value: "MUAY_THAI", label: "Muay Thai" },
+        { value: "BOXING", label: "Boxing" },
+        { value: "KICKBOXING", label: "Kickboxing" },
+      ];
   const [state, formAction] = useFormState(action, null as CourseFormResult | null);
 
   return (
@@ -108,7 +114,7 @@ export function CursoForm({
           Modalidade (opcional)
         </span>
         <select name="modality" className="input" defaultValue={initialModality ?? ""}>
-          {MODALITIES.map(({ value, label }) => (
+          {modalityOptions.map(({ value, label }) => (
             <option key={value || "any"} value={value}>
               {label}
             </option>

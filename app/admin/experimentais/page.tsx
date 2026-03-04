@@ -5,6 +5,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
 import { ConvertTrialButton } from "./ConvertTrialButton";
+import { AcceptTrialButton } from "./AcceptTrialButton";
 
 type SearchParams = Promise<{ filter?: string }>;
 
@@ -13,7 +14,7 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const params = await searchParams;
-  const filter = params.filter ?? "all"; // all | pending | converted
+  const filter = params.filter ?? "all"; // all | pending | accepted | converted
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -21,12 +22,13 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
 
   const { data: trials } = await supabase
     .from("TrialClass")
-    .select("id, name, contact, modality, lessonDate, lessonId, convertedToStudent, createdAt")
+    .select("id, name, contact, modality, lessonDate, lessonId, convertedToStudent, acceptedAt, createdAt")
     .order("createdAt", { ascending: false });
 
   const list = trials ?? [];
   let filtered = list;
-  if (filter === "pending") filtered = list.filter((t) => !t.convertedToStudent);
+  if (filter === "pending") filtered = list.filter((t) => !t.convertedToStudent && !t.acceptedAt);
+  if (filter === "accepted") filtered = list.filter((t) => !t.convertedToStudent && !!t.acceptedAt);
   if (filter === "converted") filtered = list.filter((t) => t.convertedToStudent);
 
   const lessonIds = [...new Set(list.map((t) => t.lessonId).filter(Boolean))] as string[];
@@ -104,6 +106,17 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
           Pendentes
         </Link>
         <Link
+          href="/admin/experimentais?filter=accepted"
+          className="btn"
+          style={{
+            textDecoration: "none",
+            backgroundColor: filter === "accepted" ? "var(--primary)" : "var(--bg-secondary)",
+            color: filter === "accepted" ? "#fff" : "var(--text-primary)",
+          }}
+        >
+          Aceites
+        </Link>
+        <Link
           href="/admin/experimentais?filter=converted"
           className="btn"
           style={{
@@ -146,11 +159,15 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
                       fontSize: "clamp(12px, 3vw, 14px)",
                       padding: "2px 8px",
                       borderRadius: "var(--radius-md)",
-                      backgroundColor: t.convertedToStudent ? "var(--success)" : "var(--warning)",
-                      color: t.convertedToStudent ? "#fff" : "var(--text-primary)",
+                      backgroundColor: t.convertedToStudent
+                        ? "var(--success)"
+                        : t.acceptedAt
+                          ? "var(--info, #0ea5e9)"
+                          : "var(--warning)",
+                      color: t.convertedToStudent || t.acceptedAt ? "#fff" : "var(--text-primary)",
                     }}
                   >
-                    {t.convertedToStudent ? "Convertido" : "Pendente"}
+                    {t.convertedToStudent ? "Convertido" : t.acceptedAt ? "Aceite" : "Pendente"}
                   </span>
                 </div>
                 <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
@@ -162,8 +179,11 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
                     ? ` · ${formatLessonDate(lesson.date)} ${lesson.startTime}–${lesson.endTime}`
                     : ` · ${formatLessonDate(String(t.lessonDate))}`}
                 </p>
-                {!t.convertedToStudent && t.contact.includes("@") && (
-                  <ConvertTrialButton trialId={t.id} />
+                {!t.convertedToStudent && (
+                  <div style={{ marginTop: "clamp(8px, 2vw, 12px)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+                    {!t.acceptedAt && <AcceptTrialButton trialId={t.id} />}
+                    {t.contact.includes("@") && <ConvertTrialButton trialId={t.id} />}
+                  </div>
                 )}
               </li>
             );

@@ -7,7 +7,7 @@ export function ConvertTrialButton({ trialId }: { trialId: string }) {
   const [state, formAction] = useFormState(convertTrialToStudent, null as ConvertTrialResult | null);
 
   return (
-    <form action={formAction} style={{ marginTop: "clamp(8px, 2vw, 12px)" }}>
+    <form action={formAction} style={{ display: "inline-block" }}>
       <input type="hidden" name="trialId" value={trialId} />
       <button type="submit" className="btn btn-primary" style={{ fontSize: "clamp(13px, 3.2vw, 15px)" }}>
         Converter em aluno

@@ -1,19 +1,27 @@
 "use client";
 
-import Link from "next/link";
+import { useState, useMemo } from "react";
 import { useFormState } from "react-dom";
 import { submitTrialRequest, type SubmitTrialResult } from "./actions";
 
-const MODALITY_OPTIONS = [
-  { value: "MUAY_THAI", label: "Muay Thai" },
-  { value: "BOXING", label: "Boxing" },
-  { value: "KICKBOXING", label: "Kickboxing" },
-];
+type ModalityOption = { value: string; label: string };
+type LessonSlot = { id: string; date: string; label: string };
 
-type LessonOption = { id: string; label: string };
-
-export function FormularioExperimental({ lessonOptions }: { lessonOptions: LessonOption[] }) {
+export function FormularioExperimental({
+  modalityOptions,
+  lessonsByModality,
+}: {
+  modalityOptions: ModalityOption[];
+  lessonsByModality: Record<string, LessonSlot[]>;
+}) {
   const [state, formAction] = useFormState(submitTrialRequest, null as SubmitTrialResult | null);
+  const [selectedModality, setSelectedModality] = useState<string>(modalityOptions[0]?.value ?? "");
+
+  const slotsForModality = useMemo(
+    () => (selectedModality ? lessonsByModality[selectedModality] ?? [] : []),
+    [selectedModality, lessonsByModality]
+  );
+  const hasSlots = slotsForModality.length > 0;
 
   return (
     <form
@@ -48,8 +56,14 @@ export function FormularioExperimental({ lessonOptions }: { lessonOptions: Lesso
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Modalidade *
         </span>
-        <select name="modality" required className="input">
-          {MODALITY_OPTIONS.map((o) => (
+        <select
+          name="modality"
+          required
+          className="input"
+          value={selectedModality}
+          onChange={(e) => setSelectedModality(e.target.value)}
+        >
+          {modalityOptions.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
@@ -58,29 +72,37 @@ export function FormularioExperimental({ lessonOptions }: { lessonOptions: Lesso
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          Data desejada *
+          Data e hora desejada *
         </span>
-        <input type="date" name="lessonDate" required className="input" />
-      </label>
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          Aula específica (opcional)
-        </span>
-        <select name="lessonId" className="input">
-          <option value="">— Não tenho preferência —</option>
-          {lessonOptions.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        {hasSlots ? (
+          <select name="lessonId" required className="input">
+            <option value="">— Escolhe uma aula —</option>
+            {slotsForModality.map((slot) => (
+              <option key={slot.id} value={slot.id}>
+                {slot.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div
+            style={{
+              padding: "12px 16px",
+              borderRadius: "var(--radius-md)",
+              backgroundColor: "var(--bg-secondary)",
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            Sem aulas disponíveis para esta modalidade nos próximos tempos. Entra em contacto para combinarmos uma data.
+          </div>
+        )}
       </label>
       {state?.error && (
         <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>
           {state.error}
         </p>
       )}
-      <button type="submit" className="btn btn-primary">
+      <button type="submit" className="btn btn-primary" disabled={!hasSlots}>
         Enviar pedido
       </button>
     </form>

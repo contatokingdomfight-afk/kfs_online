@@ -23,6 +23,14 @@ function formatEventDate(dateStr: string): string {
   }
 }
 
+function formatEventDateRange(startStr: string | null | undefined, endStr: string | null | undefined, fallbackEventDate: string): string {
+  const start = startStr ?? fallbackEventDate;
+  const end = endStr ?? fallbackEventDate;
+  if (!start) return "";
+  if (!end || start === end) return formatEventDate(start);
+  return `${formatEventDate(start)} a ${formatEventDate(end)}`;
+}
+
 export default async function AdminEventosPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
@@ -32,7 +40,7 @@ export default async function AdminEventosPage() {
   const supabase = result.client;
   const { data: events } = await supabase
     .from("Event")
-    .select("id, name, description, type, event_date, price, max_participants, is_active")
+    .select("id, name, description, type, event_date, start_date, end_date, price, max_participants, is_active")
     .order("event_date", { ascending: false });
 
   const list = events ?? [];
@@ -131,7 +139,7 @@ export default async function AdminEventosPage() {
                     {TYPE_LABELS[e.type] ?? e.type}
                   </span>
                   <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                    {formatEventDate(e.event_date)}
+                    {formatEventDateRange((e as { start_date?: string }).start_date, (e as { end_date?: string }).end_date, e.event_date)}
                   </span>
                   <span style={{ marginLeft: "auto", fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--primary)" }}>
                     €{Number(e.price).toFixed(0)}

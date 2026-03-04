@@ -92,6 +92,7 @@ export function ResponsiveShell({
             <Sidebar
               title={sidebarTitle}
               links={sidebarLinks}
+              activeHref={pathname}
               initialTheme={initialTheme}
               initialLocale={initialLocale}
               logoutLabel={logoutLabel}

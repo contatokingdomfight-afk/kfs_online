@@ -3,6 +3,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
+import { CoachActiveToggle } from "./CoachActiveToggle";
 
 export default async function AdminCoachesPage() {
   const dbUser = await getCurrentDbUser();
@@ -14,7 +15,7 @@ export default async function AdminCoachesPage() {
 
   const { data: coaches } = await supabase
     .from("Coach")
-    .select("id, userId, specialties, createdAt")
+    .select("id, userId, specialties, createdAt, is_active")
     .order("createdAt", { ascending: false });
 
   const list = coaches ?? [];
@@ -75,28 +76,54 @@ export default async function AdminCoachesPage() {
             const u = userById.get(c.userId);
             return (
               <li key={c.id}>
-                <Link
-                  href={`/admin/coaches/${c.id}`}
+                <div
                   className="card"
                   style={{
-                    display: "block",
                     padding: "clamp(14px, 3.5vw, 18px)",
-                    textDecoration: "none",
-                    color: "inherit",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "clamp(10px, 2.5vw, 12px)",
                   }}
                 >
-                  <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                    {u?.name || "—"}
-                  </span>
-                  <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                    {u?.email ?? "—"}
-                  </p>
-                  {c.specialties && (
-                    <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-                      {c.specialties}
+                  <Link
+                    href={`/admin/coaches/${c.id}`}
+                    style={{
+                      flex: "1 1 auto",
+                      minWidth: 0,
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
+                  >
+                    <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
+                      {u?.name || "—"}
+                    </span>
+                    {!(c as { is_active?: boolean }).is_active && (
+                      <span
+                        style={{
+                          marginLeft: 8,
+                          fontSize: 12,
+                          padding: "2px 8px",
+                          borderRadius: "var(--radius-md)",
+                          backgroundColor: "var(--text-secondary)",
+                          color: "var(--bg)",
+                        }}
+                      >
+                        Inativo
+                      </span>
+                    )}
+                    <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+                      {u?.email ?? "—"}
                     </p>
-                  )}
-                </Link>
+                    {c.specialties && (
+                      <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+                        {c.specialties}
+                      </p>
+                    )}
+                  </Link>
+                  <CoachActiveToggle coachId={c.id} isActive={(c as { is_active?: boolean }).is_active !== false} />
+                </div>
               </li>
             );
           })}

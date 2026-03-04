@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { createClient } from "@/lib/supabase/server";
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { CursoForm } from "../CursoForm";
 
 export default async function AdminCursosNovoPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+
+  const supabase = await createClient();
+  const modalities = await getCachedModalityRefs(supabase);
 
   return (
     <div style={{ maxWidth: "min(520px, 100%)" }}>
@@ -40,7 +45,7 @@ export default async function AdminCursosNovoPage() {
         <strong style={{ color: "var(--text-primary)" }}>Passo 1:</strong> Preenche os dados gerais do curso abaixo e clica em "Criar curso".<br />
         <strong style={{ color: "var(--text-primary)" }}>Passo 2:</strong> Serás redirecionado para a página de edição onde poderás adicionar <strong>módulos</strong> e <strong>unidades</strong> (vídeos e textos) ao curso.
       </div>
-      <CursoForm />
+      <CursoForm modalities={modalities ?? []} />
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { EditarCoachForm } from "./EditarCoachForm";
+import { CoachActiveToggle } from "../CoachActiveToggle";
+import { DeleteCoachButton } from "./DeleteCoachButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -16,7 +18,7 @@ export default async function AdminCoachEditarPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: coach } = await supabase.from("Coach").select("id, userId, specialties, studentId, hourly_rate").eq("id", coachId).single();
+  const { data: coach } = await supabase.from("Coach").select("id, userId, specialties, studentId, hourly_rate, is_active").eq("id", coachId).single();
 
   if (!coach) {
     return (
@@ -59,6 +61,30 @@ export default async function AdminCoachEditarPage({ params }: Props) {
       <p style={{ margin: "0 0 clamp(20px, 5vw, 24px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
         {user?.email}
       </p>
+
+      <div
+        className="card"
+        style={{
+          marginBottom: "clamp(20px, 5vw, 24px)",
+          padding: "clamp(16px, 4vw, 20px)",
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <div>
+          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 600, color: "var(--text-primary)" }}>
+            Acesso à plataforma
+          </span>
+          <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+            {(coach as { is_active?: boolean }).is_active !== false ? "Ativo — o coach pode aceder à área professor." : "Inativo — o coach não consegue aceder à área /coach."}
+          </p>
+        </div>
+        <CoachActiveToggle coachId={coachId} isActive={(coach as { is_active?: boolean }).is_active !== false} />
+      </div>
+
       <EditarCoachForm
         coachId={coachId}
         initialName={user?.name ?? ""}
@@ -67,6 +93,10 @@ export default async function AdminCoachEditarPage({ params }: Props) {
         studentId={student?.id ?? null}
         initialCanCreateCourses={student?.can_create_courses ?? false}
       />
+
+      <div style={{ marginTop: "clamp(32px, 8vw, 40px)" }}>
+        <DeleteCoachButton coachId={coachId} coachName={user?.name ?? user?.email ?? "este coach"} />
+      </div>
     </div>
   );
 }

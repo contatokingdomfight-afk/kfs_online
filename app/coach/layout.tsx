@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { getCoachStudentId } from "@/lib/auth/get-coach-student-id";
 import { getViewAsFromCookies } from "@/lib/view-as-server";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -16,6 +17,11 @@ export default async function CoachLayout({
   const dbUser = await getCurrentDbUser();
   if (!dbUser) redirect("/sign-in");
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") redirect("/dashboard");
+
+  if (dbUser.role === "COACH") {
+    const coachId = await getCurrentCoachId();
+    if (!coachId) redirect("/dashboard?message=coach-access-revoked");
+  }
 
   const result = getAdminClientOrNull();
   const supabase = result.client;
