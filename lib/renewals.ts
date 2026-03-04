@@ -94,6 +94,7 @@ export async function generateMonthlyPayments(
 
   for (const p of pending) {
     const { error } = await supabase.from("Payment").insert({
+      id: crypto.randomUUID(),
       studentId: p.studentId,
       amount: p.priceMonthly,
       status: "LATE",

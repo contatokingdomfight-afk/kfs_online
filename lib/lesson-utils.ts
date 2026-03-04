@@ -56,3 +56,40 @@ export function getWeekStartMondayForDate(d: Date): string {
 export function getWeekStartMonday(): string {
   return getWeekStartMondayForDate(new Date());
 }
+
+const WEEKDAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+/** Dado Monday em YYYY-MM-DD, devolve domingo da mesma semana em YYYY-MM-DD. */
+export function getWeekEndSunday(mondayYYYYMMDD: string): string {
+  const [y, m, d] = mondayYYYYMMDD.split("-").map(Number);
+  const mon = new Date(y, m - 1, d);
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  return `${sun.getFullYear()}-${String(sun.getMonth() + 1).padStart(2, "0")}-${String(sun.getDate()).padStart(2, "0")}`;
+}
+
+/** Nome do dia da semana (0=domingo) para uma data YYYY-MM-DD. */
+export function getWeekdayName(dateYYYYMMDD: string): string {
+  const [y, m, d] = dateYYYYMMDD.split("-").map(Number);
+  const day = new Date(y, m - 1, d).getDay();
+  return WEEKDAY_NAMES[day] ?? "";
+}
+
+/** Formata intervalo da semana para exibição: "24 fev. – 2 mar. 2026". */
+export function formatWeekRangeLabel(mondayYYYYMMDD: string): string {
+  const [y, m, d] = mondayYYYYMMDD.split("-").map(Number);
+  const mon = new Date(y, m - 1, d);
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  const monStr = mon.toLocaleDateString("pt-PT", { day: "numeric", month: "short" });
+  const sunStr = sun.toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" });
+  return `${monStr} – ${sunStr}`;
+}
+
+/** Segunda anterior / próxima a partir de uma segunda em YYYY-MM-DD. */
+export function addWeeks(mondayYYYYMMDD: string, delta: number): string {
+  const [y, m, d] = mondayYYYYMMDD.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + delta * 7);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}

@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
           ? new Date(periodStart * 1000).toISOString().slice(0, 7)
           : new Date().toISOString().slice(0, 7);
         await supabase.from("Payment").insert({
+          id: crypto.randomUUID(),
           studentId,
           amount,
           status: "PAID",

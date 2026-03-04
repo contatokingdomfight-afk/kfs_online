@@ -32,7 +32,7 @@ Validar que o Admin vê e acede a:
 | Escolas | `/admin/escolas` | Listar e gerir escolas |
 | Alunos | `/admin/alunos` | Listar, convidar, editar alunos; atribuir plano; atalho "Acesso total" |
 | Atletas | `/admin/atletas` | Listar atletas; criar atleta a partir de aluno (coach, nível) |
-| Turmas / Aulas | `/admin/turmas` | Listar aulas; criar e editar aula (modalidade, data, coach, capacidade) |
+| Turmas / Aulas | `/admin/turmas` | Listar aulas **por modalidade** ou **por semana** (grade da semana); criar e editar aula (modalidade, data, coach, capacidade) |
 | Locais | `/admin/locais` | Gerir locais da escola |
 | Modalidades | `/admin/modalidades` | Gerir modalidades (Muay Thai, Boxe, Kickboxing, etc.) |
 | Planos | `/admin/planos` | Listar, criar e editar planos (preço, acesso digital, âmbito modalidades) |
@@ -65,9 +65,11 @@ Validar que o Admin vê e acede a:
 
 #### C) Turmas e aulas
 
-1. **Criar aula:** Admin → Turmas → Criar aula. Preencher modalidade, data, horário, coach, local, capacidade. Guardar.
-2. **Editar aula:** Clicar numa aula na lista → alterar dados → Guardar.
-3. **Cancelar aula:** Na edição da aula, usar ação de cancelar/apagar (se existir) e confirmar.
+1. **Lista agrupada por modalidade:** Admin → Turmas. As aulas aparecem agrupadas por modalidade (ex.: Muay Thai, MMA), com um título por grupo e o número de aulas; dentro de cada grupo, as aulas mantêm a ordem por data e hora.
+2. **Grade por semana:** Clicar em "Por semana". Surge a grade da semana (segunda a domingo) com o intervalo de datas e links "Semana anterior" / "Próxima semana". Cada dia mostra as aulas do dia (hora, modalidade, coach, local, link Editar); dias sem aulas mostram "Sem aulas neste dia."
+3. **Criar aula:** Na secção "Nova aula", preencher modalidade, data, horário, coach, local, capacidade. Guardar.
+4. **Editar aula:** Clicar em "Editar →" numa aula (na lista por modalidade ou na grade por semana) → alterar dados → Guardar.
+5. **Cancelar aula:** Na edição da aula, usar ação de cancelar/apagar (se existir) e confirmar.
 
 #### D) Cursos e biblioteca
 

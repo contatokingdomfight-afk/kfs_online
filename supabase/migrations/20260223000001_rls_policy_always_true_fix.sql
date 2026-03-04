@@ -1,0 +1,13 @@
+-- Fix RLS "Policy Always True" warning (lint 0024): replace single FOR ALL policy
+-- with separate SELECT (USING true) + INSERT/UPDATE/DELETE (auth.uid() IS NOT NULL).
+-- Applied via MCP; this file documents the change for other environments.
+-- Tables: Athlete, AthleteEvaluation, AthleteMissionAward, AthleteMissionCompletion,
+-- Attendance, AttendanceGoal, Coach, Comment, Course, CourseCreator, CourseModule,
+-- CourseProgress, CoursePurchase, CourseUnit, CourseUnitProgress, EvaluationComponent,
+-- EvaluationCriterion, Event, EventRegistration, GeneralDimension, Lesson, Location,
+-- MissionTemplate, ModalityEvaluationConfig, ModalityRef, Notification, Payment, Plan,
+-- StudentBadge, StudentPhysicalAssessment, StudentProfile, TrialClass, WeekTheme.
+-- For each: DROP POLICY "allow_authenticated"; CREATE allow_authenticated_select (SELECT, USING true);
+-- CREATE allow_authenticated_insert (INSERT, WITH CHECK auth.uid() IS NOT NULL);
+-- CREATE allow_authenticated_update (UPDATE, USING and WITH CHECK auth.uid() IS NOT NULL);
+-- CREATE allow_authenticated_delete (DELETE, USING auth.uid() IS NOT NULL);
