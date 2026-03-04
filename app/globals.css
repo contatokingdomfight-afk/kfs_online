@@ -623,10 +623,10 @@
   background-color: var(--bg) !important;
 }
 
-/* Botão Sair no menu lateral: destaque e hover */
+/* Botão Sair no menu lateral: hover discreto */
 .app-sidebar-logout-btn:hover:not(:disabled) {
-  background-color: var(--danger) !important;
-  color: #fff !important;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
 }
 .app-sidebar-logout-btn:active:not(:disabled) {
   opacity: 0.9;

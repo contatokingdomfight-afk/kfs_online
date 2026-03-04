@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -43,6 +44,9 @@ export function AdminDashboardCharts(props: Props) {
     modalityNames,
   } = props;
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const schoolName = currentSchoolId ? schools.find((s) => s.id === currentSchoolId)?.name ?? "Todas" : "Todas";
 
   const attendanceChartData = attendanceByDay.map((r) => {
@@ -58,6 +62,15 @@ export function AdminDashboardCharts(props: Props) {
     label: `${r.month.slice(5)}/${r.month.slice(0, 4)}`,
   }));
 
+  if (!mounted) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(24px, 6vw, 32px)", minWidth: 0 }}>
+        <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minHeight: 320 }} />
+        <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minHeight: 300 }} />
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(24px, 6vw, 32px)", minWidth: 0 }}>
       {/* Escondido no mobile para evitar quebra; KPI "Receita do mês" permanece visível na secção de KPIs */}
@@ -65,7 +78,7 @@ export function AdminDashboardCharts(props: Props) {
         <h3 style={{ margin: "0 0 16px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Presenças no mês ({schoolName})
         </h3>
-        <div style={{ width: "100%", minWidth: 0, height: 280 }}>
+        <div style={{ width: "100%", minWidth: 0, minHeight: 240, height: 280 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={attendanceChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -99,7 +112,7 @@ export function AdminDashboardCharts(props: Props) {
         {revenueChartData.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>Sem dados de pagamentos.</p>
         ) : (
-          <div style={{ width: "100%", minWidth: 0, height: 260 }}>
+          <div style={{ width: "100%", minWidth: 0, minHeight: 220, height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />

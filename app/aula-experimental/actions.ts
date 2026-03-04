@@ -20,7 +20,12 @@ export async function submitTrialRequest(
   if (!modality) return { error: "Escolhe uma modalidade." };
   if (!lessonId) return { error: "Escolhe a data e hora desejada." };
 
-  const supabase = createAdminClient();
+  let supabase;
+  try {
+    supabase = createAdminClient();
+  } catch {
+    return { error: "Configuração do servidor em falta. A inscrição não pôde ser guardada. Contacta a escola." };
+  }
 
   const { data: lesson } = await supabase
     .from("Lesson")

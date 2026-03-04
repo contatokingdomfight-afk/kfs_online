@@ -33,6 +33,7 @@ export function ResponsiveShell({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pathname = usePathname();
   const menuBtnRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   const closeDrawer = () => {
     setDrawerOpen(false);
@@ -41,7 +42,16 @@ export function ResponsiveShell({
 
   useEffect(() => {
     setDrawerOpen(false);
+    const t = setTimeout(() => menuBtnRef.current?.focus({ preventScroll: true }), 0);
+    return () => clearTimeout(t);
   }, [pathname]);
+
+  useEffect(() => {
+    const el = drawerRef.current;
+    if (!el) return;
+    if (drawerOpen) el.removeAttribute("inert");
+    else el.setAttribute("inert", "");
+  }, [drawerOpen]);
 
   return (
     <div className="app-shell" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -49,10 +59,11 @@ export function ResponsiveShell({
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         {/* Drawer (mobile) / Sidebar (desktop) */}
         <div
+          ref={drawerRef}
           className={`app-shell-drawer ${drawerOpen ? "app-shell-drawer--open" : ""}`}
           role="dialog"
           aria-label="Menu"
-          aria-hidden={!drawerOpen}
+          aria-modal={drawerOpen}
         >
           <div style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
             <div
