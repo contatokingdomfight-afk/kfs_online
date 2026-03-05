@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getCurrentSchoolId } from "@/lib/auth/get-current-school";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 
@@ -11,6 +12,7 @@ export default async function CoachCursosPage() {
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
+  const schoolId = await getCurrentSchoolId();
 
   const { data: student } = await supabase
     .from("Student")
@@ -38,9 +40,42 @@ export default async function CoachCursosPage() {
 
   const { data: courses } = await supabase
     .from("Course")
-    .select("id, name, description, is_active, price, available_for_purchase, category")
+    .select("id, name, description, is_active, price, available_for_purchase, category, included_in_digital_plan")
     .eq("creator_student_id", student.id)
     .order("name", { ascending: true });
+
+  const courseIds = (courses ?? []).map((c) => c.id);
+  let purchaseCountByCourseId = new Map<string, number>();
+  let studentsWithDigitalPlanCount = 0;
+
+  if (courseIds.length > 0) {
+    const { data: purchases } = await supabase
+      .from("CoursePurchase")
+      .select("courseId")
+      .in("courseId", courseIds);
+    for (const cid of courseIds) {
+      purchaseCountByCourseId.set(cid, (purchases ?? []).filter((p) => p.courseId === cid).length);
+    }
+    const hasDigitalPlanCourse = (courses ?? []).some((c) => (c as { included_in_digital_plan?: boolean }).included_in_digital_plan);
+    if (hasDigitalPlanCourse) {
+      const { data: plansWithDigital } = await supabase
+        .from("Plan")
+        .select("id")
+        .eq("includes_digital_access", true)
+        .eq("is_active", true);
+      const planIds = (plansWithDigital ?? []).map((p) => p.id);
+      if (planIds.length > 0) {
+        let studentsQuery = supabase
+          .from("Student")
+          .select("id", { count: "exact", head: true })
+          .in("planId", planIds)
+          .eq("status", "ATIVO");
+        if (schoolId) studentsQuery = studentsQuery.eq("schoolId", schoolId);
+        const { count } = await studentsQuery;
+        studentsWithDigitalPlanCount = count ?? 0;
+      }
+    }
+  }
 
   return (
     <div style={{ maxWidth: "min(620px, 100%)" }}>
@@ -76,46 +111,60 @@ export default async function CoachCursosPage() {
         </div>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-          {(courses ?? []).map((c) => (
-            <li key={c.id} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                <div>
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-primary)" }}>
-                    {c.name}
-                  </p>
-                  {c.description && (
-                    <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
-                      {c.description.slice(0, 80)}{c.description.length > 80 ? "…" : ""}
+          {(courses ?? []).map((c) => {
+            const purchaseCount = purchaseCountByCourseId.get(c.id) ?? 0;
+            const includedInDigital = (c as { included_in_digital_plan?: boolean }).included_in_digital_plan;
+            return (
+              <li key={c.id} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 600, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-primary)" }}>
+                      {c.name}
                     </p>
-                  )}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      padding: "2px 8px",
-                      borderRadius: "var(--radius-md)",
-                      background: c.is_active ? "var(--success)" : "var(--surface)",
-                      color: c.is_active ? "#fff" : "var(--text-secondary)",
-                    }}
-                  >
-                    {c.is_active ? "Ativo" : "Em revisão"}
-                  </span>
-                  {c.price && (
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--primary)" }}>
-                      €{Number(c.price).toFixed(0)}
+                    {c.description && (
+                      <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
+                        {c.description.slice(0, 80)}{c.description.length > 80 ? "…" : ""}
+                      </p>
+                    )}
+                    <p style={{ margin: "6px 0 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
+                      {purchaseCount === 0 && !includedInDigital && "Nenhum aluno com acesso ainda."}
+                      {purchaseCount > 0 && <span><strong>{purchaseCount}</strong> {purchaseCount === 1 ? "aluno comprou" : "alunos compraram"}.</span>}
+                      {includedInDigital && studentsWithDigitalPlanCount > 0 && (
+                        <span>
+                          {purchaseCount > 0 ? " · " : ""}
+                          <strong>{studentsWithDigitalPlanCount}</strong> {studentsWithDigitalPlanCount === 1 ? "aluno tem" : "alunos têm"} acesso pelo plano digital.
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        padding: "2px 8px",
+                        borderRadius: "var(--radius-md)",
+                        background: c.is_active ? "var(--success)" : "var(--surface)",
+                        color: c.is_active ? "#fff" : "var(--text-secondary)",
+                      }}
+                    >
+                      {c.is_active ? "Ativo" : "Em revisão"}
                     </span>
-                  )}
-                  <Link
-                    href={`/coach/cursos/${c.id}`}
-                    style={{ fontSize: 14, color: "var(--primary)", textDecoration: "none", fontWeight: 500 }}
-                  >
-                    Editar →
-                  </Link>
+                    {c.price && (
+                      <span style={{ fontSize: 14, fontWeight: 600, color: "var(--primary)" }}>
+                        €{Number(c.price).toFixed(0)}
+                      </span>
+                    )}
+                    <Link
+                      href={`/coach/cursos/${c.id}`}
+                      style={{ fontSize: 14, color: "var(--primary)", textDecoration: "none", fontWeight: 500 }}
+                    >
+                      Editar →
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
