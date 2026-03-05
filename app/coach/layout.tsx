@@ -26,17 +26,13 @@ export default async function CoachLayout({
   const result = getAdminClientOrNull();
   const supabase = result.client;
 
-  const [viewAs, theme, locale, coachStudentId, studentRes] = await Promise.all([
+  const [viewAs, theme, locale, coachStudentId] = await Promise.all([
     dbUser.role === "ADMIN" ? getViewAsFromCookies() : Promise.resolve(null),
     getThemeFromCookies(),
     getLocaleFromCookies(),
     getCoachStudentId(),
-    supabase
-      ? supabase.from("Student").select("can_create_courses").eq("userId", dbUser.id).single()
-      : Promise.resolve({ data: null }),
   ]);
 
-  const canCreateCourses = studentRes?.data?.can_create_courses ?? false;
   const t = getTranslations(locale as "pt" | "en");
   const coachLinks = [
     ...(dbUser.role === "ADMIN"
@@ -48,9 +44,7 @@ export default async function CoachLayout({
     { label: t("navAgenda"), href: "/coach/agenda" },
     { label: t("navStudents"), href: "/coach/alunos" },
     { label: t("navAthletesCoach"), href: "/coach/atletas" },
-    ...(canCreateCourses
-      ? [{ label: "Meus Cursos", href: "/coach/cursos" as string }]
-      : []),
+    { label: "Meus Cursos", href: "/coach/cursos" as string },
     { label: t("libraryTitle"), href: "/coach/biblioteca" as string },
     { label: "Financeiro", href: "/coach/financeiro" as string },
     { label: t("navSettings"), href: "/coach/configuracoes" as string },
