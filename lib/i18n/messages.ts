@@ -278,6 +278,8 @@ export const messages = {
     coachAbsent: "faltas",
     coachSettingsTitle: "Configurações do perfil",
     coachProfileIntro: "Atualiza o teu nome, foto e dados de contacto. O email está ligado à conta e não pode ser alterado aqui.",
+    coachLibraryDescription: "Conteúdos disponíveis na biblioteca para os alunos. Podes consultar aqui e associar um curso ao Tema da Semana.",
+    coachLinkCourseToTheme: "Associar este curso ao Tema da Semana",
 
     // Auth
     signOut: "Sair",
@@ -571,6 +573,8 @@ export const messages = {
     coachAbsent: "absent",
     coachSettingsTitle: "Profile settings",
     coachProfileIntro: "Update your name, photo and contact details. Email is linked to your account and cannot be changed here.",
+    coachLibraryDescription: "Content available in the library for students. You can browse here and link a course to the Week Theme.",
+    coachLinkCourseToTheme: "Link this course to Week Theme",
 
     signOut: "Sign out",
     email: "Email",
