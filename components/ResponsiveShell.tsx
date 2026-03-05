@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar, type SidebarLink } from "./Sidebar";
 import type { Theme, Locale } from "@/lib/theme-locale";
@@ -31,9 +31,18 @@ export function ResponsiveShell({
   children,
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(true); // assume mobile até hidratar (evita sidebar clicável antes do JS)
   const pathname = usePathname();
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 768px)");
+    const onMatch = () => setIsMobile(!mql.matches);
+    onMatch();
+    mql.addEventListener("change", onMatch);
+    return () => mql.removeEventListener("change", onMatch);
+  }, []);
 
   const closeDrawer = () => {
     setDrawerOpen(false);
@@ -46,12 +55,14 @@ export function ResponsiveShell({
     return () => clearTimeout(t);
   }, [pathname]);
 
-  useEffect(() => {
+  // Só usar inert no mobile quando o drawer estiver fechado. No desktop o sidebar fica sempre clicável.
+  useLayoutEffect(() => {
     const el = drawerRef.current;
     if (!el) return;
-    if (drawerOpen) el.removeAttribute("inert");
-    else el.setAttribute("inert", "");
-  }, [drawerOpen]);
+    const shouldBeInert = isMobile && !drawerOpen;
+    if (shouldBeInert) el.setAttribute("inert", "");
+    else el.removeAttribute("inert");
+  }, [drawerOpen, isMobile]);
 
   return (
     <div className="app-shell" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
