@@ -617,6 +617,9 @@
 .app-sidebar-nav-link {
   transition: background-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
 }
+.app-sidebar-nav-link:hover {
+  background-color: var(--bg) !important;
+}
 .app-sidebar-nav-link:active:not(:disabled) {
   transform: scale(0.98);
   opacity: 0.9;

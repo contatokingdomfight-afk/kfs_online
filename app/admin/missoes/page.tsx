@@ -23,10 +23,38 @@ export default async function AdminMissoesPage() {
     .select("code, name")
     .order("sortOrder", { ascending: true });
 
-  const { data: missions } = await supabase
+  const selectCols = "id, name, description, modality, beltIndex, xpReward, sortOrder, isActive";
+  let missions: { id: string; name: string; description: string | null; modality: string | null; beltIndex: number | null; xpReward: number; sortOrder: number; isActive: boolean }[] | null = null;
+  let missionsError: { message: string } | null = null;
+
+  const res = await supabase
     .from("MissionTemplate")
-    .select("id, name, description, modality, beltIndex, xpReward, sortOrder, isActive")
+    .select(selectCols)
     .order("sortOrder", { ascending: true });
+  missions = res.data;
+  missionsError = res.error;
+
+  if (missionsError && (missionsError.message?.includes("does not exist") || missionsError.message?.includes("relation"))) {
+    const fallback = await supabase
+      .from("mission_template")
+      .select("id, name, description, modality, belt_index, xp_reward, sort_order, is_active")
+      .order("sort_order", { ascending: true });
+    if (!fallback.error && fallback.data?.length !== undefined) {
+      missions = fallback.data.map((r: Record<string, unknown>) => ({
+        id: r.id as string,
+        name: r.name as string,
+        description: (r.description as string | null) ?? null,
+        modality: (r.modality as string | null) ?? null,
+        beltIndex: (r.belt_index as number | null) ?? null,
+        xpReward: (r.xp_reward as number) ?? 50,
+        sortOrder: (r.sort_order as number) ?? 0,
+        isActive: (r.is_active as boolean) ?? true,
+      }));
+      missionsError = null;
+    } else if (fallback.error) {
+      missionsError = fallback.error;
+    }
+  }
 
   const modalityOptions = (modalities ?? []).map((m) => ({ code: m.code, name: m.name ?? m.code }));
   const list = missions ?? [];
@@ -65,9 +93,14 @@ export default async function AdminMissoesPage() {
       </div>
 
       <h2 className="text-base font-semibold text-text-primary mb-3">Todas as missões (por faixa)</h2>
-      {list.length === 0 ? (
+      {missionsError ? (
+        <p className="text-sm text-red-600 dark:text-red-400 mb-2">
+          Erro ao carregar missões: {missionsError.message}
+        </p>
+      ) : null}
+      {list.length === 0 && !missionsError ? (
         <p className="text-sm text-text-secondary">Ainda não há missões. Cria uma acima.</p>
-      ) : (
+      ) : list.length > 0 ? (
         <div className="flex flex-col gap-6">
           {orderedBeltKeys.map((key) => {
             const group = byBelt.get(key)!;
@@ -115,7 +148,7 @@ export default async function AdminMissoesPage() {
             );
           })}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

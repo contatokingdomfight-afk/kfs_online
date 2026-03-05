@@ -1,9 +1,11 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { revalidatePath } from "next/cache";
 import { SEED_MISSIONS } from "./seed-missions-data";
+
+const MISSION_TABLE = "MissionTemplate";
 
 export type MissionResult = { error?: string; success?: boolean };
 
@@ -14,8 +16,14 @@ export async function seedMissionsFromDoc(): Promise<SeedMissionsResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Sem permissão." };
 
-  const supabase = await createClient();
-  const { data: existing } = await supabase.from("MissionTemplate").select("name");
+  let supabase;
+  try {
+    supabase = createAdminClient();
+  } catch {
+    return { error: "Configuração do servidor em falta (SUPABASE_SERVICE_ROLE_KEY)." };
+  }
+
+  const { data: existing } = await supabase.from(MISSION_TABLE).select("name");
   const existingNames = new Set((existing ?? []).map((r) => r.name.trim().toLowerCase()));
 
   let inserted = 0;
@@ -27,7 +35,7 @@ export async function seedMissionsFromDoc(): Promise<SeedMissionsResult> {
       skipped++;
       continue;
     }
-    const { error } = await supabase.from("MissionTemplate").insert({
+    const { error } = await supabase.from(MISSION_TABLE).insert({
       name: m.name,
       description: m.description,
       modality: m.modality,
@@ -75,8 +83,13 @@ export async function createMission(
 
   if (beltIndex != null && (Number.isNaN(beltIndex) || beltIndex < 0)) return { error: "Faixa inválida." };
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("MissionTemplate").insert({
+  let supabase;
+  try {
+    supabase = createAdminClient();
+  } catch {
+    return { error: "Configuração do servidor em falta (SUPABASE_SERVICE_ROLE_KEY)." };
+  }
+  const { error } = await supabase.from(MISSION_TABLE).insert({
     name,
     description,
     modality,
@@ -99,8 +112,13 @@ export async function deleteMission(missionId: string): Promise<MissionResult> {
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Sem permissão." };
   if (!missionId) return { error: "ID em falta." };
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("MissionTemplate").delete().eq("id", missionId);
+  let supabase;
+  try {
+    supabase = createAdminClient();
+  } catch {
+    return { error: "Configuração do servidor em falta (SUPABASE_SERVICE_ROLE_KEY)." };
+  }
+  const { error } = await supabase.from(MISSION_TABLE).delete().eq("id", missionId);
 
   if (error) {
     console.error("deleteMission:", error);
