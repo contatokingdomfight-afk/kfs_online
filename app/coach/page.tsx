@@ -339,9 +339,6 @@ export default async function CoachHomePage() {
           <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
             {t("coachPresencesTodayEmpty")}
           </p>
-          <Link href="/coach/aula" className="btn btn-secondary" style={{ textDecoration: "none", marginTop: 12, display: "inline-block" }}>
-            {t("enterClass")}
-          </Link>
         </section>
       )}
 
