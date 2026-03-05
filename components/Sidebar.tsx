@@ -80,8 +80,10 @@ export function Sidebar({
         }}
       >
         {links.map((item) => {
-          const isParentActive = activeHref === item.href || (activeHref && item.href !== "/admin" && activeHref.startsWith(item.href));
           const hasChildren = item.children && item.children.length > 0;
+          // Só considerar ativo por prefixo em itens com filhos (ex: /admin e /admin/coaches). Caso contrário exato (evita /coach ativo em /coach/alunos).
+          const isParentActive = activeHref === item.href
+            || (hasChildren && activeHref && (activeHref === item.href || activeHref.startsWith(item.href + "/")));
           return (
             <div key={item.href}>
               <Link

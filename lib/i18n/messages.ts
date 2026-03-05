@@ -276,6 +276,9 @@ export const messages = {
     coachConfirmed: "confirmadas",
     coachPending: "pendentes",
     coachAbsent: "faltas",
+    coachSettingsTitle: "Configurações do perfil",
+    coachProfileIntro: "Atualiza o teu nome, foto e dados de contacto. O email está ligado à conta e não pode ser alterado aqui.",
+    navSettings: "Configurações",
 
     // Auth
     signOut: "Sair",
@@ -567,6 +570,9 @@ export const messages = {
     coachConfirmed: "confirmed",
     coachPending: "pending",
     coachAbsent: "absent",
+    coachSettingsTitle: "Profile settings",
+    coachProfileIntro: "Update your name, photo and contact details. Email is linked to your account and cannot be changed here.",
+    navSettings: "Settings",
 
     signOut: "Sign out",
     email: "Email",
