@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getViewAsFromCookies } from "@/lib/view-as-server";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { ViewAsBanner } from "@/components/ViewAsBanner";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
+import { StudentOnboardingGate } from "@/components/onboarding/StudentOnboardingGate";
 
 export default async function DashboardLayout({
   children,
@@ -33,7 +35,28 @@ export default async function DashboardLayout({
     { label: t("navEvents"), href: "/dashboard/eventos" },
     { label: t("navFinance"), href: "/dashboard/financeiro" },
     { label: t("navProfile"), href: "/dashboard/perfil" },
+    { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
   ];
+
+  const onboardingSteps = [
+    { title: t("onboardingWelcomeTitle"), description: t("onboardingWelcomeDesc") },
+    { title: t("onboardingHomeTitle"), description: t("onboardingHomeDesc") },
+    { title: t("onboardingAthleteTitle"), description: t("onboardingAthleteDesc") },
+    { title: t("onboardingConquestsTitle"), description: t("onboardingConquestsDesc") },
+    { title: t("onboardingStoreTitle"), description: t("onboardingStoreDesc") },
+    { title: t("onboardingLibraryTitle"), description: t("onboardingLibraryDesc") },
+    { title: t("onboardingEventsTitle"), description: t("onboardingEventsDesc") },
+    { title: t("onboardingFinanceTitle"), description: t("onboardingFinanceDesc") },
+    { title: t("onboardingProfileTitle"), description: t("onboardingProfileDesc") },
+    { title: t("onboardingDoneTitle"), description: t("onboardingDoneDesc") },
+  ];
+
+  const onboardingLabels = {
+    next: t("onboardingNext"),
+    back: t("onboardingBack"),
+    skip: t("onboardingSkip"),
+    start: t("onboardingStart"),
+  };
 
   return (
     <div data-dashboard style={{ minHeight: "100vh", backgroundColor: "var(--bg)", color: "var(--text-primary)" }}>
@@ -47,7 +70,11 @@ export default async function DashboardLayout({
         mainClassName="dashboard-main"
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
       >
-        {children}
+        <Suspense fallback={null}>
+          <StudentOnboardingGate steps={onboardingSteps} labels={onboardingLabels}>
+            {children}
+          </StudentOnboardingGate>
+        </Suspense>
       </ResponsiveShell>
     </div>
   );
