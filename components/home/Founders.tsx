@@ -8,18 +8,21 @@ type Content = {
   founder1Name: string;
   founder1Role: string;
   founder1Image: string;
+  founder1Bio?: string;
   founder2Name: string;
   founder2Role: string;
   founder2Image: string;
+  founder2Bio?: string;
 };
 
 type FounderCardProps = {
   name: string;
   role: string;
   imageSrc?: string;
+  bio?: string;
 };
 
-function FounderCard({ name, role, imageSrc }: FounderCardProps) {
+function FounderCard({ name, role, imageSrc, bio }: FounderCardProps) {
   return (
     <div className="flex flex-col items-center rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-6 text-center transition-all hover:border-[var(--primary)]/30">
       <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-full border-2 border-[var(--border)]">
@@ -38,7 +41,12 @@ function FounderCard({ name, role, imageSrc }: FounderCardProps) {
         )}
       </div>
       <h3 className="mt-4 font-semibold text-[var(--text-primary)]">{name}</h3>
-      <p className="mt-1 text-sm text-[var(--text-secondary)]">{role}</p>
+      <p className="mt-1 text-sm font-medium text-[var(--primary)]">{role}</p>
+      {bio && (
+        <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+          {bio}
+        </p>
+      )}
     </div>
   );
 }
@@ -49,11 +57,13 @@ export function Founders({ content }: { content: Content }) {
       name: content.founder1Name,
       role: content.founder1Role,
       imageSrc: content.founder1Image || undefined,
+      bio: content.founder1Bio,
     },
     {
       name: content.founder2Name,
       role: content.founder2Role,
       imageSrc: content.founder2Image || undefined,
+      bio: content.founder2Bio,
     },
   ];
 
