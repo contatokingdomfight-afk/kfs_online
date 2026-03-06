@@ -346,6 +346,7 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
           </div>
         </section>
       )}
+      {/* A minha performance – só radar ou placeholder + link para Perfil do Atleta */}
       <section>
         <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>{t("myPerformance")}</h2>
         <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
@@ -354,39 +355,50 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
               <p style={{ margin: "0 0 12px 0", fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-primary)" }}>Performance geral</p>
               <p style={{ margin: "0 0 12px 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>Média das últimas {GENERAL_LAST_N} avaliações (escala 1–10).</p>
               <PerformanceRadar scores={generalPerformanceScores} axes={[...GENERAL_PERFORMANCE_AXES]} maxScore={10} />
-              <Link href="/dashboard/performance" className="btn btn-secondary" style={{ marginTop: "var(--space-3)", textDecoration: "none", alignSelf: "flex-start" }}>Ver Performance</Link>
+              <Link href="/dashboard/performance" className="btn btn-secondary" style={{ marginTop: "var(--space-3)", textDecoration: "none", alignSelf: "flex-start" }}>{t("viewAthleteProfileLink")}</Link>
             </>
           ) : (
-            <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("evaluationPlaceholder")}</p>
-          )}
-          {studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact) && (
-            <div style={{ marginTop: "clamp(16px, 4vw, 20px)", paddingTop: "clamp(16px, 4vw, 20px)", borderTop: "1px solid var(--border)" }}>
-              <p style={{ margin: "0 0 12px 0", fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 600, color: "var(--text-primary)" }}>{t("myDataTitle")}</p>
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-                {studentProfile.weightKg != null && <li style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("weightLabel")}: <strong style={{ color: "var(--text-primary)" }}>{studentProfile.weightKg} {t("weightUnit")}</strong></li>}
-                {studentProfile.heightCm != null && <li style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("heightLabel")}: <strong style={{ color: "var(--text-primary)" }}>{studentProfile.heightCm} {t("heightUnit")}</strong></li>}
-                {studentProfile.dateOfBirth && <li style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("dateOfBirthLabel")}: <strong style={{ color: "var(--text-primary)" }}>{new Date(studentProfile.dateOfBirth + "T12:00:00").toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", { day: "2-digit", month: "long", year: "numeric" })}</strong></li>}
-                {studentProfile.medicalNotes && <li style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("medicalNotesLabel")}: <span style={{ color: "var(--text-primary)" }}>{studentProfile.medicalNotes}</span></li>}
-                {studentProfile.emergencyContact && <li style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("emergencyContactLabel")}: <span style={{ color: "var(--text-primary)" }}>{studentProfile.emergencyContact}</span></li>}
-              </ul>
-              <Link href="/dashboard/perfil" style={{ display: "inline-block", marginTop: 12, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none", fontWeight: 500 }}>{t("editMyData")} →</Link>
-            </div>
-          )}
-          {Object.keys(attendanceByModality).length > 0 && (
-            <div style={{ marginTop: "clamp(16px, 4vw, 20px)", paddingTop: "clamp(16px, 4vw, 20px)", borderTop: "1px solid var(--surface)" }}>
-              <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{t("attendanceByModality")}</p>
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-                {Object.entries(attendanceByModality).map(([mod, count]) => (
-                  <li key={mod} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "clamp(14px, 3.5vw, 16px)" }}>
-                    <span style={{ color: "var(--text-primary)" }}>{MODALITY_LABELS[mod] ?? mod}</span>
-                    <span style={{ color: "var(--primary)", fontWeight: 600 }}>{count} {t("classesCount")}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <>
+              <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("evaluationPlaceholder")}</p>
+              <Link href="/dashboard/performance" style={{ display: "inline-block", marginTop: 12, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none", fontWeight: 500 }}>{t("viewAthleteProfileLink")} →</Link>
+            </>
           )}
         </div>
       </section>
+
+      {/* Os meus dados – perfil + presenças por modalidade */}
+      {(studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact)) || Object.keys(attendanceByModality).length > 0 ? (
+        <section>
+          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>{t("myDataTitle")}</h2>
+          <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+            {studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact) && (
+              <>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {studentProfile.weightKg != null && <li style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("weightLabel")}: <strong style={{ color: "var(--text-primary)" }}>{studentProfile.weightKg} {t("weightUnit")}</strong></li>}
+                  {studentProfile.heightCm != null && <li style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("heightLabel")}: <strong style={{ color: "var(--text-primary)" }}>{studentProfile.heightCm} {t("heightUnit")}</strong></li>}
+                  {studentProfile.dateOfBirth && <li style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("dateOfBirthLabel")}: <strong style={{ color: "var(--text-primary)" }}>{new Date(studentProfile.dateOfBirth + "T12:00:00").toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", { day: "2-digit", month: "long", year: "numeric" })}</strong></li>}
+                  {studentProfile.medicalNotes && <li style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("medicalNotesLabel")}: <span style={{ color: "var(--text-primary)" }}>{studentProfile.medicalNotes}</span></li>}
+                  {studentProfile.emergencyContact && <li style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("emergencyContactLabel")}: <span style={{ color: "var(--text-primary)" }}>{studentProfile.emergencyContact}</span></li>}
+                </ul>
+                <Link href="/dashboard/perfil" style={{ display: "inline-block", marginTop: 12, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none", fontWeight: 500 }}>{t("editMyData")} →</Link>
+              </>
+            )}
+            {Object.keys(attendanceByModality).length > 0 && (
+              <div style={{ marginTop: studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact) ? "clamp(16px, 4vw, 20px)" : 0, paddingTop: studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact) ? "clamp(16px, 4vw, 20px)" : 0, borderTop: studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact) ? "1px solid var(--border)" : "none" }}>
+                <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{t("attendanceByModality")}</p>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                  {Object.entries(attendanceByModality).map(([mod, count]) => (
+                    <li key={mod} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+                      <span style={{ color: "var(--text-primary)" }}>{MODALITY_LABELS[mod] ?? mod}</span>
+                      <span style={{ color: "var(--primary)", fontWeight: 600 }}>{count} {t("classesCount")}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </section>
+      ) : null}
       {studentId && (
         <>
           <section>
