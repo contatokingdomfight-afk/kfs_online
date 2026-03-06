@@ -74,6 +74,10 @@ export const homeContent = {
     popular: "Mais Popular",
     planCta: "Começar",
 
+    // YouTube Shorts
+    youtubeShortsTitle: "KFS em ação",
+    youtubeShortsSubtitle: "Alguns momentos do nosso dia a dia no tatame.",
+
     // Why choose
     whyTitle: "Por que a Kingdom Fight",
     why1: "Treinadores experientes",
@@ -185,6 +189,9 @@ export const homeContent = {
     planFullAudience: "Complete experience.",
     popular: "Most Popular",
     planCta: "Start",
+
+    youtubeShortsTitle: "KFS in action",
+    youtubeShortsSubtitle: "Some moments from our day on the mat.",
 
     whyTitle: "Why Kingdom Fight",
     why1: "Experienced trainers",

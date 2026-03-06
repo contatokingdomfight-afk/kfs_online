@@ -9,6 +9,7 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { Plans } from "@/components/home/Plans";
 import { Founders } from "@/components/home/Founders";
 import { LearningPathsSection } from "@/components/home/LearningPathsSection";
+import { YouTubeShortsSection } from "@/components/home/YouTubeShortsSection";
 import { WhyChoose } from "@/components/home/WhyChoose";
 import { Testimonials } from "@/components/home/Testimonials";
 import { CTASection } from "@/components/home/CTASection";
@@ -61,6 +62,7 @@ export default async function HomePage({ searchParams }: Props) {
       <LearningPathsSection content={content} />
       <Plans content={content} />
       <WhyChoose content={content} />
+      <YouTubeShortsSection content={content} />
       <Testimonials content={content} />
       <CTASection content={content} />
       <Footer content={content} />
