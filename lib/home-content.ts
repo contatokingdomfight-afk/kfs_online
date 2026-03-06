@@ -111,11 +111,11 @@ export const homeContent = {
     founder1Name: "Oséias Beu",
     founder1Role: "Co-fundador",
     founder1Image: "/founders/Oseias.png",
-    founder1Bio: "Amante de artes marciais desde a juventude. Kru e prajied preto em Muay Thai (mestre Marcio Farah). Kickboxing faixa marrom, Jiu-Jitsu faixa azul. A finalizar curso de treinador de Boxe em Portugal. Treino em Chiang Mai (YOKKAO). Cientista de dados e mestrando em Data Science.",
+    founder1Bio: "Iniciou nas artes marciais ainda jovem, passando pelo Jiu-Jitsu, Boxe e Kickboxing até encontrar no Muay Thai sua principal paixão, onde conquistou o Prajied Preto pelo mestre Márcio Farah, no ginásio Crokodilos em São Paulo. É atleta e treinador de Boxe e Muay Thai. Além da trajetória no desporto de combate, atua como cientista de dados e atualmente é mestrando em Data Science pela NOVA IMS.",
     founder2Name: "Ícaro Bueno",
     founder2Role: "Co-fundador",
     founder2Image: "/founders/Icaro.png",
-    founder2Bio: "Jornada desde 2003 em Capoeira e Boxe. Primeira turma de Muay Thai em 2009 — vocação para formar atletas. Mestre e prajied preto há mais de 20 anos. Desenvolveu inúmeros atletas para competições. Treino em Chiang Mai (YOKKAO) com o sócio Oséias.",
+    founder2Bio: "Iniciou sua jornada nas artes marciais com Capoeira e Boxe e posteriormente passou a ensinar crianças em um projeto social, onde descobriu sua vocação para o ensino. Tornou-se professor de Muay Thai e encontrou sua maior realização em formar atletas, atuar no corner e transmitir princípios e valores através do esporte. Com mais de 20 anos de experiência, recebeu o Prajied Preto em Muay Thai, já desenvolveu diversos atletas que competiram em diferentes níveis.",
 
     // Footer
     footerLinks: "Links rápidos",
@@ -218,11 +218,11 @@ export const homeContent = {
     founder1Name: "Oséias Beu",
     founder1Role: "Co-founder",
     founder1Image: "/founders/Oseias.png",
-    founder1Bio: "Martial arts enthusiast since youth. Kru and black prajied in Muay Thai (master Marcio Farah). Kickboxing brown belt, Jiu-Jitsu blue belt. Finishing boxing coach course in Portugal. Trained in Chiang Mai (YOKKAO). Data scientist and MSc student in Data Science.",
+    founder1Bio: "Started martial arts young, training in Jiu-Jitsu, Boxing and Kickboxing before finding his main passion in Muay Thai, where he earned the Black Prajied under master Márcio Farah at Crokodilos gym in São Paulo. He is an athlete and coach in Boxing and Muay Thai. Beyond combat sports, he works as a data scientist and is currently an MSc student in Data Science at NOVA IMS.",
     founder2Name: "Ícaro Bueno",
     founder2Role: "Co-founder",
     founder2Image: "/founders/Icaro.png",
-    founder2Bio: "Journey since 2003 in Capoeira and Boxing. First official Muay Thai class in 2009 — vocation for coaching. Master and black prajied for over 20 years. Developed many athletes for competition. Trained in Chiang Mai (YOKKAO) with partner Oséias.",
+    founder2Bio: "Started his martial arts journey with Capoeira and Boxing, then began teaching children in a social project where he discovered his vocation for teaching. He became a Muay Thai instructor and found his greatest fulfilment in developing athletes, working the corner and passing on principles and values through sport. With over 20 years of experience, he received the Black Prajied in Muay Thai and has developed many athletes who have competed at different levels.",
 
     footerLinks: "Quick links",
     footerAulaExp: "Trial Class",
