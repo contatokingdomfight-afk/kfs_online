@@ -37,11 +37,12 @@ export default async function DashboardPage() {
   const weekStart = getWeekStartMonday();
   const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Buscar dados do aluno uma vez (schoolId, planId, primaryModality)
+  // Buscar dados do aluno uma vez (schoolId, planId, primaryModality, plano digital)
   let studentSchoolId: string | null = null;
   let allowedModalities: string[] = MODALITIES_LIST.slice();
   let studentPlanId: string | null = null;
   let studentPrimaryModality: string | null = null;
+  let hasDigitalAccess = false;
   if (studentId) {
     const { data: student } = await supabase.from("Student").select("schoolId, planId, primaryModality").eq("id", studentId).single();
     if (student) {
@@ -49,10 +50,11 @@ export default async function DashboardPage() {
       studentPlanId = student.planId || null;
       studentPrimaryModality = (student as { primaryModality?: string }).primaryModality ?? null;
       if (student.planId) {
-        const { data: plan } = await supabase.from("Plan").select("modality_scope").eq("id", student.planId).eq("is_active", true).single();
+        const { data: plan } = await supabase.from("Plan").select("modality_scope, includes_digital_access").eq("id", student.planId).eq("is_active", true).single();
         if (plan?.modality_scope === "NONE") allowedModalities = [];
         else if (plan?.modality_scope === "SINGLE" && (student as { primaryModality?: string }).primaryModality)
           allowedModalities = [(student as { primaryModality: string }).primaryModality];
+        hasDigitalAccess = (plan as { includes_digital_access?: boolean })?.includes_digital_access === true;
       }
     }
   }
@@ -254,6 +256,51 @@ export default async function DashboardPage() {
           </ul>
         </>
       )}
+      </section>
+
+      {/* Trilhas de aprendizagem e plano digital — evidência na home */}
+      <section
+        className="card"
+        style={{
+          padding: "clamp(20px, 5vw, 28px)",
+          background: "linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%)",
+          borderLeft: "4px solid var(--primary)",
+        }}
+      >
+        <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: "var(--text-primary)" }}>
+          {t("homeLearningPathsTitle")}
+        </h2>
+        <p style={{ margin: "0 0 4px 0", fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-primary)", lineHeight: 1.45 }}>
+          {t("homeLearningPathsSubtitle")}
+        </p>
+        <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+          {hasDigitalAccess ? t("homeDigitalPlanYouHave") : t("homeDigitalPlanCta")}
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "clamp(10px, 2.5vw, 12px)" }}>
+          <Link
+            href="/dashboard/biblioteca"
+            className="btn btn-primary"
+            style={{ textDecoration: "none", fontSize: "clamp(14px, 3.5vw, 16px)", minHeight: 44 }}
+          >
+            {t("homeGoToLibrary")}
+          </Link>
+          {!hasDigitalAccess && (
+            <Link
+              href="/dashboard/loja"
+              className="btn"
+              style={{
+                textDecoration: "none",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                minHeight: 44,
+                background: "var(--surface)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              {t("homePlansAndStore")}
+            </Link>
+          )}
+        </div>
       </section>
 
       <Suspense fallback={<DashboardRestSkeleton />}>
