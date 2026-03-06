@@ -20,7 +20,41 @@ export default async function CoachCursosPage() {
     .eq("userId", dbUser.id)
     .single();
 
-  if (!student?.can_create_courses) {
+  const isAdmin = dbUser.role === "ADMIN";
+  const canCreate = student ? (student.can_create_courses || isAdmin) : false;
+
+  if (!student) {
+    return (
+      <div style={{ maxWidth: "min(520px, 100%)" }}>
+        <h1 style={{ margin: "0 0 16px 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          Meus Cursos
+        </h1>
+        <div className="card" style={{ padding: "clamp(20px, 5vw, 24px)" }}>
+          {isAdmin ? (
+            <>
+              <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+                Como administrador, para criar cursos como professor precisas de um perfil de aluno associado ao teu utilizador. Caso contrário, gere todos os cursos em Admin.
+              </p>
+              <Link href="/admin/cursos" className="btn btn-primary" style={{ marginTop: 16, display: "inline-block", textDecoration: "none" }}>
+                Ir para Admin → Cursos
+              </Link>
+            </>
+          ) : (
+            <>
+              <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+                Ainda não tens permissão para criar cursos. Fala com o administrador da KFS para solicitar autorização.
+              </p>
+              <p style={{ margin: "12px 0 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
+                Quando autorizado, podes publicar cursos na plataforma e receber 65% da receita de cada venda.
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!canCreate) {
     return (
       <div style={{ maxWidth: "min(520px, 100%)" }}>
         <h1 style={{ margin: "0 0 16px 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>

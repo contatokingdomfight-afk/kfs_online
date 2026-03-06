@@ -20,8 +20,10 @@ async function getAuthorizedCoachStudent() {
     .eq("userId", dbUser.id)
     .single();
 
-  if (!student?.can_create_courses) return null;
-  return student;
+  if (!student) return null;
+  const isAdmin = dbUser.role === "ADMIN";
+  if (student.can_create_courses || isAdmin) return student;
+  return null;
 }
 
 export async function createCoachCourse(
