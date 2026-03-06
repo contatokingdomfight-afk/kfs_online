@@ -51,6 +51,7 @@ export const messages = {
 
     // Dashboard aluno
     navHome: "Início",
+    navAthleteProfile: "Perfil do Atleta",
     navLibrary: "Biblioteca",
     navEvents: "Eventos",
     navStore: "Loja",
@@ -360,6 +361,7 @@ export const messages = {
     homeCtaTitle: "Ready to start?",
 
     navHome: "Home",
+    navAthleteProfile: "Athlete profile",
     navLibrary: "Library",
     navEvents: "Events",
     navStore: "Store",
