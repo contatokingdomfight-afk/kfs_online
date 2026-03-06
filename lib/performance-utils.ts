@@ -139,6 +139,32 @@ export function computeGeneralPerformanceScores(
   return result;
 }
 
+/**
+ * Calcula scores por modalidade (últimas N avaliações por modalidade).
+ * Retorna um mapa modality -> { tecnico, tatico, fisico, mental, teorico } em escala 1–10.
+ * Útil para mostrar KPIs explícitos por modalidade no dashboard de performance.
+ */
+export function computePerformanceScoresByModality(
+  evaluations: GeneralScoresInputEval[],
+  configByModality: Map<string, ModalityConfig>,
+  lastNPerModality: number,
+  scale1to10: boolean
+): Record<string, Record<string, number>> {
+  const byModality = new Map<string, GeneralScoresInputEval[]>();
+  for (const ev of evaluations) {
+    const mod = ev.modality ?? "GENERAL";
+    if (!byModality.has(mod)) byModality.set(mod, []);
+    byModality.get(mod)!.push(ev);
+  }
+  const result: Record<string, Record<string, number>> = {};
+  for (const [mod, evals] of byModality) {
+    const recent = evals.slice(0, lastNPerModality);
+    if (recent.length === 0) continue;
+    result[mod] = computeGeneralPerformanceScores(recent, configByModality, recent.length, scale1to10);
+  }
+  return result;
+}
+
 /** Conta presenças confirmadas por modalidade para um aluno. */
 export async function getAttendanceByModality(
   supabase: SupabaseClient,

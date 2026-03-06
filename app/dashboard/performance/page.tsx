@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
-import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores } from "@/lib/performance-utils";
+import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality } from "@/lib/performance-utils";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
@@ -19,6 +19,7 @@ import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 const GENERAL_LAST_N = 10;
+const LAST_N_PER_MODALITY = 5;
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,7 @@ export default async function DashboardPerformancePage() {
   }
 
   let generalPerformanceScores: Record<string, number> | null = null;
+  let scoresByModality: Record<string, Record<string, number>> = {};
   let rankInfo: { level: number; rankIndex: number; xpCurrent: number; xpNext: number } | null = null;
   let customMissions: { id: string; name: string; description: string | null; xpReward: number }[] = [];
   let primaryModalityLabel: string | null = null;
@@ -51,13 +53,14 @@ export default async function DashboardPerformancePage() {
   let lastPhysicalAssessment: { assessedAt: string; nextDueAt: string | null } | null = null;
   let coachFeedback: string | null = null;
   let coachName: string | null = null;
+  let suggestedCourses: { id: string; name: string; category: string; modality: string | null }[] = [];
   if (studentId) {
     const { data: athlete } = await supabase.from("Athlete").select("id, xp").eq("studentId", studentId).single();
     if (athlete) {
       const xp = (athlete.xp as number | null) ?? 0;
       const rank = getRankFromXp(xp);
       rankInfo = { level: rank.level, rankIndex: rank.rankIndex, xpCurrent: rank.xpCurrent, xpNext: rank.xpNext };
-      const { data: student } = await supabase.from("Student").select("primaryModality").eq("id", studentId).single();
+      const { data: student } = await supabase.from("Student").select("primaryModality, planId").eq("id", studentId).single();
       const primaryModality = (student?.primaryModality as string | null) ?? null;
       primaryModalityLabel = primaryModality ? (modalityLabels.get(primaryModality) ?? MODALITY_LABELS[primaryModality] ?? primaryModality) : "Todas as modalidades";
       customMissions = (await getApplicableMissionTemplates(supabase, athlete.id, xp, primaryModality)).map(
@@ -110,7 +113,34 @@ export default async function DashboardPerformancePage() {
 
       if (evaluations.length > 0) {
         generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
+        scoresByModality = computePerformanceScoresByModality(evaluations, configByModality, LAST_N_PER_MODALITY, true);
       }
+
+      // Cursos sugeridos para ligar ao feedback (por modalidade principal; aluno vê junto ao feedback do coach)
+      const planId = (student?.planId as string | null) ?? null;
+      let hasDigitalAccess = false;
+      if (planId) {
+        const { data: plan } = await supabase.from("Plan").select("includes_digital_access").eq("id", planId).eq("is_active", true).single();
+        hasDigitalAccess = (plan as { includes_digital_access?: boolean } | null)?.includes_digital_access === true;
+      }
+      const [{ data: purchasesData }, { data: coursesData }] = await Promise.all([
+        supabase.from("CoursePurchase").select("courseId").eq("studentId", studentId),
+        supabase.from("Course").select("id, name, category, modality, included_in_digital_plan").eq("is_active", true).order("sort_order", { ascending: true }).order("name", { ascending: true }),
+      ]);
+      const purchasedIds = new Set((purchasesData ?? []).map((p: { courseId: string }) => p.courseId));
+      const allCourses = coursesData ?? [];
+      const accessible = allCourses.filter(
+        (c: { id: string; included_in_digital_plan?: boolean }) => (c.included_in_digital_plan && hasDigitalAccess) || purchasedIds.has(c.id)
+      );
+      suggestedCourses = [...accessible]
+        .sort((a, b) => {
+          if (!primaryModality) return 0;
+          const aMatch = a.modality === primaryModality ? 1 : 0;
+          const bMatch = b.modality === primaryModality ? 1 : 0;
+          return bMatch - aMatch;
+        })
+        .slice(0, 3)
+        .map((c: { id: string; name: string; category: string; modality: string | null }) => ({ id: c.id, name: c.name, category: c.category, modality: c.modality }));
     }
   }
 
@@ -137,11 +167,15 @@ export default async function DashboardPerformancePage() {
     );
   }
 
+  const modalityLabelsForDashboard: Record<string, string> = { ...Object.fromEntries(modalityLabels), GENERAL: "Geral" };
+
   return (
     <PerformanceFighterDashboard
       backHref="/dashboard"
       backLabel="Voltar ao início"
       scores={generalPerformanceScores!}
+      scoresByModality={Object.keys(scoresByModality).length > 0 ? scoresByModality : undefined}
+      modalityLabels={modalityLabelsForDashboard}
       detailOrder={detailOrder}
       detailSource={detailSource}
       axes={[...GENERAL_PERFORMANCE_AXES]}
@@ -159,6 +193,7 @@ export default async function DashboardPerformancePage() {
       }
       coachFeedback={coachFeedback ?? undefined}
       coachName={coachName ?? undefined}
+      suggestedCourses={suggestedCourses.length > 0 ? suggestedCourses : undefined}
     />
   );
 }

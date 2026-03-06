@@ -206,10 +206,9 @@
 
 Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md) que ainda não têm implementação.
 
-### 14.1 Dashboard de Performance ultra-personalizado (parcialmente feito)
+### 14.1 Dashboard de Performance ultra-personalizado
 
-- **Feito:** Métricas por dimensão (Técnico, Tático, Físico, Mental, Teórico); gráfico radar; faixas por cor e XP; missões (sistema + configuráveis); detalhe por componente filtrado pela modalidade principal do aluno; feedback do coach (card).
-- **Por fazer:** KPIs explícitos por modalidade (BJJ quando existir); feedback que sugere conteúdos da biblioteca (quando Biblioteca existir).
+- **Feito:** Métricas por dimensão (Técnico, Tático, Físico, Mental, Teórico); gráfico radar; faixas por cor e XP; missões (sistema + configuráveis por modalidade); detalhe por componente filtrado pela modalidade principal do aluno; feedback do coach (card); **KPIs explícitos por modalidade** (secção “Performance por modalidade” na página /dashboard/performance com scores por modalidade, escala 1–10; BJJ quando existir aparecerá automaticamente); **feedback que sugere conteúdos da biblioteca** (secção “Conteúdos sugeridos para ti” na mesma página, até 3 cursos por modalidade principal, junto ao feedback do coach).
 
 
 ### 14.2 Biblioteca de Conteúdo 360º
@@ -276,4 +275,4 @@ Com base na especificação e na dependência entre módulos:
 
 ---
 
-*Última atualização: Gamificação completa (conquistas, meta IMC, metas avaliação, seed 62 missões, faixa mínima); Sala de Aula Invertida; Biblioteca/Loja/Eventos; remuneração coaches; roadmap alinhado ao estado atual. Próximos passos opcionais: Battle Pass, PWA/Capacitor, renovação automática.*
+*Última atualização: Dashboard de Performance – KPIs por modalidade e sugestões de biblioteca junto ao feedback do coach (secções na página Perfil do Atleta). Próximos passos opcionais: Battle Pass, PWA/Capacitor, renovação automática.*
