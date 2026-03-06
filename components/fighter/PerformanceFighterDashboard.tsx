@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FighterHeader } from "./FighterHeader";
+import { PerformanceHeroCard } from "./PerformanceHeroCard";
 import { StatCard } from "./StatCard";
 import { RadarStats } from "./RadarStatsDynamic";
 import { AttributeAccordion } from "./AttributeAccordion";
@@ -107,18 +107,26 @@ export function PerformanceFighterDashboard({
 
   return (
     <div className="max-w-[min(720px,100%)] mx-auto space-y-6 pb-8">
-      <FighterHeader
+      <PerformanceHeroCard
         backHref={backHref}
         backLabel={backLabel}
+        overallScore={mediaGeral}
+        maxScore={maxScore}
         level={level}
         rankIndex={rankIndex}
         xpCurrent={xpCurrent}
         xpNext={xpNext}
+        primaryModalityLabel={primaryModalityLabel}
       />
 
-      {/* Status gerais – stat cards */}
-      <section>
-        <h2 className="text-lg font-bold text-text-primary mb-3">Atributos principais</h2>
+      {/* Atributos – stat cards */}
+      <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 className="text-base font-bold text-text-primary uppercase tracking-wider">
+            Atributos
+          </h2>
+          <span className="text-xs text-text-secondary">Performance geral 1–10</span>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {axes.map((a) => (
             <StatCard
@@ -130,18 +138,22 @@ export function PerformanceFighterDashboard({
             />
           ))}
         </div>
-        <p className="mt-3 text-sm text-text-secondary">
-          Média geral: <span className="font-semibold text-primary">{mediaGeral.toFixed(1)}/10</span>
-        </p>
       </section>
 
       {/* Radar */}
-      <RadarStats scores={scores} axes={axes} maxScore={maxScore} />
+      <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+        <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-3">
+          Perfil de competências
+        </h2>
+        <RadarStats scores={scores} axes={axes} maxScore={maxScore} />
+      </section>
 
       {/* KPIs por modalidade */}
       {scoresByModality && Object.keys(scoresByModality).length > 0 && (
-        <section>
-          <h2 className="text-lg font-bold text-text-primary mb-3">Performance por modalidade</h2>
+        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+          <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-2">
+            Performance por modalidade
+          </h2>
           <p className="text-sm text-text-secondary mb-3">
             Média das últimas avaliações em cada modalidade (escala 1–10).
           </p>
@@ -182,16 +194,38 @@ export function PerformanceFighterDashboard({
       )}
 
       {/* Accordion por dimensão */}
-      <AttributeAccordion
-        detailOrder={detailOrder}
-        detailSource={detailSource}
-        scores={scores}
-        maxScore={maxScore}
-        primaryModalityLabel={primaryModalityLabel}
-      />
+      <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+        <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-3">
+          Detalhe por dimensão
+        </h2>
+        <AttributeAccordion
+          detailOrder={detailOrder}
+          detailSource={detailSource}
+          scores={scores}
+          maxScore={maxScore}
+          primaryModalityLabel={primaryModalityLabel}
+        />
+      </section>
 
-      {/* Missões */}
+      {/* Objetivos / Quests */}
       <MissionCard missions={missions} />
+
+      {/* Conquistas – teaser */}
+      <Link
+        href="/dashboard/conquistas"
+        className="block rounded-2xl bg-bg-secondary border border-border p-4 shadow-md hover:border-primary/40 transition-colors no-underline text-inherit"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl" aria-hidden>🏆</span>
+            <div>
+              <h2 className="text-base font-bold text-text-primary">Conquistas</h2>
+              <p className="text-sm text-text-secondary">Badges e metas que já desbloqueaste</p>
+            </div>
+          </div>
+          <span className="text-sm font-medium text-primary">Ver todas →</span>
+        </div>
+      </Link>
 
       {/* Coach feedback */}
       <CoachFeedback
@@ -205,12 +239,12 @@ export function PerformanceFighterDashboard({
       {/* Conteúdos sugeridos (ligados ao contexto do feedback / modalidade) */}
       {suggestedCourses.length > 0 && (
         <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-          <h2 className="text-base font-bold text-text-primary mb-2 flex items-center gap-2">
+          <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-2 flex items-center gap-2">
             <span aria-hidden>📚</span>
-            Conteúdos sugeridos para ti
+            Conteúdos para evoluir
           </h2>
           <p className="text-sm text-text-secondary mb-3">
-            Cursos da biblioteca que podem ajudar a evoluir no teu perfil. Combina com o feedback do treinador.
+            Cursos da biblioteca para subir de nível. Combina com o feedback do treinador.
           </p>
           <ul className="list-none p-0 m-0 flex flex-col gap-2">
             {suggestedCourses.map((c) => (

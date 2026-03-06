@@ -16,9 +16,9 @@ export function MissionCard({ missions }: Props) {
 
   return (
     <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-      <h2 className="text-base font-bold text-text-primary mb-1 flex items-center gap-2">
+      <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-1 flex items-center gap-2">
         <span aria-hidden>🎯</span>
-        Missões ativas
+        Objetivos
       </h2>
       <p className="text-sm text-text-secondary mb-4">
         Completa estes objetivos para ganhar XP e subir de nível.
