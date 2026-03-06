@@ -57,12 +57,12 @@ export default async function HomePage({ searchParams }: Props) {
       <Hero content={content} />
       <Stats content={content} />
       <About content={content} />
+      <YouTubeShortsSection content={content} />
       <Founders content={content} />
       <HowItWorks content={content} />
       <LearningPathsSection content={content} />
       <Plans content={content} />
       <WhyChoose content={content} />
-      <YouTubeShortsSection content={content} />
       <Testimonials content={content} />
       <CTASection content={content} />
       <Footer content={content} />
