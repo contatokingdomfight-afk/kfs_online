@@ -60,7 +60,7 @@ const plans = [
 
 export function Plans({ content }: { content: Content }) {
   return (
-    <section className="border-t border-[var(--border)] py-16 sm:py-24">
+    <section id="plans" className="border-t border-[var(--border)] py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <h2 className="text-center text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
           {content.plansTitle}

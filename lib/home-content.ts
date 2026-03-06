@@ -46,6 +46,12 @@ export const homeContent = {
     step4: "Evolua constantemente",
     step4Desc: "Métricas, feedback do coach e progresso visível.",
 
+    // Trilhas + Plano digital (landing)
+    learningPathsTitle: "Trilhas de aprendizagem",
+    learningPathsSubtitle: "Do Iniciante ao Elite",
+    learningPathsDesc: "Técnica, mindset e performance — uma biblioteca de cursos para evoluir ao teu ritmo. Não podes fazer aulas presenciais? O plano digital dá-te acesso a todas as trilhas online.",
+    learningPathsCta: "Ver planos",
+
     // Plans
     plansTitle: "Planos",
     planOnline: "Kingdom Online",
@@ -151,6 +157,11 @@ export const homeContent = {
     step3Desc: "Structured classes by level and modality.",
     step4: "Evolve constantly",
     step4Desc: "Metrics, coach feedback and visible progress.",
+
+    learningPathsTitle: "Learning paths",
+    learningPathsSubtitle: "From Beginner to Elite",
+    learningPathsDesc: "Technique, mindset and performance — a library of courses to evolve at your own pace. Can't make it to in-person classes? The digital plan gives you access to all online paths.",
+    learningPathsCta: "View plans",
 
     plansTitle: "Plans",
     planOnline: "Kingdom Online",
