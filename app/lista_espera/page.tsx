@@ -28,7 +28,7 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
         style={{ backgroundColor: "var(--bg)", paddingTop: "clamp(24px, 6vw, 48px)", paddingBottom: "clamp(48px, 10vw, 80px)" }}
       >
         <div className="lista-espera-container">
-          {/* Hero */}
+          {/* Hero – título centralizado */}
           <section className="lista-espera-hero">
             <div
               className="absolute inset-0 -z-10 opacity-40 rounded-2xl"
@@ -45,41 +45,28 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
             </p>
           </section>
 
-          {/* Pack de Boas-Vindas – 50 Pioneiros */}
+          <FormularioListaEspera source={source} />
+
+          {/* 50 Pioneiros – abaixo do formulário */}
           <section className="lista-espera-pioneiros">
-            <h2
-              className="text-xl font-bold"
-              style={{ color: "var(--text-primary)", marginBottom: 20, textAlign: "center" }}
-            >
+            <h2 className="lista-espera-pioneiros-title">
               Torne-se um dos 50 Pioneiros KFS.
             </h2>
-            <ul
-              style={{
-                margin: 0,
-                paddingLeft: 20,
-                color: "var(--text-secondary)",
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                lineHeight: 1.7,
-              }}
-            >
-              <li style={{ marginBottom: 16 }}>
-                <strong style={{ color: "var(--text-primary)" }}>Seminário Exclusivo &quot;The Chiang Mai Connection&quot;:</strong>{" "}
+            <ul className="lista-espera-pioneiros-list">
+              <li>
+                <strong>Seminário Exclusivo &quot;The Chiang Mai Connection&quot;:</strong>{" "}
                 Um workshop intensivo de um dia inteiro onde ensinaremos as técnicas de elite, ajustes de guarda e estratégias de combate que trouxemos diretamente dos melhores camps de Chiang Mai, na Tailândia.
               </li>
-              <li style={{ marginBottom: 16 }}>
-                <strong style={{ color: "var(--text-primary)" }}>Mensalidade Blindada:</strong>{" "}
+              <li>
+                <strong>Mensalidade Blindada:</strong>{" "}
                 Garanta o valor promocional de abertura para sempre. Enquanto a escola cresce, o seu investimento permanece o mesmo.
               </li>
               <li>
-                <strong style={{ color: "var(--text-primary)" }}>Prioridade na Grade:</strong>{" "}
+                <strong>Prioridade na Grade:</strong>{" "}
                 Escolha os horários das primeiras turmas antes de todo mundo.
               </li>
             </ul>
           </section>
-
-          <div className="lista-espera-form-col">
-            <FormularioListaEspera source={source} />
-          </div>
 
           {/* Prova Social e Autoridade – Tailândia */}
           <section className="lista-espera-authority">

@@ -212,7 +212,7 @@
 }
 
 /* ========================================
-   LISTA ESPERA - Mobile first, desktop ajustado
+   LISTA ESPERA - Mobile first, desktop limpo (coluna única)
    ======================================== */
 
 .lista-espera-page {
@@ -230,29 +230,15 @@
 
 @media (min-width: 768px) {
   .lista-espera-container {
-    max-width: 600px;
-    padding: 24px 32px;
+    max-width: 520px;
+    padding: 32px 40px;
   }
 }
 
 @media (min-width: 1024px) {
   .lista-espera-container {
-    max-width: 900px;
-    display: grid;
-    grid-template-columns: 1fr 380px;
-    gap: 48px;
-    align-items: start;
-  }
-
-  .lista-espera-container > * {
-    grid-column: 1;
-  }
-
-  .lista-espera-container > .lista-espera-form-col {
-    grid-column: 2;
-    grid-row: 1 / -1;
-    position: sticky;
-    top: 24px;
+    max-width: 560px;
+    padding: 48px 56px;
   }
 }
 
@@ -260,7 +246,8 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-lg);
-  margin-bottom: clamp(24px, 6vw, 32px);
+  margin-bottom: clamp(28px, 6vw, 40px);
+  text-align: center;
 }
 
 .lista-espera-hero-title {
@@ -268,20 +255,21 @@
   font-weight: 700;
   letter-spacing: -0.025em;
   color: var(--text-primary);
-  line-height: 1.2;
+  line-height: 1.25;
   margin-bottom: 12px;
 }
 
 @media (min-width: 768px) {
   .lista-espera-hero-title {
     font-size: 2rem;
+    margin-bottom: 16px;
   }
 }
 
 .lista-espera-hero-sub {
   font-size: clamp(1rem, 2.5vw, 1.125rem);
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.55;
   margin: 0;
 }
 
@@ -290,16 +278,44 @@
   border: 1px solid var(--primary);
   border-radius: var(--radius-lg);
   padding: clamp(20px, 5vw, 28px);
-  margin-bottom: clamp(24px, 6vw, 32px);
+  margin-top: clamp(32px, 6vw, 40px);
+  margin-bottom: 0;
   box-shadow: var(--shadow-sm);
 }
 
-.lista-espera-pioneiros h2 {
+.lista-espera-pioneiros-title {
   color: var(--text-primary);
-  margin-bottom: 20px;
+  margin: 0 0 20px 0;
   text-align: center;
   font-size: 1.25rem;
   font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .lista-espera-pioneiros-title {
+    font-size: 1.375rem;
+    margin-bottom: 24px;
+  }
+}
+
+.lista-espera-pioneiros-list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-secondary);
+  font-size: clamp(14px, 3.5vw, 16px);
+  line-height: 1.7;
+}
+
+.lista-espera-pioneiros-list li {
+  margin-bottom: 16px;
+}
+
+.lista-espera-pioneiros-list li:last-child {
+  margin-bottom: 0;
+}
+
+.lista-espera-pioneiros-list strong {
+  color: var(--text-primary);
 }
 
 .lista-espera-authority {
