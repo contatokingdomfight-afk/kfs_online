@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { FormularioListaEspera } from "./FormularioListaEspera";
 import { MetaPixelScript } from "./MetaPixelScript";
 
@@ -29,19 +28,6 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
         style={{ backgroundColor: "var(--bg)", paddingTop: "clamp(24px, 6vw, 48px)", paddingBottom: "clamp(48px, 10vw, 80px)" }}
       >
         <div className="container-mobile">
-          <Link
-            href="/"
-            style={{
-              display: "inline-block",
-              marginBottom: "clamp(16px, 4vw, 24px)",
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              color: "var(--text-secondary)",
-              textDecoration: "none",
-            }}
-          >
-            ← Voltar ao site
-          </Link>
-
           {/* Hero */}
           <section className="relative overflow-hidden rounded-2xl" style={{ marginBottom: "clamp(24px, 6vw, 32px)" }}>
             <div
