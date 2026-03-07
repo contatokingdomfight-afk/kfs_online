@@ -38,7 +38,7 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
               }}
             />
             <h1 className="lista-espera-hero-title">
-              A primeira Kingdom Fight School está chegando a Oeiras/Cascais.
+              A primeira Kingdom Fight School está a chegar a Oeiras/Cascais.
             </h1>
             <p className="lista-espera-hero-sub">
               Garanta o seu lugar na vanguarda do treino marcial. Vagas limitadas para o lançamento.
@@ -63,7 +63,7 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
               </li>
               <li>
                 <strong>Prioridade na Grade:</strong>{" "}
-                Escolha os horários das primeiras turmas antes de todo mundo.
+                Escolhe os horários das primeiras turmas antes de toda a gente.
               </li>
             </ul>
           </section>

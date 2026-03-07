@@ -49,10 +49,10 @@ export function FormularioListaEspera({ source }: Props) {
     return (
       <div className="card" style={{ padding: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
         <h2 style={{ fontSize: "clamp(1.125rem, 4vw, 1.25rem)", fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
-          Obrigado! Você entrou para a lista de espera.
+          Perfeito! O teu lugar está garantido.
         </h2>
         <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}>
-          Avisaremos primeiro quando a Kingdom Fight School abrir as portas.
+          Logo entraremos em contacto contigo!
         </p>
       </div>
     );
