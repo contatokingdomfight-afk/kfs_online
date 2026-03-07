@@ -98,7 +98,7 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
             <h3 className="lista-espera-videos-subtitle">KFS em ação</h3>
             <p className="lista-espera-videos-desc">Alguns momentos do nosso dia a dia no tatame.</p>
             <div className="lista-espera-shorts-grid">
-              {["cvKryFioSkc", "qotPbvcE2Zw", "4TIfiWJm3L8", "jZ1KZLz_Mk0", "zigTvTl_HEs", "UMB2jgvBji4"].map((id) => (
+              {["ni1-Oo45zGo", "qotPbvcE2Zw", "4TIfiWJm3L8", "jZ1KZLz_Mk0", "zigTvTl_HEs", "AsbWWfKZlkY"].map((id) => (
                 <div key={id} className="lista-espera-video-wrap lista-espera-video-short">
                   <iframe
                     src={`https://www.youtube.com/embed/${id}`}
