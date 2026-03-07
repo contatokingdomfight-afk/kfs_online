@@ -37,7 +37,7 @@ export function PerfilForm({ initial, locale }: Props) {
     const form = e.currentTarget;
     const formData = new FormData(form);
     startTransition(() => {
-      formAction(state, formData);
+      formAction(formData);
     });
   };
 
