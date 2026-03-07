@@ -354,6 +354,83 @@
   }
 }
 
+/* Lista espera – vídeos (apresentação + Shorts) */
+.lista-espera-videos {
+  margin-top: clamp(32px, 8vw, 48px);
+}
+
+.lista-espera-videos-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .lista-espera-videos-title {
+    font-size: 1.375rem;
+    margin-bottom: 20px;
+  }
+}
+
+.lista-espera-video-main {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+}
+
+.lista-espera-videos-subtitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 28px 0 8px 0;
+  text-align: center;
+}
+
+.lista-espera-videos-desc {
+  font-size: clamp(14px, 3.5vw, 15px);
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0 0 16px 0;
+}
+
+.lista-espera-shorts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .lista-espera-shorts-grid {
+    gap: 16px;
+  }
+}
+
+.lista-espera-video-short {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+}
+
+.lista-espera-video-wrap {
+  position: relative;
+}
+
+.lista-espera-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
 /* ========================================
    HOME PAGE - Mobile First UX
    ======================================== */

@@ -83,6 +83,35 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
             </div>
           </section>
 
+          {/* Vídeos – apresentação + Shorts (mesmos da home) */}
+          <section className="lista-espera-videos">
+            <h2 className="lista-espera-videos-title">A história da KFS</h2>
+            <div className="lista-espera-video-wrap lista-espera-video-main">
+              <iframe
+                src="https://www.youtube.com/embed/eQWUG9Q61c4?start=3"
+                title="A história da KFS"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="lista-espera-iframe"
+              />
+            </div>
+            <h3 className="lista-espera-videos-subtitle">KFS em ação</h3>
+            <p className="lista-espera-videos-desc">Alguns momentos do nosso dia a dia no tatame.</p>
+            <div className="lista-espera-shorts-grid">
+              {["cvKryFioSkc", "qotPbvcE2Zw", "4TIfiWJm3L8", "jZ1KZLz_Mk0", "zigTvTl_HEs", "UMB2jgvBji4"].map((id) => (
+                <div key={id} className="lista-espera-video-wrap lista-espera-video-short">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${id}`}
+                    title="YouTube Short"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="lista-espera-iframe"
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* Rodapé – Instagram */}
           <footer
             style={{
