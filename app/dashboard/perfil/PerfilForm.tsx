@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useFormState } from "react-dom";
 import { saveStudentProfile, type SaveProfileResult } from "./actions";
 import { getTranslations } from "@/lib/i18n";
@@ -14,6 +14,7 @@ type Props = {
     phone: string;
     weightKg: string;
     heightCm: string;
+    reachCm: string;
     dateOfBirth: string;
     medicalNotes: string;
     emergencyContact: string;
@@ -24,11 +25,21 @@ type Props = {
 export function PerfilForm({ initial, locale }: Props) {
   const t = getTranslations(locale);
   const [userDismissed, setUserDismissed] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const wrappedAction = async (prev: SaveProfileResult | null, formData: FormData) => {
     setUserDismissed(false);
     return saveStudentProfile(prev, formData);
   };
   const [state, formAction] = useFormState(wrappedAction, null as SaveProfileResult | null);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    startTransition(() => {
+      formAction(state, formData);
+    });
+  };
 
   const showSuccess = Boolean(state?.success && !state?.error && !userDismissed);
 
@@ -42,7 +53,7 @@ export function PerfilForm({ initial, locale }: Props) {
         closeLabel={t("closeConfirm")}
       />
     <form
-      action={formAction}
+      onSubmit={handleSubmit}
       className="card"
       style={{
         padding: "clamp(20px, 5vw, 24px)",
@@ -152,6 +163,20 @@ export function PerfilForm({ initial, locale }: Props) {
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          {t("reachLabel")} ({t("heightUnit")})
+        </span>
+        <input
+          type="number"
+          name="reachCm"
+          defaultValue={initial.reachCm}
+          min="0"
+          step="0.1"
+          className="input"
+          placeholder="ex: 180"
+        />
+      </label>
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           {t("dateOfBirthLabel")}
         </span>
         <input
@@ -191,8 +216,8 @@ export function PerfilForm({ initial, locale }: Props) {
           {state.error}
         </p>
       )}
-      <button type="submit" className="btn btn-primary">
-        {t("saveButton")}
+      <button type="submit" className="btn btn-primary" disabled={isPending}>
+        {isPending ? t("savingLabel") : t("saveButton")}
       </button>
     </form>
     </>

@@ -15,14 +15,17 @@ export async function saveStudentProfile(_prev: SaveProfileResult | null, formDa
   const phone = (formData.get("phone") as string)?.trim() || null;
   const weightRaw = (formData.get("weightKg") as string)?.trim();
   const heightRaw = (formData.get("heightCm") as string)?.trim();
+  const reachRaw = (formData.get("reachCm") as string)?.trim();
   const dateOfBirth = (formData.get("dateOfBirth") as string)?.trim() || null;
   const medicalNotes = (formData.get("medicalNotes") as string)?.trim() || null;
   const emergencyContact = (formData.get("emergencyContact") as string)?.trim() || null;
 
   const weightKg = weightRaw === "" ? null : Number(weightRaw);
   const heightCm = heightRaw === "" ? null : Number(heightRaw);
+  const reachCm = reachRaw === "" ? null : Number(reachRaw);
   if (weightRaw && (Number.isNaN(Number(weightRaw)) || Number(weightRaw) <= 0)) return { error: "Peso inválido." };
   if (heightRaw && (Number.isNaN(Number(heightRaw)) || Number(heightRaw) <= 0)) return { error: "Altura inválida." };
+  if (reachRaw && (Number.isNaN(Number(reachRaw)) || Number(reachRaw) <= 0)) return { error: "Envergadura inválida." };
 
   const supabase = await createClient();
   const { data: student } = await supabase.from("Student").select("userId").eq("id", studentId).single();
@@ -46,6 +49,7 @@ export async function saveStudentProfile(_prev: SaveProfileResult | null, formDa
   const row = {
     weightKg,
     heightCm,
+    reachCm: reachCm ?? null,
     dateOfBirth: dateOfBirth || null,
     medicalNotes: medicalNotes || null,
     emergencyContact: emergencyContact || null,

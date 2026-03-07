@@ -25,7 +25,7 @@ export default async function DashboardPerfilPage() {
 
   const { data: profile } = await supabase
     .from("StudentProfile")
-    .select("weightKg, heightCm, dateOfBirth, medicalNotes, emergencyContact, phone")
+    .select("weightKg, heightCm, reachCm, dateOfBirth, medicalNotes, emergencyContact, phone")
     .eq("studentId", studentId)
     .maybeSingle();
 
@@ -36,6 +36,7 @@ export default async function DashboardPerfilPage() {
     phone: (profile as { phone?: string | null } | undefined)?.phone ?? "",
     weightKg: profile?.weightKg != null ? String(profile.weightKg) : "",
     heightCm: profile?.heightCm != null ? String(profile.heightCm) : "",
+    reachCm: profile?.reachCm != null ? String(profile.reachCm) : "",
     dateOfBirth: profile?.dateOfBirth ?? "",
     medicalNotes: profile?.medicalNotes ?? "",
     emergencyContact: profile?.emergencyContact ?? "",
