@@ -132,6 +132,11 @@
     color: #fff;
   }
 
+  .lista-espera-cta:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: scale(1.02);
+  }
+
   .btn-secondary {
     background-color: var(--bg-secondary);
     color: var(--text-primary);

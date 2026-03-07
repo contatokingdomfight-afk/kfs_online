@@ -8,7 +8,6 @@ const CITIES = [
   { value: "", label: "— Escolhe a cidade —" },
   { value: "Oeiras", label: "Oeiras" },
   { value: "Cascais", label: "Cascais" },
-  { value: "Lisboa", label: "Lisboa" },
   { value: "Outra", label: "Outra" },
 ] as const;
 
@@ -124,8 +123,13 @@ export function FormularioListaEspera({ source }: Props) {
       {state?.error && (
         <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>{state.error}</p>
       )}
-      <button type="submit" className="btn btn-primary w-full" style={{ minHeight: 48 }} disabled={isPending}>
-        {isPending ? "Entrando na lista..." : "Entrar na Lista de Espera"}
+      <button
+        type="submit"
+        className="btn btn-primary w-full lista-espera-cta"
+        style={{ minHeight: 48 }}
+        disabled={isPending}
+      >
+        {isPending ? "A guardar..." : "Quero ser um Pioneiro KFS"}
       </button>
     </form>
   );
