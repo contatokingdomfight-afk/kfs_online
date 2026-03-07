@@ -431,6 +431,7 @@ export const messages = {
     avatarLabel: "Profile photo (URL)",
     emailReadOnlyNote: "Email is linked to your account. To change it, contact the school.",
     heightLabel: "Height",
+    reachLabel: "Reach (wingspan)",
     dateOfBirthLabel: "Date of birth",
     medicalNotesLabel: "Medical notes / restrictions",
     emergencyContactLabel: "Emergency contact",
