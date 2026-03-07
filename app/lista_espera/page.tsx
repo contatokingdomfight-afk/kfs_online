@@ -24,49 +24,34 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
     <>
       <MetaPixelScript />
       <main
-        className="min-h-screen flex flex-col items-center p-6"
+        className="min-h-screen flex flex-col items-center lista-espera-page"
         style={{ backgroundColor: "var(--bg)", paddingTop: "clamp(24px, 6vw, 48px)", paddingBottom: "clamp(48px, 10vw, 80px)" }}
       >
-        <div className="container-mobile">
+        <div className="lista-espera-container">
           {/* Hero */}
-          <section className="relative overflow-hidden rounded-2xl" style={{ marginBottom: "clamp(24px, 6vw, 32px)" }}>
+          <section className="lista-espera-hero">
             <div
-              className="absolute inset-0 -z-10 opacity-40"
+              className="absolute inset-0 -z-10 opacity-40 rounded-2xl"
               style={{
                 background:
                   "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(193, 18, 31, 0.2), transparent)",
               }}
             />
-            <h1
-              className="text-2xl font-bold tracking-tight sm:text-3xl"
-              style={{ color: "var(--text-primary)", lineHeight: 1.2, marginBottom: 12 }}
-            >
+            <h1 className="lista-espera-hero-title">
               A primeira Kingdom Fight School está chegando a Oeiras/Cascais.
             </h1>
-            <p
-              className="text-base sm:text-lg"
-              style={{ color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}
-            >
+            <p className="lista-espera-hero-sub">
               Garanta o seu lugar na vanguarda do treino marcial. Vagas limitadas para o lançamento.
             </p>
           </section>
 
           {/* Pack de Boas-Vindas – 50 Pioneiros */}
-          <section
-            className="card"
-            style={{
-              marginBottom: "clamp(24px, 6vw, 32px)",
-              padding: "clamp(20px, 5vw, 28px)",
-              borderColor: "var(--primary)",
-              borderWidth: 1,
-              borderStyle: "solid",
-            }}
-          >
+          <section className="lista-espera-pioneiros">
             <h2
               className="text-xl font-bold"
               style={{ color: "var(--text-primary)", marginBottom: 20, textAlign: "center" }}
             >
-              🥊 Torne-se um dos 50 Pioneiros KFS.
+              Torne-se um dos 50 Pioneiros KFS.
             </h2>
             <ul
               style={{
@@ -92,32 +77,21 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
             </ul>
           </section>
 
-          <FormularioListaEspera source={source} />
+          <div className="lista-espera-form-col">
+            <FormularioListaEspera source={source} />
+          </div>
 
           {/* Prova Social e Autoridade – Tailândia */}
-          <section
-            className="relative overflow-hidden rounded-2xl"
-            style={{
-              marginTop: "clamp(32px, 8vw, 48px)",
-              minHeight: 220,
-              backgroundImage: "url(/tailandia.jpeg)",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          >
-            <div
-              className="absolute inset-0 rounded-2xl"
-              style={{ backgroundColor: "rgba(0,0,0,0.65)" }}
-            />
-            <div
-              className="relative flex flex-col justify-center px-5 py-8 sm:px-6 sm:py-10"
-              style={{ minHeight: 220 }}
-            >
+          <section className="lista-espera-authority">
+            <div className="absolute inset-0 rounded-2xl lista-espera-authority-overlay" />
+            <div className="relative flex flex-col justify-center lista-espera-authority-inner">
               <p
-                className="text-base sm:text-lg font-medium max-w-xl"
-                style={{ color: "#fff", lineHeight: 1.5, margin: 0 }}
+                className="text-base sm:text-lg md:text-xl font-medium"
+                style={{ color: "#fff", lineHeight: 1.4, margin: 0 }}
               >
-                Metodologia validada na fonte: técnicas trazidas diretamente do norte da Tailândia para o tatame de Oeiras.
+                Treine com Propósito.
+                <br />
+                Lute com Disciplina.
               </p>
             </div>
           </section>
