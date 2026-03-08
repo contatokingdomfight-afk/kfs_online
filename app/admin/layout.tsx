@@ -38,6 +38,7 @@ export default async function AdminLayout({
     { label: t("navFinance"), href: "/admin/financeiro" },
     { label: t("navTrials"), href: "/admin/experimentais" },
     { label: t("navCoaches"), href: "/admin/coaches" },
+    { label: t("navLeads"), href: "/admin/leads" },
   ];
 
   return (

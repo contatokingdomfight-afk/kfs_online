@@ -221,6 +221,7 @@ export const messages = {
     navFinance: "Financeiro",
     navTrials: "Experimentais",
     navCoaches: "Coaches",
+    navLeads: "Leads",
 
     // Coach
     coach: "Coach",
@@ -558,6 +559,7 @@ export const messages = {
     navFinance: "Finance",
     navTrials: "Trials",
     navCoaches: "Coaches",
+    navLeads: "Leads",
 
     coach: "Coach",
     coachTitle: "Coach",
