@@ -156,6 +156,10 @@ export function CoachStudentProfileModal(props: Props) {
           ) : null}
         </section>
 
+        <style>{`
+          .evaluation-category[open] .evaluation-category-chevron { transform: rotate(180deg); }
+          .evaluation-category summary::-webkit-details-marker { display: none; }
+        `}</style>
         <section>
           <h3 style={{ margin: "0 0 12px 0", fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>
             {isStandalone ? "Avaliar (escolhe a modalidade)" : `Avaliar nesta aula (${MODALITY_LABELS[selectedModality] ?? selectedModality})`}
@@ -185,29 +189,62 @@ export function CoachStudentProfileModal(props: Props) {
             {useDynamicForm ? (
               <>
                 <input type="hidden" name="scoresJson" value={JSON.stringify(scores)} />
-                {evaluationConfig!.categorias.map((cat) => (
-                  <div key={cat.nome} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{cat.nome}</span>
-                    {cat.criterios.map((c) => (
-                      <label key={c.id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-                          {c.label} — {scores[c.id] ?? 5}/10
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {evaluationConfig!.categorias.map((cat, index) => (
+                    <details
+                      key={cat.nome}
+                      className="evaluation-category"
+                      open={index < 2}
+                      style={{
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-md)",
+                        overflow: "hidden",
+                        backgroundColor: "var(--bg-secondary)",
+                      }}
+                    >
+                      <summary
+                        style={{
+                          padding: "12px 14px",
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: "var(--text-primary)",
+                          cursor: "pointer",
+                          listStyle: "none",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 8,
+                        }}
+                      >
+                        <span>{cat.nome}</span>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-secondary)" }}>
+                          {cat.criterios.length} itens
                         </span>
-                        {c.description ? (
-                          <span style={{ fontSize: 12, color: "var(--text-secondary)", opacity: 0.9 }}>{c.description}</span>
-                        ) : null}
-                        <input
-                          type="range"
-                          min={1}
-                          max={10}
-                          value={scores[c.id] ?? 5}
-                          onChange={(e) => setScores((prev) => ({ ...prev, [c.id]: Number(e.target.value) }))}
-                          style={{ width: "100%", accentColor: "var(--primary)" }}
-                        />
-                      </label>
-                    ))}
-                  </div>
-                ))}
+                        <span className="evaluation-category-chevron" style={{ opacity: 0.7, transition: "transform 0.2s" }} aria-hidden>▼</span>
+                      </summary>
+                      <div style={{ padding: "0 14px 14px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+                        {cat.criterios.map((c) => (
+                          <label key={c.id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+                              {c.label} — {scores[c.id] ?? 5}/10
+                            </span>
+                            {c.description ? (
+                              <span style={{ fontSize: 12, color: "var(--text-secondary)", opacity: 0.9 }}>{c.description}</span>
+                            ) : null}
+                            <input
+                              type="range"
+                              min={1}
+                              max={10}
+                              value={scores[c.id] ?? 5}
+                              onChange={(e) => setScores((prev) => ({ ...prev, [c.id]: Number(e.target.value) }))}
+                              style={{ width: "100%", accentColor: "var(--primary)" }}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </details>
+                  ))}
+                </div>
               </>
             ) : (
               (["gas", "technique", "strength", "theory"] as const).map(function(key) {

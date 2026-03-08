@@ -22,7 +22,7 @@ DECLARE
   ord int;
 BEGIN
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'BOX_ESTILOS' AND c.modality = 'BOXING' LIMIT 1;
-  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id) THEN
+  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
     FOREACH r IN ARRAY ARRAY[
       'Out-Boxer (Boxer) — controle à distância com jab e movimentação',
@@ -37,7 +37,7 @@ BEGIN
       'Peek-a-Boo Fighter — guarda alta e pressão constante'
     ]
     LOOP
-      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id, r, NULL, ord); ord := ord + 1;
+      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;
   END IF;
 END $$;

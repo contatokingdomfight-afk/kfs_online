@@ -58,7 +58,7 @@ DECLARE
 BEGIN
   -- Posicionamento e circulação no ringue (1-6)
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'MUAY_TATICO_POSICIONAMENTO' AND c.modality = 'MUAY_THAI' LIMIT 1;
-  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id) THEN
+  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
     FOREACH r IN ARRAY ARRAY[
       'Posicionamento e circulação no ringue',
@@ -69,13 +69,13 @@ BEGIN
       'Controle de ringue após as saídas'
     ]
     LOOP
-      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id, r, NULL, ord); ord := ord + 1;
+      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;
   END IF;
 
   -- Controle de distância (7-11)
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'MUAY_TATICO_DISTANCIA' AND c.modality = 'MUAY_THAI' LIMIT 1;
-  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id) THEN
+  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
     FOREACH r IN ARRAY ARRAY[
       'Gestão de distância longa',
@@ -85,13 +85,13 @@ BEGIN
       'Quebra de distância do adversário'
     ]
     LOOP
-      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id, r, NULL, ord); ord := ord + 1;
+      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;
   END IF;
 
   -- Pressão e controle (12-16)
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'MUAY_TATICO_PRESSAO' AND c.modality = 'MUAY_THAI' LIMIT 1;
-  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id) THEN
+  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
     FOREACH r IN ARRAY ARRAY[
       'Pressão constante no adversário',
@@ -101,13 +101,13 @@ BEGIN
       'Controle do centro do ringue'
     ]
     LOOP
-      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id, r, NULL, ord); ord := ord + 1;
+      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;
   END IF;
 
   -- Tempo e ritmo (17-21)
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'MUAY_TATICO_TEMPO_RITMO' AND c.modality = 'MUAY_THAI' LIMIT 1;
-  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id) THEN
+  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
     FOREACH r IN ARRAY ARRAY[
       'Controle de ritmo da luta',
@@ -117,13 +117,13 @@ BEGIN
       'Contra-ataque imediato'
     ]
     LOOP
-      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id, r, NULL, ord); ord := ord + 1;
+      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;
   END IF;
 
   -- Estratégias ofensivas (22-27)
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'MUAY_TATICO_OFENSIVA' AND c.modality = 'MUAY_THAI' LIMIT 1;
-  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id) THEN
+  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
     FOREACH r IN ARRAY ARRAY[
       'Ataque em sequência (combinações)',
@@ -134,13 +134,13 @@ BEGIN
       'Ataque após erro do adversário'
     ]
     LOOP
-      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id, r, NULL, ord); ord := ord + 1;
+      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;
   END IF;
 
   -- Estratégias defensivas (28-32)
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'MUAY_TATICO_DEFENSIVA' AND c.modality = 'MUAY_THAI' LIMIT 1;
-  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id) THEN
+  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
     FOREACH r IN ARRAY ARRAY[
       'Defesa ativa (bloquear e responder)',
@@ -150,13 +150,13 @@ BEGIN
       'Defesa com quebra de ritmo'
     ]
     LOOP
-      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id, r, NULL, ord); ord := ord + 1;
+      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;
   END IF;
 
   -- Controle psicológico (33-36)
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'MUAY_TATICO_PSICOLOGICO' AND c.modality = 'MUAY_THAI' LIMIT 1;
-  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id) THEN
+  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
     FOREACH r IN ARRAY ARRAY[
       'Quebra de confiança do adversário',
@@ -165,13 +165,13 @@ BEGIN
       'Leitura de padrões do adversário'
     ]
     LOOP
-      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id, r, NULL, ord); ord := ord + 1;
+      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;
   END IF;
 
   -- Leitura de luta (37-40)
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'MUAY_TATICO_LEITURA' AND c.modality = 'MUAY_THAI' LIMIT 1;
-  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id) THEN
+  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
     FOREACH r IN ARRAY ARRAY[
       'Identificação de padrões do adversário',
@@ -180,13 +180,13 @@ BEGIN
       'Ajustes táticos durante a luta'
     ]
     LOOP
-      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id, r, NULL, ord); ord := ord + 1;
+      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;
   END IF;
 
   -- Clinch tático (41-45)
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'MUAY_TATICO_CLINCH' AND c.modality = 'MUAY_THAI' LIMIT 1;
-  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id) THEN
+  IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
     FOREACH r IN ARRAY ARRAY[
       'Entrada estratégica no clinch',
@@ -196,7 +196,7 @@ BEGIN
       'Saída segura do clinch'
     ]
     LOOP
-      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id, r, NULL, ord); ord := ord + 1;
+      INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;
   END IF;
 END $$;

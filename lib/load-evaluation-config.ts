@@ -2,9 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import { parseConfig, type ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 
+const CACHE_TAG = "evaluation-configs";
+
 /**
  * Carrega as configurações de avaliação para MUAY_THAI, BOXING e KICKBOXING em paralelo.
- * Usa cache de 5 minutos pois os dados raramente mudam.
+ * Usa cache de 5 minutos; invalida com revalidateTag("evaluation-configs") quando alterares critérios no Admin.
  */
 export async function loadAllEvaluationConfigs(
   supabase: SupabaseClient
@@ -16,7 +18,7 @@ export async function loadAllEvaluationConfigs(
       return mods.map((mod, i) => [mod, configs[i]] as [string, ModalityEvaluationConfigPayload | null]);
     },
     ["evaluation-configs"],
-    { revalidate: 300 }
+    { revalidate: 300, tags: [CACHE_TAG] }
   )();
   return new Map(entries);
 }

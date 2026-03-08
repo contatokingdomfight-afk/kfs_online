@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { parseConfig } from "@/lib/evaluation-config";
@@ -53,6 +53,7 @@ export async function saveModalityEvaluationConfig(
   revalidatePath("/admin/avaliacao");
   revalidatePath("/coach/aula");
   revalidatePath("/coach/atletas");
+  revalidateTag("evaluation-configs");
   return { success: true };
 }
 
@@ -99,6 +100,7 @@ export async function createComponent(_prev: ComponentResult | null, formData: F
   revalidatePath("/coach/atletas");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/performance");
+  revalidateTag("evaluation-configs");
   return { success: true };
 }
 
@@ -138,6 +140,7 @@ export async function updateComponent(_prev: ComponentResult | null, formData: F
   revalidatePath("/coach/atletas");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/performance");
+  revalidateTag("evaluation-configs");
   return { success: true };
 }
 
@@ -160,6 +163,7 @@ export async function deleteComponent(_prev: ComponentResult | null, formData: F
   revalidatePath("/coach/atletas");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/performance");
+  revalidateTag("evaluation-configs");
   return { success: true };
 }
 
@@ -198,6 +202,7 @@ export async function createCriterion(_prev: CriterionResult | null, formData: F
   revalidatePath("/coach/atletas");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/performance");
+  revalidateTag("evaluation-configs");
   return { success: true };
 }
 
@@ -222,6 +227,7 @@ export async function updateCriterion(_prev: CriterionResult | null, formData: F
   revalidatePath("/coach/atletas");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/performance");
+  revalidateTag("evaluation-configs");
   return { success: true };
 }
 
@@ -244,5 +250,6 @@ export async function deleteCriterion(_prev: CriterionResult | null, formData: F
   revalidatePath("/coach/atletas");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/performance");
+  revalidateTag("evaluation-configs");
   return { success: true };
 }
