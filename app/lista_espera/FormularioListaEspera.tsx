@@ -2,16 +2,10 @@
 
 import { useEffect, useRef, useTransition } from "react";
 import { useFormState } from "react-dom";
+import { getTranslations } from "@/lib/i18n";
 import { joinWaitlist, type JoinWaitlistResult } from "./actions";
 
-const CITIES = [
-  { value: "", label: "— Escolhe a cidade —" },
-  { value: "Oeiras", label: "Oeiras" },
-  { value: "Cascais", label: "Cascais" },
-  { value: "Outra", label: "Outra" },
-] as const;
-
-type Props = { source: string };
+type Props = { source: string; locale: "pt" | "en" };
 
 declare global {
   interface Window {
@@ -19,11 +13,19 @@ declare global {
   }
 }
 
-export function FormularioListaEspera({ source }: Props) {
+export function FormularioListaEspera({ source, locale }: Props) {
+  const t = getTranslations(locale);
   const [state, formAction] = useFormState(joinWaitlist, null as JoinWaitlistResult | null);
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   const prevSuccess = useRef(false);
+
+  const cityOptions = [
+    { value: "", label: t("waitlistCityChoose") },
+    { value: "Oeiras", label: t("waitlistCityOeiras") },
+    { value: "Cascais", label: t("waitlistCityCascais") },
+    { value: "Outra", label: t("waitlistCityOther") },
+  ];
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,10 +51,10 @@ export function FormularioListaEspera({ source }: Props) {
     return (
       <div className="card" style={{ padding: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
         <h2 style={{ fontSize: "clamp(1.125rem, 4vw, 1.25rem)", fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
-          Perfeito! O teu lugar está garantido.
+          {t("waitlistSuccessTitle")}
         </h2>
         <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}>
-          Logo entraremos em contacto contigo!
+          {t("waitlistSuccessMessage")}
         </p>
       </div>
     );
@@ -73,41 +75,41 @@ export function FormularioListaEspera({ source }: Props) {
       <input type="hidden" name="source" value={source} />
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          Nome *
+          {t("waitlistFormName")} *
         </span>
-        <input type="text" name="name" required className="input" placeholder="O teu nome" autoComplete="name" />
+        <input type="text" name="name" required className="input" placeholder={t("waitlistPlaceholderName")} autoComplete="name" />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          Email *
+          {t("waitlistFormEmail")} *
         </span>
         <input
           type="email"
           name="email"
           required
           className="input"
-          placeholder="email@exemplo.com"
+          placeholder={t("waitlistPlaceholderEmail")}
           autoComplete="email"
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          Telefone <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>(opcional)</span>
+          {t("waitlistFormPhone")} <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>{t("waitlistOptional")}</span>
         </span>
         <input
           type="tel"
           name="phone"
           className="input"
-          placeholder="+351..."
+          placeholder={t("waitlistPlaceholderPhone")}
           autoComplete="tel"
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          Cidade <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>(opcional)</span>
+          {t("waitlistFormCity")} <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>{t("waitlistOptional")}</span>
         </span>
         <select name="city" className="input">
-          {CITIES.map((o) => (
+          {cityOptions.map((o) => (
             <option key={o.value || "empty"} value={o.value}>
               {o.label}
             </option>
@@ -117,7 +119,7 @@ export function FormularioListaEspera({ source }: Props) {
       <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
         <input type="checkbox" name="marketing_optin" className="input" style={{ width: "auto", minHeight: 20 }} />
         <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-          Quero receber novidades e ofertas da Kingdom Fight <span style={{ opacity: 0.9 }}>(opcional)</span>
+          {t("waitlistFormMarketing")} <span style={{ opacity: 0.9 }}>{t("waitlistOptional")}</span>
         </span>
       </label>
       {state?.error && (
@@ -129,10 +131,10 @@ export function FormularioListaEspera({ source }: Props) {
         style={{ minHeight: 48 }}
         disabled={isPending}
       >
-        {isPending ? "A guardar..." : "Quero ser um Pioneiro KFS"}
+        {isPending ? t("waitlistSaving") : t("waitlistCTA")}
       </button>
       <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", textAlign: "center" }}>
-        Grátis. Sem custo.
+        {t("waitlistFree")}
       </p>
     </form>
   );
