@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useFormState } from "react-dom";
 import { saveEvaluationFromLesson } from "@/app/coach/aula/actions";
+import { saveStandaloneEvaluation } from "@/app/coach/alunos/[id]/actions";
 import { EVALUATION_LABELS_BY_MODALITY } from "@/lib/performance-utils";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
@@ -24,17 +25,40 @@ export type StudentProfileForModal = {
 
 type Props = {
   studentId: string;
-  lessonId: string;
+  lessonId?: string | null;
   modality: string;
   evaluationConfig: ModalityEvaluationConfigPayload | null;
   profile: StudentProfileForModal;
   onClose: () => void;
   onSuccess?: () => void;
+  /** Modo standalone (perfil do aluno): escolher modalidade e avaliar sem aula */
+  modalities?: { value: string; label: string }[];
+  evaluationConfigByModality?: Record<string, ModalityEvaluationConfigPayload | null>;
 };
 
 export function CoachStudentProfileModal(props: Props) {
-  const { studentId, lessonId, modality, evaluationConfig, profile, onClose, onSuccess } = props;
-  const [state, formAction] = useFormState(saveEvaluationFromLesson, null);
+  const {
+    studentId,
+    lessonId,
+    modality: initialModality,
+    evaluationConfig: initialConfig,
+    profile,
+    onClose,
+    onSuccess,
+    modalities = [],
+    evaluationConfigByModality = {},
+  } = props;
+
+  const isStandalone = lessonId == null || lessonId === "";
+  const [selectedModality, setSelectedModality] = useState(initialModality);
+  const evaluationConfig = isStandalone
+    ? (evaluationConfigByModality[selectedModality] ?? null)
+    : initialConfig;
+
+  const [stateLesson, formActionLesson] = useFormState(saveEvaluationFromLesson, null);
+  const [stateStandalone, formActionStandalone] = useFormState(saveStandaloneEvaluation, null);
+  const state = isStandalone ? stateStandalone : stateLesson;
+  const formAction = isStandalone ? formActionStandalone : formActionLesson;
 
   const criterionIds = useMemo(
     () => (evaluationConfig ? getAllCriterionIds(evaluationConfig) : []),
@@ -56,7 +80,7 @@ export function CoachStudentProfileModal(props: Props) {
   }, [state, onSuccess]);
 
   const defaultLabels = { gas: "Condicionamento", technique: "Técnica", strength: "Força", theory: "Teoria" };
-  const labels = EVALUATION_LABELS_BY_MODALITY[modality] ?? defaultLabels;
+  const labels = EVALUATION_LABELS_BY_MODALITY[selectedModality] ?? defaultLabels;
   const useDynamicForm = Boolean(evaluationConfig?.categorias?.length && criterionIds.length > 0);
 
   return (
@@ -90,7 +114,7 @@ export function CoachStudentProfileModal(props: Props) {
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <h2 id="modal-title" style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 600, color: "var(--text-primary)" }}>
-            Perfil e avaliação
+            {isStandalone ? "Avaliar aluno" : "Perfil e avaliação"}
           </h2>
           <button type="button" onClick={onClose} className="btn" style={{ minWidth: 40, padding: "8px 12px", fontSize: 18 }} aria-label="Fechar">
             ×
@@ -134,15 +158,30 @@ export function CoachStudentProfileModal(props: Props) {
 
         <section>
           <h3 style={{ margin: "0 0 12px 0", fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>
-            Avaliar nesta aula ({MODALITY_LABELS[modality] ?? modality})
+            {isStandalone ? "Avaliar (escolhe a modalidade)" : `Avaliar nesta aula (${MODALITY_LABELS[selectedModality] ?? selectedModality})`}
           </h3>
           <form
             action={formAction}
             style={{ display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}
           >
-            <input type="hidden" name="lessonId" value={lessonId} />
+            {!isStandalone && <input type="hidden" name="lessonId" value={lessonId!} />}
             <input type="hidden" name="studentId" value={studentId} />
-            <input type="hidden" name="modality" value={modality} />
+            <input type="hidden" name="modality" value={selectedModality} />
+            {isStandalone && modalities.length > 0 && (
+              <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>Modalidade</span>
+                <select
+                  className="input"
+                  value={selectedModality}
+                  onChange={(e) => setSelectedModality(e.target.value)}
+                  style={{ minHeight: 44 }}
+                >
+                  {modalities.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </label>
+            )}
             {useDynamicForm ? (
               <>
                 <input type="hidden" name="scoresJson" value={JSON.stringify(scores)} />

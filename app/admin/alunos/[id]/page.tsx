@@ -15,6 +15,8 @@ import {
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
+import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
+import { AvaliarAlunoButton } from "@/app/coach/alunos/[id]/AvaliarAlunoButton";
 
 const GENERAL_LAST_N = 10;
 
@@ -52,7 +54,16 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     );
   }
 
-  const { data: user } = await supabase.from("User").select("id, name, email, role").eq("id", student.userId).single();
+  const { data: user } = await supabase
+    .from("User")
+    .select("id, name, email, role, avatarUrl")
+    .eq("id", student.userId)
+    .single();
+  const { data: studentProfile } = await supabase
+    .from("StudentProfile")
+    .select("weightKg, heightCm, medicalNotes, emergencyContact, phone")
+    .eq("studentId", studentId)
+    .maybeSingle();
 
   const { data: plans } = await supabase
     .from("Plan")
@@ -70,6 +81,13 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   const isPlanWithoutModality = planName.includes("Presencial MMA") || planName.includes("Kingdom Online");
   const rawPrimary = (student as { primaryModality?: string | null }).primaryModality ?? null;
   const initialPrimaryModality = isPlanWithoutModality || rawPrimary == null || rawPrimary === "" ? "" : rawPrimary;
+
+  const allConfigs = await loadAllEvaluationConfigs(supabase);
+  const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {
+    MUAY_THAI: allConfigs.get("MUAY_THAI") ?? null,
+    BOXING: allConfigs.get("BOXING") ?? null,
+    KICKBOXING: allConfigs.get("KICKBOXING") ?? null,
+  };
 
   // Performance: athlete + evaluations → radar
   let generalPerformanceScores: Record<string, number> | null = null;
@@ -89,9 +107,8 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
       scores: e.scores as Record<string, number> | null,
       modality: e.modality,
     }));
-    const allConfigs = await loadAllEvaluationConfigs(supabase);
     const configByModality = new Map<string, ModalityConfig>();
-    for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"]) {
+    for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"] as const) {
       const config = allConfigs.get(mod);
       if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
     }
@@ -103,6 +120,17 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   const hasPerformance = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
 
   const modalityNameFor = (code: string) => modalityOptions.find((m) => m.code === code)?.name ?? MODALITY_LABELS[code] ?? code;
+
+  const profileForModal = {
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+    avatarUrl: (user as { avatarUrl?: string | null } | undefined)?.avatarUrl ?? null,
+    phone: studentProfile?.phone ?? null,
+    weightKg: studentProfile?.weightKg != null ? Number(studentProfile.weightKg) : null,
+    heightCm: studentProfile?.heightCm != null ? Number(studentProfile.heightCm) : null,
+    medicalNotes: studentProfile?.medicalNotes ?? null,
+    emergencyContact: studentProfile?.emergencyContact ?? null,
+  };
 
   return (
     <div style={{ maxWidth: "min(420px, 100%)" }}>
@@ -122,13 +150,20 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
       <h1 style={{ margin: "0 0 4px 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
         {user?.name || "Aluno"}
       </h1>
-      <p style={{ margin: "0 0 clamp(20px, 5vw, 24px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+      <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
         {user?.email}
       </p>
+      <AvaliarAlunoButton
+        studentId={studentId}
+        profile={profileForModal}
+        primaryModality={rawPrimary}
+        evaluationConfigByModality={evaluationConfigByModality}
+      />
 
       <section
         className="card"
         style={{
+          marginTop: "clamp(20px, 5vw, 24px)",
           padding: "clamp(20px, 5vw, 24px)",
         }}
       >

@@ -13,6 +13,8 @@ import {
 } from "@/lib/performance-utils";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
+import { AvaliarAlunoButton } from "./AvaliarAlunoButton";
 
 const GENERAL_LAST_N = 10;
 
@@ -50,13 +52,29 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
     );
   }
 
-  const { data: user } = await supabase.from("User").select("id, name, email").eq("id", student.userId).single();
+  const { data: user } = await supabase
+    .from("User")
+    .select("id, name, email, avatarUrl")
+    .eq("id", student.userId)
+    .single();
+  const { data: studentProfile } = await supabase
+    .from("StudentProfile")
+    .select("weightKg, heightCm, medicalNotes, emergencyContact, phone")
+    .eq("studentId", studentId)
+    .maybeSingle();
 
   let planName: string | null = null;
   if (student.planId) {
     const { data: plan } = await supabase.from("Plan").select("name").eq("id", student.planId).single();
     planName = plan?.name ?? null;
   }
+
+  const allConfigs = await loadAllEvaluationConfigs(supabase);
+  const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {
+    MUAY_THAI: allConfigs.get("MUAY_THAI") ?? null,
+    BOXING: allConfigs.get("BOXING") ?? null,
+    KICKBOXING: allConfigs.get("KICKBOXING") ?? null,
+  };
 
   // Performance
   let generalPerformanceScores: Record<string, number> | null = null;
@@ -76,9 +94,8 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
       scores: e.scores as Record<string, number> | null,
       modality: e.modality,
     }));
-    const allConfigs = await loadAllEvaluationConfigs(supabase);
     const configByModality = new Map<string, ModalityConfig>();
-    for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"]) {
+    for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"] as const) {
       const config = allConfigs.get(mod);
       if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
     }
@@ -100,6 +117,17 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
   const primaryModality = (student as { primaryModality?: string | null }).primaryModality;
   const today = new Date().toISOString().slice(0, 10);
   const assessmentDue = !lastAssessment || (lastAssessment.nextDueAt != null && lastAssessment.nextDueAt <= today);
+
+  const profileForModal = {
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+    avatarUrl: (user as { avatarUrl?: string | null } | undefined)?.avatarUrl ?? null,
+    phone: studentProfile?.phone ?? null,
+    weightKg: studentProfile?.weightKg != null ? Number(studentProfile.weightKg) : null,
+    heightCm: studentProfile?.heightCm != null ? Number(studentProfile.heightCm) : null,
+    medicalNotes: studentProfile?.medicalNotes ?? null,
+    emergencyContact: studentProfile?.emergencyContact ?? null,
+  };
 
   return (
     <div style={{ maxWidth: "min(420px, 100%)" }}>
@@ -161,6 +189,12 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
           </span>
         )}
       </div>
+      <AvaliarAlunoButton
+        studentId={studentId}
+        profile={profileForModal}
+        primaryModality={primaryModality ?? null}
+        evaluationConfigByModality={evaluationConfigByModality}
+      />
 
       <section
         className="card"

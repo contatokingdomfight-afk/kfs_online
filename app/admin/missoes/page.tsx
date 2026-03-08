@@ -26,6 +26,7 @@ export default async function AdminMissoesPage() {
   const selectCols = "id, name, description, modality, beltIndex, xpReward, sortOrder, isActive";
   let missions: { id: string; name: string; description: string | null; modality: string | null; beltIndex: number | null; xpReward: number; sortOrder: number; isActive: boolean }[] | null = null;
   let missionsError: { message: string } | null = null;
+  let tableUsed: string = "MissionTemplate";
 
   const res = await supabase
     .from("MissionTemplate")
@@ -40,6 +41,7 @@ export default async function AdminMissoesPage() {
       .select("id, name, description, modality, belt_index, xp_reward, sort_order, is_active")
       .order("sort_order", { ascending: true });
     if (!fallback.error && fallback.data?.length !== undefined) {
+      tableUsed = "mission_template";
       missions = fallback.data.map((r: Record<string, unknown>) => ({
         id: r.id as string,
         name: r.name as string,
@@ -58,6 +60,10 @@ export default async function AdminMissoesPage() {
 
   const modalityOptions = (modalities ?? []).map((m) => ({ code: m.code, name: m.name ?? m.code }));
   const list = missions ?? [];
+
+  const countRes = await supabase.from(tableUsed).select("*", { count: "exact", head: true });
+  const totalCount = countRes.count ?? null;
+  const countError = countRes.error;
 
   // Agrupar por faixa: null = "Qualquer faixa", depois por beltIndex 0, 1, 2, ...
   const byBelt = new Map<string, typeof list>();
@@ -93,6 +99,20 @@ export default async function AdminMissoesPage() {
       </div>
 
       <h2 className="text-base font-semibold text-text-primary mb-3">Todas as missões (por faixa)</h2>
+
+      <details className="mb-4 rounded-lg border border-border bg-bg-secondary p-3 text-sm">
+        <summary className="cursor-pointer font-medium text-text-primary">Validar tabela no banco (diagnóstico)</summary>
+        <dl className="mt-2 space-y-1 text-text-secondary">
+          <div><dt className="inline font-medium">Tabela usada:</dt> <dd className="inline">{tableUsed}</dd></div>
+          <div><dt className="inline font-medium">Total de linhas (count):</dt> <dd className="inline">{totalCount ?? "—"}</dd></div>
+          {countError && <div><dt className="inline font-medium text-red-600">Erro no count:</dt> <dd className="inline text-red-600">{countError.message}</dd></div>}
+          {missionsError && <div><dt className="inline font-medium text-red-600">Erro na listagem:</dt> <dd className="inline text-red-600">{missionsError.message}</dd></div>}
+          <div className="pt-2 text-xs opacity-80">
+            Se &quot;Total de linhas&quot; for 0 ou —, a tabela está vazia ou o nome está errado. No Supabase (Table Editor) confirma o nome exato da tabela (ex: MissionTemplate ou mission_template) e se há registos.
+          </div>
+        </dl>
+      </details>
+
       {missionsError ? (
         <p className="text-sm text-red-600 dark:text-red-400 mb-2">
           Erro ao carregar missões: {missionsError.message}
