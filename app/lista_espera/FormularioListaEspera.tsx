@@ -104,7 +104,7 @@ export function FormularioListaEspera({ source }: Props) {
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          Cidade
+          Cidade <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>(opcional)</span>
         </span>
         <select name="city" className="input">
           {CITIES.map((o) => (
@@ -116,8 +116,8 @@ export function FormularioListaEspera({ source }: Props) {
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
         <input type="checkbox" name="marketing_optin" className="input" style={{ width: "auto", minHeight: 20 }} />
-        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-          Quero receber novidades e ofertas da Kingdom Fight
+        <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+          Quero receber novidades e ofertas da Kingdom Fight <span style={{ opacity: 0.9 }}>(opcional)</span>
         </span>
       </label>
       {state?.error && (
@@ -131,6 +131,9 @@ export function FormularioListaEspera({ source }: Props) {
       >
         {isPending ? "A guardar..." : "Quero ser um Pioneiro KFS"}
       </button>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", textAlign: "center" }}>
+        Grátis. Sem custo.
+      </p>
     </form>
   );
 }

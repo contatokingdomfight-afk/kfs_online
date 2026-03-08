@@ -45,6 +45,10 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
             </p>
           </section>
 
+          <p className="lista-espera-intro-form">
+            Só demora 30 segundos. Sem compromisso — avisamos quando abrirmos.
+          </p>
+
           <FormularioListaEspera source={source} />
 
           {/* 50 Pioneiros – abaixo do formulário */}
@@ -92,6 +96,7 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
                 title="A história da KFS"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
+                loading="lazy"
                 className="lista-espera-iframe"
               />
             </div>
@@ -105,6 +110,7 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
                     title="YouTube Short"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
+                    loading="lazy"
                     className="lista-espera-iframe"
                   />
                 </div>
