@@ -30,6 +30,25 @@ export function categoryToGeneralDimension(categoryNome: string): (typeof GENERA
   return null;
 }
 
+/** Mapeia código da dimensão (ex: MUAY_POSTURA, MUAY_TATICO_LEITURA) para o pilar geral do radar. */
+export function dimensionCodeToGeneralDimension(
+  code: string
+): (typeof GENERAL_DIMENSION_IDS)[number] | null {
+  if (!code || typeof code !== "string") return null;
+  const upper = code.toUpperCase();
+  if (upper.includes("_TATICO_") || upper.endsWith("_TATICO")) return "tatico";
+  if (upper.includes("_FISICO") || upper.includes("FISICO_")) return "fisico";
+  if (upper.includes("_MENTAL") || upper.includes("MENTAL_")) return "mental";
+  if (upper.includes("_TEORICO") || upper.includes("TEORICO_")) return "teorico";
+  if (
+    upper.startsWith("MUAY_") ||
+    upper.startsWith("BOX_") ||
+    upper.startsWith("KICKBOXING_")
+  )
+    return "tecnico";
+  return null;
+}
+
 /** Converte uma avaliação legada (gas, technique, strength, theory 1–5) para as 5 dimensões gerais (escala 1–5). */
 export function legacyEvaluationToGeneralScores(ev: {
   gas: number | null;
@@ -93,12 +112,16 @@ export function computeGeneralPerformanceScores(
       GENERAL_DIMENSION_IDS.forEach((id) => (byDim[id] = []));
       for (const [criterionId, value] of Object.entries(ev.scores!)) {
         if (typeof value !== "number" || value < 1 || value > 10) continue;
-        const dim =
+        const rawDim =
           criterionToDimensionCode?.get(criterionId) ??
           (() => {
             const catNome = criterionToCategory.get(criterionId);
             return catNome ? categoryToGeneralDimension(catNome) : null;
           })();
+        const dim: (typeof GENERAL_DIMENSION_IDS)[number] | null =
+          rawDim && GENERAL_DIMENSION_IDS.includes(rawDim as (typeof GENERAL_DIMENSION_IDS)[number])
+            ? (rawDim as (typeof GENERAL_DIMENSION_IDS)[number])
+            : dimensionCodeToGeneralDimension(rawDim ?? "");
         if (dim) {
           if (!byDim[dim]) byDim[dim] = [];
           byDim[dim].push(value);

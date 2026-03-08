@@ -74,7 +74,14 @@ export async function loadEvaluationConfigForModality(
           })),
         };
       })
-      .filter((cat) => cat.criterios.length > 0);
+      .filter((cat) => cat.criterios.length > 0)
+      .filter(
+        (cat) =>
+          !(
+            (cat.nome === "Técnico" || cat.nome === "Tático") &&
+            cat.criterios.length <= 3
+          )
+      );
 
     if (categorias.length > 0) return { categorias };
   }
