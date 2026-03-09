@@ -76,13 +76,15 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
     KICKBOXING: allConfigs.get("KICKBOXING") ?? null,
   };
 
-  // Performance
+  // Performance e última avaliação (para pré-preencher o modal)
   let generalPerformanceScores: Record<string, number> | null = null;
+  let lastEvalScoresByModality: Record<string, Record<string, number>> = {};
+  let lastEvalDate: string | null = null;
   const { data: athlete } = await supabase.from("Athlete").select("id").eq("studentId", studentId).single();
   if (athlete) {
     const { data: evalsRows } = await supabase
       .from("AthleteEvaluation")
-      .select("gas, technique, strength, theory, scores, modality")
+      .select("gas, technique, strength, theory, scores, modality, created_at")
       .eq("athleteId", athlete.id)
       .order("created_at", { ascending: false })
       .limit(GENERAL_LAST_N);
@@ -93,7 +95,17 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
       theory: e.theory,
       scores: e.scores as Record<string, number> | null,
       modality: e.modality,
+      created_at: (e as { created_at?: string }).created_at,
     }));
+    if (evaluations.length > 0) {
+      lastEvalDate = evaluations[0].created_at ?? null;
+      for (const e of evaluations) {
+        const mod = e.modality ?? "";
+        if (mod && e.scores && typeof e.scores === "object" && Object.keys(e.scores).length > 0 && !lastEvalScoresByModality[mod]) {
+          lastEvalScoresByModality[mod] = e.scores;
+        }
+      }
+    }
     const configByModality = new Map<string, ModalityConfig>();
     for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"] as const) {
       const config = allConfigs.get(mod);
@@ -194,6 +206,7 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
         profile={profileForModal}
         primaryModality={primaryModality ?? null}
         evaluationConfigByModality={evaluationConfigByModality}
+        lastEvalScoresByModality={Object.keys(lastEvalScoresByModality).length > 0 ? lastEvalScoresByModality : undefined}
       />
 
       <section
@@ -208,6 +221,11 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
         </h2>
         {hasPerformance && generalPerformanceScores ? (
           <>
+            {lastEvalDate && (
+              <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-primary)", fontWeight: 500 }}>
+                Última avaliação: {new Date(lastEvalDate).toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" })}
+              </p>
+            )}
             <p style={{ margin: "0 0 16px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
               Média das últimas {GENERAL_LAST_N} avaliações (escala 1–10).
             </p>

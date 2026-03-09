@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useFormState, useFormStatus } from "react-dom";
 import { saveEvaluationFromLesson } from "@/app/coach/aula/actions";
 import { saveStandaloneEvaluation } from "@/app/coach/alunos/[id]/actions";
 import { EVALUATION_LABELS_BY_MODALITY } from "@/lib/performance-utils";
@@ -11,6 +11,20 @@ import { getAllCriterionIds } from "@/lib/evaluation-config";
 
 const SCORES_1_5 = [1, 2, 3, 4, 5];
 const SCORES_1_10 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+function SubmitEvaluationButton({ onClose }: { onClose: () => void }) {
+  const { pending } = useFormStatus();
+  return (
+    <>
+      <button type="submit" className="btn btn-primary" style={{ minHeight: 44 }} disabled={pending}>
+        {pending ? "A guardar…" : "Guardar"}
+      </button>
+      <button type="button" onClick={onClose} className="btn" style={{ minHeight: 44 }} disabled={pending}>
+        Fechar
+      </button>
+    </>
+  );
+}
 
 export type StudentProfileForModal = {
   name: string | null;
@@ -34,6 +48,8 @@ type Props = {
   /** Modo standalone (perfil do aluno): escolher modalidade e avaliar sem aula */
   modalities?: { value: string; label: string }[];
   evaluationConfigByModality?: Record<string, ModalityEvaluationConfigPayload | null>;
+  /** Última avaliação por modalidade (scores) para pré-preencher o formulário */
+  initialScoresByModality?: Record<string, Record<string, number>>;
 };
 
 export function CoachStudentProfileModal(props: Props) {
@@ -47,6 +63,7 @@ export function CoachStudentProfileModal(props: Props) {
     onSuccess,
     modalities = [],
     evaluationConfigByModality = {},
+    initialScoresByModality,
   } = props;
 
   const isStandalone = lessonId == null || lessonId === "";
@@ -54,6 +71,9 @@ export function CoachStudentProfileModal(props: Props) {
   const evaluationConfig = isStandalone
     ? (evaluationConfigByModality[selectedModality] ?? null)
     : initialConfig;
+  const initialScoresByModality = props.initialScoresByModality;
+  const initialScoresByModalityRef = useRef(initialScoresByModality);
+  initialScoresByModalityRef.current = initialScoresByModality;
 
   const [stateLesson, formActionLesson] = useFormState(saveEvaluationFromLesson, null);
   const [stateStandalone, formActionStandalone] = useFormState(saveStandaloneEvaluation, null);
@@ -70,10 +90,14 @@ export function CoachStudentProfileModal(props: Props) {
     return o;
   });
   useEffect(() => {
+    if (!criterionIds.length) return;
+    const initial = initialScoresByModalityRef.current?.[selectedModality];
     const o: Record<string, number> = {};
-    criterionIds.forEach((id) => { o[id] = scores[id] ?? 5; });
-    setScores((prev) => (criterionIds.length ? { ...o, ...prev } : prev));
-  }, [criterionIds.join(",")]);
+    criterionIds.forEach((id) => {
+      o[id] = initial && typeof initial[id] === "number" ? initial[id] : 5;
+    });
+    setScores(o);
+  }, [criterionIds.join(","), selectedModality]);
 
   useEffect(() => {
     if (state && (state as { success?: boolean }).success && onSuccess) onSuccess();
@@ -265,9 +289,11 @@ export function CoachStudentProfileModal(props: Props) {
             {state && (state as { error?: string }).error ? (
               <p style={{ margin: 0, fontSize: 14, color: "var(--danger)" }}>{(state as { error: string }).error}</p>
             ) : null}
-            <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-              <button type="submit" className="btn btn-primary" style={{ minHeight: 44 }}>Guardar</button>
-              <button type="button" onClick={onClose} className="btn" style={{ minHeight: 44 }}>Fechar</button>
+            {state && (state as { success?: boolean }).success ? (
+              <p style={{ margin: 0, fontSize: 14, color: "var(--success, green)" }}>Avaliação guardada com sucesso.</p>
+            ) : null}
+            <div style={{ display: "flex", gap: 12, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <SubmitEvaluationButton onClose={onClose} />
             </div>
           </form>
         </section>

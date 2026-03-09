@@ -12,6 +12,8 @@ type Props = {
   profile: StudentProfileForModal;
   primaryModality: string | null;
   evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null>;
+  /** Última avaliação por modalidade (scores) para pré-preencher o formulário */
+  lastEvalScoresByModality?: Record<string, Record<string, number>>;
 };
 
 const MODALITIES = [
@@ -20,7 +22,7 @@ const MODALITIES = [
   { value: "KICKBOXING", label: MODALITY_LABELS.KICKBOXING ?? "Kickboxing" },
 ];
 
-export function AvaliarAlunoButton({ studentId, profile, primaryModality, evaluationConfigByModality }: Props) {
+export function AvaliarAlunoButton({ studentId, profile, primaryModality, evaluationConfigByModality, lastEvalScoresByModality }: Props) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -56,6 +58,7 @@ export function AvaliarAlunoButton({ studentId, profile, primaryModality, evalua
           onSuccess={handleSuccess}
           modalities={MODALITIES}
           evaluationConfigByModality={evaluationConfigByModality}
+          initialScoresByModality={lastEvalScoresByModality}
         />
       )}
       <SuccessConfirmModal

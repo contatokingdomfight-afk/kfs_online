@@ -128,7 +128,7 @@ BEGIN
   SELECT c.id INTO comp_id FROM "EvaluationComponent" c JOIN "GeneralDimension" d ON c."dimensionId" = d.id WHERE d.code = 'MUAY_CHUTES' AND c.modality = 'MUAY_THAI' LIMIT 1;
   IF comp_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "EvaluationCriterion" WHERE "componentId" = comp_id::text) THEN
     ord := 0;
-    FOREACH r IN ARRAY ARRAY['Tae Tat (Low kick coxa)','Tae Klang (Chute médio costela)','Tae Hua (Chute alto cabeça)','Tae Chiang (Chute circular)','Inside low kick','Outside low kick','Body kick','Head kick','Tae Switch (Switch kick)','Teep kick (empurrão)','Tae Kradot (Chute saltando)','Tae Klap Lang (Chute giratório)']
+    FOREACH r IN ARRAY ARRAY['Tae Tat (Low kick coxa)','Tae Klang (Chute médio costela)','Tae Hua (Chute alto cabeça)','Tae Chiang (Chute circular)','Tae Switch (Switch kick)','Tae Kradot (Chute saltando)','Tae Klap Lang (Chute giratório)']
     LOOP
       INSERT INTO "EvaluationCriterion" (id, "componentId", label, description, "sortOrder") VALUES (gen_random_uuid(), comp_id::text, r, NULL, ord); ord := ord + 1;
     END LOOP;

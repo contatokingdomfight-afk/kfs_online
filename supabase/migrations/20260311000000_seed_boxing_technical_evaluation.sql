@@ -115,7 +115,6 @@ BEGIN
     FOREACH r IN ARRAY ARRAY[
       'Counter Jab',
       'Pull Counter',
-      'Check Hook',
       'Gazelle Punch',
       'Corkscrew Punch',
       'Step-in Punch',
