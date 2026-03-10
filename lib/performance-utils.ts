@@ -91,6 +91,44 @@ export type ModalityConfig = {
   criterionToDimensionCode?: Map<string, string>;
 };
 
+/**
+ * Extrai um score Físico (1–10) do formData da avaliação física (ficha de anamnese).
+ * Usa a média das notas do instrutor: condição, mobilidade, coordenação, resistência, força.
+ */
+export function getFisicoScoreFromPhysicalAssessment(formData: unknown): number | null {
+  if (!formData || typeof formData !== "object") return null;
+  const fd = formData as Record<string, unknown>;
+  const keys = ["scoreCondition", "scoreMobility", "scoreCoordination", "scoreEndurance", "scoreStrength"];
+  const values: number[] = [];
+  for (const k of keys) {
+    const v = fd[k];
+    const n = typeof v === "number" ? v : parseInt(String(v), 10);
+    if (Number.isFinite(n) && n >= 1 && n <= 10) values.push(n);
+  }
+  if (values.length === 0) return null;
+  const avg = values.reduce((a, b) => a + b, 0) / values.length;
+  return Math.round(Math.min(10, Math.max(1, avg)) * 10) / 10;
+}
+
+/**
+ * Combina o score da avaliação física (ficha) com os generalPerformanceScores.
+ * Se existir avaliação física com notas 1–10, o eixo Físico passa a ser a média entre
+ * o valor das avaliações na aula e o valor da ficha.
+ */
+export function mergePhysicalAssessmentIntoRadar(
+  scores: Record<string, number>,
+  physicalFormData: unknown
+): Record<string, number> {
+  const physicalScore = getFisicoScoreFromPhysicalAssessment(physicalFormData);
+  if (physicalScore == null) return scores;
+  const current = scores.fisico ?? 1;
+  const combined = (current + physicalScore) / 2;
+  return {
+    ...scores,
+    fisico: Math.round(Math.min(10, Math.max(1, combined)) * 10) / 10,
+  };
+}
+
 /** Calcula a média das dimensões gerais a partir das últimas N avaliações. Retorna scores 1–10 (escala do radar). */
 export function computeGeneralPerformanceScores(
   evaluations: GeneralScoresInputEval[],

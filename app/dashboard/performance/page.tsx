@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
-import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality, enrichScoresForDetail } from "@/lib/performance-utils";
+import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality, enrichScoresForDetail, getFisicoScoreFromPhysicalAssessment, mergePhysicalAssessmentIntoRadar } from "@/lib/performance-utils";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
@@ -106,12 +106,12 @@ export default async function DashboardPerformancePage() {
       }
       const { data: lastPhys } = await supabase
         .from("StudentPhysicalAssessment")
-        .select("assessedAt, nextDueAt")
+        .select("assessedAt, nextDueAt, formData")
         .eq("studentId", studentId)
         .order("assessedAt", { ascending: false })
         .limit(1)
         .maybeSingle();
-      lastPhysicalAssessment = lastPhys ?? null;
+      lastPhysicalAssessment = lastPhys ? { assessedAt: lastPhys.assessedAt, nextDueAt: lastPhys.nextDueAt } : null;
       const today = new Date().toISOString().slice(0, 10);
       physicalAssessmentDue =
         !lastPhysicalAssessment || (lastPhysicalAssessment.nextDueAt != null && lastPhysicalAssessment.nextDueAt <= today);
@@ -132,6 +132,9 @@ export default async function DashboardPerformancePage() {
 
       if (evaluations.length > 0) {
         generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
+        if (lastPhys?.formData && generalPerformanceScores) {
+          generalPerformanceScores = mergePhysicalAssessmentIntoRadar(generalPerformanceScores, lastPhys.formData);
+        }
         scoresByModality = computePerformanceScoresByModality(evaluations, configByModality, LAST_N_PER_MODALITY, true);
         const latestEval = evalsRows![0] as { scores?: Record<string, number> | null; coachId?: string; note?: string | null; created_at?: string | null };
         const previousEval = evalsRows!.length > 1 ? (evalsRows![1] as { scores?: Record<string, number> | null }) : null;
@@ -171,6 +174,18 @@ export default async function DashboardPerformancePage() {
             coachName: evalCoachName,
             date: dateStr,
             note: latestEval.note ?? null,
+          };
+        }
+      }
+      if (!generalPerformanceScores && lastPhys?.formData) {
+        const fisico = getFisicoScoreFromPhysicalAssessment(lastPhys.formData);
+        if (fisico != null) {
+          generalPerformanceScores = {
+            tecnico: 1,
+            tatico: 1,
+            fisico,
+            mental: 1,
+            teorico: 1,
           };
         }
       }

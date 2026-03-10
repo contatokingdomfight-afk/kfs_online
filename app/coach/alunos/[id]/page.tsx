@@ -10,6 +10,8 @@ import {
   GENERAL_PERFORMANCE_AXES,
   computeGeneralPerformanceScores,
   getAttendanceByModality,
+  getFisicoScoreFromPhysicalAssessment,
+  mergePhysicalAssessmentIntoRadar,
 } from "@/lib/performance-utils";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
@@ -116,15 +118,30 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
     }
   }
   const attendanceByModality = await getAttendanceByModality(supabase, studentId);
-  const hasPerformance = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
 
   const { data: lastAssessment } = await supabase
     .from("StudentPhysicalAssessment")
-    .select("assessedAt, nextDueAt, clearance")
+    .select("assessedAt, nextDueAt, clearance, formData")
     .eq("studentId", studentId)
     .order("assessedAt", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  if (lastAssessment?.formData && generalPerformanceScores) {
+    generalPerformanceScores = mergePhysicalAssessmentIntoRadar(generalPerformanceScores, lastAssessment.formData);
+  } else if (lastAssessment?.formData && !generalPerformanceScores) {
+    const fisico = getFisicoScoreFromPhysicalAssessment(lastAssessment.formData);
+    if (fisico != null) {
+      generalPerformanceScores = {
+        tecnico: 1,
+        tatico: 1,
+        fisico,
+        mental: 1,
+        teorico: 1,
+      };
+    }
+  }
+  const hasPerformance = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
 
   const primaryModality = (student as { primaryModality?: string | null }).primaryModality;
   const today = new Date().toISOString().slice(0, 10);

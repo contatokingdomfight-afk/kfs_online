@@ -10,6 +10,8 @@ import {
   GENERAL_PERFORMANCE_AXES,
   computeGeneralPerformanceScores,
   enrichScoresForDetail,
+  getFisicoScoreFromPhysicalAssessment,
+  mergePhysicalAssessmentIntoRadar,
 } from "@/lib/performance-utils";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
 import {
@@ -118,12 +120,12 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
 
     const { data: lastPhys } = await supabase
       .from("StudentPhysicalAssessment")
-      .select("assessedAt, nextDueAt")
+      .select("assessedAt, nextDueAt, formData")
       .eq("studentId", studentId)
       .order("assessedAt", { ascending: false })
       .limit(1)
       .maybeSingle();
-    lastPhysicalAssessment = lastPhys ?? null;
+    lastPhysicalAssessment = lastPhys ? { assessedAt: lastPhys.assessedAt, nextDueAt: lastPhys.nextDueAt } : null;
     const today = new Date().toISOString().slice(0, 10);
     physicalAssessmentDue =
       !lastPhysicalAssessment || (lastPhysicalAssessment.nextDueAt != null && lastPhysicalAssessment.nextDueAt <= today);
@@ -145,6 +147,9 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
 
     if (evaluations.length > 0) {
       generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
+      if (lastPhys?.formData && generalPerformanceScores) {
+        generalPerformanceScores = mergePhysicalAssessmentIntoRadar(generalPerformanceScores, lastPhys.formData);
+      }
       const latestEval = evalsRows![0];
       if (latestEval?.coachId) {
         let evalCoachName = "Treinador";
@@ -159,6 +164,18 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
           coachName: evalCoachName,
           date: dateStr,
           note: (latestEval.note as string | null) ?? null,
+        };
+      }
+    }
+    if (!generalPerformanceScores && lastPhys?.formData) {
+      const fisico = getFisicoScoreFromPhysicalAssessment(lastPhys.formData);
+      if (fisico != null) {
+        generalPerformanceScores = {
+          tecnico: 1,
+          tatico: 1,
+          fisico,
+          mental: 1,
+          teorico: 1,
         };
       }
     }
