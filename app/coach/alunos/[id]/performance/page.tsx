@@ -9,6 +9,7 @@ import {
   type ModalityConfig,
   GENERAL_PERFORMANCE_AXES,
   computeGeneralPerformanceScores,
+  enrichScoresForDetail,
 } from "@/lib/performance-utils";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
 import {
@@ -171,11 +172,13 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
     );
   }
 
+  const scoresForDetail = enrichScoresForDetail(generalPerformanceScores!, detailOrder);
+
   return (
     <PerformanceFighterDashboard
       backHref={`/coach/alunos/${studentId}`}
       backLabel="Voltar ao perfil do aluno"
-      scores={generalPerformanceScores!}
+      scores={scoresForDetail}
       detailOrder={detailOrder}
       detailSource={detailSource}
       axes={[...GENERAL_PERFORMANCE_AXES]}

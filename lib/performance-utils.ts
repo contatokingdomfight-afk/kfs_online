@@ -163,6 +163,27 @@ export function computeGeneralPerformanceScores(
 }
 
 /**
+ * Para o accordion "Detalhe por componente", as chaves em detailOrder podem ser códigos
+ * de categoria (ex.: MUAY_POSTURA) em vez dos 5 ids gerais. Este helper devolve um
+ * Record com score para cada chave, usando a dimensão geral quando a chave não existir
+ * em generalScores (ex.: scores["MUAY_POSTURA"] = scores["tecnico"]).
+ */
+export function enrichScoresForDetail(
+  generalScores: Record<string, number>,
+  detailOrder: string[]
+): Record<string, number> {
+  const out: Record<string, number> = { ...generalScores };
+  for (const dimId of detailOrder) {
+    if (out[dimId] != null) continue;
+    const generalDim = dimensionCodeToGeneralDimension(dimId);
+    if (generalDim && generalScores[generalDim] != null) {
+      out[dimId] = generalScores[generalDim];
+    }
+  }
+  return out;
+}
+
+/**
  * Calcula scores por modalidade (últimas N avaliações por modalidade).
  * Retorna um mapa modality -> { tecnico, tatico, fisico, mental, teorico } em escala 1–10.
  * Útil para mostrar KPIs explícitos por modalidade no dashboard de performance.

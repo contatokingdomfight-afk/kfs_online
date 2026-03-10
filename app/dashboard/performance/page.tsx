@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
-import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality } from "@/lib/performance-utils";
+import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality, enrichScoresForDetail } from "@/lib/performance-utils";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
@@ -168,12 +168,13 @@ export default async function DashboardPerformancePage() {
   }
 
   const modalityLabelsForDashboard: Record<string, string> = { ...Object.fromEntries(modalityLabels), GENERAL: "Geral" };
+  const scoresForDetail = enrichScoresForDetail(generalPerformanceScores!, detailOrder);
 
   return (
     <PerformanceFighterDashboard
       backHref="/dashboard"
       backLabel="Voltar ao início"
-      scores={generalPerformanceScores!}
+      scores={scoresForDetail}
       scoresByModality={Object.keys(scoresByModality).length > 0 ? scoresByModality : undefined}
       modalityLabels={modalityLabelsForDashboard}
       detailOrder={detailOrder}
