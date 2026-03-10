@@ -78,7 +78,7 @@ function AccordionSection({
         <div className="border-t border-border p-4 pt-3 space-y-5">
           {detail.groups
             .filter((group) => {
-              if (!primaryModalityLabel) return true;
+              if (!primaryModalityLabel || primaryModalityLabel === "Todas as modalidades") return true;
               const suffix = ` (${primaryModalityLabel})`;
               return group.title.endsWith(suffix) || !group.title.includes(" (");
             })
