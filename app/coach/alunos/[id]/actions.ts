@@ -81,7 +81,20 @@ export async function saveStandaloneEvaluation(
     effectiveCoachId = athlete.mainCoachId;
   }
 
-  if (!effectiveCoachId) return { error: "Não foi possível associar um coach ao atleta. Atribui um coach ao aluno." };
+  if (!effectiveCoachId && dbUser.role === "ADMIN") {
+    const { data: student } = await supabase.from("Student").select("schoolId").eq("id", studentId).single();
+    if (student?.schoolId) {
+      const { data: schoolCoach } = await supabase
+        .from("Coach")
+        .select("id")
+        .eq("schoolId", student.schoolId)
+        .limit(1)
+        .maybeSingle();
+      if (schoolCoach) effectiveCoachId = schoolCoach.id;
+    }
+  }
+
+  if (!effectiveCoachId) return { error: "Não foi possível associar um coach ao atleta. Atribui um coach ao aluno ou à escola." };
 
   const { error } = await supabase.from("AthleteEvaluation").insert({
     athleteId: athlete.id,
