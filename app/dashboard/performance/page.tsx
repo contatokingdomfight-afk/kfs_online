@@ -18,6 +18,8 @@ import { getRankFromXp } from "@/lib/xp-missions";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { getAchievementUnlockContext, getAchievementsWithStatus } from "@/lib/achievements";
+import type { AchievementWithStatus } from "@/lib/achievements";
 
 const GENERAL_LAST_N = 10;
 const LAST_N_PER_MODALITY = 5;
@@ -56,7 +58,10 @@ export default async function DashboardPerformancePage() {
   let coachName: string | null = null;
   let lastEvaluation: { coachName: string; date: string; note: string | null } | null = null;
   let suggestedCourses: { id: string; name: string; category: string; modality: string | null }[] = [];
+  let profileAchievements: AchievementWithStatus[] = [];
   if (studentId) {
+    const achievementContext = await getAchievementUnlockContext(supabase, studentId);
+    profileAchievements = getAchievementsWithStatus(achievementContext);
     const { data: athlete } = await supabase.from("Athlete").select("id, xp").eq("studentId", studentId).single();
     if (athlete) {
       const xp = (athlete.xp as number | null) ?? 0;
@@ -225,6 +230,7 @@ export default async function DashboardPerformancePage() {
       lastEvaluation={lastEvaluation ?? undefined}
       evaluationsHistoryHref="/dashboard/performance/historico"
       suggestedCourses={suggestedCourses.length > 0 ? suggestedCourses : undefined}
+      profileAchievements={profileAchievements}
     />
   );
 }

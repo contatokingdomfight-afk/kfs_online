@@ -12,6 +12,8 @@ import type { RadarAxis } from "./RadarStatsDynamic";
 import { XP_PER_MISSION, getRankNameForIndex } from "@/lib/xp-missions";
 import { BeltProgressionSection } from "@/components/belt-progression";
 import { beltIdFromRankName } from "@/components/belt-progression/belt-progression-data";
+import { ProfileAchievements } from "@/components/achievements/ProfileAchievements";
+import type { AchievementWithStatus } from "@/lib/achievements";
 
 const CATEGORY_LABEL: Record<string, string> = {
   TECHNIQUE: "Técnica",
@@ -72,6 +74,8 @@ type Props = {
   modalityLabels?: Record<string, string>;
   /** Cursos da biblioteca sugeridos (por modalidade principal); mostrados junto ao feedback do coach. */
   suggestedCourses?: { id: string; name: string; category: string; modality: string | null }[];
+  /** Conquistas para a secção no perfil (badges desbloqueados e progresso). */
+  profileAchievements?: AchievementWithStatus[];
 };
 
 export function PerformanceFighterDashboard({
@@ -96,6 +100,7 @@ export function PerformanceFighterDashboard({
   scoresByModality,
   modalityLabels = {},
   suggestedCourses = [],
+  profileAchievements,
 }: Props) {
   const systemMissions = buildMissionsFromScores(scores, axes, maxScore);
   const customAsMissions: Mission[] = customMissions.map((c) => ({
@@ -227,22 +232,26 @@ export function PerformanceFighterDashboard({
         />
       )}
 
-      {/* Conquistas – teaser */}
-      <Link
-        href="/dashboard/conquistas"
-        className="block rounded-2xl bg-bg-secondary border border-border p-4 shadow-md hover:border-primary/40 transition-colors no-underline text-inherit"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl" aria-hidden>🏆</span>
-            <div>
-              <h2 className="text-base font-bold text-text-primary">Conquistas</h2>
-              <p className="text-sm text-text-secondary">Badges e metas que já desbloqueaste</p>
+      {/* Conquistas – resumo e link */}
+      {profileAchievements ? (
+        <ProfileAchievements achievements={profileAchievements} backHref="/dashboard" />
+      ) : (
+        <Link
+          href="/dashboard/conquistas"
+          className="block rounded-2xl bg-bg-secondary border border-border p-4 shadow-md hover:border-primary/40 transition-colors no-underline text-inherit"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl" aria-hidden>🏆</span>
+              <div>
+                <h2 className="text-base font-bold text-text-primary">Conquistas</h2>
+                <p className="text-sm text-text-secondary">Badges e metas que já desbloqueaste</p>
+              </div>
             </div>
+            <span className="text-sm font-medium text-primary">Ver todas →</span>
           </div>
-          <span className="text-sm font-medium text-primary">Ver todas →</span>
-        </div>
-      </Link>
+        </Link>
+      )}
 
       {/* Última avaliação: treinador, data e comentário */}
       {lastEvaluation && (
