@@ -30,6 +30,30 @@ function SubmitEvaluationButton({ onClose }: { onClose: () => void }) {
   );
 }
 
+function FormLoadingBar() {
+  const { pending } = useFormStatus();
+  if (!pending) return null;
+  return (
+    <div
+      className="absolute top-0 left-0 right-0 z-10 h-1 bg-[var(--primary)]/20 overflow-hidden rounded-t-2xl"
+      role="progressbar"
+      aria-valuetext="A guardar avaliação…"
+    >
+      <div
+        className="h-full w-1/2 bg-[var(--primary)]"
+        style={{ animation: "loading-bar 1.2s ease-in-out infinite" }}
+      />
+      <style>{`
+        @keyframes loading-bar {
+          0% { transform: translateX(-100%); }
+          50% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export type StudentProfileForModal = {
   name: string | null;
   email: string;
@@ -218,7 +242,7 @@ export function CoachStudentProfileModal(props: Props) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className={`card coach-profile-modal-card bg-[var(--bg)] border border-[var(--border)] rounded-2xl shadow-xl flex flex-col max-h-[90vh] w-full overflow-hidden ${useDynamicForm ? "max-w-[100vw] md:max-w-[900px]" : ""}`}
+        className={`card coach-profile-modal-card relative bg-[var(--bg)] border border-[var(--border)] rounded-2xl shadow-xl flex flex-col max-h-[90vh] w-full overflow-hidden ${useDynamicForm ? "max-w-[100vw] md:max-w-[900px]" : ""}`}
         style={!useDynamicForm ? { maxWidth: "min(480px, 100%)" } : undefined}
         onClick={(e) => e.stopPropagation()}
       >
@@ -237,6 +261,7 @@ export function CoachStudentProfileModal(props: Props) {
         </div>
 
         <form ref={formRef} action={formAction} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <FormLoadingBar />
         <div className="flex flex-1 min-h-0 overflow-hidden">
           {useDynamicForm && evaluationConfig && (
             <nav
