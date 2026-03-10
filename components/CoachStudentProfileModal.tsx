@@ -218,8 +218,8 @@ export function CoachStudentProfileModal(props: Props) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="card coach-profile-modal-card bg-[var(--bg)] border border-[var(--border)] rounded-2xl shadow-xl flex flex-col max-h-[90vh] w-full overflow-hidden"
-        style={{ maxWidth: useDynamicForm ? "min(900px, 100%)" : "min(480px, 100%)" }}
+        className={`card coach-profile-modal-card bg-[var(--bg)] border border-[var(--border)] rounded-2xl shadow-xl flex flex-col max-h-[90vh] w-full overflow-hidden ${useDynamicForm ? "max-w-[100vw] md:max-w-[900px]" : ""}`}
+        style={!useDynamicForm ? { maxWidth: "min(480px, 100%)" } : undefined}
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`
@@ -240,7 +240,7 @@ export function CoachStudentProfileModal(props: Props) {
         <div className="flex flex-1 min-h-0 overflow-hidden">
           {useDynamicForm && evaluationConfig && (
             <nav
-              className="shrink-0 w-44 py-4 pl-4 pr-2 border-r border-[var(--border)] overflow-y-auto"
+              className="hidden md:block shrink-0 w-44 py-4 pl-4 pr-2 border-r border-[var(--border)] overflow-y-auto"
               aria-label="Navegação por categoria"
             >
               <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2 px-2">
@@ -327,6 +327,33 @@ export function CoachStudentProfileModal(props: Props) {
 
                 {useDynamicForm && evaluationConfig && (
                   <>
+                    <label className="md:hidden flex flex-col gap-1.5">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Ir para categoria</span>
+                      <select
+                        className="input min-h-11 rounded-lg w-full"
+                        aria-label="Selecionar categoria para navegar"
+                        defaultValue=""
+                        onChange={(e) => {
+                          const name = e.target.value;
+                          if (!name) return;
+                          const el = categorySectionRefs.current[name];
+                          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          e.target.value = "";
+                        }}
+                      >
+                        <option value="" disabled>Selecionar…</option>
+                        {evaluationConfig.categorias.map((cat) => {
+                          const status = getSectionStatus(cat, scores, touchedIds);
+                          const avg = categoryAverages.get(cat.nome);
+                          const Icon = status === "complete" ? "✓" : status === "partial" ? "•" : "○";
+                          return (
+                            <option key={cat.nome} value={cat.nome}>
+                              {Icon} {cat.nome}{avg != null ? ` — média ${avg}` : ""}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </label>
                     <div className="rounded-xl border border-[var(--primary)]/30 bg-[var(--primary)]/5 p-4 space-y-3">
                       <p className="text-sm font-semibold text-[var(--text-primary)] m-0">Valor base da avaliação</p>
                       <div className="flex flex-wrap items-center gap-2">
