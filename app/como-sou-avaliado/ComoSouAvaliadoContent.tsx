@@ -250,8 +250,21 @@ export function ComoSouAvaliadoContent({
                 <div className="min-w-0 flex-1">
                   <h2 className="text-base font-semibold text-text-primary">{detail.title}</h2>
                   <p className="text-xs text-text-secondary">
-                    {detail.groups.length} categorias ·{" "}
-                    {detail.groups.reduce((s, g) => s + (g.items?.length ?? 0), 0)} critérios
+                    {detail.groups.reduce(
+                      (s, g) =>
+                        s + (g.subGroups?.length ?? (g.items?.length ? 1 : 0)),
+                      0
+                    )}{" "}
+                    categorias ·{" "}
+                    {detail.groups.reduce(
+                      (s, g) =>
+                        s +
+                        (g.subGroups?.reduce((a, sg) => a + (sg.items?.length ?? 0), 0) ??
+                          g.items?.length ??
+                          0),
+                      0
+                    )}{" "}
+                    critérios
                   </p>
                 </div>
                 {hasScores && avg > 0 && (
@@ -283,70 +296,87 @@ export function ComoSouAvaliadoContent({
                     <p className="text-sm text-text-secondary leading-relaxed">{intro}</p>
                   )}
                   {detail.groups.map((group: DetailGroup, gi: number) => {
-                    const catKey = `${dimKey}-${gi}`;
-                    const isCatOpen = openCategories.has(catKey);
-                    const items = group.items ?? [];
+                    const categories = group.subGroups ?? (group.items?.length ? [group] : []);
+                    const modalityTitle = group.subGroups ? group.title : null;
 
                     return (
-                      <div key={gi} className="rounded-lg border border-border bg-bg overflow-hidden">
-                        <button
-                          type="button"
-                          onClick={() => toggleCategory(catKey)}
-                          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-bg-secondary/50 text-sm font-semibold text-text-primary"
-                          aria-expanded={isCatOpen}
-                        >
-                          <span>{group.title}</span>
-                          <span className="text-text-secondary">
-                            {items.length} critérios
-                          </span>
-                          <span
-                            className="shrink-0 text-text-secondary transition-transform"
-                            style={{ transform: isCatOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-                          >
-                            ▾
-                          </span>
-                        </button>
-                        {isCatOpen && (
-                          <div className="border-t border-border px-3 py-2 space-y-1.5">
-                            {group.note && (
-                              <p className="text-xs italic text-text-secondary mb-2">
-                                {group.note}
-                              </p>
-                            )}
-                            {items.map((item: string | DetailItem, ii: number) => {
-                              const label = typeof item === "string" ? item : (item as DetailItem).label;
-                              const note = typeof item === "string" ? null : (item as DetailItem).note;
-                              return (
-                                <div
-                                  key={ii}
-                                  className="group flex items-start gap-2 text-sm"
-                                  title={note ?? undefined}
-                                >
-                                  <span className="text-primary/80 mt-0.5">•</span>
-                                  <div className="min-w-0 flex-1">
-                                    <span className="font-medium text-text-primary">
-                                      {label}
-                                    </span>
-                                    {note && (
-                                      <span className="block text-xs text-text-secondary mt-0.5">
-                                        {note}
-                                      </span>
-                                    )}
-                                  </div>
-                                  {note && (
-                                    <span
-                                      className="shrink-0 w-4 h-4 rounded-full border border-border text-[10px] flex items-center justify-center text-text-secondary cursor-help"
-                                      title={note}
-                                      aria-label={`Mais informações: ${note}`}
-                                    >
-                                      ?
-                                    </span>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
+                      <div key={gi} className="space-y-2">
+                        {modalityTitle && (
+                          <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">
+                            {modalityTitle}
+                          </h3>
                         )}
+                        {categories.map((cat: DetailGroup, ci: number) => {
+                          const catKey = `${dimKey}-${gi}-${ci}`;
+                          const isCatOpen = openCategories.has(catKey);
+                          const items = cat.items ?? [];
+
+                          return (
+                            <div
+                              key={ci}
+                              className="rounded-lg border border-border bg-bg overflow-hidden"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => toggleCategory(catKey)}
+                                className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-bg-secondary/50 text-sm font-semibold text-text-primary"
+                                aria-expanded={isCatOpen}
+                              >
+                                <span>{cat.title}</span>
+                                <span className="text-text-secondary">
+                                  {items.length} critérios
+                                </span>
+                                <span
+                                  className="shrink-0 text-text-secondary transition-transform"
+                                  style={{ transform: isCatOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                                >
+                                  ▾
+                                </span>
+                              </button>
+                              {isCatOpen && (
+                                <div className="border-t border-border px-3 py-2 space-y-1.5">
+                                  {cat.note && (
+                                    <p className="text-xs italic text-text-secondary mb-2">
+                                      {cat.note}
+                                    </p>
+                                  )}
+                                  {items.map((item: string | DetailItem, ii: number) => {
+                                    const label = typeof item === "string" ? item : (item as DetailItem).label;
+                                    const note = typeof item === "string" ? null : (item as DetailItem).note;
+                                    return (
+                                      <div
+                                        key={ii}
+                                        className="group flex items-start gap-2 text-sm"
+                                        title={note ?? undefined}
+                                      >
+                                        <span className="text-primary/80 mt-0.5">•</span>
+                                        <div className="min-w-0 flex-1">
+                                          <span className="font-medium text-text-primary">
+                                            {label}
+                                          </span>
+                                          {note && (
+                                            <span className="block text-xs text-text-secondary mt-0.5">
+                                              {note}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {note && (
+                                          <span
+                                            className="shrink-0 w-4 h-4 rounded-full border border-border text-[10px] flex items-center justify-center text-text-secondary cursor-help"
+                                            title={note}
+                                            aria-label={`Mais informações: ${note}`}
+                                          >
+                                            ?
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })}

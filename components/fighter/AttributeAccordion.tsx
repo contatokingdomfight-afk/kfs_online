@@ -82,14 +82,18 @@ function AccordionSection({
               const suffix = ` (${primaryModalityLabel})`;
               return group.title.endsWith(suffix) || !group.title.includes(" (");
             })
-            .map((group, gi) => (
-            <div key={gi} className="space-y-2">
+            .flatMap((group, gi) => {
+              const subGroups = group.subGroups ?? (group.items?.length ? [{ title: group.title, items: group.items, note: group.note }] : []);
+              return subGroups.map((sg, sgi) => ({ ...sg, key: `${gi}-${sgi}` }));
+            })
+            .map((group) => (
+            <div key={group.key} className="space-y-2">
               <p className="text-sm font-semibold text-text-primary">{group.title}</p>
               {group.note && (
                 <p className="text-xs text-text-secondary italic">{group.note}</p>
               )}
               <ul className="space-y-3 list-none pl-0">
-                {group.items.map((item, i) => {
+                {(group.items ?? []).map((item, i) => {
                   const label = typeof item === "string" ? item : (item as DetailItem).label;
                   const note = typeof item === "string" ? undefined : (item as DetailItem).note;
                   return (

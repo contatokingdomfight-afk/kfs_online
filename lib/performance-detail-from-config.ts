@@ -10,16 +10,20 @@ const DIMENSION_LABELS: Record<string, string> = Object.fromEntries(
 
 export type ConfigWithModality = { modality: string; config: ModalityEvaluationConfigPayload };
 
+const DIMENSIONS_TO_GROUP_BY_MODALITY = ["tecnico", "tatico"] as const;
+
 /**
  * Constrói a estrutura "Por componente" a partir dos critérios cadastrados
  * (Admin → Critérios de avaliação). Cada dimensão geral (Técnico, Tático, etc.)
  * é preenchida com os componentes e critérios reais das modalidades.
+ * Para Técnico e Tático: agrupa categorias por modalidade (Muay Thai, Boxing, Kickboxing).
  */
 export function buildPerformanceDetailFromConfigs(
   configs: ConfigWithModality[],
   modalityLabels?: Map<string, string>
 ): Record<string, DimensionDetail> {
   const byDim: Record<string, { title: string; groups: DetailGroup[] }> = {};
+  const hasMultipleModalities = configs.length > 1;
 
   for (const { modality, config } of configs) {
     const modalityLabel = modalityLabels?.get(modality) ?? modality;
@@ -35,20 +39,37 @@ export function buildPerformanceDetailFromConfigs(
         };
       }
 
-      const groupTitle =
-        configs.length > 1 && configs.some((c) => c.modality !== modality)
-          ? `${cat.nome} (${modalityLabel})`
-          : cat.nome;
-
       const items: DetailItem[] = cat.criterios.map((c) => ({
         label: c.label,
         note: c.description ?? undefined,
       }));
 
-      byDim[dim].groups.push({
-        title: groupTitle,
+      const categoryGroup: DetailGroup = {
+        title: cat.nome,
         items,
-      });
+        note: undefined,
+      };
+
+      if (
+        hasMultipleModalities &&
+        DIMENSIONS_TO_GROUP_BY_MODALITY.includes(dim as (typeof DIMENSIONS_TO_GROUP_BY_MODALITY)[number])
+      ) {
+        let modalityGroup = byDim[dim].groups.find(
+          (g) => g.title === modalityLabel && g.subGroups
+        );
+        if (!modalityGroup) {
+          modalityGroup = { title: modalityLabel, subGroups: [] };
+          byDim[dim].groups.push(modalityGroup);
+        }
+        modalityGroup.subGroups!.push(categoryGroup);
+      } else {
+        const groupTitle =
+          hasMultipleModalities ? `${cat.nome} (${modalityLabel})` : cat.nome;
+        byDim[dim].groups.push({
+          title: groupTitle,
+          items,
+        });
+      }
     }
   }
 

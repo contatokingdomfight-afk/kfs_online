@@ -4,7 +4,13 @@
  */
 
 export type DetailItem = { label: string; note?: string };
-export type DetailGroup = { title: string; items: (string | DetailItem)[]; note?: string };
+export type DetailGroup = {
+  title: string;
+  items?: (string | DetailItem)[];
+  /** Subgrupos (ex.: categorias dentro de uma modalidade) */
+  subGroups?: DetailGroup[];
+  note?: string;
+};
 export type DimensionDetail = { title: string; groups: DetailGroup[] };
 
 const TECNICO: DimensionDetail = {
