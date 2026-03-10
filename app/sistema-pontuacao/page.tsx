@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PilaresAccordion } from "./PilaresAccordion";
 
 export const metadata: Metadata = {
   title: "Sistema de pontuação | Kingdom Fight School",
@@ -15,24 +16,7 @@ export default function SistemaPontuacaoPage() {
         Esta página explica como as avaliações, o radar de performance, as faixas e o XP funcionam na plataforma.
       </p>
 
-      <section className="card" style={{ padding: "clamp(20px, 5vw, 28px)", marginBottom: "clamp(20px, 5vw, 28px)" }}>
-        <h2 style={{ margin: "0 0 12px 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Os 5 pilares da avaliação
-        </h2>
-        <p style={{ margin: "0 0 16px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-          Cada atleta é avaliado em cinco dimensões gerais, que aparecem no teu radar de performance:
-        </p>
-        <ul style={{ margin: "0 0 16px 0", paddingLeft: "1.25em", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)", lineHeight: 1.7 }}>
-          <li><strong>Técnico</strong> — execução técnica (socos, chutes, clinch, defesas, etc., consoante a modalidade)</li>
-          <li><strong>Tático</strong> — leitura de luta, posicionamento, controle de distância, estratégias ofensivas e defensivas</li>
-          <li><strong>Físico</strong> — condicionamento, força e resistência</li>
-          <li><strong>Mental</strong> — foco, calma sob pressão e consistência</li>
-          <li><strong>Teórico</strong> — conhecimento das regras, combate e conceitos da modalidade</li>
-        </ul>
-        <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-          O treinador avalia critérios detalhados por modalidade (Muay Thai, Boxe, etc.). Esses critérios são depois agregados nestes 5 pilares para o gráfico radar.
-        </p>
-      </section>
+      <PilaresAccordion />
 
       <section className="card" style={{ padding: "clamp(20px, 5vw, 28px)", marginBottom: "clamp(20px, 5vw, 28px)" }}>
         <h2 style={{ margin: "0 0 12px 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
