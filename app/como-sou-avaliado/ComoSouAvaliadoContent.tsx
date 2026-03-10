@@ -74,31 +74,16 @@ export function ComoSouAvaliadoContent({
   dimensionAverages = {},
   dimensionHistory = {},
 }: Props) {
-  const [search, setSearch] = useState("");
   const [filterDim, setFilterDim] = useState<string | null>(null);
   const [openDim, setOpenDim] = useState<string | null>(detailOrder[0] ?? null);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
   const hasScores = Object.keys(dimensionAverages).length > 0;
 
-  const filteredOrder = useMemo(() => {
-    let order = filterDim ? [filterDim] : detailOrder;
-    if (!search.trim()) return order;
-    const q = search.toLowerCase().trim();
-    return order.filter((dimKey) => {
-      const detail = detailByDimension[dimKey];
-      if (!detail) return false;
-      if (detail.title.toLowerCase().includes(q)) return true;
-      for (const g of detail.groups ?? []) {
-        if (g.title.toLowerCase().includes(q)) return true;
-        for (const item of g.items ?? []) {
-          const label = typeof item === "string" ? item : (item as DetailItem).label;
-          if (label.toLowerCase().includes(q)) return true;
-        }
-      }
-      return false;
-    });
-  }, [detailOrder, filterDim, search, detailByDimension]);
+  const filteredOrder = useMemo(
+    () => (filterDim ? [filterDim] : detailOrder),
+    [detailOrder, filterDim]
+  );
 
   const toggleCategory = (key: string) => {
     setOpenCategories((prev) => {
@@ -182,45 +167,6 @@ export function ComoSouAvaliadoContent({
           );
         })}
       </section>
-
-      {/* Filtros e busca */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <input
-          type="search"
-          placeholder="Buscar critério ou categoria..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-0 rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
-          aria-label="Buscar"
-        />
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setFilterDim(null)}
-            className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
-              !filterDim ? "border-primary bg-primary/10 text-primary" : "border-border text-text-secondary hover:bg-bg-secondary"
-            }`}
-          >
-            Todas
-          </button>
-          {detailOrder.map((dimKey) => {
-            const detail = detailByDimension[dimKey];
-            if (!detail) return null;
-            return (
-              <button
-                key={dimKey}
-                type="button"
-                onClick={() => setFilterDim(filterDim === dimKey ? null : dimKey)}
-                className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
-                  filterDim === dimKey ? "border-primary bg-primary/10 text-primary" : "border-border text-text-secondary hover:bg-bg-secondary"
-                }`}
-              >
-                {detail.title}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Accordions: Dimensão → Categoria → Critérios */}
       <div className="space-y-2">
@@ -386,13 +332,6 @@ export function ComoSouAvaliadoContent({
           );
         })}
       </div>
-
-      {filteredOrder.length === 0 && (search || filterDim) && (
-        <p className="text-center text-text-secondary py-8">
-          Nenhum resultado para &quot;{search}&quot;
-          {filterDim && ` em ${detailByDimension[filterDim]?.title}`}.
-        </p>
-      )}
 
       <p className="text-sm text-text-secondary">
         {hasScores ? (
