@@ -71,7 +71,7 @@ function BeltNode({
         <button
           type="button"
           className={`
-            w-9 h-9 rounded-full flex items-center justify-center text-base
+            w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-sm
             transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]
             ${bgClass} ${isCurrent ? `ring-2 ${ringClass} scale-105 shadow-md` : "ring-2 ring-[var(--border)]"}
             ${isPast ? "opacity-70" : ""}
@@ -98,7 +98,7 @@ function BeltNode({
       {showConnector && (
         <div
           className={`
-            w-4 sm:w-8 h-0.5 rounded mx-0.5 flex-shrink-0
+            w-2 sm:w-5 h-0.5 rounded mx-0.5 flex-shrink-0
             ${isPast ? "bg-[var(--primary)]/50" : "bg-[var(--border)]"}
           `}
           aria-hidden

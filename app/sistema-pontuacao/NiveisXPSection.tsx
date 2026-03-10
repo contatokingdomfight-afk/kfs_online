@@ -27,16 +27,16 @@ export function NiveisXPSection() {
         <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-3">
           Progressão de níveis (resumo)
         </p>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           {BELT_ORDER.map((beltId) => {
             const d = BELT_DISPLAY[beltId];
             return (
               <div
                 key={beltId}
-                className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5"
+                className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2 py-1"
               >
-                <span className="text-base" aria-hidden>{d.emoji}</span>
-                <span className="text-sm font-medium text-[var(--text-primary)]">{d.label}</span>
+                <span className="text-sm" aria-hidden>{d.emoji}</span>
+                <span className="text-xs font-medium text-[var(--text-primary)]">{d.label}</span>
               </div>
             );
           })}

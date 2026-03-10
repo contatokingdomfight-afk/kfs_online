@@ -233,9 +233,14 @@ export function PerformanceFighterDashboard({
       {/* Accordion por dimensão (só quando não estamos no novo dashboard de resultados) */}
       {!evaluationResultsData && (
         <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-          <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-3">
+          <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-2">
             Detalhe por dimensão
           </h2>
+          <p className="text-sm text-text-secondary mb-4">
+            {primaryModalityLabel
+              ? `Secções por dimensão; dentro de cada uma, critérios da tua modalidade (${primaryModalityLabel}). Cada critério: nome, descrição, 1–5 estrelas e barra de progresso.`
+              : "Secções por dimensão; dentro de cada uma, grupos por modalidade. Cada critério: nome, pergunta/descrição, 1–5 estrelas e barra opcional."}
+          </p>
           <AttributeAccordion
             detailOrder={detailOrder}
             detailSource={detailSource}

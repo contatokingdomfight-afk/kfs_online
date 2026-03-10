@@ -88,26 +88,27 @@ function AccordionSection({
               {group.note && (
                 <p className="text-xs text-text-secondary italic">{group.note}</p>
               )}
-              <ul className="space-y-2 list-none pl-0">
+              <ul className="space-y-3 list-none pl-0">
                 {group.items.map((item, i) => {
                   const label = typeof item === "string" ? item : (item as DetailItem).label;
                   const note = typeof item === "string" ? undefined : (item as DetailItem).note;
                   return (
                     <li
                       key={i}
-                      className="flex flex-wrap items-center justify-between gap-2 py-2 px-3 rounded-lg bg-bg border border-border/50"
+                      className="rounded-lg bg-bg border border-border/50 p-3 space-y-2"
                     >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-text-primary">{label}</p>
-                        {note && (
-                          <p className="text-xs text-text-secondary mt-0.5">{note}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <p className="text-sm font-medium text-text-primary">{label}</p>
+                      {note && (
+                        <p className="text-xs text-text-secondary">{note}</p>
+                      )}
+                      <div className="flex items-center gap-3 flex-wrap">
                         <StarRating value={starValue} />
-                        <div className="w-16 h-1.5 rounded-full bg-border overflow-hidden">
+                        <div
+                          className="w-20 h-1 rounded-full bg-border overflow-hidden flex-shrink-0"
+                          aria-hidden
+                        >
                           <div
-                            className="h-full rounded-full bg-primary transition-all"
+                            className="h-full rounded-full bg-primary/80 transition-all"
                             style={{
                               width: `${maxScore > 0 ? (scoreVal / maxScore) * 100 : 0}%`,
                             }}
@@ -134,31 +135,23 @@ export function AttributeAccordion({
   primaryModalityLabel = null,
 }: Props) {
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-bold text-text-primary">Detalhe por componente</h2>
-      <p className="text-sm text-text-secondary mb-4">
-        {primaryModalityLabel
-          ? `Critérios da tua modalidade (${primaryModalityLabel}) e a tua evolução.`
-          : "Expande cada dimensão para ver critérios por modalidade e a tua evolução."}
-      </p>
-      <div className="flex flex-col gap-3">
-        {detailOrder.map((dimId) => {
-          const detail = detailSource[dimId];
-          if (!detail) return null;
-          const score = scores[dimId];
-          return (
-            <AccordionSection
-              key={dimId}
-              dimId={dimId}
-              detail={detail}
-              score={score}
-              maxScore={maxScore}
-              defaultOpen={dimId === detailOrder[0]}
-              primaryModalityLabel={primaryModalityLabel}
-            />
-          );
-        })}
-      </div>
-    </section>
+    <div className="flex flex-col gap-3">
+      {detailOrder.map((dimId) => {
+        const detail = detailSource[dimId];
+        if (!detail) return null;
+        const score = scores[dimId];
+        return (
+          <AccordionSection
+            key={dimId}
+            dimId={dimId}
+            detail={detail}
+            score={score}
+            maxScore={maxScore}
+            defaultOpen={dimId === detailOrder[0]}
+            primaryModalityLabel={primaryModalityLabel}
+          />
+        );
+      })}
+    </div>
   );
 }
