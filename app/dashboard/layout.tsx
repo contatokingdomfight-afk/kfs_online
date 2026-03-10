@@ -30,14 +30,20 @@ export default async function DashboardLayout({
     { label: t("navHome"), href: "/dashboard" },
     { label: t("navAthleteProfile"), href: "/dashboard/performance" },
     { label: "Histórico de avaliações", href: "/dashboard/performance/historico" },
-    { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+    {
+      label: "Avaliação e pontuação",
+      href: "/como-sou-avaliado",
+      children: [
+        { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+        { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
+      ],
+    },
     { label: t("navConquests"), href: "/dashboard/conquistas" },
     { label: t("navStore"), href: "/dashboard/loja" },
     { label: t("navLibrary"), href: "/dashboard/biblioteca" },
     { label: t("navEvents"), href: "/dashboard/eventos" },
     { label: t("navFinance"), href: "/dashboard/financeiro" },
     { label: t("navProfile"), href: "/dashboard/perfil" },
-    { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
     { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
   ];
 

@@ -18,7 +18,14 @@ export default async function AdminLayout({
   const t = getTranslations(locale as "pt" | "en");
   const adminLinks = [
     { label: t("navHome"), href: "/admin" },
-    { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+    {
+      label: "Avaliação e pontuação",
+      href: "/como-sou-avaliado",
+      children: [
+        { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+        { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
+      ],
+    },
     { label: t("navSchools"), href: "/admin/escolas" },
     { label: t("navStudents"), href: "/admin/alunos" },
     { label: t("navAthletes"), href: "/admin/atletas" },
@@ -39,7 +46,6 @@ export default async function AdminLayout({
     { label: t("navTrials"), href: "/admin/experimentais" },
     { label: t("navCoaches"), href: "/admin/coaches" },
     { label: t("navLeads"), href: "/admin/leads" },
-    { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
   ];
 
   return (

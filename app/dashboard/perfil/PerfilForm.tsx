@@ -5,6 +5,7 @@ import { useFormState } from "react-dom";
 import { saveStudentProfile, type SaveProfileResult } from "./actions";
 import { getTranslations } from "@/lib/i18n";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 
 type Props = {
   initial: {
@@ -45,6 +46,7 @@ export function PerfilForm({ initial, locale }: Props) {
 
   return (
     <>
+      <LoadingOverlay open={isPending} message={t("savingLabel")} />
       <SuccessConfirmModal
         open={showSuccess}
         onClose={() => setUserDismissed(true)}

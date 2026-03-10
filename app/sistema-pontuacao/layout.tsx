@@ -36,6 +36,14 @@ export default async function SistemaPontuacaoLayout({
     );
     sidebarLinks = [
       { label: t("navHome"), href: "/admin" },
+      {
+        label: "Avaliação e pontuação",
+        href: "/como-sou-avaliado",
+        children: [
+          { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+          { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
+        ],
+      },
       { label: t("navSchools"), href: "/admin/escolas" },
       { label: t("navStudents"), href: "/admin/alunos" },
       { label: t("navAthletes"), href: "/admin/atletas" },
@@ -56,13 +64,20 @@ export default async function SistemaPontuacaoLayout({
       { label: t("navTrials"), href: "/admin/experimentais" },
       { label: t("navCoaches"), href: "/admin/coaches" },
       { label: t("navLeads"), href: "/admin/leads" },
-      { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
     ];
   } else if (dbUser.role === "COACH") {
     sidebarTitle = t("coachTitle");
     headerExtra = <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>;
     sidebarLinks = [
       { label: t("navHome"), href: "/coach" },
+      {
+        label: "Avaliação e pontuação",
+        href: "/como-sou-avaliado",
+        children: [
+          { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+          { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
+        ],
+      },
       { label: t("navEnterClass"), href: "/coach/aula" },
       { label: t("navWeekTheme"), href: "/coach/tema-semana" },
       { label: t("navAgenda"), href: "/coach/agenda" },
@@ -72,7 +87,6 @@ export default async function SistemaPontuacaoLayout({
       { label: t("libraryTitle"), href: "/coach/biblioteca" as string },
       { label: "Financeiro", href: "/coach/financeiro" as string },
       { label: t("navSettings"), href: "/coach/configuracoes" as string },
-      { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
       ...(coachStudentId ? [{ label: t("myStudentArea"), href: "/dashboard" as string }] : []),
     ];
   } else {
@@ -86,7 +100,6 @@ export default async function SistemaPontuacaoLayout({
       { label: t("navEvents"), href: "/dashboard/eventos" },
       { label: t("navFinance"), href: "/dashboard/financeiro" },
       { label: t("navProfile"), href: "/dashboard/perfil" },
-      { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
       { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
     ];
   }

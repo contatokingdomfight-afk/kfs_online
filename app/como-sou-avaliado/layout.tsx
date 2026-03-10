@@ -31,7 +31,14 @@ export default async function ComoSouAvaliadoLayout({
     sidebarTitle = "Admin";
     sidebarLinks = [
       { label: t("navHome"), href: "/admin" },
-      { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+      {
+        label: "Avaliação e pontuação",
+        href: "/como-sou-avaliado",
+        children: [
+          { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+          { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
+        ],
+      },
       { label: t("navSchools"), href: "/admin/escolas" },
       { label: t("navStudents"), href: "/admin/alunos" },
       { label: t("navAthletes"), href: "/admin/atletas" },
@@ -48,7 +55,6 @@ export default async function ComoSouAvaliadoLayout({
       { label: t("navTrials"), href: "/admin/experimentais" },
       { label: t("navCoaches"), href: "/admin/coaches" },
       { label: t("navLeads"), href: "/admin/leads" },
-      { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
     ];
   } else if (dbUser.role === "COACH") {
     sidebarTitle = t("coachTitle");
@@ -65,7 +71,6 @@ export default async function ComoSouAvaliadoLayout({
       { label: t("libraryTitle"), href: "/coach/biblioteca" },
       { label: "Financeiro", href: "/coach/financeiro" },
       { label: t("navSettings"), href: "/coach/configuracoes" },
-      { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
       ...(coachStudentId ? [{ label: t("myStudentArea"), href: "/dashboard" }] : []),
     ];
   } else {
@@ -74,14 +79,20 @@ export default async function ComoSouAvaliadoLayout({
       { label: t("navHome"), href: "/dashboard" },
       { label: t("navAthleteProfile"), href: "/dashboard/performance" },
       { label: "Histórico de avaliações", href: "/dashboard/performance/historico" },
-      { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+      {
+        label: "Avaliação e pontuação",
+        href: "/como-sou-avaliado",
+        children: [
+          { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+          { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
+        ],
+      },
       { label: t("navConquests"), href: "/dashboard/conquistas" },
       { label: t("navStore"), href: "/dashboard/loja" },
       { label: t("navLibrary"), href: "/dashboard/biblioteca" },
       { label: t("navEvents"), href: "/dashboard/eventos" },
       { label: t("navFinance"), href: "/dashboard/financeiro" },
       { label: t("navProfile"), href: "/dashboard/perfil" },
-      { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
       { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
     ];
   }
