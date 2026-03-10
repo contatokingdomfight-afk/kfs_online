@@ -22,6 +22,7 @@ import { getAchievementUnlockContext, getAchievementsWithStatus } from "@/lib/ac
 import type { AchievementWithStatus } from "@/lib/achievements";
 import {
   buildCriterionScores,
+  buildCriterionScoresFromDimensionScores,
   type DimensionScore,
   type CriterionScoreItem,
 } from "@/lib/evaluation-results-data";
@@ -134,8 +135,8 @@ export default async function DashboardPerformancePage() {
         scoresByModality = computePerformanceScoresByModality(evaluations, configByModality, LAST_N_PER_MODALITY, true);
         const latestEval = evalsRows![0] as { scores?: Record<string, number> | null; coachId?: string; note?: string | null; created_at?: string | null };
         const previousEval = evalsRows!.length > 1 ? (evalsRows![1] as { scores?: Record<string, number> | null }) : null;
-        const criterionScores = buildCriterionScores(latestEval?.scores ?? null, configsForDetail, previousEval?.scores ?? null);
-        if (criterionScores.length > 0 && generalPerformanceScores !== null) {
+        const criterionScoresFromEval = buildCriterionScores(latestEval?.scores ?? null, configsForDetail, previousEval?.scores ?? null);
+        if (generalPerformanceScores !== null) {
           const dimensionScores: DimensionScore[] = GENERAL_PERFORMANCE_AXES.map((a) => ({
             id: a.id,
             label: a.label,
@@ -145,11 +146,16 @@ export default async function DashboardPerformancePage() {
           const overallScore = dimensionScores.length > 0
             ? dimensionScores.reduce((s, d) => s + d.score, 0) / dimensionScores.length
             : 0;
+          const scoresForRadar = { ...generalPerformanceScores };
+          const criterionScores =
+            criterionScoresFromEval.length > 0
+              ? criterionScoresFromEval
+              : buildCriterionScoresFromDimensionScores(configsForDetail, generalPerformanceScores);
           evaluationResultsData = {
             dimensionScores,
             criterionScores,
             overallScore,
-            scoresForRadar: { ...generalPerformanceScores },
+            scoresForRadar,
           };
         }
         if (latestEval?.coachId) {

@@ -3,6 +3,7 @@
  */
 
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
+import { categoryToGeneralDimension } from "@/lib/performance-utils";
 
 export type DimensionScore = {
   id: string;
@@ -52,6 +53,42 @@ export function buildCriterionScores(
             previousEvalScores && previousEvalScores[c.id] != null
               ? Math.min(maxScore, Math.max(0, Number(previousEvalScores[c.id])))
               : undefined,
+        });
+      }
+    }
+  }
+  return result.sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Constrói lista de critérios atribuindo a cada um a pontuação da sua dimensão geral.
+ * Usado quando a avaliação não tem scores por critério (só gas/technique/strength/theory):
+ * assim o novo dashboard (barras, categorias, filtros) é sempre mostrado.
+ */
+export function buildCriterionScoresFromDimensionScores(
+  configs: { modality: string; config: ModalityEvaluationConfigPayload }[],
+  dimensionScores: Record<string, number>
+): CriterionScoreItem[] {
+  const maxScore = 10;
+  const result: CriterionScoreItem[] = [];
+  const seen = new Set<string>();
+
+  for (const { modality, config } of configs) {
+    for (const cat of config.categorias) {
+      const categoryName = cat.nome;
+      const dimId = cat.code ?? categoryToGeneralDimension(cat.nome) ?? "tecnico";
+      const score = Math.min(maxScore, Math.max(0, dimensionScores[dimId] ?? 0));
+
+      for (const c of cat.criterios) {
+        if (seen.has(c.id)) continue;
+        seen.add(c.id);
+        result.push({
+          criterionId: c.id,
+          label: c.label,
+          score,
+          maxScore,
+          modality,
+          categoryName,
         });
       }
     }
