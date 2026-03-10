@@ -135,11 +135,11 @@ export default async function DashboardPerformancePage() {
         const latestEval = evalsRows![0] as { scores?: Record<string, number> | null; coachId?: string; note?: string | null; created_at?: string | null };
         const previousEval = evalsRows!.length > 1 ? (evalsRows![1] as { scores?: Record<string, number> | null }) : null;
         const criterionScores = buildCriterionScores(latestEval?.scores ?? null, configsForDetail, previousEval?.scores ?? null);
-        if (criterionScores.length > 0 && generalPerformanceScores) {
+        if (criterionScores.length > 0 && generalPerformanceScores !== null) {
           const dimensionScores: DimensionScore[] = GENERAL_PERFORMANCE_AXES.map((a) => ({
             id: a.id,
             label: a.label,
-            score: generalPerformanceScores[a.id] ?? 0,
+            score: generalPerformanceScores![a.id] ?? 0,
             maxScore: 10,
           }));
           const overallScore = dimensionScores.length > 0
