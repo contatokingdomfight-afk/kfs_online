@@ -63,8 +63,12 @@ export async function loadEvaluationConfigForModality(
     const categorias = components!
       .map((comp) => {
         const dim = comp.dimensionId ? dimensionById.get(comp.dimensionId) : null;
+        const nome =
+          dim
+            ? (comp.name === dim.name ? dim.name : `${dim.name} - ${comp.name}`)
+            : comp.name;
         return {
-          nome: dim?.name ?? comp.name,
+          nome,
           code: dim?.code,
           criterios: (criteriaByComponent.get(comp.id) ?? []).map((cr) => ({
             id: cr.id,
