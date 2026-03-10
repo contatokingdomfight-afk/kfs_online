@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import { savePhysicalAssessment } from "./actions";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import {
   OBJECTIVE_OPTIONS,
   MEDICAL_CONDITIONS,
@@ -40,13 +41,15 @@ export function AvaliacaoFisicaForm({
   const [state, formAction] = useFormState(savePhysicalAssessment, null as { error?: string; success?: boolean } | null);
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const today = new Date().toISOString().slice(0, 10);
 
-  const handleSubmitClick = () => {
-    if (window.confirm("Confirma que pretende guardar a avaliação física? Esta ação registará a ficha e definirá a próxima renovação em 6 meses.")) {
-      formRef.current?.requestSubmit();
-    }
+  const handleSubmitClick = () => setShowConfirm(true);
+
+  const handleConfirmSubmit = () => {
+    setShowConfirm(false);
+    formRef.current?.requestSubmit();
   };
 
   return (
@@ -57,6 +60,17 @@ export function AvaliacaoFisicaForm({
           {state.error}
         </div>
       )}
+
+      <ConfirmModal
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmSubmit}
+        title="Guardar avaliação física?"
+        message="A ficha será registada e a próxima renovação ficará agendada para daqui a 6 meses. Deseja continuar?"
+        confirmLabel="Sim, guardar"
+        cancelLabel="Cancelar"
+        variant="primary"
+      />
 
       {state?.success && (
         <div
