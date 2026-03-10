@@ -739,6 +739,11 @@
     overflow: hidden;
   }
 
+  /* View-as banner não deve crescer (só o wrapper do conteúdo tem flex: 1) */
+  .app-shell > .view-as-banner-root {
+    flex: 0 0 auto;
+  }
+
   .app-shell-drawer {
     position: sticky;
     top: 0;

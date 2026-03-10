@@ -14,6 +14,7 @@ export function ViewAsBanner({ viewAs }: Props) {
 
   return (
     <div
+      className="view-as-banner-root"
       style={{
         padding: "8px 16px",
         backgroundColor: "var(--primary)",

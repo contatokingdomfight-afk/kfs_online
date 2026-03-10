@@ -168,11 +168,14 @@ export default async function DashboardPerformancePage() {
   const detailOrder = useStaticDetail ? [...PERFORMANCE_DETAIL_ORDER] : getDetailOrder(detailByDimension);
   let groupedSource = groupDetailByGeneralDimension(detailSource, detailOrder);
   let groupedOrder = getDetailOrder(groupedSource);
-  // Se após agrupar ficar vazio (ex.: códigos de dimensão sem mapeamento), usar estrutura estática para "Detalhe por dimensão/componente"
-  if (groupedOrder.length === 0) {
-    groupedSource = PERFORMANCE_DETAIL_BY_DIMENSION;
-    groupedOrder = [...PERFORMANCE_DETAIL_ORDER];
+  // Garantir as 5 dimensões: preencher com estrutura estática as que não tiverem conteúdo da config
+  const fullOrder = [...PERFORMANCE_DETAIL_ORDER];
+  for (const dim of fullOrder) {
+    if (!groupedSource[dim]?.groups?.length) {
+      groupedSource = { ...groupedSource, [dim]: PERFORMANCE_DETAIL_BY_DIMENSION[dim] };
+    }
   }
+  groupedOrder = fullOrder;
 
   const hasScores = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
 
