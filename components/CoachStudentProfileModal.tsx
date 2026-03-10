@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { saveEvaluationFromLesson } from "@/app/coach/aula/actions";
 import { saveStandaloneEvaluation } from "@/app/coach/alunos/[id]/actions";
-import { EVALUATION_LABELS_BY_MODALITY } from "@/lib/performance-utils";
+import { EVALUATION_LABELS_BY_MODALITY, GENERAL_PERFORMANCE_AXES } from "@/lib/performance-utils";
+import { categoryToGeneralDimension } from "@/lib/performance-utils";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import type { CategoryConfig, CriterionConfig } from "@/lib/evaluation-config";
@@ -139,6 +140,29 @@ export function CoachStudentProfileModal(props: Props) {
     return list;
   }, [evaluationConfig]);
 
+  const dimensionsForNav = useMemo(() => {
+    if (!evaluationConfig) return [];
+    const byDim = new Map<string, { label: string; firstCategoryName: string }>();
+    for (const cat of evaluationConfig.categorias) {
+      const dim = cat.code ?? categoryToGeneralDimension(cat.nome);
+      if (!dim) continue;
+      if (!byDim.has(dim)) {
+        const axis = GENERAL_PERFORMANCE_AXES.find((a) => a.id === dim);
+        byDim.set(dim, {
+          label: axis?.label ?? dim,
+          firstCategoryName: cat.nome,
+        });
+      }
+    }
+    const dims = GENERAL_PERFORMANCE_AXES.filter((a) => byDim.has(a.id)).map((a) => ({
+      id: a.id,
+      label: a.label,
+      firstCategoryName: byDim.get(a.id)!.firstCategoryName,
+    }));
+    const firstCat = evaluationConfig.categorias[0]?.nome;
+    return [{ id: "todas", label: "Todas", firstCategoryName: firstCat ?? "" }, ...dims];
+  }, [evaluationConfig]);
+
   const [scores, setScores] = useState<Record<string, number>>(() => {
     const o: Record<string, number> = {};
     criterionIds.forEach((id) => { o[id] = DEFAULT_BASELINE; });
@@ -266,29 +290,48 @@ export function CoachStudentProfileModal(props: Props) {
           {useDynamicForm && evaluationConfig && (
             <nav
               className="hidden md:block shrink-0 w-44 py-4 pl-4 pr-2 border-r border-[var(--border)] overflow-y-auto"
-              aria-label="Navegação por categoria"
+              aria-label="Navegação por dimensão"
             >
               <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2 px-2">
-                Categorias
+                Dimensões
               </p>
               <ul className="space-y-1 list-none m-0 p-0">
-                {evaluationConfig.categorias.map((cat) => {
-                  const status = getSectionStatus(cat, scores, touchedIds);
-                  const avg = categoryAverages.get(cat.nome);
+                {dimensionsForNav.map((dim) => {
+                  const catsInDim =
+                    dim.id === "todas"
+                      ? evaluationConfig.categorias
+                      : evaluationConfig.categorias.filter(
+                          (c) => (c.code ?? categoryToGeneralDimension(c.nome)) === dim.id
+                        );
+                  const statuses = catsInDim.map((c) => getSectionStatus(c, scores, touchedIds));
+                  const status: SectionStatus =
+                    statuses.every((s) => s === "complete")
+                      ? "complete"
+                      : statuses.some((s) => s !== "empty")
+                        ? "partial"
+                        : "empty";
+                  const avg =
+                    catsInDim.length > 0
+                      ? catsInDim.reduce((s, c) => s + (categoryAverages.get(c.nome) ?? 0), 0) / catsInDim.length
+                      : null;
                   const Icon = status === "complete" ? "✓" : status === "partial" ? "•" : "○";
                   return (
-                    <li key={cat.nome}>
+                    <li key={dim.id}>
                       <button
                         type="button"
                         className="w-full text-left py-2 px-2 rounded-lg text-sm font-medium transition-colors hover:bg-[var(--bg-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                         onClick={() => {
-                          const el = categorySectionRefs.current[cat.nome];
+                          const el = categorySectionRefs.current[dim.firstCategoryName];
                           if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
                         }}
                       >
                         <span className="text-[var(--text-primary)]" aria-hidden>{Icon}</span>
-                        <span className="ml-1.5 text-[var(--text-primary)]">{cat.nome}</span>
-                        {avg != null && <span className="block text-xs text-[var(--text-secondary)] mt-0.5">média {avg}</span>}
+                        <span className="ml-1.5 text-[var(--text-primary)]">{dim.label}</span>
+                        {avg != null && !Number.isNaN(avg) && (
+                          <span className="block text-xs text-[var(--text-secondary)] mt-0.5">
+                            média {Math.round(avg * 10) / 10}
+                          </span>
+                        )}
                       </button>
                     </li>
                   );
@@ -353,27 +396,42 @@ export function CoachStudentProfileModal(props: Props) {
                 {useDynamicForm && evaluationConfig && (
                   <>
                     <label className="md:hidden flex flex-col gap-1.5">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Ir para categoria</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Ir para dimensão</span>
                       <select
                         className="input min-h-11 rounded-lg w-full"
-                        aria-label="Selecionar categoria para navegar"
+                        aria-label="Selecionar dimensão para navegar"
                         defaultValue=""
                         onChange={(e) => {
-                          const name = e.target.value;
-                          if (!name) return;
-                          const el = categorySectionRefs.current[name];
+                          const firstCategoryName = e.target.value;
+                          if (!firstCategoryName) return;
+                          const el = categorySectionRefs.current[firstCategoryName];
                           if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
                           e.target.value = "";
                         }}
                       >
                         <option value="" disabled>Selecionar…</option>
-                        {evaluationConfig.categorias.map((cat) => {
-                          const status = getSectionStatus(cat, scores, touchedIds);
-                          const avg = categoryAverages.get(cat.nome);
+                        {dimensionsForNav.map((dim) => {
+                          const catsInDim =
+                            dim.id === "todas"
+                              ? evaluationConfig.categorias
+                              : evaluationConfig.categorias.filter(
+                                  (c) => (c.code ?? categoryToGeneralDimension(c.nome)) === dim.id
+                                );
+                          const statuses = catsInDim.map((c) => getSectionStatus(c, scores, touchedIds));
+                          const status: SectionStatus =
+                            statuses.every((s) => s === "complete")
+                              ? "complete"
+                              : statuses.some((s) => s !== "empty")
+                                ? "partial"
+                                : "empty";
+                          const avg =
+                            catsInDim.length > 0
+                              ? catsInDim.reduce((s, c) => s + (categoryAverages.get(c.nome) ?? 0), 0) / catsInDim.length
+                              : null;
                           const Icon = status === "complete" ? "✓" : status === "partial" ? "•" : "○";
                           return (
-                            <option key={cat.nome} value={cat.nome}>
-                              {Icon} {cat.nome}{avg != null ? ` — média ${avg}` : ""}
+                            <option key={dim.id} value={dim.firstCategoryName}>
+                              {Icon} {dim.label}{avg != null && !Number.isNaN(avg) ? ` — média ${Math.round(avg * 10) / 10}` : ""}
                             </option>
                           );
                         })}
