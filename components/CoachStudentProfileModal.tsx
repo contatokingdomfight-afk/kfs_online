@@ -402,7 +402,7 @@ export function CoachStudentProfileModal(props: Props) {
                           >
                             <details
                               className="evaluation-category"
-                              open={index < 2 || status !== "complete"}
+                              open={false}
                               data-status={status}
                             >
                               <summary className="flex items-center justify-between gap-2 py-3 px-4 cursor-pointer list-none select-none font-semibold text-[var(--text-primary)] text-sm">
