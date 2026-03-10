@@ -4,14 +4,6 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import type { DimensionDetail, DetailGroup, DetailItem } from "@/lib/performance-detail-structure";
 
-const DIMENSION_ICONS: Record<string, string> = {
-  tecnico: "🥊",
-  tatico: "🎯",
-  fisico: "💪",
-  mental: "🧠",
-  teorico: "📚",
-};
-
 const DIMENSION_INTROS: Record<string, string> = {
   tecnico:
     "Avaliação da execução técnica: postura, deslocamento, qualidade dos golpes (socos, chutes, cotoveladas, joelhadas, etc.), defesas e combinações.",
@@ -127,7 +119,6 @@ export function ComoSouAvaliadoContent({
           const avg = dimensionAverages[dimKey] ?? 0;
           const history = dimensionHistory[dimKey] ?? [];
           const status = getStatusColor(avg);
-          const icon = DIMENSION_ICONS[dimKey] ?? "•";
           const isFiltered = filterDim === dimKey;
 
           return (
@@ -139,9 +130,6 @@ export function ComoSouAvaliadoContent({
                 isFiltered ? "border-primary bg-primary/10 ring-2 ring-primary/30" : "border-border bg-bg-secondary"
               }`}
             >
-              <span className="text-xl" aria-hidden>
-                {icon}
-              </span>
               <span className="text-xs font-semibold text-text-primary truncate w-full text-center">
                 {detail.title}
               </span>
@@ -174,7 +162,6 @@ export function ComoSouAvaliadoContent({
           const detail = detailByDimension[dimKey];
           if (!detail?.groups?.length) return null;
           const intro = DIMENSION_INTROS[dimKey];
-          const icon = DIMENSION_ICONS[dimKey] ?? "•";
           const avg = dimensionAverages[dimKey] ?? 0;
           const status = getStatusColor(avg);
           const isOpen = openDim === dimKey;
@@ -190,9 +177,6 @@ export function ComoSouAvaliadoContent({
                 className="w-full flex items-center gap-3 p-4 text-left hover:bg-bg/50 transition-colors"
                 aria-expanded={isOpen}
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-lg">
-                  {icon}
-                </span>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-base font-semibold text-text-primary">{detail.title}</h2>
                   <p className="text-xs text-text-secondary">
