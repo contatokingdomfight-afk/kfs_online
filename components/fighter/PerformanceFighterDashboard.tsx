@@ -9,7 +9,9 @@ import { MissionCard, type Mission } from "./MissionCard";
 import { CoachFeedback } from "./CoachFeedback";
 import type { DimensionDetail } from "@/lib/performance-detail-structure";
 import type { RadarAxis } from "./RadarStatsDynamic";
-import { XP_PER_MISSION } from "@/lib/xp-missions";
+import { XP_PER_MISSION, getRankNameForIndex } from "@/lib/xp-missions";
+import { BeltProgressionSection } from "@/components/belt-progression";
+import { beltIdFromRankName } from "@/components/belt-progression/belt-progression-data";
 
 const CATEGORY_LABEL: Record<string, string> = {
   TECHNIQUE: "Técnica",
@@ -215,6 +217,15 @@ export function PerformanceFighterDashboard({
 
       {/* Objetivos / Quests */}
       <MissionCard missions={missions} />
+
+      {/* Progressão de Faixas e XP */}
+      {xpCurrent != null && xpNext != null && rankIndex != null && (
+        <BeltProgressionSection
+          currentXP={xpCurrent}
+          nextBeltXP={xpNext}
+          currentBelt={beltIdFromRankName(getRankNameForIndex(rankIndex))}
+        />
+      )}
 
       {/* Conquistas – teaser */}
       <Link
