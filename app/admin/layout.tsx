@@ -39,6 +39,7 @@ export default async function AdminLayout({
     { label: t("navTrials"), href: "/admin/experimentais" },
     { label: t("navCoaches"), href: "/admin/coaches" },
     { label: t("navLeads"), href: "/admin/leads" },
+    { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
   ];
 
   return (

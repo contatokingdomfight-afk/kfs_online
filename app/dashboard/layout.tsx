@@ -35,6 +35,7 @@ export default async function DashboardLayout({
     { label: t("navEvents"), href: "/dashboard/eventos" },
     { label: t("navFinance"), href: "/dashboard/financeiro" },
     { label: t("navProfile"), href: "/dashboard/perfil" },
+    { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
     { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
   ];
 
