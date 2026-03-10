@@ -71,7 +71,6 @@ export function CoachStudentProfileModal(props: Props) {
   const evaluationConfig = isStandalone
     ? (evaluationConfigByModality[selectedModality] ?? null)
     : initialConfig;
-  const initialScoresByModality = props.initialScoresByModality;
   const initialScoresByModalityRef = useRef(initialScoresByModality);
   initialScoresByModalityRef.current = initialScoresByModality;
 
