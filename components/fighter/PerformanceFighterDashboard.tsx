@@ -249,7 +249,7 @@ export function PerformanceFighterDashboard({
       {/* Objetivos / Quests */}
       <MissionCard missions={missions} />
 
-      {/* Progressão de Faixas e XP */}
+      {/* Progressão de Níveis e XP */}
       {xpCurrent != null && xpNext != null && rankIndex != null && (
         <BeltProgressionSection
           currentXP={xpCurrent}

@@ -29,7 +29,7 @@ export function BeltProgressionSection({
         id="belt-progression-heading"
         className="text-base font-bold uppercase tracking-wider text-[var(--text-primary)]"
       >
-        Progressão de Faixas e XP
+        Progressão de Níveis e XP
       </h2>
 
       <CurrentBeltCard

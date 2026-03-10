@@ -36,7 +36,7 @@ export function ProgressionPath({ currentBelt, className = "" }: Props) {
                 </span>
                 <div className="min-w-0">
                   <p className={`font-semibold text-sm truncate ${isCurrent ? "text-[var(--primary)]" : "text-[var(--text-primary)]"}`}>
-                    Faixa {display.label}
+                    Nível {display.label}
                   </p>
                   <p className="text-xs text-[var(--text-secondary)] truncate">{meaning}</p>
                 </div>

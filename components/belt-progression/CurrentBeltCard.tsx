@@ -12,9 +12,9 @@ type Props = {
 };
 
 const MOTIVATIONAL_MESSAGES: Record<string, string> = {
-  default: "Continua a treinar para subires de faixa.",
-  near: "Estás a aproximar-te da próxima faixa.",
-  close: "Quase lá! Mais um esforço e atinges a próxima faixa.",
+  default: "Continua a treinar para subires de nível.",
+  near: "Estás a aproximar-te do próximo nível.",
+  close: "Quase lá! Mais um esforço e atinges o próximo nível.",
 };
 
 export function CurrentBeltCard({ currentBelt, currentXP, nextBeltXP, className = "" }: Props) {

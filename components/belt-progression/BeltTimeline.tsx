@@ -15,7 +15,7 @@ export function BeltTimeline({ currentBelt, className = "" }: Props) {
   return (
     <div className={className}>
       <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-3">
-        Progressão de faixas
+        Progressão de níveis
       </p>
       <div className="flex items-center justify-between gap-1 overflow-x-auto pb-2">
         {BELT_ORDER.map((beltId, i) => {
@@ -71,17 +71,17 @@ function BeltNode({
         <button
           type="button"
           className={`
-            w-12 h-12 rounded-full flex items-center justify-center text-xl
+            w-9 h-9 rounded-full flex items-center justify-center text-base
             transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]
-            ${bgClass} ${isCurrent ? `ring-4 ${ringClass} scale-110 shadow-lg` : "ring-2 ring-[var(--border)]"}
+            ${bgClass} ${isCurrent ? `ring-2 ${ringClass} scale-105 shadow-md` : "ring-2 ring-[var(--border)]"}
             ${isPast ? "opacity-70" : ""}
-            hover:scale-110 hover:shadow-md
+            hover:scale-105 hover:shadow-md
           `}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
           onFocus={() => setShowTooltip(true)}
           onBlur={() => setShowTooltip(false)}
-          aria-label={`Faixa ${label}, XP necessário: ${formatXP(xpRequired)}`}
+          aria-label={`Nível ${label}, XP necessário: ${formatXP(xpRequired)}`}
         >
           {emoji}
         </button>
@@ -90,7 +90,7 @@ function BeltNode({
             className="absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)] shadow-xl text-sm whitespace-nowrap"
             role="tooltip"
           >
-            <p className="font-semibold text-[var(--text-primary)]">Faixa {label}</p>
+            <p className="font-semibold text-[var(--text-primary)]">Nível {label}</p>
             <p className="text-[var(--text-secondary)]">XP necessário: {formatXP(xpRequired)}</p>
           </div>
         )}

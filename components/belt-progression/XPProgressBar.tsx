@@ -38,7 +38,7 @@ export function XPProgressBar({ currentXP, nextBeltXP, className = "" }: Props) 
         aria-valuenow={currentXP}
         aria-valuemin={0}
         aria-valuemax={nextBeltXP}
-        aria-label={`Progresso: ${animatedProgress.toFixed(0)}% para a próxima faixa`}
+        aria-label={`Progresso: ${animatedProgress.toFixed(0)}% para o próximo nível`}
       >
         <div
           className="h-full rounded-full bg-gradient-to-r from-[var(--primary)] to-[var(--primary)]/80 transition-all duration-700 ease-out relative"
@@ -55,7 +55,7 @@ export function XPProgressBar({ currentXP, nextBeltXP, className = "" }: Props) 
         </div>
       </div>
       <p className="text-xs text-[var(--text-secondary)] mt-2">
-        Faltam <strong className="text-[var(--text-primary)]">{formatXP(remaining)}</strong> XP para atingir a próxima faixa.
+        Faltam <strong className="text-[var(--text-primary)]">{formatXP(remaining)}</strong> XP para atingir o próximo nível.
       </p>
     </div>
   );
