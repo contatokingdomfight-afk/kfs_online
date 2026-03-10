@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { AvaliacaoFisicaForm } from "./AvaliacaoFisicaForm";
@@ -13,7 +14,9 @@ export default async function CoachAlunoAvaliacaoFisicaPage({ params }: Props) {
   if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) redirect("/dashboard");
 
   const { id: studentId } = await params;
-  const supabase = await createClient();
+  const result = getAdminClientOrNull();
+  if (!result.client) return <AdminConfigMissing errorType={result.error} />;
+  const supabase = result.client;
 
   const { data: student } = await supabase
     .from("Student")
