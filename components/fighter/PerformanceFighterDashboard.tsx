@@ -14,6 +14,8 @@ import { BeltProgressionSection } from "@/components/belt-progression";
 import { beltIdFromRankName } from "@/components/belt-progression/belt-progression-data";
 import { ProfileAchievements } from "@/components/achievements/ProfileAchievements";
 import type { AchievementWithStatus } from "@/lib/achievements";
+import { EvaluationResultsDashboard } from "@/components/evaluation-results";
+import type { DimensionScore, CriterionScoreItem } from "@/lib/evaluation-results-data";
 
 const CATEGORY_LABEL: Record<string, string> = {
   TECHNIQUE: "Técnica",
@@ -76,6 +78,13 @@ type Props = {
   suggestedCourses?: { id: string; name: string; category: string; modality: string | null }[];
   /** Conquistas para a secção no perfil (badges desbloqueados e progresso). */
   profileAchievements?: AchievementWithStatus[];
+  /** Dados para o dashboard de resultados de avaliação (resumo, pontos fortes/fracos, critérios por categoria). */
+  evaluationResultsData?: {
+    dimensionScores: DimensionScore[];
+    criterionScores: CriterionScoreItem[];
+    overallScore: number;
+    scoresForRadar: Record<string, number>;
+  } | null;
 };
 
 export function PerformanceFighterDashboard({
@@ -101,6 +110,7 @@ export function PerformanceFighterDashboard({
   modalityLabels = {},
   suggestedCourses = [],
   profileAchievements,
+  evaluationResultsData,
 }: Props) {
   const systemMissions = buildMissionsFromScores(scores, axes, maxScore);
   const customAsMissions: Mission[] = customMissions.map((c) => ({
@@ -132,34 +142,48 @@ export function PerformanceFighterDashboard({
         primaryModalityLabel={primaryModalityLabel}
       />
 
-      {/* Atributos – stat cards */}
-      <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h2 className="text-base font-bold text-text-primary uppercase tracking-wider">
-            Atributos
-          </h2>
-          <span className="text-xs text-text-secondary">Performance geral 1–10</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {axes.map((a) => (
-            <StatCard
-              key={a.id}
-              icon={<span aria-hidden>{AXIS_ICONS[a.id] ?? "•"}</span>}
-              label={a.label}
-              score={scores[a.id] ?? 0}
-              maxScore={maxScore}
-            />
-          ))}
-        </div>
-      </section>
+      {/* Resultados de avaliação: resumo, radar, pontos fortes/fracos, filtros e critérios por categoria */}
+      {evaluationResultsData ? (
+        <EvaluationResultsDashboard
+          dimensionScores={evaluationResultsData.dimensionScores}
+          criterionScores={evaluationResultsData.criterionScores}
+          overallScore={evaluationResultsData.overallScore}
+          maxScore={maxScore}
+          axes={axes}
+          scoresForRadar={evaluationResultsData.scoresForRadar}
+          modalityLabels={modalityLabels}
+        />
+      ) : (
+        <>
+          {/* Atributos – stat cards (fallback quando não há scores por critério) */}
+          <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h2 className="text-base font-bold text-text-primary uppercase tracking-wider">
+                Atributos
+              </h2>
+              <span className="text-xs text-text-secondary">Performance geral 1–10</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {axes.map((a) => (
+                <StatCard
+                  key={a.id}
+                  icon={<span aria-hidden>{AXIS_ICONS[a.id] ?? "•"}</span>}
+                  label={a.label}
+                  score={scores[a.id] ?? 0}
+                  maxScore={maxScore}
+                />
+              ))}
+            </div>
+          </section>
 
-      {/* Radar */}
-      <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-        <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-3">
-          Perfil de competências
-        </h2>
-        <RadarStats scores={scores} axes={axes} maxScore={maxScore} />
-      </section>
+          <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+            <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-3">
+              Perfil de competências
+            </h2>
+            <RadarStats scores={scores} axes={axes} maxScore={maxScore} />
+          </section>
+        </>
+      )}
 
       {/* KPIs por modalidade */}
       {scoresByModality && Object.keys(scoresByModality).length > 0 && (
@@ -206,19 +230,21 @@ export function PerformanceFighterDashboard({
         </section>
       )}
 
-      {/* Accordion por dimensão */}
-      <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-        <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-3">
-          Detalhe por dimensão
-        </h2>
-        <AttributeAccordion
-          detailOrder={detailOrder}
-          detailSource={detailSource}
-          scores={scores}
-          maxScore={maxScore}
-          primaryModalityLabel={primaryModalityLabel}
-        />
-      </section>
+      {/* Accordion por dimensão (só quando não estamos no novo dashboard de resultados) */}
+      {!evaluationResultsData && (
+        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+          <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-3">
+            Detalhe por dimensão
+          </h2>
+          <AttributeAccordion
+            detailOrder={detailOrder}
+            detailSource={detailSource}
+            scores={scores}
+            maxScore={maxScore}
+            primaryModalityLabel={primaryModalityLabel}
+          />
+        </section>
+      )}
 
       {/* Objetivos / Quests */}
       <MissionCard missions={missions} />

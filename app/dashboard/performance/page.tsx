@@ -20,6 +20,11 @@ import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getAchievementUnlockContext, getAchievementsWithStatus } from "@/lib/achievements";
 import type { AchievementWithStatus } from "@/lib/achievements";
+import {
+  buildCriterionScores,
+  type DimensionScore,
+  type CriterionScoreItem,
+} from "@/lib/evaluation-results-data";
 
 const GENERAL_LAST_N = 10;
 const LAST_N_PER_MODALITY = 5;
@@ -59,6 +64,12 @@ export default async function DashboardPerformancePage() {
   let lastEvaluation: { coachName: string; date: string; note: string | null } | null = null;
   let suggestedCourses: { id: string; name: string; category: string; modality: string | null }[] = [];
   let profileAchievements: AchievementWithStatus[] = [];
+  let evaluationResultsData: {
+    dimensionScores: DimensionScore[];
+    criterionScores: CriterionScoreItem[];
+    overallScore: number;
+    scoresForRadar: Record<string, number>;
+  } | null = null;
   if (studentId) {
     const achievementContext = await getAchievementUnlockContext(supabase, studentId);
     profileAchievements = getAchievementsWithStatus(achievementContext);
@@ -121,7 +132,26 @@ export default async function DashboardPerformancePage() {
       if (evaluations.length > 0) {
         generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
         scoresByModality = computePerformanceScoresByModality(evaluations, configByModality, LAST_N_PER_MODALITY, true);
-        const latestEval = evalsRows![0] as { coachId?: string; note?: string | null; created_at?: string | null };
+        const latestEval = evalsRows![0] as { scores?: Record<string, number> | null; coachId?: string; note?: string | null; created_at?: string | null };
+        const previousEval = evalsRows!.length > 1 ? (evalsRows![1] as { scores?: Record<string, number> | null }) : null;
+        const criterionScores = buildCriterionScores(latestEval?.scores ?? null, configsForDetail, previousEval?.scores ?? null);
+        if (criterionScores.length > 0 && generalPerformanceScores) {
+          const dimensionScores: DimensionScore[] = GENERAL_PERFORMANCE_AXES.map((a) => ({
+            id: a.id,
+            label: a.label,
+            score: generalPerformanceScores[a.id] ?? 0,
+            maxScore: 10,
+          }));
+          const overallScore = dimensionScores.length > 0
+            ? dimensionScores.reduce((s, d) => s + d.score, 0) / dimensionScores.length
+            : 0;
+          evaluationResultsData = {
+            dimensionScores,
+            criterionScores,
+            overallScore,
+            scoresForRadar: { ...generalPerformanceScores },
+          };
+        }
         if (latestEval?.coachId) {
           let evalCoachName = "Treinador";
           const { data: coachRow } = await supabase.from("Coach").select("userId").eq("id", latestEval.coachId).single();
@@ -231,6 +261,7 @@ export default async function DashboardPerformancePage() {
       evaluationsHistoryHref="/dashboard/performance/historico"
       suggestedCourses={suggestedCourses.length > 0 ? suggestedCourses : undefined}
       profileAchievements={profileAchievements}
+      evaluationResultsData={evaluationResultsData}
     />
   );
 }
