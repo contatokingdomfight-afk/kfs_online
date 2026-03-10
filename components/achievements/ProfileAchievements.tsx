@@ -15,7 +15,7 @@ export function ProfileAchievements({ achievements, backHref = "/dashboard" }: P
   const total = achievements.length;
   const pct = total > 0 ? Math.round((unlocked.length / total) * 100) : 0;
 
-  const showTooltip = (a: AchievementWithStatus, e: React.MouseEvent) => {
+  const showTooltip = (a: AchievementWithStatus, e: React.MouseEvent | React.FocusEvent) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setTooltip({
       name: a.name,
