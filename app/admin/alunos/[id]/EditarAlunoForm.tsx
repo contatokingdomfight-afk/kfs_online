@@ -9,11 +9,14 @@ import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 
 type PlanOption = { id: string; label: string };
 type ModalityOption = { code: string; name: string };
+type SchoolOption = { id: string; name: string };
 
 type Props = {
   studentId: string;
   initialName: string;
   initialStatus: string;
+  initialSchoolId: string;
+  schoolOptions: SchoolOption[];
   initialPlanId: string;
   initialPrimaryModality: string;
   planOptions: PlanOption[];
@@ -23,7 +26,7 @@ type Props = {
   initialLocale?: "pt" | "en";
 };
 
-export function EditarAlunoForm({ studentId, initialName, initialStatus, initialPlanId, initialPrimaryModality, planOptions, modalityOptions, statusLabels, currentUserRole, initialLocale = "pt" }: Props) {
+export function EditarAlunoForm({ studentId, initialName, initialStatus, initialSchoolId, schoolOptions, initialPlanId, initialPrimaryModality, planOptions, modalityOptions, statusLabels, currentUserRole, initialLocale = "pt" }: Props) {
   const t = getTranslations(initialLocale);
   const [userDismissed, setUserDismissed] = useState(false);
   const wrappedAction = async (prev: UpdateStudentResult | null, formData: FormData) => {
@@ -161,6 +164,19 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
           className="input"
           placeholder="Nome completo"
         />
+      </label>
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          Escola *
+        </span>
+        <select name="schoolId" className="input" defaultValue={initialSchoolId || ""} required>
+          <option value="">Selecione uma escola</option>
+          {schoolOptions.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>

@@ -37,9 +37,15 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
+  const { data: schools } = await supabase
+    .from("School")
+    .select("id, name")
+    .eq("isActive", true)
+    .order("name", { ascending: true });
+
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality")
+    .select("id, userId, status, planId, primaryModality, schoolId")
     .eq("id", studentId)
     .single();
 
@@ -272,6 +278,8 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
             studentId={studentId}
             initialName={user?.name ?? ""}
             initialStatus={student.status}
+            initialSchoolId={(student as { schoolId?: string }).schoolId ?? ""}
+            schoolOptions={(schools ?? []).map((s) => ({ id: s.id, name: s.name ?? s.id }))}
             initialPlanId={student.planId ?? ""}
             initialPrimaryModality={initialPrimaryModality}
             planOptions={planOptions}

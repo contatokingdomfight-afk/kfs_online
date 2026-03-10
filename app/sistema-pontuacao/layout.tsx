@@ -40,7 +40,6 @@ export default async function SistemaPontuacaoLayout({
       { label: t("navStudents"), href: "/admin/alunos" },
       { label: t("navAthletes"), href: "/admin/atletas" },
       { label: t("navClasses"), href: "/admin/turmas" },
-      { label: t("navLocations"), href: "/admin/locais" },
       { label: t("navModalities"), href: "/admin/modalidades" },
       { label: t("navPlans"), href: "/admin/planos" },
       { label: t("navCourses"), href: "/admin/cursos" },

@@ -84,6 +84,7 @@ export async function updateStudent(
 
   const name = (formData.get("name") as string)?.trim() || null;
   const status = formData.get("status") as string | null;
+  const schoolId = (formData.get("schoolId") as string)?.trim() || null;
   const planId = (formData.get("planId") as string)?.trim() || null;
   const primaryModality = (formData.get("primaryModality") as string)?.trim() || null;
   const validStatuses = ["ATIVO", "INATIVO", "EXPERIMENTAL"];
@@ -92,12 +93,22 @@ export async function updateStudent(
 
   const supabase = createAdminClient();
 
+  if (schoolId) {
+    const { data: school } = await supabase.from("School").select("id").eq("id", schoolId).eq("isActive", true).single();
+    if (!school) return { error: "Escola inválida ou inativa." };
+  }
+
   // Planos sem modalidade única: Presencial MMA = Todas; Kingdom Online = apenas digital (sem modalidade)
+  let effectivePlanId: string | null = planId === "" ? null : planId;
   if (planId) {
-    const { data: plan } = await supabase.from("Plan").select("name").eq("id", planId).single();
+    const { data: plan } = await supabase.from("Plan").select("name, schoolId").eq("id", planId).single();
     const planName = plan?.name ? String(plan.name) : "";
     if (planName.includes("Presencial MMA") || planName.includes("Kingdom Online")) {
       newPrimaryModality = null;
+    }
+    // Se mudou de escola e o plano é de outra escola, desatribuir plano
+    if (schoolId && plan?.schoolId && plan.schoolId !== schoolId) {
+      effectivePlanId = null;
     }
   }
 
@@ -109,9 +120,10 @@ export async function updateStudent(
 
   if (!student) return { error: "Aluno não encontrado." };
 
-  const updates: { status?: string; planId?: string | null; primaryModality?: string | null } = {};
+  const updates: { status?: string; schoolId?: string; planId?: string | null; primaryModality?: string | null } = {};
   if (newStatus) updates.status = newStatus;
-  updates.planId = planId === "" ? null : planId;
+  if (schoolId) updates.schoolId = schoolId;
+  updates.planId = effectivePlanId;
   updates.primaryModality = newPrimaryModality;
   const { error: studentError } = await supabase.from("Student").update(updates).eq("id", studentId);
   if (studentError) return { error: studentError.message };
