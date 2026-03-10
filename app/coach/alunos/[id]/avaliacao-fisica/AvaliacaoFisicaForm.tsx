@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import { savePhysicalAssessment } from "./actions";
@@ -42,6 +42,11 @@ export function AvaliacaoFisicaForm({
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (state !== null) setIsSubmitting(false);
+  }, [state]);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -49,6 +54,7 @@ export function AvaliacaoFisicaForm({
 
   const handleConfirmSubmit = () => {
     setShowConfirm(false);
+    setIsSubmitting(true);
     formRef.current?.requestSubmit();
   };
 
@@ -71,6 +77,29 @@ export function AvaliacaoFisicaForm({
         cancelLabel="Cancelar"
         variant="primary"
       />
+
+      {isSubmitting && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          role="status"
+          aria-live="polite"
+          aria-label="A guardar avaliação"
+        >
+          <div className="rounded-2xl bg-[var(--bg-secondary)] border-2 border-[var(--border)] shadow-2xl max-w-md w-full p-6 text-center">
+            <p className="text-lg font-semibold text-[var(--text-primary)] mb-4">
+              A guardar…
+            </p>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
+              A processar a ficha de avaliação física.
+            </p>
+            <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden">
+              <div
+                className="h-full w-[40%] rounded-full bg-[var(--primary)] animate-loading-bar"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {state?.success && (
         <div
