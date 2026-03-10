@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { revalidatePath } from "next/cache";
@@ -16,8 +17,13 @@ export async function saveStandaloneEvaluation(
   if (!dbUser) return { error: "Sessão inválida." };
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Sem permissão." };
 
-  const currentCoachId = await getCurrentCoachId();
-  if (dbUser.role === "COACH" && !currentCoachId) return { error: "Perfil de coach não encontrado." };
+  let currentCoachId = await getCurrentCoachId();
+  if (dbUser.role === "COACH" && !currentCoachId) {
+    const supabaseForCoach = await createClient();
+    const { data: coachByUser } = await supabaseForCoach.from("Coach").select("id").eq("userId", dbUser.id).maybeSingle();
+    if (coachByUser) currentCoachId = coachByUser.id;
+    else return { error: "Perfil de coach não encontrado. Contacta o administrador." };
+  }
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const modality = (formData.get("modality") as string)?.trim();
@@ -82,19 +88,27 @@ export async function saveStandaloneEvaluation(
   }
 
   if (!effectiveCoachId && dbUser.role === "ADMIN") {
-    const { data: student } = await supabase.from("Student").select("schoolId").eq("id", studentId).single();
-    if (student?.schoolId) {
-      const { data: schoolCoach } = await supabase
-        .from("Coach")
-        .select("id")
-        .eq("schoolId", student.schoolId)
-        .limit(1)
-        .maybeSingle();
-      if (schoolCoach) effectiveCoachId = schoolCoach.id;
+    const adminResult = getAdminClientOrNull();
+    const adminSupabase = adminResult.client;
+    if (adminSupabase) {
+      const { data: student } = await adminSupabase.from("Student").select("schoolId").eq("id", studentId).single();
+      if (student?.schoolId) {
+        const { data: schoolCoach } = await adminSupabase
+          .from("Coach")
+          .select("id")
+          .eq("schoolId", student.schoolId)
+          .limit(1)
+          .maybeSingle();
+        if (schoolCoach) effectiveCoachId = schoolCoach.id;
+      }
+      if (!effectiveCoachId) {
+        const { data: anyCoach } = await adminSupabase.from("Coach").select("id").limit(1).maybeSingle();
+        if (anyCoach) effectiveCoachId = anyCoach.id;
+      }
     }
   }
 
-  if (!effectiveCoachId) return { error: "Não foi possível associar um coach ao atleta. Atribui um coach ao aluno ou à escola." };
+  if (!effectiveCoachId) return { error: "Não foi possível associar um coach ao atleta. Cria um perfil de coach na escola ou atribui um coach ao aluno." };
 
   const { error } = await supabase.from("AthleteEvaluation").insert({
     athleteId: athlete.id,
