@@ -2,14 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom";
+import { useFormState, useFormStatus } from "react-dom";
 import { updateStudent, setStudentFullAccess, promoteStudentToRole, type UpdateStudentResult, type SetFullAccessResult, type PromoteStudentResult } from "../actions";
 import { getTranslations } from "@/lib/i18n";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 type PlanOption = { id: string; label: string };
 type ModalityOption = { code: string; name: string };
 type SchoolOption = { id: string; name: string };
+
+function SubmitGuardarButton({ saveLabel }: { saveLabel: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="btn btn-primary" disabled={pending}>
+      {pending ? "A guardar…" : saveLabel}
+    </button>
+  );
+}
 
 type Props = {
   studentId: string;
@@ -152,6 +162,7 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
           gap: "clamp(16px, 4vw, 20px)",
         }}
       >
+        <FormLoadingModal message="A guardar…" />
         <input type="hidden" name="studentId" value={studentId} />
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
@@ -221,9 +232,7 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
           {state.error}
         </p>
       )}
-      <button type="submit" className="btn btn-primary">
-        {t("saveButton")}
-      </button>
+      <SubmitGuardarButton saveLabel={t("saveButton")} />
     </form>
     </>
   );
