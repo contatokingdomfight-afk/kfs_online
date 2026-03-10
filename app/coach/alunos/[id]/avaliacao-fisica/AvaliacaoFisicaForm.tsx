@@ -74,19 +74,19 @@ export function AvaliacaoFisicaForm({
 
       {state?.success && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="success-modal-title"
         >
-          <div className="rounded-2xl bg-bg-primary border border-border shadow-xl max-w-md w-full p-6 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mb-4" aria-hidden>
-              <span className="text-2xl">✓</span>
+          <div className="rounded-2xl bg-[var(--bg-secondary)] border-2 border-[var(--border)] shadow-2xl max-w-md w-full p-6 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-green-500/30 flex items-center justify-center mb-4" aria-hidden>
+              <span className="text-2xl text-green-600 dark:text-green-400">✓</span>
             </div>
-            <h2 id="success-modal-title" className="text-lg font-semibold text-text-primary mb-2">
+            <h2 id="success-modal-title" className="text-lg font-semibold text-[var(--text-primary)] mb-2">
               Avaliação guardada
             </h2>
-            <p className="text-sm text-text-secondary mb-6">
+            <p className="text-sm text-[var(--text-secondary)] mb-6">
               A ficha foi registada. A próxima renovação está prevista para daqui a 6 meses.
             </p>
             <button
