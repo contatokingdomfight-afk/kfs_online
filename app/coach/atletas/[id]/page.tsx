@@ -3,14 +3,19 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { redirect } from "next/navigation";
-import { getAttendanceByModality } from "@/lib/performance-utils";
+import {
+  getAttendanceByModality,
+  GENERAL_PERFORMANCE_AXES,
+  computeGeneralPerformanceScores,
+  type ModalityConfig,
+} from "@/lib/performance-utils";
+import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
+import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { EditarAtletaForm } from "./EditarAtletaForm";
 import { ComentariosAtleta } from "./ComentariosAtleta";
 import { PerformanceRadar } from "@/components/PerformanceRadarDynamic";
 import { AvaliacaoAtleta } from "./AvaliacaoAtleta";
-import { computeMovingAverage, getRadarAxes } from "@/lib/evaluation-config";
-import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
 
 const LEVEL_LABEL: Record<string, string> = {
   INICIANTE: "Iniciante",
@@ -109,29 +114,30 @@ export default async function CoachAtletaPage({ params }: Props) {
   const latestEval = evaluationList[0] ?? null;
   const attendanceByModality = await getAttendanceByModality(supabase, athlete.studentId);
 
-  const MOVING_AVERAGE_N = 10;
-  let radarModality: string | null = null;
-  let radarConfig: Awaited<ReturnType<typeof loadEvaluationConfigForModality>> = null;
-  const evalsWithScores = evaluationList.filter((e) => e.scores && typeof e.scores === "object");
-  if (evalsWithScores.length > 0) {
-    radarModality = (evalsWithScores[0] as { modality?: string | null }).modality ?? null;
-    if (radarModality) radarConfig = await loadEvaluationConfigForModality(supabase, radarModality);
+  const GENERAL_LAST_N = 10;
+  let generalPerformanceScores: Record<string, number> | null = null;
+  const allConfigs = await loadAllEvaluationConfigs(supabase);
+  const configByModality = new Map<string, ModalityConfig>();
+  for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"] as const) {
+    const config = allConfigs.get(mod);
+    if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
   }
-  const criterionIds = radarConfig ? getRadarAxes(radarConfig).map((a) => a.id) : [];
-  const movingAverageScores =
-    radarConfig && criterionIds.length > 0
-      ? computeMovingAverage(
-          evaluationList.map((e) => ({ scores: (e as { scores?: Record<string, number> | null }).scores ?? null })),
-          criterionIds,
-          MOVING_AVERAGE_N
-        )
-      : null;
-  const radarAxes = radarConfig ? getRadarAxes(radarConfig) : [];
-  const showDynamicRadar = radarAxes.length > 0 && movingAverageScores && Object.keys(movingAverageScores).length > 0;
+  const evaluationsForRadar = evaluationList.map((e) => ({
+    gas: e.gas,
+    technique: e.technique,
+    strength: e.strength,
+    theory: e.theory,
+    scores: (e as { scores?: Record<string, number> | null }).scores ?? null,
+    modality: (e as { modality?: string | null }).modality ?? null,
+  }));
+  if (evaluationsForRadar.length > 0) {
+    generalPerformanceScores = computeGeneralPerformanceScores(evaluationsForRadar, configByModality, GENERAL_LAST_N, true);
+  }
+  const showPillarRadar = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
   const showLegacyRadar =
     latestEval &&
     (latestEval.gas != null || latestEval.technique != null || latestEval.strength != null || latestEval.theory != null) &&
-    !showDynamicRadar;
+    !showPillarRadar;
 
   return (
     <div style={{ maxWidth: "min(560px, 100%)" }}>
@@ -196,16 +202,23 @@ export default async function CoachAtletaPage({ params }: Props) {
           Performance
         </h2>
         <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-          {showDynamicRadar
-            ? `Média móvel (últimas ${MOVING_AVERAGE_N} avaliações)${radarModality ? ` · ${MODALITY_LABELS[radarModality] ?? radarModality}` : ""}.`
+          {showPillarRadar
+            ? `Média das últimas ${GENERAL_LAST_N} avaliações (escala 1–10).`
             : "Avaliação e assiduidade por modalidade."}
         </p>
-        {showDynamicRadar && movingAverageScores ? (
+        {showPillarRadar && generalPerformanceScores ? (
           <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)", marginBottom: "clamp(16px, 4vw, 20px)" }}>
             <p style={{ margin: "0 0 12px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-              Média móvel (1–10)
+              Performance geral (5 pilares)
             </p>
-            <PerformanceRadar scores={movingAverageScores} axes={radarAxes} maxScore={10} />
+            <PerformanceRadar scores={generalPerformanceScores} axes={[...GENERAL_PERFORMANCE_AXES]} maxScore={10} />
+            <Link
+              href={`/coach/alunos/${athlete.studentId}/performance`}
+              className="btn btn-secondary"
+              style={{ marginTop: "clamp(12px, 3vw, 16px)", textDecoration: "none", alignSelf: "flex-start" }}
+            >
+              Ver perfil completo (todas as métricas)
+            </Link>
           </div>
         ) : showLegacyRadar && latestEval ? (
           <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)", marginBottom: "clamp(16px, 4vw, 20px)" }}>
