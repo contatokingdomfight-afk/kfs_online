@@ -40,6 +40,7 @@ export function EvaluationHistoryClient({ list, getEvaluationById, backHref, bac
   }
 
   return (
+    <>
     <div className="card p-4 sm:p-6">
       <p className="text-sm text-text-secondary mb-4">
         Clica numa avaliação para ver o detalhe (nota do treinador e critérios).
@@ -80,7 +81,7 @@ export function EvaluationHistoryClient({ list, getEvaluationById, backHref, bac
       </Link>
     </div>
 
-      {modalEval && (
+    {modalEval && (
         <div
           role="dialog"
           aria-modal="true"
