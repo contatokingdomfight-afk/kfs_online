@@ -18,6 +18,7 @@ export default async function AdminLayout({
   const t = getTranslations(locale as "pt" | "en");
   const adminLinks = [
     { label: t("navHome"), href: "/admin" },
+    { label: "Como sou avaliado", href: "/como-sou-avaliado" },
     { label: t("navSchools"), href: "/admin/escolas" },
     { label: t("navStudents"), href: "/admin/alunos" },
     { label: t("navAthletes"), href: "/admin/atletas" },

@@ -44,6 +44,7 @@ export default async function CoachLayout({
     { label: t("navAgenda"), href: "/coach/agenda" },
     { label: t("navStudents"), href: "/coach/alunos" },
     { label: t("navAthletesCoach"), href: "/coach/atletas" },
+    { label: "Como sou avaliado", href: "/como-sou-avaliado" as string },
     { label: "Meus Cursos", href: "/coach/cursos" as string },
     { label: t("libraryTitle"), href: "/coach/biblioteca" as string },
     { label: "Financeiro", href: "/coach/financeiro" as string },

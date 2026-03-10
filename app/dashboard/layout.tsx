@@ -30,7 +30,7 @@ export default async function DashboardLayout({
     { label: t("navHome"), href: "/dashboard" },
     { label: t("navAthleteProfile"), href: "/dashboard/performance" },
     { label: "Histórico de avaliações", href: "/dashboard/performance/historico" },
-    { label: "Como sou avaliado", href: "/dashboard/como-sou-avaliado" },
+    { label: "Como sou avaliado", href: "/como-sou-avaliado" },
     { label: t("navConquests"), href: "/dashboard/conquistas" },
     { label: t("navStore"), href: "/dashboard/loja" },
     { label: t("navLibrary"), href: "/dashboard/biblioteca" },
