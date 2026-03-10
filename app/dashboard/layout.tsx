@@ -29,6 +29,7 @@ export default async function DashboardLayout({
   const sidebarLinks = [
     { label: t("navHome"), href: "/dashboard" },
     { label: t("navAthleteProfile"), href: "/dashboard/performance" },
+    { label: "Histórico de avaliações", href: "/dashboard/performance/historico" },
     { label: t("navConquests"), href: "/dashboard/conquistas" },
     { label: t("navStore"), href: "/dashboard/loja" },
     { label: t("navLibrary"), href: "/dashboard/biblioteca" },

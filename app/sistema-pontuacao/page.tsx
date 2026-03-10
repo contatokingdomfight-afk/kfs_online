@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PilaresAccordion } from "./PilaresAccordion";
+import { BELT_NAMES, getXpThresholdForBeltIndex } from "@/lib/belts";
 
 export const metadata: Metadata = {
   title: "Sistema de pontuação | Kingdom Fight School",
@@ -35,15 +36,40 @@ export default function SistemaPontuacaoPage() {
           Faixas e XP
         </h2>
         <p style={{ margin: "0 0 16px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-          O teu nível na plataforma é representado por uma <strong>faixa (cor)</strong>, da Branca até Preta/Dourado e depois Dourado 1, 2, 3… O progresso é feito através de <strong>XP (pontos de experiência)</strong>.
+          O teu nível na plataforma é representado por uma <strong>faixa (cor)</strong>. Existem <strong>{BELT_NAMES.length} faixas de cor</strong> (da Branca à Preta/Dourado) e, a partir daí, níveis <strong>Dourado 1</strong>, <strong>Dourado 2</strong>, <strong>Dourado 3</strong>, etc., sem limite. O progresso é feito através de <strong>XP (pontos de experiência)</strong>.
         </p>
+
+        <h3 style={{ margin: "16px 0 8px 0", fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          Ordem das faixas
+        </h3>
+        <ol style={{ margin: "0 0 16px 0", paddingLeft: "1.5em", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)", lineHeight: 1.8 }}>
+          {BELT_NAMES.map((name, i) => {
+            const xpMin = getXpThresholdForBeltIndex(i);
+            const xpNext = getXpThresholdForBeltIndex(i + 1);
+            const step = xpNext - xpMin;
+            return (
+              <li key={name}>
+                <strong>{name}</strong>
+                {i === 0 ? " (início)" : ` — ${xpMin.toLocaleString("pt-PT")} XP total para atingir`}
+                {i > 0 && step > 0 && ` · +${step.toLocaleString("pt-PT")} XP nesta faixa para subir`}
+              </li>
+            );
+          })}
+          <li style={{ marginTop: 4 }}>
+            <strong>Dourado 1</strong>, <strong>Dourado 2</strong>, <strong>Dourado 3</strong>, … — progressão infinita (cada nível exige o dobro do XP da faixa anterior).
+          </li>
+        </ol>
+
+        <h3 style={{ margin: "16px 0 8px 0", fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          Como ganhar XP
+        </h3>
         <ul style={{ margin: "0 0 16px 0", paddingLeft: "1.25em", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)", lineHeight: 1.7 }}>
           <li>Para subir da <strong>Branca</strong> para <strong>Branca/amarela</strong> são necessários <strong>1000 XP</strong>.</li>
-          <li>Em cada faixa seguinte, precisas do <strong>dobro</strong> do XP que precisaste na faixa anterior (progressão em dobro).</li>
-          <li>Ganhas XP ao completar <strong>missões</strong> (por exemplo: “Subir Técnico para 7”, “Realizar avaliação física”).</li>
+          <li>Em cada faixa seguinte, precisas de <strong>mais XP do que na anterior</strong>: a progressão é em dobro (1000 → 2000 → 4000 → 8000 … XP por faixa).</li>
+          <li>Ganhas XP ao completar <strong>missões</strong> (por exemplo: “Subir Técnico para 7”, “Realizar avaliação física”). Cada missão de dimensão dá uma recompensa fixa de XP.</li>
         </ul>
         <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-          As missões de dimensão (subir um pilar a um determinado valor) são desbloqueadas com base nas tuas avaliações e dão uma recompensa fixa de XP ao serem atingidas.
+          As missões são desbloqueadas com base nas tuas avaliações. No perfil do atleta vês a barra de progresso para a próxima faixa e as missões ativas.
         </p>
       </section>
 

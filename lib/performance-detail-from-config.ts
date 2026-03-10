@@ -1,4 +1,4 @@
-import { categoryToGeneralDimension } from "@/lib/performance-utils";
+import { categoryToGeneralDimension, dimensionCodeToGeneralDimension } from "@/lib/performance-utils";
 import { GENERAL_PERFORMANCE_AXES } from "@/lib/performance-utils";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import type { DetailGroup, DetailItem, DimensionDetail } from "@/lib/performance-detail-structure";
@@ -71,6 +71,40 @@ export function getDetailOrder(detailByDimension: Record<string, DimensionDetail
   const standard = DIMENSION_ORDER.filter((dim) => withContent(dim));
   const others = Object.keys(detailByDimension).filter((d) => !DIMENSION_ORDER.includes(d as any));
   return [...standard, ...others];
+}
+
+/**
+ * Agrupa detailSource por dimensão geral (5 pilares). Em vez de dezenas de secções
+ * (uma por critério/categoria), devolve apenas 5 secções (Técnico, Tático, Físico, Mental, Teórico)
+ * com todos os grupos/critérios reunidos dentro de cada uma.
+ */
+export function groupDetailByGeneralDimension(
+  detailSource: Record<string, DimensionDetail>,
+  detailOrder: string[]
+): Record<string, DimensionDetail> {
+  const merged: Record<string, { title: string; groups: DetailGroup[] }> = {};
+  for (const dimId of detailOrder) {
+    const detail = detailSource[dimId];
+    if (!detail?.groups?.length) continue;
+    const generalDim = DIMENSION_ORDER.includes(dimId as (typeof DIMENSION_ORDER)[number])
+      ? dimId
+      : dimensionCodeToGeneralDimension(dimId);
+    const key = generalDim ?? dimId;
+    if (!merged[key]) {
+      merged[key] = {
+        title: DIMENSION_LABELS[key] ?? detail.title,
+        groups: [],
+      };
+    }
+    merged[key].groups.push(...detail.groups);
+  }
+  const result: Record<string, DimensionDetail> = {};
+  for (const dim of DIMENSION_ORDER) {
+    if (merged[dim]?.groups.length) {
+      result[dim] = { title: merged[dim].title, groups: merged[dim].groups };
+    }
+  }
+  return result;
 }
 
 export const PERFORMANCE_DETAIL_ORDER = DIMENSION_ORDER;

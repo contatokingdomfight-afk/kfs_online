@@ -19,6 +19,7 @@ import {
 import {
   buildPerformanceDetailFromConfigs,
   getDetailOrder,
+  groupDetailByGeneralDimension,
 } from "@/lib/performance-detail-from-config";
 import { getRankFromXp } from "@/lib/xp-missions";
 import { getApplicableMissionTemplates } from "@/lib/missions";
@@ -80,6 +81,7 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
   let lastPhysicalAssessment: { assessedAt: string; nextDueAt: string | null } | null = null;
   let coachFeedback: string | null = null;
   let coachName: string | null = null;
+  let lastEvaluation: { coachName: string; date: string; note: string | null } | null = null;
 
   const { data: athlete } = await supabase.from("Athlete").select("id, xp").eq("studentId", studentId).single();
 
@@ -128,7 +130,7 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
 
     const { data: evalsRows } = await supabase
       .from("AthleteEvaluation")
-      .select("gas, technique, strength, theory, scores, modality")
+      .select("gas, technique, strength, theory, scores, modality, coachId, note, created_at")
       .eq("athleteId", athlete.id)
       .order("created_at", { ascending: false })
       .limit(GENERAL_LAST_N);
@@ -143,6 +145,22 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
 
     if (evaluations.length > 0) {
       generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
+      const latestEval = evalsRows![0];
+      if (latestEval?.coachId) {
+        let evalCoachName = "Treinador";
+        const { data: coachRow } = await supabase.from("Coach").select("userId").eq("id", latestEval.coachId).single();
+        if (coachRow) {
+          const { data: userRow } = await supabase.from("User").select("name").eq("id", coachRow.userId).single();
+          evalCoachName = userRow?.name ?? evalCoachName;
+        }
+        const created = latestEval.created_at;
+        const dateStr = created ? new Date(created).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" }) : "";
+        lastEvaluation = {
+          coachName: evalCoachName,
+          date: dateStr,
+          note: (latestEval.note as string | null) ?? null,
+        };
+      }
     }
   }
 
@@ -150,6 +168,8 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
   const useStaticDetail = Object.keys(detailByDimension).length === 0;
   const detailSource = useStaticDetail ? PERFORMANCE_DETAIL_BY_DIMENSION : detailByDimension;
   const detailOrder = useStaticDetail ? [...PERFORMANCE_DETAIL_ORDER] : getDetailOrder(detailByDimension);
+  const groupedSource = groupDetailByGeneralDimension(detailSource, detailOrder);
+  const groupedOrder = getDetailOrder(groupedSource);
 
   const hasScores = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
 
@@ -172,15 +192,15 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
     );
   }
 
-  const scoresForDetail = enrichScoresForDetail(generalPerformanceScores!, detailOrder);
+  const scoresForDetail = enrichScoresForDetail(generalPerformanceScores!, groupedOrder);
 
   return (
     <PerformanceFighterDashboard
       backHref={`/coach/alunos/${studentId}`}
       backLabel="Voltar ao perfil do aluno"
       scores={scoresForDetail}
-      detailOrder={detailOrder}
-      detailSource={detailSource}
+      detailOrder={groupedOrder}
+      detailSource={groupedSource}
       axes={[...GENERAL_PERFORMANCE_AXES]}
       maxScore={10}
       level={rankInfo?.level}
@@ -203,6 +223,8 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
       }
       coachFeedback={coachFeedback ?? undefined}
       coachName={coachName ?? undefined}
+      lastEvaluation={lastEvaluation ?? undefined}
+      evaluationsHistoryHref={`/coach/alunos/${studentId}/avaliacoes`}
     />
   );
 }

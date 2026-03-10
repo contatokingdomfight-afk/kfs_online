@@ -61,6 +61,10 @@ type Props = {
   physicalAssessmentMission?: { id: string; name: string; description: string | null; xpReward: number } | null;
   coachFeedback?: string;
   coachName?: string;
+  /** Última avaliação: treinador, data e nota (da tabela AthleteEvaluation). */
+  lastEvaluation?: { coachName: string; date: string; note: string | null };
+  /** URL para a página de histórico de avaliações (aluno ou coach). */
+  evaluationsHistoryHref?: string;
   /** KPIs por modalidade (ex.: Muay Thai, Boxing) para secção "Performance por modalidade". */
   scoresByModality?: Record<string, Record<string, number>>;
   modalityLabels?: Record<string, string>;
@@ -85,6 +89,8 @@ export function PerformanceFighterDashboard({
   physicalAssessmentMission = null,
   coachFeedback,
   coachName,
+  lastEvaluation,
+  evaluationsHistoryHref,
   scoresByModality,
   modalityLabels = {},
   suggestedCourses = [],
@@ -227,7 +233,34 @@ export function PerformanceFighterDashboard({
         </div>
       </Link>
 
-      {/* Coach feedback */}
+      {/* Última avaliação: treinador, data e comentário */}
+      {lastEvaluation && (
+        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+          <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-2 flex items-center gap-2">
+            <span aria-hidden>📋</span>
+            Última avaliação
+          </h2>
+          <p className="text-sm text-text-secondary mb-1">
+            Por <strong className="text-text-primary">{lastEvaluation.coachName}</strong>
+            {lastEvaluation.date ? ` · ${lastEvaluation.date}` : ""}
+          </p>
+          {lastEvaluation.note ? (
+            <p className="text-sm text-text-primary mt-2 whitespace-pre-wrap">{lastEvaluation.note}</p>
+          ) : (
+            <p className="text-sm text-text-secondary italic">Sem comentário nesta avaliação.</p>
+          )}
+          {evaluationsHistoryHref && (
+            <Link
+              href={evaluationsHistoryHref}
+              className="inline-block mt-3 text-sm font-medium text-primary no-underline hover:underline"
+            >
+              Ver histórico de avaliações →
+            </Link>
+          )}
+        </section>
+      )}
+
+      {/* Coach feedback (comentário geral do treinador) */}
       <CoachFeedback
         quote={
           coachFeedback ??

@@ -235,13 +235,22 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
               maxScore={10}
               embedded
             />
-            <Link
-              href={`/coach/alunos/${studentId}/performance`}
-              className="btn btn-secondary"
-              style={{ marginTop: "clamp(12px, 3vw, 16px)", textDecoration: "none", alignSelf: "flex-start" }}
-            >
-              Ver mais detalhes
-            </Link>
+            <div style={{ marginTop: "clamp(12px, 3vw, 16px)", display: "flex", flexWrap: "wrap", gap: 10 }}>
+              <Link
+                href={`/coach/alunos/${studentId}/performance`}
+                className="btn btn-secondary"
+                style={{ textDecoration: "none" }}
+              >
+                Ver mais detalhes
+              </Link>
+              <Link
+                href={`/coach/alunos/${studentId}/avaliacoes`}
+                className="btn"
+                style={{ textDecoration: "none", background: "var(--bg)", border: "1px solid var(--border)" }}
+              >
+                Histórico de avaliações
+              </Link>
+            </div>
           </>
         ) : (
           <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>

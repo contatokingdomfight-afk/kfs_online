@@ -12,6 +12,7 @@ import {
 import {
   buildPerformanceDetailFromConfigs,
   getDetailOrder,
+  groupDetailByGeneralDimension,
 } from "@/lib/performance-detail-from-config";
 import { getRankFromXp } from "@/lib/xp-missions";
 import { getApplicableMissionTemplates } from "@/lib/missions";
@@ -53,6 +54,7 @@ export default async function DashboardPerformancePage() {
   let lastPhysicalAssessment: { assessedAt: string; nextDueAt: string | null } | null = null;
   let coachFeedback: string | null = null;
   let coachName: string | null = null;
+  let lastEvaluation: { coachName: string; date: string; note: string | null } | null = null;
   let suggestedCourses: { id: string; name: string; category: string; modality: string | null }[] = [];
   if (studentId) {
     const { data: athlete } = await supabase.from("Athlete").select("id, xp").eq("studentId", studentId).single();
@@ -98,7 +100,7 @@ export default async function DashboardPerformancePage() {
         !lastPhysicalAssessment || (lastPhysicalAssessment.nextDueAt != null && lastPhysicalAssessment.nextDueAt <= today);
       const { data: evalsRows } = await supabase
         .from("AthleteEvaluation")
-        .select("gas, technique, strength, theory, scores, modality")
+        .select("gas, technique, strength, theory, scores, modality, coachId, note, created_at")
         .eq("athleteId", athlete.id)
         .order("created_at", { ascending: false })
         .limit(GENERAL_LAST_N);
@@ -114,6 +116,22 @@ export default async function DashboardPerformancePage() {
       if (evaluations.length > 0) {
         generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
         scoresByModality = computePerformanceScoresByModality(evaluations, configByModality, LAST_N_PER_MODALITY, true);
+        const latestEval = evalsRows![0] as { coachId?: string; note?: string | null; created_at?: string | null };
+        if (latestEval?.coachId) {
+          let evalCoachName = "Treinador";
+          const { data: coachRow } = await supabase.from("Coach").select("userId").eq("id", latestEval.coachId).single();
+          if (coachRow) {
+            const { data: userRow } = await supabase.from("User").select("name").eq("id", coachRow.userId).single();
+            evalCoachName = userRow?.name ?? evalCoachName;
+          }
+          const created = latestEval.created_at;
+          const dateStr = created ? new Date(created).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" }) : "";
+          lastEvaluation = {
+            coachName: evalCoachName,
+            date: dateStr,
+            note: latestEval.note ?? null,
+          };
+        }
       }
 
       // Cursos sugeridos para ligar ao feedback (por modalidade principal; aluno vê junto ao feedback do coach)
@@ -148,6 +166,8 @@ export default async function DashboardPerformancePage() {
   const useStaticDetail = Object.keys(detailByDimension).length === 0;
   const detailSource = useStaticDetail ? PERFORMANCE_DETAIL_BY_DIMENSION : detailByDimension;
   const detailOrder = useStaticDetail ? [...PERFORMANCE_DETAIL_ORDER] : getDetailOrder(detailByDimension);
+  const groupedSource = groupDetailByGeneralDimension(detailSource, detailOrder);
+  const groupedOrder = getDetailOrder(groupedSource);
 
   const hasScores = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
 
@@ -168,7 +188,7 @@ export default async function DashboardPerformancePage() {
   }
 
   const modalityLabelsForDashboard: Record<string, string> = { ...Object.fromEntries(modalityLabels), GENERAL: "Geral" };
-  const scoresForDetail = enrichScoresForDetail(generalPerformanceScores!, detailOrder);
+  const scoresForDetail = enrichScoresForDetail(generalPerformanceScores!, groupedOrder);
 
   return (
     <PerformanceFighterDashboard
@@ -177,8 +197,8 @@ export default async function DashboardPerformancePage() {
       scores={scoresForDetail}
       scoresByModality={Object.keys(scoresByModality).length > 0 ? scoresByModality : undefined}
       modalityLabels={modalityLabelsForDashboard}
-      detailOrder={detailOrder}
-      detailSource={detailSource}
+      detailOrder={groupedOrder}
+      detailSource={groupedSource}
       axes={[...GENERAL_PERFORMANCE_AXES]}
       maxScore={10}
       level={rankInfo?.level}
@@ -194,6 +214,8 @@ export default async function DashboardPerformancePage() {
       }
       coachFeedback={coachFeedback ?? undefined}
       coachName={coachName ?? undefined}
+      lastEvaluation={lastEvaluation ?? undefined}
+      evaluationsHistoryHref="/dashboard/performance/historico"
       suggestedCourses={suggestedCourses.length > 0 ? suggestedCourses : undefined}
     />
   );
