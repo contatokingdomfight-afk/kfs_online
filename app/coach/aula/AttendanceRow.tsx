@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useFormState } from "react-dom";
 import { useRouter } from "next/navigation";
 import { setAttendanceStatusFromForm } from "./actions";
-import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModal";
-import { SuccessConfirmModal } from "@/components/SuccessConfirmModal";
+import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
+import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 
 type Props = {

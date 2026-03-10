@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModal";
-import { SuccessConfirmModal } from "@/components/SuccessConfirmModal";
+import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
+import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 

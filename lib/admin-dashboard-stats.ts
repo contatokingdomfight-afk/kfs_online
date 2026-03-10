@@ -4,7 +4,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getCachedModalityRefs } from "@/lib/cached-reference-data";
+import { getCachedModalityRefs, getCachedSchools } from "@/lib/cached-reference-data";
 
 export type SchoolOption = { id: string; name: string };
 
@@ -30,14 +30,11 @@ export async function getAdminDashboardStats(
   supabase: SupabaseClient,
   schoolId: string | null
 ): Promise<DashboardStats> {
-  const modalities = await getCachedModalityRefs(supabase);
+  const [modalities, schools] = await Promise.all([
+    getCachedModalityRefs(supabase),
+    getCachedSchools(supabase),
+  ]);
   const modalityNames = new Map(modalities.map((m) => [m.code, m.name]));
-
-  const { data: schools } = await supabase
-    .from("School")
-    .select("id, name")
-    .eq("isActive", true)
-    .order("name", { ascending: true });
 
   let studentsQuery = supabase.from("Student").select("id, schoolId, primaryModality");
   if (schoolId) studentsQuery = studentsQuery.eq("schoolId", schoolId);
@@ -131,7 +128,7 @@ export async function getAdminDashboardStats(
   }
 
   return {
-    schools: (schools ?? []).map((s) => ({ id: s.id, name: s.name })),
+    schools: schools.map((s) => ({ id: s.id, name: s.name })),
     totalStudents,
     studentsByModality,
     revenueCurrentMonth,

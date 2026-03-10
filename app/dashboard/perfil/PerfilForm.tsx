@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useFormState } from "react-dom";
 import { saveStudentProfile, type SaveProfileResult } from "./actions";
 import { getTranslations } from "@/lib/i18n";
-import { SuccessConfirmModal } from "@/components/SuccessConfirmModal";
+import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 
 type Props = {
   initial: {

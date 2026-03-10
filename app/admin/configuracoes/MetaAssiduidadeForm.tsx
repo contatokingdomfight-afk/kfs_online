@@ -5,7 +5,7 @@ import { useFormState } from "react-dom";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { updateAttendanceGoal, type UpdateAttendanceGoalResult } from "./actions";
-import { SuccessConfirmModal } from "@/components/SuccessConfirmModal";
+import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 
 type Props = { initialTargetValue: number; initialLocale: Locale };
 

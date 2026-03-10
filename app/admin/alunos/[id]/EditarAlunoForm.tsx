@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import { updateStudent, setStudentFullAccess, promoteStudentToRole, type UpdateStudentResult, type SetFullAccessResult, type PromoteStudentResult } from "../actions";
 import { getTranslations } from "@/lib/i18n";
-import { SuccessConfirmModal } from "@/components/SuccessConfirmModal";
+import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 
 type PlanOption = { id: string; label: string };
 type ModalityOption = { code: string; name: string };

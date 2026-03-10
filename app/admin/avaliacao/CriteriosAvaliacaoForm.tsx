@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useFormState } from "react-dom";
+import { useFormState, useFormStatus } from "react-dom";
 import { saveModalityEvaluationConfig } from "./actions";
-import { SuccessConfirmModal } from "@/components/SuccessConfirmModal";
+import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import { parseConfig } from "@/lib/evaluation-config";
 
 function newCriterionId(): string {
@@ -31,6 +31,15 @@ function buildInitialState(initialConfig: string): CategoryEdit[] {
     nome: cat.nome,
     criterios: cat.criterios.map((c) => ({ id: c.id, label: c.label })),
   }));
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-start" }} disabled={pending}>
+      {pending ? "A guardar…" : "Guardar critérios"}
+    </button>
+  );
 }
 
 type Props = { modality: string; initialConfig: string };
@@ -215,9 +224,7 @@ export function CriteriosAvaliacaoForm({ modality, initialConfig }: Props) {
         {state?.error && (
           <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--danger)" }}>{state.error}</p>
         )}
-        <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
-          Guardar critérios
-        </button>
+        <SubmitButton />
       </form>
 
       <SuccessConfirmModal
