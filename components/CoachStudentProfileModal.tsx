@@ -12,8 +12,9 @@ import { getAllCriterionIds } from "@/lib/evaluation-config";
 
 const SCORES_1_5 = [1, 2, 3, 4, 5];
 const SCORES_1_10 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
-const AUTO_SAVE_DELAY_MS = 2000;
+const MIN_SCORE = 1;
+const MAX_SCORE = 10;
+const DEFAULT_BASELINE = 5;
 
 function SubmitEvaluationButton({ onClose }: { onClose: () => void }) {
   const { pending } = useFormStatus();
@@ -116,15 +117,12 @@ export function CoachStudentProfileModal(props: Props) {
 
   const [scores, setScores] = useState<Record<string, number>>(() => {
     const o: Record<string, number> = {};
-    criterionIds.forEach((id) => { o[id] = 5; });
+    criterionIds.forEach((id) => { o[id] = DEFAULT_BASELINE; });
     return o;
   });
 
   const [touchedIds, setTouchedIds] = useState<Set<string>>(() => new Set());
-  const [quickMode, setQuickMode] = useState(false);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const lastSavedScoresRef = useRef<string>("");
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [globalBaseline, setGlobalBaseline] = useState(DEFAULT_BASELINE);
 
   useEffect(() => {
     if (!criterionIds.length) return;
@@ -132,8 +130,8 @@ export function CoachStudentProfileModal(props: Props) {
     const o: Record<string, number> = {};
     const touched = new Set<string>();
     criterionIds.forEach((id) => {
-      const v = initial && typeof initial[id] === "number" ? initial[id] : 5;
-      o[id] = v;
+      const v = initial && typeof initial[id] === "number" ? initial[id] : DEFAULT_BASELINE;
+      o[id] = Math.min(MAX_SCORE, Math.max(MIN_SCORE, v));
       if (initial && initial[id] != null) touched.add(id);
     });
     setScores(o);
@@ -141,32 +139,32 @@ export function CoachStudentProfileModal(props: Props) {
   }, [criterionIds.join(","), selectedModality]);
 
   useEffect(() => {
-    if (state && (state as { success?: boolean }).success) {
-      if (onSuccess) onSuccess();
-      setAutoSaveStatus("saved");
-      const t = setTimeout(() => setAutoSaveStatus("idle"), 3000);
-      return () => clearTimeout(t);
-    }
-    if (state && (state as { error?: string }).error) setAutoSaveStatus("error");
+    if (state && (state as { success?: boolean }).success && onSuccess) onSuccess();
   }, [state, onSuccess]);
 
-  const triggerAutoSave = useCallback(() => {
-    if (!formRef.current || !criterionIds.length) return;
-    const payload = JSON.stringify(scores);
-    if (payload === lastSavedScoresRef.current) return;
-    setAutoSaveStatus("saving");
-    lastSavedScoresRef.current = payload;
-    formRef.current.requestSubmit();
-  }, [scores, criterionIds.length]);
+  const applyBaselineToAll = useCallback(() => {
+    const v = Math.min(MAX_SCORE, Math.max(MIN_SCORE, globalBaseline));
+    setScores((prev) => {
+      const next = { ...prev };
+      criterionIds.forEach((id) => { next[id] = v; });
+      return next;
+    });
+    setTouchedIds(new Set(criterionIds));
+  }, [globalBaseline, criterionIds]);
 
-  useEffect(() => {
-    if (!criterionIds.length || touchedIds.size === 0) return;
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(triggerAutoSave, AUTO_SAVE_DELAY_MS);
-    return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    };
-  }, [scores, touchedIds.size, triggerAutoSave, criterionIds.length]);
+  const applyBaselineToSection = useCallback((cat: CategoryConfig) => {
+    const v = Math.min(MAX_SCORE, Math.max(MIN_SCORE, globalBaseline));
+    setScores((prev) => {
+      const next = { ...prev };
+      cat.criterios.forEach((c) => { next[c.id] = v; });
+      return next;
+    });
+    setTouchedIds((prev) => {
+      const next = new Set(prev);
+      cat.criterios.forEach((c) => next.add(c.id));
+      return next;
+    });
+  }, [globalBaseline]);
 
   const updateScore = useCallback((criterionId: string, value: number) => {
     setScores((prev) => ({ ...prev, [criterionId]: value }));
@@ -329,22 +327,26 @@ export function CoachStudentProfileModal(props: Props) {
 
                 {useDynamicForm && evaluationConfig && (
                   <>
-                    <div className="flex items-center justify-between gap-4 flex-wrap">
-                      <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="rounded-xl border border-[var(--primary)]/30 bg-[var(--primary)]/5 p-4 space-y-3">
+                      <p className="text-sm font-semibold text-[var(--text-primary)] m-0">Valor base da avaliação</p>
+                      <div className="flex flex-wrap items-center gap-2">
                         <input
-                          type="checkbox"
-                          checked={quickMode}
-                          onChange={(e) => setQuickMode(e.target.checked)}
-                          className="rounded accent-[var(--primary)]"
+                          type="number"
+                          min={MIN_SCORE}
+                          max={MAX_SCORE}
+                          value={globalBaseline}
+                          onChange={(e) => setGlobalBaseline(Math.min(MAX_SCORE, Math.max(MIN_SCORE, Number(e.target.value) || DEFAULT_BASELINE)))}
+                          className="input w-16 h-11 rounded-lg text-center font-semibold"
+                          aria-label="Valor base"
                         />
-                        <span className="text-sm font-medium text-[var(--text-primary)]">⚡ Modo avaliação rápida</span>
-                      </label>
-                      {autoSaveStatus === "saved" && (
-                        <span className="text-xs text-[var(--success)] font-medium">Guardado automaticamente</span>
-                      )}
-                      {autoSaveStatus === "saving" && (
-                        <span className="text-xs text-[var(--text-secondary)]">A guardar…</span>
-                      )}
+                        <button
+                          type="button"
+                          onClick={applyBaselineToAll}
+                          className="btn btn-primary h-11 px-4 rounded-lg font-medium"
+                        >
+                          Aplicar a todos os critérios
+                        </button>
+                      </div>
                     </div>
 
                     {focusSuggestions.length > 0 && (
@@ -388,12 +390,23 @@ export function CoachStudentProfileModal(props: Props) {
                                 <span className="evaluation-category-chevron opacity-70 transition-transform" aria-hidden>▼</span>
                               </summary>
                               <div className="px-4 pb-4 pt-1 flex flex-col gap-5">
+                                <div className="flex flex-wrap items-center gap-2 py-2 border-b border-[var(--border)]">
+                                  <span className="text-xs text-[var(--text-secondary)]">Aplicar valor base à secção:</span>
+                                  <span className="inline-flex items-center justify-center w-10 h-9 rounded bg-[var(--bg)] border border-[var(--border)] text-sm font-semibold text-[var(--text-primary)]" aria-hidden>{globalBaseline}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => applyBaselineToSection(cat)}
+                                    className="btn h-9 px-3 rounded-lg text-sm"
+                                  >
+                                    Aplicar
+                                  </button>
+                                </div>
                                 {cat.criterios.map((c) => (
                                   <CriterionRow
                                     key={c.id}
                                     criterion={c}
-                                    value={scores[c.id] ?? 5}
-                                    quickMode={quickMode}
+                                    value={scores[c.id] ?? globalBaseline}
+                                    baseline={globalBaseline}
                                     isTouched={touchedIds.has(c.id)}
                                     onValueChange={(v) => updateScore(c.id, v)}
                                     inputRef={(el) => { criterionInputRefs.current[c.id] = el; }}
@@ -434,13 +447,8 @@ export function CoachStudentProfileModal(props: Props) {
           </div>
         </div>
 
-        <div className="shrink-0 sticky bottom-0 border-t border-[var(--border)] bg-[var(--bg)] p-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            {autoSaveStatus === "saved" && <span className="text-xs text-[var(--success)]">Guardado automaticamente</span>}
-          </div>
-          <div className="flex gap-3 items-center flex-wrap">
-            <SubmitEvaluationButton onClose={onClose} />
-          </div>
+        <div className="shrink-0 sticky bottom-0 border-t border-[var(--border)] bg-[var(--bg)] p-4 flex flex-wrap items-center justify-end gap-3">
+          <SubmitEvaluationButton onClose={onClose} />
         </div>
         </form>
       </div>
@@ -451,62 +459,82 @@ export function CoachStudentProfileModal(props: Props) {
 type CriterionRowProps = {
   criterion: CriterionConfig;
   value: number;
-  quickMode: boolean;
+  baseline: number;
   isTouched: boolean;
   onValueChange: (v: number) => void;
   inputRef: (el: HTMLInputElement | HTMLButtonElement | null) => void;
 };
 
-function CriterionRow({ criterion, value, quickMode, isTouched, onValueChange, inputRef }: CriterionRowProps) {
+function CriterionRow({ criterion, value, baseline, isTouched, onValueChange, inputRef }: CriterionRowProps) {
   const isUnrated = !isTouched;
+  const delta = value - baseline;
+  const clamped = (v: number) => Math.min(MAX_SCORE, Math.max(MIN_SCORE, v));
+
   return (
     <div
       className={`rounded-lg p-3 transition-colors ${
         isUnrated ? "bg-amber-500/10 border border-amber-500/30" : "bg-[var(--bg)]/50 border border-transparent"
-      }`}
+      } ${delta !== 0 ? "ring-1 ring-[var(--primary)]/40" : ""}`}
     >
-      <div className="flex items-center justify-between gap-2 mb-2">
+      <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
         <span className="text-sm font-medium text-[var(--text-primary)]">{criterion.label}</span>
+        <span className="text-sm font-medium text-[var(--text-primary)] tabular-nums">
+          {value}
+          {delta !== 0 && (
+            <span className="ml-1 text-[var(--primary)] font-semibold">({delta > 0 ? "+" : ""}{delta})</span>
+          )}
+        </span>
         {isUnrated && (
-          <span className="text-xs text-amber-600 font-medium">⚠ não avaliado</span>
+          <span className="text-xs text-amber-600 font-medium w-full">⚠ não avaliado</span>
         )}
       </div>
       {criterion.description && (
         <p className="text-xs text-[var(--text-secondary)] mb-2">{criterion.description}</p>
       )}
-      {quickMode ? (
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label={`${criterion.label}, nota de 1 a 10`}>
-          {SCORES_1_10.map((n) => (
-            <button
-              key={n}
-              ref={n === 1 ? inputRef : undefined}
-              type="button"
-              onClick={() => onValueChange(n)}
-              className={`min-w-[2.25rem] h-9 rounded-lg text-sm font-medium transition-all ${
-                value === n
-                  ? "bg-[var(--primary)] text-white ring-2 ring-[var(--primary)]"
-                  : "bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border)] hover:border-[var(--primary)]/50"
-              }`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <input
-            ref={inputRef as (el: HTMLInputElement | null) => void}
-            type="range"
-            min={1}
-            max={10}
-            value={value}
-            onChange={(e) => onValueChange(Number(e.target.value))}
-            className="flex-1 h-3 rounded-full accent-[var(--primary)]"
-            aria-label={`${criterion.label}, ${value} de 10`}
-          />
-          <span className="text-sm font-medium text-[var(--text-primary)] w-8 tabular-nums">{value}/10</span>
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <span className="text-xs text-[var(--text-secondary)] sr-only sm:not-sr-only">Ajuste rápido:</span>
+        <button
+          ref={inputRef as (el: HTMLButtonElement | null) => void}
+          type="button"
+          onClick={() => onValueChange(clamped(value - 1))}
+          className="min-w-[3rem] h-9 rounded-lg text-sm font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--primary)]/50 transition-colors"
+          aria-label={`${criterion.label}, menos um`}
+        >
+          −1
+        </button>
+        <button
+          type="button"
+          onClick={() => onValueChange(baseline)}
+          className={`min-w-[3.5rem] h-9 rounded-lg text-sm font-medium transition-colors ${
+            value === baseline
+              ? "bg-[var(--primary)] text-white border-2 border-[var(--primary)]"
+              : "border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--primary)]/50"
+          }`}
+          aria-label={`${criterion.label}, valor base ${baseline}`}
+        >
+          BASE
+        </button>
+        <button
+          type="button"
+          onClick={() => onValueChange(clamped(value + 1))}
+          className="min-w-[3rem] h-9 rounded-lg text-sm font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--primary)]/50 transition-colors"
+          aria-label={`${criterion.label}, mais um`}
+        >
+          +1
+        </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="range"
+          min={MIN_SCORE}
+          max={MAX_SCORE}
+          value={value}
+          onChange={(e) => onValueChange(Number(e.target.value))}
+          className="flex-1 h-3 rounded-full accent-[var(--primary)]"
+          aria-label={`${criterion.label}, ajuste fino ${value} de 10`}
+        />
+        <span className="text-sm font-medium text-[var(--text-primary)] w-8 tabular-nums">{value}/10</span>
+      </div>
     </div>
   );
 }
