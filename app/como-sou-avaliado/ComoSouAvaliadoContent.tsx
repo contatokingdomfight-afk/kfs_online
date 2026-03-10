@@ -100,7 +100,7 @@ export function ComoSouAvaliadoContent({
             Como sou avaliado
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Os 5 pilares: Técnico, Tático, Físico, Mental e Teórico. Escala de 1 a 10.
+            Cada critério abaixo recebe uma nota de 1 a 10. O teu perfil geral é a média de todas as classificações.
           </p>
         </div>
         <span className="rounded-full border border-border bg-bg-secondary px-3 py-1 text-sm font-medium text-text-primary">
