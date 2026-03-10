@@ -14,6 +14,8 @@ export type EvaluationDetail = {
   strength: number | null;
   theory: number | null;
   scores: Record<string, number> | null;
+  /** Nomes dos critérios (id → label) para mostrar no modal em vez de UUID. */
+  criterionLabels?: Record<string, string>;
 };
 
 /** Obtém uma avaliação por id (para modal). Apenas se pertencer ao aluno atual. */
@@ -47,6 +49,18 @@ export async function getMyEvaluationById(evalId: string): Promise<EvaluationDet
     ? new Date(evalRow.created_at).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
     : "";
 
+  const scores = (evalRow.scores as Record<string, number> | null) ?? null;
+  let criterionLabels: Record<string, string> = {};
+  if (scores && Object.keys(scores).length > 0) {
+    const { data: criteria } = await supabase
+      .from("EvaluationCriterion")
+      .select("id, label")
+      .in("id", Object.keys(scores));
+    (criteria ?? []).forEach((c) => {
+      criterionLabels[c.id] = c.label ?? c.id;
+    });
+  }
+
   return {
     id: evalRow.id,
     coachName,
@@ -57,6 +71,7 @@ export async function getMyEvaluationById(evalId: string): Promise<EvaluationDet
     technique: evalRow.technique ?? null,
     strength: evalRow.strength ?? null,
     theory: evalRow.theory ?? null,
-    scores: (evalRow.scores as Record<string, number> | null) ?? null,
+    scores,
+    criterionLabels,
   };
 }

@@ -166,8 +166,13 @@ export default async function DashboardPerformancePage() {
   const useStaticDetail = Object.keys(detailByDimension).length === 0;
   const detailSource = useStaticDetail ? PERFORMANCE_DETAIL_BY_DIMENSION : detailByDimension;
   const detailOrder = useStaticDetail ? [...PERFORMANCE_DETAIL_ORDER] : getDetailOrder(detailByDimension);
-  const groupedSource = groupDetailByGeneralDimension(detailSource, detailOrder);
-  const groupedOrder = getDetailOrder(groupedSource);
+  let groupedSource = groupDetailByGeneralDimension(detailSource, detailOrder);
+  let groupedOrder = getDetailOrder(groupedSource);
+  // Se após agrupar ficar vazio (ex.: códigos de dimensão sem mapeamento), usar estrutura estática para "Detalhe por dimensão/componente"
+  if (groupedOrder.length === 0) {
+    groupedSource = PERFORMANCE_DETAIL_BY_DIMENSION;
+    groupedOrder = [...PERFORMANCE_DETAIL_ORDER];
+  }
 
   const hasScores = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
 

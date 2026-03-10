@@ -4,6 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import type { EvaluationDetail } from "../actions";
 
+function formatModality(mod: string | null): string {
+  if (!mod) return "";
+  return mod.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 type ListItem = { id: string; coachName: string; date: string };
 
 type Props = {
@@ -35,12 +40,12 @@ export function EvaluationHistoryClient({ list, getEvaluationById, backHref, bac
   }
 
   return (
-    <>
+    <div className="card p-4 sm:p-6">
       <p className="text-sm text-text-secondary mb-4">
         Clica numa avaliação para ver o detalhe (comentário do treinador e critérios).
       </p>
       {list.length === 0 ? (
-        <div className="card p-6 text-center">
+        <div className="text-center py-6">
           <p className="text-text-secondary">Ainda não há avaliações.</p>
           <Link href={backHref} className="btn btn-primary mt-4 inline-block no-underline">
             {backLabel}
@@ -73,6 +78,7 @@ export function EvaluationHistoryClient({ list, getEvaluationById, backHref, bac
       <Link href={backHref} className="inline-block mt-6 text-sm font-medium text-primary no-underline hover:underline">
         {backLabel} →
       </Link>
+    </div>
 
       {modalEval && (
         <div
@@ -103,7 +109,7 @@ export function EvaluationHistoryClient({ list, getEvaluationById, backHref, bac
               <p className="text-sm text-text-secondary">
                 Por <strong className="text-text-primary">{modalEval.coachName}</strong>
                 {modalEval.date ? ` · ${modalEval.date}` : ""}
-                {modalEval.modality ? ` · ${modalEval.modality}` : ""}
+                {modalEval.modality ? ` · ${formatModality(modalEval.modality)}` : ""}
               </p>
               {modalEval.note ? (
                 <div>
@@ -111,18 +117,21 @@ export function EvaluationHistoryClient({ list, getEvaluationById, backHref, bac
                   <p className="text-sm text-text-primary whitespace-pre-wrap">{modalEval.note}</p>
                 </div>
               ) : (
-                <p className="text-sm text-text-secondary italic">Sem comentário.</p>
+                <p className="text-sm text-text-secondary italic">O treinador não deixou comentário nesta avaliação.</p>
               )}
               {(modalEval.scores && Object.keys(modalEval.scores).length > 0) && (
                 <div>
                   <p className="text-xs font-semibold text-text-secondary uppercase mb-2">Critérios (1–10)</p>
-                  <ul className="space-y-1 text-sm">
-                    {Object.entries(modalEval.scores).map(([key, value]) => (
-                      <li key={key} className="flex justify-between gap-2">
-                        <span className="text-text-primary truncate">{key}</span>
-                        <span className="text-primary font-medium flex-shrink-0">{value}/10</span>
-                      </li>
-                    ))}
+                  <ul className="space-y-2 text-sm">
+                    {Object.entries(modalEval.scores).map(([criterionId, value]) => {
+                      const label = modalEval.criterionLabels?.[criterionId] ?? criterionId;
+                      return (
+                        <li key={criterionId} className="flex justify-between gap-2 items-baseline">
+                          <span className="text-text-primary min-w-0">{label}</span>
+                          <span className="text-primary font-medium flex-shrink-0">{value}/10</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
