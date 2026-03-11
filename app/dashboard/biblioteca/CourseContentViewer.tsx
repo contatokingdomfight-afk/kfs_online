@@ -26,9 +26,9 @@ type Module = {
 type Props = {
   courseId: string;
   moduleList: Module[];
-  unitsByModule: Map<string, Unit[]>;
-  completedUnitIds: Set<string>;
-  completedModuleIds: Set<string>;
+  unitsByModule: Record<string, Unit[]>;
+  completedUnitIds: string[];
+  completedModuleIds: string[];
   studentId: string | null;
   t: (key: "videoComingSoon" | "completePreviousUnit" | "videoUnavailable") => string;
 };
@@ -53,10 +53,13 @@ export function CourseContentViewer({
     });
   };
 
+  const completedUnitSet = new Set(completedUnitIds);
+  const completedModuleSet = new Set(completedModuleIds);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
       {moduleList.map((mod, idx) => {
-        const units = unitsByModule.get(mod.id) ?? [];
+        const units = unitsByModule[mod.id] ?? [];
         const hasUnits = units.length > 0;
         const isLegacy = !hasUnits && mod.video_url;
 
@@ -71,7 +74,7 @@ export function CourseContentViewer({
               )}
               {units.map((u, uIdx) => {
                 const prevUnit = uIdx > 0 ? units[uIdx - 1] : null;
-                const isUnlocked = !prevUnit || completedUnitIds.has(prevUnit.id);
+                const isUnlocked = !prevUnit || completedUnitSet.has(prevUnit.id);
                 const isExpanded = expandedUnits.has(u.id);
 
                 return (
@@ -102,7 +105,7 @@ export function CourseContentViewer({
                           </span>
                         </span>
                         {studentId &&
-                          (completedUnitIds.has(u.id) ? (
+                          (completedUnitSet.has(u.id) ? (
                             <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
                           ) : isUnlocked ? (
                             <div onClick={(e) => e.stopPropagation()}>
@@ -162,7 +165,7 @@ export function CourseContentViewer({
                     {idx + 1}. {mod.name}
                   </span>
                   {studentId &&
-                    (completedModuleIds.has(mod.id) ? (
+                    (completedModuleSet.has(mod.id) ? (
                       <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
                     ) : (
                       <ConcluirModuloButton moduleId={mod.id} courseId={courseId} />

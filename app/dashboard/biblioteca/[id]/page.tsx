@@ -147,9 +147,9 @@ export default async function CursoDetailPage({ params }: Props) {
           <CourseContentViewer
             courseId={courseId}
             moduleList={moduleList}
-            unitsByModule={unitsByModule}
-            completedUnitIds={completedUnitIds}
-            completedModuleIds={completedModuleIds}
+            unitsByModule={Object.fromEntries(unitsByModule)}
+            completedUnitIds={[...completedUnitIds]}
+            completedModuleIds={[...completedModuleIds]}
             studentId={studentId}
             t={t}
           />
