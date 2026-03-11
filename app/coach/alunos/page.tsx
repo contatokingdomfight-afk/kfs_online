@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlunoProfileLink } from "@/components/AlunoProfileLink";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
@@ -154,7 +155,7 @@ export default async function CoachAlunosPage({ searchParams }: { searchParams: 
             const primMod = (s as { primaryModality?: string | null }).primaryModality;
             return (
               <li key={s.id}>
-                <Link
+                <AlunoProfileLink
                   href={`/coach/alunos/${s.id}`}
                   className="card"
                   style={{
@@ -196,7 +197,7 @@ export default async function CoachAlunosPage({ searchParams }: { searchParams: 
                   <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                     {u?.email ?? "—"}
                   </p>
-                </Link>
+                </AlunoProfileLink>
               </li>
             );
           })}
