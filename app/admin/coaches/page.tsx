@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { AdminConfigMissing } from "@/components/AdminConfigMissing";
+import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { CoachActiveToggle } from "./CoachActiveToggle";
@@ -9,9 +8,7 @@ export default async function AdminCoachesPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
-  const result = getAdminClientOrNull();
-  if (!result.client) return <AdminConfigMissing errorType={result.error} />;
-  const supabase = result.client;
+  const supabase = await createClient();
 
   const { data: coaches } = await supabase
     .from("Coach")
