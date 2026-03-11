@@ -26,9 +26,27 @@ export default async function CoachAgendaPage() {
     query = query.eq("coachId", coachId);
   }
 
-  const { data: lessons } = await query;
+  let { data: lessons } = await query;
+  let list = lessons ?? [];
+  let showAllSchoolHint = false;
 
-  const list = lessons ?? [];
+  // Se o coach não tem aulas atribuídas, mostrar todas as aulas da escola
+  if (list.length === 0 && coachId) {
+    const { data: coachRow } = await supabase.from("Coach").select("schoolId").eq("id", coachId).single();
+    const schoolId = coachRow?.schoolId;
+    if (schoolId) {
+      const { data: allSchoolLessons } = await supabase
+        .from("Lesson")
+        .select("id, modality, date, startTime, endTime")
+        .eq("schoolId", schoolId)
+        .gte("date", today)
+        .lte("date", inFourWeeks)
+        .order("date", { ascending: true })
+        .order("startTime", { ascending: true });
+      list = allSchoolLessons ?? [];
+      showAllSchoolHint = list.length > 0;
+    }
+  }
 
   return (
     <div style={{ maxWidth: "min(600px, 100%)" }}>
@@ -51,6 +69,11 @@ export default async function CoachAgendaPage() {
       {!coachId && (
         <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
           {t("agendaAdminHint")}
+        </p>
+      )}
+      {showAllSchoolHint && (
+        <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+          {t("agendaNoAssignedHint")}
         </p>
       )}
       {list.length === 0 ? (
