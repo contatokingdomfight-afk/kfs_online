@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormState } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createLesson } from "./actions";
 
 type Coach = { id: string; name: string };
@@ -17,6 +18,7 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
 
   return (
     <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <FormLoadingModal message="A aula está a ser criada…" />
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
         <label style={{ flex: "1 1 140px", minWidth: 0 }}>
           <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "#a1a1aa" }}>
