@@ -6,6 +6,7 @@ const CACHE_TAG = "evaluation-configs";
 
 /**
  * Carrega as configurações de avaliação para MUAY_THAI, BOXING e KICKBOXING em paralelo.
+ * KICKBOXING usa a mesma config que MUAY_THAI (avaliação idêntica: Muay Thai & Kickboxing).
  * Usa cache de 5 minutos; invalida com revalidateTag("evaluation-configs") quando alterares critérios no Admin.
  */
 export async function loadAllEvaluationConfigs(
@@ -23,19 +24,31 @@ export async function loadAllEvaluationConfigs(
   return new Map(entries);
 }
 
+/** Muay Thai e Kickboxing partilham a mesma estrutura de avaliação. */
+const MUAY_KICKBOXING_ALIAS: Record<string, string> = {
+  KICKBOXING: "MUAY_THAI",
+};
+
+/** Modalidades que usam SEMPRE EvaluationComponent (nunca config legado). */
+const MODALITIES_USE_COMPONENTS = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
+
 /**
  * Carrega a configuração de avaliação para uma modalidade.
- * Primeiro tenta as tabelas EvaluationComponent + EvaluationCriterion (nova estrutura);
- * se não houver dados, usa ModalityEvaluationConfig.config (JSON legado).
+ * KICKBOXING usa a mesma config que MUAY_THAI (avaliação idêntica).
+ * Para MUAY_THAI/BOXING/KICKBOXING: usa SEMPRE EvaluationComponent + EvaluationCriterion.
+ * Para outras modalidades: fallback para ModalityEvaluationConfig (JSON legado).
  */
 export async function loadEvaluationConfigForModality(
   supabase: SupabaseClient,
   modality: string
 ): Promise<ModalityEvaluationConfigPayload | null> {
+  const effectiveModality = MUAY_KICKBOXING_ALIAS[modality] ?? modality;
+  const useComponentsOnly = MODALITIES_USE_COMPONENTS.includes(effectiveModality as (typeof MODALITIES_USE_COMPONENTS)[number]);
+
   const { data: components } = await supabase
     .from("EvaluationComponent")
     .select("id, name, sortOrder, dimensionId")
-    .eq("modality", modality)
+    .eq("modality", effectiveModality)
     .order("sortOrder", { ascending: true });
 
   if (components?.length) {
@@ -90,10 +103,12 @@ export async function loadEvaluationConfigForModality(
     if (categorias.length > 0) return { categorias };
   }
 
+  if (useComponentsOnly) return null;
+
   const { data: row } = await supabase
     .from("ModalityEvaluationConfig")
     .select("config")
-    .eq("modality", modality)
+    .eq("modality", effectiveModality)
     .maybeSingle();
 
   if (row?.config) return parseConfig(row.config as unknown);

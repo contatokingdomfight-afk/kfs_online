@@ -144,7 +144,8 @@ export function CoachStudentProfileModal(props: Props) {
     if (!evaluationConfig) return [];
     const byDim = new Map<string, { label: string; firstCategoryName: string }>();
     for (const cat of evaluationConfig.categorias) {
-      const dim = cat.code ?? categoryToGeneralDimension(cat.nome);
+      const raw = cat.code ?? categoryToGeneralDimension(cat.nome);
+      const dim = raw?.toLowerCase();
       if (!dim) continue;
       if (!byDim.has(dim)) {
         const axis = GENERAL_PERFORMANCE_AXES.find((a) => a.id === dim);
@@ -159,8 +160,8 @@ export function CoachStudentProfileModal(props: Props) {
       label: a.label,
       firstCategoryName: byDim.get(a.id)!.firstCategoryName,
     }));
-    const firstCat = evaluationConfig.categorias[0]?.nome;
-    return [{ id: "todas", label: "Todas", firstCategoryName: firstCat ?? "" }, ...dims];
+    const firstCat = evaluationConfig.categorias[0]?.nome ?? "";
+    return [{ id: "todas", label: "Todas", firstCategoryName: firstCat }, ...dims];
   }, [evaluationConfig]);
 
   const [scores, setScores] = useState<Record<string, number>>(() => {

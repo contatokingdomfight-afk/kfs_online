@@ -19,14 +19,16 @@ function normalizeCategoryName(nome: string): string {
     .trim();
 }
 
-/** Mapeia nome de categoria do config para id da dimensão geral (ou null). */
+/** Mapeia nome de categoria do config para id da dimensão geral (ou null).
+ * Aceita "Técnico", "Técnico - Teep (Push Kick)", etc. */
 export function categoryToGeneralDimension(categoryNome: string): (typeof GENERAL_DIMENSION_IDS)[number] | null {
   const n = normalizeCategoryName(categoryNome);
-  if (n === "tecnico") return "tecnico";
-  if (n === "tatico") return "tatico";
-  if (n === "fisico") return "fisico";
-  if (n === "mental") return "mental";
-  if (n === "teorico") return "teorico";
+  const first = n.split(/\s*[-–]\s*/)[0]?.trim() ?? n;
+  if (first === "tecnico") return "tecnico";
+  if (first === "tatico") return "tatico";
+  if (first === "fisico") return "fisico";
+  if (first === "mental") return "mental";
+  if (first === "teorico") return "teorico";
   return null;
 }
 
