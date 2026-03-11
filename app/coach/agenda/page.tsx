@@ -1,11 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
 
 export default async function CoachAgendaPage() {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") redirect("/coach");
+
   const coachId = await getCurrentCoachId();
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");

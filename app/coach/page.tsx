@@ -383,11 +383,13 @@ export default async function CoachHomePage() {
           {t("quickAccess")}
         </h2>
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 12px)" }}>
-          <li>
-            <Link href="/coach/agenda" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none" }}>
-              {t("viewAgenda")}
-            </Link>
-          </li>
+          {dbUser?.role === "ADMIN" && (
+            <li>
+              <Link href="/coach/agenda" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none" }}>
+                {t("viewAgenda")}
+              </Link>
+            </li>
+          )}
           <li>
             <Link href="/coach/atletas" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none" }}>
               {t("athletesUnderCoaching")}

@@ -64,7 +64,6 @@ export default async function ComoSouAvaliadoLayout({
       { label: "Como sou avaliado", href: "/como-sou-avaliado" },
       { label: t("navEnterClass"), href: "/coach/aula" },
       { label: t("navWeekTheme"), href: "/coach/tema-semana" },
-      { label: t("navAgenda"), href: "/coach/agenda" },
       { label: t("navStudents"), href: "/coach/alunos" },
       { label: t("navAthletesCoach"), href: "/coach/atletas" },
       { label: "Meus Cursos", href: "/coach/cursos" },
