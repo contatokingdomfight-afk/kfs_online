@@ -151,7 +151,9 @@ export default async function CursoDetailPage({ params }: Props) {
             completedUnitIds={[...completedUnitIds]}
             completedModuleIds={[...completedModuleIds]}
             studentId={studentId}
-            t={t}
+            videoComingSoon={t("videoComingSoon")}
+            completePreviousUnit={t("completePreviousUnit")}
+            videoUnavailable={t("videoUnavailable")}
           />
         </div>
       ) : (

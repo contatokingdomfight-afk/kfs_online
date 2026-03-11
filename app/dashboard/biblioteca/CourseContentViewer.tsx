@@ -30,7 +30,9 @@ type Props = {
   completedUnitIds: string[];
   completedModuleIds: string[];
   studentId: string | null;
-  t: (key: "videoComingSoon" | "completePreviousUnit" | "videoUnavailable") => string;
+  videoComingSoon: string;
+  completePreviousUnit: string;
+  videoUnavailable: string;
 };
 
 export function CourseContentViewer({
@@ -40,7 +42,9 @@ export function CourseContentViewer({
   completedUnitIds,
   completedModuleIds,
   studentId,
-  t,
+  videoComingSoon,
+  completePreviousUnit,
+  videoUnavailable,
 }: Props) {
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
 
@@ -113,7 +117,7 @@ export function CourseContentViewer({
                             </div>
                           ) : (
                             <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                              {t("completePreviousUnit")}
+                              {completePreviousUnit}
                             </span>
                           ))}
                       </div>
@@ -124,7 +128,7 @@ export function CourseContentViewer({
                     {isExpanded && isUnlocked && (
                       <>
                         {u.content_type === "VIDEO" && u.video_url ? (
-                          <VideoPlayer url={u.video_url} title={u.name} fallbackMessage={t("videoUnavailable")} />
+                          <VideoPlayer url={u.video_url} title={u.name} fallbackMessage={videoUnavailable} />
                         ) : u.content_type === "TEXT" && u.text_content ? (
                           <div
                             style={{
@@ -139,14 +143,14 @@ export function CourseContentViewer({
                           </div>
                         ) : (
                           <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-                            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>{t("videoComingSoon")}</p>
+                            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>{videoComingSoon}</p>
                           </div>
                         )}
                       </>
                     )}
                     {isExpanded && !isUnlocked && (
                       <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-                        <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>{t("completePreviousUnit")}</p>
+                        <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>{completePreviousUnit}</p>
                       </div>
                     )}
                   </div>
@@ -175,7 +179,7 @@ export function CourseContentViewer({
                   <p style={{ margin: "6px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{mod.description}</p>
                 )}
               </div>
-              <VideoPlayer url={mod.video_url!} title={mod.name} fallbackMessage={t("videoUnavailable")} />
+              <VideoPlayer url={mod.video_url!} title={mod.name} fallbackMessage={videoUnavailable} />
             </div>
           );
         }
