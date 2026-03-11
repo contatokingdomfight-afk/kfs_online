@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { formatLessonDate } from "@/lib/lesson-utils";
@@ -14,7 +15,8 @@ export default async function AdminTurmaEditarPage({ params }: Props) {
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const { id: lessonId } = await params;
-  const supabase = await createClient();
+  const adminResult = getAdminClientOrNull();
+  const supabase = adminResult.client ?? (await createClient());
 
   const { data: lesson } = await supabase
     .from("Lesson")

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { CreateLessonForm } from "./CreateLessonForm";
@@ -25,7 +26,9 @@ export default async function AdminTurmasPage({
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
-  const supabase = await createClient();
+  // Usar admin client quando disponível (bypassa RLS) para garantir coaches em turmas/aulas
+  const adminResult = getAdminClientOrNull();
+  const supabase = adminResult.client ?? (await createClient());
 
   const { data: lessons, error: lessonsError } = await supabase
     .from("Lesson")

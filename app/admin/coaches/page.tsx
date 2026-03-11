@@ -11,7 +11,7 @@ export default async function AdminCoachesPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
-  // Preferir admin client (bypassa RLS); fallback para createClient quando service role não configurada
+  // Usar admin client (bypassa RLS) quando disponível; fallback para createClient
   const adminResult = getAdminClientOrNull();
   const supabase = adminResult.client ?? (await createClient());
 
@@ -60,9 +60,16 @@ export default async function AdminCoachesPage() {
       </div>
 
       {list.length === 0 ? (
-        <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>
-          Ainda não há coaches cadastrados.
-        </p>
+        <div>
+          <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>
+            Ainda não há coaches cadastrados.
+          </p>
+          {!adminResult.client && (
+            <p style={{ marginTop: 12, fontSize: 13, color: "var(--text-secondary)", maxWidth: 420 }}>
+              Se já existem coaches na base de dados, configura <code>SUPABASE_SERVICE_ROLE_KEY</code> em Vercel (Settings → Environment Variables) e faz redeploy.
+            </p>
+          )}
+        </div>
       ) : (
         <ul
           style={{
