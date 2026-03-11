@@ -47,6 +47,7 @@ export default async function CoachAulaPage({
     medicalNotes: string | null;
     emergencyContact: string | null;
     evaluatedInThisLesson: boolean;
+    lastEvalScoresByModality?: Record<string, Record<string, number>>;
   };
   let attendances: AttWithProfile[] = [];
 
@@ -93,6 +94,24 @@ export default async function CoachAulaPage({
           : { data: [] as { athleteId: string }[] };
       const evaluatedAthleteIds = new Set((evals ?? []).map((e) => e.athleteId));
 
+      const lessonModality = selectedLesson.modality;
+      const { data: lastEvals } =
+        athleteIds.length > 0
+          ? await supabase
+              .from("AthleteEvaluation")
+              .select("athleteId, scores")
+              .eq("modality", lessonModality)
+              .in("athleteId", athleteIds)
+              .not("scores", "is", null)
+              .order("created_at", { ascending: false })
+          : { data: [] as { athleteId: string; scores: Record<string, number> | null }[] };
+      const lastScoresByAthleteId = new Map<string, Record<string, number>>();
+      for (const e of lastEvals ?? []) {
+        if (!lastScoresByAthleteId.has(e.athleteId) && e.scores && typeof e.scores === "object" && Object.keys(e.scores).length > 0) {
+          lastScoresByAthleteId.set(e.athleteId, e.scores as Record<string, number>);
+        }
+      }
+
       const userById = new Map((users ?? []).map((u) => [u.id, u]));
       const profileByStudentId = new Map((profiles ?? []).map((p) => [p.studentId, p]));
       const studentToUser = new Map((students ?? []).map((s) => [s.id, userById.get(s.userId)]));
@@ -102,6 +121,11 @@ export default async function CoachAulaPage({
         const prof = profileByStudentId.get(a.studentId);
         const aid = athleteByStudentId.get(a.studentId);
         const evaluatedInThisLesson = aid ? evaluatedAthleteIds.has(aid) : false;
+        const lastScores = aid ? lastScoresByAthleteId.get(aid) : undefined;
+        const lastEvalScoresByModality =
+          lastScores && lessonModality
+            ? { [lessonModality]: lastScores }
+            : undefined;
         return {
           id: a.id,
           studentId: a.studentId,
@@ -115,6 +139,7 @@ export default async function CoachAulaPage({
           medicalNotes: prof?.medicalNotes ?? null,
           emergencyContact: prof?.emergencyContact ?? null,
           evaluatedInThisLesson,
+          lastEvalScoresByModality,
         };
       });
     }
@@ -201,6 +226,7 @@ export default async function CoachAulaPage({
                       modality={selectedLesson.modality}
                       evaluationConfig={evaluationConfig}
                       evaluatedInThisLesson={a.evaluatedInThisLesson}
+                      lastEvalScoresByModality={a.lastEvalScoresByModality}
                       profile={{
                         name: a.name,
                         email: a.email,

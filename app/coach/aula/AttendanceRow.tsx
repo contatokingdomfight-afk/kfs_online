@@ -18,6 +18,7 @@ type Props = {
   modality: string;
   evaluationConfig: ModalityEvaluationConfigPayload | null;
   evaluatedInThisLesson?: boolean;
+  lastEvalScoresByModality?: Record<string, Record<string, number>>;
   profile: StudentProfileForModal;
 };
 
@@ -31,6 +32,7 @@ export function AttendanceRow({
   modality,
   evaluationConfig,
   evaluatedInThisLesson = false,
+  lastEvalScoresByModality,
   profile,
 }: Props) {
   const router = useRouter();
@@ -98,6 +100,7 @@ export function AttendanceRow({
           lessonId={lessonId}
           modality={modality}
           evaluationConfig={evaluationConfig}
+          initialScoresByModality={lastEvalScoresByModality}
           profile={profile}
           onClose={() => setModalOpen(false)}
           onSuccess={handleEvaluationSuccess}

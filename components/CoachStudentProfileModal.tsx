@@ -374,6 +374,11 @@ export function CoachStudentProfileModal(props: Props) {
               <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">
                 {isStandalone ? "Avaliar (escolhe a modalidade)" : `Avaliar nesta aula (${MODALITY_LABELS[selectedModality] ?? selectedModality})`}
               </h3>
+              {!isStandalone && (
+                <p className="text-xs text-[var(--text-secondary)] -mt-2 mb-2">
+                  Podes avaliar apenas os critérios que observaste. Os restantes mantêm a última avaliação.
+                </p>
+              )}
                 {!isStandalone && <input type="hidden" name="lessonId" value={lessonId!} />}
                 <input type="hidden" name="studentId" value={studentId} />
                 <input type="hidden" name="modality" value={selectedModality} />
