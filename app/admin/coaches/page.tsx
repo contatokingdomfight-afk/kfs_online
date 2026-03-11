@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { CoachActiveToggle } from "./CoachActiveToggle";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminCoachesPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
-  const supabase = await createClient();
+  // Preferir admin client (bypassa RLS); fallback para createClient quando service role não configurada
+  const adminResult = getAdminClientOrNull();
+  const supabase = adminResult.client ?? (await createClient());
 
   const { data: coaches } = await supabase
     .from("Coach")
