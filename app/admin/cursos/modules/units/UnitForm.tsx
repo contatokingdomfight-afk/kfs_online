@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import { createUnit, updateUnit, type UnitFormResult } from "./actions";
+import { FormLoadingBar } from "@/components/FormLoadingBar";
 
 type Props = {
   courseId: string;
@@ -15,6 +16,7 @@ type Props = {
   initialVideoUrl?: string;
   initialTextContent?: string;
   initialSortOrder?: number;
+  onSuccess?: () => void;
 };
 
 export function UnitForm({
@@ -27,6 +29,7 @@ export function UnitForm({
   initialVideoUrl = "",
   initialTextContent = "",
   initialSortOrder = 0,
+  onSuccess,
 }: Props) {
   const router = useRouter();
   const [contentType, setContentType] = useState<"VIDEO" | "TEXT">(initialContentType);
@@ -34,8 +37,11 @@ export function UnitForm({
   const [state, formAction] = useFormState(action, null as UnitFormResult | null);
 
   useEffect(() => {
-    if (state && !state.error) router.refresh();
-  }, [state, router]);
+    if (state && !state.error) {
+      onSuccess?.();
+      router.refresh();
+    }
+  }, [state, router, onSuccess]);
 
   return (
     <form
@@ -48,6 +54,7 @@ export function UnitForm({
         gap: 12,
       }}
     >
+      <FormLoadingBar message={unitId ? "A guardar…" : "A adicionar unidade…"} />
       <input type="hidden" name="courseId" value={courseId} />
       <input type="hidden" name="moduleId" value={moduleId} />
       {unitId && <input type="hidden" name="unitId" value={unitId} />}

@@ -4,24 +4,8 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
-import { ConcluirModuloButton } from "../ConcluirModuloButton";
-import { ConcluirUnidadeButton } from "../ConcluirUnidadeButton";
-
-/** Converte URL do YouTube (watch ou short) em URL de embed para iframe. */
-function toEmbedVideoUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes("youtube.com") && u.searchParams.has("v")) {
-      return `https://www.youtube.com/embed/${u.searchParams.get("v")}`;
-    }
-    if (u.hostname === "youtu.be") {
-      return `https://www.youtube.com/embed${u.pathname}`;
-    }
-  } catch {
-    // fallback: devolver original
-  }
-  return url;
-}
+import { CourseContentViewer } from "../CourseContentViewer";
+import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -160,136 +144,21 @@ export default async function CursoDetailPage({ params }: Props) {
               </p>
             );
           })()}
-          {moduleList.map((mod, idx) => {
-            const units = unitsByModule.get(mod.id) ?? [];
-            const hasUnits = units.length > 0;
-            const isLegacy = !hasUnits && mod.video_url;
-
-            if (hasUnits) {
-              return (
-                <div key={mod.id} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <h3 style={{ margin: 0, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                    Módulo {idx + 1}: {mod.name}
-                  </h3>
-                  {mod.description && (
-                    <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>{mod.description}</p>
-                  )}
-                  {units.map((u, uIdx) => (
-                    <div key={u.id} className="card" style={{ padding: 0, overflow: "hidden" }}>
-                      <div style={{ padding: "clamp(12px, 3vw, 16px)", borderBottom: "1px solid var(--border)" }}>
-                        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                          <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
-                            {uIdx + 1}. {u.name}
-                          </span>
-                          {studentId &&
-                            (completedUnitIds.has(u.id) ? (
-                              <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
-                            ) : (
-                              <ConcluirUnidadeButton unitId={u.id} courseId={courseId} />
-                            ))}
-                        </div>
-                        {u.description && (
-                          <p style={{ margin: "6px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{u.description}</p>
-                        )}
-                      </div>
-                      {u.content_type === "VIDEO" && u.video_url ? (
-                        <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden" }}>
-                          <iframe
-                            src={toEmbedVideoUrl(u.video_url)}
-                            title={u.name}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
-                          />
-                        </div>
-                      ) : u.content_type === "TEXT" && u.text_content ? (
-                        <div
-                          style={{
-                            padding: "clamp(16px, 4vw, 20px)",
-                            fontSize: "clamp(14px, 3.5vw, 16px)",
-                            lineHeight: 1.6,
-                            color: "var(--text-primary)",
-                            whiteSpace: "pre-wrap",
-                          }}
-                        >
-                          {u.text_content}
-                        </div>
-                      ) : (
-                        <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-                          <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>{t("videoComingSoon")}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              );
-            }
-
-            if (isLegacy) {
-              return (
-                <div key={mod.id} className="card" style={{ padding: 0, overflow: "hidden" }}>
-                  <div style={{ padding: "clamp(12px, 3vw, 16px)", borderBottom: "1px solid var(--border)" }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                      <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
-                        {idx + 1}. {mod.name}
-                      </span>
-                      {studentId &&
-                        (completedModuleIds.has(mod.id) ? (
-                          <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
-                        ) : (
-                          <ConcluirModuloButton moduleId={mod.id} courseId={courseId} />
-                        ))}
-                    </div>
-                    {mod.description && (
-                      <p style={{ margin: "6px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{mod.description}</p>
-                    )}
-                  </div>
-                  <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden" }}>
-                    <iframe
-                      src={toEmbedVideoUrl(mod.video_url!)}
-                      title={mod.name}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
-                    />
-                  </div>
-                </div>
-              );
-            }
-
-            return (
-              <div key={mod.id} className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-                <h3 style={{ margin: 0, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                  Módulo {idx + 1}: {mod.name}
-                </h3>
-                {mod.description && (
-                  <p style={{ margin: "8px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{mod.description}</p>
-                )}
-                <p style={{ margin: "12px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>Sem unidades ainda.</p>
-              </div>
-            );
-          })}
+          <CourseContentViewer
+            courseId={courseId}
+            moduleList={moduleList}
+            unitsByModule={unitsByModule}
+            completedUnitIds={completedUnitIds}
+            completedModuleIds={completedModuleIds}
+            studentId={studentId}
+            t={t}
+          />
         </div>
       ) : (
         <>
           {course.video_url ? (
             <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden" }}>
-                <iframe
-                  src={toEmbedVideoUrl(course.video_url)}
-                  title={course.name}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    border: "none",
-                  }}
-                />
-              </div>
+              <VideoPlayer url={course.video_url} title={course.name} fallbackMessage={t("videoUnavailable")} />
             </div>
           ) : (
             <div className="card" style={{ padding: "clamp(20px, 5vw, 24px)" }}>

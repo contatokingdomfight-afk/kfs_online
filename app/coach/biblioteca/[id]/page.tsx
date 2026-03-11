@@ -5,21 +5,7 @@ import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
-
-function toEmbedVideoUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes("youtube.com") && u.searchParams.has("v")) {
-      return `https://www.youtube.com/embed/${u.searchParams.get("v")}`;
-    }
-    if (u.hostname === "youtu.be") {
-      return `https://www.youtube.com/embed${u.pathname}`;
-    }
-  } catch {
-    // fallback
-  }
-  return url;
-}
+import { toEmbedVideoUrl } from "@/lib/youtube-embed";
 
 type Props = { params: Promise<{ id: string }> };
 

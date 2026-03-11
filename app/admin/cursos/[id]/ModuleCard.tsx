@@ -30,6 +30,7 @@ type Props = {
 export function ModuleCard({ courseId, module, index, units }: Props) {
   const [open, setOpen] = useState(true);
   const [showAddUnit, setShowAddUnit] = useState(false);
+  const [unitFormKey, setUnitFormKey] = useState(0);
 
   return (
     <div
@@ -138,6 +139,7 @@ export function ModuleCard({ courseId, module, index, units }: Props) {
                 }}
               >
                 <UnitForm
+                  key={unitFormKey}
                   courseId={courseId}
                   moduleId={module.id}
                   initialSortOrder={units.length}
@@ -146,6 +148,7 @@ export function ModuleCard({ courseId, module, index, units }: Props) {
                   initialContentType="VIDEO"
                   initialVideoUrl=""
                   initialTextContent=""
+                  onSuccess={() => setUnitFormKey((k) => k + 1)}
                 />
               </div>
               <button

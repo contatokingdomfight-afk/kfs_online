@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import { createModule, updateModule, type ModuleFormResult } from "./actions";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 type Props = {
   courseId: string;
@@ -20,14 +21,18 @@ export function ModuleForm({
   initialName = "",
   initialDescription = "",
   initialSortOrder = 0,
+  onSuccess,
 }: Props) {
   const router = useRouter();
   const action = moduleId ? updateModule : createModule;
   const [state, formAction] = useFormState(action, null as ModuleFormResult | null);
 
   useEffect(() => {
-    if (state && !state.error) router.refresh();
-  }, [state, router]);
+    if (state && !state.error) {
+      onSuccess?.();
+      router.refresh();
+    }
+  }, [state, router, onSuccess]);
 
   return (
     <form
@@ -40,6 +45,7 @@ export function ModuleForm({
         gap: 12,
       }}
     >
+      <FormLoadingModal message={moduleId ? "A guardar…" : "A adicionar módulo…"} />
       <input type="hidden" name="courseId" value={courseId} />
       {moduleId && <input type="hidden" name="moduleId" value={moduleId} />}
       <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>

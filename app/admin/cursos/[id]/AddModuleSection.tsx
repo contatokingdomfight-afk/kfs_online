@@ -11,6 +11,7 @@ type Props = {
 
 export function AddModuleSection({ courseId, initialSortOrder, hasModules }: Props) {
   const [open, setOpen] = useState(!hasModules);
+  const [formKey, setFormKey] = useState(0);
 
   return (
     <div
@@ -63,7 +64,12 @@ export function AddModuleSection({ courseId, initialSortOrder, hasModules }: Pro
               </button>
             )}
           </div>
-          <ModuleForm courseId={courseId} initialSortOrder={initialSortOrder} />
+          <ModuleForm
+            key={formKey}
+            courseId={courseId}
+            initialSortOrder={initialSortOrder}
+            onSuccess={() => setFormKey((k) => k + 1)}
+          />
         </div>
       )}
     </div>
