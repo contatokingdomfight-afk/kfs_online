@@ -33,38 +33,22 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
     PERFORMANCE: t("categoryPerformance"),
   };
 
-  let studentPlanId: string | null = null;
-  let studentPrimaryModality: string | null = null;
-  const { data: student } = await supabase.from("Student").select("schoolId, planId, primaryModality").eq("id", studentId).single();
-  if (student) {
-    studentPlanId = student.planId || null;
-    studentPrimaryModality = (student as { primaryModality?: string }).primaryModality ?? null;
-  }
-
-  const locationById = new Map((await getCachedLocations(supabase)).map((loc) => [loc.id, loc.name]));
-
   const monthStart = new Date().toISOString().slice(0, 7) + "-01";
   const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10);
   const sixWeeksAgo = new Date();
   sixWeeksAgo.setDate(sixWeeksAgo.getDate() - 42);
   const sixWeeksStr = sixWeeksAgo.toISOString().slice(0, 10);
 
-  const [
-    planRes,
-    attByMod,
-    athleteRes,
-    badgesRes,
-    nextBadgeRes,
-    profileRes,
-    goalRes,
-    confirmedAttRes,
-    purchasesRes,
-    coursesRes,
-    notifRes,
-    allConfigs,
-    pastAttRes,
-  ] = await Promise.all([
-    studentPlanId ? supabase.from("Plan").select("name, price_monthly, includes_digital_access").eq("id", studentPlanId).eq("is_active", true).single() : Promise.resolve({ data: null }),
+  const [studentRes, locationsList, planRes, attByMod, athleteRes, badgesRes, nextBadgeRes, profileRes, goalRes, confirmedAttRes, purchasesRes, coursesRes, notifRes, allConfigs, pastAttRes] =
+    await (async () => {
+      const [studentRes, locationsList] = await Promise.all([
+        supabase.from("Student").select("schoolId, planId, primaryModality").eq("id", studentId).single(),
+        getCachedLocations(supabase),
+      ]);
+      const student = studentRes.data;
+      const studentPlanId = student?.planId ?? null;
+      const rest = await Promise.all([
+        studentPlanId ? supabase.from("Plan").select("name, price_monthly, includes_digital_access").eq("id", studentPlanId).eq("is_active", true).single() : Promise.resolve({ data: null }),
     getAttendanceByModality(supabase, studentId),
     supabase.from("Athlete").select("id, currentBelt, currentXP").eq("studentId", studentId).single(),
     getEarnedBadges(supabase, studentId),
@@ -77,7 +61,14 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
     supabase.from("Notification").select("id, title, body, read_at, created_at").eq("studentId", studentId).order("created_at", { ascending: false }).limit(10),
     loadAllEvaluationConfigs(supabase),
     supabase.from("Attendance").select("lessonId, status").eq("studentId", studentId).order("createdAt", { ascending: false }).limit(50),
-  ]);
+      ]);
+      const [planRes, attByMod, athleteRes, badgesRes, nextBadgeRes, profileRes, goalRes, confirmedAttRes, purchasesRes, coursesRes, notifRes, allConfigs, pastAttRes] = rest;
+      return [studentRes, locationsList, planRes, attByMod, athleteRes, badgesRes, nextBadgeRes, profileRes, goalRes, confirmedAttRes, purchasesRes, coursesRes, notifRes, allConfigs, pastAttRes];
+    })();
+
+  const locationById = new Map(locationsList.map((loc) => [loc.id, loc.name]));
+  const student = studentRes.data;
+  const studentPrimaryModality = (student as { primaryModality?: string } | null)?.primaryModality ?? null;
 
   let hasDigitalAccess = false;
   const plan = planRes.data;

@@ -15,7 +15,7 @@ const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const locale = await getLocaleFromCookies();
+  const [locale, dbUser] = await Promise.all([getLocaleFromCookies(), getCurrentDbUser()]);
   const t = getTranslations(locale as "pt" | "en");
   const STATUS_LABEL: Record<string, string> = {
     PENDING: t("statusPending"),
@@ -28,7 +28,6 @@ export default async function DashboardPage() {
     PERFORMANCE: t("categoryPerformance"),
   };
 
-  const dbUser = await getCurrentDbUser();
   if (!dbUser) return null;
 
   const studentId = await getCurrentStudentId();

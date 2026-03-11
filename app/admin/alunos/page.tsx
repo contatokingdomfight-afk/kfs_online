@@ -27,17 +27,11 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  // Buscar escolas para o filtro
-  const { data: schools } = await supabase
-    .from("School")
-    .select("id, name")
-    .eq("isActive", true)
-    .order("name", { ascending: true });
-
-  const { data: studentsData } = await supabase
-    .from("Student")
-    .select("id, userId, status, primaryModality, schoolId, createdAt")
-    .order("createdAt", { ascending: false });
+  const [{ data: schools }, { data: studentsData }, modalitiesForFilter] = await Promise.all([
+    supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
+    supabase.from("Student").select("id, userId, status, primaryModality, schoolId, createdAt").order("createdAt", { ascending: false }),
+    getCachedModalityRefs(supabase),
+  ]);
 
   const students = studentsData ?? [];
   let filtered = students;
@@ -60,8 +54,6 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
     .in("id", userIds);
 
   const userById = new Map((usersData ?? []).map((u) => [u.id, u]));
-
-  const modalitiesForFilter = await getCachedModalityRefs(supabase);
 
   return (
     <div style={{ maxWidth: "min(700px, 100%)" }}>

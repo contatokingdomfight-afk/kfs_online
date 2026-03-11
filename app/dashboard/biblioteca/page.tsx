@@ -18,28 +18,13 @@ type Props = { searchParams: Promise<{ cat?: string; mod?: string; lvl?: string 
 export default async function BibliotecaPage({ searchParams }: Props) {
   const params = await searchParams;
   const supabase = await createClient();
-  const locale = await getLocaleFromCookies();
+  const [locale, studentId] = await Promise.all([getLocaleFromCookies(), getCurrentStudentId()]);
   const t = getTranslations(locale as "pt" | "en");
   const CATEGORY_LABEL: Record<string, string> = {
     TECHNIQUE: t("categoryTechnique"),
     MINDSET: t("categoryMindset"),
     PERFORMANCE: t("categoryPerformance"),
   };
-  const studentId = await getCurrentStudentId();
-
-  let hasDigitalAccess = false;
-  if (studentId) {
-    const { data: student } = await supabase.from("Student").select("planId").eq("id", studentId).single();
-    if (student?.planId) {
-      const { data: plan } = await supabase
-        .from("Plan")
-        .select("includes_digital_access")
-        .eq("id", student.planId)
-        .eq("is_active", true)
-        .single();
-      hasDigitalAccess = plan?.includes_digital_access === true;
-    }
-  }
 
   let coursesQuery = supabase
     .from("Course")
@@ -50,16 +35,27 @@ export default async function BibliotecaPage({ searchParams }: Props) {
   if (params.cat) coursesQuery = coursesQuery.eq("category", params.cat);
   if (params.mod) coursesQuery = coursesQuery.eq("modality", params.mod);
   if (params.lvl) coursesQuery = coursesQuery.eq("level", params.lvl);
-  const { data: courses } = await coursesQuery;
 
-  let purchasedCourseIds = new Set<string>();
-  if (studentId) {
-    const { data: purchases } = await supabase
-      .from("CoursePurchase")
-      .select("courseId")
-      .eq("studentId", studentId);
-    purchasedCourseIds = new Set((purchases ?? []).map((p) => p.courseId));
+  const [coursesRes, studentRes, purchasesRes] = await Promise.all([
+    coursesQuery,
+    studentId ? supabase.from("Student").select("planId").eq("id", studentId).single() : Promise.resolve({ data: null }),
+    studentId ? supabase.from("CoursePurchase").select("courseId").eq("studentId", studentId) : Promise.resolve({ data: [] }),
+  ]);
+
+  const student = studentRes.data;
+  let hasDigitalAccess = false;
+  if (student?.planId) {
+    const { data: plan } = await supabase
+      .from("Plan")
+      .select("includes_digital_access")
+      .eq("id", student.planId)
+      .eq("is_active", true)
+      .single();
+    hasDigitalAccess = plan?.includes_digital_access === true;
   }
+
+  const purchasedCourseIds = new Set((purchasesRes.data ?? []).map((p) => p.courseId));
+  const courses = coursesRes.data;
 
   const list = courses ?? [];
 

@@ -21,9 +21,12 @@ const EVAL_HISTORY_LIMIT = 10;
 
 export default async function ComoSouAvaliadoPage() {
   const supabase = await createClient();
-  const modalitiesList = await getCachedModalityRefs(supabase);
+  const [modalitiesList, allConfigs, studentId] = await Promise.all([
+    getCachedModalityRefs(supabase),
+    loadAllEvaluationConfigs(supabase),
+    getCurrentStudentId(),
+  ]);
   const modalityLabels = new Map<string, string>(modalitiesList.map((m) => [m.code, m.name ?? m.code]));
-  const allConfigs = await loadAllEvaluationConfigs(supabase);
 
   const configsForDetail: { modality: string; config: import("@/lib/evaluation-config").ModalityEvaluationConfigPayload }[] = [];
   const configByModality = new Map<string, ModalityConfig>();
@@ -45,7 +48,6 @@ export default async function ComoSouAvaliadoPage() {
 
   let dimensionAverages: Record<string, number> = {};
   let dimensionHistory: Record<string, number[]> = {};
-  const studentId = await getCurrentStudentId();
 
   if (studentId && configByModality.size > 0) {
     const { data: athlete } = await supabase.from("Athlete").select("id").eq("studentId", studentId).single();

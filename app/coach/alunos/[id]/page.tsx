@@ -54,24 +54,14 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
     );
   }
 
-  const { data: user } = await supabase
-    .from("User")
-    .select("id, name, email, avatarUrl")
-    .eq("id", student.userId)
-    .single();
-  const { data: studentProfile } = await supabase
-    .from("StudentProfile")
-    .select("weightKg, heightCm, medicalNotes, emergencyContact, phone")
-    .eq("studentId", studentId)
-    .maybeSingle();
+  const [{ data: user }, { data: studentProfile }, planRes, allConfigs] = await Promise.all([
+    supabase.from("User").select("id, name, email, avatarUrl").eq("id", student.userId).single(),
+    supabase.from("StudentProfile").select("weightKg, heightCm, medicalNotes, emergencyContact, phone").eq("studentId", studentId).maybeSingle(),
+    student.planId ? supabase.from("Plan").select("name").eq("id", student.planId).single() : Promise.resolve({ data: null }),
+    loadAllEvaluationConfigs(supabase),
+  ]);
 
-  let planName: string | null = null;
-  if (student.planId) {
-    const { data: plan } = await supabase.from("Plan").select("name").eq("id", student.planId).single();
-    planName = plan?.name ?? null;
-  }
-
-  const allConfigs = await loadAllEvaluationConfigs(supabase);
+  const planName = planRes.data?.name ?? null;
   const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {
     MUAY_THAI: allConfigs.get("MUAY_THAI") ?? null,
     BOXING: allConfigs.get("BOXING") ?? null,
@@ -82,7 +72,16 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
   let generalPerformanceScores: Record<string, number> | null = null;
   let lastEvalScoresByModality: Record<string, Record<string, number>> = {};
   let lastEvalDate: string | null = null;
-  const { data: athlete } = await supabase.from("Athlete").select("id").eq("studentId", studentId).single();
+
+  const [athleteRes, attendanceByModality, lastAssessmentRes] = await Promise.all([
+    supabase.from("Athlete").select("id").eq("studentId", studentId).single(),
+    getAttendanceByModality(supabase, studentId),
+    supabase.from("StudentPhysicalAssessment").select("assessedAt, nextDueAt, clearance, formData").eq("studentId", studentId).order("assessedAt", { ascending: false }).limit(1).maybeSingle(),
+  ]);
+
+  const athlete = athleteRes.data;
+  const lastAssessment = lastAssessmentRes.data ?? null;
+
   if (athlete) {
     const { data: evalsRows } = await supabase
       .from("AthleteEvaluation")
@@ -117,15 +116,6 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
       generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
     }
   }
-  const attendanceByModality = await getAttendanceByModality(supabase, studentId);
-
-  const { data: lastAssessment } = await supabase
-    .from("StudentPhysicalAssessment")
-    .select("assessedAt, nextDueAt, clearance, formData")
-    .eq("studentId", studentId)
-    .order("assessedAt", { ascending: false })
-    .limit(1)
-    .maybeSingle();
 
   if (lastAssessment?.formData && generalPerformanceScores) {
     generalPerformanceScores = mergePhysicalAssessmentIntoRadar(generalPerformanceScores, lastAssessment.formData);
