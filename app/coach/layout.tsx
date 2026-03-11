@@ -39,6 +39,7 @@ export default async function CoachLayout({
       ? [{ label: "Admin", href: "/admin" as string }]
       : []),
     { label: t("navHome"), href: "/coach" },
+    { label: t("navPresence"), href: "/coach/presenca" },
     { label: t("navEnterClass"), href: "/coach/aula" },
     { label: t("navWeekTheme"), href: "/coach/tema-semana" },
     { label: t("navAgenda"), href: "/coach/agenda" },

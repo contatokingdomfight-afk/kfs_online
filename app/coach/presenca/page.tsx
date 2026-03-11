@@ -11,9 +11,9 @@ const STATUS_LABEL: Record<string, string> = {
   ABSENT: "Falta",
 };
 
-export default async function AdminPresencaPage() {
+export default async function CoachPresencaPage() {
   const dbUser = await getCurrentDbUser();
-  if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) redirect("/dashboard");
 
   const adminResult = getAdminClientOrNull();
   const supabase = adminResult.client ?? (await createClient());
@@ -75,7 +75,7 @@ export default async function AdminPresencaPage() {
         }}
       >
         <Link
-          href="/admin"
+          href="/coach"
           style={{
             color: "var(--text-secondary)",
             fontSize: "clamp(15px, 3.8vw, 17px)",
@@ -91,7 +91,7 @@ export default async function AdminPresencaPage() {
       </div>
 
       <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-        Próximas 2 semanas. Para confirmar presenças, usa a área do professor em Entrar na aula.
+        Próximas 2 semanas. Clica em Ver/confirmar para gerir as presenças de cada aula.
       </p>
 
       {list.length === 0 ? (
