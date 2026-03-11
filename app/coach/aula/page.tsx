@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
 import { getCachedLocations } from "@/lib/cached-reference-data";
@@ -66,12 +67,14 @@ export default async function CoachAulaPage({
 
     if (attList?.length) {
       const studentIds = attList.map((a) => a.studentId);
-      const { data: students } = await supabase
+      // Student e User têm RLS restritivo; admin client bypassa para coach ver lista de presenças
+      const adminSupabase = getAdminClientOrNull().client ?? supabase;
+      const { data: students } = await adminSupabase
         .from("Student")
         .select("id, userId")
         .in("id", studentIds);
       const userIds = [...new Set((students ?? []).map((s) => s.userId))];
-      const { data: users } = await supabase
+      const { data: users } = await adminSupabase
         .from("User")
         .select("id, name, email, avatarUrl")
         .in("id", userIds);
