@@ -171,6 +171,7 @@ export function CoachStudentProfileModal(props: Props) {
 
   const [touchedIds, setTouchedIds] = useState<Set<string>>(() => new Set());
   const [globalBaseline, setGlobalBaseline] = useState(DEFAULT_BASELINE);
+  const [sectionBaselines, setSectionBaselines] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!criterionIds.length) return;
@@ -200,8 +201,8 @@ export function CoachStudentProfileModal(props: Props) {
     setTouchedIds(new Set(criterionIds));
   }, [globalBaseline, criterionIds]);
 
-  const applyBaselineToSection = useCallback((cat: CategoryConfig) => {
-    const v = Math.min(MAX_SCORE, Math.max(MIN_SCORE, globalBaseline));
+  const applyBaselineToSection = useCallback((cat: CategoryConfig, value: number) => {
+    const v = Math.min(MAX_SCORE, Math.max(MIN_SCORE, value));
     setScores((prev) => {
       const next = { ...prev };
       cat.criterios.forEach((c) => { next[c.id] = v; });
@@ -212,7 +213,7 @@ export function CoachStudentProfileModal(props: Props) {
       cat.criterios.forEach((c) => next.add(c.id));
       return next;
     });
-  }, [globalBaseline]);
+  }, []);
 
   const updateScore = useCallback((criterionId: string, value: number) => {
     setScores((prev) => ({ ...prev, [criterionId]: value }));
@@ -507,10 +508,23 @@ export function CoachStudentProfileModal(props: Props) {
                               <div className="px-4 pb-4 pt-1 flex flex-col gap-5">
                                 <div className="flex flex-wrap items-center gap-2 py-2 border-b border-[var(--border)]">
                                   <span className="text-xs text-[var(--text-secondary)]">Aplicar valor base à secção:</span>
-                                  <span className="inline-flex items-center justify-center w-10 h-9 rounded bg-[var(--bg)] border border-[var(--border)] text-sm font-semibold text-[var(--text-primary)]" aria-hidden>{globalBaseline}</span>
+                                  <input
+                                    type="number"
+                                    min={MIN_SCORE}
+                                    max={MAX_SCORE}
+                                    value={sectionBaselines[cat.nome] ?? globalBaseline}
+                                    onChange={(e) =>
+                                      setSectionBaselines((prev) => ({
+                                        ...prev,
+                                        [cat.nome]: Math.min(MAX_SCORE, Math.max(MIN_SCORE, Number(e.target.value) || DEFAULT_BASELINE)),
+                                      }))
+                                    }
+                                    className="input w-16 h-9 rounded-lg text-center font-semibold text-sm"
+                                    aria-label={`Valor base para ${cat.nome}`}
+                                  />
                                   <button
                                     type="button"
-                                    onClick={() => applyBaselineToSection(cat)}
+                                    onClick={() => applyBaselineToSection(cat, sectionBaselines[cat.nome] ?? globalBaseline)}
                                     className="btn h-9 px-3 rounded-lg text-sm"
                                   >
                                     Aplicar
