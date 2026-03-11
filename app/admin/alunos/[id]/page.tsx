@@ -14,7 +14,6 @@ import {
 } from "@/lib/performance-utils";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
-import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AvaliarAlunoButton } from "@/app/coach/alunos/[id]/AvaliarAlunoButton";
 
@@ -77,10 +76,13 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     .eq("is_active", true)
     .order("price_monthly", { ascending: true });
   const planOptions = (plans ?? []).map((p) => ({ id: p.id, label: `${p.name} (€${Number(p.price_monthly).toFixed(0)}/mês)` }));
-  const modalityRefs = await getCachedModalityRefs(supabase);
+  const { data: modalityRows } = await supabase
+    .from("ModalityRef")
+    .select("code, name")
+    .order("sortOrder", { ascending: true });
   const modalityOptions = [
     { code: "", name: "Todas as modalidades" },
-    ...(modalityRefs ?? []),
+    ...(modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code })),
   ];
   const studentPlan = (plans ?? []).find((p) => p.id === student.planId);
   const planName = studentPlan?.name ? String(studentPlan.name) : "";
