@@ -99,14 +99,16 @@ export function Plans({ content }: { content: Content }) {
                 <p className="mt-2 text-xs text-[var(--text-secondary)]/80">
                   {plan.audience}
                 </p>
-                <Link
-                  href="/aula-experimental"
-                  className={`mt-6 w-full rounded-lg py-3 text-center font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                    plan.popular ? "btn btn-primary" : "btn btn-secondary"
-                  }`}
-                >
-                  {content.planCta}
-                </Link>
+                <div className="mt-auto pt-6">
+                  <Link
+                    href="/aula-experimental"
+                    className={`block w-full rounded-lg py-3 text-center font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                      plan.popular ? "btn btn-primary" : "btn btn-secondary"
+                    }`}
+                  >
+                    {content.planCta}
+                  </Link>
+                </div>
               </div>
             );
           })}
