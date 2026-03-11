@@ -4,11 +4,10 @@ import { useFormState } from "react-dom";
 import { createLesson } from "./actions";
 
 type Coach = { id: string; name: string };
-type Location = { id: string; name: string };
 type Modality = { code: string; name: string };
 type School = { id: string; name: string };
 
-export function CreateLessonForm({ coaches, locations, modalities, schools }: { coaches: Coach[]; locations: Location[]; modalities: Modality[]; schools: School[] }) {
+export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Coach[]; modalities: Modality[]; schools: School[] }) {
   const [state, formAction] = useFormState(
     async (_: unknown, formData: FormData) => {
       return await createLesson(formData);
@@ -121,28 +120,6 @@ export function CreateLessonForm({ coaches, locations, modalities, schools }: { 
             <option value="">— Selecionar —</option>
             {schools.map((school) => (
               <option key={school.id} value={school.id}>{school.name}</option>
-            ))}
-          </select>
-        </label>
-        <label style={{ flex: "1 1 180px", minWidth: 0 }}>
-          <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "var(--text-secondary)" }}>
-            Local
-          </span>
-          <select
-            name="locationId"
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              backgroundColor: "#0b0b0b",
-              border: "1px solid #27272a",
-              borderRadius: 6,
-              color: "#ffffff",
-              fontSize: 14,
-            }}
-          >
-            <option value="">— Sem local —</option>
-            {locations.map((loc) => (
-              <option key={loc.id} value={loc.id}>{loc.name}</option>
             ))}
           </select>
         </label>

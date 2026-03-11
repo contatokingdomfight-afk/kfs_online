@@ -40,7 +40,7 @@ export default async function AdminTurmasPage({
     return {
       data: (r.data || []).map((c) => {
         const u = users?.find((u) => u.id === c.userId);
-        return { id: c.id, name: u?.name || u?.email || c.id };
+        return { id: c.id, name: u?.name || u?.email || "—" };
       }),
     };
   });
@@ -82,7 +82,7 @@ export default async function AdminTurmasPage({
         <h2 style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Nova aula
         </h2>
-        <CreateLessonForm coaches={coaches ?? []} locations={locations ?? []} modalities={modalities ?? []} schools={schools ?? []} />
+        <CreateLessonForm coaches={coaches ?? []} modalities={modalities ?? []} schools={schools ?? []} />
       </section>
 
       <section>

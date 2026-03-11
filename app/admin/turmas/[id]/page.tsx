@@ -39,7 +39,7 @@ export default async function AdminTurmaEditarPage({ params }: Props) {
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
   const coachOptions = (coaches ?? []).map((c) => ({
     id: c.id,
-    name: userById.get(c.userId)?.name ?? userById.get(c.userId)?.email ?? c.id,
+    name: userById.get(c.userId)?.name ?? userById.get(c.userId)?.email ?? "—",
   }));
 
   const [locationOptions, modalityOptions] = await Promise.all([
