@@ -91,7 +91,7 @@ export default async function AdminPresencaPage() {
       </div>
 
       <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-        Próximas 2 semanas. Para confirmar presenças, usa a área do professor em Entrar na aula.
+        Próximas 2 semanas. Para confirmar presenças, usa a área do professor em Check-in de aula.
       </p>
 
       {list.length === 0 ? (

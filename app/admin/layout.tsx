@@ -35,7 +35,6 @@ export default async function AdminLayout({
     { label: t("navCourses"), href: "/admin/cursos" },
     { label: t("navEventsAdmin"), href: "/admin/eventos" },
     { label: t("navSettings"), href: "/admin/configuracoes" },
-    { label: t("navPresence"), href: "/admin/presenca" },
     {
       label: t("navEvaluationCriteria"),
       href: "/admin/avaliacao",

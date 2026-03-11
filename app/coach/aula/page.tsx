@@ -29,10 +29,11 @@ export default async function CoachAulaPage({
   const allLocations = await getCachedLocations(supabase);
   const locations = locationIds.length > 0 ? allLocations.filter((l) => locationIds.includes(l.id)) : [];
   const locationById = new Map(locations.map((loc) => [loc.id, loc.name]));
+  // Só mostrar lista de presenças quando o utilizador escolher uma aula (trocar de tela)
   const lessonId =
     selectedLessonId && lessons.some((l) => l.id === selectedLessonId)
       ? selectedLessonId
-      : lessons[0]?.id ?? null;
+      : null;
   const selectedLesson = lessonId ? lessons.find((l) => l.id === lessonId) : null;
 
   type AttWithProfile = {
@@ -165,31 +166,37 @@ export default async function CoachAulaPage({
         </div>
       ) : (
         <>
-          <section className="coach-aula-lesson-select" aria-label="Escolher aula">
-            <label className="coach-aula-label">Escolhe a aula</label>
-            <ul className="coach-aula-lesson-list" role="list">
-              {lessons.map((l) => {
-                const locName = (l as { locationId?: string }).locationId ? locationById.get((l as { locationId: string }).locationId) : null;
-                return (
-                <li key={l.id}>
-                  <Link
-                    href={`/coach/aula?lesson=${l.id}`}
-                    className={`coach-aula-lesson-link ${l.id === lessonId ? "coach-aula-lesson-link--active" : ""}`}
-                  >
-                    <span className="coach-aula-lesson-modality">{MODALITY_LABELS[l.modality] ?? l.modality}</span>
-                    <span className="coach-aula-lesson-meta">
-                      {locName ? `${locName} · ` : ""}{formatLessonDate(l.date)} · {l.startTime}–{l.endTime}
-                    </span>
-                  </Link>
-                </li>
-              );
-              })}
-            </ul>
-          </section>
-
-          {selectedLesson && (
+          {!selectedLesson ? (
+            <section className="coach-aula-lesson-select" aria-label="Escolher aula">
+              <label className="coach-aula-label">Escolhe a aula</label>
+              <p style={{ margin: "0 0 12px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+                Clica numa aula para ver e gerir a lista de presenças.
+              </p>
+              <ul className="coach-aula-lesson-list" role="list">
+                {lessons.map((l) => {
+                  const locName = (l as { locationId?: string }).locationId ? locationById.get((l as { locationId: string }).locationId) : null;
+                  return (
+                    <li key={l.id}>
+                      <Link
+                        href={`/coach/aula?lesson=${l.id}`}
+                        className="coach-aula-lesson-link"
+                      >
+                        <span className="coach-aula-lesson-modality">{MODALITY_LABELS[l.modality] ?? l.modality}</span>
+                        <span className="coach-aula-lesson-meta">
+                          {locName ? `${locName} · ` : ""}{formatLessonDate(l.date)} · {l.startTime}–{l.endTime}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : (
             <section className="coach-aula-presences" aria-labelledby="lista-presencas-heading">
               <div className="coach-aula-selected-bar">
+                <Link href="/coach/aula" style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)", textDecoration: "none", marginRight: "auto" }}>
+                  ← Trocar aula
+                </Link>
                 <div className="coach-aula-selected-info">
                   <span className="coach-aula-selected-modality">{MODALITY_LABELS[selectedLesson.modality] ?? selectedLesson.modality}</span>
                   <span className="coach-aula-selected-time">

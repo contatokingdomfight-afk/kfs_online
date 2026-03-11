@@ -230,6 +230,7 @@ export const messages = {
     coachTitle: "Professor",
     myStudentArea: "Minha área de aluno",
     navEnterClass: "Entrar na aula",
+    navCheckInClass: "Check-in de aula",
     navAgenda: "Agenda",
     navAthletesCoach: "Atletas",
     navWeekTheme: "Tema da Semana",
@@ -288,7 +289,7 @@ export const messages = {
 
     // Coach home / agenda / tema
     helloCoach: "Olá,",
-    enterClass: "Entrar na aula",
+    enterClass: "Check-in de aula",
     viewQrCode: "Ver QR Code",
     noClassScheduled: "Nenhuma aula agendada. Cria uma aula na área Admin.",
     quickAccess: "Acesso rápido",
@@ -607,6 +608,7 @@ export const messages = {
     coachTitle: "Coach",
     myStudentArea: "My student area",
     navEnterClass: "Enter class",
+    navCheckInClass: "Class check-in",
     navAgenda: "Agenda",
     navAthletesCoach: "Athletes",
     navWeekTheme: "Week theme",
@@ -660,7 +662,7 @@ export const messages = {
     closeConfirm: "Close",
 
     helloCoach: "Hello,",
-    enterClass: "Enter class",
+    enterClass: "Class check-in",
     viewQrCode: "View QR Code",
     noClassScheduled: "No class scheduled. Create a class in the Admin area.",
     quickAccess: "Quick access",
