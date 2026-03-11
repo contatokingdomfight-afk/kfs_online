@@ -233,7 +233,8 @@ export async function promoteStudentToRole(
 
   if (userUpdateError) return { error: userUpdateError.message };
 
-  if (newRole === "COACH") {
+  // COACH e ADMIN têm permissões de professor: ambos precisam de registo Coach
+  if (newRole === "COACH" || newRole === "ADMIN") {
     const { data: existingCoach } = await supabase
       .from("Coach")
       .select("id")
