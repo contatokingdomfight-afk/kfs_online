@@ -3,8 +3,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { revalidatePath } from "next/cache";
+import { grantBadgesIfEligible } from "@/lib/gamification";
+import { createPresenceConfirmedNotification } from "@/lib/notifications/in-app";
+import { sendCheckInConfirmation } from "@/lib/notifications/email";
 
-/** Cria ou atualiza a intenção de presença (Vou = CONFIRMED, Não vou = ABSENT). */
+/** Ciclo de Presença 2.0: Intenção (RSVP) – Vou = PENDING, Não vou = ABSENT. */
 export async function setAttendanceIntention(
   lessonId: string,
   intention: "vou" | "nao_vou"
@@ -13,7 +16,7 @@ export async function setAttendanceIntention(
   if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
 
   const supabase = await createClient();
-  const status = intention === "vou" ? "CONFIRMED" : "ABSENT";
+  const status = intention === "vou" ? "PENDING" : "ABSENT";
 
   const { data: existing } = await supabase
     .from("Attendance")
@@ -50,6 +53,76 @@ export async function setAttendanceIntention(
   return {};
 }
 
+/** Ciclo de Presença 2.0: Check-in via QR – confirmação imediata (CONFIRMED + checkedInAt). */
+export async function checkIn(lessonId: string): Promise<{ error?: string; checkedInAt?: string }> {
+  const studentId = await getCurrentStudentId();
+  if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
+
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+
+  const { data: existing } = await supabase
+    .from("Attendance")
+    .select("id")
+    .eq("lessonId", lessonId)
+    .eq("studentId", studentId)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("Attendance")
+      .update({ status: "CONFIRMED", checkedInAt: now })
+      .eq("id", existing.id);
+    if (error) {
+      console.error("checkIn update error:", error);
+      return { error: error.message };
+    }
+  } else {
+    const id = crypto.randomUUID();
+    const { error } = await supabase.from("Attendance").insert({
+      id,
+      lessonId,
+      studentId,
+      status: "CONFIRMED",
+      checkedInAt: now,
+      isExperimental: false,
+    });
+    if (error) {
+      console.error("checkIn insert error:", error);
+      return { error: error.message };
+    }
+  }
+
+  await grantBadgesIfEligible(supabase, studentId);
+  const { data: lesson } = await supabase
+    .from("Lesson")
+    .select("modality, date, startTime, endTime")
+    .eq("id", lessonId)
+    .single();
+  const { data: student } = await supabase.from("Student").select("userId").eq("id", studentId).single();
+  if (lesson && student) {
+    await createPresenceConfirmedNotification(supabase, studentId, {
+      modality: lesson.modality,
+      date: lesson.date,
+      startTime: lesson.startTime,
+      endTime: lesson.endTime,
+    });
+    const { data: user } = await supabase.from("User").select("email, name").eq("id", student.userId).single();
+    if (user?.email) {
+      await sendCheckInConfirmation(user.email, user.name ?? null, {
+        modality: lesson.modality,
+        date: lesson.date,
+        startTime: lesson.startTime,
+        endTime: lesson.endTime,
+      });
+    }
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/check-in/${lessonId}`);
+  return { checkedInAt: now };
+}
+
 /** Para useFormState: recebe formData com lessonId e intention (vou | nao_vou). */
 export async function setAttendanceIntentionFromForm(
   _prev: { error?: string } | null,
@@ -61,7 +134,8 @@ export async function setAttendanceIntentionFromForm(
   return setAttendanceIntention(lessonId, intention);
 }
 
-/** Marcar presença (legado: cria PENDING; preferir Vou/Não vou). */
+/** @deprecated Use checkIn() para QR ou setAttendanceIntention() para intenção. */
 export async function markPresence(lessonId: string): Promise<{ error?: string }> {
-  return setAttendanceIntention(lessonId, "vou");
+  const r = await checkIn(lessonId);
+  return r;
 }

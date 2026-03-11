@@ -5,7 +5,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { markPresence } from "@/app/dashboard/actions";
+import { checkIn } from "@/app/dashboard/actions";
 
 type Props = { params: Promise<{ lessonId: string }> };
 
@@ -59,7 +59,7 @@ export default async function CheckInPage({ params }: Props) {
     );
   }
 
-  const result = await markPresence(lessonId);
+  const result = await checkIn(lessonId);
 
   if (result.error) {
     return (
@@ -77,16 +77,23 @@ export default async function CheckInPage({ params }: Props) {
     );
   }
 
+  const timeStr = result.checkedInAt
+    ? new Date(result.checkedInAt).toLocaleTimeString(locale === "en" ? "en-GB" : "pt-PT", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
   return (
     <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
-      <h1 className="text-mobile-lg" style={{ color: "var(--text-primary)", marginBottom: 12 }}>
-        {t("presenceRegistered")}
+      <h1 className="text-mobile-lg" style={{ color: "var(--success)", marginBottom: 12 }}>
+        {t("checkInConfirmed")}
       </h1>
       <p className="text-mobile-base" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
-        {t("presenceRegisteredSuccess")}
+        {timeStr ? t("checkInConfirmedAt").replace("{time}", timeStr) : t("presenceRegisteredSuccess")}
       </p>
       <p className="text-mobile-sm" style={{ color: "var(--text-secondary)", marginBottom: 24 }}>
-        {t("coachWillConfirm")} {t("thankYou")}
+        {t("thankYou")}
       </p>
       <Link href="/dashboard" className="btn btn-primary">
         {t("backToDashboard")}

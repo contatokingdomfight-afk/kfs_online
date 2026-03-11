@@ -83,29 +83,37 @@ export default async function DashboardPage() {
   const restOfWeek = lessons.slice(1);
 
   const lessonIds = lessons.map((l) => l.id);
-  const attendanceByLesson: Record<string, string> = {};
+  const attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }> = {};
   if (studentId && lessonIds.length > 0) {
     const { data: attendances } = await supabase
       .from("Attendance")
-      .select("lessonId, status")
+      .select("lessonId, status, checkedInAt")
       .eq("studentId", studentId)
       .in("lessonId", lessonIds);
     (attendances ?? []).forEach((a) => {
-      attendanceByLesson[a.lessonId] = a.status;
+      attendanceByLesson[a.lessonId] = {
+        status: a.status,
+        checkedInAt: (a as { checkedInAt?: string | null }).checkedInAt ?? null,
+      };
     });
   }
 
-  const renderPresence = (lessonId: string) => (
-    <VouNaoVouButtons
-      lessonId={lessonId}
-      currentStatus={attendanceByLesson[lessonId]}
-      goingLabel={t("goingLabel")}
-      notGoingLabel={t("notGoingLabel")}
-      statusConfirmedLabel={STATUS_LABEL.CONFIRMED}
-      statusAbsentLabel={STATUS_LABEL.ABSENT}
-      statusPendingLabel={STATUS_LABEL.PENDING}
-    />
-  );
+  const renderPresence = (lessonId: string) => {
+    const att = attendanceByLesson[lessonId];
+    return (
+      <VouNaoVouButtons
+        lessonId={lessonId}
+        currentStatus={att?.status}
+        checkedInAt={att?.checkedInAt ?? null}
+        goingLabel={t("goingLabel")}
+        notGoingLabel={t("notGoingLabel")}
+        intentGoingLabel={t("intentGoingLabel")}
+        checkInDoneLabel={t("checkInDoneLabel")}
+        statusConfirmedLabel={STATUS_LABEL.CONFIRMED}
+        statusAbsentLabel={STATUS_LABEL.ABSENT}
+      />
+    );
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>

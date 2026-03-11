@@ -38,6 +38,7 @@ export default async function CoachAulaPage({
     id: string;
     studentId: string;
     status: string;
+    checkedInAt: string | null;
     name: string | null;
     email: string;
     avatarUrl: string | null;
@@ -59,7 +60,7 @@ export default async function CoachAulaPage({
   if (lessonId && selectedLesson) {
     const { data: attList } = await supabase
       .from("Attendance")
-      .select("id, studentId, status")
+      .select("id, studentId, status, checkedInAt")
       .eq("lessonId", lessonId)
       .order("createdAt", { ascending: true });
 
@@ -130,6 +131,7 @@ export default async function CoachAulaPage({
           id: a.id,
           studentId: a.studentId,
           status: a.status,
+          checkedInAt: (a as { checkedInAt?: string | null }).checkedInAt ?? null,
           name: u?.name ?? null,
           email: u?.email ?? "",
           avatarUrl: (u as { avatarUrl?: string | null } | undefined)?.avatarUrl ?? null,
@@ -222,6 +224,7 @@ export default async function CoachAulaPage({
                       studentName={a.name}
                       studentEmail={a.email}
                       status={a.status}
+                      checkedInAt={a.checkedInAt}
                       lessonId={selectedLesson.id}
                       modality={selectedLesson.modality}
                       evaluationConfig={evaluationConfig}

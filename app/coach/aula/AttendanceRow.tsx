@@ -14,6 +14,7 @@ type Props = {
   studentName: string | null;
   studentEmail: string;
   status: string;
+  checkedInAt: string | null;
   lessonId: string;
   modality: string;
   evaluationConfig: ModalityEvaluationConfigPayload | null;
@@ -28,6 +29,7 @@ export function AttendanceRow({
   studentName,
   studentEmail,
   status,
+  checkedInAt,
   lessonId,
   modality,
   evaluationConfig,
@@ -48,7 +50,14 @@ export function AttendanceRow({
       : status === "ABSENT"
         ? "coach-attendance-status--absent"
         : "coach-attendance-status--pending";
-  const statusLabel = status === "PENDING" ? "Pendente" : status === "CONFIRMED" ? "Confirmada" : "Falta";
+  const statusLabel =
+    status === "CONFIRMED"
+      ? checkedInAt
+        ? `Presente (Check-in às ${new Date(checkedInAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })})`
+        : "Presente (Manual)"
+      : status === "PENDING"
+        ? "Marcou 'Vou'"
+        : "Falta";
 
   const handleEvaluationSuccess = () => {
     setModalOpen(false);
@@ -82,10 +91,18 @@ export function AttendanceRow({
             <form action={formAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
               <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
               <button type="submit" name="status" value="CONFIRMED" className="btn btn-success">
-                Confirmar
+                Marcar Presença Manual
               </button>
               <button type="submit" name="status" value="ABSENT" className="btn btn-danger">
-                Falta
+                Marcar Ausente
+              </button>
+            </form>
+          )}
+          {status === "CONFIRMED" && (
+            <form action={formAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+              <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
+              <button type="submit" name="status" value="ABSENT" className="btn btn-danger">
+                Reverter para Ausente
               </button>
             </form>
           )}
