@@ -4,7 +4,6 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
-import { ComprarCursoButton } from "./ComprarCursoButton";
 import { BibliotecaFilters } from "./BibliotecaFilters";
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -28,7 +27,7 @@ export default async function BibliotecaPage({ searchParams }: Props) {
 
   let coursesQuery = supabase
     .from("Course")
-    .select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, price, available_for_purchase")
+    .select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
@@ -83,7 +82,6 @@ export default async function BibliotecaPage({ searchParams }: Props) {
             const hasAccessByPlan = c.included_in_digital_plan && hasDigitalAccess;
             const hasAccessByPurchase = purchasedCourseIds.has(c.id);
             const hasAccess = hasAccessByPlan || hasAccessByPurchase;
-            const canPurchase = !hasAccess && c.available_for_purchase && c.price != null && Number(c.price) > 0;
             const cardContent = (
               <>
                 <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -115,13 +113,9 @@ export default async function BibliotecaPage({ searchParams }: Props) {
                     <span style={{ marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)" }}>
                       Ver curso →
                     </span>
-                  ) : canPurchase ? (
-                    <span style={{ marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)" }}>
-                      €{Number(c.price).toFixed(0)} · Comprar
-                    </span>
                   ) : (
                     <span style={{ marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-                      Incluído em planos com acesso digital
+                      {t("includedInDigitalPlan")}
                     </span>
                   )}
                 </div>
@@ -130,14 +124,6 @@ export default async function BibliotecaPage({ searchParams }: Props) {
                     {c.description.slice(0, 120)}
                     {c.description.length > 120 ? "…" : ""}
                   </p>
-                )}
-                {canPurchase && (
-                  <ComprarCursoButton
-                    courseId={c.id}
-                    courseName={c.name}
-                    price={Number(c.price)}
-                    initialLocale={locale as "pt" | "en"}
-                  />
                 )}
               </>
             );

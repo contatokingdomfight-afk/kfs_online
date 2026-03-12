@@ -238,7 +238,7 @@ export const messages = {
 
     // Biblioteca (aluno)
     libraryTitle: "Biblioteca",
-    libraryDescription: "Cursos e vídeos para estudar técnica, mindset e performance. O acesso vem do teu plano ou por compra avulsa.",
+    libraryDescription: "Cursos e vídeos para estudar técnica, mindset e performance. O acesso vem do teu plano digital.",
     libraryEmpty: "Ainda não há cursos disponíveis. Em breve a escola adicionará conteúdo aqui.",
     buyCourse: "Comprar",
     includedInDigitalPlan: "Incluído em planos com acesso digital",
@@ -615,7 +615,7 @@ export const messages = {
     navWeekTheme: "Week theme",
 
     libraryTitle: "Library",
-    libraryDescription: "Courses and videos to study technique, mindset and performance. Access comes from your plan or one-off purchase.",
+    libraryDescription: "Courses and videos to study technique, mindset and performance. Access comes from your digital plan.",
     libraryEmpty: "No courses available yet. The school will add content here soon.",
     buyCourse: "Buy",
     includedInDigitalPlan: "Included in plans with digital access",
