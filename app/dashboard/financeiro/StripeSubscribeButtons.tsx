@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-type PlanOption = { id: string; name: string; price_monthly: number };
+type PlanPriceOption = { stripePriceId: string; intervalLabel: string; amountCents: number };
+type PlanOption = { id: string; name: string; price_monthly: number; stripePriceId?: string; planPrices?: PlanPriceOption[] };
 
 type Props = {
   hasStripeCustomer: boolean;
@@ -19,13 +20,25 @@ export function StripeSubscribeButtons({
   manageLabel = "Gerir assinatura / cartão",
   perMonthLabel = "/mês",
 }: Props) {
+  const firstPlan = plansWithStripe[0];
+  const firstPrice = firstPlan?.planPrices?.[0] ?? (firstPlan?.stripePriceId ? { stripePriceId: firstPlan.stripePriceId, intervalLabel: perMonthLabel, amountCents: Math.round((firstPlan.price_monthly ?? 0) * 100) } : null);
   const [loading, setLoading] = useState<"checkout" | "portal" | null>(null);
-  const [planId, setPlanId] = useState(plansWithStripe[0]?.id ?? "");
+  const [planId, setPlanId] = useState(firstPlan?.id ?? "");
+  const [stripePriceId, setStripePriceId] = useState(firstPrice?.stripePriceId ?? "");
   const [error, setError] = useState<string | null>(null);
 
+  const currentPlan = plansWithStripe.find((p) => p.id === planId);
+  const priceOptions = currentPlan?.planPrices ?? (currentPlan?.stripePriceId ? [{ stripePriceId: currentPlan.stripePriceId, intervalLabel: perMonthLabel, amountCents: Math.round((currentPlan.price_monthly ?? 0) * 100) }] : []);
+
+  useEffect(() => {
+    const p = plansWithStripe.find((x) => x.id === planId);
+    const first = p?.planPrices?.[0] ?? (p?.stripePriceId ? { stripePriceId: p.stripePriceId } : null);
+    if (first) setStripePriceId(first.stripePriceId);
+  }, [planId, plansWithStripe]);
+
   const handleCheckout = async () => {
-    if (!planId) {
-      setError("Escolhe um plano.");
+    if (!planId || !stripePriceId) {
+      setError("Escolhe um plano e opção de pagamento.");
       return;
     }
     setLoading("checkout");
@@ -34,7 +47,7 @@ export function StripeSubscribeButtons({
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ planId, stripePriceId }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -95,16 +108,40 @@ export function StripeSubscribeButtons({
           {plansWithStripe.length > 1 && (
             <select
               value={planId}
-              onChange={(e) => setPlanId(e.target.value)}
+              onChange={(e) => {
+                const p = plansWithStripe.find((x) => x.id === e.target.value);
+                setPlanId(e.target.value);
+                const first = p?.planPrices?.[0] ?? (p?.stripePriceId ? { stripePriceId: p.stripePriceId } : null);
+                if (first) setStripePriceId(first.stripePriceId);
+              }}
               className="input w-full max-w-xs"
               aria-label="Escolher plano"
             >
               {plansWithStripe.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} · €{p.price_monthly.toFixed(0)}{perMonthLabel}
+                  {p.name}
                 </option>
               ))}
             </select>
+          )}
+          {priceOptions.length > 1 && (
+            <select
+              value={stripePriceId}
+              onChange={(e) => setStripePriceId(e.target.value)}
+              className="input w-full max-w-xs"
+              aria-label="Periodicidade"
+            >
+              {priceOptions.map((po) => (
+                <option key={po.stripePriceId} value={po.stripePriceId}>
+                  {po.intervalLabel} · €{(po.amountCents / 100).toFixed(0)}
+                </option>
+              ))}
+            </select>
+          )}
+          {priceOptions.length === 1 && (
+            <p className="text-sm text-text-secondary">
+              {currentPlan?.name} · €{(priceOptions[0]?.amountCents ?? 0) / 100} {priceOptions[0]?.intervalLabel ?? perMonthLabel}
+            </p>
           )}
           <button
             type="button"

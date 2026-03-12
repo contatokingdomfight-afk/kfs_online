@@ -10,13 +10,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  let body: { planId?: string };
+  let body: { planId?: string; stripePriceId?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Body inválido." }, { status: 400 });
   }
   const planId = body.planId?.trim();
+  const stripePriceIdParam = body.stripePriceId?.trim();
   if (!planId) {
     return NextResponse.json({ error: "planId é obrigatório." }, { status: 400 });
   }
@@ -31,17 +32,49 @@ export async function POST(request: NextRequest) {
   }
   const supabase = result.client;
 
-  const { data: plan } = await supabase
-    .from("Plan")
-    .select("id, name, stripePriceId")
-    .eq("id", planId)
-    .eq("is_active", true)
-    .single();
-  if (!plan?.stripePriceId) {
-    return NextResponse.json(
-      { error: "Plano não disponível para pagamento por cartão. Contacta a secretaria." },
-      { status: 400 }
-    );
+  let priceToUse: string;
+
+  if (stripePriceIdParam) {
+    const { data: planPrice } = await supabase
+      .from("PlanPrice")
+      .select("stripePriceId, planId")
+      .eq("stripePriceId", stripePriceIdParam)
+      .eq("planId", planId)
+      .eq("isActive", true)
+      .single();
+    if (!planPrice) {
+      return NextResponse.json(
+        { error: "Opção de preço inválida para este plano." },
+        { status: 400 }
+      );
+    }
+    priceToUse = planPrice.stripePriceId;
+  } else {
+    const { data: plan } = await supabase
+      .from("Plan")
+      .select("id, stripePriceId")
+      .eq("id", planId)
+      .eq("is_active", true)
+      .single();
+    if (!plan?.stripePriceId) {
+      const { data: firstPrice } = await supabase
+        .from("PlanPrice")
+        .select("stripePriceId")
+        .eq("planId", planId)
+        .eq("isActive", true)
+        .order("sortOrder", { ascending: true })
+        .limit(1)
+        .single();
+      if (!firstPrice?.stripePriceId) {
+        return NextResponse.json(
+          { error: "Plano não disponível para pagamento por cartão. Contacta a secretaria." },
+          { status: 400 }
+        );
+      }
+      priceToUse = firstPrice.stripePriceId;
+    } else {
+      priceToUse = plan.stripePriceId;
+    }
   }
 
   const { data: student } = await supabase
@@ -74,7 +107,7 @@ export async function POST(request: NextRequest) {
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
-    line_items: [{ price: plan.stripePriceId, quantity: 1 }],
+    line_items: [{ price: priceToUse, quantity: 1 }],
     success_url: `${baseUrl}/dashboard/financeiro?stripe=success`,
     cancel_url: `${baseUrl}/dashboard/financeiro?stripe=cancel`,
     subscription_data: {

@@ -32,6 +32,12 @@ export default async function EscolherPlanoPage() {
   if (schoolId) plansQuery = plansQuery.eq("schoolId", schoolId);
   const { data: plans } = await plansQuery.order("price_monthly", { ascending: true });
 
+  const { data: planPrices } = await supabase
+    .from("PlanPrice")
+    .select("planId, stripePriceId, intervalLabel, amountCents, sortOrder")
+    .eq("isActive", true)
+    .order("sortOrder", { ascending: true });
+
   const t = getTranslations((locale as "pt" | "en") ?? "pt");
 
   return (
@@ -77,28 +83,38 @@ export default async function EscolherPlanoPage() {
             gap: 20,
           }}
         >
-          {(plans ?? []).map((plan) => (
-            <PlanCard
-              key={plan.id}
-              plan={{
-                id: plan.id,
-                name: plan.name,
-                description: plan.description,
-                price_monthly: Number(plan.price_monthly),
-                includes_digital_access: plan.includes_digital_access === true,
-                includes_performance_tracking: plan.includes_performance_tracking !== false,
-                includes_check_in: plan.includes_check_in !== false,
-                modality_scope: plan.modality_scope,
-                includes_exclusive_benefits: plan.includes_exclusive_benefits === true,
-                hasStripe: plan.name.toLowerCase().includes("kingdom online") && !!plan.stripePriceId,
-              }}
-              studentId={studentId}
-              locale={(locale as "pt" | "en") ?? "pt"}
-              perMonth={t("perMonth")}
-              loading={t("loading")}
-              choosePlanSelect={t("choosePlanSelect")}
-            />
-          ))}
+          {(plans ?? []).map((plan) => {
+            const prices = (planPrices ?? []).filter((pp) => pp.planId === plan.id);
+            const hasStripe = plan.name.toLowerCase().includes("kingdom online") && (!!plan.stripePriceId || prices.length > 0);
+            const planPricesForCard = prices.length > 0
+              ? prices.map((pp) => ({ stripePriceId: pp.stripePriceId, intervalLabel: pp.intervalLabel, amountCents: pp.amountCents }))
+              : plan.stripePriceId
+                ? [{ stripePriceId: plan.stripePriceId, intervalLabel: t("perMonth"), amountCents: Math.round(Number(plan.price_monthly) * 100) }]
+                : undefined;
+            return (
+              <PlanCard
+                key={plan.id}
+                plan={{
+                  id: plan.id,
+                  name: plan.name,
+                  description: plan.description,
+                  price_monthly: Number(plan.price_monthly),
+                  includes_digital_access: plan.includes_digital_access === true,
+                  includes_performance_tracking: plan.includes_performance_tracking !== false,
+                  includes_check_in: plan.includes_check_in !== false,
+                  modality_scope: plan.modality_scope,
+                  includes_exclusive_benefits: plan.includes_exclusive_benefits === true,
+                  hasStripe,
+                  planPrices: planPricesForCard,
+                }}
+                studentId={studentId}
+                locale={(locale as "pt" | "en") ?? "pt"}
+                perMonth={t("perMonth")}
+                loading={t("loading")}
+                choosePlanSelect={t("choosePlanSelect")}
+              />
+            );
+          })}
         </div>
         {(!plans || plans.length === 0) && (
           <p style={{ fontSize: 16, color: "var(--text-secondary)" }}>

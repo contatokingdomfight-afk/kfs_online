@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
+type PlanPriceOption = { stripePriceId: string; intervalLabel: string; amountCents: number };
 type Plan = {
   id: string;
   name: string;
@@ -13,6 +14,7 @@ type Plan = {
   modality_scope: string | null;
   includes_exclusive_benefits: boolean;
   hasStripe: boolean;
+  planPrices?: PlanPriceOption[];
 };
 
 type Props = {
@@ -26,6 +28,13 @@ type Props = {
 
 export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLabel, choosePlanSelect }: Props) {
   const [isLoading, setLoading] = useState(false);
+  const priceOptions = plan.planPrices ?? [];
+  const [selectedPriceId, setSelectedPriceId] = useState(priceOptions[0]?.stripePriceId ?? "");
+  useEffect(() => {
+    if (priceOptions.length > 0 && !selectedPriceId) {
+      setSelectedPriceId(priceOptions[0].stripePriceId);
+    }
+  }, [priceOptions]);
 
   const benefits: string[] = [];
   if (plan.includes_check_in) benefits.push(locale === "pt" ? "Check-in nas aulas" : "Class check-in");
@@ -37,12 +46,13 @@ export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLa
 
   async function handleSelect() {
     if (!studentId || !plan.hasStripe) return;
+    const stripePriceIdToUse = priceOptions.length > 0 ? (selectedPriceId || priceOptions[0]?.stripePriceId) : undefined;
     setLoading(true);
     try {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId: plan.id }),
+        body: JSON.stringify({ planId: plan.id, stripePriceId: stripePriceIdToUse }),
       });
       const data = await res.json();
       if (res.ok && data.url) {
@@ -73,12 +83,39 @@ export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLa
           {plan.description}
         </p>
       )}
-      <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-        €{plan.price_monthly.toFixed(0)}
-        <span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-secondary)" }}>
-          {perMonth}
-        </span>
-      </p>
+      {priceOptions.length > 1 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <select
+            value={selectedPriceId}
+            onChange={(e) => setSelectedPriceId(e.target.value)}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              backgroundColor: "var(--bg)",
+              color: "var(--text-primary)",
+              fontSize: 14,
+            }}
+            aria-label={locale === "pt" ? "Periodicidade" : "Billing interval"}
+          >
+            {priceOptions.map((po) => (
+              <option key={po.stripePriceId} value={po.stripePriceId}>
+                {po.intervalLabel} · €{(po.amountCents / 100).toFixed(0)}
+              </option>
+            ))}
+          </select>
+          <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>
+            {locale === "pt" ? "Cobrança automática recorrente. Sem preocupações." : "Automatic recurring billing. No hassle."}
+          </p>
+        </div>
+      ) : (
+        <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+          €{plan.price_monthly.toFixed(0)}
+          <span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-secondary)" }}>
+            {perMonth}
+          </span>
+        </p>
+      )}
       <ul style={{ paddingLeft: 20, margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
         {benefits.map((b, i) => (
           <li key={i}>{b}</li>

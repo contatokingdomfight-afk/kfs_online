@@ -23,7 +23,7 @@ export default async function DashboardFinanceiroPage() {
   let plan: { name: string; price_monthly: number } | null = null;
   let payments: { id: string; referenceMonth: string; amount: number; status: string; createdAt: string }[] = [];
   let hasStripeCustomer = false;
-  let plansWithStripe: { id: string; name: string; price_monthly: number }[] = [];
+  let plansWithStripe: { id: string; name: string; price_monthly: number; stripePriceId?: string; planPrices?: { stripePriceId: string; intervalLabel: string; amountCents: number }[] }[] = [];
 
   if (studentId) {
     const { data: student } = await supabase
@@ -46,14 +46,34 @@ export default async function DashboardFinanceiroPage() {
 
     const { data: plans } = await supabase
       .from("Plan")
-      .select("id, name, price_monthly")
-      .eq("is_active", true)
-      .not("stripePriceId", "is", null);
-    plansWithStripe = (plans ?? []).map((p) => ({
-      id: p.id,
-      name: p.name,
-      price_monthly: Number(p.price_monthly),
-    }));
+      .select("id, name, price_monthly, stripePriceId")
+      .eq("is_active", true);
+    const { data: planPrices } = await supabase
+      .from("PlanPrice")
+      .select("planId, stripePriceId, intervalLabel, amountCents")
+      .eq("isActive", true)
+      .order("sortOrder", { ascending: true });
+    const plansWithStripeData: { id: string; name: string; price_monthly: number; stripePriceId?: string; planPrices?: { stripePriceId: string; intervalLabel: string; amountCents: number }[] }[] = [];
+    for (const p of plans ?? []) {
+      const prices = (planPrices ?? []).filter((pp) => pp.planId === p.id);
+      if (prices.length > 0) {
+        plansWithStripeData.push({
+          id: p.id,
+          name: p.name,
+          price_monthly: prices[0].amountCents / 100,
+          stripePriceId: prices[0].stripePriceId,
+          planPrices: prices.map((x) => ({ stripePriceId: x.stripePriceId, intervalLabel: x.intervalLabel, amountCents: x.amountCents })),
+        });
+      } else if (p.stripePriceId) {
+        plansWithStripeData.push({
+          id: p.id,
+          name: p.name,
+          price_monthly: Number(p.price_monthly),
+          stripePriceId: p.stripePriceId,
+        });
+      }
+    }
+    plansWithStripe = plansWithStripeData;
 
     const { data: paymentRows } = await supabase
       .from("Payment")
