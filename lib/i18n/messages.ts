@@ -262,13 +262,11 @@ export const messages = {
     registering: "A inscrever…",
     registerConfirm: "Inscrever-me em \"{name}\" (€{price})? O pagamento será acertado na escola.",
 
-    // Loja (Cursos + Eventos)
+    // Loja (produtos físicos: camisetas, chaveiros, etc.)
     storeTitle: "Loja",
-    storeDescription: "Cursos avulsos e eventos (Camps, Workshops). Compra ou inscreve-te e acerta o pagamento na escola.",
-    storeCoursesSection: "Cursos disponíveis",
-    storeEventsSection: "Eventos em breve",
-    storeAlreadyPurchased: "Já tens acesso",
-    storeEmpty: "Não há cursos nem eventos disponíveis para compra ou inscrição no momento.",
+    storeDescription: "Produtos KFS: camisetas, chaveiros e merchandising. Compra na escola.",
+    storeComingSoon: "Em breve teremos produtos como camisetas, chaveiros e mais. Fica atento!",
+    storeMeanwhile: "Enquanto isso: material de treino na",
 
     // Admin home
     helloAdmin: "Olá,",
@@ -641,11 +639,9 @@ export const messages = {
     registerConfirm: "Register for \"{name}\" (€{price})? Payment will be settled at the school.",
 
     storeTitle: "Store",
-    storeDescription: "One-off courses and events (Camps, Workshops). Buy or register and settle payment at the school.",
-    storeCoursesSection: "Available courses",
-    storeEventsSection: "Upcoming events",
-    storeAlreadyPurchased: "You already have access",
-    storeEmpty: "No courses or events available for purchase or registration at the moment.",
+    storeDescription: "KFS products: t-shirts, keychains and merchandise. Buy at the school.",
+    storeComingSoon: "Coming soon: t-shirts, keychains and more. Stay tuned!",
+    storeMeanwhile: "Meanwhile: training material in the",
 
     helloAdmin: "Hello,",
     viewAs: "View as",
