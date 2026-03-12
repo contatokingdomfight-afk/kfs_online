@@ -5,6 +5,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
+import { AlunosSearchForm } from "./_components/AlunosSearchForm";
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
@@ -12,7 +13,20 @@ const STATUS_LABEL: Record<string, string> = {
   EXPERIMENTAL: "Experimental",
 };
 
-type SearchParams = Promise<{ status?: string; modality?: string; school?: string }>;
+function buildQuery(
+  overrides: { status?: string; modality?: string; school?: string; plan?: string; q?: string }
+): string {
+  const p = new URLSearchParams();
+  if (overrides.status && overrides.status !== "all") p.set("status", overrides.status);
+  if (overrides.modality && overrides.modality !== "all") p.set("modality", overrides.modality);
+  if (overrides.school && overrides.school !== "all") p.set("school", overrides.school);
+  if (overrides.plan && overrides.plan !== "all") p.set("plan", overrides.plan);
+  if (overrides.q?.trim()) p.set("q", overrides.q.trim());
+  const s = p.toString();
+  return s ? `?${s}` : "";
+}
+
+type SearchParams = Promise<{ status?: string; modality?: string; school?: string; plan?: string; q?: string }>;
 
 export default async function AdminAlunosPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
@@ -22,14 +36,17 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   const filterStatus = params.status ?? "all";
   const filterModality = params.modality ?? "all";
   const filterSchool = params.school ?? "all";
+  const filterPlan = params.plan ?? "all";
+  const searchQuery = (params.q ?? "").trim().toLowerCase();
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const [{ data: schools }, { data: studentsData }, modalitiesForFilter] = await Promise.all([
+  const [{ data: schools }, { data: studentsData }, { data: plansData }, modalitiesForFilter] = await Promise.all([
     supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
-    supabase.from("Student").select("id, userId, status, primaryModality, schoolId, createdAt").order("createdAt", { ascending: false }),
+    supabase.from("Student").select("id, userId, status, primaryModality, schoolId, planId, createdAt").order("createdAt", { ascending: false }),
+    supabase.from("Plan").select("id, name").eq("is_active", true).order("name", { ascending: true }),
     getCachedModalityRefs(supabase),
   ]);
 
@@ -46,17 +63,43 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   if (filterSchool !== "all") {
     filtered = filtered.filter((s) => s.schoolId === filterSchool);
   }
+  if (filterPlan !== "all") {
+    if (filterPlan === "none") {
+      filtered = filtered.filter((s) => !(s as { planId?: string | null }).planId);
+    } else {
+      filtered = filtered.filter((s) => (s as { planId?: string | null }).planId === filterPlan);
+    }
+  }
 
   const userIds = [...new Set(filtered.map((s) => s.userId))];
-  const { data: usersData } = await supabase
-    .from("User")
-    .select("id, name, email")
-    .in("id", userIds);
+  const studentIds = filtered.map((s) => s.id);
+
+  const [{ data: usersData }, { data: profilesData }] = await Promise.all([
+    supabase.from("User").select("id, name, email").in("id", userIds),
+    studentIds.length > 0
+      ? supabase.from("StudentProfile").select("studentId, phone").in("studentId", studentIds)
+      : Promise.resolve({ data: [] }),
+  ]);
 
   const userById = new Map((usersData ?? []).map((u) => [u.id, u]));
+  const profileByStudentId = new Map((profilesData ?? []).map((p) => [p.studentId, p]));
+
+  if (searchQuery) {
+    const qNorm = searchQuery.replace(/\s/g, "");
+    filtered = filtered.filter((s) => {
+      const u = userById.get(s.userId);
+      const p = profileByStudentId.get(s.id);
+      const name = (u?.name ?? "").toLowerCase();
+      const email = (u?.email ?? "").toLowerCase();
+      const phone = (p?.phone ?? "").replace(/\s/g, "");
+      return name.includes(searchQuery) || email.includes(searchQuery) || (qNorm && phone.includes(qNorm));
+    });
+  }
+
+  const baseFilters = { status: filterStatus, modality: filterModality, school: filterSchool, plan: filterPlan, q: params.q ?? "" };
 
   return (
-    <div style={{ maxWidth: "min(700px, 100%)" }}>
+    <div style={{ maxWidth: "min(700px, 100%)", paddingTop: 8 }}>
       <div
         style={{
           display: "flex",
@@ -68,11 +111,11 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
       >
         <Link
           href="/admin"
+          className="btn btn-secondary"
           style={{
-            color: "var(--text-secondary)",
-            fontSize: "clamp(15px, 3.8vw, 17px)",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
             textDecoration: "none",
-            fontWeight: 500,
+            padding: "8px 12px",
           }}
         >
           ← Voltar
@@ -92,13 +135,26 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
         Convidar envia um email ao futuro aluno para se registar; depois aparece na lista com status Ativo ou Experimental.
       </p>
 
-      <div style={{ marginBottom: "clamp(16px, 4vw, 20px)" }}>
-        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-secondary)" }}>
+      <div style={{ marginBottom: "clamp(16px, 4vw, 20px)", padding: "clamp(12px, 3vw, 16px)", backgroundColor: "var(--bg-secondary)", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
+        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          Buscar
+        </p>
+        <AlunosSearchForm
+          defaultValue={params.q ?? ""}
+          status={filterStatus}
+          modality={filterModality}
+          school={filterSchool}
+          plan={filterPlan}
+        />
+      </div>
+
+      <div style={{ marginBottom: "clamp(16px, 4vw, 20px)", padding: "clamp(12px, 3vw, 16px)", backgroundColor: "var(--bg-secondary)", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
+        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Status
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <Link
-            href={filterModality !== "all" ? `/admin/alunos?modality=${filterModality}` : "/admin/alunos"}
+            href={`/admin/alunos${buildQuery({ ...baseFilters, status: "all" })}`}
             className="btn"
             style={{
               textDecoration: "none",
@@ -111,7 +167,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
           {(["ATIVO", "INATIVO", "EXPERIMENTAL"] as const).map((s) => (
             <Link
               key={s}
-              href={`/admin/alunos?status=${s}${filterModality !== "all" ? `&modality=${filterModality}` : ""}`}
+              href={`/admin/alunos${buildQuery({ ...baseFilters, status: s })}`}
               className="btn"
               style={{
                 textDecoration: "none",
@@ -123,12 +179,12 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
             </Link>
           ))}
         </div>
-        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-secondary)" }}>
+        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Modalidade
         </p>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <Link
-            href={filterStatus !== "all" ? `/admin/alunos?status=${filterStatus}` : "/admin/alunos"}
+            href={`/admin/alunos${buildQuery({ ...baseFilters, modality: "all" })}`}
             className="btn"
             style={{
               textDecoration: "none",
@@ -141,7 +197,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
           {modalitiesForFilter.map((m) => (
             <Link
               key={m.code}
-              href={`/admin/alunos?modality=${m.code}${filterStatus !== "all" ? `&status=${filterStatus}` : ""}`}
+              href={`/admin/alunos${buildQuery({ ...baseFilters, modality: m.code })}`}
               className="btn"
               style={{
                 textDecoration: "none",
@@ -153,15 +209,12 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
             </Link>
           ))}
         </div>
-      </div>
-
-      <div style={{ marginBottom: "clamp(16px, 4vw, 20px)" }}>
-        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-secondary)" }}>
+        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Escola
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <Link
-            href={`/admin/alunos${filterStatus !== "all" ? `?status=${filterStatus}` : ""}${filterModality !== "all" ? `${filterStatus !== "all" ? "&" : "?"}modality=${filterModality}` : ""}`}
+            href={`/admin/alunos${buildQuery({ ...baseFilters, school: "all" })}`}
             className="btn"
             style={{
               textDecoration: "none",
@@ -174,7 +227,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
           {(schools ?? []).map((school) => (
             <Link
               key={school.id}
-              href={`/admin/alunos?school=${school.id}${filterStatus !== "all" ? `&status=${filterStatus}` : ""}${filterModality !== "all" ? `&modality=${filterModality}` : ""}`}
+              href={`/admin/alunos${buildQuery({ ...baseFilters, school: school.id })}`}
               className="btn"
               style={{
                 textDecoration: "none",
@@ -183,6 +236,47 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
               }}
             >
               {school.name}
+            </Link>
+          ))}
+        </div>
+        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          Plano
+        </p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Link
+            href={`/admin/alunos${buildQuery({ ...baseFilters, plan: "all" })}`}
+            className="btn"
+            style={{
+              textDecoration: "none",
+              backgroundColor: filterPlan === "all" ? "var(--primary)" : "var(--bg-secondary)",
+              color: filterPlan === "all" ? "#fff" : "var(--text-primary)",
+            }}
+          >
+            Todos
+          </Link>
+          <Link
+            href={`/admin/alunos${buildQuery({ ...baseFilters, plan: "none" })}`}
+            className="btn"
+            style={{
+              textDecoration: "none",
+              backgroundColor: filterPlan === "none" ? "var(--primary)" : "var(--bg-secondary)",
+              color: filterPlan === "none" ? "#fff" : "var(--text-primary)",
+            }}
+          >
+            Sem plano
+          </Link>
+          {(plansData ?? []).map((plan) => (
+            <Link
+              key={plan.id}
+              href={`/admin/alunos${buildQuery({ ...baseFilters, plan: plan.id })}`}
+              className="btn"
+              style={{
+                textDecoration: "none",
+                backgroundColor: filterPlan === plan.id ? "var(--primary)" : "var(--bg-secondary)",
+                color: filterPlan === plan.id ? "#fff" : "var(--text-primary)",
+              }}
+            >
+              {plan.name}
             </Link>
           ))}
         </div>
