@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -40,6 +41,7 @@ export default async function RootLayout({
       <body className={`${inter.variable} font-sans`}>
         <ThemeLocaleSwitcherFixedOnlyOnPublic initialTheme={theme} initialLocale={locale} />
         {children}
+        <Analytics />
         <SpeedInsights />
       </body>
     </html>
