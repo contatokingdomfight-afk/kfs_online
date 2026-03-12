@@ -6,15 +6,16 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
+import { syncUserAfterSignUp } from "../actions";
 
 export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
   const t = getTranslations(initialLocale);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleGoogleSignIn() {
@@ -37,20 +38,25 @@ export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setMessage(null);
     setLoading(true);
     const supabase = createClient();
     const { error: err } = await supabase.auth.signUp({
       email,
       password,
+      options: { data: { full_name: name.trim() || undefined } },
     });
-    setLoading(false);
     if (err) {
+      setLoading(false);
       setError(err.message);
       return;
     }
-    setMessage(t("accountCreatedMessage"));
-    router.refresh();
+    const result = await syncUserAfterSignUp();
+    setLoading(false);
+    if ("error" in result) {
+      setError(result.error);
+      return;
+    }
+    router.push(result.redirect);
   }
 
   return (
@@ -70,9 +76,18 @@ export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
           {googleLoading ? (initialLocale === "en" ? "Redirecting…" : "A redirecionar…") : t("signInWithGoogle")}
         </button>
         <span className="block text-center text-mobile-sm mb-4" style={{ color: "var(--text-secondary)" }}>
-          {initialLocale === "en" ? "or" : "ou"}
+          {initialLocale === "en" ? "or" : "or"}
         </span>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input
+            type="text"
+            placeholder={t("signUpFullNamePlaceholder")}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="input"
+            autoComplete="name"
+          />
           <input
             type="email"
             placeholder={t("email")}
@@ -93,11 +108,6 @@ export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
           {error && (
             <p className="text-mobile-sm" style={{ color: "var(--danger)", margin: 0 }}>
               {error}
-            </p>
-          )}
-          {message && (
-            <p className="text-mobile-sm" style={{ color: "var(--success)", margin: 0 }}>
-              {message}
             </p>
           )}
           <button type="submit" disabled={loading} className="btn btn-primary w-full">

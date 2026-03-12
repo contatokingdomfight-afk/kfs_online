@@ -13,5 +13,6 @@ export const getCurrentDbUser = cache(async function getCurrentDbUser() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
-  return syncUser(user);
+  const { user: dbUser } = await syncUser(user);
+  return dbUser;
 });

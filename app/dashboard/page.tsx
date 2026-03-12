@@ -7,6 +7,7 @@ import { getThisWeekRange, MODALITY_LABELS, getWeekStartMonday } from "@/lib/les
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import { getPlanAccess } from "@/lib/plan-access";
 import { getApplicableMissionTemplates } from "@/lib/missions";
+import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
 import { NextLessonCard } from "./NextLessonCard";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
@@ -38,10 +39,12 @@ export default async function DashboardPage() {
 
   let studentSchoolId: string | null = null;
   let studentPrimaryModality: string | null = null;
+  let hasPlan = false;
   if (studentId) {
-    const { data: student } = await supabase.from("Student").select("schoolId, primaryModality").eq("id", studentId).single();
+    const { data: student } = await supabase.from("Student").select("schoolId, primaryModality, planId").eq("id", studentId).single();
     studentSchoolId = student?.schoolId ?? null;
     studentPrimaryModality = (student as { primaryModality?: string } | null)?.primaryModality ?? null;
+    hasPlan = !!student?.planId;
   }
 
   let lessonsQuery = supabase
@@ -66,7 +69,13 @@ export default async function DashboardPage() {
 
   const allLessons = lessonsData;
   const lessons =
-    allowedModalities.length === 0 ? [] : allowedModalities.length < MODALITIES_LIST.length ? allLessons.filter((l) => allowedModalities.includes(l.modality)) : allLessons;
+    !hasPlan
+      ? allLessons
+      : allowedModalities.length === 0
+        ? []
+        : allowedModalities.length < MODALITIES_LIST.length
+          ? allLessons.filter((l) => allowedModalities.includes(l.modality))
+          : allLessons;
   const nextLesson = lessons[0] ?? null;
 
   const lessonIds = lessons.map((l) => l.id);
@@ -169,6 +178,7 @@ export default async function DashboardPage() {
         locale={locale as "pt" | "en"}
         todayStr={todayStr}
         hasCheckIn={hasCheckIn}
+        isFreeTier={!hasPlan}
         t={t as (key: string) => string}
         statusLabels={STATUS_LABEL}
       />

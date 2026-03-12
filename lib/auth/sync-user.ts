@@ -70,6 +70,8 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     .eq("userId", userId)
     .maybeSingle();
 
+  let studentId: string | null = null;
+
   if (!student) {
     // Buscar escola padrão (primeira escola ativa)
     const { data: defaultSchool } = await supabase
@@ -84,17 +86,61 @@ export async function syncUser(supabaseUser: SupabaseUser) {
       throw new Error("Nenhuma escola ativa encontrada. Configure uma escola primeiro.");
     }
 
-    const studentId = crypto.randomUUID();
+    const newStudentId = crypto.randomUUID();
     const { error: studentError } = await supabase.from("Student").insert({
-      id: studentId,
+      id: newStudentId,
       userId,
       schoolId: defaultSchool.id,
       status: "ATIVO",
     });
-    
-    // Ignorar erro de duplicação (race condition)
-    if (studentError && studentError.code !== '23505') {
+
+    // Ignorar erro de duplicação (race condition) - buscar o student existente
+    if (studentError && studentError.code === "23505") {
+      const { data: existingStudent } = await supabase
+        .from("Student")
+        .select("id")
+        .eq("userId", userId)
+        .single();
+      studentId = existingStudent?.id ?? null;
+      if (studentId) {
+        const { data: existingProfile } = await supabase
+          .from("StudentProfile")
+          .select("id")
+          .eq("studentId", studentId)
+          .maybeSingle();
+        if (!existingProfile) {
+          await supabase.from("StudentProfile").insert({
+            id: crypto.randomUUID(),
+            studentId,
+            hasCompletedOnboarding: false,
+          });
+        }
+      }
+    } else if (studentError) {
       throw studentError;
+    } else {
+      studentId = newStudentId;
+      // Criar StudentProfile com hasCompletedOnboarding = false para novo aluno
+      await supabase.from("StudentProfile").insert({
+        id: crypto.randomUUID(),
+        studentId: newStudentId,
+        hasCompletedOnboarding: false,
+      });
+    }
+  } else {
+    studentId = student.id;
+    // Garantir que StudentProfile existe (alunos antigos podem não ter)
+    const { data: existingProfile } = await supabase
+      .from("StudentProfile")
+      .select("id")
+      .eq("studentId", studentId)
+      .maybeSingle();
+    if (!existingProfile) {
+      await supabase.from("StudentProfile").insert({
+        id: crypto.randomUUID(),
+        studentId,
+        hasCompletedOnboarding: false,
+      });
     }
   }
 
@@ -104,5 +150,16 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     .eq("id", userId)
     .single();
 
-  return user;
+  // Verificar se precisa de onboarding (para redirecionamento)
+  let hasCompletedOnboarding = true;
+  if (studentId) {
+    const { data: profile } = await supabase
+      .from("StudentProfile")
+      .select("hasCompletedOnboarding")
+      .eq("studentId", studentId)
+      .maybeSingle();
+    hasCompletedOnboarding = profile?.hasCompletedOnboarding ?? false;
+  }
+
+  return { user, hasCompletedOnboarding };
 }

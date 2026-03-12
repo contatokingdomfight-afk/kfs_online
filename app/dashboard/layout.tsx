@@ -20,6 +20,7 @@ export default async function DashboardLayout({
   if (!dbUser) redirect("/sign-in");
 
   if (dbUser.role === "COACH") redirect("/coach");
+
   let viewAs: "aluno" | "coach" | null = null;
   if (dbUser.role === "ADMIN") {
     viewAs = await getViewAsFromCookies();
@@ -32,6 +33,17 @@ export default async function DashboardLayout({
     getLocaleFromCookies(),
     getCurrentStudentId(),
   ]);
+  if (studentId) {
+    const supabaseForOnboarding = await createClient();
+    const { data: profile } = await supabaseForOnboarding
+      .from("StudentProfile")
+      .select("hasCompletedOnboarding")
+      .eq("studentId", studentId)
+      .maybeSingle();
+    if (profile && !profile.hasCompletedOnboarding) {
+      redirect("/onboarding");
+    }
+  }
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
   const planAccess = await getPlanAccess(supabase, studentId);

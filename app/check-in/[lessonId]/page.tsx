@@ -23,6 +23,11 @@ export default async function CheckInPage({ params }: Props) {
 
   const studentId = await getCurrentStudentId();
   const planAccess = await getPlanAccess(supabase, studentId);
+  let hasPlan = false;
+  if (studentId) {
+    const { data: student } = await supabase.from("Student").select("planId").eq("id", studentId).single();
+    hasPlan = !!student?.planId;
+  }
   if (studentId && !planAccess.hasCheckIn) {
     return (
       <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
@@ -32,9 +37,16 @@ export default async function CheckInPage({ params }: Props) {
         <p className="text-mobile-base" style={{ color: "var(--danger)", marginBottom: 24 }}>
           {locale === "pt" ? "O teu plano não inclui check-in de aulas presenciais." : "Your plan does not include in-person class check-in."}
         </p>
-        <Link href="/dashboard" className="btn btn-primary">
-          {t("goToDashboard")}
-        </Link>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
+          {!hasPlan && (
+            <Link href="/escolher-plano" className="btn btn-primary">
+              {locale === "pt" ? "Ver planos e preços" : "View plans and prices"}
+            </Link>
+          )}
+          <Link href="/dashboard" className="btn btn-secondary">
+            {t("goToDashboard")}
+          </Link>
+        </div>
       </div>
     );
   }

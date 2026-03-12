@@ -18,6 +18,7 @@ type Props = {
   locale: "pt" | "en";
   todayStr: string;
   hasCheckIn: boolean;
+  isFreeTier?: boolean;
   t: (key: string) => string;
   statusLabels: Record<string, string>;
 };
@@ -29,10 +30,11 @@ export function NextLessonCard({
   locale,
   todayStr,
   hasCheckIn,
+  isFreeTier = false,
   t,
   statusLabels,
 }: Props) {
-  if (!hasCheckIn) return null;
+  if (!hasCheckIn && !isFreeTier) return null;
 
   if (!lesson) {
     return (
@@ -44,6 +46,7 @@ export function NextLessonCard({
           <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-secondary)" }}>
             {t("dashboardNoClassesThisWeek")}
           </p>
+          {!isFreeTier && (
           <Link
             href="/dashboard/biblioteca"
             className="btn btn-primary"
@@ -59,6 +62,7 @@ export function NextLessonCard({
           >
             {t("dashboardExploreLibrary")}
           </Link>
+          )}
         </div>
       </section>
     );
@@ -91,6 +95,11 @@ export function NextLessonCard({
           {formatNextLessonDate(lesson.date, locale)} · {lesson.startTime}–{lesson.endTime}
         </p>
         <div style={{ marginTop: 12 }}>
+          {isFreeTier ? (
+            <p style={{ margin: 0, fontSize: 14, opacity: 0.9 }}>
+              🔒 {t("freeTierSubscribeToParticipate")}
+            </p>
+          ) : (
           <VouNaoVouButtons
             lessonId={lesson.id}
             currentStatus={att?.status}
@@ -102,7 +111,9 @@ export function NextLessonCard({
             statusConfirmedLabel={statusLabels.CONFIRMED}
             statusAbsentLabel={statusLabels.ABSENT}
           />
+          )}
         </div>
+        {!isFreeTier && (
         <Link
           href={`/check-in/${lesson.id}`}
           className="btn"
@@ -123,6 +134,8 @@ export function NextLessonCard({
         >
           📲 {t("dashboardCheckInButton")}
         </Link>
+        )}
+        {!isFreeTier && (
         <p style={{ marginTop: 12, marginBottom: 0, fontSize: "clamp(12px, 3vw, 14px)", opacity: 0.9 }}>
           {t("atGymScanQr")}{" "}
           <a href={`/check-in/${lesson.id}`} style={{ color: "#fff", textDecoration: "underline" }}>
@@ -130,6 +143,7 @@ export function NextLessonCard({
           </a>
           .
         </p>
+        )}
       </div>
     </section>
   );

@@ -25,7 +25,11 @@ export async function GET(request: NextRequest) {
       // Sincronizar User/Student logo no callback para o primeiro carregamento do dashboard já ter dados
       if (session?.user) {
         try {
-          await syncUser(session.user);
+          const { hasCompletedOnboarding } = await syncUser(session.user);
+          // Redirecionar para onboarding se ainda não completou
+          if (!hasCompletedOnboarding) {
+            return NextResponse.redirect(`${origin}/onboarding`);
+          }
         } catch (syncErr) {
           console.error("Auth callback syncUser (non-fatal):", syncErr);
           // Continua e redireciona; na próxima requisição o sync pode correr
