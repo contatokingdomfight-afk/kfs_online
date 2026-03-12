@@ -52,6 +52,7 @@ export default async function DashboardLayout({
       ],
     },
     ...(planAccess.hasPerformanceTracking ? [{ label: t("navConquests"), href: "/dashboard/conquistas" }] : []),
+    ...(planAccess.hasCheckIn ? [{ label: t("navHistoricoPresencas"), href: "/dashboard/historico" }] : []),
     { label: t("navStore"), href: "/dashboard/loja" },
     { label: t("navLibrary"), href: "/dashboard/biblioteca" },
     { label: t("navEvents"), href: "/dashboard/eventos" },

@@ -1,16 +1,16 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { getThisWeekRange, formatLessonDate, MODALITY_LABELS, getWeekStartMonday } from "@/lib/lesson-utils";
-import { VouNaoVouButtons } from "./VouNaoVouButtons";
+import { getThisWeekRange, MODALITY_LABELS, getWeekStartMonday } from "@/lib/lesson-utils";
 import { getCachedLocations } from "@/lib/cached-reference-data";
-import { Suspense } from "react";
-import { DashboardRestSkeleton } from "./DashboardRestSkeleton";
-import { DashboardRestContent } from "./DashboardRestContent";
 import { getPlanAccess } from "@/lib/plan-access";
+import { getApplicableMissionTemplates } from "@/lib/missions";
+import { NextLessonCard } from "./NextLessonCard";
+import { WarriorPanel } from "./WarriorPanel";
+import { WhatIsNew } from "./WhatIsNew";
+import { ExploreSection } from "./ExploreSection";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 
@@ -23,29 +23,27 @@ export default async function DashboardPage() {
     CONFIRMED: t("statusConfirmed"),
     ABSENT: t("statusAbsent"),
   };
-  const CATEGORY_LABEL: Record<string, string> = {
-    TECHNIQUE: t("categoryTechnique"),
-    MINDSET: t("categoryMindset"),
-    PERFORMANCE: t("categoryPerformance"),
-  };
 
   if (!dbUser) return null;
 
   const studentId = await getCurrentStudentId();
   const planAccess = await getPlanAccess(supabase, studentId);
-  const { hasDigitalAccess, hasCheckIn, allowedModalities } = planAccess;
+  const { hasCheckIn, allowedModalities } = planAccess;
 
   const { today, endOfWeek } = getThisWeekRange();
   const weekStart = getWeekStartMonday();
   const todayStr = new Date().toISOString().slice(0, 10);
+  const monthStart = new Date().toISOString().slice(0, 7) + "-01";
+  const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10);
 
   let studentSchoolId: string | null = null;
+  let studentPrimaryModality: string | null = null;
   if (studentId) {
-    const { data: student } = await supabase.from("Student").select("schoolId").eq("id", studentId).single();
+    const { data: student } = await supabase.from("Student").select("schoolId, primaryModality").eq("id", studentId).single();
     studentSchoolId = student?.schoolId ?? null;
+    studentPrimaryModality = (student as { primaryModality?: string } | null)?.primaryModality ?? null;
   }
 
-  // Paralelizar: aulas, locations, weekThemes
   let lessonsQuery = supabase
     .from("Lesson")
     .select("id, modality, date, startTime, endTime, locationId")
@@ -53,10 +51,13 @@ export default async function DashboardPage() {
     .lte("date", endOfWeek);
   if (studentSchoolId) lessonsQuery = lessonsQuery.eq("schoolId", studentSchoolId);
 
-  const [lessonsRes, locationsList, weekThemesRes] = await Promise.all([
+  const [lessonsRes, locationsList, weekThemesRes, goalRes, athleteRes, confirmedAttRes] = await Promise.all([
     lessonsQuery.order("date", { ascending: true }).order("startTime", { ascending: true }),
     getCachedLocations(supabase),
     supabase.from("WeekTheme").select("modality, title, course_id, video_url").eq("week_start", weekStart).order("modality", { ascending: true }),
+    supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
+    studentId ? supabase.from("Athlete").select("id, currentBelt, currentXP").eq("studentId", studentId).single() : Promise.resolve({ data: null }),
+    studentId ? supabase.from("Attendance").select("lessonId").eq("studentId", studentId).eq("status", "CONFIRMED") : Promise.resolve({ data: [] }),
   ]);
 
   const lessonsData = lessonsRes.data ?? [];
@@ -67,7 +68,6 @@ export default async function DashboardPage() {
   const lessons =
     allowedModalities.length === 0 ? [] : allowedModalities.length < MODALITIES_LIST.length ? allLessons.filter((l) => allowedModalities.includes(l.modality)) : allLessons;
   const nextLesson = lessons[0] ?? null;
-  const restOfWeek = lessons.slice(1);
 
   const lessonIds = lessons.map((l) => l.id);
   const attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }> = {};
@@ -85,223 +85,117 @@ export default async function DashboardPage() {
     });
   }
 
-  const renderPresence = (lessonId: string) => {
-    const att = attendanceByLesson[lessonId];
-    return (
-      <VouNaoVouButtons
-        lessonId={lessonId}
-        currentStatus={att?.status}
-        checkedInAt={att?.checkedInAt ?? null}
-        goingLabel={t("goingLabel")}
-        notGoingLabel={t("notGoingLabel")}
-        intentGoingLabel={t("intentGoingLabel")}
-        checkInDoneLabel={t("checkInDoneLabel")}
-        statusConfirmedLabel={STATUS_LABEL.CONFIRMED}
-        statusAbsentLabel={STATUS_LABEL.ABSENT}
-      />
-    );
-  };
+  let attendanceGoal = 10;
+  if (goalRes.data) attendanceGoal = goalRes.data.target_value ?? 10;
+
+  const confirmedAtt = confirmedAttRes.data ?? [];
+  const allLessonIds = [...new Set(confirmedAtt.map((a) => a.lessonId))];
+  let currentMonthCount = 0;
+  let totalPresences = 0;
+  let athleteStats: { currentBelt: string | null; currentXP: number; nextLevelXP: number } | null = null;
+  let weekThemeForPrimary: { modality: string; title: string; course_id: string | null; video_url: string | null } | null = null;
+  let nextMission: { id: string; name: string; description: string | null; xpReward: number } | null = null;
+  let coachFeedback: { content: string; coachName: string; date: string } | null = null;
+
+  if (allLessonIds.length > 0) {
+    const { data: confirmedLessons } = await supabase.from("Lesson").select("id, date").in("id", allLessonIds);
+    const lessonsList = confirmedLessons ?? [];
+    currentMonthCount = lessonsList.filter((l) => l.date >= monthStart && l.date <= monthEnd).length;
+  }
+
+  const athlete = athleteRes.data;
+  if (athlete) {
+    const beltLevels = ["WHITE", "YELLOW", "ORANGE", "GREEN", "BLUE", "PURPLE", "BROWN", "BLACK", "BLACK_1", "BLACK_2", "BLACK_3", "GOLDEN"];
+    const currentIndex = beltLevels.indexOf(athlete.currentBelt || "WHITE");
+    const baseXP = 1000;
+    const nextLevelXP = currentIndex >= 0 ? baseXP * Math.pow(2, currentIndex) : baseXP;
+    athleteStats = {
+      currentBelt: athlete.currentBelt,
+      currentXP: athlete.currentXP || 0,
+      nextLevelXP,
+    };
+    const { count } = await supabase.from("Attendance").select("*", { count: "exact", head: true }).eq("studentId", studentId).eq("status", "CONFIRMED");
+    totalPresences = count ?? 0;
+
+    if (studentPrimaryModality) {
+      const theme = temaSemanaList.find((t) => t.modality === studentPrimaryModality);
+      if (theme) weekThemeForPrimary = { modality: theme.modality, title: theme.title, course_id: theme.course_id, video_url: (theme as { video_url?: string | null }).video_url ?? null };
+    } else if (temaSemanaList.length > 0) {
+      const theme = temaSemanaList[0];
+      weekThemeForPrimary = { modality: theme.modality, title: theme.title, course_id: theme.course_id, video_url: (theme as { video_url?: string | null }).video_url ?? null };
+    }
+
+    const missions = await getApplicableMissionTemplates(supabase, athlete.id, athlete.currentXP || 0, studentPrimaryModality);
+    if (missions.length > 0) {
+      const m = missions[0];
+      nextMission = { id: m.id, name: m.name, description: m.description, xpReward: m.xpReward };
+    }
+
+    const { data: latestComment } = await supabase
+      .from("Comment")
+      .select("content, authorCoachId, createdAt")
+      .eq("targetType", "ATHLETE")
+      .eq("targetId", athlete.id)
+      .eq("visibility", "SHARED")
+      .order("createdAt", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestComment?.content) {
+      let coachName = "Treinador";
+      if (latestComment.authorCoachId) {
+        const { data: coach } = await supabase.from("Coach").select("userId").eq("id", latestComment.authorCoachId).single();
+        if (coach) {
+          const { data: user } = await supabase.from("User").select("name").eq("id", coach.userId).single();
+          coachName = user?.name ?? "Treinador";
+        }
+      }
+      coachFeedback = {
+        content: latestComment.content,
+        coachName,
+        date: latestComment.createdAt,
+      };
+    }
+  }
+
+  const beltLabel = athleteStats?.currentBelt ? t(("belt_" + athleteStats.currentBelt) as "belt_WHITE") : "—";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
-      {/* Agenda - apenas para planos com check-in */}
-      {hasCheckIn && (
-      <section>
-        <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
-          {t("agendaTitle")}
-        </h2>
-      {nextLesson ? (
-        <div
-          className="card"
-          style={{
-            backgroundColor: "var(--primary)",
-            color: "#fff",
-            padding: "clamp(20px, 5vw, 24px)",
-          }}
-        >
-          <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 8px 0", opacity: 0.9 }}>
-            {t("nextClass")}
-          </p>
-          <p style={{ fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, margin: "0 0 8px 0" }}>
-            {MODALITY_LABELS[nextLesson.modality] ?? nextLesson.modality}
-          </p>
-          <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 12px 0", opacity: 0.9 }}>
-            {(nextLesson as { locationId?: string }).locationId && locationById.get((nextLesson as { locationId: string }).locationId)
-              ? `${locationById.get((nextLesson as { locationId: string }).locationId)} · `
-              : ""}
-            {formatLessonDate(nextLesson.date)} · {nextLesson.startTime}–{nextLesson.endTime}
-          </p>
-          <div style={{ marginTop: 12 }}>{renderPresence(nextLesson.id)}</div>
-          <p style={{ marginTop: 12, marginBottom: 0, fontSize: "clamp(12px, 3vw, 14px)", opacity: 0.9 }}>
-            {t("atGymScanQr")}{" "}
-            <a href={`/check-in/${nextLesson.id}`} style={{ color: "#fff", textDecoration: "underline" }}>
-              {t("openLinkOnPhone")}
-            </a>
-            .
-          </p>
-        </div>
-      ) : (
-        <div className="card">
-          <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-secondary)" }}>
-            {t("noClassesThisWeek")}
-          </p>
-        </div>
-      )}
+      <NextLessonCard
+        lesson={nextLesson}
+        locationById={locationById}
+        attendanceByLesson={attendanceByLesson}
+        locale={locale as "pt" | "en"}
+        todayStr={todayStr}
+        hasCheckIn={hasCheckIn}
+        t={t as (key: string) => string}
+        statusLabels={STATUS_LABEL}
+      />
 
-      {/* Tema da Semana — em destaque logo após a próxima aula, UX responsiva */}
-      {temaSemanaList.length > 0 && (
-        <section style={{ marginTop: "clamp(8px, 2vw, 12px)" }}>
-          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(8px, 2vw, 12px)", color: "var(--text-primary)" }}>
-            {t("weekThemeTitle")}
-          </h2>
-          <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-            {t("weekThemeDescription")}
-          </p>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
-            {temaSemanaList.map((item) => (
-              <li key={item.modality}>
-                <div
-                  className="card"
-                  style={{
-                    padding: "clamp(16px, 4vw, 20px)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "clamp(10px, 2.5vw, 12px)",
-                  }}
-                >
-                  <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-                    {MODALITY_LABELS[item.modality] ?? item.modality}
-                  </span>
-                  <span style={{ fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                    {item.title}
-                  </span>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
-                    {item.course_id && (
-                      <Link
-                        href={`/dashboard/biblioteca/${item.course_id}`}
-                        className="btn btn-primary"
-                        style={{
-                          textDecoration: "none",
-                          textAlign: "center",
-                          minHeight: 44,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
-                        }}
-                      >
-                        {t("viewTheoryVideo")} →
-                      </Link>
-                    )}
-                    {(item as { video_url?: string | null }).video_url && (
-                      <a
-                        href={(item as { video_url: string }).video_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn"
-                        style={{
-                          textAlign: "center",
-                          minHeight: 44,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
-                          background: "var(--surface)",
-                          color: "var(--text-primary)",
-                          textDecoration: "none",
-                        }}
-                      >
-                        Ver vídeo →
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <WarriorPanel
+        studentName={dbUser?.name ?? null}
+        currentBelt={athleteStats?.currentBelt ?? null}
+        currentXP={athleteStats?.currentXP ?? 0}
+        nextLevelXP={athleteStats?.nextLevelXP ?? 1000}
+        totalPresences={totalPresences}
+        currentMonthCount={currentMonthCount}
+        attendanceGoal={attendanceGoal}
+        hasCheckIn={hasCheckIn}
+        hasPerformanceTracking={planAccess.hasPerformanceTracking}
+        t={t as (key: string) => string}
+        beltLabel={beltLabel}
+      />
 
-      {restOfWeek.length > 0 && (
-        <>
-          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
-            {t("thisWeek")}
-          </h2>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
-            {restOfWeek.map((lesson) => (
-              <li
-                key={lesson.id}
-                className="card"
-                style={{ padding: "clamp(14px, 3.5vw, 16px)" }}
-              >
-                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                    {MODALITY_LABELS[lesson.modality] ?? lesson.modality}
-                  </span>
-                  <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                    {(lesson as { locationId?: string }).locationId && locationById.get((lesson as { locationId: string }).locationId)
-                      ? `${locationById.get((lesson as { locationId: string }).locationId)} · `
-                      : ""}
-                    {formatLessonDate(lesson.date)} · {lesson.startTime}–{lesson.endTime}
-                  </span>
-                </div>
-                <div style={{ marginTop: 8 }}>{renderPresence(lesson.id)}</div>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-      </section>
-      )}
+      <WhatIsNew
+        weekTheme={weekThemeForPrimary}
+        nextMission={nextMission}
+        coachFeedback={coachFeedback}
+        locale={locale as "pt" | "en"}
+        t={t as (key: string) => string}
+      />
 
-      {/* Trilhas de aprendizagem e plano digital — evidência na home */}
-      <section
-        className="card"
-        style={{
-          padding: "clamp(20px, 5vw, 28px)",
-          background: "linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%)",
-          borderLeft: "4px solid var(--primary)",
-        }}
-      >
-        <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: "var(--text-primary)" }}>
-          {t("homeLearningPathsTitle")}
-        </h2>
-        <p style={{ margin: "0 0 4px 0", fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-primary)", lineHeight: 1.45 }}>
-          {t("homeLearningPathsSubtitle")}
-        </p>
-        <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-          {hasDigitalAccess ? t("homeDigitalPlanYouHave") : t("homeDigitalPlanCta")}
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "clamp(10px, 2.5vw, 12px)" }}>
-          <Link
-            href="/dashboard/biblioteca"
-            className="btn btn-primary"
-            style={{ textDecoration: "none", fontSize: "clamp(14px, 3.5vw, 16px)", minHeight: 44 }}
-          >
-            {t("homeGoToLibrary")}
-          </Link>
-          {!hasDigitalAccess && (
-            <Link
-              href="/dashboard/loja"
-              className="btn"
-              style={{
-                textDecoration: "none",
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                minHeight: 44,
-                background: "var(--surface)",
-                color: "var(--text-primary)",
-                border: "1px solid var(--border)",
-              }}
-            >
-              {t("homePlansAndStore")}
-            </Link>
-          )}
-        </div>
-      </section>
-
-      <Suspense fallback={<DashboardRestSkeleton />}>
-        <DashboardRestContent studentId={studentId} locale={locale as "pt" | "en"} hasPerformanceTracking={planAccess.hasPerformanceTracking} hasCheckIn={planAccess.hasCheckIn} />
-      </Suspense>
+      <ExploreSection hasPerformanceTracking={planAccess.hasPerformanceTracking} t={t as (key: string) => string} />
 
       <div className="card">
         <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", marginBottom: 12 }}>

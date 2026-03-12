@@ -23,6 +23,26 @@ export function formatLessonDate(dateStr: string): string {
   }
 }
 
+/** Formata data da próxima aula: "Hoje", "Amanhã, 12 de Março" ou "12 de Março" (locale-aware). */
+export function formatNextLessonDate(dateStr: string, locale: "pt" | "en" = "pt"): string {
+  try {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lessonDay = new Date(date);
+    lessonDay.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((lessonDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const loc = locale === "en" ? "en-GB" : "pt-PT";
+    const datePart = date.toLocaleDateString(loc, { day: "numeric", month: "long" });
+    if (diffDays === 0) return locale === "pt" ? "Hoje" : "Today";
+    if (diffDays === 1) return locale === "pt" ? `Amanhã, ${datePart}` : `Tomorrow, ${datePart}`;
+    return datePart;
+  } catch {
+    return dateStr;
+  }
+}
+
 /** Retorna hoje e o domingo da semana atual em YYYY-MM-DD (timezone local do servidor). */
 export function getThisWeekRange(): { today: string; endOfWeek: string } {
   const d = new Date();
