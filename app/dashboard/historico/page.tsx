@@ -6,6 +6,7 @@ import { getTranslations } from "@/lib/i18n";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getPlanAccess } from "@/lib/plan-access";
+import { requirePlan } from "@/lib/require-plan";
 import { redirect } from "next/navigation";
 
 const SIX_WEEKS_AGO = (() => {
@@ -31,6 +32,7 @@ export default async function DashboardHistoricoPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await requirePlan();
   const supabase = await createClient();
   const studentId = await getCurrentStudentId();
   const planAccess = await getPlanAccess(supabase, studentId);

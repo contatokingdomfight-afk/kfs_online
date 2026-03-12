@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requirePlan } from "@/lib/require-plan";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getPlanAccess } from "@/lib/plan-access";
 import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality, enrichScoresForDetail, getFisicoScoreFromPhysicalAssessment, mergePhysicalAssessmentIntoRadar } from "@/lib/performance-utils";
@@ -35,6 +36,7 @@ const LAST_N_PER_MODALITY = 5;
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPerformancePage() {
+  await requirePlan();
   const supabase = await createClient();
   const studentId = await getCurrentStudentId();
   const planAccess = await getPlanAccess(supabase, studentId);

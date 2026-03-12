@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { requirePlan } from "@/lib/require-plan";
 import { InscreverMeButton } from "./InscreverMeButton";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -24,6 +25,7 @@ function formatEventDate(dateStr: string, locale: string): string {
 }
 
 export default async function EventosPage() {
+  await requirePlan();
   const supabase = await createClient();
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");

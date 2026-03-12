@@ -2,10 +2,12 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { redirect } from "next/navigation";
+import { requirePlan } from "@/lib/require-plan";
 import { EvaluationHistoryClient } from "./EvaluationHistoryClient";
 import { getMyEvaluationById } from "../actions";
 
 export default async function HistoricoAvaliacoesPage() {
+  await requirePlan();
   const studentId = await getCurrentStudentId();
   if (!studentId) redirect("/sign-in");
 

@@ -130,6 +130,7 @@ export async function syncUser(supabaseUser: SupabaseUser) {
   } else {
     studentId = student.id;
     // Garantir que StudentProfile existe (alunos antigos podem não ter)
+    // Alunos existentes = registados antes do onboarding → considerar onboarding completo
     const { data: existingProfile } = await supabase
       .from("StudentProfile")
       .select("id")
@@ -139,7 +140,7 @@ export async function syncUser(supabaseUser: SupabaseUser) {
       await supabase.from("StudentProfile").insert({
         id: crypto.randomUUID(),
         studentId,
-        hasCompletedOnboarding: false,
+        hasCompletedOnboarding: true,
       });
     }
   }

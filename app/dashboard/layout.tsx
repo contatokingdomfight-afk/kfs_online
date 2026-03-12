@@ -47,32 +47,44 @@ export default async function DashboardLayout({
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
   const planAccess = await getPlanAccess(supabase, studentId);
-  const baseLinks = [
-    { label: t("navHome"), href: "/dashboard" },
-    ...(planAccess.hasPerformanceTracking
-      ? [
-          { label: t("navAthleteProfile"), href: "/dashboard/performance" },
-          { label: "Histórico de avaliações", href: "/dashboard/performance/historico" },
-        ]
-      : []),
-    {
-      label: "Avaliação e pontuação",
-      href: "/como-sou-avaliado",
-      children: [
-        { label: "Como sou avaliado", href: "/como-sou-avaliado" },
-        { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
-      ],
-    },
-    ...(planAccess.hasPerformanceTracking ? [{ label: t("navConquests"), href: "/dashboard/conquistas" }] : []),
-    ...(planAccess.hasCheckIn ? [{ label: t("navHistoricoPresencas"), href: "/dashboard/historico" }] : []),
-    { label: t("navStore"), href: "/dashboard/loja" },
-    { label: t("navLibrary"), href: "/dashboard/biblioteca" },
-    { label: t("navEvents"), href: "/dashboard/eventos" },
-    { label: t("navFinance"), href: "/dashboard/financeiro" },
-    { label: t("navProfile"), href: "/dashboard/perfil" },
-    ...(planAccess.hasExclusiveBenefits ? [{ label: t("navExclusiveBenefits"), href: "/dashboard/beneficios" }] : []),
-    { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
-  ];
+  const { data: student } = studentId
+    ? await supabase.from("Student").select("planId").eq("id", studentId).single()
+    : { data: null };
+  const hasPlan = !!student?.planId;
+
+  const baseLinks = hasPlan
+    ? [
+        { label: t("navHome"), href: "/dashboard" },
+        ...(planAccess.hasPerformanceTracking
+          ? [
+              { label: t("navAthleteProfile"), href: "/dashboard/performance" },
+              { label: "Histórico de avaliações", href: "/dashboard/performance/historico" },
+            ]
+          : []),
+        {
+          label: "Avaliação e pontuação",
+          href: "/como-sou-avaliado",
+          children: [
+            { label: "Como sou avaliado", href: "/como-sou-avaliado" },
+            { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
+          ],
+        },
+        ...(planAccess.hasPerformanceTracking ? [{ label: t("navConquests"), href: "/dashboard/conquistas" }] : []),
+        ...(planAccess.hasCheckIn ? [{ label: t("navHistoricoPresencas"), href: "/dashboard/historico" }] : []),
+        { label: t("navStore"), href: "/dashboard/loja" },
+        { label: t("navLibrary"), href: "/dashboard/biblioteca" },
+        { label: t("navEvents"), href: "/dashboard/eventos" },
+        { label: t("navFinance"), href: "/dashboard/financeiro" },
+        { label: t("navProfile"), href: "/dashboard/perfil" },
+        ...(planAccess.hasExclusiveBenefits ? [{ label: t("navExclusiveBenefits"), href: "/dashboard/beneficios" }] : []),
+        { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
+      ]
+    : [
+        { label: t("navHome"), href: "/dashboard" },
+        { label: "✨ " + t("choosePlanTitle"), href: "/escolher-plano" },
+        { label: t("navLibrary"), href: "/dashboard/biblioteca" },
+        { label: t("navProfile"), href: "/dashboard/perfil" },
+      ];
 
   const onboardingSteps = [
     { title: t("onboardingWelcomeTitle"), description: t("onboardingWelcomeDesc") },

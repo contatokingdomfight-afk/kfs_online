@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { requirePlan } from "@/lib/require-plan";
 
 export default async function LojaPage() {
+  await requirePlan();
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
 

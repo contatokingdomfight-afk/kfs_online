@@ -2,11 +2,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getPlanAccess } from "@/lib/plan-access";
+import { requirePlan } from "@/lib/require-plan";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import Link from "next/link";
 
 export default async function BeneficiosPage() {
+  await requirePlan();
   const supabase = await createClient();
   const studentId = await getCurrentStudentId();
   const planAccess = await getPlanAccess(supabase, studentId);
