@@ -192,7 +192,18 @@ export default async function DashboardPage() {
         nextMission={nextMission}
         coachFeedback={coachFeedback}
         locale={locale as "pt" | "en"}
-        t={t as (key: string) => string}
+        labels={{
+          title: t("dashboardWhatIsNewTitle"),
+          tabTheme: t("dashboardTabWeekTheme"),
+          tabMission: t("dashboardTabNextMission"),
+          tabFeedback: t("dashboardTabLastFeedback"),
+          viewTheory: t("dashboardViewTheory"),
+          viewVideo: t("dashboardViewVideo"),
+          noWeekTheme: t("dashboardNoWeekTheme"),
+          viewAllMissions: t("dashboardViewAllMissions"),
+          noMissions: t("dashboardNoMissions"),
+          noCoachFeedback: t("dashboardNoCoachFeedback"),
+        }}
       />
 
       <ExploreSection hasPerformanceTracking={planAccess.hasPerformanceTracking} t={t as (key: string) => string} />

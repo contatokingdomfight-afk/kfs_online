@@ -24,29 +24,42 @@ type CoachFeedback = {
   date: string;
 };
 
+type WhatIsNewLabels = {
+  title: string;
+  tabTheme: string;
+  tabMission: string;
+  tabFeedback: string;
+  viewTheory: string;
+  viewVideo: string;
+  noWeekTheme: string;
+  viewAllMissions: string;
+  noMissions: string;
+  noCoachFeedback: string;
+};
+
 type Props = {
   weekTheme: WeekTheme | null;
   nextMission: Mission | null;
   coachFeedback: CoachFeedback | null;
   locale: "pt" | "en";
-  t: (key: string) => string;
+  labels: WhatIsNewLabels;
 };
 
 const TABS = ["theme", "mission", "feedback"] as const;
 
-export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, t }: Props) {
+export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, labels }: Props) {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("theme");
 
   const tabs = [
-    { id: "theme" as const, label: t("dashboardTabWeekTheme") },
-    { id: "mission" as const, label: t("dashboardTabNextMission") },
-    { id: "feedback" as const, label: t("dashboardTabLastFeedback") },
+    { id: "theme" as const, label: labels.tabTheme },
+    { id: "mission" as const, label: labels.tabMission },
+    { id: "feedback" as const, label: labels.tabFeedback },
   ];
 
   return (
     <section>
       <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
-        🎯 {t("dashboardWhatIsNewTitle")}
+        🎯 {labels.title}
       </h2>
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ display: "flex", borderBottom: "1px solid var(--border)" }}>
@@ -96,7 +109,7 @@ export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, t }: 
                           minHeight: 44,
                         }}
                       >
-                        {t("dashboardViewTheory")}
+                        {labels.viewTheory}
                       </Link>
                     ) : (
                       <a
@@ -113,14 +126,14 @@ export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, t }: 
                           minHeight: 44,
                         }}
                       >
-                        {t("dashboardViewVideo")}
+                        {labels.viewVideo}
                       </a>
                     )
                   )}
                 </>
               ) : (
                 <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                  {t("dashboardNoWeekTheme")}
+                  {labels.noWeekTheme}
                 </p>
               )}
             </div>
@@ -145,12 +158,12 @@ export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, t }: 
                     href="/dashboard/performance"
                     style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500, textDecoration: "none" }}
                   >
-                    {t("dashboardViewAllMissions")} →
+                    {labels.viewAllMissions} →
                   </Link>
                 </>
               ) : (
                 <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                  {t("dashboardNoMissions")}
+                  {labels.noMissions}
                 </p>
               )}
             </div>
@@ -168,7 +181,7 @@ export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, t }: 
                 </>
               ) : (
                 <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                  {t("dashboardNoCoachFeedback")}
+                  {labels.noCoachFeedback}
                 </p>
               )}
             </div>
