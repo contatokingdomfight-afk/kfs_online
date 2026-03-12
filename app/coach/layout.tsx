@@ -44,6 +44,7 @@ export default async function CoachLayout({
     ...(dbUser.role === "ADMIN" ? [{ label: t("navAgenda"), href: "/coach/agenda" }] : []),
     { label: t("navStudents"), href: "/coach/alunos" },
     { label: t("navAthletesCoach"), href: "/coach/atletas" },
+    { label: t("navTrials"), href: "/coach/experimentais" },
     {
       label: "Avaliação e pontuação",
       href: "/como-sou-avaliado",

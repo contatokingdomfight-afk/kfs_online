@@ -1,23 +1,56 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { getCurrentSchoolId } from "@/lib/auth/get-current-school";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
+import { MODALITY_LABELS, formatLessonDate, getWeekStartMonday } from "@/lib/lesson-utils";
+import { CurrentOrNextClassCard } from "./_components/CurrentOrNextClassCard";
+import { TodayScheduleCard } from "./_components/TodayScheduleCard";
+import { WeekThemeCard } from "./_components/WeekThemeCard";
+import { TrialClassesCard } from "./_components/TrialClassesCard";
+import { MonitoredAthletesList } from "./_components/MonitoredAthletesList";
 
-const DAYS_NAO_AVALIADOS = 20;
-
-type TodayLessonWithPresences = {
-  id: string;
-  modality: string;
-  startTime: string;
-  endTime: string;
-  confirmed: number;
-  pending: number;
-  absent: number;
+const LEVEL_LABEL: Record<string, string> = {
+  INICIANTE: "Iniciante",
+  INTERMEDIARIO: "Intermediário",
+  AVANCADO: "Avançado",
 };
+
+/** Converte "HH:MM" ou "HH:MM:SS" em minutos desde meia-noite. */
+function timeToMinutes(t: string): number {
+  const parts = t.trim().split(/[:\s]/).map(Number);
+  const h = parts[0] ?? 0;
+  const m = parts[1] ?? 0;
+  return h * 60 + m;
+}
+
+/** Determina cenário e aula em foco: in_class, next ou rest. */
+function getCurrentOrNextScenario(
+  todayLessons: { id: string; modality: string; startTime: string; endTime: string }[],
+  nowMinutes: number
+): { scenario: "in_class" | "next" | "rest"; lesson: (typeof todayLessons)[0] | null } {
+  if (todayLessons.length === 0) {
+    return { scenario: "rest", lesson: null };
+  }
+
+  for (const l of todayLessons) {
+    const start = timeToMinutes(l.startTime);
+    const end = timeToMinutes(l.endTime);
+    if (nowMinutes >= start && nowMinutes < end) {
+      return { scenario: "in_class", lesson: l };
+    }
+  }
+
+  for (const l of todayLessons) {
+    const start = timeToMinutes(l.startTime);
+    if (nowMinutes < start) {
+      return { scenario: "next", lesson: l };
+    }
+  }
+
+  return { scenario: "rest", lesson: null };
+}
 
 export default async function CoachHomePage() {
   const dbUser = await getCurrentDbUser();
@@ -30,378 +63,229 @@ export default async function CoachHomePage() {
   const supabase = await createClient();
 
   const today = new Date().toISOString().slice(0, 10);
-  const sinceDate = new Date();
-  sinceDate.setDate(sinceDate.getDate() - DAYS_NAO_AVALIADOS);
-  const sinceIso = sinceDate.toISOString().slice(0, 10);
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const weekStart = getWeekStartMonday();
 
-  // Próximas aulas (filtradas por coach)
-  let lessonsQuery = supabase
-    .from("Lesson")
-    .select("id, modality, date, startTime, endTime, schoolId")
-    .gte("date", today)
-    .order("date", { ascending: true })
-    .order("startTime", { ascending: true })
-    .limit(5);
-
-  if (coachId) {
-    lessonsQuery = lessonsQuery.eq("coachId", coachId);
-  }
-  if (schoolId) {
-    lessonsQuery = lessonsQuery.eq("schoolId", schoolId);
-  }
-
-  const { data: lessons } = await lessonsQuery;
-  const nextLesson = lessons?.[0] ?? null;
-
-  // Estatísticas: total alunos na escola
-  let totalStudents = 0;
-  let studentsQuery = supabase.from("Student").select("id", { count: "exact", head: true }).eq("status", "ATIVO");
-  if (schoolId) {
-    studentsQuery = studentsQuery.eq("schoolId", schoolId);
-  }
-  const { count: studentsCount } = await studentsQuery;
-  totalStudents = studentsCount ?? 0;
-
-  // Estatísticas: aulas esta semana (do coach)
-  const weekStart = new Date();
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6);
-  const weekStartIso = weekStart.toISOString().slice(0, 10);
-  const weekEndIso = weekEnd.toISOString().slice(0, 10);
-
-  let weekLessonsQuery = supabase
-    .from("Lesson")
-    .select("id", { count: "exact", head: true })
-    .gte("date", weekStartIso)
-    .lte("date", weekEndIso);
-  if (coachId) {
-    weekLessonsQuery = weekLessonsQuery.eq("coachId", coachId);
-  }
-  if (schoolId) {
-    weekLessonsQuery = weekLessonsQuery.eq("schoolId", schoolId);
-  }
-  const { count: weekLessonsCount } = await weekLessonsQuery;
-  const lessonsThisWeek = weekLessonsCount ?? 0;
-
-  // Presenças hoje: aulas do coach hoje + contagem por status
+  // Aulas do coach hoje
   let todayLessonsQuery = supabase
     .from("Lesson")
-    .select("id, modality, startTime, endTime")
+    .select("id, modality, date, startTime, endTime")
     .eq("date", today)
     .order("startTime", { ascending: true });
+
   if (coachId) {
     todayLessonsQuery = todayLessonsQuery.eq("coachId", coachId);
   }
   if (schoolId) {
     todayLessonsQuery = todayLessonsQuery.eq("schoolId", schoolId);
   }
-  const { data: todayLessons } = await todayLessonsQuery;
 
-  let todayPresences: TodayLessonWithPresences[] = [];
-  let totalPresencesToday = 0;
-  if (todayLessons && todayLessons.length > 0) {
-    const lessonIds = todayLessons.map((l) => l.id);
+  const { data: todayLessons } = await todayLessonsQuery;
+  const lessonsList = todayLessons ?? [];
+
+  const { scenario, lesson: focusLesson } = getCurrentOrNextScenario(lessonsList, nowMinutes);
+
+  // Sumário de presenças para a aula em foco
+  let attendanceSummary = "";
+  if (focusLesson) {
     const { data: attendances } = await supabase
       .from("Attendance")
-      .select("lessonId, status")
-      .in("lessonId", lessonIds);
+      .select("status, isExperimental")
+      .eq("lessonId", focusLesson.id);
 
-    const byLesson = new Map<string, { confirmed: number; pending: number; absent: number }>();
-    for (const lid of lessonIds) {
-      byLesson.set(lid, { confirmed: 0, pending: 0, absent: 0 });
+    const confirmed = (attendances ?? []).filter((a) => a.status === "CONFIRMED").length;
+    const pending = (attendances ?? []).filter((a) => a.status === "PENDING").length;
+    const experimental = (attendances ?? []).filter((a) => (a as { isExperimental?: boolean }).isExperimental).length;
+    const withIntent = confirmed + pending;
+    const parts: string[] = [];
+    if (withIntent > 0) {
+      parts.push(
+        locale === "pt"
+          ? `${withIntent} com intenção de vir`
+          : `${withIntent} planning to attend`
+      );
     }
-    for (const a of attendances ?? []) {
-      const m = byLesson.get(a.lessonId);
-      if (m) {
-        if (a.status === "CONFIRMED") m.confirmed++;
-        else if (a.status === "PENDING") m.pending++;
-        else m.absent++;
-      }
+    if (experimental > 0) {
+      parts.push(
+        locale === "pt"
+          ? `${experimental} experimentais agendados`
+          : `${experimental} trial classes scheduled`
+      );
     }
-    todayPresences = todayLessons.map((l) => {
-      const m = byLesson.get(l.id)!;
-      totalPresencesToday += m.confirmed + m.pending + m.absent;
-      return {
-        id: l.id,
-        modality: l.modality,
-        startTime: l.startTime,
-        endTime: l.endTime,
-        confirmed: m.confirmed,
-        pending: m.pending,
-        absent: m.absent,
-      };
-    });
+    attendanceSummary = parts.join(", ") || (locale === "pt" ? "Sem presenças ainda." : "No presences yet.");
   }
 
-  // Alunos sem avaliação (últimos N dias)
-  type AlunoNaoAvaliado = { studentId: string; name: string | null };
-  let alunosNaoAvaliados: AlunoNaoAvaliado[] = [];
+  // Resto do dia: aulas que ainda não começaram
+  const restOfDayLessons = lessonsList.filter((l) => {
+    const start = timeToMinutes(l.startTime);
+    return nowMinutes < start;
+  });
+
+  // Modalidade principal do coach (para Tema da Semana)
+  let mainModality = "MUAY_THAI";
   if (coachId) {
-    const { data: lessonsLast20 } = await supabase
-      .from("Lesson")
-      .select("id")
-      .eq("coachId", coachId)
-      .gte("date", sinceIso);
-    if (schoolId) {
-      // Filter by school if coach has one
-      // lessonsLast20 is already coach's lessons - they're at coach's school
-    }
-    const lessonIds = (lessonsLast20 ?? []).map((l) => l.id);
-    if (lessonIds.length > 0) {
-      const { data: attendances } = await supabase
-        .from("Attendance")
-        .select("studentId")
-        .in("lessonId", lessonIds);
-      const studentIds = [...new Set((attendances ?? []).map((a) => a.studentId))];
-      if (studentIds.length > 0) {
-        const { data: athletes } = await supabase
-          .from("Athlete")
-          .select("id, studentId")
-          .in("studentId", studentIds);
-        const athleteIds = (athletes ?? []).map((a) => a.id);
-        const { data: evaluated } =
-          athleteIds.length > 0
-            ? await supabase
-                .from("AthleteEvaluation")
-                .select("athleteId")
-                .eq("coachId", coachId)
-                .gte("created_at", sinceDate.toISOString())
-                .in("athleteId", athleteIds)
-            : { data: [] as { athleteId: string }[] };
-        const evaluatedSet = new Set((evaluated ?? []).map((e) => e.athleteId));
-        const athleteByStudent = new Map((athletes ?? []).map((a) => [a.studentId, a.id]));
-        const notEvaluatedStudentIds = studentIds.filter((sid) => {
-          const aid = athleteByStudent.get(sid);
-          return aid && !evaluatedSet.has(aid);
-        });
-        if (notEvaluatedStudentIds.length > 0) {
-          const { data: students } = await supabase
-            .from("Student")
-            .select("id, userId")
-            .in("id", notEvaluatedStudentIds);
-          const userIds = [...new Set((students ?? []).map((s) => s.userId))];
-          const { data: users } = await supabase
-            .from("User")
-            .select("id, name")
-            .in("id", userIds);
-          const userById = new Map((users ?? []).map((u) => [u.id, u]));
-          const studentToUser = new Map((students ?? []).map((s) => [s.id, userById.get(s.userId)]));
-          alunosNaoAvaliados = notEvaluatedStudentIds
-            .map((studentId) => {
-              const u = studentToUser.get(studentId);
-              return { studentId, name: u?.name ?? null };
-            })
-            .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "pt"));
-        }
-      }
+    const { data: coach } = await supabase
+      .from("Coach")
+      .select("specialties")
+      .eq("id", coachId)
+      .single();
+    const specialties = (coach?.specialties as string) ?? "";
+    const first = specialties.split(/[,;]/)[0]?.trim();
+    if (first && ["MUAY_THAI", "BOXING", "KICKBOXING"].includes(first)) {
+      mainModality = first;
+    } else if (lessonsList.length > 0) {
+      mainModality = lessonsList[0].modality;
     }
   }
+
+  // Tema da semana para modalidade principal
+  const { data: weekThemes } = await supabase
+    .from("WeekTheme")
+    .select("modality, title")
+    .eq("week_start", weekStart)
+    .eq("modality", mainModality);
+  const theme = weekThemes?.[0] ?? null;
+
+  // Experimentais nas aulas do coach (não convertidos, data >= hoje)
+  let trialLessons: { id: string; modality: string; date: string; startTime: string; endTime: string }[] = [];
+  if (coachId || schoolId) {
+    let lessonsForTrials = supabase
+      .from("Lesson")
+      .select("id, modality, date, startTime, endTime")
+      .gte("date", today)
+      .order("date", { ascending: true })
+      .order("startTime", { ascending: true })
+      .limit(50);
+    if (coachId) lessonsForTrials = lessonsForTrials.eq("coachId", coachId);
+    if (schoolId) lessonsForTrials = lessonsForTrials.eq("schoolId", schoolId);
+    const { data: coachLessons } = await lessonsForTrials;
+    trialLessons = coachLessons ?? [];
+  }
+
+  const coachLessonIds = new Set(trialLessons.map((l) => l.id));
+  const { data: trials } = await supabase
+    .from("TrialClass")
+    .select("id, name, modality, lessonDate, lessonId")
+    .eq("convertedToStudent", false)
+    .gte("lessonDate", today)
+    .order("lessonDate", { ascending: true });
+
+  const coachTrials = (trials ?? []).filter((t) => t.lessonId && coachLessonIds.has(t.lessonId));
+  const lessonById = new Map(trialLessons.map((l) => [l.id, l]));
+  const trialsWithLesson = coachTrials.map((t) => {
+    const lesson = t.lessonId ? lessonById.get(t.lessonId) : null;
+    return {
+      id: t.id,
+      name: t.name,
+      modality: t.modality,
+      lessonDate: String(t.lessonDate),
+      startTime: lesson?.startTime,
+      endTime: lesson?.endTime,
+    };
+  });
+
+  // Atletas do coach (mainCoachId)
+  let athletesQuery = supabase
+    .from("Athlete")
+    .select("id, studentId, level")
+    .order("id");
+  if (coachId) {
+    athletesQuery = athletesQuery.eq("mainCoachId", coachId);
+  }
+  const { data: athletes } = await athletesQuery;
+  const athleteList = athletes ?? [];
+
+  const studentIds = athleteList.map((a) => a.studentId);
+  const { data: students } =
+    studentIds.length > 0
+      ? await supabase.from("Student").select("id, userId").in("id", studentIds)
+      : { data: [] };
+  const userIds = [...new Set((students ?? []).map((s) => s.userId))];
+  const { data: users } =
+    userIds.length > 0 ? await supabase.from("User").select("id, name").in("id", userIds) : { data: [] };
+  const userById = new Map((users ?? []).map((u) => [u.id, u]));
+  const studentToUser = new Map((students ?? []).map((s) => [s.id, userById.get(s.userId)]));
+
+  const athletesWithNames = athleteList.map((a) => {
+    const u = studentToUser.get(a.studentId);
+    return {
+      studentId: a.studentId,
+      name: u?.name ?? null,
+      level: a.level,
+    };
+  });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)", maxWidth: "min(480px, 100%)" }}>
-      <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-secondary)" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "clamp(20px, 5vw, 24px)",
+        maxWidth: "min(520px, 100%)",
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontSize: "clamp(15px, 3.8vw, 17px)",
+          color: "var(--text-secondary)",
+        }}
+      >
         {t("helloCoach")} {dbUser?.name || t("coach")} 👋
       </p>
 
-      {/* Stats cards */}
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(8px, 2vw, 12px)" }}>
-        <div
-          className="card"
-          style={{
-            padding: "clamp(12px, 3vw, 16px)",
-            textAlign: "center",
-          }}
-        >
-          <p style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 700, color: "var(--primary)" }}>
-            {totalStudents}
-          </p>
-          <p style={{ margin: "4px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--text-secondary)" }}>
-            {t("coachTotalStudents")}
-          </p>
-        </div>
-        <div
-          className="card"
-          style={{
-            padding: "clamp(12px, 3vw, 16px)",
-            textAlign: "center",
-          }}
-        >
-          <p style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 700, color: "var(--primary)" }}>
-            {lessonsThisWeek}
-          </p>
-          <p style={{ margin: "4px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--text-secondary)" }}>
-            {t("coachLessonsThisWeek")}
-          </p>
-        </div>
-        <div
-          className="card"
-          style={{
-            padding: "clamp(12px, 3vw, 16px)",
-            textAlign: "center",
-          }}
-        >
-          <p style={{ margin: 0, fontSize: "clamp(20px, 5vw, 28px)", fontWeight: 700, color: "var(--primary)" }}>
-            {totalPresencesToday}
-          </p>
-          <p style={{ margin: "4px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--text-secondary)" }}>
-            {t("coachPresencesToday")}
-          </p>
-        </div>
-      </section>
+      {/* Secção 1: FOCO ATUAL */}
+      <CurrentOrNextClassCard
+        scenario={scenario}
+        lesson={focusLesson}
+        modalityLabel={focusLesson ? MODALITY_LABELS[focusLesson.modality] ?? focusLesson.modality : ""}
+        summary={attendanceSummary}
+        manageLabel={t("coachManageClassNow")}
+        restMessage={t("coachRestMessage")}
+      />
 
-      {/* Próxima aula */}
-      <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)" }}>
-        <h2 style={{ margin: "0 0 clamp(8px, 2vw, 12px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          {t("nextClass")}
-        </h2>
-        {nextLesson ? (
-          <>
-            <p style={{ margin: "0 0 8px 0", fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 600, color: "var(--text-primary)" }}>
-              {MODALITY_LABELS[nextLesson.modality] ?? nextLesson.modality}
-            </p>
-            <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-              {formatLessonDate(nextLesson.date)} · {nextLesson.startTime}–{nextLesson.endTime}
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "clamp(8px, 2vw, 12px)" }}>
-              <Link
-                href={`/coach/aula?lesson=${nextLesson.id}`}
-                className="btn btn-primary"
-                style={{ textDecoration: "none" }}
-              >
-                {t("enterClass")}
-              </Link>
-              <Link
-                href={`/coach/aula/qr?lesson=${nextLesson.id}`}
-                className="btn btn-secondary"
-                style={{ textDecoration: "none" }}
-              >
-                {t("viewQrCode")}
-              </Link>
-            </div>
-          </>
-        ) : (
-          <>
-            <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-              {t("noClassScheduled")}
-            </p>
-            <Link href="/coach/aula" className="btn btn-primary" style={{ textDecoration: "none" }}>
-              {t("enterClass")}
-            </Link>
-          </>
-        )}
-      </section>
+      {/* Secção 2: PREPARAÇÃO E PLANEAMENTO */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "clamp(12px, 3vw, 16px)",
+        }}
+      >
+        <TodayScheduleCard
+          lessons={restOfDayLessons}
+          modalityLabels={MODALITY_LABELS}
+          title={t("coachRestOfDay")}
+          viewAgendaLabel={t("coachViewFullAgenda")}
+          noLessonsLabel={t("coachNoLessonsRestToday")}
+        />
+        <WeekThemeCard
+          title={t("navWeekTheme")}
+          themeTitle={theme?.title ?? null}
+          modalityLabel={MODALITY_LABELS[mainModality] ?? mainModality}
+          defineLabel={t("coachDefineTheme")}
+          noThemeHint={t("coachNoThemeHint")}
+        />
+        <TrialClassesCard
+          trials={trialsWithLesson}
+          modalityLabels={MODALITY_LABELS}
+          title={t("coachTrialClasses")}
+          manageAllLabel={t("coachManageAllTrials")}
+          emptyMessage={t("coachTrialClassesEmpty")}
+          formatDate={(d) => formatLessonDate(d)}
+        />
+      </div>
 
-      {/* Presenças do dia */}
-      {todayPresences.length > 0 && (
-        <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)" }}>
-          <h2 style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-            {t("coachTodayPresences")}
-          </h2>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 12px)" }}>
-            {todayPresences.map((l) => (
-              <li key={l.id}>
-                <Link
-                  href={`/coach/aula?lesson=${l.id}`}
-                  style={{
-                    display: "block",
-                    padding: "clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px)",
-                    borderRadius: "var(--radius-sm)",
-                    backgroundColor: "var(--bg)",
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    color: "var(--text-primary)",
-                    textDecoration: "none",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                    <span style={{ fontWeight: 600 }}>{MODALITY_LABELS[l.modality] ?? l.modality}</span>
-                    <span style={{ color: "var(--text-secondary)", fontSize: "clamp(13px, 3.2vw, 15px)" }}>
-                      {l.startTime}–{l.endTime}
-                    </span>
-                  </div>
-                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>
-                    <span style={{ color: "var(--success)" }}>{l.confirmed} {t("coachConfirmed")}</span>
-                    <span>{l.pending} {t("coachPending")}</span>
-                    {l.absent > 0 && <span style={{ color: "var(--danger)" }}>{l.absent} {t("coachAbsent")}</span>}
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {todayPresences.length === 0 && (
-        <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)" }}>
-          <h2 style={{ margin: "0 0 clamp(8px, 2vw, 12px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-            {t("coachTodayPresences")}
-          </h2>
-          <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-            {t("coachPresencesTodayEmpty")}
-          </p>
-        </section>
-      )}
-
-      {alunosNaoAvaliados.length > 0 && (
-        <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)" }}>
-          <h2 style={{ margin: "0 0 clamp(8px, 2vw, 12px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-            {t("coachNotEvaluatedTitle")} ({DAYS_NAO_AVALIADOS} {locale === "pt" ? "dias" : "days"})
-          </h2>
-          <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-            {t("coachNotEvaluatedHint")}
-          </p>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(6px, 1.5vw, 8px)" }}>
-            {alunosNaoAvaliados.map((a) => (
-              <li key={a.studentId}>
-                <Link
-                  href={`/coach/alunos/${a.studentId}`}
-                  style={{
-                    display: "block",
-                    padding: "clamp(8px, 2vw, 10px) clamp(12px, 3vw, 14px)",
-                    borderRadius: "var(--radius-sm)",
-                    backgroundColor: "var(--bg)",
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    color: "var(--text-primary)",
-                    textDecoration: "none",
-                  }}
-                >
-                  {a.name || "Aluno"}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <p style={{ margin: "clamp(12px, 3vw, 16px) 0 0 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-            <Link href="/coach/aula" style={{ color: "var(--primary)", textDecoration: "none" }}>
-              {t("coachGoToPresences")}
-            </Link>
-          </p>
-        </section>
-      )}
-
-      <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)" }}>
-        <h2 style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          {t("quickAccess")}
-        </h2>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 12px)" }}>
-          {dbUser?.role === "ADMIN" && (
-            <li>
-              <Link href="/coach/agenda" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none" }}>
-                {t("viewAgenda")}
-              </Link>
-            </li>
-          )}
-          <li>
-            <Link href="/coach/atletas" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none" }}>
-              {t("athletesUnderCoaching")}
-            </Link>
-          </li>
-          <li>
-            <Link href="/coach/alunos" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none" }}>
-              {t("navStudents")}
-            </Link>
-          </li>
-        </ul>
-      </section>
+      {/* Secção 3: ACOMPANHAMENTO DE ATLETAS */}
+      <MonitoredAthletesList
+        athletes={athletesWithNames}
+        title={t("coachYourAthletes")}
+        searchPlaceholder={t("coachSearchAthletes")}
+        levelLabels={LEVEL_LABEL}
+        emptyMessage={t("coachNoAthletes")}
+        noResultsMessage={t("coachNoSearchResults")}
+      />
     </div>
   );
 }
