@@ -94,7 +94,7 @@ export default async function EscolherPlanoPage() {
               }}
               studentId={studentId}
               locale={(locale as "pt" | "en") ?? "pt"}
-              t={t}
+              t={t as (key: string) => string}
             />
           ))}
         </div>
