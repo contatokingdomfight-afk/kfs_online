@@ -19,11 +19,13 @@ type Props = {
   plan: Plan;
   studentId: string | null;
   locale: "pt" | "en";
-  t: (key: string) => string;
+  perMonth: string;
+  loading: string;
+  choosePlanSelect: string;
 };
 
-export function PlanCard({ plan, studentId, locale, t }: Props) {
-  const [loading, setLoading] = useState(false);
+export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLabel, choosePlanSelect }: Props) {
+  const [isLoading, setLoading] = useState(false);
 
   const benefits: string[] = [];
   if (plan.includes_check_in) benefits.push(locale === "pt" ? "Check-in nas aulas" : "Class check-in");
@@ -74,7 +76,7 @@ export function PlanCard({ plan, studentId, locale, t }: Props) {
       <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
         €{plan.price_monthly.toFixed(0)}
         <span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-secondary)" }}>
-          {t("perMonth")}
+          {perMonth}
         </span>
       </p>
       <ul style={{ paddingLeft: 20, margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
@@ -86,11 +88,11 @@ export function PlanCard({ plan, studentId, locale, t }: Props) {
         <button
           type="button"
           onClick={handleSelect}
-          disabled={loading}
+          disabled={isLoading}
           className="btn btn-primary"
           style={{ marginTop: "auto" }}
         >
-          {loading ? t("loading") : t("choosePlanSelect")}
+          {isLoading ? loadingLabel : choosePlanSelect}
         </button>
       ) : (
         <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>

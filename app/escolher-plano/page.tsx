@@ -94,7 +94,9 @@ export default async function EscolherPlanoPage() {
               }}
               studentId={studentId}
               locale={(locale as "pt" | "en") ?? "pt"}
-              t={t as (key: string) => string}
+              perMonth={t("perMonth")}
+              loading={t("loading")}
+              choosePlanSelect={t("choosePlanSelect")}
             />
           ))}
         </div>
