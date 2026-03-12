@@ -5,8 +5,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
-import { AlunosSearchForm } from "./_components/AlunosSearchForm";
-import { CollapsibleSection } from "./_components/CollapsibleSection";
+import { AlunosFiltersPanel } from "@/components/AlunosFiltersPanel";
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
@@ -136,146 +135,24 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
         Convidar envia um email ao futuro aluno para se registar; depois aparece na lista com status Ativo ou Experimental.
       </p>
 
-      <CollapsibleSection title="Buscar" defaultOpen>
-        <AlunosSearchForm
-          defaultValue={params.q ?? ""}
-          status={filterStatus}
-          modality={filterModality}
-          school={filterSchool}
-          plan={filterPlan}
-        />
-      </CollapsibleSection>
-
-      <CollapsibleSection title="Status" defaultOpen={filterStatus !== "all"}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link
-            href={`/admin/alunos${buildQuery({ ...baseFilters, status: "all" })}`}
-            className="btn"
-            style={{
-              textDecoration: "none",
-              backgroundColor: filterStatus === "all" ? "var(--primary)" : "var(--bg-secondary)",
-              color: filterStatus === "all" ? "#fff" : "var(--text-primary)",
-            }}
-          >
-            Todos
-          </Link>
-          {(["ATIVO", "INATIVO", "EXPERIMENTAL"] as const).map((s) => (
-            <Link
-              key={s}
-              href={`/admin/alunos${buildQuery({ ...baseFilters, status: s })}`}
-              className="btn"
-              style={{
-                textDecoration: "none",
-                backgroundColor: filterStatus === s ? "var(--primary)" : "var(--bg-secondary)",
-                color: filterStatus === s ? "#fff" : "var(--text-primary)",
-              }}
-            >
-              {STATUS_LABEL[s]}
-            </Link>
-          ))}
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection title="Modalidade" defaultOpen={filterModality !== "all"}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link
-            href={`/admin/alunos${buildQuery({ ...baseFilters, modality: "all" })}`}
-            className="btn"
-            style={{
-              textDecoration: "none",
-              backgroundColor: filterModality === "all" ? "var(--primary)" : "var(--bg-secondary)",
-              color: filterModality === "all" ? "#fff" : "var(--text-primary)",
-            }}
-          >
-            Todas
-          </Link>
-          {modalitiesForFilter.map((m) => (
-            <Link
-              key={m.code}
-              href={`/admin/alunos${buildQuery({ ...baseFilters, modality: m.code })}`}
-              className="btn"
-              style={{
-                textDecoration: "none",
-                backgroundColor: filterModality === m.code ? "var(--primary)" : "var(--bg-secondary)",
-                color: filterModality === m.code ? "#fff" : "var(--text-primary)",
-              }}
-            >
-              {m.name}
-            </Link>
-          ))}
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection title="Escola" defaultOpen={filterSchool !== "all"}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link
-            href={`/admin/alunos${buildQuery({ ...baseFilters, school: "all" })}`}
-            className="btn"
-            style={{
-              textDecoration: "none",
-              backgroundColor: filterSchool === "all" ? "var(--primary)" : "var(--bg-secondary)",
-              color: filterSchool === "all" ? "#fff" : "var(--text-primary)",
-            }}
-          >
-            Todas
-          </Link>
-          {(schools ?? []).map((school) => (
-            <Link
-              key={school.id}
-              href={`/admin/alunos${buildQuery({ ...baseFilters, school: school.id })}`}
-              className="btn"
-              style={{
-                textDecoration: "none",
-                backgroundColor: filterSchool === school.id ? "var(--primary)" : "var(--bg-secondary)",
-                color: filterSchool === school.id ? "#fff" : "var(--text-primary)",
-              }}
-            >
-              {school.name}
-            </Link>
-          ))}
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection title="Plano" defaultOpen={filterPlan !== "all"}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link
-            href={`/admin/alunos${buildQuery({ ...baseFilters, plan: "all" })}`}
-            className="btn"
-            style={{
-              textDecoration: "none",
-              backgroundColor: filterPlan === "all" ? "var(--primary)" : "var(--bg-secondary)",
-              color: filterPlan === "all" ? "#fff" : "var(--text-primary)",
-            }}
-          >
-            Todos
-          </Link>
-          <Link
-            href={`/admin/alunos${buildQuery({ ...baseFilters, plan: "none" })}`}
-            className="btn"
-            style={{
-              textDecoration: "none",
-              backgroundColor: filterPlan === "none" ? "var(--primary)" : "var(--bg-secondary)",
-              color: filterPlan === "none" ? "#fff" : "var(--text-primary)",
-            }}
-          >
-            Sem plano
-          </Link>
-          {(plansData ?? []).map((plan) => (
-            <Link
-              key={plan.id}
-              href={`/admin/alunos${buildQuery({ ...baseFilters, plan: plan.id })}`}
-              className="btn"
-              style={{
-                textDecoration: "none",
-                backgroundColor: filterPlan === plan.id ? "var(--primary)" : "var(--bg-secondary)",
-                color: filterPlan === plan.id ? "#fff" : "var(--text-primary)",
-              }}
-            >
-              {plan.name}
-            </Link>
-          ))}
-        </div>
-      </CollapsibleSection>
+      <AlunosFiltersPanel
+        basePath="/admin/alunos"
+        defaultValue={params.q ?? ""}
+        status={filterStatus}
+        modality={filterModality}
+        school={filterSchool}
+        plan={filterPlan}
+        buildQuery={buildQuery}
+        baseFilters={baseFilters}
+        filterStatus={filterStatus}
+        filterModality={filterModality}
+        filterSchool={filterSchool}
+        filterPlan={filterPlan}
+        statusLabel={STATUS_LABEL}
+        modalities={modalitiesForFilter}
+        schools={schools ?? []}
+        plans={plansData ?? []}
+      />
 
       {filtered.length === 0 ? (
         <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>

@@ -14,8 +14,8 @@ export function CollapsibleSection({ title, children, defaultOpen = false }: Pro
   return (
     <div
       style={{
-        marginBottom: "clamp(12px, 3vw, 16px)",
-        padding: "clamp(12px, 3vw, 16px)",
+        marginBottom: "clamp(8px, 2vw, 12px)",
+        padding: "clamp(10px, 2.5vw, 14px)",
         backgroundColor: "var(--bg-secondary)",
         borderRadius: "var(--radius-md)",
         border: "1px solid var(--border)",
@@ -30,19 +30,21 @@ export function CollapsibleSection({ title, children, defaultOpen = false }: Pro
           alignItems: "center",
           justifyContent: "space-between",
           gap: 8,
-          padding: 0,
+          padding: "10px 0",
+          minHeight: 44,
           border: "none",
           background: "none",
           color: "var(--text-primary)",
-          fontSize: "clamp(13px, 3.2vw, 15px)",
+          fontSize: "clamp(14px, 3.5vw, 16px)",
           fontWeight: 600,
           cursor: "pointer",
           textAlign: "left",
+          WebkitTapHighlightColor: "transparent",
         }}
         aria-expanded={open}
       >
         {title}
-        <span style={{ fontSize: "clamp(16px, 4vw, 20px)", lineHeight: 1 }}>
+        <span style={{ fontSize: "clamp(18px, 4.5vw, 22px)", lineHeight: 1, flexShrink: 0 }}>
           {open ? "−" : "+"}
         </span>
       </button>
