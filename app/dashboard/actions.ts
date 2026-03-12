@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { grantBadgesIfEligible } from "@/lib/gamification";
 import { createPresenceConfirmedNotification } from "@/lib/notifications/in-app";
 import { sendCheckInConfirmation } from "@/lib/notifications/email";
+import { getPlanAccess } from "@/lib/plan-access";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 /** Ciclo de Presença 2.0: Intenção (RSVP) – Vou = PENDING, Não vou = ABSENT. */
 export async function setAttendanceIntention(
@@ -16,6 +18,8 @@ export async function setAttendanceIntention(
   if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
 
   const supabase = await createClient();
+  const planAccess = await getPlanAccess(supabase, studentId);
+  if (!planAccess.hasCheckIn) return { error: "O teu plano não inclui check-in de aulas presenciais." };
   const status = intention === "vou" ? "PENDING" : "ABSENT";
 
   const { data: existing } = await supabase
@@ -59,6 +63,31 @@ export async function checkIn(lessonId: string): Promise<{ error?: string; check
   if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
 
   const supabase = await createClient();
+  const planAccess = await getPlanAccess(supabase, studentId);
+  if (!planAccess.hasCheckIn) return { error: "O teu plano não inclui check-in de aulas presenciais." };
+
+  const { data: lessonData } = await supabase.from("Lesson").select("id, modality, date, startTime, endTime").eq("id", lessonId).single();
+  if (!lessonData) return { error: "Aula não encontrada." };
+
+  if (planAccess.primaryModality && planAccess.allowedModalities.length === 1 && lessonData.modality !== planAccess.primaryModality) {
+    const modLabel = MODALITY_LABELS[planAccess.primaryModality] ?? planAccess.primaryModality;
+    return { error: "O teu plano permite apenas aulas de " + modLabel + "." };
+  }
+
+  if (planAccess.maxCheckInsPerDay === 1) {
+    const { data: sameDayLessons } = await supabase.from("Lesson").select("id").eq("date", lessonData.date);
+    const sameDayIds = (sameDayLessons ?? []).map((l) => l.id).filter((id) => id !== lessonId);
+    if (sameDayIds.length > 0) {
+      const { count: otherConfirmed } = await supabase
+        .from("Attendance")
+        .select("id", { count: "exact", head: true })
+        .eq("studentId", studentId)
+        .eq("status", "CONFIRMED")
+        .in("lessonId", sameDayIds);
+      if ((otherConfirmed ?? 0) >= 1) return { error: "Só podes fazer um check-in por dia no teu plano." };
+    }
+  }
+
   const now = new Date().toISOString();
 
   const { data: existing } = await supabase
@@ -94,26 +123,21 @@ export async function checkIn(lessonId: string): Promise<{ error?: string; check
   }
 
   await grantBadgesIfEligible(supabase, studentId);
-  const { data: lesson } = await supabase
-    .from("Lesson")
-    .select("modality, date, startTime, endTime")
-    .eq("id", lessonId)
-    .single();
   const { data: student } = await supabase.from("Student").select("userId").eq("id", studentId).single();
-  if (lesson && student) {
+  if (lessonData && student) {
     await createPresenceConfirmedNotification(supabase, studentId, {
-      modality: lesson.modality,
-      date: lesson.date,
-      startTime: lesson.startTime,
-      endTime: lesson.endTime,
+      modality: lessonData.modality,
+      date: lessonData.date,
+      startTime: lessonData.startTime,
+      endTime: lessonData.endTime,
     });
     const { data: user } = await supabase.from("User").select("email, name").eq("id", student.userId).single();
     if (user?.email) {
       await sendCheckInConfirmation(user.email, user.name ?? null, {
-        modality: lesson.modality,
-        date: lesson.date,
-        startTime: lesson.startTime,
-        endTime: lesson.endTime,
+        modality: lessonData.modality,
+        date: lessonData.date,
+        startTime: lessonData.startTime,
+        endTime: lessonData.endTime,
       });
     }
   }

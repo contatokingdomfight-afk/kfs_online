@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
+import { getPlanAccess } from "@/lib/plan-access";
 import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality, enrichScoresForDetail, getFisicoScoreFromPhysicalAssessment, mergePhysicalAssessmentIntoRadar } from "@/lib/performance-utils";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
@@ -35,6 +37,10 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPerformancePage() {
   const supabase = await createClient();
   const studentId = await getCurrentStudentId();
+  const planAccess = await getPlanAccess(supabase, studentId);
+  if (studentId && !planAccess.hasPerformanceTracking) {
+    redirect("/dashboard?message=plan-no-performance");
+  }
 
   const modalitiesList = await getCachedModalityRefs(supabase);
   const modalityLabels = new Map<string, string>(modalitiesList.map((m) => [m.code, m.name ?? m.code]));

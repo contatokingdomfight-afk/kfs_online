@@ -10,6 +10,12 @@ const MODALITY_SCOPES = [
   { value: "ALL", label: "Todas as modalidades" },
 ] as const;
 
+const MAX_CHECK_INS_OPTIONS = [
+  { value: "0", label: "Sem check-in" },
+  { value: "1", label: "Uma por dia" },
+  { value: "unlimited", label: "Ilimitado" },
+] as const;
+
 type Props = {
   planId?: string;
   initialName?: string;
@@ -20,6 +26,10 @@ type Props = {
   initialIsActive?: boolean;
   initialStripePriceId?: string;
   initialSchoolId?: string;
+  initialIncludesPerformanceTracking?: boolean;
+  initialIncludesCheckIn?: boolean;
+  initialMaxCheckInsPerDay?: number | null;
+  initialIncludesExclusiveBenefits?: boolean;
 };
 
 export function PlanForm({
@@ -32,6 +42,10 @@ export function PlanForm({
   initialIsActive = true,
   initialStripePriceId = "",
   initialSchoolId = "",
+  initialIncludesPerformanceTracking = true,
+  initialIncludesCheckIn = true,
+  initialMaxCheckInsPerDay = null,
+  initialIncludesExclusiveBenefits = false,
 }: Props) {
   const action = planId ? updatePlan : createPlan;
   const [state, formAction] = useFormState(action, null as PlanFormResult | null);
@@ -164,6 +178,51 @@ export function PlanForm({
         />
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
           Inclui acesso à plataforma digital
+        </span>
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <input
+          type="checkbox"
+          name="includes_performance_tracking"
+          defaultChecked={initialIncludesPerformanceTracking}
+          value="on"
+        />
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
+          Inclui acompanhamento de performance
+        </span>
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <input
+          type="checkbox"
+          name="includes_check_in"
+          defaultChecked={initialIncludesCheckIn}
+          value="on"
+        />
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
+          Inclui check-in de aulas presenciais
+        </span>
+      </label>
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          Máximo de check-ins por dia
+        </span>
+        <select name="max_check_ins_per_day" className="input" defaultValue={initialMaxCheckInsPerDay === null ? "unlimited" : String(initialMaxCheckInsPerDay)}>
+          {MAX_CHECK_INS_OPTIONS.map(({ value, label }) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <input
+          type="checkbox"
+          name="includes_exclusive_benefits"
+          defaultChecked={initialIncludesExclusiveBenefits}
+          value="on"
+        />
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
+          Inclui brindes e benefícios exclusivos
         </span>
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 10 }}>

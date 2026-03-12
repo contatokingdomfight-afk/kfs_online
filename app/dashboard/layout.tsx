@@ -1,12 +1,15 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getViewAsFromCookies } from "@/lib/view-as-server";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { ViewAsBanner } from "@/components/ViewAsBanner";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import { StudentOnboardingGate } from "@/components/onboarding/StudentOnboardingGate";
+import { getPlanAccess } from "@/lib/plan-access";
 
 export default async function DashboardLayout({
   children,
@@ -24,12 +27,22 @@ export default async function DashboardLayout({
     if (viewAs !== "aluno") redirect("/admin");
   }
 
-  const [theme, locale] = await Promise.all([getThemeFromCookies(), getLocaleFromCookies()]);
+  const [theme, locale, studentId] = await Promise.all([
+    getThemeFromCookies(),
+    getLocaleFromCookies(),
+    getCurrentStudentId(),
+  ]);
   const t = getTranslations(locale as "pt" | "en");
-  const sidebarLinks = [
+  const supabase = await createClient();
+  const planAccess = await getPlanAccess(supabase, studentId);
+  const baseLinks = [
     { label: t("navHome"), href: "/dashboard" },
-    { label: t("navAthleteProfile"), href: "/dashboard/performance" },
-    { label: "Histórico de avaliações", href: "/dashboard/performance/historico" },
+    ...(planAccess.hasPerformanceTracking
+      ? [
+          { label: t("navAthleteProfile"), href: "/dashboard/performance" },
+          { label: "Histórico de avaliações", href: "/dashboard/performance/historico" },
+        ]
+      : []),
     {
       label: "Avaliação e pontuação",
       href: "/como-sou-avaliado",
@@ -38,12 +51,13 @@ export default async function DashboardLayout({
         { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
       ],
     },
-    { label: t("navConquests"), href: "/dashboard/conquistas" },
+    ...(planAccess.hasPerformanceTracking ? [{ label: t("navConquests"), href: "/dashboard/conquistas" }] : []),
     { label: t("navStore"), href: "/dashboard/loja" },
     { label: t("navLibrary"), href: "/dashboard/biblioteca" },
     { label: t("navEvents"), href: "/dashboard/eventos" },
     { label: t("navFinance"), href: "/dashboard/financeiro" },
     { label: t("navProfile"), href: "/dashboard/perfil" },
+    ...(planAccess.hasExclusiveBenefits ? [{ label: t("navExclusiveBenefits"), href: "/dashboard/beneficios" }] : []),
     { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
   ];
 
@@ -71,7 +85,7 @@ export default async function DashboardLayout({
     <div data-dashboard style={{ minHeight: "100vh", backgroundColor: "var(--bg)", color: "var(--text-primary)" }}>
       <ResponsiveShell
         sidebarTitle={t("studentArea")}
-        sidebarLinks={sidebarLinks}
+        sidebarLinks={baseLinks}
         initialTheme={theme}
         initialLocale={locale}
         headerTitle="Kingdom Fight School"

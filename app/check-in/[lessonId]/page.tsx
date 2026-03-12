@@ -5,6 +5,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { getPlanAccess } from "@/lib/plan-access";
 import { checkIn } from "@/app/dashboard/actions";
 
 type Props = { params: Promise<{ lessonId: string }> };
@@ -21,6 +22,22 @@ export default async function CheckInPage({ params }: Props) {
   }
 
   const studentId = await getCurrentStudentId();
+  const planAccess = await getPlanAccess(supabase, studentId);
+  if (studentId && !planAccess.hasCheckIn) {
+    return (
+      <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
+        <h1 className="text-mobile-lg" style={{ color: "var(--text-primary)", marginBottom: 12 }}>
+          {t("checkIn")}
+        </h1>
+        <p className="text-mobile-base" style={{ color: "var(--danger)", marginBottom: 24 }}>
+          {locale === "pt" ? "O teu plano não inclui check-in de aulas presenciais." : "Your plan does not include in-person class check-in."}
+        </p>
+        <Link href="/dashboard" className="btn btn-primary">
+          {t("goToDashboard")}
+        </Link>
+      </div>
+    );
+  }
   if (!studentId) {
     return (
       <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>

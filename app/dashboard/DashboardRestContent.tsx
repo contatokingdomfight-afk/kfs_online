@@ -14,9 +14,9 @@ import { getCachedLocations } from "@/lib/cached-reference-data";
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 const GENERAL_LAST_N = 10;
 
-type Props = { studentId: string | null; locale: "pt" | "en" };
+type Props = { studentId: string | null; locale: "pt" | "en"; hasPerformanceTracking?: boolean; hasCheckIn?: boolean };
 
-export async function DashboardRestContent({ studentId, locale }: Props) {
+export async function DashboardRestContent({ studentId, locale, hasPerformanceTracking = true, hasCheckIn = true }: Props) {
   if (!studentId) return null;
 
   const supabase = await createClient();
@@ -225,7 +225,7 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
 
   return (
     <>
-      {athleteStats && (
+      {athleteStats && hasCheckIn && (
         <section>
           <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
             {t("myStats")}
@@ -265,7 +265,7 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
           </div>
         </section>
       )}
-      {activeMissions.length > 0 && (
+      {activeMissions.length > 0 && hasPerformanceTracking && (
         <section>
           <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>🎯 {t("featuredMissions")}</h2>
           <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("featuredMissionsDescription")}</p>
@@ -299,7 +299,7 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
           </ul>
         </section>
       )}
-      {pastAttendances.length > 0 && (
+      {pastAttendances.length > 0 && hasCheckIn && (
         <section>
           <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>{t("presenceHistory")}</h2>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 10px)" }}>
@@ -313,7 +313,7 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
           </ul>
         </section>
       )}
-      {weeklyProgress.length > 0 && (
+      {weeklyProgress.length > 0 && hasCheckIn && (
         <section>
           <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>📈 {t("weeklyProgress")}</h2>
           <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
@@ -338,6 +338,7 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
         </section>
       )}
       {/* A minha performance – só radar ou placeholder + link para Perfil do Atleta */}
+      {hasPerformanceTracking && (
       <section>
         <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>{t("myPerformance")}</h2>
         <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
@@ -356,9 +357,10 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
           )}
         </div>
       </section>
+      )}
 
       {/* Os meus dados – perfil + presenças por modalidade */}
-      {(studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact)) || Object.keys(attendanceByModality).length > 0 ? (
+      {(studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact)) || (hasCheckIn && Object.keys(attendanceByModality).length > 0) ? (
         <section>
           <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>{t("myDataTitle")}</h2>
           <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
@@ -374,7 +376,7 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
                 <Link href="/dashboard/perfil" style={{ display: "inline-block", marginTop: 12, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none", fontWeight: 500 }}>{t("editMyData")} →</Link>
               </>
             )}
-            {Object.keys(attendanceByModality).length > 0 && (
+            {hasCheckIn && Object.keys(attendanceByModality).length > 0 && (
               <div style={{ marginTop: studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact) ? "clamp(16px, 4vw, 20px)" : 0, paddingTop: studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact) ? "clamp(16px, 4vw, 20px)" : 0, borderTop: studentProfile && (studentProfile.weightKg != null || studentProfile.heightCm != null || studentProfile.dateOfBirth || studentProfile.medicalNotes || studentProfile.emergencyContact) ? "1px solid var(--border)" : "none" }}>
                 <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{t("attendanceByModality")}</p>
                 <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
@@ -390,7 +392,7 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
           </div>
         </section>
       ) : null}
-      {studentId && (
+      {studentId && hasCheckIn && (
         <>
           <section>
             <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>{t("monthGoal")}</h2>
@@ -420,7 +422,7 @@ export async function DashboardRestContent({ studentId, locale }: Props) {
               </section>
             );
           })()}
-          {generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0 && (() => {
+          {hasPerformanceTracking && generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0 && (() => {
             const maxScore = 10;
             const axes = GENERAL_PERFORMANCE_AXES.map((a) => ({ id: a.id, label: a.label, score: generalPerformanceScores![a.id] ?? 0 }));
             const toImprove = axes.filter((e) => e.score < maxScore).sort((a, b) => a.score - b.score).slice(0, 2);

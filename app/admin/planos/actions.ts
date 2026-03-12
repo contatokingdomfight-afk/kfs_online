@@ -24,6 +24,11 @@ export async function createPlan(
   const modalityScope = (formData.get("modality_scope") as string)?.trim() || "SINGLE";
   const isActive = formData.get("is_active") !== "off" && formData.get("is_active") !== "false";
   const stripePriceId = (formData.get("stripePriceId") as string)?.trim() || null;
+  const includesPerformance = formData.get("includes_performance_tracking") === "on" || formData.get("includes_performance_tracking") === "true";
+  const includesCheckIn = formData.get("includes_check_in") === "on" || formData.get("includes_check_in") === "true";
+  const maxCheckInsStr = (formData.get("max_check_ins_per_day") as string)?.trim();
+  const maxCheckInsPerDay = maxCheckInsStr === "" || maxCheckInsStr === "unlimited" ? null : parseInt(maxCheckInsStr, 10);
+  const includesExclusiveBenefits = formData.get("includes_exclusive_benefits") === "on" || formData.get("includes_exclusive_benefits") === "true";
 
   if (!name) return { error: "Nome do plano é obrigatório." };
   if (!schoolId) return { error: "Escola é obrigatória." };
@@ -46,6 +51,10 @@ export async function createPlan(
     modality_scope: modalityScope,
     is_active: isActive,
     stripePriceId,
+    includes_performance_tracking: includesPerformance,
+    includes_check_in: includesCheckIn,
+    max_check_ins_per_day: maxCheckInsPerDay,
+    includes_exclusive_benefits: includesExclusiveBenefits,
   });
 
   if (error) {
@@ -74,6 +83,11 @@ export async function updatePlan(
   const modalityScope = (formData.get("modality_scope") as string)?.trim() || "SINGLE";
   const isActive = formData.get("is_active") !== "off" && formData.get("is_active") !== "false";
   const stripePriceId = (formData.get("stripePriceId") as string)?.trim() || null;
+  const includesPerformance = formData.get("includes_performance_tracking") === "on" || formData.get("includes_performance_tracking") === "true";
+  const includesCheckIn = formData.get("includes_check_in") === "on" || formData.get("includes_check_in") === "true";
+  const maxCheckInsStr = (formData.get("max_check_ins_per_day") as string)?.trim();
+  const maxCheckInsPerDay = maxCheckInsStr === "" || maxCheckInsStr === "unlimited" ? null : parseInt(maxCheckInsStr, 10);
+  const includesExclusiveBenefits = formData.get("includes_exclusive_benefits") === "on" || formData.get("includes_exclusive_benefits") === "true";
 
   if (!name) return { error: "Nome do plano é obrigatório." };
   const price = priceStr ? parseFloat(priceStr) : 0;
@@ -94,6 +108,10 @@ export async function updatePlan(
       modality_scope: modalityScope,
       is_active: isActive,
       stripePriceId,
+      includes_performance_tracking: includesPerformance,
+      includes_check_in: includesCheckIn,
+      max_check_ins_per_day: maxCheckInsPerDay,
+      includes_exclusive_benefits: includesExclusiveBenefits,
     })
     .eq("id", planId);
 

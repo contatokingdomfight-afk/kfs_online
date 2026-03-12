@@ -10,6 +10,7 @@ import { getCachedLocations } from "@/lib/cached-reference-data";
 import { Suspense } from "react";
 import { DashboardRestSkeleton } from "./DashboardRestSkeleton";
 import { DashboardRestContent } from "./DashboardRestContent";
+import { getPlanAccess } from "@/lib/plan-access";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 
@@ -31,31 +32,17 @@ export default async function DashboardPage() {
   if (!dbUser) return null;
 
   const studentId = await getCurrentStudentId();
+  const planAccess = await getPlanAccess(supabase, studentId);
+  const { hasDigitalAccess, hasCheckIn, allowedModalities } = planAccess;
 
   const { today, endOfWeek } = getThisWeekRange();
   const weekStart = getWeekStartMonday();
   const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Buscar dados do aluno uma vez (schoolId, planId, primaryModality, plano digital)
   let studentSchoolId: string | null = null;
-  let allowedModalities: string[] = MODALITIES_LIST.slice();
-  let studentPlanId: string | null = null;
-  let studentPrimaryModality: string | null = null;
-  let hasDigitalAccess = false;
   if (studentId) {
-    const { data: student } = await supabase.from("Student").select("schoolId, planId, primaryModality").eq("id", studentId).single();
-    if (student) {
-      studentSchoolId = student.schoolId || null;
-      studentPlanId = student.planId || null;
-      studentPrimaryModality = (student as { primaryModality?: string }).primaryModality ?? null;
-      if (student.planId) {
-        const { data: plan } = await supabase.from("Plan").select("modality_scope, includes_digital_access").eq("id", student.planId).eq("is_active", true).single();
-        if (plan?.modality_scope === "NONE") allowedModalities = [];
-        else if (plan?.modality_scope === "SINGLE" && (student as { primaryModality?: string }).primaryModality)
-          allowedModalities = [(student as { primaryModality: string }).primaryModality];
-        hasDigitalAccess = (plan as { includes_digital_access?: boolean })?.includes_digital_access === true;
-      }
-    }
+    const { data: student } = await supabase.from("Student").select("schoolId").eq("id", studentId).single();
+    studentSchoolId = student?.schoolId ?? null;
   }
 
   // Paralelizar: aulas, locations, weekThemes
@@ -117,7 +104,8 @@ export default async function DashboardPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
-      {/* Agenda - above the fold (streams first) */}
+      {/* Agenda - apenas para planos com check-in */}
+      {hasCheckIn && (
       <section>
         <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
           {t("agendaTitle")}
@@ -264,6 +252,7 @@ export default async function DashboardPage() {
         </>
       )}
       </section>
+      )}
 
       {/* Trilhas de aprendizagem e plano digital — evidência na home */}
       <section
@@ -311,7 +300,7 @@ export default async function DashboardPage() {
       </section>
 
       <Suspense fallback={<DashboardRestSkeleton />}>
-        <DashboardRestContent studentId={studentId} locale={locale as "pt" | "en"} />
+        <DashboardRestContent studentId={studentId} locale={locale as "pt" | "en"} hasPerformanceTracking={planAccess.hasPerformanceTracking} hasCheckIn={planAccess.hasCheckIn} />
       </Suspense>
 
       <div className="card">
