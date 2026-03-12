@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
-import { syncUserAfterSignUp } from "../actions";
 
 export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
   const t = getTranslations(initialLocale);
@@ -14,6 +13,7 @@ export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
@@ -38,25 +38,28 @@ export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setMessage(null);
     setLoading(true);
     const supabase = createClient();
-    const { error: err } = await supabase.auth.signUp({
+    const { data, error: err } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: name.trim() || undefined } },
     });
+    setLoading(false);
     if (err) {
-      setLoading(false);
       setError(err.message);
       return;
     }
-    const result = await syncUserAfterSignUp();
-    setLoading(false);
-    if ("error" in result) {
-      setError(result.error);
+    // Se há sessão (email confirmation desativado), redirecionar para dashboard.
+    // O sync User/Student/StudentProfile acontece no carregamento da página via getCurrentDbUser.
+    if (data?.session) {
+      router.push("/dashboard");
+      router.refresh();
       return;
     }
-    router.push(result.redirect);
+    // Email confirmation ativado: mostrar mensagem para verificar email
+    setMessage(t("accountCreatedMessage"));
   }
 
   return (
@@ -108,6 +111,11 @@ export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
           {error && (
             <p className="text-mobile-sm" style={{ color: "var(--danger)", margin: 0 }}>
               {error}
+            </p>
+          )}
+          {message && (
+            <p className="text-mobile-sm" style={{ color: "var(--success)", margin: 0 }}>
+              {message}
             </p>
           )}
           <button type="submit" disabled={loading} className="btn btn-primary w-full">
