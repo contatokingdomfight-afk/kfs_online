@@ -31,6 +31,7 @@ export default async function AdminLayout({
     { label: t("navAthletes"), href: "/admin/atletas" },
     { label: t("navClasses"), href: "/admin/turmas" },
     { label: t("navModalities"), href: "/admin/modalidades" },
+    { label: t("navLocations"), href: "/admin/locais" },
     { label: t("navPlans"), href: "/admin/planos" },
     { label: t("navCourses"), href: "/admin/cursos" },
     { label: t("navEventsAdmin"), href: "/admin/eventos" },

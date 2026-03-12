@@ -41,7 +41,7 @@ export default async function CoachLayout({
     { label: t("navHome"), href: "/coach" },
     { label: t("navCheckInClass"), href: "/coach/aula" },
     { label: t("navWeekTheme"), href: "/coach/tema-semana" },
-    ...(dbUser.role === "ADMIN" ? [{ label: t("navAgenda"), href: "/coach/agenda" }] : []),
+    { label: t("navAgenda"), href: "/coach/agenda" },
     { label: t("navStudents"), href: "/coach/alunos" },
     { label: t("navAthletesCoach"), href: "/coach/atletas" },
     { label: t("navTrials"), href: "/coach/experimentais" },
