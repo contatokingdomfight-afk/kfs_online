@@ -13,19 +13,6 @@ const STATUS_LABEL: Record<string, string> = {
   EXPERIMENTAL: "Experimental",
 };
 
-function buildQuery(
-  overrides: { status?: string; modality?: string; school?: string; plan?: string; q?: string }
-): string {
-  const p = new URLSearchParams();
-  if (overrides.status && overrides.status !== "all") p.set("status", overrides.status);
-  if (overrides.modality && overrides.modality !== "all") p.set("modality", overrides.modality);
-  if (overrides.school && overrides.school !== "all") p.set("school", overrides.school);
-  if (overrides.plan && overrides.plan !== "all") p.set("plan", overrides.plan);
-  if (overrides.q?.trim()) p.set("q", overrides.q.trim());
-  const s = p.toString();
-  return s ? `?${s}` : "";
-}
-
 type SearchParams = Promise<{ status?: string; modality?: string; school?: string; plan?: string; q?: string }>;
 
 export default async function CoachAlunosPage({ searchParams }: { searchParams: SearchParams }) {
@@ -132,7 +119,6 @@ export default async function CoachAlunosPage({ searchParams }: { searchParams: 
         modality={filterModality}
         school={filterSchool}
         plan={filterPlan}
-        buildQuery={buildQuery}
         baseFilters={baseFilters}
         filterStatus={filterStatus}
         filterModality={filterModality}

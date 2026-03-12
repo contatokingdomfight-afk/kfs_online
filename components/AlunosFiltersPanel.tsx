@@ -2,6 +2,17 @@
 
 import { useState } from "react";
 
+function buildQueryString(overrides: Record<string, string>): string {
+  const p = new URLSearchParams();
+  if (overrides.status && overrides.status !== "all") p.set("status", overrides.status);
+  if (overrides.modality && overrides.modality !== "all") p.set("modality", overrides.modality);
+  if (overrides.school && overrides.school !== "all") p.set("school", overrides.school);
+  if (overrides.plan && overrides.plan !== "all") p.set("plan", overrides.plan);
+  if (overrides.q?.trim()) p.set("q", overrides.q.trim());
+  const s = p.toString();
+  return s ? `?${s}` : "";
+}
+
 type Props = {
   basePath: string;
   defaultValue?: string;
@@ -9,7 +20,6 @@ type Props = {
   modality?: string;
   school?: string;
   plan?: string;
-  buildQuery: (overrides: Record<string, string>) => string;
   baseFilters: Record<string, string>;
   filterStatus: string;
   filterModality: string;
@@ -30,7 +40,6 @@ export function AlunosFiltersPanel({
   modality = "all",
   school = "all",
   plan = "all",
-  buildQuery,
   baseFilters,
   filterStatus,
   filterModality,
@@ -148,7 +157,7 @@ export function AlunosFiltersPanel({
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <a
-                href={`${basePath}${buildQuery({ ...baseFilters, status: "all" })}`}
+                href={`${basePath}${buildQueryString({ ...baseFilters, status: "all" })}`}
                 className="btn"
                 style={{
                   textDecoration: "none",
@@ -161,7 +170,7 @@ export function AlunosFiltersPanel({
               {(["ATIVO", "INATIVO", "EXPERIMENTAL"] as const).map((s) => (
                 <a
                   key={s}
-                  href={`${basePath}${buildQuery({ ...baseFilters, status: s })}`}
+                  href={`${basePath}${buildQueryString({ ...baseFilters, status: s })}`}
                   className="btn"
                   style={{
                     textDecoration: "none",
@@ -182,7 +191,7 @@ export function AlunosFiltersPanel({
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <a
-                href={`${basePath}${buildQuery({ ...baseFilters, modality: "all" })}`}
+                href={`${basePath}${buildQueryString({ ...baseFilters, modality: "all" })}`}
                 className="btn"
                 style={{
                   textDecoration: "none",
@@ -195,7 +204,7 @@ export function AlunosFiltersPanel({
               {modalities.map((m) => (
                 <a
                   key={m.code}
-                  href={`${basePath}${buildQuery({ ...baseFilters, modality: m.code })}`}
+                  href={`${basePath}${buildQueryString({ ...baseFilters, modality: m.code })}`}
                   className="btn"
                   style={{
                     textDecoration: "none",
@@ -216,7 +225,7 @@ export function AlunosFiltersPanel({
               </p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <a
-                  href={`${basePath}${buildQuery({ ...baseFilters, school: "all" })}`}
+                  href={`${basePath}${buildQueryString({ ...baseFilters, school: "all" })}`}
                   className="btn"
                   style={{
                     textDecoration: "none",
@@ -229,7 +238,7 @@ export function AlunosFiltersPanel({
                 {schools.map((s) => (
                   <a
                     key={s.id}
-                    href={`${basePath}${buildQuery({ ...baseFilters, school: s.id })}`}
+                    href={`${basePath}${buildQueryString({ ...baseFilters, school: s.id })}`}
                     className="btn"
                     style={{
                       textDecoration: "none",
@@ -251,18 +260,18 @@ export function AlunosFiltersPanel({
               </p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <a
-                  href={`${basePath}${buildQuery({ ...baseFilters, plan: "all" })}`}
+                  href={`${basePath}${buildQueryString({ ...baseFilters, plan: "all" })}`}
                   className="btn"
                   style={{
                     textDecoration: "none",
-                    backgroundColor: filterPlan === "all" ? "var(--primary)" : "var(--bg)",
+                    backgroundColor: filterPlan === "all" ? "var(--primary)" : "var(--bg-secondary)",
                     color: filterPlan === "all" ? "#fff" : "var(--text-primary)",
                   }}
                 >
                   Todos
                 </a>
                 <a
-                  href={`${basePath}${buildQuery({ ...baseFilters, plan: "none" })}`}
+                  href={`${basePath}${buildQueryString({ ...baseFilters, plan: "none" })}`}
                   className="btn"
                   style={{
                     textDecoration: "none",
@@ -275,7 +284,7 @@ export function AlunosFiltersPanel({
                 {plans.map((p) => (
                   <a
                     key={p.id}
-                    href={`${basePath}${buildQuery({ ...baseFilters, plan: p.id })}`}
+                    href={`${basePath}${buildQueryString({ ...baseFilters, plan: p.id })}`}
                     className="btn"
                     style={{
                       textDecoration: "none",
