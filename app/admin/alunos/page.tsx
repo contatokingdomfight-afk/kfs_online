@@ -6,6 +6,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { AlunosSearchForm } from "./_components/AlunosSearchForm";
+import { CollapsibleSection } from "./_components/CollapsibleSection";
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
@@ -135,10 +136,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
         Convidar envia um email ao futuro aluno para se registar; depois aparece na lista com status Ativo ou Experimental.
       </p>
 
-      <div style={{ marginBottom: "clamp(16px, 4vw, 20px)", padding: "clamp(12px, 3vw, 16px)", backgroundColor: "var(--bg-secondary)", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
-        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Buscar
-        </p>
+      <CollapsibleSection title="Buscar" defaultOpen>
         <AlunosSearchForm
           defaultValue={params.q ?? ""}
           status={filterStatus}
@@ -146,13 +144,10 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
           school={filterSchool}
           plan={filterPlan}
         />
-      </div>
+      </CollapsibleSection>
 
-      <div style={{ marginBottom: "clamp(16px, 4vw, 20px)", padding: "clamp(12px, 3vw, 16px)", backgroundColor: "var(--bg-secondary)", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
-        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Status
-        </p>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+      <CollapsibleSection title="Status" defaultOpen={filterStatus !== "all"}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Link
             href={`/admin/alunos${buildQuery({ ...baseFilters, status: "all" })}`}
             className="btn"
@@ -179,10 +174,10 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
             </Link>
           ))}
         </div>
-        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Modalidade
-        </p>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Modalidade" defaultOpen={filterModality !== "all"}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Link
             href={`/admin/alunos${buildQuery({ ...baseFilters, modality: "all" })}`}
             className="btn"
@@ -209,10 +204,10 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
             </Link>
           ))}
         </div>
-        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Escola
-        </p>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Escola" defaultOpen={filterSchool !== "all"}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Link
             href={`/admin/alunos${buildQuery({ ...baseFilters, school: "all" })}`}
             className="btn"
@@ -239,9 +234,9 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
             </Link>
           ))}
         </div>
-        <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Plano
-        </p>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Plano" defaultOpen={filterPlan !== "all"}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Link
             href={`/admin/alunos${buildQuery({ ...baseFilters, plan: "all" })}`}
@@ -280,7 +275,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
             </Link>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
 
       {filtered.length === 0 ? (
         <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>
