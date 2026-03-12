@@ -90,7 +90,7 @@ export default async function EscolherPlanoPage() {
                 includes_check_in: plan.includes_check_in !== false,
                 modality_scope: plan.modality_scope,
                 includes_exclusive_benefits: plan.includes_exclusive_benefits === true,
-                hasStripe: !!plan.stripePriceId,
+                hasStripe: plan.name.toLowerCase().includes("kingdom online") && !!plan.stripePriceId,
               }}
               studentId={studentId}
               locale={(locale as "pt" | "en") ?? "pt"}
