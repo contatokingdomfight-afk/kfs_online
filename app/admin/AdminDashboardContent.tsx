@@ -1,13 +1,22 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import dynamic from "next/dynamic";
 import { getAdminDashboardStats } from "@/lib/admin-dashboard-stats";
 import { getActionItemsData } from "@/lib/admin-action-items";
 import { AdminSchoolFilter } from "./AdminSchoolFilter";
 import { BusinessHealthStats } from "./_components/BusinessHealthStats";
 import { ActionItems } from "./_components/ActionItems";
-import { OverviewCharts } from "./_components/OverviewCharts";
 import { ManagementGrid } from "./_components/ManagementGrid";
 import { getTranslations } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+
+const OverviewCharts = dynamic(() => import("./_components/OverviewCharts").then((m) => ({ default: m.OverviewCharts })), {
+  loading: () => (
+    <div className="card" style={{ padding: 24, minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)" }}>
+      A carregar gráficos…
+    </div>
+  ),
+  ssr: false,
+});
 
 type Props = {
   client: SupabaseClient;
@@ -105,7 +114,7 @@ export async function AdminDashboardContent({ client, schoolId }: Props) {
         }}
       />
 
-      {/* Secção 3: VISÃO GERAL */}
+      {/* Secção 3: VISÃO GERAL - carregado dinamicamente para reduzir bundle inicial */}
       <OverviewCharts
         studentsGrowthByMonth={stats.studentsGrowthByMonth}
         revenueAccumulatedMonths={stats.revenueAccumulatedMonths}

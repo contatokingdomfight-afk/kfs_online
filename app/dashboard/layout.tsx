@@ -46,11 +46,11 @@ export default async function DashboardLayout({
   }
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
-  const planAccess = await getPlanAccess(supabase, studentId);
-  const { data: student } = studentId
-    ? await supabase.from("Student").select("planId").eq("id", studentId).single()
-    : { data: null };
-  const hasPlan = !!student?.planId;
+  const [planAccess, studentRes] = await Promise.all([
+    getPlanAccess(supabase, studentId),
+    studentId ? supabase.from("Student").select("planId").eq("id", studentId).single() : Promise.resolve({ data: null }),
+  ]);
+  const hasPlan = !!studentRes.data?.planId;
 
   const baseLinks = hasPlan
     ? [
