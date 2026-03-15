@@ -56,7 +56,15 @@ export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLa
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planId: plan.id, stripePriceId: stripePriceIdToUse }),
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data: { url?: string; error?: string } = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        setLoading(false);
+        setError(res.ok ? "Resposta inválida do servidor." : `Erro ${res.status}. Verifica a consola do servidor.`);
+        return;
+      }
       if (res.ok && data.url) {
         window.location.href = data.url;
       } else {

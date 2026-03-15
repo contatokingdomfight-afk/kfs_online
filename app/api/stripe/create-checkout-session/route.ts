@@ -104,18 +104,24 @@ export async function POST(request: NextRequest) {
     await supabase.from("Student").update({ stripeCustomerId: customerId }).eq("id", studentId);
   }
 
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId,
-    mode: "subscription",
-    line_items: [{ price: priceToUse, quantity: 1 }],
-    success_url: `${baseUrl}/dashboard/financeiro?stripe=success`,
-    cancel_url: `${baseUrl}/dashboard/financeiro?stripe=cancel`,
-    subscription_data: {
-      metadata: { studentId },
-      trial_period_days: undefined,
-    },
-    allow_promotion_codes: true,
-  });
+  try {
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "subscription",
+      line_items: [{ price: priceToUse, quantity: 1 }],
+      success_url: `${baseUrl}/dashboard/financeiro?stripe=success`,
+      cancel_url: `${baseUrl}/dashboard/financeiro?stripe=cancel`,
+      subscription_data: {
+        metadata: { studentId },
+        trial_period_days: undefined,
+      },
+      allow_promotion_codes: true,
+    });
 
-  return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erro ao criar sessão de pagamento.";
+    console.error("Stripe checkout error:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

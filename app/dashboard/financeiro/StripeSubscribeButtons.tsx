@@ -49,7 +49,15 @@ export function StripeSubscribeButtons({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planId, stripePriceId }),
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data: { url?: string; error?: string } = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        setError(res.ok ? "Resposta inválida do servidor." : `Erro ${res.status}. Verifica a consola do servidor.`);
+        setLoading(null);
+        return;
+      }
       if (!res.ok) {
         setError(data.error ?? "Erro ao criar sessão.");
         setLoading(null);
@@ -72,7 +80,15 @@ export function StripeSubscribeButtons({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data: { url?: string; error?: string } = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        setError(res.ok ? "Resposta inválida do servidor." : `Erro ${res.status}. Verifica a consola do servidor.`);
+        setLoading(null);
+        return;
+      }
       if (!res.ok) {
         setError(data.error ?? "Erro ao abrir portal.");
         setLoading(null);
