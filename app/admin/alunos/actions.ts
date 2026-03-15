@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { stripe } from "@/lib/stripe/server";
 
 export type CreateStudentResult = { error?: string };
 
@@ -155,12 +156,24 @@ export async function setStudentFullAccess(
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, schoolId")
+    .select("id, schoolId, stripeSubscriptionId")
     .eq("id", studentId)
     .single();
 
   if (!student) return { error: "Aluno não encontrado." };
 
+  // Cancela subscrição Stripe se existir (acesso gratuito = sem cobranças)
+  const subId = (student as { stripeSubscriptionId?: string | null }).stripeSubscriptionId;
+  if (subId && stripe) {
+    try {
+      await stripe.subscriptions.cancel(subId);
+    } catch (e) {
+      console.warn("Stripe subscription cancel failed:", e);
+      // Continua: atribui o plano na mesma
+    }
+  }
+
+  // Melhor plano = plataforma digital + todas as modalidades; ordenar por preço DESC para preferir Kingdom FULL
   const { data: fullPlan } = await supabase
     .from("Plan")
     .select("id")
@@ -168,6 +181,7 @@ export async function setStudentFullAccess(
     .eq("is_active", true)
     .eq("includes_digital_access", true)
     .eq("modality_scope", "ALL")
+    .order("price_monthly", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -178,7 +192,11 @@ export async function setStudentFullAccess(
     };
   }
 
-  const { error } = await supabase.from("Student").update({ planId: fullPlan.id }).eq("id", studentId);
+  // Atribui o melhor plano (acesso gratuito, sem cobranças)
+  const { error } = await supabase
+    .from("Student")
+    .update({ planId: fullPlan.id, stripeSubscriptionId: null })
+    .eq("id", studentId);
   if (error) return { error: error.message };
 
   revalidatePath("/admin/alunos");
