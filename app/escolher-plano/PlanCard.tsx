@@ -28,6 +28,7 @@ type Props = {
 
 export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLabel, choosePlanSelect }: Props) {
   const [isLoading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const priceOptions = plan.planPrices ?? [];
   const [selectedPriceId, setSelectedPriceId] = useState(priceOptions[0]?.stripePriceId ?? "");
   useEffect(() => {
@@ -48,6 +49,7 @@ export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLa
     if (!studentId || !plan.hasStripe) return;
     const stripePriceIdToUse = priceOptions.length > 0 ? (selectedPriceId || priceOptions[0]?.stripePriceId) : undefined;
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
@@ -59,9 +61,11 @@ export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLa
         window.location.href = data.url;
       } else {
         setLoading(false);
+        setError(data?.error ?? (res.status === 401 ? "Sessão expirada. Por favor, entra novamente." : "Erro ao iniciar pagamento. Tenta novamente."));
       }
-    } catch {
+    } catch (err) {
       setLoading(false);
+      setError(err instanceof Error ? err.message : "Erro de rede. Verifica a ligação e tenta novamente.");
     }
   }
 
@@ -121,6 +125,11 @@ export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLa
           <li key={i}>{b}</li>
         ))}
       </ul>
+      {error && (
+        <p style={{ fontSize: 13, color: "var(--text-error, #dc2626)", margin: 0 }} role="alert">
+          {error}
+        </p>
+      )}
       {plan.hasStripe && studentId ? (
         <button
           type="button"
