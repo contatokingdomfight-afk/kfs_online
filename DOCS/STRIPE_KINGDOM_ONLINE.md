@@ -13,6 +13,19 @@ Configuração completa para subscrições recorrentes do plano digital Kingdom 
 
 **Para produção (kingdomfight.com):** Cria os produtos/preços em modo **Live** no Stripe e atualiza a BD (ver abaixo).
 
+## ⚠️ MCP Stripe vs Vercel – Contas diferentes
+
+O **MCP Stripe** (Cursor) e a **Vercel** podem usar **contas Stripe diferentes**:
+
+- **MCP Stripe** – usa a conta onde fizeste login no Stripe (OAuth). Os preços que vês no MCP existem nesta conta.
+- **Vercel** – usa `STRIPE_SECRET_KEY` das variáveis de ambiente. Se for de outra conta, os Price IDs da BD não existem lá.
+
+**Solução:** Garante que `STRIPE_SECRET_KEY` na Vercel pertence à **mesma conta Stripe** onde os produtos/preços foram criados.
+
+1. Abre o [Stripe Dashboard](https://dashboard.stripe.com) da conta onde os preços existem (a que o MCP usa).
+2. Developers → API keys → copia a **Secret key** (`sk_test_...` ou `sk_live_...`).
+3. Na Vercel: Project → Settings → Environment Variables → `STRIPE_SECRET_KEY` → cola essa chave e faz redeploy.
+
 ## Modelos de subscrição
 
 | Periodicidade | Preço |
@@ -33,14 +46,27 @@ Configuração completa para subscrições recorrentes do plano digital Kingdom 
 
 ## Webhook Stripe (obrigatório)
 
+**Sem o webhook configurado**, o pagamento funciona mas a plataforma não atualiza:
+- Plano atribuído continua "Sem plano"
+- Últimos pagamentos vazios
+- Menu lateral continua com "Escolher plano" em vez das opções completas (Biblioteca, etc.)
+
+### Configuração
+
 1. Acede ao [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
-2. Cria endpoint: `https://teu-dominio.vercel.app/api/stripe/webhook`
+2. **Adicionar endpoint** → URL: `https://kingdomfight.com/api/stripe/webhook` (ou o teu domínio)
 3. Eventos a selecionar:
    - `customer.subscription.created`
    - `customer.subscription.updated`
    - `customer.subscription.deleted`
    - `invoice.paid`
-4. Copia o **Signing secret** → variável `STRIPE_WEBHOOK_SECRET` na Vercel
+4. Copia o **Signing secret** (começa com `whsec_`)
+5. Na Vercel: Project → Settings → Environment Variables → `STRIPE_WEBHOOK_SECRET` → cola o valor
+6. **Redeploy** do projeto para aplicar a variável
+
+### Verificar se está a funcionar
+
+No Stripe Dashboard → Webhooks → clica no teu endpoint → vê os eventos enviados. Se falharem (erro 4xx/5xx), verifica os logs na Vercel.
 
 ## Variáveis de ambiente
 
