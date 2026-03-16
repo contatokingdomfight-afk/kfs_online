@@ -4,6 +4,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { PlanForm } from "../PlanForm";
+import { PlanPriceForm } from "../PlanPriceForm";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -32,6 +33,13 @@ export default async function AdminPlanosEditarPage({ params }: Props) {
       </div>
     );
   }
+
+  const { data: planPrices } = await supabase
+    .from("PlanPrice")
+    .select("id, intervalLabel, stripePriceId, amountCents")
+    .eq("planId", planId)
+    .eq("isActive", true)
+    .order("sortOrder", { ascending: true });
 
   return (
     <div style={{ maxWidth: "min(420px, 100%)" }}>
@@ -69,6 +77,9 @@ export default async function AdminPlanosEditarPage({ params }: Props) {
         initialMaxCheckInsPerDay={(plan as { max_check_ins_per_day?: number | null }).max_check_ins_per_day ?? null}
         initialIncludesExclusiveBenefits={(plan as { includes_exclusive_benefits?: boolean }).includes_exclusive_benefits ?? false}
       />
+      {planPrices && planPrices.length > 0 && (
+        <PlanPriceForm planPrices={planPrices.map((pp) => ({ id: pp.id, intervalLabel: pp.intervalLabel, stripePriceId: pp.stripePriceId, amountCents: pp.amountCents }))} />
+      )}
     </div>
   );
 }

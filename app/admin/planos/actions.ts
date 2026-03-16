@@ -121,3 +121,43 @@ export async function updatePlan(
   revalidatePath(`/admin/planos/${planId}`);
   return {};
 }
+
+export type UpdatePlanPriceResult = { error?: string; success?: boolean };
+
+/** Atualiza o Stripe Price ID de uma opção PlanPrice (para corrigir Teste vs Produção). */
+export async function updatePlanPrice(
+  _prev: UpdatePlanPriceResult | null,
+  formData: FormData
+): Promise<UpdatePlanPriceResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const planPriceId = (formData.get("planPriceId") as string)?.trim();
+  const stripePriceId = (formData.get("stripePriceId") as string)?.trim();
+  if (!planPriceId || !stripePriceId) return { error: "ID e Stripe Price ID são obrigatórios." };
+  if (!stripePriceId.startsWith("price_")) return { error: "Stripe Price ID deve começar por price_" };
+
+  const supabase = createAdminClient();
+  const { data: planPrice } = await supabase
+    .from("PlanPrice")
+    .select("planId, sortOrder")
+    .eq("id", planPriceId)
+    .single();
+
+  const { error } = await supabase
+    .from("PlanPrice")
+    .update({ stripePriceId })
+    .eq("id", planPriceId);
+
+  if (error) return { error: error.message };
+
+  // Se for o preço mensal (sortOrder=1), atualiza também Plan.stripePriceId
+  if (planPrice?.planId && planPrice.sortOrder === 1) {
+    await supabase.from("Plan").update({ stripePriceId }).eq("id", planPrice.planId);
+  }
+
+  revalidatePath("/admin/planos");
+  revalidatePath("/escolher-plano");
+  revalidatePath("/dashboard/financeiro");
+  return { success: true };
+}
