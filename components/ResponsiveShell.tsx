@@ -1,9 +1,17 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sidebar, type SidebarLink } from "./Sidebar";
 import type { Theme, Locale } from "@/lib/theme-locale";
+
+function headerAvatarInitials(name: string | null): string {
+  if (!name?.trim()) return "?";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 type Props = {
   sidebarTitle: string;
@@ -12,6 +20,13 @@ type Props = {
   initialLocale: Locale;
   headerTitle: string;
   headerExtra?: React.ReactNode;
+  /** Miniatura no canto (link para o ecrã de perfil / definições). */
+  headerAvatar?: {
+    href: string;
+    imageUrl: string | null;
+    displayName: string | null;
+    ariaLabel: string;
+  };
   viewAsBanner?: React.ReactNode;
   mainClassName?: string;
   logoutLabel?: string;
@@ -25,6 +40,7 @@ export function ResponsiveShell({
   initialLocale,
   headerTitle,
   headerExtra,
+  headerAvatar,
   viewAsBanner,
   mainClassName,
   logoutLabel,
@@ -174,7 +190,44 @@ export function ResponsiveShell({
               </svg>
             </button>
             <h1 style={{ margin: 0, fontSize: "clamp(17px, 4.2vw, 20px)", fontWeight: 600, flex: 1 }}>{headerTitle}</h1>
-            {headerExtra}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              {headerAvatar && (
+                <Link
+                  href={headerAvatar.href}
+                  aria-label={headerAvatar.ariaLabel}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    border: "1px solid var(--border)",
+                    overflow: "hidden",
+                    flexShrink: 0,
+                    background: "var(--bg-secondary)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--text-secondary)",
+                    textDecoration: "none",
+                  }}
+                >
+                  {headerAvatar.imageUrl?.trim() ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={headerAvatar.imageUrl}
+                      alt=""
+                      width={36}
+                      height={36}
+                      style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                    />
+                  ) : (
+                    headerAvatarInitials(headerAvatar.displayName)
+                  )}
+                </Link>
+              )}
+              {headerExtra}
+            </div>
           </header>
           <main className={mainClassName} style={{ flex: 1, overflow: "auto", minHeight: 0, minWidth: 0 }}>{children}</main>
         </div>

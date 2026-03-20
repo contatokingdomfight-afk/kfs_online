@@ -117,6 +117,12 @@ export default async function DashboardLayout({
         initialTheme={theme}
         initialLocale={locale}
         headerTitle="Kingdom Fight School"
+        headerAvatar={{
+          href: "/dashboard/perfil",
+          imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,
+          displayName: dbUser.name,
+          ariaLabel: t("headerProfileAria"),
+        }}
         headerExtra={<NotificationBell locale={locale as "pt" | "en"} />}
         viewAsBanner={dbUser.role === "ADMIN" && viewAs === "aluno" ? <ViewAsBanner viewAs="aluno" /> : undefined}
         mainClassName="dashboard-main"

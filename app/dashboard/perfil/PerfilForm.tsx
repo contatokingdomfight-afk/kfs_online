@@ -6,6 +6,7 @@ import { saveStudentProfile, type SaveProfileResult } from "./actions";
 import { getTranslations } from "@/lib/i18n";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { ProfileAvatarField } from "@/components/ProfileAvatarField";
 
 type Props = {
   initial: {
@@ -68,30 +69,7 @@ export function PerfilForm({ initial, locale }: Props) {
         {t("personalDataTitle")}
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
-        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-            {t("avatarLabel")}
-          </span>
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 12 }}>
-            {initial.avatarUrl && (
-              <img
-                src={initial.avatarUrl}
-                alt=""
-                width={64}
-                height={64}
-                style={{ borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border)" }}
-              />
-            )}
-            <input
-              type="url"
-              name="avatarUrl"
-              defaultValue={initial.avatarUrl}
-              className="input"
-              placeholder="https://..."
-              style={{ flex: 1, minWidth: 0 }}
-            />
-          </div>
-        </label>
+        <ProfileAvatarField initialAvatarUrl={initial.avatarUrl} displayName={initial.name} locale={locale} />
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
             {t("nameLabel")}

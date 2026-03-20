@@ -71,6 +71,12 @@ export default async function CoachLayout({
         initialTheme={theme}
         initialLocale={locale}
         headerTitle="Kingdom Fight School"
+        headerAvatar={{
+          href: "/coach/configuracoes",
+          imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,
+          displayName: dbUser.name,
+          ariaLabel: t("headerProfileAria"),
+        }}
         headerExtra={<span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>}
         viewAsBanner={showViewAsBanner ? <ViewAsBanner viewAs="coach" /> : undefined}
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
