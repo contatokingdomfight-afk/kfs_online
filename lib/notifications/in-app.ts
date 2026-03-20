@@ -1,10 +1,31 @@
 /**
- * Notificações in-app (guardadas na BD, visíveis no dashboard do aluno).
+ * Notificações in-app (tabela Supabase `Notification`, visíveis na central do aluno).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type NotificationType = "PRESENCE_CONFIRMED";
+export type NotificationType = "PRESENCE_CONFIRMED" | "GENERAL";
+
+type InsertPayload = {
+  studentId: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  href?: string | null;
+};
+
+export async function createInAppNotification(supabase: SupabaseClient, payload: InsertPayload): Promise<void> {
+  const row: Record<string, unknown> = {
+    id: crypto.randomUUID(),
+    studentId: payload.studentId,
+    type: payload.type,
+    title: payload.title,
+    body: payload.body,
+    created_at: new Date().toISOString(),
+  };
+  if (payload.href) row.href = payload.href;
+  await supabase.from("Notification").insert(row);
+}
 
 export async function createPresenceConfirmedNotification(
   supabase: SupabaseClient,
@@ -21,13 +42,12 @@ export async function createPresenceConfirmedNotification(
   const title = "Presença confirmada";
   const body = `${modalityLabel}, ${dateFormatted}, ${payload.startTime} – ${payload.endTime}`;
 
-  await supabase.from("Notification").insert({
-    id: crypto.randomUUID(),
+  await createInAppNotification(supabase, {
     studentId,
     type: "PRESENCE_CONFIRMED",
     title,
     body,
-    created_at: new Date().toISOString(),
+    href: "/dashboard/historico",
   });
 }
 

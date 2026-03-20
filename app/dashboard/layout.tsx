@@ -8,6 +8,7 @@ import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-se
 import { getTranslations } from "@/lib/i18n";
 import { ViewAsBanner } from "@/components/ViewAsBanner";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
+import { NotificationBell } from "@/components/NotificationBell";
 import { StudentOnboardingGate } from "@/components/onboarding/StudentOnboardingGate";
 import { getPlanAccess } from "@/lib/plan-access";
 
@@ -55,6 +56,7 @@ export default async function DashboardLayout({
   const baseLinks = hasPlan
     ? [
         { label: t("navHome"), href: "/dashboard" },
+        { label: t("navNotificationsCenter"), href: "/dashboard/notificacoes" },
         ...(planAccess.hasPerformanceTracking
           ? [
               { label: t("navAthleteProfile"), href: "/dashboard/performance" },
@@ -81,6 +83,7 @@ export default async function DashboardLayout({
       ]
     : [
         { label: t("navHome"), href: "/dashboard" },
+        { label: t("navNotificationsCenter"), href: "/dashboard/notificacoes" },
         { label: "✨ " + t("choosePlanTitle"), href: "/escolher-plano" },
         { label: t("navLibrary"), href: "/dashboard/biblioteca" },
         { label: t("navProfile"), href: "/dashboard/perfil" },
@@ -114,6 +117,7 @@ export default async function DashboardLayout({
         initialTheme={theme}
         initialLocale={locale}
         headerTitle="Kingdom Fight School"
+        headerExtra={<NotificationBell locale={locale as "pt" | "en"} />}
         viewAsBanner={dbUser.role === "ADMIN" && viewAs === "aluno" ? <ViewAsBanner viewAs="aluno" /> : undefined}
         mainClassName="dashboard-main"
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}

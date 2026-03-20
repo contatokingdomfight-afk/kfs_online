@@ -58,7 +58,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
     supabase.from("Attendance").select("lessonId").eq("studentId", studentId).eq("status", "CONFIRMED"),
     supabase.from("CoursePurchase").select("courseId").eq("studentId", studentId),
     supabase.from("Course").select("id, name, category, modality, included_in_digital_plan").eq("is_active", true).order("sort_order", { ascending: true }).order("name", { ascending: true }),
-    supabase.from("Notification").select("id, title, body, read_at, created_at").eq("studentId", studentId).order("created_at", { ascending: false }).limit(10),
+    supabase.from("Notification").select("*").eq("studentId", studentId).order("created_at", { ascending: false }).limit(5),
     loadAllEvaluationConfigs(supabase),
     supabase.from("Attendance").select("lessonId, status").eq("studentId", studentId).order("createdAt", { ascending: false }).limit(50),
       ]);
@@ -141,19 +141,14 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
     .slice(0, 3)
     .map((c) => ({ id: c.id, name: c.name, category: c.category, modality: c.modality }));
 
-  let notifications = (notifRes.data ?? []).map((n) => ({
+  const notifications = (notifRes.data ?? []).map((n) => ({
     id: n.id,
     title: n.title,
     body: n.body ?? null,
     read_at: n.read_at ?? null,
     created_at: n.created_at,
+    href: (n as { href?: string | null }).href ?? null,
   }));
-  const unreadIds = notifications.filter((n) => !n.read_at).map((n) => n.id);
-  if (unreadIds.length > 0) {
-    const readAt = new Date().toISOString();
-    await supabase.from("Notification").update({ read_at: readAt }).in("id", unreadIds);
-    notifications = notifications.map((n) => (unreadIds.includes(n.id) ? { ...n, read_at: readAt } : n));
-  }
 
   let currentMonthCount = 0;
   let weeklyProgress: Array<{ weekStart: string; count: number }> = [];
@@ -289,14 +284,49 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
         <section>
           <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>{t("notifications")}</h2>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 10px)" }}>
-            {notifications.map((n) => (
-              <li key={n.id} className="card" style={{ padding: "clamp(14px, 3.5vw, 16px)", borderLeft: n.read_at ? "3px solid transparent" : "3px solid var(--primary)" }}>
-                <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>{n.title}</p>
-                {n.body && <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{n.body}</p>}
-                <p style={{ margin: "6px 0 0 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", opacity: 0.9 }}>{new Date(n.created_at).toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
-              </li>
-            ))}
+            {notifications.map((n) => {
+              const dateLine = new Date(n.created_at).toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+              const inner = (
+                <>
+                  <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>{n.title}</p>
+                  {n.body && <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{n.body}</p>}
+                  <p style={{ margin: "6px 0 0 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", opacity: 0.9 }}>{dateLine}</p>
+                </>
+              );
+              return (
+                <li key={n.id}>
+                  {n.href ? (
+                    <Link
+                      href={n.href}
+                      className="card"
+                      style={{
+                        display: "block",
+                        padding: "clamp(14px, 3.5vw, 16px)",
+                        borderLeft: n.read_at ? "3px solid transparent" : "3px solid var(--primary)",
+                        textDecoration: "none",
+                        color: "inherit",
+                      }}
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div className="card" style={{ padding: "clamp(14px, 3.5vw, 16px)", borderLeft: n.read_at ? "3px solid transparent" : "3px solid var(--primary)" }}>{inner}</div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
+          <Link
+            href="/dashboard/notificacoes"
+            style={{ display: "inline-block", marginTop: "clamp(12px, 3vw, 16px)", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 600, textDecoration: "none" }}
+          >
+            {t("notificationsViewAll")} →
+          </Link>
         </section>
       )}
       {pastAttendances.length > 0 && hasCheckIn && (
