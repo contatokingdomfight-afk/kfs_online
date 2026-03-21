@@ -3,10 +3,24 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const publicPaths = ["/", "/sign-in", "/sign-up", "/aula-experimental", "/lista_espera", "/auth/callback"];
 
-function isPublicPath(pathname: string) {
-  return publicPaths.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
-  );
+/** Aluno sem plano: só onboarding, escolher plano e callback OAuth. */
+const studentAllowedWithoutPlanPrefixes = ["/onboarding", "/escolher-plano", "/auth/callback"];
+
+function isPublicBrowserPath(pathname: string) {
+  return publicPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+function isPublicApiPath(pathname: string) {
+  return pathname === "/api/stripe/webhook" || pathname.startsWith("/api/cron/");
+}
+
+function isStudentAllowedWithoutPlan(pathname: string) {
+  return studentAllowedWithoutPlanPrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+/** Checkout Stripe: aluno autenticado ainda sem planId. */
+function isStripeCheckoutApi(pathname: string) {
+  return pathname === "/api/stripe/create-checkout-session";
 }
 
 export async function middleware(request: NextRequest) {
@@ -29,20 +43,72 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  const pathname = request.nextUrl.pathname;
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && !isPublicPath(request.nextUrl.pathname)) {
+  if (isPublicApiPath(pathname)) {
+    return response;
+  }
+
+  if (!user) {
+    if (isPublicBrowserPath(pathname)) {
+      return response;
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";
-    if (request.nextUrl.pathname.startsWith("/check-in/")) {
-      url.searchParams.set("next", request.nextUrl.pathname);
+    if (pathname.startsWith("/check-in/")) {
+      url.searchParams.set("next", pathname);
     }
     return NextResponse.redirect(url);
   }
 
-  return response;
+  if (isStripeCheckoutApi(pathname)) {
+    return response;
+  }
+
+  const { data: dbUser } = await supabase
+    .from("User")
+    .select("id, role")
+    .eq("authUserId", user.id)
+    .maybeSingle();
+
+  if (!dbUser) {
+    return response;
+  }
+
+  if (dbUser.role === "ADMIN" || dbUser.role === "COACH") {
+    return response;
+  }
+
+  if (dbUser.role !== "ALUNO") {
+    return response;
+  }
+
+  const { data: student } = await supabase
+    .from("Student")
+    .select("planId")
+    .eq("userId", dbUser.id)
+    .maybeSingle();
+
+  if (student?.planId) {
+    return response;
+  }
+
+  if (isStudentAllowedWithoutPlan(pathname)) {
+    return response;
+  }
+
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "É necessário um plano ativo. Escolhe um plano para continuar." }, { status: 403 });
+  }
+
+  const url = request.nextUrl.clone();
+  url.pathname = "/escolher-plano";
+  url.search = "";
+  return NextResponse.redirect(url);
 }
 
 export const config = {

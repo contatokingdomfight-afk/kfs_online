@@ -1,15 +1,18 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { PlanCard } from "./PlanCard";
+import { EscolherPlanoToolbar } from "./EscolherPlanoToolbar";
 
 export const dynamic = "force-dynamic";
 
-export default async function EscolherPlanoPage() {
+type Props = { searchParams: Promise<{ stripe?: string }> };
+
+export default async function EscolherPlanoPage({ searchParams }: Props) {
+  const { stripe: stripeQuery } = await searchParams;
   const [dbUser, studentId, locale] = await Promise.all([
     getCurrentDbUser(),
     getCurrentStudentId(),
@@ -21,8 +24,15 @@ export default async function EscolherPlanoPage() {
 
   let schoolId: string | null = null;
   if (studentId) {
-    const { data: student } = await supabase.from("Student").select("schoolId").eq("id", studentId).single();
+    const { data: student } = await supabase
+      .from("Student")
+      .select("schoolId, planId")
+      .eq("id", studentId)
+      .single();
     schoolId = student?.schoolId ?? null;
+    if (student?.planId) {
+      redirect("/dashboard");
+    }
   }
 
   let plansQuery = supabase
@@ -40,24 +50,35 @@ export default async function EscolherPlanoPage() {
 
   const t = getTranslations((locale as "pt" | "en") ?? "pt");
 
+  const stripeBanner =
+    stripeQuery === "success"
+      ? t("choosePlanStripeSuccess")
+      : stripeQuery === "cancel"
+        ? t("choosePlanStripeCancel")
+        : null;
+
   return (
     <main
       className="min-h-screen p-6 bg-bg"
       style={{ color: "var(--text-primary)" }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <Link
-          href="/dashboard"
-          style={{
-            display: "inline-block",
-            marginBottom: 24,
-            fontSize: 14,
-            color: "var(--text-secondary)",
-            textDecoration: "underline",
-          }}
-        >
-          ← {t("back")}
-        </Link>
+        <EscolherPlanoToolbar siteHomeLabel={t("choosePlanSiteHome")} signOutLabel={t("signOut")} />
+        {stripeBanner && (
+          <div
+            role="status"
+            className="card"
+            style={{
+              marginBottom: 24,
+              padding: "clamp(14px, 3.5vw, 18px)",
+              borderLeft: "4px solid var(--primary)",
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {stripeBanner}
+          </div>
+        )}
         <h1
           style={{
             fontSize: "clamp(24px, 5vw, 28px)",

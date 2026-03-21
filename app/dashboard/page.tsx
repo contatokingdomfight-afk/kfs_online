@@ -7,7 +7,6 @@ import { getThisWeekRange, MODALITY_LABELS, getWeekStartMonday } from "@/lib/les
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import { getPlanAccess } from "@/lib/plan-access";
 import { getApplicableMissionTemplates } from "@/lib/missions";
-import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
 import { NextLessonCard } from "./NextLessonCard";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";

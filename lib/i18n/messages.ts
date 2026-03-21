@@ -155,9 +155,14 @@ export const messages = {
     onboardingWizardSchoolNone: "Nenhuma escola disponível.",
     onboardingWizardFinish: "Finalizar configuração",
     choosePlanTitle: "Escolher plano",
-    choosePlanSubtitle: "Seleciona o plano que melhor se adequa aos teus objetivos.",
+    choosePlanSubtitle:
+      "Para aceder à área de aluno, biblioteca e restantes funcionalidades, escolhe e paga o teu plano. A equipa também pode ativar o teu acesso na secretaria.",
     choosePlanSelect: "Selecionar plano",
     choosePlanNoPlans: "Nenhum plano disponível no momento.",
+    choosePlanStripeSuccess:
+      "Pagamento concluído. O teu plano será ativado em segundos — atualiza a página ou espera a confirmação.",
+    choosePlanStripeCancel: "Pagamento cancelado. Podes escolher outro plano quando quiseres.",
+    choosePlanSiteHome: "Site público",
     freeTierSubscribeToParticipate: "Assine um plano para participar.",
     heightUnit: "cm",
     profileIntro: "Estes dados podem ser usados na avaliação médica e no acompanhamento do teu treino. Preenche o que quiseres partilhar.",
@@ -648,9 +653,14 @@ export const messages = {
     onboardingWizardSchoolNone: "No schools available.",
     onboardingWizardFinish: "Finish setup",
     choosePlanTitle: "Choose plan",
-    choosePlanSubtitle: "Select the plan that best fits your goals.",
+    choosePlanSubtitle:
+      "To access the student area, library and all features, choose and pay for a plan. Staff can also activate your access at the desk.",
     choosePlanSelect: "Select plan",
     choosePlanNoPlans: "No plans available at the moment.",
+    choosePlanStripeSuccess:
+      "Payment successful. Your plan will activate in a few seconds — refresh the page or wait for confirmation.",
+    choosePlanStripeCancel: "Payment cancelled. You can pick a plan whenever you're ready.",
+    choosePlanSiteHome: "Public site",
     freeTierSubscribeToParticipate: "Subscribe to a plan to participate.",
     heightUnit: "cm",
     profileIntro: "This data can be used for medical assessment and training follow-up. Fill in what you're comfortable sharing.",
