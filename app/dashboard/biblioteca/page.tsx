@@ -42,6 +42,7 @@ export default async function BibliotecaPage({ searchParams }: Props) {
   ]);
 
   const student = studentRes.data;
+  const isFreeTierLibrary = Boolean(studentId && student && !student.planId);
   let hasDigitalAccess = false;
   if (student?.planId) {
     const { data: plan } = await supabase
@@ -82,6 +83,7 @@ export default async function BibliotecaPage({ searchParams }: Props) {
             const hasAccessByPlan = c.included_in_digital_plan && hasDigitalAccess;
             const hasAccessByPurchase = purchasedCourseIds.has(c.id);
             const hasAccess = hasAccessByPlan || hasAccessByPurchase;
+            const canOpenCourse = hasAccess || isFreeTierLibrary;
             const cardContent = (
               <>
                 <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -113,6 +115,10 @@ export default async function BibliotecaPage({ searchParams }: Props) {
                     <span style={{ marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)" }}>
                       Ver curso →
                     </span>
+                  ) : canOpenCourse ? (
+                    <span style={{ marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)" }}>
+                      {t("libraryPreviewBadge")} →
+                    </span>
                   ) : (
                     <span style={{ marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
                       {t("includedInDigitalPlan")}
@@ -129,7 +135,7 @@ export default async function BibliotecaPage({ searchParams }: Props) {
             );
             return (
               <li key={c.id}>
-                {hasAccess ? (
+                {canOpenCourse ? (
                   <Link
                     href={`/dashboard/biblioteca/${c.id}`}
                     className="card"

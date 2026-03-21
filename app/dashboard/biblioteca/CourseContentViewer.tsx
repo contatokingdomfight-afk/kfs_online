@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ConcluirUnidadeButton } from "./ConcluirUnidadeButton";
 import { ConcluirModuloButton } from "./ConcluirModuloButton";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
@@ -33,7 +34,41 @@ type Props = {
   videoComingSoon: string;
   completePreviousUnit: string;
   videoUnavailable: string;
+  lockedPreview?: boolean;
+  lockedOverlayTitle?: string;
+  lockedOverlayBody?: string;
+  choosePlanLabel?: string;
 };
+
+function PreviewLockedBlock({
+  title,
+  body,
+  ctaLabel,
+}: {
+  title: string;
+  body: string;
+  ctaLabel: string;
+}) {
+  return (
+    <div
+      style={{
+        padding: "clamp(16px, 4vw, 20px)",
+        background: "var(--surface)",
+        borderTop: "1px solid var(--border)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        alignItems: "flex-start",
+      }}
+    >
+      <p style={{ margin: 0, fontWeight: 600, color: "var(--text-primary)", fontSize: 15 }}>{title}</p>
+      <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.45 }}>{body}</p>
+      <Link href="/escolher-plano" className="btn btn-primary" style={{ textDecoration: "none", fontSize: 14 }}>
+        {ctaLabel}
+      </Link>
+    </div>
+  );
+}
 
 export function CourseContentViewer({
   courseId,
@@ -45,6 +80,10 @@ export function CourseContentViewer({
   videoComingSoon,
   completePreviousUnit,
   videoUnavailable,
+  lockedPreview = false,
+  lockedOverlayTitle = "",
+  lockedOverlayBody = "",
+  choosePlanLabel = "",
 }: Props) {
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
 
@@ -79,6 +118,7 @@ export function CourseContentViewer({
               {units.map((u, uIdx) => {
                 const prevUnit = uIdx > 0 ? units[uIdx - 1] : null;
                 const isUnlocked = !prevUnit || completedUnitSet.has(prevUnit.id);
+                const canExpand = lockedPreview || isUnlocked;
                 const isExpanded = expandedUnits.has(u.id);
 
                 return (
@@ -88,16 +128,16 @@ export function CourseContentViewer({
                     style={{
                       padding: 0,
                       overflow: "hidden",
-                      opacity: isUnlocked ? 1 : 0.7,
+                      opacity: canExpand ? 1 : 0.7,
                     }}
                   >
                     <div
                       style={{
                         padding: "clamp(12px, 3vw, 16px)",
                         borderBottom: isExpanded ? "1px solid var(--border)" : "none",
-                        cursor: isUnlocked ? "pointer" : "default",
+                        cursor: canExpand ? "pointer" : "default",
                       }}
-                      onClick={() => isUnlocked && toggleUnit(u.id)}
+                      onClick={() => canExpand && toggleUnit(u.id)}
                     >
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                         <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -108,7 +148,8 @@ export function CourseContentViewer({
                             {uIdx + 1}. {u.name}
                           </span>
                         </span>
-                        {studentId &&
+                        {!lockedPreview &&
+                          studentId &&
                           (completedUnitSet.has(u.id) ? (
                             <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
                           ) : isUnlocked ? (
@@ -125,30 +166,36 @@ export function CourseContentViewer({
                         <p style={{ margin: "6px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{u.description}</p>
                       )}
                     </div>
-                    {isExpanded && isUnlocked && (
+                    {isExpanded && canExpand && (
                       <>
-                        {u.content_type === "VIDEO" && u.video_url ? (
-                          <VideoPlayer url={u.video_url} title={u.name} fallbackMessage={videoUnavailable} />
-                        ) : u.content_type === "TEXT" && u.text_content ? (
-                          <div
-                            style={{
-                              padding: "clamp(16px, 4vw, 20px)",
-                              fontSize: "clamp(14px, 3.5vw, 16px)",
-                              lineHeight: 1.6,
-                              color: "var(--text-primary)",
-                              whiteSpace: "pre-wrap",
-                            }}
-                          >
-                            {u.text_content}
-                          </div>
+                        {lockedPreview ? (
+                          <PreviewLockedBlock title={lockedOverlayTitle} body={lockedOverlayBody} ctaLabel={choosePlanLabel} />
                         ) : (
-                          <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-                            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>{videoComingSoon}</p>
-                          </div>
+                          <>
+                            {u.content_type === "VIDEO" && u.video_url ? (
+                              <VideoPlayer url={u.video_url} title={u.name} fallbackMessage={videoUnavailable} />
+                            ) : u.content_type === "TEXT" && u.text_content ? (
+                              <div
+                                style={{
+                                  padding: "clamp(16px, 4vw, 20px)",
+                                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                                  lineHeight: 1.6,
+                                  color: "var(--text-primary)",
+                                  whiteSpace: "pre-wrap",
+                                }}
+                              >
+                                {u.text_content}
+                              </div>
+                            ) : (
+                              <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                                <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>{videoComingSoon}</p>
+                              </div>
+                            )}
+                          </>
                         )}
                       </>
                     )}
-                    {isExpanded && !isUnlocked && (
+                    {isExpanded && !canExpand && (
                       <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
                         <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>{completePreviousUnit}</p>
                       </div>
@@ -168,7 +215,8 @@ export function CourseContentViewer({
                   <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
                     {idx + 1}. {mod.name}
                   </span>
-                  {studentId &&
+                  {!lockedPreview &&
+                    studentId &&
                     (completedModuleSet.has(mod.id) ? (
                       <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
                     ) : (
@@ -179,7 +227,11 @@ export function CourseContentViewer({
                   <p style={{ margin: "6px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{mod.description}</p>
                 )}
               </div>
-              <VideoPlayer url={mod.video_url!} title={mod.name} fallbackMessage={videoUnavailable} />
+              {lockedPreview ? (
+                <PreviewLockedBlock title={lockedOverlayTitle} body={lockedOverlayBody} ctaLabel={choosePlanLabel} />
+              ) : (
+                <VideoPlayer url={mod.video_url!} title={mod.name} fallbackMessage={videoUnavailable} />
+              )}
             </div>
           );
         }

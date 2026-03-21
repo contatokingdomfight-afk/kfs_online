@@ -7,6 +7,7 @@ import { getThisWeekRange, MODALITY_LABELS, getWeekStartMonday } from "@/lib/les
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import { getPlanAccess } from "@/lib/plan-access";
 import { getApplicableMissionTemplates } from "@/lib/missions";
+import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
 import { NextLessonCard } from "./NextLessonCard";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
@@ -14,7 +15,10 @@ import { ExploreSection } from "./ExploreSection";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 
-export default async function DashboardPage() {
+type PageProps = { searchParams: Promise<{ stripe?: string }> };
+
+export default async function DashboardPage({ searchParams }: PageProps) {
+  const { stripe: stripeQuery } = await searchParams;
   const supabase = await createClient();
   const [locale, dbUser] = await Promise.all([getLocaleFromCookies(), getCurrentDbUser()]);
   const t = getTranslations(locale as "pt" | "en");
@@ -168,8 +172,32 @@ export default async function DashboardPage() {
 
   const beltLabel = athleteStats?.currentBelt ? t(("belt_" + athleteStats.currentBelt) as "belt_WHITE") : "—";
 
+  const stripeBanner =
+    !hasPlan && stripeQuery === "success"
+      ? t("dashboardStripeSuccess")
+      : !hasPlan && stripeQuery === "cancel"
+        ? t("dashboardStripeCancel")
+        : null;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
+      {!hasPlan && stripeBanner && (
+        <div
+          role="status"
+          className="card"
+          style={{
+            padding: "clamp(14px, 3.5vw, 18px)",
+            borderLeft: "4px solid var(--primary)",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            color: "var(--text-primary)",
+          }}
+        >
+          {stripeBanner}
+        </div>
+      )}
+      {!hasPlan && (
+        <ChoosePlanCTA message={t("freeTierCtaMessage")} ctaLabel={t("freeTierCtaButton")} />
+      )}
       <NextLessonCard
         lesson={nextLesson}
         locationById={locationById}
@@ -182,40 +210,44 @@ export default async function DashboardPage() {
         statusLabels={STATUS_LABEL}
       />
 
-      <WarriorPanel
-        studentName={dbUser?.name ?? null}
-        currentBelt={athleteStats?.currentBelt ?? null}
-        currentXP={athleteStats?.currentXP ?? 0}
-        nextLevelXP={athleteStats?.nextLevelXP ?? 1000}
-        totalPresences={totalPresences}
-        currentMonthCount={currentMonthCount}
-        attendanceGoal={attendanceGoal}
-        hasCheckIn={hasCheckIn}
-        hasPerformanceTracking={planAccess.hasPerformanceTracking}
-        t={t as (key: string) => string}
-        beltLabel={beltLabel}
-      />
+      {hasPlan && (
+        <WarriorPanel
+          studentName={dbUser?.name ?? null}
+          currentBelt={athleteStats?.currentBelt ?? null}
+          currentXP={athleteStats?.currentXP ?? 0}
+          nextLevelXP={athleteStats?.nextLevelXP ?? 1000}
+          totalPresences={totalPresences}
+          currentMonthCount={currentMonthCount}
+          attendanceGoal={attendanceGoal}
+          hasCheckIn={hasCheckIn}
+          hasPerformanceTracking={planAccess.hasPerformanceTracking}
+          t={t as (key: string) => string}
+          beltLabel={beltLabel}
+        />
+      )}
 
-      <WhatIsNew
-        weekTheme={weekThemeForPrimary}
-        nextMission={nextMission}
-        coachFeedback={coachFeedback}
-        locale={locale as "pt" | "en"}
-        labels={{
-          title: t("dashboardWhatIsNewTitle"),
-          tabTheme: t("dashboardTabWeekTheme"),
-          tabMission: t("dashboardTabNextMission"),
-          tabFeedback: t("dashboardTabLastFeedback"),
-          viewTheory: t("dashboardViewTheory"),
-          viewVideo: t("dashboardViewVideo"),
-          noWeekTheme: t("dashboardNoWeekTheme"),
-          viewAllMissions: t("dashboardViewAllMissions"),
-          noMissions: t("dashboardNoMissions"),
-          noCoachFeedback: t("dashboardNoCoachFeedback"),
-        }}
-      />
+      {hasPlan && (
+        <WhatIsNew
+          weekTheme={weekThemeForPrimary}
+          nextMission={nextMission}
+          coachFeedback={coachFeedback}
+          locale={locale as "pt" | "en"}
+          labels={{
+            title: t("dashboardWhatIsNewTitle"),
+            tabTheme: t("dashboardTabWeekTheme"),
+            tabMission: t("dashboardTabNextMission"),
+            tabFeedback: t("dashboardTabLastFeedback"),
+            viewTheory: t("dashboardViewTheory"),
+            viewVideo: t("dashboardViewVideo"),
+            noWeekTheme: t("dashboardNoWeekTheme"),
+            viewAllMissions: t("dashboardViewAllMissions"),
+            noMissions: t("dashboardNoMissions"),
+            noCoachFeedback: t("dashboardNoCoachFeedback"),
+          }}
+        />
+      )}
 
-      <ExploreSection hasPerformanceTracking={planAccess.hasPerformanceTracking} t={t as (key: string) => string} />
+      {hasPlan && <ExploreSection hasPerformanceTracking={planAccess.hasPerformanceTracking} t={t as (key: string) => string} />}
 
       <div className="card">
         <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", marginBottom: 12 }}>

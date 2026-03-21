@@ -21,15 +21,17 @@ export default async function CursoDetailPage({ params }: Props) {
   };
   const studentId = await getCurrentStudentId();
 
+  let planId: string | null = null;
   let hasDigitalAccess = false;
   let hasPurchased = false;
   if (studentId) {
     const { data: student } = await supabase.from("Student").select("planId").eq("id", studentId).single();
-    if (student?.planId) {
+    planId = student?.planId ?? null;
+    if (planId) {
       const { data: plan } = await supabase
         .from("Plan")
         .select("includes_digital_access")
-        .eq("id", student.planId)
+        .eq("id", planId)
         .eq("is_active", true)
         .single();
       hasDigitalAccess = plan?.includes_digital_access === true;
@@ -81,7 +83,8 @@ export default async function CursoDetailPage({ params }: Props) {
   }
 
   const hasAccess = (course.included_in_digital_plan && hasDigitalAccess) || hasPurchased;
-  if (!hasAccess) {
+  const isFreeTierPreview = Boolean(studentId && !planId && !hasPurchased);
+  if (!hasAccess && !isFreeTierPreview) {
     return (
       <div>
         <p style={{ color: "var(--text-secondary)", marginBottom: 16 }}>
@@ -93,6 +96,8 @@ export default async function CursoDetailPage({ params }: Props) {
       </div>
     );
   }
+
+  const lockedPreview = isFreeTierPreview;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
@@ -126,41 +131,86 @@ export default async function CursoDetailPage({ params }: Props) {
         </div>
       )}
 
+      {lockedPreview && (
+        <div
+          className="card"
+          style={{
+            padding: "clamp(14px, 3.5vw, 18px)",
+            borderLeft: "4px solid var(--primary)",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            color: "var(--text-primary)",
+          }}
+        >
+          <p style={{ margin: "0 0 8px 0", fontWeight: 600 }}>{t("freeTierCourseLockedTitle")}</p>
+          <p style={{ margin: 0, color: "var(--text-secondary)" }}>{t("freeTierCourseLockedBody")}</p>
+          <Link href="/escolher-plano" className="btn btn-primary" style={{ marginTop: 12, textDecoration: "none", display: "inline-flex" }}>
+            {t("freeTierCtaButton")}
+          </Link>
+        </div>
+      )}
       {moduleList.length > 0 ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
-          {(() => {
-            const totalUnits = [...unitsByModule.values()].reduce((s, list) => s + list.length, 0);
-            const completedUnits = [...unitsByModule.values()].reduce(
-              (s, list) => s + list.filter((u) => completedUnitIds.has(u.id)).length,
-              0
-            );
-            const legacyModules = moduleList.filter((m) => (unitsByModule.get(m.id) ?? []).length === 0 && m.video_url);
-            const completedLegacy = legacyModules.filter((m) => completedModuleIds.has(m.id)).length;
-            const totalForProgress = totalUnits + legacyModules.length;
-            const completedForProgress = completedUnits + completedLegacy;
-            return (
-              <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
-                {completedForProgress} / {totalForProgress} itens concluídos
-              </p>
-            );
-          })()}
+          {!lockedPreview &&
+            (() => {
+              const totalUnits = [...unitsByModule.values()].reduce((s, list) => s + list.length, 0);
+              const completedUnits = [...unitsByModule.values()].reduce(
+                (s, list) => s + list.filter((u) => completedUnitIds.has(u.id)).length,
+                0
+              );
+              const legacyModules = moduleList.filter((m) => (unitsByModule.get(m.id) ?? []).length === 0 && m.video_url);
+              const completedLegacy = legacyModules.filter((m) => completedModuleIds.has(m.id)).length;
+              const totalForProgress = totalUnits + legacyModules.length;
+              const completedForProgress = completedUnits + completedLegacy;
+              return (
+                <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
+                  {completedForProgress} / {totalForProgress} itens concluídos
+                </p>
+              );
+            })()}
           <CourseContentViewer
             courseId={courseId}
             moduleList={moduleList}
             unitsByModule={Object.fromEntries(unitsByModule)}
             completedUnitIds={[...completedUnitIds]}
             completedModuleIds={[...completedModuleIds]}
-            studentId={studentId}
+            studentId={lockedPreview ? null : studentId}
             videoComingSoon={t("videoComingSoon")}
             completePreviousUnit={t("completePreviousUnit")}
             videoUnavailable={t("videoUnavailable")}
+            lockedPreview={lockedPreview}
+            lockedOverlayTitle={t("freeTierCourseLockedTitle")}
+            lockedOverlayBody={t("freeTierCourseLockedBody")}
+            choosePlanLabel={t("freeTierCtaButton")}
           />
         </div>
       ) : (
         <>
           {course.video_url ? (
-            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-              <VideoPlayer url={course.video_url} title={course.name} fallbackMessage={t("videoUnavailable")} />
+            <div className="card" style={{ padding: 0, overflow: "hidden", position: "relative" }}>
+              {lockedPreview ? (
+                <div
+                  style={{
+                    minHeight: 220,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 12,
+                    padding: 24,
+                    background: "var(--surface)",
+                  }}
+                >
+                  <p style={{ margin: 0, fontWeight: 600, textAlign: "center" }}>{t("freeTierCourseLockedTitle")}</p>
+                  <p style={{ margin: 0, color: "var(--text-secondary)", textAlign: "center", fontSize: 14 }}>
+                    {t("freeTierCourseLockedBody")}
+                  </p>
+                  <Link href="/escolher-plano" className="btn btn-primary" style={{ textDecoration: "none" }}>
+                    {t("freeTierCtaButton")}
+                  </Link>
+                </div>
+              ) : (
+                <VideoPlayer url={course.video_url} title={course.name} fallbackMessage={t("videoUnavailable")} />
+              )}
             </div>
           ) : (
             <div className="card" style={{ padding: "clamp(20px, 5vw, 24px)" }}>

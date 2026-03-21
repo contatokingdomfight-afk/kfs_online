@@ -58,13 +58,13 @@ Este é o percurso que um novo utilizador fará desde o registo até à ativaç�
 *   **Objetivo:** Oferecer uma amostra funcional da plataforma para criar desejo e demonstrar valor, guiando o utilizador para a subscrição.
 *   **Lógica de Renderização:** A página `/dashboard` verifica se `student.planId` é `null`. Se for, renderiza esta versão limitada.
 *   **Componentes da UI:**
-    *   **`ChoosePlanCTA` Banner:** Um banner no topo da página, que não pode ser fechado.
-        *   **Texto:** "Seu perfil está pronto! Escolha um plano para desbloquear as aulas, a biblioteca e começar a treinar de verdade. 💪"
-        *   **Ação:** Botão `[ ✨ Ver Planos e Preços ]` que leva para `/escolher-plano`.
+    *   **`ChoosePlanCTA` Banner:** No topo do `/dashboard`, com texto e CTA traduzidos (`lib/i18n/messages.ts`, chaves `freeTierCtaMessage` / `freeTierCtaButton`).
     *   **Conteúdo Limitado (Demonstração):**
-        *   **Agenda de Aulas:** A lista de aulas é visível, mas os botões de ação ("Vou", "Check-in") estão desativados. Um ícone de cadeado (🔒) com uma dica ("Assine um plano para participar") pode ser usado.
-        *   **Biblioteca de Cursos:** A lista de cursos é visível. Ao clicar num curso, o utilizador vê a lista de aulas, mas o leitor de vídeo está bloqueado por uma sobreposição com a mensagem "Conteúdo exclusivo para assinantes" e um link para a página de planos.
-        *   **Outras áreas:** O utilizador pode aceder ao seu perfil para editar os dados que inseriu no onboarding.
+        *   **Agenda de Aulas:** Próxima aula e contexto visíveis; ações "Vou" / check-in desativadas com mensagem 🔒 (`freeTierSubscribeToParticipate`).
+        *   **Biblioteca:** Catálogo com entrada em modo pré-visualização; ao abrir um curso, módulos e unidades expandem mas vídeo/texto ficam bloqueados com CTA para `/escolher-plano` (`CourseContentViewer` com `lockedPreview`).
+        *   **Painel guerreiro, Tema da semana, Explorar:** Ocultos até existir `planId` (dashboard mais focado na conversão).
+        *   **Perfil:** `/dashboard/perfil` (e upload de avatar via API permitidos no middleware).
+    *   **Após Stripe:** `success_url` / `cancel_url` voltam ao `/dashboard?stripe=…` com aviso no topo até o webhook atualizar o plano.
 
 ---
 
@@ -94,7 +94,7 @@ Este é o percurso que um novo utilizador fará desde o registo até à ativaç�
 
 #### **Requisitos:**
 
-1.  **Middleware (`middleware.ts`):** A lógica precisa ser ajustada para permitir que utilizadores autenticados com `student.planId === null` acedam a um conjunto específico de páginas (`/dashboard`, `/perfil`, `/escolher-plano`) enquanto bloqueia outras (`/check-in`).
+1.  **Middleware (`middleware.ts`):** Alunos com `student.planId === null` acedem a `/dashboard`, `/dashboard/biblioteca`, `/dashboard/perfil`, `/onboarding`, `/escolher-plano` e `/auth/callback`; as restantes rotas (ex.: `/check-in`, loja, performance) redirecionam para `/escolher-plano`. APIs REST (exceto checkout Stripe, webhook, cron e `POST /api/profile/avatar`) respondem 403 até haver plano.
 2.  **Base de Dados (`schema.prisma`):** Adicionar o campo `hasCompletedOnboarding: Boolean @default(false)` ao modelo `StudentProfile`.
 3.  **Rotas:** Criar as novas rotas `/onboarding` e `/escolher-plano`.
 4.  **Componentes Condicionais:** Refatorar a página `/dashboard` e os componentes filhos para renderizar de forma diferente com base na existência de `student.planId`.

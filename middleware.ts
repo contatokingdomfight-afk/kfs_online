@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const publicPaths = ["/", "/sign-in", "/sign-up", "/aula-experimental", "/lista_espera", "/auth/callback"];
 
-/** Aluno sem plano: só onboarding, escolher plano e callback OAuth. */
+/** Aluno sem plano: onboarding, escolher plano, callback OAuth e free tier (dashboard + biblioteca + perfil). */
 const studentAllowedWithoutPlanPrefixes = ["/onboarding", "/escolher-plano", "/auth/callback"];
 
 function isPublicBrowserPath(pathname: string) {
@@ -16,6 +16,14 @@ function isPublicApiPath(pathname: string) {
 
 function isStudentAllowedWithoutPlan(pathname: string) {
   return studentAllowedWithoutPlanPrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+/** Free tier: explora agenda (só leitura), biblioteca em pré-visualização e perfil. */
+function isStudentFreeTierPath(pathname: string) {
+  if (pathname === "/dashboard") return true;
+  if (pathname.startsWith("/dashboard/biblioteca")) return true;
+  if (pathname.startsWith("/dashboard/perfil")) return true;
+  return false;
 }
 
 /** Checkout Stripe: aluno autenticado ainda sem planId. */
@@ -97,7 +105,11 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  if (isStudentAllowedWithoutPlan(pathname)) {
+  if (isStudentAllowedWithoutPlan(pathname) || isStudentFreeTierPath(pathname)) {
+    return response;
+  }
+
+  if (pathname === "/api/profile/avatar") {
     return response;
   }
 

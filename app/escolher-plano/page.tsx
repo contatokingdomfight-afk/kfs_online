@@ -63,7 +63,11 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
       style={{ color: "var(--text-primary)" }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <EscolherPlanoToolbar siteHomeLabel={t("choosePlanSiteHome")} signOutLabel={t("signOut")} />
+        <EscolherPlanoToolbar
+          siteHomeLabel={t("choosePlanSiteHome")}
+          dashboardLabel={t("choosePlanBackToDashboard")}
+          signOutLabel={t("signOut")}
+        />
         {stripeBanner && (
           <div
             role="status"

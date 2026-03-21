@@ -109,8 +109,8 @@ export async function POST(request: NextRequest) {
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: priceToUse, quantity: 1 }],
-      success_url: `${baseUrl}/escolher-plano?stripe=success`,
-      cancel_url: `${baseUrl}/escolher-plano?stripe=cancel`,
+      success_url: `${baseUrl}/dashboard?stripe=success`,
+      cancel_url: `${baseUrl}/dashboard?stripe=cancel`,
       subscription_data: {
         metadata: { studentId },
         trial_period_days: undefined,

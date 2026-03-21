@@ -156,13 +156,24 @@ export const messages = {
     onboardingWizardFinish: "Finalizar configuração",
     choosePlanTitle: "Escolher plano",
     choosePlanSubtitle:
-      "Para aceder à área de aluno, biblioteca e restantes funcionalidades, escolhe e paga o teu plano. A equipa também pode ativar o teu acesso na secretaria.",
+      "Compara os planos e subscreve online, ou fala com a secretaria. Explora o dashboard em modo de demonstração enquanto decides.",
     choosePlanSelect: "Selecionar plano",
+    freeTierCtaMessage:
+      "O teu perfil está pronto. Escolhe um plano para desbloquear check-in nas aulas, vídeos na biblioteca e toda a experiência Kingdom. Enquanto isso, podes ver a agenda e a estrutura dos cursos.",
+    freeTierCtaButton: "✨ Ver planos e preços",
+    dashboardStripeSuccess:
+      "Pagamento concluído. O teu plano será ativado em segundos — atualiza a página se ainda vires o modo demonstração.",
+    dashboardStripeCancel: "Pagamento cancelado. Continua a explorar ou escolhe um plano quando quiseres.",
+    freeTierCourseLockedTitle: "Conteúdo para subscritores",
+    freeTierCourseLockedBody:
+      "Assina um plano com biblioteca digital ou compra este curso na loja para ver vídeos e materiais.",
+    libraryPreviewBadge: "Pré-visualização",
     choosePlanNoPlans: "Nenhum plano disponível no momento.",
     choosePlanStripeSuccess:
       "Pagamento concluído. O teu plano será ativado em segundos — atualiza a página ou espera a confirmação.",
     choosePlanStripeCancel: "Pagamento cancelado. Podes escolher outro plano quando quiseres.",
     choosePlanSiteHome: "Site público",
+    choosePlanBackToDashboard: "Área de aluno",
     freeTierSubscribeToParticipate: "Assine um plano para participar.",
     heightUnit: "cm",
     profileIntro: "Estes dados podem ser usados na avaliação médica e no acompanhamento do teu treino. Preenche o que quiseres partilhar.",
@@ -654,13 +665,24 @@ export const messages = {
     onboardingWizardFinish: "Finish setup",
     choosePlanTitle: "Choose plan",
     choosePlanSubtitle:
-      "To access the student area, library and all features, choose and pay for a plan. Staff can also activate your access at the desk.",
+      "Compare plans and subscribe online, or talk to staff. Explore the dashboard in demo mode while you decide.",
     choosePlanSelect: "Select plan",
+    freeTierCtaMessage:
+      "Your profile is ready. Choose a plan to unlock class check-in, library videos and the full Kingdom experience. Meanwhile you can browse the schedule and course structure.",
+    freeTierCtaButton: "✨ View plans and pricing",
+    dashboardStripeSuccess:
+      "Payment successful. Your plan will activate in a few seconds — refresh if you still see demo mode.",
+    dashboardStripeCancel: "Payment cancelled. Keep exploring or pick a plan whenever you're ready.",
+    freeTierCourseLockedTitle: "Subscriber-only content",
+    freeTierCourseLockedBody:
+      "Subscribe to a plan with digital library access or purchase this course in the store to unlock videos and materials.",
+    libraryPreviewBadge: "Preview",
     choosePlanNoPlans: "No plans available at the moment.",
     choosePlanStripeSuccess:
       "Payment successful. Your plan will activate in a few seconds — refresh the page or wait for confirmation.",
     choosePlanStripeCancel: "Payment cancelled. You can pick a plan whenever you're ready.",
     choosePlanSiteHome: "Public site",
+    choosePlanBackToDashboard: "Student area",
     freeTierSubscribeToParticipate: "Subscribe to a plan to participate.",
     heightUnit: "cm",
     profileIntro: "This data can be used for medical assessment and training follow-up. Fill in what you're comfortable sharing.",
