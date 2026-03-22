@@ -5,6 +5,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { startGracePeriodOnLatePayment } from "@/lib/payment-grace";
 
 export type RenewalPending = {
   studentId: string;
@@ -103,6 +104,7 @@ export async function generateMonthlyPayments(
     if (error) {
       return { created, skipped: pending.length - created, error: error.message };
     }
+    await startGracePeriodOnLatePayment(supabase, p.studentId, referenceMonth);
     created++;
   }
 

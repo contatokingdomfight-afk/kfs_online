@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { clearGraceOnPaidPayment } from "@/lib/payment-grace";
 import { stripe, STRIPE_WEBHOOK_SECRET } from "@/lib/stripe/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
@@ -57,6 +58,9 @@ export async function POST(request: NextRequest) {
             planId: isActive && planId ? planId : null,
           })
           .eq("id", studentId);
+        if (isActive && planId) {
+          await clearGraceOnPaidPayment(supabase, studentId);
+        }
         break;
       }
       case "customer.subscription.deleted": {
@@ -92,6 +96,7 @@ export async function POST(request: NextRequest) {
           status: "PAID",
           referenceMonth,
         });
+        await clearGraceOnPaidPayment(supabase, studentId);
         break;
       }
       default:

@@ -4,7 +4,12 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type NotificationType = "PRESENCE_CONFIRMED" | "GENERAL";
+export type NotificationType =
+  | "PRESENCE_CONFIRMED"
+  | "GENERAL"
+  | "PAYMENT_OVERDUE"
+  | "PAYMENT_SUSPENDED"
+  | "PAYMENT_RESTORED";
 
 type InsertPayload = {
   studentId: string;
