@@ -279,3 +279,116 @@ export async function promoteStudentToRole(
   revalidatePath("/admin/coaches");
   return { success: true };
 }
+
+export type DeleteStudentResult = { error?: string };
+
+/**
+ * Remove o aluno, dados associados, registo User e conta Supabase Auth.
+ * Só para utilizadores com role ALUNO. Não remove cursos onde o aluno é criador principal.
+ */
+export async function deleteStudent(
+  _prev: DeleteStudentResult | null,
+  formData: FormData
+): Promise<DeleteStudentResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const studentId = (formData.get("studentId") as string)?.trim();
+  if (!studentId) return { error: "ID do aluno inválido." };
+
+  const supabase = createAdminClient();
+
+  const { data: student } = await supabase
+    .from("Student")
+    .select("id, userId, stripeSubscriptionId")
+    .eq("id", studentId)
+    .single();
+
+  if (!student) return { error: "Aluno não encontrado." };
+
+  if (dbUser.id === student.userId) {
+    return { error: "Não podes eliminar a tua própria conta neste ecrã." };
+  }
+
+  const { data: user } = await supabase
+    .from("User")
+    .select("id, role, authUserId")
+    .eq("id", student.userId)
+    .single();
+
+  if (!user) return { error: "Utilizador não encontrado." };
+  if (user.role !== "ALUNO") {
+    return {
+      error:
+        "Este utilizador já não é só aluno (Professor ou Admin). Gere o perfil em Coaches ou altera o papel antes de eliminar.",
+    };
+  }
+
+  const { count: courseCreatorCount } = await supabase
+    .from("Course")
+    .select("id", { count: "exact", head: true })
+    .eq("creator_student_id", studentId);
+
+  if (courseCreatorCount && courseCreatorCount > 0) {
+    return {
+      error:
+        "Este aluno é criador principal de um ou mais cursos. Transfere a propriedade ou remove os cursos em Admin → Cursos antes de eliminar.",
+    };
+  }
+
+  const subId = (student as { stripeSubscriptionId?: string | null }).stripeSubscriptionId;
+  if (subId && stripe) {
+    try {
+      await stripe.subscriptions.cancel(subId);
+    } catch (e) {
+      console.warn("Stripe subscription cancel before student delete:", e);
+    }
+  }
+
+  await supabase.from("Coach").update({ studentId: null }).eq("studentId", studentId);
+
+  const { data: athlete } = await supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle();
+  if (athlete?.id) {
+    const aid = athlete.id;
+    await supabase.from("Comment").delete().eq("targetType", "ATHLETE").eq("targetId", aid);
+    await supabase.from("AthleteEvaluation").delete().eq("athleteId", aid);
+    await supabase.from("AthleteMissionCompletion").delete().eq("athleteId", aid);
+    await supabase.from("AthleteMissionAward").delete().eq("athleteId", aid);
+    await supabase.from("Athlete").delete().eq("id", aid);
+  }
+
+  await supabase.from("Attendance").delete().eq("studentId", studentId);
+  await supabase.from("Payment").delete().eq("studentId", studentId);
+  await supabase.from("StudentPhysicalAssessment").delete().eq("studentId", studentId);
+  await supabase.from("Notification").delete().eq("studentId", studentId);
+  await supabase.from("StudentBadge").delete().eq("studentId", studentId);
+  await supabase.from("StudentProfile").delete().eq("studentId", studentId);
+  await supabase.from("CoursePurchase").delete().eq("studentId", studentId);
+  await supabase.from("CourseProgress").delete().eq("student_id", studentId);
+  await supabase.from("CourseUnitProgress").delete().eq("student_id", studentId);
+  await supabase.from("EventRegistration").delete().eq("studentId", studentId);
+  await supabase.from("CourseCreator").delete().eq("student_id", studentId);
+
+  const { error: delStudentErr } = await supabase.from("Student").delete().eq("id", studentId);
+  if (delStudentErr) return { error: delStudentErr.message };
+
+  const { error: delUserErr } = await supabase.from("User").delete().eq("id", student.userId);
+  if (delUserErr) return { error: delUserErr.message };
+
+  const authId = user.authUserId as string | undefined;
+  if (authId) {
+    const { error: authErr } = await supabase.auth.admin.deleteUser(authId);
+    if (authErr) {
+      console.error("deleteStudent: auth.admin.deleteUser failed:", authErr);
+      return {
+        error:
+          "Dados do aluno removidos, mas falhou a remoção da conta de login no Supabase Auth. Remove manualmente em Authentication → Users.",
+      };
+    }
+  }
+
+  revalidatePath("/admin/alunos");
+  revalidatePath("/admin/atletas");
+  revalidatePath("/admin/financeiro");
+  redirect("/admin/alunos");
+}

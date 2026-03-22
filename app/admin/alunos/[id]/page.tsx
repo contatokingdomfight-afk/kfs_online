@@ -16,6 +16,7 @@ import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AvaliarAlunoButton } from "@/app/coach/alunos/[id]/AvaliarAlunoButton";
+import { DeleteStudentButton } from "./DeleteStudentButton";
 
 const GENERAL_LAST_N = 10;
 
@@ -291,6 +292,14 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
           />
         </div>
       </details>
+
+      {user?.role === "ALUNO" && (
+        <DeleteStudentButton
+          studentId={studentId}
+          studentName={user?.name ?? ""}
+          studentEmail={user?.email ?? ""}
+        />
+      )}
     </div>
   );
 }
