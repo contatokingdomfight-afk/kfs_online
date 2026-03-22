@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useFormState } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { deleteStudent } from "../actions";
 
 export function DeleteStudentButton({
@@ -45,6 +46,7 @@ export function DeleteStudentButton({
         </button>
       ) : (
         <form action={formAction}>
+          <FormLoadingModal message="A remover o aluno e a conta…" />
           <input type="hidden" name="studentId" value={studentId} />
           <p style={{ margin: "0 0 10px 0", fontSize: 14, color: "var(--text-primary)" }}>
             Confirmar eliminação definitiva de <strong>{studentName || studentEmail}</strong> ({studentEmail})?

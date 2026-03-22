@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useFormState } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { deleteCoach } from "../actions";
 
 export function DeleteCoachButton({ coachId, coachName }: { coachId: string; coachName: string }) {
@@ -19,10 +20,10 @@ export function DeleteCoachButton({ coachId, coachName }: { coachId: string; coa
       }}
     >
       <h3 style={{ margin: "0 0 8px 0", fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--danger)" }}>
-        Excluir coach
+        Excluir acesso de professor
       </h3>
       <p style={{ margin: "0 0 12px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-        Remove o acesso de professor da plataforma. O utilizador continuará a poder fazer login como utilizador normal (sem área coach). Esta ação não pode ser desfeita.
+        Remove o acesso à área de professor. O utilizador continuará a poder fazer login como utilizador normal (sem área coach). Esta ação não pode ser desfeita.
       </p>
       {!confirm ? (
         <button
@@ -35,6 +36,7 @@ export function DeleteCoachButton({ coachId, coachName }: { coachId: string; coa
         </button>
       ) : (
         <form action={formAction}>
+          <FormLoadingModal message="A remover o acesso de professor…" />
           <input type="hidden" name="coachId" value={coachId} />
           <p style={{ margin: "0 0 10px 0", fontSize: 14, color: "var(--text-primary)" }}>
             Confirmar exclusão do acesso de <strong>{coachName}</strong>?
