@@ -73,11 +73,40 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
 
   const { data: plans } = await supabase
     .from("Plan")
-    .select("id, name, price_monthly")
+    .select("id, name, price_monthly, schoolId, is_active")
     .eq("is_active", true)
-    .eq("schoolId", student.schoolId)
     .order("price_monthly", { ascending: true });
-  const planOptions = (plans ?? []).map((p) => ({ id: p.id, label: `${p.name} (€${Number(p.price_monthly).toFixed(0)}/mês)` }));
+
+  let planRows = [...(plans ?? [])];
+  const currentPlanId = student.planId;
+  if (currentPlanId && !planRows.some((p) => p.id === currentPlanId)) {
+    const { data: currentPlan } = await supabase
+      .from("Plan")
+      .select("id, name, price_monthly, schoolId, is_active")
+      .eq("id", currentPlanId)
+      .maybeSingle();
+    if (currentPlan) planRows = [currentPlan, ...planRows];
+  }
+
+  const schoolIds = [...new Set(planRows.map((p) => p.schoolId).filter(Boolean))] as string[];
+  const { data: plansSchools } =
+    schoolIds.length > 0
+      ? await supabase.from("School").select("id, name").in("id", schoolIds)
+      : { data: [] as { id: string; name: string | null }[] };
+  const schoolNameById = new Map((plansSchools ?? []).map((s) => [s.id, s.name ?? s.id]));
+
+  const studentSchoolId = (student as { schoolId?: string }).schoolId ?? "";
+  planRows.sort((a, b) => {
+    const aHere = a.schoolId === studentSchoolId ? 0 : 1;
+    const bHere = b.schoolId === studentSchoolId ? 0 : 1;
+    if (aHere !== bHere) return aHere - bHere;
+    return Number(a.price_monthly) - Number(b.price_monthly);
+  });
+
+  const planOptions = planRows.map((p) => ({
+    id: p.id,
+    label: `${p.name} (€${Number(p.price_monthly).toFixed(0)}/mês) — ${schoolNameById.get(p.schoolId ?? "") ?? "Escola?"}`,
+  }));
   const { data: modalityRows } = await supabase
     .from("ModalityRef")
     .select("code, name")
@@ -86,7 +115,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     { code: "", name: "Todas as modalidades" },
     ...(modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code })),
   ];
-  const studentPlan = (plans ?? []).find((p) => p.id === student.planId);
+  const studentPlan = planRows.find((p) => p.id === student.planId);
   const planName = studentPlan?.name ? String(studentPlan.name) : "";
   const isPlanWithoutModality = planName.includes("Presencial MMA") || planName.includes("Kingdom Online");
   const rawPrimary = (student as { primaryModality?: string | null }).primaryModality ?? null;

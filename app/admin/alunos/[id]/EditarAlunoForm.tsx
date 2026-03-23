@@ -220,6 +220,9 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Plano
         </span>
+        <span style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 2 }}>
+          Lista todos os planos ativos (com a escola em cada linha). O plano tem de ser da mesma escola indicada acima para o guardar.
+        </span>
         <select name="planId" className="input" defaultValue={initialPlanId || ""}>
           <option value="">Sem plano atribuído</option>
           {planOptions.map((p) => (
