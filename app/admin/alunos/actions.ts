@@ -107,13 +107,8 @@ export async function updateStudent(
     if (planName.includes("Presencial MMA") || planName.includes("Kingdom Online")) {
       newPrimaryModality = null;
     }
-    // Plano tem de ser da mesma escola do aluno (evita guardar "com sucesso" com plano anulado)
-    if (schoolId && plan?.schoolId && plan.schoolId !== schoolId) {
-      return {
-        error:
-          "O plano selecionado pertence a outra escola. Escolhe um plano da escola do aluno (ou cria o plano em Admin → Planos para essa escola).",
-      };
-    }
+    // O mesmo catálogo de planos pode ser reutilizado entre escolas (registo Plan liga-se a uma escola
+    // para organização admin; o aluno mantém a sua escola em Student.schoolId).
   }
 
   const { data: student } = await supabase
@@ -176,8 +171,9 @@ export async function setStudentFullAccess(
     }
   }
 
-  // Melhor plano = plataforma digital + todas as modalidades; ordenar por preço DESC para preferir Kingdom FULL
-  const { data: fullPlan } = await supabase
+  // Preferir plano FULL na escola do aluno; se não existir, usar qualquer plano ativo equivalente (catálogo partilhado).
+  let fullPlan: { id: string } | null = null;
+  const { data: fullPlanForSchool } = await supabase
     .from("Plan")
     .select("id")
     .eq("schoolId", student.schoolId)
@@ -188,10 +184,25 @@ export async function setStudentFullAccess(
     .limit(1)
     .maybeSingle();
 
+  if (fullPlanForSchool) {
+    fullPlan = fullPlanForSchool;
+  } else {
+    const { data: fullPlanAny } = await supabase
+      .from("Plan")
+      .select("id")
+      .eq("is_active", true)
+      .eq("includes_digital_access", true)
+      .eq("modality_scope", "ALL")
+      .order("price_monthly", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    fullPlan = fullPlanAny ?? null;
+  }
+
   if (!fullPlan) {
     return {
       error:
-        "Nenhum plano com acesso total (plataforma + ginásio) encontrado para esta escola. Crie um plano com «Inclui plataforma digital» e «Todas as modalidades» em Admin → Planos.",
+        "Nenhum plano com acesso total encontrado. Crie pelo menos um plano ativo com «Inclui plataforma digital» e «Todas as modalidades» em Admin → Planos.",
     };
   }
 

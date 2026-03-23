@@ -116,7 +116,7 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
             <FullAccessFormInner studentId={studentId} />
           </form>
           <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
-            Atribui um plano com plataforma digital e todas as modalidades. Requer um plano desse tipo na escola do aluno.
+            Atribui um plano com plataforma digital e todas as modalidades (usa o plano FULL da escola do aluno, ou qualquer plano equivalente no catálogo).
           </p>
           {fullAccessState?.success && (
             <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Acesso total atribuído.</p>
@@ -221,7 +221,7 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
           Plano
         </span>
         <span style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 2 }}>
-          Lista todos os planos ativos (com a escola em cada linha). O plano tem de ser da mesma escola indicada acima para o guardar.
+          Planos ativos do catálogo (a escola indicada é a do registo do plano na admin; o aluno mantém a escola do campo «Escola» acima).
         </span>
         <select name="planId" className="input" defaultValue={initialPlanId || ""}>
           <option value="">Sem plano atribuído</option>
