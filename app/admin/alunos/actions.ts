@@ -107,9 +107,12 @@ export async function updateStudent(
     if (planName.includes("Presencial MMA") || planName.includes("Kingdom Online")) {
       newPrimaryModality = null;
     }
-    // Se mudou de escola e o plano é de outra escola, desatribuir plano
+    // Plano tem de ser da mesma escola do aluno (evita guardar "com sucesso" com plano anulado)
     if (schoolId && plan?.schoolId && plan.schoolId !== schoolId) {
-      effectivePlanId = null;
+      return {
+        error:
+          "O plano selecionado pertence a outra escola. Escolhe um plano da escola do aluno (ou cria o plano em Admin → Planos para essa escola).",
+      };
     }
   }
 

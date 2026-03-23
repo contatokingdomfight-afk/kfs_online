@@ -21,6 +21,25 @@ function SubmitGuardarButton({ saveLabel }: { saveLabel: string }) {
   );
 }
 
+function FullAccessFormInner({ studentId }: { studentId: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <>
+      <FormLoadingModal message="A atribuir acesso à plataforma…" />
+      <input type="hidden" name="studentId" value={studentId} />
+      <button
+        type="submit"
+        className="btn btn-primary"
+        style={{ fontSize: 14, padding: "8px 14px" }}
+        disabled={pending}
+        aria-busy={pending}
+      >
+        {pending ? "A atribuir acesso…" : "Atribuir acesso total (plataforma + ginásio)"}
+      </button>
+    </>
+  );
+}
+
 type Props = {
   studentId: string;
   initialName: string;
@@ -57,6 +76,9 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
   useEffect(() => {
     if (promoteState?.success) router.refresh();
   }, [promoteState?.success, router]);
+  useEffect(() => {
+    if (state?.success && !state?.error) router.refresh();
+  }, [state?.success, state?.error, router]);
 
   return (
     <>
@@ -91,14 +113,7 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
             Acesso rápido
           </p>
           <form action={fullAccessFormAction}>
-            <input type="hidden" name="studentId" value={studentId} />
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ fontSize: 14, padding: "8px 14px" }}
-            >
-              Atribuir acesso total (plataforma + ginásio)
-            </button>
+            <FullAccessFormInner studentId={studentId} />
           </form>
           <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
             Atribui um plano com plataforma digital e todas as modalidades. Requer um plano desse tipo na escola do aluno.

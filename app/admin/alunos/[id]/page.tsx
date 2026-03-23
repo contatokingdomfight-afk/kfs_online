@@ -75,6 +75,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     .from("Plan")
     .select("id, name, price_monthly")
     .eq("is_active", true)
+    .eq("schoolId", student.schoolId)
     .order("price_monthly", { ascending: true });
   const planOptions = (plans ?? []).map((p) => ({ id: p.id, label: `${p.name} (€${Number(p.price_monthly).toFixed(0)}/mês)` }));
   const { data: modalityRows } = await supabase
