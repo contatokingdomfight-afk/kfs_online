@@ -15,20 +15,6 @@ export default async function AdminAtletasNovoPage() {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: allStudents } = await supabase.from("Student").select("id, userId");
-  const { data: existingAthletes } = await supabase.from("Athlete").select("studentId");
-  const athleteStudentIds = new Set((existingAthletes ?? []).map((a) => a.studentId));
-  const studentsWithoutAthlete = (allStudents ?? []).filter((s) => !athleteStudentIds.has(s.id));
-
-  const userIds = studentsWithoutAthlete.map((s) => s.userId);
-  const { data: users } =
-    userIds.length > 0 ? await supabase.from("User").select("id, name, email").in("id", userIds) : { data: [] };
-  const userById = new Map((users ?? []).map((u) => [u.id, u]));
-  const studentOptions = studentsWithoutAthlete.map((s) => ({
-    id: s.id,
-    label: userById.get(s.userId)?.name || userById.get(s.userId)?.email || s.id,
-  }));
-
   const { data: coaches } = await supabase.from("Coach").select("id, userId");
   const coachUserIds = [...new Set((coaches ?? []).map((c) => c.userId))];
   const { data: coachUsers } =
@@ -40,7 +26,7 @@ export default async function AdminAtletasNovoPage() {
   }));
 
   return (
-    <div style={{ maxWidth: "min(420px, 100%)" }}>
+    <div style={{ maxWidth: "min(520px, 100%)" }}>
       <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
         <Link
           href="/admin/atletas"
@@ -58,9 +44,9 @@ export default async function AdminAtletasNovoPage() {
         Novo atleta
       </h1>
       <p style={{ margin: "0 0 clamp(20px, 5vw, 24px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-        Escolhe um aluno para passar a atleta em acompanhamento e opcionalmente atribui um coach responsável.
+        Pesquisa o aluno por nome, email ou telefone; em seguida define o coach responsável e o nível.
       </p>
-      <NovoAtletaForm studentOptions={studentOptions} coachOptions={coachOptions} />
+      <NovoAtletaForm coachOptions={coachOptions} />
     </div>
   );
 }

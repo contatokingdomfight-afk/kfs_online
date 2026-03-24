@@ -4,8 +4,37 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
+import { loadStudentSummaryRows, type StudentSummaryRow } from "@/lib/admin-student-summary";
+
+export type { StudentSummaryRow };
 
 export type CreateAthleteResult = { error?: string };
+
+export type SearchStudentsForAthleteResult = { error: string } | { results: StudentSummaryRow[] };
+
+/** Alunos (sem registo de atleta) que correspondem à pesquisa por nome, email ou telefone. */
+export async function searchStudentsForNewAthlete(query: string): Promise<SearchStudentsForAthleteResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const q = query.trim();
+  if (q.length < 2) {
+    return { error: "Indica pelo menos 2 caracteres (nome, email ou telefone)." };
+  }
+
+  const supabase = createAdminClient();
+  const ids = await searchStudentIdsByQuery(supabase, q);
+  if (ids.length === 0) return { results: [] };
+
+  const { data: existingAthletes } = await supabase.from("Athlete").select("studentId").in("studentId", ids);
+  const athleteSet = new Set((existingAthletes ?? []).map((a) => a.studentId));
+  const eligibleIds = ids.filter((id) => !athleteSet.has(id));
+  const results = await loadStudentSummaryRows(supabase, eligibleIds);
+  results.sort((a, b) => (a.name || a.email || "").localeCompare(b.name || b.email || "", "pt"));
+
+  return { results };
+}
 
 export async function createAthlete(
   _prev: CreateAthleteResult | null,
