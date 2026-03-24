@@ -4,8 +4,63 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { loadStudentPaymentRows, type StudentPaymentRow } from "@/lib/admin-student-payment-context";
 import { getRenewalsPending, generateMonthlyPayments, type GenerateMonthlyPaymentsResult } from "@/lib/renewals";
 import { clearGraceOnPaidPayment, startGracePeriodOnLatePayment } from "@/lib/payment-grace";
+
+export type { StudentPaymentRow };
+
+export type SearchStudentsForPaymentResult = { error: string } | { results: StudentPaymentRow[] };
+
+/** Pesquisa alunos por nome, email ou telefone (perfil) para registar pagamento. */
+export async function searchStudentsForPayment(
+  query: string,
+  referenceMonth: string
+): Promise<SearchStudentsForPaymentResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const q = query.trim();
+  if (q.length < 2) {
+    return { error: "Indica pelo menos 2 caracteres (nome, email ou telefone)." };
+  }
+  if (!/^\d{4}-\d{2}$/.test(referenceMonth)) {
+    return { error: "Mês de referência inválido (use AAAA-MM)." };
+  }
+
+  const safe = q.replace(/%/g, "").replace(/_/g, "");
+  const like = `%${safe}%`;
+
+  const supabase = createAdminClient();
+
+  const [{ data: byName }, { data: byEmail }, { data: byPhone }] = await Promise.all([
+    supabase.from("User").select("id").ilike("name", like).limit(30),
+    supabase.from("User").select("id").ilike("email", like).limit(30),
+    supabase.from("StudentProfile").select("studentId").ilike("phone", like).limit(30),
+  ]);
+
+  const userIds = new Set<string>(
+    [...(byName ?? []), ...(byEmail ?? [])].map((r) => (r as { id: string }).id)
+  );
+  const phoneStudentIds = new Set(
+    (byPhone ?? []).map((r) => (r as { studentId: string }).studentId)
+  );
+
+  const { data: studentsByUser } = userIds.size
+    ? await supabase.from("Student").select("id").in("userId", [...userIds])
+    : { data: [] as { id: string }[] };
+
+  const studentIdSet = new Set<string>([
+    ...(studentsByUser ?? []).map((s) => s.id),
+    ...phoneStudentIds,
+  ]);
+
+  const ids = [...studentIdSet].slice(0, 40);
+  const results = await loadStudentPaymentRows(supabase, ids, referenceMonth);
+  results.sort((a, b) => (a.name || a.email || "").localeCompare(b.name || b.email || "", "pt"));
+
+  return { results };
+}
 
 export type { GenerateMonthlyPaymentsResult };
 export type CreatePaymentResult = { error?: string };

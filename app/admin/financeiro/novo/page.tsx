@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { loadStudentPaymentRows } from "@/lib/admin-student-payment-context";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -19,21 +20,19 @@ export default async function AdminFinanceiroNovoPage({ searchParams }: { search
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
-  const { data: students } = await supabase.from("Student").select("id, userId").order("id");
-  const userIds = [...new Set((students ?? []).map((s) => s.userId))];
-  const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
-  const userById = new Map((users ?? []).map((u) => [u.id, u]));
-  const options = (students ?? []).map((s) => ({
-    id: s.id,
-    label: userById.get(s.userId)?.name || userById.get(s.userId)?.email || s.id,
-  }));
 
   const refMonth = new Date();
   const fallbackRef = `${refMonth.getFullYear()}-${String(refMonth.getMonth() + 1).padStart(2, "0")}`;
   const referenceMonth = /^\d{4}-\d{2}$/.test(defaultRef) ? defaultRef : fallbackRef;
 
+  let initialRow = null;
+  if (defaultStudentId) {
+    const rows = await loadStudentPaymentRows(supabase, [defaultStudentId], referenceMonth);
+    initialRow = rows[0] ?? null;
+  }
+
   return (
-    <div style={{ maxWidth: "min(420px, 100%)" }}>
+    <div style={{ maxWidth: "min(520px, 100%)" }}>
       <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
         <Link
           href="/admin/financeiro"
@@ -51,10 +50,9 @@ export default async function AdminFinanceiroNovoPage({ searchParams }: { search
         Registar pagamento
       </h1>
       <NovoPagamentoForm
-        studentOptions={options}
         defaultReferenceMonth={referenceMonth}
-        defaultStudentId={defaultStudentId}
-        defaultAmount={defaultAmount}
+        initialRow={initialRow}
+        urlAmount={defaultAmount}
       />
     </div>
   );
