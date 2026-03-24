@@ -15,10 +15,12 @@ const GOALS = [
 type Props = {
   userName: string | null;
   schools: { id: string; name: string }[];
+  /** Pré-seleção (ex.: escola online). */
+  defaultSchoolId?: string;
   locale: "pt" | "en";
 };
 
-export function OnboardingWizard({ userName, schools, locale }: Props) {
+export function OnboardingWizard({ userName, schools, defaultSchoolId, locale }: Props) {
   const t = getTranslations(locale);
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -26,7 +28,9 @@ export function OnboardingWizard({ userName, schools, locale }: Props) {
   const [weightKg, setWeightKg] = useState("");
   const [heightCm, setHeightCm] = useState("");
   const [goals, setGoals] = useState<string[]>([]);
-  const [schoolId, setSchoolId] = useState(schools[0]?.id ?? "");
+  const [schoolId, setSchoolId] = useState(
+    () => defaultSchoolId || schools[0]?.id || ""
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
