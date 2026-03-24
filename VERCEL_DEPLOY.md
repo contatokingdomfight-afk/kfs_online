@@ -1,27 +1,29 @@
-# 🚀 Guia de Deploy na Vercel - KFS System
+# Guia de deploy na Vercel – KFS Online
+
+> **Março 2026:** Repositório **`kfs_online`** · **Next.js 15** · Node **20** (usar 20 na Vercel). Variáveis: **`VARIAVEIS_AMBIENTE_VERCEL.txt`**. Crons e pagamentos: **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**. Webhook Stripe: **`/api/stripe/webhook`**.
 
 ## Passo 1: Aceder à Vercel
 
 1. Aceda a [https://vercel.com](https://vercel.com)
-2. Faça login com a sua conta GitHub (OseiasBeu)
-3. Autorize a Vercel a aceder aos seus repositórios
+2. Login com GitHub
+3. Autorize a Vercel a aceder aos repositórios necessários
 
-## Passo 2: Criar Novo Projeto
+## Passo 2: Criar novo projeto
 
-1. Clique em **"Add New..."** → **"Project"**
-2. Procure pelo repositório **`kfs_system`**
-3. Clique em **"Import"**
+1. **Add New…** → **Project**
+2. Importar o repositório **`kfs_online`** (ou o nome do teu fork)
+3. **Import**
 
-## Passo 3: Configurar o Projeto
+## Passo 3: Configurar o projeto
 
-### Framework Preset
-- **Framework:** Next.js (deve ser detectado automaticamente)
-- **Root Directory:** `.` (deixar como está)
-- **Build Command:** `npm run build` (automático)
-- **Output Directory:** `.next` (automático)
+### Framework preset
+- **Framework:** Next.js (detetado automaticamente)
+- **Root Directory:** `.`
+- **Build Command:** `npm run build`
+- **Output Directory:** `.next`
 
-### Node.js Version
-- Recomendado: **18.x** ou **20.x**
+### Node.js
+- **20.x** (alinhado a `package.json` → `engines`)
 
 ## Passo 4: Configurar Variáveis de Ambiente
 
@@ -70,11 +72,19 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 4. Para o Webhook Secret:
    - Vá a **Developers** → **Webhooks**
    - Clique em **"Add endpoint"**
-   - URL: `https://seu-dominio.vercel.app/api/webhooks/stripe`
-   - Eventos: Selecione `checkout.session.completed`
+   - URL: `https://seu-dominio.vercel.app/api/stripe/webhook`
+   - Eventos: conforme o que a app trata (ex.: pagamentos de subscrição / fatura)
    - Copie o **Signing secret** → `STRIPE_WEBHOOK_SECRET`
 
-### 🔑 NextAuth (Autenticação)
+### Cron (`CRON_SECRET`)
+```
+CRON_SECRET=um_segredo_forte
+```
+- Protege `GET /api/cron/lesson-reminders`, `/api/cron/payment-suspension`, etc.
+- Na Vercel, os crons definidos em `vercel.json` usam o cabeçalho `x-vercel-cron`.
+- Documentação: **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**
+
+### 🔑 NextAuth (opcional / legado)
 ```
 NEXTAUTH_URL=https://seu-dominio.vercel.app
 NEXTAUTH_SECRET=gere_um_secret_aleatorio
@@ -153,7 +163,7 @@ npx prisma db push
 
 1. Volte ao Stripe Dashboard → **Webhooks**
 2. Edite o endpoint criado anteriormente
-3. Atualize a URL para: `https://seu-dominio-real.vercel.app/api/webhooks/stripe`
+3. Confirme a URL: `https://seu-dominio-real.vercel.app/api/stripe/webhook`
 
 ## ✅ Verificação Final
 
