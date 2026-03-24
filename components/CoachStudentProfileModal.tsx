@@ -17,6 +17,44 @@ const MIN_SCORE = 1;
 const MAX_SCORE = 10;
 const DEFAULT_BASELINE = 5;
 
+/** Select nativo 1–10: evita teclado numérico caprichoso e zoom no iOS (vs. input number com texto pequeno). */
+function ScoreSelect1to10({
+  value,
+  onChange,
+  "aria-label": ariaLabel,
+  className = "",
+  innerRef,
+  /** Largura confortável em telemóvel (100%); em linha compacta usa largura fixa. */
+  fullWidthOnNarrow = false,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  "aria-label": string;
+  className?: string;
+  innerRef?: (el: HTMLSelectElement | null) => void;
+  fullWidthOnNarrow?: boolean;
+}) {
+  const v = Math.min(MAX_SCORE, Math.max(MIN_SCORE, value));
+  return (
+    <select
+      ref={innerRef}
+      aria-label={ariaLabel}
+      value={v}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className={`input min-h-11 text-center font-semibold text-base ${
+        fullWidthOnNarrow ? "w-full min-w-0 sm:w-24 sm:shrink-0" : "shrink-0"
+      } ${className}`}
+      style={fullWidthOnNarrow ? undefined : { width: "4.75rem", maxWidth: "100%" }}
+    >
+      {SCORES_1_10.map((n) => (
+        <option key={n} value={n}>
+          {n}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function SubmitEvaluationButton({ onClose }: { onClose: () => void }) {
   const { pending } = useFormStatus();
   return (
@@ -124,7 +162,7 @@ export function CoachStudentProfileModal(props: Props) {
 
   const formRef = useRef<HTMLFormElement>(null);
   const categorySectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const criterionInputRefs = useRef<Record<string, HTMLInputElement | HTMLButtonElement | null>>({});
+  const criterionInputRefs = useRef<Record<string, HTMLInputElement | HTMLButtonElement | HTMLSelectElement | null>>({});
 
   const criterionIds = useMemo(
     () => (evaluationConfig ? getAllCriterionIds(evaluationConfig) : []),
@@ -446,20 +484,16 @@ export function CoachStudentProfileModal(props: Props) {
                     </label>
                     <div className="rounded-xl border border-[var(--primary)]/30 bg-[var(--primary)]/5 p-4 space-y-3">
                       <p className="text-sm font-semibold text-[var(--text-primary)] m-0">Valor base da avaliação</p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <input
-                          type="number"
-                          min={MIN_SCORE}
-                          max={MAX_SCORE}
+                      <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
+                        <ScoreSelect1to10
                           value={globalBaseline}
-                          onChange={(e) => setGlobalBaseline(Math.min(MAX_SCORE, Math.max(MIN_SCORE, Number(e.target.value) || DEFAULT_BASELINE)))}
-                          className="input w-16 h-11 rounded-lg text-center font-semibold"
+                          onChange={setGlobalBaseline}
                           aria-label="Valor base"
                         />
                         <button
                           type="button"
                           onClick={applyBaselineToAll}
-                          className="btn btn-primary h-11 px-4 rounded-lg font-medium"
+                          className="btn btn-primary min-h-11 px-4 rounded-lg font-medium w-full sm:w-auto"
                         >
                           Aplicar a todos os critérios
                         </button>
@@ -507,29 +541,27 @@ export function CoachStudentProfileModal(props: Props) {
                                 <span className="evaluation-category-chevron opacity-70 transition-transform" aria-hidden>▼</span>
                               </summary>
                               <div className="px-4 pb-4 pt-1 flex flex-col gap-5">
-                                <div className="flex flex-wrap items-center gap-2 py-2 border-b border-[var(--border)]">
-                                  <span className="text-xs text-[var(--text-secondary)]">Aplicar valor base à secção:</span>
-                                  <input
-                                    type="number"
-                                    min={MIN_SCORE}
-                                    max={MAX_SCORE}
-                                    value={sectionBaselines[cat.nome] ?? globalBaseline}
-                                    onChange={(e) =>
-                                      setSectionBaselines((prev) => ({
-                                        ...prev,
-                                        [cat.nome]: Math.min(MAX_SCORE, Math.max(MIN_SCORE, Number(e.target.value) || DEFAULT_BASELINE)),
-                                      }))
-                                    }
-                                    className="input w-16 h-9 rounded-lg text-center font-semibold text-sm"
-                                    aria-label={`Valor base para ${cat.nome}`}
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => applyBaselineToSection(cat, sectionBaselines[cat.nome] ?? globalBaseline)}
-                                    className="btn h-9 px-3 rounded-lg text-sm"
-                                  >
-                                    Aplicar
-                                  </button>
+                                <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 py-2 border-b border-[var(--border)]">
+                                  <span className="text-xs text-[var(--text-secondary)] sm:shrink-0">Aplicar valor base à secção:</span>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <ScoreSelect1to10
+                                      value={sectionBaselines[cat.nome] ?? globalBaseline}
+                                      onChange={(n) =>
+                                        setSectionBaselines((prev) => ({
+                                          ...prev,
+                                          [cat.nome]: n,
+                                        }))
+                                      }
+                                      aria-label={`Valor base para ${cat.nome}`}
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => applyBaselineToSection(cat, sectionBaselines[cat.nome] ?? globalBaseline)}
+                                      className="btn min-h-11 px-3 rounded-lg text-sm"
+                                    >
+                                      Aplicar
+                                    </button>
+                                  </div>
                                 </div>
                                 {cat.criterios.map((c) => (
                                   <CriterionRow
@@ -564,7 +596,7 @@ export function CoachStudentProfileModal(props: Props) {
 
                 <label className="flex flex-col gap-1">
                   <span className="text-sm text-[var(--text-secondary)]">Nota (opcional)</span>
-                  <textarea name="note" className="input rounded-lg min-h-[56px] resize-y" placeholder="Observações sobre esta avaliação..." rows={2} />
+                  <textarea name="note" className="input rounded-lg min-h-[56px] resize-y text-base" placeholder="Observações sobre esta avaliação..." rows={2} />
                 </label>
 
                 {state && (state as { error?: string }).error && (
@@ -592,7 +624,7 @@ type CriterionRowProps = {
   baseline: number;
   isTouched: boolean;
   onValueChange: (v: number) => void;
-  inputRef: (el: HTMLInputElement | HTMLButtonElement | null) => void;
+  inputRef: (el: HTMLInputElement | HTMLButtonElement | HTMLSelectElement | null) => void;
 };
 
 function CriterionRow({ criterion, value, baseline, isTouched, onValueChange, inputRef }: CriterionRowProps) {
@@ -621,49 +653,61 @@ function CriterionRow({ criterion, value, baseline, isTouched, onValueChange, in
       {criterion.description && (
         <p className="text-xs text-[var(--text-secondary)] mb-2">{criterion.description}</p>
       )}
-      <div className="flex flex-wrap items-center gap-2 mb-2">
-        <span className="text-xs text-[var(--text-secondary)] sr-only sm:not-sr-only">Ajuste rápido:</span>
-        <button
-          ref={inputRef as (el: HTMLButtonElement | null) => void}
-          type="button"
-          onClick={() => onValueChange(clamped(value - 1))}
-          className="min-w-[3rem] h-9 rounded-lg text-sm font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--primary)]/50 transition-colors"
-          aria-label={`${criterion.label}, menos um`}
-        >
-          −1
-        </button>
-        <button
-          type="button"
-          onClick={() => onValueChange(baseline)}
-          className={`min-w-[3.5rem] h-9 rounded-lg text-sm font-medium transition-colors ${
-            value === baseline
-              ? "bg-[var(--primary)] text-white border-2 border-[var(--primary)]"
-              : "border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--primary)]/50"
-          }`}
-          aria-label={`${criterion.label}, valor base ${baseline}`}
-        >
-          BASE
-        </button>
-        <button
-          type="button"
-          onClick={() => onValueChange(clamped(value + 1))}
-          className="min-w-[3rem] h-9 rounded-lg text-sm font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--primary)]/50 transition-colors"
-          aria-label={`${criterion.label}, mais um`}
-        >
-          +1
-        </button>
+      <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
+          <span className="text-xs text-[var(--text-secondary)] shrink-0 sm:sr-only">Nota</span>
+          <ScoreSelect1to10
+            innerRef={inputRef}
+            fullWidthOnNarrow
+            value={value}
+            onChange={onValueChange}
+            aria-label={`${criterion.label}, nota de 1 a 10`}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-[var(--text-secondary)] sr-only sm:not-sr-only">Ajuste rápido:</span>
+          <button
+            type="button"
+            onClick={() => onValueChange(clamped(value - 1))}
+            className="min-w-[3rem] min-h-11 rounded-lg text-base font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--primary)]/50 transition-colors touch-manipulation"
+            aria-label={`${criterion.label}, menos um`}
+          >
+            −1
+          </button>
+          <button
+            type="button"
+            onClick={() => onValueChange(baseline)}
+            className={`min-w-[3.5rem] min-h-11 rounded-lg text-sm font-semibold transition-colors touch-manipulation ${
+              value === baseline
+                ? "bg-[var(--primary)] text-white border-2 border-[var(--primary)]"
+                : "border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--primary)]/50"
+            }`}
+            aria-label={`${criterion.label}, valor base ${baseline}`}
+          >
+            BASE
+          </button>
+          <button
+            type="button"
+            onClick={() => onValueChange(clamped(value + 1))}
+            className="min-w-[3rem] min-h-11 rounded-lg text-base font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--primary)]/50 transition-colors touch-manipulation"
+            aria-label={`${criterion.label}, mais um`}
+          >
+            +1
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 py-1 min-h-11 touch-manipulation">
         <input
           type="range"
           min={MIN_SCORE}
           max={MAX_SCORE}
+          step={1}
           value={value}
           onChange={(e) => onValueChange(Number(e.target.value))}
-          className="flex-1 h-3 rounded-full accent-[var(--primary)]"
+          className="flex-1 w-full min-h-11 cursor-pointer accent-[var(--primary)] [touch-action:pan-y]"
           aria-label={`${criterion.label}, ajuste fino ${value} de 10`}
         />
-        <span className="text-sm font-medium text-[var(--text-primary)] w-8 tabular-nums">{value}/10</span>
+        <span className="text-sm font-medium text-[var(--text-primary)] w-9 shrink-0 tabular-nums">{value}/10</span>
       </div>
     </div>
   );
