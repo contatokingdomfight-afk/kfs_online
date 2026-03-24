@@ -1,9 +1,12 @@
 /**
  * Permissões de acesso por plano.
- * Usar getPlanAccess(studentId) para obter o que o aluno pode fazer.
+ * Usar getPlanAccess(supabase, studentId) em rotas que já têm cliente;
+ * em layouts/páginas RSC preferir getCachedPlanAccess(studentId) para deduplicar no mesmo pedido.
  */
 
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 
@@ -82,3 +85,9 @@ export async function getPlanAccess(
     primaryModality,
   };
 }
+
+/** Mesmo resultado que getPlanAccess, mas memoizado por pedido (studentId). */
+export const getCachedPlanAccess = cache(async (studentId: string | null) => {
+  const supabase = await createClient();
+  return getPlanAccess(supabase, studentId);
+});

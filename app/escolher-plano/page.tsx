@@ -40,13 +40,13 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
     .select("id, name, description, price_monthly, includes_digital_access, includes_performance_tracking, includes_check_in, modality_scope, includes_exclusive_benefits, stripePriceId")
     .eq("is_active", true);
   if (schoolId) plansQuery = plansQuery.eq("schoolId", schoolId);
-  const { data: plans } = await plansQuery.order("price_monthly", { ascending: true });
 
-  const { data: planPrices } = await supabase
-    .from("PlanPrice")
-    .select("planId, stripePriceId, intervalLabel, amountCents, sortOrder")
-    .eq("isActive", true)
-    .order("sortOrder", { ascending: true });
+  const [plansRes, planPricesRes] = await Promise.all([
+    plansQuery.order("price_monthly", { ascending: true }),
+    supabase.from("PlanPrice").select("planId, stripePriceId, intervalLabel, amountCents, sortOrder").eq("isActive", true).order("sortOrder", { ascending: true }),
+  ]);
+  const plans = plansRes.data;
+  const planPrices = planPricesRes.data;
 
   const t = getTranslations((locale as "pt" | "en") ?? "pt");
 

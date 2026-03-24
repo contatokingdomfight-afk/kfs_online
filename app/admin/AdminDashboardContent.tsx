@@ -5,7 +5,7 @@ import { AdminSchoolFilter } from "./AdminSchoolFilter";
 import { BusinessHealthStats } from "./_components/BusinessHealthStats";
 import { ActionItems } from "./_components/ActionItems";
 import { ManagementGrid } from "./_components/ManagementGrid";
-import { OverviewCharts } from "./_components/OverviewCharts";
+import { OverviewChartsDynamic } from "./_components/OverviewChartsDynamic";
 import { getTranslations } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 
@@ -106,7 +106,7 @@ export async function AdminDashboardContent({ client, schoolId }: Props) {
       />
 
       {/* Secção 3: VISÃO GERAL - carregado dinamicamente para reduzir bundle inicial */}
-      <OverviewCharts
+      <OverviewChartsDynamic
         studentsGrowthByMonth={stats.studentsGrowthByMonth}
         revenueAccumulatedMonths={stats.revenueAccumulatedMonths}
         attendanceByModality30Days={stats.attendanceByModality30Days}

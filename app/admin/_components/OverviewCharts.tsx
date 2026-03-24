@@ -21,7 +21,7 @@ type MonthGrowth = { month: string; label: string; active: number; new: number }
 type MonthRevenue = { month: string; revenue: number; label: string };
 type ModalityShare = { name: string; value: number };
 
-type Props = {
+export type OverviewChartsProps = {
   studentsGrowthByMonth: { month: string; active: number; new: number; churned: number }[];
   revenueAccumulatedMonths: { month: string; revenue: number }[];
   attendanceByModality30Days: { modality: string; count: number }[];
@@ -37,7 +37,7 @@ type Props = {
 
 const MODALITY_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6"];
 
-export function OverviewCharts(props: Props) {
+export function OverviewCharts(props: OverviewChartsProps) {
   const {
     studentsGrowthByMonth,
     revenueAccumulatedMonths,

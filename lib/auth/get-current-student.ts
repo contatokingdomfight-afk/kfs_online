@@ -1,12 +1,13 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 
 /**
  * Obtém o ID do Student do utilizador atual (para utilizadores que são alunos).
  * Retorna null se não houver sessão ou se o utilizador não tiver registo em Student.
- * Usa getCurrentDbUser (em cache por request) para evitar syncUser duplicado.
+ * Usa getCurrentDbUser (em cache por request) e cache próprio para evitar queries duplicadas layout + página.
  */
-export async function getCurrentStudentId(): Promise<string | null> {
+export const getCurrentStudentId = cache(async function getCurrentStudentId(): Promise<string | null> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return null;
 
@@ -18,4 +19,4 @@ export async function getCurrentStudentId(): Promise<string | null> {
     .maybeSingle();
 
   return student?.id ?? null;
-}
+});

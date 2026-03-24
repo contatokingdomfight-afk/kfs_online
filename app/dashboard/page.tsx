@@ -5,7 +5,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getThisWeekRange, MODALITY_LABELS, getWeekStartMonday } from "@/lib/lesson-utils";
 import { getCachedLocations } from "@/lib/cached-reference-data";
-import { getPlanAccess } from "@/lib/plan-access";
+import { getCachedPlanAccess } from "@/lib/plan-access";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
 import { NextLessonCard } from "./NextLessonCard";
@@ -19,8 +19,11 @@ type PageProps = { searchParams: Promise<{ stripe?: string }> };
 
 export default async function DashboardPage({ searchParams }: PageProps) {
   const { stripe: stripeQuery } = await searchParams;
-  const supabase = await createClient();
-  const [locale, dbUser] = await Promise.all([getLocaleFromCookies(), getCurrentDbUser()]);
+  const [locale, dbUser, supabase] = await Promise.all([
+    getLocaleFromCookies(),
+    getCurrentDbUser(),
+    createClient(),
+  ]);
   const t = getTranslations(locale as "pt" | "en");
   const STATUS_LABEL: Record<string, string> = {
     PENDING: t("statusPending"),
@@ -31,7 +34,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   if (!dbUser) return null;
 
   const studentId = await getCurrentStudentId();
-  const planAccess = await getPlanAccess(supabase, studentId);
+  const planAccess = await getCachedPlanAccess(studentId);
   const { hasCheckIn, allowedModalities } = planAccess;
 
   const { today, endOfWeek } = getThisWeekRange();
@@ -126,8 +129,21 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       currentXP: athlete.currentXP || 0,
       nextLevelXP,
     };
-    const { count } = await supabase.from("Attendance").select("*", { count: "exact", head: true }).eq("studentId", studentId).eq("status", "CONFIRMED");
-    totalPresences = count ?? 0;
+
+    const [countRes, missions, latestCommentRes] = await Promise.all([
+      supabase.from("Attendance").select("*", { count: "exact", head: true }).eq("studentId", studentId).eq("status", "CONFIRMED"),
+      getApplicableMissionTemplates(supabase, athlete.id, athlete.currentXP || 0, studentPrimaryModality),
+      supabase
+        .from("Comment")
+        .select("content, authorCoachId, createdAt")
+        .eq("targetType", "ATHLETE")
+        .eq("targetId", athlete.id)
+        .eq("visibility", "SHARED")
+        .order("createdAt", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    totalPresences = countRes.count ?? 0;
 
     if (studentPrimaryModality) {
       const theme = temaSemanaList.find((t) => t.modality === studentPrimaryModality);
@@ -137,22 +153,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       weekThemeForPrimary = { modality: theme.modality, title: theme.title, course_id: theme.course_id, video_url: (theme as { video_url?: string | null }).video_url ?? null };
     }
 
-    const missions = await getApplicableMissionTemplates(supabase, athlete.id, athlete.currentXP || 0, studentPrimaryModality);
     if (missions.length > 0) {
       const m = missions[0];
       nextMission = { id: m.id, name: m.name, description: m.description, xpReward: m.xpReward };
     }
 
-    const { data: latestComment } = await supabase
-      .from("Comment")
-      .select("content, authorCoachId, createdAt")
-      .eq("targetType", "ATHLETE")
-      .eq("targetId", athlete.id)
-      .eq("visibility", "SHARED")
-      .order("createdAt", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
+    const latestComment = latestCommentRes.data;
     if (latestComment?.content) {
       let coachName = "Treinador";
       if (latestComment.authorCoachId) {

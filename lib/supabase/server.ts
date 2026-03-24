@@ -1,7 +1,9 @@
+import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-export async function createClient() {
+/** Uma instância por pedido RSC — evita múltiplos `createServerClient` no mesmo render. */
+async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -25,3 +27,5 @@ export async function createClient() {
     }
   );
 }
+
+export const createClient = cache(createSupabaseServerClient);

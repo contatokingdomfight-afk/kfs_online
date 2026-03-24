@@ -10,7 +10,7 @@ import { ViewAsBanner } from "@/components/ViewAsBanner";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import { NotificationBell } from "@/components/NotificationBell";
 import { StudentOnboardingGate } from "@/components/onboarding/StudentOnboardingGate";
-import { getPlanAccess } from "@/lib/plan-access";
+import { getCachedPlanAccess } from "@/lib/plan-access";
 
 export default async function DashboardLayout({
   children,
@@ -48,7 +48,7 @@ export default async function DashboardLayout({
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
   const [planAccess, studentRes] = await Promise.all([
-    getPlanAccess(supabase, studentId),
+    getCachedPlanAccess(studentId),
     studentId ? supabase.from("Student").select("planId").eq("id", studentId).single() : Promise.resolve({ data: null }),
   ]);
   const hasPlan = !!studentRes.data?.planId;
