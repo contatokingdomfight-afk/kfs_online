@@ -65,7 +65,7 @@ export default async function CoachAtletaPage({ params }: Props) {
 
   const { data: comments } = await supabase
     .from("Comment")
-    .select("id, content, createdAt, authorCoachId")
+    .select("id, content, createdAt, authorCoachId, visibility")
     .eq("targetType", "ATHLETE")
     .eq("targetId", athleteId)
     .order("createdAt", { ascending: false });
@@ -302,6 +302,7 @@ export default async function CoachAtletaPage({ params }: Props) {
             content: c.content,
             createdAt: c.createdAt,
             authorName: authorNames.get(c.id) ?? "Coach",
+            visibility: c.visibility === "SHARED" ? "SHARED" : "PRIVATE",
           }))}
           canAdd={!!coachId}
         />

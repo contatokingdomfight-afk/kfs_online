@@ -3,7 +3,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState, useFormStatus } from "react-dom";
-import { updateStudent, setStudentFullAccess, promoteStudentToRole, type UpdateStudentResult, type SetFullAccessResult, type PromoteStudentResult } from "../actions";
+import {
+  updateStudent,
+  setStudentFullAccess,
+  clearStudentPlanAccess,
+  promoteStudentToRole,
+  type UpdateStudentResult,
+  type SetFullAccessResult,
+  type ClearStudentPlanResult,
+  type PromoteStudentResult,
+} from "../actions";
 import { getTranslations } from "@/lib/i18n";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
@@ -40,6 +49,31 @@ function FullAccessFormInner({ studentId }: { studentId: string }) {
   );
 }
 
+function ClearPlanFormInner({ studentId, disabled }: { studentId: string; disabled: boolean }) {
+  const { pending } = useFormStatus();
+  return (
+    <>
+      <FormLoadingModal message="A remover o plano…" />
+      <input type="hidden" name="studentId" value={studentId} />
+      <button
+        type="submit"
+        className="btn"
+        style={{
+          fontSize: 14,
+          padding: "8px 14px",
+          border: "1px solid var(--danger)",
+          color: "var(--danger)",
+          backgroundColor: "transparent",
+        }}
+        disabled={pending || disabled}
+        aria-busy={pending}
+      >
+        {pending ? "A remover…" : "Remover plano e acesso via subscrição"}
+      </button>
+    </>
+  );
+}
+
 type Props = {
   studentId: string;
   initialName: string;
@@ -64,15 +98,20 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
   };
   const [state, formAction] = useFormState(wrappedAction, null as UpdateStudentResult | null);
   const [fullAccessState, fullAccessFormAction] = useFormState(setStudentFullAccess, null as SetFullAccessResult | null);
+  const [clearPlanState, clearPlanFormAction] = useFormState(clearStudentPlanAccess, null as ClearStudentPlanResult | null);
   const [promoteState, promoteFormAction] = useFormState(promoteStudentToRole, null as PromoteStudentResult | null);
   const router = useRouter();
 
   const showSuccess = Boolean(state?.success && !state?.error && !userDismissed);
   const canPromote = currentUserRole === "ALUNO";
+  const hasAssignedPlan = Boolean(initialPlanId);
 
   useEffect(() => {
     if (fullAccessState?.success) router.refresh();
   }, [fullAccessState?.success, router]);
+  useEffect(() => {
+    if (clearPlanState?.success) router.refresh();
+  }, [clearPlanState?.success, router]);
   useEffect(() => {
     if (promoteState?.success) router.refresh();
   }, [promoteState?.success, router]);
@@ -112,17 +151,41 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
           <p style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
             Acesso rápido
           </p>
-          <form action={fullAccessFormAction}>
-            <FullAccessFormInner studentId={studentId} />
-          </form>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+            <form action={fullAccessFormAction}>
+              <FullAccessFormInner studentId={studentId} />
+            </form>
+            <form
+              action={clearPlanFormAction}
+              onSubmit={(e) => {
+                if (
+                  !hasAssignedPlan ||
+                  !window.confirm(
+                    "Remover o plano deste aluno? Fica sem acesso à plataforma conforme plano. Se existir subscrição Stripe ativa, será cancelada."
+                  )
+                ) {
+                  e.preventDefault();
+                }
+              }}
+            >
+              <ClearPlanFormInner studentId={studentId} disabled={!hasAssignedPlan} />
+            </form>
+          </div>
           <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
             Atribui um plano com plataforma digital e todas as modalidades (usa o plano FULL da escola do aluno, ou qualquer plano equivalente no catálogo).
+            Usa «Remover plano» para revogar o plano atual (inclui acesso total atribuído aqui ou noutro plano).
           </p>
           {fullAccessState?.success && (
             <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Acesso total atribuído.</p>
           )}
           {fullAccessState?.error && (
             <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{fullAccessState.error}</p>
+          )}
+          {clearPlanState?.success && (
+            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Plano removido. O aluno ficou sem plano atribuído.</p>
+          )}
+          {clearPlanState?.error && (
+            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{clearPlanState.error}</p>
           )}
         </div>
 

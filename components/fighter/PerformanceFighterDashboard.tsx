@@ -67,6 +67,8 @@ type Props = {
   physicalAssessmentMission?: { id: string; name: string; description: string | null; xpReward: number } | null;
   coachFeedback?: string;
   coachName?: string;
+  /** Quando o feedback vem da nota da última avaliação, não repetir o texto na secção «Última avaliação». */
+  omitLastEvaluationNoteBody?: boolean;
   /** Última avaliação: treinador, data e nota (da tabela AthleteEvaluation). */
   lastEvaluation?: { coachName: string; date: string; note: string | null };
   /** URL para a página de histórico de avaliações (aluno ou coach). */
@@ -104,6 +106,7 @@ export function PerformanceFighterDashboard({
   physicalAssessmentMission = null,
   coachFeedback,
   coachName,
+  omitLastEvaluationNoteBody = false,
   lastEvaluation,
   evaluationsHistoryHref,
   scoresByModality,
@@ -295,7 +298,11 @@ export function PerformanceFighterDashboard({
             Por <strong className="text-text-primary">{lastEvaluation.coachName}</strong>
             {lastEvaluation.date ? ` · ${lastEvaluation.date}` : ""}
           </p>
-          {lastEvaluation.note ? (
+          {omitLastEvaluationNoteBody && lastEvaluation.note ? (
+            <p className="text-sm text-text-secondary mt-2 italic">
+              O comentário desta avaliação está destacado em «Feedback do treinador» abaixo.
+            </p>
+          ) : lastEvaluation.note ? (
             <p className="text-sm text-text-primary mt-2 whitespace-pre-wrap">{lastEvaluation.note}</p>
           ) : (
             <p className="text-sm text-text-secondary italic">Sem comentário nesta avaliação.</p>

@@ -24,6 +24,7 @@ import { getRankFromXp } from "@/lib/xp-missions";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
 
 const GENERAL_LAST_N = 10;
 
@@ -70,6 +71,7 @@ export async function PerformanceContent({ studentId }: Props) {
   let lastPhysicalAssessment: { assessedAt: string; nextDueAt: string | null } | null = null;
   let coachFeedback: string | null = null;
   let coachName: string | null = null;
+  let omitLastEvaluationNoteBody = false;
   let lastEvaluation: { coachName: string; date: string; note: string | null } | null = null;
 
   const { data: athlete } = await supabase.from("Athlete").select("id, xp").eq("studentId", studentId).single();
@@ -89,6 +91,7 @@ export async function PerformanceContent({ studentId }: Props) {
         .select("content, authorCoachId")
         .eq("targetType", "ATHLETE")
         .eq("targetId", athlete.id)
+        .eq("visibility", "SHARED")
         .order("createdAt", { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -110,14 +113,16 @@ export async function PerformanceContent({ studentId }: Props) {
     customMissions = missionsData.map((t) => ({ id: t.id, name: t.name, description: t.description, xpReward: t.xpReward }));
 
     const latestComment = latestCommentRes.data;
+    let sharedCommentContent: string | null = null;
+    let sharedCommentCoachName: string | null = null;
     if (latestComment?.content) {
-      coachFeedback = latestComment.content;
+      sharedCommentContent = latestComment.content;
       const { data: coach } = await supabase.from("Coach").select("userId").eq("id", latestComment.authorCoachId).single();
       if (coach) {
         const { data: user } = await supabase.from("User").select("name").eq("id", coach.userId).single();
-        coachName = user?.name ?? "Treinador";
+        sharedCommentCoachName = user?.name ?? "Treinador";
       } else {
-        coachName = "Treinador";
+        sharedCommentCoachName = "Treinador";
       }
     }
 
@@ -171,6 +176,16 @@ export async function PerformanceContent({ studentId }: Props) {
         };
       }
     }
+
+    const feedbackResolved = resolveCoachFeedbackForStudentView({
+      sharedCommentContent,
+      sharedCommentCoachName,
+      lastEvaluationCoachName: lastEvaluation?.coachName,
+      lastEvaluationNote: lastEvaluation?.note,
+    });
+    coachFeedback = feedbackResolved.quote;
+    coachName = feedbackResolved.coachName;
+    omitLastEvaluationNoteBody = feedbackResolved.hideNoteInLastEvaluationSection;
   }
 
   const detailByDimension = buildPerformanceDetailFromConfigs(configsForDetail, modalityLabels);
@@ -232,6 +247,7 @@ export async function PerformanceContent({ studentId }: Props) {
       }
       coachFeedback={coachFeedback ?? undefined}
       coachName={coachName ?? undefined}
+      omitLastEvaluationNoteBody={omitLastEvaluationNoteBody}
       lastEvaluation={lastEvaluation ?? undefined}
       evaluationsHistoryHref={`/coach/alunos/${studentId}/avaliacoes`}
     />

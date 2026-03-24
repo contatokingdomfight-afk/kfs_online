@@ -135,6 +135,8 @@ export async function saveStandaloneEvaluation(
   revalidatePath("/admin/alunos");
   revalidatePath(`/admin/alunos/${studentId}`);
   revalidatePath("/coach/atletas");
+  revalidatePath("/dashboard/performance");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 

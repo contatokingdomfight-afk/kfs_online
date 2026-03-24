@@ -29,6 +29,7 @@ import {
   type DimensionScore,
   type CriterionScoreItem,
 } from "@/lib/evaluation-results-data";
+import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
 
 const GENERAL_LAST_N = 10;
 const LAST_N_PER_MODALITY = 5;
@@ -70,6 +71,7 @@ export default async function DashboardPerformancePage() {
   let lastPhysicalAssessment: { assessedAt: string; nextDueAt: string | null } | null = null;
   let coachFeedback: string | null = null;
   let coachName: string | null = null;
+  let omitLastEvaluationNoteBody = false;
   let lastEvaluation: { coachName: string; date: string; note: string | null } | null = null;
   let suggestedCourses: { id: string; name: string; category: string; modality: string | null }[] = [];
   let profileAchievements: AchievementWithStatus[] = [];
@@ -102,14 +104,16 @@ export default async function DashboardPerformancePage() {
         .order("createdAt", { ascending: false })
         .limit(1)
         .maybeSingle();
+      let sharedCommentContent: string | null = null;
+      let sharedCommentCoachName: string | null = null;
       if (latestComment?.content) {
-        coachFeedback = latestComment.content;
+        sharedCommentContent = latestComment.content;
         const { data: coach } = await supabase.from("Coach").select("userId").eq("id", latestComment.authorCoachId).single();
         if (coach) {
           const { data: user } = await supabase.from("User").select("name").eq("id", coach.userId).single();
-          coachName = user?.name ?? "Treinador";
+          sharedCommentCoachName = user?.name ?? "Treinador";
         } else {
-          coachName = "Treinador";
+          sharedCommentCoachName = "Treinador";
         }
       }
       const { data: lastPhys } = await supabase
@@ -197,6 +201,16 @@ export default async function DashboardPerformancePage() {
           };
         }
       }
+
+      const feedbackResolved = resolveCoachFeedbackForStudentView({
+        sharedCommentContent,
+        sharedCommentCoachName,
+        lastEvaluationCoachName: lastEvaluation?.coachName,
+        lastEvaluationNote: lastEvaluation?.note,
+      });
+      coachFeedback = feedbackResolved.quote;
+      coachName = feedbackResolved.coachName;
+      omitLastEvaluationNoteBody = feedbackResolved.hideNoteInLastEvaluationSection;
 
       // Cursos sugeridos para ligar ao feedback (por modalidade principal; aluno vê junto ao feedback do coach)
       const planId = (student?.planId as string | null) ?? null;
@@ -286,6 +300,7 @@ export default async function DashboardPerformancePage() {
       }
       coachFeedback={coachFeedback ?? undefined}
       coachName={coachName ?? undefined}
+      omitLastEvaluationNoteBody={omitLastEvaluationNoteBody}
       lastEvaluation={lastEvaluation ?? undefined}
       evaluationsHistoryHref="/dashboard/performance/historico"
       suggestedCourses={suggestedCourses.length > 0 ? suggestedCourses : undefined}

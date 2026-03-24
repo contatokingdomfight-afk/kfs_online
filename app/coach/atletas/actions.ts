@@ -68,10 +68,15 @@ export async function createComment(
 
   const supabase = await createClient();
 
-  const { data: athlete } = await supabase.from("Athlete").select("id, mainCoachId").eq("id", targetId).single();
+  const { data: athlete } = await supabase
+    .from("Athlete")
+    .select("id, mainCoachId, studentId")
+    .eq("id", targetId)
+    .single();
   if (!athlete) return { error: "Atleta não encontrado." };
   if (athlete.mainCoachId !== coachId && dbUser.role !== "ADMIN") return { error: "Não és o coach deste atleta." };
 
+  const shareWithStudent = formData.get("shareWithStudent") === "on";
   const id = crypto.randomUUID();
   const { error } = await supabase.from("Comment").insert({
     id,
@@ -79,12 +84,17 @@ export async function createComment(
     targetType: "ATHLETE",
     targetId,
     content,
-    visibility: "PRIVATE",
+    visibility: shareWithStudent ? "SHARED" : "PRIVATE",
   });
 
   if (error) return { error: error.message };
 
   revalidatePath(`/coach/atletas/${targetId}`);
+  const studentId = (athlete as { studentId?: string | null }).studentId;
+  if (studentId) {
+    revalidatePath("/dashboard/performance");
+    revalidatePath("/dashboard");
+  }
   return {};
 }
 

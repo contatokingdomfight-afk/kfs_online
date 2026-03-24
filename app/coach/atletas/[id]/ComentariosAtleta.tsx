@@ -3,7 +3,7 @@
 import { useFormState } from "react-dom";
 import { createComment, type CreateCommentResult } from "../actions";
 
-type CommentRow = { id: string; content: string; createdAt: string; authorName: string };
+type CommentRow = { id: string; content: string; createdAt: string; authorName: string; visibility: "PRIVATE" | "SHARED" };
 
 function formatCommentDate(iso: string): string {
   try {
@@ -56,6 +56,25 @@ export function ComentariosAtleta({ athleteId, comments, canAdd }: Props) {
               style={{ resize: "vertical", minHeight: "clamp(72px, 18vw, 88px)" }}
             />
           </label>
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "flex-start",
+              gap: 10,
+              cursor: "pointer",
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              color: "var(--text-primary)",
+            }}
+          >
+            <input type="checkbox" name="shareWithStudent" style={{ marginTop: 4, width: 18, height: 18, flexShrink: 0 }} />
+            <span>
+              <strong>Partilhar com o aluno</strong>
+              <span style={{ display: "block", fontSize: 12, color: "var(--text-secondary)", fontWeight: 400, marginTop: 4 }}>
+                Se ativares, o texto aparece no painel de performance do aluno (bloco «Feedback do treinador»). Se não, fica só visível para a equipa técnica.
+              </span>
+            </span>
+          </label>
           {state?.error && (
             <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>
               {state.error}
@@ -78,8 +97,24 @@ export function ComentariosAtleta({ athleteId, comments, canAdd }: Props) {
               <p style={{ margin: "0 0 6px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)", whiteSpace: "pre-wrap" }}>
                 {c.content}
               </p>
-              <p style={{ margin: 0, fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>
+              <p style={{ margin: "0 0 4px 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>
                 {c.authorName} · {formatCommentDate(c.createdAt)}
+                {c.visibility === "SHARED" ? (
+                  <span
+                    style={{
+                      marginLeft: 8,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "var(--primary)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    · Visível para o aluno
+                  </span>
+                ) : (
+                  <span style={{ marginLeft: 8, fontSize: 11, color: "var(--text-secondary)" }}>· Só equipa</span>
+                )}
               </p>
             </li>
           ))}

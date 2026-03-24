@@ -184,5 +184,7 @@ export async function saveEvaluationFromLesson(
 
   revalidatePath("/coach/aula");
   revalidatePath("/coach/atletas");
+  revalidatePath("/dashboard/performance");
+  revalidatePath("/dashboard");
   return { success: true };
 }

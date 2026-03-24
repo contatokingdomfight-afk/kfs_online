@@ -12,6 +12,7 @@ import { NextLessonCard } from "./NextLessonCard";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
 import { ExploreSection } from "./ExploreSection";
+import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 
@@ -130,7 +131,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       nextLevelXP,
     };
 
-    const [countRes, missions, latestCommentRes] = await Promise.all([
+    const [countRes, missions, latestCommentRes, latestEvalRes] = await Promise.all([
       supabase.from("Attendance").select("*", { count: "exact", head: true }).eq("studentId", studentId).eq("status", "CONFIRMED"),
       getApplicableMissionTemplates(supabase, athlete.id, athlete.currentXP || 0, studentPrimaryModality),
       supabase
@@ -140,6 +141,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         .eq("targetId", athlete.id)
         .eq("visibility", "SHARED")
         .order("createdAt", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("AthleteEvaluation")
+        .select("note, coachId, created_at")
+        .eq("athleteId", athlete.id)
+        .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
     ]);
@@ -159,19 +167,57 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     }
 
     const latestComment = latestCommentRes.data;
+    const latestEval = latestEvalRes.data as { note?: string | null; coachId?: string | null; created_at?: string | null } | null;
+
+    let sharedCommentContent: string | null = null;
+    let sharedCommentCoachName: string | null = null;
+    let sharedCommentDate: string | null = null;
     if (latestComment?.content) {
-      let coachName = "Treinador";
+      sharedCommentContent = latestComment.content;
+      sharedCommentDate = latestComment.createdAt;
       if (latestComment.authorCoachId) {
         const { data: coach } = await supabase.from("Coach").select("userId").eq("id", latestComment.authorCoachId).single();
         if (coach) {
           const { data: user } = await supabase.from("User").select("name").eq("id", coach.userId).single();
-          coachName = user?.name ?? "Treinador";
+          sharedCommentCoachName = user?.name ?? "Treinador";
+        } else {
+          sharedCommentCoachName = "Treinador";
         }
+      } else {
+        sharedCommentCoachName = "Treinador";
       }
+    }
+
+    let lastEvalCoachName: string | null = null;
+    let lastEvalNote: string | null = null;
+    let lastEvalDate: string | null = null;
+    if (latestEval?.coachId && latestEval.note?.trim()) {
+      lastEvalNote = latestEval.note ?? null;
+      lastEvalDate = latestEval.created_at ?? null;
+      const { data: coachRow } = await supabase.from("Coach").select("userId").eq("id", latestEval.coachId).single();
+      if (coachRow) {
+        const { data: userRow } = await supabase.from("User").select("name").eq("id", coachRow.userId).single();
+        lastEvalCoachName = userRow?.name ?? "Treinador";
+      } else {
+        lastEvalCoachName = "Treinador";
+      }
+    }
+
+    const homeFeedbackResolved = resolveCoachFeedbackForStudentView({
+      sharedCommentContent,
+      sharedCommentCoachName,
+      lastEvaluationCoachName: lastEvalCoachName,
+      lastEvaluationNote: lastEvalNote,
+    });
+    if (homeFeedbackResolved.quote) {
+      const dateStr =
+        homeFeedbackResolved.source === "comment"
+          ? sharedCommentDate
+          : lastEvalDate;
       coachFeedback = {
-        content: latestComment.content,
-        coachName,
-        date: latestComment.createdAt,
+        content: homeFeedbackResolved.quote,
+        coachName: homeFeedbackResolved.coachName ?? "Treinador",
+        date: dateStr ?? new Date().toISOString(),
       };
     }
   }

@@ -218,6 +218,52 @@ export async function setStudentFullAccess(
   return { success: true };
 }
 
+export type ClearStudentPlanResult = { error?: string; success?: boolean };
+
+/** Remove o plano do aluno (deixa de ter acesso via plano). Cancela subscrição Stripe se existir. */
+export async function clearStudentPlanAccess(
+  _prev: ClearStudentPlanResult | null,
+  formData: FormData
+): Promise<ClearStudentPlanResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const studentId = (formData.get("studentId") as string)?.trim();
+  if (!studentId) return { error: "ID do aluno inválido." };
+
+  const supabase = createAdminClient();
+
+  const { data: student } = await supabase
+    .from("Student")
+    .select("id, stripeSubscriptionId, planId")
+    .eq("id", studentId)
+    .single();
+
+  if (!student) return { error: "Aluno não encontrado." };
+  if (!(student as { planId?: string | null }).planId) {
+    return { error: "Este aluno já não tem plano atribuído." };
+  }
+
+  const subId = (student as { stripeSubscriptionId?: string | null }).stripeSubscriptionId;
+  if (subId && stripe) {
+    try {
+      await stripe.subscriptions.cancel(subId);
+    } catch (e) {
+      console.warn("Stripe subscription cancel failed:", e);
+    }
+  }
+
+  const { error } = await supabase
+    .from("Student")
+    .update({ planId: null, stripeSubscriptionId: null })
+    .eq("id", studentId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/alunos");
+  revalidatePath(`/admin/alunos/${studentId}`);
+  return { success: true };
+}
+
 export type PromoteStudentResult = { error?: string; success?: boolean };
 
 /**
