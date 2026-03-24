@@ -1,22 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import dynamic from "next/dynamic";
 import { getAdminDashboardStats } from "@/lib/admin-dashboard-stats";
 import { getActionItemsData } from "@/lib/admin-action-items";
 import { AdminSchoolFilter } from "./AdminSchoolFilter";
 import { BusinessHealthStats } from "./_components/BusinessHealthStats";
 import { ActionItems } from "./_components/ActionItems";
 import { ManagementGrid } from "./_components/ManagementGrid";
+import { OverviewCharts } from "./_components/OverviewCharts";
 import { getTranslations } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
-
-const OverviewCharts = dynamic(() => import("./_components/OverviewCharts").then((m) => ({ default: m.OverviewCharts })), {
-  loading: () => (
-    <div className="card" style={{ padding: 24, minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)" }}>
-      A carregar gráficos…
-    </div>
-  ),
-  ssr: false,
-});
 
 type Props = {
   client: SupabaseClient;

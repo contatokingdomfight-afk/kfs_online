@@ -12,9 +12,9 @@ import { WeekView, ModalityView, type LessonRow } from "./TurmasViews";
 export default async function AdminTurmasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; week?: string }> | { view?: string; week?: string };
+  searchParams: Promise<{ view?: string; week?: string }>;
 }) {
-  const params = typeof (searchParams as Promise<{ view?: string; week?: string }>).then === "function" ? await (searchParams as Promise<{ view?: string; week?: string }>) : (searchParams as { view?: string; week?: string });
+  const params = await searchParams;
   const view = (params.view === "semana" ? "semana" : "modalidade") as "modalidade" | "semana";
   const weekParam = params.week?.trim() || null;
   const weekMonday =
