@@ -5,6 +5,9 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  shouldGenerateLatePayments,
+} from "@/lib/lisbon-payment-dates";
 import { startGracePeriodOnLatePayment } from "@/lib/payment-grace";
 
 export type RenewalPending = {
@@ -16,13 +19,21 @@ export type RenewalPending = {
   priceMonthly: number;
 };
 
+export type GetRenewalsPendingOptions = {
+  /**
+   * Para criar registo LATE: excluir quem já tem qualquer Payment nesse mês (evita duplicar).
+   * Para listagens (admin): omitir — mostra quem ainda não tem PAID (inclui quem já tem LATE).
+   */
+  forLateGeneration?: boolean;
+};
+
 /**
- * Devolve alunos que têm plano atribuído e não têm nenhum pagamento
- * para o mês de referência (YYYY-MM).
+ * Devolve alunos com plano ativo que **não têm PAID** no mês de referência (YYYY-MM).
  */
 export async function getRenewalsPending(
   supabase: SupabaseClient,
-  referenceMonth: string
+  referenceMonth: string,
+  options?: GetRenewalsPendingOptions
 ): Promise<RenewalPending[]> {
   if (!/^\d{4}-\d{2}$/.test(referenceMonth)) return [];
 
@@ -44,14 +55,20 @@ export async function getRenewalsPending(
 
   const { data: payments } = await supabase
     .from("Payment")
-    .select("studentId")
+    .select("studentId, status")
     .eq("referenceMonth", referenceMonth);
 
-  const paidStudentIds = new Set((payments ?? []).map((p) => p.studentId));
-
-  const withPlan = students.filter(
-    (s) => s.planId && planById.has(s.planId) && !paidStudentIds.has(s.id)
+  const paidStudentIds = new Set(
+    (payments ?? []).filter((p) => (p as { status: string }).status === "PAID").map((p) => p.studentId)
   );
+  const anyPaymentStudentIds = new Set((payments ?? []).map((p) => p.studentId));
+
+  const withPlan = students.filter((s) => {
+    if (!s.planId || !planById.has(s.planId)) return false;
+    if (paidStudentIds.has(s.id)) return false;
+    if (options?.forLateGeneration && anyPaymentStudentIds.has(s.id)) return false;
+    return true;
+  });
   if (withPlan.length === 0) return [];
 
   const userIds = [...new Set(withPlan.map((s) => s.userId))];
@@ -78,19 +95,34 @@ export type GenerateMonthlyPaymentsResult = {
   error?: string;
 };
 
+export type GenerateMonthlyPaymentsOptions = {
+  /** Se true, ignora a regra do 5.º dia útil (ex.: ação de admin). */
+  force?: boolean;
+  /** Instante de referência (cron / testes). */
+  now?: Date;
+};
+
 /**
  * Cria um registo de Payment (status LATE) para cada aluno com plano
- * que ainda não tem pagamento no mês de referência. Valor = plan.price_monthly.
+ * sem PAID no mês de referência. Valor = plan.price_monthly.
+ * Por defeito só corre após o fim do 5.º dia útil em Lisboa (ou mês já ultrapassado).
  */
 export async function generateMonthlyPayments(
   supabase: SupabaseClient,
-  referenceMonth: string
+  referenceMonth: string,
+  options?: GenerateMonthlyPaymentsOptions
 ): Promise<GenerateMonthlyPaymentsResult> {
   if (!/^\d{4}-\d{2}$/.test(referenceMonth)) {
     return { created: 0, skipped: 0, error: "Mês de referência deve ser AAAA-MM." };
   }
 
-  const pending = await getRenewalsPending(supabase, referenceMonth);
+  const now = options?.now ?? new Date();
+  const force = options?.force ?? false;
+  if (!force && !shouldGenerateLatePayments(now, referenceMonth)) {
+    return { created: 0, skipped: 0 };
+  }
+
+  const pending = await getRenewalsPending(supabase, referenceMonth, { forLateGeneration: true });
   let created = 0;
 
   for (const p of pending) {

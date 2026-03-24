@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  currentReferenceMonthLisbon,
+  previousReferenceMonthLisbon,
+} from "@/lib/lisbon-payment-dates";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateMonthlyPayments } from "@/lib/renewals";
 
 /**
- * Cron: gera mensalidades (Payment LATE) para o mês indicado.
- * Alunos com plano que ainda não têm pagamento no mês recebem um registo.
- *
- * Chamar no início do mês (ex.: dia 1) com:
- *   Authorization: Bearer <CRON_SECRET>
- * ou header x-vercel-cron: 1 (Vercel Cron).
+ * Cron opcional: gera mensalidades (Payment LATE) após o 5.º dia útil em Lisboa
+ * (ou recupera meses já ultrapassados). Sem ?month= corre mês anterior + corrente (Lisboa).
  *
  * GET /api/cron/generate-monthly-payments
  * GET /api/cron/generate-monthly-payments?month=2025-03
@@ -25,25 +25,27 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const monthParam = searchParams.get("month")?.trim();
   const now = new Date();
-  const referenceMonth =
+  const months =
     monthParam && /^\d{4}-\d{2}$/.test(monthParam)
-      ? monthParam
-      : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      ? [monthParam]
+      : [previousReferenceMonthLisbon(now), currentReferenceMonthLisbon(now)];
 
   const supabase = createAdminClient();
-  const result = await generateMonthlyPayments(supabase, referenceMonth);
+  const results: { referenceMonth: string; created: number; skipped: number; error?: string }[] = [];
 
-  if (result.error) {
-    return NextResponse.json(
-      { ok: false, error: result.error, created: result.created, skipped: result.skipped },
-      { status: 500 }
-    );
+  for (const referenceMonth of months) {
+    const result = await generateMonthlyPayments(supabase, referenceMonth, { now });
+    results.push({ referenceMonth, ...result });
+    if (result.error) {
+      return NextResponse.json(
+        { ok: false, error: result.error, results },
+        { status: 500 }
+      );
+    }
   }
 
   return NextResponse.json({
     ok: true,
-    referenceMonth,
-    created: result.created,
-    skipped: result.skipped,
+    results,
   });
 }

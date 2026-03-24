@@ -98,7 +98,7 @@ export async function generateMonthlyPaymentsAction(
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { created: 0, skipped: 0, error: "Não autorizado." };
   const supabase = createAdminClient();
-  const result = await generateMonthlyPayments(supabase, referenceMonth);
+  const result = await generateMonthlyPayments(supabase, referenceMonth, { force: true });
   revalidatePath("/admin/financeiro");
   return result;
 }

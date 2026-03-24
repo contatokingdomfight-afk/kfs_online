@@ -3,6 +3,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
+import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { getRenewalsPending } from "@/lib/renewals";
 import { RenewalsSection } from "./RenewalsSection";
 
@@ -24,8 +25,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const refMonth = new Date();
-  const currentMonth = `${refMonth.getFullYear()}-${String(refMonth.getMonth() + 1).padStart(2, "0")}`;
+  const currentMonth = currentReferenceMonthLisbon(new Date());
   const renewalsPending = await getRenewalsPending(supabase, currentMonth);
 
   const { data: payments } = await supabase

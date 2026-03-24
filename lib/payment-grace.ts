@@ -1,10 +1,11 @@
 /**
- * Pagamento em atraso: 5 dias úteis para regularizar; após o prazo, suspender como “sem plano”
- * guardando o plano em suspendedPlanId (histórico na BD mantém-se).
+ * Atraso: após o fim do 5.º dia útil do mês em Lisboa sem PAID (registo LATE).
+ * Prazo para regularizar até ao fim do dia civil 10 em Lisboa; depois suspende como “sem plano”
+ * (planId null, suspendedPlanId, histórico na BD mantém-se).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { addBusinessDaysUtc } from "@/lib/business-days";
+import { endOfCalendarDay10Lisbon, LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { stripe } from "@/lib/stripe/server";
 
@@ -40,7 +41,7 @@ export async function startGracePeriodOnLatePayment(
     return;
   }
 
-  const endsAt = addBusinessDaysUtc(new Date(), 5);
+  const endsAt = endOfCalendarDay10Lisbon(referenceMonth);
   await supabase
     .from("Student")
     .update({
@@ -49,17 +50,18 @@ export async function startGracePeriodOnLatePayment(
     })
     .eq("id", studentId);
 
-  const deadlineLabel = endsAt.toLocaleDateString("pt-PT", {
+  const deadlineLabel = new Intl.DateTimeFormat("pt-PT", {
+    timeZone: LISBON_TZ,
     day: "2-digit",
     month: "short",
     year: "numeric",
-  });
+  }).format(endsAt);
 
   await createInAppNotification(supabase, {
     studentId,
     type: "PAYMENT_OVERDUE",
     title: "Pagamento em atraso",
-    body: `A mensalidade (${referenceMonth}) está em atraso. Tens 5 dias úteis para regularizar, até ${deadlineLabel}.`,
+    body: `A mensalidade (${referenceMonth}) está em atraso (após o 5.º dia útil). Regulariza até ao dia 10 (inclusive), ${deadlineLabel}, para evitar bloqueio de acesso.`,
     href: "/dashboard/financeiro",
   });
 }
@@ -105,6 +107,7 @@ export async function clearGraceOnPaidPayment(supabase: SupabaseClient, studentI
   }
 }
 
+/** Suspende alunos com plano cujo prazo (fim do dia 10 em Lisboa para o mês em causa) já passou. */
 export async function suspendStudentsPastGrace(
   supabase: SupabaseClient
 ): Promise<{ suspended: number; errors: string[] }> {
