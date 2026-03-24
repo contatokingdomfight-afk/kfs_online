@@ -85,10 +85,13 @@ Pagas: comissões Stripe + assinatura do software de faturação. A KFS regista 
 
 ## Estado atual na KFS
 
-- **Gerar mensalidades do mês**: Cria `Payment` (LATE) para alunos com plano sem pagamento no mês.
-- **Registar pagamento**: Formulário manual para marcar como PAID (presencial).
-- **Webhook Stripe**: Cria `Payment` PAID quando a Stripe confirma o pagamento.
-- **Faturação legal**: Ainda não integrada; deve ser feita via software certificado (integrar quando houver um fornecedor escolhido).
+- **Gerar mensalidades (automático)**: Cron **`GET /api/cron/payment-suspension`** (agendado na Vercel) cria `Payment` **LATE** para alunos com **plano** e **sem `PAID`** no mês de referência, para o **mês civil anterior** e o **corrente** em **Europe/Lisboa**, **após** o fim do **5.º dia útil** desse mês (ou se o mês já passou). Documentação: **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
+- **Gerar mensalidades (admin)**: Botão em **Admin → Financeiro** com **force** — cria LATE sem esperar pelo 5.º dia útil (backfill / operação manual). Só para quem **não tem nenhum** `Payment` naquele `referenceMonth` (evita duplicar).
+- **“Pago” no mês**: Conta apenas **`Payment.status === "PAID"`** para aquele `YYYY-MM`.
+- **Prazo e bloqueio**: Após LATE, o aluno tem até ao **fim do dia civil 10** (Lisboa) para regularizar; depois o mesmo cron pode **suspender** (`planId` null, `suspendedPlanId`, cancelar subscrição Stripe se existir). Aplica-se a **online e presencial**.
+- **Registar pagamento**: Formulário manual para marcar **PAID** (presencial) ou **LATE**; PAID limpa grace / repõe plano suspenso (`clearGraceOnPaidPayment`).
+- **Webhook Stripe**: Cria `Payment` **PAID** quando a Stripe confirma (ex.: `invoice.paid`); limpa grace.
+- **Faturação legal**: Ainda não integrada; deve ser feita via **software certificado pela AT** (integrar quando houver fornecedor escolhido).
 
 ---
 

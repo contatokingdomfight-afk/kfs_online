@@ -35,13 +35,19 @@ Perfil do aluno (todos começam aqui).
 **Campos**
 
 - id
-    
 - userId
-    
+- schoolId → escola (multi-escola)
 - status → `ATIVO | INATIVO | EXPERIMENTAL`
-    
+- planId → plano atual (opcional); pode ser colocado a `null` na suspensão por pagamento
+- stripeSubscriptionId → subscrição Stripe (opcional)
+- **Pagamento / suspensão (mensalidade):**
+  - `paymentGraceEndsAt` — fim do **dia civil 10** em `Europe/Lisboa` para regularizar após atraso (instante em timestamptz)
+  - `paymentGraceReferenceMonth` — `YYYY-MM` da mensalidade em causa
+  - `paymentSuspendedAt` — quando o acesso foi suspenso por falta de pagamento
+  - `suspendedPlanId` — plano antes da suspensão; reposto após PAID
 - createdAt
-    
+
+Ver também **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
 
 ---
 

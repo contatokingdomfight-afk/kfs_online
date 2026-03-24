@@ -1,17 +1,17 @@
-# ⚡ Início Rápido - Deploy na Vercel
+# Início rápido – Deploy na Vercel (KFS Online)
 
-## 🎯 Objetivo
-Fazer deploy da aplicação KFS System na Vercel em **menos de 30 minutos**.
+> **Março 2026:** Projeto **`kfs_online`** · **Next.js 15** · Node **20**. Estado atual: **`README.md`**, **`PROXIMOS_PASSOS.md`**, **`VARIAVEIS_AMBIENTE_VERCEL.txt`** (lista atualizada). Define **`CRON_SECRET`** para os endpoints em `/api/cron/*`. Webhook Stripe: **`/api/stripe/webhook`**.
 
-## 📋 Pré-requisitos
+## Objetivo
 
-Antes de começar, certifique-se que tem:
+Fazer deploy na Vercel em cerca de **30 minutos**.
 
-- ✅ Conta GitHub (OseiasBeu)
-- ✅ Repositório `kfs_system` no GitHub (já está!)
-- ✅ Conta Supabase com projeto criado
-- ✅ Conta Stripe (modo teste)
-- ✅ 20-30 minutos disponíveis
+## Pré-requisitos
+
+- Conta GitHub com acesso ao repositório (**`kfs_online`** ou o nome que importares)
+- Conta Supabase (projeto criado)
+- Conta Stripe (modo teste)
+- Cerca de 20–30 minutos
 
 ## 🚀 Passo a Passo (Resumido)
 

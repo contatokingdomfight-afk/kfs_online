@@ -1,6 +1,8 @@
-# 📊 Sumário Completo - KFS System Deploy
+# 📊 Sumário completo – KFS System (histórico de deploy)
 
-## ✅ O Que Foi Feito
+> **Março 2026:** Este ficheiro descreve um **snapshot antigo** do deploy (nomes de repo, Next 14, listas de ficheiros). Para o estado **atual** do projeto **KFS Online**, usa **`README.md`**, **`PROXIMOS_PASSOS.md`** e **`DOCS/ROADMAP_Plataforma_KFS.md`**.
+
+## ✅ O Que Foi Feito (histórico)
 
 ### 1. Preparação do Repositório GitHub
 - ✅ **212 ficheiros** enviados com sucesso para o GitHub

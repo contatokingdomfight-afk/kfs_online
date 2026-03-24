@@ -1,10 +1,12 @@
-# ✅ Checklist Rápido - Deploy Vercel
+# Checklist – Deploy Vercel (KFS Online)
+
+> **Março 2026:** Repo típico **`kfs_online`** · Next **15** · Node **20** · ver **`VARIAVEIS_AMBIENTE_VERCEL.txt`**.
 
 ## Antes de começar
-- [ ] Conta GitHub ativa (OseiasBeu)
-- [ ] Repositório `kfs_system` no GitHub (✅ já está!)
-- [ ] Conta Supabase com projeto criado
-- [ ] Conta Stripe (modo teste)
+- [ ] Conta GitHub
+- [ ] Repositório **`kfs_online`** (ou fork) no GitHub
+- [ ] Conta Supabase
+- [ ] Conta Stripe (teste)
 
 ## Deploy na Vercel
 
@@ -13,12 +15,12 @@
 - [ ] Login com GitHub
 - [ ] Autorizar acesso aos repositórios
 
-### 2. Importar Projeto
-- [ ] Clicar em "Add New" → "Project"
-- [ ] Selecionar `kfs_system`
-- [ ] Clicar em "Import"
+### 2. Importar projeto
+- [ ] Add New → Project
+- [ ] Selecionar **`kfs_online`** (ou o repo correto)
+- [ ] Framework: Next.js; **Node.js 20**
 
-### 3. Variáveis de Ambiente (OBRIGATÓRIAS)
+### 3. Variáveis de ambiente (mínimo)
 
 #### Supabase
 - [ ] `NEXT_PUBLIC_SUPABASE_URL`
@@ -26,14 +28,16 @@
 - [ ] `SUPABASE_SERVICE_ROLE_KEY`
 - [ ] `DATABASE_URL`
 
-#### NextAuth
-- [ ] `NEXTAUTH_URL` (https://seu-projeto.vercel.app)
-- [ ] `NEXTAUTH_SECRET` (gerar com: `openssl rand -base64 32`)
+#### Cron
+- [ ] `CRON_SECRET` (protege `/api/cron/*`; ver `vercel.json`)
+
+#### NextAuth (opcional / legado)
+- [ ] `NEXTAUTH_URL` / `NEXTAUTH_SECRET` — só se usares esta stack
 
 #### Stripe
 - [ ] `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - [ ] `STRIPE_SECRET_KEY`
-- [ ] `STRIPE_WEBHOOK_SECRET` (configurar depois do deploy)
+- [ ] `STRIPE_WEBHOOK_SECRET` (após deploy; URL **`/api/stripe/webhook`**)
 
 ### 4. Deploy
 - [ ] Clicar em "Deploy"
@@ -47,12 +51,11 @@
 - [ ] Verificar se tabelas foram criadas
 
 #### Stripe Webhook
-- [ ] Ir ao Stripe Dashboard → Webhooks
-- [ ] Criar endpoint: `https://seu-projeto.vercel.app/api/webhooks/stripe`
-- [ ] Selecionar evento: `checkout.session.completed`
-- [ ] Copiar Signing Secret
-- [ ] Adicionar à Vercel como `STRIPE_WEBHOOK_SECRET`
-- [ ] Fazer redeploy
+- [ ] Stripe → Webhooks → Add endpoint
+- [ ] URL: `https://seu-projeto.vercel.app/api/stripe/webhook`
+- [ ] Eventos conforme necessidade (ex.: pagamentos de subscrição / checkout)
+- [ ] Copiar signing secret → `STRIPE_WEBHOOK_SECRET` na Vercel
+- [ ] Redeploy
 
 ### 6. Testes Finais
 - [ ] Abrir site em produção

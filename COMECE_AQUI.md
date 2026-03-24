@@ -1,8 +1,10 @@
-# 🎯 COMECE AQUI - Deploy KFS System na Vercel
+# COMECE AQUI – KFS Online
 
-## 👋 Bem-vindo!
+> **Atualização março 2026:** Projeto **KFS Online** (`kfs_online`), **Next.js 15**, Node **20**. Leitura essencial: **`README.md`**, **`PROXIMOS_PASSOS.md`**, **`DOCS/ROADMAP_Plataforma_KFS.md`**, **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
 
-Este é o **ponto de partida** para fazer deploy da sua aplicação KFS System na Vercel.
+## Bem-vindo
+
+Ponto de partida para deploy na **Vercel** e navegação na documentação da raiz do repositório.
 
 ## 📚 Documentação Disponível
 

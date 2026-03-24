@@ -1,4 +1,4 @@
--- Período de graça por pagamento em atraso (5 dias úteis) e suspensão sem apagar histórico.
+-- Período de graça até ao fim do dia civil 10 (Lisboa) e suspensão sem apagar histórico. Ver DOCS/PAGAMENTOS_MENSALIDADES_CRON.md.
 ALTER TABLE "Student" ADD COLUMN IF NOT EXISTS "paymentGraceEndsAt" timestamptz;
 ALTER TABLE "Student" ADD COLUMN IF NOT EXISTS "paymentGraceReferenceMonth" text;
 ALTER TABLE "Student" ADD COLUMN IF NOT EXISTS "paymentSuspendedAt" timestamptz;

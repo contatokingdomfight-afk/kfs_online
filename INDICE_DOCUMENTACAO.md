@@ -1,4 +1,6 @@
-# 📚 Índice da Documentação - KFS System
+# Índice da documentação – KFS Online
+
+> Projeto atual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **março 2026**.
 
 ## 🚀 Deploy & Configuração
 
@@ -69,6 +71,14 @@
   - Fases do projeto
   - Prioridades
 
+- **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**
+  - Mensalidades, **Europe/Lisbon** (5.º dia útil / dia 10)
+  - Crons `payment-suspension`, `generate-monthly-payments`
+  - Campos `Student` (grace / suspensão)
+
+- **`DOCS/FINANCEIRO_STRIPE_E_PRESENCIAL.md`**
+  - Stripe, faturação em Portugal, fluxos na KFS
+
 ### Plano de Negócios
 - **`DOCS/Plano_de_Negócios_Kingdom_Fight_School.md`**
   - Modelo de negócio
@@ -125,7 +135,7 @@
 ## 📊 Estrutura de Ficheiros
 
 ```
-KFS_System/
+kfs_online/
 ├── 📄 README.md                          # Documentação principal
 ├── ⚡ INICIO_RAPIDO.md                   # Guia rápido de deploy
 ├── 📖 VERCEL_DEPLOY.md                   # Guia completo de deploy
@@ -138,6 +148,8 @@ KFS_System/
 ├── 📁 DOCS/                              # Documentação do produto
 │   ├── Especificacao_Plataforma_Kingdom_Digital.md
 │   ├── ROADMAP_Plataforma_KFS.md
+│   ├── PAGAMENTOS_MENSALIDADES_CRON.md
+│   ├── FINANCEIRO_STRIPE_E_PRESENCIAL.md
 │   └── Plano_de_Negócios_Kingdom_Fight_School.md
 │
 ├── 📁 scripts/                           # Scripts de automação
@@ -184,7 +196,7 @@ KFS_System/
 
 #### Variáveis de Ambiente
 - Lista completa → `VARIAVEIS_AMBIENTE_VERCEL.txt`
-- Template local → `.env.example`
+- Template local → `.env.example` (inclui **`CRON_SECRET`** para `/api/cron/*`)
 - Onde obter → `VARIAVEIS_AMBIENTE_VERCEL.txt`
 
 #### Configuração
@@ -219,4 +231,4 @@ KFS_System/
 
 **💡 Dica:** Adicione este ficheiro aos favoritos para acesso rápido à documentação!
 
-**📅 Última atualização:** 2026-02-27
+**Última atualização:** março 2026

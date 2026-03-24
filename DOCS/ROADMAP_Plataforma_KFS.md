@@ -81,7 +81,7 @@
 | Criar plano | Feito | `/admin/planos/novo` |
 | Editar plano | Feito | `/admin/planos/[id]` |
 | Planos iniciais (Online, Presencial I/II, FULL) | Feito | Inseridos na migration |
-| Renovação / mensalidades | Feito | Admin Financeiro: “Renovações do mês” + gerar mensalidades; cron opcional para gerar no início do mês |
+| Renovação / mensalidades | Feito | Admin Financeiro: “Renovações do mês” + gerar mensalidades (**force** ignora calendário); cron diário em `/api/cron/payment-suspension` (mês anterior + corrente, Lisboa). Ver **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md** |
 
 ---
 
@@ -144,7 +144,8 @@
 |------|--------|--------|
 | Listar pagamentos | Feito | Com filtro |
 | Registar pagamento | Feito | `/admin/financeiro/novo` (aluno, valor, mês, status); query params para pré-preencher |
-| Renovação automática / mensalidades | Feito | Secção “Renovações do mês”: lista de alunos com plano sem pagamento; botão “Gerar mensalidades” (cria Payment LATE); cron GET /api/cron/generate-monthly-payments |
+| Renovação automática / mensalidades | Feito | Lista sem **PAID** no mês; “Gerar mensalidades” cria **LATE** (admin com **force**). Automático: após **5.º dia útil** (Lisboa) sem PAID → `LATE`; prazo até **fim do dia 10** (Lisboa); depois **suspensão** (`planId` null, `suspendedPlanId`). Cron: **`GET /api/cron/payment-suspension`** (também gera LATE para mês anterior + corrente). Opcional: **`/api/cron/generate-monthly-payments`**. Documentação: **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md** |
+| Atraso / bloqueio por pagamento (online + presencial) | Feito | `lib/lisbon-payment-dates.ts`, `lib/payment-grace.ts`, `lib/renewals.ts`; notificações in-app |
 
 ---
 
@@ -180,7 +181,7 @@
 | Entidade / Campo | Estado | Notas |
 |------------------|--------|--------|
 | User | Feito | authUserId, email, name, role |
-| Student | Feito | userId, status, planId |
+| Student | Feito | userId, status, planId, schoolId, stripeSubscriptionId; **pagamento:** paymentGraceEndsAt, paymentGraceReferenceMonth, paymentSuspendedAt, suspendedPlanId (grace até dia 10 Lisboa; suspensão após prazo) |
 | Athlete | Feito | studentId, level, mainCoachId, **xp** (gamificação) |
 | AthleteMissionAward | Feito | XP já atribuído por target de dimensão (evita duplicar) |
 | MissionTemplate | Feito | Missões configuráveis (modalidade, faixa, xpReward) |
@@ -257,7 +258,7 @@ Com base na especificação e na dependência entre módulos:
 3. **Receita adicional (Loja)** – Feito.
 4. **Dashboard de Performance** – Feito (inclui sugestões de cursos recomendados).
 5. **Gamificação** – Feito (badges, conquistas, meta assiduidade, meta IMC, metas avaliação, seed de missões).
-6. **Próximos passos (opcional):** Battle Pass / temporadas; reset mensal de missões; PWA e app nativo (secção 17); renovação automática de planos; notificações push.
+6. **Próximos passos (opcional):** Battle Pass / temporadas; reset mensal de missões; PWA e app nativo (secção 17); notificações **push** (além de email/cron); melhorias pontuais em mensalidades (relatórios, alertas admin).
 
 ---
 
@@ -275,4 +276,15 @@ Com base na especificação e na dependência entre módulos:
 
 ---
 
-*Última atualização: Dashboard de Performance – KPIs por modalidade e sugestões de biblioteca junto ao feedback do coach (secções na página Perfil do Atleta). Próximos passos opcionais: Battle Pass, PWA/Capacitor, renovação automática.*
+## 18. Stack, deploy e segurança (atual)
+
+| Item | Estado | Notas |
+|------|--------|--------|
+| Next.js 15 (App Router) | Feito | Ex.: 15.5.x; `npm run build` + ESLint |
+| Node 20 (engines) | Feito | Alinhar Vercel e desenvolvimento local |
+| `npm audit` | Feito | Manter 0 vulnerabilidades conhecidas ao atualizar dependências |
+| Crons Vercel | Feito | `vercel.json`: lembretes de aulas + **payment-suspension** (LATE + suspensão); `CRON_SECRET` obrigatório para chamadas não-Vercel |
+
+---
+
+*Última atualização (março 2026): mensalidades com calendário **Europe/Lisbon** (5.º dia útil / dia 10), cron **payment-suspension**, documentação **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**, upgrade **Next.js 15** e limpeza de vulnerabilidades npm. Próximos passos opcionais: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push.*

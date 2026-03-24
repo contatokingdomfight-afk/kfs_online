@@ -1,14 +1,19 @@
-# Kingdom Fight School – KFS System
+# Kingdom Fight School – KFS Online (`kfs_online`)
 
-Plataforma de gestão e ensino da Kingdom Fight School (MVP). Mobile First.
+Plataforma de gestão e ensino da Kingdom Fight School (MVP). Mobile first.
 
 ## Stack
 
-- **Next.js 14** (App Router) + TypeScript
-- **Tailwind CSS** + design tokens (DOCS)
+- **Next.js 15** (App Router) + **TypeScript**
+- **React 18**
+- **Tailwind CSS** + design tokens (ver `DOCS/`)
 - **Supabase** – autenticação + PostgreSQL
-- **Prisma** – ORM (base de dados no Supabase)
+- **Prisma** – ORM (schema alinhado à BD no Supabase)
 - **Vercel** – deploy
+- **Stripe** – pagamentos online; **Resend** – email
+- **`date-fns` / `date-fns-tz`** – regras de mensalidade em `Europe/Lisbon`
+
+Repositório GitHub típico: `contatokingdomfight-afk/kfs_online` (ajusta se o teu remote for outro).
 
 ## Começar
 
@@ -21,13 +26,15 @@ Plataforma de gestão e ensino da Kingdom Fight School (MVP). Mobile First.
    - Copiar `.env.example` para `.env`
    - Preencher `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Supabase → Project Settings → API)
    - Preencher `DATABASE_URL` (Supabase → Project Settings → Database → connection string)
-   - **Login com Google**: ver **DOCS/GOOGLE_OAUTH_SETUP.md** (guia completo de configuração)
+   - **Cron:** `CRON_SECRET` para proteger os endpoints em `/api/cron/*` (Vercel Cron ou chamadas manuais com `Bearer`)
+   - **Login com Google:** ver **DOCS/GOOGLE_OAUTH_SETUP.md**
 
 3. **Base de dados**
    ```bash
    npx prisma generate
    npx prisma db push
    ```
+   Migrações SQL em `supabase/migrations/` podem ser aplicadas no projeto Supabase conforme a vossa prática.
 
 4. **Desenvolvimento**
    ```bash
@@ -35,94 +42,65 @@ Plataforma de gestão e ensino da Kingdom Fight School (MVP). Mobile First.
    ```
    Abrir [http://localhost:3000](http://localhost:3000).
 
+**Node:** o `package.json` define `"engines": { "node": "20.x" }`. Usa Node 20 em local e na Vercel para consistência.
+
 ## Estrutura
 
-- `app/` – rotas e layouts (Next.js App Router)
+- `app/` – rotas e layouts (App Router)
 - `components/` – UI reutilizável (incl. `fighter/` para perfil do atleta gamificado)
-- `lib/` – Prisma, utils, i18n, belts, XP/missões, avaliação física
-- `prisma/` – schema e migrações
-- `DOCS/` – documentação do produto
+- `lib/` – Supabase, utils, i18n, cintos, XP/missões, avaliação física, **pagamentos e datas em Lisboa** (`lisbon-payment-dates.ts`, `payment-grace.ts`, `renewals.ts`)
+- `prisma/` – schema e migrações Prisma
+- `supabase/migrations/` – migrações SQL (ex.: grace/suspensão de pagamento)
+- `DOCS/` – documentação do produto e operação
 
 ## Funcionalidades principais
 
-- **Perfil do atleta (gamificado)** – Faixas por cor (Branca → Dourado N), XP por conclusão de missões, progressão em dobro (1000 XP para Branca/amarela, depois o dobro por nível). Radar de atributos (Técnico, Tático, Físico, Mental, Teórico), detalhe por componente (filtrado pela modalidade principal do aluno), missões ativas (sistema + configuráveis no Admin).
-- **Avaliação física** – Ficha de anamnese e avaliação inicial preenchida pelo instrutor no perfil do aluno; obrigatória a cada 6 meses; aparece como missão para o aluno até estar em dia. Disponível para todos os professores em **Perfil do aluno** e **Perfil do atleta**.
-- **Admin** – Missões (criar/eliminar), critérios de avaliação por modalidade, componentes gerais (dimensões), turmas, planos, alunos, coaches, experimentais, financeiro, etc.
+- **Perfil do atleta (gamificado)** – Faixas por cor, XP, radar (Técnico, Tático, Físico, Mental, Teórico), missões (sistema + configuráveis no Admin).
+- **Avaliação física** – Ficha no perfil do aluno; renovação a cada 6 meses; missão até estar em dia.
+- **Admin** – Turmas, planos, alunos, coaches, financeiro, missões, multi-escola, etc.
+- **Mensalidades e suspensão** – Atraso após o **5.º dia útil** do mês em Lisboa; prazo de regularização até ao **dia 10**; bloqueio automático via cron. Detalhe: **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**.
 
 ## Contas de teste
 
 Não existem contas pré-criadas. Cria-as assim:
 
-1. **Aluno**  
-   - Regista-te em **Registar** com um email (ex.: `aluno@teste.com`).  
-   - No Supabase → **Table Editor** → **User**: altera o campo **role** para `ALUNO`.  
-   - O primeiro login já cria o registo em **Student** (sync automático).
-
-2. **Professor (Coach)**  
-   - Regista-te com outro email (ex.: `professor@teste.com`).  
-   - No Supabase → **User**: altera **role** para `COACH`.  
-   - Em **Coach**: clica **Insert row**, preenche **id** (ex.: um UUID ou CUID), **userId** = id do User desse email, **specialties** pode ficar vazio.
-
-3. **Administrador**  
-   - Usa o email do admin (ex.: `contatokingdomfight@gmail.com`).  
-   - Em **User**, define **role** = `ADMIN`.
+1. **Aluno** – Registar com um email; no Supabase → **User**, `role` = `ALUNO`. O primeiro login sincroniza **Student**.
+2. **Coach** – Outro email; **User** com `role` = `COACH`; em **Coach** ligar `userId`.
+3. **Admin** – **User** com `role` = `ADMIN`.
 
 ### Ver como Aluno / Professor (admin)
 
-Com o email de administrador, na área **Admin** (canto superior direito) tens:
-
-- **Ver como: Aluno** – abre o dashboard como se fosses aluno (agenda, etc.).  
-- **Ver como: Professor** – abre a área Coach.
-
-Em qualquer uma destas vistas aparece o banner **"A ver como Aluno"** ou **"A ver como Professor"** com o botão **Voltar ao Admin**.
+Na área **Admin**: **Ver como: Aluno** ou **Ver como: Professor** (banner com **Voltar ao Admin**).
 
 ## Deploy (Vercel)
 
-### 🚀 Deploy Rápido
+1. Importar o projeto a partir do GitHub.
+2. Definir variáveis de ambiente (Supabase, Stripe, Resend, `CRON_SECRET`, etc.) — ver **`.env.example`** e **`VARIAVEIS_AMBIENTE_VERCEL.txt`** se existir.
+3. Garantir **Node 20** no projeto Vercel.
+4. Crons: `vercel.json` agenda `lesson-reminders` e **`payment-suspension`** (gera `LATE` + suspende após prazo). O `CRON_SECRET` tem de estar definido.
 
-1. **Aceder à Vercel**: [vercel.com](https://vercel.com) → Login com GitHub
-2. **Importar Projeto**: Add New → Project → Selecionar `kfs_system`
-3. **Configurar Variáveis**: Ver `VARIAVEIS_AMBIENTE_VERCEL.txt` para lista completa
-4. **Deploy**: Clicar em "Deploy" e aguardar 2-5 minutos
+Guias na raiz / `DOCS/`: `INICIO_RAPIDO.md`, `VERCEL_DEPLOY.md`, `VERCEL_CHECKLIST.md`, `DOCS/DEPLOY_VERCEL.md`, etc.
 
-### 📚 Documentação Completa
+## Segurança e dependências
 
-- **`VERCEL_DEPLOY.md`** - Guia completo passo a passo
-- **`GUIA_VISUAL_VERCEL.md`** - Guia visual com screenshots
-- **`VERCEL_CHECKLIST.md`** - Checklist rápido
-- **`VARIAVEIS_AMBIENTE_VERCEL.txt`** - Lista de todas as variáveis
-- **`LINKS_IMPORTANTES.md`** - Links úteis para todos os serviços
-
-### 🔑 Variáveis de Ambiente Essenciais
-
-```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://iozxildpnugqxzqkxntq.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=...
-DATABASE_URL=postgresql://...
-
-# NextAuth
-NEXTAUTH_URL=https://seu-projeto.vercel.app
-NEXTAUTH_SECRET=... # Gerar com: node scripts/generate-nextauth-secret.js
-
-# Stripe
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_... # Configurar após deploy
-```
-
-Ver `VARIAVEIS_AMBIENTE_VERCEL.txt` para instruções detalhadas de onde obter cada valor.
+- Mantém **`npm audit`** sem vulnerabilidades conhecidas; a stack foi atualizada para **Next.js 15.5.x** com esse objetivo.
+- Após upgrades, corre **`npm run build`** antes de fazer deploy.
 
 ## Documentação
 
-Ver pasta **DOCS/** para visão, modelo de dados, fluxos, design system, telas e deploy.
+| Documento | Conteúdo |
+|-----------|----------|
+| **DOCS/ROADMAP_Plataforma_KFS.md** | O que está feito / por fazer |
+| **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md** | Mensalidades, Lisboa, crons, campos `Student` |
+| **DOCS/FINANCEIRO_STRIPE_E_PRESENCIAL.md** | Stripe, faturação PT, fluxos |
+| **INDICE_DOCUMENTACAO.md** | Índice de ficheiros na raiz |
 
 ## Scripts
 
-| Comando        | Descrição              |
-|----------------|------------------------|
-| `npm run dev`  | Servidor de desenvolvimento |
-| `npm run build`| Build de produção      |
-| `npm run db:studio` | Prisma Studio (BD) |
-| `npm run db:migrate` | Criar migração   |
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Build de produção |
+| `npm run lint` | ESLint (Next) |
+| `npm run db:studio` | Prisma Studio |
+| `npm run db:migrate` | Migrações Prisma |

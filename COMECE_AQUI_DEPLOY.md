@@ -1,6 +1,12 @@
-# 🚀 COMECE AQUI - Deploy do KFS System
+# COMECE AQUI – Deploy (histórico)
 
-## ✅ O que já está pronto:
+> **Março 2026:** Para o estado atual do projeto (**KFS Online**, Next 15, crons de pagamento), usa primeiro **`README.md`**, **`PROXIMOS_PASSOS.md`** e **`VARIAVEIS_AMBIENTE_VERCEL.txt`**. O texto abaixo mantém um guia antigo (push com token, etc.) — continua útil se tiveres problemas de autenticação Git.
+
+---
+
+# Deploy do KFS System (guia legado)
+
+## O que já estava pronto (época do guia):
 
 - ✅ Código commitado localmente
 - ✅ Migration executada no Supabase (banco atualizado!)
