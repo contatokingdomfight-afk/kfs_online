@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   setThemeCookieValue,
@@ -30,6 +31,21 @@ const label: Record<Locale, { theme: string; light: string; dark: string; lang: 
 
 const MOBILE_BREAKPOINT = 768;
 
+function subscribeMinWidth768(onStoreChange: () => void) {
+  const mq = window.matchMedia(`(min-width: ${MOBILE_BREAKPOINT}px)`);
+  mq.addEventListener("change", onStoreChange);
+  return () => mq.removeEventListener("change", onStoreChange);
+}
+
+function getMinWidth768Snapshot() {
+  return window.matchMedia(`(min-width: ${MOBILE_BREAKPOINT}px)`).matches;
+}
+
+/** Mesmo valor no SSR e no 1.º paint de hidratação (evita React #418 em mobile). */
+function getMinWidth768ServerSnapshot() {
+  return true;
+}
+
 export function ThemeLocaleSwitcher({
   initialTheme,
   initialLocale,
@@ -41,16 +57,12 @@ export function ThemeLocaleSwitcher({
 }) {
   const router = useRouter();
   const t = label[initialLocale];
-  const [isDesktop, setIsDesktop] = useState(true);
+  const isDesktop = useSyncExternalStore(
+    subscribeMinWidth768,
+    getMinWidth768Snapshot,
+    getMinWidth768ServerSnapshot
+  );
   const [isExpanded, setIsExpanded] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia(`(min-width: ${MOBILE_BREAKPOINT}px)`);
-    setIsDesktop(mq.matches);
-    const handler = () => setIsDesktop(mq.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
 
   function setTheme(theme: Theme) {
     document.cookie = setThemeCookieValue(theme);
