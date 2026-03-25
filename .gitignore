@@ -33,6 +33,8 @@ prisma/migrations/**/migration_lock.toml
 # Misc
 .DS_Store
 *.pem
+*.tsbuildinfo
+supabase/.temp/
 
 # clerk configuration (can include secrets)
 /.clerk/
