@@ -56,7 +56,12 @@ export async function setAttendanceIntention(
 
 /** Ciclo de Presença 2.0: Check-in via QR – confirmação imediata (CONFIRMED + checkedInAt). */
 export async function checkIn(lessonId: string): Promise<{ error?: string; checkedInAt?: string }> {
-  return performCheckIn(lessonId);
+  const result = await performCheckIn(lessonId);
+  if (!result.error && result.checkedInAt) {
+    revalidatePath("/dashboard");
+    revalidatePath(`/check-in/${lessonId}`);
+  }
+  return result;
 }
 
 /** Para useFormState: recebe formData com lessonId e intention (vou | nao_vou). */

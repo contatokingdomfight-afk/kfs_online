@@ -2,7 +2,6 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
-import { revalidatePath } from "next/cache";
 import { grantBadgesIfEligible } from "@/lib/gamification";
 import { createPresenceConfirmedNotification } from "@/lib/notifications/in-app";
 import { sendCheckInConfirmation } from "@/lib/notifications/email";
@@ -20,7 +19,8 @@ import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
 /**
  * Lógica de check-in (QR / link). Módulo `server-only` para ser chamado
- * desde páginas RSC sem passar por uma Server Action (evita 500 em produção).
+ * desde páginas RSC. Não chamar `revalidatePath` aqui — só é permitido em
+ * Server Actions / Route Handlers; a action `checkIn` faz revalidação após sucesso.
  */
 export async function performCheckIn(lessonId: string): Promise<{ error?: string; checkedInAt?: string }> {
   const studentId = await getCurrentStudentId();
@@ -158,7 +158,5 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
     }
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath(`/check-in/${lessonId}`);
   return { checkedInAt: now };
 }
