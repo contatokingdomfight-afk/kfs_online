@@ -4,6 +4,9 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getThisWeekRange, MODALITY_LABELS, getWeekStartMonday } from "@/lib/lesson-utils";
+import { pickNextLessonForCard, isWithinLessonCheckInWindow, lessonStartInstant } from "@/lib/lesson-check-in-window";
+import { formatInTimeZone } from "date-fns-tz";
+import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import { getCachedPlanAccess } from "@/lib/plan-access";
 import { getApplicableMissionTemplates } from "@/lib/missions";
@@ -83,7 +86,25 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         : allowedModalities.length < MODALITIES_LIST.length
           ? allLessons.filter((l) => allowedModalities.includes(l.modality))
           : allLessons;
-  const nextLesson = lessons[0] ?? null;
+  const nowForCard = new Date();
+  const nextLesson = pickNextLessonForCard(lessons, nowForCard) ?? null;
+  const checkInWindowOpen =
+    !!nextLesson &&
+    isWithinLessonCheckInWindow(
+      {
+        date: nextLesson.date,
+        startTime: nextLesson.startTime,
+        endTime: nextLesson.endTime,
+      },
+      nowForCard
+    );
+  const beforeLessonStart =
+    !!nextLesson &&
+    !checkInWindowOpen &&
+    nowForCard.getTime() < lessonStartInstant(nextLesson).getTime();
+  const checkInStartTimeLabel = beforeLessonStart
+    ? formatInTimeZone(lessonStartInstant(nextLesson), LISBON_TZ, "HH:mm")
+    : null;
 
   const lessonIds = lessons.map((l) => l.id);
   const attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }> = {};
@@ -258,6 +279,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         todayStr={todayStr}
         hasCheckIn={hasCheckIn}
         isFreeTier={!hasPlan}
+        checkInWindowOpen={checkInWindowOpen}
+        checkInStartTimeLabel={checkInStartTimeLabel}
         t={t as (key: string) => string}
         statusLabels={STATUS_LABEL}
       />

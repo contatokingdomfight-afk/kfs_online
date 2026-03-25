@@ -19,6 +19,10 @@ type Props = {
   todayStr: string;
   hasCheckIn: boolean;
   isFreeTier?: boolean;
+  /** Se o check-in está na janela (início da aula até fim + 3h). */
+  checkInWindowOpen?: boolean;
+  /** HH:mm em Lisboa; só quando ainda não abriu a janela. */
+  checkInStartTimeLabel?: string | null;
   t: (key: string) => string;
   statusLabels: Record<string, string>;
 };
@@ -31,6 +35,8 @@ export function NextLessonCard({
   todayStr,
   hasCheckIn,
   isFreeTier = false,
+  checkInWindowOpen = true,
+  checkInStartTimeLabel = null,
   t,
   statusLabels,
 }: Props) {
@@ -70,6 +76,7 @@ export function NextLessonCard({
 
   const att = attendanceByLesson[lesson.id];
   const isToday = lesson.date === todayStr;
+  const canUseCheckInLink = !isFreeTier && checkInWindowOpen;
 
   return (
     <section>
@@ -113,7 +120,12 @@ export function NextLessonCard({
           />
           )}
         </div>
-        {!isFreeTier && (
+        {!isFreeTier && checkInStartTimeLabel && !checkInWindowOpen && (
+          <p style={{ marginTop: 14, marginBottom: 0, fontSize: "clamp(13px, 3.2vw, 15px)", opacity: 0.95 }}>
+            {t("dashboardCheckInAvailableFrom").replace("{time}", checkInStartTimeLabel)}
+          </p>
+        )}
+        {!isFreeTier && canUseCheckInLink && (
         <Link
           href={`/check-in/${lesson.id}`}
           className="btn"
@@ -135,12 +147,12 @@ export function NextLessonCard({
           📲 {t("dashboardCheckInButton")}
         </Link>
         )}
-        {!isFreeTier && (
+        {!isFreeTier && canUseCheckInLink && (
         <p style={{ marginTop: 12, marginBottom: 0, fontSize: "clamp(12px, 3vw, 14px)", opacity: 0.9 }}>
           {t("atGymScanQr")}{" "}
-          <a href={`/check-in/${lesson.id}`} style={{ color: "#fff", textDecoration: "underline" }}>
+          <Link href={`/check-in/${lesson.id}`} style={{ color: "#fff", textDecoration: "underline" }}>
             {t("openLinkOnPhone")}
-          </a>
+          </Link>
           .
         </p>
         )}

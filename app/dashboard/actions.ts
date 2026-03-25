@@ -8,6 +8,14 @@ import { createPresenceConfirmedNotification } from "@/lib/notifications/in-app"
 import { sendCheckInConfirmation } from "@/lib/notifications/email";
 import { getPlanAccess } from "@/lib/plan-access";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import {
+  isWithinLessonCheckInWindow,
+  lessonCheckInWindowEnd,
+  lessonStartInstant,
+} from "@/lib/lesson-check-in-window";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+import { formatInTimeZone } from "date-fns-tz";
+import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
 /** Ciclo de Presença 2.0: Intenção (RSVP) – Vou = PENDING, Não vou = ABSENT. */
 export async function setAttendanceIntention(
@@ -69,6 +77,41 @@ export async function checkIn(lessonId: string): Promise<{ error?: string; check
   const { data: lessonData } = await supabase.from("Lesson").select("id, modality, date, startTime, endTime").eq("id", lessonId).single();
   if (!lessonData) return { error: "Aula não encontrada." };
 
+  const windowFields = {
+    date: lessonData.date,
+    startTime: lessonData.startTime,
+    endTime: lessonData.endTime,
+  };
+  const nowDate = new Date();
+  if (!isWithinLessonCheckInWindow(windowFields, nowDate)) {
+    const locale = await getLocaleFromCookies();
+    const start = lessonStartInstant(windowFields);
+    const winEnd = lessonCheckInWindowEnd(windowFields);
+    if (nowDate.getTime() < start.getTime()) {
+      const t = formatInTimeZone(start, LISBON_TZ, "HH:mm");
+      return {
+        error:
+          locale === "en"
+            ? `Check-in is available from ${t} on the day of the class.`
+            : `O check-in só está disponível a partir das ${t} no dia da aula.`,
+      };
+    }
+    if (nowDate.getTime() > winEnd.getTime()) {
+      return {
+        error:
+          locale === "en"
+            ? "The check-in window for this class has ended (until 3 hours after the scheduled end)."
+            : "O período de check-in desta aula já terminou (até 3 horas após o fim do horário).",
+      };
+    }
+    return {
+      error:
+        locale === "en"
+          ? "Check-in is not available for this class at this time."
+          : "Check-in não disponível para esta aula neste momento.",
+    };
+  }
+
   if (planAccess.primaryModality && planAccess.allowedModalities.length === 1 && lessonData.modality !== planAccess.primaryModality) {
     const modLabel = MODALITY_LABELS[planAccess.primaryModality] ?? planAccess.primaryModality;
     return { error: "O teu plano permite apenas aulas de " + modLabel + "." };
@@ -88,7 +131,7 @@ export async function checkIn(lessonId: string): Promise<{ error?: string; check
     }
   }
 
-  const now = new Date().toISOString();
+  const now = nowDate.toISOString();
 
   const { data: existing } = await supabase
     .from("Attendance")

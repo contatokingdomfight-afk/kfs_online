@@ -45,7 +45,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality, schoolId")
+    .select("id, userId, status, planId, primaryModality, schoolId, adminGrantedFullAccess")
     .eq("id", studentId)
     .single();
 
@@ -314,6 +314,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
             initialSchoolId={(student as { schoolId?: string }).schoolId ?? ""}
             schoolOptions={(schools ?? []).map((s) => ({ id: s.id, name: s.name ?? s.id }))}
             initialPlanId={student.planId ?? ""}
+            initialAdminGrantedFullAccess={Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess)}
             initialPrimaryModality={initialPrimaryModality}
             planOptions={planOptions}
             modalityOptions={modalityOptions}

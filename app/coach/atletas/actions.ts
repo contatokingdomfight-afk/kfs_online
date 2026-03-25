@@ -98,6 +98,61 @@ export async function createComment(
   return {};
 }
 
+export type UpdateCommentVisibilityResult = { error?: string };
+
+export async function updateCommentVisibility(
+  _prev: UpdateCommentVisibilityResult | null,
+  formData: FormData
+): Promise<UpdateCommentVisibilityResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser) return { error: "Não autorizado." };
+  if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const commentId = (formData.get("commentId") as string)?.trim();
+  const athleteId = (formData.get("athleteId") as string)?.trim();
+  const visibilityRaw = (formData.get("visibility") as string)?.trim();
+  if (!commentId || !athleteId || (visibilityRaw !== "PRIVATE" && visibilityRaw !== "SHARED")) {
+    return { error: "Dados inválidos." };
+  }
+
+  const coachId = await getCurrentCoachId();
+  const supabase = await createClient();
+
+  const { data: comment } = await supabase
+    .from("Comment")
+    .select("id, authorCoachId, targetType, targetId")
+    .eq("id", commentId)
+    .maybeSingle();
+
+  if (!comment || comment.targetType !== "ATHLETE" || comment.targetId !== athleteId) {
+    return { error: "Comentário não encontrado." };
+  }
+
+  const { data: athlete } = await supabase
+    .from("Athlete")
+    .select("id, studentId")
+    .eq("id", athleteId)
+    .single();
+  if (!athlete) return { error: "Atleta não encontrado." };
+
+  if (dbUser.role === "COACH") {
+    if (!coachId) return { error: "Perfil de coach não encontrado." };
+    if (comment.authorCoachId !== coachId) return { error: "Só podes alterar os teus comentários." };
+  }
+
+  const { error } = await supabase.from("Comment").update({ visibility: visibilityRaw }).eq("id", commentId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/coach/atletas/${athleteId}`);
+  const studentId = (athlete as { studentId?: string | null }).studentId;
+  if (studentId) {
+    revalidatePath("/dashboard/performance");
+    revalidatePath("/dashboard");
+  }
+  return {};
+}
+
 export type CreateEvaluationResult = { error?: string };
 
 export async function createEvaluation(

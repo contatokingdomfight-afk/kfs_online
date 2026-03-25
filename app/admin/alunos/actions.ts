@@ -113,17 +113,28 @@ export async function updateStudent(
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId")
+    .select("id, userId, planId")
     .eq("id", studentId)
     .single();
 
   if (!student) return { error: "Aluno não encontrado." };
 
-  const updates: { status?: string; schoolId?: string; planId?: string | null; primaryModality?: string | null } = {};
+  const previousPlanId = (student as { planId?: string | null }).planId ?? null;
+  const planChanged = previousPlanId !== effectivePlanId;
+
+  const updates: {
+    status?: string;
+    schoolId?: string;
+    planId?: string | null;
+    primaryModality?: string | null;
+    adminGrantedFullAccess?: boolean;
+  } = {};
   if (newStatus) updates.status = newStatus;
   if (schoolId) updates.schoolId = schoolId;
   updates.planId = effectivePlanId;
   updates.primaryModality = newPrimaryModality;
+  if (planChanged) updates.adminGrantedFullAccess = false;
+
   const { error: studentError } = await supabase.from("Student").update(updates).eq("id", studentId);
   if (studentError) return { error: studentError.message };
 
@@ -209,7 +220,7 @@ export async function setStudentFullAccess(
   // Atribui o melhor plano (acesso gratuito, sem cobranças)
   const { error } = await supabase
     .from("Student")
-    .update({ planId: fullPlan.id, stripeSubscriptionId: null })
+    .update({ planId: fullPlan.id, stripeSubscriptionId: null, adminGrantedFullAccess: true })
     .eq("id", studentId);
   if (error) return { error: error.message };
 
@@ -255,7 +266,7 @@ export async function clearStudentPlanAccess(
 
   const { error } = await supabase
     .from("Student")
-    .update({ planId: null, stripeSubscriptionId: null })
+    .update({ planId: null, stripeSubscriptionId: null, adminGrantedFullAccess: false })
     .eq("id", studentId);
   if (error) return { error: error.message };
 

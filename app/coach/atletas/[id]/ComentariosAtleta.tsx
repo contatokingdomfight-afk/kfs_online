@@ -2,8 +2,16 @@
 
 import { useFormState } from "react-dom";
 import { createComment, type CreateCommentResult } from "../actions";
+import { CommentVisibilityRow } from "./CommentVisibilityRow";
 
-type CommentRow = { id: string; content: string; createdAt: string; authorName: string; visibility: "PRIVATE" | "SHARED" };
+type CommentRow = {
+  id: string;
+  content: string;
+  createdAt: string;
+  authorName: string;
+  authorCoachId: string;
+  visibility: "PRIVATE" | "SHARED";
+};
 
 function formatCommentDate(iso: string): string {
   try {
@@ -24,9 +32,11 @@ type Props = {
   athleteId: string;
   comments: CommentRow[];
   canAdd: boolean;
+  currentCoachId: string | null;
+  isAdmin: boolean;
 };
 
-export function ComentariosAtleta({ athleteId, comments, canAdd }: Props) {
+export function ComentariosAtleta({ athleteId, comments, canAdd, currentCoachId, isAdmin }: Props) {
   const [state, formAction] = useFormState(createComment, null as CreateCommentResult | null);
 
   return (
@@ -116,6 +126,9 @@ export function ComentariosAtleta({ athleteId, comments, canAdd }: Props) {
                   <span style={{ marginLeft: 8, fontSize: 11, color: "var(--text-secondary)" }}>· Só equipa</span>
                 )}
               </p>
+              {(isAdmin || (currentCoachId !== null && c.authorCoachId === currentCoachId)) && (
+                <CommentVisibilityRow commentId={c.id} athleteId={athleteId} initialVisibility={c.visibility} />
+              )}
             </li>
           ))}
         </ul>

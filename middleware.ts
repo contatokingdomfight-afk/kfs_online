@@ -18,11 +18,12 @@ function isStudentAllowedWithoutPlan(pathname: string) {
   return studentAllowedWithoutPlanPrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-/** Free tier: explora agenda (só leitura), biblioteca em pré-visualização e perfil. */
+/** Free tier: explora agenda (só leitura), biblioteca em pré-visualização e perfil; check-in mostra mensagem se sem plano. */
 function isStudentFreeTierPath(pathname: string) {
   if (pathname === "/dashboard") return true;
   if (pathname.startsWith("/dashboard/biblioteca")) return true;
   if (pathname.startsWith("/dashboard/perfil")) return true;
+  if (pathname.startsWith("/check-in/")) return true;
   return false;
 }
 

@@ -302,9 +302,12 @@ export default async function CoachAtletaPage({ params }: Props) {
             content: c.content,
             createdAt: c.createdAt,
             authorName: authorNames.get(c.id) ?? "Coach",
+            authorCoachId: c.authorCoachId,
             visibility: c.visibility === "SHARED" ? "SHARED" : "PRIVATE",
           }))}
           canAdd={!!coachId}
+          currentCoachId={coachId}
+          isAdmin={dbUser.role === "ADMIN"}
         />
       </section>
     </div>

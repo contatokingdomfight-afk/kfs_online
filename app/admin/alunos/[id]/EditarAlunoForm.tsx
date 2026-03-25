@@ -81,6 +81,8 @@ type Props = {
   initialSchoolId: string;
   schoolOptions: SchoolOption[];
   initialPlanId: string;
+  /** True quando o plano FULL foi atribuído pelo atalho «Atribuir acesso total». */
+  initialAdminGrantedFullAccess?: boolean;
   initialPrimaryModality: string;
   planOptions: PlanOption[];
   modalityOptions: ModalityOption[];
@@ -89,7 +91,21 @@ type Props = {
   initialLocale?: "pt" | "en";
 };
 
-export function EditarAlunoForm({ studentId, initialName, initialStatus, initialSchoolId, schoolOptions, initialPlanId, initialPrimaryModality, planOptions, modalityOptions, statusLabels, currentUserRole, initialLocale = "pt" }: Props) {
+export function EditarAlunoForm({
+  studentId,
+  initialName,
+  initialStatus,
+  initialSchoolId,
+  schoolOptions,
+  initialPlanId,
+  initialAdminGrantedFullAccess = false,
+  initialPrimaryModality,
+  planOptions,
+  modalityOptions,
+  statusLabels,
+  currentUserRole,
+  initialLocale = "pt",
+}: Props) {
   const t = getTranslations(initialLocale);
   const [userDismissed, setUserDismissed] = useState(false);
   const wrappedAction = async (prev: UpdateStudentResult | null, formData: FormData) => {
@@ -152,9 +168,11 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
             Acesso rápido
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-            <form action={fullAccessFormAction}>
-              <FullAccessFormInner studentId={studentId} />
-            </form>
+            {!initialAdminGrantedFullAccess && (
+              <form action={fullAccessFormAction}>
+                <FullAccessFormInner studentId={studentId} />
+              </form>
+            )}
             <form
               action={clearPlanFormAction}
               onSubmit={(e) => {
@@ -172,8 +190,16 @@ export function EditarAlunoForm({ studentId, initialName, initialStatus, initial
             </form>
           </div>
           <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
-            Atribui um plano com plataforma digital e todas as modalidades (usa o plano FULL da escola do aluno, ou qualquer plano equivalente no catálogo).
-            Usa «Remover plano» para revogar o plano atual (inclui acesso total atribuído aqui ou noutro plano).
+            {initialAdminGrantedFullAccess ? (
+              <>
+                Acesso total atribuído pelo atalho. Usa «Remover plano» para revogar (inclui este acesso).
+              </>
+            ) : (
+              <>
+                Atribui um plano com plataforma digital e todas as modalidades (usa o plano FULL da escola do aluno, ou qualquer plano equivalente no catálogo).
+                Usa «Remover plano» para revogar o plano atual (inclui acesso total atribuído aqui ou noutro plano).
+              </>
+            )}
           </p>
           {fullAccessState?.success && (
             <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Acesso total atribuído.</p>

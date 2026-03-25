@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
           .update({
             stripeSubscriptionId: isActive ? sub.id : null,
             planId: isActive && planId ? planId : null,
+            adminGrantedFullAccess: false,
           })
           .eq("id", studentId);
         if (isActive && planId) {
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
         if (!studentId) break;
         await supabase
           .from("Student")
-          .update({ stripeSubscriptionId: null, planId: null })
+          .update({ stripeSubscriptionId: null, planId: null, adminGrantedFullAccess: false })
           .eq("id", studentId);
         break;
       }

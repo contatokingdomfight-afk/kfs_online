@@ -79,28 +79,32 @@ export function EscolasManager({ schools: initialSchools }: { schools: School[] 
                 onChange={(e) => setEditName(e.target.value)}
                 placeholder="Nome da escola *"
                 required
-                style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+                className="input"
+                style={{ fontSize: "var(--text-sm)" }}
               />
               <input
                 name="city"
                 value={editCity}
                 onChange={(e) => setEditCity(e.target.value)}
                 placeholder="Cidade"
-                style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+                className="input"
+                style={{ fontSize: "var(--text-sm)" }}
               />
               <input
                 name="address"
                 value={editAddress}
                 onChange={(e) => setEditAddress(e.target.value)}
                 placeholder="Morada completa"
-                style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+                className="input"
+                style={{ fontSize: "var(--text-sm)" }}
               />
               <input
                 name="phone"
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
                 placeholder="Telefone"
-                style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+                className="input"
+                style={{ fontSize: "var(--text-sm)" }}
               />
               <input
                 name="email"
@@ -108,7 +112,8 @@ export function EscolasManager({ schools: initialSchools }: { schools: School[] 
                 onChange={(e) => setEditEmail(e.target.value)}
                 placeholder="Email"
                 type="email"
-                style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+                className="input"
+                style={{ fontSize: "var(--text-sm)" }}
               />
               <div style={{ display: "flex", gap: "var(--space-2)" }}>
                 <button type="submit" className="btn btn-primary" style={{ fontSize: "var(--text-sm)" }}>
@@ -196,28 +201,32 @@ export function EscolasManager({ schools: initialSchools }: { schools: School[] 
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Nome da escola *"
               required
-              style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+              className="input"
+              style={{ fontSize: "var(--text-sm)" }}
             />
             <input
               name="city"
               value={newCity}
               onChange={(e) => setNewCity(e.target.value)}
               placeholder="Cidade"
-              style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+              className="input"
+              style={{ fontSize: "var(--text-sm)" }}
             />
             <input
               name="address"
               value={newAddress}
               onChange={(e) => setNewAddress(e.target.value)}
               placeholder="Morada completa"
-              style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+              className="input"
+              style={{ fontSize: "var(--text-sm)" }}
             />
             <input
               name="phone"
               value={newPhone}
               onChange={(e) => setNewPhone(e.target.value)}
               placeholder="Telefone"
-              style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+              className="input"
+              style={{ fontSize: "var(--text-sm)" }}
             />
             <input
               name="email"
@@ -225,7 +234,8 @@ export function EscolasManager({ schools: initialSchools }: { schools: School[] 
               onChange={(e) => setNewEmail(e.target.value)}
               placeholder="Email"
               type="email"
-              style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+              className="input"
+              style={{ fontSize: "var(--text-sm)" }}
             />
             <div style={{ display: "flex", gap: "var(--space-2)" }}>
               <button type="submit" className="btn btn-primary" style={{ fontSize: "var(--text-sm)" }}>
