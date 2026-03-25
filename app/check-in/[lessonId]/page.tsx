@@ -6,7 +6,10 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getPlanAccess } from "@/lib/plan-access";
-import { checkIn } from "@/app/dashboard/actions";
+import { performCheckIn } from "@/lib/perform-check-in";
+
+/** Cookies/sessão: evitar estático e falhas em produção ao abrir o link de check-in. */
+export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ lessonId: string }> };
 
@@ -88,7 +91,7 @@ export default async function CheckInPage({ params }: Props) {
     );
   }
 
-  const result = await checkIn(lessonId);
+  const result = await performCheckIn(lessonId);
 
   if (result.error) {
     return (

@@ -12,12 +12,25 @@ export type LessonTimeFields = {
   endTime: string;
 };
 
-function padTimePart(t: string): string {
-  const parts = t.trim().split(":");
+function padTimePart(t: string | null | undefined): string {
+  if (t == null || String(t).trim() === "") return "00:00:00";
+  const parts = String(t).trim().split(":");
   const h = (parts[0] ?? "0").padStart(2, "0");
   const m = (parts[1] ?? "00").padStart(2, "0");
   const s = (parts[2] ?? "00").padStart(2, "0");
   return `${h}:${m}:${s}`;
+}
+
+/** Aula com data e horários preenchidos na BD (evita crash em `.trim()` / janela inválida). */
+export function lessonHasValidSchedule(lesson: {
+  date: string | null | undefined;
+  startTime: string | null | undefined;
+  endTime: string | null | undefined;
+}): boolean {
+  if (lesson.date == null || lesson.startTime == null || lesson.endTime == null) return false;
+  const d = String(lesson.date).trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+  return String(lesson.startTime).trim() !== "" && String(lesson.endTime).trim() !== "";
 }
 
 /** Início da aula em instante (Europe/Lisbon). */
