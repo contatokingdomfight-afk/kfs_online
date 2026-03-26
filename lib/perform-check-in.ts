@@ -89,8 +89,10 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
 
   const isOpenClass = Boolean((lessonData as { isOpenClass?: boolean }).isOpenClass);
   const studentPrimaryModality = normalizeModalityCode(planAccess.primaryModality);
+  const isSingleModalityPlan = planAccess.allowedModalities.length === 1;
   if (
     !isOpenClass &&
+    isSingleModalityPlan &&
     studentPrimaryModality &&
     lessonData.modality !== studentPrimaryModality
   ) {

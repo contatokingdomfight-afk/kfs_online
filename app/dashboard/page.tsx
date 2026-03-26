@@ -92,19 +92,19 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const temaSemanaList = weekThemesRes.data ?? [];
 
   const allLessons = lessonsData;
+  const isFullPlan = allowedModalities.length >= MODALITIES_LIST.length;
   const lessons = allLessons.filter((l) => {
     const isOpenClass = Boolean((l as { isOpenClass?: boolean }).isOpenClass);
     if (isOpenClass) return true;
     if (!hasPlan) return true;
-    if (!hasCheckIn) return false;
-
-    // Regra principal: aluno só vê sua modalidade cadastrada; aula livre sempre aparece.
-    if (studentPrimaryModality) return l.modality === studentPrimaryModality;
-
-    // Fallback para contas antigas sem modalidade principal definida.
     if (allowedModalities.length === 0) return false;
-    if (allowedModalities.length < MODALITIES_LIST.length) return allowedModalities.includes(l.modality);
-    return true;
+
+    // Plano Full: vê próximas aulas de qualquer modalidade.
+    if (isFullPlan) return true;
+
+    // Plano de modalidade: vê apenas a modalidade cadastrada (ou fallback legado).
+    if (studentPrimaryModality) return l.modality === studentPrimaryModality;
+    return allowedModalities.includes(l.modality);
   });
   const nowForCard = new Date();
   const nextLesson = pickNextLessonForCard(lessons, nowForCard) ?? null;

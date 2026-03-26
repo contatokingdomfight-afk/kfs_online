@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
-const RECURRING_WEEKS = 12; // ao criar aula recorrente, criar as próximas N semanas
+const RECURRING_WEEKS = 1000; // ao criar aula recorrente, criar as próximas N semanas
 
 function parseYmd(ymd: string): { y: number; m: number; d: number } | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;

@@ -227,7 +227,7 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
           style={{ width: 18, height: 18, accentColor: "#c1121f" }}
         />
         <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
-          Aula única (evento pontual) — se não marcar, são criadas 12 aulas com recorrência semanal no dia selecionado
+          Aula única (evento pontual) — se não marcar, são criadas 1000 aulas com recorrência semanal no dia selecionado
         </span>
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
