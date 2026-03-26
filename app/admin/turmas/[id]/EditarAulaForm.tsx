@@ -17,6 +17,7 @@ type Props = {
   initialLocationId: string;
   initialCapacity: string | number;
   initialPlanningNotes: string;
+  initialIsOpenClass?: boolean;
   coachOptions: CoachOption[];
   locationOptions: LocationOption[];
   modalityOptions: ModalityOption[];
@@ -32,6 +33,7 @@ export function EditarAulaForm({
   initialLocationId,
   initialCapacity,
   initialPlanningNotes,
+  initialIsOpenClass = false,
   coachOptions,
   locationOptions,
   modalityOptions,
@@ -127,6 +129,17 @@ export function EditarAulaForm({
           placeholder="Ex: foco em defesa"
           className="input"
         />
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <input
+          type="checkbox"
+          name="isOpenClass"
+          defaultChecked={initialIsOpenClass}
+          style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
+        />
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
+          Aula livre (aberta a alunos de qualquer modalidade da escola)
+        </span>
       </label>
       {state?.error && (
         <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>

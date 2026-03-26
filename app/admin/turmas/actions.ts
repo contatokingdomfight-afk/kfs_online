@@ -19,6 +19,7 @@ export async function createLesson(formData: FormData) {
   const capacityStr = formData.get("capacity") as string | null;
   const planningNotes = (formData.get("planningNotes") as string) || null;
   const isOneOff = formData.get("isOneOff") === "on"; // checkbox: marcado = aula única
+  const isOpenClass = formData.get("isOpenClass") === "on";
 
   if (!modality || !date || !startTime || !endTime) {
     return { error: "Preencha modalidade, data, hora início e hora fim." };
@@ -51,6 +52,7 @@ export async function createLesson(formData: FormData) {
     capacity: number | null;
     planningNotes: string | null;
     isOneOff: boolean;
+    isOpenClass: boolean;
   }[] = [];
 
   for (let i = 0; i < count; i++) {
@@ -69,6 +71,7 @@ export async function createLesson(formData: FormData) {
       capacity: capacity ?? null,
       planningNotes: planningNotes || null,
       isOneOff: isOneOff || count === 1,
+      isOpenClass,
     });
   }
 
@@ -106,6 +109,7 @@ export async function updateLesson(
   const locationId = (formData.get("locationId") as string)?.trim() || null;
   const capacityStr = (formData.get("capacity") as string)?.trim() || null;
   const planningNotes = (formData.get("planningNotes") as string)?.trim() || null;
+  const isOpenClass = formData.get("isOpenClass") === "on";
 
   if (!lessonId || !modality || !date || !startTime || !endTime) {
     return { error: "Preencha modalidade, data, hora início e hora fim." };
@@ -129,6 +133,7 @@ export async function updateLesson(
       locationId: locationId || null,
       capacity: capacity ?? null,
       planningNotes: planningNotes || null,
+      isOpenClass,
     })
     .eq("id", lessonId);
 

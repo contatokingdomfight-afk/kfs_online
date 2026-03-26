@@ -9,6 +9,7 @@ type Lesson = {
   startTime: string;
   endTime: string;
   locationId?: string | null;
+  isOpenClass?: boolean;
 };
 
 type Props = {
@@ -96,6 +97,21 @@ export function NextLessonCard({
         </p>
         <p style={{ fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, margin: "0 0 8px 0" }}>
           {MODALITY_LABELS[lesson.modality] ?? lesson.modality}
+          {lesson.isOpenClass && (
+            <span
+              style={{
+                marginLeft: 8,
+                fontSize: "clamp(12px, 3vw, 14px)",
+                fontWeight: 600,
+                backgroundColor: "rgba(255,255,255,0.2)",
+                border: "1px solid rgba(255,255,255,0.55)",
+                borderRadius: 999,
+                padding: "2px 8px",
+              }}
+            >
+              Aula livre
+            </span>
+          )}
         </p>
         <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 12px 0", opacity: 0.9 }}>
           {lesson.locationId && locationById.get(lesson.locationId) ? `${locationById.get(lesson.locationId)} · ` : ""}

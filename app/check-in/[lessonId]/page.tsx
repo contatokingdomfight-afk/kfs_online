@@ -71,7 +71,7 @@ export default async function CheckInPage({ params }: Props) {
 
   const { data: lesson } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime")
+    .select("id, modality, date, startTime, endTime, isOpenClass")
     .eq("id", lessonId)
     .maybeSingle();
 

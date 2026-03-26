@@ -32,7 +32,7 @@ export default async function AdminTurmasPage({
 
   const { data: lessons, error: lessonsError } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, capacity, coachId, locationId, planningNotes, isOneOff, createdAt")
+    .select("id, modality, date, startTime, endTime, capacity, coachId, locationId, planningNotes, isOneOff, isOpenClass, createdAt")
     .order("date", { ascending: true })
     .order("startTime", { ascending: true });
 

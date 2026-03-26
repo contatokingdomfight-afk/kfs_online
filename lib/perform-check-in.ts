@@ -30,7 +30,7 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
   const planAccess = await getPlanAccess(supabase, studentId);
   if (!planAccess.hasCheckIn) return { error: "O teu plano não inclui check-in de aulas presenciais." };
 
-  const { data: lessonData } = await supabase.from("Lesson").select("id, modality, date, startTime, endTime").eq("id", lessonId).single();
+  const { data: lessonData } = await supabase.from("Lesson").select("id, modality, date, startTime, endTime, isOpenClass").eq("id", lessonId).single();
   if (!lessonData) return { error: "Aula não encontrada." };
 
   if (!lessonHasValidSchedule(lessonData)) {
@@ -72,9 +72,15 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
     };
   }
 
-  if (planAccess.primaryModality && planAccess.allowedModalities.length === 1 && lessonData.modality !== planAccess.primaryModality) {
+  const isOpenClass = Boolean((lessonData as { isOpenClass?: boolean }).isOpenClass);
+  if (
+    !isOpenClass &&
+    planAccess.primaryModality &&
+    planAccess.allowedModalities.length === 1 &&
+    lessonData.modality !== planAccess.primaryModality
+  ) {
     const modLabel = MODALITY_LABELS[planAccess.primaryModality] ?? planAccess.primaryModality;
-    return { error: "O teu plano permite apenas aulas de " + modLabel + "." };
+    return { error: "O teu plano permite apenas aulas de " + modLabel + " (exceto aulas livres)." };
   }
 
   if (planAccess.maxCheckInsPerDay === 1) {

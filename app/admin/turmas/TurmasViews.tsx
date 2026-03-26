@@ -14,6 +14,7 @@ export type LessonRow = {
   locationId: string | null;
   planningNotes: string | null;
   isOneOff?: boolean;
+  isOpenClass?: boolean;
   createdAt?: string;
 };
 
@@ -134,6 +135,7 @@ function WeekLessonRow({
       "div",
       { style: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 } },
       lesson.isOneOff && React.createElement("span", { style: { fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--bg-primary)", color: "var(--text-secondary)" } }, "Aula única"),
+      lesson.isOpenClass && React.createElement("span", { style: { fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--primary)", color: "#fff" } }, "Aula livre"),
       React.createElement("span", { style: { fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" } }, `${lesson.startTime}–${lesson.endTime}`),
       React.createElement("span", { style: { fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" } }, modalityName),
       coachName && React.createElement("span", { style: { fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" } }, "· ", coachName),
@@ -227,6 +229,11 @@ function ModalityLessonRow({
         {lesson.isOneOff && (
           <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
             Aula única
+          </span>
+        )}
+        {lesson.isOpenClass && (
+          <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--primary)", color: "#fff" }}>
+            Aula livre
           </span>
         )}
         {coachName && (

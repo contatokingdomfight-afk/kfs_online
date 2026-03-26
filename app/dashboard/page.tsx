@@ -59,7 +59,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   let lessonsQuery = supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, locationId")
+    .select("id, modality, date, startTime, endTime, locationId, isOpenClass")
     .gte("date", today)
     .lte("date", endOfWeek);
   if (studentSchoolId) lessonsQuery = lessonsQuery.eq("schoolId", studentSchoolId);
@@ -84,7 +84,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       : allowedModalities.length === 0
         ? []
         : allowedModalities.length < MODALITIES_LIST.length
-          ? allLessons.filter((l) => allowedModalities.includes(l.modality))
+          ? allLessons.filter((l) => allowedModalities.includes(l.modality) || Boolean((l as { isOpenClass?: boolean }).isOpenClass))
           : allLessons;
   const nowForCard = new Date();
   const nextLesson = pickNextLessonForCard(lessons, nowForCard) ?? null;

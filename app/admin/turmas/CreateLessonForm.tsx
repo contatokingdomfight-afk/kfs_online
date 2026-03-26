@@ -177,6 +177,12 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
           Aula única (evento pontual) — se não marcar, são criadas 12 aulas com recorrência semanal no mesmo dia e hora
         </span>
       </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <input type="checkbox" name="isOpenClass" value="on" style={{ width: 18, height: 18, accentColor: "#c1121f" }} />
+        <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
+          Aula livre (aberta a alunos de qualquer modalidade da escola)
+        </span>
+      </label>
       <label style={{ minWidth: 0 }}>
         <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "#a1a1aa" }}>
           Notas de planeamento (opcional)

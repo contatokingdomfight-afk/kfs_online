@@ -195,6 +195,7 @@ model Lesson {
   capacity       Int?
   planningNotes  String?
   isOneOff       Boolean   @default(false) // true = aula única (evento); false = recorrente semanal
+  isOpenClass    Boolean   @default(false) // true = aula aberta a qualquer modalidade da escola
   createdAt      DateTime  @default(now())
 
   attendances Attendance[]
