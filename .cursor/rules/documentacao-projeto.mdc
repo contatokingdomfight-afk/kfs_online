@@ -1,0 +1,31 @@
+---
+description: Onde e como documentar o projeto; manter DOCS/ e contexto alinhados com o código
+alwaysApply: true
+---
+
+# Documentação do projeto (kfs_online)
+
+## Onde vive a documentação
+
+- Documentação **canónica** do produto e decisões: pasta **`DOCS/`** (maiúsculas), não `docs/`.
+- O ficheiro **`DOCS/memory.md`** é o índice de contexto interno: arquitetura, fluxos, pendências e referências a outros ficheiros em `DOCS/`.
+
+## Quando atualizar documentação
+
+- Ao **alterar comportamento visível** (regras de negócio, permissões, check-in, planos, modalidades): atualizar a secção relevante em `DOCS/memory.md` ou o doc específico em `DOCS/`, em vez de deixar só comentários no código.
+- Ao **adicionar migrações ou campos na BD**: mencionar no doc o nome da migração e o propósito do campo.
+- Ao **introduzir um novo fluxo** (ex.: nova rota crítica): uma subsecção curta em `memory.md` ou um novo `.md` em `DOCS/` com link a partir do índice.
+
+## Documentação em código (ficheiros)
+
+- **Não** encher ficheiros com comentários óbvios; preferir código claro e nomes explícitos.
+- Usar **comentário ou bloco curto no topo** apenas em módulos **não óbvios** (ex.: `lib/perform-check-in.ts`, webhooks, regras de janela temporal): 2–4 linhas sobre responsabilidade e invariantes importantes.
+- **Server Actions** e rotas de API: se a validação ou efeitos colaterais forem subtis, um comentário antes da função explicando *o quê* e *quem pode chamar* evita regressões.
+
+## Ligações e caminhos
+
+- Em documentação Markdown, usar caminhos relativos ao repositório (ex.: `DOCS/memory.md`, `app/dashboard/page.tsx`) para navegação no IDE.
+
+## O que evitar
+
+- Criar ficheiros `.md` novos na raiz ou em pastas soltas sem o utilizador pedir; preferir `DOCS/` e pedir confirmação se for documentação grande fora do padrão.
