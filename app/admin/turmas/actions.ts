@@ -3,8 +3,47 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { revalidatePath } from "next/cache";
+import { formatInTimeZone } from "date-fns-tz";
+import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
 const RECURRING_WEEKS = 12; // ao criar aula recorrente, criar as próximas N semanas
+
+function parseYmd(ymd: string): { y: number; m: number; d: number } | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
+  const [y, m, d] = ymd.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return { y, m, d };
+}
+
+function ymdToUtcDate(ymd: string): Date | null {
+  const p = parseYmd(ymd);
+  if (!p) return null;
+  return new Date(Date.UTC(p.y, p.m - 1, p.d));
+}
+
+function utcDateToYmd(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Monday=1 ... Sunday=7 */
+function weekdayFromUtcDate(d: Date): number {
+  const js = d.getUTCDay(); // 0..6, Sunday=0
+  return js === 0 ? 7 : js;
+}
+
+function addDaysUtc(d: Date, days: number): Date {
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + days));
+}
+
+function nextDateForWeekday(weekday: number, baseYmd: string): string {
+  const base = ymdToUtcDate(baseYmd)!;
+  const baseWd = weekdayFromUtcDate(base);
+  const delta = (weekday - baseWd + 7) % 7;
+  return utcDateToYmd(addDaysUtc(base, delta));
+}
 
 export async function createLesson(formData: FormData) {
   const supabase = await createClient();
@@ -20,9 +59,10 @@ export async function createLesson(formData: FormData) {
   const planningNotes = (formData.get("planningNotes") as string) || null;
   const isOneOff = formData.get("isOneOff") === "on"; // checkbox: marcado = aula única
   const isOpenClass = formData.get("isOpenClass") === "on";
+  const weekdayStr = (formData.get("weekday") as string | null)?.trim() || null;
 
-  if (!modality || !date || !startTime || !endTime) {
-    return { error: "Preencha modalidade, data, hora início e hora fim." };
+  if (!modality || !startTime || !endTime) {
+    return { error: "Preencha modalidade, hora início e hora fim." };
   }
   if (!coachId) {
     return { error: "Seleciona um coach para a aula." };
@@ -36,8 +76,24 @@ export async function createLesson(formData: FormData) {
     return { error: "Capacidade deve ser um número positivo." };
   }
 
-  const baseDate = new Date(date + "T12:00:00");
-  const dayOfWeek = baseDate.getDay();
+  if (startTime >= endTime) {
+    return { error: "A hora de fim deve ser posterior à hora de início." };
+  }
+
+  let firstDate: string | null = null;
+  if (isOneOff) {
+    if (!date) return { error: "Seleciona a data da aula única." };
+    if (!parseYmd(date)) return { error: "Data inválida." };
+    firstDate = date;
+  } else {
+    const weekday = weekdayStr ? parseInt(weekdayStr, 10) : NaN;
+    if (!Number.isInteger(weekday) || weekday < 1 || weekday > 7) {
+      return { error: "Seleciona um dia da semana para a recorrência." };
+    }
+    const todayLisbonYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
+    firstDate = nextDateForWeekday(weekday, todayLisbonYmd);
+  }
+
   const count = isOneOff ? 1 : RECURRING_WEEKS;
 
   const rows: {
@@ -56,9 +112,8 @@ export async function createLesson(formData: FormData) {
   }[] = [];
 
   for (let i = 0; i < count; i++) {
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() + i * 7);
-    const dateStr = d.toISOString().slice(0, 10);
+    const base = ymdToUtcDate(firstDate)!;
+    const dateStr = utcDateToYmd(addDaysUtc(base, i * 7));
     rows.push({
       id: crypto.randomUUID(),
       modality: modality!,
@@ -89,8 +144,8 @@ export async function createLesson(formData: FormData) {
     created: count,
     message:
       count === 1
-        ? "Aula criada."
-        : `${count} aulas criadas (recorrência semanal até ${rows[rows.length - 1]!.date}).`,
+        ? `Aula criada para ${rows[0]!.date}.`
+        : `${count} aulas criadas (de ${rows[0]!.date} até ${rows[rows.length - 1]!.date}).`,
   };
 }
 

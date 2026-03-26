@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState } from "react-dom";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createLesson } from "./actions";
@@ -7,8 +8,21 @@ import { createLesson } from "./actions";
 type Coach = { id: string; name: string };
 type Modality = { code: string; name: string };
 type School = { id: string; name: string };
+type Weekday = { value: string; label: string };
+
+const WEEKDAYS: Weekday[] = [
+  { value: "1", label: "Seg" },
+  { value: "2", label: "Ter" },
+  { value: "3", label: "Qua" },
+  { value: "4", label: "Qui" },
+  { value: "5", label: "Sex" },
+  { value: "6", label: "Sáb" },
+  { value: "7", label: "Dom" },
+];
 
 export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Coach[]; modalities: Modality[]; schools: School[] }) {
+  const [isOneOff, setIsOneOff] = useState(false);
+  const [weekday, setWeekday] = useState<string>("1");
   const [state, formAction] = useFormState(
     async (_: unknown, formData: FormData) => {
       return await createLesson(formData);
@@ -43,25 +57,57 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
             ))}
           </select>
         </label>
-        <label style={{ flex: "1 1 140px", minWidth: 0 }}>
-          <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "#a1a1aa" }}>
-            Data
-          </span>
-          <input
-            type="date"
-            name="date"
-            required
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              backgroundColor: "#0b0b0b",
-              border: "1px solid #27272a",
-              borderRadius: 6,
-              color: "#ffffff",
-              fontSize: 14,
-            }}
-          />
-        </label>
+        {isOneOff ? (
+          <label style={{ flex: "1 1 140px", minWidth: 0 }}>
+            <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "#a1a1aa" }}>
+              Data
+            </span>
+            <input
+              type="date"
+              name="date"
+              required
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                backgroundColor: "#0b0b0b",
+                border: "1px solid #27272a",
+                borderRadius: 6,
+                color: "#ffffff",
+                fontSize: 14,
+              }}
+            />
+          </label>
+        ) : (
+          <div style={{ flex: "1 1 180px", minWidth: 0 }}>
+            <span style={{ display: "block", marginBottom: 6, fontSize: 12, color: "#a1a1aa" }}>
+              Dia da semana
+            </span>
+            <input type="hidden" name="weekday" value={weekday} />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {WEEKDAYS.map((d) => (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => setWeekday(d.value)}
+                  aria-pressed={weekday === d.value}
+                  style={{
+                    minWidth: 42,
+                    padding: "8px 10px",
+                    borderRadius: 6,
+                    border: weekday === d.value ? "1px solid var(--primary)" : "1px solid #27272a",
+                    backgroundColor: weekday === d.value ? "var(--primary)" : "#0b0b0b",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <label style={{ flex: "0 1 100px", minWidth: 0 }}>
           <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "#a1a1aa" }}>
             Início
@@ -172,9 +218,16 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
         </label>
       </div>
       <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <input type="checkbox" name="isOneOff" value="on" style={{ width: 18, height: 18, accentColor: "#c1121f" }} />
+        <input
+          type="checkbox"
+          name="isOneOff"
+          value="on"
+          checked={isOneOff}
+          onChange={(e) => setIsOneOff(e.target.checked)}
+          style={{ width: 18, height: 18, accentColor: "#c1121f" }}
+        />
         <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
-          Aula única (evento pontual) — se não marcar, são criadas 12 aulas com recorrência semanal no mesmo dia e hora
+          Aula única (evento pontual) — se não marcar, são criadas 12 aulas com recorrência semanal no dia selecionado
         </span>
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
