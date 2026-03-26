@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { PerfilForm } from "./PerfilForm";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 export default async function DashboardPerfilPage() {
   const studentId = await getCurrentStudentId();
@@ -14,7 +15,7 @@ export default async function DashboardPerfilPage() {
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
 
-  const { data: student } = await supabase.from("Student").select("userId").eq("id", studentId).single();
+  const { data: student } = await supabase.from("Student").select("userId, primaryModality").eq("id", studentId).single();
   if (!student) redirect("/dashboard");
 
   const { data: user } = await supabase
@@ -40,6 +41,12 @@ export default async function DashboardPerfilPage() {
     dateOfBirth: profile?.dateOfBirth ?? "",
     medicalNotes: profile?.medicalNotes ?? "",
     emergencyContact: profile?.emergencyContact ?? "",
+    primaryModalityLabel:
+      (student as { primaryModality?: string | null } | null)?.primaryModality
+        ? MODALITY_LABELS[(student as { primaryModality?: string | null }).primaryModality ?? ""]
+          ?? (student as { primaryModality?: string | null }).primaryModality
+          ?? (locale === "en" ? "Not set" : "Não definida")
+        : (locale === "en" ? "Not set" : "Não definida"),
   };
 
   return (

@@ -17,6 +17,21 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
+const MODALITY_ALIASES: Record<string, string> = {
+  MUAY_THAI: "MUAY_THAI",
+  "MUAY THAI": "MUAY_THAI",
+  MUAYTHAI: "MUAY_THAI",
+  BOXING: "BOXING",
+  KICKBOXING: "KICKBOXING",
+  "KICK BOXING": "KICKBOXING",
+};
+
+function normalizeModalityCode(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const key = value.trim().toUpperCase();
+  return MODALITY_ALIASES[key] ?? null;
+}
+
 /**
  * Lógica de check-in (QR / link). Módulo `server-only` para ser chamado
  * desde páginas RSC. Não chamar `revalidatePath` aqui — só é permitido em
@@ -73,14 +88,14 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
   }
 
   const isOpenClass = Boolean((lessonData as { isOpenClass?: boolean }).isOpenClass);
+  const studentPrimaryModality = normalizeModalityCode(planAccess.primaryModality);
   if (
     !isOpenClass &&
-    planAccess.primaryModality &&
-    planAccess.allowedModalities.length === 1 &&
-    lessonData.modality !== planAccess.primaryModality
+    studentPrimaryModality &&
+    lessonData.modality !== studentPrimaryModality
   ) {
-    const modLabel = MODALITY_LABELS[planAccess.primaryModality] ?? planAccess.primaryModality;
-    return { error: "O teu plano permite apenas aulas de " + modLabel + " (exceto aulas livres)." };
+    const modLabel = MODALITY_LABELS[studentPrimaryModality] ?? studentPrimaryModality;
+    return { error: "Só podes fazer check-in na tua modalidade (" + modLabel + ") ou em aulas livres." };
   }
 
   if (planAccess.maxCheckInsPerDay === 1) {

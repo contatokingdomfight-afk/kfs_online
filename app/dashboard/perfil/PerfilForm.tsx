@@ -20,6 +20,7 @@ type Props = {
     dateOfBirth: string;
     medicalNotes: string;
     emergencyContact: string;
+    primaryModalityLabel: string;
   };
   locale: "pt" | "en";
 };
@@ -107,6 +108,19 @@ export function PerfilForm({ initial, locale }: Props) {
             defaultValue={initial.phone}
             className="input"
             placeholder="+351 912 345 678"
+          />
+        </label>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+            {locale === "en" ? "Registered modality" : "Modalidade cadastrada"}
+          </span>
+          <input
+            type="text"
+            value={initial.primaryModalityLabel}
+            readOnly
+            disabled
+            className="input"
+            style={{ opacity: 0.9, cursor: "not-allowed" }}
           />
         </label>
       </div>

@@ -18,6 +18,20 @@ import { ExploreSection } from "./ExploreSection";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
+const MODALITY_ALIASES: Record<string, string> = {
+  MUAY_THAI: "MUAY_THAI",
+  "MUAY THAI": "MUAY_THAI",
+  MUAYTHAI: "MUAY_THAI",
+  BOXING: "BOXING",
+  KICKBOXING: "KICKBOXING",
+  "KICK BOXING": "KICKBOXING",
+};
+
+function normalizeModalityCode(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const key = value.trim().toUpperCase();
+  return MODALITY_ALIASES[key] ?? null;
+}
 
 type PageProps = { searchParams: Promise<{ stripe?: string }> };
 
@@ -53,7 +67,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   if (studentId) {
     const { data: student } = await supabase.from("Student").select("schoolId, primaryModality, planId").eq("id", studentId).single();
     studentSchoolId = student?.schoolId ?? null;
-    studentPrimaryModality = (student as { primaryModality?: string } | null)?.primaryModality ?? null;
+    studentPrimaryModality = normalizeModalityCode((student as { primaryModality?: string } | null)?.primaryModality ?? null);
     hasPlan = !!student?.planId;
   }
 
@@ -78,14 +92,20 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const temaSemanaList = weekThemesRes.data ?? [];
 
   const allLessons = lessonsData;
-  const lessons =
-    !hasPlan
-      ? allLessons
-      : allowedModalities.length === 0
-        ? []
-        : allowedModalities.length < MODALITIES_LIST.length
-          ? allLessons.filter((l) => allowedModalities.includes(l.modality) || Boolean((l as { isOpenClass?: boolean }).isOpenClass))
-          : allLessons;
+  const lessons = allLessons.filter((l) => {
+    const isOpenClass = Boolean((l as { isOpenClass?: boolean }).isOpenClass);
+    if (isOpenClass) return true;
+    if (!hasPlan) return true;
+    if (!hasCheckIn) return false;
+
+    // Regra principal: aluno só vê sua modalidade cadastrada; aula livre sempre aparece.
+    if (studentPrimaryModality) return l.modality === studentPrimaryModality;
+
+    // Fallback para contas antigas sem modalidade principal definida.
+    if (allowedModalities.length === 0) return false;
+    if (allowedModalities.length < MODALITIES_LIST.length) return allowedModalities.includes(l.modality);
+    return true;
+  });
   const nowForCard = new Date();
   const nextLesson = pickNextLessonForCard(lessons, nowForCard) ?? null;
   const checkInWindowOpen =
