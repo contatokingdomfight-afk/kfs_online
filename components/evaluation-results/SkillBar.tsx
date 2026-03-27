@@ -40,7 +40,7 @@ export function SkillBar({
   if (variant === "card") {
     return (
       <div
-        className={`rounded-2xl bg-[var(--bg-secondary)] p-4 shadow-sm ring-1 ring-inset ring-[var(--text-primary)]/[0.08] transition-all duration-200 ease-out hover:shadow-md hover:ring-[var(--primary)]/20 ${className}`}
+        className={`rounded-2xl bg-[var(--bg-secondary)] p-4 shadow-sm ring-1 ring-inset ring-[var(--border)]/85 transition-all duration-200 ease-out hover:shadow-md hover:ring-[var(--text-primary)]/20 ${className}`}
       >
         <div className="flex items-start justify-between gap-2 mb-3">
           <span className="text-sm font-semibold text-[var(--text-primary)] leading-snug line-clamp-3">
