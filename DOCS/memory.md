@@ -1,79 +1,89 @@
-# Memória da sessão (resumo do chat)
+# Índice de contexto (memory) – KFS Online
 
-Documento gerado para contexto futuro: decisões e alterações discutidas nesta conversa com o assistente (março 2026).
+> **Para continuar noutro chat:** lê este ficheiro primeiro; a documentação de produto e decisões está em **`DOCS/`** (não em `docs/`). Regra do projeto: `.cursor/rules/documentacao-projeto.mdc`.
 
----
-
-## 1. Avaliação do aluno no mobile (`CoachStudentProfileModal`)
-
-**Problema:** Inputs numéricos e controlos de avaliação pouco confortáveis em telemóvel.
-
-**Direção:** Substituir `input type="number"` por **select 1–10** (`ScoreSelect1to10`), aumentar áreas de toque (`min-h-11`), `text-base` para reduzir zoom no iOS, botões −1 / BASE / +1 e slider com melhor uso tátil. Secções de valor base com layout em coluna em ecrã pequeno (`sm:`).
-
-**Ficheiro principal:** `components/CoachStudentProfileModal.tsx`.
-
-**Commit de referência (exemplo):** `fix(coach): melhorar avaliação em mobile (select 1-10, toques maiores)`.
+**Última revisão:** março 2026.
 
 ---
 
-## 2. Admin: revogar “acesso total” / plano
+## 1. O que é o projeto
 
-**Problema:** Era possível atribuir acesso total via atalho, mas não havia ação explícita para **remover** o plano.
-
-**Solução:** Server action `clearStudentPlanAccess` em `app/admin/alunos/actions.ts` (limpa `planId` e `stripeSubscriptionId`, tenta cancelar Stripe se existir). UI em `EditarAlunoForm`: botão **«Remover plano e acesso via subscrição»** com confirmação; desativado se já não houver plano.
-
----
-
-## 3. Feedback do treinador (produto e implementação)
-
-**Esclarecimento:** O bloco «Feedback do treinador» na performance **não** era preenchido automaticamente só pelas notas das avaliações; havia texto genérico por defeito. Comentários gravados como **PRIVATE** não apareciam ao aluno.
-
-**Implementação acordada:**
-
-- **`lib/resolve-coach-feedback.ts`:** ordem de prioridade para o texto mostrado ao aluno:
-  1. Último `Comment` com `visibility === SHARED` (atleta).
-  2. Senão, **nota** da última `AthleteEvaluation` (se não vazia).
-  3. Senão, mensagem genérica + «Teu treinador».
-
-- **Comentários do coach** (`ComentariosAtleta`, `createComment`): checkbox **«Partilhar com o aluno»** → `SHARED` vs `PRIVATE`; revalidação de `/dashboard` e `/dashboard/performance` quando aplicável.
-
-- **UI:** Em «Última avaliação», quando o feedback vem **só** da nota da avaliação (sem comentário partilhado mais recente), evita-se repetir o mesmo parágrafo; remete-se para o bloco «Feedback do treinador» abaixo (`omitLastEvaluationNoteBody` em `PerformanceFighterDashboard`).
-
-- **Alinhamento:** Mesma lógica na performance do aluno, na vista performance do coach (`PerformanceContent`), e no widget **Novidades** do dashboard (`app/dashboard/page.tsx`). Query de comentário na vista coach para feedback público filtrada por **SHARED**.
-
-- **Avaliações:** `saveStandaloneEvaluation` e `saveEvaluationFromLesson` revalidam também `/dashboard/performance` e `/dashboard`.
-
-**Commit de referência (conjunto):** `feat: feedback aluno (partilhar comentário, nota avaliação) e remover plano no admin`.
+- **Nome repo:** `kfs_online` (ex.: GitHub `contatokingdomfight-afk/kfs_online`).
+- **Produto:** Plataforma Kingdom Fight School — alunos, coaches, admin; presenças, planos, biblioteca, gamificação, financeiro (Stripe + presencial), multi-escola.
+- **Stack:** Next.js **15** (App Router), React 18, TypeScript, Tailwind, **Supabase** (Auth + Postgres), Prisma (schema alinhado à BD), Vercel, Stripe, Resend.
+- **Node:** `20.x` (`package.json` engines).
 
 ---
 
-## 4. Git / remoto
+## 2. Onde está cada coisa
 
-- Pedidos de **push** à `main` em `origin` após commits locais; ficheiros temporários (`supabase/.temp/`, `tsconfig.tsbuildinfo`) mantidos fora do controlo de versão quando não relevantes.
-
----
-
-## 5. Contas de teste e `npm test`
-
-- **Seed:** `npm run seed:test-users` (requer `TEST_SEED_PASSWORD` + service role). Detalhes e emails: `DOCS/CONTAS_TESTE.md`.
-- **Testes unitários:** `npm test` (Vitest), p.ex. filtro de aulas no dashboard (`lib/dashboard-lesson-filter.ts`).
-- **Carregamento de `.env` no seed:** `.env` primeiro, depois `.env.local` (override); gravar o ficheiro antes de correr o script.
-
----
-
-## 6. Aulas livres (`isOpenClass`)
-
-- **Regra de produto:** Aula marcada como livre na escola → **qualquer aluno da escola** pode ver na agenda relevante, marcar intenção (Vou/Não vou) e fazer check-in, **mesmo sem plano** ou sem `hasCheckIn` no plano.
-- **Código:** Filtro em `lib/dashboard-lesson-filter.ts`; cartão `NextLessonCard`; `performCheckIn` e `setAttendanceIntention` tratam `isOpenClass` antes de bloquear por plano.
+| Área | Local |
+|------|--------|
+| Rotas e páginas | `app/` |
+| Componentes | `components/` |
+| Lógica partilhada | `lib/` |
+| Migrações SQL Supabase | `supabase/migrations/` |
+| Schema Prisma | `prisma/schema.prisma` |
+| Scripts (ex.: seed testes) | `scripts/seed-test-users.ts` |
+| Documentação canónica | **`DOCS/`** |
+| Roadmap feito/por fazer | `DOCS/ROADMAP_Plataforma_KFS.md` |
+| Mensalidades / crons / Lisboa | `DOCS/PAGAMENTOS_MENSALIDADES_CRON.md` |
+| Contas de teste + `npm test` | `DOCS/CONTAS_TESTE.md` |
+| Checklist manual por perfil | `DOCS/GUIA_TESTE_VALIDACAO_PERFIS.md` |
+| Índice na raiz | `INDICE_DOCUMENTACAO.md`, `README.md`, `PROXIMOS_PASSOS.md` |
 
 ---
 
-## 7. Notas para continuidade
+## 3. Entregas recentes (contexto técnico)
 
-- **Editar visibilidade** de comentários antigos (PRIVATE ↔ SHARED) não foi implementado; seria evolução futura.
-- **Roadmap canónico:** `DOCS/ROADMAP_Plataforma_KFS.md` (atualizado com aulas livres, Vitest, seed).
-- Pasta de documentação do projeto: **`DOCS/`** (este ficheiro).
+### 3.1 Aulas livres (`Lesson.isOpenClass`)
+
+- **Regra:** Qualquer aluno da **escola** pode participar (dashboard, RSVP, check-in), **incluindo sem `planId`** ou plano sem check-in.
+- **Ficheiros:** `lib/dashboard-lesson-filter.ts` (filtro da semana), `app/dashboard/page.tsx`, `app/dashboard/NextLessonCard.tsx`, `lib/perform-check-in.ts`, `app/dashboard/actions.ts` (`setAttendanceIntention`).
+- **Migração:** `supabase/migrations/20260326140000_lesson_open_class.sql` (se aplicável ao teu projeto Supabase).
+
+### 3.2 Testes e seed
+
+- **Unitários:** `npm test` (Vitest) — `lib/dashboard-lesson-filter.test.ts`.
+- **Contas de teste:** `npm run seed:test-users` — precisa `TEST_SEED_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY`, escola ativa; emails em **`DOCS/CONTAS_TESTE.md`**. Ordem dotenv no script: `.env` → `.env.local` (override); **gravar** `.env` antes de correr.
+
+### 3.3 Admin – Turmas
+
+- Vista **por semana** / por modalidade; criação de aulas (incl. recorrente / one-off) — ver `app/admin/turmas/`.
+
+### 3.4 Histórico útil (sessões anteriores)
+
+- **Mobile:** avaliação no `CoachStudentProfileModal` (select 1–10, toques maiores).
+- **Admin:** `clearStudentPlanAccess` — remover plano / subscrição (`app/admin/alunos/actions.ts`).
+- **Feedback aluno:** `lib/resolve-coach-feedback.ts`; comentários `SHARED` vs `PRIVATE`.
 
 ---
 
-*Última atualização: março de 2026 (documentação + roadmap alinhados às entregas recentes).*
+## 4. Comandos rápidos
+
+```bash
+npm install
+npm run dev
+npm run build
+npm test
+npm run seed:test-users   # ver DOCS/CONTAS_TESTE.md
+```
+
+---
+
+## 5. Pendências / evoluções (não bloqueantes)
+
+- Editar visibilidade de comentários antigos (PRIVATE ↔ SHARED) — não implementado.
+- Roadmap opcional: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push, E2E — ver **`DOCS/ROADMAP_Plataforma_KFS.md`** secções 14–17.
+
+---
+
+## 6. Continuar noutro chat — prompt sugerido
+
+Cola algo como:
+
+> Lê `DOCS/memory.md` e o roadmap em `DOCS/ROADMAP_Plataforma_KFS.md`. Quero continuar [descreve a tarefa].
+
+---
+
+*Este ficheiro é o índice de contexto interno; ao alterar comportamento visível ou regras de negócio, atualiza a secção relevante aqui ou o doc específico em `DOCS/`.*
