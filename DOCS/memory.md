@@ -53,7 +53,14 @@ Documento gerado para contexto futuro: decisões e alterações discutidas nesta
 
 ---
 
-## 5. Notas para continuidade
+## 5. Contas de teste e `npm test`
+
+- **Seed:** `npm run seed:test-users` (requer `TEST_SEED_PASSWORD` + service role). Detalhes e emails: `DOCS/CONTAS_TESTE.md`.
+- **Testes unitários:** `npm test` (Vitest), p.ex. filtro de aulas no dashboard (`lib/dashboard-lesson-filter.ts`).
+
+---
+
+## 6. Notas para continuidade
 
 - **Editar visibilidade** de comentários antigos (PRIVATE ↔ SHARED) não foi implementado; seria evolução futura.
 - Pasta de documentação do projeto: **`DOCS/`** (este ficheiro).

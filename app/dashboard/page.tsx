@@ -16,6 +16,7 @@ import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
 import { ExploreSection } from "./ExploreSection";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
+import { filterLessonsForDashboard } from "@/lib/dashboard-lesson-filter";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 const MODALITY_ALIASES: Record<string, string> = {
@@ -92,21 +93,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const temaSemanaList = weekThemesRes.data ?? [];
 
   const allLessons = lessonsData;
-  const isFullPlan = allowedModalities.length >= MODALITIES_LIST.length;
-  const lessons = allLessons.filter((l) => {
-    const isOpenClass = Boolean((l as { isOpenClass?: boolean }).isOpenClass);
-    if (isOpenClass) return true;
-    // Sem plano ou plano sem check-in: só veem aulas livres (acima); o resto fica oculto.
-    if (!hasPlan) return false;
-    if (!hasCheckIn) return false;
-    if (allowedModalities.length === 0) return false;
-
-    // Plano Full: vê próximas aulas de qualquer modalidade.
-    if (isFullPlan) return true;
-
-    // Plano de modalidade: vê apenas a modalidade cadastrada (ou fallback legado).
-    if (studentPrimaryModality) return l.modality === studentPrimaryModality;
-    return allowedModalities.includes(l.modality);
+  const lessons = filterLessonsForDashboard(allLessons, {
+    hasPlan,
+    hasCheckIn,
+    allowedModalities,
+    studentPrimaryModality,
+    modalitiesListLength: MODALITIES_LIST.length,
   });
   const nowForCard = new Date();
   const nextLesson = pickNextLessonForCard(lessons, nowForCard) ?? null;
