@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import type { DimensionScore } from "@/lib/evaluation-results-data";
 import type { CriterionScoreItem } from "@/lib/evaluation-results-data";
 import {
@@ -22,6 +22,9 @@ const MODALITY_LABELS: Record<string, string> = {
   BOXING: "Boxing",
   KICKBOXING: "Kickboxing",
 };
+
+/** Filtro principal pré-selecionado ao abrir (valor comparado com `mainCategoryOptions`, PT, case-insensitive). */
+const INITIAL_MAIN_CATEGORY = "teórico";
 
 type Props = {
   dimensionScores: DimensionScore[];
@@ -45,6 +48,8 @@ export function EvaluationResultsDashboard({
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
   /** null = mostrar todas as subcategorias; valor = filtrar por prefixo principal (derivado dos dados). */
   const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
+  /** Evita repetir o default após o aluno escolher outro chip na mesma modalidade. */
+  const defaultTeoricoAppliedForModalityKey = useRef<string | null>(null);
 
   const filteredCriteria = useMemo(() => {
     if (!selectedModality) return criterionScores;
@@ -82,6 +87,26 @@ export function EvaluationResultsDashboard({
       return valid.has(prev) ? prev : null;
     });
   }, [mainCategoryOptions]);
+
+  const modalityKey = selectedModality ?? "__all__";
+
+  useEffect(() => {
+    if (defaultTeoricoAppliedForModalityKey.current === modalityKey) return;
+    if (mainCategoryOptions.length === 0) return;
+
+    const teoricoLabel = mainCategoryOptions.find(
+      (m) => m.trim().toLowerCase() === INITIAL_MAIN_CATEGORY
+    );
+    if (teoricoLabel) {
+      setSelectedMainCategory(teoricoLabel);
+    }
+    defaultTeoricoAppliedForModalityKey.current = modalityKey;
+  }, [mainCategoryOptions, modalityKey]);
+
+  const handleSelectMainCategory = (main: string | null) => {
+    setSelectedMainCategory(main);
+    defaultTeoricoAppliedForModalityKey.current = modalityKey;
+  };
 
   const modalities = useMemo(() => {
     const mods = new Set(criterionScores.map((c) => c.modality));
@@ -136,7 +161,7 @@ export function EvaluationResultsDashboard({
               <CriteriaMainCategoryChips
                 options={mainCategoryOptions}
                 selected={selectedMainCategory}
-                onSelect={setSelectedMainCategory}
+                onSelect={handleSelectMainCategory}
               />
             )}
             <div
