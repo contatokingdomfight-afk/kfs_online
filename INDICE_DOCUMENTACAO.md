@@ -71,6 +71,13 @@
   - Fases do projeto
   - Prioridades
 
+- **`DOCS/CONTAS_TESTE.md`**
+  - Seed `npm run seed:test-users` (Admin, Coach, Aluno)
+  - `npm test` (Vitest, filtro de aulas no dashboard)
+
+- **`DOCS/GUIA_TESTE_VALIDACAO_PERFIS.md`**
+  - Checklist manual por perfil (Admin, Coach, Aluno), incl. aula livre
+
 - **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**
   - Mensalidades, **Europe/Lisbon** (5.º dia útil / dia 10)
   - Crons `payment-suspension`, `generate-monthly-payments`
@@ -148,11 +155,14 @@ kfs_online/
 ├── 📁 DOCS/                              # Documentação do produto
 │   ├── Especificacao_Plataforma_Kingdom_Digital.md
 │   ├── ROADMAP_Plataforma_KFS.md
+│   ├── CONTAS_TESTE.md
+│   ├── GUIA_TESTE_VALIDACAO_PERFIS.md
 │   ├── PAGAMENTOS_MENSALIDADES_CRON.md
 │   ├── FINANCEIRO_STRIPE_E_PRESENCIAL.md
 │   └── Plano_de_Negócios_Kingdom_Fight_School.md
 │
 ├── 📁 scripts/                           # Scripts de automação
+│   ├── seed-test-users.ts
 │   ├── generate-nextauth-secret.js
 │   ├── bulk-push-github.js
 │   └── prepare-push-batch.js

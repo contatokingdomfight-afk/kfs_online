@@ -23,7 +23,8 @@ Documento de **estado atual** e **prioridades**. Para histórico antigo (multi-e
 | Ficheiro | Uso |
 |----------|-----|
 | `README.md` | Setup local, stack, estrutura |
-| `DOCS/ROADMAP_Plataforma_KFS.md` | Feito / por fazer |
+| `DOCS/ROADMAP_Plataforma_KFS.md` | Feito / por fazer (incl. aulas livres, Vitest, seed) |
+| `DOCS/CONTAS_TESTE.md` | Contas de teste (`npm run seed:test-users`) e `npm test` |
 | `DOCS/PAGAMENTOS_MENSALIDADES_CRON.md` | Mensalidades, crons, campos `Student` |
 | `DOCS/FINANCEIRO_STRIPE_E_PRESENCIAL.md` | Stripe, faturação em Portugal |
 | `INDICE_DOCUMENTACAO.md` | Índice da raiz |
@@ -40,6 +41,9 @@ npm install
 npm audit
 npm run build
 npm run dev
+npm test
+# opcional: contas Admin / Coach / Aluno em local — ver DOCS/CONTAS_TESTE.md
+# npm run seed:test-users
 ```
 
 ---

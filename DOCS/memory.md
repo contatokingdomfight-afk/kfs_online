@@ -57,14 +57,23 @@ Documento gerado para contexto futuro: decisões e alterações discutidas nesta
 
 - **Seed:** `npm run seed:test-users` (requer `TEST_SEED_PASSWORD` + service role). Detalhes e emails: `DOCS/CONTAS_TESTE.md`.
 - **Testes unitários:** `npm test` (Vitest), p.ex. filtro de aulas no dashboard (`lib/dashboard-lesson-filter.ts`).
+- **Carregamento de `.env` no seed:** `.env` primeiro, depois `.env.local` (override); gravar o ficheiro antes de correr o script.
 
 ---
 
-## 6. Notas para continuidade
+## 6. Aulas livres (`isOpenClass`)
+
+- **Regra de produto:** Aula marcada como livre na escola → **qualquer aluno da escola** pode ver na agenda relevante, marcar intenção (Vou/Não vou) e fazer check-in, **mesmo sem plano** ou sem `hasCheckIn` no plano.
+- **Código:** Filtro em `lib/dashboard-lesson-filter.ts`; cartão `NextLessonCard`; `performCheckIn` e `setAttendanceIntention` tratam `isOpenClass` antes de bloquear por plano.
+
+---
+
+## 7. Notas para continuidade
 
 - **Editar visibilidade** de comentários antigos (PRIVATE ↔ SHARED) não foi implementado; seria evolução futura.
+- **Roadmap canónico:** `DOCS/ROADMAP_Plataforma_KFS.md` (atualizado com aulas livres, Vitest, seed).
 - Pasta de documentação do projeto: **`DOCS/`** (este ficheiro).
 
 ---
 
-*Última atualização: conversa resumida em março de 2026.*
+*Última atualização: março de 2026 (documentação + roadmap alinhados às entregas recentes).*

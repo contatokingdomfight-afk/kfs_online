@@ -43,6 +43,7 @@
 | Meta do mês (assiduidade) | Feito | Configuração em Admin Configurações; barra de progresso e celebração no dashboard |
 | Meta de saúde (IMC) | Feito | Card no dashboard quando há peso+altura; faixa OMS e sugestão “atingir/manter faixa saudável” |
 | Metas de avaliação | Feito | Até 2 eixos do radar a melhorar (ex.: “Subir Técnico para 8”) no dashboard |
+| **Aulas livres (open class)** | Feito | `Lesson.isOpenClass`; alunos **sem plano** ou com plano **sem check-in** veem na lista da semana **apenas** aulas livres + podem RSVP e check-in como quem tem plano; lógica partilhada em `lib/dashboard-lesson-filter.ts` |
 | Critérios (resultados): ação «Ver como melhorar» com conteúdo | Por fazer | Ligação futura a biblioteca/dicas por critério; placeholder retirado da UI |
 
 ---
@@ -56,6 +57,7 @@
 | Link de check-in no dashboard do aluno | Feito | Por aula: “abre este link no telemóvel” |
 | Coach confirma/ajusta presença na aula | Feito | Em `/coach/aula?lesson=...` |
 | Status de presença: Pendente, Confirmada, Falta | Feito | Em Attendance.status |
+| **Check-in / intenção (RSVP) em aula livre sem plano** | Feito | `lib/perform-check-in.ts` e `setAttendanceIntention` em `app/dashboard/actions.ts` dispensam `hasCheckIn` quando `Lesson.isOpenClass` |
 | Admin: lista de presenças (próximas 2 semanas) | Feito | `/admin/presenca` com link para aula do coach |
 
 ---
@@ -111,9 +113,10 @@
 
 | Item | Estado | Notas |
 |------|--------|--------|
-| Listar aulas (turmas) | Feito | `/admin/turmas` com “Editar” por aula |
-| Criar aula | Feito | Modalidade, data, horário, coach obrigatório, capacidade, notas |
+| Listar aulas (turmas) | Feito | `/admin/turmas`: vista **por modalidade** e **por semana** (grade seg–dom; navegação entre semanas) |
+| Criar aula | Feito | Modalidade, data ou dia da semana (recorrente), horário, coach, capacidade; modo one-off / recorrente |
 | Editar aula | Feito | `/admin/turmas/[id]` com formulário completo |
+| **Aula livre** (`isOpenClass`) | Feito | Qualquer aluno da escola pode participar (incl. sem plano); migração SQL `20260326140000_lesson_open_class.sql` |
 | Cancelar (apagar) aula | Feito | Botão com confirmação; redireciona para lista |
 
 ---
@@ -190,7 +193,7 @@
 | StudentPhysicalAssessment | Feito | Ficha avaliação física; assessedAt, nextDueAt (6 meses), clearance, formData (JSONB) |
 | StudentProfile | Feito | Dados aluno (peso, altura, nascimento, contacto, etc.) para identificação na ficha |
 | Coach | Feito | userId, specialties |
-| Lesson | Feito | modality, date, startTime, endTime, coachId, capacity, planningNotes |
+| Lesson | Feito | modality, date, startTime, endTime, coachId, capacity, planningNotes; **isOpenClass** (aula livre); recorrente / one-off conforme migrações |
 | Attendance | Feito | lessonId, studentId, status, isExperimental |
 | TrialClass | Feito | name, contact, modality, lessonDate, lessonId, convertedToStudent |
 | Comment | Feito | authorCoachId, targetType, targetId, content, visibility |
@@ -285,7 +288,9 @@ Com base na especificação e na dependência entre módulos:
 | Node 20 (engines) | Feito | Alinhar Vercel e desenvolvimento local |
 | `npm audit` | Feito | Manter 0 vulnerabilidades conhecidas ao atualizar dependências |
 | Crons Vercel | Feito | `vercel.json`: lembretes de aulas + **payment-suspension** (LATE + suspensão); `CRON_SECRET` obrigatório para chamadas não-Vercel |
+| Testes unitários (Vitest) | Feito | `npm test`; exemplo: `lib/dashboard-lesson-filter.test.ts` (filtro de aulas no dashboard) |
+| Seed de contas de teste (local/staging) | Feito | `npm run seed:test-users` + `TEST_SEED_PASSWORD` + service role; emails fixos em **DOCS/CONTAS_TESTE.md** |
 
 ---
 
-*Última atualização (março 2026): mensalidades com calendário **Europe/Lisbon** (5.º dia útil / dia 10), cron **payment-suspension**, documentação **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**, upgrade **Next.js 15** e limpeza de vulnerabilidades npm. Próximos passos opcionais: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push.*
+*Última atualização (março 2026): **aulas livres** (`isOpenClass`) no dashboard, check-in/RSVP sem plano, **Vitest** + seed de contas de teste; mensalidades **Europe/Lisbon** (5.º dia útil / dia 10), cron **payment-suspension**, **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**, **Next.js 15**. Próximos passos opcionais: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push, E2E (Playwright).*

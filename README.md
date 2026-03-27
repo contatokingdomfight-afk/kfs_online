@@ -62,8 +62,16 @@ Repositório GitHub típico: `contatokingdomfight-afk/kfs_online` (ajusta se o t
 
 ## Contas de teste
 
-Não existem contas pré-criadas. Cria-as assim:
+**Opção A – script (recomendado em local)**  
+Com `SUPABASE_SERVICE_ROLE_KEY` e `TEST_SEED_PASSWORD` no `.env` / `.env.local`, e pelo menos uma escola ativa na BD:
 
+```bash
+npm run seed:test-users
+```
+
+Emails e detalhes: **`DOCS/CONTAS_TESTE.md`**.
+
+**Opção B – manual**  
 1. **Aluno** – Registar com um email; no Supabase → **User**, `role` = `ALUNO`. O primeiro login sincroniza **Student**.
 2. **Coach** – Outro email; **User** com `role` = `COACH`; em **Coach** ligar `userId`.
 3. **Admin** – **User** com `role` = `ADMIN`.
@@ -91,6 +99,7 @@ Guias na raiz / `DOCS/`: `INICIO_RAPIDO.md`, `VERCEL_DEPLOY.md`, `VERCEL_CHECKLI
 | Documento | Conteúdo |
 |-----------|----------|
 | **DOCS/ROADMAP_Plataforma_KFS.md** | O que está feito / por fazer |
+| **DOCS/CONTAS_TESTE.md** | Seed de utilizadores de teste + `npm test` |
 | **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md** | Mensalidades, Lisboa, crons, campos `Student` |
 | **DOCS/FINANCEIRO_STRIPE_E_PRESENCIAL.md** | Stripe, faturação PT, fluxos |
 | **INDICE_DOCUMENTACAO.md** | Índice de ficheiros na raiz |
@@ -102,5 +111,7 @@ Guias na raiz / `DOCS/`: `INICIO_RAPIDO.md`, `VERCEL_DEPLOY.md`, `VERCEL_CHECKLI
 | `npm run dev` | Servidor de desenvolvimento |
 | `npm run build` | Build de produção |
 | `npm run lint` | ESLint (Next) |
+| `npm test` | Testes unitários (Vitest) |
+| `npm run seed:test-users` | Cria/atualiza contas Admin, Coach e Aluno (ver **DOCS/CONTAS_TESTE.md**) |
 | `npm run db:studio` | Prisma Studio |
 | `npm run db:migrate` | Migrações Prisma |

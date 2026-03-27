@@ -202,6 +202,11 @@ Validar que o Admin vê e acede a:
 #### A) Dashboard e presença
 
 1. **Próxima aula:** Card com modalidade, data, hora. Botões "Vou" / "Não vou". Após escolher, estado deve atualizar (e coach pode confirmar depois).
+
+#### A.1) Aula livre (`isOpenClass`) — aluno **sem plano**
+
+- **Regra:** Aulas marcadas como **aula livre** na escola são visíveis e participáveis por **qualquer aluno da escola**, mesmo **sem `planId`** ou sem check-in no plano.
+- **Validar:** Com utilizador sem plano (ex.: conta de seed **`kfs.test.aluno@local.test`**, ver **DOCS/CONTAS_TESTE.md**), existe uma `Lesson` na semana com `isOpenClass = true` → o card "Próxima aula" mostra essa aula; "Vou"/"Não vou" e check-in (na janela horária) funcionam; não deve aparecer só o bloqueio "assinar plano" como nas aulas normais sem plano.
 2. **Esta semana:** Lista do resto das aulas da semana com estado de presença em cada uma.
 3. **Plano:** Se tiver plano atribuído, card "O teu plano" com nome e preço.
 4. **Check-in:** Link "No ginásio? Escaneia o QR..." ou "abre este link no telemóvel" para a aula; em `/check-in/[lessonId]` deve conseguir marcar presença.
@@ -252,6 +257,7 @@ Validar que o Admin vê e acede a:
 - [ ] Meus dados: editar e guardar; dados refletem no dashboard (ex.: IMC)
 - [ ] Se atleta: Performance com faixa, XP, radar e missões
 - [ ] Tema claro/escuro e idioma (PT/EN) funcionam no menu
+- [ ] **Aula livre (sem plano):** próxima aula mostrada; Vou/Não vou e check-in na janela horária (ver secção 3.3 A.1)
 
 ---
 
