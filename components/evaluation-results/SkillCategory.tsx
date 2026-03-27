@@ -46,7 +46,7 @@ export function SkillCategory({
   if (items.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-[var(--border)]/70 bg-[var(--bg-secondary)] overflow-hidden transition-all duration-200 ease-out hover:shadow-md hover:scale-[1.005] hover:border-[var(--border)]">
+    <div className="rounded-xl bg-[var(--bg-secondary)] overflow-hidden shadow-sm ring-1 ring-inset ring-[var(--text-primary)]/[0.08] transition-all duration-200 ease-out hover:shadow-md hover:scale-[1.005] hover:ring-[var(--primary)]/15">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

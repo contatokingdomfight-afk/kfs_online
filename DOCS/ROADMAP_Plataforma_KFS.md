@@ -43,6 +43,7 @@
 | Meta do mês (assiduidade) | Feito | Configuração em Admin Configurações; barra de progresso e celebração no dashboard |
 | Meta de saúde (IMC) | Feito | Card no dashboard quando há peso+altura; faixa OMS e sugestão “atingir/manter faixa saudável” |
 | Metas de avaliação | Feito | Até 2 eixos do radar a melhorar (ex.: “Subir Técnico para 8”) no dashboard |
+| Critérios (resultados): ação «Ver como melhorar» com conteúdo | Por fazer | Ligação futura a biblioteca/dicas por critério; placeholder retirado da UI |
 
 ---
 

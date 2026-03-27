@@ -7,27 +7,9 @@ type Props = {
   item: CriterionScoreItem;
   showTrend?: boolean;
   className?: string;
-  /** list: linha compacta (legado); card: cartão para carrossel */
+  /** list: linha compacta; card: cartão para carrossel */
   variant?: "list" | "card";
 };
-
-/** Normaliza para escala 0–10 para faixas qualitativas (0–3 / 4–7 / 8–10). */
-function normalizedTen(score: number, maxScore: number): number {
-  if (!Number.isFinite(score) || !Number.isFinite(maxScore) || maxScore <= 0) return 0;
-  return Math.min(10, Math.max(0, (score / maxScore) * 10));
-}
-
-function qualitativeLabel(norm: number): string {
-  if (norm <= 3) return "Iniciante";
-  if (norm <= 7) return "Intermediário";
-  return "Avançado";
-}
-
-function qualitativeClasses(tierLabel: string): string {
-  if (tierLabel === "Iniciante") return "text-amber-700/90 dark:text-amber-400/95";
-  if (tierLabel === "Intermediário") return "text-sky-700/90 dark:text-sky-400/95";
-  return "text-emerald-700/90 dark:text-emerald-400/95";
-}
 
 export function SkillBar({
   item,
@@ -45,10 +27,6 @@ export function SkillBar({
     setBarWidth(safePct);
   }, [safePct]);
 
-  const norm = normalizedTen(rawScore, max);
-  const tierLabel = qualitativeLabel(norm);
-  const tierClass = qualitativeClasses(tierLabel);
-
   const prev =
     item.previousScore != null && Number.isFinite(item.previousScore)
       ? item.previousScore
@@ -62,52 +40,52 @@ export function SkillBar({
   if (variant === "card") {
     return (
       <div
-        className={`rounded-2xl border border-[var(--border)]/80 bg-[var(--bg-secondary)] p-4 shadow-sm transition-all duration-200 ease-out hover:shadow-md hover:scale-[1.02] hover:border-[var(--primary)]/30 ${className}`}
+        className={`rounded-2xl bg-[var(--bg-secondary)] p-4 shadow-sm ring-1 ring-inset ring-[var(--text-primary)]/[0.08] transition-all duration-200 ease-out hover:shadow-md hover:ring-[var(--primary)]/20 ${className}`}
       >
-        <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-start justify-between gap-2 mb-3">
           <span className="text-sm font-semibold text-[var(--text-primary)] leading-snug line-clamp-3">
             {labelText}
           </span>
-          <div className="flex flex-col items-end gap-0.5 flex-shrink-0 text-right">
-            <span className="text-base font-bold text-[var(--text-primary)] tabular-nums leading-none">
-              {rawScore}/{max}
-            </span>
-            <span className={`text-[11px] font-medium leading-tight ${tierClass}`}>{tierLabel}</span>
-          </div>
+          <span className="text-base font-bold text-[var(--text-primary)] tabular-nums leading-none flex-shrink-0">
+            {rawScore}/{max}
+          </span>
         </div>
-        <div className="h-2.5 rounded-full bg-[var(--border)]/80 overflow-hidden mb-3">
+        <div className="h-2.5 rounded-full bg-[var(--border)]/50 overflow-hidden mb-3">
           <div
             className="h-full rounded-full bg-[var(--primary)] transition-[width] duration-700 ease-out"
             style={{ width: `${barWidth}%` }}
           />
         </div>
         {hasTrend && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-3">
-            <div className="flex items-center gap-1.5 font-semibold tabular-nums text-[var(--text-primary)]">
-              <span className="text-[var(--text-secondary)]/90">{prev}</span>
-              <span className="text-[var(--text-secondary)]">→</span>
-              <span>{rawScore}</span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+            <span className="text-[var(--text-secondary)] shrink-0">vs. anterior:</span>
+            <div className="flex items-center gap-1.5 font-semibold tabular-nums">
+              <span
+                className={
+                  delta === 0
+                    ? "text-[var(--text-secondary)]"
+                    : delta > 0
+                      ? "text-[var(--success)]"
+                      : "text-[var(--danger)]"
+                }
+              >
+                {prev} → {rawScore}
+              </span>
+              {delta > 0 && (
+                <span className="inline-flex items-center gap-0.5 rounded-md bg-[var(--success)]/12 px-1.5 py-0.5 text-[var(--success)] font-semibold tabular-nums">
+                  <span aria-hidden>▲</span>
+                  +{delta}
+                </span>
+              )}
+              {delta < 0 && (
+                <span className="inline-flex items-center gap-0.5 rounded-md bg-[var(--danger)]/12 px-1.5 py-0.5 text-[var(--danger)] font-semibold tabular-nums">
+                  <span aria-hidden>▼</span>
+                  {delta}
+                </span>
+              )}
             </div>
-            {delta > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[var(--success)]/15 px-2 py-0.5 text-[var(--success)] font-semibold tabular-nums">
-                <span aria-hidden>▲</span>
-                <span>+{delta}</span>
-              </span>
-            )}
-            {delta < 0 && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[var(--danger)]/15 px-2 py-0.5 text-[var(--danger)] font-semibold tabular-nums">
-                <span aria-hidden>▼</span>
-                <span>{delta}</span>
-              </span>
-            )}
-            {delta === 0 && (
-              <span className="text-[var(--text-secondary)] tabular-nums">—</span>
-            )}
           </div>
         )}
-        <p className="text-[11px] text-[var(--text-secondary)] opacity-90 border-t border-[var(--border)]/50 pt-3">
-          <span className="cursor-default select-none">Ver como melhorar →</span>
-        </p>
       </div>
     );
   }
@@ -118,12 +96,9 @@ export function SkillBar({
         <span className="text-sm font-medium text-[var(--text-primary)] truncate leading-snug">
           {labelText}
         </span>
-        <div className="flex flex-col items-end gap-0.5 flex-shrink-0 text-right">
-          <span className="text-sm font-semibold text-[var(--text-primary)] tabular-nums leading-none">
-            {rawScore}/{max}
-          </span>
-          <span className={`text-[11px] font-medium leading-tight ${tierClass}`}>{tierLabel}</span>
-        </div>
+        <span className="text-sm font-semibold text-[var(--text-primary)] tabular-nums leading-none flex-shrink-0">
+          {rawScore}/{max}
+        </span>
       </div>
       <div className="h-2 rounded-full bg-[var(--border)]/80 overflow-hidden">
         <div
@@ -132,38 +107,29 @@ export function SkillBar({
         />
       </div>
       {hasTrend && (
-        <p className="text-xs mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-          {delta > 0 && (
-            <span className="text-[var(--success)] font-semibold" aria-hidden>
-              ▲
-            </span>
-          )}
-          {delta < 0 && (
-            <span className="text-[var(--danger)] font-semibold" aria-hidden>
-              ▼
-            </span>
-          )}
-          {delta === 0 && (
-            <span className="text-[var(--text-secondary)] font-medium" aria-hidden>
-              —
-            </span>
-          )}
+        <p className="text-xs mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <span className="text-[var(--text-secondary)]">Anterior:</span>
           <span
             className={
-              delta > 0
-                ? "text-[var(--success)] font-semibold tabular-nums"
-                : delta < 0
-                  ? "text-[var(--danger)] font-semibold tabular-nums"
-                  : "text-[var(--text-secondary)] tabular-nums"
+              delta === 0
+                ? "text-[var(--text-secondary)] font-medium tabular-nums"
+                : delta > 0
+                  ? "text-[var(--success)] font-semibold tabular-nums"
+                  : "text-[var(--danger)] font-semibold tabular-nums"
             }
           >
             {prev} → {rawScore}
           </span>
+          {delta > 0 && (
+            <span className="text-[var(--success)] font-semibold tabular-nums">
+              (▲ +{delta})
+            </span>
+          )}
+          {delta < 0 && (
+            <span className="text-[var(--danger)] font-semibold tabular-nums">(▼ {delta})</span>
+          )}
         </p>
       )}
-      <p className="text-[11px] text-[var(--text-secondary)] mt-2 opacity-90">
-        <span className="cursor-default select-none">Ver como melhorar →</span>
-      </p>
     </div>
   );
 }
