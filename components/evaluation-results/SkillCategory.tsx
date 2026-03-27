@@ -47,16 +47,16 @@ export function SkillCategory({
 
   return (
     <div
-      className={`rounded-xl bg-[var(--bg-secondary)] overflow-hidden transition-all duration-300 ease-out ${
+      className={`rounded-xl border border-solid bg-[var(--bg-secondary)] overflow-hidden transition-[border-color,box-shadow,transform] duration-300 ease-out ${
         open
-          ? "shadow-md ring-1 ring-inset ring-[var(--text-primary)]/25"
-          : "shadow-sm ring-1 ring-inset ring-[var(--border)]/85 hover:shadow-md hover:scale-[1.005]"
+          ? "border-[color-mix(in_srgb,var(--text-primary)_28%,var(--border))] shadow-md"
+          : "border-[var(--border)] shadow-sm hover:shadow-md hover:scale-[1.005]"
       }`}
     >
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-[var(--border)]/25 transition-colors"
+        className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-[var(--border)]/25 transition-colors outline-none [-webkit-tap-highlight-color:transparent] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--border)]"
         aria-expanded={open}
       >
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 flex-1 pr-1">
