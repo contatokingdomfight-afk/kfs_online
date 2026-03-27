@@ -6,6 +6,8 @@ import { SkillBar } from "./SkillBar";
 
 type Props = {
   categoryName: string;
+  /** Título do acordeão (ex.: só subcategoria quando um filtro principal está ativo). */
+  headingLabel?: string;
   items: CriterionScoreItem[];
   defaultOpen?: boolean;
   showTrend?: boolean;
@@ -25,6 +27,7 @@ function categoryAverage(items: CriterionScoreItem[]): { avg: number; maxRef: nu
 
 export function SkillCategory({
   categoryName,
+  headingLabel,
   items,
   defaultOpen = false,
   showTrend = true,
@@ -34,6 +37,11 @@ export function SkillCategory({
   const { avg, maxRef } = useMemo(() => categoryAverage(items), [items]);
   const avgPct =
     maxRef > 0 && Number.isFinite(avg) ? Math.min(100, Math.max(0, (avg / maxRef) * 100)) : 0;
+
+  const displayTitle =
+    headingLabel != null && String(headingLabel).trim() !== ""
+      ? String(headingLabel).trim()
+      : categoryName;
 
   if (items.length === 0) return null;
 
@@ -47,7 +55,7 @@ export function SkillCategory({
       >
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 flex-1 pr-1">
           <span className="font-semibold text-[var(--text-primary)] text-left truncate">
-            {categoryName}
+            {displayTitle}
           </span>
           <div className="flex items-center gap-2.5 sm:ml-auto sm:mr-1 flex-shrink-0">
             <span
@@ -77,10 +85,21 @@ export function SkillCategory({
         </span>
       </button>
       {open && (
-        <div className="px-4 pb-3.5 pt-1 border-t border-[var(--border)]/60">
-          {items.map((item) => (
-            <SkillBar key={item.criterionId} item={item} showTrend={showTrend} />
-          ))}
+        <div className="border-t border-[var(--border)]/60">
+          <div
+            className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 pt-3 px-3 sm:px-4 [-webkit-overflow-scrolling:touch] scroll-pl-3 scroll-pr-3 sm:scroll-pl-4 sm:scroll-pr-4"
+            role="region"
+            aria-label={`Critérios: ${displayTitle}`}
+          >
+            {items.map((item) => (
+              <div
+                key={item.criterionId}
+                className="min-w-[80%] sm:min-w-[45%] lg:min-w-[36%] max-w-[min(100%,340px)] snap-center shrink-0"
+              >
+                <SkillBar item={item} showTrend={showTrend} variant="card" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

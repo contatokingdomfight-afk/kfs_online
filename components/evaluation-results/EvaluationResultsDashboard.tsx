@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { DimensionScore } from "@/lib/evaluation-results-data";
 import type { CriterionScoreItem } from "@/lib/evaluation-results-data";
 import {
   getStrengthsAndWeaknesses,
   groupByCategory,
+  mainCategoryFromCategoryName,
+  subLabelFromCategoryName,
 } from "@/lib/evaluation-results-data";
 import { EvaluationSummary } from "./EvaluationSummary";
 import { StrengthsWeaknesses } from "./StrengthsWeaknesses";
 import { EvaluationFilters } from "./EvaluationFilters";
 import { SkillCategory } from "./SkillCategory";
+import { CriteriaMainCategoryChips } from "./CriteriaMainCategoryChips";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import type { RadarAxis } from "@/components/fighter/RadarStatsDynamic";
 
@@ -40,6 +43,8 @@ export function EvaluationResultsDashboard({
   modalityLabels = {},
 }: Props) {
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
+  /** null = mostrar todas as subcategorias; valor = filtrar por prefixo principal (derivado dos dados). */
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
 
   const filteredCriteria = useMemo(() => {
     if (!selectedModality) return criterionScores;
@@ -53,6 +58,30 @@ export function EvaluationResultsDashboard({
 
   const byCategory = useMemo(() => groupByCategory(filteredCriteria), [filteredCriteria]);
   const categoryNames = useMemo(() => Array.from(byCategory.keys()).sort(), [byCategory]);
+
+  const mainCategoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const name of categoryNames) {
+      const m = mainCategoryFromCategoryName(name);
+      if (m) set.add(m);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt"));
+  }, [categoryNames]);
+
+  const filteredCategoryNames = useMemo(() => {
+    if (selectedMainCategory == null) return categoryNames;
+    return categoryNames.filter(
+      (n) => mainCategoryFromCategoryName(n) === selectedMainCategory
+    );
+  }, [categoryNames, selectedMainCategory]);
+
+  useEffect(() => {
+    setSelectedMainCategory((prev) => {
+      if (prev == null) return null;
+      const valid = new Set(mainCategoryOptions);
+      return valid.has(prev) ? prev : null;
+    });
+  }, [mainCategoryOptions]);
 
   const modalities = useMemo(() => {
     const mods = new Set(criterionScores.map((c) => c.modality));
@@ -103,11 +132,26 @@ export function EvaluationResultsDashboard({
             <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-3">
               Critérios por categoria
             </h2>
-            <div className="space-y-3">
-              {categoryNames.map((name, i) => (
+            {mainCategoryOptions.length > 1 && (
+              <CriteriaMainCategoryChips
+                options={mainCategoryOptions}
+                selected={selectedMainCategory}
+                onSelect={setSelectedMainCategory}
+              />
+            )}
+            <div
+              key={selectedMainCategory ?? "all"}
+              className="space-y-3"
+            >
+              {filteredCategoryNames.map((name, i) => (
                 <SkillCategory
                   key={name}
                   categoryName={name}
+                  headingLabel={
+                    selectedMainCategory == null
+                      ? undefined
+                      : subLabelFromCategoryName(name)
+                  }
                   items={byCategory.get(name) ?? []}
                   defaultOpen={i === 0}
                   showTrend={true}

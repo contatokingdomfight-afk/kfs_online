@@ -121,6 +121,33 @@ export function groupByCategory(items: CriterionScoreItem[]): Map<string, Criter
   return map;
 }
 
+/**
+ * Extrai o agrupamento principal a partir do nome completo da categoria (ex.: "Físico - X" → "Físico").
+ * Usa o primeiro " - "; se não existir, devolve o nome completo. Sem valores fixos.
+ */
+export function mainCategoryFromCategoryName(categoryName: string | null | undefined): string {
+  if (categoryName == null || typeof categoryName !== "string") return "";
+  const t = categoryName.trim();
+  if (!t) return "";
+  const sep = " - ";
+  const i = t.indexOf(sep);
+  if (i <= 0) return t;
+  const head = t.slice(0, i).trim();
+  return head || t;
+}
+
+/** Parte após o primeiro " - " para título compacto quando um filtro principal está ativo. */
+export function subLabelFromCategoryName(categoryName: string | null | undefined): string {
+  if (categoryName == null || typeof categoryName !== "string") return "";
+  const t = categoryName.trim();
+  if (!t) return "";
+  const sep = " - ";
+  const i = t.indexOf(sep);
+  if (i === -1) return t;
+  const rest = t.slice(i + sep.length).trim();
+  return rest || t;
+}
+
 export const DIMENSION_ICONS: Record<string, string> = {
   tecnico: "🥊",
   tatico: "🎯",
