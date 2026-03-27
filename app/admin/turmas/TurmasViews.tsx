@@ -84,11 +84,20 @@ function WeekDayCard({
   modalities: CachedModalityRef[] | null;
 }) {
   const dayLabel = getWeekdayName(dateStr);
-  const dateFormatted = formatLessonDate(dateStr);
+  /** Só dia/mês: `formatLessonDate` já inclui o dia da semana em pt-PT, o que duplicava o rótulo. */
+  const dateOnly = (() => {
+    try {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString("pt-PT", { day: "2-digit", month: "short" });
+    } catch {
+      return dateStr;
+    }
+  })();
   return (
     <div className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
       <h3 style={{ margin: "0 0 clamp(10px, 2.5vw, 12px) 0", fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
-        {dayLabel}, {dateFormatted}
+        {dayLabel}, {dateOnly}
         {dayLessons.length > 0 && (
           <span style={{ fontWeight: 400, color: "var(--text-secondary)", fontSize: "clamp(13px, 3.2vw, 15px)" }}>
             {" "}({dayLessons.length} {dayLessons.length === 1 ? "aula" : "aulas"})

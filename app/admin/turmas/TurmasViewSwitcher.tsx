@@ -31,7 +31,7 @@ export function TurmasViewSwitcher({
         }}
       >
         <Link
-          href={base}
+          href={`${base}?view=modalidade`}
           style={{
             padding: "8px 14px",
             borderRadius: 6,
@@ -60,34 +60,30 @@ export function TurmasViewSwitcher({
         </Link>
       </div>
       {view === "semana" && weekMonday && (
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: "12px",
-            marginTop: "12px",
-          }}
-        >
-          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)", fontWeight: 500 }}>
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-2">
+          <span
+            className="min-w-0 shrink text-[clamp(14px,3.5vw,16px)] font-medium text-[var(--text-primary)]"
+          >
             {formatWeekRangeLabel(weekMonday)}
           </span>
-          {prevWeek && (
-            <Link
-              href={`${base}?view=semana&week=${prevWeek}`}
-              style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)", textDecoration: "none" }}
-            >
-              ← Semana anterior
-            </Link>
-          )}
-          {nextWeek && (
-            <Link
-              href={`${base}?view=semana&week=${nextWeek}`}
-              style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)", textDecoration: "none" }}
-            >
-              Próxima semana →
-            </Link>
-          )}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:justify-end sm:shrink-0">
+            {prevWeek && (
+              <Link
+                href={`${base}?view=semana&week=${prevWeek}`}
+                className="whitespace-nowrap text-[clamp(13px,3.2vw,15px)] text-[var(--primary)] no-underline"
+              >
+                ← Semana anterior
+              </Link>
+            )}
+            {nextWeek && (
+              <Link
+                href={`${base}?view=semana&week=${nextWeek}`}
+                className="whitespace-nowrap text-[clamp(13px,3.2vw,15px)] text-[var(--primary)] no-underline"
+              >
+                Próxima semana →
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>

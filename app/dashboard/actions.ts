@@ -16,7 +16,14 @@ export async function setAttendanceIntention(
 
   const supabase = await createClient();
   const planAccess = await getPlanAccess(supabase, studentId);
-  if (!planAccess.hasCheckIn) return { error: "O teu plano não inclui check-in de aulas presenciais." };
+
+  const { data: lessonRow } = await supabase.from("Lesson").select("isOpenClass").eq("id", lessonId).single();
+  if (!lessonRow) return { error: "Aula não encontrada." };
+  const isOpenClass = Boolean((lessonRow as { isOpenClass?: boolean }).isOpenClass);
+  if (!planAccess.hasCheckIn && !isOpenClass) {
+    return { error: "O teu plano não inclui check-in de aulas presenciais." };
+  }
+
   const status = intention === "vou" ? "PENDING" : "ABSENT";
 
   const { data: existing } = await supabase

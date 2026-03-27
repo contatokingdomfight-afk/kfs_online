@@ -15,7 +15,8 @@ export default async function AdminTurmasPage({
   searchParams: Promise<{ view?: string; week?: string }>;
 }) {
   const params = await searchParams;
-  const view = (params.view === "semana" ? "semana" : "modalidade") as "modalidade" | "semana";
+  /** Por defeito: vista por semana; `?view=modalidade` para agrupar por modalidade. */
+  const view = (params.view === "modalidade" ? "modalidade" : "semana") as "modalidade" | "semana";
   const weekParam = params.week?.trim() || null;
   const weekMonday =
     view === "semana"

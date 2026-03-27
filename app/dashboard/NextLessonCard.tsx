@@ -41,8 +41,6 @@ export function NextLessonCard({
   t,
   statusLabels,
 }: Props) {
-  if (!hasCheckIn && !isFreeTier) return null;
-
   if (!lesson) {
     return (
       <section>
@@ -77,7 +75,8 @@ export function NextLessonCard({
 
   const att = attendanceByLesson[lesson.id];
   const isToday = lesson.date === todayStr;
-  const canUseCheckInLink = !isFreeTier && checkInWindowOpen;
+  const openClassParticipation = Boolean(lesson.isOpenClass);
+  const canUseCheckInLink = (!isFreeTier || openClassParticipation) && checkInWindowOpen;
 
   return (
     <section>
@@ -118,7 +117,7 @@ export function NextLessonCard({
           {formatNextLessonDate(lesson.date, locale)} · {lesson.startTime}–{lesson.endTime}
         </p>
         <div style={{ marginTop: 12 }}>
-          {isFreeTier ? (
+          {isFreeTier && !openClassParticipation ? (
             <p style={{ margin: 0, fontSize: 14, opacity: 0.9 }}>
               🔒 {t("freeTierSubscribeToParticipate")}
             </p>
@@ -136,12 +135,12 @@ export function NextLessonCard({
           />
           )}
         </div>
-        {!isFreeTier && checkInStartTimeLabel && !checkInWindowOpen && (
+        {(!isFreeTier || openClassParticipation) && checkInStartTimeLabel && !checkInWindowOpen && (
           <p style={{ marginTop: 14, marginBottom: 0, fontSize: "clamp(13px, 3.2vw, 15px)", opacity: 0.95 }}>
             {t("dashboardCheckInAvailableFrom").replace("{time}", checkInStartTimeLabel)}
           </p>
         )}
-        {!isFreeTier && canUseCheckInLink && (
+        {canUseCheckInLink && (
         <Link
           href={`/check-in/${lesson.id}`}
           className="btn"
@@ -163,7 +162,7 @@ export function NextLessonCard({
           📲 {t("dashboardCheckInButton")}
         </Link>
         )}
-        {!isFreeTier && canUseCheckInLink && (
+        {canUseCheckInLink && (
         <p style={{ marginTop: 12, marginBottom: 0, fontSize: "clamp(12px, 3vw, 14px)", opacity: 0.9 }}>
           {t("atGymScanQr")}{" "}
           <Link href={`/check-in/${lesson.id}`} style={{ color: "#fff", textDecoration: "underline" }}>

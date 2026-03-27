@@ -43,10 +43,14 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
 
   const supabase = await createClient();
   const planAccess = await getPlanAccess(supabase, studentId);
-  if (!planAccess.hasCheckIn) return { error: "O teu plano não inclui check-in de aulas presenciais." };
 
   const { data: lessonData } = await supabase.from("Lesson").select("id, modality, date, startTime, endTime, isOpenClass").eq("id", lessonId).single();
   if (!lessonData) return { error: "Aula não encontrada." };
+
+  const isOpenClass = Boolean((lessonData as { isOpenClass?: boolean }).isOpenClass);
+  if (!planAccess.hasCheckIn && !isOpenClass) {
+    return { error: "O teu plano não inclui check-in de aulas presenciais." };
+  }
 
   if (!lessonHasValidSchedule(lessonData)) {
     return { error: "Esta aula não tem horário completo na agenda. Contacta a receção." };
@@ -87,7 +91,6 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
     };
   }
 
-  const isOpenClass = Boolean((lessonData as { isOpenClass?: boolean }).isOpenClass);
   const studentPrimaryModality = normalizeModalityCode(planAccess.primaryModality);
   const isSingleModalityPlan = planAccess.allowedModalities.length === 1;
   if (

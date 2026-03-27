@@ -96,7 +96,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const lessons = allLessons.filter((l) => {
     const isOpenClass = Boolean((l as { isOpenClass?: boolean }).isOpenClass);
     if (isOpenClass) return true;
-    if (!hasPlan) return true;
+    // Sem plano ou plano sem check-in: só veem aulas livres (acima); o resto fica oculto.
+    if (!hasPlan) return false;
+    if (!hasCheckIn) return false;
     if (allowedModalities.length === 0) return false;
 
     // Plano Full: vê próximas aulas de qualquer modalidade.
@@ -108,6 +110,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   });
   const nowForCard = new Date();
   const nextLesson = pickNextLessonForCard(lessons, nowForCard) ?? null;
+  const showNextLessonCard =
+    hasCheckIn ||
+    !hasPlan ||
+    (nextLesson != null && Boolean((nextLesson as { isOpenClass?: boolean }).isOpenClass));
   const checkInWindowOpen =
     !!nextLesson &&
     isWithinLessonCheckInWindow(
@@ -291,6 +297,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {!hasPlan && (
         <ChoosePlanCTA message={t("freeTierCtaMessage")} ctaLabel={t("freeTierCtaButton")} />
       )}
+      {showNextLessonCard && (
       <NextLessonCard
         lesson={nextLesson}
         locationById={locationById}
@@ -304,6 +311,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         t={t as (key: string) => string}
         statusLabels={STATUS_LABEL}
       />
+      )}
 
       {hasPlan && (
         <WarriorPanel
