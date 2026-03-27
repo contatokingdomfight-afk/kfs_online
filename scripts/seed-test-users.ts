@@ -8,8 +8,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 import { resolve } from "node:path";
 
-config({ path: resolve(process.cwd(), ".env.local") });
+// .env primeiro; .env.local sobrescreve (comportamento típico Next.js)
 config({ path: resolve(process.cwd(), ".env") });
+config({ path: resolve(process.cwd(), ".env.local"), override: true });
 
 const EMAIL_ADMIN = "kfs.test.admin@local.test";
 const EMAIL_COACH = "kfs.test.coach@local.test";
@@ -119,7 +120,7 @@ async function main() {
     process.exit(1);
   }
   if (!password || password.length < 8) {
-    console.error("Defina TEST_SEED_PASSWORD no .env.local (mín. 8 caracteres).");
+    console.error("Defina TEST_SEED_PASSWORD no .env ou .env.local (mín. 8 caracteres).");
     process.exit(1);
   }
 

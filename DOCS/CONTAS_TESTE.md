@@ -2,7 +2,7 @@
 
 ## Criar ou atualizar utilizadores
 
-1. No `.env.local`, define:
+1. No `.env` ou `.env.local`, define (o script carrega `.env` e depois `.env.local` por cima):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `TEST_SEED_PASSWORD` (mínimo 8 caracteres; **não** commits esta password)
