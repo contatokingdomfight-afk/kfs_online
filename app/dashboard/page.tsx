@@ -14,6 +14,7 @@ import { getCachedPlanAccess } from "@/lib/plan-access";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
 import { NextLessonCard } from "./NextLessonCard";
+import { OpenClassesThisWeekCarousel } from "./OpenClassesThisWeekCarousel";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
 import { ExploreSection } from "./ExploreSection";
@@ -136,6 +137,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     !hasPlan ||
     (nextLesson != null && Boolean((nextLesson as { isOpenClass?: boolean }).isOpenClass)) ||
     additionalOpenLessons.length > 0;
+
+  const hasOpenClassesCarousel = additionalOpenLessons.length > 0;
 
   const lessonIds = lessons.map((l) => l.id);
   const attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }> = {};
@@ -302,21 +305,35 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {!hasPlan && (
         <ChoosePlanCTA message={t("freeTierCtaMessage")} ctaLabel={t("freeTierCtaButton")} />
       )}
-      {showNextLessonCard && (
-      <NextLessonCard
-        lesson={nextLesson}
-        additionalOpenLessons={additionalOpenLessons}
-        studentSchoolId={studentSchoolId}
-        locationById={locationById}
-        attendanceByLesson={attendanceByLesson}
-        locale={locale as "pt" | "en"}
-        todayStr={todayStr}
-        isFreeTier={!hasPlan}
-        checkInWindowOpen={checkInWindowOpen}
-        checkInStartTimeLabel={checkInStartTimeLabel}
-        t={t as (key: string) => string}
-        statusLabels={STATUS_LABEL}
-      />
+      {showNextLessonCard && nextLesson && (
+        <NextLessonCard
+          lesson={nextLesson}
+          studentSchoolId={studentSchoolId}
+          locationById={locationById}
+          attendanceByLesson={attendanceByLesson}
+          locale={locale as "pt" | "en"}
+          todayStr={todayStr}
+          isFreeTier={!hasPlan}
+          checkInWindowOpen={checkInWindowOpen}
+          checkInStartTimeLabel={checkInStartTimeLabel}
+          t={t as (key: string) => string}
+          statusLabels={STATUS_LABEL}
+        />
+      )}
+      {showNextLessonCard && !nextLesson && !hasOpenClassesCarousel && (
+        <NextLessonCard
+          lesson={null}
+          studentSchoolId={studentSchoolId}
+          locationById={locationById}
+          attendanceByLesson={attendanceByLesson}
+          locale={locale as "pt" | "en"}
+          todayStr={todayStr}
+          isFreeTier={!hasPlan}
+          checkInWindowOpen={checkInWindowOpen}
+          checkInStartTimeLabel={checkInStartTimeLabel}
+          t={t as (key: string) => string}
+          statusLabels={STATUS_LABEL}
+        />
       )}
 
       {hasPlan && (
@@ -332,6 +349,22 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           hasPerformanceTracking={planAccess.hasPerformanceTracking}
           t={t as (key: string) => string}
           beltLabel={beltLabel}
+        />
+      )}
+
+      {hasOpenClassesCarousel && (
+        <OpenClassesThisWeekCarousel
+          rows={additionalOpenLessons}
+          studentSchoolId={studentSchoolId}
+          locationById={locationById}
+          attendanceByLesson={attendanceByLesson}
+          locale={locale as "pt" | "en"}
+          todayStr={todayStr}
+          isFreeTier={!hasPlan}
+          t={t as (key: string) => string}
+          statusLabels={STATUS_LABEL}
+          sectionTitle={t("dashboardOpenClassesThisWeekTitle")}
+          swipeHint={t("dashboardOpenClassesCarouselHint")}
         />
       )}
 
