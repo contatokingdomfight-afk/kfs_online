@@ -38,6 +38,7 @@ Definidos em `vercel.json`:
 - **`createPayment`** (`app/admin/financeiro/actions.ts`) não deve deixar **duas linhas** para o mesmo `studentId` + `referenceMonth` (ex.: um `LATE` gerado automaticamente e um `PAID` registado depois).
 - Ao registar **Pago** para um mês que já tinha **Em atraso**, o sistema **atualiza** o registo existente para `PAID` e remove duplicados do mesmo par aluno/mês.
 - Ao tentar registar **Em atraso** quando já existe **Pago** nesse mês, devolve erro.
+- **Dados antigos** (duplicados antes desta regra): Admin → Financeiro → botão **«Limpar duplicados (mesmo aluno + mês)»** (`dedupeDuplicatePaymentsAction`) ou SQL de manutenção equivalente.
 
 ## Campos em `Student` (grace e suspensão)
 

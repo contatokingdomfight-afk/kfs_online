@@ -164,3 +164,69 @@ export async function generateMonthlyPaymentsFormAction(
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim() ?? "";
   return generateMonthlyPaymentsAction(referenceMonth);
 }
+
+/**
+ * Remove duplicados históricos: LATE quando já existe PAID no mesmo mês; vários PAID ou vários LATE
+ * para o mesmo par aluno+mês (mantém o registo mais antigo por createdAt).
+ */
+export async function dedupeDuplicatePaymentsAction(): Promise<void> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+
+  const supabase = createAdminClient();
+  const { data: rows, error } = await supabase
+    .from("Payment")
+    .select("id, studentId, status, referenceMonth, createdAt");
+
+  if (error) redirect(`/admin/financeiro?dedupedError=${encodeURIComponent(error.message)}`);
+
+  type Row = { id: string; studentId: string; status: string; referenceMonth: string; createdAt: string | null };
+  const list = (rows ?? []) as Row[];
+  const groupKey = (sid: string, rm: string) => `${sid}\t${rm}`;
+  const groups = new Map<string, Row[]>();
+  for (const r of list) {
+    const k = groupKey(r.studentId, r.referenceMonth);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k)!.push(r);
+  }
+
+  let removed = 0;
+  for (const [, g] of groups) {
+    const paids = g.filter((r) => r.status === "PAID");
+    const lates = g.filter((r) => r.status === "LATE");
+
+    if (paids.length > 0 && lates.length > 0) {
+      const ids = lates.map((r) => r.id);
+      const { error: delErr } = await supabase.from("Payment").delete().in("id", ids);
+      if (delErr) redirect(`/admin/financeiro?dedupedError=${encodeURIComponent(delErr.message)}`);
+      removed += ids.length;
+    }
+
+    const paids2 = g.filter((r) => r.status === "PAID");
+    if (paids2.length > 1) {
+      const sorted = [...paids2].sort(
+        (a, b) =>
+          new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime() || a.id.localeCompare(b.id)
+      );
+      const toDel = sorted.slice(1).map((r) => r.id);
+      const { error: delErr } = await supabase.from("Payment").delete().in("id", toDel);
+      if (delErr) redirect(`/admin/financeiro?dedupedError=${encodeURIComponent(delErr.message)}`);
+      removed += toDel.length;
+    }
+
+    const lates2 = g.filter((r) => r.status === "LATE");
+    if (paids.length === 0 && lates2.length > 1) {
+      const sorted = [...lates2].sort(
+        (a, b) =>
+          new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime() || a.id.localeCompare(b.id)
+      );
+      const toDel = sorted.slice(1).map((r) => r.id);
+      const { error: delErr } = await supabase.from("Payment").delete().in("id", toDel);
+      if (delErr) redirect(`/admin/financeiro?dedupedError=${encodeURIComponent(delErr.message)}`);
+      removed += toDel.length;
+    }
+  }
+
+  revalidatePath("/admin/financeiro");
+  redirect(`/admin/financeiro?deduped=${removed}`);
+}

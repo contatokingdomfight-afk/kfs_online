@@ -6,13 +6,14 @@ import { redirect } from "next/navigation";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { getRenewalsPending } from "@/lib/renewals";
 import { RenewalsSection } from "./RenewalsSection";
+import { dedupeDuplicatePaymentsAction } from "./actions";
 
 const STATUS_LABEL: Record<string, string> = {
   PAID: "Pago",
   LATE: "Em atraso",
 };
 
-type SearchParams = Promise<{ status?: string }>;
+type SearchParams = Promise<{ status?: string; deduped?: string; dedupedError?: string }>;
 
 export default async function AdminFinanceiroPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
@@ -20,6 +21,8 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
 
   const params = await searchParams;
   const filterStatus = params.status ?? "all";
+  const deduped = params.deduped;
+  const dedupedError = params.dedupedError;
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -129,6 +132,53 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           Em atraso
         </Link>
       </div>
+
+      {deduped !== undefined && deduped !== "" && (
+        <p
+          role="status"
+          className="card"
+          style={{
+            padding: "clamp(12px, 3vw, 16px)",
+            marginBottom: 16,
+            borderLeft: "4px solid var(--success)",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            color: "var(--text-primary)",
+          }}
+        >
+          Limpeza concluída: removidos {deduped} registo(s) duplicado(s) (mesmo aluno e mês).
+        </p>
+      )}
+      {dedupedError && (
+        <p
+          role="alert"
+          className="card"
+          style={{
+            padding: "clamp(12px, 3vw, 16px)",
+            marginBottom: 16,
+            borderLeft: "4px solid var(--danger)",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            color: "var(--text-primary)",
+          }}
+        >
+          Erro ao limpar duplicados: {dedupedError}
+        </p>
+      )}
+
+      <form
+        action={dedupeDuplicatePaymentsAction}
+        style={{ marginBottom: "clamp(16px, 4vw, 20px)" }}
+      >
+        <button
+          type="submit"
+          className="btn"
+          style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}
+        >
+          Limpar duplicados (mesmo aluno + mês)
+        </button>
+        <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
+          Remove «Em atraso» quando já existe «Pago» nesse mês e junta linhas repetidas. Mantém o registo mais antigo.
+        </p>
+      </form>
 
       <RenewalsSection referenceMonth={currentMonth} pending={renewalsPending} />
 
