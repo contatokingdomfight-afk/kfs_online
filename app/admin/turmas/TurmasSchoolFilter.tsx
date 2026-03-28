@@ -4,17 +4,25 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 type School = { id: string; name: string };
 
-export function TurmasSchoolFilter({ schools }: { schools: School[] }) {
+export function TurmasSchoolFilter({
+  schools,
+  weekFallback,
+}: {
+  schools: School[];
+  /** Segunda-feira da semana em vista (quando a URL ainda não tem `week`). */
+  weekFallback?: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const view = searchParams.get("view") === "modalidade" ? "modalidade" : "semana";
-  const week = searchParams.get("week")?.trim() || "";
+  const weekFromUrl = searchParams.get("week")?.trim() || "";
+  const effectiveWeek = weekFromUrl || (view === "semana" ? weekFallback?.trim() || "" : "");
   const school = searchParams.get("school")?.trim() || "";
 
   const buildUrl = (nextSchool: string) => {
     const p = new URLSearchParams();
     p.set("view", view);
-    if (view === "semana" && week) p.set("week", week);
+    if (view === "semana" && effectiveWeek) p.set("week", effectiveWeek);
     if (nextSchool) p.set("school", nextSchool);
     return `/admin/turmas?${p.toString()}`;
   };

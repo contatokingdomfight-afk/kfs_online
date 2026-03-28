@@ -41,13 +41,13 @@ export default async function AdminTurmasPage({
     .order("startTime", { ascending: true });
 
   const { data: coaches } = await supabase.from("Coach").select("id, userId, schoolId").then(async (r) => {
-    if (!r.data?.length) return { data: [] as { id: string; name: string }[] };
+    if (!r.data?.length) return { data: [] as { id: string; name: string; schoolId: string }[] };
     const userIds = r.data.map((c) => c.userId);
     const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
     return {
       data: (r.data || []).map((c) => {
         const u = users?.find((u) => u.id === c.userId);
-        return { id: c.id, name: u?.name || u?.email || "—" };
+        return { id: c.id, name: u?.name || u?.email || "—", schoolId: c.schoolId };
       }),
     };
   });
@@ -105,7 +105,23 @@ export default async function AdminTurmasPage({
         <h2 style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Aulas
         </h2>
-        <TurmasViewSwitcher view={view} weekMonday={weekMonday} weekMondayForLink={weekMondayForLink} />
+        <div
+          className="card"
+          style={{
+            marginBottom: "clamp(14px, 3.5vw, 18px)",
+            padding: "clamp(14px, 3.5vw, 18px)",
+          }}
+        >
+          <Suspense fallback={<p style={{ color: "var(--text-secondary)", fontSize: 14 }}>A carregar filtro…</p>}>
+            <TurmasSchoolFilter schools={schools ?? []} weekFallback={weekMondayForLink} />
+          </Suspense>
+        </div>
+        <TurmasViewSwitcher
+          view={view}
+          weekMonday={weekMonday}
+          weekMondayForLink={weekMondayForLink}
+          schoolParam={schoolFilterParam}
+        />
         {lessonsError && (
           <p style={{ color: "var(--danger)", fontSize: "clamp(14px, 3.5vw, 16px)" }}>
             Erro ao carregar: {lessonsError.message}
