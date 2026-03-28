@@ -77,7 +77,8 @@ export async function setAttendanceIntentionFromForm(
   formData: FormData
 ): Promise<{ error?: string } | null> {
   const lessonId = (formData.get("lessonId") as string)?.trim();
-  const intention = formData.get("intention") as "vou" | "nao_vou";
+  const raw = formData.get("intention");
+  const intention = typeof raw === "string" ? raw.trim() : "";
   if (!lessonId || (intention !== "vou" && intention !== "nao_vou")) return { error: "Dados inválidos." };
   return setAttendanceIntention(lessonId, intention);
 }
