@@ -1,36 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { LessonPromoBlock, type OpenLessonRow } from "./LessonPromoBlock";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 type Props = {
-  rows: OpenLessonRow[];
-  studentSchoolId: string | null;
-  locationById: Map<string, string>;
-  attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }>;
-  locale: "pt" | "en";
-  todayStr: string;
-  isFreeTier: boolean;
-  t: (key: string) => string;
-  statusLabels: Record<string, string>;
+  children: ReactNode;
   sectionTitle: string;
   swipeHint: string;
+  ariaLabelPrev: string;
+  ariaLabelNext: string;
+  /** Número de itens no carrossel (para setas e texto de ajuda) */
+  itemCount: number;
 };
 
-const CARD_WIDTH = "min(88vw, 380px)";
-
-export function OpenClassesThisWeekCarousel({
-  rows,
-  studentSchoolId,
-  locationById,
-  attendanceByLesson,
-  locale,
-  todayStr,
-  isFreeTier,
-  t,
-  statusLabels,
+/**
+ * Apenas UI de scroll/setas. Os cartões (`LessonPromoBlock`) são renderizados no Server Component
+ * (`page.tsx`) e passados como `children`, para não enviar Map/funções `t` por props ao cliente.
+ */
+export function OpenClassesCarouselShell({
+  children,
   sectionTitle,
   swipeHint,
+  ariaLabelPrev,
+  ariaLabelNext,
+  itemCount,
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
@@ -51,7 +43,7 @@ export function OpenClassesThisWeekCarousel({
     const ro = new ResizeObserver(() => updateArrows());
     ro.observe(el);
     return () => ro.disconnect();
-  }, [rows.length, updateArrows]);
+  }, [itemCount, updateArrows]);
 
   const scrollByDir = (dir: -1 | 1) => {
     const el = scrollerRef.current;
@@ -60,7 +52,7 @@ export function OpenClassesThisWeekCarousel({
     el.scrollBy({ left: dir * w, behavior: "smooth" });
   };
 
-  if (rows.length === 0) return null;
+  if (itemCount === 0) return null;
 
   return (
     <section aria-label={sectionTitle}>
@@ -77,12 +69,12 @@ export function OpenClassesThisWeekCarousel({
         <h2 style={{ fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
           {sectionTitle}
         </h2>
-        {rows.length > 1 && (
+        {itemCount > 1 && (
           <div style={{ display: "flex", gap: 8 }}>
             <button
               type="button"
               className="btn btn-secondary"
-              aria-label={t("dashboardCarouselPrev")}
+              aria-label={ariaLabelPrev}
               disabled={!canPrev}
               onClick={() => scrollByDir(-1)}
               style={{
@@ -98,7 +90,7 @@ export function OpenClassesThisWeekCarousel({
             <button
               type="button"
               className="btn btn-secondary"
-              aria-label={t("dashboardCarouselNext")}
+              aria-label={ariaLabelNext}
               disabled={!canNext}
               onClick={() => scrollByDir(1)}
               style={{
@@ -134,33 +126,9 @@ export function OpenClassesThisWeekCarousel({
             scrollbarGutter: "stable",
           }}
         >
-          {rows.map((row) => (
-            <div
-              key={row.lesson.id}
-              style={{
-                flex: `0 0 ${CARD_WIDTH}`,
-                maxWidth: CARD_WIDTH,
-                scrollSnapAlign: "start",
-                minHeight: 1,
-              }}
-            >
-              <LessonPromoBlock
-                lesson={row.lesson}
-                studentSchoolId={studentSchoolId}
-                checkInWindowOpen={row.checkInWindowOpen}
-                checkInStartTimeLabel={row.checkInStartTimeLabel}
-                locationById={locationById}
-                attendanceByLesson={attendanceByLesson}
-                locale={locale}
-                todayStr={todayStr}
-                isFreeTier={isFreeTier}
-                t={t}
-                statusLabels={statusLabels}
-              />
-            </div>
-          ))}
+          {children}
         </div>
-        {rows.length > 1 && (
+        {itemCount > 1 && (
           <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
             {swipeHint}
           </p>

@@ -12,10 +12,11 @@ const SpeedInsights = dynamic(() => import("@vercel/speed-insights/next").then((
 
 /** Carrega Analytics / Speed Insights no cliente para não competir com FCP/LCP. */
 export function VercelMetrics() {
+  const disableSpeed = process.env.NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS === "true";
   return (
     <>
       <Analytics />
-      <SpeedInsights />
+      {!disableSpeed && <SpeedInsights />}
     </>
   );
 }

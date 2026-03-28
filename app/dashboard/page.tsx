@@ -13,8 +13,10 @@ import { getCachedLocations } from "@/lib/cached-reference-data";
 import { getCachedPlanAccess } from "@/lib/plan-access";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
+import { LessonPromoBlock } from "./LessonPromoBlock";
 import { NextLessonCard } from "./NextLessonCard";
-import { OpenClassesThisWeekCarousel } from "./OpenClassesThisWeekCarousel";
+import { OPEN_CLASS_CARD_WIDTH } from "./open-classes-carousel-constants";
+import { OpenClassesCarouselShell } from "./OpenClassesCarouselShell";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
 import { ExploreSection } from "./ExploreSection";
@@ -104,7 +106,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       schoolName: row.schoolId ? schoolNameById.get(row.schoolId) ?? null : null,
     };
   });
-  const locationById = new Map(locationsList.map((loc) => [loc.id, loc.name]));
+  const locationById = Object.fromEntries(locationsList.map((loc) => [loc.id, loc.name])) as Record<string, string>;
   const temaSemanaList = weekThemesRes.data ?? [];
 
   const allLessons = lessonsData;
@@ -353,19 +355,39 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       )}
 
       {hasOpenClassesCarousel && (
-        <OpenClassesThisWeekCarousel
-          rows={additionalOpenLessons}
-          studentSchoolId={studentSchoolId}
-          locationById={locationById}
-          attendanceByLesson={attendanceByLesson}
-          locale={locale as "pt" | "en"}
-          todayStr={todayStr}
-          isFreeTier={!hasPlan}
-          t={t as (key: string) => string}
-          statusLabels={STATUS_LABEL}
+        <OpenClassesCarouselShell
+          itemCount={additionalOpenLessons.length}
           sectionTitle={t("dashboardOpenClassesThisWeekTitle")}
           swipeHint={t("dashboardOpenClassesCarouselHint")}
-        />
+          ariaLabelPrev={t("dashboardCarouselPrev")}
+          ariaLabelNext={t("dashboardCarouselNext")}
+        >
+          {additionalOpenLessons.map((row) => (
+            <div
+              key={row.lesson.id}
+              style={{
+                flex: `0 0 ${OPEN_CLASS_CARD_WIDTH}`,
+                maxWidth: OPEN_CLASS_CARD_WIDTH,
+                scrollSnapAlign: "start",
+                minHeight: 1,
+              }}
+            >
+              <LessonPromoBlock
+                lesson={row.lesson}
+                studentSchoolId={studentSchoolId}
+                checkInWindowOpen={row.checkInWindowOpen}
+                checkInStartTimeLabel={row.checkInStartTimeLabel}
+                locationById={locationById}
+                attendanceByLesson={attendanceByLesson}
+                locale={locale as "pt" | "en"}
+                todayStr={todayStr}
+                isFreeTier={!hasPlan}
+                t={t as (key: string) => string}
+                statusLabels={STATUS_LABEL}
+              />
+            </div>
+          ))}
+        </OpenClassesCarouselShell>
       )}
 
       {hasPlan && (

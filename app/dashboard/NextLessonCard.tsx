@@ -4,7 +4,7 @@ import { LessonPromoBlock, type LessonPromoLesson } from "./LessonPromoBlock";
 type Props = {
   lesson: LessonPromoLesson | null;
   studentSchoolId?: string | null;
-  locationById: Map<string, string>;
+  locationById: Record<string, string>;
   attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }>;
   locale: "pt" | "en";
   todayStr: string;

@@ -22,7 +22,7 @@ export type OpenLessonRow = {
 
 type Props = OpenLessonRow & {
   studentSchoolId: string | null;
-  locationById: Map<string, string>;
+  locationById: Record<string, string>;
   attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }>;
   locale: "pt" | "en";
   todayStr: string;
@@ -48,7 +48,7 @@ export function LessonPromoBlock({
   const isToday = lesson.date === todayStr;
   const openClassParticipation = Boolean(lesson.isOpenClass);
   const canUseCheckInLink = (!isFreeTier || openClassParticipation) && checkInWindowOpen;
-  const locationName = lesson.locationId ? locationById.get(lesson.locationId) : null;
+  const locationName = lesson.locationId ? locationById[lesson.locationId] ?? null : null;
   const isOtherSchoolOpen =
     Boolean(lesson.isOpenClass) &&
     studentSchoolId != null &&

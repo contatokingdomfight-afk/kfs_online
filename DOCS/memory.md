@@ -42,7 +42,7 @@
 - **Dashboard (aluno):** Aulas da **própria escola** + **todas** as aulas com `isOpenClass` de **qualquer** unidade (rede Kingdom Fight). Nome da escola e local em destaque no cartão; aviso extra quando a aula é noutra sede. Secção **«Nesta semana — aulas livres»** em **carrossel horizontal** (cards com scroll e setas), **depois do Painel do Guerreiro** quando há plano; sem plano, fica a seguir à «próxima aula».
 - **Admin / turmas:** Criar aula com `SUPABASE_SERVICE_ROLE_KEY` (cliente admin) quando disponível; o coach **tem de** estar associado à escola da aula (`CoachSchool`). Lista de coaches filtrada por escola. Filtro `?school=` na lista (por semana / por modalidade).
 - **Coach ↔ escolas (N:N):** tabela `CoachSchool`; cadastro/edição em **Admin → Coaches** (várias escolas por professor). Migração: `supabase/migrations/20260327180000_coach_multi_school.sql`.
-- **Ficheiros:** `lib/dashboard-lesson-filter.ts`, `app/dashboard/page.tsx`, `app/dashboard/NextLessonCard.tsx`, `app/dashboard/OpenClassesThisWeekCarousel.tsx`, `app/dashboard/LessonPromoBlock.tsx`, `app/admin/turmas/*`, `app/admin/turmas/actions.ts`, `lib/lesson-check-in-window.ts`, `lib/perform-check-in.ts`, `app/dashboard/actions.ts`.
+- **Ficheiros:** `lib/dashboard-lesson-filter.ts`, `app/dashboard/page.tsx`, `app/dashboard/NextLessonCard.tsx`, `app/dashboard/OpenClassesCarouselShell.tsx` (client só scroll/setas; cartões como `children` do servidor), `app/dashboard/LessonPromoBlock.tsx`, `app/admin/turmas/*`, `app/admin/turmas/actions.ts`, `lib/lesson-check-in-window.ts`, `lib/perform-check-in.ts`, `app/dashboard/actions.ts`.
 - **Migração:** `supabase/migrations/20260326140000_lesson_open_class.sql` (se aplicável ao teu projeto Supabase).
 
 ### 3.2 Testes e seed
