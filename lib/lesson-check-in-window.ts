@@ -79,3 +79,17 @@ export function pickNextLessonForCard<T extends LessonTimeFields>(lessons: T[], 
   }
   return null;
 }
+
+/** Estado da UI de check-in (janela aberta vs. mensagem «a partir das HH:mm»). */
+export function getLessonCheckInUiState(lesson: LessonTimeFields, now: Date = new Date()): {
+  checkInWindowOpen: boolean;
+  checkInStartTimeLabel: string | null;
+} {
+  const checkInWindowOpen = isWithinLessonCheckInWindow(lesson, now);
+  const beforeLessonStart =
+    !checkInWindowOpen && now.getTime() < lessonStartInstant(lesson).getTime();
+  const checkInStartTimeLabel = beforeLessonStart
+    ? formatInTimeZone(lessonStartInstant(lesson), LISBON_TZ, "HH:mm")
+    : null;
+  return { checkInWindowOpen, checkInStartTimeLabel };
+}

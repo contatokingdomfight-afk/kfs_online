@@ -39,7 +39,8 @@
 ### 3.1 Aulas livres (`Lesson.isOpenClass`)
 
 - **Regra:** Qualquer aluno da **escola** pode participar (dashboard, RSVP, check-in), **incluindo sem `planId`** ou plano sem check-in.
-- **Ficheiros:** `lib/dashboard-lesson-filter.ts` (filtro da semana), `app/dashboard/page.tsx`, `app/dashboard/NextLessonCard.tsx`, `lib/perform-check-in.ts`, `app/dashboard/actions.ts` (`setAttendanceIntention`).
+- **Dashboard:** O cartão «Próxima aula» continua a ser a primeira aula elegível da semana; **todas** as outras aulas livres da semana aparecem na secção **«Nesta semana — aulas livres»** (evita que uma aula no meio da semana «esconda» a aula livre de sábado). Query de aulas: `schoolId` = escola do aluno **ou** (`isOpenClass` e `schoolId` nulo, aula livre global).
+- **Ficheiros:** `lib/dashboard-lesson-filter.ts` (filtro da semana), `app/dashboard/page.tsx`, `app/dashboard/NextLessonCard.tsx`, `lib/lesson-check-in-window.ts` (`getLessonCheckInUiState`), `lib/perform-check-in.ts`, `app/dashboard/actions.ts` (`setAttendanceIntention`).
 - **Migração:** `supabase/migrations/20260326140000_lesson_open_class.sql` (se aplicável ao teu projeto Supabase).
 
 ### 3.2 Testes e seed

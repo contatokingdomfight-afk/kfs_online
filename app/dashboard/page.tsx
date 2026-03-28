@@ -4,9 +4,11 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getThisWeekRange, MODALITY_LABELS, getWeekStartMonday } from "@/lib/lesson-utils";
-import { pickNextLessonForCard, isWithinLessonCheckInWindow, lessonStartInstant } from "@/lib/lesson-check-in-window";
-import { formatInTimeZone } from "date-fns-tz";
-import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
+import {
+  pickNextLessonForCard,
+  getLessonCheckInUiState,
+  isLessonEligibleForNextCard,
+} from "@/lib/lesson-check-in-window";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import { getCachedPlanAccess } from "@/lib/plan-access";
 import { getApplicableMissionTemplates } from "@/lib/missions";
@@ -77,7 +79,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     .select("id, modality, date, startTime, endTime, locationId, isOpenClass")
     .gte("date", today)
     .lte("date", endOfWeek);
-  if (studentSchoolId) lessonsQuery = lessonsQuery.eq("schoolId", studentSchoolId);
+  // Aulas da escola do aluno + aulas livres «globais» (schoolId nulo), para ninguém ficar sem ver open class.
+  if (studentSchoolId) {
+    lessonsQuery = lessonsQuery.or(
+      `schoolId.eq.${studentSchoolId},and(isOpenClass.eq.true,schoolId.is.null)`
+    );
+  }
 
   const [lessonsRes, locationsList, weekThemesRes, goalRes, athleteRes, confirmedAttRes] = await Promise.all([
     lessonsQuery.order("date", { ascending: true }).order("startTime", { ascending: true }),
@@ -102,27 +109,26 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   });
   const nowForCard = new Date();
   const nextLesson = pickNextLessonForCard(lessons, nowForCard) ?? null;
+  const nextLessonUi = nextLesson ? getLessonCheckInUiState(nextLesson, nowForCard) : null;
+  const checkInWindowOpen = nextLessonUi?.checkInWindowOpen ?? false;
+  const checkInStartTimeLabel = nextLessonUi?.checkInStartTimeLabel ?? null;
+
+  const openLessonsThisWeek = lessons.filter(
+    (l) =>
+      Boolean((l as { isOpenClass?: boolean }).isOpenClass) && isLessonEligibleForNextCard(l, nowForCard)
+  );
+  const additionalOpenLessons = openLessonsThisWeek
+    .filter((l) => l.id !== nextLesson?.id)
+    .map((lesson) => ({
+      lesson,
+      ...getLessonCheckInUiState(lesson, nowForCard),
+    }));
+
   const showNextLessonCard =
     hasCheckIn ||
     !hasPlan ||
-    (nextLesson != null && Boolean((nextLesson as { isOpenClass?: boolean }).isOpenClass));
-  const checkInWindowOpen =
-    !!nextLesson &&
-    isWithinLessonCheckInWindow(
-      {
-        date: nextLesson.date,
-        startTime: nextLesson.startTime,
-        endTime: nextLesson.endTime,
-      },
-      nowForCard
-    );
-  const beforeLessonStart =
-    !!nextLesson &&
-    !checkInWindowOpen &&
-    nowForCard.getTime() < lessonStartInstant(nextLesson).getTime();
-  const checkInStartTimeLabel = beforeLessonStart
-    ? formatInTimeZone(lessonStartInstant(nextLesson), LISBON_TZ, "HH:mm")
-    : null;
+    (nextLesson != null && Boolean((nextLesson as { isOpenClass?: boolean }).isOpenClass)) ||
+    additionalOpenLessons.length > 0;
 
   const lessonIds = lessons.map((l) => l.id);
   const attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }> = {};
@@ -292,11 +298,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {showNextLessonCard && (
       <NextLessonCard
         lesson={nextLesson}
+        additionalOpenLessons={additionalOpenLessons}
         locationById={locationById}
         attendanceByLesson={attendanceByLesson}
         locale={locale as "pt" | "en"}
         todayStr={todayStr}
-        hasCheckIn={hasCheckIn}
         isFreeTier={!hasPlan}
         checkInWindowOpen={checkInWindowOpen}
         checkInStartTimeLabel={checkInStartTimeLabel}
