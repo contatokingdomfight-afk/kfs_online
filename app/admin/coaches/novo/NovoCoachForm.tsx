@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useFormState } from "react-dom";
 import { useState, useEffect } from "react";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
+import { CoachSchoolMultiSelect } from "@/components/CoachSchoolMultiSelect";
 import { createCoach, type CreateCoachResult } from "../actions";
 
 export function NovoCoachForm() {
@@ -50,28 +52,16 @@ export function NovoCoachForm() {
         </span>
         <input type="text" name="name" className="input" placeholder="Nome completo" />
       </label>
-      <fieldset style={{ border: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-        <legend style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)", marginBottom: 4 }}>
-          Escolas onde leciona * (uma ou mais)
-        </legend>
-        {loading ? (
-          <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>A carregar escolas…</p>
-        ) : (
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-            {schools.map((school) => (
-              <li key={school.id}>
-                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                  <input type="checkbox" name="schoolIds" value={school.id} style={{ width: 18, height: 18, accentColor: "var(--primary)" }} />
-                  <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>{school.name}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        )}
-        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-          O perfil de aluno (se ativares abaixo) usa a primeira escola que marcares.
-        </span>
-      </fieldset>
+      {loading ? (
+        <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>A carregar escolas…</p>
+      ) : (
+        <CoachSchoolMultiSelect
+          schools={schools}
+          initialSelectedIds={[]}
+          legend="Escolas onde leciona * (uma ou mais)"
+          hint="O perfil de aluno (se ativares abaixo) usa a escola marcada como Principal — adiciona as sedes por ordem (a primeira é a principal)."
+        />
+      )}
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Especialidades
@@ -100,13 +90,14 @@ export function NovoCoachForm() {
         </p>
       )}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <button type="submit" className="btn btn-primary">
+        <button type="submit" className="btn btn-primary" disabled={loading}>
           Enviar convite
         </button>
         <Link href="/admin/coaches" className="btn btn-secondary" style={{ textDecoration: "none" }}>
           Cancelar
         </Link>
       </div>
+      <FormLoadingModal message="A criar convite do coach…" />
     </form>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useFormState } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
+import { CoachSchoolMultiSelect } from "@/components/CoachSchoolMultiSelect";
 import { updateCoach, type UpdateCoachResult } from "../actions";
 
 type Props = {
@@ -63,27 +65,12 @@ export function EditarCoachForm({
         />
       </label>
 
-      <fieldset style={{ border: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-        <legend style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)", marginBottom: 4 }}>
-          Escolas onde leciona * (uma ou mais)
-        </legend>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-          {schools.map((school) => (
-            <li key={school.id}>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  name="schoolIds"
-                  value={school.id}
-                  defaultChecked={initialSchoolIds.includes(school.id)}
-                  style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
-                />
-                <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>{school.name}</span>
-              </label>
-            </li>
-          ))}
-        </ul>
-      </fieldset>
+      <CoachSchoolMultiSelect
+        schools={schools}
+        initialSelectedIds={initialSchoolIds}
+        legend="Escolas onde leciona * (uma ou mais)"
+        hint="Pesquisa e adiciona sedes; a primeira (Principal) é usada como sede do perfil de aluno quando aplicável."
+      />
 
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
@@ -152,6 +139,7 @@ export function EditarCoachForm({
       <button type="submit" className="btn btn-primary">
         Guardar
       </button>
+      <FormLoadingModal message="A guardar dados do coach…" />
     </form>
   );
 }

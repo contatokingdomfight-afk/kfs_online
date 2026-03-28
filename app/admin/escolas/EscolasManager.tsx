@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useFormState } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createSchool, updateSchool, toggleSchoolActive, type SchoolResult } from "./actions";
 
 type School = {
@@ -130,6 +131,7 @@ export function EscolasManager({ schools: initialSchools }: { schools: School[] 
               </div>
               {updateState?.error && <p style={{ color: "var(--danger)", fontSize: "var(--text-sm)", margin: 0 }}>{updateState.error}</p>}
               {updateState?.success && <p style={{ color: "var(--success)", fontSize: "var(--text-sm)", margin: 0 }}>{updateState.success}</p>}
+              <FormLoadingModal message="A guardar alterações da escola…" />
             </form>
           ) : (
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-3)", flexWrap: "wrap" }}>
@@ -259,6 +261,7 @@ export function EscolasManager({ schools: initialSchools }: { schools: School[] 
             </div>
             {createState?.error && <p style={{ color: "var(--danger)", fontSize: "var(--text-sm)", margin: 0 }}>{createState.error}</p>}
             {createState?.success && <p style={{ color: "var(--success)", fontSize: "var(--text-sm)", margin: 0 }}>{createState.success}</p>}
+            <FormLoadingModal message="A criar escola…" />
           </form>
         </div>
       ) : (

@@ -64,7 +64,13 @@
 - **Controle psicológico** pertence ao pilar **Mental** (não Tática): dimensões `MUAY_MENTAL_PSICOLOGICO` / `BOX_MENTAL_PSICOLOGICO` em `GeneralDimension`; componente `Controle psicológico`. Dados antigos com código `*_TATICO_PSICOLOGICO` são mapeados para o eixo mental em `lib/performance-utils.ts`.
 - **Migração:** `supabase/migrations/20260327120000_controle_psicologico_under_mental.sql`.
 
-### 3.6 Histórico útil (sessões anteriores)
+### 3.6 Admin – Escolas e Coaches (UX)
+
+- **Escolas:** ao criar ou guardar edição de uma escola, `FormLoadingModal` em `EscolasManager` (mensagens «A criar escola…» / «A guardar alterações…»).
+- **Ficha do coach:** `app/admin/coaches/[id]/loading.tsx` — estado de carregamento ao navegar para a página de detalhe.
+- **Escolas onde leciona:** componente `components/CoachSchoolMultiSelect.tsx` — pesquisa, lista rolável, chips com remoção; ordem define a primeira como «Principal» (alinhado a `schoolIds[0]` em `createCoach`).
+
+### 3.7 Histórico útil (sessões anteriores)
 
 - **Mobile:** avaliação no `CoachStudentProfileModal` (select 1–10, toques maiores).
 - **Admin:** `clearStudentPlanAccess` — remover plano / subscrição (`app/admin/alunos/actions.ts`).
