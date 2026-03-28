@@ -60,17 +60,70 @@ export async function createPayment(
   if (status !== "PAID" && status !== "LATE") return { error: "Status inválido." };
 
   const supabase = createAdminClient();
-  const id = crypto.randomUUID();
 
-  const { error } = await supabase.from("Payment").insert({
-    id,
-    studentId,
-    amount,
-    status,
-    referenceMonth,
-  });
+  const { data: existingRows, error: existingErr } = await supabase
+    .from("Payment")
+    .select("id, status")
+    .eq("studentId", studentId)
+    .eq("referenceMonth", referenceMonth);
 
-  if (error) return { error: error.message };
+  if (existingErr) return { error: existingErr.message };
+
+  const rows = existingRows ?? [];
+
+  if (status === "PAID") {
+    const keepId =
+      rows.find((r) => (r as { status: string }).status === "PAID")?.id ??
+      rows.find((r) => (r as { status: string }).status === "LATE")?.id;
+
+    if (rows.length === 0) {
+      const id = crypto.randomUUID();
+      const { error } = await supabase.from("Payment").insert({
+        id,
+        studentId,
+        amount,
+        status: "PAID",
+        referenceMonth,
+      });
+      if (error) return { error: error.message };
+    } else if (keepId) {
+      const toDelete = rows.map((r) => (r as { id: string }).id).filter((id) => id !== keepId);
+      if (toDelete.length > 0) {
+        const { error: delErr } = await supabase.from("Payment").delete().in("id", toDelete);
+        if (delErr) return { error: delErr.message };
+      }
+      const { error: upErr } = await supabase
+        .from("Payment")
+        .update({ amount, status: "PAID" })
+        .eq("id", keepId);
+      if (upErr) return { error: upErr.message };
+    }
+  } else {
+    // LATE
+    if (rows.some((r) => (r as { status: string }).status === "PAID")) {
+      return { error: "Já existe pagamento pago para este mês. Remove ou altera o registo existente." };
+    }
+    if (rows.length === 0) {
+      const id = crypto.randomUUID();
+      const { error } = await supabase.from("Payment").insert({
+        id,
+        studentId,
+        amount,
+        status: "LATE",
+        referenceMonth,
+      });
+      if (error) return { error: error.message };
+    } else {
+      const keepId = rows[0].id as string;
+      const toDelete = rows.slice(1).map((r) => (r as { id: string }).id);
+      if (toDelete.length > 0) {
+        const { error: delErr } = await supabase.from("Payment").delete().in("id", toDelete);
+        if (delErr) return { error: delErr.message };
+      }
+      const { error: upErr } = await supabase.from("Payment").update({ amount, status: "LATE" }).eq("id", keepId);
+      if (upErr) return { error: upErr.message };
+    }
+  }
 
   if (status === "LATE") {
     await startGracePeriodOnLatePayment(supabase, studentId, referenceMonth);

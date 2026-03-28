@@ -33,6 +33,12 @@ Definidos em `vercel.json`:
 
 - **Gerar mensalidades** em `/admin/financeiro` usa **`force: true`**: cria `LATE` para quem não tem `PAID` e ainda não tem qualquer `Payment` naquele mês, **sem** esperar pelo 5.º dia útil (backfill / operação manual).
 
+### Registar pagamento (consolidação por aluno + mês)
+
+- **`createPayment`** (`app/admin/financeiro/actions.ts`) não deve deixar **duas linhas** para o mesmo `studentId` + `referenceMonth` (ex.: um `LATE` gerado automaticamente e um `PAID` registado depois).
+- Ao registar **Pago** para um mês que já tinha **Em atraso**, o sistema **atualiza** o registo existente para `PAID` e remove duplicados do mesmo par aluno/mês.
+- Ao tentar registar **Em atraso** quando já existe **Pago** nesse mês, devolve erro.
+
 ## Campos em `Student` (grace e suspensão)
 
 | Coluna | Significado |
@@ -53,6 +59,7 @@ Definidos em `vercel.json`:
 - `lib/lisbon-payment-dates.ts` — 5.º dia útil, fim do dia 10, mês corrente/anterior em Lisboa.
 - `lib/renewals.ts` — `getRenewalsPending`, `generateMonthlyPayments` (opções `force`, `now`).
 - `lib/payment-grace.ts` — `startGracePeriodOnLatePayment`, `clearGraceOnPaidPayment`, `suspendStudentsPastGrace`.
+- `app/admin/financeiro/actions.ts` — `createPayment` (consolida `Payment` por aluno/mês).
 - `app/api/stripe/webhook/route.ts` — `PAID` via Stripe chama `clearGraceOnPaidPayment`.
 
 ---
