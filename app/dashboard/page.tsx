@@ -4,11 +4,7 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getThisWeekRange, MODALITY_LABELS, getWeekStartMonday } from "@/lib/lesson-utils";
-import {
-  pickNextLessonForCard,
-  getLessonCheckInUiState,
-  isLessonEligibleForNextCard,
-} from "@/lib/lesson-check-in-window";
+import { getLessonCheckInUiState, isLessonEligibleForNextCard } from "@/lib/lesson-check-in-window";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import { getCachedPlanAccess } from "@/lib/plan-access";
 import { getApplicableMissionTemplates } from "@/lib/missions";
@@ -118,29 +114,25 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     modalitiesListLength: MODALITIES_LIST.length,
   });
   const nowForCard = new Date();
-  const nextLesson = pickNextLessonForCard(lessons, nowForCard) ?? null;
-  const nextLessonUi = nextLesson ? getLessonCheckInUiState(nextLesson, nowForCard) : null;
-  const checkInWindowOpen = nextLessonUi?.checkInWindowOpen ?? false;
-  const checkInStartTimeLabel = nextLessonUi?.checkInStartTimeLabel ?? null;
+  const eligibleLessons = lessons.filter((l) => isLessonEligibleForNextCard(l, nowForCard));
+  const nonOpenUpcoming = eligibleLessons.filter((l) => !Boolean((l as { isOpenClass?: boolean }).isOpenClass));
+  const openUpcoming = eligibleLessons.filter((l) => Boolean((l as { isOpenClass?: boolean }).isOpenClass));
 
-  const openLessonsThisWeek = lessons.filter(
-    (l) =>
-      Boolean((l as { isOpenClass?: boolean }).isOpenClass) && isLessonEligibleForNextCard(l, nowForCard)
-  );
-  const additionalOpenLessons = openLessonsThisWeek
-    .filter((l) => l.id !== nextLesson?.id)
-    .map((lesson) => ({
-      lesson,
-      ...getLessonCheckInUiState(lesson, nowForCard),
-    }));
+  /** Com plano: aulas normais (não «livres»). Sem plano: todas as aulas livres elegíveis ficam aqui (evita duplicar a secção de baixo). */
+  const primaryNextRows =
+    nonOpenUpcoming.length > 0
+      ? nonOpenUpcoming.map((lesson) => ({ lesson, ...getLessonCheckInUiState(lesson, nowForCard) }))
+      : openUpcoming.map((lesson) => ({ lesson, ...getLessonCheckInUiState(lesson, nowForCard) }));
 
-  const showNextLessonCard =
-    hasCheckIn ||
-    !hasPlan ||
-    (nextLesson != null && Boolean((nextLesson as { isOpenClass?: boolean }).isOpenClass)) ||
-    additionalOpenLessons.length > 0;
+  const additionalOpenLessons =
+    nonOpenUpcoming.length > 0
+      ? openUpcoming.map((lesson) => ({ lesson, ...getLessonCheckInUiState(lesson, nowForCard) }))
+      : [];
+
+  const showNextLessonSection = hasCheckIn || !hasPlan || eligibleLessons.length > 0;
 
   const hasOpenClassesCarousel = additionalOpenLessons.length > 0;
+  const hasPrimaryNextCarousel = primaryNextRows.length > 0;
 
   const lessonIds = lessons.map((l) => l.id);
   const attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }> = {};
@@ -307,35 +299,43 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {!hasPlan && (
         <ChoosePlanCTA message={t("freeTierCtaMessage")} ctaLabel={t("freeTierCtaButton")} />
       )}
-      {showNextLessonCard && nextLesson && (
-        <NextLessonCard
-          lesson={nextLesson}
-          studentSchoolId={studentSchoolId}
-          locationById={locationById}
-          attendanceByLesson={attendanceByLesson}
-          locale={locale as "pt" | "en"}
-          todayStr={todayStr}
-          isFreeTier={!hasPlan}
-          checkInWindowOpen={checkInWindowOpen}
-          checkInStartTimeLabel={checkInStartTimeLabel}
-          t={t as (key: string) => string}
-          statusLabels={STATUS_LABEL}
-        />
+      {showNextLessonSection && hasPrimaryNextCarousel && (
+        <OpenClassesCarouselShell
+          itemCount={primaryNextRows.length}
+          sectionTitle={t("dashboardNextLessonTitle")}
+          swipeHint={t("dashboardNextLessonCarouselHint")}
+          ariaLabelPrev={t("dashboardCarouselPrev")}
+          ariaLabelNext={t("dashboardCarouselNext")}
+        >
+          {primaryNextRows.map((row) => (
+            <div
+              key={row.lesson.id}
+              style={{
+                flex: `0 0 ${OPEN_CLASS_CARD_WIDTH}`,
+                maxWidth: OPEN_CLASS_CARD_WIDTH,
+                scrollSnapAlign: "start",
+                minHeight: 1,
+              }}
+            >
+              <LessonPromoBlock
+                lesson={row.lesson}
+                studentSchoolId={studentSchoolId}
+                checkInWindowOpen={row.checkInWindowOpen}
+                checkInStartTimeLabel={row.checkInStartTimeLabel}
+                locationById={locationById}
+                attendanceByLesson={attendanceByLesson}
+                locale={locale as "pt" | "en"}
+                todayStr={todayStr}
+                isFreeTier={!hasPlan}
+                t={t as (key: string) => string}
+                statusLabels={STATUS_LABEL}
+              />
+            </div>
+          ))}
+        </OpenClassesCarouselShell>
       )}
-      {showNextLessonCard && !nextLesson && !hasOpenClassesCarousel && (
-        <NextLessonCard
-          lesson={null}
-          studentSchoolId={studentSchoolId}
-          locationById={locationById}
-          attendanceByLesson={attendanceByLesson}
-          locale={locale as "pt" | "en"}
-          todayStr={todayStr}
-          isFreeTier={!hasPlan}
-          checkInWindowOpen={checkInWindowOpen}
-          checkInStartTimeLabel={checkInStartTimeLabel}
-          t={t as (key: string) => string}
-          statusLabels={STATUS_LABEL}
-        />
+      {showNextLessonSection && !hasPrimaryNextCarousel && !hasOpenClassesCarousel && (
+        <NextLessonCard isFreeTier={!hasPlan} t={t as (key: string) => string} />
       )}
 
       {hasPlan && (
