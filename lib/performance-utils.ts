@@ -38,6 +38,8 @@ export function dimensionCodeToGeneralDimension(
 ): (typeof GENERAL_DIMENSION_IDS)[number] | null {
   if (!code || typeof code !== "string") return null;
   const upper = code.toUpperCase();
+  // Controle psicológico foi movido de código TATICO_* para MENTAL_* (migração); mantém histórico.
+  if (upper.includes("TATICO_PSICOLOGICO")) return "mental";
   if (upper.includes("_TATICO_") || upper.endsWith("_TATICO")) return "tatico";
   if (upper.includes("_FISICO") || upper.includes("FISICO_")) return "fisico";
   if (upper.includes("_MENTAL") || upper.includes("MENTAL_")) return "mental";
