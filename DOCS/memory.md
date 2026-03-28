@@ -47,11 +47,15 @@
 - **Unitários:** `npm test` (Vitest) — `lib/dashboard-lesson-filter.test.ts`.
 - **Contas de teste:** `npm run seed:test-users` — precisa `TEST_SEED_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY`, escola ativa; emails em **`DOCS/CONTAS_TESTE.md`**. Ordem dotenv no script: `.env` → `.env.local` (override); **gravar** `.env` antes de correr.
 
-### 3.3 Admin – Turmas
+### 3.3 Financeiro – um pagamento por aluno e mês
+
+- **`createPayment`** consolida linhas em `Payment` para o mesmo `studentId` + `referenceMonth`: registar **Pago** quando já existia **Em atraso** (ex.: mensalidade gerada) **atualiza** o registo em vez de criar duplicado. Ver **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
+
+### 3.4 Admin – Turmas
 
 - Vista **por semana** / por modalidade; criação de aulas (incl. recorrente / one-off) — ver `app/admin/turmas/`.
 
-### 3.4 Histórico útil (sessões anteriores)
+### 3.5 Histórico útil (sessões anteriores)
 
 - **Mobile:** avaliação no `CoachStudentProfileModal` (select 1–10, toques maiores).
 - **Admin:** `clearStudentPlanAccess` — remover plano / subscrição (`app/admin/alunos/actions.ts`).
