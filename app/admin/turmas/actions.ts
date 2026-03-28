@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { revalidatePath } from "next/cache";
 import { formatInTimeZone } from "date-fns-tz";
@@ -45,8 +46,18 @@ function nextDateForWeekday(weekday: number, baseYmd: string): string {
   return utcDateToYmd(addDaysUtc(base, delta));
 }
 
+function getSupabaseForAdminWrite() {
+  const adminResult = getAdminClientOrNull();
+  return adminResult.client;
+}
+
 export async function createLesson(formData: FormData) {
-  const supabase = await createClient();
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") {
+    return { error: "Não autorizado." };
+  }
+
+  const supabase = getSupabaseForAdminWrite() ?? (await createClient());
 
   const modality = (formData.get("modality") as string)?.trim() || null;
   const date = formData.get("date") as string | null;
@@ -69,6 +80,14 @@ export async function createLesson(formData: FormData) {
   }
   if (!schoolId) {
     return { error: "Seleciona uma escola para a aula." };
+  }
+
+  const { data: coachRow } = await supabase.from("Coach").select("schoolId").eq("id", coachId).maybeSingle();
+  if (!coachRow?.schoolId || coachRow.schoolId !== schoolId) {
+    return {
+      error:
+        "O coach tem de pertencer à mesma escola da aula. Escolhe a escola e depois um coach dessa escola.",
+    };
   }
 
   const capacity = capacityStr ? parseInt(capacityStr, 10) : null;
@@ -155,6 +174,11 @@ export async function updateLesson(
   _prev: UpdateLessonResult | null,
   formData: FormData
 ): Promise<UpdateLessonResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") {
+    return { error: "Não autorizado." };
+  }
+
   const lessonId = (formData.get("lessonId") as string)?.trim();
   const modality = (formData.get("modality") as string)?.trim();
   const date = (formData.get("date") as string)?.trim();
@@ -176,7 +200,7 @@ export async function updateLesson(
     return { error: "Capacidade deve ser um número positivo." };
   }
 
-  const supabase = await createClient();
+  const supabase = getSupabaseForAdminWrite() ?? (await createClient());
   const { error } = await supabase
     .from("Lesson")
     .update({
@@ -212,7 +236,7 @@ export async function deleteLesson(lessonId: string): Promise<DeleteLessonResult
     return { error: "ID da aula inválido." };
   }
 
-  const supabase = await createClient();
+  const supabase = getSupabaseForAdminWrite() ?? (await createClient());
   const { error } = await supabase.from("Lesson").delete().eq("id", lessonId.trim());
 
   if (error) {

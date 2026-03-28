@@ -10,6 +10,8 @@ type Lesson = {
   endTime: string;
   locationId?: string | null;
   isOpenClass?: boolean;
+  schoolId?: string | null;
+  schoolName?: string | null;
 };
 
 type OpenLessonRow = {
@@ -22,6 +24,8 @@ type Props = {
   lesson: Lesson | null;
   /** Outras aulas livres na semana (ex.: sábado) quando a «próxima» já é outra aula no calendário. */
   additionalOpenLessons?: OpenLessonRow[];
+  /** Escola do aluno (para destacar aulas livres noutra sede). */
+  studentSchoolId?: string | null;
   locationById: Map<string, string>;
   attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }>;
   locale: "pt" | "en";
@@ -37,6 +41,7 @@ type Props = {
 
 function LessonPromoBlock({
   lesson,
+  studentSchoolId,
   locationById,
   attendanceByLesson,
   locale,
@@ -47,6 +52,7 @@ function LessonPromoBlock({
   t,
   statusLabels,
 }: OpenLessonRow & {
+  studentSchoolId: string | null;
   locationById: Map<string, string>;
   attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }>;
   locale: "pt" | "en";
@@ -59,6 +65,14 @@ function LessonPromoBlock({
   const isToday = lesson.date === todayStr;
   const openClassParticipation = Boolean(lesson.isOpenClass);
   const canUseCheckInLink = (!isFreeTier || openClassParticipation) && checkInWindowOpen;
+  const locationName = lesson.locationId ? locationById.get(lesson.locationId) : null;
+  const isOtherSchoolOpen =
+    Boolean(lesson.isOpenClass) &&
+    studentSchoolId != null &&
+    lesson.schoolId != null &&
+    lesson.schoolId !== studentSchoolId;
+  const openClassLocationHighlight =
+    Boolean(lesson.isOpenClass) && Boolean(lesson.schoolName || locationName);
 
   return (
     <div
@@ -72,6 +86,40 @@ function LessonPromoBlock({
       <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 8px 0", opacity: 0.9 }}>
         {t("dashboardNextLessonSubtitle")}
       </p>
+      {openClassLocationHighlight && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "12px 14px",
+            backgroundColor: isOtherSchoolOpen ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.14)",
+            borderRadius: 10,
+            borderLeft: isOtherSchoolOpen ? "4px solid #fff" : "3px solid rgba(255,255,255,0.45)",
+          }}
+        >
+          {lesson.schoolName && (
+            <p style={{ margin: 0, fontWeight: 700, fontSize: "clamp(16px, 4vw, 19px)", lineHeight: 1.35 }}>
+              {lesson.schoolName}
+            </p>
+          )}
+          {locationName && (
+            <p
+              style={{
+                margin: lesson.schoolName ? "6px 0 0" : 0,
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontWeight: 600,
+                opacity: 0.98,
+              }}
+            >
+              {locationName}
+            </p>
+          )}
+          {isOtherSchoolOpen && (
+            <p style={{ margin: "8px 0 0", fontSize: "clamp(12px, 3vw, 13px)", opacity: 0.92 }}>
+              {t("dashboardOpenClassOtherSchoolHint")}
+            </p>
+          )}
+        </div>
+      )}
       <p style={{ fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, margin: "0 0 8px 0" }}>
         {MODALITY_LABELS[lesson.modality] ?? lesson.modality}
         {lesson.isOpenClass && (
@@ -91,7 +139,7 @@ function LessonPromoBlock({
         )}
       </p>
       <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 12px 0", opacity: 0.9 }}>
-        {lesson.locationId && locationById.get(lesson.locationId) ? `${locationById.get(lesson.locationId)} · ` : ""}
+        {!openClassLocationHighlight && locationName ? `${locationName} · ` : ""}
         {formatNextLessonDate(lesson.date, locale)} · {lesson.startTime}–{lesson.endTime}
       </p>
       <div style={{ marginTop: 12 }}>
@@ -156,6 +204,7 @@ function LessonPromoBlock({
 export function NextLessonCard({
   lesson,
   additionalOpenLessons = [],
+  studentSchoolId = null,
   locationById,
   attendanceByLesson,
   locale,
@@ -208,6 +257,7 @@ export function NextLessonCard({
       {lesson && (
         <LessonPromoBlock
           lesson={lesson}
+          studentSchoolId={studentSchoolId}
           checkInWindowOpen={checkInWindowOpen}
           checkInStartTimeLabel={checkInStartTimeLabel}
           locationById={locationById}
@@ -236,6 +286,7 @@ export function NextLessonCard({
               <LessonPromoBlock
                 key={row.lesson.id}
                 lesson={row.lesson}
+                studentSchoolId={studentSchoolId}
                 checkInWindowOpen={row.checkInWindowOpen}
                 checkInStartTimeLabel={row.checkInStartTimeLabel}
                 locationById={locationById}

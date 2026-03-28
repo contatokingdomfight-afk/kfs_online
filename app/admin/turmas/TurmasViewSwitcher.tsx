@@ -5,16 +5,24 @@ import { formatWeekRangeLabel, addWeeks } from "@/lib/lesson-utils";
 
 type ViewMode = "modalidade" | "semana";
 
+function schoolSuffix(schoolParam: string | null | undefined): string {
+  if (!schoolParam?.trim()) return "";
+  return `&school=${encodeURIComponent(schoolParam.trim())}`;
+}
+
 export function TurmasViewSwitcher({
   view,
   weekMonday,
   weekMondayForLink,
+  schoolParam,
 }: {
   view: ViewMode;
   weekMonday: string | null;
   weekMondayForLink: string;
+  schoolParam?: string | null;
 }) {
   const base = "/admin/turmas";
+  const ss = schoolSuffix(schoolParam);
   const weekForNav = weekMonday ?? weekMondayForLink;
   const prevWeek = weekForNav ? addWeeks(weekForNav, -1) : null;
   const nextWeek = weekForNav ? addWeeks(weekForNav, 1) : null;
@@ -31,7 +39,7 @@ export function TurmasViewSwitcher({
         }}
       >
         <Link
-          href={`${base}?view=modalidade`}
+          href={`${base}?view=modalidade${ss}`}
           style={{
             padding: "8px 14px",
             borderRadius: 6,
@@ -45,7 +53,7 @@ export function TurmasViewSwitcher({
           Por modalidade
         </Link>
         <Link
-          href={`${base}?view=semana&week=${weekMondayForLink}`}
+          href={`${base}?view=semana&week=${weekMondayForLink}${ss}`}
           style={{
             padding: "8px 14px",
             borderRadius: 6,
@@ -69,7 +77,7 @@ export function TurmasViewSwitcher({
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:justify-end sm:shrink-0">
             {prevWeek && (
               <Link
-                href={`${base}?view=semana&week=${prevWeek}`}
+                href={`${base}?view=semana&week=${prevWeek}${ss}`}
                 className="whitespace-nowrap text-[clamp(13px,3.2vw,15px)] text-[var(--primary)] no-underline"
               >
                 ← Semana anterior
@@ -77,7 +85,7 @@ export function TurmasViewSwitcher({
             )}
             {nextWeek && (
               <Link
-                href={`${base}?view=semana&week=${nextWeek}`}
+                href={`${base}?view=semana&week=${nextWeek}${ss}`}
                 className="whitespace-nowrap text-[clamp(13px,3.2vw,15px)] text-[var(--primary)] no-underline"
               >
                 Próxima semana →

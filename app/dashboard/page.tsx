@@ -76,26 +76,33 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   let lessonsQuery = supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, locationId, isOpenClass")
+    .select("id, modality, date, startTime, endTime, locationId, isOpenClass, schoolId")
     .gte("date", today)
     .lte("date", endOfWeek);
-  // Aulas da escola do aluno + aulas livres «globais» (schoolId nulo), para ninguém ficar sem ver open class.
+  // Aulas da própria escola + todas as aulas livres de qualquer unidade Kingdom Fight.
   if (studentSchoolId) {
-    lessonsQuery = lessonsQuery.or(
-      `schoolId.eq.${studentSchoolId},and(isOpenClass.eq.true,schoolId.is.null)`
-    );
+    lessonsQuery = lessonsQuery.or(`schoolId.eq.${studentSchoolId},isOpenClass.eq.true`);
   }
 
-  const [lessonsRes, locationsList, weekThemesRes, goalRes, athleteRes, confirmedAttRes] = await Promise.all([
+  const [lessonsRes, locationsList, schoolsList, weekThemesRes, goalRes, athleteRes, confirmedAttRes] = await Promise.all([
     lessonsQuery.order("date", { ascending: true }).order("startTime", { ascending: true }),
     getCachedLocations(supabase),
+    supabase.from("School").select("id, name"),
     supabase.from("WeekTheme").select("modality, title, course_id, video_url").eq("week_start", weekStart).order("modality", { ascending: true }),
     supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
     studentId ? supabase.from("Athlete").select("id, currentBelt, currentXP").eq("studentId", studentId).single() : Promise.resolve({ data: null }),
     studentId ? supabase.from("Attendance").select("lessonId").eq("studentId", studentId).eq("status", "CONFIRMED") : Promise.resolve({ data: [] }),
   ]);
 
-  const lessonsData = lessonsRes.data ?? [];
+  const lessonsRaw = lessonsRes.data ?? [];
+  const schoolNameById = new Map((schoolsList.data ?? []).map((s) => [s.id, s.name]));
+  const lessonsData = lessonsRaw.map((l) => {
+    const row = l as { schoolId?: string | null };
+    return {
+      ...l,
+      schoolName: row.schoolId ? schoolNameById.get(row.schoolId) ?? null : null,
+    };
+  });
   const locationById = new Map(locationsList.map((loc) => [loc.id, loc.name]));
   const temaSemanaList = weekThemesRes.data ?? [];
 
@@ -299,6 +306,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       <NextLessonCard
         lesson={nextLesson}
         additionalOpenLessons={additionalOpenLessons}
+        studentSchoolId={studentSchoolId}
         locationById={locationById}
         attendanceByLesson={attendanceByLesson}
         locale={locale as "pt" | "en"}

@@ -16,10 +16,13 @@ export type LessonRow = {
   isOneOff?: boolean;
   isOpenClass?: boolean;
   createdAt?: string;
+  schoolId?: string | null;
 };
 
 export type Coach = { id: string; name: string };
 export type Location = { id: string; name: string };
+
+type SchoolOption = { id: string; name: string };
 
 type WeekViewProps = {
   weekMonday: string;
@@ -28,9 +31,10 @@ type WeekViewProps = {
   locations: Location[] | null;
   coaches: Coach[] | null;
   modalities: CachedModalityRef[] | null;
+  schools: SchoolOption[] | null;
 };
 
-export function WeekView({ weekMonday, weekEnd, lessons, locations, coaches, modalities }: WeekViewProps) {
+export function WeekView({ weekMonday, weekEnd, lessons, locations, coaches, modalities, schools }: WeekViewProps) {
   const inRange = lessons.filter((l) => l.date >= weekMonday && l.date <= weekEnd);
   const byDate = new Map<string, LessonRow[]>();
   for (let i = 0; i < 7; i++) {
@@ -64,6 +68,7 @@ export function WeekView({ weekMonday, weekEnd, lessons, locations, coaches, mod
           locations={locations}
           coaches={coaches}
           modalities={modalities}
+          schools={schools}
         />
       ))}
     </div>
@@ -76,12 +81,14 @@ function WeekDayCard({
   locations,
   coaches,
   modalities,
+  schools,
 }: {
   dateStr: string;
   dayLessons: LessonRow[];
   locations: Location[] | null;
   coaches: Coach[] | null;
   modalities: CachedModalityRef[] | null;
+  schools: SchoolOption[] | null;
 }) {
   const dayLabel = getWeekdayName(dateStr);
   /** Só dia/mês: `formatLessonDate` já inclui o dia da semana em pt-PT, o que duplicava o rótulo. */
@@ -115,6 +122,7 @@ function WeekDayCard({
               locations={locations}
               coaches={coaches}
               modalities={modalities}
+              schools={schools}
             />
           ))}
         </ul>
@@ -128,15 +136,18 @@ function WeekLessonRow({
   locations,
   coaches,
   modalities,
+  schools,
 }: {
   lesson: LessonRow;
   locations: Location[] | null;
   coaches: Coach[] | null;
   modalities: CachedModalityRef[] | null;
+  schools: SchoolOption[] | null;
 }) {
   const locationName = lesson.locationId ? locations?.find((l) => l.id === lesson.locationId)?.name : null;
   const coachName = coaches?.find((c) => c.id === lesson.coachId)?.name ?? null;
   const modalityName = (modalities ?? []).find((m) => m.code === lesson.modality)?.name ?? MODALITY_LABELS[lesson.modality ?? ""] ?? lesson.modality ?? "";
+  const schoolName = lesson.schoolId ? schools?.find((s) => s.id === lesson.schoolId)?.name : null;
   return React.createElement(
     "li",
     { style: { padding: "10px 12px", backgroundColor: "var(--bg-secondary)", borderRadius: 8 } },
@@ -145,6 +156,13 @@ function WeekLessonRow({
       { style: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 } },
       lesson.isOneOff && React.createElement("span", { style: { fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--bg-primary)", color: "var(--text-secondary)" } }, "Aula única"),
       lesson.isOpenClass && React.createElement("span", { style: { fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--primary)", color: "#fff" } }, "Aula livre"),
+      schoolName &&
+        React.createElement(
+          "span",
+          { style: { fontSize: "clamp(12px, 3vw, 14px)", fontWeight: 600, color: "var(--text-primary)" } },
+          schoolName,
+          " · "
+        ),
       React.createElement("span", { style: { fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" } }, `${lesson.startTime}–${lesson.endTime}`),
       React.createElement("span", { style: { fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" } }, modalityName),
       coachName && React.createElement("span", { style: { fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" } }, "· ", coachName),
@@ -160,9 +178,10 @@ type ModalityViewProps = {
   modalities: CachedModalityRef[] | null;
   locations: Location[] | null;
   coaches: Coach[] | null;
+  schools: SchoolOption[] | null;
 };
 
-export function ModalityView({ lessons, modalities, locations, coaches }: ModalityViewProps) {
+export function ModalityView({ lessons, modalities, locations, coaches, schools }: ModalityViewProps) {
   const byModality = new Map<string, LessonRow[]>();
   for (const lesson of lessons) {
     const mod = lesson.modality ?? "OTHER";
@@ -184,6 +203,7 @@ export function ModalityView({ lessons, modalities, locations, coaches }: Modali
           modalities={modalities}
           locations={locations}
           coaches={coaches}
+          schools={schools}
         />
       ))}
     </div>
@@ -196,12 +216,14 @@ function ModalityGroup({
   modalities,
   locations,
   coaches,
+  schools,
 }: {
   modCode: string;
   groupLessons: LessonRow[];
   modalities: CachedModalityRef[] | null;
   locations: Location[] | null;
   coaches: Coach[] | null;
+  schools: SchoolOption[] | null;
 }) {
   const modalityName = (modalities ?? []).find((m) => m.code === modCode)?.name ?? MODALITY_LABELS[modCode] ?? modCode;
   return (
@@ -214,7 +236,7 @@ function ModalityGroup({
       </h3>
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 10px)" }}>
         {groupLessons.map((lesson) => (
-          <ModalityLessonRow key={lesson.id} lesson={lesson} locations={locations} coaches={coaches} />
+          <ModalityLessonRow key={lesson.id} lesson={lesson} locations={locations} coaches={coaches} schools={schools} />
         ))}
       </ul>
     </div>
@@ -225,13 +247,16 @@ function ModalityLessonRow({
   lesson,
   locations,
   coaches,
+  schools,
 }: {
   lesson: LessonRow;
   locations: Location[] | null;
   coaches: Coach[] | null;
+  schools: SchoolOption[] | null;
 }) {
   const locationName = lesson.locationId ? locations?.find((l) => l.id === lesson.locationId)?.name : null;
   const coachName = coaches?.find((c) => c.id === lesson.coachId)?.name ?? null;
+  const schoolName = lesson.schoolId ? schools?.find((s) => s.id === lesson.schoolId)?.name : null;
   return (
     <li className="card" style={{ padding: "clamp(12px, 3vw, 16px)" }}>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -244,6 +269,9 @@ function ModalityLessonRow({
           <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--primary)", color: "#fff" }}>
             Aula livre
           </span>
+        )}
+        {schoolName && (
+          <span style={{ fontSize: "clamp(12px, 3vw, 14px)", fontWeight: 600, color: "var(--text-primary)" }}>{schoolName} ·</span>
         )}
         {coachName && (
           <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>

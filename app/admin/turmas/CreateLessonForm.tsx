@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFormState } from "react-dom";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createLesson } from "./actions";
 
-type Coach = { id: string; name: string };
+type Coach = { id: string; name: string; schoolId: string };
 type Modality = { code: string; name: string };
 type School = { id: string; name: string };
 type Weekday = { value: string; label: string };
@@ -23,6 +23,11 @@ const WEEKDAYS: Weekday[] = [
 export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Coach[]; modalities: Modality[]; schools: School[] }) {
   const [isOneOff, setIsOneOff] = useState(false);
   const [weekday, setWeekday] = useState<string>("1");
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>("");
+  const coachesForSchool = useMemo(
+    () => (selectedSchoolId ? coaches.filter((c) => c.schoolId === selectedSchoolId) : []),
+    [coaches, selectedSchoolId]
+  );
   const [state, formAction] = useFormState(
     async (_: unknown, formData: FormData) => {
       return await createLesson(formData);
@@ -155,6 +160,8 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
           <select
             name="schoolId"
             required
+            value={selectedSchoolId}
+            onChange={(e) => setSelectedSchoolId(e.target.value)}
             style={{
               width: "100%",
               padding: "8px 12px",
@@ -178,6 +185,8 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
           <select
             name="coachId"
             required
+            key={selectedSchoolId || "no-school"}
+            disabled={!selectedSchoolId}
             style={{
               width: "100%",
               padding: "8px 12px",
@@ -186,15 +195,21 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
               borderRadius: 6,
               color: "#ffffff",
               fontSize: 14,
+              opacity: selectedSchoolId ? 1 : 0.6,
             }}
           >
-            <option value="">— Selecionar —</option>
-            {coaches.map((c) => (
+            <option value="">{selectedSchoolId ? "— Selecionar —" : "— Escolhe primeiro a escola —"}</option>
+            {coachesForSchool.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
           </select>
+          {selectedSchoolId && coachesForSchool.length === 0 && (
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: "#f97316" }}>
+              Não há coaches nesta escola. Associa um coach a esta escola antes de criar a aula.
+            </p>
+          )}
         </label>
         <label style={{ flex: "0 1 80px", minWidth: 0 }}>
           <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "#a1a1aa" }}>

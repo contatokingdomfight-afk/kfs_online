@@ -39,8 +39,9 @@
 ### 3.1 Aulas livres (`Lesson.isOpenClass`)
 
 - **Regra:** Qualquer aluno da **escola** pode participar (dashboard, RSVP, check-in), **incluindo sem `planId`** ou plano sem check-in.
-- **Dashboard:** O cartão «Próxima aula» continua a ser a primeira aula elegível da semana; **todas** as outras aulas livres da semana aparecem na secção **«Nesta semana — aulas livres»** (evita que uma aula no meio da semana «esconda» a aula livre de sábado). Query de aulas: `schoolId` = escola do aluno **ou** (`isOpenClass` e `schoolId` nulo, aula livre global).
-- **Ficheiros:** `lib/dashboard-lesson-filter.ts` (filtro da semana), `app/dashboard/page.tsx`, `app/dashboard/NextLessonCard.tsx`, `lib/lesson-check-in-window.ts` (`getLessonCheckInUiState`), `lib/perform-check-in.ts`, `app/dashboard/actions.ts` (`setAttendanceIntention`).
+- **Dashboard (aluno):** Aulas da **própria escola** + **todas** as aulas com `isOpenClass` de **qualquer** unidade (rede Kingdom Fight). Nome da escola e local em destaque no cartão; aviso extra quando a aula é noutra sede. Secção **«Nesta semana — aulas livres»** para não esconder aulas livres mais tarde na semana.
+- **Admin / turmas:** Criar aula com `SUPABASE_SERVICE_ROLE_KEY` (cliente admin) quando disponível; coach **tem de** pertencer à **mesma escola** escolhida no formulário (lista de coaches filtrada por escola). Filtro `?school=` na lista (por semana / por modalidade).
+- **Ficheiros:** `lib/dashboard-lesson-filter.ts`, `app/dashboard/page.tsx`, `app/dashboard/NextLessonCard.tsx`, `app/admin/turmas/*`, `app/admin/turmas/actions.ts`, `lib/lesson-check-in-window.ts`, `lib/perform-check-in.ts`, `app/dashboard/actions.ts`.
 - **Migração:** `supabase/migrations/20260326140000_lesson_open_class.sql` (se aplicável ao teu projeto Supabase).
 
 ### 3.2 Testes e seed

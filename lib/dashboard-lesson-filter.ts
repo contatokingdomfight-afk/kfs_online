@@ -3,6 +3,9 @@
 export type DashboardLessonRow = {
   modality: string;
   isOpenClass?: boolean | null;
+  schoolId?: string | null;
+  /** Preenchido no dashboard para exibir local da aula livre. */
+  schoolName?: string | null;
 };
 
 export type DashboardLessonFilterInput = {

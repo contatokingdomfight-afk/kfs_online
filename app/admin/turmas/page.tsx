@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { CreateLessonForm } from "./CreateLessonForm";
 import { TurmasViewSwitcher } from "./TurmasViewSwitcher";
+import { TurmasSchoolFilter } from "./TurmasSchoolFilter";
 import { getWeekStartMonday, getWeekEndSunday } from "@/lib/lesson-utils";
 import { getCachedLocations, getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { WeekView, ModalityView, type LessonRow } from "./TurmasViews";
@@ -12,7 +14,7 @@ import { WeekView, ModalityView, type LessonRow } from "./TurmasViews";
 export default async function AdminTurmasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; week?: string }>;
+  searchParams: Promise<{ view?: string; week?: string; school?: string }>;
 }) {
   const params = await searchParams;
   /** Por defeito: vista por semana; `?view=modalidade` para agrupar por modalidade. */
@@ -24,6 +26,7 @@ export default async function AdminTurmasPage({
       : null;
   const weekEnd = weekMonday ? getWeekEndSunday(weekMonday) : null;
   const weekMondayForLink = weekMonday ?? (view === "semana" ? getWeekStartMonday() : getWeekStartMonday());
+  const schoolFilterParam = params.school?.trim() || null;
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
@@ -33,11 +36,11 @@ export default async function AdminTurmasPage({
 
   const { data: lessons, error: lessonsError } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, capacity, coachId, locationId, planningNotes, isOneOff, isOpenClass, createdAt")
+    .select("id, modality, date, startTime, endTime, capacity, coachId, locationId, planningNotes, isOneOff, isOpenClass, createdAt, schoolId")
     .order("date", { ascending: true })
     .order("startTime", { ascending: true });
 
-  const { data: coaches } = await supabase.from("Coach").select("id, userId").then(async (r) => {
+  const { data: coaches } = await supabase.from("Coach").select("id, userId, schoolId").then(async (r) => {
     if (!r.data?.length) return { data: [] as { id: string; name: string }[] };
     const userIds = r.data.map((c) => c.userId);
     const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
@@ -54,6 +57,11 @@ export default async function AdminTurmasPage({
     getCachedModalityRefs(supabase),
   ]);
   const { data: schools } = await supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true });
+
+  const lessonsForView =
+    schoolFilterParam && schools?.some((s) => s.id === schoolFilterParam)
+      ? (lessons ?? []).filter((l) => (l as { schoolId?: string }).schoolId === schoolFilterParam)
+      : lessons;
 
   return (
     <div style={{ maxWidth: "min(700px, 100%)" }}>
@@ -86,7 +94,11 @@ export default async function AdminTurmasPage({
         <h2 style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Nova aula
         </h2>
-        <CreateLessonForm coaches={coaches ?? []} modalities={modalities ?? []} schools={schools ?? []} />
+        <CreateLessonForm
+          coaches={(coaches ?? []) as { id: string; name: string; schoolId: string }[]}
+          modalities={modalities ?? []}
+          schools={schools ?? []}
+        />
       </section>
 
       <section>
@@ -104,24 +116,36 @@ export default async function AdminTurmasPage({
             Nenhuma aula criada. Adiciona acima.
           </p>
         )}
-        {!lessonsError && view === "semana" && weekMonday && weekEnd && lessons && (
+        {!lessonsError && view === "semana" && weekMonday && weekEnd && lessonsForView && (
           <WeekView
             weekMonday={weekMonday}
             weekEnd={weekEnd}
-            lessons={lessons as LessonRow[]}
+            lessons={lessonsForView as LessonRow[]}
             locations={locations ?? null}
             coaches={coaches ?? null}
             modalities={modalities ?? null}
+            schools={schools ?? null}
           />
         )}
-        {!lessonsError && view === "modalidade" && lessons && lessons.length > 0 && (
+        {!lessonsError && view === "modalidade" && lessonsForView && lessonsForView.length > 0 && (
           <ModalityView
-            lessons={lessons as LessonRow[]}
+            lessons={lessonsForView as LessonRow[]}
             modalities={modalities ?? null}
             locations={locations ?? null}
             coaches={coaches ?? null}
+            schools={schools ?? null}
           />
         )}
+        {!lessonsError &&
+          view === "modalidade" &&
+          lessons &&
+          lessons.length > 0 &&
+          lessonsForView &&
+          lessonsForView.length === 0 && (
+            <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+              Nenhuma aula com o filtro de escola selecionado. Escolhe «Todas as escolas» ou outra sede.
+            </p>
+          )}
       </section>
     </div>
   );
