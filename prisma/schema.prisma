@@ -67,11 +67,11 @@ model School {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
 
-  students    Student[]
-  coaches     Coach[]
-  lessons     Lesson[]
-  locations   Location[]
-  plans       Plan[]
+  students     Student[]
+  coachSchools CoachSchool[]
+  lessons      Lesson[]
+  locations    Location[]
+  plans        Plan[]
 }
 
 // Utilizador (sincronizado com Supabase Auth; role definido na plataforma)
@@ -166,16 +166,25 @@ model AthleteMissionCompletion {
   @@unique([athleteId, missionTemplateId])
 }
 
+/// Escolas onde o professor pode lecionar (N:N).
+model CoachSchool {
+  coachId  String
+  schoolId String
+  coach    Coach  @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@id([coachId, schoolId])
+}
+
 model Coach {
   id          String   @id @default(cuid())
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  schoolId    String
-  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   studentId   String?  @unique // Permite que o coach também seja aluno
   specialties String?  // ex: "Muay Thai, Boxing" – pode evoluir para JSON
   createdAt   DateTime @default(now())
 
+  coachSchools        CoachSchool[]
   lessons             Lesson[]
   comments            Comment[]
   athletesMainCoach   Athlete[] @relation("AthleteMainCoach")

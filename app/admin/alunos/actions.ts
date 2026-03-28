@@ -335,12 +335,20 @@ export async function promoteStudentToRole(
       const { error: coachError } = await supabase.from("Coach").insert({
         id: coachId,
         userId: student.userId,
-        schoolId: student.schoolId,
         studentId: student.id,
       });
       if (coachError) {
         await supabase.from("User").update({ role: "ALUNO" }).eq("id", student.userId);
         return { error: coachError.message };
+      }
+      const { error: csErr } = await supabase.from("CoachSchool").insert({
+        coachId,
+        schoolId: student.schoolId,
+      });
+      if (csErr) {
+        await supabase.from("Coach").delete().eq("id", coachId);
+        await supabase.from("User").update({ role: "ALUNO" }).eq("id", student.userId);
+        return { error: csErr.message };
       }
     }
   }

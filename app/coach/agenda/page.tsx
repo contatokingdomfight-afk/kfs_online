@@ -27,14 +27,19 @@ export default async function CoachAgendaPage({ searchParams }: { searchParams: 
   const today = new Date().toISOString().slice(0, 10);
   const inFourWeeks = new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  // Obter schoolId (coach ou admin)
-  let effectiveSchoolId = schoolId;
-  if (!effectiveSchoolId && coachId) {
-    const { data: coachRow } = await supabase.from("Coach").select("schoolId").eq("id", coachId).single();
-    effectiveSchoolId = coachRow?.schoolId ?? null;
+  // Escolas do coach (N:N) ou escola única do contexto (aluno / admin com escola)
+  let coachSchoolIds: string[] = [];
+  if (coachId) {
+    const { data: links } = await supabase.from("CoachSchool").select("schoolId").eq("coachId", coachId);
+    coachSchoolIds = (links ?? []).map((l) => l.schoolId);
   }
 
-  // 1. Buscar todas as aulas da escola no período (para filtro e lista)
+  let effectiveSchoolId = schoolId;
+  if (!effectiveSchoolId && coachSchoolIds.length === 1) {
+    effectiveSchoolId = coachSchoolIds[0]!;
+  }
+
+  // 1. Buscar aulas no período: nas escolas do professor ou na escola do contexto
   let allLessonsQuery = supabase
     .from("Lesson")
     .select("id, modality, date, startTime, endTime, coachId")
@@ -43,7 +48,13 @@ export default async function CoachAgendaPage({ searchParams }: { searchParams: 
     .order("date", { ascending: true })
     .order("startTime", { ascending: true });
 
-  if (effectiveSchoolId) {
+  if (coachId && coachSchoolIds.length === 0) {
+    allLessonsQuery = allLessonsQuery.eq("id", "00000000-0000-0000-0000-000000000000");
+  } else if (coachSchoolIds.length > 1) {
+    allLessonsQuery = allLessonsQuery.in("schoolId", coachSchoolIds);
+  } else if (coachSchoolIds.length === 1) {
+    allLessonsQuery = allLessonsQuery.eq("schoolId", coachSchoolIds[0]!);
+  } else if (effectiveSchoolId) {
     allLessonsQuery = allLessonsQuery.eq("schoolId", effectiveSchoolId);
   }
 

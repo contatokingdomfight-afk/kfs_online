@@ -10,9 +10,20 @@ type Props = {
   initialHourlyRate: number | null;
   studentId: string | null;
   initialCanCreateCourses: boolean;
+  schools: { id: string; name: string }[];
+  initialSchoolIds: string[];
 };
 
-export function EditarCoachForm({ coachId, initialName, initialSpecialties, initialHourlyRate, studentId, initialCanCreateCourses }: Props) {
+export function EditarCoachForm({
+  coachId,
+  initialName,
+  initialSpecialties,
+  initialHourlyRate,
+  studentId,
+  initialCanCreateCourses,
+  schools,
+  initialSchoolIds,
+}: Props) {
   const [state, formAction] = useFormState(updateCoach, null as UpdateCoachResult | null);
 
   return (
@@ -51,6 +62,28 @@ export function EditarCoachForm({ coachId, initialName, initialSpecialties, init
           placeholder="ex: Muay Thai, Boxing"
         />
       </label>
+
+      <fieldset style={{ border: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+        <legend style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)", marginBottom: 4 }}>
+          Escolas onde leciona * (uma ou mais)
+        </legend>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+          {schools.map((school) => (
+            <li key={school.id}>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  name="schoolIds"
+                  value={school.id}
+                  defaultChecked={initialSchoolIds.includes(school.id)}
+                  style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
+                />
+                <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>{school.name}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </fieldset>
 
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>

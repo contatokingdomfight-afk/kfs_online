@@ -23,15 +23,17 @@ export async function getCurrentSchoolId(): Promise<string | null> {
     return student?.schoolId || null;
   }
 
-  // Se for COACH ou ADMIN, buscar schoolId do Coach
+  // Coach: primeira escola associada em CoachSchool (para contextos que precisam de um único id)
   if (dbUser.role === "COACH" || dbUser.role === "ADMIN") {
-    const { data: coach } = await supabase
-      .from("Coach")
-      .select("schoolId")
-      .eq("userId", dbUser.id)
-      .maybeSingle();
-    
-    if (coach?.schoolId) return coach.schoolId;
+    const { data: coach } = await supabase.from("Coach").select("id").eq("userId", dbUser.id).maybeSingle();
+    if (coach?.id) {
+      const { data: links } = await supabase
+        .from("CoachSchool")
+        .select("schoolId")
+        .eq("coachId", coach.id)
+        .limit(1);
+      if (links?.[0]?.schoolId) return links[0].schoolId;
+    }
   }
 
   // ADMIN pode não ter coach associado, então retorna null (acesso a todas as escolas)
@@ -49,6 +51,24 @@ export async function hasAccessToSchool(schoolId: string): Promise<boolean> {
   // ADMIN tem acesso a tudo
   if (dbUser.role === "ADMIN") return true;
 
-  const currentSchoolId = await getCurrentSchoolId();
-  return currentSchoolId === schoolId;
+  const supabase = await createClient();
+
+  if (dbUser.role === "ALUNO") {
+    const currentSchoolId = await getCurrentSchoolId();
+    return currentSchoolId === schoolId;
+  }
+
+  if (dbUser.role === "COACH") {
+    const { data: coach } = await supabase.from("Coach").select("id").eq("userId", dbUser.id).maybeSingle();
+    if (!coach?.id) return false;
+    const { data: row } = await supabase
+      .from("CoachSchool")
+      .select("schoolId")
+      .eq("coachId", coach.id)
+      .eq("schoolId", schoolId)
+      .maybeSingle();
+    return row != null;
+  }
+
+  return false;
 }

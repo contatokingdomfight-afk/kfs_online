@@ -5,7 +5,7 @@ import { useFormState } from "react-dom";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createLesson } from "./actions";
 
-type Coach = { id: string; name: string; schoolId: string };
+type Coach = { id: string; name: string; schoolIds: string[] };
 type Modality = { code: string; name: string };
 type School = { id: string; name: string };
 type Weekday = { value: string; label: string };
@@ -25,7 +25,8 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
   const [weekday, setWeekday] = useState<string>("1");
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>("");
   const coachesForSchool = useMemo(
-    () => (selectedSchoolId ? coaches.filter((c) => c.schoolId === selectedSchoolId) : []),
+    () =>
+      selectedSchoolId ? coaches.filter((c) => c.schoolIds.includes(selectedSchoolId)) : [],
     [coaches, selectedSchoolId]
   );
   const [state, formAction] = useFormState(

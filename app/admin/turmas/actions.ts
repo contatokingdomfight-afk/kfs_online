@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
@@ -82,11 +83,11 @@ export async function createLesson(formData: FormData) {
     return { error: "Seleciona uma escola para a aula." };
   }
 
-  const { data: coachRow } = await supabase.from("Coach").select("schoolId").eq("id", coachId).maybeSingle();
-  if (!coachRow?.schoolId || coachRow.schoolId !== schoolId) {
+  const teachesHere = await coachTeachesAtSchool(supabase, coachId, schoolId);
+  if (!teachesHere) {
     return {
       error:
-        "O coach tem de pertencer à mesma escola da aula. Escolhe a escola e depois um coach dessa escola.",
+        "O coach tem de estar associado à escola desta aula. Edita o coach em Coaches e marca as escolas onde leciona.",
     };
   }
 

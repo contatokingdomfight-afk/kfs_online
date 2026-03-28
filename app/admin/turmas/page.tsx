@@ -40,14 +40,28 @@ export default async function AdminTurmasPage({
     .order("date", { ascending: true })
     .order("startTime", { ascending: true });
 
-  const { data: coaches } = await supabase.from("Coach").select("id, userId, schoolId").then(async (r) => {
-    if (!r.data?.length) return { data: [] as { id: string; name: string; schoolId: string }[] };
+  const { data: coaches } = await supabase.from("Coach").select("id, userId").then(async (r) => {
+    if (!r.data?.length) return { data: [] as { id: string; name: string; schoolIds: string[] }[] };
     const userIds = r.data.map((c) => c.userId);
-    const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
+    const coachIds = r.data.map((c) => c.id);
+    const [{ data: users }, { data: coachSchools }] = await Promise.all([
+      supabase.from("User").select("id, name, email").in("id", userIds),
+      supabase.from("CoachSchool").select("coachId, schoolId").in("coachId", coachIds),
+    ]);
+    const schoolIdsByCoach = new Map<string, string[]>();
+    for (const row of coachSchools ?? []) {
+      const list = schoolIdsByCoach.get(row.coachId) ?? [];
+      list.push(row.schoolId);
+      schoolIdsByCoach.set(row.coachId, list);
+    }
     return {
       data: (r.data || []).map((c) => {
         const u = users?.find((u) => u.id === c.userId);
-        return { id: c.id, name: u?.name || u?.email || "—", schoolId: c.schoolId };
+        return {
+          id: c.id,
+          name: u?.name || u?.email || "—",
+          schoolIds: schoolIdsByCoach.get(c.id) ?? [],
+        };
       }),
     };
   });
@@ -95,7 +109,7 @@ export default async function AdminTurmasPage({
           Nova aula
         </h2>
         <CreateLessonForm
-          coaches={(coaches ?? []) as { id: string; name: string; schoolId: string }[]}
+          coaches={(coaches ?? []) as { id: string; name: string; schoolIds: string[] }[]}
           modalities={modalities ?? []}
           schools={schools ?? []}
         />

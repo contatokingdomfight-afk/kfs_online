@@ -22,8 +22,26 @@ export default async function AdminCoachesPage() {
 
   const list = coaches ?? [];
   const userIds = list.map((c) => c.userId);
-  const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
+  const [{ data: users }, coachSchoolsRes] = await Promise.all([
+    supabase.from("User").select("id, name, email").in("id", userIds),
+    list.length > 0
+      ? supabase.from("CoachSchool").select("coachId, schoolId").in(
+          "coachId",
+          list.map((c) => c.id)
+        )
+      : Promise.resolve({ data: [] as { coachId: string; schoolId: string }[] }),
+  ]);
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
+  const schoolIds = [...new Set((coachSchoolsRes.data ?? []).map((r) => r.schoolId))];
+  const { data: schoolRows } =
+    schoolIds.length > 0 ? await supabase.from("School").select("id, name").in("id", schoolIds) : { data: [] };
+  const schoolNameById = new Map((schoolRows ?? []).map((s) => [s.id, s.name]));
+  const schoolsLabelByCoach = new Map<string, string>();
+  for (const row of coachSchoolsRes.data ?? []) {
+    const n = schoolNameById.get(row.schoolId) ?? row.schoolId;
+    const prev = schoolsLabelByCoach.get(row.coachId);
+    schoolsLabelByCoach.set(row.coachId, prev ? `${prev} · ${n}` : n);
+  }
 
   return (
     <div style={{ maxWidth: "min(700px, 100%)" }}>
@@ -125,6 +143,11 @@ export default async function AdminCoachesPage() {
                     <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                       {u?.email ?? "—"}
                     </p>
+                    {schoolsLabelByCoach.get(c.id) && (
+                      <p style={{ margin: "4px 0 0 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>
+                        {schoolsLabelByCoach.get(c.id)}
+                      </p>
+                    )}
                     {c.specialties && (
                       <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
                         {c.specialties}

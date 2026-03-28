@@ -103,10 +103,11 @@ async function ensureCoach(supabase: SupabaseClient, userId: string, schoolId: s
   const { error } = await supabase.from("Coach").insert({
     id: coachId,
     userId,
-    schoolId,
     is_active: true,
   });
   if (error) throw error;
+  const { error: csErr } = await supabase.from("CoachSchool").insert({ coachId, schoolId });
+  if (csErr) throw csErr;
   return coachId;
 }
 

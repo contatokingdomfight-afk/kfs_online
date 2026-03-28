@@ -31,14 +31,18 @@ export default async function AdminCoachEditarPage({ params }: Props) {
     );
   }
 
-  const [{ data: user }, studentRes] = await Promise.all([
+  const [{ data: user }, studentRes, coachSchoolsRes, schoolsRes] = await Promise.all([
     supabase.from("User").select("id, name, email").eq("id", coach.userId).single(),
     coach.studentId
       ? supabase.from("Student").select("id, can_create_courses").eq("id", coach.studentId).single()
       : Promise.resolve({ data: null }),
+    supabase.from("CoachSchool").select("schoolId").eq("coachId", coachId),
+    supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
   ]);
 
   const student = studentRes.data;
+  const initialSchoolIds = (coachSchoolsRes.data ?? []).map((r) => r.schoolId);
+  const schoolsList = schoolsRes.data ?? [];
 
   return (
     <div style={{ maxWidth: "min(420px, 100%)" }}>
@@ -92,6 +96,8 @@ export default async function AdminCoachEditarPage({ params }: Props) {
         initialHourlyRate={coach.hourly_rate != null ? Number(coach.hourly_rate) : null}
         studentId={student?.id ?? null}
         initialCanCreateCourses={student?.can_create_courses ?? false}
+        schools={schoolsList}
+        initialSchoolIds={initialSchoolIds}
       />
 
       <div style={{ marginTop: "clamp(32px, 8vw, 40px)" }}>

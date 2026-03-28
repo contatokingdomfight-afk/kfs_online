@@ -76,8 +76,7 @@ export default async function CoachHomePage() {
 
   if (coachId) {
     todayLessonsQuery = todayLessonsQuery.eq("coachId", coachId);
-  }
-  if (schoolId) {
+  } else if (schoolId) {
     todayLessonsQuery = todayLessonsQuery.eq("schoolId", schoolId);
   }
 
@@ -158,7 +157,7 @@ export default async function CoachHomePage() {
       .order("startTime", { ascending: true })
       .limit(50);
     if (coachId) lessonsForTrials = lessonsForTrials.eq("coachId", coachId);
-    if (schoolId) lessonsForTrials = lessonsForTrials.eq("schoolId", schoolId);
+    else if (schoolId) lessonsForTrials = lessonsForTrials.eq("schoolId", schoolId);
     const { data: coachLessons } = await lessonsForTrials;
     trialLessons = coachLessons ?? [];
   }

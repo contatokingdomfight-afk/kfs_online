@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
+import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
 
 export type SaveStandaloneEvaluationResult = { error?: string; success?: boolean };
@@ -94,12 +95,12 @@ export async function saveStandaloneEvaluation(
       const { data: student } = await adminSupabase.from("Student").select("schoolId").eq("id", studentId).single();
       if (student?.schoolId) {
         const { data: schoolCoach } = await adminSupabase
-          .from("Coach")
-          .select("id")
+          .from("CoachSchool")
+          .select("coachId")
           .eq("schoolId", student.schoolId)
           .limit(1)
           .maybeSingle();
-        if (schoolCoach) effectiveCoachId = schoolCoach.id;
+        if (schoolCoach) effectiveCoachId = schoolCoach.coachId;
       }
       if (!effectiveCoachId) {
         const { data: anyCoach } = await adminSupabase.from("Coach").select("id").limit(1).maybeSingle();
@@ -176,8 +177,9 @@ export async function getEvaluationById(evalId: string): Promise<EvaluationDetai
     const coachId = await getCurrentCoachId();
     if (!coachId) return { error: "Acesso negado." };
     const { data: student } = await supabase.from("Student").select("schoolId").eq("id", athlete.studentId).single();
-    const { data: coach } = await supabase.from("Coach").select("schoolId").eq("id", coachId).single();
-    if (!coach || !student || student.schoolId !== coach.schoolId) return { error: "Acesso negado." };
+    if (!student?.schoolId) return { error: "Acesso negado." };
+    const canTeach = await coachTeachesAtSchool(supabase, coachId, student.schoolId);
+    if (!canTeach) return { error: "Acesso negado." };
   }
 
   let coachName = "Treinador";

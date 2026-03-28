@@ -17,11 +17,12 @@ export async function createCoach(
   const email = (formData.get("email") as string)?.trim();
   const name = (formData.get("name") as string)?.trim() || null;
   const specialties = (formData.get("specialties") as string)?.trim() || null;
-  const schoolId = (formData.get("schoolId") as string)?.trim();
+  const schoolIds = formData.getAll("schoolIds").filter((v): v is string => typeof v === "string" && v.trim() !== "");
   const createStudentProfile = formData.get("createStudentProfile") === "true";
 
   if (!email) return { error: "Email é obrigatório." };
-  if (!schoolId) return { error: "Escola é obrigatória." };
+  if (schoolIds.length === 0) return { error: "Seleciona pelo menos uma escola onde o coach pode lecionar." };
+  const primarySchoolId = schoolIds[0]!;
 
   const supabase = createAdminClient();
 
@@ -64,7 +65,7 @@ export async function createCoach(
     const { error: studentError } = await supabase.from("Student").insert({
       id: studentId,
       userId,
-      schoolId,
+      schoolId: primarySchoolId,
       status: "ATIVO",
     });
 
@@ -88,12 +89,15 @@ export async function createCoach(
   const { error: coachError } = await supabase.from("Coach").insert({
     id: coachId,
     userId,
-    schoolId,
     studentId,
     specialties,
   });
 
   if (coachError) return { error: coachError.message };
+
+  const schoolRows = schoolIds.map((schoolId) => ({ coachId, schoolId }));
+  const { error: csError } = await supabase.from("CoachSchool").insert(schoolRows);
+  if (csError) return { error: csError.message };
 
   revalidatePath("/admin/coaches");
   revalidatePath("/admin/coaches/novo");
@@ -114,11 +118,14 @@ export async function updateCoach(_prev: UpdateCoachResult | null, formData: For
   const canCreateCourses = formData.get("can_create_courses") === "on";
   const hourlyRateRaw = (formData.get("hourly_rate") as string)?.trim();
   const hourlyRate = hourlyRateRaw ? parseFloat(hourlyRateRaw) : null;
+  const schoolIds = formData.getAll("schoolIds").filter((v): v is string => typeof v === "string" && v.trim() !== "");
 
   const supabase = createAdminClient();
 
   const { data: coach } = await supabase.from("Coach").select("id, userId, studentId").eq("id", coachId).single();
   if (!coach) return { error: "Coach não encontrado." };
+
+  if (schoolIds.length === 0) return { error: "Seleciona pelo menos uma escola." };
 
   if (name !== undefined) {
     const { error: userError } = await supabase.from("User").update({ name }).eq("id", coach.userId);
@@ -131,6 +138,12 @@ export async function updateCoach(_prev: UpdateCoachResult | null, formData: For
     .eq("id", coachId);
 
   if (coachError) return { error: coachError.message };
+
+  await supabase.from("CoachSchool").delete().eq("coachId", coachId);
+  const { error: csError } = await supabase
+    .from("CoachSchool")
+    .insert(schoolIds.map((schoolId) => ({ coachId, schoolId })));
+  if (csError) return { error: csError.message };
 
   if (coach.studentId) {
     const { error: studentError } = await supabase
