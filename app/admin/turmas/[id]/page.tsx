@@ -120,7 +120,11 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
         locationOptions={locationOptions ?? []}
         modalityOptions={modalityOptions ?? []}
       />
-      <CancelarAulaButton lessonId={lessonId} turmasReturnQuery={turmasReturnQuery} />
+      <CancelarAulaButton
+        lessonId={lessonId}
+        turmasReturnQuery={turmasReturnQuery}
+        isOneOff={Boolean((lesson as { isOneOff?: boolean }).isOneOff)}
+      />
     </div>
   );
 }
