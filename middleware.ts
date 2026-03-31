@@ -88,6 +88,10 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  if (pathname.startsWith("/api/admin/") && dbUser.role !== "ADMIN") {
+    return NextResponse.json({ error: "Não autorizado." }, { status: 403 });
+  }
+
   if (dbUser.role === "ADMIN" || dbUser.role === "COACH") {
     return response;
   }

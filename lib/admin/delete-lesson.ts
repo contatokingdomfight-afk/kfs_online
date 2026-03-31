@@ -54,6 +54,20 @@ export type DeleteLessonResult = {
   redirectTo?: string;
 };
 
+/** `TrialClass.lessonId` referencia `Lesson` sem ON DELETE SET NULL — é preciso libertar antes do DELETE. */
+async function detachTrialClassesFromLessons(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  lessonIds: string[]
+): Promise<{ error?: string }> {
+  if (lessonIds.length === 0) return {};
+  const { error } = await supabase.from("TrialClass").update({ lessonId: null }).in("lessonId", lessonIds);
+  if (error) {
+    console.error("detachTrialClassesFromLessons:", error);
+    return { error: error.message };
+  }
+  return {};
+}
+
 /**
  * Remove uma aula ou todas as instâncias futuras da mesma série recorrente.
  * Chamador deve garantir que o utilizador é ADMIN.
@@ -71,6 +85,9 @@ export async function performDeleteLesson(
   const id = lessonId.trim();
 
   if (scope === "single") {
+    const detach = await detachTrialClassesFromLessons(supabase, [id]);
+    if (detach.error) return { error: detach.error };
+
     const { error } = await supabase.from("Lesson").delete().eq("id", id);
     if (error) {
       console.error("performDeleteLesson error:", error);
@@ -128,6 +145,9 @@ export async function performDeleteLesson(
   if (ids.length === 0) {
     return { error: "Nenhuma aula em série encontrada para remover." };
   }
+
+  const detach = await detachTrialClassesFromLessons(supabase, ids);
+  if (detach.error) return { error: detach.error };
 
   const { error: delErr } = await supabase.from("Lesson").delete().in("id", ids);
 

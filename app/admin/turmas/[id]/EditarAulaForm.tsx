@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FormLoadingModal } from "@/components/FormLoadingModal";
-import { updateLesson, type UpdateLessonResult } from "../actions";
+import type { UpdateLessonResult } from "@/lib/admin/update-lesson";
 
 type CoachOption = { id: string; name: string };
 type LocationOption = { id: string; name: string };
@@ -46,7 +44,8 @@ export function EditarAulaForm({
 }: Props) {
   const router = useRouter();
   const redirectOnce = useRef(false);
-  const [state, formAction] = useFormState(updateLesson, null as UpdateLessonResult | null);
+  const [pending, setPending] = useState(false);
+  const [state, setState] = useState<UpdateLessonResult | null>(null);
 
   useEffect(() => {
     if (state?.success && !redirectOnce.current) {
@@ -56,9 +55,57 @@ export function EditarAulaForm({
     }
   }, [state?.success, router, turmasReturnQuery]);
 
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setState(null);
+    setPending(true);
+    const fd = new FormData(e.currentTarget);
+    const capacityRaw = (fd.get("capacity") as string | null)?.trim() ?? "";
+    const payload = {
+      lessonId,
+      modality: (fd.get("modality") as string) ?? "",
+      date: (fd.get("date") as string) ?? "",
+      startTime: (fd.get("startTime") as string) ?? "",
+      endTime: (fd.get("endTime") as string) ?? "",
+      coachId: (fd.get("coachId") as string) ?? "",
+      locationId: ((fd.get("locationId") as string) || "").trim() || null,
+      capacity: capacityRaw === "" ? null : capacityRaw,
+      planningNotes: ((fd.get("planningNotes") as string) || "").trim() || null,
+      isOpenClass: fd.get("isOpenClass") === "on",
+    };
+    try {
+      const res = await fetch("/api/admin/turmas/update-lesson", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload),
+      });
+      const result = (await res.json()) as UpdateLessonResult;
+      if (res.status === 403) {
+        setState({ error: result.error ?? "Não autorizado." });
+        return;
+      }
+      if (!res.ok) {
+        setState({ error: result.error ?? "Pedido inválido." });
+        return;
+      }
+      if (result.error) {
+        setState({ error: result.error });
+        return;
+      }
+      if (result.success) {
+        setState({ success: true });
+      }
+    } catch {
+      setState({ error: "Erro ao guardar alterações." });
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <form
-      action={formAction}
+      onSubmit={handleSubmit}
       className="card"
       style={{
         padding: "clamp(20px, 5vw, 24px)",
@@ -67,7 +114,59 @@ export function EditarAulaForm({
         gap: "clamp(16px, 4vw, 20px)",
       }}
     >
-      <FormLoadingModal message="A guardar alterações…" />
+      {pending ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-busy="true"
+          aria-live="polite"
+          aria-label="A guardar alterações"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: 280,
+              padding: "clamp(24px, 5vw, 32px)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+            }}
+          >
+            <div
+              role="progressbar"
+              aria-valuetext="A guardar alterações"
+              style={{
+                width: 40,
+                height: 40,
+                border: "3px solid var(--border)",
+                borderTopColor: "var(--primary)",
+                borderRadius: "50%",
+                animation: "edit-lesson-spin 0.8s linear infinite",
+              }}
+            />
+            <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 500, color: "var(--text-primary)" }}>
+              A guardar alterações…
+            </p>
+            <style>{`
+              @keyframes edit-lesson-spin {
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        </div>
+      ) : null}
       <input type="hidden" name="lessonId" value={lessonId} />
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
@@ -168,7 +267,7 @@ export function EditarAulaForm({
           Alterações guardadas.
         </p>
       )}
-      <button type="submit" className="btn btn-primary">
+      <button type="submit" className="btn btn-primary" disabled={pending}>
         Guardar
       </button>
     </form>

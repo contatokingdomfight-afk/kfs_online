@@ -10,6 +10,7 @@ import {
   type DeleteLessonScope,
   type DeleteLessonResult,
 } from "@/lib/admin/delete-lesson";
+import { performUpdateLesson, type UpdateLessonResult } from "@/lib/admin/update-lesson";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
@@ -174,7 +175,7 @@ export async function createLesson(formData: FormData) {
   };
 }
 
-export type UpdateLessonResult = { error?: string; success?: boolean };
+export type { UpdateLessonResult };
 
 export async function updateLesson(
   _prev: UpdateLessonResult | null,
@@ -206,29 +207,18 @@ export async function updateLesson(
     return { error: "Capacidade deve ser um número positivo." };
   }
 
-  const supabase = getSupabaseForAdminWrite() ?? (await createClient());
-  const { error } = await supabase
-    .from("Lesson")
-    .update({
-      modality,
-      date,
-      startTime,
-      endTime,
-      coachId,
-      locationId: locationId || null,
-      capacity: capacity ?? null,
-      planningNotes: planningNotes || null,
-      isOpenClass,
-    })
-    .eq("id", lessonId);
-
-  if (error) return { error: error.message };
-
-  revalidatePath("/admin/turmas");
-  revalidatePath(`/admin/turmas/${lessonId}`);
-  revalidatePath("/coach");
-  revalidatePath("/coach/agenda");
-  return { success: true };
+  return performUpdateLesson({
+    lessonId,
+    modality,
+    date,
+    startTime,
+    endTime,
+    coachId,
+    locationId,
+    capacity,
+    planningNotes,
+    isOpenClass,
+  });
 }
 
 export type { DeleteLessonScope, DeleteLessonResult };

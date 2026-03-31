@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getCurrentDbUserUncached } from "@/lib/auth/get-current-user";
 import { performDeleteLesson, type DeleteLessonScope } from "@/lib/admin/delete-lesson";
 
 export async function POST(request: Request) {
-  const dbUser = await getCurrentDbUser();
+  const dbUser = await getCurrentDbUserUncached();
   if (!dbUser || dbUser.role !== "ADMIN") {
     return NextResponse.json({ error: "Não autorizado." }, { status: 403 });
   }
