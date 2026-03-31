@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { deleteLesson, type DeleteLessonScope } from "../actions";
+import type { DeleteLessonScope, DeleteLessonResult } from "@/lib/admin/delete-lesson";
 
 type Props = { lessonId: string; turmasReturnQuery?: string; isOneOff: boolean };
 
@@ -37,12 +37,30 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
     setPending(true);
     try {
       const effectiveScope: DeleteLessonScope = isOneOff ? "single" : scope;
-      const result = await deleteLesson(lessonId, effectiveScope, turmasReturnQuery);
-      if (result?.error) {
+      const res = await fetch("/api/admin/turmas/delete-lesson", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          lessonId,
+          scope: effectiveScope,
+          returnQuery: turmasReturnQuery || undefined,
+        }),
+      });
+      const result = (await res.json()) as DeleteLessonResult;
+      if (res.status === 403) {
+        setError(result.error ?? "Não autorizado.");
+        return;
+      }
+      if (!res.ok) {
+        setError(result.error ?? "Pedido inválido.");
+        return;
+      }
+      if (result.error) {
         setError(result.error);
         return;
       }
-      if (result?.success && result.redirectTo) {
+      if (result.success && result.redirectTo) {
         setModalOpen(false);
         window.location.assign(result.redirectTo);
         return;

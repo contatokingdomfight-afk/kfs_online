@@ -5,7 +5,11 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
-import { turmasPathAfterDelete } from "@/lib/turmas-list-query";
+import {
+  performDeleteLesson,
+  type DeleteLessonScope,
+  type DeleteLessonResult,
+} from "@/lib/admin/delete-lesson";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
@@ -227,35 +231,11 @@ export async function updateLesson(
   return { success: true };
 }
 
-export type DeleteLessonScope = "single" | "series_future";
-
-export type DeleteLessonResult = {
-  error?: string;
-  success?: boolean;
-  deletedCount?: number;
-  /** URL interna para o cliente após sucesso (evita redirect() na action, que pode gerar 400). */
-  redirectTo?: string;
-};
-
-/** Segunda=1 … Domingo=7 (alinhado a `createLesson` / dia da semana da recorrência). */
-function weekdayFromYmd(ymd: string): number | null {
-  const p = parseYmd(ymd);
-  if (!p) return null;
-  const d = new Date(Date.UTC(p.y, p.m - 1, p.d));
-  const js = d.getUTCDay();
-  return js === 0 ? 7 : js;
-}
-
-function lessonDateYmd(date: unknown): string {
-  if (typeof date === "string") return date.slice(0, 10);
-  if (date instanceof Date) return utcDateToYmd(date);
-  return String(date).slice(0, 10);
-}
+export type { DeleteLessonScope, DeleteLessonResult };
 
 /**
- * Remove uma aula ou todas as instâncias futuras da mesma série recorrente
- * (mesmo coach, escola, modalidade, horário, dia da semana, flags isOpenClass;
- * `isOneOff = false`; datas >= à data da aula alvo).
+ * Remove uma aula ou todas as instâncias futuras da mesma série recorrente.
+ * O fluxo principal na UI usa `POST /api/admin/turmas/delete-lesson` para evitar 400 nas Server Actions.
  */
 export async function deleteLesson(
   lessonId: string,
@@ -266,90 +246,5 @@ export async function deleteLesson(
   if (!dbUser || dbUser.role !== "ADMIN") {
     return { error: "Não autorizado." };
   }
-  if (!lessonId?.trim()) {
-    return { error: "ID da aula inválido." };
-  }
-
-  const supabase = getSupabaseForAdminWrite() ?? (await createClient());
-  const id = lessonId.trim();
-
-  if (scope === "single") {
-    const { error } = await supabase.from("Lesson").delete().eq("id", id);
-    if (error) {
-      console.error("deleteLesson error:", error);
-      return { error: error.message };
-    }
-    revalidatePathsAfterLessonDelete();
-    return {
-      success: true,
-      deletedCount: 1,
-      redirectTo: turmasPathAfterDelete(returnQuery),
-    };
-  }
-
-  const { data: anchor, error: fetchErr } = await supabase
-    .from("Lesson")
-    .select("id, date, schoolId, coachId, modality, startTime, endTime, isOneOff, isOpenClass")
-    .eq("id", id)
-    .single();
-
-  if (fetchErr || !anchor) {
-    return { error: fetchErr?.message ?? "Aula não encontrada." };
-  }
-
-  if ((anchor as { isOneOff?: boolean }).isOneOff) {
-    return { error: "Esta é uma aula única; só pode ser removida individualmente." };
-  }
-
-  const anchorYmd = lessonDateYmd((anchor as { date: unknown }).date);
-  const anchorWd = weekdayFromYmd(anchorYmd);
-  if (anchorWd == null) {
-    return { error: "Data da aula inválida." };
-  }
-
-  const { data: candidates, error: listErr } = await supabase
-    .from("Lesson")
-    .select("id, date")
-    .eq("schoolId", (anchor as { schoolId: string }).schoolId)
-    .eq("coachId", (anchor as { coachId: string }).coachId)
-    .eq("modality", (anchor as { modality: string }).modality)
-    .eq("startTime", (anchor as { startTime: string }).startTime)
-    .eq("endTime", (anchor as { endTime: string }).endTime)
-    .eq("isOneOff", false)
-    .eq("isOpenClass", Boolean((anchor as { isOpenClass?: boolean }).isOpenClass))
-    .gte("date", anchorYmd);
-
-  if (listErr) {
-    console.error("deleteLesson list:", listErr);
-    return { error: listErr.message };
-  }
-
-  const ids = (candidates ?? [])
-    .filter((row) => weekdayFromYmd(lessonDateYmd(row.date)) === anchorWd)
-    .map((row) => row.id);
-
-  if (ids.length === 0) {
-    return { error: "Nenhuma aula em série encontrada para remover." };
-  }
-
-  const { error: delErr } = await supabase.from("Lesson").delete().in("id", ids);
-
-  if (delErr) {
-    console.error("deleteLesson series:", delErr);
-    return { error: delErr.message };
-  }
-
-  revalidatePathsAfterLessonDelete();
-  return {
-    success: true,
-    deletedCount: ids.length,
-    redirectTo: turmasPathAfterDelete(returnQuery),
-  };
-}
-
-function revalidatePathsAfterLessonDelete() {
-  revalidatePath("/admin/turmas");
-  revalidatePath("/admin/presenca");
-  revalidatePath("/coach");
-  revalidatePath("/coach/agenda");
+  return performDeleteLesson(lessonId, scope, returnQuery);
 }
