@@ -342,7 +342,7 @@ export async function deleteLesson(
   revalidatePathsAfterLessonDelete();
   return {
     success: true,
-    deletedCount: n,
+    deletedCount: ids.length,
     redirectTo: turmasPathAfterDelete(returnQuery),
   };
 }
