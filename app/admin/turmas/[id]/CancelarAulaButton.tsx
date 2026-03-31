@@ -36,14 +36,16 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
       const result = await deleteLesson(lessonId, effectiveScope);
       if (result?.error) {
         setError(result.error);
-        setPending(false);
         return;
       }
-      if (result?.success !== true) return;
+      // Sucesso: fechar modal antes da navegação (evita overlay preso se router.push atrasar)
       setModalOpen(false);
-      router.push(turmasReturnQuery ? `/admin/turmas?${turmasReturnQuery}` : "/admin/turmas");
+      const href = turmasReturnQuery ? `/admin/turmas?${turmasReturnQuery}` : "/admin/turmas";
+      router.push(href);
+      router.refresh();
     } catch {
       setError("Erro ao cancelar aula.");
+    } finally {
       setPending(false);
     }
   }
