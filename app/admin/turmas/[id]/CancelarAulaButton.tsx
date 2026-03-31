@@ -6,6 +6,16 @@ import { deleteLesson, type DeleteLessonScope } from "../actions";
 
 type Props = { lessonId: string; turmasReturnQuery?: string; isOneOff: boolean };
 
+function isNextRedirect(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "digest" in e &&
+    typeof (e as { digest: unknown }).digest === "string" &&
+    (e as { digest: string }).digest.startsWith("NEXT_REDIRECT")
+  );
+}
+
 export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff }: Props) {
   const [mounted, setMounted] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -35,19 +45,22 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
   async function handleConfirm() {
     setError(null);
     setPending(true);
+    const href = turmasReturnQuery ? `/admin/turmas?${turmasReturnQuery}` : "/admin/turmas";
     try {
       const effectiveScope: DeleteLessonScope = isOneOff ? "single" : scope;
-      const result = await deleteLesson(lessonId, effectiveScope);
+      const result = await deleteLesson(lessonId, effectiveScope, turmasReturnQuery);
       if (result?.error) {
         setError(result.error);
         return;
       }
-
-      const href = turmasReturnQuery ? `/admin/turmas?${turmasReturnQuery}` : "/admin/turmas";
+      // Fallback se o servidor devolver sucesso sem redirect (não esperado)
       setModalOpen(false);
-      // Navegação completa: mais fiável que router.push após server action (evita ficar na mesma rota).
       window.location.assign(href);
-    } catch {
+    } catch (e) {
+      if (isNextRedirect(e)) {
+        setModalOpen(false);
+        return;
+      }
       setError("Erro ao cancelar aula.");
     } finally {
       setPending(false);

@@ -24,3 +24,15 @@ export function buildTurmasListQueryFromState(input: {
   if (input.schoolId) q.set("school", input.schoolId);
   return q.toString();
 }
+
+/**
+ * Path para `redirect()` após cancelar aula. Só aceita query gerada pelo nosso UI
+ * (evita open redirect). Sem query válida → `/admin/turmas`.
+ */
+export function turmasPathAfterDelete(returnQuery: string | undefined): string {
+  if (!returnQuery?.trim()) return "/admin/turmas";
+  const raw = returnQuery.trim();
+  if (raw.length > 512) return "/admin/turmas";
+  if (!/^[\w&=%.+\-]*$/.test(raw)) return "/admin/turmas";
+  return `/admin/turmas?${raw}`;
+}

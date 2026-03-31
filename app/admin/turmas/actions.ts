@@ -5,6 +5,8 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { turmasPathAfterDelete } from "@/lib/turmas-list-query";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
@@ -252,7 +254,8 @@ function lessonDateYmd(date: unknown): string {
  */
 export async function deleteLesson(
   lessonId: string,
-  scope: DeleteLessonScope = "single"
+  scope: DeleteLessonScope = "single",
+  returnQuery?: string
 ): Promise<DeleteLessonResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") {
@@ -266,19 +269,13 @@ export async function deleteLesson(
   const id = lessonId.trim();
 
   if (scope === "single") {
-    const { data: deletedRows, error } = await supabase.from("Lesson").delete().eq("id", id).select("id");
+    const { error } = await supabase.from("Lesson").delete().eq("id", id);
     if (error) {
       console.error("deleteLesson error:", error);
       return { error: error.message };
     }
-    if (!deletedRows?.length) {
-      return {
-        error:
-          "Nenhuma aula foi removida. Verifica permissões (admin com service role) ou se a aula já não existia.",
-      };
-    }
     revalidatePathsAfterLessonDelete();
-    return { success: true, deletedCount: deletedRows.length };
+    redirect(turmasPathAfterDelete(returnQuery));
   }
 
   const { data: anchor, error: fetchErr } = await supabase
@@ -326,19 +323,15 @@ export async function deleteLesson(
     return { error: "Nenhuma aula em série encontrada para remover." };
   }
 
-  const { data: deletedRows, error: delErr } = await supabase.from("Lesson").delete().in("id", ids).select("id");
+  const { error: delErr } = await supabase.from("Lesson").delete().in("id", ids);
 
   if (delErr) {
     console.error("deleteLesson series:", delErr);
     return { error: delErr.message };
   }
-  const n = deletedRows?.length ?? 0;
-  if (n === 0) {
-    return { error: "Nenhuma aula foi removida." };
-  }
 
   revalidatePathsAfterLessonDelete();
-  return { success: true, deletedCount: n };
+  redirect(turmasPathAfterDelete(returnQuery));
 }
 
 function revalidatePathsAfterLessonDelete() {
