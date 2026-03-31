@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { deleteLesson } from "../actions";
 import { ConfirmModal } from "@/components/ConfirmModalDynamic";
 
-type Props = { lessonId: string };
+type Props = { lessonId: string; turmasReturnQuery?: string };
 
-export function CancelarAulaButton({ lessonId }: Props) {
+export function CancelarAulaButton({ lessonId, turmasReturnQuery = "" }: Props) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -25,7 +25,7 @@ export function CancelarAulaButton({ lessonId }: Props) {
       }
       if (result?.success !== true) return;
       setModalOpen(false);
-      router.push("/admin/turmas");
+      router.push(turmasReturnQuery ? `/admin/turmas?${turmasReturnQuery}` : "/admin/turmas");
     } catch {
       setError("Erro ao cancelar aula.");
       setPending(false);

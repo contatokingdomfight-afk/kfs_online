@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
 export type CachedLocation = { id: string; name: string };
 export type CachedModalityRef = { code: string; name: string };
@@ -28,13 +30,17 @@ export async function getCachedSchools(
 
 /**
  * Lista de locais (id, name). Cache 5 min; dados pouco voláteis.
+ * O callback usa sempre um cliente com leitura fiável (service role se existir) para não
+ * cachear [] quando o primeiro pedido corre sem sessão autenticada.
  */
 export async function getCachedLocations(
-  supabase: SupabaseClient
+  _supabase: SupabaseClient
 ): Promise<CachedLocation[]> {
   const rows = await unstable_cache(
     async () => {
-      const { data } = await supabase
+      const admin = getAdminClientOrNull().client;
+      const client = admin ?? (await createClient());
+      const { data } = await client
         .from("Location")
         .select("id, name")
         .order("sortOrder", { ascending: true });
@@ -44,6 +50,21 @@ export async function getCachedLocations(
     { revalidate: 300 }
   )();
   return rows as CachedLocation[];
+}
+
+/**
+ * Locais de uma escola (sem cache). Para formulários onde o filtro por escola é obrigatório.
+ */
+export async function getLocationsForSchool(
+  supabase: SupabaseClient,
+  schoolId: string
+): Promise<CachedLocation[]> {
+  const { data } = await supabase
+    .from("Location")
+    .select("id, name")
+    .eq("schoolId", schoolId)
+    .order("sortOrder", { ascending: true });
+  return data ?? [];
 }
 
 /**

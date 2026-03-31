@@ -1,6 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useFormState } from "react-dom";
+import { useRouter } from "next/navigation";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { updateLesson, type UpdateLessonResult } from "../actions";
 
 type CoachOption = { id: string; name: string };
@@ -9,6 +12,8 @@ type ModalityOption = { code: string; name: string };
 
 type Props = {
   lessonId: string;
+  /** Query string (sem `?`) para voltar à mesma vista da agenda. */
+  turmasReturnQuery: string;
   initialModality: string;
   initialDate: string;
   initialStartTime: string;
@@ -25,6 +30,7 @@ type Props = {
 
 export function EditarAulaForm({
   lessonId,
+  turmasReturnQuery,
   initialModality,
   initialDate,
   initialStartTime,
@@ -38,7 +44,17 @@ export function EditarAulaForm({
   locationOptions,
   modalityOptions,
 }: Props) {
+  const router = useRouter();
+  const redirectOnce = useRef(false);
   const [state, formAction] = useFormState(updateLesson, null as UpdateLessonResult | null);
+
+  useEffect(() => {
+    if (state?.success && !redirectOnce.current) {
+      redirectOnce.current = true;
+      const href = turmasReturnQuery ? `/admin/turmas?${turmasReturnQuery}` : "/admin/turmas";
+      router.push(href);
+    }
+  }, [state?.success, router, turmasReturnQuery]);
 
   return (
     <form
@@ -51,6 +67,7 @@ export function EditarAulaForm({
         gap: "clamp(16px, 4vw, 20px)",
       }}
     >
+      <FormLoadingModal message="A guardar alterações…" />
       <input type="hidden" name="lessonId" value={lessonId} />
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>

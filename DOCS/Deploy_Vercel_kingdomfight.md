@@ -92,3 +92,7 @@ O projeto usa Prisma (schema); a base de dados está no Supabase. Na Vercel:
 5. Atualizar Supabase e Google (OAuth) com o URL de produção.
 
 Qualquer dúvida concreta (um erro de build, uma variável, ou um passo na Hostinger), diz em que passo estás e o que aparece no ecrã.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

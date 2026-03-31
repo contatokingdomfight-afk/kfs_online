@@ -167,3 +167,7 @@
     
 
 ---
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

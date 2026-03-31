@@ -77,3 +77,7 @@ Resumo da revisão feita no projeto em termos de segurança. **Não substitui um
 Se quiseres, no próximo passo podemos:
 - desenhar políticas RLS mais restritivas por tabela, ou
 - rever uma lista concreta de Server Actions (admin/coach) para garantir que todas checam role/identidade.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

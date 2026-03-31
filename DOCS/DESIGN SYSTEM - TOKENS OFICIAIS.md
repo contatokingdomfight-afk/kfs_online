@@ -235,3 +235,7 @@ Agora o caminho profissional é:
 
 👉 Quer que eu **converta esses tokens diretamente para `tailwind.config.ts` + CSS variables**?  
 Ou prefere que eu **crie os componentes base (Button, Card, Input)** usando esses tokens?
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

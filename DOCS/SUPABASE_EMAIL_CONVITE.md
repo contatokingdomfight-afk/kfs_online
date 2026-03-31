@@ -78,3 +78,7 @@ Supabase aceita qualquer SMTP (Brevo, SendGrid, Postmark, AWS SES, etc.). Em **A
 | Remetente (nome e email) | Supabase → **Project Settings** → **Auth** → **SMTP Settings** (Custom SMTP) |
 
 Depois de guardar, envia um novo convite (Admin → Alunos → Convidar aluno) para testar.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

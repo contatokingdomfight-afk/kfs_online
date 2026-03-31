@@ -1,5 +1,7 @@
 # Mapeamento de Estados de Execução
 
+> **Nota (março 2026):** documento conceitual. Para o que está implementado no código (presenças, aulas, check-in), ver [`memory.md`](memory.md) e o roadmap em [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md).
+
 ## Plataforma Kingdom Fight School (Mobile First)
 
 Este documento mapeia **todos os estados possíveis de execução do sistema**, pensando na **vida real da academia**.
@@ -216,3 +218,7 @@ Regras:
 
 Próximo passo natural:  
 ➡️ transformar estes estados em **regras técnicas do MVP**.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

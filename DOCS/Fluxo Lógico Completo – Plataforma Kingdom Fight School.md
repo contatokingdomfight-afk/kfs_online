@@ -300,3 +300,7 @@ Este fluxo já é suficiente para:
 
 Próximo passo natural:  
 ➡️ transformar este fluxo em **telas do sistema**.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

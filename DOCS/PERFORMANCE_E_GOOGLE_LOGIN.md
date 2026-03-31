@@ -70,3 +70,7 @@ A plataforma estava lenta ao mudar de página ou ao fazer ações (muitas chamad
 ---
 
 *Última atualização: índices, next/dynamic, cache Location/ModalityRef, Suspense no dashboard.*
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

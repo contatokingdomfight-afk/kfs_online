@@ -184,3 +184,7 @@ Se quiseres agora, posso:
 * Criar **copy motivacional oficial da KFS para apresentar o sistema aos alunos**
 
 Qual próximo passo estratégico vamos construir? 👊🔥
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

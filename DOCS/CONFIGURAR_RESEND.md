@@ -99,3 +99,7 @@ Referência: [Resend – Send with Supabase SMTP](https://resend.com/docs/send-w
 | 5 | Supabase → Auth → SMTP Settings | Custom SMTP com host `smtp.resend.com`, user `resend`, password = API key |
 
 Depois de configurar, envia um convite (Admin → Convidar aluno) para testar o email de convite.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

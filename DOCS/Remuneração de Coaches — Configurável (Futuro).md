@@ -102,3 +102,7 @@ Fórmula mensal: soma das aulas do coach no mês.
 
 - **Modelo de Dados:** Lesson + Attendance já permitem qualquer cálculo futuro; ver secção “Remuneração de coaches (futuro)”.
 - **Visão / Financeiro:** Remuneração de coaches listada como funcionalidade futura, configurável.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

@@ -55,3 +55,7 @@ Domínio: **kingdomfight.com**
 | **Hostinger** | Domínio/subdomínio a apontar para onde a app está em produção; HTTPS ativo. |
 
 Depois disto, “Entrar com Google” passa a funcionar também no teu domínio.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

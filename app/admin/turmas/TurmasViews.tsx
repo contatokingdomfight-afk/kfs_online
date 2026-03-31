@@ -32,9 +32,20 @@ type WeekViewProps = {
   coaches: Coach[] | null;
   modalities: CachedModalityRef[] | null;
   schools: SchoolOption[] | null;
+  /** Preserva vista/semana/escola ao abrir edição. */
+  editLessonQuery?: string;
 };
 
-export function WeekView({ weekMonday, weekEnd, lessons, locations, coaches, modalities, schools }: WeekViewProps) {
+export function WeekView({
+  weekMonday,
+  weekEnd,
+  lessons,
+  locations,
+  coaches,
+  modalities,
+  schools,
+  editLessonQuery = "",
+}: WeekViewProps) {
   const inRange = lessons.filter((l) => l.date >= weekMonday && l.date <= weekEnd);
   const byDate = new Map<string, LessonRow[]>();
   for (let i = 0; i < 7; i++) {
@@ -69,6 +80,7 @@ export function WeekView({ weekMonday, weekEnd, lessons, locations, coaches, mod
           coaches={coaches}
           modalities={modalities}
           schools={schools}
+          editLessonQuery={editLessonQuery}
         />
       ))}
     </div>
@@ -82,6 +94,7 @@ function WeekDayCard({
   coaches,
   modalities,
   schools,
+  editLessonQuery = "",
 }: {
   dateStr: string;
   dayLessons: LessonRow[];
@@ -89,6 +102,7 @@ function WeekDayCard({
   coaches: Coach[] | null;
   modalities: CachedModalityRef[] | null;
   schools: SchoolOption[] | null;
+  editLessonQuery?: string;
 }) {
   const dayLabel = getWeekdayName(dateStr);
   /** Só dia/mês: `formatLessonDate` já inclui o dia da semana em pt-PT, o que duplicava o rótulo. */
@@ -123,6 +137,7 @@ function WeekDayCard({
               coaches={coaches}
               modalities={modalities}
               schools={schools}
+              editLessonQuery={editLessonQuery}
             />
           ))}
         </ul>
@@ -137,13 +152,19 @@ function WeekLessonRow({
   coaches,
   modalities,
   schools,
+  editLessonQuery = "",
 }: {
   lesson: LessonRow;
   locations: Location[] | null;
   coaches: Coach[] | null;
   modalities: CachedModalityRef[] | null;
   schools: SchoolOption[] | null;
+  editLessonQuery?: string;
 }) {
+  const editHref =
+    editLessonQuery && editLessonQuery.length > 0
+      ? `/admin/turmas/${lesson.id}?${editLessonQuery}`
+      : `/admin/turmas/${lesson.id}`;
   const locationName = lesson.locationId ? locations?.find((l) => l.id === lesson.locationId)?.name : null;
   const coachName = coaches?.find((c) => c.id === lesson.coachId)?.name ?? null;
   const modalityName = (modalities ?? []).find((m) => m.code === lesson.modality)?.name ?? MODALITY_LABELS[lesson.modality ?? ""] ?? lesson.modality ?? "";
@@ -168,7 +189,7 @@ function WeekLessonRow({
       coachName && React.createElement("span", { style: { fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" } }, "· ", coachName),
       locationName && React.createElement("span", { style: { fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" } }, "· ", locationName),
       lesson.capacity != null && React.createElement("span", { style: { fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" } }, `(cap. ${lesson.capacity})`),
-      React.createElement(Link, { href: `/admin/turmas/${lesson.id}`, style: { marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)", textDecoration: "none" } }, "Editar →")
+      React.createElement(Link, { href: editHref, style: { marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)", textDecoration: "none" } }, "Editar →")
     )
   );
 }
@@ -179,9 +200,17 @@ type ModalityViewProps = {
   locations: Location[] | null;
   coaches: Coach[] | null;
   schools: SchoolOption[] | null;
+  editLessonQuery?: string;
 };
 
-export function ModalityView({ lessons, modalities, locations, coaches, schools }: ModalityViewProps) {
+export function ModalityView({
+  lessons,
+  modalities,
+  locations,
+  coaches,
+  schools,
+  editLessonQuery = "",
+}: ModalityViewProps) {
   const byModality = new Map<string, LessonRow[]>();
   for (const lesson of lessons) {
     const mod = lesson.modality ?? "OTHER";
@@ -204,6 +233,7 @@ export function ModalityView({ lessons, modalities, locations, coaches, schools 
           locations={locations}
           coaches={coaches}
           schools={schools}
+          editLessonQuery={editLessonQuery}
         />
       ))}
     </div>
@@ -217,6 +247,7 @@ function ModalityGroup({
   locations,
   coaches,
   schools,
+  editLessonQuery = "",
 }: {
   modCode: string;
   groupLessons: LessonRow[];
@@ -224,6 +255,7 @@ function ModalityGroup({
   locations: Location[] | null;
   coaches: Coach[] | null;
   schools: SchoolOption[] | null;
+  editLessonQuery?: string;
 }) {
   const modalityName = (modalities ?? []).find((m) => m.code === modCode)?.name ?? MODALITY_LABELS[modCode] ?? modCode;
   return (
@@ -236,7 +268,14 @@ function ModalityGroup({
       </h3>
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 10px)" }}>
         {groupLessons.map((lesson) => (
-          <ModalityLessonRow key={lesson.id} lesson={lesson} locations={locations} coaches={coaches} schools={schools} />
+          <ModalityLessonRow
+            key={lesson.id}
+            lesson={lesson}
+            locations={locations}
+            coaches={coaches}
+            schools={schools}
+            editLessonQuery={editLessonQuery}
+          />
         ))}
       </ul>
     </div>
@@ -248,12 +287,18 @@ function ModalityLessonRow({
   locations,
   coaches,
   schools,
+  editLessonQuery = "",
 }: {
   lesson: LessonRow;
   locations: Location[] | null;
   coaches: Coach[] | null;
   schools: SchoolOption[] | null;
+  editLessonQuery?: string;
 }) {
+  const editHref =
+    editLessonQuery && editLessonQuery.length > 0
+      ? `/admin/turmas/${lesson.id}?${editLessonQuery}`
+      : `/admin/turmas/${lesson.id}`;
   const locationName = lesson.locationId ? locations?.find((l) => l.id === lesson.locationId)?.name : null;
   const coachName = coaches?.find((c) => c.id === lesson.coachId)?.name ?? null;
   const schoolName = lesson.schoolId ? schools?.find((s) => s.id === lesson.schoolId)?.name : null;
@@ -292,7 +337,7 @@ function ModalityLessonRow({
           </span>
         )}
         <Link
-          href={`/admin/turmas/${lesson.id}`}
+          href={editHref}
           style={{ marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)", textDecoration: "none" }}
         >
           Editar →

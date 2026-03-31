@@ -25,7 +25,7 @@
 | Migrações SQL Supabase | `supabase/migrations/` |
 | Schema Prisma | `prisma/schema.prisma` |
 | Scripts (ex.: seed testes) | `scripts/seed-test-users.ts` |
-| Documentação canónica | **`DOCS/`** |
+| Documentação canónica | **`DOCS/`** — índice de ficheiros: **`DOCS/INDEX.md`** |
 | Roadmap feito/por fazer | `DOCS/ROADMAP_Plataforma_KFS.md` |
 | Mensalidades / crons / Lisboa | `DOCS/PAGAMENTOS_MENSALIDADES_CRON.md` |
 | Contas de teste + `npm test` | `DOCS/CONTAS_TESTE.md` |
@@ -69,8 +69,19 @@
 - **Escolas:** ao criar ou guardar edição de uma escola, `FormLoadingModal` em `EscolasManager` (mensagens «A criar escola…» / «A guardar alterações…»).
 - **Ficha do coach:** `app/admin/coaches/[id]/loading.tsx` — estado de carregamento ao navegar para a página de detalhe.
 - **Escolas onde leciona:** componente `components/CoachSchoolMultiSelect.tsx` — pesquisa, lista rolável, chips com remoção; ordem define a primeira como «Principal» (alinhado a `schoolIds[0]` em `createCoach`).
+- **Turmas / editar aula:** `app/admin/turmas/[id]/loading.tsx` — «A abrir edição…» ao navegar para a edição; no formulário, `FormLoadingModal` «A guardar alterações…»; após guardar com sucesso, redireciona para `/admin/turmas` com a mesma query (`view`, `week`, `school`) via `lib/turmas-list-query.ts`. Locais no select: `getLocationsForSchool` por `schoolId` da aula; `getCachedLocations` usa service role no callback de cache para não devolver lista vazia por cache incorreto.
 
-### 3.7 Histórico útil (sessões anteriores)
+### 3.7 Produção (Vercel) — favicon, RSC e métricas
+
+- **Favicon:** `app/icon.tsx` (ImageResponse); rewrite `next.config.mjs`: `/favicon.ico` → `/icon`.
+- **Client vs Server:** carrosséis do dashboard passam só **strings** e **`children`** renderizados no servidor (`OpenClassesCarouselShell` + `LessonPromoBlock`); não passar `Map` nem funções `t` a `"use client"`.
+- **Speed Insights:** avisos de preload (ex.: domínios de terceiros) podem surgir; opcional **`NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS=true`** em `components/VercelMetrics.tsx` para desativar só o Speed Insights (Analytics mantém-se).
+
+### 3.8 Documentação em `DOCS/` (higiene)
+
+- **Índice:** `DOCS/INDEX.md` lista os ficheiros atuais. Em março 2026 foram removidos resumos de sessão, guias Git obsoletos (repo antigo), texto de treino fora do âmbito do repositório e duplicado curto de marca; **`DEPLOY_VERCEL.md`** foi reescrito para a stack atual (Supabase, sem Clerk).
+
+### 3.9 Histórico útil (sessões anteriores)
 
 - **Mobile:** avaliação no `CoachStudentProfileModal` (select 1–10, toques maiores).
 - **Admin:** `clearStudentPlanAccess` — remover plano / subscrição (`app/admin/alunos/actions.ts`).
@@ -104,5 +115,5 @@ Cola algo como:
 > Lê `DOCS/memory.md` e o roadmap em `DOCS/ROADMAP_Plataforma_KFS.md`. Quero continuar [descreve a tarefa].
 
 ---
-
+*Este ficheiro é o índice de contexto interno; ao alterar comportamento visível ou regras de negócio, atualiza a secção relevante aqui ou o doc específico em `DOCS/`.* Lista completa de documentos: **`DOCS/INDEX.md`**.
 *Este ficheiro é o índice de contexto interno; ao alterar comportamento visível ou regras de negócio, atualiza a secção relevante aqui ou o doc específico em `DOCS/`.*

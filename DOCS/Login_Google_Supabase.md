@@ -118,3 +118,7 @@ Depois disto, ao clicar em **“Entrar com Google”** em `/sign-in` ou `/sign-u
 
 - Enquanto o ecrã de consentimento estiver em **Testing**, só as contas que adicionares em **Test users** (OAuth consent screen → Test users) podem fazer login.
 - Para qualquer pessoa com conta Google poder entrar, tens de ir a **OAuth consent screen** e clicar em **“Publish App”** (Publicar app). O Google pode pedir uma verificação se pedires permissões sensíveis; para apenas email e perfil básico, muitas vezes não é necessário.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

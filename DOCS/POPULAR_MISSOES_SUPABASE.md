@@ -52,3 +52,7 @@ SELECT COUNT(*) FROM mission_template;
 ```
 
 O resultado deve ser **69** (ou o número de linhas que importaste).
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

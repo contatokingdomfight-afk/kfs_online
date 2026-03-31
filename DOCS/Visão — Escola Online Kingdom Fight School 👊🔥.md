@@ -397,3 +397,7 @@ Agora o caminho natural é:
 👉 Minha pergunta final, pra guiar o próximo passo certo:
 
 **Você quer avançar primeiro no desenho das telas ou no plano prático de implementação (como tirar isso do papel em semanas)?**
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

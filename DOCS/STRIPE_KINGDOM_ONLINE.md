@@ -103,3 +103,7 @@ UPDATE "Plan" SET "stripePriceId" = 'price_TEUMENSAL' WHERE id = 'plan-online';
 3. Stripe cobra automaticamente em cada ciclo (sem o aluno fazer nada)
 4. Webhook atualiza BD e regista pagamentos
 5. Aluno pode gerir cartão/faturas em "Gerir assinatura"
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

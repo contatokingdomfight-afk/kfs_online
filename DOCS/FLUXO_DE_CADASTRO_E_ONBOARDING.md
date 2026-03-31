@@ -109,3 +109,7 @@ Este é o percurso que um novo utilizador fará desde o registo até à ativaç�
     ```
     Refatore a página em `app/dashboard/page.tsx`. Ela deve primeiro buscar os dados do aluno, incluindo o `planId`. Se `planId` for nulo, renderize um componente `ChoosePlanCTA` no topo da página e desative as funcionalidades interativas dos componentes filhos. Se `planId` existir, renderize o dashboard completo normalmente.
     ```
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

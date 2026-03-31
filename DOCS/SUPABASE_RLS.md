@@ -40,3 +40,7 @@ e, na política de Student, a subquery: `SELECT id FROM "User" WHERE auth_user_i
 - [Supabase – Database Linter (0013 rls_disabled_in_public)](https://supabase.com/docs/guides/database/database-linter?lint=0013_rls_disabled_in_public)
 - [Permissive RLS policy (0024)](https://supabase.com/docs/guides/database/database-linter?lint=0024_permissive_rls_policy)
 - [Row Level Security](https://supabase.com/docs/guides/auth/row-level-security)
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

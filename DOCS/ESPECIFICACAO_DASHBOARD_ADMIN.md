@@ -1,5 +1,7 @@
 # Especificação Funcional: O Novo Painel de Controlo do Admin
 
+> **Nota (março 2026):** esta especificação descreve o alvo de produto. O estado implementado está alinhado em grande parte — ver rotas em `app/admin/` e **`DOCS/ROADMAP_Plataforma_KFS.md`**. Índice geral: **`DOCS/INDEX.md`**.
+
 ## 1. Visão Geral e Princípios
 
 **Objetivo:** Transformar a página inicial do administrador (`/admin`) num "Painel de Controlo" dinâmico e funcional. A nova interface deve permitir monitorar a saúde do negócio, identificar e agir sobre tarefas urgentes, e navegar facilmente para todas as áreas de gestão.
@@ -105,3 +107,7 @@ A página `/admin` será reestruturada nas seguintes secções, por ordem de pri
         *   `[ ⚙️ Configurações ]` → `/admin/configuracoes`
         *   `[ 🎯 Missões ]` → `/admin/missoes`
         *   `[ 📊 Critérios de Avaliação ]` → `/admin/avaliacao`
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

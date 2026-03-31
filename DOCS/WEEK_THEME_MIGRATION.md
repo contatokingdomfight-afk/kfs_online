@@ -18,3 +18,7 @@ Para ativar o Tema da Semana, execute a migration no Supabase:
 
 - **Coach:** Em `/coach/tema-semana` define o tema por modalidade e pode associar um curso/vídeo da biblioteca
 - **Aluno:** No dashboard vê o tema da semana e o botão "Ver vídeo da teoria" quando há curso associado
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

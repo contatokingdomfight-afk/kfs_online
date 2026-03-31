@@ -2,6 +2,11 @@
 
 > Projeto atual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **março 2026**.
 
+### Documentação canónica em `DOCS/`
+
+- **`DOCS/INDEX.md`** — índice mestre de todos os ficheiros em `DOCS/`
+- **`DOCS/memory.md`** — contexto técnico e decisões recentes (prioridade para continuidade)
+
 ## 🚀 Deploy & Configuração
 
 ### Início Rápido

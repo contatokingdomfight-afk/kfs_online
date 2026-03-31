@@ -123,7 +123,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 Se precisar de mais detalhes, consulte:
 
-- **Push no GitHub**: `DOCS/RESOLVER_GITHUB_PUSH.md`
+- **Push no GitHub**: `DOCS/DEPLOY_VERCEL.md` (secção «2. Git e push» — GitHub CLI ou PAT)
 - **Deploy Completo**: `DOCS/DEPLOY_VERCEL.md`
 - **Sistema Multi-Escola**: `DOCS/SISTEMA_MULTI_ESCOLA.md`
 - **Guia Rápido Multi-Escola**: `DOCS/GUIA_RAPIDO_MULTI_ESCOLA.md`

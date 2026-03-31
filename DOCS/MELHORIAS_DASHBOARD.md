@@ -1,5 +1,12 @@
 # Melhorias do Dashboard - Kingdom Fight School
 
+## Estado (março 2026)
+
+- **«Sua próxima aula»:** carrossel horizontal (`OpenClassesCarouselShell`) com **todas** as aulas elegíveis da semana que não são só «aula livre» quando o aluno tem plano (várias modalidades / mesmo dia). **Sem plano:** as aulas livres elegíveis concentram-se nesta secção.
+- **«Nesta semana — aulas livres»:** carrossel à parte quando há plano e aulas livres adicionais; **depois do Painel do Guerreiro**.
+- **Componentes:** `app/dashboard/page.tsx`, `LessonPromoBlock.tsx`, `OpenClassesCarouselShell.tsx`, `open-classes-carousel-constants.ts`; estado vazio em `NextLessonCard.tsx` (apenas mensagem sem aulas).
+- **Chaves i18n:** `dashboardNextLessonCarouselHint`, `dashboardOpenClassesCarouselHint`, `dashboardCarouselPrev` / `Next`.
+
 ## 📋 Resumo
 
 Implementámos melhorias significativas no Dashboard do aluno para torná-lo mais informativo, visual e motivador.
@@ -183,6 +190,8 @@ monday.setDate(monday.getDate() - daysToMonday);
 
 ---
 
-**Data**: 23 de Fevereiro de 2026  
-**Versão**: 1.0  
-**Autor**: AI Assistant (Claude Sonnet 4.5)
+**Histórico:** 23 de Fevereiro de 2026 (v1.0) — atualizado março 2026 (carrosséis).
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

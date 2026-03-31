@@ -30,7 +30,8 @@
 | Item | Estado | Notas |
 |------|--------|--------|
 | Dashboard do aluno | Feito | Próximas aulas da semana, marcar presença, histórico |
-| Próxima aula em destaque | Feito | Card com modalidade, data, horário |
+| Próxima aula em destaque | Feito | **Carrossel** «Sua próxima aula»: todas as aulas elegíveis (plano: várias modalidades/dia); sem plano: aulas livres nesta secção |
+| Secção «Aulas livres» na semana | Feito | **Carrossel** «Nesta semana — aulas livres» quando há plano e aulas livres extra (após Painel do Guerreiro) |
 | Lista “Esta semana” (resto das aulas) | Feito | Com estado de presença por aula |
 | Marcar presença (check-in) | Feito | Botão/link por aula; link direto `/check-in/[lessonId]` |
 | Histórico de presenças (passadas) | Feito | Lista com modalidade, data, horário, status (Pendente/Confirmada/Falta) |
@@ -43,7 +44,7 @@
 | Meta do mês (assiduidade) | Feito | Configuração em Admin Configurações; barra de progresso e celebração no dashboard |
 | Meta de saúde (IMC) | Feito | Card no dashboard quando há peso+altura; faixa OMS e sugestão “atingir/manter faixa saudável” |
 | Metas de avaliação | Feito | Até 2 eixos do radar a melhorar (ex.: “Subir Técnico para 8”) no dashboard |
-| **Aulas livres (open class)** | Feito | `Lesson.isOpenClass`; alunos **sem plano** ou com plano **sem check-in** veem na lista da semana **apenas** aulas livres + podem RSVP e check-in como quem tem plano; lógica partilhada em `lib/dashboard-lesson-filter.ts` |
+| **Aulas livres (open class)** | Feito | `Lesson.isOpenClass`; alunos **sem plano** ou com plano **sem check-in** veem **apenas** aulas livres (carrossel «Sua próxima aula»); com plano, secção extra de carrossel para livres; lógica em `lib/dashboard-lesson-filter.ts` |
 | Critérios (resultados): ação «Ver como melhorar» com conteúdo | Por fazer | Ligação futura a biblioteca/dicas por critério; placeholder retirado da UI |
 
 ---
@@ -138,7 +139,9 @@
 | Listar coaches | Feito | `/admin/coaches` |
 | Convidar coach (novo) | Feito | `/admin/coaches/novo` |
 | Editar coach (nome, especialidades, valor/hora) | Feito | `/admin/coaches/[id]`; hourly_rate para pagamento por aulas |
+| Coach em várias escolas (N:N) | Feito | Tabela `CoachSchool`; UI `CoachSchoolMultiSelect` (pesquisa + chips); primeira escola = principal em `createCoach` |
 | Autorizar coach a criar cursos | Feito | Checkbox can_create_courses no perfil do aluno do coach |
+| UX escolas / coaches | Feito | Modais de carregamento em criar escola e guardar; `loading.tsx` na ficha do coach |
 
 ---
 
@@ -293,4 +296,8 @@ Com base na especificação e na dependência entre módulos:
 
 ---
 
-*Última atualização (março 2026): **aulas livres** (`isOpenClass`) no dashboard, check-in/RSVP sem plano, **Vitest** + seed de contas de teste; mensalidades **Europe/Lisbon** (5.º dia útil / dia 10), cron **payment-suspension**, **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**, **Next.js 15**. Próximos passos opcionais: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push, E2E (Playwright).*
+*Última atualização (março 2026): carrosséis no dashboard (**Sua próxima aula** / **Aulas livres**), **CoachSchool** multi-escola, correções RSC no cliente, **favicon** (`app/icon` + rewrite), opcional **NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS**; **aulas livres** (`isOpenClass`), check-in/RSVP sem plano, **Vitest** + seed, mensalidades **Europe/Lisbon**, cron **payment-suspension**, **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**, **Next.js 15**. Próximos passos opcionais: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push, E2E (Playwright).*
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

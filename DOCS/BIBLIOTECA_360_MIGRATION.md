@@ -21,3 +21,7 @@ Para ativar a Biblioteca 360º completa (módulos, progresso, nível), execute a
 ## Retrocompatibilidade
 
 Cursos sem módulos continuam a funcionar com o vídeo principal (`video_url`).
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

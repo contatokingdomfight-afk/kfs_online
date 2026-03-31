@@ -314,3 +314,7 @@ Quando a funcionalidade for implementada, poderá existir uma entidade de **conf
 3️⃣ Ligar modelo às telas (wireframes)
 
 👉 Diga qual você quer fazer agora que eu sigo direto.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

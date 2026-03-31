@@ -72,3 +72,7 @@ Fazer deploy. Se funcionar, o problema pode estar na configuração de crons. De
 - **Render** – suporta Next.js
 
 O projeto pode ser migrado se o problema na Vercel persistir.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

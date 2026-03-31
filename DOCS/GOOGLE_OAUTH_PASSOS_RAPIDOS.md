@@ -218,3 +218,7 @@ Redirect URI: https://kfs-online.vercel.app/auth/callback
 ---
 
 **💡 Dica:** Guarde o Client ID e Client Secret num local seguro. Vai precisar deles para configurar o Supabase!
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

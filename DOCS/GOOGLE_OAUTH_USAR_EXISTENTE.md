@@ -197,3 +197,7 @@ Sem ela, o login com Google **NÃO VAI FUNCIONAR**!
 ---
 
 **💡 Próximo Passo:** Editar "Web client 1" e adicionar as URIs!
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

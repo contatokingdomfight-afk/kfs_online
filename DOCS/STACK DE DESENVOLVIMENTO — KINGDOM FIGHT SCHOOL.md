@@ -297,3 +297,7 @@ ou
 ### 2️⃣ Criar a **estrutura base do projeto (pastas + roles)**
 
 👉 Me diz qual você prefere que eu construa primeiro contigo, já **pensando em prompts para usar direto no Cursor**.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

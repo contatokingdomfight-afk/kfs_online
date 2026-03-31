@@ -98,3 +98,7 @@ Pagas: comissões Stripe + assinatura do software de faturação. A KFS regista 
 ## Nota técnica
 
 Os inserts em `Payment` (Supabase) devem incluir sempre o campo `id` (UUID). Corrigido em: `lib/renewals.ts` e `app/api/stripe/webhook/route.ts`.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

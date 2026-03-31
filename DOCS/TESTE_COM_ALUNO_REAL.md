@@ -63,3 +63,7 @@ Para checklists detalhados por perfil (Admin, Coach, Aluno), usa o **GUIA_TESTE_
 - **Biblioteca vazia:** Atribuir um plano com "Acesso digital" ou criar uma compra de curso no Admin (Financeiro ou lógica de compra).
 
 Testar com um aluno real é a melhor forma de validar o fluxo completo e a experiência móvel (dashboard no telemóvel).
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

@@ -272,3 +272,7 @@ Validar que o Admin vê e acede a:
 ---
 
 *Documento alinhado ao estado atual da aplicação KFS. Atualizar quando forem adicionadas novas funcionalidades por perfil.*
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

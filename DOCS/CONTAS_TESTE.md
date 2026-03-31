@@ -40,3 +40,7 @@ npm test
 ```
 
 Cobre o filtro de aulas no dashboard (`lib/dashboard-lesson-filter.ts`), incluindo aulas livres para quem não tem plano.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

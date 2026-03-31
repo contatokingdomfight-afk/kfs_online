@@ -197,3 +197,7 @@ Produtos e eventos que aumentam a margem (Camps, Workshops, cursos avulsos) deve
 | Receita adicional           | Página de cursos/eventos com compra para quem não tem acesso.                       |
 
 Este documento deve ser atualizado à medida que as funcionalidades forem implementadas ou que novas decisões de produto forem tomadas.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

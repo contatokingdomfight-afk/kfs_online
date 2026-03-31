@@ -1,5 +1,7 @@
 # Guia Rápido: Sistema Multi-Escola
 
+> **Março 2026:** coaches podem lecionar em **várias escolas** (`CoachSchool` N:N). Em **Admin → Coaches → novo/editar**, usar o seletor com pesquisa e chips (não um único `schoolId`). Ver `DOCS/memory.md` secção Admin – Escolas e Coaches.
+
 ## 🚀 Início Rápido
 
 ### Passo 1: Executar Migration
@@ -52,12 +54,12 @@ SELECT COUNT(*) FROM "Lesson" WHERE "schoolId" = 'default-school-001';
 3. Preencha Email e Nome
 4. Clique em **"Enviar convite"**
 
-### Passo 5: Criar Coach como Aluno
+### Passo 5: Criar Coach (e opcionalmente perfil de aluno)
 
 1. Aceda a **Admin** → **Coaches** → **"Novo coach"**
-2. Selecione a **Escola**
+2. Em **«Escolas onde leciona»**, pesquisa e adiciona **uma ou mais** escolas (a primeira é a **Principal** para o perfil de aluno, se ativares o checkbox abaixo)
 3. Preencha Email, Nome, Especialidades
-4. ✅ Marque **"Este coach também é aluno"**
+4. ✅ Marque **"Este coach também é aluno"** se aplicável
 5. Clique em **"Enviar convite"**
 
 O coach agora tem:
@@ -195,3 +197,7 @@ Se tiver dúvidas ou problemas:
 ---
 
 **Última atualização**: 23 de Fevereiro de 2026
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

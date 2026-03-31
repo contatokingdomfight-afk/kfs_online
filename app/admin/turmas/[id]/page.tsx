@@ -6,29 +6,38 @@ import { redirect } from "next/navigation";
 import { formatLessonDate } from "@/lib/lesson-utils";
 import { EditarAulaForm } from "./EditarAulaForm";
 import { CancelarAulaButton } from "./CancelarAulaButton";
-import { getCachedLocations, getCachedModalityRefs } from "@/lib/cached-reference-data";
+import { getCachedModalityRefs, getLocationsForSchool } from "@/lib/cached-reference-data";
+import { buildTurmasListQuery } from "@/lib/turmas-list-query";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
 
-export default async function AdminTurmaEditarPage({ params }: Props) {
+export default async function AdminTurmaEditarPage({ params, searchParams }: Props) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const { id: lessonId } = await params;
+  const sp = await searchParams;
+  const turmasReturnQuery = buildTurmasListQuery(sp);
   const adminResult = getAdminClientOrNull();
   const supabase = adminResult.client ?? (await createClient());
 
   const { data: lesson } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, coachId, locationId, capacity, planningNotes, isOneOff, isOpenClass")
+    .select(
+      "id, modality, date, startTime, endTime, coachId, schoolId, locationId, capacity, planningNotes, isOneOff, isOpenClass"
+    )
     .eq("id", lessonId)
     .single();
 
   if (!lesson) {
+    const backHref = turmasReturnQuery ? `/admin/turmas?${turmasReturnQuery}` : "/admin/turmas";
     return (
       <div>
         <p style={{ color: "var(--text-secondary)", marginBottom: 16 }}>Aula não encontrada.</p>
-        <Link href="/admin/turmas" className="btn btn-secondary" style={{ textDecoration: "none" }}>
+        <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>
           ← Voltar
         </Link>
       </div>
@@ -44,10 +53,22 @@ export default async function AdminTurmaEditarPage({ params }: Props) {
     name: userById.get(c.userId)?.name ?? userById.get(c.userId)?.email ?? "—",
   }));
 
-  const [locationOptions, modalityOptions] = await Promise.all([
-    getCachedLocations(supabase),
-    getCachedModalityRefs(supabase),
-  ]);
+  const schoolId = (lesson as { schoolId?: string }).schoolId ?? "";
+  let locationOptions = schoolId ? await getLocationsForSchool(supabase, schoolId) : [];
+  const initialLocationId = (lesson as { locationId?: string }).locationId ?? "";
+  if (initialLocationId && !locationOptions.some((l) => l.id === initialLocationId)) {
+    const { data: orphan } = await supabase.from("Location").select("id, name").eq("id", initialLocationId).maybeSingle();
+    if (orphan) {
+      locationOptions = [...locationOptions, orphan];
+    } else {
+      locationOptions = [
+        ...locationOptions,
+        { id: initialLocationId, name: "(local atual — já não disponível na lista)" },
+      ];
+    }
+  }
+
+  const modalityOptions = await getCachedModalityRefs(supabase);
   const modalityName = modalityOptions.find((m) => m.code === lesson.modality)?.name ?? lesson.modality;
 
   const dateStr = typeof lesson.date === "string" ? lesson.date.slice(0, 10) : lesson.date;
@@ -56,7 +77,7 @@ export default async function AdminTurmaEditarPage({ params }: Props) {
     <div style={{ maxWidth: "min(420px, 100%)" }}>
       <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
         <Link
-          href="/admin/turmas"
+          href={turmasReturnQuery ? `/admin/turmas?${turmasReturnQuery}` : "/admin/turmas"}
           style={{
             color: "var(--text-secondary)",
             fontSize: "clamp(15px, 3.8vw, 17px)",
@@ -85,12 +106,13 @@ export default async function AdminTurmaEditarPage({ params }: Props) {
       </p>
       <EditarAulaForm
         lessonId={lessonId}
+        turmasReturnQuery={turmasReturnQuery}
         initialModality={lesson.modality}
         initialDate={dateStr}
         initialStartTime={lesson.startTime}
         initialEndTime={lesson.endTime}
         initialCoachId={lesson.coachId}
-        initialLocationId={(lesson as { locationId?: string }).locationId ?? ""}
+        initialLocationId={initialLocationId}
         initialCapacity={lesson.capacity ?? ""}
         initialPlanningNotes={lesson.planningNotes ?? ""}
         initialIsOpenClass={Boolean((lesson as { isOpenClass?: boolean }).isOpenClass)}
@@ -98,7 +120,7 @@ export default async function AdminTurmaEditarPage({ params }: Props) {
         locationOptions={locationOptions ?? []}
         modalityOptions={modalityOptions ?? []}
       />
-      <CancelarAulaButton lessonId={lessonId} />
+      <CancelarAulaButton lessonId={lessonId} turmasReturnQuery={turmasReturnQuery} />
     </div>
   );
 }

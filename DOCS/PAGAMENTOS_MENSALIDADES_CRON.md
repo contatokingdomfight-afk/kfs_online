@@ -66,3 +66,7 @@ Definidos em `vercel.json`:
 ---
 
 *Última atualização: março de 2026.*
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

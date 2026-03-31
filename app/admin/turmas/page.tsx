@@ -9,6 +9,7 @@ import { TurmasViewSwitcher } from "./TurmasViewSwitcher";
 import { TurmasSchoolFilter } from "./TurmasSchoolFilter";
 import { getWeekStartMonday, getWeekEndSunday } from "@/lib/lesson-utils";
 import { getCachedLocations, getCachedModalityRefs } from "@/lib/cached-reference-data";
+import { buildTurmasListQueryFromState } from "@/lib/turmas-list-query";
 import { WeekView, ModalityView, type LessonRow } from "./TurmasViews";
 
 export default async function AdminTurmasPage({
@@ -76,6 +77,12 @@ export default async function AdminTurmasPage({
     schoolFilterParam && schools?.some((s) => s.id === schoolFilterParam)
       ? (lessons ?? []).filter((l) => (l as { schoolId?: string }).schoolId === schoolFilterParam)
       : lessons;
+
+  const editLessonQuery = buildTurmasListQueryFromState({
+    view,
+    weekYmd: weekMondayForLink,
+    schoolId: schoolFilterParam,
+  });
 
   return (
     <div style={{ maxWidth: "min(700px, 100%)" }}>
@@ -155,6 +162,7 @@ export default async function AdminTurmasPage({
             coaches={coaches ?? null}
             modalities={modalities ?? null}
             schools={schools ?? null}
+            editLessonQuery={editLessonQuery}
           />
         )}
         {!lessonsError && view === "modalidade" && lessonsForView && lessonsForView.length > 0 && (
@@ -164,6 +172,7 @@ export default async function AdminTurmasPage({
             locations={locations ?? null}
             coaches={coaches ?? null}
             schools={schools ?? null}
+            editLessonQuery={editLessonQuery}
           />
         )}
         {!lessonsError &&

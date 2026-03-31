@@ -311,3 +311,7 @@ Agora temos três caminhos naturais:
 3️⃣ **Modelo de dados (banco / lógica por trás)**
 
 👉 Qual seguimos agora?
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

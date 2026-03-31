@@ -33,3 +33,7 @@
 - Vídeos são reproduzidos em iframe
 - Textos são exibidos para leitura
 - Botão "Marcar como concluído" por unidade
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

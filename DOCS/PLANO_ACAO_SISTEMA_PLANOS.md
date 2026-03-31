@@ -187,3 +187,7 @@ Criar em `lib/plan-access.ts` (ou equivalente):
 - **Identificação do plano**: usar `Plan.name` (ex.: "Kingdom Online") ou um campo `plan_type` (enum) para lógica mais estável.
 - **Multi-escola**: os planos têm `schoolId`; garantir que a lógica de acesso respeita a escola do aluno.
 - **Alunos sem plano**: tratar como sem acesso a performance e check-in (comportamento conservador).
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

@@ -76,3 +76,7 @@ A página `/coach` será reestruturada nas seguintes secções, por ordem de pri
     *   **Condição:** Apenas visível se o professor também tiver um perfil de aluno associado (`coach.studentId` existe).
     *   **Posição:** Para evitar confusão de contexto, este link **não** deve estar no conteúdo do dashboard de coach. Deve ser um item persistente na navegação principal da aplicação (na barra lateral ou no menu do perfil do utilizador).
     *   **Texto:** "Minha Área de Aluno".
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*

@@ -231,3 +231,7 @@ Agora temos dois caminhos MUITO bons:
 
 👉 Qual você prefere fazer agora?  
 (Se quiser, já escrevo **o código base dos componentes** pronto para colar no projeto.)
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
