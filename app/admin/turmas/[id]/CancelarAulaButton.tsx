@@ -6,16 +6,6 @@ import { deleteLesson, type DeleteLessonScope } from "../actions";
 
 type Props = { lessonId: string; turmasReturnQuery?: string; isOneOff: boolean };
 
-function isNextRedirect(e: unknown): boolean {
-  return (
-    typeof e === "object" &&
-    e !== null &&
-    "digest" in e &&
-    typeof (e as { digest: unknown }).digest === "string" &&
-    (e as { digest: string }).digest.startsWith("NEXT_REDIRECT")
-  );
-}
-
 export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff }: Props) {
   const [mounted, setMounted] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -45,7 +35,6 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
   async function handleConfirm() {
     setError(null);
     setPending(true);
-    const href = turmasReturnQuery ? `/admin/turmas?${turmasReturnQuery}` : "/admin/turmas";
     try {
       const effectiveScope: DeleteLessonScope = isOneOff ? "single" : scope;
       const result = await deleteLesson(lessonId, effectiveScope, turmasReturnQuery);
@@ -53,14 +42,13 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
         setError(result.error);
         return;
       }
-      // Fallback se o servidor devolver sucesso sem redirect (não esperado)
-      setModalOpen(false);
-      window.location.assign(href);
-    } catch (e) {
-      if (isNextRedirect(e)) {
+      if (result?.success && result.redirectTo) {
         setModalOpen(false);
+        window.location.assign(result.redirectTo);
         return;
       }
+      setError("Não foi possível concluir o cancelamento. Tenta de novo.");
+    } catch {
       setError("Erro ao cancelar aula.");
     } finally {
       setPending(false);

@@ -5,7 +5,6 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { turmasPathAfterDelete } from "@/lib/turmas-list-query";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
@@ -230,7 +229,13 @@ export async function updateLesson(
 
 export type DeleteLessonScope = "single" | "series_future";
 
-export type DeleteLessonResult = { error?: string; success?: boolean; deletedCount?: number };
+export type DeleteLessonResult = {
+  error?: string;
+  success?: boolean;
+  deletedCount?: number;
+  /** URL interna para o cliente após sucesso (evita redirect() na action, que pode gerar 400). */
+  redirectTo?: string;
+};
 
 /** Segunda=1 … Domingo=7 (alinhado a `createLesson` / dia da semana da recorrência). */
 function weekdayFromYmd(ymd: string): number | null {
@@ -275,7 +280,11 @@ export async function deleteLesson(
       return { error: error.message };
     }
     revalidatePathsAfterLessonDelete();
-    redirect(turmasPathAfterDelete(returnQuery));
+    return {
+      success: true,
+      deletedCount: 1,
+      redirectTo: turmasPathAfterDelete(returnQuery),
+    };
   }
 
   const { data: anchor, error: fetchErr } = await supabase
@@ -331,7 +340,11 @@ export async function deleteLesson(
   }
 
   revalidatePathsAfterLessonDelete();
-  redirect(turmasPathAfterDelete(returnQuery));
+  return {
+    success: true,
+    deletedCount: n,
+    redirectTo: turmasPathAfterDelete(returnQuery),
+  };
 }
 
 function revalidatePathsAfterLessonDelete() {
