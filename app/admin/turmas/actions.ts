@@ -266,13 +266,19 @@ export async function deleteLesson(
   const id = lessonId.trim();
 
   if (scope === "single") {
-    const { error } = await supabase.from("Lesson").delete().eq("id", id);
+    const { data: deletedRows, error } = await supabase.from("Lesson").delete().eq("id", id).select("id");
     if (error) {
       console.error("deleteLesson error:", error);
       return { error: error.message };
     }
+    if (!deletedRows?.length) {
+      return {
+        error:
+          "Nenhuma aula foi removida. Verifica permissões (admin com service role) ou se a aula já não existia.",
+      };
+    }
     revalidatePathsAfterLessonDelete();
-    return { success: true, deletedCount: 1 };
+    return { success: true, deletedCount: deletedRows.length };
   }
 
   const { data: anchor, error: fetchErr } = await supabase
@@ -320,15 +326,19 @@ export async function deleteLesson(
     return { error: "Nenhuma aula em série encontrada para remover." };
   }
 
-  const { error: delErr } = await supabase.from("Lesson").delete().in("id", ids);
+  const { data: deletedRows, error: delErr } = await supabase.from("Lesson").delete().in("id", ids).select("id");
 
   if (delErr) {
     console.error("deleteLesson series:", delErr);
     return { error: delErr.message };
   }
+  const n = deletedRows?.length ?? 0;
+  if (n === 0) {
+    return { error: "Nenhuma aula foi removida." };
+  }
 
   revalidatePathsAfterLessonDelete();
-  return { success: true, deletedCount: ids.length };
+  return { success: true, deletedCount: n };
 }
 
 function revalidatePathsAfterLessonDelete() {

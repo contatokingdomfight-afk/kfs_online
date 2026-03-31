@@ -70,7 +70,7 @@
 - **Ficha do coach:** `app/admin/coaches/[id]/loading.tsx` — estado de carregamento ao navegar para a página de detalhe.
 - **Escolas onde leciona:** componente `components/CoachSchoolMultiSelect.tsx` — pesquisa, lista rolável, chips com remoção; ordem define a primeira como «Principal» (alinhado a `schoolIds[0]` em `createCoach`).
 - **Turmas / editar aula:** `app/admin/turmas/[id]/loading.tsx` — «A abrir edição…» ao navegar para a edição; no formulário, `FormLoadingModal` «A guardar alterações…»; após guardar com sucesso, redireciona para `/admin/turmas` com a mesma query (`view`, `week`, `school`) via `lib/turmas-list-query.ts`. Locais no select: `getLocationsForSchool` por `schoolId` da aula; `getCachedLocations` usa service role no callback de cache para não devolver lista vazia por cache incorreto.
-- **Cancelar aula (edição):** modal com escolha — **apenas esta aula** ou **esta e todas as futuras** da mesma recorrência semanal (`deleteLesson` com `series_future` em `app/admin/turmas/actions.ts`: mesmo `schoolId`, `coachId`, `modality`, `startTime`, `endTime`, `isOpenClass`, `isOneOff=false`, mesmo dia da semana, `date` ≥ data da aula). Aulas únicas (`isOneOff`) só explicam remoção da ocorrência única.
+- **Cancelar aula (edição):** modal (portal em `document.body`, `window.location.assign` para Turmas após sucesso) com **«Cancelar apenas esta aula»** ou **«Deletar esta e todas as futuras aulas a partir desta»** (`deleteLesson` com `series_future`: mesmo `schoolId`, `coachId`, `modality`, `startTime`, `endTime`, `isOpenClass`, `isOneOff=false`, mesmo dia da semana, `date` ≥ data da aula). A `delete` confirma linhas removidas com `.select("id")`; se zero linhas, devolve erro explícito.
 
 ### 3.7 Produção (Vercel) — favicon, RSC e métricas
 
