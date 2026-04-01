@@ -9,6 +9,11 @@ type Props = {
   variant?: "sidebar" | "button";
 };
 
+/** `redirect()` no servidor lança isto; não é falha — não logar como erro. */
+function isNextRedirect(error: unknown): boolean {
+  return error instanceof Error && error.message === "NEXT_REDIRECT";
+}
+
 export function LogoutButton({ label, variant = "sidebar" }: Props) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -17,9 +22,13 @@ export function LogoutButton({ label, variant = "sidebar" }: Props) {
     setLoading(true);
     try {
       await signOut();
-      router.push("/sign-in");
-      router.refresh();
+      // Não usar router.refresh() aqui: ainda estamos na rota protegida e o RSC pode
+      // executar redirect() → NEXT_REDIRECT, que o catch tratava como "Logout error".
+      router.replace("/sign-in");
     } catch (error) {
+      if (isNextRedirect(error)) {
+        return;
+      }
       console.error("Logout error:", error);
       setLoading(false);
     }
