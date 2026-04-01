@@ -49,7 +49,7 @@
 
 - **Pós-registo:** destino **`/dashboard`** (sem obrigar o wizard). `lib/auth/sync-user.ts` cria `StudentProfile` com `hasCompletedOnboarding: true` para novos alunos; OAuth em `app/auth/callback/route.ts` não redireciona para `/onboarding`.
 - **Tour no dashboard:** `StudentOnboardingGate` em `app/dashboard/layout.tsx`; wizard opcional em `app/onboarding/`.
-- **Recuperação de senha:** `app/auth/forgot-password`, fluxo de atualização em `app/auth/update-password` (Supabase `resetPasswordForEmail`); adicionar URLs em Supabase Auth → Redirect URLs.
+- **Recuperação de senha:** `resetPasswordForEmail` com `redirectTo` = `/auth/update-password`; a rota tem de estar em **`publicPaths`** no `middleware` (senão o `?code=` perde-se ao redirecionar para `/sign-in` e aparece `otp_expired`). Na página, `exchangeCodeForSession(code)` no cliente; Supabase → Redirect URLs deve incluir `…/auth/update-password`.
 - **Aula experimental** (`/aula-experimental`): escolha de **escola** + slots por `expandLessonsForDateRange` e `schoolId`; `submitTrialRequest` valida escola, modalidade e ocorrência (`lessonId::occurrenceDate`).
 
 ### 3.3 Testes e seed

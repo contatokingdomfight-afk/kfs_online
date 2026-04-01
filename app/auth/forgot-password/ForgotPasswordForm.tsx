@@ -19,7 +19,8 @@ export function ForgotPasswordForm({ initialLocale }: { initialLocale: Locale })
     setLoading(true);
     const supabase = createClient();
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent("/auth/update-password")}`;
+    /** Mesma página onde o browser troca o `code` (PKCE); tem de estar nas Redirect URLs do Supabase. */
+    const redirectTo = `${origin}/auth/update-password`;
     const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo,
     });

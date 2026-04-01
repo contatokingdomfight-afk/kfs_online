@@ -54,10 +54,12 @@ Valores exatos: copiar do `.env.local` de desenvolvimento (sem secrets no Git).
 Em **Authentication → URL Configuration**:
 
 - **Site URL:** URL de produção (ou `http://localhost:3000` em dev).
-- **Redirect URLs:** incluir pelo menos:
+- **Redirect URLs:** incluir pelo menos (ou um wildcard `https://<domínio>/auth/**`):
   - `http://localhost:3000/auth/callback`
-  - `https://<o-teu-dominio-ou-preview>/auth/callback`  
-  O fluxo **Esqueci a senha** envia `redirectTo` = `/auth/callback?next=/auth/update-password` (mesma origem); o utilizador define a nova palavra-passe em `/auth/update-password` após abrir o link do email.
+  - `http://localhost:3000/auth/update-password`
+  - `https://<o-teu-dominio-ou-preview>/auth/callback`
+  - `https://<o-teu-dominio-ou-preview>/auth/update-password`  
+  O email de **recuperação de senha** usa `redirectTo` = `/auth/update-password` (com `?code=` na URL). Essa rota tem de ser **pública** no middleware (já está em `publicPaths`) e **listada** aqui; caso contrário o utilizador é enviado para `/sign-in` sem trocar o código e o link expira (`otp_expired`).
 
 ---
 

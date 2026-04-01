@@ -1,7 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const publicPaths = ["/", "/sign-in", "/sign-up", "/aula-experimental", "/lista_espera", "/auth/callback", "/auth/forgot-password"];
+/** Inclui `/auth/update-password`: link do email de reset traz `?code=`; tem de ser público antes da sessão existir. */
+const publicPaths = [
+  "/",
+  "/sign-in",
+  "/sign-up",
+  "/aula-experimental",
+  "/lista_espera",
+  "/auth/callback",
+  "/auth/forgot-password",
+  "/auth/update-password",
+];
 
 /** Aluno sem plano: onboarding, escolher plano, callback OAuth e free tier (dashboard + biblioteca + perfil). */
 const studentAllowedWithoutPlanPrefixes = ["/onboarding", "/escolher-plano", "/auth/callback", "/auth/update-password"];

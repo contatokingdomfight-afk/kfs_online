@@ -17,11 +17,50 @@ export function UpdatePasswordForm({ initialLocale }: { initialLocale: Locale })
   const [sessionReady, setSessionReady] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSessionReady(!!session);
-    });
-  }, []);
+    let cancelled = false;
+    async function establishRecoverySession() {
+      const supabase = createClient();
+      if (typeof window === "undefined") return;
+
+      const url = new URL(window.location.href);
+      const oauthErr = url.searchParams.get("error");
+      const oauthDesc = url.searchParams.get("error_description");
+      if (oauthErr) {
+        if (!cancelled) {
+          setError(
+            oauthDesc?.replace(/\+/g, " ") ??
+              (initialLocale === "en" ? "Link invalid or expired. Request a new reset." : "Link inválido ou expirado. Pede um novo reset.")
+          );
+          setSessionReady(false);
+        }
+        return;
+      }
+
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeErr) {
+          if (!cancelled) {
+            setError(exchangeErr.message);
+            setSessionReady(false);
+          }
+          return;
+        }
+        window.history.replaceState({}, "", url.pathname);
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!cancelled) {
+        setSessionReady(!!session);
+      }
+    }
+    establishRecoverySession();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialLocale]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,10 +89,11 @@ export function UpdatePasswordForm({ initialLocale }: { initialLocale: Locale })
     return (
       <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-bg">
         <div className="container-mobile text-center">
-          <p className="text-mobile-base mb-6" style={{ color: "var(--text-secondary)", lineHeight: 1.5 }}>
-            {initialLocale === "en"
-              ? "Session expired or invalid link. Request a new reset from the sign-in page."
-              : "Sessão expirada ou link inválido. Pedir novo link na página de login."}
+          <p className="text-mobile-base mb-6" style={{ color: error ? "var(--danger)" : "var(--text-secondary)", lineHeight: 1.5 }}>
+            {error ??
+              (initialLocale === "en"
+                ? "Session expired or invalid link. Request a new reset from the sign-in page."
+                : "Sessão expirada ou link inválido. Pedir novo link na página de login.")}
           </p>
           <Link href="/auth/forgot-password" className="btn btn-primary" style={{ textDecoration: "none" }}>
             {t("forgotPasswordTitle")}
