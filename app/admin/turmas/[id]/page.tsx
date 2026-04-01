@@ -107,6 +107,7 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
       <EditarAulaForm
         lessonId={lessonId}
         turmasReturnQuery={turmasReturnQuery}
+        isOneOff={Boolean((lesson as { isOneOff?: boolean }).isOneOff)}
         initialModality={lesson.modality}
         initialDate={dateStr}
         initialStartTime={lesson.startTime}

@@ -5,11 +5,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
-import {
-  performDeleteLesson,
-  type DeleteLessonScope,
-  type DeleteLessonResult,
-} from "@/lib/admin/delete-lesson";
+import { performDeleteLesson, type DeleteLessonResult } from "@/lib/admin/delete-lesson";
 import { performUpdateLesson, type UpdateLessonResult } from "@/lib/admin/update-lesson";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
@@ -221,20 +217,16 @@ export async function updateLesson(
   });
 }
 
-export type { DeleteLessonScope, DeleteLessonResult };
+export type { DeleteLessonResult };
 
 /**
- * Remove uma aula ou todas as instâncias futuras da mesma série recorrente.
- * O fluxo principal na UI usa `POST /api/admin/turmas/delete-lesson` para evitar 400 nas Server Actions.
+ * Remove aula única ou âncora + todas as futuras da série (recorrente).
+ * UI: `POST /api/admin/turmas/delete-lesson`.
  */
-export async function deleteLesson(
-  lessonId: string,
-  scope: DeleteLessonScope = "single",
-  returnQuery?: string
-): Promise<DeleteLessonResult> {
+export async function deleteLesson(lessonId: string, returnQuery?: string): Promise<DeleteLessonResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") {
     return { error: "Não autorizado." };
   }
-  return performDeleteLesson(lessonId, scope, returnQuery);
+  return performDeleteLesson(lessonId, returnQuery);
 }

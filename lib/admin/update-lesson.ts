@@ -2,10 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
+import { listFutureSeriesLessonIds } from "@/lib/admin/recurring-lesson-series";
 
 function getSupabaseForAdminWrite() {
   return getAdminClientOrNull().client;
 }
+
+const UPDATE_CHUNK = 400;
 
 export type UpdateLessonResult = { error?: string; success?: boolean };
 
@@ -50,11 +53,12 @@ export async function performUpdateLesson(payload: UpdateLessonPayload): Promise
   }
 
   const supabase = getSupabaseForAdminWrite() ?? (await createClient());
+  const id = lessonId.trim();
 
   const { data: existing, error: fetchErr } = await supabase
     .from("Lesson")
-    .select("id, schoolId")
-    .eq("id", lessonId.trim())
+    .select("id, schoolId, isOneOff")
+    .eq("id", id)
     .maybeSingle();
 
   if (fetchErr || !existing) {
@@ -70,25 +74,46 @@ export async function performUpdateLesson(payload: UpdateLessonPayload): Promise
     };
   }
 
-  const { error } = await supabase
-    .from("Lesson")
-    .update({
-      modality: modality.trim(),
-      date: date.trim(),
-      startTime: startTime.trim(),
-      endTime: endTime.trim(),
-      coachId: coachId.trim(),
-      locationId: locationId || null,
-      capacity,
-      planningNotes: planningNotes || null,
-      isOpenClass,
-    })
-    .eq("id", lessonId.trim());
+  const isOneOff = Boolean((existing as { isOneOff?: boolean }).isOneOff);
 
-  if (error) return { error: error.message };
+  const sharedFields = {
+    modality: modality.trim(),
+    startTime: startTime.trim(),
+    endTime: endTime.trim(),
+    coachId: coachId.trim(),
+    locationId: locationId || null,
+    capacity,
+    planningNotes: planningNotes || null,
+    isOpenClass,
+  };
+
+  if (isOneOff) {
+    const { error } = await supabase
+      .from("Lesson")
+      .update({
+        ...sharedFields,
+        date: date.trim(),
+      })
+      .eq("id", id);
+
+    if (error) return { error: error.message };
+  } else {
+    const series = await listFutureSeriesLessonIds(supabase, id);
+    if (series.error) return { error: series.error };
+    if (series.ids.length === 0) {
+      return { error: "Nenhuma aula em série encontrada para atualizar." };
+    }
+
+    for (let i = 0; i < series.ids.length; i += UPDATE_CHUNK) {
+      const chunk = series.ids.slice(i, i + UPDATE_CHUNK);
+      const { error } = await supabase.from("Lesson").update(sharedFields).in("id", chunk);
+      if (error) return { error: error.message };
+    }
+    // Cada ocorrência mantém o seu `date` (semana a semana); só propagamos horários, coach, modalidade, etc.
+  }
 
   revalidatePath("/admin/turmas");
-  revalidatePath(`/admin/turmas/${lessonId.trim()}`);
+  revalidatePath(`/admin/turmas/${id}`);
   revalidatePath("/coach");
   revalidatePath("/coach/agenda");
   return { success: true };

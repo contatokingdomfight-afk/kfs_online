@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentDbUserUncached } from "@/lib/auth/get-current-user";
-import { performDeleteLesson, type DeleteLessonScope } from "@/lib/admin/delete-lesson";
+import { performDeleteLesson } from "@/lib/admin/delete-lesson";
 
 export async function POST(request: Request) {
   const dbUser = await getCurrentDbUserUncached();
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 403 });
   }
 
-  let body: { lessonId?: string; scope?: string; returnQuery?: string };
+  let body: { lessonId?: string; returnQuery?: string };
   try {
     body = await request.json();
   } catch {
@@ -16,10 +16,8 @@ export async function POST(request: Request) {
   }
 
   const lessonId = typeof body.lessonId === "string" ? body.lessonId.trim() : "";
-  const scope: DeleteLessonScope =
-    body.scope === "series_future" ? "series_future" : "single";
   const returnQuery = typeof body.returnQuery === "string" ? body.returnQuery : undefined;
 
-  const result = await performDeleteLesson(lessonId, scope, returnQuery);
+  const result = await performDeleteLesson(lessonId, returnQuery);
   return NextResponse.json(result);
 }

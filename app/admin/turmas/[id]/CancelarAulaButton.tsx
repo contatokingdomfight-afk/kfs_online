@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import type { DeleteLessonScope, DeleteLessonResult } from "@/lib/admin/delete-lesson";
+import type { DeleteLessonResult } from "@/lib/admin/delete-lesson";
 
 type Props = { lessonId: string; turmasReturnQuery?: string; isOneOff: boolean };
 
 export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff }: Props) {
   const [mounted, setMounted] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [scope, setScope] = useState<DeleteLessonScope>("single");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +26,6 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
   }, [modalOpen, pending]);
 
   function openModal() {
-    setScope("single");
     setError(null);
     setModalOpen(true);
   }
@@ -36,14 +34,12 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
     setError(null);
     setPending(true);
     try {
-      const effectiveScope: DeleteLessonScope = isOneOff ? "single" : scope;
       const res = await fetch("/api/admin/turmas/delete-lesson", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
           lessonId,
-          scope: effectiveScope,
           returnQuery: turmasReturnQuery || undefined,
         }),
       });
@@ -117,56 +113,10 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
               desfeita.
             </p>
           ) : (
-            <>
-              <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                Escolhe o âmbito. «Futuras» = mesma recorrência semanal (mesmo horário, coach, escola e dia da semana), a partir desta
-                data.
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 10,
-                    cursor: pending ? "default" : "pointer",
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    color: "var(--text-primary)",
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="cancel-scope"
-                    checked={scope === "single"}
-                    disabled={pending}
-                    onChange={() => setScope("single")}
-                    style={{ marginTop: 3, width: 18, height: 18, accentColor: "var(--primary)" }}
-                  />
-                  <span>Cancelar apenas esta aula</span>
-                </label>
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 10,
-                    cursor: pending ? "default" : "pointer",
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    color: "var(--text-primary)",
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="cancel-scope"
-                    checked={scope === "series_future"}
-                    disabled={pending}
-                    onChange={() => setScope("series_future")}
-                    style={{ marginTop: 3, width: 18, height: 18, accentColor: "var(--primary)" }}
-                  />
-                  <span>Deletar esta e todas as futuras aulas a partir desta</span>
-                </label>
-              </div>
-            </>
+            <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+              Serão <strong>eliminadas esta ocorrência e todas as futuras</strong> da mesma série semanal (mesmo horário, coach, escola e
+              dia da semana), a partir desta data. Esta ação não pode ser desfeita.
+            </p>
           )}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
             <button type="button" onClick={() => !pending && setModalOpen(false)} disabled={pending} className="btn btn-secondary" style={{ minHeight: 44 }}>

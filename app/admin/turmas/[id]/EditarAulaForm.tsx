@@ -12,6 +12,8 @@ type Props = {
   lessonId: string;
   /** Query string (sem `?`) para voltar à mesma vista da agenda. */
   turmasReturnQuery: string;
+  /** Se false, ao guardar aplicam-se alterações a todas as futuras da série (cada data semanal mantém-se). */
+  isOneOff: boolean;
   initialModality: string;
   initialDate: string;
   initialStartTime: string;
@@ -29,6 +31,7 @@ type Props = {
 export function EditarAulaForm({
   lessonId,
   turmasReturnQuery,
+  isOneOff,
   initialModality,
   initialDate,
   initialStartTime,
@@ -168,6 +171,19 @@ export function EditarAulaForm({
         </div>
       ) : null}
       <input type="hidden" name="lessonId" value={lessonId} />
+      {!isOneOff && (
+        <p
+          style={{
+            margin: 0,
+            fontSize: "clamp(13px, 3.2vw, 15px)",
+            color: "var(--text-secondary)",
+            lineHeight: 1.5,
+          }}
+        >
+          Ao guardar, <strong>modalidade, horários, coach, local e restantes campos</strong> aplicam-se a <strong>esta e a todas as
+          futuras</strong> da mesma série semanal. A data de cada semana mantém-se.
+        </p>
+      )}
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Modalidade *
