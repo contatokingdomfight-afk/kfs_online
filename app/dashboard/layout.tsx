@@ -11,6 +11,7 @@ import { ResponsiveShell } from "@/components/ResponsiveShell";
 import { NotificationBell } from "@/components/NotificationBell";
 import { StudentOnboardingGate } from "@/components/onboarding/StudentOnboardingGate";
 import { getCachedPlanAccess } from "@/lib/plan-access";
+import { DashboardSplash } from "@/components/DashboardSplash";
 
 export default async function DashboardLayout({
   children,
@@ -116,6 +117,7 @@ export default async function DashboardLayout({
         mainClassName="dashboard-main"
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
       >
+        <DashboardSplash locale={locale} displayName={dbUser.name} />
         <Suspense fallback={null}>
           <StudentOnboardingGate steps={onboardingSteps} labels={onboardingLabels}>
             {children}
