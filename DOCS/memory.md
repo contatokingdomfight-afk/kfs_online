@@ -51,6 +51,7 @@
 - **Tour no dashboard:** `StudentOnboardingGate` em `app/dashboard/layout.tsx`; wizard opcional em `app/onboarding/`.
 - **Recuperação de senha:** `resetPasswordForEmail` corre numa **Server Action** (`app/auth/forgot-password/actions.ts`) com `createClient` de `@/lib/supabase/server` para o **PKCE code verifier** ficar em **cookies** alinhados ao `@supabase/ssr`. `redirectTo` = `…/auth/callback?next=/auth/update-password`; a troca do `code` é em **`GET /auth/callback`** (servidor). `/auth/update-password` e `/auth/callback` em **`publicPaths`**; Supabase → Redirect URLs: `…/auth/callback` e `…/auth/update-password`.
 - **Aula experimental** (`/aula-experimental`): escolha de **escola** + slots por `expandLessonsForDateRange` e `schoolId`; `submitTrialRequest` valida escola, modalidade e ocorrência (`lessonId::occurrenceDate`).
+- **Ranking (Rank):** `/dashboard/rank` — classificação por **XP** na **mesma escola** do aluno (só `Student` ATIVO com `Athlete`). RPC Postgres `get_leaderboard_my_school` (`supabase/migrations/20260402120000_leaderboard_school_rpc.sql`); `lib/leaderboard.ts`. Menu e acesso alinhados a **performance** (`hasPerformanceTracking`). RLS não expõe `User`/`Student` de terceiros: o ranking usa função `SECURITY DEFINER`.
 
 ### 3.3 Testes e seed
 
