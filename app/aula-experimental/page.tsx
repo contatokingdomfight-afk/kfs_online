@@ -3,11 +3,23 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { formatLessonDate } from "@/lib/lesson-utils";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
+import {
+  expandLessonsForDateRange,
+  fetchLessonCancellations,
+  rowsToLessonDefinitions,
+} from "@/lib/lesson-occurrences";
 import { FormularioExperimental } from "./FormularioExperimental";
 
 type SearchParams = Promise<{ sucesso?: string }>;
 
-export type LessonSlot = { id: string; date: string; label: string };
+function addDaysYmd(ymd: string, days: number): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days));
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+}
+
+/** Slot com ocorrência concreta (recorrentes incluídos). */
+export type LessonSlot = { id: string; occurrenceDate: string; label: string };
 
 export default async function AulaExperimentalPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -17,33 +29,55 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
   if (!result.client) return <AdminConfigMissing errorType={result.error} backHref="/" backLabel="← Voltar à página inicial" />;
   const supabase = result.client;
   const today = new Date().toISOString().slice(0, 10);
+  const rangeEnd = addDaysYmd(today, 56);
 
-  const [modalities, lessonsRes] = await Promise.all([
+  const [modalities, schoolsRes, lessonsRes] = await Promise.all([
     getCachedModalityRefs(supabase),
+    supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
     supabase
       .from("Lesson")
-      .select("id, modality, date, startTime, endTime")
-      .gte("date", today)
-      .order("date", { ascending: true })
-      .order("startTime", { ascending: true })
-      .limit(120),
+      .select(
+        "id, modality, date, weekday, startTime, endTime, schoolId, isOneOff, isOpenClass, locationId, coachId, capacity, planningNotes"
+      )
+      .order("startTime", { ascending: true }),
   ]);
 
-  const lessons = lessonsRes.data ?? [];
+  const schools = schoolsRes.data ?? [];
+  const lessonsRaw = lessonsRes.data ?? [];
+  const schoolIds = new Set(schools.map((s) => s.id));
+  const lessonsForActiveSchools = lessonsRaw.filter((row) => {
+    const sid = (row as { schoolId?: string }).schoolId;
+    return sid && schoolIds.has(sid);
+  });
+
+  const lessonIds = lessonsForActiveSchools.map((l) => (l as { id: string }).id);
+  const cancellations = await fetchLessonCancellations(supabase, lessonIds);
+
   const modalityOptions = (modalities ?? []).map((m) => ({ value: m.code, label: m.name }));
 
-  const lessonsByModality: Record<string, LessonSlot[]> = {};
-  for (const m of modalityOptions) {
-    lessonsByModality[m.value] = [];
+  /** schoolId -> modality code -> slots */
+  const lessonsBySchoolId: Record<string, Record<string, LessonSlot[]>> = {};
+  for (const s of schools) {
+    lessonsBySchoolId[s.id] = {};
+    for (const m of modalityOptions) {
+      lessonsBySchoolId[s.id][m.value] = [];
+    }
   }
-  for (const l of lessons) {
-    const mod = l.modality ?? "OTHER";
-    if (!lessonsByModality[mod]) lessonsByModality[mod] = [];
-    lessonsByModality[mod].push({
-      id: l.id,
-      date: l.date,
-      label: `${formatLessonDate(l.date)} ${l.startTime}–${l.endTime}`,
-    });
+
+  for (const school of schools) {
+    const defs = rowsToLessonDefinitions(
+      lessonsForActiveSchools.filter((row) => (row as { schoolId?: string }).schoolId === school.id)
+    );
+    const expanded = expandLessonsForDateRange(defs, cancellations, today, rangeEnd);
+    for (const occ of expanded) {
+      const mod = occ.modality ?? "OTHER";
+      if (!lessonsBySchoolId[school.id][mod]) lessonsBySchoolId[school.id][mod] = [];
+      lessonsBySchoolId[school.id][mod].push({
+        id: occ.id,
+        occurrenceDate: occ.occurrenceDate,
+        label: `${formatLessonDate(occ.occurrenceDate)} · ${occ.startTime}–${occ.endTime}`,
+      });
+    }
   }
 
   if (sucesso) {
@@ -83,9 +117,13 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
           Aula experimental
         </h1>
         <p className="text-mobile-base mb-6" style={{ color: "var(--text-secondary)", lineHeight: 1.5 }}>
-          Preenche os dados e escolhe a modalidade e data. Entraremos em contacto para confirmar a tua vaga.
+          Escolhe o <strong>local</strong>, depois a modalidade e a data. Entraremos em contacto para confirmar a tua vaga.
         </p>
-        <FormularioExperimental modalityOptions={modalityOptions} lessonsByModality={lessonsByModality} />
+        <FormularioExperimental
+          schools={schools.map((s) => ({ id: s.id, name: s.name }))}
+          modalityOptions={modalityOptions}
+          lessonsBySchoolId={lessonsBySchoolId}
+        />
       </div>
     </main>
   );

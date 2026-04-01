@@ -112,7 +112,7 @@ export async function syncUser(supabaseUser: SupabaseUser) {
           await supabase.from("StudentProfile").insert({
             id: crypto.randomUUID(),
             studentId,
-            hasCompletedOnboarding: false,
+            hasCompletedOnboarding: true,
           });
         }
       }
@@ -120,11 +120,10 @@ export async function syncUser(supabaseUser: SupabaseUser) {
       throw studentError;
     } else {
       studentId = newStudentId;
-      // Criar StudentProfile com hasCompletedOnboarding = false para novo aluno
       await supabase.from("StudentProfile").insert({
         id: crypto.randomUUID(),
         studentId: newStudentId,
-        hasCompletedOnboarding: false,
+        hasCompletedOnboarding: true,
       });
     }
   } else {

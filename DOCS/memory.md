@@ -45,7 +45,14 @@
 - **Ficheiros:** `lib/dashboard-lesson-filter.ts`, `app/dashboard/page.tsx`, `app/dashboard/NextLessonCard.tsx`, `app/dashboard/OpenClassesCarouselShell.tsx` (client só scroll/setas; cartões como `children` do servidor), `app/dashboard/LessonPromoBlock.tsx`, `app/admin/turmas/*`, `app/admin/turmas/actions.ts`, `lib/lesson-check-in-window.ts`, `lib/perform-check-in.ts`, `app/dashboard/actions.ts`.
 - **Migração:** `supabase/migrations/20260326140000_lesson_open_class.sql` (se aplicável ao teu projeto Supabase).
 
-### 3.2 Testes e seed
+### 3.2 Cadastro, auth e onboarding (aluno)
+
+- **Pós-registo:** destino **`/dashboard`** (sem obrigar o wizard). `lib/auth/sync-user.ts` cria `StudentProfile` com `hasCompletedOnboarding: true` para novos alunos; OAuth em `app/auth/callback/route.ts` não redireciona para `/onboarding`.
+- **Tour no dashboard:** `StudentOnboardingGate` em `app/dashboard/layout.tsx`; wizard opcional em `app/onboarding/`.
+- **Recuperação de senha:** `app/auth/forgot-password`, fluxo de atualização em `app/auth/update-password` (Supabase `resetPasswordForEmail`); adicionar URLs em Supabase Auth → Redirect URLs.
+- **Aula experimental** (`/aula-experimental`): escolha de **escola** + slots por `expandLessonsForDateRange` e `schoolId`; `submitTrialRequest` valida escola, modalidade e ocorrência (`lessonId::occurrenceDate`).
+
+### 3.3 Testes e seed
 
 - **Unitários:** `npm test` (Vitest) — `lib/dashboard-lesson-filter.test.ts`.
 - **Contas de teste:** `npm run seed:test-users` — precisa `TEST_SEED_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY`, escola ativa; emails em **`DOCS/CONTAS_TESTE.md`**. Ordem dotenv no script: `.env` → `.env.local` (override); **gravar** `.env` antes de correr.
@@ -54,19 +61,19 @@
 
 - **`createPayment`** consolida linhas em `Payment` para o mesmo `studentId` + `referenceMonth`: registar **Pago** quando já existia **Em atraso** (ex.: mensalidade gerada) **atualiza** o registo em vez de criar duplicado. Ver **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
 
-### 3.4 Admin – Turmas
+### 3.5 Admin – Turmas
 
 - Vista **por semana** / por modalidade; criação de aulas (incl. recorrente / one-off) — ver `app/admin/turmas/`.
 - **Modelo de agenda (2026-04):** uma linha em `Lesson` por **definição**; recorrentes usam `weekday` (1–7) e `date` null; ocorrências na agenda são **expandidas** em memória (`lib/lesson-occurrences.ts`). Cancelamento pontual: `LessonCancellation` (só aquela data). Professores N:N: `LessonCoach` (primeiro espelhado em `Lesson.coachId`). Migração: `supabase/migrations/20260401120000_lesson_template_schedule.sql`.
 - **Área Coach** (agenda, presenças na aula, QR, home, presença global, financeiro, experimentais): mesma expansão; links para uma ocorrência usam `?lesson=<id>&date=YYYY-MM-DD`; lista de presenças na aula filtra `Attendance` por `occurrenceDate`. Helper `rowsToLessonDefinitions` em `lib/lesson-occurrences.ts`.
 
-### 3.5 Perfil do atleta – critérios por categoria (resultados de avaliação)
+### 3.6 Perfil do atleta – critérios por categoria (resultados de avaliação)
 
 - **Filtro principal** na área «Critérios por categoria» abre com **Técnico** (não Teórico): `components/evaluation-results/EvaluationResultsDashboard.tsx` (`INITIAL_MAIN_CATEGORY`).
 - **Controle psicológico** pertence ao pilar **Mental** (não Tática): dimensões `MUAY_MENTAL_PSICOLOGICO` / `BOX_MENTAL_PSICOLOGICO` em `GeneralDimension`; componente `Controle psicológico`. Dados antigos com código `*_TATICO_PSICOLOGICO` são mapeados para o eixo mental em `lib/performance-utils.ts`.
 - **Migração:** `supabase/migrations/20260327120000_controle_psicologico_under_mental.sql`.
 
-### 3.6 Admin – Escolas e Coaches (UX)
+### 3.7 Admin – Escolas e Coaches (UX)
 
 - **Escolas:** ao criar ou guardar edição de uma escola, `FormLoadingModal` em `EscolasManager` (mensagens «A criar escola…» / «A guardar alterações…»).
 - **Ficha do coach:** `app/admin/coaches/[id]/loading.tsx` — estado de carregamento ao navegar para a página de detalhe.
@@ -74,13 +81,13 @@
 - **Turmas / editar aula:** `app/admin/turmas/[id]/loading.tsx` — «A abrir edição…» ao navegar para a edição; no formulário, `FormLoadingModal` «A guardar alterações…»; após guardar com sucesso, redireciona para `/admin/turmas` com a mesma query (`view`, `week`, `school`) via `lib/turmas-list-query.ts`. Locais no select: `getLocationsForSchool` por `schoolId` da aula; `getCachedLocations` usa service role no callback de cache para não devolver lista vazia por cache incorreto.
 - **Cancelar aula (edição):** modal em `document.body`. **Recorrente com `?occurrence=YYYY-MM-DD`:** pode **cancelar só essa semana** (`LessonCancellation`) ou **eliminar a definição** (apaga a linha `Lesson`). **Recorrente sem data na URL:** só eliminar definição. **Aula única:** elimina a linha. `lib/admin/delete-lesson.ts` (`performCancelOccurrence`, `performDeleteLessonDefinition`). **`POST /api/admin/turmas/delete-lesson`** com `action`: `cancelOccurrence` | `deleteDefinition`. **Guardar edição:** `POST /api/admin/turmas/update-lesson` — altera **a definição** (incl. vários professores em `LessonCoach`). `EditarAulaForm` com `fetch`. Sucesso: `{ redirectTo }` + `window.location.assign`; `turmasPathAfterDelete` reconstrói a query.
 
-### 3.7 Produção (Vercel) — favicon, RSC e métricas
+### 3.8 Produção (Vercel) — favicon, RSC e métricas
 
 - **Favicon:** `app/icon.tsx` (ImageResponse); rewrite `next.config.mjs`: `/favicon.ico` → `/icon`.
 - **Client vs Server:** carrosséis do dashboard passam só **strings** e **`children`** renderizados no servidor (`OpenClassesCarouselShell` + `LessonPromoBlock`); não passar `Map` nem funções `t` a `"use client"`.
 - **Speed Insights:** avisos de preload (ex.: domínios de terceiros) podem surgir; opcional **`NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS=true`** em `components/VercelMetrics.tsx` para desativar só o Speed Insights (Analytics mantém-se).
 
-### 3.8 Documentação em `DOCS/` (higiene)
+### 3.9 Documentação em `DOCS/` (higiene)
 
 - **Índice:** `DOCS/INDEX.md` lista os ficheiros atuais. Em março 2026 foram removidos resumos de sessão, guias Git obsoletos (repo antigo), texto de treino fora do âmbito do repositório e duplicado curto de marca; **`DEPLOY_VERCEL.md`** foi reescrito para a stack atual (Supabase, sem Clerk).
 
@@ -107,7 +114,7 @@ npm run seed:test-users   # ver DOCS/CONTAS_TESTE.md
 ## 5. Pendências / evoluções (não bloqueantes)
 
 - Editar visibilidade de comentários antigos (PRIVATE ↔ SHARED) — não implementado.
-- Roadmap opcional: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push, E2E — ver **`DOCS/ROADMAP_Plataforma_KFS.md`** secções 14–17.
+- Roadmap opcional: **rankeamento** (evolução + pontos), **Tribo** (feed social); BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push, E2E — ver **`DOCS/ROADMAP_Plataforma_KFS.md`** secções 14–17.
 
 ---
 

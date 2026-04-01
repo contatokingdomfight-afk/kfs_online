@@ -49,6 +49,16 @@ Configurar em **Settings → Environment Variables** (Production e, se necessár
 
 Valores exatos: copiar do `.env.local` de desenvolvimento (sem secrets no Git).
 
+### 4.1 Supabase Auth — callbacks e recuperação de senha
+
+Em **Authentication → URL Configuration**:
+
+- **Site URL:** URL de produção (ou `http://localhost:3000` em dev).
+- **Redirect URLs:** incluir pelo menos:
+  - `http://localhost:3000/auth/callback`
+  - `https://<o-teu-dominio-ou-preview>/auth/callback`  
+  O fluxo **Esqueci a senha** envia `redirectTo` = `/auth/callback?next=/auth/update-password` (mesma origem); o utilizador define a nova palavra-passe em `/auth/update-password` após abrir o link do email.
+
 ---
 
 ## 5. Webhooks

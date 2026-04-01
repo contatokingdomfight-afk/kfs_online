@@ -128,6 +128,11 @@ export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
             {t("signIn")}
           </Link>
         </p>
+        <p className="text-mobile-base text-center mt-3" style={{ color: "var(--text-secondary)" }}>
+          <Link href="/auth/forgot-password" style={{ color: "var(--primary)", textDecoration: "none" }}>
+            {t("loginTrouble")}
+          </Link>
+        </p>
       </div>
     </main>
   );

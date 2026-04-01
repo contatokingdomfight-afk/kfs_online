@@ -231,6 +231,7 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 ### 14.3 Gamificação e presença
 
 - **Feito:** Sistema de faixas (cores) e XP; missões ativas (subir dimensão X + missões configuráveis no Admin); missão “Avaliação física”; conclusão de avaliação na aula atribui XP por targets de dimensão; **badges/conquistas** (primeira aula, 5/10/25/50/100 aulas, 3/5 semanas seguidas, por modalidade); **meta de assiduidade** (X aulas/mês configurável, barra e celebração no dashboard); **página Conquistas** (/dashboard/conquistas) com grelha de badges e próxima conquista; **meta de saúde (IMC)** e **metas de avaliação** (melhorar eixos do radar) no dashboard; **seed de 62 missões** (Admin → Importar missões padrão); faixa mínima nas missões (ex.: Verde ou superior).
+- **Por fazer:** **Sistema de rankeamento** dos alunos com base na **evolução** (ex.: progresso nas dimensões / faixas) e no **acúmulo de pontos** (XP e/ou pontuação dedicada): leaderboards por escola, modalidade ou período; regras e anti-abuso a definir em produto.
 - **Por fazer (opcional):** Battle Pass por temporada; reset automático de missões mensais; recompensas reais (camiseta, desconto).
 
 ### 14.4 Sala de Aula Invertida
@@ -241,12 +242,18 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 
 - **Feito:** Página Loja (/dashboard/loja) com produtos (cursos avulsos, eventos); “Comprar” / “Inscrever-me”; CoursePurchase e registo no Financeiro; desbloqueio de acesso ao conteúdo/evento.
 
+### 14.6 Comunidade – Tribo (feed social)
+
+- **Por fazer:** Página **Tribo** onde membros da comunidade podem **publicar fotos** e **vídeos curtos**; **comentar** e **curtir** publicações; **partilhar** no **Instagram, Facebook**, etc. (links profundos, Open Graph, ou SDKs conforme plataforma). Implica: modelo de publicações e media na BD, armazenamento (ex. Supabase Storage), moderação (denúncias, regras de conteúdo), permissões por role e RGPD.
+
 ---
 
 ## 15. Outros (plano / melhorias futuras)
 
 | Item | Estado | Notas |
 |------|--------|--------|
+| **Rankeamento de alunos** (evolução + acúmulo de pontos) | Por fazer | Leaderboards; alinhado a XP/faixas; ver §14.3 |
+| **Página Tribo** (feed: fotos, vídeos curtos, comentários, curtidas, partilha em redes) | Por fazer | Comunidade; ver §14.6 |
 | Modalidades: Jiu-Jitsu (BJJ), MMA | Por fazer | Hoje: Muay Thai, Boxing, Kickboxing |
 | Biometria (mencionada no plano) | Por fazer | Métricas além de presença; depende de definição de produto |
 | Notificações (email/push) | Feito | Resend: confirmação de presença (coach confirma); cron lembrete aulas (GET /api/cron/lesson-reminders). |
@@ -265,7 +272,7 @@ Com base na especificação e na dependência entre módulos:
 3. **Receita adicional (Loja)** – Feito.
 4. **Dashboard de Performance** – Feito (inclui sugestões de cursos recomendados).
 5. **Gamificação** – Feito (badges, conquistas, meta assiduidade, meta IMC, metas avaliação, seed de missões).
-6. **Próximos passos (opcional):** Battle Pass / temporadas; reset mensal de missões; PWA e app nativo (secção 17); notificações **push** (além de email/cron); melhorias pontuais em mensalidades (relatórios, alertas admin).
+6. **Próximos passos (opcional):** **Rankeamento** (§14.3); **Tribo** / feed social (§14.6); Battle Pass / temporadas; reset mensal de missões; PWA e app nativo (secção 17); notificações **push** (além de email/cron); melhorias pontuais em mensalidades (relatórios, alertas admin).
 
 ---
 
@@ -296,7 +303,7 @@ Com base na especificação e na dependência entre módulos:
 
 ---
 
-*Última atualização (março 2026): carrosséis no dashboard (**Sua próxima aula** / **Aulas livres**), **CoachSchool** multi-escola, correções RSC no cliente, **favicon** (`app/icon` + rewrite), opcional **NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS**; **aulas livres** (`isOpenClass`), check-in/RSVP sem plano, **Vitest** + seed, mensalidades **Europe/Lisbon**, cron **payment-suspension**, **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**, **Next.js 15**. Próximos passos opcionais: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push, E2E (Playwright).*
+*Última atualização (abril 2026): roadmap — **rankeamento** (evolução + pontos) e **Tribo** (feed social com media, interações e partilha); histórico março 2026: carrosséis no dashboard (**Sua próxima aula** / **Aulas livres**), **CoachSchool** multi-escola, **aulas livres** (`isOpenClass`), expansão de ocorrências de aula (`lesson-occurrences`), etc. Próximos passos opcionais: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push, E2E (Playwright).*
 
 ---
 

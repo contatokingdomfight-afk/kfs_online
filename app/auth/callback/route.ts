@@ -42,13 +42,9 @@ export async function GET(request: NextRequest) {
         console.error("Auth callback exchange error:", exchangeError);
         return NextResponse.redirect(`${origin}/sign-in?error=auth_callback_error`);
       }
-      // Sincronizar User/Student e decidir destino
       if (session?.user) {
         try {
-          const { hasCompletedOnboarding } = await syncUser(session.user);
-          if (!hasCompletedOnboarding) {
-            redirectPath = "/onboarding";
-          }
+          await syncUser(session.user);
         } catch (syncErr) {
           console.error("Auth callback syncUser (non-fatal):", syncErr);
         }

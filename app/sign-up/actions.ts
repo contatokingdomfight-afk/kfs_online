@@ -16,8 +16,8 @@ export async function syncUserAfterSignUp(): Promise<{ redirect: string } | { er
     return { error: "Sessão não encontrada. Tenta fazer login novamente." };
   }
   try {
-    const { hasCompletedOnboarding } = await syncUser(user);
-    return { redirect: hasCompletedOnboarding ? "/dashboard" : "/onboarding" };
+    await syncUser(user);
+    return { redirect: "/dashboard" };
   } catch (err) {
     console.error("syncUserAfterSignUp:", err);
     return { error: err instanceof Error ? err.message : "Erro ao criar perfil." };

@@ -1,10 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const publicPaths = ["/", "/sign-in", "/sign-up", "/aula-experimental", "/lista_espera", "/auth/callback"];
+const publicPaths = ["/", "/sign-in", "/sign-up", "/aula-experimental", "/lista_espera", "/auth/callback", "/auth/forgot-password"];
 
 /** Aluno sem plano: onboarding, escolher plano, callback OAuth e free tier (dashboard + biblioteca + perfil). */
-const studentAllowedWithoutPlanPrefixes = ["/onboarding", "/escolher-plano", "/auth/callback"];
+const studentAllowedWithoutPlanPrefixes = ["/onboarding", "/escolher-plano", "/auth/callback", "/auth/update-password"];
 
 function isPublicBrowserPath(pathname: string) {
   return publicPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));

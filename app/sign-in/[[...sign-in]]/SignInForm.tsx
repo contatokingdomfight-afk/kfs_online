@@ -94,6 +94,11 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
             required
             className="input"
           />
+          <p className="text-mobile-sm text-right" style={{ margin: "-8px 0 0 0" }}>
+            <Link href="/auth/forgot-password" style={{ color: "var(--primary)", textDecoration: "none" }}>
+              {t("forgotPassword")}
+            </Link>
+          </p>
           {(error || urlError) && (
             <p className="text-mobile-sm" style={{ color: "var(--danger)", margin: 0 }}>
               {error || (urlError === "exchange_failed" && (initialLocale === "en" ? "Login failed. Please try again." : "Falha ao iniciar sessão. Tenta novamente.")) || (urlError === "missing_code" && (initialLocale === "en" ? "Invalid callback." : "Callback inválido.")) || (urlError === "no_user" && (initialLocale === "en" ? "No user returned." : "Sessão não encontrada."))}

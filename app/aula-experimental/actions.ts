@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { weekdayFromYmd } from "@/lib/lesson-occurrences";
 
 export type SubmitTrialResult = { error?: string };
 
@@ -13,12 +14,20 @@ export async function submitTrialRequest(
   const name = (formData.get("name") as string)?.trim();
   const contact = (formData.get("contact") as string)?.trim();
   const modality = (formData.get("modality") as string)?.trim();
-  const lessonId = (formData.get("lessonId") as string)?.trim() || null;
+  const schoolId = (formData.get("schoolId") as string)?.trim();
+  const lessonSlot = (formData.get("lessonSlot") as string)?.trim() ?? "";
 
   if (!name) return { error: "Nome é obrigatório." };
   if (!contact) return { error: "Contacto (email ou telefone) é obrigatório." };
   if (!modality) return { error: "Escolhe uma modalidade." };
-  if (!lessonId) return { error: "Escolhe a data e hora desejada." };
+  if (!schoolId) return { error: "Escolhe o local / escola." };
+
+  const slotParts = lessonSlot.split("::");
+  const lessonId = slotParts[0]?.trim() ?? "";
+  const occurrenceYmd = slotParts[1]?.trim() ?? "";
+  if (!lessonId || !occurrenceYmd || !/^\d{4}-\d{2}-\d{2}$/.test(occurrenceYmd)) {
+    return { error: "Escolhe a data e hora da aula." };
+  }
 
   let supabase;
   try {
@@ -29,14 +38,35 @@ export async function submitTrialRequest(
 
   const { data: lesson } = await supabase
     .from("Lesson")
-    .select("id, date, modality")
+    .select("id, date, modality, weekday, schoolId, isOneOff")
     .eq("id", lessonId)
     .single();
 
   if (!lesson) return { error: "Aula selecionada não encontrada. Tenta novamente." };
+  if ((lesson as { schoolId?: string }).schoolId !== schoolId) {
+    return { error: "A aula não corresponde ao local escolhido." };
+  }
   if ((lesson.modality ?? "") !== modality) return { error: "A aula não corresponde à modalidade escolhida." };
 
-  const lessonDate = lesson.date;
+  const isOneOff = Boolean((lesson as { isOneOff?: boolean }).isOneOff);
+  if (isOneOff) {
+    const d = typeof lesson.date === "string" ? lesson.date.slice(0, 10) : "";
+    if (d !== occurrenceYmd) return { error: "Data da aula inválida para esta inscrição." };
+  } else {
+    const wd = (lesson as { weekday?: number | null }).weekday;
+    if (wd == null) return { error: "Esta aula não tem horário recorrente válido." };
+    if (weekdayFromYmd(occurrenceYmd) !== wd) {
+      return { error: "Data da aula inválida para esta inscrição." };
+    }
+  }
+
+  const { data: cancelled } = await supabase
+    .from("LessonCancellation")
+    .select("id")
+    .eq("lessonId", lessonId)
+    .eq("date", occurrenceYmd)
+    .maybeSingle();
+  if (cancelled) return { error: "Esta data foi cancelada. Escolhe outra aula." };
 
   const id = crypto.randomUUID();
   const { error } = await supabase.from("TrialClass").insert({
@@ -44,7 +74,7 @@ export async function submitTrialRequest(
     name,
     contact,
     modality,
-    lessonDate,
+    lessonDate: occurrenceYmd,
     lessonId,
     convertedToStudent: false,
   });

@@ -1,26 +1,41 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useFormState } from "react-dom";
 import { submitTrialRequest, type SubmitTrialResult } from "./actions";
 
 type ModalityOption = { value: string; label: string };
-type LessonSlot = { id: string; date: string; label: string };
+type LessonSlot = { id: string; occurrenceDate: string; label: string };
 
 export function FormularioExperimental({
+  schools,
   modalityOptions,
-  lessonsByModality,
+  lessonsBySchoolId,
 }: {
+  schools: { id: string; name: string }[];
   modalityOptions: ModalityOption[];
-  lessonsByModality: Record<string, LessonSlot[]>;
+  lessonsBySchoolId: Record<string, Record<string, LessonSlot[]>>;
 }) {
   const [state, formAction] = useFormState(submitTrialRequest, null as SubmitTrialResult | null);
-  const [selectedModality, setSelectedModality] = useState<string>(modalityOptions[0]?.value ?? "");
+  const [schoolId, setSchoolId] = useState(schools[0]?.id ?? "");
+  const [selectedModality, setSelectedModality] = useState<string>("");
 
-  const slotsForModality = useMemo(
-    () => (selectedModality ? lessonsByModality[selectedModality] ?? [] : []),
-    [selectedModality, lessonsByModality]
-  );
+  const modalitiesForSchool = useMemo(() => {
+    if (!schoolId) return [];
+    const byMod = lessonsBySchoolId[schoolId] ?? {};
+    return modalityOptions.filter((o) => (byMod[o.value] ?? []).length > 0);
+  }, [schoolId, lessonsBySchoolId, modalityOptions]);
+
+  useEffect(() => {
+    const first = modalitiesForSchool[0]?.value ?? "";
+    setSelectedModality(first);
+  }, [schoolId, modalitiesForSchool]);
+
+  const slotsForModality = useMemo(() => {
+    if (!schoolId || !selectedModality) return [];
+    return lessonsBySchoolId[schoolId]?.[selectedModality] ?? [];
+  }, [schoolId, selectedModality, lessonsBySchoolId]);
+
   const hasSlots = slotsForModality.length > 0;
 
   return (
@@ -34,6 +49,29 @@ export function FormularioExperimental({
         gap: "clamp(16px, 4vw, 20px)",
       }}
     >
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          Local / escola *
+        </span>
+        <select
+          name="schoolId"
+          required
+          className="input"
+          value={schoolId}
+          onChange={(e) => setSchoolId(e.target.value)}
+          aria-label="Escola ou local"
+        >
+          {schools.length === 0 ? (
+            <option value="">— Nenhuma escola disponível —</option>
+          ) : (
+            schools.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))
+          )}
+        </select>
+      </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Nome *
@@ -62,12 +100,17 @@ export function FormularioExperimental({
           className="input"
           value={selectedModality}
           onChange={(e) => setSelectedModality(e.target.value)}
+          disabled={modalitiesForSchool.length === 0}
         >
-          {modalityOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
+          {modalitiesForSchool.length === 0 ? (
+            <option value="">— Escolhe um local com aulas —</option>
+          ) : (
+            modalitiesForSchool.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))
+          )}
         </select>
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -75,10 +118,10 @@ export function FormularioExperimental({
           Data e hora desejada *
         </span>
         {hasSlots ? (
-          <select name="lessonId" required className="input">
+          <select name="lessonSlot" required className="input">
             <option value="">— Escolhe uma aula —</option>
             {slotsForModality.map((slot) => (
-              <option key={slot.id} value={slot.id}>
+              <option key={`${slot.id}::${slot.occurrenceDate}`} value={`${slot.id}::${slot.occurrenceDate}`}>
                 {slot.label}
               </option>
             ))}
@@ -93,7 +136,8 @@ export function FormularioExperimental({
               color: "var(--text-secondary)",
             }}
           >
-            Sem aulas disponíveis para esta modalidade nos próximos tempos. Entra em contacto para combinarmos uma data.
+            Sem aulas disponíveis para esta modalidade neste local nos próximos tempos. Entra em contacto para combinarmos uma
+            data.
           </div>
         )}
       </label>
@@ -102,7 +146,7 @@ export function FormularioExperimental({
           {state.error}
         </p>
       )}
-      <button type="submit" className="btn btn-primary" disabled={!hasSlots}>
+      <button type="submit" className="btn btn-primary" disabled={!hasSlots || !schoolId}>
         Enviar pedido
       </button>
     </form>

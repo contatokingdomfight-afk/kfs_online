@@ -1,32 +1,15 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getDefaultOnboardingSchoolId } from "@/lib/onboarding-default-school";
 import { OnboardingWizard } from "./OnboardingWizard";
 
 export default async function OnboardingPage() {
-  const [dbUser, studentId, locale] = await Promise.all([
-    getCurrentDbUser(),
-    getCurrentStudentId(),
-    getLocaleFromCookies(),
-  ]);
+  const [dbUser, locale] = await Promise.all([getCurrentDbUser(), getLocaleFromCookies()]);
   if (!dbUser) redirect("/sign-in");
 
   const supabase = await createClient();
-
-  // Verificar se já completou onboarding → redirecionar para dashboard
-  if (studentId) {
-    const { data: profile } = await supabase
-      .from("StudentProfile")
-      .select("hasCompletedOnboarding")
-      .eq("studentId", studentId)
-      .maybeSingle();
-    if (profile?.hasCompletedOnboarding) {
-      redirect("/dashboard");
-    }
-  }
 
   const { data: schools } = await supabase
     .from("School")

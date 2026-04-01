@@ -4,6 +4,8 @@
 
 **Objetivo:** Implementar um novo fluxo de cadastro e onboarding "self-service" para novos alunos. A meta é reduzir o atrito inicial, permitindo que o utilizador crie uma conta e explore a plataforma num estado "Free Tier" (amostra grátis) antes de se comprometer com um plano. Esta abordagem visa aumentar a taxa de conversão ao demonstrar o valor do produto primeiro.
 
+> **Implementação (abril 2026):** Após cadastro (email ou Google), o utilizador é levado à **área do aluno** (`/dashboard`). O wizard em `/onboarding` é **opcional** (pode preencher dados de perfil quando quiser). O `StudentProfile` de novos alunos marca `hasCompletedOnboarding` como concluído na criação, para não bloquear o dashboard; o **tour guiado** continua disponível no dashboard (`StudentOnboardingGate`, incl. `?replayOnboarding=1`).
+
 ---
 
 ## 2. A Jornada do Novo Aluno (Passo a Passo)
@@ -22,15 +24,15 @@ Este é o percurso que um novo utilizador fará desde o registo até à ativaç�
     *   **Botão de Destaque:** `[ Continuar com Google ]`. Este deve ser visualmente mais apelativo, pois é o caminho mais rápido.
 *   **Lógica de Backend:**
     *   Após o cadastro bem-sucedido, o sistema cria as entidades `User`, `Student` e `StudentProfile`.
-    *   O `StudentProfile` deve ter um campo `hasCompletedOnboarding` definido como `false`.
-    *   O utilizador é imediatamente autenticado e redirecionado para a página `/onboarding`.
+    *   O `StudentProfile` define `hasCompletedOnboarding` como `true` para novos alunos (onboarding opcional; wizard disponível em `/onboarding` para quem quiser completar dados).
+    *   O utilizador é imediatamente autenticado e redirecionado para **`/dashboard`**.
 
 ---
 
-### **Passo 2: O Wizard de Onboarding (`/onboarding`)**
+### **Passo 2: O Wizard de Onboarding (`/onboarding`) — opcional**
 
 *   **Objetivo:** Coletar dados de perfil importantes de uma forma guiada e interativa, em vez de um formulário longo e intimidante.
-*   **Lógica de Acesso:** Esta página só é acessível se `hasCompletedOnboarding` for `false`. Se um utilizador com onboarding completo tentar aceder, deve ser redirecionado para o `/dashboard`.
+*   **Lógica de Acesso:** O aluno pode abrir `/onboarding` quando quiser. Se `hasCompletedOnboarding` já for `true`, a página pode redirecionar para o `/dashboard` (evitar duplicar fluxo).
 *   **Estrutura da UI:**
     *   Um layout limpo e centrado com um indicador de progresso (ex: "Passo 1 de 4").
 *   **Ecrãs do Wizard:**
