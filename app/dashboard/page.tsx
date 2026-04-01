@@ -17,7 +17,12 @@ import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
 import { ExploreSection } from "./ExploreSection";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
-import { filterLessonsForDashboard } from "@/lib/dashboard-lesson-filter";
+import { isLessonParticipationAllowedByPlan } from "@/lib/dashboard-lesson-filter";
+import {
+  expandLessonsForDateRange,
+  fetchLessonCancellations,
+  type LessonDefinitionRow,
+} from "@/lib/lesson-occurrences";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
 const MODALITY_ALIASES: Record<string, string> = {
@@ -75,44 +80,66 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   let lessonsQuery = supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, locationId, isOpenClass, schoolId")
-    .gte("date", today)
-    .lte("date", endOfWeek);
-  // Aulas da própria escola + todas as aulas livres de qualquer unidade Kingdom Fight.
+    .select("id, modality, date, weekday, startTime, endTime, locationId, isOpenClass, schoolId, isOneOff, coachId")
+    .order("startTime", { ascending: true });
   if (studentSchoolId) {
     lessonsQuery = lessonsQuery.or(`schoolId.eq.${studentSchoolId},isOpenClass.eq.true`);
+  } else {
+    lessonsQuery = lessonsQuery.eq("isOpenClass", true);
   }
 
-  const [lessonsRes, locationsList, schoolsList, weekThemesRes, goalRes, athleteRes, confirmedAttRes] = await Promise.all([
-    lessonsQuery.order("date", { ascending: true }).order("startTime", { ascending: true }),
+  const [lessonsRes, locationsList, schoolsList, weekThemesRes, goalRes, athleteRes] = await Promise.all([
+    lessonsQuery,
     getCachedLocations(supabase),
     supabase.from("School").select("id, name"),
     supabase.from("WeekTheme").select("modality, title, course_id, video_url").eq("week_start", weekStart).order("modality", { ascending: true }),
     supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
     studentId ? supabase.from("Athlete").select("id, currentBelt, currentXP").eq("studentId", studentId).single() : Promise.resolve({ data: null }),
-    studentId ? supabase.from("Attendance").select("lessonId").eq("studentId", studentId).eq("status", "CONFIRMED") : Promise.resolve({ data: [] }),
   ]);
 
   const lessonsRaw = lessonsRes.data ?? [];
   const schoolNameById = new Map((schoolsList.data ?? []).map((s) => [s.id, s.name]));
-  const lessonsData = lessonsRaw.map((l) => {
-    const row = l as { schoolId?: string | null };
+  const lessonIds = lessonsRaw.map((l) => (l as { id: string }).id);
+  const cancellations = await fetchLessonCancellations(supabase, lessonIds);
+
+  const lessonsAsDefs: LessonDefinitionRow[] = (lessonsRaw ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    const id = String(r.id);
     return {
-      ...l,
-      schoolName: row.schoolId ? schoolNameById.get(row.schoolId) ?? null : null,
+      id,
+      modality: (r.modality as string | null) ?? null,
+      date: typeof r.date === "string" ? r.date.slice(0, 10) : (r.date as string | null),
+      weekday:
+        typeof r.weekday === "number" ? r.weekday : r.weekday != null ? Number(r.weekday) : null,
+      startTime: String(r.startTime ?? ""),
+      endTime: String(r.endTime ?? ""),
+      coachId: String(r.coachId ?? ""),
+      schoolId: String(r.schoolId ?? ""),
+      locationId: (r.locationId as string | null) ?? null,
+      capacity: (r.capacity as number | null) ?? null,
+      planningNotes: (r.planningNotes as string | null) ?? null,
+      isOneOff: Boolean(r.isOneOff),
+      isOpenClass: Boolean(r.isOpenClass),
     };
   });
-  const locationById = Object.fromEntries(locationsList.map((loc) => [loc.id, loc.name])) as Record<string, string>;
-  const temaSemanaList = weekThemesRes.data ?? [];
 
-  const allLessons = lessonsData;
-  const lessons = filterLessonsForDashboard(allLessons, {
+  const expanded = expandLessonsForDateRange(lessonsAsDefs, cancellations, today, endOfWeek);
+  const lessons = expanded.map((L) => ({
+    ...L,
+    date: L.occurrenceDate,
+    modality: L.modality ?? "",
+    schoolName: L.schoolId ? schoolNameById.get(L.schoolId) ?? null : null,
+  }));
+
+  const planFilterInput = {
     hasPlan,
     hasCheckIn,
     allowedModalities,
     studentPrimaryModality,
     modalitiesListLength: MODALITIES_LIST.length,
-  });
+  };
+  const locationById = Object.fromEntries(locationsList.map((loc) => [loc.id, loc.name])) as Record<string, string>;
+  const temaSemanaList = weekThemesRes.data ?? [];
   const nowForCard = new Date();
   const eligibleLessons = lessons.filter((l) => isLessonEligibleForNextCard(l, nowForCard));
   const nonOpenUpcoming = eligibleLessons.filter((l) => !Boolean((l as { isOpenClass?: boolean }).isOpenClass));
@@ -129,21 +156,23 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       ? openUpcoming.map((lesson) => ({ lesson, ...getLessonCheckInUiState(lesson, nowForCard) }))
       : [];
 
-  const showNextLessonSection = hasCheckIn || !hasPlan || eligibleLessons.length > 0;
+  const showNextLessonSection = lessons.length > 0;
 
   const hasOpenClassesCarousel = additionalOpenLessons.length > 0;
   const hasPrimaryNextCarousel = primaryNextRows.length > 0;
 
-  const lessonIds = lessons.map((l) => l.id);
+  const uniqueLessonIdsForAttendance = [...new Set(lessons.map((l) => l.id))];
   const attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }> = {};
-  if (studentId && lessonIds.length > 0) {
+  if (studentId && uniqueLessonIdsForAttendance.length > 0) {
     const { data: attendances } = await supabase
       .from("Attendance")
-      .select("lessonId, status, checkedInAt")
+      .select("lessonId, status, checkedInAt, occurrenceDate")
       .eq("studentId", studentId)
-      .in("lessonId", lessonIds);
+      .in("lessonId", uniqueLessonIdsForAttendance);
     (attendances ?? []).forEach((a) => {
-      attendanceByLesson[a.lessonId] = {
+      const occ = (a as { occurrenceDate?: string | null }).occurrenceDate?.slice(0, 10) ?? "";
+      const key = occ ? `${a.lessonId}_${occ}` : a.lessonId;
+      attendanceByLesson[key] = {
         status: a.status,
         checkedInAt: (a as { checkedInAt?: string | null }).checkedInAt ?? null,
       };
@@ -153,8 +182,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   let attendanceGoal = 10;
   if (goalRes.data) attendanceGoal = goalRes.data.target_value ?? 10;
 
-  const confirmedAtt = confirmedAttRes.data ?? [];
-  const allLessonIds = [...new Set(confirmedAtt.map((a) => a.lessonId))];
   let currentMonthCount = 0;
   let totalPresences = 0;
   let athleteStats: { currentBelt: string | null; currentXP: number; nextLevelXP: number } | null = null;
@@ -162,10 +189,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   let nextMission: { id: string; name: string; description: string | null; xpReward: number } | null = null;
   let coachFeedback: { content: string; coachName: string; date: string } | null = null;
 
-  if (allLessonIds.length > 0) {
-    const { data: confirmedLessons } = await supabase.from("Lesson").select("id, date").in("id", allLessonIds);
-    const lessonsList = confirmedLessons ?? [];
-    currentMonthCount = lessonsList.filter((l) => l.date >= monthStart && l.date <= monthEnd).length;
+  if (studentId) {
+    const { count: monthAttCount } = await supabase
+      .from("Attendance")
+      .select("id", { count: "exact", head: true })
+      .eq("studentId", studentId)
+      .eq("status", "CONFIRMED")
+      .gte("occurrenceDate", monthStart)
+      .lte("occurrenceDate", monthEnd);
+    currentMonthCount = monthAttCount ?? 0;
   }
 
   const athlete = athleteRes.data;
@@ -309,7 +341,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         >
           {primaryNextRows.map((row) => (
             <div
-              key={row.lesson.id}
+              key={(row.lesson as { occurrenceKey?: string }).occurrenceKey ?? `${row.lesson.id}-${row.lesson.date}`}
               style={{
                 flex: `0 0 ${OPEN_CLASS_CARD_WIDTH}`,
                 maxWidth: OPEN_CLASS_CARD_WIDTH,
@@ -324,6 +356,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 checkInStartTimeLabel={row.checkInStartTimeLabel}
                 locationById={locationById}
                 attendanceByLesson={attendanceByLesson}
+                attendanceLookupKey={`${row.lesson.id}_${row.lesson.date}`}
+                participationAllowedByPlan={isLessonParticipationAllowedByPlan(row.lesson, planFilterInput)}
+                hasPlan={hasPlan}
+                hasCheckIn={hasCheckIn}
                 locale={locale as "pt" | "en"}
                 todayStr={todayStr}
                 isFreeTier={!hasPlan}
@@ -364,7 +400,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         >
           {additionalOpenLessons.map((row) => (
             <div
-              key={row.lesson.id}
+              key={(row.lesson as { occurrenceKey?: string }).occurrenceKey ?? `${row.lesson.id}-${row.lesson.date}`}
               style={{
                 flex: `0 0 ${OPEN_CLASS_CARD_WIDTH}`,
                 maxWidth: OPEN_CLASS_CARD_WIDTH,
@@ -379,6 +415,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 checkInStartTimeLabel={row.checkInStartTimeLabel}
                 locationById={locationById}
                 attendanceByLesson={attendanceByLesson}
+                attendanceLookupKey={`${row.lesson.id}_${row.lesson.date}`}
+                participationAllowedByPlan={isLessonParticipationAllowedByPlan(row.lesson, planFilterInput)}
+                hasPlan={hasPlan}
+                hasCheckIn={hasCheckIn}
                 locale={locale as "pt" | "en"}
                 todayStr={todayStr}
                 isFreeTier={!hasPlan}

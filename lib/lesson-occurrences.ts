@@ -20,6 +20,28 @@ export type LessonDefinitionRow = {
   createdAt?: string;
 };
 
+/** Mapeia linhas `Lesson` do Supabase para definições usadas na expansão. */
+export function rowsToLessonDefinitions(rows: unknown[] | null | undefined): LessonDefinitionRow[] {
+  return (rows ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      id: String(r.id),
+      modality: (r.modality as string | null) ?? null,
+      date: typeof r.date === "string" ? r.date.slice(0, 10) : (r.date as string | null),
+      weekday: typeof r.weekday === "number" ? r.weekday : r.weekday != null ? Number(r.weekday) : null,
+      startTime: String(r.startTime ?? ""),
+      endTime: String(r.endTime ?? ""),
+      coachId: String(r.coachId ?? ""),
+      schoolId: String(r.schoolId ?? ""),
+      locationId: (r.locationId as string | null) ?? null,
+      capacity: (r.capacity as number | null) ?? null,
+      planningNotes: (r.planningNotes as string | null) ?? null,
+      isOneOff: Boolean(r.isOneOff),
+      isOpenClass: Boolean(r.isOpenClass),
+    };
+  });
+}
+
 /** Uma ocorrência na agenda (virtual para recorrentes). */
 export type ExpandedLessonRow = LessonDefinitionRow & {
   /** Data concreta YYYY-MM-DD (presenças / cancelamento). */
@@ -27,7 +49,8 @@ export type ExpandedLessonRow = LessonDefinitionRow & {
   occurrenceKey: string;
 };
 
-function weekdayFromYmd(ymd: string): number {
+/** Segunda=1 … Domingo=7 (UTC), alinhado à expansão de ocorrências. */
+export function weekdayFromYmd(ymd: string): number {
   const [y, m, d] = ymd.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
   const js = dt.getUTCDay();

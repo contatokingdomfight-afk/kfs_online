@@ -5,6 +5,8 @@ import { setAttendanceIntentionFromForm } from "./actions";
 
 type Props = {
   lessonId: string;
+  /** Data da ocorrência (YYYY-MM-DD), obrigatória com presenças por ocorrência. */
+  occurrenceDate: string;
   currentStatus: string | undefined;
   checkedInAt: string | null;
   goingLabel: string;
@@ -28,6 +30,7 @@ function PendingHint({ savingLabel }: { savingLabel: string }) {
 
 export function VouNaoVouButtons({
   lessonId,
+  occurrenceDate,
   currentStatus,
   checkedInAt,
   goingLabel,
@@ -68,6 +71,7 @@ export function VouNaoVouButtons({
         </span>
         <form action={formAction} style={{ display: "inline-flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginTop: 8 }}>
           <input type="hidden" name="lessonId" value={lessonId} />
+          <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
           <input type="hidden" name="intention" value="nao_vou" />
           <button
             type="submit"
@@ -99,6 +103,7 @@ export function VouNaoVouButtons({
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
         <form action={formAction} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
           <input type="hidden" name="lessonId" value={lessonId} />
+          <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
           <input type="hidden" name="intention" value="vou" />
           <button
             type="submit"
@@ -115,6 +120,7 @@ export function VouNaoVouButtons({
         </form>
         <form action={formAction} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
           <input type="hidden" name="lessonId" value={lessonId} />
+          <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
           <input type="hidden" name="intention" value="nao_vou" />
           <button
             type="submit"

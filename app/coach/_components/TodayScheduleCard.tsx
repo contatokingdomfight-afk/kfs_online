@@ -5,6 +5,7 @@ type Lesson = {
   modality: string;
   startTime: string;
   endTime: string;
+  occurrenceDate?: string;
 };
 
 type Props = {
@@ -59,9 +60,9 @@ export function TodayScheduleCard({
           }}
         >
           {lessons.map((l) => (
-            <li key={l.id}>
+            <li key={`${l.id}-${l.occurrenceDate ?? ""}`}>
               <Link
-                href={`/coach/aula?lesson=${l.id}`}
+                href={`/coach/aula?lesson=${l.id}${l.occurrenceDate ? `&date=${encodeURIComponent(l.occurrenceDate)}` : ""}`}
                 style={{
                   display: "block",
                   padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 14px)",

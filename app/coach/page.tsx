@@ -5,6 +5,11 @@ import { getCurrentSchoolId } from "@/lib/auth/get-current-school";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS, formatLessonDate, getWeekStartMonday } from "@/lib/lesson-utils";
+import {
+  expandLessonsForDateRange,
+  fetchLessonCancellations,
+  rowsToLessonDefinitions,
+} from "@/lib/lesson-occurrences";
 import { CurrentOrNextClassCard } from "./_components/CurrentOrNextClassCard";
 import { TodayScheduleCard } from "./_components/TodayScheduleCard";
 import { WeekThemeCard } from "./_components/WeekThemeCard";
@@ -27,7 +32,7 @@ function timeToMinutes(t: string): number {
 
 /** Determina cenário e aula em foco: in_class, next ou rest. */
 function getCurrentOrNextScenario(
-  todayLessons: { id: string; modality: string; startTime: string; endTime: string }[],
+  todayLessons: { id: string; modality: string | null; startTime: string; endTime: string; occurrenceDate: string }[],
   nowMinutes: number
 ): { scenario: "in_class" | "next" | "rest"; lesson: (typeof todayLessons)[0] | null } {
   if (todayLessons.length === 0) {
@@ -67,31 +72,44 @@ export default async function CoachHomePage() {
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const weekStart = getWeekStartMonday();
 
-  // Aulas do coach hoje
-  let todayLessonsQuery = supabase
+  let defsQuery = supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime")
-    .eq("date", today)
+    .select(
+      "id, modality, date, weekday, startTime, endTime, coachId, schoolId, isOneOff, isOpenClass, locationId, capacity, planningNotes"
+    )
     .order("startTime", { ascending: true });
-
   if (coachId) {
-    todayLessonsQuery = todayLessonsQuery.eq("coachId", coachId);
+    defsQuery = defsQuery.eq("coachId", coachId);
   } else if (schoolId) {
-    todayLessonsQuery = todayLessonsQuery.eq("schoolId", schoolId);
+    defsQuery = defsQuery.eq("schoolId", schoolId);
   }
+  const { data: defsRaw } = await defsQuery;
+  const defs = rowsToLessonDefinitions(defsRaw ?? []);
+  const cancellations = await fetchLessonCancellations(
+    supabase,
+    defs.map((d) => d.id)
+  );
+  const lessonsList = expandLessonsForDateRange(defs, cancellations, today, today);
 
-  const { data: todayLessons } = await todayLessonsQuery;
-  const lessonsList = todayLessons ?? [];
-
-  const { scenario, lesson: focusLesson } = getCurrentOrNextScenario(lessonsList, nowMinutes);
+  const { scenario, lesson: focusLessonRaw } = getCurrentOrNextScenario(lessonsList, nowMinutes);
+  const focusLesson = focusLessonRaw
+    ? {
+        id: focusLessonRaw.id,
+        modality: focusLessonRaw.modality ?? "",
+        startTime: focusLessonRaw.startTime,
+        endTime: focusLessonRaw.endTime,
+        occurrenceDate: focusLessonRaw.occurrenceDate,
+      }
+    : null;
 
   // Sumário de presenças para a aula em foco
   let attendanceSummary = "";
-  if (focusLesson) {
+  if (focusLesson && focusLesson.occurrenceDate) {
     const { data: attendances } = await supabase
       .from("Attendance")
       .select("status, isExperimental")
-      .eq("lessonId", focusLesson.id);
+      .eq("lessonId", focusLesson.id)
+      .eq("occurrenceDate", focusLesson.occurrenceDate);
 
     const confirmed = (attendances ?? []).filter((a) => a.status === "CONFIRMED").length;
     const pending = (attendances ?? []).filter((a) => a.status === "PENDING").length;
@@ -116,10 +134,18 @@ export default async function CoachHomePage() {
   }
 
   // Resto do dia: aulas que ainda não começaram
-  const restOfDayLessons = lessonsList.filter((l) => {
-    const start = timeToMinutes(l.startTime);
-    return nowMinutes < start;
-  });
+  const restOfDayLessons = lessonsList
+    .filter((l) => {
+      const start = timeToMinutes(l.startTime);
+      return nowMinutes < start;
+    })
+    .map((l) => ({
+      id: l.id,
+      modality: l.modality ?? "",
+      startTime: l.startTime,
+      endTime: l.endTime,
+      occurrenceDate: l.occurrenceDate,
+    }));
 
   // Modalidade principal do coach (para Tema da Semana)
   let mainModality = "MUAY_THAI";
@@ -134,7 +160,7 @@ export default async function CoachHomePage() {
     if (first && ["MUAY_THAI", "BOXING", "KICKBOXING"].includes(first)) {
       mainModality = first;
     } else if (lessonsList.length > 0) {
-      mainModality = lessonsList[0].modality;
+      mainModality = lessonsList[0].modality ?? "MUAY_THAI";
     }
   }
 
@@ -146,20 +172,22 @@ export default async function CoachHomePage() {
     .eq("modality", mainModality);
   const theme = weekThemes?.[0] ?? null;
 
-  // Experimentais nas aulas do coach (não convertidos, data >= hoje)
-  let trialLessons: { id: string; modality: string; date: string; startTime: string; endTime: string }[] = [];
+  let trialLessons: { id: string; modality: string; startTime: string; endTime: string }[] = [];
   if (coachId || schoolId) {
     let lessonsForTrials = supabase
       .from("Lesson")
-      .select("id, modality, date, startTime, endTime")
-      .gte("date", today)
-      .order("date", { ascending: true })
+      .select("id, modality, date, weekday, startTime, endTime, coachId, schoolId, isOneOff, isOpenClass, locationId, capacity, planningNotes")
       .order("startTime", { ascending: true })
-      .limit(50);
+      .limit(80);
     if (coachId) lessonsForTrials = lessonsForTrials.eq("coachId", coachId);
     else if (schoolId) lessonsForTrials = lessonsForTrials.eq("schoolId", schoolId);
-    const { data: coachLessons } = await lessonsForTrials;
-    trialLessons = coachLessons ?? [];
+    const { data: coachLessonsRaw } = await lessonsForTrials;
+    trialLessons = rowsToLessonDefinitions(coachLessonsRaw ?? []).map((l) => ({
+      id: l.id,
+      modality: l.modality ?? "",
+      startTime: l.startTime,
+      endTime: l.endTime,
+    }));
   }
 
   const coachLessonIds = new Set(trialLessons.map((l) => l.id));

@@ -3,6 +3,11 @@ import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
+import {
+  expandLessonsForDateRange,
+  fetchLessonCancellations,
+  rowsToLessonDefinitions,
+} from "@/lib/lesson-occurrences";
 
 type SearchParams = Promise<{ month?: string }>;
 
@@ -55,16 +60,22 @@ export default async function CoachFinanceiroPage({ searchParams }: { searchPara
 
   const hourlyRate = Number(coach.hourly_rate ?? 0);
 
-  // Buscar aulas do mês lecionadas por este coach
-  const { data: lessons } = await supabase
+  const { data: lessonsRaw } = await supabase
     .from("Lesson")
-    .select("id, date, modality, startTime, endTime")
+    .select(
+      "id, date, weekday, modality, startTime, endTime, coachId, schoolId, isOneOff, isOpenClass, locationId, capacity, planningNotes"
+    )
     .eq("coachId", coach.id)
-    .gte("date", start)
-    .lte("date", end)
-    .order("date", { ascending: true });
+    .order("startTime", { ascending: true });
 
-  const lessonCount = (lessons ?? []).length;
+  const defs = rowsToLessonDefinitions(lessonsRaw ?? []);
+  const cancellations = await fetchLessonCancellations(
+    supabase,
+    defs.map((d) => d.id)
+  );
+  const lessons = expandLessonsForDateRange(defs, cancellations, start, end);
+
+  const lessonCount = lessons.length;
   const lessonPay = lessonCount * hourlyRate;
 
   // Buscar receita de cursos no mês (via CourseCreator)
@@ -214,15 +225,15 @@ export default async function CoachFinanceiroPage({ searchParams }: { searchPara
       </div>
 
       {/* Lista de aulas */}
-      {(lessons ?? []).length > 0 && (
+      {lessons.length > 0 && (
         <section style={{ marginBottom: "clamp(24px, 6vw, 32px)" }}>
           <h2 style={{ margin: "0 0 12px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
             Aulas de {label}
           </h2>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-            {(lessons ?? []).map((l) => (
+            {lessons.map((l) => (
               <li
-                key={l.id}
+                key={l.occurrenceKey}
                 style={{
                   padding: "10px 14px",
                   background: "var(--surface)",
@@ -244,7 +255,7 @@ export default async function CoachFinanceiroPage({ searchParams }: { searchPara
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                    {formatDate(l.date)}
+                    {formatDate(l.occurrenceDate)}
                   </span>
                   {hourlyRate > 0 && (
                     <span style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)" }}>

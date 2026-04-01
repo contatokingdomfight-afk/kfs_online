@@ -5,6 +5,7 @@ import { getCurrentSchoolId } from "@/lib/auth/get-current-school";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
+import { rowsToLessonDefinitions } from "@/lib/lesson-occurrences";
 
 export default async function CoachExperimentaisPage() {
   const coachId = await getCurrentCoachId();
@@ -15,12 +16,9 @@ export default async function CoachExperimentaisPage() {
 
   const today = new Date().toISOString().slice(0, 10);
 
-  // Aulas do coach (para filtrar experimentais)
   let lessonsQuery = supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime")
-    .gte("date", today)
-    .order("date", { ascending: true })
+    .select("id, modality, date, weekday, startTime, endTime, coachId, schoolId, isOneOff, isOpenClass, locationId, capacity, planningNotes")
     .order("startTime", { ascending: true });
 
   if (coachId) {
@@ -30,12 +28,13 @@ export default async function CoachExperimentaisPage() {
     lessonsQuery = lessonsQuery.eq("schoolId", schoolId);
   }
 
-  const { data: coachLessons } = await lessonsQuery;
-  const coachLessonIds = new Set((coachLessons ?? []).map((l) => l.id));
+  const { data: coachLessonsRaw } = await lessonsQuery;
+  const coachDefs = rowsToLessonDefinitions(coachLessonsRaw ?? []);
+  const coachLessonIds = new Set(coachDefs.map((l) => l.id));
   const lessonById = new Map(
-    (coachLessons ?? []).map((l) => [
+    coachDefs.map((l) => [
       l.id,
-      { modality: l.modality, date: l.date, startTime: l.startTime, endTime: l.endTime },
+      { modality: l.modality, startTime: l.startTime, endTime: l.endTime },
     ])
   );
 
@@ -49,7 +48,9 @@ export default async function CoachExperimentaisPage() {
 
   const filtered = (trials ?? []).filter((t) => {
     if (!t.lessonId) return false;
-    return coachLessonIds.has(t.lessonId);
+    if (!coachLessonIds.has(t.lessonId)) return false;
+    const ld = String(t.lessonDate).slice(0, 10);
+    return ld >= today;
   });
 
   return (
@@ -123,12 +124,12 @@ export default async function CoachExperimentaisPage() {
                 <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                   {MODALITY_LABELS[trial.modality] ?? trial.modality}
                   {lesson
-                    ? ` · ${formatLessonDate(lesson.date)} ${lesson.startTime}–${lesson.endTime}`
+                    ? ` · ${formatLessonDate(String(trial.lessonDate))} ${lesson.startTime}–${lesson.endTime}`
                     : ` · ${formatLessonDate(String(trial.lessonDate))}`}
                 </p>
                 {trial.lessonId && (
                   <Link
-                    href={`/coach/aula?lesson=${trial.lessonId}`}
+                    href={`/coach/aula?lesson=${trial.lessonId}&date=${encodeURIComponent(String(trial.lessonDate).slice(0, 10))}`}
                     style={{
                       display: "inline-block",
                       marginTop: "clamp(8px, 2vw, 12px)",

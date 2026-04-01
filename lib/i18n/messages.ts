@@ -175,6 +175,9 @@ export const messages = {
     choosePlanSiteHome: "Site público",
     choosePlanBackToDashboard: "Área de aluno",
     freeTierSubscribeToParticipate: "Assine um plano para participar.",
+    dashboardParticipationBlockedPayment:
+      "Check-in e presenças presenciais indisponíveis: mensalidade em falta ou plano sem aulas presenciais.",
+    dashboardParticipationBlockedModality: "Esta modalidade não está incluída no teu plano.",
     heightUnit: "cm",
     profileIntro: "Estes dados podem ser usados na avaliação médica e no acompanhamento do teu treino. Preenche o que quiseres partilhar.",
     saveButton: "Guardar",
@@ -691,6 +694,9 @@ export const messages = {
     choosePlanSiteHome: "Public site",
     choosePlanBackToDashboard: "Student area",
     freeTierSubscribeToParticipate: "Subscribe to a plan to participate.",
+    dashboardParticipationBlockedPayment:
+      "In-person check-in and attendance are unavailable: payment pending or plan without in-person classes.",
+    dashboardParticipationBlockedModality: "This discipline is not included in your plan.",
     heightUnit: "cm",
     profileIntro: "This data can be used for medical assessment and training follow-up. Fill in what you're comfortable sharing.",
     saveButton: "Save",

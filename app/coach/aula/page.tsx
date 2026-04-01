@@ -2,6 +2,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
+import {
+  expandLessonsForDateRange,
+  fetchLessonCancellations,
+  rowsToLessonDefinitions,
+} from "@/lib/lesson-occurrences";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import { AttendanceRow } from "./AttendanceRow";
@@ -9,32 +14,41 @@ import { AttendanceRow } from "./AttendanceRow";
 export default async function CoachAulaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ lesson?: string }>;
+  searchParams: Promise<{ lesson?: string; date?: string }>;
 }) {
   const supabase = await createClient();
   const { today, endOfWeek } = getThisWeekRange();
   const params = await searchParams;
   const selectedLessonId = params.lesson ?? null;
+  const dateParam = params.date?.trim().slice(0, 10) ?? null;
 
-  const { data: lessonsData } = await supabase
+  const { data: lessonsRaw } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, locationId")
-    .gte("date", today)
-    .lte("date", endOfWeek)
-    .order("date", { ascending: true })
+    .select(
+      "id, modality, date, weekday, startTime, endTime, locationId, schoolId, isOneOff, coachId, isOpenClass, capacity, planningNotes"
+    )
     .order("startTime", { ascending: true });
 
-  const lessons = lessonsData ?? [];
-  const locationIds = [...new Set((lessons as { locationId?: string }[]).map((l) => l.locationId).filter(Boolean))];
+  const lessonIdsAll = (lessonsRaw ?? []).map((l) => (l as { id: string }).id);
+  const cancellations = await fetchLessonCancellations(supabase, lessonIdsAll);
+  const lessonsAsDefs = rowsToLessonDefinitions(lessonsRaw ?? []);
+  const lessons = expandLessonsForDateRange(lessonsAsDefs, cancellations, today, endOfWeek);
+
+  const locationIds = [...new Set(lessons.map((l) => l.locationId).filter(Boolean))] as string[];
   const allLocations = await getCachedLocations(supabase);
   const locations = locationIds.length > 0 ? allLocations.filter((l) => locationIds.includes(l.id)) : [];
   const locationById = new Map(locations.map((loc) => [loc.id, loc.name]));
-  // Só mostrar lista de presenças quando o utilizador escolher uma aula (trocar de tela)
-  const lessonId =
-    selectedLessonId && lessons.some((l) => l.id === selectedLessonId)
-      ? selectedLessonId
-      : null;
-  const selectedLesson = lessonId ? lessons.find((l) => l.id === lessonId) : null;
+
+  const resolveSelected = () => {
+    if (!selectedLessonId || !lessons.some((l) => l.id === selectedLessonId)) return { lessonId: null as string | null, selectedLesson: null };
+    if (dateParam) {
+      const row = lessons.find((l) => l.id === selectedLessonId && l.occurrenceDate === dateParam);
+      if (row) return { lessonId: selectedLessonId, selectedLesson: row };
+    }
+    const first = lessons.find((l) => l.id === selectedLessonId);
+    return { lessonId: selectedLessonId, selectedLesson: first ?? null };
+  };
+  const { lessonId, selectedLesson } = resolveSelected();
 
   type AttWithProfile = {
     id: string;
@@ -55,15 +69,18 @@ export default async function CoachAulaPage({
   let attendances: AttWithProfile[] = [];
 
   let evaluationConfig: Awaited<ReturnType<typeof loadEvaluationConfigForModality>> = null;
-  if (selectedLesson) {
+  if (selectedLesson?.modality) {
     evaluationConfig = await loadEvaluationConfigForModality(supabase, selectedLesson.modality);
   }
 
-  if (lessonId && selectedLesson) {
+  const occurrenceYmd = selectedLesson?.occurrenceDate ?? "";
+
+  if (lessonId && selectedLesson && occurrenceYmd) {
     const { data: attList } = await supabase
       .from("Attendance")
-      .select("id, studentId, status, checkedInAt")
+      .select("id, studentId, status, checkedInAt, occurrenceDate")
       .eq("lessonId", lessonId)
+      .eq("occurrenceDate", occurrenceYmd)
       .order("createdAt", { ascending: true });
 
     if (attList?.length) {
@@ -99,9 +116,9 @@ export default async function CoachAulaPage({
           : { data: [] as { athleteId: string }[] };
       const evaluatedAthleteIds = new Set((evals ?? []).map((e) => e.athleteId));
 
-      const lessonModality = selectedLesson.modality;
+      const lessonModality = selectedLesson.modality ?? "";
       const { data: lastEvals } =
-        athleteIds.length > 0
+        athleteIds.length > 0 && lessonModality
           ? await supabase
               .from("AthleteEvaluation")
               .select("athleteId, scores")
@@ -128,9 +145,7 @@ export default async function CoachAulaPage({
         const evaluatedInThisLesson = aid ? evaluatedAthleteIds.has(aid) : false;
         const lastScores = aid ? lastScoresByAthleteId.get(aid) : undefined;
         const lastEvalScoresByModality =
-          lastScores && lessonModality
-            ? { [lessonModality]: lastScores }
-            : undefined;
+          lastScores && lessonModality ? { [lessonModality]: lastScores } : undefined;
         return {
           id: a.id,
           studentId: a.studentId,
@@ -174,16 +189,16 @@ export default async function CoachAulaPage({
               </p>
               <ul className="coach-aula-lesson-list" role="list">
                 {lessons.map((l) => {
-                  const locName = (l as { locationId?: string }).locationId ? locationById.get((l as { locationId: string }).locationId) : null;
+                  const locName = l.locationId ? locationById.get(l.locationId) : null;
                   return (
-                    <li key={l.id}>
+                    <li key={l.occurrenceKey}>
                       <Link
-                        href={`/coach/aula?lesson=${l.id}`}
+                        href={`/coach/aula?lesson=${l.id}&date=${encodeURIComponent(l.occurrenceDate)}`}
                         className="coach-aula-lesson-link"
                       >
-                        <span className="coach-aula-lesson-modality">{MODALITY_LABELS[l.modality] ?? l.modality}</span>
+                        <span className="coach-aula-lesson-modality">{MODALITY_LABELS[l.modality ?? ""] ?? l.modality ?? ""}</span>
                         <span className="coach-aula-lesson-meta">
-                          {locName ? `${locName} · ` : ""}{formatLessonDate(l.date)} · {l.startTime}–{l.endTime}
+                          {locName ? `${locName} · ` : ""}{formatLessonDate(l.occurrenceDate)} · {l.startTime}–{l.endTime}
                         </span>
                       </Link>
                     </li>
@@ -198,16 +213,16 @@ export default async function CoachAulaPage({
                   ← Trocar aula
                 </Link>
                 <div className="coach-aula-selected-info">
-                  <span className="coach-aula-selected-modality">{MODALITY_LABELS[selectedLesson.modality] ?? selectedLesson.modality}</span>
+                  <span className="coach-aula-selected-modality">{MODALITY_LABELS[selectedLesson.modality ?? ""] ?? selectedLesson.modality ?? ""}</span>
                   <span className="coach-aula-selected-time">
-                    {(selectedLesson as { locationId?: string }).locationId && locationById.get((selectedLesson as { locationId: string }).locationId)
-                      ? `${locationById.get((selectedLesson as { locationId: string }).locationId)} · `
+                    {selectedLesson.locationId && locationById.get(selectedLesson.locationId)
+                      ? `${locationById.get(selectedLesson.locationId)} · `
                       : ""}
-                    {formatLessonDate(selectedLesson.date)} · {selectedLesson.startTime}–{selectedLesson.endTime}
+                    {formatLessonDate(selectedLesson.occurrenceDate)} · {selectedLesson.startTime}–{selectedLesson.endTime}
                   </span>
                 </div>
                 <Link
-                  href={`/coach/aula/qr?lesson=${selectedLesson.id}`}
+                  href={`/coach/aula/qr?lesson=${selectedLesson.id}&date=${encodeURIComponent(selectedLesson.occurrenceDate)}`}
                   className="btn btn-secondary coach-aula-qr-btn"
                 >
                   <span aria-hidden>📱</span> QR Code
@@ -236,7 +251,7 @@ export default async function CoachAulaPage({
                       status={a.status}
                       checkedInAt={a.checkedInAt}
                       lessonId={selectedLesson.id}
-                      modality={selectedLesson.modality}
+                      modality={selectedLesson.modality ?? ""}
                       evaluationConfig={evaluationConfig}
                       evaluatedInThisLesson={a.evaluatedInThisLesson}
                       lastEvalScoresByModality={a.lastEvalScoresByModality}

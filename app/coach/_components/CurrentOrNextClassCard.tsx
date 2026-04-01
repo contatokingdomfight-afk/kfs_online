@@ -7,6 +7,8 @@ type Lesson = {
   modality: string;
   startTime: string;
   endTime: string;
+  /** Ocorrência concreta (aulas recorrentes). */
+  occurrenceDate?: string;
 };
 
 type Props = {
@@ -109,7 +111,7 @@ export function CurrentOrNextClassCard({
         </p>
       )}
       <Link
-        href={`/coach/aula?lesson=${lesson.id}`}
+        href={`/coach/aula?lesson=${lesson.id}${lesson.occurrenceDate ? `&date=${encodeURIComponent(lesson.occurrenceDate)}` : ""}`}
         className="btn btn-primary"
         style={{
           display: "inline-flex",

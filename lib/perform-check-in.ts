@@ -16,6 +16,7 @@ import {
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
+import { weekdayFromYmd } from "@/lib/lesson-occurrences";
 
 const MODALITY_ALIASES: Record<string, string> = {
   MUAY_THAI: "MUAY_THAI",
@@ -32,19 +33,48 @@ function normalizeModalityCode(value: string | null | undefined): string | null 
   return MODALITY_ALIASES[key] ?? null;
 }
 
+function resolveOccurrenceYmd(
+  lesson: { date: string | null; weekday?: number | null },
+  options?: { occurrenceDate?: string }
+): { ok: true; ymd: string } | { ok: false; error: string } {
+  if (lesson.date != null && String(lesson.date).trim() !== "") {
+    const ymd = String(lesson.date).slice(0, 10);
+    if (options?.occurrenceDate && options.occurrenceDate.slice(0, 10) !== ymd) {
+      return { ok: false, error: "Data inválida para esta aula." };
+    }
+    return { ok: true, ymd };
+  }
+  const occ = options?.occurrenceDate?.slice(0, 10) ?? "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occ)) {
+    return {
+      ok: false,
+      error: "Indica a data desta aula (ex.: abre o link a partir do dashboard com a data correta).",
+    };
+  }
+  if (lesson.weekday != null && weekdayFromYmd(occ) !== lesson.weekday) {
+    return { ok: false, error: "Data inválida para esta aula recorrente." };
+  }
+  return { ok: true, ymd: occ };
+}
+
 /**
- * Lógica de check-in (QR / link). Módulo `server-only` para ser chamado
- * desde páginas RSC. Não chamar `revalidatePath` aqui — só é permitido em
- * Server Actions / Route Handlers; a action `checkIn` faz revalidação após sucesso.
+ * Check-in (QR / link). `occurrenceDate` opcional: obrigatório para aulas recorrentes (`Lesson.date` null).
  */
-export async function performCheckIn(lessonId: string): Promise<{ error?: string; checkedInAt?: string }> {
+export async function performCheckIn(
+  lessonId: string,
+  options?: { occurrenceDate?: string }
+): Promise<{ error?: string; checkedInAt?: string }> {
   const studentId = await getCurrentStudentId();
   if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
 
   const supabase = await createClient();
   const planAccess = await getPlanAccess(supabase, studentId);
 
-  const { data: lessonData } = await supabase.from("Lesson").select("id, modality, date, startTime, endTime, isOpenClass").eq("id", lessonId).single();
+  const { data: lessonData } = await supabase
+    .from("Lesson")
+    .select("id, modality, date, startTime, endTime, isOpenClass, weekday")
+    .eq("id", lessonId)
+    .single();
   if (!lessonData) return { error: "Aula não encontrada." };
 
   const isOpenClass = Boolean((lessonData as { isOpenClass?: boolean }).isOpenClass);
@@ -52,15 +82,26 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
     return { error: "O teu plano não inclui check-in de aulas presenciais." };
   }
 
-  if (!lessonHasValidSchedule(lessonData)) {
-    return { error: "Esta aula não tem horário completo na agenda. Contacta a receção." };
-  }
+  const occ = resolveOccurrenceYmd(
+    {
+      date: (lessonData as { date?: string | null }).date ?? null,
+      weekday: (lessonData as { weekday?: number | null }).weekday ?? null,
+    },
+    options
+  );
+  if (!occ.ok) return { error: occ.error };
+
+  const occurrenceYmd = occ.ymd;
 
   const windowFields = {
-    date: lessonData.date,
+    date: occurrenceYmd,
     startTime: lessonData.startTime,
     endTime: lessonData.endTime,
   };
+  if (!lessonHasValidSchedule({ ...windowFields, date: occurrenceYmd })) {
+    return { error: "Esta aula não tem horário completo na agenda. Contacta a receção." };
+  }
+
   const nowDate = new Date();
   if (!isWithinLessonCheckInWindow(windowFields, nowDate)) {
     const locale = await getLocaleFromCookies();
@@ -104,16 +145,15 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
   }
 
   if (planAccess.maxCheckInsPerDay === 1) {
-    const { data: sameDayLessons } = await supabase.from("Lesson").select("id").eq("date", lessonData.date);
-    const sameDayIds = (sameDayLessons ?? []).map((l) => l.id).filter((id) => id !== lessonId);
-    if (sameDayIds.length > 0) {
-      const { count: otherConfirmed } = await supabase
-        .from("Attendance")
-        .select("id", { count: "exact", head: true })
-        .eq("studentId", studentId)
-        .eq("status", "CONFIRMED")
-        .in("lessonId", sameDayIds);
-      if ((otherConfirmed ?? 0) >= 1) return { error: "Só podes fazer um check-in por dia no teu plano." };
+    const { count: otherConfirmed } = await supabase
+      .from("Attendance")
+      .select("id", { count: "exact", head: true })
+      .eq("studentId", studentId)
+      .eq("status", "CONFIRMED")
+      .eq("occurrenceDate", occurrenceYmd)
+      .neq("lessonId", lessonId);
+    if ((otherConfirmed ?? 0) >= 1) {
+      return { error: "Só podes fazer um check-in por dia no teu plano." };
     }
   }
 
@@ -124,13 +164,14 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
     .select("id")
     .eq("lessonId", lessonId)
     .eq("studentId", studentId)
+    .eq("occurrenceDate", occurrenceYmd)
     .maybeSingle();
 
   if (existing) {
     const { error } = await supabase
       .from("Attendance")
       .update({ status: "CONFIRMED", checkedInAt: now })
-      .eq("id", existing.id);
+      .eq("id", (existing as { id: string }).id);
     if (error) {
       console.error("checkIn update error:", error);
       return { error: error.message };
@@ -144,6 +185,7 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
       status: "CONFIRMED",
       checkedInAt: now,
       isExperimental: false,
+      occurrenceDate: occurrenceYmd,
     });
     if (error) {
       console.error("checkIn insert error:", error);
@@ -157,12 +199,13 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
     console.error("grantBadgesIfEligible:", e);
   }
 
+  const lessonDataForNotify = { ...lessonData, date: occurrenceYmd };
   const { data: student } = await supabase.from("Student").select("userId").eq("id", studentId).single();
-  if (lessonData && student) {
+  if (lessonDataForNotify && student) {
     try {
       await createPresenceConfirmedNotification(supabase, studentId, {
         modality: lessonData.modality,
-        date: lessonData.date,
+        date: occurrenceYmd,
         startTime: lessonData.startTime,
         endTime: lessonData.endTime,
       });
@@ -174,7 +217,7 @@ export async function performCheckIn(lessonId: string): Promise<{ error?: string
       if (user?.email) {
         await sendCheckInConfirmation(user.email, user.name ?? null, {
           modality: lessonData.modality,
-          date: lessonData.date,
+          date: occurrenceYmd,
           startTime: lessonData.startTime,
           endTime: lessonData.endTime,
         });

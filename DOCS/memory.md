@@ -39,7 +39,7 @@
 ### 3.1 Aulas livres (`Lesson.isOpenClass`)
 
 - **Regra:** Qualquer aluno da **escola** pode participar (dashboard, RSVP, check-in), **incluindo sem `planId`** ou plano sem check-in.
-- **Dashboard (aluno):** Aulas da **própria escola** + **todas** as aulas com `isOpenClass` de **qualquer** unidade (rede Kingdom Fight). Nome da escola e local em destaque no cartão; aviso extra quando a aula é noutra sede. Secção **«Sua próxima aula»** em **carrossel** com **todas** as aulas elegíveis não abertas (ex.: plano full, várias modalidades / mesmo dia); sem plano, as aulas livres elegíveis concentram-se nessa secção. **«Nesta semana — aulas livres»** só quando há plano e aulas livres extra, também em carrossel, **depois do Painel do Guerreiro**; sem plano, fica a seguir ao CTA.
+- **Dashboard (aluno):** Aulas da **própria escola** + **todas** as aulas com `isOpenClass` de **qualquer** unidade (rede Kingdom Fight). A agenda da semana (**hoje → domingo**) usa **`expandLessonsForDateRange`** para incluir recorrentes (`Lesson.date` nulo). **Todas** as aulas relevantes aparecem; RSVP/check-in só quando `isLessonParticipationAllowedByPlan` (plano, `hasCheckIn`, modalidade). Cartões com mensagens se plano sem check-in ou modalidade fora do plano. **Presenças:** `Attendance.occurrenceDate`; check-in `/check-in/[id]?date=YYYY-MM-DD`.
 - **Admin / turmas:** Criar aula com `SUPABASE_SERVICE_ROLE_KEY` (cliente admin) quando disponível; o coach **tem de** estar associado à escola da aula (`CoachSchool`). Lista de coaches filtrada por escola. Filtro `?school=` na lista (por semana / por modalidade).
 - **Coach ↔ escolas (N:N):** tabela `CoachSchool`; cadastro/edição em **Admin → Coaches** (várias escolas por professor). Migração: `supabase/migrations/20260327180000_coach_multi_school.sql`.
 - **Ficheiros:** `lib/dashboard-lesson-filter.ts`, `app/dashboard/page.tsx`, `app/dashboard/NextLessonCard.tsx`, `app/dashboard/OpenClassesCarouselShell.tsx` (client só scroll/setas; cartões como `children` do servidor), `app/dashboard/LessonPromoBlock.tsx`, `app/admin/turmas/*`, `app/admin/turmas/actions.ts`, `lib/lesson-check-in-window.ts`, `lib/perform-check-in.ts`, `app/dashboard/actions.ts`.
@@ -58,6 +58,7 @@
 
 - Vista **por semana** / por modalidade; criação de aulas (incl. recorrente / one-off) — ver `app/admin/turmas/`.
 - **Modelo de agenda (2026-04):** uma linha em `Lesson` por **definição**; recorrentes usam `weekday` (1–7) e `date` null; ocorrências na agenda são **expandidas** em memória (`lib/lesson-occurrences.ts`). Cancelamento pontual: `LessonCancellation` (só aquela data). Professores N:N: `LessonCoach` (primeiro espelhado em `Lesson.coachId`). Migração: `supabase/migrations/20260401120000_lesson_template_schedule.sql`.
+- **Área Coach** (agenda, presenças na aula, QR, home, presença global, financeiro, experimentais): mesma expansão; links para uma ocorrência usam `?lesson=<id>&date=YYYY-MM-DD`; lista de presenças na aula filtra `Attendance` por `occurrenceDate`. Helper `rowsToLessonDefinitions` em `lib/lesson-occurrences.ts`.
 
 ### 3.5 Perfil do atleta – critérios por categoria (resultados de avaliação)
 

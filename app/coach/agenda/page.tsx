@@ -7,6 +7,11 @@ import { getCurrentSchoolId } from "@/lib/auth/get-current-school";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
+import {
+  expandLessonsForDateRange,
+  fetchLessonCancellations,
+  rowsToLessonDefinitions,
+} from "@/lib/lesson-occurrences";
 
 type SearchParams = Promise<{ coach?: string }>;
 
@@ -39,13 +44,12 @@ export default async function CoachAgendaPage({ searchParams }: { searchParams: 
     effectiveSchoolId = coachSchoolIds[0]!;
   }
 
-  // 1. Buscar aulas no período: nas escolas do professor ou na escola do contexto
+  // 1. Definições de aula (sem filtrar por `date` no SQL — recorrentes têm `date` null)
   let allLessonsQuery = supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, coachId")
-    .gte("date", today)
-    .lte("date", inFourWeeks)
-    .order("date", { ascending: true })
+    .select(
+      "id, modality, date, weekday, startTime, endTime, coachId, schoolId, isOneOff, isOpenClass, locationId, capacity, planningNotes"
+    )
     .order("startTime", { ascending: true });
 
   if (coachId && coachSchoolIds.length === 0) {
@@ -58,8 +62,11 @@ export default async function CoachAgendaPage({ searchParams }: { searchParams: 
     allLessonsQuery = allLessonsQuery.eq("schoolId", effectiveSchoolId);
   }
 
-  const { data: allLessons } = await allLessonsQuery;
-  const fullList = allLessons ?? [];
+  const { data: allLessonsRaw } = await allLessonsQuery;
+  const defs = rowsToLessonDefinitions(allLessonsRaw ?? []);
+  const lessonIds = defs.map((d) => d.id);
+  const cancellations = await fetchLessonCancellations(supabase, lessonIds);
+  const fullList = expandLessonsForDateRange(defs, cancellations, today, inFourWeeks);
 
   // 2. Aplicar filtro: coach em vista ou filtro por professor
   let list = fullList;
@@ -162,9 +169,9 @@ export default async function CoachAgendaPage({ searchParams }: { searchParams: 
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
           {list.map((lesson) => (
-            <li key={lesson.id}>
+            <li key={lesson.occurrenceKey}>
               <Link
-                href={`/coach/aula?lesson=${lesson.id}`}
+                href={`/coach/aula?lesson=${lesson.id}&date=${encodeURIComponent(lesson.occurrenceDate)}`}
                 className="card"
                 style={{
                   display: "flex",
@@ -177,10 +184,10 @@ export default async function CoachAgendaPage({ searchParams }: { searchParams: 
                 }}
               >
                 <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                  {MODALITY_LABELS[lesson.modality] ?? lesson.modality}
+                  {MODALITY_LABELS[lesson.modality ?? ""] ?? lesson.modality ?? ""}
                 </span>
                 <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                  {formatLessonDate(lesson.date)} · {lesson.startTime}–{lesson.endTime}
+                  {formatLessonDate(lesson.occurrenceDate)} · {lesson.startTime}–{lesson.endTime}
                 </span>
                 <span style={{ marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)" }}>
                   {t("presencesLink")}

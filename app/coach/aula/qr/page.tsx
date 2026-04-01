@@ -3,6 +3,11 @@ import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getCachedLocations } from "@/lib/cached-reference-data";
+import {
+  expandLessonsForDateRange,
+  fetchLessonCancellations,
+  rowsToLessonDefinitions,
+} from "@/lib/lesson-occurrences";
 import QRCode from "qrcode";
 
 async function getBaseUrl(): Promise<string> {
@@ -18,7 +23,7 @@ async function getBaseUrl(): Promise<string> {
   return "http://localhost:3000";
 }
 
-type Props = { searchParams: Promise<{ lesson?: string }> };
+type Props = { searchParams: Promise<{ lesson?: string; date?: string }> };
 
 export default async function CoachAulaQrPage({ searchParams }: Props) {
   const baseUrl = await getBaseUrl();
@@ -26,28 +31,39 @@ export default async function CoachAulaQrPage({ searchParams }: Props) {
   const { today, endOfWeek } = getThisWeekRange();
   const params = await searchParams;
   const lessonId = params.lesson ?? null;
+  const dateParam = params.date?.trim().slice(0, 10) ?? null;
 
-  const { data: lessonsData } = await supabase
+  const { data: lessonsRaw } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, locationId")
-    .gte("date", today)
-    .lte("date", endOfWeek)
-    .order("date", { ascending: true })
+    .select(
+      "id, modality, date, weekday, startTime, endTime, locationId, schoolId, isOneOff, coachId, isOpenClass, capacity, planningNotes"
+    )
     .order("startTime", { ascending: true });
 
-  const lessons = lessonsData ?? [];
-  const locationIds = [...new Set((lessons as { locationId?: string }[]).map((l) => l.locationId).filter(Boolean))];
+  const lessonIds = (lessonsRaw ?? []).map((l) => (l as { id: string }).id);
+  const cancellations = await fetchLessonCancellations(supabase, lessonIds);
+
+  const lessonsAsDefs = rowsToLessonDefinitions(lessonsRaw ?? []);
+
+  const lessons = expandLessonsForDateRange(lessonsAsDefs, cancellations, today, endOfWeek);
+  const locationIds = [...new Set(lessons.map((l) => l.locationId).filter(Boolean))] as string[];
   const allLocations = await getCachedLocations(supabase);
   const locations = locationIds.length > 0 ? allLocations.filter((l) => locationIds.includes(l.id)) : [];
   const locationById = new Map(locations.map((loc) => [loc.id, loc.name]));
 
   const selectedId =
     lessonId && lessons.some((l) => l.id === lessonId) ? lessonId : lessons[0]?.id ?? null;
-  const selectedLesson = selectedId ? lessons.find((l) => l.id === selectedId) : null;
+  const selectedLesson = selectedId
+    ? dateParam
+      ? lessons.find((l) => l.id === selectedId && l.occurrenceDate === dateParam) ??
+        lessons.find((l) => l.id === selectedId)
+      : lessons.find((l) => l.id === selectedId)
+    : null;
 
   let qrDataUrl: string | null = null;
-  if (selectedId) {
-    const checkInUrl = `${baseUrl}/check-in/${selectedId}`;
+  if (selectedId && selectedLesson) {
+    const dateForCheckIn = selectedLesson.occurrenceDate;
+    const checkInUrl = `${baseUrl}/check-in/${selectedId}?date=${encodeURIComponent(dateForCheckIn)}`;
     qrDataUrl = await QRCode.toDataURL(checkInUrl, { width: 280, margin: 2 });
   }
 
@@ -80,33 +96,37 @@ export default async function CoachAulaQrPage({ searchParams }: Props) {
             Escolhe a aula para mostrar o QR:
           </p>
           <ul style={{ listStyle: "none", padding: 0, margin: "0 0 clamp(20px, 5vw, 24px) 0", display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
-            {lessons.map((l) => (
-              <li key={l.id}>
+            {lessons.map((l) => {
+              const isSelected =
+                selectedLesson &&
+                l.id === selectedLesson.id &&
+                l.occurrenceDate === selectedLesson.occurrenceDate;
+              return (
+              <li key={l.occurrenceKey}>
                 <Link
-                  href={`/coach/aula/qr?lesson=${l.id}`}
+                  href={`/coach/aula/qr?lesson=${l.id}&date=${encodeURIComponent(l.occurrenceDate)}`}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     padding: "clamp(14px, 3.5vw, 16px)",
-                    backgroundColor: l.id === selectedId ? "var(--primary)" : "var(--bg-secondary)",
+                    backgroundColor: isSelected ? "var(--primary)" : "var(--bg-secondary)",
                     border: "1px solid var(--border)",
                     borderRadius: "var(--radius-md)",
-                    color: l.id === selectedId ? "#fff" : "var(--text-primary)",
+                    color: isSelected ? "#fff" : "var(--text-primary)",
                     textDecoration: "none",
                     fontSize: "clamp(15px, 3.8vw, 17px)",
-                    fontWeight: l.id === selectedId ? 600 : 400,
+                    fontWeight: isSelected ? 600 : 400,
                     minHeight: "clamp(48px, 12vw, 56px)",
                     boxSizing: "border-box",
                   }}
                 >
-                  {MODALITY_LABELS[l.modality] ?? l.modality}
-                  {(l as { locationId?: string }).locationId && locationById.get((l as { locationId: string }).locationId)
-                    ? ` · ${locationById.get((l as { locationId: string }).locationId)}`
-                    : ""}
-                  {" · "}{formatLessonDate(l.date)} · {l.startTime}–{l.endTime}
+                  {MODALITY_LABELS[l.modality ?? ""] ?? l.modality ?? ""}
+                  {l.locationId && locationById.get(l.locationId) ? ` · ${locationById.get(l.locationId)}` : ""}
+                  {" · "}{formatLessonDate(l.occurrenceDate)} · {l.startTime}–{l.endTime}
                 </Link>
               </li>
-            ))}
+            );
+            })}
           </ul>
 
           {selectedLesson && qrDataUrl && (
@@ -118,13 +138,13 @@ export default async function CoachAulaQrPage({ searchParams }: Props) {
               }}
             >
               <p style={{ margin: "0 0 16px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                {MODALITY_LABELS[selectedLesson.modality] ?? selectedLesson.modality}
+                {MODALITY_LABELS[selectedLesson.modality ?? ""] ?? selectedLesson.modality ?? ""}
               </p>
               <p style={{ margin: "0 0 20px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                {(selectedLesson as { locationId?: string }).locationId && locationById.get((selectedLesson as { locationId: string }).locationId)
-                  ? `${locationById.get((selectedLesson as { locationId: string }).locationId)} · `
+                {selectedLesson.locationId && locationById.get(selectedLesson.locationId)
+                  ? `${locationById.get(selectedLesson.locationId)} · `
                   : ""}
-                {formatLessonDate(selectedLesson.date)} · {selectedLesson.startTime}–{selectedLesson.endTime}
+                {formatLessonDate(selectedLesson.occurrenceDate)} · {selectedLesson.startTime}–{selectedLesson.endTime}
               </p>
               <div style={{ display: "inline-block", padding: 16, backgroundColor: "#fff", borderRadius: "var(--radius-md)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}

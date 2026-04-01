@@ -11,17 +11,26 @@ import { performCheckIn } from "@/lib/perform-check-in";
 /** Cookies/sessão: evitar estático e falhas em produção ao abrir o link de check-in. */
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ lessonId: string }> };
+type Props = {
+  params: Promise<{ lessonId: string }>;
+  searchParams: Promise<{ date?: string }>;
+};
 
-export default async function CheckInPage({ params }: Props) {
+export default async function CheckInPage({ params, searchParams }: Props) {
   const { lessonId } = await params;
+  const sp = await searchParams;
+  const dateParam = typeof sp.date === "string" ? sp.date.trim().slice(0, 10) : undefined;
+
   const supabase = await createClient();
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
 
   const dbUser = await getCurrentDbUser();
   if (!dbUser) {
-    redirect(`/sign-in?next=${encodeURIComponent(`/check-in/${lessonId}`)}`);
+    const next = dateParam
+      ? `/check-in/${lessonId}?date=${encodeURIComponent(dateParam)}`
+      : `/check-in/${lessonId}`;
+    redirect(`/sign-in?next=${encodeURIComponent(next)}`);
   }
 
   const studentId = await getCurrentStudentId();
@@ -31,28 +40,7 @@ export default async function CheckInPage({ params }: Props) {
     const { data: student } = await supabase.from("Student").select("planId").eq("id", studentId).single();
     hasPlan = !!student?.planId;
   }
-  if (studentId && !planAccess.hasCheckIn) {
-    return (
-      <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
-        <h1 className="text-mobile-lg" style={{ color: "var(--text-primary)", marginBottom: 12 }}>
-          {t("checkIn")}
-        </h1>
-        <p className="text-mobile-base" style={{ color: "var(--danger)", marginBottom: 24 }}>
-          {locale === "pt" ? "O teu plano não inclui check-in de aulas presenciais." : "Your plan does not include in-person class check-in."}
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
-          {!hasPlan && (
-            <Link href="/escolher-plano" className="btn btn-primary">
-              {locale === "pt" ? "Ver planos e preços" : "View plans and prices"}
-            </Link>
-          )}
-          <Link href="/dashboard" className="btn btn-secondary">
-            {t("goToDashboard")}
-          </Link>
-        </div>
-      </div>
-    );
-  }
+
   if (!studentId) {
     return (
       <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
@@ -91,7 +79,33 @@ export default async function CheckInPage({ params }: Props) {
     );
   }
 
-  const result = await performCheckIn(lessonId);
+  const isOpenClass = Boolean((lesson as { isOpenClass?: boolean }).isOpenClass);
+  if (!planAccess.hasCheckIn && !isOpenClass) {
+    return (
+      <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
+        <h1 className="text-mobile-lg" style={{ color: "var(--text-primary)", marginBottom: 12 }}>
+          {t("checkIn")}
+        </h1>
+        <p className="text-mobile-base" style={{ color: "var(--danger)", marginBottom: 24 }}>
+          {locale === "pt"
+            ? "O teu plano não inclui check-in de aulas presenciais."
+            : "Your plan does not include in-person class check-in."}
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
+          {!hasPlan && (
+            <Link href="/escolher-plano" className="btn btn-primary">
+              {locale === "pt" ? "Ver planos e preços" : "View plans and prices"}
+            </Link>
+          )}
+          <Link href="/dashboard" className="btn btn-secondary">
+            {t("goToDashboard")}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const result = await performCheckIn(lessonId, { occurrenceDate: dateParam });
 
   if (result.error) {
     return (

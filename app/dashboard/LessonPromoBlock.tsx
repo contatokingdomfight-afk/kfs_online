@@ -24,6 +24,11 @@ type Props = OpenLessonRow & {
   studentSchoolId: string | null;
   locationById: Record<string, string>;
   attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }>;
+  /** Chave composta `lessonId_occurrenceDate` (presenças por ocorrência). */
+  attendanceLookupKey: string;
+  participationAllowedByPlan: boolean;
+  hasPlan: boolean;
+  hasCheckIn: boolean;
   locale: "pt" | "en";
   todayStr: string;
   isFreeTier: boolean;
@@ -31,11 +36,27 @@ type Props = OpenLessonRow & {
   statusLabels: Record<string, string>;
 };
 
+function participationBlockedCopy(
+  t: (key: string) => string,
+  hasPlan: boolean,
+  hasCheckIn: boolean,
+  participationAllowedByPlan: boolean
+): string | null {
+  if (participationAllowedByPlan) return null;
+  if (!hasPlan) return t("freeTierSubscribeToParticipate");
+  if (!hasCheckIn) return t("dashboardParticipationBlockedPayment");
+  return t("dashboardParticipationBlockedModality");
+}
+
 export function LessonPromoBlock({
   lesson,
   studentSchoolId,
   locationById,
   attendanceByLesson,
+  attendanceLookupKey,
+  participationAllowedByPlan,
+  hasPlan,
+  hasCheckIn,
   locale,
   todayStr,
   isFreeTier,
@@ -44,10 +65,11 @@ export function LessonPromoBlock({
   t,
   statusLabels,
 }: Props) {
-  const att = attendanceByLesson[lesson.id];
+  const att = attendanceByLesson[attendanceLookupKey] ?? attendanceByLesson[lesson.id];
   const isToday = lesson.date === todayStr;
   const openClassParticipation = Boolean(lesson.isOpenClass);
-  const canUseCheckInLink = (!isFreeTier || openClassParticipation) && checkInWindowOpen;
+  const canUseCheckInLink =
+    participationAllowedByPlan && (!isFreeTier || openClassParticipation) && checkInWindowOpen;
   const locationName = lesson.locationId ? locationById[lesson.locationId] ?? null : null;
   const isOtherSchoolOpen =
     Boolean(lesson.isOpenClass) &&
@@ -56,6 +78,11 @@ export function LessonPromoBlock({
     lesson.schoolId !== studentSchoolId;
   const openClassLocationHighlight =
     Boolean(lesson.isOpenClass) && Boolean(lesson.schoolName || locationName);
+
+  const blockedCopy = participationBlockedCopy(t, hasPlan, hasCheckIn, participationAllowedByPlan);
+  const showRsvpBlocked = Boolean(blockedCopy) && !openClassParticipation;
+
+  const checkInHref = `/check-in/${lesson.id}?date=${encodeURIComponent(lesson.date)}`;
 
   return (
     <div
@@ -128,13 +155,14 @@ export function LessonPromoBlock({
         {formatNextLessonDate(lesson.date, locale)} · {lesson.startTime}–{lesson.endTime}
       </p>
       <div style={{ marginTop: 12 }}>
-        {isFreeTier && !openClassParticipation ? (
+        {showRsvpBlocked ? (
           <p style={{ margin: 0, fontSize: 14, opacity: 0.9 }}>
-            🔒 {t("freeTierSubscribeToParticipate")}
+            🔒 {blockedCopy}
           </p>
         ) : (
           <VouNaoVouButtons
             lessonId={lesson.id}
+            occurrenceDate={lesson.date}
             currentStatus={att?.status}
             checkedInAt={att?.checkedInAt ?? null}
             goingLabel={t("goingLabel")}
@@ -146,14 +174,14 @@ export function LessonPromoBlock({
           />
         )}
       </div>
-      {(!isFreeTier || openClassParticipation) && checkInStartTimeLabel && !checkInWindowOpen && (
+      {participationAllowedByPlan && (!isFreeTier || openClassParticipation) && checkInStartTimeLabel && !checkInWindowOpen && (
         <p style={{ marginTop: 14, marginBottom: 0, fontSize: "clamp(13px, 3.2vw, 15px)", opacity: 0.95 }}>
           {t("dashboardCheckInAvailableFrom").replace("{time}", checkInStartTimeLabel)}
         </p>
       )}
       {canUseCheckInLink && (
         <Link
-          href={`/check-in/${lesson.id}`}
+          href={checkInHref}
           className="btn"
           style={{
             marginTop: 16,
@@ -176,7 +204,7 @@ export function LessonPromoBlock({
       {canUseCheckInLink && (
         <p style={{ marginTop: 12, marginBottom: 0, fontSize: "clamp(12px, 3vw, 14px)", opacity: 0.9 }}>
           {t("atGymScanQr")}{" "}
-          <Link href={`/check-in/${lesson.id}`} style={{ color: "#fff", textDecoration: "underline" }}>
+          <Link href={checkInHref} style={{ color: "#fff", textDecoration: "underline" }}>
             {t("openLinkOnPhone")}
           </Link>
           .
