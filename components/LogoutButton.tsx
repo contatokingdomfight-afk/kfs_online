@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signOut } from "@/app/actions/auth";
 
 type Props = {
@@ -10,11 +11,14 @@ type Props = {
 
 export function LogoutButton({ label, variant = "sidebar" }: Props) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   async function handleLogout() {
     setLoading(true);
     try {
       await signOut();
+      router.push("/sign-in");
+      router.refresh();
     } catch (error) {
       console.error("Logout error:", error);
       setLoading(false);

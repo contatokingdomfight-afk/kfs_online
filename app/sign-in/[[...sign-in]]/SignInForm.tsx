@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -12,30 +13,48 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [savePhase, setSavePhase] = useState<"idle" | "saving" | "success">("idle");
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextUrl = searchParams.get("next");
   const urlError = searchParams.get("error");
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const overlayOpen = savePhase !== "idle" || googleLoading;
+  const overlayMessage = googleLoading
+    ? t("signInOpeningGoogle")
+    : savePhase === "success"
+      ? t("signInSuccessRedirect")
+      : t("signingIn");
+  const overlayShowSpinner = googleLoading || savePhase === "saving";
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
+    setSavePhase("saving");
     const supabase = createClient();
     const { error: err } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    setLoading(false);
     if (err) {
+      setSavePhase("idle");
       setError(err.message);
       return;
     }
+    setSavePhase("success");
     const target = nextUrl && nextUrl.startsWith("/") ? nextUrl : "/dashboard";
-    router.push(target);
-    router.refresh();
+    redirectTimerRef.current = setTimeout(() => {
+      router.push(target);
+      router.refresh();
+    }, 900);
   }
 
   async function handleGoogleSignIn() {
@@ -50,16 +69,22 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
       provider: "google",
       options: { redirectTo },
     });
-    setGoogleLoading(false);
     if (err) {
+      setGoogleLoading(false);
       setError(err.message);
       return;
     }
-    if (data?.url) window.location.href = data.url;
+    if (data?.url) {
+      window.location.href = data.url;
+      return;
+    }
+    setGoogleLoading(false);
   }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-bg">
+      <LoadingOverlay open={overlayOpen} message={overlayMessage} showSpinner={overlayShowSpinner} />
+
       <div className="container-mobile">
         <h1 className="text-mobile-lg font-semibold text-center mb-6" style={{ color: "var(--text-primary)" }}>
           {t("signIn")}
@@ -85,6 +110,7 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
             onChange={(e) => setEmail(e.target.value)}
             required
             className="input"
+            disabled={overlayOpen}
           />
           <input
             type="password"
@@ -93,6 +119,7 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
             onChange={(e) => setPassword(e.target.value)}
             required
             className="input"
+            disabled={overlayOpen}
           />
           <p className="text-mobile-sm text-right" style={{ margin: "-8px 0 0 0" }}>
             <Link href="/auth/forgot-password" style={{ color: "var(--primary)", textDecoration: "none" }}>
@@ -104,8 +131,8 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
               {error || (urlError === "exchange_failed" && (initialLocale === "en" ? "Login failed. Please try again." : "Falha ao iniciar sessão. Tenta novamente.")) || (urlError === "missing_code" && (initialLocale === "en" ? "Invalid callback." : "Callback inválido.")) || (urlError === "no_user" && (initialLocale === "en" ? "No user returned." : "Sessão não encontrada."))}
             </p>
           )}
-          <button type="submit" disabled={loading} className="btn btn-primary w-full">
-            {loading ? t("signingIn") : t("signIn")}
+          <button type="submit" disabled={overlayOpen} className="btn btn-primary w-full">
+            {t("signIn")}
           </button>
         </form>
         <p className="text-mobile-base text-center mt-6" style={{ color: "var(--text-secondary)" }}>

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -17,14 +18,21 @@ export function UpdatePasswordForm({ initialLocale }: { initialLocale: Locale })
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [savePhase, setSavePhase] = useState<"idle" | "saving" | "success">("idle");
   const [sessionReady, setSessionReady] = useState<boolean | null>(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSessionReady(!!session);
     });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -38,17 +46,27 @@ export function UpdatePasswordForm({ initialLocale }: { initialLocale: Locale })
       setError(initialLocale === "en" ? "Password must be at least 6 characters." : "A senha deve ter pelo menos 6 caracteres.");
       return;
     }
-    setLoading(true);
+
+    setSavePhase("saving");
     const supabase = createClient();
     const { error: err } = await supabase.auth.updateUser({ password });
-    setLoading(false);
+
     if (err) {
+      setSavePhase("idle");
       setError(err.message);
       return;
     }
-    router.push("/dashboard");
-    router.refresh();
+
+    setSavePhase("success");
+    redirectTimerRef.current = setTimeout(() => {
+      router.push("/dashboard");
+      router.refresh();
+    }, 900);
   }
+
+  const overlayOpen = savePhase !== "idle";
+  const overlayMessage =
+    savePhase === "success" ? t("updatePasswordSuccess") : t("updatePasswordSaving");
 
   if (sessionReady === false) {
     return (
@@ -79,6 +97,8 @@ export function UpdatePasswordForm({ initialLocale }: { initialLocale: Locale })
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-bg">
+      <LoadingOverlay open={overlayOpen} message={overlayMessage} showSpinner={savePhase === "saving"} />
+
       <div className="container-mobile">
         <h1 className="text-mobile-lg font-semibold text-center mb-2" style={{ color: "var(--text-primary)" }}>
           {t("updatePasswordTitle")}
@@ -96,6 +116,7 @@ export function UpdatePasswordForm({ initialLocale }: { initialLocale: Locale })
             minLength={6}
             autoComplete="new-password"
             className="input"
+            disabled={overlayOpen}
           />
           <input
             type="password"
@@ -106,14 +127,15 @@ export function UpdatePasswordForm({ initialLocale }: { initialLocale: Locale })
             minLength={6}
             autoComplete="new-password"
             className="input"
+            disabled={overlayOpen}
           />
           {error && (
             <p className="text-mobile-sm" style={{ color: "var(--danger)", margin: 0 }}>
               {error}
             </p>
           )}
-          <button type="submit" disabled={loading} className="btn btn-primary w-full">
-            {loading ? t("loading") : t("updatePasswordSubmit")}
+          <button type="submit" disabled={overlayOpen} className="btn btn-primary w-full">
+            {t("updatePasswordSubmit")}
           </button>
         </form>
       </div>

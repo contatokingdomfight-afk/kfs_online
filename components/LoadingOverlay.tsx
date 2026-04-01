@@ -2,14 +2,13 @@
 
 type Props = {
   open: boolean;
-  message?: string;
+  message: string;
+  /** Por omissão mostra o spinner; desativar na fase final (ex.: “a redirecionar”). */
+  showSpinner?: boolean;
 };
 
-/**
- * Modal de carregamento controlado por prop.
- * Útil para formulários que usam useTransition em vez de useFormStatus.
- */
-export function LoadingOverlay({ open, message = "A guardar…" }: Props) {
+/** Overlay de carregamento (spinner + texto). Reutilizável em formulários client-side. */
+export function LoadingOverlay({ open, message, showSpinner = true }: Props) {
   if (!open) return null;
 
   return (
@@ -33,7 +32,7 @@ export function LoadingOverlay({ open, message = "A guardar…" }: Props) {
       <div
         className="card"
         style={{
-          maxWidth: 280,
+          maxWidth: 300,
           padding: "clamp(24px, 5vw, 32px)",
           display: "flex",
           flexDirection: "column",
@@ -42,19 +41,30 @@ export function LoadingOverlay({ open, message = "A guardar…" }: Props) {
           boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
         }}
       >
-        <div
-          role="progressbar"
-          aria-valuetext={message}
+        {showSpinner ? (
+          <div
+            role="progressbar"
+            aria-valuetext={message}
+            style={{
+              width: 40,
+              height: 40,
+              border: "3px solid var(--border)",
+              borderTopColor: "var(--primary)",
+              borderRadius: "50%",
+              animation: "loading-overlay-spin 0.8s linear infinite",
+            }}
+          />
+        ) : null}
+        <p
           style={{
-            width: 40,
-            height: 40,
-            border: "3px solid var(--border)",
-            borderTopColor: "var(--primary)",
-            borderRadius: "50%",
-            animation: "loading-overlay-spin 0.8s linear infinite",
+            margin: 0,
+            fontSize: "clamp(15px, 3.8vw, 17px)",
+            fontWeight: 500,
+            color: "var(--text-primary)",
+            textAlign: "center",
+            lineHeight: 1.45,
           }}
-        />
-        <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 500, color: "var(--text-primary)" }}>
+        >
           {message}
         </p>
         <style>{`
