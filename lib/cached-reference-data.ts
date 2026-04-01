@@ -3,6 +3,10 @@ import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
+function supabaseForReliableRead(fallback: SupabaseClient): SupabaseClient {
+  return getAdminClientOrNull().client ?? fallback;
+}
+
 export type CachedLocation = { id: string; name: string };
 export type CachedModalityRef = { code: string; name: string };
 export type CachedSchoolOption = { id: string; name: string };
@@ -54,16 +58,34 @@ export async function getCachedLocations(
 
 /**
  * Locais de uma escola (sem cache). Para formulários onde o filtro por escola é obrigatório.
+ * Usa service role quando existir (igual a `getCachedLocations`) para não devolver lista vazia por RLS/sessão.
  */
 export async function getLocationsForSchool(
   supabase: SupabaseClient,
   schoolId: string
 ): Promise<CachedLocation[]> {
-  const { data } = await supabase
-    .from("Location")
-    .select("id, name")
-    .eq("schoolId", schoolId)
-    .order("sortOrder", { ascending: true });
+  const client = supabaseForReliableRead(supabase);
+  const q = () =>
+    client
+      .from("Location")
+      .select("id, name")
+      .eq("schoolId", schoolId)
+      .order("sortOrder", { ascending: true });
+
+  let { data, error } = await q();
+  if (error) {
+    console.error("getLocationsForSchool (ordered):", error.message);
+    const r2 = await client
+      .from("Location")
+      .select("id, name")
+      .eq("schoolId", schoolId);
+    data = r2.data;
+    error = r2.error;
+    if (error) {
+      console.error("getLocationsForSchool:", error.message);
+      return [];
+    }
+  }
   return data ?? [];
 }
 

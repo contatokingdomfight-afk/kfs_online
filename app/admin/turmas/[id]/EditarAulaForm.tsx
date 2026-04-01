@@ -302,7 +302,12 @@ export function EditarAulaForm({
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Local
         </span>
-        <select name="locationId" defaultValue={initialLocationId || ""} className="input">
+        <select
+          name="locationId"
+          key={`location-${initialLocationId || "none"}`}
+          defaultValue={initialLocationId || ""}
+          className="input"
+        >
           <option value="">— Sem local —</option>
           {locationOptions.map((loc) => (
             <option key={loc.id} value={loc.id}>
@@ -310,6 +315,11 @@ export function EditarAulaForm({
             </option>
           ))}
         </select>
+        {locationOptions.length === 0 && (
+          <span style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.45 }}>
+            Não há espaços registados para esta escola. Cria locais em Admin → Locais (cada local fica associado a uma escola).
+          </span>
+        )}
       </label>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
