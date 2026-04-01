@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
-import { getCurrentDbUserUncached } from "@/lib/auth/get-current-user";
+import { requireAdminForRoute } from "@/lib/supabase/route-handler";
 import { performUpdateLesson } from "@/lib/admin/update-lesson";
 
 export async function POST(request: Request) {
-  const dbUser = await getCurrentDbUserUncached();
-  if (!dbUser || dbUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Não autorizado." }, { status: 403 });
+  const auth = await requireAdminForRoute();
+  if (!auth.adminOk) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Pedido inválido." }, { status: 400 });
+  } catch (e) {
+    console.error("update-lesson: body parse error", e);
+    return NextResponse.json({ error: "Corpo do pedido inválido (não é JSON)." }, { status: 400 });
   }
 
   const lessonId = typeof body.lessonId === "string" ? body.lessonId.trim() : "";
@@ -41,17 +42,22 @@ export async function POST(request: Request) {
 
   const isOpenClass = body.isOpenClass === true;
 
-  const result = await performUpdateLesson({
-    lessonId,
-    modality,
-    date,
-    startTime,
-    endTime,
-    coachId,
-    locationId,
-    capacity,
-    planningNotes,
-    isOpenClass,
-  });
-  return NextResponse.json(result);
+  try {
+    const result = await performUpdateLesson({
+      lessonId,
+      modality,
+      date,
+      startTime,
+      endTime,
+      coachId,
+      locationId,
+      capacity,
+      planningNotes,
+      isOpenClass,
+    });
+    return NextResponse.json(result);
+  } catch (e) {
+    console.error("update-lesson: performUpdateLesson error", e);
+    return NextResponse.json({ error: "Erro interno ao guardar aula." }, { status: 500 });
+  }
 }
