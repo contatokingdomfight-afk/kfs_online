@@ -79,6 +79,13 @@ export function getWeekStartMonday(): string {
 
 const WEEKDAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
+/** Segunda=1 … Domingo=7 (como em `Lesson.weekday`). */
+const WEEKDAY_LABEL_MON1 = ["", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+
+export function weekdayLabelMon1(weekday: number): string {
+  return WEEKDAY_LABEL_MON1[weekday] ?? "";
+}
+
 /** Dado Monday em YYYY-MM-DD, devolve domingo da mesma semana em YYYY-MM-DD. */
 export function getWeekEndSunday(mondayYYYYMMDD: string): string {
   const [y, m, d] = mondayYYYYMMDD.split("-").map(Number);

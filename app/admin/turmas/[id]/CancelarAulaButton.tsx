@@ -4,13 +4,20 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { DeleteLessonResult } from "@/lib/admin/delete-lesson";
 
-type Props = { lessonId: string; turmasReturnQuery?: string; isOneOff: boolean };
+type Props = {
+  lessonId: string;
+  turmasReturnQuery?: string;
+  isOneOff: boolean;
+  /** Se vier da agenda com data concreta (recorrente), permite cancelar só essa semana. */
+  occurrenceDate?: string | null;
+};
 
-export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff }: Props) {
+export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff, occurrenceDate }: Props) {
   const [mounted, setMounted] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"cancelWeek" | "deleteSeries">("cancelWeek");
 
   useEffect(() => {
     setMounted(true);
@@ -27,10 +34,15 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
 
   function openModal() {
     setError(null);
+    if (!isOneOff && occurrenceDate) {
+      setMode("cancelWeek");
+    } else {
+      setMode("deleteSeries");
+    }
     setModalOpen(true);
   }
 
-  async function handleConfirm() {
+  async function confirmDeleteSeries() {
     setError(null);
     setPending(true);
     try {
@@ -41,6 +53,7 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
         body: JSON.stringify({
           lessonId,
           returnQuery: turmasReturnQuery || undefined,
+          action: "deleteDefinition",
         }),
       });
       const result = (await res.json()) as DeleteLessonResult;
@@ -61,12 +74,62 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
         window.location.assign(result.redirectTo);
         return;
       }
-      setError("Não foi possível concluir o cancelamento. Tenta de novo.");
+      setError("Não foi possível concluir. Tenta de novo.");
     } catch {
-      setError("Erro ao cancelar aula.");
+      setError("Erro ao eliminar.");
     } finally {
       setPending(false);
     }
+  }
+
+  async function confirmCancelWeek() {
+    if (!occurrenceDate) return;
+    setError(null);
+    setPending(true);
+    try {
+      const res = await fetch("/api/admin/turmas/delete-lesson", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          lessonId,
+          returnQuery: turmasReturnQuery || undefined,
+          action: "cancelOccurrence",
+          occurrenceDate,
+        }),
+      });
+      const result = (await res.json()) as DeleteLessonResult;
+      if (res.status === 403) {
+        setError(result.error ?? "Não autorizado.");
+        return;
+      }
+      if (!res.ok) {
+        setError(result.error ?? "Pedido inválido.");
+        return;
+      }
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      if (result.success && result.redirectTo) {
+        setModalOpen(false);
+        window.location.assign(result.redirectTo);
+        return;
+      }
+      setError("Não foi possível concluir. Tenta de novo.");
+    } catch {
+      setError("Erro ao cancelar.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handlePrimaryConfirm() {
+    if (!isOneOff && occurrenceDate && mode === "cancelWeek") {
+      await confirmCancelWeek();
+      return;
+    }
+    await confirmDeleteSeries();
   }
 
   const modal =
@@ -105,17 +168,49 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
             id="cancel-lesson-title"
             style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 600, color: "var(--text-primary)" }}
           >
-            Cancelar aula
+            {isOneOff ? "Eliminar aula" : occurrenceDate ? "Cancelar ou eliminar" : "Eliminar definição"}
           </h2>
           {isOneOff ? (
             <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-              Esta é uma <strong>aula única</strong>. Será <strong>eliminada</strong> apenas esta ocorrência. Esta ação não pode ser
-              desfeita.
+              Esta aula única será <strong>eliminada</strong>. Esta ação não pode ser desfeita.
             </p>
+          ) : occurrenceDate ? (
+            <>
+              {mode === "cancelWeek" ? (
+                <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                  Será registado um <strong>cancelamento apenas para {occurrenceDate}</strong>. As outras semanas mantêm-se na agenda.
+                </p>
+              ) : (
+                <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                  Será <strong>eliminada a definição</strong> desta aula (deixa de aparecer em todas as semanas). Esta ação não pode ser
+                  desfeita.
+                </p>
+              )}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setMode("cancelWeek")}
+                  disabled={pending}
+                  style={{ opacity: mode === "cancelWeek" ? 1 : 0.75 }}
+                >
+                  Só esta semana
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setMode("deleteSeries")}
+                  disabled={pending}
+                  style={{ opacity: mode === "deleteSeries" ? 1 : 0.75 }}
+                >
+                  Série inteira
+                </button>
+              </div>
+            </>
           ) : (
             <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-              Serão <strong>eliminadas esta ocorrência e todas as futuras</strong> da mesma série semanal (mesmo horário, coach, escola e
-              dia da semana), a partir desta data. Esta ação não pode ser desfeita.
+              Será <strong>eliminada a definição</strong> (a aula deixa de existir no sistema). Para cancelar apenas uma semana, abre a
+              edição a partir da <strong>vista por semana</strong> na agenda (para associar a data).
             </p>
           )}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
@@ -124,12 +219,16 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
             </button>
             <button
               type="button"
-              onClick={handleConfirm}
+              onClick={handlePrimaryConfirm}
               disabled={pending}
               className="btn btn-danger"
               style={{ minHeight: 44 }}
             >
-              {pending ? "A processar…" : "Confirmar"}
+              {pending ? "A processar…" : isOneOff
+                ? "Eliminar"
+                : occurrenceDate && mode === "cancelWeek"
+                  ? "Cancelar esta semana"
+                  : "Eliminar definição"}
             </button>
           </div>
         </div>
@@ -150,7 +249,7 @@ export function CancelarAulaButton({ lessonId, turmasReturnQuery = "", isOneOff 
           opacity: pending ? 0.7 : 1,
         }}
       >
-        {pending ? "A cancelar…" : "Cancelar aula"}
+        {pending ? "A processar…" : isOneOff ? "Eliminar aula" : "Cancelar / eliminar"}
       </button>
       {error && (
         <p style={{ marginTop: 8, fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--danger)" }}>

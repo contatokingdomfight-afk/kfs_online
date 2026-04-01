@@ -6,11 +6,16 @@ import type { CachedModalityRef } from "@/lib/cached-reference-data";
 export type LessonRow = {
   id: string;
   modality: string | null;
+  /** Data da ocorrência na agenda (YYYY-MM-DD). */
   date: string;
+  occurrenceDate?: string;
+  occurrenceKey?: string;
   startTime: string;
   endTime: string;
   capacity: number | null;
   coachId: string | null;
+  /** Professores (ordem da associação); preferir para o rótulo. */
+  coachIds?: string[];
   locationId: string | null;
   planningNotes: string | null;
   isOneOff?: boolean;
@@ -18,6 +23,25 @@ export type LessonRow = {
   createdAt?: string;
   schoolId?: string | null;
 };
+
+function coachNamesForLesson(lesson: LessonRow, coaches: Coach[] | null): string | null {
+  const ids =
+    lesson.coachIds && lesson.coachIds.length > 0
+      ? lesson.coachIds
+      : lesson.coachId
+        ? [lesson.coachId]
+        : [];
+  const names = ids.map((id) => coaches?.find((c) => c.id === id)?.name).filter(Boolean) as string[];
+  return names.length ? names.join(", ") : null;
+}
+
+function editHrefForLesson(lesson: LessonRow, editLessonQuery: string): string {
+  const parts = [editLessonQuery.trim(), lesson.occurrenceDate ? `occurrence=${lesson.occurrenceDate}` : ""].filter(
+    Boolean
+  );
+  const q = parts.join("&");
+  return q ? `/admin/turmas/${lesson.id}?${q}` : `/admin/turmas/${lesson.id}`;
+}
 
 export type Coach = { id: string; name: string };
 export type Location = { id: string; name: string };
@@ -131,7 +155,7 @@ function WeekDayCard({
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 10px)" }}>
           {dayLessons.map((lesson) => (
             <WeekLessonRow
-              key={lesson.id}
+              key={lesson.occurrenceKey ?? lesson.id}
               lesson={lesson}
               locations={locations}
               coaches={coaches}
@@ -161,12 +185,9 @@ function WeekLessonRow({
   schools: SchoolOption[] | null;
   editLessonQuery?: string;
 }) {
-  const editHref =
-    editLessonQuery && editLessonQuery.length > 0
-      ? `/admin/turmas/${lesson.id}?${editLessonQuery}`
-      : `/admin/turmas/${lesson.id}`;
+  const editHref = editHrefForLesson(lesson, editLessonQuery);
   const locationName = lesson.locationId ? locations?.find((l) => l.id === lesson.locationId)?.name : null;
-  const coachName = coaches?.find((c) => c.id === lesson.coachId)?.name ?? null;
+  const coachName = coachNamesForLesson(lesson, coaches);
   const modalityName = (modalities ?? []).find((m) => m.code === lesson.modality)?.name ?? MODALITY_LABELS[lesson.modality ?? ""] ?? lesson.modality ?? "";
   const schoolName = lesson.schoolId ? schools?.find((s) => s.id === lesson.schoolId)?.name : null;
   return React.createElement(
@@ -269,7 +290,7 @@ function ModalityGroup({
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 10px)" }}>
         {groupLessons.map((lesson) => (
           <ModalityLessonRow
-            key={lesson.id}
+            key={lesson.occurrenceKey ?? lesson.id}
             lesson={lesson}
             locations={locations}
             coaches={coaches}
@@ -295,12 +316,9 @@ function ModalityLessonRow({
   schools: SchoolOption[] | null;
   editLessonQuery?: string;
 }) {
-  const editHref =
-    editLessonQuery && editLessonQuery.length > 0
-      ? `/admin/turmas/${lesson.id}?${editLessonQuery}`
-      : `/admin/turmas/${lesson.id}`;
+  const editHref = editHrefForLesson(lesson, editLessonQuery);
   const locationName = lesson.locationId ? locations?.find((l) => l.id === lesson.locationId)?.name : null;
-  const coachName = coaches?.find((c) => c.id === lesson.coachId)?.name ?? null;
+  const coachName = coachNamesForLesson(lesson, coaches);
   const schoolName = lesson.schoolId ? schools?.find((s) => s.id === lesson.schoolId)?.name : null;
   return (
     <li className="card" style={{ padding: "clamp(12px, 3vw, 16px)" }}>

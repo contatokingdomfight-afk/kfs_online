@@ -10,6 +10,11 @@ import { TurmasSchoolFilter } from "./TurmasSchoolFilter";
 import { getWeekStartMonday, getWeekEndSunday } from "@/lib/lesson-utils";
 import { getCachedLocations, getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { buildTurmasListQueryFromState } from "@/lib/turmas-list-query";
+import {
+  expandLessonsForDateRange,
+  fetchLessonCancellations,
+  type LessonDefinitionRow,
+} from "@/lib/lesson-occurrences";
 import { WeekView, ModalityView, type LessonRow } from "./TurmasViews";
 
 export default async function AdminTurmasPage({
@@ -35,11 +40,65 @@ export default async function AdminTurmasPage({
   const adminResult = getAdminClientOrNull();
   const supabase = adminResult.client ?? (await createClient());
 
-  const { data: lessons, error: lessonsError } = await supabase
+  const { data: lessonsRaw, error: lessonsError } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, capacity, coachId, locationId, planningNotes, isOneOff, isOpenClass, createdAt, schoolId")
-    .order("date", { ascending: true })
+    .select(
+      "id, modality, date, weekday, startTime, endTime, capacity, coachId, locationId, planningNotes, isOneOff, isOpenClass, createdAt, schoolId"
+    )
+    .order("modality", { ascending: true })
     .order("startTime", { ascending: true });
+
+  const lessonIds = (lessonsRaw ?? []).map((l) => l.id);
+  const [{ data: lessonCoachRows }, cancellations] = await Promise.all([
+    lessonIds.length
+      ? supabase.from("LessonCoach").select("lessonId, coachId, sortOrder").in("lessonId", lessonIds).order("sortOrder")
+      : Promise.resolve({ data: [] as { lessonId: string; coachId: string }[] }),
+    fetchLessonCancellations(supabase, lessonIds),
+  ]);
+
+  const coachIdsByLesson = new Map<string, string[]>();
+  for (const row of lessonCoachRows ?? []) {
+    const lid = (row as { lessonId: string }).lessonId;
+    const cid = (row as { coachId: string }).coachId;
+    const list = coachIdsByLesson.get(lid) ?? [];
+    list.push(cid);
+    coachIdsByLesson.set(lid, list);
+  }
+
+  const lessonsAsDefs: LessonDefinitionRow[] = (lessonsRaw ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    const id = String(r.id);
+    const fromJoin = coachIdsByLesson.get(id);
+    const coachId = String(r.coachId ?? "");
+    return {
+      id,
+      modality: (r.modality as string | null) ?? null,
+      date: typeof r.date === "string" ? r.date.slice(0, 10) : (r.date as string | null),
+      weekday: typeof r.weekday === "number" ? r.weekday : r.weekday != null ? Number(r.weekday) : null,
+      startTime: String(r.startTime ?? ""),
+      endTime: String(r.endTime ?? ""),
+      coachId,
+      coachIds: fromJoin?.length ? fromJoin : coachId ? [coachId] : [],
+      schoolId: String(r.schoolId ?? ""),
+      locationId: (r.locationId as string | null) ?? null,
+      capacity: (r.capacity as number | null) ?? null,
+      planningNotes: (r.planningNotes as string | null) ?? null,
+      isOneOff: Boolean(r.isOneOff),
+      isOpenClass: Boolean(r.isOpenClass),
+      createdAt: r.createdAt as string | undefined,
+    };
+  });
+
+  const weekEndForExpand = getWeekEndSunday(weekMondayForLink);
+  const lessonsExpanded: LessonRow[] = expandLessonsForDateRange(
+    lessonsAsDefs,
+    cancellations,
+    weekMondayForLink,
+    weekEndForExpand
+  ).map((L) => ({
+    ...L,
+    date: L.occurrenceDate,
+  }));
 
   const { data: coaches } = await supabase.from("Coach").select("id, userId").then(async (r) => {
     if (!r.data?.length) return { data: [] as { id: string; name: string; schoolIds: string[] }[] };
@@ -75,8 +134,8 @@ export default async function AdminTurmasPage({
 
   const lessonsForView =
     schoolFilterParam && schools?.some((s) => s.id === schoolFilterParam)
-      ? (lessons ?? []).filter((l) => (l as { schoolId?: string }).schoolId === schoolFilterParam)
-      : lessons;
+      ? lessonsExpanded.filter((l) => l.schoolId === schoolFilterParam)
+      : lessonsExpanded;
 
   const editLessonQuery = buildTurmasListQueryFromState({
     view,
@@ -148,7 +207,7 @@ export default async function AdminTurmasPage({
             Erro ao carregar: {lessonsError.message}
           </p>
         )}
-        {!lessonsError && (!lessons || lessons.length === 0) && (
+        {!lessonsError && (!lessonsRaw || lessonsRaw.length === 0) && (
           <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)" }}>
             Nenhuma aula criada. Adiciona acima.
           </p>
@@ -177,8 +236,8 @@ export default async function AdminTurmasPage({
         )}
         {!lessonsError &&
           view === "modalidade" &&
-          lessons &&
-          lessons.length > 0 &&
+          lessonsRaw &&
+          lessonsRaw.length > 0 &&
           lessonsForView &&
           lessonsForView.length === 0 && (
             <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)" }}>

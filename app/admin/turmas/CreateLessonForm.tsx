@@ -179,39 +179,44 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
             ))}
           </select>
         </label>
-        <label style={{ flex: "1 1 180px", minWidth: 0 }}>
-          <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "var(--text-secondary)" }}>
-            Coach *
+        <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+          <span style={{ display: "block", marginBottom: 6, fontSize: 12, color: "var(--text-secondary)" }}>
+            Professores * (podes marcar vários)
           </span>
-          <select
-            name="coachId"
-            required
+          <div
             key={selectedSchoolId || "no-school"}
-            disabled={!selectedSchoolId}
             style={{
-              width: "100%",
-              padding: "8px 12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              padding: "10px 12px",
               backgroundColor: "#0b0b0b",
               border: "1px solid #27272a",
               borderRadius: 6,
-              color: "#ffffff",
-              fontSize: 14,
               opacity: selectedSchoolId ? 1 : 0.6,
+              pointerEvents: selectedSchoolId ? "auto" : "none",
             }}
           >
-            <option value="">{selectedSchoolId ? "— Selecionar —" : "— Escolhe primeiro a escola —"}</option>
-            {coachesForSchool.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            {!selectedSchoolId ? (
+              <span style={{ fontSize: 13, color: "#a1a1aa" }}>Escolhe primeiro a escola.</span>
+            ) : (
+              coachesForSchool.map((c) => (
+                <label
+                  key={c.id}
+                  style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#fff", cursor: "pointer" }}
+                >
+                  <input type="checkbox" name="coachIds" value={c.id} style={{ width: 18, height: 18, accentColor: "#c1121f" }} />
+                  {c.name}
+                </label>
+              ))
+            )}
+          </div>
           {selectedSchoolId && coachesForSchool.length === 0 && (
             <p style={{ margin: "6px 0 0", fontSize: 12, color: "#f97316" }}>
               Não há coaches nesta escola. Associa um coach a esta escola antes de criar a aula.
             </p>
           )}
-        </label>
+        </div>
         <label style={{ flex: "0 1 80px", minWidth: 0 }}>
           <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "#a1a1aa" }}>
             Capacidade
@@ -243,7 +248,7 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
           style={{ width: 18, height: 18, accentColor: "#c1121f" }}
         />
         <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
-          Aula única (evento pontual) — se não marcar, são criadas 1000 aulas com recorrência semanal no dia selecionado
+          Aula única (evento pontual) — se não marcar, fica registada uma aula semanal (mesmo dia e hora todas as semanas)
         </span>
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

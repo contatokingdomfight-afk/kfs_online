@@ -21,7 +21,15 @@ export async function POST(request: Request) {
   const date = typeof body.date === "string" ? body.date.trim() : "";
   const startTime = typeof body.startTime === "string" ? body.startTime.trim() : "";
   const endTime = typeof body.endTime === "string" ? body.endTime.trim() : "";
-  const coachId = typeof body.coachId === "string" ? body.coachId.trim() : "";
+
+  let coachIds: string[] = [];
+  const rawCoachIds = body.coachIds;
+  if (Array.isArray(rawCoachIds)) {
+    coachIds = rawCoachIds.map((x) => String(x).trim()).filter(Boolean);
+  } else if (typeof body.coachId === "string" && body.coachId.trim()) {
+    coachIds = [body.coachId.trim()];
+  }
+
   const locationRaw = body.locationId;
   const locationId =
     typeof locationRaw === "string" && locationRaw.trim() !== "" ? locationRaw.trim() : null;
@@ -42,6 +50,13 @@ export async function POST(request: Request) {
 
   const isOpenClass = body.isOpenClass === true;
 
+  let weekday: number | null = null;
+  const wdRaw = body.weekday;
+  if (wdRaw !== undefined && wdRaw !== null && wdRaw !== "") {
+    const n = typeof wdRaw === "number" ? wdRaw : parseInt(String(wdRaw), 10);
+    if (!Number.isNaN(n)) weekday = n;
+  }
+
   try {
     const result = await performUpdateLesson({
       lessonId,
@@ -49,11 +64,12 @@ export async function POST(request: Request) {
       date,
       startTime,
       endTime,
-      coachId,
+      coachIds,
       locationId,
       capacity,
       planningNotes,
       isOpenClass,
+      weekday,
     });
     return NextResponse.json(result);
   } catch (e) {

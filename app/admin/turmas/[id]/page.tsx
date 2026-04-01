@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
-import { formatLessonDate } from "@/lib/lesson-utils";
+import { formatLessonDate, weekdayLabelMon1 } from "@/lib/lesson-utils";
 import { EditarAulaForm } from "./EditarAulaForm";
 import { CancelarAulaButton } from "./CancelarAulaButton";
 import { getCachedModalityRefs, getLocationsForSchool } from "@/lib/cached-reference-data";
@@ -21,13 +21,16 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
   const { id: lessonId } = await params;
   const sp = await searchParams;
   const turmasReturnQuery = buildTurmasListQuery(sp);
+  const occurrenceRaw = typeof sp.occurrence === "string" ? sp.occurrence.trim() : "";
+  const occurrenceDate = /^\d{4}-\d{2}-\d{2}$/.test(occurrenceRaw) ? occurrenceRaw : null;
+
   const adminResult = getAdminClientOrNull();
   const supabase = adminResult.client ?? (await createClient());
 
   const { data: lesson } = await supabase
     .from("Lesson")
     .select(
-      "id, modality, date, startTime, endTime, coachId, schoolId, locationId, capacity, planningNotes, isOneOff, isOpenClass"
+      "id, modality, date, weekday, startTime, endTime, coachId, schoolId, locationId, capacity, planningNotes, isOneOff, isOpenClass"
     )
     .eq("id", lessonId)
     .single();
@@ -44,16 +47,37 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
     );
   }
 
+  const { data: lessonCoachRows } = await supabase
+    .from("LessonCoach")
+    .select("coachId, sortOrder")
+    .eq("lessonId", lessonId)
+    .order("sortOrder");
+
+  const initialCoachIds =
+    lessonCoachRows && lessonCoachRows.length > 0
+      ? lessonCoachRows.map((r) => (r as { coachId: string }).coachId)
+      : lesson.coachId
+        ? [lesson.coachId]
+        : [];
+
+  const schoolId = (lesson as { schoolId?: string }).schoolId ?? "";
+  const { data: coachSchoolRows } = await supabase.from("CoachSchool").select("coachId").eq("schoolId", schoolId);
+
+  const allowedCoachIds = new Set((coachSchoolRows ?? []).map((r) => r.coachId));
+
   const { data: coaches } = await supabase.from("Coach").select("id, userId");
   const userIds = [...new Set((coaches ?? []).map((c) => c.userId))];
   const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
-  const coachOptions = (coaches ?? []).map((c) => ({
+  const coachOptionsAll = (coaches ?? []).map((c) => ({
     id: c.id,
     name: userById.get(c.userId)?.name ?? userById.get(c.userId)?.email ?? "—",
   }));
+  const coachOptions =
+    allowedCoachIds.size > 0
+      ? coachOptionsAll.filter((c) => allowedCoachIds.has(c.id))
+      : coachOptionsAll;
 
-  const schoolId = (lesson as { schoolId?: string }).schoolId ?? "";
   let locationOptions = schoolId ? await getLocationsForSchool(supabase, schoolId) : [];
   const initialLocationId = (lesson as { locationId?: string }).locationId ?? "";
   if (initialLocationId && !locationOptions.some((l) => l.id === initialLocationId)) {
@@ -71,7 +95,15 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
   const modalityOptions = await getCachedModalityRefs(supabase);
   const modalityName = modalityOptions.find((m) => m.code === lesson.modality)?.name ?? lesson.modality;
 
-  const dateStr = typeof lesson.date === "string" ? lesson.date.slice(0, 10) : lesson.date;
+  const isOneOff = Boolean((lesson as { isOneOff?: boolean }).isOneOff);
+  const wd = (lesson as { weekday?: number | null }).weekday;
+  const initialWeekday =
+    typeof wd === "number" && Number.isInteger(wd) && wd >= 1 && wd <= 7 ? wd : null;
+  const dateStr = typeof lesson.date === "string" ? lesson.date.slice(0, 10) : "";
+
+  const scheduleSubtitle = isOneOff
+    ? `${formatLessonDate(dateStr)} ${lesson.startTime}–${lesson.endTime}`
+    : `${weekdayLabelMon1(initialWeekday ?? 1)} · ${lesson.startTime}–${lesson.endTime}`;
 
   return (
     <div style={{ maxWidth: "min(420px, 100%)" }}>
@@ -92,14 +124,32 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
         Editar aula
       </h1>
       <p style={{ margin: "0 0 clamp(20px, 5vw, 24px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-        {modalityName} · {formatLessonDate(dateStr)} {lesson.startTime}–{lesson.endTime}
-        {(lesson as { isOneOff?: boolean }).isOneOff && (
-          <span style={{ marginLeft: 8, fontSize: 12, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
+        {modalityName} · {scheduleSubtitle}
+        {isOneOff && (
+          <span
+            style={{
+              marginLeft: 8,
+              fontSize: 12,
+              padding: "2px 6px",
+              borderRadius: 4,
+              backgroundColor: "var(--bg-secondary)",
+              color: "var(--text-secondary)",
+            }}
+          >
             Aula única
           </span>
         )}
         {(lesson as { isOpenClass?: boolean }).isOpenClass && (
-          <span style={{ marginLeft: 8, fontSize: 12, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--primary)", color: "#fff" }}>
+          <span
+            style={{
+              marginLeft: 8,
+              fontSize: 12,
+              padding: "2px 6px",
+              borderRadius: 4,
+              backgroundColor: "var(--primary)",
+              color: "#fff",
+            }}
+          >
             Aula livre
           </span>
         )}
@@ -107,12 +157,13 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
       <EditarAulaForm
         lessonId={lessonId}
         turmasReturnQuery={turmasReturnQuery}
-        isOneOff={Boolean((lesson as { isOneOff?: boolean }).isOneOff)}
+        isOneOff={isOneOff}
         initialModality={lesson.modality}
         initialDate={dateStr}
         initialStartTime={lesson.startTime}
         initialEndTime={lesson.endTime}
-        initialCoachId={lesson.coachId}
+        initialWeekday={initialWeekday}
+        initialCoachIds={initialCoachIds}
         initialLocationId={initialLocationId}
         initialCapacity={lesson.capacity ?? ""}
         initialPlanningNotes={lesson.planningNotes ?? ""}
@@ -124,7 +175,8 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
       <CancelarAulaButton
         lessonId={lessonId}
         turmasReturnQuery={turmasReturnQuery}
-        isOneOff={Boolean((lesson as { isOneOff?: boolean }).isOneOff)}
+        isOneOff={isOneOff}
+        occurrenceDate={occurrenceDate}
       />
     </div>
   );

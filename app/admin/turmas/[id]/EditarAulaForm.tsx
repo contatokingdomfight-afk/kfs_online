@@ -8,17 +8,29 @@ type CoachOption = { id: string; name: string };
 type LocationOption = { id: string; name: string };
 type ModalityOption = { code: string; name: string };
 
+const WEEKDAYS = [
+  { value: "1", label: "Seg" },
+  { value: "2", label: "Ter" },
+  { value: "3", label: "Qua" },
+  { value: "4", label: "Qui" },
+  { value: "5", label: "Sex" },
+  { value: "6", label: "Sáb" },
+  { value: "7", label: "Dom" },
+];
+
 type Props = {
   lessonId: string;
   /** Query string (sem `?`) para voltar à mesma vista da agenda. */
   turmasReturnQuery: string;
-  /** Se false, ao guardar aplicam-se alterações a todas as futuras da série (cada data semanal mantém-se). */
   isOneOff: boolean;
   initialModality: string;
+  /** Aula única: YYYY-MM-DD. Recorrente: ignorado na UI. */
   initialDate: string;
   initialStartTime: string;
   initialEndTime: string;
-  initialCoachId: string;
+  /** Recorrente: 1–7 (seg–dom). */
+  initialWeekday: number | null;
+  initialCoachIds: string[];
   initialLocationId: string;
   initialCapacity: string | number;
   initialPlanningNotes: string;
@@ -36,7 +48,8 @@ export function EditarAulaForm({
   initialDate,
   initialStartTime,
   initialEndTime,
-  initialCoachId,
+  initialWeekday,
+  initialCoachIds,
   initialLocationId,
   initialCapacity,
   initialPlanningNotes,
@@ -49,6 +62,11 @@ export function EditarAulaForm({
   const redirectOnce = useRef(false);
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<UpdateLessonResult | null>(null);
+  const [weekday, setWeekday] = useState<string>(() => {
+    const w = initialWeekday;
+    if (w != null && Number.isInteger(w) && w >= 1 && w <= 7) return String(w);
+    return "1";
+  });
 
   useEffect(() => {
     if (state?.success && !redirectOnce.current) {
@@ -64,18 +82,33 @@ export function EditarAulaForm({
     setPending(true);
     const fd = new FormData(e.currentTarget);
     const capacityRaw = (fd.get("capacity") as string | null)?.trim() ?? "";
-    const payload = {
+    const coachIds = fd.getAll("coachIds").map((x) => String(x).trim()).filter(Boolean);
+
+    let capacity: number | null = null;
+    if (capacityRaw !== "") {
+      const n = parseInt(capacityRaw, 10);
+      if (!Number.isNaN(n) && n >= 1) capacity = n;
+    }
+
+    const payload: Record<string, unknown> = {
       lessonId,
       modality: (fd.get("modality") as string) ?? "",
-      date: (fd.get("date") as string) ?? "",
       startTime: (fd.get("startTime") as string) ?? "",
       endTime: (fd.get("endTime") as string) ?? "",
-      coachId: (fd.get("coachId") as string) ?? "",
+      coachIds,
       locationId: ((fd.get("locationId") as string) || "").trim() || null,
-      capacity: capacityRaw === "" ? null : capacityRaw,
+      capacity,
       planningNotes: ((fd.get("planningNotes") as string) || "").trim() || null,
       isOpenClass: fd.get("isOpenClass") === "on",
     };
+
+    if (isOneOff) {
+      payload.date = (fd.get("date") as string) ?? "";
+    } else {
+      const wd = parseInt(weekday, 10);
+      payload.weekday = Number.isInteger(wd) ? wd : null;
+    }
+
     try {
       const res = await fetch("/api/admin/turmas/update-lesson", {
         method: "POST",
@@ -180,8 +213,7 @@ export function EditarAulaForm({
             lineHeight: 1.5,
           }}
         >
-          Ao guardar, <strong>modalidade, horários, coach, local e restantes campos</strong> aplicam-se a <strong>esta e a todas as
-          futuras</strong> da mesma série semanal. A data de cada semana mantém-se.
+          Ao guardar, alteras a <strong>definição</strong> da aula: aplica-se a <strong>todas as semanas</strong> (dia da semana e horário).
         </p>
       )}
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -190,30 +222,82 @@ export function EditarAulaForm({
         </span>
         <select name="modality" required defaultValue={initialModality} className="input">
           {modalityOptions.map((m) => (
-            <option key={m.code} value={m.code}>{m.name}</option>
+            <option key={m.code} value={m.code}>
+              {m.name}
+            </option>
           ))}
         </select>
       </label>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "clamp(12px, 3vw, 16px)" }}>
-        <label style={{ flex: "1 1 140px", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-            Data *
-          </span>
-          <input type="date" name="date" required defaultValue={initialDate} className="input" />
-        </label>
-        <label style={{ flex: "0 1 100px", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-            Início *
-          </span>
-          <input type="time" name="startTime" required defaultValue={initialStartTime} className="input" />
-        </label>
-        <label style={{ flex: "0 1 100px", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-            Fim *
-          </span>
-          <input type="time" name="endTime" required defaultValue={initialEndTime} className="input" />
-        </label>
-      </div>
+
+      {isOneOff ? (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "clamp(12px, 3vw, 16px)" }}>
+          <label style={{ flex: "1 1 140px", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+              Data *
+            </span>
+            <input type="date" name="date" required defaultValue={initialDate} className="input" />
+          </label>
+          <label style={{ flex: "0 1 100px", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+              Início *
+            </span>
+            <input type="time" name="startTime" required defaultValue={initialStartTime} className="input" />
+          </label>
+          <label style={{ flex: "0 1 100px", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+              Fim *
+            </span>
+            <input type="time" name="endTime" required defaultValue={initialEndTime} className="input" />
+          </label>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
+          <div>
+            <span style={{ display: "block", marginBottom: 6, fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+              Dia da semana *
+            </span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {WEEKDAYS.map((d) => (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => setWeekday(d.value)}
+                  aria-pressed={weekday === d.value}
+                  className="btn"
+                  style={{
+                    minWidth: 42,
+                    padding: "8px 10px",
+                    borderRadius: 6,
+                    border: weekday === d.value ? "1px solid var(--primary)" : "1px solid var(--border)",
+                    backgroundColor: weekday === d.value ? "var(--primary)" : "var(--bg-secondary)",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "clamp(12px, 3vw, 16px)" }}>
+            <label style={{ flex: "0 1 100px", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+                Início *
+              </span>
+              <input type="time" name="startTime" required defaultValue={initialStartTime} className="input" />
+            </label>
+            <label style={{ flex: "0 1 100px", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+                Fim *
+              </span>
+              <input type="time" name="endTime" required defaultValue={initialEndTime} className="input" />
+            </label>
+          </div>
+        </div>
+      )}
+
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Local
@@ -221,22 +305,43 @@ export function EditarAulaForm({
         <select name="locationId" defaultValue={initialLocationId || ""} className="input">
           <option value="">— Sem local —</option>
           {locationOptions.map((loc) => (
-            <option key={loc.id} value={loc.id}>{loc.name}</option>
-          ))}
-        </select>
-      </label>
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          Coach *
-        </span>
-        <select name="coachId" required defaultValue={initialCoachId} className="input">
-          {coachOptions.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
+            <option key={loc.id} value={loc.id}>
+              {loc.name}
             </option>
           ))}
         </select>
       </label>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          Professores * (vários permitidos)
+        </span>
+        <div
+          className="input"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+            padding: "12px 14px",
+            height: "auto",
+            backgroundColor: "var(--bg-secondary)",
+          }}
+        >
+          {coachOptions.map((c) => (
+            <label key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 14 }}>
+              <input
+                type="checkbox"
+                name="coachIds"
+                value={c.id}
+                defaultChecked={initialCoachIds.includes(c.id)}
+                style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
+              />
+              {c.name}
+            </label>
+          ))}
+        </div>
+      </div>
+
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Capacidade

@@ -57,6 +57,7 @@
 ### 3.4 Admin – Turmas
 
 - Vista **por semana** / por modalidade; criação de aulas (incl. recorrente / one-off) — ver `app/admin/turmas/`.
+- **Modelo de agenda (2026-04):** uma linha em `Lesson` por **definição**; recorrentes usam `weekday` (1–7) e `date` null; ocorrências na agenda são **expandidas** em memória (`lib/lesson-occurrences.ts`). Cancelamento pontual: `LessonCancellation` (só aquela data). Professores N:N: `LessonCoach` (primeiro espelhado em `Lesson.coachId`). Migração: `supabase/migrations/20260401120000_lesson_template_schedule.sql`.
 
 ### 3.5 Perfil do atleta – critérios por categoria (resultados de avaliação)
 
@@ -70,7 +71,7 @@
 - **Ficha do coach:** `app/admin/coaches/[id]/loading.tsx` — estado de carregamento ao navegar para a página de detalhe.
 - **Escolas onde leciona:** componente `components/CoachSchoolMultiSelect.tsx` — pesquisa, lista rolável, chips com remoção; ordem define a primeira como «Principal» (alinhado a `schoolIds[0]` em `createCoach`).
 - **Turmas / editar aula:** `app/admin/turmas/[id]/loading.tsx` — «A abrir edição…» ao navegar para a edição; no formulário, `FormLoadingModal` «A guardar alterações…»; após guardar com sucesso, redireciona para `/admin/turmas` com a mesma query (`view`, `week`, `school`) via `lib/turmas-list-query.ts`. Locais no select: `getLocationsForSchool` por `schoolId` da aula; `getCachedLocations` usa service role no callback de cache para não devolver lista vazia por cache incorreto.
-- **Cancelar aula (edição):** modal em `document.body`. **Recorrente:** elimina esta ocorrência e todas as futuras da mesma série (critérios em `lib/admin/recurring-lesson-series.ts` / `listFutureSeriesLessonIds`). **Aula única:** só essa linha. `performDeleteLesson` em `lib/admin/delete-lesson.ts`; antes do `DELETE`, libertar **`TrialClass.lessonId`**. **`POST /api/admin/turmas/delete-lesson`**; auth com `getCurrentDbUserUncached()`. **Guardar edição:** `POST /api/admin/turmas/update-lesson` — **recorrente:** propaga modalidade, horários, coach, local, capacidade, notas, aula livre a **todas as futuras** da série; cada `date` semanal **mantém-se**. **Aula única:** atualiza só essa linha (incl. data). `EditarAulaForm` com `fetch`. Sucesso cancelar: `{ redirectTo }` + `window.location.assign(redirectTo)`; `turmasPathAfterDelete` reconstrói a query.
+- **Cancelar aula (edição):** modal em `document.body`. **Recorrente com `?occurrence=YYYY-MM-DD`:** pode **cancelar só essa semana** (`LessonCancellation`) ou **eliminar a definição** (apaga a linha `Lesson`). **Recorrente sem data na URL:** só eliminar definição. **Aula única:** elimina a linha. `lib/admin/delete-lesson.ts` (`performCancelOccurrence`, `performDeleteLessonDefinition`). **`POST /api/admin/turmas/delete-lesson`** com `action`: `cancelOccurrence` | `deleteDefinition`. **Guardar edição:** `POST /api/admin/turmas/update-lesson` — altera **a definição** (incl. vários professores em `LessonCoach`). `EditarAulaForm` com `fetch`. Sucesso: `{ redirectTo }` + `window.location.assign`; `turmasPathAfterDelete` reconstrói a query.
 
 ### 3.7 Produção (Vercel) — favicon, RSC e métricas
 
