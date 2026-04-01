@@ -59,7 +59,7 @@ Em **Authentication → URL Configuration**:
   - `http://localhost:3000/auth/update-password`
   - `https://<o-teu-dominio-ou-preview>/auth/callback`
   - `https://<o-teu-dominio-ou-preview>/auth/update-password`  
-  O email de **recuperação de senha** usa `redirectTo` = `/auth/update-password` (com `?code=` na URL). Essa rota tem de ser **pública** no middleware (já está em `publicPaths`) e **listada** aqui; caso contrário o utilizador é enviado para `/sign-in` sem trocar o código e o link expira (`otp_expired`).
+  O email de **recuperação de senha** usa `redirectTo` = `/auth/callback?next=/auth/update-password` (o `?code=` é tratado no callback no servidor). `/auth/callback` e `/auth/update-password` têm de ser **públicos** no middleware (já estão em `publicPaths`) e **listados** aqui; caso contrário o fluxo falha (`otp_expired` ou PKCE).
 
 ---
 

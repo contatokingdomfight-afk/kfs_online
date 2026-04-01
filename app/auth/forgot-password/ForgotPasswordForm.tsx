@@ -1,38 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useFormState } from "react-dom";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
+import { requestPasswordReset, type RequestPasswordResetState } from "./actions";
 
 export function ForgotPasswordForm({ initialLocale }: { initialLocale: Locale }) {
   const t = getTranslations(initialLocale);
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [state, formAction, pending] = useFormState(requestPasswordReset, null as RequestPasswordResetState | null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    const supabase = createClient();
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    /** Mesma página onde o browser troca o `code` (PKCE); tem de estar nas Redirect URLs do Supabase. */
-    const redirectTo = `${origin}/auth/update-password`;
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo,
-    });
-    setLoading(false);
-    if (err) {
-      setError(err.message);
-      return;
-    }
-    setSent(true);
-  }
-
-  if (sent) {
+  if (state?.success) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-bg">
         <div className="container-mobile">
@@ -56,23 +34,22 @@ export function ForgotPasswordForm({ initialLocale }: { initialLocale: Locale })
         <p className="text-mobile-sm text-center mb-6" style={{ color: "var(--text-secondary)", lineHeight: 1.5 }}>
           {t("forgotPasswordDescription")}
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form action={formAction} className="flex flex-col gap-4">
           <input
             type="email"
+            name="email"
             placeholder={t("email")}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
             className="input"
           />
-          {error && (
+          {state?.error && (
             <p className="text-mobile-sm" style={{ color: "var(--danger)", margin: 0 }}>
-              {error}
+              {state.error}
             </p>
           )}
-          <button type="submit" disabled={loading} className="btn btn-primary w-full">
-            {loading ? t("loading") : t("forgotPasswordSubmit")}
+          <button type="submit" disabled={pending} className="btn btn-primary w-full">
+            {pending ? t("loading") : t("forgotPasswordSubmit")}
           </button>
         </form>
         <p className="text-mobile-base text-center mt-6" style={{ color: "var(--text-secondary)" }}>

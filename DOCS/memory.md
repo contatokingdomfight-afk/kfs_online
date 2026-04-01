@@ -49,7 +49,7 @@
 
 - **Pós-registo:** destino **`/dashboard`** (sem obrigar o wizard). `lib/auth/sync-user.ts` cria `StudentProfile` com `hasCompletedOnboarding: true` para novos alunos; OAuth em `app/auth/callback/route.ts` não redireciona para `/onboarding`.
 - **Tour no dashboard:** `StudentOnboardingGate` em `app/dashboard/layout.tsx`; wizard opcional em `app/onboarding/`.
-- **Recuperação de senha:** `resetPasswordForEmail` com `redirectTo` = `/auth/update-password`; a rota tem de estar em **`publicPaths`** no `middleware` (senão o `?code=` perde-se ao redirecionar para `/sign-in` e aparece `otp_expired`). Na página, `exchangeCodeForSession(code)` no cliente; Supabase → Redirect URLs deve incluir `…/auth/update-password`.
+- **Recuperação de senha:** `resetPasswordForEmail` corre numa **Server Action** (`app/auth/forgot-password/actions.ts`) com `createClient` de `@/lib/supabase/server` para o **PKCE code verifier** ficar em **cookies** alinhados ao `@supabase/ssr`. `redirectTo` = `…/auth/callback?next=/auth/update-password`; a troca do `code` é em **`GET /auth/callback`** (servidor). `/auth/update-password` e `/auth/callback` em **`publicPaths`**; Supabase → Redirect URLs: `…/auth/callback` e `…/auth/update-password`.
 - **Aula experimental** (`/aula-experimental`): escolha de **escola** + slots por `expandLessonsForDateRange` e `schoolId`; `submitTrialRequest` valida escola, modalidade e ocorrência (`lessonId::occurrenceDate`).
 
 ### 3.3 Testes e seed
