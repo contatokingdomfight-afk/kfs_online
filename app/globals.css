@@ -1203,3 +1203,8 @@
 .animate-loading-bar {
   animation: loadingBar 1.5s ease-in-out infinite;
 }
+
+/* PWA instalada — html[data-pwa-standalone="true"] (components/PwaDisplayMode.tsx) */
+html[data-pwa-standalone="true"] body {
+  min-height: 100dvh;
+}

@@ -4,6 +4,8 @@ import "./globals.css";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { ThemeLocaleSwitcherFixedOnlyOnPublic } from "@/components/ThemeLocaleSwitcherFixedOnlyOnPublic";
 import { VercelMetrics } from "@/components/VercelMetrics";
+import { PwaDisplayMode } from "@/components/PwaDisplayMode";
+import { PwaServiceWorkerRegister } from "@/components/PwaServiceWorkerRegister";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -14,6 +16,20 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Kingdom Fight School",
   description: "Plataforma de gestão e ensino da Kingdom Fight School",
+  applicationName: "Kingdom Fight School",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Kingdom Fight School",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
@@ -38,6 +54,8 @@ export default async function RootLayout({
   return (
     <html lang={locale} data-theme={theme} suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
+        <PwaDisplayMode />
+        <PwaServiceWorkerRegister />
         <ThemeLocaleSwitcherFixedOnlyOnPublic initialTheme={theme} initialLocale={locale} />
         {children}
         <VercelMetrics />

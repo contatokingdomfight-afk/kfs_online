@@ -274,7 +274,7 @@ Com base na especificação e na dependência entre módulos:
 3. **Receita adicional (Loja)** – Feito.
 4. **Dashboard de Performance** – Feito (inclui sugestões de cursos recomendados).
 5. **Gamificação** – Feito (badges, conquistas, meta assiduidade, meta IMC, metas avaliação, seed de missões).
-6. **Próximos passos (opcional):** **Rankeamento** — extensões (modalidade, período; §14.3); **Tribo** / feed social (§14.6); Battle Pass / temporadas; reset mensal de missões; PWA e app nativo (secção 17); notificações **push** (além de email/cron); melhorias pontuais em mensalidades (relatórios, alertas admin).
+6. **Próximos passos (opcional):** **Rankeamento** — extensões (modalidade, período; §14.3); **Tribo** / feed social (§14.6); Battle Pass / temporadas; reset mensal de missões; **Capacitor** / lojas (secção 17; PWA base em **`DOCS/PWA.md`**); notificações **push** (além de email/cron); melhorias pontuais em mensalidades (relatórios, alertas admin).
 
 ---
 
@@ -284,7 +284,7 @@ Com base na especificação e na dependência entre módulos:
 
 | Item | Estado | Notas |
 |------|--------|--------|
-| PWA (Progressive Web App) | Por fazer | Manifest, Service Worker, meta tags; app instalável na tela inicial do telemóvel |
+| PWA (Progressive Web App) | Feito | Manifest (`app/manifest.ts`), ícones `public/icons/` (`npm run generate:pwa-icons`), SW pass-through (`public/sw.js`), ver **`DOCS/PWA.md`** |
 | Capacitor (Android + iOS) | Por fazer | Embrulhar o web app em container nativo; publicar na Play Store e App Store |
 | Testes em dispositivos reais | Por fazer | Validar UX e performance em Android e iOS |
 
@@ -305,7 +305,7 @@ Com base na especificação e na dependência entre módulos:
 
 ---
 
-*Última atualização (abril 2026): **Rank** `/dashboard/rank` (leaderboard XP por escola, v1); roadmap — extensões de rankeamento e **Tribo** (feed social); histórico março 2026: carrosséis no dashboard (**Sua próxima aula** / **Aulas livres**), **CoachSchool** multi-escola, **aulas livres** (`isOpenClass`), expansão de ocorrências de aula (`lesson-occurrences`), etc. Próximos passos opcionais: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push, E2E (Playwright).*
+*Última atualização (abril 2026): **PWA** (manifest, ícones, SW — `DOCS/PWA.md`); **Rank** `/dashboard/rank` (leaderboard XP por escola, v1); roadmap — extensões de rankeamento e **Tribo** (feed social); histórico março 2026: carrosséis no dashboard (**Sua próxima aula** / **Aulas livres**), **CoachSchool** multi-escola, **aulas livres** (`isOpenClass`), expansão de ocorrências de aula (`lesson-occurrences`), etc. Próximos passos opcionais: BJJ/MMA, biometria, Battle Pass, **Capacitor**, push, E2E (Playwright).*
 
 ---
 

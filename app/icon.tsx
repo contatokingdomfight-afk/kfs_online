@@ -9,9 +9,9 @@ export default function Icon() {
     (
       <div
         style={{
-          fontSize: 20,
+          fontSize: 9,
           fontWeight: 700,
-          background: "linear-gradient(145deg, #1f2937 0%, #0b0b0b 100%)",
+          background: "#ED1C24",
           width: "100%",
           height: "100%",
           display: "flex",
@@ -21,7 +21,7 @@ export default function Icon() {
           fontFamily: "ui-sans-serif, system-ui, sans-serif",
         }}
       >
-        K
+        KFS
       </div>
     ),
     { ...size }

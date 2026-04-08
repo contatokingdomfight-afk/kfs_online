@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed:test-users": "tsx scripts/seed-test-users.ts",
+    "generate:pwa-icons": "tsx scripts/generate-pwa-icons.ts",
     "clean": "node -e \"const fs=require('fs');const path=require('path');['.next','node_modules/.cache'].forEach(d=>{try{fs.rmSync(path.join(process.cwd(),d),{recursive:true,force:true});console.log('Removed',d);}catch(e){if(e.code!=='ENOENT')throw e;}});\"",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -45,13 +46,14 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "dotenv": "^16.4.7",
     "eslint": "^8.57.0",
     "eslint-config-next": "15.5.14",
     "postcss": "^8.4.49",
     "prisma": "^5.22.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.15",
     "tsx": "^4.19.2",
-    "dotenv": "^16.4.7",
     "typescript": "^5.6.3",
     "vitest": "^3.0.5"
   }

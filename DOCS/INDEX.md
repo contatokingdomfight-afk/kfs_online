@@ -31,6 +31,7 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 | [`VERCEL_DEPLOY_TROUBLESHOOTING.md`](VERCEL_DEPLOY_TROUBLESHOOTING.md) | Resolução de problemas |
 | [`OTIMIZACOES_SPEED_INSIGHTS.md`](OTIMIZACOES_SPEED_INSIGHTS.md) | LCP, skeletons, Speed Insights (`NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS`) |
 | [`PERFORMANCE_E_GOOGLE_LOGIN.md`](PERFORMANCE_E_GOOGLE_LOGIN.md) | Performance e login Google |
+| [`PWA.md`](PWA.md) | PWA (manifest, ícones, service worker); Capacitor continua no roadmap |
 
 ---
 
