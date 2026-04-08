@@ -87,8 +87,8 @@ export function OverviewCharts(props: OverviewChartsProps) {
         {growthData.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>{labels.noData}</p>
         ) : (
-          <div style={{ width: "100%", minWidth: 0, minHeight: 220, height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ width: "100%", minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={260}>
               <LineChart data={growthData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="label" tick={{ fill: "var(--text-secondary)", fontSize: 11 }} stroke="var(--border)" />
@@ -113,8 +113,8 @@ export function OverviewCharts(props: OverviewChartsProps) {
         {revenueData.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>{labels.noData}</p>
         ) : (
-          <div style={{ width: "100%", minWidth: 0, minHeight: 220, height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ width: "100%", minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={260}>
               <BarChart data={revenueData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="label" tick={{ fill: "var(--text-secondary)", fontSize: 11 }} stroke="var(--border)" />
@@ -138,8 +138,8 @@ export function OverviewCharts(props: OverviewChartsProps) {
         {modalityData.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>{labels.noData}</p>
         ) : (
-          <div style={{ width: "100%", minWidth: 0, minHeight: 220, height: 280 }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ width: "100%", minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
                   data={modalityData}

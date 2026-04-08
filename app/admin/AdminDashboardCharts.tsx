@@ -78,8 +78,8 @@ export function AdminDashboardCharts(props: Props) {
         <h3 style={{ margin: "0 0 16px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Presenças no mês ({schoolName})
         </h3>
-        <div style={{ width: "100%", minWidth: 0, minHeight: 240, height: 280 }}>
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ width: "100%", minWidth: 0 }}>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={attendanceChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="day" tick={{ fill: "var(--text-secondary)", fontSize: 11 }} stroke="var(--border)" />
@@ -112,8 +112,8 @@ export function AdminDashboardCharts(props: Props) {
         {revenueChartData.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>Sem dados de pagamentos.</p>
         ) : (
-          <div style={{ width: "100%", minWidth: 0, minHeight: 220, height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ width: "100%", minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={260}>
               <LineChart data={revenueChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="label" tick={{ fill: "var(--text-secondary)", fontSize: 11 }} stroke="var(--border)" />

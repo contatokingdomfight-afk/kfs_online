@@ -11,7 +11,7 @@
 | **Ícones** | `public/icons/` — `icon-192.png`, `icon-512.png`, `icon-512-maskable.png`, `apple-touch-icon.png` gerados a partir de **`KFS Logo.png`** na raiz. |
 | **Regenerar ícones** | `npm run generate:pwa-icons` (script: `scripts/generate-pwa-icons.ts`, usa **sharp**). |
 | **Metadados** | `app/layout.tsx` — `applicationName`, `appleWebApp`, `icons` (favicon dinâmico continua em `app/icon.tsx`, alinhado à cor de marca). |
-| **Service worker** | `public/sw.js` — pass-through para a rede (sem cache de HTML/API; evita sessões desatualizadas). Registo só em **produção** via `components/PwaServiceWorkerRegister.tsx`. |
+| **Service worker** | `public/sw.js` — só `install` / `activate` (sem listener `fetch`), para não intercetar pedidos nem gerar erros quando `fetch` falha na rede. Registo só em **produção** via `components/PwaServiceWorkerRegister.tsx`. |
 | **Modo standalone** | `components/PwaDisplayMode.tsx` define `data-pwa-standalone` no `<html>`; `app/globals.css` ajusta `min-height` do `body` em modo app. |
 | **Middleware** | `middleware.ts` — matcher exclui `sw.js` e `manifest.webmanifest` para não redirecionar para login. |
 
