@@ -25,6 +25,7 @@ export const messages = {
       "No iPhone/iPad (Safari): toque em Partilhar e depois em «Adicionar ao Ecrã Principal».",
     pwaChromeMenuInstall:
       "No Chrome Android: menu (⋮) → «Instalar app» ou «Adicionar à página inicial». Pode demorar um pouco a aparecer após visitar o site.",
+    pwaInstallSubtle: "Atalho no ecrã inicial, sem loja de apps.",
 
     // Público / Landing / Home
     ctaTrial: "Aula Experimental",
@@ -579,6 +580,7 @@ export const messages = {
     pwaIosAddToHome: "On iPhone/iPad (Safari): tap Share, then «Add to Home Screen».",
     pwaChromeMenuInstall:
       "On Chrome for Android: menu (⋮) → «Install app» or «Add to Home screen». It may take a visit or two to appear.",
+    pwaInstallSubtle: "Shortcut on your home screen — no app store.",
 
     ctaTrial: "Trial Class",
     signIn: "Sign in",

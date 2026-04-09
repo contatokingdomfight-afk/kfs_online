@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/messages";
 
@@ -61,7 +62,7 @@ export function PwaInstallHint({ locale }: Props) {
     const fallbackTimer = window.setTimeout(() => {
       if (bipSeenRef.current) return;
       setHintKind(isIos ? "ios" : "chrome");
-    }, 4500);
+    }, 6500);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBip);
@@ -89,65 +90,83 @@ export function PwaInstallHint({ locale }: Props) {
 
   if (!mounted || !hintKind) return null;
 
+  const textStyle: CSSProperties = {
+    margin: 0,
+    fontSize: 12,
+    lineHeight: 1.45,
+    color: "var(--text-secondary)",
+    paddingRight: 22,
+  };
+
   return (
     <div
       role="region"
       aria-label={t("pwaInstallApp")}
       style={{
         position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
+        left: "max(12px, env(safe-area-inset-left))",
+        right: "max(12px, env(safe-area-inset-right))",
+        bottom: "max(12px, env(safe-area-inset-bottom))",
         zIndex: 60,
-        padding: "12px max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))",
+        maxWidth: 340,
+        marginLeft: "auto",
+        marginRight: "auto",
+        padding: "10px 12px",
         background: "var(--bg-secondary)",
-        borderTop: "1px solid var(--border)",
-        boxShadow: "var(--shadow-md)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-lg)",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
-      {hintKind === "bip" && (
-        <button
-          type="button"
-          onClick={onInstallClick}
-          style={{
-            width: "100%",
-            padding: "12px 16px",
-            borderRadius: "var(--radius-md)",
-            background: "var(--primary)",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: 16,
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          {t("pwaInstallApp")}
-        </button>
-      )}
-      {hintKind === "ios" && (
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: "var(--text-primary)" }}>{t("pwaIosAddToHome")}</p>
-      )}
-      {hintKind === "chrome" && (
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: "var(--text-primary)" }}>{t("pwaChromeMenuInstall")}</p>
-      )}
       <button
         type="button"
         onClick={dismiss}
+        aria-label={t("pwaInstallDismiss")}
         style={{
-          alignSelf: "flex-end",
-          background: "transparent",
+          position: "absolute",
+          top: 6,
+          right: 6,
+          width: 28,
+          height: 28,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
           border: "none",
+          borderRadius: "var(--radius-sm)",
+          background: "transparent",
           color: "var(--text-secondary)",
-          fontSize: 13,
+          fontSize: 18,
+          lineHeight: 1,
           cursor: "pointer",
-          textDecoration: "underline",
         }}
       >
-        {t("pwaInstallDismiss")}
+        ×
       </button>
+
+      {hintKind === "bip" && (
+        <div style={{ paddingRight: 18 }}>
+          <button
+            type="button"
+            onClick={onInstallClick}
+            style={{
+              padding: "6px 12px",
+              borderRadius: "var(--radius-md)",
+              background: "transparent",
+              color: "var(--primary)",
+              fontWeight: 500,
+              fontSize: 13,
+              border: "1px solid var(--border)",
+              cursor: "pointer",
+            }}
+          >
+            {t("pwaInstallApp")}
+          </button>
+          <p style={{ ...textStyle, marginTop: 8, paddingRight: 0, fontSize: 11 }}>{t("pwaInstallSubtle")}</p>
+        </div>
+      )}
+      {hintKind === "ios" && <p style={textStyle}>{t("pwaIosAddToHome")}</p>}
+      {hintKind === "chrome" && <p style={textStyle}>{t("pwaChromeMenuInstall")}</p>}
     </div>
   );
 }
