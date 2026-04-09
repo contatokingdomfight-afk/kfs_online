@@ -909,6 +909,19 @@
   opacity: 0.9;
 }
 
+/* CTA «Instalar app» no menu lateral (cor primária + sombra) */
+.app-sidebar-pwa-install-btn {
+  transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.app-sidebar-pwa-install-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 4px 16px rgba(193, 18, 31, 0.45);
+}
+.app-sidebar-pwa-install-btn:active:not(:disabled) {
+  transform: scale(0.98);
+  filter: brightness(0.95);
+}
+
 /* Botão hamburger e botão fechar do drawer (mobile) */
 .app-shell-menu-btn,
 .app-shell-drawer-close {

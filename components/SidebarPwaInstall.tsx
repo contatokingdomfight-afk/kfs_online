@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/theme-locale";
 import { usePwaInstall } from "@/components/PwaInstallProvider";
@@ -60,40 +60,65 @@ export function SidebarPwaInstall({ locale }: Props) {
 
   if (!pwa?.storageReady || showBlock !== true) return null;
 
-  const linkInactive = {
-    display: "flex" as const,
-    alignItems: "center" as const,
-    minHeight: "clamp(44px, 11vw, 48px)",
-    padding: "12px 20px",
-    fontSize: "clamp(14px, 3.5vw, 16px)",
-    color: "var(--text-primary)",
-    fontWeight: 500,
-    backgroundColor: "transparent",
-    borderLeft: "4px solid transparent",
+  const btnStyle: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    minHeight: 48,
+    padding: "12px 16px",
     width: "100%",
-    textAlign: "left" as const,
-    cursor: "pointer",
+    fontSize: "clamp(14px, 3.5vw, 16px)",
+    fontWeight: 600,
+    color: "#fff",
+    backgroundColor: "var(--primary)",
     border: "none",
-    borderRadius: "0 var(--radius-md) var(--radius-md) 0",
+    borderRadius: "var(--radius-md)",
+    cursor: "pointer",
     fontFamily: "inherit",
+    boxShadow: "0 2px 10px rgba(193, 18, 31, 0.35)",
+    WebkitTapHighlightColor: "transparent",
   };
 
-  const footnoteStyle = {
-    margin: "4px 0 0 12px",
+  const footnoteBox: CSSProperties = {
+    margin: 0,
     fontSize: 11,
-    lineHeight: 1.4,
+    lineHeight: 1.45,
     color: "var(--text-secondary)",
-    paddingLeft: 8,
+    padding: "10px 12px",
+    borderRadius: "var(--radius-md)",
+    border: "1px solid var(--border)",
+    backgroundColor: "var(--bg)",
   };
 
   return (
-    <div style={{ padding: "0 12px 8px 0" }}>
+    <div style={{ padding: "0 0 4px 0" }}>
       {pwa.deferredPrompt ? (
-        <button type="button" onClick={onInstall} style={linkInactive}>
-          {t("pwaInstallApp")}
+        <button
+          type="button"
+          onClick={onInstall}
+          className="app-sidebar-pwa-install-btn"
+          style={btnStyle}
+        >
+          <svg
+            width={20}
+            height={20}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span>{t("pwaInstallApp")}</span>
         </button>
       ) : (
-        <p style={{ ...footnoteStyle, marginTop: 0 }}>{t("pwaInstallSidebarFootnote")}</p>
+        <p style={footnoteBox}>{t("pwaInstallSidebarFootnote")}</p>
       )}
     </div>
   );
