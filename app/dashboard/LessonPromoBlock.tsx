@@ -167,7 +167,8 @@ export function LessonPromoBlock({
             checkedInAt={att?.checkedInAt ?? null}
             goingLabel={t("goingLabel")}
             notGoingLabel={t("notGoingLabel")}
-            intentGoingLabel={t("intentGoingLabel")}
+            intentGoingTitle={t("intentGoingTitle")}
+            intentGoingHint={t("intentGoingHint")}
             checkInDoneLabel={t("checkInDoneLabel")}
             statusConfirmedLabel={statusLabels.CONFIRMED}
             statusAbsentLabel={statusLabels.ABSENT}

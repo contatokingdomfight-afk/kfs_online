@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { setAttendanceIntentionFromForm } from "./actions";
 
@@ -11,22 +12,61 @@ type Props = {
   checkedInAt: string | null;
   goingLabel: string;
   notGoingLabel: string;
-  intentGoingLabel: string;
+  intentGoingTitle: string;
+  intentGoingHint: string;
   checkInDoneLabel: string;
   statusConfirmedLabel: string;
   statusAbsentLabel: string;
 };
+
+/** Cartão semitransparente sobre o bloco «próxima aula» (fundo primário). */
+const promoPanel: CSSProperties = {
+  padding: "14px 16px",
+  borderRadius: 14,
+  background: "rgba(255, 255, 255, 0.14)",
+  border: "1px solid rgba(255, 255, 255, 0.32)",
+  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+};
+
+const textOnPromo = { title: "#fff" as const, sub: "rgba(255,255,255,0.9)" as const };
+
+function CheckIcon() {
+  return (
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="11" fill="var(--success)" />
+      <path
+        d="M8 12.5l2.5 2.5L16 9"
+        stroke="#fff"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 /** Tem de estar dentro do <form> que dispara a action (useFormStatus). */
 function PendingHint({ savingLabel }: { savingLabel: string }) {
   const { pending } = useFormStatus();
   if (!pending) return null;
   return (
-    <span style={{ fontSize: 13, color: "var(--text-secondary)", marginLeft: 4 }} aria-live="polite">
+    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginLeft: 4 }} aria-live="polite">
       {savingLabel}
     </span>
   );
 }
+
+const btnNotGoingOnPromo: CSSProperties = {
+  fontSize: "clamp(14px, 3.5vw, 16px)",
+  minHeight: 44,
+  padding: "0.5em 1.1em",
+  backgroundColor: "rgba(255,255,255,0.14)",
+  color: "#fff",
+  border: "1px solid rgba(255,255,255,0.45)",
+  borderRadius: "var(--radius-md)",
+  cursor: "pointer",
+  fontWeight: 500,
+};
 
 export function VouNaoVouButtons({
   lessonId,
@@ -35,7 +75,8 @@ export function VouNaoVouButtons({
   checkedInAt,
   goingLabel,
   notGoingLabel,
-  intentGoingLabel,
+  intentGoingTitle,
+  intentGoingHint,
   checkInDoneLabel,
   statusConfirmedLabel,
   statusAbsentLabel,
@@ -51,46 +92,120 @@ export function VouNaoVouButtons({
         )
       : statusConfirmedLabel;
     return (
-      <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 600, color: "var(--success)" }}>
-        {label}
-      </span>
+      <div style={{ ...promoPanel, background: "rgba(34, 197, 94, 0.18)", border: "1px solid rgba(255,255,255,0.35)" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <div style={{ flexShrink: 0, paddingTop: 2 }}>
+            <CheckIcon />
+          </div>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontWeight: 600,
+              color: "#fff",
+              lineHeight: 1.45,
+            }}
+          >
+            {label}
+          </p>
+        </div>
+      </div>
     );
   }
   if (currentStatus === "ABSENT") {
     return (
-      <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-secondary)" }}>
-        {statusAbsentLabel}
-      </span>
+      <div style={{ ...promoPanel, background: "rgba(0, 0, 0, 0.12)", border: "1px solid rgba(255,255,255,0.22)" }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontWeight: 500,
+            color: "rgba(255,255,255,0.88)",
+            lineHeight: 1.45,
+          }}
+        >
+          {statusAbsentLabel}
+        </p>
+      </div>
     );
   }
   if (currentStatus === "PENDING") {
     return (
       <div style={{ marginTop: 4 }}>
-        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 600, color: "var(--primary)" }}>
-          {intentGoingLabel}
-        </span>
-        <form action={formAction} style={{ display: "inline-flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginTop: 8 }}>
-          <input type="hidden" name="lessonId" value={lessonId} />
-          <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
-          <input type="hidden" name="intention" value="nao_vou" />
-          <button
-            type="submit"
-            className="btn"
+        <div style={promoPanel}>
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <div
+              style={{
+                flexShrink: 0,
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                background: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
+              }}
+              aria-hidden
+            >
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <circle cx="12" cy="12" r="11" stroke="var(--success)" strokeWidth={2} fill="rgba(34,197,94,0.12)" />
+                <path
+                  d="M8 12.5l2.5 2.5L16 9"
+                  stroke="var(--success)"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "clamp(16px, 4vw, 18px)",
+                  fontWeight: 700,
+                  color: textOnPromo.title,
+                  lineHeight: 1.3,
+                }}
+              >
+                {intentGoingTitle}
+              </p>
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontSize: "clamp(13px, 3.2vw, 15px)",
+                  color: textOnPromo.sub,
+                  lineHeight: 1.45,
+                }}
+              >
+                {intentGoingHint}
+              </p>
+            </div>
+          </div>
+          <form
+            action={formAction}
+            style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginTop: 16 }}
+          >
+            <input type="hidden" name="lessonId" value={lessonId} />
+            <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
+            <input type="hidden" name="intention" value="nao_vou" />
+            <button type="submit" style={btnNotGoingOnPromo}>
+              {notGoingLabel}
+            </button>
+            <PendingHint savingLabel={savingLabel} />
+          </form>
+        </div>
+        {state?.error && (
+          <span
             style={{
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              minHeight: 44,
-              padding: "0.5em 1em",
-              backgroundColor: "var(--bg-secondary)",
-              color: "var(--text-secondary)",
-              border: "1px solid var(--border)",
+              display: "block",
+              width: "100%",
+              marginTop: 8,
+              fontSize: "clamp(13px, 3.2vw, 15px)",
+              color: "#fecaca",
             }}
           >
-            {notGoingLabel}
-          </button>
-          <PendingHint savingLabel={savingLabel} />
-        </form>
-        {state?.error && (
-          <span style={{ display: "block", width: "100%", marginTop: 8, fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--danger)" }}>
             {state.error}
           </span>
         )}
@@ -122,25 +237,22 @@ export function VouNaoVouButtons({
           <input type="hidden" name="lessonId" value={lessonId} />
           <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
           <input type="hidden" name="intention" value="nao_vou" />
-          <button
-            type="submit"
-            className="btn"
-            style={{
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              minHeight: 44,
-              padding: "0.5em 1em",
-              backgroundColor: "var(--bg-secondary)",
-              color: "var(--text-secondary)",
-              border: "1px solid var(--border)",
-            }}
-          >
+          <button type="submit" style={btnNotGoingOnPromo}>
             {notGoingLabel}
           </button>
           <PendingHint savingLabel={savingLabel} />
         </form>
       </div>
       {state?.error && (
-        <span style={{ display: "block", width: "100%", marginTop: 8, fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--danger)" }}>
+        <span
+          style={{
+            display: "block",
+            width: "100%",
+            marginTop: 8,
+            fontSize: "clamp(13px, 3.2vw, 15px)",
+            color: "#fecaca",
+          }}
+        >
           {state.error}
         </span>
       )}
