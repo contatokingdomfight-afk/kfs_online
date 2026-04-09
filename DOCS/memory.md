@@ -92,6 +92,7 @@
 
 - **Manifest** (`app/manifest.ts`): `standalone`, cor de tema **#ED1C24**, ícones em `public/icons/` (gerados com `npm run generate:pwa-icons` a partir de `KFS Logo.png`).
 - **Service worker** (`public/sw.js`): `fetch` com fallback `Response.error()` se a rede falhar; `PwaInstallProvider` + `PwaInstallHint` (telemóvel, aviso inicial) e `SidebarPwaInstall` (menu lateral após «Agora não»). Registo em produção (`PwaServiceWorkerRegister`). Middleware não intercepta `/sw.js` nem `/manifest.webmanifest`.
+- **Instalação vs desinstalação:** não há API para detetar remoção da app no telemóvel; `appinstalled` grava `kfs-pwa-appinstalled-at` em `localStorage` (só instalação concluída). Após desinstalar, o Chrome pode demorar a voltar a emitir `beforeinstallprompt` — ver **`DOCS/PWA.md`**.
 - **Detalhes:** **`DOCS/PWA.md`**. **Capacitor** (Android/iOS) continua no roadmap como passo após o PWA.
 
 ### 3.10 Documentação em `DOCS/` (higiene)

@@ -16,6 +16,12 @@
 | **Modo standalone** | `components/PwaDisplayMode.tsx` define `data-pwa-standalone` no `<html>`; `app/globals.css` ajusta `min-height` do `body` em modo app. |
 | **Middleware** | `middleware.ts` — matcher exclui `sw.js` e `manifest.webmanifest` para não redirecionar para login. |
 
+## Desinstalar e voltar a instalar (limitações da plataforma)
+
+- **Não existe evento nem API fiável** na Web para saber que o utilizador **removeu** a PWA do ecrã principal ou da gaveta de apps. O site só pode reagir ao que corre **dentro do browser** (ex.: `beforeinstallprompt`, `appinstalled`).
+- O Chrome **pode demorar** a voltar a emitir `beforeinstallprompt` depois de uma desinstalação (critérios internos de engajamento). Nesse intervalo o nosso botão «Instalar app» pode não aparecer; o utilizador pode usar **menu ⋮ → Instalar app** (Android) ou **Partilhar → Ecrã principal** (iOS).
+- **`appinstalled`**: o cliente regista um timestamp em `localStorage` (`kfs-pwa-appinstalled-at`, ver `lib/pwa-install-storage.ts`) quando a instalação é concluída — serve para suporte/diagnóstico, **não** indica desinstalação.
+
 ## Testes rápidos
 
 1. **Produção local:** `npm run build` → `npm start` → Chrome DevTools → **Application** → Manifest / Service Workers.  

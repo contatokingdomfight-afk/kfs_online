@@ -27,7 +27,7 @@ export const messages = {
       "No Chrome Android: menu (⋮) → «Instalar app» ou «Adicionar à página inicial». Pode demorar um pouco a aparecer após visitar o site.",
     pwaInstallSubtle: "Atalho no ecrã inicial, sem loja de apps.",
     pwaInstallSidebarFootnote:
-      "Se o botão não abrir a instalação, use o menu do browser (Safari: Partilhar → Ecrã principal; Chrome: ⋮).",
+      "Se removeu a app do telemóvel, o Chrome pode demorar a voltar a mostrar o botão — use o menu ⋮ → Instalar app. Se não abrir, Safari: Partilhar → Ecrã principal.",
 
     // Público / Landing / Home
     ctaTrial: "Aula Experimental",
@@ -584,7 +584,7 @@ export const messages = {
       "On Chrome for Android: menu (⋮) → «Install app» or «Add to Home screen». It may take a visit or two to appear.",
     pwaInstallSubtle: "Shortcut on your home screen — no app store.",
     pwaInstallSidebarFootnote:
-      "If install doesn’t open, use the browser menu (Safari: Share → Home Screen; Chrome: ⋮).",
+      "If you removed the app from your phone, Chrome may take a while to show the install button again — use ⋮ → Install app. Otherwise Safari: Share → Add to Home Screen.",
 
     ctaTrial: "Trial Class",
     signIn: "Sign in",

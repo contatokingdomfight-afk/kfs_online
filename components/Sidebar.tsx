@@ -47,7 +47,7 @@ export function Sidebar({
         flexDirection: "column",
         gap: 0,
         minHeight: 0,
-        overflow: "auto",
+        overflow: "hidden",
       }}
     >
       <div
@@ -121,13 +121,16 @@ export function Sidebar({
         })}
       </nav>
       <div
+        className="app-sidebar-footer"
         style={{
           marginTop: "auto",
+          flexShrink: 0,
           paddingTop: 16,
           borderTop: "1px solid var(--border)",
           display: "flex",
           flexDirection: "column",
           gap: 12,
+          backgroundColor: "var(--bg-secondary)",
         }}
       >
         <SidebarPwaInstall locale={initialLocale} />

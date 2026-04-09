@@ -13,6 +13,7 @@ import type { Locale } from "@/lib/theme-locale";
 import {
   migrateLegacyPwaDismiss,
   readPreferSidebar,
+  recordAppInstalledAt,
   writePreferSidebar,
 } from "@/lib/pwa-install-storage";
 
@@ -59,6 +60,13 @@ export function PwaInstallProvider({ locale, children }: { locale: Locale; child
     };
     window.addEventListener("beforeinstallprompt", onBip);
     return () => window.removeEventListener("beforeinstallprompt", onBip);
+  }, []);
+
+  /** Só existe evento de instalação concluída; não há API para «removeu do ecrã principal». */
+  useEffect(() => {
+    const onInstalled = () => recordAppInstalledAt();
+    window.addEventListener("appinstalled", onInstalled);
+    return () => window.removeEventListener("appinstalled", onInstalled);
   }, []);
 
   const moveInstallToSidebar = useCallback(() => {
