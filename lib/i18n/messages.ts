@@ -28,6 +28,19 @@ export const messages = {
     pwaInstallSubtle: "Atalho no ecrã inicial, sem loja de apps.",
     pwaInstallSidebarFootnote:
       "Se removeu a app do telemóvel, o Chrome pode demorar a voltar a mostrar o botão — use o menu ⋮ → Instalar app. Se não abrir, Safari: Partilhar → Ecrã principal.",
+    /** Safari / sem beforeinstallprompt: botão abre modal (não há API nativa) */
+    pwaInstallHelpButton: "Como instalar a app",
+    pwaInstallHelpButtonIos: "Adicionar ao ecrã principal",
+    pwaInstallHelpButtonMac: "Adicionar ao Dock",
+    pwaInstallModalTitleIos: "Adicionar ao ecrã principal (iPhone / iPad)",
+    pwaInstallModalTitleMac: "Adicionar ao Dock (Safari no Mac)",
+    pwaInstallModalTitleGeneric: "Instalar no telemóvel ou computador",
+    pwaInstallModalBodyIos:
+      "O Safari não permite um botão que instale sozinho — segue estes passos:\n\n1. Toca no botão Partilhar (□↑) na barra do Safari.\n2. Escolhe «Adicionar ao Ecrã Principal».\n3. Confirma com «Adicionar».\n\nFicas com um ícone da KFS no ecrã inicial, como uma app.",
+    pwaInstallModalBodyMac:
+      "No Safari para Mac podes fixar o site como app no Dock:\n\n• Menu Ficheiro → «Adicionar ao Dock», ou\n• Botão Partilhar na barra → «Adicionar ao Dock» (depende da versão do macOS).\n\nAssim abre numa janela própria, sem barra de endereço.",
+    pwaInstallModalBodyGeneric:
+      "• Chrome (Android ou PC): menu ⋮ → «Instalar app» ou «Instalar» — pode demorar a aparecer.\n\n• Safari no iPhone/iPad: Partilhar → «Adicionar ao Ecrã Principal».\n\n• Safari no Mac: Ficheiro ou Partilhar → «Adicionar ao Dock», quando disponível.",
 
     // Público / Landing / Home
     ctaTrial: "Aula Experimental",
@@ -586,6 +599,18 @@ export const messages = {
     pwaInstallSubtle: "Shortcut on your home screen — no app store.",
     pwaInstallSidebarFootnote:
       "If you removed the app from your phone, Chrome may take a while to show the install button again — use ⋮ → Install app. Otherwise Safari: Share → Add to Home Screen.",
+    pwaInstallHelpButton: "How to install the app",
+    pwaInstallHelpButtonIos: "Add to Home Screen",
+    pwaInstallHelpButtonMac: "Add to Dock",
+    pwaInstallModalTitleIos: "Add to Home Screen (iPhone / iPad)",
+    pwaInstallModalTitleMac: "Add to Dock (Safari on Mac)",
+    pwaInstallModalTitleGeneric: "Install on your phone or computer",
+    pwaInstallModalBodyIos:
+      "Safari doesn’t allow a one-tap install from the website — follow these steps:\n\n1. Tap the Share button (□↑) in Safari’s toolbar.\n2. Choose «Add to Home Screen».\n3. Tap «Add» to confirm.\n\nYou’ll get a KFS icon on your home screen, like an app.",
+    pwaInstallModalBodyMac:
+      "In Safari on Mac you can pin the site as an app in the Dock:\n\n• File menu → «Add to Dock», or\n• Share in the toolbar → «Add to Dock» (depends on your macOS version).\n\nIt opens in its own window, without the address bar.",
+    pwaInstallModalBodyGeneric:
+      "• Chrome (Android or desktop): ⋮ menu → «Install app» or «Install» — it may take a visit or two to show.\n\n• Safari on iPhone/iPad: Share → «Add to Home Screen».\n\n• Safari on Mac: File or Share → «Add to Dock», when available.",
 
     ctaTrial: "Trial Class",
     signIn: "Sign in",
