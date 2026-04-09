@@ -91,7 +91,7 @@
 ### 3.9 PWA (Progressive Web App)
 
 - **Manifest** (`app/manifest.ts`): `standalone`, cor de tema **#ED1C24**, ícones em `public/icons/` (gerados com `npm run generate:pwa-icons` a partir de `KFS Logo.png`).
-- **Service worker** (`public/sw.js`): `fetch` com fallback `Response.error()` se a rede falhar; `PwaInstallHint` no layout (telemóvel) para `beforeinstallprompt` / texto iOS. Registo em produção (`PwaServiceWorkerRegister`). Middleware não intercepta `/sw.js` nem `/manifest.webmanifest`.
+- **Service worker** (`public/sw.js`): `fetch` com fallback `Response.error()` se a rede falhar; `PwaInstallProvider` + `PwaInstallHint` (telemóvel, aviso inicial) e `SidebarPwaInstall` (menu lateral após «Agora não»). Registo em produção (`PwaServiceWorkerRegister`). Middleware não intercepta `/sw.js` nem `/manifest.webmanifest`.
 - **Detalhes:** **`DOCS/PWA.md`**. **Capacitor** (Android/iOS) continua no roadmap como passo após o PWA.
 
 ### 3.10 Documentação em `DOCS/` (higiene)

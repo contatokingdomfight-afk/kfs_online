@@ -1,48 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { getTranslations } from "@/lib/i18n";
-import type { Locale } from "@/lib/i18n/messages";
+import { usePwaInstall } from "@/components/PwaInstallProvider";
 
-const DISMISS_KEY = "kfs-pwa-install-dismissed";
-const DISMISS_MS = 14 * 24 * 60 * 60 * 1000;
-
-/** Chromium: beforeinstallprompt (não está em todos os lib.dom) */
-type InstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
-
-type Props = {
-  locale: Locale;
-};
-
-export function PwaInstallHint({ locale }: Props) {
-  const t = getTranslations(locale);
-  const [mounted, setMounted] = useState(false);
+/**
+ * Primeira visita (telemóvel): aviso em baixo mais visível.
+ * Após «Agora não» ou ×, a instalação passa só para `SidebarPwaInstall`.
+ */
+export function PwaInstallHint() {
+  const ctx = usePwaInstall();
   const [hintKind, setHintKind] = useState<null | "bip" | "ios" | "chrome">(null);
-  const deferredRef = useRef<InstallPromptEvent | null>(null);
-  const bipSeenRef = useRef(false);
+
+  const locale = ctx?.locale ?? "pt";
+  const t = getTranslations(locale);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted || typeof window === "undefined") return;
+    if (!ctx?.storageReady || ctx.preferSidebar) return;
 
     if (window.matchMedia("(display-mode: standalone)").matches) return;
-
     const nav = navigator as Navigator & { standalone?: boolean };
     if (nav.standalone === true) return;
-
-    const dismissed = localStorage.getItem(DISMISS_KEY);
-    if (dismissed) {
-      const ts = parseInt(dismissed, 10);
-      if (Number.isFinite(ts) && Date.now() - ts < DISMISS_MS) return;
-    }
-
     if (!window.matchMedia("(max-width: 768px)").matches) return;
 
     const ua = navigator.userAgent;
@@ -50,52 +29,48 @@ export function PwaInstallHint({ locale }: Props) {
       /iPad|iPhone|iPod/.test(ua) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-    const onBip = (e: Event) => {
-      e.preventDefault();
-      bipSeenRef.current = true;
-      deferredRef.current = e as InstallPromptEvent;
-      setHintKind("bip");
-    };
-
-    window.addEventListener("beforeinstallprompt", onBip);
-
     const fallbackTimer = window.setTimeout(() => {
-      if (bipSeenRef.current) return;
-      setHintKind(isIos ? "ios" : "chrome");
+      setHintKind((current) => {
+        if (current === "bip") return current;
+        return isIos ? "ios" : "chrome";
+      });
     }, 6500);
 
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onBip);
-      window.clearTimeout(fallbackTimer);
-    };
-  }, [mounted]);
+    return () => window.clearTimeout(fallbackTimer);
+  }, [ctx?.storageReady, ctx?.preferSidebar]);
 
-  const dismiss = () => {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
-    setHintKind(null);
-    deferredRef.current = null;
-  };
+  useEffect(() => {
+    if (ctx?.deferredPrompt) setHintKind("bip");
+  }, [ctx?.deferredPrompt]);
+
+  if (!ctx?.storageReady || ctx.preferSidebar) return null;
+  if (typeof window === "undefined") return null;
+
+  if (window.matchMedia("(display-mode: standalone)").matches) return null;
+  const nav = navigator as Navigator & { standalone?: boolean };
+  if (nav.standalone === true) return null;
+  if (!window.matchMedia("(max-width: 768px)").matches) return null;
+
+  if (!hintKind) return null;
+
+  const moveToSidebar = () => ctx.moveInstallToSidebar();
 
   const onInstallClick = async () => {
-    const ev = deferredRef.current;
+    const ev = ctx.deferredPrompt;
     if (!ev) return;
     try {
       await ev.prompt();
       await ev.userChoice;
     } finally {
-      deferredRef.current = null;
-      dismiss();
+      ctx.setDeferredPrompt(null);
     }
   };
 
-  if (!mounted || !hintKind) return null;
-
   const textStyle: CSSProperties = {
     margin: 0,
-    fontSize: 12,
+    fontSize: 14,
     lineHeight: 1.45,
-    color: "var(--text-secondary)",
-    paddingRight: 22,
+    color: "var(--text-primary)",
   };
 
   return (
@@ -104,69 +79,81 @@ export function PwaInstallHint({ locale }: Props) {
       aria-label={t("pwaInstallApp")}
       style={{
         position: "fixed",
-        left: "max(12px, env(safe-area-inset-left))",
-        right: "max(12px, env(safe-area-inset-right))",
-        bottom: "max(12px, env(safe-area-inset-bottom))",
+        left: 0,
+        right: 0,
+        bottom: 0,
         zIndex: 60,
-        maxWidth: 340,
-        marginLeft: "auto",
-        marginRight: "auto",
-        padding: "10px 12px",
+        padding:
+          "16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))",
         background: "var(--bg-secondary)",
-        border: "1px solid var(--border)",
-        borderRadius: "var(--radius-lg)",
-        boxShadow: "var(--shadow-sm)",
+        borderTop: "1px solid var(--border)",
+        boxShadow: "var(--shadow-md)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
       }}
     >
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label={t("pwaInstallDismiss")}
-        style={{
-          position: "absolute",
-          top: 6,
-          right: 6,
-          width: 28,
-          height: 28,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 0,
-          border: "none",
-          borderRadius: "var(--radius-sm)",
-          background: "transparent",
-          color: "var(--text-secondary)",
-          fontSize: 18,
-          lineHeight: 1,
-          cursor: "pointer",
-        }}
-      >
-        ×
-      </button>
-
       {hintKind === "bip" && (
-        <div style={{ paddingRight: 18 }}>
+        <>
           <button
             type="button"
             onClick={onInstallClick}
             style={{
-              padding: "6px 12px",
+              width: "100%",
+              padding: "14px 16px",
               borderRadius: "var(--radius-md)",
-              background: "transparent",
-              color: "var(--primary)",
-              fontWeight: 500,
-              fontSize: 13,
-              border: "1px solid var(--border)",
+              background: "var(--primary)",
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: 16,
+              border: "none",
               cursor: "pointer",
             }}
           >
             {t("pwaInstallApp")}
           </button>
-          <p style={{ ...textStyle, marginTop: 8, paddingRight: 0, fontSize: 11 }}>{t("pwaInstallSubtle")}</p>
-        </div>
+          <p style={{ ...textStyle, fontSize: 12, color: "var(--text-secondary)" }}>{t("pwaInstallSubtle")}</p>
+        </>
       )}
       {hintKind === "ios" && <p style={textStyle}>{t("pwaIosAddToHome")}</p>}
-      {hintKind === "chrome" && <p style={textStyle}>{t("pwaChromeMenuInstall")}</p>}
+      {hintKind === "chrome" && <p style={{ ...textStyle, fontSize: 13 }}>{t("pwaChromeMenuInstall")}</p>}
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <button
+          type="button"
+          onClick={moveToSidebar}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "var(--text-secondary)",
+            fontSize: 14,
+            cursor: "pointer",
+            textDecoration: "underline",
+            padding: 0,
+          }}
+        >
+          {t("pwaInstallDismiss")}
+        </button>
+        <button
+          type="button"
+          onClick={moveToSidebar}
+          aria-label={t("pwaInstallDismiss")}
+          style={{
+            minWidth: 40,
+            minHeight: 40,
+            padding: 0,
+            border: "none",
+            borderRadius: "var(--radius-sm)",
+            background: "transparent",
+            color: "var(--text-secondary)",
+            fontSize: 22,
+            lineHeight: 1,
+            cursor: "pointer",
+          }}
+        >
+          ×
+        </button>
+      </div>
     </div>
   );
 }

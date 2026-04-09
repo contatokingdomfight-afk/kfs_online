@@ -6,6 +6,7 @@ import { ThemeLocaleSwitcherFixedOnlyOnPublic } from "@/components/ThemeLocaleSw
 import { VercelMetrics } from "@/components/VercelMetrics";
 import { PwaDisplayMode } from "@/components/PwaDisplayMode";
 import { PwaServiceWorkerRegister } from "@/components/PwaServiceWorkerRegister";
+import { PwaInstallProvider } from "@/components/PwaInstallProvider";
 import { PwaInstallHint } from "@/components/PwaInstallHint";
 
 const inter = Inter({
@@ -51,16 +52,19 @@ export default async function RootLayout({
 }>) {
   const theme = await getThemeFromCookies();
   const locale = await getLocaleFromCookies();
+  const appLocale = locale === "en" ? "en" : "pt";
 
   return (
     <html lang={locale} data-theme={theme} suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
-        <PwaDisplayMode />
-        <PwaServiceWorkerRegister />
-        <PwaInstallHint locale={locale === "en" ? "en" : "pt"} />
-        <ThemeLocaleSwitcherFixedOnlyOnPublic initialTheme={theme} initialLocale={locale} />
-        {children}
-        <VercelMetrics />
+        <PwaInstallProvider locale={appLocale}>
+          <PwaDisplayMode />
+          <PwaServiceWorkerRegister />
+          <PwaInstallHint />
+          <ThemeLocaleSwitcherFixedOnlyOnPublic initialTheme={theme} initialLocale={locale} />
+          {children}
+          <VercelMetrics />
+        </PwaInstallProvider>
       </body>
     </html>
   );

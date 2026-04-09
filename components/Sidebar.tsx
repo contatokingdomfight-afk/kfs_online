@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ThemeLocaleSwitcher } from "@/components/ThemeLocaleSwitcher";
 import { LogoutButton } from "@/components/LogoutButton";
+import { SidebarPwaInstall } from "@/components/SidebarPwaInstall";
 import type { Theme } from "@/lib/theme-locale";
 import type { Locale } from "@/lib/theme-locale";
 
@@ -129,6 +130,7 @@ export function Sidebar({
           gap: 12,
         }}
       >
+        <SidebarPwaInstall locale={initialLocale} />
         {logoutLabel && <LogoutButton label={logoutLabel} variant="sidebar" />}
         <ThemeLocaleSwitcher initialTheme={initialTheme} initialLocale={initialLocale} variant="inline" />
       </div>

@@ -12,7 +12,7 @@
 | **Regenerar ícones** | `npm run generate:pwa-icons` (script: `scripts/generate-pwa-icons.ts`, usa **sharp**). |
 | **Metadados** | `app/layout.tsx` — `applicationName`, `appleWebApp`, `icons` (favicon dinâmico continua em `app/icon.tsx`, alinhado à cor de marca). |
 | **Service worker** | `public/sw.js` — `install` / `activate` + handler `fetch` que em caso de falha devolve `Response.error()` (critérios de instalação no Chrome Android; sem promessa rejeitada no SW). Registo só em **produção** via `components/PwaServiceWorkerRegister.tsx`. |
-| **Dica de instalação** | `components/PwaInstallHint.tsx` — em ecrãs ≤768px: botão quando o browser dispara `beforeinstallprompt` (Chrome Android); em iOS, texto para «Adicionar ao Ecrã Principal» (Safari não tem esse evento). «Agora não» grava dismiss 14 dias (`localStorage`). |
+| **Dica de instalação** | `PwaInstallProvider` + `PwaInstallHint.tsx`: primeiro aviso em ecrãs ≤768px (estilo destacado); «Agora não» ou × grava `kfs-pwa-sidebar-mode` e o aviso some. Depois, `SidebarPwaInstall` no menu lateral (dashboard/coach/admin/…) mostra «Instalar app» ou texto de ajuda se não houver evento Chromium. Migração: quem tinha o dismiss antigo passa para modo menu (`lib/pwa-install-storage.ts`). |
 | **Modo standalone** | `components/PwaDisplayMode.tsx` define `data-pwa-standalone` no `<html>`; `app/globals.css` ajusta `min-height` do `body` em modo app. |
 | **Middleware** | `middleware.ts` — matcher exclui `sw.js` e `manifest.webmanifest` para não redirecionar para login. |
 
