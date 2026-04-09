@@ -1,8 +1,8 @@
 /**
- * Service worker mínimo: sem cache de páginas ou APIs (evita dados obsoletos em sessões autenticadas).
- * Não regista handler de `fetch`: se o fizermos com `respondWith(fetch(...))`, qualquer falha de rede
- * (offline, aborto, erro) rejeita a promessa e o DevTools mostra "Failed to fetch" / FetchEvent network error.
- * Sem listener de fetch, o browser trata os pedidos normalmente; o SW continua a contar para instalação PWA.
+ * Service worker mínimo: sem cache de páginas ou APIs.
+ * O Chrome (Android) exige um handler `fetch` para cumprir critérios de instalação PWA.
+ * Em caso de falha de rede, devolvemos Response.error() em vez de rejeitar a promessa
+ * (evita "Uncaught (in promise) Failed to fetch" no SW).
  */
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -10,4 +10,16 @@ self.addEventListener("install", () => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    (async () => {
+      try {
+        return await fetch(event.request);
+      } catch {
+        return Response.error();
+      }
+    })()
+  );
 });

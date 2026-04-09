@@ -5,6 +5,7 @@ const THEME = "#ED1C24";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
+    lang: "pt",
     name: "Kingdom Fight School",
     short_name: "KFS",
     description: "Plataforma de gestão e ensino da Kingdom Fight School",

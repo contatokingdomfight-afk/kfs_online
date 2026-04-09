@@ -18,6 +18,14 @@ export const messages = {
     error: "Erro",
     success: "Sucesso",
 
+    // PWA (instalar no telemóvel)
+    pwaInstallApp: "Instalar app",
+    pwaInstallDismiss: "Agora não",
+    pwaIosAddToHome:
+      "No iPhone/iPad (Safari): toque em Partilhar e depois em «Adicionar ao Ecrã Principal».",
+    pwaChromeMenuInstall:
+      "No Chrome Android: menu (⋮) → «Instalar app» ou «Adicionar à página inicial». Pode demorar um pouco a aparecer após visitar o site.",
+
     // Público / Landing / Home
     ctaTrial: "Aula Experimental",
     signIn: "Entrar",
@@ -565,6 +573,12 @@ export const messages = {
     loading: "Loading…",
     error: "Error",
     success: "Success",
+
+    pwaInstallApp: "Install app",
+    pwaInstallDismiss: "Not now",
+    pwaIosAddToHome: "On iPhone/iPad (Safari): tap Share, then «Add to Home Screen».",
+    pwaChromeMenuInstall:
+      "On Chrome for Android: menu (⋮) → «Install app» or «Add to Home screen». It may take a visit or two to appear.",
 
     ctaTrial: "Trial Class",
     signIn: "Sign in",

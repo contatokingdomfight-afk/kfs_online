@@ -6,6 +6,7 @@ import { ThemeLocaleSwitcherFixedOnlyOnPublic } from "@/components/ThemeLocaleSw
 import { VercelMetrics } from "@/components/VercelMetrics";
 import { PwaDisplayMode } from "@/components/PwaDisplayMode";
 import { PwaServiceWorkerRegister } from "@/components/PwaServiceWorkerRegister";
+import { PwaInstallHint } from "@/components/PwaInstallHint";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -56,6 +57,7 @@ export default async function RootLayout({
       <body className={`${inter.variable} font-sans`}>
         <PwaDisplayMode />
         <PwaServiceWorkerRegister />
+        <PwaInstallHint locale={locale === "en" ? "en" : "pt"} />
         <ThemeLocaleSwitcherFixedOnlyOnPublic initialTheme={theme} initialLocale={locale} />
         {children}
         <VercelMetrics />
