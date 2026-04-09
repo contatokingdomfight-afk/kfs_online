@@ -83,7 +83,7 @@ export function ResponsiveShell({
   return (
     <div className="app-shell" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {viewAsBanner}
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <div className="app-shell-inner">
         {/* Drawer (mobile) / Sidebar (desktop) */}
         <div
           ref={drawerRef}

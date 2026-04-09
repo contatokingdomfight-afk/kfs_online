@@ -9,20 +9,43 @@ type Props = {
   locale: Locale;
 };
 
+/** Mesmo breakpoint do aviso inferior em `PwaInstallHint` */
+const MOBILE_MAX_PX = 768;
+
 /**
- * Mostra «Instalar app» no menu lateral depois de «Agora não» no aviso inicial.
+ * «Instalar app» no menu lateral.
+ * - Desktop: sempre visível (o aviso em baixo só existe em mobile).
+ * - Mobile: só depois de «Agora não» / × no aviso (evita duplicar com o banner).
  */
 export function SidebarPwaInstall({ locale }: Props) {
   const pwa = usePwaInstall();
   const t = getTranslations(locale);
-  const [standalone, setStandalone] = useState(true);
+  /** null = ainda não mediu viewport; evita SSR/client mismatch */
+  const [showBlock, setShowBlock] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setStandalone(
+    if (!pwa?.storageReady) return;
+
+    const isStandalone = () =>
       window.matchMedia("(display-mode: standalone)").matches ||
-        (navigator as Navigator & { standalone?: boolean }).standalone === true
-    );
-  }, []);
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+    const sync = () => {
+      if (isStandalone()) {
+        setShowBlock(false);
+        return;
+      }
+      const narrow = window.matchMedia(`(max-width: ${MOBILE_MAX_PX}px)`).matches;
+      const allow = !narrow || pwa.preferSidebar;
+      setShowBlock(allow);
+    };
+
+    sync();
+
+    const mqlNarrow = window.matchMedia(`(max-width: ${MOBILE_MAX_PX}px)`);
+    mqlNarrow.addEventListener("change", sync);
+    return () => mqlNarrow.removeEventListener("change", sync);
+  }, [pwa?.storageReady, pwa?.preferSidebar]);
 
   const onInstall = useCallback(async () => {
     const ev = pwa?.deferredPrompt;
@@ -35,7 +58,7 @@ export function SidebarPwaInstall({ locale }: Props) {
     }
   }, [pwa]);
 
-  if (!pwa?.storageReady || !pwa.preferSidebar || standalone) return null;
+  if (!pwa?.storageReady || showBlock !== true) return null;
 
   const linkInactive = {
     display: "flex" as const,

@@ -76,6 +76,7 @@
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--bg);
     color: var(--text-primary);
+    overflow-x: hidden;
   }
 
   body {
@@ -86,6 +87,8 @@
     font-family: var(--font-inter, "Inter"), system-ui, sans-serif;
     background-color: var(--bg);
     color: var(--text-primary);
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
   }
 
   /* Mobile viewport fix */
@@ -656,6 +659,24 @@
    ResponsiveShell + Sidebar
    ======================================== */
 
+/* Evita scroll horizontal no documento (flex + conteúdo largo; MIUI/Chrome Android) */
+.app-shell {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Linha flex entre drawer fixo e área principal: permite encolher abaixo da largura do conteúdo */
+.app-shell-inner {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
 /* Mobile: < 768px (default) */
 .app-shell-drawer {
   position: fixed;
@@ -697,6 +718,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .app-shell-header {
@@ -714,10 +737,12 @@
 
 .app-shell-main > main {
   flex: 1;
+  min-width: 0;
   padding: var(--space-4);
   padding-left: max(var(--space-4), env(safe-area-inset-left));
   padding-right: max(var(--space-4), env(safe-area-inset-right));
   padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
