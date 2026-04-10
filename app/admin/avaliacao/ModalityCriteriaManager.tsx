@@ -6,7 +6,10 @@ import {
   createCriterion,
   updateCriterion,
   deleteCriterion,
+  createComponent,
+  deleteComponent,
   type CriterionResult,
+  type ComponentResult,
 } from "./actions";
 
 function FormSavingBar({ label = "A guardar…" }: { label?: string }) {
@@ -130,8 +133,18 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
   // Estado para replicação em outras modalidades: modalityCode → componentId escolhido
   const [selectedExtra, setSelectedExtra] = useState<Record<string, string>>({});
 
+  // Estado para adicionar sub-categoria (componente dentro de uma dimensão)
+  const [addingSubCompToDimension, setAddingSubCompToDimension] = useState<string | null>(null);
+  const [newSubCompName, setNewSubCompName] = useState("");
+
+  // Estado para adicionar categoria autónoma (sem dimensão)
+  const [addingStandaloneComp, setAddingStandaloneComp] = useState(false);
+  const [newStandaloneCompName, setNewStandaloneCompName] = useState("");
+
   const [critState, critAction] = useFormState(createCriterion, null as CriterionResult | null);
   const [critUpdateState, critUpdateAction] = useFormState(updateCriterion, null as CriterionResult | null);
+  const [compState, compAction] = useFormState(createComponent, null as ComponentResult | null);
+  const [deleteCompState, deleteCompAction] = useFormState(deleteComponent, null as ComponentResult | null);
 
   useEffect(() => {
     if (critState?.success) {
@@ -150,6 +163,15 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
     }
   }, [critUpdateState]);
 
+  useEffect(() => {
+    if (compState?.success) {
+      setAddingSubCompToDimension(null);
+      setNewSubCompName("");
+      setAddingStandaloneComp(false);
+      setNewStandaloneCompName("");
+    }
+  }, [compState]);
+
   const toggleExtraModality = (modalityCode: string, checked: boolean, currentCompName: string) => {
     setSelectedExtra((prev) => {
       if (!checked) {
@@ -157,7 +179,6 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
         delete next[modalityCode];
         return next;
       }
-      // Auto-selecciona componente com mesmo nome; senão o primeiro disponível
       const mod = otherModalities.find((m) => m.code === modalityCode);
       const match = mod?.components.find((c) => c.componentName === currentCompName);
       const defaultId = match?.componentId ?? mod?.components[0]?.componentId ?? "";
@@ -188,8 +209,8 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
           </h3>
 
           {block.components.length === 0 && (
-            <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-              Nenhum sub-componente configurado para esta dimensão.
+            <p style={{ margin: "0 0 var(--space-3) 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+              Nenhuma sub-categoria configurada para esta dimensão.
             </p>
           )}
 
@@ -203,9 +224,24 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
               }}
             >
               {comp.componentName !== block.dimensionName && (
-                <p style={{ margin: "0 0 var(--space-2) 0", fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-secondary)" }}>
-                  {comp.componentName}
-                </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)", marginBottom: "var(--space-2)" }}>
+                  <p style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-secondary)" }}>
+                    {comp.componentName}
+                  </p>
+                  <form action={deleteCompAction} style={{ display: "inline-flex" }}>
+                    <input type="hidden" name="componentId" value={comp.componentId} />
+                    <button
+                      type="submit"
+                      className="btn btn-secondary"
+                      style={{ fontSize: "var(--text-xs)", padding: "0.2em 0.5em", color: "var(--danger)" }}
+                      onClick={(e) => {
+                        if (!confirm(`Apagar sub-categoria "${comp.componentName}" e todos os seus critérios?`)) e.preventDefault();
+                      }}
+                    >
+                      Apagar
+                    </button>
+                  </form>
+                </div>
               )}
 
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
@@ -370,12 +406,101 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
               )}
             </div>
           ))}
+
+          {/* Nova sub-categoria dentro desta dimensão */}
+          {addingSubCompToDimension === block.dimensionId ? (
+            <form
+              action={compAction}
+              style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
+            >
+              <input type="hidden" name="modality" value={modality} />
+              <input type="hidden" name="dimensionId" value={block.dimensionId} />
+              <input
+                type="text"
+                name="name"
+                className="input"
+                value={newSubCompName}
+                onChange={(e) => setNewSubCompName(e.target.value)}
+                placeholder={`Ex: Variações de ${block.dimensionName}, Técnicas avançadas…`}
+                required
+                style={{ fontSize: "var(--text-sm)" }}
+                autoFocus
+              />
+              <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                <button type="submit" className="btn btn-primary" style={{ fontSize: "var(--text-sm)" }}>
+                  Criar sub-categoria
+                </button>
+                <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)" }}
+                  onClick={() => { setAddingSubCompToDimension(null); setNewSubCompName(""); }}>
+                  Cancelar
+                </button>
+              </div>
+              {compState?.error && <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--danger)" }}>{compState.error}</p>}
+            </form>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ marginTop: "var(--space-3)", fontSize: "var(--text-sm)", borderStyle: "dashed" }}
+              onClick={() => { setAddingSubCompToDimension(block.dimensionId); setAddingStandaloneComp(false); }}
+            >
+              + Nova sub-categoria em {block.dimensionName}
+            </button>
+          )}
         </div>
       ))}
 
-      {(critState?.error || critUpdateState?.error) && (
+      {/* Botão / form para nova categoria autónoma (sem dimensão) */}
+      <div
+        className="card"
+        style={{ padding: "var(--space-4)", borderStyle: "dashed" }}
+      >
+        {addingStandaloneComp ? (
+          <form
+            action={compAction}
+            style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
+          >
+            <input type="hidden" name="modality" value={modality} />
+            <p style={{ margin: "0 0 var(--space-1) 0", fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-primary)" }}>
+              Nova categoria
+            </p>
+            <input
+              type="text"
+              name="name"
+              className="input"
+              value={newStandaloneCompName}
+              onChange={(e) => setNewStandaloneCompName(e.target.value)}
+              placeholder="Ex: Grappling, Clínch avançado, Psicologia de luta…"
+              required
+              style={{ fontSize: "var(--text-sm)" }}
+              autoFocus
+            />
+            <div style={{ display: "flex", gap: "var(--space-2)" }}>
+              <button type="submit" className="btn btn-primary" style={{ fontSize: "var(--text-sm)" }}>
+                Criar categoria
+              </button>
+              <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)" }}
+                onClick={() => { setAddingStandaloneComp(false); setNewStandaloneCompName(""); }}>
+                Cancelar
+              </button>
+            </div>
+            {compState?.error && <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--danger)" }}>{compState.error}</p>}
+          </form>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ fontSize: "var(--text-sm)", width: "100%" }}
+            onClick={() => { setAddingStandaloneComp(true); setAddingSubCompToDimension(null); }}
+          >
+            + Adicionar nova categoria
+          </button>
+        )}
+      </div>
+
+      {(critState?.error || critUpdateState?.error || deleteCompState?.error) && (
         <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--danger)" }}>
-          {critState?.error ?? critUpdateState?.error}
+          {critState?.error ?? critUpdateState?.error ?? deleteCompState?.error}
         </p>
       )}
     </div>

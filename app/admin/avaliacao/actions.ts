@@ -69,32 +69,29 @@ export async function createComponent(_prev: ComponentResult | null, formData: F
   const name = (formData.get("name") as string)?.trim();
   const dimensionId = (formData.get("dimensionId") as string)?.trim() || null;
   if (!modality) return { error: "Modalidade é obrigatória." };
-  if (!dimensionId && !name) return { error: "Nome ou dimensão são obrigatórios." };
+  if (!name) return { error: "Nome da sub-categoria é obrigatório." };
 
   const out = getClient();
   if (!out.client) return { error: out.error! };
 
-  if (dimensionId) {
-    const { data: existing } = await out.client.from("EvaluationComponent").select("id").eq("modality", modality).eq("dimensionId", dimensionId).maybeSingle();
-    if (existing) return { error: "Já existe uma componente para esta dimensão nesta modalidade." };
-    const { data: dim } = await out.client.from("GeneralDimension").select("sortOrder, name").eq("id", dimensionId).single();
-    const sortOrder = dim?.sortOrder ?? 0;
-    const id = randomUUID();
-    const { error } = await out.client.from("EvaluationComponent").insert({ id, modality, dimensionId, name: dim?.name ?? "Componente", sortOrder });
-    if (error) {
-      console.error("createComponent:", error);
-      return { error: error.message };
-    }
-  } else {
-    const id = randomUUID();
-    const { data: components } = await out.client.from("EvaluationComponent").select("sortOrder").eq("modality", modality).order("sortOrder", { ascending: false }).limit(1);
-    const sortOrder = (components?.[0]?.sortOrder ?? -1) + 1;
-    const { error } = await out.client.from("EvaluationComponent").insert({ id, modality, name, sortOrder });
-    if (error) {
-      console.error("createComponent:", error);
-      return { error: error.message };
-    }
+  // sortOrder = max atual da modalidade + 1 (garante que vai para o fim)
+  const { data: lastComp } = await out.client
+    .from("EvaluationComponent")
+    .select("sortOrder")
+    .eq("modality", modality)
+    .order("sortOrder", { ascending: false })
+    .limit(1);
+  const sortOrder = (lastComp?.[0]?.sortOrder ?? -1) + 1;
+
+  const id = randomUUID();
+  const { error } = await out.client
+    .from("EvaluationComponent")
+    .insert({ id, modality, name, sortOrder, ...(dimensionId ? { dimensionId } : {}) });
+  if (error) {
+    console.error("createComponent:", error);
+    return { error: error.message };
   }
+
   revalidatePath("/admin/avaliacao");
   revalidatePath("/coach/aula");
   revalidatePath("/coach/atletas");
