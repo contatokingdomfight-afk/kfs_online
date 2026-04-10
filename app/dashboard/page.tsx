@@ -1,23 +1,19 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { getThisWeekRange, MODALITY_LABELS, getWeekStartMonday } from "@/lib/lesson-utils";
+import { getThisWeekRange } from "@/lib/lesson-utils";
 import { getLessonCheckInUiState, isLessonEligibleForNextCard } from "@/lib/lesson-check-in-window";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import { getCachedPlanAccess } from "@/lib/plan-access";
-import { getApplicableMissionTemplates } from "@/lib/missions";
-import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
 import { LessonPromoBlock } from "./LessonPromoBlock";
 import { NextLessonCard } from "./NextLessonCard";
 import { OPEN_CLASS_CARD_WIDTH } from "./open-classes-carousel-constants";
 import { OpenClassesCarouselShell } from "./OpenClassesCarouselShell";
-import { WarriorPanel } from "./WarriorPanel";
-import { WhatIsNew } from "./WhatIsNew";
-import { ExploreSection } from "./ExploreSection";
-import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
+import { DashboardBelowFold } from "./DashboardBelowFold";
 import { isLessonParticipationAllowedByPlan } from "@/lib/dashboard-lesson-filter";
 import {
   expandLessonsForDateRange,
@@ -39,6 +35,19 @@ function normalizeModalityCode(value: string | null | undefined): string | null 
   if (!value) return null;
   const key = value.trim().toUpperCase();
   return MODALITY_ALIASES[key] ?? null;
+}
+
+function BelowFoldSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
+      <div className="card animate-pulse" style={{ height: 160, padding: "clamp(20px, 5vw, 28px)" }} />
+      <div className="card animate-pulse" style={{ height: 120, padding: 0 }} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "clamp(12px, 3vw, 16px)" }}>
+        <div className="card animate-pulse" style={{ height: 100 }} />
+        <div className="card animate-pulse" style={{ height: 100 }} />
+      </div>
+    </div>
+  );
 }
 
 type PageProps = { searchParams: Promise<{ stripe?: string }> };
@@ -64,10 +73,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const { hasCheckIn, allowedModalities } = planAccess;
 
   const { today, endOfWeek } = getThisWeekRange();
-  const weekStart = getWeekStartMonday();
   const todayStr = new Date().toISOString().slice(0, 10);
-  const monthStart = new Date().toISOString().slice(0, 7) + "-01";
-  const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10);
 
   let studentSchoolId: string | null = null;
   let studentPrimaryModality: string | null = null;
@@ -89,19 +95,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     lessonsQuery = lessonsQuery.eq("isOpenClass", true);
   }
 
-  const [lessonsRes, locationsList, schoolsList, weekThemesRes, goalRes, athleteRes] = await Promise.all([
+  const [lessonsRes, locationsList, schoolsList] = await Promise.all([
     lessonsQuery,
     getCachedLocations(supabase),
     supabase.from("School").select("id, name"),
-    supabase.from("WeekTheme").select("modality, title, course_id, video_url").eq("week_start", weekStart).order("modality", { ascending: true }),
-    supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
-    studentId
-      ? supabase
-          .from("Athlete")
-          .select("id, currentBelt, currentXP, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
-          .eq("studentId", studentId)
-          .single()
-      : Promise.resolve({ data: null }),
   ]);
 
   const lessonsRaw = lessonsRes.data ?? [];
@@ -146,7 +143,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     modalitiesListLength: MODALITIES_LIST.length,
   };
   const locationById = Object.fromEntries(locationsList.map((loc) => [loc.id, loc.name])) as Record<string, string>;
-  const temaSemanaList = weekThemesRes.data ?? [];
   const nowForCard = new Date();
   const eligibleLessons = lessons.filter((l) => isLessonEligibleForNextCard(l, nowForCard));
   const nonOpenUpcoming = eligibleLessons.filter((l) => !Boolean((l as { isOpenClass?: boolean }).isOpenClass));
@@ -185,143 +181,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       };
     });
   }
-
-  let attendanceGoal = 10;
-  if (goalRes.data) attendanceGoal = goalRes.data.target_value ?? 10;
-
-  let currentMonthCount = 0;
-  let totalPresences = 0;
-  let athleteStats: { currentBelt: string | null; currentXP: number; nextLevelXP: number } | null = null;
-  let weekThemeForPrimary: { modality: string; title: string; course_id: string | null; video_url: string | null } | null = null;
-  let nextMission: { id: string; name: string; description: string | null; xpReward: number } | null = null;
-  let coachFeedback: { content: string; coachName: string; date: string } | null = null;
-
-  if (studentId) {
-    const { count: monthAttCount } = await supabase
-      .from("Attendance")
-      .select("id", { count: "exact", head: true })
-      .eq("studentId", studentId)
-      .eq("status", "CONFIRMED")
-      .gte("occurrenceDate", monthStart)
-      .lte("occurrenceDate", monthEnd);
-    currentMonthCount = monthAttCount ?? 0;
-  }
-
-  const athlete = athleteRes.data;
-  if (athlete) {
-    const beltLevels = ["WHITE", "YELLOW", "ORANGE", "GREEN", "BLUE", "PURPLE", "BROWN", "BLACK", "BLACK_1", "BLACK_2", "BLACK_3", "GOLDEN"];
-    const currentIndex = beltLevels.indexOf(athlete.currentBelt || "WHITE");
-    const baseXP = 1000;
-    const nextLevelXP = currentIndex >= 0 ? baseXP * Math.pow(2, currentIndex) : baseXP;
-    athleteStats = {
-      currentBelt: athlete.currentBelt,
-      currentXP: athlete.currentXP || 0,
-      nextLevelXP,
-    };
-
-    const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
-    const xpForMissions =
-      synced?.xp ??
-      ((athlete as { xp?: number; currentXP?: number }).xp ?? (athlete as { currentXP?: number }).currentXP ?? 0);
-
-    const [countRes, missions, latestCommentRes, latestEvalRes] = await Promise.all([
-      supabase.from("Attendance").select("*", { count: "exact", head: true }).eq("studentId", studentId).eq("status", "CONFIRMED"),
-      getApplicableMissionTemplates(
-        supabase,
-        athlete.id,
-        xpForMissions,
-        studentPrimaryModality,
-        synced?.displayBeltIndex
-      ),
-      supabase
-        .from("Comment")
-        .select("content, authorCoachId, createdAt")
-        .eq("targetType", "ATHLETE")
-        .eq("targetId", athlete.id)
-        .eq("visibility", "SHARED")
-        .order("createdAt", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("AthleteEvaluation")
-        .select("note, coachId, created_at")
-        .eq("athleteId", athlete.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-    ]);
-    totalPresences = countRes.count ?? 0;
-
-    if (studentPrimaryModality) {
-      const theme = temaSemanaList.find((t) => t.modality === studentPrimaryModality);
-      if (theme) weekThemeForPrimary = { modality: theme.modality, title: theme.title, course_id: theme.course_id, video_url: (theme as { video_url?: string | null }).video_url ?? null };
-    } else if (temaSemanaList.length > 0) {
-      const theme = temaSemanaList[0];
-      weekThemeForPrimary = { modality: theme.modality, title: theme.title, course_id: theme.course_id, video_url: (theme as { video_url?: string | null }).video_url ?? null };
-    }
-
-    if (missions.length > 0) {
-      const m = missions[0];
-      nextMission = { id: m.id, name: m.name, description: m.description, xpReward: m.xpReward };
-    }
-
-    const latestComment = latestCommentRes.data;
-    const latestEval = latestEvalRes.data as { note?: string | null; coachId?: string | null; created_at?: string | null } | null;
-
-    let sharedCommentContent: string | null = null;
-    let sharedCommentCoachName: string | null = null;
-    let sharedCommentDate: string | null = null;
-    if (latestComment?.content) {
-      sharedCommentContent = latestComment.content;
-      sharedCommentDate = latestComment.createdAt;
-      if (latestComment.authorCoachId) {
-        const { data: coach } = await supabase.from("Coach").select("userId").eq("id", latestComment.authorCoachId).single();
-        if (coach) {
-          const { data: user } = await supabase.from("User").select("name").eq("id", coach.userId).single();
-          sharedCommentCoachName = user?.name ?? "Treinador";
-        } else {
-          sharedCommentCoachName = "Treinador";
-        }
-      } else {
-        sharedCommentCoachName = "Treinador";
-      }
-    }
-
-    let lastEvalCoachName: string | null = null;
-    let lastEvalNote: string | null = null;
-    let lastEvalDate: string | null = null;
-    if (latestEval?.coachId && latestEval.note?.trim()) {
-      lastEvalNote = latestEval.note ?? null;
-      lastEvalDate = latestEval.created_at ?? null;
-      const { data: coachRow } = await supabase.from("Coach").select("userId").eq("id", latestEval.coachId).single();
-      if (coachRow) {
-        const { data: userRow } = await supabase.from("User").select("name").eq("id", coachRow.userId).single();
-        lastEvalCoachName = userRow?.name ?? "Treinador";
-      } else {
-        lastEvalCoachName = "Treinador";
-      }
-    }
-
-    const homeFeedbackResolved = resolveCoachFeedbackForStudentView({
-      sharedCommentContent,
-      sharedCommentCoachName,
-      lastEvaluationCoachName: lastEvalCoachName,
-      lastEvaluationNote: lastEvalNote,
-    });
-    if (homeFeedbackResolved.quote) {
-      const dateStr =
-        homeFeedbackResolved.source === "comment"
-          ? sharedCommentDate
-          : lastEvalDate;
-      coachFeedback = {
-        content: homeFeedbackResolved.quote,
-        coachName: homeFeedbackResolved.coachName ?? "Treinador",
-        date: dateStr ?? new Date().toISOString(),
-      };
-    }
-  }
-
-  const beltLabel = athleteStats?.currentBelt ? t(("belt_" + athleteStats.currentBelt) as "belt_WHITE") : "—";
 
   const stripeBanner =
     !hasPlan && stripeQuery === "success"
@@ -392,22 +251,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <NextLessonCard isFreeTier={!hasPlan} t={t as (key: string) => string} />
       )}
 
-      {hasPlan && (
-        <WarriorPanel
-          studentName={dbUser?.name ?? null}
-          currentBelt={athleteStats?.currentBelt ?? null}
-          currentXP={athleteStats?.currentXP ?? 0}
-          nextLevelXP={athleteStats?.nextLevelXP ?? 1000}
-          totalPresences={totalPresences}
-          currentMonthCount={currentMonthCount}
-          attendanceGoal={attendanceGoal}
-          hasCheckIn={hasCheckIn}
-          hasPerformanceTracking={planAccess.hasPerformanceTracking}
-          t={t as (key: string) => string}
-          beltLabel={beltLabel}
-        />
-      )}
-
       {hasOpenClassesCarousel && (
         <OpenClassesCarouselShell
           itemCount={additionalOpenLessons.length}
@@ -448,28 +291,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </OpenClassesCarouselShell>
       )}
 
-      {hasPlan && (
-        <WhatIsNew
-          weekTheme={weekThemeForPrimary}
-          nextMission={nextMission}
-          coachFeedback={coachFeedback}
-          locale={locale as "pt" | "en"}
-          labels={{
-            title: t("dashboardWhatIsNewTitle"),
-            tabTheme: t("dashboardTabWeekTheme"),
-            tabMission: t("dashboardTabNextMission"),
-            tabFeedback: t("dashboardTabLastFeedback"),
-            viewTheory: t("dashboardViewTheory"),
-            viewVideo: t("dashboardViewVideo"),
-            noWeekTheme: t("dashboardNoWeekTheme"),
-            viewAllMissions: t("dashboardViewAllMissions"),
-            noMissions: t("dashboardNoMissions"),
-            noCoachFeedback: t("dashboardNoCoachFeedback"),
-          }}
+      <Suspense fallback={<BelowFoldSkeleton />}>
+        <DashboardBelowFold
+          studentId={studentId}
+          studentPrimaryModality={studentPrimaryModality}
+          hasPlan={hasPlan}
+          hasCheckIn={hasCheckIn}
+          hasPerformanceTracking={planAccess.hasPerformanceTracking}
         />
-      )}
-
-      {hasPlan && <ExploreSection hasPerformanceTracking={planAccess.hasPerformanceTracking} t={t as (key: string) => string} />}
+      </Suspense>
 
       <div className="card">
         <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", marginBottom: 12 }}>

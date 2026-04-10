@@ -5,7 +5,7 @@ import { SidebarPwaInstall } from "@/components/SidebarPwaInstall";
 import type { Theme } from "@/lib/theme-locale";
 import type { Locale } from "@/lib/theme-locale";
 
-export type SidebarLink = { label: string; href: string; children?: SidebarLink[] };
+export type SidebarLink = { label: string; href: string; prefetch?: boolean; children?: SidebarLink[] };
 
 export function Sidebar({
   title,
@@ -89,6 +89,7 @@ export function Sidebar({
             <div key={item.href}>
               <Link
                 href={item.href}
+                prefetch={item.prefetch}
                 className="app-sidebar-nav-link"
                 style={linkStyle(Boolean(hasChildren ? activeHref === item.href : isParentActive))}
               >
@@ -102,6 +103,7 @@ export function Sidebar({
                       <Link
                         key={child.href}
                         href={child.href}
+                        prefetch={child.prefetch}
                         className="app-sidebar-nav-link"
                         style={{
                           ...linkStyle(isChildActive),

@@ -99,10 +99,12 @@ export function WarriorPanel({
                 <div style={{ width: "100%", height: 10, backgroundColor: "var(--border)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
                   <div
                     style={{
-                      width: `${xpPct}%`,
+                      width: "100%",
                       height: "100%",
                       backgroundColor: "var(--primary)",
-                      transition: "width 0.3s ease",
+                      transform: `scaleX(${xpPct / 100})`,
+                      transformOrigin: "left",
+                      transition: "transform 0.3s ease",
                     }}
                   />
                 </div>
@@ -121,10 +123,12 @@ export function WarriorPanel({
               <div style={{ width: "100%", height: 10, backgroundColor: "var(--border)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
                 <div
                   style={{
-                    width: `${attendancePct}%`,
+                    width: "100%",
                     height: "100%",
                     backgroundColor: goalReached ? "var(--success)" : "var(--primary)",
-                    transition: "width 0.3s ease",
+                    transform: `scaleX(${attendancePct / 100})`,
+                    transformOrigin: "left",
+                    transition: "transform 0.3s ease",
                   }}
                 />
               </div>
