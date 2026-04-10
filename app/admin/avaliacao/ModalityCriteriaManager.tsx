@@ -224,10 +224,29 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
               }}
             >
               {comp.componentName !== block.dimensionName && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)", marginBottom: "var(--space-2)" }}>
-                  <p style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-secondary)" }}>
-                    {comp.componentName}
-                  </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)", marginBottom: "var(--space-2)", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                    <p style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-secondary)" }}>
+                      {comp.componentName}
+                    </p>
+                    {comp.criteria.length === 0 && (
+                      <span
+                        title="Sub-categorias sem critérios não aparecem no formulário de avaliação do coach nem no radar do atleta."
+                        style={{
+                          fontSize: "var(--text-xs)",
+                          fontWeight: 500,
+                          color: "#92400e",
+                          background: "#fef3c7",
+                          border: "1px solid #fde68a",
+                          borderRadius: 4,
+                          padding: "1px 6px",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        ⚠ Sem critérios — não aparece na avaliação
+                      </span>
+                    )}
+                  </div>
                   <form action={deleteCompAction} style={{ display: "inline-flex" }}>
                     <input type="hidden" name="componentId" value={comp.componentId} />
                     <button
