@@ -156,29 +156,42 @@ export function EvaluationResultsDashboard({
   return (
     <div className="space-y-6">
       {showModalityFilter && (
-        <div className="flex flex-wrap items-center justify-end gap-2 pb-1">
-          <label
-            htmlFor="perfil-atleta-modality"
-            className="inline-flex items-center gap-2 text-[11px] text-[var(--text-secondary)]"
-          >
-            <span className="shrink-0 opacity-90">Modalidade</span>
-            <select
-              id="perfil-atleta-modality"
-              className="max-w-[min(100%,14rem)] min-h-8 cursor-pointer rounded-md border border-[var(--border)]/70 bg-[var(--bg)]/80 py-1 pl-2 pr-7 text-xs text-[var(--text-primary)] shadow-none transition-colors hover:border-[var(--border)] focus:border-[var(--primary)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/20"
-              value={selectedModality ?? ""}
-              onChange={(e) => {
-                const v = e.target.value;
-                setSelectedModality(v === "" ? null : v);
-              }}
+        <div className="pb-1">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+            Modalidade
+          </p>
+          <div className="-mx-1">
+            <div
+              className="flex gap-2 overflow-x-auto pb-2 scroll-smooth snap-x snap-mandatory [-webkit-overflow-scrolling:touch] px-1"
+              role="tablist"
               aria-label="Filtrar desempenho e critérios por modalidade"
             >
-              {modalitySelectOptions.map((opt) => (
-                <option key={opt.value === "" ? "all" : opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              {modalitySelectOptions.map((opt) => {
+                const isAll = opt.value === "";
+                const active = isAll
+                  ? selectedModality === null
+                  : selectedModality === opt.value;
+                const displayLabel = isAll ? "Todas" : opt.label;
+                return (
+                  <button
+                    key={isAll ? "all" : opt.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    title={isAll ? "Todas as modalidades" : opt.label}
+                    onClick={() => setSelectedModality(isAll ? null : opt.value)}
+                    className={`snap-start shrink-0 max-w-[min(85vw,280px)] truncate rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-200 border ${
+                      active
+                        ? "bg-[var(--primary)] text-white border-[var(--primary)] shadow-md"
+                        : "bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--border)]/80 hover:border-[var(--primary)]/50 hover:bg-[var(--border)]/20"
+                    }`}
+                  >
+                    {displayLabel}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
