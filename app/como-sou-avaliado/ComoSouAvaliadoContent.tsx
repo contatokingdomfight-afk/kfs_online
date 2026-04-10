@@ -138,7 +138,7 @@ export function ComoSouAvaliadoContent({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <header className="space-y-4">
         <div>
           <Link
             href={hasScores ? "/dashboard/performance" : "/dashboard"}
@@ -149,17 +149,21 @@ export function ComoSouAvaliadoContent({
           <h1 className="mt-1 text-[clamp(22px,5vw,26px)] font-bold text-text-primary">
             Como sou avaliado
           </h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            Cada critério abaixo recebe uma nota de 1 a 10. O teu perfil geral é a média de todas as classificações
-            {showModalityFilter ? " (podes filtrar por modalidade abaixo)." : "."}
+          <p className="mt-2 text-sm text-text-secondary leading-relaxed max-w-[52ch]">
+            Cada critério abaixo recebe uma nota de 1 a 10. O teu perfil geral é a média das classificações
+            {showModalityFilter ? " (podes focar numa modalidade com o filtro)." : "."}
           </p>
         </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          {showModalityFilter && (
-            <label className="flex flex-col gap-1 w-full min-[420px]:w-auto min-[420px]:min-w-[220px]">
-              <span className="text-xs font-medium text-text-secondary">Modalidade</span>
+
+        {showModalityFilter ? (
+          <div className="rounded-2xl border border-border bg-bg-secondary/70 p-4 shadow-sm">
+            <label htmlFor="como-sou-avaliado-modality" className="block space-y-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
+                Ver critérios de
+              </span>
               <select
-                className="input rounded-lg min-h-11 text-sm w-full"
+                id="como-sou-avaliado-modality"
+                className="input w-full min-h-11 rounded-xl border-border bg-bg px-3 py-2.5 text-sm text-text-primary shadow-none focus:ring-2 focus:ring-primary/25"
                 value={modalityFilter}
                 onChange={(e) => setModalityFilter(e.target.value)}
                 aria-label="Filtrar critérios por modalidade"
@@ -172,12 +176,9 @@ export function ComoSouAvaliadoContent({
                 ))}
               </select>
             </label>
-          )}
-          <span className="rounded-full border border-border bg-bg-secondary px-3 py-1 text-sm font-medium text-text-primary">
-            Escala <strong>1–10</strong>
-          </span>
-        </div>
-      </div>
+          </div>
+        ) : null}
+      </header>
 
       {/* Resumo no topo: cards por dimensão */}
       <section
