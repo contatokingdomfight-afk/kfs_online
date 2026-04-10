@@ -1,24 +1,29 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { parseConfig, type ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 
 const CACHE_TAG = "evaluation-configs";
 
 /**
- * Carrega as configurações de avaliação para MUAY_THAI, BOXING e KICKBOXING em paralelo.
- * KICKBOXING usa a mesma config que MUAY_THAI (avaliação idêntica: Muay Thai & Kickboxing).
- * Usa cache de 5 minutos; invalida com revalidateTag("evaluation-configs") quando alterares critérios no Admin.
+ * Carrega as configurações de avaliação para todas as modalidades em ModalityRef (em paralelo).
+ * KICKBOXING usa a mesma config que MUAY_THAI (alias interno em loadEvaluationConfigForModality).
+ * Cache de 5 minutos; a chave inclui a lista de códigos para refletir novas modalidades.
+ * Invalida com revalidateTag("evaluation-configs") quando alterares critérios no Admin.
  */
 export async function loadAllEvaluationConfigs(
   supabase: SupabaseClient
 ): Promise<Map<string, ModalityEvaluationConfigPayload | null>> {
-  const mods = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
+  const modalities = await getCachedModalityRefs(supabase);
+  const codesSorted = [...modalities.map((m) => m.code)].sort();
+  if (codesSorted.length === 0) return new Map();
+
   const entries = await unstable_cache(
     async () => {
-      const configs = await Promise.all(mods.map((mod) => loadEvaluationConfigForModality(supabase, mod)));
-      return mods.map((mod, i) => [mod, configs[i]] as [string, ModalityEvaluationConfigPayload | null]);
+      const configs = await Promise.all(codesSorted.map((mod) => loadEvaluationConfigForModality(supabase, mod)));
+      return codesSorted.map((mod, i) => [mod, configs[i]] as [string, ModalityEvaluationConfigPayload | null]);
     },
-    ["evaluation-configs"],
+    ["evaluation-configs", ...codesSorted],
     { revalidate: 300, tags: [CACHE_TAG] }
   )();
   return new Map(entries);
