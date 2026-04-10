@@ -155,6 +155,7 @@ export function PerformanceFighterDashboard({
           axes={axes}
           scoresForRadar={evaluationResultsData.scoresForRadar}
           modalityLabels={modalityLabels}
+          scoresByModality={scoresByModality}
         />
       ) : (
         <>

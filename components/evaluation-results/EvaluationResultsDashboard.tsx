@@ -11,17 +11,10 @@ import {
 } from "@/lib/evaluation-results-data";
 import { EvaluationSummary } from "./EvaluationSummary";
 import { StrengthsWeaknesses } from "./StrengthsWeaknesses";
-import { EvaluationFilters } from "./EvaluationFilters";
 import { SkillCategory } from "./SkillCategory";
 import { CriteriaMainCategoryChips } from "./CriteriaMainCategoryChips";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import type { RadarAxis } from "@/components/fighter/RadarStatsDynamic";
-
-const MODALITY_LABELS: Record<string, string> = {
-  MUAY_THAI: "Muay Thai",
-  BOXING: "Boxing",
-  KICKBOXING: "Kickboxing",
-};
 
 /** Filtro principal pré-selecionado ao abrir (valor comparado com `mainCategoryOptions`, PT, case-insensitive). */
 const INITIAL_MAIN_CATEGORY = "técnico";
@@ -34,6 +27,8 @@ type Props = {
   axes: RadarAxis[];
   scoresForRadar: Record<string, number>;
   modalityLabels?: Record<string, string>;
+  /** Médias por dimensão (tecnico, tatico, …) por modalidade — alinha radar e resumo com o filtro. */
+  scoresByModality?: Record<string, Record<string, number>>;
 };
 
 export function EvaluationResultsDashboard({
@@ -44,6 +39,7 @@ export function EvaluationResultsDashboard({
   axes,
   scoresForRadar,
   modalityLabels = {},
+  scoresByModality,
 }: Props) {
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
   /** null = mostrar todas as subcategorias; valor = filtrar por prefixo principal (derivado dos dados). */
@@ -108,27 +104,86 @@ export function EvaluationResultsDashboard({
     defaultMainCategoryAppliedForModalityKey.current = modalityKey;
   };
 
-  const modalities = useMemo(() => {
-    const mods = new Set(criterionScores.map((c) => c.modality));
-    const list: { value: string | null; label: string }[] = [
-      { value: null, label: "Todas" },
-    ];
-    ["MUAY_THAI", "BOXING", "KICKBOXING"].forEach((m) => {
-      if (mods.has(m)) {
-        list.push({
-          value: m,
-          label: modalityLabels[m] ?? MODALITY_LABELS[m] ?? m,
-        });
+  const modalitySelectOptions = useMemo(() => {
+    const codes = new Set<string>();
+    for (const c of criterionScores) {
+      if (c.modality) codes.add(c.modality);
+    }
+    if (scoresByModality) {
+      for (const k of Object.keys(scoresByModality)) {
+        if (k) codes.add(k);
       }
-    });
-    return list;
-  }, [criterionScores, modalityLabels]);
+    }
+    const sorted = [...codes].sort((a, b) =>
+      (modalityLabels[a] ?? a).localeCompare(modalityLabels[b] ?? b, "pt")
+    );
+    return [
+      { value: "" as const, label: "Todas as modalidades" },
+      ...sorted.map((code) => ({
+        value: code,
+        label: modalityLabels[code] ?? code,
+      })),
+    ];
+  }, [criterionScores, scoresByModality, modalityLabels]);
+
+  const showModalityFilter = modalitySelectOptions.length > 1;
+
+  const activeRadarScores = useMemo(() => {
+    if (!selectedModality) return scoresForRadar;
+    const per = scoresByModality?.[selectedModality];
+    if (per && Object.keys(per).length > 0) return per;
+    const empty: Record<string, number> = {};
+    for (const a of axes) empty[a.id] = 0;
+    return empty;
+  }, [selectedModality, scoresByModality, scoresForRadar, axes]);
+
+  const activeDimensionScores = useMemo((): DimensionScore[] => {
+    return axes.map((a) => ({
+      id: a.id,
+      label: a.label,
+      score: activeRadarScores[a.id] ?? 0,
+      maxScore,
+    }));
+  }, [axes, activeRadarScores, maxScore]);
+
+  const activeOverallScore = useMemo(() => {
+    if (activeDimensionScores.length === 0) return 0;
+    return (
+      activeDimensionScores.reduce((s, d) => s + d.score, 0) / activeDimensionScores.length
+    );
+  }, [activeDimensionScores]);
 
   return (
     <div className="space-y-6">
+      {showModalityFilter && (
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]/70 p-4 shadow-sm">
+          <label htmlFor="perfil-atleta-modality" className="block space-y-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+              Ver desempenho de
+            </span>
+            <select
+              id="perfil-atleta-modality"
+              className="input w-full min-h-11 rounded-xl border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--text-primary)] shadow-none focus:ring-2 focus:ring-[var(--primary)]/25"
+              value={selectedModality ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                setSelectedModality(v === "" ? null : v);
+              }}
+              aria-label="Filtrar desempenho e critérios por modalidade"
+            >
+              {modalitySelectOptions.map((opt) => (
+                <option key={opt.value === "" ? "all" : opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+
       <EvaluationSummary
-        dimensionScores={dimensionScores}
-        overallScore={overallScore}
+        dimensionScores={activeDimensionScores}
+        overallScore={activeOverallScore}
         maxScore={maxScore}
       />
 
@@ -137,7 +192,7 @@ export function EvaluationResultsDashboard({
           Perfil de competências
         </h2>
         <RadarStats
-          scores={scoresForRadar}
+          scores={activeRadarScores}
           axes={axes}
           maxScore={maxScore}
         />
@@ -147,12 +202,6 @@ export function EvaluationResultsDashboard({
 
       {criterionScores.length > 0 && (
         <>
-          <EvaluationFilters
-            selectedModality={selectedModality}
-            onSelect={setSelectedModality}
-            modalities={modalities}
-          />
-
           <section>
             <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-3">
               Critérios por categoria
