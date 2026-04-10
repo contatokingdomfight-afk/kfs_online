@@ -24,11 +24,11 @@ function normalizeCategoryName(nome: string): string {
 export function categoryToGeneralDimension(categoryNome: string): (typeof GENERAL_DIMENSION_IDS)[number] | null {
   const n = normalizeCategoryName(categoryNome);
   const first = n.split(/\s*[-–]\s*/)[0]?.trim() ?? n;
-  if (first === "tecnico") return "tecnico";
-  if (first === "tatico") return "tatico";
-  if (first === "fisico") return "fisico";
+  if (first === "tecnico" || first === "tecnica" || first === "technical") return "tecnico";
+  if (first === "tatico" || first === "tatica") return "tatico";
+  if (first === "fisico" || first === "fisica") return "fisico";
   if (first === "mental") return "mental";
-  if (first === "teorico") return "teorico";
+  if (first === "teorico" || first === "teorica") return "teorico";
   return null;
 }
 
@@ -38,6 +38,12 @@ export function dimensionCodeToGeneralDimension(
 ): (typeof GENERAL_DIMENSION_IDS)[number] | null {
   if (!code || typeof code !== "string") return null;
   const upper = code.toUpperCase();
+  // Slugs dos cinco pilares (GeneralDimension / ModalityEvaluationConfig)
+  if (upper === "TECNICO" || upper === "TECNICA") return "tecnico";
+  if (upper === "TATICO" || upper === "TATICA") return "tatico";
+  if (upper === "FISICO" || upper === "FISICA") return "fisico";
+  if (upper === "MENTAL") return "mental";
+  if (upper === "TEORICO" || upper === "TEORICA") return "teorico";
   // Controle psicológico foi movido de código TATICO_* para MENTAL_* (migração); mantém histórico.
   if (upper.includes("TATICO_PSICOLOGICO")) return "mental";
   if (upper.includes("_TATICO_") || upper.endsWith("_TATICO")) return "tatico";
@@ -51,6 +57,22 @@ export function dimensionCodeToGeneralDimension(
   )
     return "tecnico";
   return null;
+}
+
+/**
+ * Pilar geral (tecnico, tatico, …) para uma categoria de avaliação: usa o código da dimensão quando mapeável,
+ * senão o nome (ex.: "Técnico - …"). Evita comparar códigos tipo MUAY_* diretamente com "tecnico".
+ */
+export function categoryToPerformanceAxisId(cat: {
+  code?: string | null;
+  nome: string;
+}): (typeof GENERAL_DIMENSION_IDS)[number] | null {
+  const code = typeof cat.code === "string" ? cat.code.trim() : "";
+  if (code) {
+    const fromCode = dimensionCodeToGeneralDimension(code);
+    if (fromCode) return fromCode;
+  }
+  return categoryToGeneralDimension(cat.nome);
 }
 
 /** Converte uma avaliação legada (gas, technique, strength, theory 1–5) para as 5 dimensões gerais (escala 1–5). */

@@ -4,8 +4,11 @@ import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { saveEvaluationFromLesson } from "@/app/coach/aula/actions";
 import { saveStandaloneEvaluation } from "@/app/coach/alunos/[id]/actions";
-import { EVALUATION_LABELS_BY_MODALITY, GENERAL_PERFORMANCE_AXES } from "@/lib/performance-utils";
-import { categoryToGeneralDimension } from "@/lib/performance-utils";
+import {
+  EVALUATION_LABELS_BY_MODALITY,
+  GENERAL_PERFORMANCE_AXES,
+  categoryToPerformanceAxisId,
+} from "@/lib/performance-utils";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import type { CategoryConfig, CriterionConfig } from "@/lib/evaluation-config";
@@ -182,8 +185,7 @@ export function CoachStudentProfileModal(props: Props) {
     if (!evaluationConfig) return [];
     const byDim = new Map<string, { label: string; firstCategoryName: string }>();
     for (const cat of evaluationConfig.categorias) {
-      const raw = cat.code ?? categoryToGeneralDimension(cat.nome);
-      const dim = raw?.toLowerCase();
+      const dim = categoryToPerformanceAxisId(cat);
       if (!dim) continue;
       if (!byDim.has(dim)) {
         const axis = GENERAL_PERFORMANCE_AXES.find((a) => a.id === dim);
@@ -341,7 +343,7 @@ export function CoachStudentProfileModal(props: Props) {
                     dim.id === "todas"
                       ? evaluationConfig.categorias
                       : evaluationConfig.categorias.filter(
-                          (c) => (c.code ?? categoryToGeneralDimension(c.nome)) === dim.id
+                          (c) => categoryToPerformanceAxisId(c) === dim.id
                         );
                   const statuses = catsInDim.map((c) => getSectionStatus(c, scores, touchedIds));
                   const status: SectionStatus =
@@ -460,7 +462,7 @@ export function CoachStudentProfileModal(props: Props) {
                             dim.id === "todas"
                               ? evaluationConfig.categorias
                               : evaluationConfig.categorias.filter(
-                                  (c) => (c.code ?? categoryToGeneralDimension(c.nome)) === dim.id
+                                  (c) => categoryToPerformanceAxisId(c) === dim.id
                                 );
                           const statuses = catsInDim.map((c) => getSectionStatus(c, scores, touchedIds));
                           const status: SectionStatus =
