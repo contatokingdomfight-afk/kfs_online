@@ -1,15 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
 
 export type RadarAxis = { id: string; label: string };
 
@@ -21,62 +12,109 @@ type Props = {
   embedded?: boolean;
 };
 
-export function RadarStats({ scores, axes, maxScore = 10, embedded = false }: Props) {
-  const data = useMemo(() => {
-    return axes.map((a) => ({
-      subject: a.label,
-      value: Math.min(maxScore, Math.max(0, scores[a.id] ?? 0)),
-      fullMark: maxScore,
-    }));
-  }, [scores, axes, maxScore]);
+const SIZE = 300;
+const CX = SIZE / 2;
+const CY = SIZE / 2;
+const R = SIZE * 0.36;
+const LABEL_R = R + 26;
+const GRID_LEVELS = [0.25, 0.5, 0.75, 1];
 
-  if (data.length === 0) return null;
+function toXY(angleDeg: number, radius: number): [number, number] {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return [CX + radius * Math.cos(rad), CY + radius * Math.sin(rad)];
+}
+
+function pts(points: [number, number][]): string {
+  return points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
+}
+
+export function RadarStats({ scores, axes, maxScore = 10, embedded = false }: Props) {
+  const n = axes.length;
+
+  const dataPoints = useMemo(
+    () =>
+      axes.map((a, i) => {
+        const frac = Math.min(1, Math.max(0, (scores[a.id] ?? 0) / maxScore));
+        return toXY((360 / n) * i, R * frac);
+      }),
+    [axes, scores, maxScore, n]
+  );
+
+  const avg =
+    n > 0
+      ? axes.reduce((s, a) => s + Math.min(maxScore, Math.max(0, scores[a.id] ?? 0)), 0) / n
+      : 0;
+
+  if (n === 0) return null;
 
   const chart = (
     <>
-      <div className="w-full h-[280px] sm:h-[320px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={data} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-            <PolarGrid stroke="var(--border)" />
-            <PolarAngleAxis
-              dataKey="subject"
-              tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
-              tickLine={{ stroke: "var(--border)" }}
+      <svg
+        viewBox={`0 0 ${SIZE} ${SIZE}`}
+        className="w-full"
+        style={{ maxHeight: 300 }}
+        aria-hidden="true"
+      >
+        {/* Grid rings */}
+        {GRID_LEVELS.map((level) => (
+          <polygon
+            key={level}
+            points={pts(axes.map((_, i) => toXY((360 / n) * i, R * level)))}
+            fill="none"
+            stroke="var(--border)"
+            strokeWidth="1"
+          />
+        ))}
+
+        {/* Spokes */}
+        {axes.map((_, i) => {
+          const [x, y] = toXY((360 / n) * i, R);
+          return (
+            <line
+              key={i}
+              x1={CX}
+              y1={CY}
+              x2={x}
+              y2={y}
+              stroke="var(--border)"
+              strokeWidth="1"
             />
-            <PolarRadiusAxis
-              angle={90}
-              domain={[0, maxScore]}
-              tick={{ fill: "var(--text-secondary)", fontSize: 10 }}
-              tickCount={6}
-            />
-            <Radar
-              name="Performance"
-              dataKey="value"
-              stroke="var(--primary)"
-              fill="var(--primary)"
-              fillOpacity={0.4}
-              strokeWidth={2}
-              animationDuration={800}
-              animationEasing="ease-out"
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "var(--bg-secondary)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-md)",
-              }}
-              labelStyle={{ color: "var(--text-primary)" }}
-              formatter={(value: number | undefined) => [(value ?? 0).toFixed(1), "Score"]}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="mt-3 flex justify-center">
+          );
+        })}
+
+        {/* Data polygon */}
+        <polygon
+          points={pts(dataPoints)}
+          fill="var(--primary)"
+          fillOpacity="0.35"
+          stroke="var(--primary)"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+
+        {/* Labels */}
+        {axes.map((a, i) => {
+          const [x, y] = toXY((360 / n) * i, LABEL_R);
+          return (
+            <text
+              key={a.id}
+              x={x}
+              y={y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize="11"
+              fill="var(--text-secondary)"
+            >
+              {a.label}
+            </text>
+          );
+        })}
+      </svg>
+
+      <div className="mt-2 flex justify-center">
         <p className="text-xs text-text-secondary">
           Média geral:{" "}
-          <span className="font-semibold text-primary">
-            {(data.reduce((s, d) => s + d.value, 0) / (data.length || 1)).toFixed(1)}/10
-          </span>
+          <span className="font-semibold text-primary">{avg.toFixed(1)}/10</span>
         </p>
       </div>
     </>

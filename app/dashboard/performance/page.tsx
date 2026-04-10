@@ -267,20 +267,25 @@ export default async function DashboardPerformancePage() {
     }
   }
 
-  const detailByDimension = buildPerformanceDetailFromConfigs(configsForDetail, modalityLabels);
-  const useStaticDetail = Object.keys(detailByDimension).length === 0;
-  const detailSource = useStaticDetail ? PERFORMANCE_DETAIL_BY_DIMENSION : detailByDimension;
-  const detailOrder = useStaticDetail ? [...PERFORMANCE_DETAIL_ORDER] : getDetailOrder(detailByDimension);
-  let groupedSource = groupDetailByGeneralDimension(detailSource, detailOrder);
-  let groupedOrder = getDetailOrder(groupedSource);
-  // Garantir as 5 dimensões: preencher com estrutura estática as que não tiverem conteúdo da config
-  const fullOrder = [...PERFORMANCE_DETAIL_ORDER];
-  for (const dim of fullOrder) {
-    if (!groupedSource[dim]?.groups?.length) {
-      groupedSource = { ...groupedSource, [dim]: PERFORMANCE_DETAIL_BY_DIMENSION[dim] };
+  // detailSource/detailOrder só são necessários quando não há evaluationResultsData
+  // (o AttributeAccordion fica oculto quando o dashboard de resultados está activo)
+  let groupedSource: Record<string, import("@/lib/performance-detail-structure").DimensionDetail> = {};
+  let groupedOrder: string[] = [];
+  if (!evaluationResultsData) {
+    const detailByDimension = buildPerformanceDetailFromConfigs(configsForDetail, modalityLabels);
+    const useStaticDetail = Object.keys(detailByDimension).length === 0;
+    const ds = useStaticDetail ? PERFORMANCE_DETAIL_BY_DIMENSION : detailByDimension;
+    const do_ = useStaticDetail ? [...PERFORMANCE_DETAIL_ORDER] : getDetailOrder(detailByDimension);
+    let gs = groupDetailByGeneralDimension(ds, do_);
+    const fullOrder = [...PERFORMANCE_DETAIL_ORDER];
+    for (const dim of fullOrder) {
+      if (!gs[dim]?.groups?.length) {
+        gs = { ...gs, [dim]: PERFORMANCE_DETAIL_BY_DIMENSION[dim] };
+      }
     }
+    groupedSource = gs;
+    groupedOrder = fullOrder;
   }
-  groupedOrder = fullOrder;
 
   const hasScores = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
 

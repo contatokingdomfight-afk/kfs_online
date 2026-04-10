@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { PerformanceHeroCard } from "./PerformanceHeroCard";
 import { StatCard } from "./StatCard";
@@ -10,13 +11,34 @@ import { CoachFeedback } from "./CoachFeedback";
 import type { DimensionDetail } from "@/lib/performance-detail-structure";
 import type { RadarAxis } from "./RadarStatsDynamic";
 import { XP_PER_MISSION, getRankNameForIndex } from "@/lib/xp-missions";
-import { BeltProgressionSection } from "@/components/belt-progression";
 import { beltIdFromRankName } from "@/components/belt-progression/belt-progression-data";
-import { ProfileAchievements } from "@/components/achievements/ProfileAchievements";
 import type { AchievementWithStatus } from "@/lib/achievements";
 import { EvaluationResultsDashboard } from "@/components/evaluation-results";
 import type { DimensionScore, CriterionScoreItem } from "@/lib/evaluation-results-data";
 import type { BeltTimeGateInfo } from "@/lib/xp-missions";
+
+const BeltProgressionSection = dynamic(
+  () => import("@/components/belt-progression").then((m) => ({ default: m.BeltProgressionSection })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-2xl bg-bg-secondary border border-border h-32 animate-pulse" />
+    ),
+  }
+);
+
+const ProfileAchievements = dynamic(
+  () =>
+    import("@/components/achievements/ProfileAchievements").then((m) => ({
+      default: m.ProfileAchievements,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-2xl bg-bg-secondary border border-border h-24 animate-pulse" />
+    ),
+  }
+);
 
 const CATEGORY_LABEL: Record<string, string> = {
   TECHNIQUE: "Técnica",
@@ -53,8 +75,8 @@ type Props = {
   backHref: string;
   backLabel?: string;
   scores: Record<string, number>;
-  detailOrder: string[];
-  detailSource: Record<string, DimensionDetail>;
+  detailOrder?: string[];
+  detailSource?: Record<string, DimensionDetail>;
   axes: RadarAxis[];
   maxScore?: number;
   /** Nível e XP (gamificação). Se não passados, usam valores por defeito. */
@@ -96,8 +118,8 @@ export function PerformanceFighterDashboard({
   backHref,
   backLabel,
   scores,
-  detailOrder,
-  detailSource,
+  detailOrder = [],
+  detailSource = {},
   axes,
   maxScore = 10,
   level,
