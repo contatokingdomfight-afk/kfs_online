@@ -175,6 +175,9 @@ export async function createCriterion(_prev: CriterionResult | null, formData: F
   const dimensionId = (formData.get("dimensionId") as string)?.trim() || null;
   const label = (formData.get("label") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
+  const extraComponentIdsRaw = (formData.get("extraComponentIds") as string)?.trim() || "";
+  const extraComponentIds = extraComponentIdsRaw.split(",").map((s) => s.trim()).filter(Boolean);
+
   if (!label) return { error: "Designação do critério é obrigatória." };
   if (!componentId && (!modality || !dimensionId)) return { error: "Componente ou (modalidade + dimensão) são obrigatórios." };
 
@@ -197,6 +200,23 @@ export async function createCriterion(_prev: CriterionResult | null, formData: F
     console.error("createCriterion:", error);
     return { error: error.message };
   }
+
+  // Replicar critério nas componentes extra (outras modalidades)
+  for (const extraId of extraComponentIds) {
+    const { data: extraCriteria } = await out.client
+      .from("EvaluationCriterion")
+      .select("sortOrder")
+      .eq("componentId", extraId)
+      .order("sortOrder", { ascending: false })
+      .limit(1);
+    const extraSortOrder = (extraCriteria?.[0]?.sortOrder ?? -1) + 1;
+    const extraCriterionId = randomUUID();
+    const { error: extraError } = await out.client
+      .from("EvaluationCriterion")
+      .insert({ id: extraCriterionId, componentId: extraId, label, description, sortOrder: extraSortOrder });
+    if (extraError) console.error("createCriterion extra:", extraError);
+  }
+
   revalidatePath("/admin/avaliacao");
   revalidatePath("/coach/aula");
   revalidatePath("/coach/atletas");

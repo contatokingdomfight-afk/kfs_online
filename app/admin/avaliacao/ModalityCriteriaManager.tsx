@@ -91,28 +91,44 @@ function DeleteCriterionForm({ criterionId }: { criterionId: string }) {
   );
 }
 
+export type ComponentBlock = {
+  componentId: string;
+  componentName: string;
+  componentSortOrder: number;
+  criteria: { id: string; label: string; description: string | null; sortOrder: number }[];
+};
+
 export type DimensionBlock = {
   dimensionId: string;
   dimensionCode: string;
   dimensionName: string;
   dimensionSortOrder: number;
-  componentId: string | null;
-  criteria: { id: string; label: string; description: string | null; sortOrder: number }[];
+  components: ComponentBlock[];
+};
+
+export type OtherModalityData = {
+  code: string;
+  name: string;
+  components: { componentId: string; componentName: string }[];
 };
 
 type Props = {
   modality: string;
   modalityLabel: string;
   dimensionBlocks: DimensionBlock[];
+  otherModalities?: OtherModalityData[];
 };
 
-export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBlocks }: Props) {
+export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBlocks, otherModalities = [] }: Props) {
   const [addingCriterionTo, setAddingCriterionTo] = useState<string | null>(null);
   const [newCriterionLabel, setNewCriterionLabel] = useState("");
   const [newCriterionDescription, setNewCriterionDescription] = useState("");
   const [editingCriterion, setEditingCriterion] = useState<string | null>(null);
   const [editCriterionLabel, setEditCriterionLabel] = useState("");
   const [editCriterionDescription, setEditCriterionDescription] = useState("");
+
+  // Estado para replicação em outras modalidades: modalityCode → componentId escolhido
+  const [selectedExtra, setSelectedExtra] = useState<Record<string, string>>({});
 
   const [critState, critAction] = useFormState(createCriterion, null as CriterionResult | null);
   const [critUpdateState, critUpdateAction] = useFormState(updateCriterion, null as CriterionResult | null);
@@ -122,6 +138,7 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
       setAddingCriterionTo(null);
       setNewCriterionLabel("");
       setNewCriterionDescription("");
+      setSelectedExtra({});
     }
   }, [critState]);
 
@@ -132,6 +149,21 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
       setEditCriterionDescription("");
     }
   }, [critUpdateState]);
+
+  const toggleExtraModality = (modalityCode: string, checked: boolean, currentCompName: string) => {
+    setSelectedExtra((prev) => {
+      if (!checked) {
+        const next = { ...prev };
+        delete next[modalityCode];
+        return next;
+      }
+      // Auto-selecciona componente com mesmo nome; senão o primeiro disponível
+      const mod = otherModalities.find((m) => m.code === modalityCode);
+      const match = mod?.components.find((c) => c.componentName === currentCompName);
+      const defaultId = match?.componentId ?? mod?.components[0]?.componentId ?? "";
+      return { ...prev, [modalityCode]: defaultId };
+    });
+  };
 
   const startEditCriterion = (c: { id: string; label: string; description: string | null }) => {
     setEditingCriterion(c.id);
@@ -155,118 +187,189 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
             {block.dimensionName}
           </h3>
 
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-            {block.criteria.map((c) => (
-              <li
-                key={c.id}
-                style={{
-                  padding: "var(--space-2) var(--space-3)",
-                  background: "var(--bg)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-sm)",
-                }}
-              >
-                {editingCriterion === c.id ? (
-                  <form
-                    action={critUpdateAction}
-                    style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
-                  >
-                    <input type="hidden" name="criterionId" value={c.id} />
-                    <input
-                      type="text"
-                      name="label"
-                      className="input"
-                      value={editCriterionLabel}
-                      onChange={(e) => setEditCriterionLabel(e.target.value)}
-                      placeholder="Designação"
-                      required
-                      style={{ fontSize: "var(--text-sm)" }}
-                    />
-                    <textarea
-                      name="description"
-                      className="input"
-                      value={editCriterionDescription}
-                      onChange={(e) => setEditCriterionDescription(e.target.value)}
-                      placeholder="Descrição do que está a ser avaliado"
-                      rows={2}
-                      style={{ fontSize: "var(--text-sm)", resize: "vertical" }}
-                    />
-                    <EditCriterionActions onCancel={() => setEditingCriterion(null)} />
-                  </form>
-                ) : (
-                  <>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-2)", flexWrap: "wrap" }}>
-                      <div>
-                        <span style={{ fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--text-primary)" }}>{c.label}</span>
-                        {c.description && (
-                          <p style={{ margin: "4px 0 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.4 }}>
-                            {c.description}
-                          </p>
-                        )}
-                      </div>
-                      <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                        <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-xs)", padding: "0.3em 0.6em" }} onClick={() => startEditCriterion(c)}>
-                          Editar
-                        </button>
-                        <DeleteCriterionForm criterionId={c.id} />
-                      </div>
-                    </div>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-
-          {addingCriterionTo === block.dimensionId ? (
-            <form
-              action={critAction}
-              style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
-            >
-              {block.componentId ? (
-                <input type="hidden" name="componentId" value={block.componentId} />
-              ) : (
-                <>
-                  <input type="hidden" name="modality" value={modality} />
-                  <input type="hidden" name="dimensionId" value={block.dimensionId} />
-                </>
-              )}
-              <input
-                type="text"
-                name="label"
-                className="input"
-                value={newCriterionLabel}
-                onChange={(e) => setNewCriterionLabel(e.target.value)}
-                placeholder="Ex: Jab, Defesa, Resistência..."
-                required
-                style={{ fontSize: "var(--text-sm)" }}
-              />
-              <textarea
-                name="description"
-                className="input"
-                value={newCriterionDescription}
-                onChange={(e) => setNewCriterionDescription(e.target.value)}
-                placeholder="Ex: O aluno está a aplicar o jab corretamente"
-                rows={2}
-                style={{ fontSize: "var(--text-sm)", resize: "vertical" }}
-              />
-              <AddCriterionActions
-                onCancel={() => {
-                  setAddingCriterionTo(null);
-                  setNewCriterionLabel("");
-                  setNewCriterionDescription("");
-                }}
-              />
-            </form>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ marginTop: "var(--space-3)", fontSize: "var(--text-sm)" }}
-              onClick={() => setAddingCriterionTo(block.dimensionId)}
-            >
-              + Adicionar critério a {block.dimensionName}
-            </button>
+          {block.components.length === 0 && (
+            <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+              Nenhum sub-componente configurado para esta dimensão.
+            </p>
           )}
+
+          {block.components.map((comp, compIdx) => (
+            <div
+              key={comp.componentId}
+              style={{
+                marginTop: compIdx === 0 ? 0 : "var(--space-4)",
+                paddingTop: compIdx === 0 ? 0 : "var(--space-4)",
+                borderTop: compIdx === 0 ? "none" : "1px solid var(--border)",
+              }}
+            >
+              {comp.componentName !== block.dimensionName && (
+                <p style={{ margin: "0 0 var(--space-2) 0", fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-secondary)" }}>
+                  {comp.componentName}
+                </p>
+              )}
+
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                {comp.criteria.map((c) => (
+                  <li
+                    key={c.id}
+                    style={{
+                      padding: "var(--space-2) var(--space-3)",
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-sm)",
+                    }}
+                  >
+                    {editingCriterion === c.id ? (
+                      <form
+                        action={critUpdateAction}
+                        style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
+                      >
+                        <input type="hidden" name="criterionId" value={c.id} />
+                        <input
+                          type="text"
+                          name="label"
+                          className="input"
+                          value={editCriterionLabel}
+                          onChange={(e) => setEditCriterionLabel(e.target.value)}
+                          placeholder="Designação"
+                          required
+                          style={{ fontSize: "var(--text-sm)" }}
+                        />
+                        <textarea
+                          name="description"
+                          className="input"
+                          value={editCriterionDescription}
+                          onChange={(e) => setEditCriterionDescription(e.target.value)}
+                          placeholder="Descrição do que está a ser avaliado"
+                          rows={2}
+                          style={{ fontSize: "var(--text-sm)", resize: "vertical" }}
+                        />
+                        <EditCriterionActions onCancel={() => setEditingCriterion(null)} />
+                      </form>
+                    ) : (
+                      <>
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                          <div>
+                            <span style={{ fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--text-primary)" }}>{c.label}</span>
+                            {c.description && (
+                              <p style={{ margin: "4px 0 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.4 }}>
+                                {c.description}
+                              </p>
+                            )}
+                          </div>
+                          <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                            <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-xs)", padding: "0.3em 0.6em" }} onClick={() => startEditCriterion(c)}>
+                              Editar
+                            </button>
+                            <DeleteCriterionForm criterionId={c.id} />
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+
+              {addingCriterionTo === comp.componentId ? (
+                <form
+                  action={critAction}
+                  style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
+                >
+                  <input type="hidden" name="componentId" value={comp.componentId} />
+                  <input
+                    type="hidden"
+                    name="extraComponentIds"
+                    value={Object.values(selectedExtra).filter(Boolean).join(",")}
+                  />
+                  <input
+                    type="text"
+                    name="label"
+                    className="input"
+                    value={newCriterionLabel}
+                    onChange={(e) => setNewCriterionLabel(e.target.value)}
+                    placeholder="Ex: Jab, Defesa, Resistência..."
+                    required
+                    style={{ fontSize: "var(--text-sm)" }}
+                  />
+                  <textarea
+                    name="description"
+                    className="input"
+                    value={newCriterionDescription}
+                    onChange={(e) => setNewCriterionDescription(e.target.value)}
+                    placeholder="Ex: O aluno está a aplicar o jab corretamente"
+                    rows={2}
+                    style={{ fontSize: "var(--text-sm)", resize: "vertical" }}
+                  />
+
+                  {otherModalities.length > 0 && (
+                    <div
+                      style={{
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-sm)",
+                        padding: "var(--space-3)",
+                        background: "var(--bg)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "var(--space-2)",
+                      }}
+                    >
+                      <p style={{ margin: 0, fontSize: "var(--text-xs)", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                        Adicionar também em
+                      </p>
+                      {otherModalities.map((mod) => {
+                        const isChecked = mod.code in selectedExtra;
+                        return (
+                          <div key={mod.code} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                            <label style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", cursor: "pointer", fontSize: "var(--text-sm)", color: "var(--text-primary)", minWidth: 120 }}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => toggleExtraModality(mod.code, e.target.checked, comp.componentName)}
+                                style={{ accentColor: "var(--primary)", width: 15, height: 15, flexShrink: 0 }}
+                              />
+                              {mod.name}
+                            </label>
+                            {isChecked && (
+                              <select
+                                className="input"
+                                value={selectedExtra[mod.code] ?? ""}
+                                onChange={(e) => setSelectedExtra((prev) => ({ ...prev, [mod.code]: e.target.value }))}
+                                style={{ fontSize: "var(--text-xs)", padding: "0.25em 0.5em", flex: 1, minWidth: 160 }}
+                              >
+                                {mod.components.map((c) => (
+                                  <option key={c.componentId} value={c.componentId}>
+                                    {c.componentName}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <AddCriterionActions
+                    onCancel={() => {
+                      setAddingCriterionTo(null);
+                      setNewCriterionLabel("");
+                      setNewCriterionDescription("");
+                      setSelectedExtra({});
+                    }}
+                  />
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ marginTop: "var(--space-3)", fontSize: "var(--text-sm)" }}
+                  onClick={() => setAddingCriterionTo(comp.componentId)}
+                >
+                  + Adicionar critério a {comp.componentName}
+                </button>
+              )}
+            </div>
+          ))}
         </div>
       ))}
 

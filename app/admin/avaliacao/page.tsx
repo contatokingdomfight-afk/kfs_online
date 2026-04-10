@@ -35,14 +35,14 @@ export default async function AdminAvaliacaoPage({
     .order("sortOrder", { ascending: true });
   const dimensions = dimensionsList ?? [];
 
-  type DimensionWithComponent = { dimensionId: string; dimensionCode: string; dimensionName: string; dimensionSortOrder: number; componentId: string | null; criteria: { id: string; label: string; description: string | null; sortOrder: number }[] };
-  let dimensionBlocks: DimensionWithComponent[] = dimensions.map((d) => ({
+  type ComponentBlock = { componentId: string; componentName: string; componentSortOrder: number; criteria: { id: string; label: string; description: string | null; sortOrder: number }[] };
+  type DimensionWithComponents = { dimensionId: string; dimensionCode: string; dimensionName: string; dimensionSortOrder: number; components: ComponentBlock[] };
+  let dimensionBlocks: DimensionWithComponents[] = dimensions.map((d) => ({
     dimensionId: d.id,
     dimensionCode: d.code,
     dimensionName: d.name,
     dimensionSortOrder: d.sortOrder,
-    componentId: null as string | null,
-    criteria: [],
+    components: [],
   }));
 
   if (selectedModality) {
@@ -67,27 +67,46 @@ export default async function AdminAvaliacaoPage({
         criteriaByComponent.set(c.componentId, list);
       });
 
-      const byDimension = new Map<string, { componentId: string; criteria: { id: string; label: string; description: string | null; sortOrder: number }[] }>();
+      const byDimension = new Map<string, ComponentBlock[]>();
       components.forEach((c) => {
         if (c.dimensionId) {
-          byDimension.set(c.dimensionId, {
-            componentId: c.id,
-            criteria: criteriaByComponent.get(c.id) ?? [],
-          });
+          const list = byDimension.get(c.dimensionId) ?? [];
+          list.push({ componentId: c.id, componentName: c.name, componentSortOrder: c.sortOrder, criteria: criteriaByComponent.get(c.id) ?? [] });
+          byDimension.set(c.dimensionId, list);
         }
       });
 
-      dimensionBlocks = dimensions.map((d) => {
-        const block = byDimension.get(d.id);
-        return {
-          dimensionId: d.id,
-          dimensionCode: d.code,
-          dimensionName: d.name,
-          dimensionSortOrder: d.sortOrder,
-          componentId: block?.componentId ?? null,
-          criteria: block?.criteria ?? [],
-        };
-      });
+      dimensionBlocks = dimensions.map((d) => ({
+        dimensionId: d.id,
+        dimensionCode: d.code,
+        dimensionName: d.name,
+        dimensionSortOrder: d.sortOrder,
+        components: byDimension.get(d.id) ?? [],
+      }));
+    }
+  }
+
+  // Componentes das outras modalidades — para replicação de critérios
+  type OtherModalityData = { code: string; name: string; components: { componentId: string; componentName: string }[] };
+  let otherModalities: OtherModalityData[] = [];
+  if (selectedModality) {
+    const otherCodes = modalities.filter((m) => m.code !== selectedModality).map((m) => m.code);
+    if (otherCodes.length > 0) {
+      const { data: otherComponents } = await result.client
+        .from("EvaluationComponent")
+        .select("id, name, modality")
+        .in("modality", otherCodes)
+        .order("sortOrder", { ascending: true });
+      otherModalities = modalities
+        .filter((m) => m.code !== selectedModality)
+        .map((m) => ({
+          code: m.code,
+          name: m.name,
+          components: (otherComponents ?? [])
+            .filter((c) => c.modality === m.code)
+            .map((c) => ({ componentId: c.id, componentName: c.name })),
+        }))
+        .filter((m) => m.components.length > 0);
     }
   }
 
@@ -156,6 +175,7 @@ export default async function AdminAvaliacaoPage({
             modality={selectedModality}
             modalityLabel={selectedModalityName ?? selectedModality}
             dimensionBlocks={dimensionBlocks}
+            otherModalities={otherModalities}
           />
         </section>
       )}
