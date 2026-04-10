@@ -1,0 +1,29 @@
+---
+description: Branch dev para implementações; merge em main só com autorização; DOCS após merge; uso de MCPs
+alwaysApply: true
+---
+
+# Fluxo Git — dev → main (produção)
+
+A plataforma tem utilizadores em produção. O fluxo obrigatório:
+
+## Branch de trabalho
+
+- **Implementar sempre na branch `dev`** (cria-a a partir de `main` se ainda não existir: `git checkout -b dev main`).
+- Antes de **commit e push**: correr **`npm run build`** (ou o comando de build acordado no projeto) localmente e corrigir erros.
+- **Push** para `origin/dev` após commits estáveis.
+
+## Merge para `main`
+
+- **Não** fazer merge de `dev` → `main`, **nem** push direto para `main`, **sem instrução explícita** do utilizador (“autorizar”, “fazer merge”, “para produção”, etc.).
+- Se o utilizador pedir só desenvolvimento ou PR para `dev`, manter o trabalho em `dev`.
+
+## Documentação após merge em `main`
+
+- **Sempre que** integrações forem para **`main`** (merge concluído), **atualizar `DOCS/`** conforme `.cursor/rules/documentacao-projeto.mdc`: `DOCS/memory.md`, roadmap ou doc específico para o que mudou (comportamento, migrações, fluxos novos).
+- Isto aplica-se ao trabalho deste repo; o agente deve lembrar o utilizador ou incluir atualizações de doc no mesmo esforço do merge quando for pedido.
+
+## MCPs configurados
+
+- Para tarefas que envolvam **Supabase**, **GitHub**, **Vercel**, **Stripe**, **Firebase** ou outros serviços com MCP ativo no projeto: **usar as ferramentas MCP** em vez de improvisar só por terminal, quando fizer sentido (consultar schemas/descritores antes de chamar ferramentas).
+- Listar/descobrir ferramentas nos descritores em `mcps/<servidor>/tools/` quando necessário.

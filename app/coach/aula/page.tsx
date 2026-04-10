@@ -50,6 +50,8 @@ export default async function CoachAulaPage({
   };
   const { lessonId, selectedLesson } = resolveSelected();
 
+  type WellnessZone = "GREEN" | "YELLOW" | "RED";
+
   type AttWithProfile = {
     id: string;
     studentId: string;
@@ -65,6 +67,12 @@ export default async function CoachAulaPage({
     emergencyContact: string | null;
     evaluatedInThisLesson: boolean;
     lastEvalScoresByModality?: Record<string, Record<string, number>>;
+    preLessonWellness: {
+      zone: WellnessZone;
+      tooltip: string;
+    } | null;
+    rpe: number | null;
+    rpeRecordedAt: string | null;
   };
   let attendances: AttWithProfile[] = [];
 
@@ -78,13 +86,51 @@ export default async function CoachAulaPage({
   if (lessonId && selectedLesson && occurrenceYmd) {
     const { data: attList } = await supabase
       .from("Attendance")
-      .select("id, studentId, status, checkedInAt, occurrenceDate")
+      .select("id, studentId, status, checkedInAt, occurrenceDate, rpe, rpeRecordedAt")
       .eq("lessonId", lessonId)
       .eq("occurrenceDate", occurrenceYmd)
       .order("createdAt", { ascending: true });
 
     if (attList?.length) {
       const studentIds = attList.map((a) => a.studentId);
+
+      const { data: wellnessList } = await supabase
+        .from("PreLessonWellness")
+        .select("studentId, wellnessZone, sleepHours, sleepQuality, hydrationOk, stress, fatigue")
+        .eq("lessonId", lessonId)
+        .eq("occurrenceDate", occurrenceYmd)
+        .in("studentId", studentIds);
+
+      const wellnessByStudent = new Map<
+        string,
+        {
+          zone: WellnessZone;
+          sleepHours: number;
+          sleepQuality: number;
+          hydrationOk: boolean;
+          stress: number;
+          fatigue: number;
+        }
+      >();
+      for (const row of wellnessList ?? []) {
+        const w = row as {
+          studentId: string;
+          wellnessZone: WellnessZone;
+          sleepHours: number;
+          sleepQuality: number;
+          hydrationOk: boolean;
+          stress: number;
+          fatigue: number;
+        };
+        wellnessByStudent.set(w.studentId, {
+          zone: w.wellnessZone,
+          sleepHours: w.sleepHours,
+          sleepQuality: w.sleepQuality,
+          hydrationOk: w.hydrationOk,
+          stress: w.stress,
+          fatigue: w.fatigue,
+        });
+      }
       // Student e User têm RLS restritivo; admin client bypassa para coach ver lista de presenças
       const adminSupabase = getAdminClientOrNull().client ?? supabase;
       const { data: students } = await adminSupabase
@@ -146,6 +192,14 @@ export default async function CoachAulaPage({
         const lastScores = aid ? lastScoresByAthleteId.get(aid) : undefined;
         const lastEvalScoresByModality =
           lastScores && lessonModality ? { [lessonModality]: lastScores } : undefined;
+        const raw = a as { rpe?: number | null; rpeRecordedAt?: string | null };
+        const wdata = wellnessByStudent.get(a.studentId);
+        const preLessonWellness = wdata
+          ? {
+              zone: wdata.zone,
+              tooltip: `Sono ${wdata.sleepHours}h · qualidade ${wdata.sleepQuality}/5 · hidratação ${wdata.hydrationOk ? "ok" : "baixa"} · stress ${wdata.stress}/5 · fadiga ${wdata.fatigue}/5`,
+            }
+          : null;
         return {
           id: a.id,
           studentId: a.studentId,
@@ -161,6 +215,9 @@ export default async function CoachAulaPage({
           emergencyContact: prof?.emergencyContact ?? null,
           evaluatedInThisLesson,
           lastEvalScoresByModality,
+          preLessonWellness,
+          rpe: raw.rpe != null && raw.rpe !== undefined ? Number(raw.rpe) : null,
+          rpeRecordedAt: raw.rpeRecordedAt ?? null,
         };
       });
     }
@@ -232,6 +289,9 @@ export default async function CoachAulaPage({
               <h2 id="lista-presencas-heading" className="coach-aula-list-title">
                 Lista de presenças
               </h2>
+              <p className="coach-aula-wellness-hint" style={{ margin: "0 0 16px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                Pré-treino (sono, hidratação, stress) e RPE pós-treino aparecem por aluno quando o aluno os regista na app.
+              </p>
 
               {attendances.length === 0 ? (
                 <div className="coach-aula-empty-list">
@@ -255,6 +315,9 @@ export default async function CoachAulaPage({
                       evaluationConfig={evaluationConfig}
                       evaluatedInThisLesson={a.evaluatedInThisLesson}
                       lastEvalScoresByModality={a.lastEvalScoresByModality}
+                      preLessonWellness={a.preLessonWellness}
+                      rpe={a.rpe}
+                      rpeRecordedAt={a.rpeRecordedAt}
                       profile={{
                         name: a.name,
                         email: a.email,

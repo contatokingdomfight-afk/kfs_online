@@ -212,7 +212,12 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
     const currentIndex = beltLevels.indexOf(athlete.currentBelt || "WHITE");
     const baseXP = 1000;
     const nextLevelXP = currentIndex >= 0 ? baseXP * Math.pow(2, currentIndex) : baseXP;
-    const { count: totalPresences } = await supabase.from("Attendance").select("*", { count: "exact", head: true }).eq("studentId", studentId).eq("status", "CONFIRMED");
+    const { count: totalPresences } = await supabase
+      .from("Attendance")
+      .select("*", { count: "exact", head: true })
+      .eq("studentId", studentId)
+      .eq("status", "CONFIRMED")
+      .eq("countsForGamification", true);
     athleteStats = {
       currentBelt: athlete.currentBelt,
       currentXP: athlete.currentXP || 0,

@@ -81,6 +81,7 @@ export async function DashboardBelowFold({
       .select("id", { count: "exact", head: true })
       .eq("studentId", studentId)
       .eq("status", "CONFIRMED")
+      .eq("countsForGamification", true)
       .gte("occurrenceDate", monthStart)
       .lte("occurrenceDate", monthEnd);
     currentMonthCount = monthAttCount ?? 0;
@@ -106,7 +107,8 @@ export async function DashboardBelowFold({
         .from("Attendance")
         .select("*", { count: "exact", head: true })
         .eq("studentId", studentId)
-        .eq("status", "CONFIRMED"),
+        .eq("status", "CONFIRMED")
+        .eq("countsForGamification", true),
       getApplicableMissionTemplates(
         supabase,
         athlete.id,

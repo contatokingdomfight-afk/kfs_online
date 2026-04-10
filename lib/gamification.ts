@@ -96,25 +96,32 @@ export async function computeBadgeStats(
 ): Promise<BadgeStats> {
   const { data: attendances } = await supabase
     .from("Attendance")
-    .select("lessonId")
+    .select("lessonId, occurrenceDate, countsForGamification")
     .eq("studentId", studentId)
     .eq("status", "CONFIRMED");
-  if (!attendances?.length) {
+  const rows = (attendances ?? []).filter(
+    (a) => (a as { countsForGamification?: boolean }).countsForGamification !== false
+  );
+  if (!rows.length) {
     return { totalClasses: 0, byModality: {}, consecutiveWeeks: 0 };
   }
 
-  const lessonIds = [...new Set(attendances.map((a) => a.lessonId))];
+  const lessonIds = [...new Set(rows.map((a) => a.lessonId))];
   const { data: lessons } = await supabase
     .from("Lesson")
-    .select("id, date, modality")
+    .select("id, modality")
     .in("id", lessonIds);
+
+  const modById = new Map((lessons ?? []).map((l) => [l.id, l.modality as string]));
 
   const byModality: Record<string, number> = {};
   const weekSet = new Set<string>();
-  (lessons ?? []).forEach((l) => {
-    byModality[l.modality as string] = (byModality[l.modality as string] ?? 0) + 1;
-    weekSet.add(getWeekKey(l.date));
-  });
+  for (const a of rows) {
+    const mod = modById.get(a.lessonId);
+    if (mod) byModality[mod] = (byModality[mod] ?? 0) + 1;
+    const occ = (a as { occurrenceDate?: string }).occurrenceDate;
+    if (occ && typeof occ === "string") weekSet.add(getWeekKey(occ.slice(0, 10)));
+  }
 
   const sortedWeeks = Array.from(weekSet).sort();
   let maxStreak = 0;
@@ -133,7 +140,7 @@ export async function computeBadgeStats(
   }
 
   return {
-    totalClasses: lessons?.length ?? 0,
+    totalClasses: rows.length,
     byModality,
     consecutiveWeeks: maxStreak,
   };

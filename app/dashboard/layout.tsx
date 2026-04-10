@@ -46,6 +46,7 @@ export default async function DashboardLayout({
   const baseLinks = hasPlan
     ? [
         { label: t("navHome"), href: "/dashboard" },
+        { label: locale === "pt" ? "Bem-estar e treino" : "Wellness & training", href: "/dashboard/bem-estar" },
         { label: t("navNotificationsCenter"), href: "/dashboard/notificacoes" },
         ...(planAccess.hasPerformanceTracking
           ? [
@@ -75,6 +76,7 @@ export default async function DashboardLayout({
       ]
     : [
         { label: t("navHome"), href: "/dashboard" },
+        { label: locale === "pt" ? "Bem-estar e treino" : "Wellness & training", href: "/dashboard/bem-estar" },
         { label: "✨ " + t("choosePlanTitle"), href: "/escolher-plano" },
         { label: t("navLibrary"), href: "/dashboard/biblioteca" },
         { label: t("navProfile"), href: "/dashboard/perfil" },

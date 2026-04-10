@@ -6,9 +6,9 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getPlanAccess } from "@/lib/plan-access";
-import { performCheckIn } from "@/lib/perform-check-in";
+import { resolveOccurrenceYmd } from "@/lib/resolve-check-in-occurrence";
+import { CheckInFlow } from "./CheckInFlow";
 
-/** Cookies/sessão: evitar estático e falhas em produção ao abrir o link de check-in. */
 export const dynamic = "force-dynamic";
 
 type Props = {
@@ -24,6 +24,7 @@ export default async function CheckInPage({ params, searchParams }: Props) {
   const supabase = await createClient();
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
+  const loc = locale === "en" ? "en" : "pt";
 
   const dbUser = await getCurrentDbUser();
   if (!dbUser) {
@@ -59,7 +60,7 @@ export default async function CheckInPage({ params, searchParams }: Props) {
 
   const { data: lesson } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, isOpenClass")
+    .select("id, modality, date, startTime, endTime, isOpenClass, weekday")
     .eq("id", lessonId)
     .maybeSingle();
 
@@ -105,16 +106,22 @@ export default async function CheckInPage({ params, searchParams }: Props) {
     );
   }
 
-  const result = await performCheckIn(lessonId, { occurrenceDate: dateParam });
+  const occ = resolveOccurrenceYmd(
+    {
+      date: (lesson as { date?: string | null }).date ?? null,
+      weekday: (lesson as { weekday?: number | null }).weekday ?? null,
+    },
+    { occurrenceDate: dateParam }
+  );
 
-  if (result.error) {
+  if (!occ.ok) {
     return (
       <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
         <h1 className="text-mobile-lg" style={{ color: "var(--text-primary)", marginBottom: 12 }}>
           {t("checkIn")}
         </h1>
         <p className="text-mobile-base" style={{ color: "var(--danger)", marginBottom: 24 }}>
-          {result.error}
+          {occ.error}
         </p>
         <Link href="/dashboard" className="btn btn-primary">
           {t("goToDashboard")}
@@ -123,27 +130,50 @@ export default async function CheckInPage({ params, searchParams }: Props) {
     );
   }
 
-  const timeStr = result.checkedInAt
-    ? new Date(result.checkedInAt).toLocaleTimeString(locale === "en" ? "en-GB" : "pt-PT", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : null;
+  const labels =
+    loc === "pt"
+      ? {
+          title: "Check-in e bem-estar",
+          intro: "Antes de confirmar a presença, indica como te sentes hoje (ajuda o teu coach e a plataforma).",
+          sleepHours: "Horas de sono (última noite)",
+          sleepQuality: "Qualidade do sono",
+          hydration: "Hidratação",
+          hydrationYes: "Bem hidratado",
+          stress: "Stress",
+          fatigue: "Fadiga",
+          lowHigh: "1 = pior · 5 = melhor",
+          skipQuestionnaire: "Saltar questionário e só fazer check-in",
+          submitWithWellness: "Confirmar presença com este registo",
+          backDashboard: "Voltar ao painel",
+          thankYou: "Obrigado.",
+          confirmedAt: "Presença registada às {time}.",
+          zoneGreen: "Verde: pronto a treinar",
+          zoneYellow: "Amarelo: atenção",
+          zoneRed: "Vermelho: priorizar recuperação (esta aula não conta para conquistas por assiduidade)",
+          wellnessHint:
+            "Se estiveres em zona vermelha, a tua presença conta para o treino, mas não para badges de assiduidade — para não premiar overtraining.",
+        }
+      : {
+          title: "Check-in & wellness",
+          intro: "Before confirming attendance, share how you feel today (helps your coach and the app).",
+          sleepHours: "Sleep hours (last night)",
+          sleepQuality: "Sleep quality",
+          hydration: "Hydration",
+          hydrationYes: "Well hydrated",
+          stress: "Stress",
+          fatigue: "Fatigue",
+          lowHigh: "1 = worst · 5 = best",
+          skipQuestionnaire: "Skip questionnaire and check in only",
+          submitWithWellness: "Confirm attendance with this log",
+          backDashboard: "Back to dashboard",
+          thankYou: "Thank you.",
+          confirmedAt: "Attendance registered at {time}.",
+          zoneGreen: "Green: ready to train",
+          zoneYellow: "Yellow: caution",
+          zoneRed: "Red: prioritize recovery (this class won’t count toward attendance badges)",
+          wellnessHint:
+            "In the red zone, your class still counts for training, but not for attendance badges — to avoid rewarding overtraining.",
+        };
 
-  return (
-    <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
-      <h1 className="text-mobile-lg" style={{ color: "var(--success)", marginBottom: 12 }}>
-        {t("checkInConfirmed")}
-      </h1>
-      <p className="text-mobile-base" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
-        {timeStr ? t("checkInConfirmedAt").replace("{time}", timeStr) : t("presenceRegisteredSuccess")}
-      </p>
-      <p className="text-mobile-sm" style={{ color: "var(--text-secondary)", marginBottom: 24 }}>
-        {t("thankYou")}
-      </p>
-      <Link href="/dashboard" className="btn btn-primary">
-        {t("backToDashboard")}
-      </Link>
-    </div>
-  );
+  return <CheckInFlow lessonId={lessonId} occurrenceDate={occ.ymd} labels={labels} locale={loc} />;
 }

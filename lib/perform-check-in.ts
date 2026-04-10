@@ -16,7 +16,8 @@ import {
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
-import { weekdayFromYmd } from "@/lib/lesson-occurrences";
+import { computeWellnessZone, type WellnessCheckInInput } from "@/lib/wellness-score";
+import { resolveOccurrenceYmd } from "@/lib/resolve-check-in-occurrence";
 
 const MODALITY_ALIASES: Record<string, string> = {
   MUAY_THAI: "MUAY_THAI",
@@ -33,37 +34,17 @@ function normalizeModalityCode(value: string | null | undefined): string | null 
   return MODALITY_ALIASES[key] ?? null;
 }
 
-function resolveOccurrenceYmd(
-  lesson: { date: string | null; weekday?: number | null },
-  options?: { occurrenceDate?: string }
-): { ok: true; ymd: string } | { ok: false; error: string } {
-  if (lesson.date != null && String(lesson.date).trim() !== "") {
-    const ymd = String(lesson.date).slice(0, 10);
-    if (options?.occurrenceDate && options.occurrenceDate.slice(0, 10) !== ymd) {
-      return { ok: false, error: "Data inválida para esta aula." };
-    }
-    return { ok: true, ymd };
-  }
-  const occ = options?.occurrenceDate?.slice(0, 10) ?? "";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(occ)) {
-    return {
-      ok: false,
-      error: "Indica a data desta aula (ex.: abre o link a partir do dashboard com a data correta).",
-    };
-  }
-  if (lesson.weekday != null && weekdayFromYmd(occ) !== lesson.weekday) {
-    return { ok: false, error: "Data inválida para esta aula recorrente." };
-  }
-  return { ok: true, ymd: occ };
-}
-
 /**
  * Check-in (QR / link). `occurrenceDate` opcional: obrigatório para aulas recorrentes (`Lesson.date` null).
+ * `wellness`: questionário pré-treino; zona VERMELHA não conta para gamificação (badges) nesta presença.
  */
 export async function performCheckIn(
   lessonId: string,
-  options?: { occurrenceDate?: string }
-): Promise<{ error?: string; checkedInAt?: string }> {
+  options?: {
+    occurrenceDate?: string;
+    wellness?: WellnessCheckInInput | "skip";
+  }
+): Promise<{ error?: string; checkedInAt?: string; attendanceId?: string }> {
   const studentId = await getCurrentStudentId();
   if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
 
@@ -167,19 +148,22 @@ export async function performCheckIn(
     .eq("occurrenceDate", occurrenceYmd)
     .maybeSingle();
 
+  let attendanceId: string;
+
   if (existing) {
+    attendanceId = (existing as { id: string }).id;
     const { error } = await supabase
       .from("Attendance")
       .update({ status: "CONFIRMED", checkedInAt: now })
-      .eq("id", (existing as { id: string }).id);
+      .eq("id", attendanceId);
     if (error) {
       console.error("checkIn update error:", error);
       return { error: error.message };
     }
   } else {
-    const id = crypto.randomUUID();
+    attendanceId = crypto.randomUUID();
     const { error } = await supabase.from("Attendance").insert({
-      id,
+      id: attendanceId,
       lessonId,
       studentId,
       status: "CONFIRMED",
@@ -191,6 +175,43 @@ export async function performCheckIn(
       console.error("checkIn insert error:", error);
       return { error: error.message };
     }
+  }
+
+  const wellnessOpt = options?.wellness;
+  if (wellnessOpt && wellnessOpt !== "skip") {
+    const zone = computeWellnessZone(wellnessOpt);
+    const countsForGamification = zone !== "RED";
+
+    const { data: existingW } = await supabase
+      .from("PreLessonWellness")
+      .select("id")
+      .eq("studentId", studentId)
+      .eq("lessonId", lessonId)
+      .eq("occurrenceDate", occurrenceYmd)
+      .maybeSingle();
+
+    const row = {
+      id: (existingW as { id?: string } | null)?.id ?? crypto.randomUUID(),
+      studentId,
+      lessonId,
+      occurrenceDate: occurrenceYmd,
+      sleepHours: wellnessOpt.sleepHours,
+      sleepQuality: wellnessOpt.sleepQuality,
+      hydrationOk: wellnessOpt.hydrationOk,
+      stress: wellnessOpt.stress,
+      fatigue: wellnessOpt.fatigue,
+      wellnessZone: zone,
+    };
+
+    if (existingW) {
+      const { error: wErr } = await supabase.from("PreLessonWellness").update(row).eq("id", (existingW as { id: string }).id);
+      if (wErr) console.error("PreLessonWellness update:", wErr);
+    } else {
+      const { error: wErr } = await supabase.from("PreLessonWellness").insert(row);
+      if (wErr) console.error("PreLessonWellness insert:", wErr);
+    }
+
+    await supabase.from("Attendance").update({ countsForGamification }).eq("id", attendanceId);
   }
 
   try {
@@ -227,5 +248,5 @@ export async function performCheckIn(
     }
   }
 
-  return { checkedInAt: now };
+  return { checkedInAt: now, attendanceId };
 }

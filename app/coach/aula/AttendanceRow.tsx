@@ -8,6 +8,8 @@ import { CoachStudentProfileModal, type StudentProfileForModal } from "@/compone
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 
+type WellnessZone = "GREEN" | "YELLOW" | "RED";
+
 type Props = {
   attendanceId: string;
   studentId: string;
@@ -21,6 +23,10 @@ type Props = {
   evaluatedInThisLesson?: boolean;
   lastEvalScoresByModality?: Record<string, Record<string, number>>;
   profile: StudentProfileForModal;
+  /** Registo pré-treino desta ocorrência (check-in), se existir. */
+  preLessonWellness: { zone: WellnessZone; tooltip: string } | null;
+  rpe: number | null;
+  rpeRecordedAt: string | null;
 };
 
 export function AttendanceRow({
@@ -36,6 +42,9 @@ export function AttendanceRow({
   evaluatedInThisLesson = false,
   lastEvalScoresByModality,
   profile,
+  preLessonWellness,
+  rpe,
+  rpeRecordedAt,
 }: Props) {
   const router = useRouter();
   const [state, formAction] = useFormState(setAttendanceStatusFromForm, null as { error?: string } | null);
@@ -58,6 +67,23 @@ export function AttendanceRow({
       : status === "PENDING"
         ? "Marcou 'Vou'"
         : "Falta";
+
+  const zoneClass =
+    preLessonWellness?.zone === "GREEN"
+      ? "coach-wellness-zone-pill--green"
+      : preLessonWellness?.zone === "YELLOW"
+        ? "coach-wellness-zone-pill--yellow"
+        : preLessonWellness?.zone === "RED"
+          ? "coach-wellness-zone-pill--red"
+          : "";
+  const zoneShort =
+    preLessonWellness?.zone === "GREEN"
+      ? "Pré: Verde"
+      : preLessonWellness?.zone === "YELLOW"
+        ? "Pré: Amarelo"
+        : preLessonWellness?.zone === "RED"
+          ? "Pré: Vermelho"
+          : null;
 
   const handleEvaluationSuccess = () => {
     setModalOpen(false);
@@ -82,6 +108,32 @@ export function AttendanceRow({
             <span className={`coach-attendance-status ${statusClass}`}>{statusLabel}</span>
           </div>
           {studentName && <span className="coach-attendance-email">{studentEmail}</span>}
+          {(zoneShort || rpe != null) && (
+            <div className="coach-attendance-wellness" aria-label="Bem-estar e RPE">
+              {zoneShort && (
+                <span className={`coach-wellness-zone-pill ${zoneClass}`} title={preLessonWellness?.tooltip}>
+                  {zoneShort}
+                </span>
+              )}
+              <span className="coach-attendance-rpe">
+                RPE:{" "}
+                {rpe != null ? (
+                  <>
+                    <strong>{rpe}</strong>
+                    {rpeRecordedAt ? (
+                      <span className="coach-attendance-rpe-time">
+                        {" "}
+                        (registado às{" "}
+                        {new Date(rpeRecordedAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })})
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  "—"
+                )}
+              </span>
+            </div>
+          )}
         </div>
         <div className="coach-attendance-actions">
           <button type="button" onClick={() => setModalOpen(true)} className="btn btn-secondary">

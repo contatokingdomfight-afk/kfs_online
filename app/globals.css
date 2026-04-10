@@ -1182,6 +1182,42 @@
   max-width: 100%;
 }
 
+.coach-attendance-wellness {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 8px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+.coach-attendance-rpe strong {
+  color: var(--text-primary);
+}
+.coach-attendance-rpe-time {
+  font-weight: 400;
+  opacity: 0.92;
+}
+.coach-wellness-zone-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.coach-wellness-zone-pill--green {
+  background: rgba(34, 197, 94, 0.2);
+  color: #15803d;
+}
+.coach-wellness-zone-pill--yellow {
+  background: rgba(234, 179, 8, 0.28);
+  color: #a16207;
+}
+.coach-wellness-zone-pill--red {
+  background: rgba(239, 68, 68, 0.2);
+  color: #b91c1c;
+}
+
 .coach-attendance-status {
   display: inline-block;
   padding: 4px 10px;

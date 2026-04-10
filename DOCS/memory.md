@@ -31,6 +31,8 @@
 | Contas de teste + `npm test` | `DOCS/CONTAS_TESTE.md` |
 | Checklist manual por perfil | `DOCS/GUIA_TESTE_VALIDACAO_PERFIS.md` |
 | Índice na raiz | `INDICE_DOCUMENTACAO.md`, `README.md`, `PROXIMOS_PASSOS.md` |
+| Fluxo Git (branch `dev`, merge em `main` só com autorização, DOCS após merge) | `.cursor/rules/fluxo-git-dev-main.mdc` |
+| Bem-estar / RPE / dores / benchmarks / peso (aluno) | `app/dashboard/bem-estar/`, migração `20260410200000_wellness_rpe_pain_benchmark_weight.sql` |
 
 ---
 
@@ -114,6 +116,14 @@
 - **Admin Avaliação** (`app/admin/avaliacao/`): várias subcategorias por dimensão; **replicar o mesmo critério em várias modalidades**; migração `20260410120000_remove_legacy_evaluation_components.sql` para dados legacy inconsistentes.
 - **Config em tempo real:** `lib/load-evaluation-config.ts` **sem** `unstable_cache` (alterações no admin reflectem nas avaliações/radar).
 - **Performance (aluno):** `/dashboard` — `DashboardBelowFold` async + `<Suspense>` para reduzir payload RSC inicial; sidebar com `prefetch: false` em `/como-sou-avaliado` e `/sistema-pontuacao`; `WarriorPanel` com barras via `transform: scaleX`. `/dashboard/performance` — radar **SVG** (sem Recharts), lazy-load de secções, tooltips CSS em conquistas, payload de detalhe condicional. Chunk partilhado grande `1255-*` no browser = runtime Next.js (esperado). Detalhe: **`DOCS/ROADMAP_Plataforma_KFS.md`** (§2, §2b, §18).
+
+### 3.14 Bem-estar, RPE, dores, benchmarks e peso (abril 2026)
+
+- **Migração:** `supabase/migrations/20260410200000_wellness_rpe_pain_benchmark_weight.sql` — `PreLessonWellness` (sono, hidratação, stress, fadiga, zona GREEN/YELLOW/RED), `Attendance.rpe` / `rpeRecordedAt`, `Attendance.countsForGamification` (falso se zona vermelha no pré-treino), `PainSelfReport`, `PhysicalBenchmarkEntry`, `BodyWeightEntry`, `StudentProfile.weightGoalKg` / `weightGoalTargetDate`.
+- **Check-in** (`/check-in/[lessonId]`): formulário pré-treino opcional (ou saltar); `lib/wellness-score.ts` calcula zona; `lib/resolve-check-in-occurrence.ts` partilha resolução de data com `performCheckIn`. Zona **vermelha**: presença válida mas **não** entra em `computeBadgeStats` / badges de assiduidade (`lib/gamification.ts` conta por linha `Attendance` + `occurrenceDate`).
+- **Aluno:** hub `/dashboard/bem-estar` — RPE (`/dashboard/bem-estar/rpe`), dores (`/dores`), benchmarks (`/benchmarks`), peso (`/peso`). Ações em `app/dashboard/bem-estar/actions.ts`.
+- **Metas mensais / totais no dashboard:** contagens de presenças usam `countsForGamification = true` (`DashboardBelowFold`, `DashboardRestContent`) para alinhar com badges.
+- **Coach:** `/coach/aula?lesson=&date=` — por aluno, zona de pré-treino + RPE (`AttendanceRow`, dados de `PreLessonWellness` + `Attendance.rpe`). `/coach/alunos/[id]` — secção **Bem-estar e carga** (`CoachStudentWellbeingSection`): últimos pré-treinos e RPE (cliente admin).
 
 ---
 

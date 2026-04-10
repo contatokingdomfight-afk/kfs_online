@@ -14,6 +14,7 @@ import { CoachNotes } from "./_components/CoachNotes";
 import { PerformanceStatsSkeleton } from "./_components/PerformanceStatsSkeleton";
 import { PhysicalAssessmentSkeleton } from "./_components/PhysicalAssessmentSkeleton";
 import { CoachNotesSkeleton } from "./_components/CoachNotesSkeleton";
+import { CoachStudentWellbeingSection } from "./_components/CoachStudentWellbeingSection";
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
@@ -149,6 +150,10 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
         modalities={modalitiesForEvaluate}
         evaluationConfigByModality={evaluationConfigByModality}
       />
+
+      <Suspense fallback={null}>
+        <CoachStudentWellbeingSection studentId={studentId} />
+      </Suspense>
 
       <Suspense fallback={<PerformanceStatsSkeleton />}>
         <PerformanceStatsSection studentId={studentId} />
