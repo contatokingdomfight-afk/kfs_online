@@ -1,8 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { unstable_cache } from "next/cache";
 import { parseConfig, type ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
-
-const CACHE_TAG = "evaluation-configs";
 
 /**
  * Lista códigos de modalidade (igual a ModalityRef no admin).
@@ -17,24 +14,16 @@ async function getModalityCodes(supabase: SupabaseClient): Promise<string[]> {
 /**
  * Carrega as configurações de avaliação para todas as modalidades em ModalityRef (em paralelo).
  * KICKBOXING usa a mesma config que MUAY_THAI (alias interno em loadEvaluationConfigForModality).
- * Cache de 5 minutos; a chave inclui a lista de códigos para refletir novas modalidades.
- * Invalida com revalidateTag("evaluation-configs") quando alterares critérios no Admin.
+ * Sem cache: as páginas que chamam esta função são force-dynamic e os critérios devem
+ * reflectir imediatamente qualquer alteração feita no admin.
  */
 export async function loadAllEvaluationConfigs(
   supabase: SupabaseClient
 ): Promise<Map<string, ModalityEvaluationConfigPayload | null>> {
-  const codesSorted = [...(await getModalityCodes(supabase))].sort();
-  if (codesSorted.length === 0) return new Map();
-
-  const entries = await unstable_cache(
-    async () => {
-      const configs = await Promise.all(codesSorted.map((mod) => loadEvaluationConfigForModality(supabase, mod)));
-      return codesSorted.map((mod, i) => [mod, configs[i]] as [string, ModalityEvaluationConfigPayload | null]);
-    },
-    ["evaluation-configs", ...codesSorted],
-    { revalidate: 300, tags: [CACHE_TAG] }
-  )();
-  return new Map(entries);
+  const codes = await getModalityCodes(supabase);
+  if (codes.length === 0) return new Map();
+  const configs = await Promise.all(codes.map((mod) => loadEvaluationConfigForModality(supabase, mod)));
+  return new Map(codes.map((mod, i) => [mod, configs[i]]));
 }
 
 /** Muay Thai e Kickboxing partilham a mesma estrutura de avaliação. */
