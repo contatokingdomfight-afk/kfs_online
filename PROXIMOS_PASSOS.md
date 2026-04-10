@@ -32,7 +32,7 @@ Documento de **estado atual** e **prioridades**. Para histórico antigo (multi-e
 
 ## Sugestões de evolução (produto)
 
-Ver secções **14–17** do roadmap: BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, notificações push, etc.
+Ver secções **14–17** do roadmap: critérios de avaliação por modalidade (BJJ/MMA onde faltar), biometria, Battle Pass, Capacitor, notificações push, etc. (modalidades já cadastráveis na plataforma.)
 
 ## Comandos úteis
 

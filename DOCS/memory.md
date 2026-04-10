@@ -123,7 +123,9 @@ npm run generate:pwa-icons   # ícones PWA a partir de KFS Logo.png — ver DOCS
 ## 5. Pendências / evoluções (não bloqueantes)
 
 - Editar visibilidade de comentários antigos (PRIVATE ↔ SHARED) — não implementado.
-- Roadmap opcional: **rankeamento** (evolução + pontos), **Tribo** (feed social); BJJ/MMA, biometria, Battle Pass, PWA/Capacitor, push, E2E — ver **`DOCS/ROADMAP_Plataforma_KFS.md`** secções 14–17.
+- **PWA na web** (instalar, Safari modal, menu lateral) — feito; ver **`DOCS/PWA.md`**. **Capacitor** e lojas — por fazer (roadmap §17).
+- **Modalidades** (BJJ, MMA, etc.): cadastro na plataforma — **feito** (`ModalityRef`). **Próximo passo:** **critérios de avaliação** (Técnico, Tático, Físico, Mental, Teórico) por modalidade onde ainda não existam — ver Admin Avaliação / roadmap §15.
+- Roadmap opcional: **Tribo**, extensões de **rankeamento**, «Ver como melhorar» → biblioteca, biometria, Battle Pass, **push Web**, E2E — ver **`DOCS/ROADMAP_Plataforma_KFS.md`** (tabela resumo após §17 e secções 14–17).
 
 ---
 

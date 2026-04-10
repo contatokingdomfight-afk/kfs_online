@@ -217,7 +217,7 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 
 ### 14.1 Dashboard de Performance ultra-personalizado
 
-- **Feito:** Métricas por dimensão (Técnico, Tático, Físico, Mental, Teórico); gráfico radar; faixas por cor e XP; missões (sistema + configuráveis por modalidade); detalhe por componente filtrado pela modalidade principal do aluno; feedback do coach (card); **KPIs explícitos por modalidade** (secção “Performance por modalidade” na página /dashboard/performance com scores por modalidade, escala 1–10; BJJ quando existir aparecerá automaticamente); **feedback que sugere conteúdos da biblioteca** (secção “Conteúdos sugeridos para ti” na mesma página, até 3 cursos por modalidade principal, junto ao feedback do coach).
+- **Feito:** Métricas por dimensão (Técnico, Tático, Físico, Mental, Teórico); gráfico radar; faixas por cor e XP; missões (sistema + configuráveis por modalidade); detalhe por componente filtrado pela modalidade principal do aluno; feedback do coach (card); **KPIs explícitos por modalidade** (secção “Performance por modalidade” em `/dashboard/performance`, escala 1–10; **BJJ/MMA** entram no mesmo ecrã quando existirem **critérios de avaliação** configurados para essas modalidades — ver §15); **feedback que sugere conteúdos da biblioteca** (secção “Conteúdos sugeridos para ti”, até 3 cursos por modalidade principal).
 
 
 ### 14.2 Biblioteca de Conteúdo 360º
@@ -256,7 +256,8 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 |------|--------|--------|
 | **Rankeamento de alunos** (evolução + acúmulo de pontos) | Parcial | **v1:** `/dashboard/rank` (XP por escola). Falta: modalidade, período, dimensões; ver §14.3 |
 | **Página Tribo** (feed: fotos, vídeos curtos, comentários, curtidas, partilha em redes) | Por fazer | Comunidade; ver §14.6 |
-| Modalidades: Jiu-Jitsu (BJJ), MMA | Por fazer | Hoje: Muay Thai, Boxing, Kickboxing |
+| **Modalidades oficiais** (Muay Thai, Boxing, Kickboxing, BJJ, MMA, …) | Feito | Cadastro em **Admin → Modalidades** (`ModalityRef`); aulas, planos e filtro por modalidade usam estes códigos. |
+| **Critérios de avaliação** (pilares **Técnico, Tático, Físico, Mental, Teórico**) por modalidade | Por fazer | A plataforma já tem o modelo (`EvaluationComponent` / `EvaluationCriterion`, Admin **Avaliação**). **Próximo passo operacional:** completar critérios para cada modalidade que ainda não os tenha (em especial **BJJ** e **MMA**), alinhados à metodologia KFS. |
 | Biometria (mencionada no plano) | Por fazer | Métricas além de presença; depende de definição de produto |
 | Notificações (email/push) | Feito | Resend: confirmação de presença (coach confirma); cron lembrete aulas (GET /api/cron/lesson-reminders). |
 | Remuneração de coaches (configurável) | Feito | Coach.hourly_rate; /admin/financeiro/coaches (resumo mensal); /coach/financeiro (painel do coach) |
@@ -274,21 +275,36 @@ Com base na especificação e na dependência entre módulos:
 3. **Receita adicional (Loja)** – Feito.
 4. **Dashboard de Performance** – Feito (inclui sugestões de cursos recomendados).
 5. **Gamificação** – Feito (badges, conquistas, meta assiduidade, meta IMC, metas avaliação, seed de missões).
-6. **Próximos passos (opcional):** **Rankeamento** — extensões (modalidade, período; §14.3); **Tribo** / feed social (§14.6); Battle Pass / temporadas; reset mensal de missões; **Capacitor** / lojas (secção 17; PWA base em **`DOCS/PWA.md`**); notificações **push** (além de email/cron); melhorias pontuais em mensalidades (relatórios, alertas admin).
+6. **Próximos passos (opcional):** **Rankeamento** — extensões (modalidade, período; §14.3); **Tribo** / feed social (§14.6); Battle Pass / temporadas; reset mensal de missões; **Capacitor** / lojas (secção 17; experiência **PWA na web** já coberta — **`DOCS/PWA.md`**); notificações **push** Web (além de email/cron Resend); melhorias pontuais em mensalidades (relatórios, alertas admin).
 
 ---
 
 ## 17. Aplicação móvel e distribuição (após conclusão das atualizações)
 
-> **Prioridade:** Desenvolver apenas depois de concluídas todas as funcionalidades e atualizações previstas nas secções anteriores (Biblioteca, Sala Invertida, Receita adicional, Gamificação completa, etc.).
+> **Prioridade:** Capacitor e lojas **depois** de estabilizar o produto web; a camada **PWA** já está utilizável no browser (instalar / atalho).
 
 | Item | Estado | Notas |
 |------|--------|--------|
-| PWA (Progressive Web App) | Feito | Manifest (`app/manifest.ts`), ícones `public/icons/` (`npm run generate:pwa-icons`), SW pass-through (`public/sw.js`), ver **`DOCS/PWA.md`** |
+| PWA (Progressive Web App) | Feito | Manifest (`app/manifest.ts`), ícones `public/icons/` (`npm run generate:pwa-icons`), SW (`public/sw.js`), metadados Apple; **`PwaInstallProvider`** + aviso inicial (mobile) + **`SidebarPwaInstall`** no menu (rodapé fixo); **Chrome:** `beforeinstallprompt`; **Safari / sem API:** mesmo CTA com **modal** de passos (`lib/pwa-install-ui.ts`); registo opcional `appinstalled` → `kfs-pwa-appinstalled-at`; ajustes overflow mobile no shell. Ver **`DOCS/PWA.md`**. |
 | Capacitor (Android + iOS) | Por fazer | Embrulhar o web app em container nativo; publicar na Play Store e App Store |
-| Testes em dispositivos reais | Por fazer | Validar UX e performance em Android e iOS |
+| Testes em dispositivos reais | Por fazer | Validar UX e performance em Android e iOS (PWA + futuro Capacitor) |
 
-**Ordem sugerida:** (1) PWA → (2) Capacitor → (3) Publicação nas lojas.
+**Ordem sugerida (distribuição):** (1) ~~PWA na web~~ ✓ → (2) **Capacitor** (quando houver decisão de produto) → (3) **Publicação nas lojas** + testes em dispositivos reais.
+
+### Resumo — o que ainda falta fazer (prioridade de produto)
+
+| Área | O quê | Onde no doc |
+|------|--------|-------------|
+| Comunidade | **Tribo** — feed (fotos/vídeos, comentários, curtidas, partilhas) | §14.6, §15 |
+| Gamificação | Rank **v2** (modalidade, período, evolução nas dimensões); opcional Battle Pass / temporadas | §14.3, §15 |
+| Aluno / performance | «Ver como melhorar» nos critérios → **ligação a conteúdos** da biblioteca | §2 (tabela aluno), §14.1 |
+| Avaliação | **Critérios dos cinco pilares** por modalidade (foco **BJJ / MMA** onde faltar) | §15 |
+| Dados / produto | **Biometria** (definição + escopo) | §15 |
+| Mobile nativo | **Capacitor** + **Play Store / App Store**; testes em **dispositivos reais** | §17 |
+| Notificações | **Push Web** (além de email Resend + crons) | §15, §16 |
+| Qualidade | **E2E** (ex.: Playwright), relatórios/alertas admin em financeiro (melhorias pontuais) | rodapé, §16 |
+
+*Itens já cobertos na web:* PWA instalável, i18n PT/EN, dark/light, notificações in-app/email/crons listados em §15.
 
 ---
 
@@ -305,7 +321,7 @@ Com base na especificação e na dependência entre módulos:
 
 ---
 
-*Última atualização (abril 2026): **PWA** (manifest, ícones, SW — `DOCS/PWA.md`); **Rank** `/dashboard/rank` (leaderboard XP por escola, v1); roadmap — extensões de rankeamento e **Tribo** (feed social); histórico março 2026: carrosséis no dashboard (**Sua próxima aula** / **Aulas livres**), **CoachSchool** multi-escola, **aulas livres** (`isOpenClass`), expansão de ocorrências de aula (`lesson-occurrences`), etc. Próximos passos opcionais: BJJ/MMA, biometria, Battle Pass, **Capacitor**, push, E2E (Playwright).*
+*Última atualização (abril 2026): **Modalidades** (incl. BJJ, MMA) tratadas como **feitas** ao nível da plataforma (`ModalityRef` / operações). **Próximo foco de produto:** **critérios de avaliação** (Técnico, Tático, Físico, Mental, Teórico) por modalidade onde ainda faltem. **PWA** completo na web; **Rank** v1; **UI RSVP** «Vou». **Por fazer:** critérios BJJ/MMA (e outras lacunas); Tribo; extensões de rankeamento; «Ver como melhorar» → biblioteca; biometria; Battle Pass; **Capacitor + lojas**; push Web; E2E; histórico: carrosséis, **CoachSchool**, **aulas livres**, `lesson-occurrences`, etc.*
 
 ---
 

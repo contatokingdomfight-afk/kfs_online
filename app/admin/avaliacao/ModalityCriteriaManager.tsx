@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState } from "react-dom";
+import { useState, useEffect } from "react";
+import { useFormState, useFormStatus } from "react-dom";
 import {
   createCriterion,
   updateCriterion,
@@ -9,14 +9,83 @@ import {
   type CriterionResult,
 } from "./actions";
 
+function FormSavingBar({ label = "A guardar…" }: { label?: string }) {
+  const { pending } = useFormStatus();
+  if (!pending) return null;
+  return (
+    <div role="status" aria-live="polite" style={{ marginBottom: "var(--space-2)" }}>
+      <div
+        style={{
+          height: 4,
+          borderRadius: 2,
+          background: "var(--border)",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          className="animate-loading-bar"
+          style={{ height: "100%", width: "38%", background: "var(--primary)", borderRadius: 2 }}
+        />
+      </div>
+      <p style={{ margin: "8px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>{label}</p>
+    </div>
+  );
+}
+
+function AddCriterionActions({ onCancel }: { onCancel: () => void }) {
+  const { pending } = useFormStatus();
+  return (
+    <>
+      <FormSavingBar />
+      <div style={{ display: "flex", gap: "var(--space-2)" }}>
+        <button type="submit" className="btn btn-primary" style={{ fontSize: "var(--text-sm)" }} disabled={pending}>
+          {pending ? "A guardar…" : "Adicionar critério"}
+        </button>
+        <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)" }} disabled={pending} onClick={onCancel}>
+          Cancelar
+        </button>
+      </div>
+    </>
+  );
+}
+
+function EditCriterionActions({ onCancel }: { onCancel: () => void }) {
+  const { pending } = useFormStatus();
+  return (
+    <>
+      <FormSavingBar />
+      <div style={{ display: "flex", gap: "var(--space-2)" }}>
+        <button type="submit" className="btn btn-primary" style={{ fontSize: "var(--text-sm)" }} disabled={pending}>
+          {pending ? "A guardar…" : "Guardar"}
+        </button>
+        <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)" }} disabled={pending} onClick={onCancel}>
+          Cancelar
+        </button>
+      </div>
+    </>
+  );
+}
+
+function DeleteCriterionSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      className="btn btn-secondary"
+      style={{ fontSize: "var(--text-xs)", padding: "0.3em 0.6em", color: "var(--danger)" }}
+      disabled={pending}
+    >
+      {pending ? "A remover…" : "Remover"}
+    </button>
+  );
+}
+
 function DeleteCriterionForm({ criterionId }: { criterionId: string }) {
   const [deleteState, deleteAction] = useFormState(deleteCriterion, null);
   return (
-    <form action={deleteAction} style={{ display: "inline" }}>
+    <form action={deleteAction} style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
       <input type="hidden" name="criterionId" value={criterionId} />
-      <button type="submit" className="btn btn-secondary" style={{ fontSize: "var(--text-xs)", padding: "0.3em 0.6em", color: "var(--danger)" }}>
-        Remover
-      </button>
+      <DeleteCriterionSubmitButton />
       {deleteState?.error && <span style={{ color: "var(--danger)", fontSize: "var(--text-xs)" }}>{deleteState.error}</span>}
     </form>
   );
@@ -47,6 +116,22 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
 
   const [critState, critAction] = useFormState(createCriterion, null as CriterionResult | null);
   const [critUpdateState, critUpdateAction] = useFormState(updateCriterion, null as CriterionResult | null);
+
+  useEffect(() => {
+    if (critState?.success) {
+      setAddingCriterionTo(null);
+      setNewCriterionLabel("");
+      setNewCriterionDescription("");
+    }
+  }, [critState]);
+
+  useEffect(() => {
+    if (critUpdateState?.success) {
+      setEditingCriterion(null);
+      setEditCriterionLabel("");
+      setEditCriterionDescription("");
+    }
+  }, [critUpdateState]);
 
   const startEditCriterion = (c: { id: string; label: string; description: string | null }) => {
     setEditingCriterion(c.id);
@@ -83,10 +168,7 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
               >
                 {editingCriterion === c.id ? (
                   <form
-                    action={(fd) => {
-                      critUpdateAction(fd);
-                      setEditingCriterion(null);
-                    }}
+                    action={critUpdateAction}
                     style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
                   >
                     <input type="hidden" name="criterionId" value={c.id} />
@@ -109,14 +191,7 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
                       rows={2}
                       style={{ fontSize: "var(--text-sm)", resize: "vertical" }}
                     />
-                    <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                      <button type="submit" className="btn btn-primary" style={{ fontSize: "var(--text-sm)" }}>
-                        Guardar
-                      </button>
-                      <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)" }} onClick={() => setEditingCriterion(null)}>
-                        Cancelar
-                      </button>
-                    </div>
+                    <EditCriterionActions onCancel={() => setEditingCriterion(null)} />
                   </form>
                 ) : (
                   <>
@@ -144,12 +219,7 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
 
           {addingCriterionTo === block.dimensionId ? (
             <form
-              action={(fd) => {
-                critAction(fd);
-                setAddingCriterionTo(null);
-                setNewCriterionLabel("");
-                setNewCriterionDescription("");
-              }}
+              action={critAction}
               style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
             >
               {block.componentId ? (
@@ -179,14 +249,13 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
                 rows={2}
                 style={{ fontSize: "var(--text-sm)", resize: "vertical" }}
               />
-              <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                <button type="submit" className="btn btn-primary" style={{ fontSize: "var(--text-sm)" }}>
-                  Adicionar critério
-                </button>
-                <button type="button" className="btn btn-secondary" style={{ fontSize: "var(--text-sm)" }} onClick={() => { setAddingCriterionTo(null); setNewCriterionLabel(""); setNewCriterionDescription(""); }}>
-                  Cancelar
-                </button>
-              </div>
+              <AddCriterionActions
+                onCancel={() => {
+                  setAddingCriterionTo(null);
+                  setNewCriterionLabel("");
+                  setNewCriterionDescription("");
+                }}
+              />
             </form>
           ) : (
             <button
