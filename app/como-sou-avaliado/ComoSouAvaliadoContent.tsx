@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { DimensionDetail, DetailGroup, DetailItem } from "@/lib/performance-detail-structure";
 
 const DIMENSION_INTROS: Record<string, string> = {
@@ -58,6 +58,13 @@ type Props = {
   detailByDimension: Record<string, DimensionDetail>;
   dimensionAverages?: Record<string, number>;
   dimensionHistory?: Record<string, number[]>;
+  /** Com mais do que uma modalidade com critérios, mostra filtro «Todas» vs uma modalidade. */
+  modalityOptions?: { code: string; label: string }[];
+  detailByModality?: Record<string, { detailOrder: string[]; detailByDimension: Record<string, DimensionDetail> }>;
+  scoresByModality?: Record<
+    string,
+    { dimensionAverages: Record<string, number>; dimensionHistory: Record<string, number[]> }
+  >;
 };
 
 export function ComoSouAvaliadoContent({
@@ -65,16 +72,59 @@ export function ComoSouAvaliadoContent({
   detailByDimension,
   dimensionAverages = {},
   dimensionHistory = {},
+  modalityOptions = [],
+  detailByModality = {},
+  scoresByModality = {},
 }: Props) {
+  const [modalityFilter, setModalityFilter] = useState("");
   const [filterDim, setFilterDim] = useState<string | null>(null);
   const [openDim, setOpenDim] = useState<string | null>(detailOrder[0] ?? null);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
-  const hasScores = Object.keys(dimensionAverages).length > 0;
+  const mergedView = useMemo(
+    () => ({
+      detailOrder,
+      detailByDimension,
+      dimensionAverages,
+      dimensionHistory,
+    }),
+    [detailOrder, detailByDimension, dimensionAverages, dimensionHistory]
+  );
+
+  const active = useMemo(() => {
+    if (!modalityFilter || !detailByModality[modalityFilter]) {
+      return mergedView;
+    }
+    const bundle = detailByModality[modalityFilter];
+    const sc = scoresByModality[modalityFilter];
+    return {
+      detailOrder: bundle.detailOrder,
+      detailByDimension: bundle.detailByDimension,
+      dimensionAverages: sc?.dimensionAverages ?? {},
+      dimensionHistory: sc?.dimensionHistory ?? {},
+    };
+  }, [modalityFilter, mergedView, detailByModality, scoresByModality]);
+
+  useEffect(() => {
+    setFilterDim(null);
+    setOpenCategories(new Set());
+    const order =
+      modalityFilter && detailByModality[modalityFilter]?.detailOrder?.length
+        ? detailByModality[modalityFilter].detailOrder
+        : detailOrder;
+    setOpenDim(order[0] ?? null);
+    // Só quando o utilizador muda o filtro de modalidade — não incluir detailOrder/detailByModality
+    // para não repor o estado a cada re-render com novo object identity do servidor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intencional
+  }, [modalityFilter]);
+
+  const showModalityFilter = modalityOptions.length > 1;
+
+  const hasScores = Object.keys(active.dimensionAverages).length > 0;
 
   const filteredOrder = useMemo(
-    () => (filterDim ? [filterDim] : detailOrder),
-    [detailOrder, filterDim]
+    () => (filterDim ? [filterDim] : active.detailOrder),
+    [active.detailOrder, filterDim]
   );
 
   const toggleCategory = (key: string) => {
@@ -100,12 +150,33 @@ export function ComoSouAvaliadoContent({
             Como sou avaliado
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Cada critério abaixo recebe uma nota de 1 a 10. O teu perfil geral é a média de todas as classificações.
+            Cada critério abaixo recebe uma nota de 1 a 10. O teu perfil geral é a média de todas as classificações
+            {showModalityFilter ? " (podes filtrar por modalidade abaixo)." : "."}
           </p>
         </div>
-        <span className="rounded-full border border-border bg-bg-secondary px-3 py-1 text-sm font-medium text-text-primary">
-          Escala <strong>1–10</strong>
-        </span>
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          {showModalityFilter && (
+            <label className="flex flex-col gap-1 w-full min-[420px]:w-auto min-[420px]:min-w-[220px]">
+              <span className="text-xs font-medium text-text-secondary">Modalidade</span>
+              <select
+                className="input rounded-lg min-h-11 text-sm w-full"
+                value={modalityFilter}
+                onChange={(e) => setModalityFilter(e.target.value)}
+                aria-label="Filtrar critérios por modalidade"
+              >
+                <option value="">Todas as modalidades</option>
+                {modalityOptions.map((m) => (
+                  <option key={m.code} value={m.code}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <span className="rounded-full border border-border bg-bg-secondary px-3 py-1 text-sm font-medium text-text-primary">
+            Escala <strong>1–10</strong>
+          </span>
+        </div>
       </div>
 
       {/* Resumo no topo: cards por dimensão */}
@@ -113,11 +184,11 @@ export function ComoSouAvaliadoContent({
         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3"
         aria-label="Resumo por dimensão"
       >
-        {detailOrder.map((dimKey) => {
-          const detail = detailByDimension[dimKey];
+        {active.detailOrder.map((dimKey) => {
+          const detail = active.detailByDimension[dimKey];
           if (!detail?.groups?.length) return null;
-          const avg = dimensionAverages[dimKey] ?? 0;
-          const history = dimensionHistory[dimKey] ?? [];
+          const avg = active.dimensionAverages[dimKey] ?? 0;
+          const history = active.dimensionHistory[dimKey] ?? [];
           const status = getStatusColor(avg);
           const isFiltered = filterDim === dimKey;
 
@@ -159,10 +230,10 @@ export function ComoSouAvaliadoContent({
       {/* Accordions: Dimensão → Categoria → Critérios */}
       <div className="space-y-2">
         {filteredOrder.map((dimKey) => {
-          const detail = detailByDimension[dimKey];
+          const detail = active.detailByDimension[dimKey];
           if (!detail?.groups?.length) return null;
           const intro = DIMENSION_INTROS[dimKey];
-          const avg = dimensionAverages[dimKey] ?? 0;
+          const avg = active.dimensionAverages[dimKey] ?? 0;
           const status = getStatusColor(avg);
           const isOpen = openDim === dimKey;
 
