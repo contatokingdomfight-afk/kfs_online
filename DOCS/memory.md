@@ -109,6 +109,12 @@
 - **Admin:** `clearStudentPlanAccess` — remover plano / subscrição (`app/admin/alunos/actions.ts`).
 - **Feedback aluno:** `lib/resolve-coach-feedback.ts`; comentários `SHARED` vs `PRIVATE`.
 
+### 3.13 Admin – critérios de avaliação e performance (abril 2026)
+
+- **Admin Avaliação** (`app/admin/avaliacao/`): várias subcategorias por dimensão; **replicar o mesmo critério em várias modalidades**; migração `20260410120000_remove_legacy_evaluation_components.sql` para dados legacy inconsistentes.
+- **Config em tempo real:** `lib/load-evaluation-config.ts` **sem** `unstable_cache` (alterações no admin reflectem nas avaliações/radar).
+- **Performance (aluno):** `/dashboard` — `DashboardBelowFold` async + `<Suspense>` para reduzir payload RSC inicial; sidebar com `prefetch: false` em `/como-sou-avaliado` e `/sistema-pontuacao`; `WarriorPanel` com barras via `transform: scaleX`. `/dashboard/performance` — radar **SVG** (sem Recharts), lazy-load de secções, tooltips CSS em conquistas, payload de detalhe condicional. Chunk partilhado grande `1255-*` no browser = runtime Next.js (esperado). Detalhe: **`DOCS/ROADMAP_Plataforma_KFS.md`** (§2, §2b, §18).
+
 ---
 
 ## 4. Comandos rápidos
@@ -141,4 +147,3 @@ Cola algo como:
 
 ---
 *Este ficheiro é o índice de contexto interno; ao alterar comportamento visível ou regras de negócio, atualiza a secção relevante aqui ou o doc específico em `DOCS/`.* Lista completa de documentos: **`DOCS/INDEX.md`**.
-*Este ficheiro é o índice de contexto interno; ao alterar comportamento visível ou regras de negócio, atualiza a secção relevante aqui ou o doc específico em `DOCS/`.*

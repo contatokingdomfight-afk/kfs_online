@@ -35,13 +35,20 @@ Melhorias aplicadas para reduzir LCP nas rotas mais lentas do Vercel Speed Insig
 | /coach | 6.15s |
 | /sign-in | 5.46s |
 
+## Estado (abril 2026) — dashboard aluno e performance
+
+- **`/dashboard`:** secção **Painel do Guerreiro + O que há de novo + Explorar** movida para `app/dashboard/DashboardBelowFold.tsx` (async) com `<Suspense>` — primeiro paint com menos serialização RSC. Fallback com skeleton leve.
+- **Sidebar:** `prefetch={false}` em `/como-sou-avaliado` e `/sistema-pontuacao` (evita prefetch longo de páginas informativas pesadas).
+- **`/dashboard/performance`:** radar sem Recharts (SVG); lazy-load de secções; ver também `memory.md` §3.13.
+
 ## Próximos passos (opcional)
 
-1. **Cache de dados** – `unstable_cache` para queries pesadas no admin (ex.: `getAdminDashboardStats` com revalidate 60s)
-2. **Streaming** – Dividir páginas em componentes async com Suspense para stream progressivo
-3. **Prefetch** – `prefetch` em links críticos do dashboard
-4. **Imagens** – `priority` em imagens above-the-fold e `loading="lazy"` em abaixo
+1. **Cache de dados** – `unstable_cache` para queries pesadas no **admin** (ex.: `getAdminDashboardStats` com revalidate 60s) — **não** aplicar de forma a stalear configs de avaliação em rotas dinâmicas.
+2. **Streaming** – Continuar a aplicar Suspense/async onde fizer sentido (ex.: outras páginas com muitos dados acima do fold).
+3. **Prefetch** – Manter prefetch por defeito em rotas leves; usar `prefetch={false}` só em rotas pesadas ou raramente visitadas.
+4. **Imagens** – `priority` em imagens above-the-fold e `loading="lazy"` em abaixo.
+5. **Medição** – Re-correr Lighthouse / Speed Insights em **produção** após deploy para validar ganhos.
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md), [ROADMAP_Plataforma_KFS.md](ROADMAP_Plataforma_KFS.md) — abril 2026.*

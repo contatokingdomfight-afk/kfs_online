@@ -37,7 +37,7 @@
 | Histórico de presenças (passadas) | Feito | Lista com modalidade, data, horário, status (Pendente/Confirmada/Falta) |
 | Mostrar plano atual no dashboard | Feito | Card “O teu plano” com nome e preço (quando atribuído) |
 | Dashboard de performance (Perfil do atleta gamificado) | Feito | Faixas (cores), XP, radar, stat cards, detalhe por componente, missões |
-| Gráfico radar / “Avatar” de evolução | Feito | Técnico, Tático, Físico, Mental, Teórico (Recharts) |
+| Gráfico radar / “Avatar” de evolução | Feito | Técnico, Tático, Físico, Mental, Teórico — **SVG nativo** (`components/fighter/RadarStats.tsx`; Recharts removido para reduzir bundle) |
 | Missões ativas (sistema + configuráveis) | Feito | Admin /admin/missoes; por modalidade e faixa; XP por conclusão; importar missões padrão (seed) |
 | Sugestões de conteúdo no dashboard | Feito | Cursos recomendados por modalidade principal; link para biblioteca |
 | Conquistas (badges) | Feito | Página /dashboard/conquistas; grelha de badges fixos; próxima conquista; link no sidebar |
@@ -47,6 +47,18 @@
 | Metas de avaliação | Feito | Até 2 eixos do radar a melhorar (ex.: “Subir Técnico para 8”) no dashboard |
 | **Aulas livres (open class)** | Feito | `Lesson.isOpenClass`; alunos **sem plano** ou com plano **sem check-in** veem **apenas** aulas livres (carrossel «Sua próxima aula»); com plano, secção extra de carrossel para livres; lógica em `lib/dashboard-lesson-filter.ts` |
 | Critérios (resultados): ação «Ver como melhorar» com conteúdo | Por fazer | Ligação futura a biblioteca/dicas por critério; placeholder retirado da UI |
+
+---
+
+## 2b. Admin – Critérios de avaliação (pilares por modalidade)
+
+| Item | Estado | Notas |
+|------|--------|--------|
+| Dimensões gerais (Técnico, Tático, Físico, Mental, Teórico) + subcategorias (`EvaluationComponent`) | Feito | Admin **Avaliação** (`app/admin/avaliacao/`): árvore por dimensão e **várias subcategorias** por dimensão |
+| Critérios com descrição por modalidade | Feito | `EvaluationCriterion`; avaliação do coach e radar alinhados ao que está na BD |
+| **Replicar o mesmo critério em várias modalidades** | Feito | UI «Adicionar também em» + `actions.ts` (`extraComponentIds`) |
+| Dados legacy inconsistentes (ex.: Muay Thai antigo) | Feito | Migração `20260410120000_remove_legacy_evaluation_components.sql` (limpeza de componentes/critérios órfãos nas modalidades listadas) |
+| Refrescar critérios após alteração no admin | Feito | Sem `unstable_cache` em `lib/load-evaluation-config.ts` (dados sempre actuais em rotas dinâmicas) |
 
 ---
 
@@ -276,6 +288,7 @@ Com base na especificação e na dependência entre módulos:
 4. **Dashboard de Performance** – Feito (inclui sugestões de cursos recomendados).
 5. **Gamificação** – Feito (badges, conquistas, meta assiduidade, meta IMC, metas avaliação, seed de missões).
 6. **Próximos passos (opcional):** **Rankeamento** — extensões (modalidade, período; §14.3); **Tribo** / feed social (§14.6); Battle Pass / temporadas; reset mensal de missões; **Capacitor** / lojas (secção 17; experiência **PWA na web** já coberta — **`DOCS/PWA.md`**); notificações **push** Web (além de email/cron Resend); melhorias pontuais em mensalidades (relatórios, alertas admin).
+7. **Performance (web):** iterações em **`DOCS/OTIMIZACOES_SPEED_INSIGHTS.md`** e linha «Performance web» na tabela do aluno (§2); revalidar com Lighthouse após deploy; chunk `1255-*` = runtime Next.js (não há «remoção» de código de app).
 
 ---
 
@@ -303,8 +316,9 @@ Com base na especificação e na dependência entre módulos:
 | Mobile nativo | **Capacitor** + **Play Store / App Store**; testes em **dispositivos reais** | §17 |
 | Notificações | **Push Web** (além de email Resend + crons) | §15, §16 |
 | Qualidade | **E2E** (ex.: Playwright), relatórios/alertas admin em financeiro (melhorias pontuais) | rodapé, §16 |
+| Performance | Re-Lighthouse em `/dashboard` e `/dashboard/performance` em produção; opcional `ANALYZE=true npm run build` (bundle analyzer em `next.config.mjs`) | §2, §16 |
 
-*Itens já cobertos na web:* PWA instalável, i18n PT/EN, dark/light, notificações in-app/email/crons listados em §15.
+*Itens já cobertos na web:* PWA instalável, i18n PT/EN, dark/light, notificações in-app/email/crons listados em §15; otimizações recentes de bundle/RSC na home do aluno e no perfil de performance (§2, §2b).
 
 ---
 
@@ -318,11 +332,12 @@ Com base na especificação e na dependência entre módulos:
 | Crons Vercel | Feito | `vercel.json`: lembretes de aulas + **payment-suspension** (LATE + suspensão); `CRON_SECRET` obrigatório para chamadas não-Vercel |
 | Testes unitários (Vitest) | Feito | `npm test`; exemplo: `lib/dashboard-lesson-filter.test.ts` (filtro de aulas no dashboard) |
 | Seed de contas de teste (local/staging) | Feito | `npm run seed:test-users` + `TEST_SEED_PASSWORD` + service role; emails fixos em **DOCS/CONTAS_TESTE.md** |
+| Bundle analyzer (dev) | Feito (opcional) | `@next/bundle-analyzer`; activar com `ANALYZE=true npm run build`; relatório em `.next/analyze/client.html` |
 
 ---
 
-*Última atualização (abril 2026): **Modalidades** (incl. BJJ, MMA) tratadas como **feitas** ao nível da plataforma (`ModalityRef` / operações). **Próximo foco de produto:** **critérios de avaliação** (Técnico, Tático, Físico, Mental, Teórico) por modalidade onde ainda faltem. **PWA** completo na web; **Rank** v1; **UI RSVP** «Vou». **Por fazer:** critérios BJJ/MMA (e outras lacunas); Tribo; extensões de rankeamento; «Ver como melhorar» → biblioteca; biometria; Battle Pass; **Capacitor + lojas**; push Web; E2E; histórico: carrosséis, **CoachSchool**, **aulas livres**, `lesson-occurrences`, etc.*
+*Última atualização (abril 2026): **Admin – critérios de avaliação** com subcategorias, replicar critério em várias modalidades, limpeza legacy e config sem cache obsoleto (§2b). **Performance:** streaming RSC na home do aluno (`DashboardBelowFold`), prefetch selectivo no sidebar, radar SVG sem Recharts, lazy-load e tooltips CSS no perfil de performance (§2). **Modalidades** (`ModalityRef`) — feito ao nível da plataforma. **Próximo foco de produto:** **conteúdo** dos critérios onde faltar (**BJJ/MMA** e outras); **Tribo**; extensões de **Rank**; «Ver como melhorar» → biblioteca; biometria; Battle Pass; **Capacitor + lojas**; push Web; E2E; revalidar métricas Lighthouse em produção.*
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
