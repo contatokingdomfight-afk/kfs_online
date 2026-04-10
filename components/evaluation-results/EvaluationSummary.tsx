@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { DimensionScore } from "@/lib/evaluation-results-data";
 import { DIMENSION_ICONS } from "@/lib/evaluation-results-data";
 
@@ -7,6 +8,8 @@ type Props = {
   dimensionScores: DimensionScore[];
   overallScore: number;
   maxScore?: number;
+  /** Controlo opcional acima do título (ex.: filtro por modalidade). */
+  controls?: ReactNode;
   className?: string;
 };
 
@@ -14,15 +17,19 @@ export function EvaluationSummary({
   dimensionScores,
   overallScore,
   maxScore = 10,
+  controls,
   className = "",
 }: Props) {
   return (
     <section
       className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5 shadow-lg ${className}`}
     >
-      <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-4">
-        Resumo da avaliação
-      </h2>
+      <div className="mb-4 space-y-3">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+          Resumo da avaliação
+        </h2>
+        {controls ? <div className="min-w-0">{controls}</div> : null}
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-6">
         <div className="text-center sm:text-left">
           <p className="text-xs text-[var(--text-secondary)] mb-0.5">Pontuação geral</p>

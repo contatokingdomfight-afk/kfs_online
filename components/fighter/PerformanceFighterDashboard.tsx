@@ -16,6 +16,7 @@ import { ProfileAchievements } from "@/components/achievements/ProfileAchievemen
 import type { AchievementWithStatus } from "@/lib/achievements";
 import { EvaluationResultsDashboard } from "@/components/evaluation-results";
 import type { DimensionScore, CriterionScoreItem } from "@/lib/evaluation-results-data";
+import type { BeltTimeGateInfo } from "@/lib/xp-missions";
 
 const CATEGORY_LABEL: Record<string, string> = {
   TECHNIQUE: "Técnica",
@@ -61,6 +62,8 @@ type Props = {
   rankIndex?: number;
   xpCurrent?: number;
   xpNext?: number;
+  /** Trava de tempo na faixa (além do XP) para subir de nível. */
+  beltTimeGate?: BeltTimeGateInfo;
   customMissions?: { id: string; name: string; description: string | null; xpReward: number }[];
   primaryModalityLabel?: string | null;
   /** Missão obrigatória: realizar/renovar avaliação física (aparece quando em falta ou >6 meses). */
@@ -101,6 +104,7 @@ export function PerformanceFighterDashboard({
   rankIndex,
   xpCurrent,
   xpNext,
+  beltTimeGate,
   customMissions = [],
   primaryModalityLabel = null,
   physicalAssessmentMission = null,
@@ -143,6 +147,11 @@ export function PerformanceFighterDashboard({
         xpCurrent={xpCurrent}
         xpNext={xpNext}
         primaryModalityLabel={primaryModalityLabel}
+        xpBarNote={
+          beltTimeGate?.waitingOnTime
+            ? `Tempo na faixa: ${beltTimeGate.daysElapsedInBelt}/${beltTimeGate.minDaysRequired} dias (mín. ${beltTimeGate.minMonthsRequired} ${beltTimeGate.minMonthsRequired === 1 ? "mês" : "meses"}).`
+            : undefined
+        }
       />
 
       {/* Resultados de avaliação: resumo, radar, pontos fortes/fracos, filtros e critérios por categoria */}
@@ -264,6 +273,7 @@ export function PerformanceFighterDashboard({
           currentXP={xpCurrent}
           nextBeltXP={xpNext}
           currentBelt={beltIdFromRankName(getRankNameForIndex(rankIndex))}
+          beltTimeGate={beltTimeGate}
         />
       )}
 

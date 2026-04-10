@@ -20,7 +20,8 @@ import {
   getDetailOrder,
   groupDetailByGeneralDimension,
 } from "@/lib/performance-detail-from-config";
-import { getRankFromXp } from "@/lib/xp-missions";
+import { getRankFromAthleteState, type BeltTimeGateInfo } from "@/lib/xp-missions";
+import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
@@ -64,7 +65,13 @@ export async function PerformanceContent({ studentId }: Props) {
   }
 
   let generalPerformanceScores: Record<string, number> | null = null;
-  let rankInfo: { level: number; rankIndex: number; xpCurrent: number; xpNext: number } | null = null;
+  let rankInfo: {
+    level: number;
+    rankIndex: number;
+    xpCurrent: number;
+    xpNext: number;
+    beltTimeGate?: BeltTimeGateInfo;
+  } | null = null;
   let customMissions: { id: string; name: string; description: string | null; xpReward: number }[] = [];
   let primaryModalityLabel: string | null = null;
   let physicalAssessmentDue = false;
@@ -74,18 +81,33 @@ export async function PerformanceContent({ studentId }: Props) {
   let omitLastEvaluationNoteBody = false;
   let lastEvaluation: { coachName: string; date: string; note: string | null } | null = null;
 
-  const { data: athlete } = await supabase.from("Athlete").select("id, xp").eq("studentId", studentId).single();
+  const { data: athlete } = await supabase.from("Athlete").select("id, xp, createdAt").eq("studentId", studentId).single();
 
   if (athlete) {
-    const xp = (athlete.xp as number | null) ?? 0;
-    const rank = getRankFromXp(xp);
-    rankInfo = { level: rank.level, rankIndex: rank.rankIndex, xpCurrent: rank.xpCurrent, xpNext: rank.xpNext };
+    const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
+    if (synced) {
+      const rank = getRankFromAthleteState(
+        synced.xp,
+        synced.displayBeltIndex,
+        synced.lastBeltPromotionAt,
+        synced.createdAt
+      );
+      rankInfo = {
+        level: rank.level,
+        rankIndex: rank.rankIndex,
+        xpCurrent: rank.xpCurrent,
+        xpNext: rank.xpNext,
+        beltTimeGate: rank.beltTimeGate,
+      };
+    }
 
     const primaryModality = (student.primaryModality as string | null) ?? null;
     primaryModalityLabel = primaryModality ? (modalityLabels.get(primaryModality) ?? MODALITY_LABELS[primaryModality] ?? primaryModality) : "Todas as modalidades";
 
+    const athleteXpForMissions = synced?.xp ?? ((athlete.xp as number | null) ?? 0);
+
     const [missionsData, latestCommentRes, lastPhysRes, evalsRes] = await Promise.all([
-      getApplicableMissionTemplates(supabase, athlete.id, xp, primaryModality),
+      getApplicableMissionTemplates(supabase, athlete.id, athleteXpForMissions, primaryModality, synced?.displayBeltIndex),
       supabase
         .from("Comment")
         .select("content, authorCoachId")
@@ -231,6 +253,7 @@ export async function PerformanceContent({ studentId }: Props) {
       rankIndex={rankInfo?.rankIndex}
       xpCurrent={rankInfo?.xpCurrent}
       xpNext={rankInfo?.xpNext}
+      beltTimeGate={rankInfo?.beltTimeGate}
       customMissions={customMissions}
       primaryModalityLabel={primaryModalityLabel}
       physicalAssessmentMission={

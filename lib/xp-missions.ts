@@ -3,7 +3,16 @@ import { computeGeneralPerformanceScores } from "@/lib/performance-utils";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
 import { GENERAL_PERFORMANCE_AXES } from "@/lib/performance-utils";
-import { getBeltFromXp, getBeltName, BELT_NAMES } from "@/lib/belts";
+import {
+  getBeltFromXp,
+  getBeltName,
+  BELT_NAMES,
+  getBeltIndexFromXp,
+  getXpThresholdForBeltIndex,
+  getMinMonthsInCurrentBeltForNextPromotion,
+  getMinCalendarDaysInBeltForNextPromotion,
+} from "@/lib/belts";
+import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 
 /** Faixas (cores) – alias para compatibilidade. */
 export const FIGHTER_RANKS = BELT_NAMES as unknown as readonly string[];
@@ -11,13 +20,65 @@ export const FIGHTER_RANKS = BELT_NAMES as unknown as readonly string[];
 /** XP atribuído por cada missão de dimensão concluída (atingir target 1–10). */
 export const XP_PER_MISSION = 50;
 
+export type BeltTimeGateInfo = {
+  /** Meses exigidos na faixa atual (regra: 2 meses na 1.ª; depois 2×+1). */
+  minMonthsRequired: number;
+  /** ~30 d/mês, para barra textual e comparação. */
+  minDaysRequired: number;
+  daysElapsedInBelt: number;
+  /** XP já permite o próximo degrau, mas ainda não passou o tempo mínimo na faixa. */
+  waitingOnTime: boolean;
+};
+
 export type RankInfo = {
   rankIndex: number;
   rankName: string;
   level: number;
   xpCurrent: number;
   xpNext: number;
+  beltTimeGate?: BeltTimeGateInfo;
 };
+
+/**
+ * Nível e barra de XP usando a faixa efetiva (displayBeltIndex), alinhada com trava de tempo.
+ */
+export function getRankFromAthleteState(
+  xp: number,
+  displayBeltIndex: number,
+  lastBeltPromotionAt: string | null,
+  createdAt: string
+): RankInfo {
+  const d = Math.max(0, displayBeltIndex);
+  const thresholdCurrent = getXpThresholdForBeltIndex(d);
+  const thresholdNext = getXpThresholdForBeltIndex(d + 1);
+  const xpVal = Math.max(0, Math.floor(xp));
+  const xpCurrent = Math.max(0, xpVal - thresholdCurrent);
+  const xpNext = Math.max(1, thresholdNext - thresholdCurrent);
+  const beltName = getBeltName(d);
+
+  const last = new Date(lastBeltPromotionAt ?? createdAt);
+  const elapsedMs = Date.now() - last.getTime();
+  const daysElapsedInBelt = Math.max(0, Math.floor(elapsedMs / 86_400_000));
+  const xpAllowsNext = getBeltIndexFromXp(xpVal) > d;
+  const minMonthsRequired = getMinMonthsInCurrentBeltForNextPromotion(d);
+  const minDaysRequired = getMinCalendarDaysInBeltForNextPromotion(d);
+  const minMs = minDaysRequired * 86_400_000;
+  const waitingOnTime = xpAllowsNext && elapsedMs < minMs;
+
+  return {
+    rankIndex: d,
+    rankName: beltName,
+    level: d + 1,
+    xpCurrent,
+    xpNext,
+    beltTimeGate: {
+      minMonthsRequired,
+      minDaysRequired,
+      daysElapsedInBelt,
+      waitingOnTime,
+    },
+  };
+}
 
 /**
  * Calcula faixa (cor), nível e progresso da barra de XP a partir do total de XP.
@@ -134,6 +195,7 @@ export async function processMissionAwards(
       .from("Athlete")
       .update({ xp: currentXp + xpAdded })
       .eq("id", athleteId);
+    await syncAthleteDisplayBelt(supabase, athleteId);
   }
 
   return { xpAdded };

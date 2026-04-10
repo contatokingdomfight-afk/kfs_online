@@ -15,6 +15,8 @@ type Props = {
   xpNext?: number;
   /** Ex.: "Muay Thai" para badge de modalidade. */
   primaryModalityLabel?: string | null;
+  /** Texto opcional sob a barra de XP (ex.: trava de tempo na faixa). */
+  xpBarNote?: string;
 };
 
 export function PerformanceHeroCard({
@@ -27,6 +29,7 @@ export function PerformanceHeroCard({
   xpCurrent = 0,
   xpNext = 1000,
   primaryModalityLabel,
+  xpBarNote,
 }: Props) {
   const beltName = getBeltName(rankIndex ?? 0);
   const normalized = Math.min(maxScore, Math.max(0, overallScore));
@@ -109,6 +112,9 @@ export function PerformanceHeroCard({
                     style={{ width: `${xpPercent}%` }}
                   />
                 </div>
+                {xpBarNote ? (
+                  <p className="text-[11px] leading-snug text-text-secondary mt-1.5">{xpBarNote}</p>
+                ) : null}
               </div>
             </div>
           </div>

@@ -99,7 +99,11 @@
 
 - **Índice:** `DOCS/INDEX.md` lista os ficheiros atuais. Em março 2026 foram removidos resumos de sessão, guias Git obsoletos (repo antigo), texto de treino fora do âmbito do repositório e duplicado curto de marca; **`DEPLOY_VERCEL.md`** foi reescrito para a stack atual (Supabase, sem Clerk).
 
-### 3.11 Histórico útil (sessões anteriores)
+### 3.11 XP / níveis — tempo mínimo na faixa
+
+- Para além do XP, a **subida de nível** (faixa mostrada no perfil) exige **tempo mínimo na faixa atual**: **2 → 5 → 11 meses** nas três primeiras faixas (regra 2×+1); **a partir da faixa índice 3** (Verde em `BELT_NAMES`), fixo **12 meses** por degrau — `getMinMonthsInCurrentBeltForNextPromotion` em `lib/belts.ts` (~30 d/mês). Estado: `Athlete.displayBeltIndex`, `Athlete.lastBeltPromotionAt`; migração **`supabase/migrations/20260408120000_athlete_display_belt_time_gate.sql`**. UI: `getRankFromAthleteState` (`lib/xp-missions.ts`); sync: `syncAthleteDisplayBelt`. Missões: `getApplicableMissionTemplates`.
+
+### 3.12 Histórico útil (sessões anteriores)
 
 - **Mobile:** avaliação no `CoachStudentProfileModal` (select 1–10, toques maiores).
 - **Admin:** `clearStudentPlanAccess` — remover plano / subscrição (`app/admin/alunos/actions.ts`).

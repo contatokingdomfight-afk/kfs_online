@@ -4,6 +4,37 @@
  * Primeira subida (Branca → Branca/amarela): 1000 XP.
  */
 
+/**
+ * Meses mínimos na faixa para a **primeira** subida (índice de faixa 0 → 1).
+ * Nas faixas 1 e 2: `2 × (meses anteriores) + 1` (2 → 5 → 11).
+ */
+export const INITIAL_MIN_MONTHS_IN_BELT_FOR_PROMOTION = 2;
+
+/** A partir deste índice de faixa (Verde em diante no array BELT_NAMES), o mínimo é fixo em meses. */
+export const MIN_MONTHS_FIXED_FROM_BELT_INDEX = 3;
+
+/** Meses mínimos na faixa para índices >= MIN_MONTHS_FIXED_FROM_BELT_INDEX (só +12 meses por degrau). */
+export const FIXED_MIN_MONTHS_IN_BELT_FROM_VERDE = 12;
+
+/**
+ * Meses mínimos na faixa atual (`displayBeltIndex`) antes de poder promover (além do XP).
+ * k=0: 2; k=1: 5; k=2: 11; a partir de k=3: sempre FIXED_MIN_MONTHS_IN_BELT_FROM_VERDE (12).
+ */
+export function getMinMonthsInCurrentBeltForNextPromotion(displayBeltIndex: number): number {
+  const k = Math.max(0, displayBeltIndex);
+  if (k >= MIN_MONTHS_FIXED_FROM_BELT_INDEX) return FIXED_MIN_MONTHS_IN_BELT_FROM_VERDE;
+  let months = INITIAL_MIN_MONTHS_IN_BELT_FOR_PROMOTION;
+  for (let i = 0; i < k; i++) {
+    months = 2 * months + 1;
+  }
+  return months;
+}
+
+/** Dias aproximados (30 d/mês) para comparar elapsed time com a regra de meses. */
+export function getMinCalendarDaysInBeltForNextPromotion(displayBeltIndex: number): number {
+  return Math.round(getMinMonthsInCurrentBeltForNextPromotion(displayBeltIndex) * 30);
+}
+
 /** Nomes das faixas até Preta/Dourado; depois "Dourado 1", "Dourado 2", ... */
 export const BELT_NAMES = [
   "Branca",

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getBeltIndexFromXp } from "@/lib/belts";
+import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 
 export type MissionTemplateRow = {
   id: string;
@@ -19,9 +20,11 @@ export async function getApplicableMissionTemplates(
   supabase: SupabaseClient,
   athleteId: string,
   athleteXp: number,
-  primaryModality: string | null
+  primaryModality: string | null,
+  /** Preferir índice após `syncAthleteDisplayBelt`; se omitido, usa-se só o XP. */
+  displayBeltIndex?: number
 ): Promise<MissionTemplateRow[]> {
-  const beltIndex = getBeltIndexFromXp(athleteXp);
+  const beltIndex = displayBeltIndex ?? getBeltIndexFromXp(athleteXp);
 
   const { data: templates } = await supabase
     .from("MissionTemplate")
@@ -98,6 +101,7 @@ export async function completeCustomMission(
   const { data: athlete } = await supabase.from("Athlete").select("xp").eq("id", athleteId).single();
   const currentXp = (athlete?.xp as number | null) ?? 0;
   await supabase.from("Athlete").update({ xp: currentXp + xpReward }).eq("id", athleteId);
+  await syncAthleteDisplayBelt(supabase, athleteId);
 
   return { xpAwarded: xpReward };
 }

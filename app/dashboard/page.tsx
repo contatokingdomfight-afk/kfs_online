@@ -8,6 +8,7 @@ import { getLessonCheckInUiState, isLessonEligibleForNextCard } from "@/lib/less
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import { getCachedPlanAccess } from "@/lib/plan-access";
 import { getApplicableMissionTemplates } from "@/lib/missions";
+import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
 import { LessonPromoBlock } from "./LessonPromoBlock";
 import { NextLessonCard } from "./NextLessonCard";
@@ -94,7 +95,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     supabase.from("School").select("id, name"),
     supabase.from("WeekTheme").select("modality, title, course_id, video_url").eq("week_start", weekStart).order("modality", { ascending: true }),
     supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
-    studentId ? supabase.from("Athlete").select("id, currentBelt, currentXP").eq("studentId", studentId).single() : Promise.resolve({ data: null }),
+    studentId
+      ? supabase
+          .from("Athlete")
+          .select("id, currentBelt, currentXP, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
+          .eq("studentId", studentId)
+          .single()
+      : Promise.resolve({ data: null }),
   ]);
 
   const lessonsRaw = lessonsRes.data ?? [];
@@ -212,9 +219,20 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       nextLevelXP,
     };
 
+    const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
+    const xpForMissions =
+      synced?.xp ??
+      ((athlete as { xp?: number; currentXP?: number }).xp ?? (athlete as { currentXP?: number }).currentXP ?? 0);
+
     const [countRes, missions, latestCommentRes, latestEvalRes] = await Promise.all([
       supabase.from("Attendance").select("*", { count: "exact", head: true }).eq("studentId", studentId).eq("status", "CONFIRMED"),
-      getApplicableMissionTemplates(supabase, athlete.id, athlete.currentXP || 0, studentPrimaryModality),
+      getApplicableMissionTemplates(
+        supabase,
+        athlete.id,
+        xpForMissions,
+        studentPrimaryModality,
+        synced?.displayBeltIndex
+      ),
       supabase
         .from("Comment")
         .select("content, authorCoachId, createdAt")

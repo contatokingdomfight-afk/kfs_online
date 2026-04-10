@@ -3,11 +3,13 @@
 import { BELT_DISPLAY } from "./belt-progression-data";
 import type { BeltId } from "./belt-progression-data";
 import { XPProgressBar } from "./XPProgressBar";
+import type { BeltTimeGateInfo } from "@/lib/xp-missions";
 
 type Props = {
   currentBelt: BeltId;
   currentXP: number;
   nextBeltXP: number;
+  beltTimeGate?: BeltTimeGateInfo;
   className?: string;
 };
 
@@ -17,7 +19,7 @@ const MOTIVATIONAL_MESSAGES: Record<string, string> = {
   close: "Quase lá! Mais um esforço e atinges o próximo nível.",
 };
 
-export function CurrentBeltCard({ currentBelt, currentXP, nextBeltXP, className = "" }: Props) {
+export function CurrentBeltCard({ currentBelt, currentXP, nextBeltXP, beltTimeGate, className = "" }: Props) {
   const display = BELT_DISPLAY[currentBelt];
   const progress = nextBeltXP > 0 ? (currentXP / nextBeltXP) * 100 : 0;
   const message =
@@ -42,7 +44,7 @@ export function CurrentBeltCard({ currentBelt, currentXP, nextBeltXP, className 
           <p className="text-sm text-[var(--text-secondary)] mt-0.5">{message}</p>
         </div>
       </div>
-      <XPProgressBar currentXP={currentXP} nextBeltXP={nextBeltXP} />
+      <XPProgressBar currentXP={currentXP} nextBeltXP={nextBeltXP} beltTimeGate={beltTimeGate} />
     </div>
   );
 }

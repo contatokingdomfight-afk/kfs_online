@@ -9,6 +9,7 @@ import { PerformanceRadar } from "@/components/PerformanceRadarDynamic";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { getApplicableMissionTemplates } from "@/lib/missions";
+import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
@@ -50,7 +51,11 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
       const rest = await Promise.all([
         studentPlanId ? supabase.from("Plan").select("name, price_monthly, includes_digital_access").eq("id", studentPlanId).eq("is_active", true).single() : Promise.resolve({ data: null }),
     getAttendanceByModality(supabase, studentId),
-    supabase.from("Athlete").select("id, currentBelt, currentXP").eq("studentId", studentId).single(),
+    supabase
+      .from("Athlete")
+      .select("id, currentBelt, currentXP, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
+      .eq("studentId", studentId)
+      .single(),
     getEarnedBadges(supabase, studentId),
     getNextBadgeProgress(supabase, studentId),
     supabase.from("StudentProfile").select("weightKg, heightCm, dateOfBirth, medicalNotes, emergencyContact, updatedAt").eq("studentId", studentId).maybeSingle(),
@@ -214,7 +219,17 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
       nextLevelXP,
       totalPresences: totalPresences || 0,
     };
-    const missions = await getApplicableMissionTemplates(supabase, athlete.id, athlete.currentXP || 0, studentPrimaryModality);
+    const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
+    const xpForMissions =
+      synced?.xp ??
+      ((athlete as { xp?: number; currentXP?: number }).xp ?? (athlete as { currentXP?: number }).currentXP ?? 0);
+    const missions = await getApplicableMissionTemplates(
+      supabase,
+      athlete.id,
+      xpForMissions,
+      studentPrimaryModality,
+      synced?.displayBeltIndex
+    );
     activeMissions = missions.slice(0, 3).map((m) => ({ id: m.id, name: m.name, description: m.description, xpReward: m.xpReward }));
   }
 

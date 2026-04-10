@@ -121,6 +121,10 @@ model Athlete {
   student     Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
   level       AthleteLevel @default(INICIANTE)
   xp          Int          @default(0) // Gamificação: XP por conclusão de missões (avaliações)
+  /// Índice da faixa mostrada (pode ficar atrás do XP até cumprir dias na faixa — ver lastBeltPromotionAt).
+  displayBeltIndex     Int       @default(0)
+  /// Início da permanência na faixa atual (para exigir tempo mínimo antes de subir).
+  lastBeltPromotionAt  DateTime?
   mainCoachId String?
   mainCoach   Coach?       @relation("AthleteMainCoach", fields: [mainCoachId], references: [id])
   createdAt   DateTime     @default(now())
