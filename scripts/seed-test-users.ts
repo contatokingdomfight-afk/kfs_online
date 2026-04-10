@@ -16,7 +16,7 @@ const EMAIL_ADMIN = "kfs.test.admin@local.test";
 const EMAIL_COACH = "kfs.test.coach@local.test";
 const EMAIL_ALUNO = "kfs.test.aluno@local.test";
 /** Aluno com plano + Athlete para demo (ex.: investidor ver o perfil completo). */
-const EMAIL_INVESTIDOR_DEMO = "kfs.demo.investidor@local.test";
+const EMAIL_INVESTIDOR_DEMO = "demo@teste.com";
 
 async function getOrCreateAuthUser(supabase: SupabaseClient, email: string, password: string): Promise<string> {
   const list = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 });

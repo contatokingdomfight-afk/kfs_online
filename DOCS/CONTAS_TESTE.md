@@ -26,7 +26,7 @@ O script é **idempotente**: se o email já existir no Auth, atualiza a password
 | Admin | `kfs.test.admin@local.test` |
 | Coach | `kfs.test.coach@local.test` |
 | Aluno (sem plano, para testar aula livre / free tier) | `kfs.test.aluno@local.test` |
-| Aluno demo (plano + Athlete, para visita guiada / investidor) | `kfs.demo.investidor@local.test` |
+| Aluno demo (plano + Athlete, para visita guiada / investidor) | `demo@teste.com` |
 
 A password das três primeiras contas é a de `TEST_SEED_PASSWORD`. A conta **demo investidor** usa `INVESTOR_DEMO_PASSWORD` se estiver definida; caso contrário usa também `TEST_SEED_PASSWORD`.
 
