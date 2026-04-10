@@ -159,7 +159,7 @@ export function EvaluationResultsDashboard({
         Modalidade
       </span>
       <div
-        className="flex max-w-full rounded-xl bg-[var(--bg)]/80 p-1 ring-1 ring-inset ring-[var(--border)]/45 shadow-inner gap-0.5 overflow-x-auto scroll-smooth snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
+        className="flex max-w-full rounded-xl bg-[var(--bg)]/80 p-1 border border-[var(--border)] gap-0.5 overflow-x-auto scroll-smooth snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
         role="tablist"
         aria-label="Filtrar desempenho e critérios por modalidade"
       >
