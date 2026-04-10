@@ -156,14 +156,15 @@ export function EvaluationResultsDashboard({
   return (
     <div className="space-y-6">
       {showModalityFilter && (
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]/70 p-4 shadow-sm">
-          <label htmlFor="perfil-atleta-modality" className="block space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
-              Ver desempenho de
-            </span>
+        <div className="flex flex-wrap items-center justify-end gap-2 pb-1">
+          <label
+            htmlFor="perfil-atleta-modality"
+            className="inline-flex items-center gap-2 text-[11px] text-[var(--text-secondary)]"
+          >
+            <span className="shrink-0 opacity-90">Modalidade</span>
             <select
               id="perfil-atleta-modality"
-              className="input w-full min-h-11 rounded-xl border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--text-primary)] shadow-none focus:ring-2 focus:ring-[var(--primary)]/25"
+              className="max-w-[min(100%,14rem)] min-h-8 cursor-pointer rounded-md border border-[var(--border)]/70 bg-[var(--bg)]/80 py-1 pl-2 pr-7 text-xs text-[var(--text-primary)] shadow-none transition-colors hover:border-[var(--border)] focus:border-[var(--primary)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/20"
               value={selectedModality ?? ""}
               onChange={(e) => {
                 const v = e.target.value;
