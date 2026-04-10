@@ -49,19 +49,25 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
     );
   }
 
-  const [{ data: user }, { data: studentProfile }, planRes, allConfigs] = await Promise.all([
+  const [{ data: user }, { data: studentProfile }, planRes, allConfigs, { data: modalityRefs }] = await Promise.all([
     supabase.from("User").select("id, name, email, avatarUrl").eq("id", student.userId).single(),
     supabase.from("StudentProfile").select("weightKg, heightCm, medicalNotes, emergencyContact, phone").eq("studentId", studentId).maybeSingle(),
     student.planId ? supabase.from("Plan").select("name").eq("id", student.planId).single() : Promise.resolve({ data: null }),
     loadAllEvaluationConfigs(supabase),
+    supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true }),
   ]);
 
   const planName = planRes.data?.name ?? null;
-  const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {
-    MUAY_THAI: allConfigs.get("MUAY_THAI") ?? null,
-    BOXING: allConfigs.get("BOXING") ?? null,
-    KICKBOXING: allConfigs.get("KICKBOXING") ?? null,
-  };
+  const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {};
+  for (const m of modalityRefs ?? []) {
+    evaluationConfigByModality[m.code] = allConfigs.get(m.code) ?? null;
+  }
+  const modalitiesForEvaluate = (modalityRefs ?? [])
+    .map((m) => ({
+      value: m.code,
+      label: (m.name?.trim() || MODALITY_LABELS[m.code] || m.code) as string,
+    }))
+    .filter((opt) => evaluationConfigByModality[opt.value] != null);
 
   const primaryModality = (student as { primaryModality?: string | null }).primaryModality;
 
@@ -140,6 +146,7 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
         studentId={studentId}
         profile={profileForModal}
         primaryModality={primaryModality ?? null}
+        modalities={modalitiesForEvaluate}
         evaluationConfigByModality={evaluationConfigByModality}
       />
 

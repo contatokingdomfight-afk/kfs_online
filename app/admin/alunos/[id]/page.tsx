@@ -122,11 +122,16 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   const initialPrimaryModality = isPlanWithoutModality || rawPrimary == null || rawPrimary === "" ? "" : rawPrimary;
 
   const allConfigs = await loadAllEvaluationConfigs(supabase);
-  const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {
-    MUAY_THAI: allConfigs.get("MUAY_THAI") ?? null,
-    BOXING: allConfigs.get("BOXING") ?? null,
-    KICKBOXING: allConfigs.get("KICKBOXING") ?? null,
-  };
+  const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {};
+  for (const m of modalityRows ?? []) {
+    evaluationConfigByModality[m.code] = allConfigs.get(m.code) ?? null;
+  }
+  const modalitiesForEvaluate = (modalityRows ?? [])
+    .map((m) => ({
+      value: m.code,
+      label: (m.name?.trim() || MODALITY_LABELS[m.code] || m.code) as string,
+    }))
+    .filter((opt) => evaluationConfigByModality[opt.value] != null);
 
   // Performance: athlete + evaluations → radar e última avaliação (para pré-preencher modal)
   let generalPerformanceScores: Record<string, number> | null = null;
@@ -161,9 +166,14 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
       }
     }
     const configByModality = new Map<string, ModalityConfig>();
-    for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"] as const) {
-      const config = allConfigs.get(mod);
-      if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
+    for (const row of modalityRows ?? []) {
+      const config = allConfigs.get(row.code);
+      if (config) {
+        configByModality.set(row.code, {
+          criterionToCategory: getCriterionToCategory(config),
+          criterionToDimensionCode: getCriterionToDimensionCode(config),
+        });
+      }
     }
     if (evaluations.length > 0) {
       generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
@@ -210,6 +220,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
         studentId={studentId}
         profile={profileForModal}
         primaryModality={rawPrimary}
+        modalities={modalitiesForEvaluate}
         evaluationConfigByModality={evaluationConfigByModality}
         lastEvalScoresByModality={Object.keys(lastEvalScoresByModality).length > 0 ? lastEvalScoresByModality : undefined}
       />

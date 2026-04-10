@@ -5,31 +5,34 @@ import { useRouter } from "next/navigation";
 import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
-import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 type Props = {
   studentId: string;
   profile: StudentProfileForModal;
   primaryModality: string | null;
+  /** Modalidades com critérios configurados (vem de ModalityRef + configs). */
+  modalities: { value: string; label: string }[];
   evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null>;
   /** Última avaliação por modalidade (scores) para pré-preencher o formulário */
   lastEvalScoresByModality?: Record<string, Record<string, number>>;
 };
 
-const MODALITIES = [
-  { value: "MUAY_THAI", label: MODALITY_LABELS.MUAY_THAI ?? "Muay Thai" },
-  { value: "BOXING", label: MODALITY_LABELS.BOXING ?? "Boxe" },
-  { value: "KICKBOXING", label: MODALITY_LABELS.KICKBOXING ?? "Kickboxing" },
-];
-
-export function AvaliarAlunoButton({ studentId, profile, primaryModality, evaluationConfigByModality, lastEvalScoresByModality }: Props) {
+export function AvaliarAlunoButton({
+  studentId,
+  profile,
+  primaryModality,
+  modalities,
+  evaluationConfigByModality,
+  lastEvalScoresByModality,
+}: Props) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const initialModality = primaryModality && evaluationConfigByModality[primaryModality] != null
-    ? primaryModality
-    : MODALITIES[0]?.value ?? "MUAY_THAI";
+  const initialModality =
+    primaryModality && evaluationConfigByModality[primaryModality] != null
+      ? primaryModality
+      : modalities[0]?.value ?? "";
 
   const handleSuccess = () => {
     setModalOpen(false);
@@ -44,6 +47,8 @@ export function AvaliarAlunoButton({ studentId, profile, primaryModality, evalua
         onClick={() => setModalOpen(true)}
         className="btn btn-primary"
         style={{ textDecoration: "none", marginTop: 8 }}
+        disabled={modalities.length === 0}
+        title={modalities.length === 0 ? "Configura critérios de avaliação para esta modalidade no Admin (Avaliação)." : undefined}
       >
         Avaliar aluno
       </button>
@@ -56,7 +61,7 @@ export function AvaliarAlunoButton({ studentId, profile, primaryModality, evalua
           profile={profile}
           onClose={() => setModalOpen(false)}
           onSuccess={handleSuccess}
-          modalities={MODALITIES}
+          modalities={modalities}
           evaluationConfigByModality={evaluationConfigByModality}
           initialScoresByModality={lastEvalScoresByModality}
         />
