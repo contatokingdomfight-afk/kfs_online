@@ -1,9 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
-import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { parseConfig, type ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 
 const CACHE_TAG = "evaluation-configs";
+
+/**
+ * Lista códigos de modalidade (igual a ModalityRef no admin).
+ * Não usar getCachedModalityRefs aqui: esse módulo importa `lib/supabase/server` e este ficheiro
+ * é transitivamente importado por `xp-missions` (usado em componentes cliente).
+ */
+async function getModalityCodes(supabase: SupabaseClient): Promise<string[]> {
+  const { data } = await supabase.from("ModalityRef").select("code").order("sortOrder", { ascending: true });
+  return (data ?? []).map((r) => r.code);
+}
 
 /**
  * Carrega as configurações de avaliação para todas as modalidades em ModalityRef (em paralelo).
@@ -14,8 +23,7 @@ const CACHE_TAG = "evaluation-configs";
 export async function loadAllEvaluationConfigs(
   supabase: SupabaseClient
 ): Promise<Map<string, ModalityEvaluationConfigPayload | null>> {
-  const modalities = await getCachedModalityRefs(supabase);
-  const codesSorted = [...modalities.map((m) => m.code)].sort();
+  const codesSorted = [...(await getModalityCodes(supabase))].sort();
   if (codesSorted.length === 0) return new Map();
 
   const entries = await unstable_cache(
