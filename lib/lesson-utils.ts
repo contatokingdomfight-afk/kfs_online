@@ -7,6 +7,7 @@ export const MODALITY_LABELS: Record<string, string> = {
   MUAY_THAI: "Muay Thai",
   BOXING: "Boxing",
   KICKBOXING: "Kickboxing",
+  MMA: "MMA",
 };
 
 export function formatLessonDate(dateStr: string): string {

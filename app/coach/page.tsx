@@ -7,12 +7,9 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { coachPresenceUrl, pickLastAndNextOccurrence } from "@/lib/coach-presence-shortcuts";
 import { MODALITY_LABELS, formatLessonDate, formatNextLessonDate, getWeekStartMonday } from "@/lib/lesson-utils";
-import {
-  expandLessonsForDateRange,
-  fetchLessonCancellations,
-  rowsToLessonDefinitions,
-  ymdAddDays,
-} from "@/lib/lesson-occurrences";
+import { ymdAddDays } from "@/lib/lesson-occurrences";
+import { loadCoachScheduleBundle } from "@/lib/coach-schedule-scope";
+import { calendarDateLisbon, minutesSinceMidnightLisbon } from "@/lib/lesson-check-in-window";
 import { CurrentOrNextClassCard } from "./_components/CurrentOrNextClassCard";
 import { TodayScheduleCard } from "./_components/TodayScheduleCard";
 import { WeekThemeCard } from "./_components/WeekThemeCard";
@@ -70,31 +67,20 @@ export default async function CoachHomePage() {
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
 
-  const today = new Date().toISOString().slice(0, 10);
   const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const today = calendarDateLisbon(now);
+  const nowMinutes = minutesSinceMidnightLisbon(now);
   const weekStart = getWeekStartMonday();
 
-  let defsQuery = supabase
-    .from("Lesson")
-    .select(
-      "id, modality, date, weekday, startTime, endTime, coachId, schoolId, isOneOff, isOpenClass, locationId, capacity, planningNotes"
-    )
-    .order("startTime", { ascending: true });
-  if (coachId) {
-    defsQuery = defsQuery.eq("coachId", coachId);
-  } else if (schoolId) {
-    defsQuery = defsQuery.eq("schoolId", schoolId);
-  }
-  const { data: defsRaw } = await defsQuery;
-  const defs = rowsToLessonDefinitions(defsRaw ?? []);
-  const cancellations = await fetchLessonCancellations(
-    supabase,
-    defs.map((d) => d.id)
-  );
   const rangeStart = ymdAddDays(today, -21);
   const rangeEnd = ymdAddDays(today, 28);
-  const expandedRange = expandLessonsForDateRange(defs, cancellations, rangeStart, rangeEnd);
+  const { defs, expanded: expandedRange } = await loadCoachScheduleBundle(
+    supabase,
+    coachId,
+    schoolId,
+    rangeStart,
+    rangeEnd
+  );
   const lessonsList = expandedRange.filter((l) => l.occurrenceDate === today);
   const { last: lastOcc, next: nextOcc } = pickLastAndNextOccurrence(expandedRange, now);
   const lastPresenceHref = lastOcc ? coachPresenceUrl(lastOcc.lessonId, lastOcc.occurrenceDate) : null;
@@ -166,7 +152,7 @@ export default async function CoachHomePage() {
       .single();
     const specialties = (coach?.specialties as string) ?? "";
     const first = specialties.split(/[,;]/)[0]?.trim();
-    if (first && ["MUAY_THAI", "BOXING", "KICKBOXING"].includes(first)) {
+    if (first && ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"].includes(first)) {
       mainModality = first;
     } else if (lessonsList.length > 0) {
       mainModality = lessonsList[0].modality ?? "MUAY_THAI";
@@ -181,23 +167,15 @@ export default async function CoachHomePage() {
     .eq("modality", mainModality);
   const theme = weekThemes?.[0] ?? null;
 
-  let trialLessons: { id: string; modality: string; startTime: string; endTime: string }[] = [];
-  if (coachId || schoolId) {
-    let lessonsForTrials = supabase
-      .from("Lesson")
-      .select("id, modality, date, weekday, startTime, endTime, coachId, schoolId, isOneOff, isOpenClass, locationId, capacity, planningNotes")
-      .order("startTime", { ascending: true })
-      .limit(80);
-    if (coachId) lessonsForTrials = lessonsForTrials.eq("coachId", coachId);
-    else if (schoolId) lessonsForTrials = lessonsForTrials.eq("schoolId", schoolId);
-    const { data: coachLessonsRaw } = await lessonsForTrials;
-    trialLessons = rowsToLessonDefinitions(coachLessonsRaw ?? []).map((l) => ({
-      id: l.id,
-      modality: l.modality ?? "",
-      startTime: l.startTime,
-      endTime: l.endTime,
-    }));
-  }
+  const trialLessons =
+    defs.length > 0
+      ? defs.map((l) => ({
+          id: l.id,
+          modality: l.modality ?? "",
+          startTime: l.startTime,
+          endTime: l.endTime,
+        }))
+      : [];
 
   const coachLessonIds = new Set(trialLessons.map((l) => l.id));
   const { data: trials } = await supabase
@@ -392,6 +370,7 @@ export default async function CoachHomePage() {
         title={t("coachYourAthletes")}
         searchPlaceholder={t("coachSearchAthletes")}
         levelLabels={LEVEL_LABEL}
+        unnamedAthleteLabel={t("coachAthleteUnnamed")}
         emptyMessage={t("coachNoAthletes")}
         noResultsMessage={t("coachNoSearchResults")}
       />

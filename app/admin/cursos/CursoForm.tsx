@@ -56,6 +56,7 @@ export function CursoForm({
         { value: "MUAY_THAI", label: "Muay Thai" },
         { value: "BOXING", label: "Boxing" },
         { value: "KICKBOXING", label: "Kickboxing" },
+        { value: "MMA", label: "MMA" },
       ];
   const [state, formAction] = useFormState(action, null as CourseFormResult | null);
 

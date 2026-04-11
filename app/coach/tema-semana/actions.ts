@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getWeekStartMonday, getWeekStartMondayForDate } from "@/lib/lesson-utils";
 
-const MODALITIES = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
+const MODALITIES = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
 export type SaveWeekThemeResult = { error?: string };
 

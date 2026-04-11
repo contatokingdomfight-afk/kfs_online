@@ -3,7 +3,7 @@
  * Usado pela action seedMissionsFromDoc().
  *
  * beltIndex = faixa mínima (null = qualquer): 0 Branca, 2 Amarela, 4 Verde, 6 Azul, 10 Preta, 11 Preta/Dourado, 12 Dourado
- * modality: null = Todas, "MUAY_THAI" | "BOXING" | "KICKBOXING"
+ * modality: null = Todas, "MUAY_THAI" | "BOXING" | "KICKBOXING" | "MMA"
  */
 
 export type SeedMission = {

@@ -328,6 +328,12 @@ export const EVALUATION_LABELS_BY_MODALITY: Record<
     strength: "Força e potência",
     theory: "Conhecimento (regras, combate)",
   },
+  MMA: {
+    gas: "Condicionamento / Gás",
+    technique: "Técnica (striking, grappling)",
+    strength: "Força e potência",
+    theory: "Conhecimento (regras, combate)",
+  },
 };
 
 export type RadarScores = { gas: number; technique: number; strength: number; theory: number };

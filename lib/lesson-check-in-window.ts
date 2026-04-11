@@ -61,6 +61,13 @@ export function calendarDateLisbon(now: Date): string {
   return formatInTimeZone(now, LISBON_TZ, "yyyy-MM-dd");
 }
 
+/** Minutos desde meia-noite em Europe/Lisboa (para comparar com horários de aula na BD). */
+export function minutesSinceMidnightLisbon(now: Date): number {
+  const hm = formatInTimeZone(now, LISBON_TZ, "H:mm");
+  const [h, m] = hm.split(":").map((x) => Number(x));
+  return (h ?? 0) * 60 + (m ?? 0);
+}
+
 /**
  * Aula ainda deve aparecer no cartão «Próxima aula»: futura na semana, ou hoje antes de fechar a janela (fim+3h).
  */

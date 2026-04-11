@@ -14,6 +14,8 @@ type Props = {
   title: string;
   searchPlaceholder: string;
   levelLabels: Record<string, string>;
+  /** Quando o User não tem nome (evita várias linhas só com "—"). */
+  unnamedAthleteLabel: string;
   emptyMessage: string;
   noResultsMessage: string;
 };
@@ -23,6 +25,7 @@ export function MonitoredAthletesList({
   title,
   searchPlaceholder,
   levelLabels,
+  unnamedAthleteLabel,
   emptyMessage,
   noResultsMessage,
 }: Props) {
@@ -107,7 +110,7 @@ export function MonitoredAthletesList({
                   textDecoration: "none",
                 }}
               >
-                <span style={{ fontWeight: 500 }}>{a.name || "—"}</span>
+                <span style={{ fontWeight: 500 }}>{a.name?.trim() || unnamedAthleteLabel}</span>
                 <span
                   style={{
                     marginLeft: 8,

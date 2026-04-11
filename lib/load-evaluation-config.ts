@@ -32,12 +32,12 @@ const MUAY_KICKBOXING_ALIAS: Record<string, string> = {
 };
 
 /** Modalidades que usam SEMPRE EvaluationComponent (nunca config legado). */
-const MODALITIES_USE_COMPONENTS = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
+const MODALITIES_USE_COMPONENTS = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
 /**
  * Carrega a configuração de avaliação para uma modalidade.
  * KICKBOXING usa a mesma config que MUAY_THAI (avaliação idêntica).
- * Para MUAY_THAI/BOXING/KICKBOXING: usa SEMPRE EvaluationComponent + EvaluationCriterion.
+ * Para MUAY_THAI/BOXING/KICKBOXING/MMA: usa SEMPRE EvaluationComponent + EvaluationCriterion.
  * Para outras modalidades: fallback para ModalityEvaluationConfig (JSON legado).
  */
 export async function loadEvaluationConfigForModality(

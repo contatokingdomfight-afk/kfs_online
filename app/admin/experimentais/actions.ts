@@ -22,7 +22,7 @@ export async function createTrialClass(
 
   if (!name) return { error: "Nome é obrigatório." };
   if (!contact) return { error: "Contacto é obrigatório." };
-  const validModalities = ["MUAY_THAI", "BOXING", "KICKBOXING"];
+  const validModalities = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"];
   if (!modality || !validModalities.includes(modality)) return { error: "Modalidade inválida." };
   if (!lessonDate) return { error: "Data da aula é obrigatória." };
 

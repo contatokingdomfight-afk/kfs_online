@@ -7,7 +7,7 @@ import { getTranslations } from "@/lib/i18n";
 import { getWeekStartMonday, getWeekStartMondayForDate } from "@/lib/lesson-utils";
 import { TemaSemanaForm } from "./TemaSemanaForm";
 
-const MODALITIES = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
+const MODALITIES = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
 function formatWeekLabel(weekStart: string, locale: string): string {
   try {

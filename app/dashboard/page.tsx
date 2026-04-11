@@ -21,7 +21,7 @@ import {
   type LessonDefinitionRow,
 } from "@/lib/lesson-occurrences";
 
-const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
+const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 const MODALITY_ALIASES: Record<string, string> = {
   MUAY_THAI: "MUAY_THAI",
   "MUAY THAI": "MUAY_THAI",
@@ -29,6 +29,7 @@ const MODALITY_ALIASES: Record<string, string> = {
   BOXING: "BOXING",
   KICKBOXING: "KICKBOXING",
   "KICK BOXING": "KICKBOXING",
+  MMA: "MMA",
 };
 
 function normalizeModalityCode(value: string | null | undefined): string | null {

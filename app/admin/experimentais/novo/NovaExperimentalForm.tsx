@@ -10,6 +10,7 @@ const MODALITY_OPTIONS = [
   { value: "MUAY_THAI", label: "Muay Thai" },
   { value: "BOXING", label: "Boxing" },
   { value: "KICKBOXING", label: "Kickboxing" },
+  { value: "MMA", label: "MMA" },
 ];
 
 export function NovaExperimentalForm({ lessonOptions }: { lessonOptions: LessonOption[] }) {

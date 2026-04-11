@@ -26,6 +26,7 @@ const MODALITY_ALIASES: Record<string, string> = {
   BOXING: "BOXING",
   KICKBOXING: "KICKBOXING",
   "KICK BOXING": "KICKBOXING",
+  MMA: "MMA",
 };
 
 function normalizeModalityCode(value: string | null | undefined): string | null {

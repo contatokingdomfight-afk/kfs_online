@@ -12,7 +12,7 @@ import { getApplicableMissionTemplates } from "@/lib/missions";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 
-const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
+const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 const GENERAL_LAST_N = 10;
 
 type Props = { studentId: string | null; locale: "pt" | "en"; hasPerformanceTracking?: boolean; hasCheckIn?: boolean };
@@ -120,7 +120,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
     modality: e.modality,
   }));
   const configByModality = new Map<string, ModalityConfig>();
-  for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"]) {
+  for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"]) {
     const config = allConfigs.get(mod);
     if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
   }

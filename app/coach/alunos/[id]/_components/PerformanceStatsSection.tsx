@@ -62,7 +62,7 @@ export async function PerformanceStatsSection({ studentId }: Props) {
     if (evaluations.length > 0) {
       lastEvalDate = evaluations[0].created_at ?? null;
       const configByModality = new Map<string, ModalityConfig>();
-      for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"] as const) {
+      for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const) {
         const config = allConfigs.get(mod);
         if (config)
           configByModality.set(mod, {

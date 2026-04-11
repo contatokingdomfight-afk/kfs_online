@@ -118,7 +118,7 @@ export default async function CoachAtletaPage({ params }: Props) {
   let generalPerformanceScores: Record<string, number> | null = null;
   const allConfigs = await loadAllEvaluationConfigs(supabase);
   const configByModality = new Map<string, ModalityConfig>();
-  for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING"] as const) {
+  for (const mod of ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const) {
     const config = allConfigs.get(mod);
     if (config) configByModality.set(mod, { criterionToCategory: getCriterionToCategory(config), criterionToDimensionCode: getCriterionToDimensionCode(config) });
   }

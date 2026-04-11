@@ -7,6 +7,7 @@ const MODALITY_LABELS: Record<string, string> = {
   MUAY_THAI: "Muay Thai",
   BOXING: "Boxing",
   KICKBOXING: "Kickboxing",
+  MMA: "MMA",
 };
 
 function getFrom(): string {

@@ -8,7 +8,7 @@ import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
-const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING"] as const;
+const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
 export type PlanAccess = {
   hasDigitalAccess: boolean;

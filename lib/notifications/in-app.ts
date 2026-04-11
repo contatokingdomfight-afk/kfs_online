@@ -41,6 +41,7 @@ export async function createPresenceConfirmedNotification(
     MUAY_THAI: "Muay Thai",
     BOXING: "Boxing",
     KICKBOXING: "Kickboxing",
+    MMA: "MMA",
   };
   const modalityLabel = modalityLabels[payload.modality] ?? payload.modality;
   const dateFormatted = formatDateShort(payload.date);
