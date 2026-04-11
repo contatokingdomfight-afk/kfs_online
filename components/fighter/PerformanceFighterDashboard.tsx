@@ -181,10 +181,6 @@ export function PerformanceFighterDashboard({
         }
       />
 
-      {checkInWellness && (
-        <CheckInWellnessSection data={checkInWellness.data} copy={checkInWellness.copy} />
-      )}
-
       {/* Resultados de avaliação: resumo, radar, pontos fortes/fracos, filtros e critérios por categoria */}
       {evaluationResultsData ? (
         <EvaluationResultsDashboard
@@ -297,6 +293,10 @@ export function PerformanceFighterDashboard({
 
       {/* Objetivos / Quests */}
       <MissionCard missions={missions} />
+
+      {checkInWellness && (
+        <CheckInWellnessSection data={checkInWellness.data} copy={checkInWellness.copy} />
+      )}
 
       {/* Progressão de Níveis e XP */}
       {xpCurrent != null && xpNext != null && rankIndex != null && (

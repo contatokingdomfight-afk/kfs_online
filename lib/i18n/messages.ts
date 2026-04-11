@@ -123,9 +123,9 @@ export const messages = {
     evaluationFromCoach: "Avaliação do teu coach (Gás, Técnica, Força, Teoria)",
     evaluationPlaceholder: "Quando um coach registar as tuas avaliações nas aulas, verás aqui um resumo. O teu nível, objetivos e feedback do coach estão no Perfil do Atleta.",
     viewAthleteProfileLink: "Ver Perfil do Atleta",
-    perfWellnessTitle: "Pré-treino nos check-ins",
+    perfWellnessTitle: "Dados biométricos",
     perfWellnessIntro:
-      "Médias dos questionários que preenches ao confirmar presença nas aulas. Reflecte hábitos de sono, hidratação e como te sentes antes do treino — útil para ti e para o teu coach acompanhar recuperação e rotina.",
+      "Médias dos indicadores que registas ao fazer check-in nas aulas (sono, hidratação, stress e fadiga). Reflecte hábitos e como te sentes antes do treino — útil para ti e para o teu coach acompanhar recuperação e rotina.",
     perfWellnessSample: "{count} registos com questionário",
     perfWellnessSleepH: "Sono (horas)",
     perfWellnessSleepQ: "Qualidade do sono",
@@ -690,9 +690,9 @@ export const messages = {
     myPerformance: "My performance",
     evaluationPlaceholder: "When a coach records your evaluations in class, you'll see a summary here. Your level, objectives and coach feedback are in the Athlete profile.",
     viewAthleteProfileLink: "View athlete profile",
-    perfWellnessTitle: "Pre-training (check-ins)",
+    perfWellnessTitle: "Biometric data",
     perfWellnessIntro:
-      "Averages from the questionnaires you fill when confirming class attendance. Reflects sleep habits, hydration and how you feel before training — useful for you and your coach to track recovery and routine.",
+      "Averages of the indicators you log when checking in to classes (sleep, hydration, stress and fatigue). Reflects habits and how you feel before training — useful for you and your coach to track recovery and routine.",
     perfWellnessSample: "{count} logged questionnaires",
     perfWellnessSleepH: "Sleep (hours)",
     perfWellnessSleepQ: "Sleep quality",
