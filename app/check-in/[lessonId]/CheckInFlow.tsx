@@ -4,6 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useMemo } from "react";
 import { submitCheckInAction, type CheckInFormState } from "./actions";
+import { CheckInSuccessModal } from "./CheckInSuccessModal";
 
 type Labels = {
   title: string;
@@ -17,6 +18,7 @@ type Labels = {
   lowHigh: string;
   skipQuestionnaire: string;
   submitWithWellness: string;
+  successTitle: string;
   backDashboard: string;
   thankYou: string;
   confirmedAt: string;
@@ -70,31 +72,10 @@ export function CheckInFlow({ lessonId, occurrenceDate, labels, locale }: Props)
     []
   );
 
-  if (state?.checkedInAt) {
-    const timeStr = new Date(state.checkedInAt).toLocaleTimeString(locale === "en" ? "en-GB" : "pt-PT", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    return (
-      <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
-        <h1 className="text-mobile-lg" style={{ color: "var(--success)", marginBottom: 12 }}>
-          {locale === "pt" ? "Check-in confirmado" : "Check-in confirmed"}
-        </h1>
-        <p className="text-mobile-base" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
-          {labels.confirmedAt.replace("{time}", timeStr)}
-        </p>
-        <p className="text-mobile-sm" style={{ color: "var(--text-secondary)", marginBottom: 24 }}>
-          {labels.thankYou}
-        </p>
-        <Link href="/dashboard" className="btn btn-primary">
-          {labels.backDashboard}
-        </Link>
-      </div>
-    );
-  }
+  const showSuccessModal = Boolean(state?.checkedInAt);
 
   return (
-    <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", maxWidth: 480, margin: "0 auto" }}>
+    <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", maxWidth: 480, margin: "0 auto", position: "relative" }}>
       <h1 className="text-mobile-lg" style={{ color: "var(--text-primary)", marginBottom: 8 }}>
         {labels.title}
       </h1>
@@ -220,6 +201,17 @@ export function CheckInFlow({ lessonId, occurrenceDate, labels, locale }: Props)
           {labels.backDashboard}
         </Link>
       </div>
+
+      {showSuccessModal && state?.checkedInAt && (
+        <CheckInSuccessModal
+          checkedInAt={state.checkedInAt}
+          locale={locale}
+          successTitle={labels.successTitle}
+          confirmedAtTemplate={labels.confirmedAt}
+          thankYou={labels.thankYou}
+          backDashboard={labels.backDashboard}
+        />
+      )}
     </div>
   );
 }
