@@ -1,6 +1,6 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** março 2026.  
+> **Última revisão deste índice:** abril 2026.  
 > **Índice de contexto técnico (prioridade para IA / equipa):** [`memory.md`](memory.md)  
 > **Roadmap feito / por fazer:** [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)
 
@@ -63,7 +63,7 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Melhorias do dashboard (incl. carrosséis março 2026) |
+| [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Melhorias do dashboard (carrosséis março 2026; perfil performance / dados biométricos abril 2026 — ver `memory.md` §3.14) |
 | [`CONTAS_TESTE.md`](CONTAS_TESTE.md) | Contas de teste e `seed:test-users` |
 | [`GUIA_TESTE_VALIDACAO_PERFIS.md`](GUIA_TESTE_VALIDACAO_PERFIS.md) | Checklist por perfil |
 | [`GUIA_TESTE_LOJA.md`](GUIA_TESTE_LOJA.md) | Testes da loja |

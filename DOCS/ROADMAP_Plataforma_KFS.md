@@ -229,7 +229,7 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 
 ### 14.1 Dashboard de Performance ultra-personalizado
 
-- **Feito:** Métricas por dimensão (Técnico, Tático, Físico, Mental, Teórico); gráfico radar; faixas por cor e XP; missões (sistema + configuráveis por modalidade); detalhe por componente filtrado pela modalidade principal do aluno; feedback do coach (card); **KPIs explícitos por modalidade** (secção “Performance por modalidade” em `/dashboard/performance`, escala 1–10; **BJJ/MMA** entram no mesmo ecrã quando existirem **critérios de avaliação** configurados para essas modalidades — ver §15); **feedback que sugere conteúdos da biblioteca** (secção “Conteúdos sugeridos para ti”, até 3 cursos por modalidade principal).
+- **Feito:** Métricas por dimensão (Técnico, Tático, Físico, Mental, Teórico); gráfico radar; faixas por cor e XP; missões (sistema + configuráveis por modalidade); detalhe por componente filtrado pela modalidade principal do aluno; feedback do coach (card); **KPIs explícitos por modalidade** (secção “Performance por modalidade” em `/dashboard/performance`, escala 1–10; **BJJ/MMA** entram no mesmo ecrã quando existirem **critérios de avaliação** configurados para essas modalidades — ver §15); **feedback que sugere conteúdos da biblioteca** (secção “Conteúdos sugeridos para ti”, até 3 cursos por modalidade principal); **dados biométricos agregados** a partir do check-in pré-treino (`PreLessonWellness`, secção no perfil de performance — ver `memory.md` §3.14).
 
 
 ### 14.2 Biblioteca de Conteúdo 360º
@@ -270,7 +270,7 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 | **Página Tribo** (feed: fotos, vídeos curtos, comentários, curtidas, partilha em redes) | Por fazer | Comunidade; ver §14.6 |
 | **Modalidades oficiais** (Muay Thai, Boxing, Kickboxing, BJJ, MMA, …) | Feito | Cadastro em **Admin → Modalidades** (`ModalityRef`); aulas, planos e filtro por modalidade usam estes códigos. |
 | **Critérios de avaliação** (pilares **Técnico, Tático, Físico, Mental, Teórico**) por modalidade | Por fazer | A plataforma já tem o modelo (`EvaluationComponent` / `EvaluationCriterion`, Admin **Avaliação**). **Próximo passo operacional:** completar critérios para cada modalidade que ainda não os tenha (em especial **BJJ** e **MMA**), alinhados à metodologia KFS. |
-| Biometria (mencionada no plano) | Por fazer | Métricas além de presença; depende de definição de produto |
+| Biometria (mencionada no plano) | Parcial | **v1 (abril 2026):** autorrelato no check-in + agregados no perfil de performance (sono, hidratação %, stress, fadiga, zonas GREEN/YELLOW/RED); hub `/dashboard/bem-estar`, RPE, dores, benchmarks, peso. **Por fazer:** integração com dispositivos / métricas além do autorrelato; definição de produto se necessário |
 | Notificações (email/push) | Feito | Resend: confirmação de presença (coach confirma); cron lembrete aulas (GET /api/cron/lesson-reminders). |
 | Remuneração de coaches (configurável) | Feito | Coach.hourly_rate; /admin/financeiro/coaches (resumo mensal); /coach/financeiro (painel do coach) |
 | Internacionalização (PT/EN) | Feito | Cookie kfs-locale; getTranslations(locale); mensagens em lib/i18n; sidebar e landing traduzidos. |
@@ -312,7 +312,7 @@ Com base na especificação e na dependência entre módulos:
 | Gamificação | Rank **v2** (modalidade, período, evolução nas dimensões); opcional Battle Pass / temporadas | §14.3, §15 |
 | Aluno / performance | «Ver como melhorar» nos critérios → **ligação a conteúdos** da biblioteca | §2 (tabela aluno), §14.1 |
 | Avaliação | **Critérios dos cinco pilares** por modalidade (foco **BJJ / MMA** onde faltar) | §15 |
-| Dados / produto | **Biometria** (definição + escopo) | §15 |
+| Dados / produto | **Biometria** — extensões (dispositivos, métricas além do autorrelato) | §15 |
 | Mobile nativo | **Capacitor** + **Play Store / App Store**; testes em **dispositivos reais** | §17 |
 | Notificações | **Push Web** (além de email Resend + crons) | §15, §16 |
 | Qualidade | **E2E** (ex.: Playwright), relatórios/alertas admin em financeiro (melhorias pontuais) | rodapé, §16 |
@@ -336,7 +336,7 @@ Com base na especificação e na dependência entre módulos:
 
 ---
 
-*Última atualização (abril 2026): **Admin – critérios de avaliação** com subcategorias, replicar critério em várias modalidades, limpeza legacy e config sem cache obsoleto (§2b). **Performance:** streaming RSC na home do aluno (`DashboardBelowFold`), prefetch selectivo no sidebar, radar SVG sem Recharts, lazy-load e tooltips CSS no perfil de performance (§2). **Modalidades** (`ModalityRef`) — feito ao nível da plataforma. **Próximo foco de produto:** **conteúdo** dos critérios onde faltar (**BJJ/MMA** e outras); **Tribo**; extensões de **Rank**; «Ver como melhorar» → biblioteca; biometria; Battle Pass; **Capacitor + lojas**; push Web; E2E; revalidar métricas Lighthouse em produção.*
+*Última atualização (abril 2026): **Admin – critérios de avaliação** com subcategorias, replicar critério em várias modalidades, limpeza legacy e config sem cache obsoleto (§2b). **Performance:** streaming RSC na home do aluno (`DashboardBelowFold`), prefetch selectivo no sidebar, radar SVG sem Recharts, lazy-load e tooltips CSS no perfil de performance (§2). **Bem-estar / check-in:** `PreLessonWellness`, hub `/dashboard/bem-estar`, agregados biométricos no perfil (`memory.md` §3.14); modal de sucesso no check-in; inputs com tema consistente. **Modalidades** (`ModalityRef`) — feito ao nível da plataforma. **Próximo foco de produto:** **conteúdo** dos critérios onde faltar (**BJJ/MMA** e outras); **Tribo**; extensões de **Rank**; «Ver como melhorar» → biblioteca; biometria além do autorrelato; Battle Pass; **Capacitor + lojas**; push Web; E2E; revalidar métricas Lighthouse em produção.*
 
 ---
 

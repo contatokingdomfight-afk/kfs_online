@@ -100,7 +100,7 @@
 
 ### 3.10 Documentação em `DOCS/` (higiene)
 
-- **Índice:** `DOCS/INDEX.md` lista os ficheiros atuais. Em março 2026 foram removidos resumos de sessão, guias Git obsoletos (repo antigo), texto de treino fora do âmbito do repositório e duplicado curto de marca; **`DEPLOY_VERCEL.md`** foi reescrito para a stack atual (Supabase, sem Clerk).
+- **Índice:** `DOCS/INDEX.md` lista os ficheiros atuais. Em março 2026 foram removidos resumos de sessão, guias Git obsoletos (repo antigo), texto de treino fora do âmbito do repositório e duplicado curto de marca; **`DEPLOY_VERCEL.md`** foi reescrito para a stack atual (Supabase, sem Clerk). Atualizações de bem-estar / biométricos no perfil: abril 2026 (§3.14).
 
 ### 3.11 XP / níveis — tempo mínimo na faixa
 
@@ -121,9 +121,9 @@
 ### 3.14 Bem-estar, RPE, dores, benchmarks e peso (abril 2026)
 
 - **Migração:** `supabase/migrations/20260410200000_wellness_rpe_pain_benchmark_weight.sql` — `PreLessonWellness` (sono, hidratação, stress, fadiga, zona GREEN/YELLOW/RED), `Attendance.rpe` / `rpeRecordedAt`, `Attendance.countsForGamification` (falso se zona vermelha no pré-treino), `PainSelfReport`, `PhysicalBenchmarkEntry`, `BodyWeightEntry`, `StudentProfile.weightGoalKg` / `weightGoalTargetDate`.
-- **Check-in** (`/check-in/[lessonId]`): formulário pré-treino opcional (ou saltar); `lib/wellness-score.ts` calcula zona; `lib/resolve-check-in-occurrence.ts` partilha resolução de data com `performCheckIn`. Zona **vermelha**: presença válida mas **não** entra em `computeBadgeStats` / badges de assiduidade (`lib/gamification.ts` conta por linha `Attendance` + `occurrenceDate`).
+- **Check-in** (`/check-in/[lessonId]`): formulário pré-treino opcional (ou saltar); `lib/wellness-score.ts` calcula zona; `lib/resolve-check-in-occurrence.ts` partilha resolução de data com `performCheckIn`. Zona **vermelha**: presença válida mas **não** entra em `computeBadgeStats` / badges de assiduidade (`lib/gamification.ts` conta por linha `Attendance` + `occurrenceDate`). **UI:** controlos com classe `.input` e `check-in-wellness-form` em `app/globals.css` (tema escuro/claro; `color-scheme`); **sucesso:** modal `CheckInSuccessModal` (não substitui a página inteira) com título tipo «Check-in realizado com sucesso!»; `app/check-in/[lessonId]/CheckInFlow.tsx`.
 - **Aluno:** hub `/dashboard/bem-estar` — RPE (`/dashboard/bem-estar/rpe`), dores (`/dores`), benchmarks (`/benchmarks`), peso (`/peso`). Ações em `app/dashboard/bem-estar/actions.ts`.
-- **Perfil do atleta (performance):** `/dashboard/performance` — secção **Dados biométricos** (médias agregadas dos check-ins com questionário: `PreLessonWellness`, `CheckInWellnessSection`, `lib/check-in-wellness-aggregates.ts`), colocada antes da progressão de níveis/XP; visível também quando ainda não há avaliações do coach mas já existem registos de pré-treino.
+- **Perfil do atleta (performance):** `/dashboard/performance` — secção **Dados biométricos** (`components/fighter/CheckInWellnessSection.tsx`): médias sobre até **500** linhas `PreLessonWellness` do aluno — sono (h), qualidade (1–5), stress/fadiga médios (1–5), **% hidratação adequada** = (nº de registos com `hydrationOk === true` / total de registos) × 100 (autorrelato no check-in, não sensor), distribuição % das zonas GREEN/YELLOW/RED. Agregação em `lib/check-in-wellness-aggregates.ts`. **Ordem no ecrã:** após **Objetivos / Quests** (`MissionCard`), **antes** da **Progressão de níveis / XP** (`BeltProgressionSection`). i18n: `perfWellness*` em `lib/i18n/messages.ts`. Se **não** há avaliações do coach mas há pré-treinos, a secção aparece acima da mensagem de «ainda não tens avaliações».
 - **Metas mensais / totais no dashboard:** contagens de presenças usam `countsForGamification = true` (`DashboardBelowFold`, `DashboardRestContent`) para alinhar com badges.
 - **Coach:** `/coach/aula?lesson=&date=` — por aluno, zona de pré-treino + RPE (`AttendanceRow`, dados de `PreLessonWellness` + `Attendance.rpe`). `/coach/alunos/[id]` — secção **Bem-estar e carga** (`CoachStudentWellbeingSection`): últimos pré-treinos e RPE (cliente admin).
 
