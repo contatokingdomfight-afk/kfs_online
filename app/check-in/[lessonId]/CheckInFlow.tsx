@@ -105,7 +105,11 @@ export function CheckInFlow({ lessonId, occurrenceDate, labels, locale }: Props)
         {labels.wellnessHint}
       </p>
 
-      <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <form
+        action={formAction}
+        className="check-in-wellness-form"
+        style={{ display: "flex", flexDirection: "column", gap: 16 }}
+      >
         <input type="hidden" name="lessonId" value={lessonId} />
         <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
 
@@ -119,8 +123,7 @@ export function CheckInFlow({ lessonId, occurrenceDate, labels, locale }: Props)
             step={0.5}
             defaultValue={7}
             required
-            className="input-mobile"
-            style={{ padding: "12px 14px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+            className="input check-in-wellness-number"
           />
         </label>
 
@@ -140,7 +143,7 @@ export function CheckInFlow({ lessonId, occurrenceDate, labels, locale }: Props)
                   borderRadius: "var(--radius-md)",
                   border: "1px solid var(--border)",
                   cursor: "pointer",
-                  background: "var(--bg-elevated)",
+                  background: "var(--bg-secondary)",
                 }}
               >
                 <input type="radio" name="sleepQuality" value={s.v} required defaultChecked={s.v === 4} /> {s.l}
@@ -151,12 +154,7 @@ export function CheckInFlow({ lessonId, occurrenceDate, labels, locale }: Props)
 
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontWeight: 600, fontSize: "clamp(14px, 3.5vw, 16px)" }}>{labels.hydration}</span>
-          <select
-            name="hydrationOk"
-            defaultValue="1"
-            className="input-mobile"
-            style={{ padding: "12px 14px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
-          >
+          <select name="hydrationOk" defaultValue="1" className="input check-in-wellness-select">
             <option value="1">{labels.hydrationYes}</option>
             <option value="0">{locale === "pt" ? "Não / pouco" : "No / low"}</option>
           </select>
@@ -175,6 +173,7 @@ export function CheckInFlow({ lessonId, occurrenceDate, labels, locale }: Props)
                   borderRadius: "var(--radius-md)",
                   border: "1px solid var(--border)",
                   cursor: "pointer",
+                  background: "var(--bg-secondary)",
                 }}
               >
                 <input type="radio" name="stress" value={s.v} required defaultChecked={s.v === 2} /> {s.l}
@@ -196,6 +195,7 @@ export function CheckInFlow({ lessonId, occurrenceDate, labels, locale }: Props)
                   borderRadius: "var(--radius-md)",
                   border: "1px solid var(--border)",
                   cursor: "pointer",
+                  background: "var(--bg-secondary)",
                 }}
               >
                 <input type="radio" name="fatigue" value={s.v} required defaultChecked={s.v === 2} /> {s.l}

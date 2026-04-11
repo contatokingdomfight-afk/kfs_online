@@ -195,6 +195,29 @@
     cursor: not-allowed;
   }
 
+  /* Check-in / bem-estar: evita fundo branco dos controlos nativos (number, select) */
+  .check-in-wellness-form {
+    color-scheme: dark;
+  }
+
+  :root[data-theme="light"] .check-in-wellness-form {
+    color-scheme: light;
+  }
+
+  .check-in-wellness-form input[type="radio"] {
+    accent-color: var(--primary);
+  }
+
+  .check-in-wellness-number,
+  .check-in-wellness-select {
+    min-height: 48px;
+    font-size: clamp(14px, 3.5vw, 16px);
+  }
+
+  .check-in-wellness-select {
+    cursor: pointer;
+  }
+
   /* Card - Componente base */
   .card {
     background-color: var(--bg-secondary);
