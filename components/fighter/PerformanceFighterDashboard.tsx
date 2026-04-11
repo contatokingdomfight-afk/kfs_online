@@ -16,6 +16,8 @@ import type { AchievementWithStatus } from "@/lib/achievements";
 import { EvaluationResultsDashboard } from "@/components/evaluation-results";
 import type { DimensionScore, CriterionScoreItem } from "@/lib/evaluation-results-data";
 import type { BeltTimeGateInfo } from "@/lib/xp-missions";
+import { CheckInWellnessSection, type CheckInWellnessCopy } from "@/components/fighter/CheckInWellnessSection";
+import type { CheckInWellnessAggregates } from "@/lib/check-in-wellness-aggregates";
 
 const BeltProgressionSection = dynamic(
   () => import("@/components/belt-progression").then((m) => ({ default: m.BeltProgressionSection })),
@@ -112,6 +114,8 @@ type Props = {
     overallScore: number;
     scoresForRadar: Record<string, number>;
   } | null;
+  /** Médias do questionário pré-treino (check-in). */
+  checkInWellness?: { data: CheckInWellnessAggregates; copy: CheckInWellnessCopy };
 };
 
 export function PerformanceFighterDashboard({
@@ -140,6 +144,7 @@ export function PerformanceFighterDashboard({
   suggestedCourses = [],
   profileAchievements,
   evaluationResultsData,
+  checkInWellness,
 }: Props) {
   const systemMissions = buildMissionsFromScores(scores, axes, maxScore);
   const customAsMissions: Mission[] = customMissions.map((c) => ({
@@ -175,6 +180,10 @@ export function PerformanceFighterDashboard({
             : undefined
         }
       />
+
+      {checkInWellness && (
+        <CheckInWellnessSection data={checkInWellness.data} copy={checkInWellness.copy} />
+      )}
 
       {/* Resultados de avaliação: resumo, radar, pontos fortes/fracos, filtros e critérios por categoria */}
       {evaluationResultsData ? (

@@ -3,7 +3,15 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requirePlan } from "@/lib/require-plan";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+import { getTranslations, type MessageKey } from "@/lib/i18n";
 import { getPlanAccess } from "@/lib/plan-access";
+import { aggregateCheckInWellness } from "@/lib/check-in-wellness-aggregates";
+import {
+  CheckInWellnessSection,
+  type CheckInWellnessCopy,
+} from "@/components/fighter/CheckInWellnessSection";
+import type { CheckInWellnessAggregates } from "@/lib/check-in-wellness-aggregates";
 import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality, enrichScoresForDetail, getFisicoScoreFromPhysicalAssessment, mergePhysicalAssessmentIntoRadar } from "@/lib/performance-utils";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
@@ -37,11 +45,47 @@ const LAST_N_PER_MODALITY = 5;
 
 export const dynamic = "force-dynamic";
 
+function buildWellnessCopy(t: (key: MessageKey) => string, agg: CheckInWellnessAggregates): CheckInWellnessCopy {
+  return {
+    title: t("perfWellnessTitle"),
+    intro: t("perfWellnessIntro"),
+    sample: t("perfWellnessSample").replace("{count}", String(agg.count)),
+    sleepH: t("perfWellnessSleepH"),
+    sleepQ: t("perfWellnessSleepQ"),
+    hydration: t("perfWellnessHydration"),
+    stress: t("perfWellnessStress"),
+    fatigue: t("perfWellnessFatigue"),
+    scaleHint: t("perfWellnessScaleHint"),
+    hydrationHint: t("perfWellnessHydrationHint"),
+    zonesTitle: t("perfWellnessZonesTitle"),
+    zoneGreen: t("perfWellnessZoneGreen"),
+    zoneYellow: t("perfWellnessZoneYellow"),
+    zoneRed: t("perfWellnessZoneRed"),
+  };
+}
+
 export default async function DashboardPerformancePage() {
   await requirePlan();
   const supabase = await createClient();
   const studentId = await getCurrentStudentId();
+  const locale = await getLocaleFromCookies();
+  const t = getTranslations(locale as "pt" | "en");
   const planAccess = await getPlanAccess(supabase, studentId);
+
+  let checkInWellness:
+    | { data: CheckInWellnessAggregates; copy: CheckInWellnessCopy }
+    | undefined;
+  if (studentId) {
+    const { data: wellnessRows } = await supabase
+      .from("PreLessonWellness")
+      .select("sleepHours, sleepQuality, hydrationOk, stress, fatigue, wellnessZone")
+      .eq("studentId", studentId)
+      .limit(500);
+    const agg = aggregateCheckInWellness(wellnessRows ?? []);
+    if (agg) {
+      checkInWellness = { data: agg, copy: buildWellnessCopy(t, agg) };
+    }
+  }
   if (studentId && !planAccess.hasPerformanceTracking) {
     redirect("/dashboard?message=plan-no-performance");
   }
@@ -291,14 +335,15 @@ export default async function DashboardPerformancePage() {
 
   if (!hasScores) {
     return (
-      <div className="max-w-[min(720px,100%)] mx-auto">
+      <div className="max-w-[min(720px,100%)] mx-auto space-y-6 pb-8">
+        {checkInWellness && (
+          <CheckInWellnessSection data={checkInWellness.data} copy={checkInWellness.copy} />
+        )}
         <div className="rounded-2xl bg-bg-secondary border border-border p-6 shadow-md">
-          <h1 className="text-xl font-bold text-text-primary mb-2">Perfil do Atleta</h1>
-          <p className="text-base text-text-secondary mb-4">
-            Ainda não tens avaliações registadas. Quando o teu treinador preencher avaliações nas aulas, aqui poderás ver a tua performance geral, atributos e missões.
-          </p>
+          <h1 className="text-xl font-bold text-text-primary mb-2">{t("navAthleteProfile")}</h1>
+          <p className="text-base text-text-secondary mb-4">{t("evaluationPlaceholder")}</p>
           <Link href="/dashboard" className="btn btn-primary inline-block no-underline">
-            Voltar ao início
+            {t("perfEmptyBackLink")}
           </Link>
         </div>
       </div>
@@ -339,6 +384,7 @@ export default async function DashboardPerformancePage() {
       suggestedCourses={suggestedCourses.length > 0 ? suggestedCourses : undefined}
       profileAchievements={profileAchievements}
       evaluationResultsData={evaluationResultsData}
+      checkInWellness={checkInWellness}
     />
   );
 }
