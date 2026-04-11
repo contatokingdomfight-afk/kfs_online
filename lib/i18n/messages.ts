@@ -496,6 +496,11 @@ export const messages = {
     coachGoToLesson: "Ir para aula",
     coachTrialClassesTitle: "Aulas experimentais",
     coachTrialClassesDescription: "Experimentais agendados nas tuas aulas.",
+    coachPresenceShortcutsTitle: "Presenças rápidas",
+    coachPresenceShortcutNext: "Próxima aula — presenças",
+    coachPresenceShortcutLast: "Última aula — presenças",
+    coachPresenceShortcutNextNone: "Sem próxima aula neste período.",
+    coachPresenceShortcutLastNone: "Sem aulas concluídas neste período.",
 
     // Auth
     signOut: "Sair",
@@ -1053,6 +1058,11 @@ export const messages = {
     coachGoToLesson: "Go to class",
     coachTrialClassesTitle: "Trial classes",
     coachTrialClassesDescription: "Trial classes scheduled in your lessons.",
+    coachPresenceShortcutsTitle: "Quick presences",
+    coachPresenceShortcutNext: "Next class — attendance",
+    coachPresenceShortcutLast: "Last class — attendance",
+    coachPresenceShortcutNextNone: "No upcoming class in this period.",
+    coachPresenceShortcutLastNone: "No completed class in this period.",
 
     signOut: "Sign out",
     email: "Email",

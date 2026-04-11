@@ -68,7 +68,7 @@
 
 - Vista **por semana** / por modalidade; criação de aulas (incl. recorrente / one-off) — ver `app/admin/turmas/`.
 - **Modelo de agenda (2026-04):** uma linha em `Lesson` por **definição**; recorrentes usam `weekday` (1–7) e `date` null; ocorrências na agenda são **expandidas** em memória (`lib/lesson-occurrences.ts`). Cancelamento pontual: `LessonCancellation` (só aquela data). Professores N:N: `LessonCoach` (primeiro espelhado em `Lesson.coachId`). Migração: `supabase/migrations/20260401120000_lesson_template_schedule.sql`.
-- **Área Coach** (agenda, presenças na aula, QR, home, presença global, financeiro, experimentais): mesma expansão; links para uma ocorrência usam `?lesson=<id>&date=YYYY-MM-DD`; lista de presenças na aula filtra `Attendance` por `occurrenceDate`. Helper `rowsToLessonDefinitions` em `lib/lesson-occurrences.ts`.
+- **Área Coach** (agenda, presenças na aula, QR, home, presença global, financeiro, experimentais): mesma expansão; links para uma ocorrência usam `?lesson=<id>&date=YYYY-MM-DD`; lista de presenças na aula filtra `Attendance` por `occurrenceDate`. Helper `rowsToLessonDefinitions` em `lib/lesson-occurrences.ts`. Na **home do coach** (`app/coach/page.tsx`), atalhos para presenças da **próxima** aula (ainda não começou) e da **última** já terminada, com ocorrências no intervalo ~21 dias atrás a ~28 à frente e instantes em `Europe/Lisbon` (`lib/coach-presence-shortcuts.ts`).
 
 ### 3.6 Perfil do atleta – critérios por categoria (resultados de avaliação)
 

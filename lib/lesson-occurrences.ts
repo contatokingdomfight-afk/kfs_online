@@ -57,7 +57,8 @@ export function weekdayFromYmd(ymd: string): number {
   return js === 0 ? 7 : js;
 }
 
-function ymdAddDays(ymd: string, days: number): string {
+/** Adiciona dias a uma data `YYYY-MM-DD` (UTC). */
+export function ymdAddDays(ymd: string, days: number): string {
   const [y, m, d] = ymd.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d + days));
   return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;

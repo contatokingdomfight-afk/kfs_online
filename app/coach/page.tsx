@@ -1,14 +1,17 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { getCurrentSchoolId } from "@/lib/auth/get-current-school";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { MODALITY_LABELS, formatLessonDate, getWeekStartMonday } from "@/lib/lesson-utils";
+import { coachPresenceUrl, pickLastAndNextOccurrence } from "@/lib/coach-presence-shortcuts";
+import { MODALITY_LABELS, formatLessonDate, formatNextLessonDate, getWeekStartMonday } from "@/lib/lesson-utils";
 import {
   expandLessonsForDateRange,
   fetchLessonCancellations,
   rowsToLessonDefinitions,
+  ymdAddDays,
 } from "@/lib/lesson-occurrences";
 import { CurrentOrNextClassCard } from "./_components/CurrentOrNextClassCard";
 import { TodayScheduleCard } from "./_components/TodayScheduleCard";
@@ -89,7 +92,13 @@ export default async function CoachHomePage() {
     supabase,
     defs.map((d) => d.id)
   );
-  const lessonsList = expandLessonsForDateRange(defs, cancellations, today, today);
+  const rangeStart = ymdAddDays(today, -21);
+  const rangeEnd = ymdAddDays(today, 28);
+  const expandedRange = expandLessonsForDateRange(defs, cancellations, rangeStart, rangeEnd);
+  const lessonsList = expandedRange.filter((l) => l.occurrenceDate === today);
+  const { last: lastOcc, next: nextOcc } = pickLastAndNextOccurrence(expandedRange, now);
+  const lastPresenceHref = lastOcc ? coachPresenceUrl(lastOcc.lessonId, lastOcc.occurrenceDate) : null;
+  const nextPresenceHref = nextOcc ? coachPresenceUrl(nextOcc.lessonId, nextOcc.occurrenceDate) : null;
 
   const { scenario, lesson: focusLessonRaw } = getCurrentOrNextScenario(lessonsList, nowMinutes);
   const focusLesson = focusLessonRaw
@@ -271,6 +280,79 @@ export default async function CoachHomePage() {
         manageLabel={t("coachManageClassNow")}
         restMessage={t("coachRestMessage")}
       />
+
+      <section
+        className="card"
+        style={{
+          padding: "clamp(16px, 4vw, 20px)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "clamp(10px, 2.5vw, 12px)",
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontSize: "clamp(12px, 3vw, 13px)",
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            color: "var(--text-secondary)",
+          }}
+        >
+          {t("coachPresenceShortcutsTitle")}
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {nextPresenceHref && nextOcc ? (
+            <Link
+              href={nextPresenceHref}
+              className="btn btn-primary"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: 4,
+                textDecoration: "none",
+                fontSize: "clamp(15px, 3.8vw, 17px)",
+                padding: "clamp(12px, 3vw, 14px) clamp(16px, 4vw, 20px)",
+              }}
+            >
+              <span>{t("coachPresenceShortcutNext")}</span>
+              <span style={{ fontSize: "clamp(13px, 3.2vw, 14px)", fontWeight: 400, opacity: 0.92 }}>
+                {formatNextLessonDate(nextOcc.occurrenceDate, locale as "pt" | "en")}
+              </span>
+            </Link>
+          ) : (
+            <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 15px)", color: "var(--text-secondary)" }}>
+              {t("coachPresenceShortcutNextNone")}
+            </p>
+          )}
+          {lastPresenceHref && lastOcc ? (
+            <Link
+              href={lastPresenceHref}
+              className="btn btn-secondary"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: 4,
+                textDecoration: "none",
+                fontSize: "clamp(15px, 3.8vw, 17px)",
+                padding: "clamp(12px, 3vw, 14px) clamp(16px, 4vw, 20px)",
+              }}
+            >
+              <span>{t("coachPresenceShortcutLast")}</span>
+              <span style={{ fontSize: "clamp(13px, 3.2vw, 14px)", fontWeight: 400, opacity: 0.92 }}>
+                {formatNextLessonDate(lastOcc.occurrenceDate, locale as "pt" | "en")}
+              </span>
+            </Link>
+          ) : (
+            <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 15px)", color: "var(--text-secondary)" }}>
+              {t("coachPresenceShortcutLastNone")}
+            </p>
+          )}
+        </div>
+      </section>
 
       {/* Secção 2: PREPARAÇÃO E PLANEAMENTO */}
       <div
