@@ -7,6 +7,14 @@ import { getTranslations } from "@/lib/i18n";
 import { PerfilForm } from "./PerfilForm";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
+/** Valor para `input type="date"` (YYYY-MM-DD). */
+function dateOfBirthForInput(value: unknown): string {
+  if (value == null || value === "") return "";
+  const s = String(value);
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(s);
+  return m ? m[1] : s.slice(0, 10);
+}
+
 export default async function DashboardPerfilPage() {
   const studentId = await getCurrentStudentId();
   if (!studentId) redirect("/sign-in");
@@ -38,7 +46,7 @@ export default async function DashboardPerfilPage() {
     weightKg: profile?.weightKg != null ? String(profile.weightKg) : "",
     heightCm: profile?.heightCm != null ? String(profile.heightCm) : "",
     reachCm: profile?.reachCm != null ? String(profile.reachCm) : "",
-    dateOfBirth: profile?.dateOfBirth ?? "",
+    dateOfBirth: dateOfBirthForInput(profile?.dateOfBirth),
     medicalNotes: profile?.medicalNotes ?? "",
     emergencyContact: profile?.emergencyContact ?? "",
     primaryModalityLabel:

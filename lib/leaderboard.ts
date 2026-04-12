@@ -20,15 +20,28 @@ function mapRpcRow(row: Record<string, unknown>): LeaderboardRow {
   };
 }
 
+export type LeaderboardFilters = {
+  /** Escola a listar; omitir ou null = escola do aluno autenticado. */
+  schoolId?: string | null;
+  /** Código de modalidade (`Student.primaryModality`); omitir = todas. */
+  modality?: string | null;
+  /** KIDS | TEENS | ADULTS | MASTERS; omitir = todas as idades. */
+  ageBucket?: string | null;
+};
+
 /**
- * Ranking por XP na escola do utilizador (RPC `get_leaderboard_my_school`).
- * Requer migração aplicada no Supabase.
+ * Ranking por XP com filtros opcionais (RPC `get_leaderboard_filtered`).
+ * Escola em falta = escola do utilizador; requer migração aplicada no Supabase.
  */
-export async function getSchoolLeaderboard(
+export async function getFilteredSchoolLeaderboard(
   supabase: SupabaseClient,
+  filters: LeaderboardFilters,
   limit = 100
 ): Promise<{ rows: LeaderboardRow[]; error: string | null }> {
-  const { data, error } = await supabase.rpc("get_leaderboard_my_school", {
+  const { data, error } = await supabase.rpc("get_leaderboard_filtered", {
+    p_school_id: filters.schoolId ?? null,
+    p_modality: filters.modality ?? null,
+    p_age_bucket: filters.ageBucket ?? null,
     p_limit: limit,
   });
 
@@ -41,4 +54,14 @@ export async function getSchoolLeaderboard(
     rows: list.map((r) => mapRpcRow(r as Record<string, unknown>)),
     error: null,
   };
+}
+
+/**
+ * Compatível com o comportamento anterior: só a escola do aluno, sem filtros de modalidade/idade.
+ */
+export async function getSchoolLeaderboard(
+  supabase: SupabaseClient,
+  limit = 100
+): Promise<{ rows: LeaderboardRow[]; error: string | null }> {
+  return getFilteredSchoolLeaderboard(supabase, {}, limit);
 }

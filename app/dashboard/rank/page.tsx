@@ -6,12 +6,18 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getPlanAccess } from "@/lib/plan-access";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { getSchoolLeaderboard } from "@/lib/leaderboard";
+import { getFilteredSchoolLeaderboard } from "@/lib/leaderboard";
 import { getBeltIndexFromXp, getBeltName } from "@/lib/belts";
+import { parseRankAgeParam, parseRankModalityParam } from "@/lib/rank-filters";
+import { RankFiltersForm } from "./RankFiltersForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardRankPage() {
+type PageProps = {
+  searchParams: Promise<{ school?: string; modality?: string; age?: string }>;
+};
+
+export default async function DashboardRankPage({ searchParams }: PageProps) {
   await requirePlan();
   const supabase = await createClient();
   const studentId = await getCurrentStudentId();
@@ -22,10 +28,62 @@ export default async function DashboardRankPage() {
     redirect("/dashboard?message=plan-no-performance");
   }
 
+  const [{ data: studentRow }, params] = await Promise.all([
+    supabase.from("Student").select("schoolId").eq("id", studentId).single(),
+    searchParams,
+  ]);
+
+  const mySchoolId = (studentRow as { schoolId?: string } | null)?.schoolId ?? "";
+  if (!mySchoolId) redirect("/dashboard");
+
+  const { data: schoolsData } = await supabase
+    .from("School")
+    .select("id, name")
+    .eq("isActive", true)
+    .order("name");
+
+  const schools = (schoolsData ?? []).map((s) => ({
+    id: String(s.id),
+    name: String(s.name ?? s.id),
+  }));
+
+  const schoolIds = new Set(schools.map((s) => s.id));
+  const rawSchool = params.school?.trim();
+  const resolvedSchoolId =
+    rawSchool && schoolIds.has(rawSchool) ? rawSchool : mySchoolId;
+
+  const modality = parseRankModalityParam(params.modality);
+  const ageBucket = parseRankAgeParam(params.age);
+
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
 
-  const { rows, error } = await getSchoolLeaderboard(supabase, 100);
+  const { rows, error } = await getFilteredSchoolLeaderboard(
+    supabase,
+    {
+      schoolId: resolvedSchoolId,
+      modality,
+      ageBucket,
+    },
+    100
+  );
+
+  const filterMessages = {
+    filterSchool: t("rankFilterSchool"),
+    filterModality: t("rankFilterModality"),
+    filterAge: t("rankFilterAge"),
+    filterAll: t("rankFilterAll"),
+    filterReset: t("rankFilterReset"),
+    filterLoading: t("rankFilterLoading"),
+    ageKids: t("rankAgeKids"),
+    ageTeens: t("rankAgeTeens"),
+    ageAdults: t("rankAgeAdults"),
+    ageMasters: t("rankAgeMasters"),
+    modalityMuay: t("rankModalityMuay"),
+    modalityBoxing: t("rankModalityBoxing"),
+    modalityKick: t("rankModalityKick"),
+    modalityMma: t("rankModalityMma"),
+  };
 
   return (
     <div className="max-w-[min(720px,100%)] mx-auto pb-8">
@@ -41,6 +99,15 @@ export default async function DashboardRankPage() {
       <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-2">{t("rankTitle")}</h1>
       <p className="text-sm text-[var(--text-secondary)] mb-6">{t("rankSubtitle")}</p>
 
+      <RankFiltersForm
+        schools={schools}
+        defaultSchoolId={mySchoolId}
+        currentSchoolId={resolvedSchoolId}
+        currentModality={modality}
+        currentAge={ageBucket}
+        messages={filterMessages}
+      />
+
       {error ? (
         <div
           className="card p-4 text-sm"
@@ -49,7 +116,7 @@ export default async function DashboardRankPage() {
           {t("rankError")}: {error}
         </div>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-[var(--text-secondary)]">{t("rankEmpty")}</p>
+        <p className="text-sm text-[var(--text-secondary)]">{t("rankEmptyFiltered")}</p>
       ) : (
         <div className="card overflow-x-auto" style={{ padding: 0 }}>
           <table className="w-full text-sm border-collapse" style={{ minWidth: 280 }}>

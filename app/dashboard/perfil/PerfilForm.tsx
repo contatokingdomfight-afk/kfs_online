@@ -112,6 +112,21 @@ export function PerfilForm({ initial, locale }: Props) {
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+            {t("dateOfBirthLabel")}
+          </span>
+          <input
+            type="date"
+            name="dateOfBirth"
+            defaultValue={initial.dateOfBirth}
+            className="input"
+            max={new Date().toISOString().slice(0, 10)}
+          />
+          <span style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.35 }}>
+            {t("dateOfBirthProfileHint")}
+          </span>
+        </label>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
             {locale === "en" ? "Registered modality" : "Modalidade cadastrada"}
           </span>
           <input
@@ -126,7 +141,7 @@ export function PerfilForm({ initial, locale }: Props) {
       </div>
 
       <p style={{ margin: "8px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 600, color: "var(--text-primary)" }}>
-        {t("weightLabel")} / {t("heightLabel")} / {t("dateOfBirthLabel")}
+        {t("profileBodyMeasurementsTitle")}
       </p>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
@@ -167,17 +182,6 @@ export function PerfilForm({ initial, locale }: Props) {
           step="0.1"
           className="input"
           placeholder="ex: 180"
-        />
-      </label>
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          {t("dateOfBirthLabel")}
-        </span>
-        <input
-          type="date"
-          name="dateOfBirth"
-          defaultValue={initial.dateOfBirth}
-          className="input"
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>

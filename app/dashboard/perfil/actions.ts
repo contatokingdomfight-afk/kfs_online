@@ -16,7 +16,8 @@ export async function saveStudentProfile(_prev: SaveProfileResult | null, formDa
   const weightRaw = (formData.get("weightKg") as string)?.trim();
   const heightRaw = (formData.get("heightCm") as string)?.trim();
   const reachRaw = (formData.get("reachCm") as string)?.trim();
-  const dateOfBirth = (formData.get("dateOfBirth") as string)?.trim() || null;
+  const dateOfBirthRaw = (formData.get("dateOfBirth") as string)?.trim() || "";
+  const dateOfBirth = dateOfBirthRaw || null;
   const medicalNotes = (formData.get("medicalNotes") as string)?.trim() || null;
   const emergencyContact = (formData.get("emergencyContact") as string)?.trim() || null;
 
@@ -26,6 +27,18 @@ export async function saveStudentProfile(_prev: SaveProfileResult | null, formDa
   if (weightRaw && (Number.isNaN(Number(weightRaw)) || Number(weightRaw) <= 0)) return { error: "Peso inválido." };
   if (heightRaw && (Number.isNaN(Number(heightRaw)) || Number(heightRaw) <= 0)) return { error: "Altura inválida." };
   if (reachRaw && (Number.isNaN(Number(reachRaw)) || Number(reachRaw) <= 0)) return { error: "Envergadura inválida." };
+
+  if (dateOfBirthRaw) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirthRaw)) return { error: "Data de nascimento inválida." };
+    const d = new Date(`${dateOfBirthRaw}T12:00:00.000Z`);
+    if (Number.isNaN(d.getTime())) return { error: "Data de nascimento inválida." };
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (d > today) return { error: "A data de nascimento não pode ser no futuro." };
+    const min = new Date();
+    min.setFullYear(min.getFullYear() - 120);
+    if (d < min) return { error: "Data de nascimento fora do intervalo aceite." };
+  }
 
   const supabase = await createClient();
   const { data: student } = await supabase.from("Student").select("userId").eq("id", studentId).single();
@@ -74,5 +87,6 @@ export async function saveStudentProfile(_prev: SaveProfileResult | null, formDa
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/perfil");
+  revalidatePath("/dashboard/rank");
   return { success: true };
 }

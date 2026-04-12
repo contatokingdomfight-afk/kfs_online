@@ -244,8 +244,8 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 ### 14.3 Gamificação e presença
 
 - **Feito:** Sistema de faixas (cores) e XP; missões ativas (subir dimensão X + missões configuráveis no Admin); missão “Avaliação física”; conclusão de avaliação na aula atribui XP por targets de dimensão; **badges/conquistas** (primeira aula, 5/10/25/50/100 aulas, 3/5 semanas seguidas, por modalidade); **meta de assiduidade** (X aulas/mês configurável, barra e celebração no dashboard); **página Conquistas** (/dashboard/conquistas) com grelha de badges e próxima conquista; **meta de saúde (IMC)** e **metas de avaliação** (melhorar eixos do radar) no dashboard; **seed de 62 missões** (Admin → Importar missões padrão); faixa mínima nas missões (ex.: Verde ou superior).
-- **Feito (v1):** Página **Rank** (`/dashboard/rank`): leaderboard por **XP** na **escola do aluno** (RPC `get_leaderboard_my_school`; alunos ATIVOS com `Athlete`; mesma escola que o utilizador).
-- **Por fazer:** Leaderboards por **modalidade** ou **período**; rankeamento por **evolução** nas dimensões além do XP acumulado; regras e anti-abuso adicionais em produto.
+- **Feito (v1):** Página **Rank** (`/dashboard/rank`): leaderboard por **XP** (RPC `get_leaderboard_filtered`); **filtros:** escola, modalidade principal, faixa etária (data de nascimento); alunos ATIVOS com `Athlete`.
+- **Por fazer:** Filtro por **período** (ex. últimos 30 dias); rankeamento por **evolução** nas dimensões além do XP acumulado; regras e anti-abuso adicionais em produto.
 - **Por fazer (opcional):** Battle Pass por temporada; reset automático de missões mensais; recompensas reais (camiseta, desconto).
 
 ### 14.4 Sala de Aula Invertida
@@ -266,7 +266,7 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 
 | Item | Estado | Notas |
 |------|--------|--------|
-| **Rankeamento de alunos** (evolução + acúmulo de pontos) | Parcial | **v1:** `/dashboard/rank` (XP por escola). Falta: modalidade, período, dimensões; ver §14.3 |
+| **Rankeamento de alunos** (evolução + acúmulo de pontos) | Parcial | **v1:** `/dashboard/rank` (XP; filtros escola, modalidade, faixa etária). Falta: período, dimensões; ver §14.3 |
 | **Página Tribo** (feed: fotos, vídeos curtos, comentários, curtidas, partilha em redes) | Por fazer | Comunidade; ver §14.6 |
 | **Modalidades oficiais** (Muay Thai, Boxing, Kickboxing, BJJ, MMA, …) | Feito | Cadastro em **Admin → Modalidades** (`ModalityRef`); aulas, planos e filtro por modalidade usam estes códigos. |
 | **Critérios de avaliação** (pilares **Técnico, Tático, Físico, Mental, Teórico**) por modalidade | Por fazer | A plataforma já tem o modelo (`EvaluationComponent` / `EvaluationCriterion`, Admin **Avaliação**). **Próximo passo operacional:** completar critérios para cada modalidade que ainda não os tenha (em especial **BJJ** e **MMA**), alinhados à metodologia KFS. |
@@ -309,7 +309,7 @@ Com base na especificação e na dependência entre módulos:
 | Área | O quê | Onde no doc |
 |------|--------|-------------|
 | Comunidade | **Tribo** — feed (fotos/vídeos, comentários, curtidas, partilhas) | §14.6, §15 |
-| Gamificação | Rank **v2** (modalidade, período, evolução nas dimensões); opcional Battle Pass / temporadas | §14.3, §15 |
+| Gamificação | Rank **v2** (período, evolução nas dimensões); opcional Battle Pass / temporadas | §14.3, §15 |
 | Aluno / performance | «Ver como melhorar» nos critérios → **ligação a conteúdos** da biblioteca | §2 (tabela aluno), §14.1 |
 | Avaliação | **Critérios dos cinco pilares** por modalidade (foco **BJJ / MMA** onde faltar) | §15 |
 | Dados / produto | **Biometria** — extensões (dispositivos, métricas além do autorrelato) | §15 |
