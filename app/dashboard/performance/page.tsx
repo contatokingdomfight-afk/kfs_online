@@ -61,6 +61,15 @@ function buildWellnessCopy(t: (key: MessageKey) => string, agg: CheckInWellnessA
     zoneGreen: t("perfWellnessZoneGreen"),
     zoneYellow: t("perfWellnessZoneYellow"),
     zoneRed: t("perfWellnessZoneRed"),
+    statusNormal: t("perfWellnessStatusNormal"),
+    statusAttention: t("perfWellnessStatusAttention"),
+    statusLower: t("perfWellnessStatusLower"),
+    statusHigher: t("perfWellnessStatusHigher"),
+    abbrSleepH: t("perfWellnessAbbrSleepH"),
+    abbrSleepQ: t("perfWellnessAbbrSleepQ"),
+    abbrHydration: t("perfWellnessAbbrHydration"),
+    abbrStress: t("perfWellnessAbbrStress"),
+    abbrFatigue: t("perfWellnessAbbrFatigue"),
   };
 }
 

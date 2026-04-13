@@ -16,51 +16,180 @@ export type CheckInWellnessCopy = {
   zoneGreen: string;
   zoneYellow: string;
   zoneRed: string;
+  statusNormal: string;
+  statusAttention: string;
+  statusLower: string;
+  statusHigher: string;
+  abbrSleepH: string;
+  abbrSleepQ: string;
+  abbrHydration: string;
+  abbrStress: string;
+  abbrFatigue: string;
 };
 
 function format1(v: number): string {
   return (Math.round(v * 10) / 10).toFixed(1);
 }
 
-function MiniScaleBar({ value, max = 5 }: { value: number; max?: number }) {
-  const filled = Math.max(0, Math.min(max, Math.round(value)));
+type StatusKind = "normal" | "attention" | "lower" | "higher";
+
+function statusColor(kind: StatusKind): string {
+  switch (kind) {
+    case "normal":
+      return "var(--success)";
+    case "attention":
+      return "var(--warning)";
+    case "lower":
+      return "#2563eb";
+    case "higher":
+      return "#d97706";
+    default:
+      return "var(--text-secondary)";
+  }
+}
+
+function labelForStatus(kind: StatusKind, copy: CheckInWellnessCopy): string {
+  switch (kind) {
+    case "normal":
+      return copy.statusNormal;
+    case "attention":
+      return copy.statusAttention;
+    case "lower":
+      return copy.statusLower;
+    case "higher":
+      return copy.statusHigher;
+    default:
+      return copy.statusNormal;
+  }
+}
+
+/** Sono (h): intervalo ~7–9 h = ideal; gauge 4–11 h → 0–1 */
+function sleepHoursInsight(h: number): { kind: StatusKind; gauge: number } {
+  let kind: StatusKind;
+  if (h >= 7 && h <= 9) kind = "normal";
+  else if (h < 7) kind = "lower";
+  else kind = "higher";
+  const gauge = Math.max(0, Math.min(1, (h - 4) / 7));
+  return { kind, gauge };
+}
+
+/** Escala 1–5 (maior = melhor): ≥3,5 bom; 2,5–3,5 atenção; &lt;2,5 baixo */
+function scaleHigherIsBetter(v: number): { kind: StatusKind; gauge: number } {
+  let kind: StatusKind;
+  if (v >= 3.5) kind = "normal";
+  else if (v >= 2.5) kind = "attention";
+  else kind = "lower";
+  const gauge = Math.max(0, Math.min(1, (v - 1) / 4));
+  return { kind, gauge };
+}
+
+/** Percentagem de check-ins hidratados */
+function hydrationInsight(pct: number): { kind: StatusKind; gauge: number } {
+  let kind: StatusKind;
+  if (pct >= 65) kind = "normal";
+  else if (pct >= 35) kind = "attention";
+  else kind = "lower";
+  const gauge = Math.max(0, Math.min(1, pct / 100));
+  return { kind, gauge };
+}
+
+function StatusIcon({ kind }: { kind: StatusKind }) {
+  if (kind === "normal") {
+    return (
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--success)_18%,transparent)] text-[length:12px] leading-none" aria-hidden>
+        ✓
+      </span>
+    );
+  }
+  if (kind === "attention") {
+    return (
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--warning)_22%,transparent)] text-[length:12px] leading-none" aria-hidden>
+        !
+      </span>
+    );
+  }
+  if (kind === "lower") {
+    return (
+      <span className="inline-flex h-5 w-5 items-center justify-center text-[length:14px] leading-none" aria-hidden>
+        ↓
+      </span>
+    );
+  }
   return (
-    <div className="flex gap-1 mt-2" aria-hidden>
-      {Array.from({ length: max }, (_, i) => (
-        <span
-          key={i}
-          className={`h-1.5 flex-1 rounded-sm ${i < filled ? "bg-primary" : "bg-border opacity-60"}`}
-        />
-      ))}
+    <span className="inline-flex h-5 w-5 items-center justify-center text-[length:14px] leading-none" aria-hidden>
+      ↑
+    </span>
+  );
+}
+
+function VerticalGauge({ fill01, fillColor }: { fill01: number; fillColor: string }) {
+  const h = Math.max(0, Math.min(100, fill01 * 100));
+  return (
+    <div
+      className="relative h-[92px] w-3 shrink-0 overflow-hidden rounded-full border border-border/80 bg-bg-secondary shadow-inner"
+      role="presentation"
+      aria-hidden
+    >
+      <div
+        className="absolute bottom-0 left-0 right-0 rounded-full transition-[height] duration-300 ease-out"
+        style={{ height: `${h}%`, backgroundColor: fillColor }}
+      />
+      <div
+        className="pointer-events-none absolute left-1/2 h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 border-white bg-bg shadow-sm"
+        style={{ bottom: `calc(${h}% - 5px)` }}
+      />
     </div>
   );
 }
 
-function MetricCard({
+function BiometricCard({
   icon,
-  label,
-  value,
-  hint,
-  children,
+  abbr,
+  mainNum,
+  unit,
+  statusKind,
+  copy,
+  gauge01,
+  accent,
+  extraHint,
 }: {
   icon: string;
-  label: string;
-  value: string;
-  hint?: string;
-  children?: ReactNode;
+  abbr: string;
+  mainNum: string;
+  unit: string;
+  statusKind: StatusKind;
+  copy: CheckInWellnessCopy;
+  gauge01: number;
+  accent: string;
+  extraHint?: ReactNode;
 }) {
+  const statusText = labelForStatus(statusKind, copy);
+  const c = statusColor(statusKind);
+
   return (
-    <div className="rounded-xl border border-border bg-bg/80 p-4 shadow-sm flex flex-col min-h-[120px]">
-      <div className="flex items-start gap-2 mb-1">
-        <span className="text-lg leading-none" aria-hidden>
-          {icon}
-        </span>
-        <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary leading-snug">{label}</span>
+    <article
+      className="relative flex min-h-[132px] gap-3 rounded-2xl border border-border/90 bg-bg p-4 shadow-md transition-shadow hover:shadow-lg"
+      style={{ boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}
+    >
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-center gap-2">
+          <span className="text-[1.15rem] leading-none opacity-95" aria-hidden>
+            {icon}
+          </span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-secondary">{abbr}</span>
+        </div>
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
+          <span className="text-[1.65rem] font-bold leading-none tabular-nums text-text-primary sm:text-[1.75rem]">{mainNum}</span>
+          <span className="text-sm font-medium text-text-secondary">{unit}</span>
+        </div>
+        <div className="mt-auto flex items-center gap-1.5 pt-3 text-xs font-semibold" style={{ color: c }}>
+          <StatusIcon kind={statusKind} />
+          <span>{statusText}</span>
+        </div>
+        {extraHint && <div className="mt-2 text-[11px] leading-snug text-text-secondary">{extraHint}</div>}
       </div>
-      <p className="text-2xl font-bold text-text-primary tabular-nums mt-auto">{value}</p>
-      {hint && <p className="text-[11px] text-text-secondary mt-1 leading-relaxed">{hint}</p>}
-      {children}
-    </div>
+      <VerticalGauge fill01={gauge01} fillColor={accent} />
+    </article>
   );
 }
 
@@ -73,68 +202,92 @@ export function CheckInWellnessSection({ data, copy }: Props) {
   const { zoneShare } = data;
   const hasZones = zoneShare.green + zoneShare.yellow + zoneShare.red > 0;
 
+  const sh = sleepHoursInsight(data.avgSleepHours);
+  const sq = scaleHigherIsBetter(data.avgSleepQuality);
+  const hy = hydrationInsight(data.hydrationOkPercent);
+  const st = scaleHigherIsBetter(data.avgStress);
+  const fa = scaleHigherIsBetter(data.avgFatigue);
+
   return (
-    <section className="rounded-2xl border border-border bg-bg-secondary p-4 sm:p-6 shadow-md overflow-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4">
+    <section className="overflow-hidden rounded-2xl border border-border bg-bg-secondary p-4 shadow-md sm:p-6">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
-            <span aria-hidden>🩺</span>
+          <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-text-primary">
+            <span aria-hidden className="text-xl">
+              🩺
+            </span>
             {copy.title}
           </h2>
-          <p className="text-sm text-text-secondary mt-1 max-w-xl leading-relaxed">{copy.intro}</p>
+          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-text-secondary">{copy.intro}</p>
         </div>
-        <span className="inline-flex items-center rounded-full bg-bg px-3 py-1 text-xs font-medium text-text-secondary border border-border shrink-0">
+        <span className="inline-flex shrink-0 items-center rounded-full border border-border bg-bg px-3 py-1.5 text-xs font-medium text-text-secondary">
           {copy.sample}
         </span>
       </div>
 
-      <p className="text-xs text-text-secondary mb-4">{copy.scaleHint}</p>
+      <p className="mb-4 text-xs text-text-secondary">{copy.scaleHint}</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-        <MetricCard icon="😴" label={copy.sleepH} value={`${format1(data.avgSleepHours)} h`} />
-        <MetricCard
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <BiometricCard
+          icon="😴"
+          abbr={copy.abbrSleepH}
+          mainNum={format1(data.avgSleepHours)}
+          unit="h"
+          statusKind={sh.kind}
+          copy={copy}
+          gauge01={sh.gauge}
+          accent={statusColor(sh.kind)}
+        />
+        <BiometricCard
           icon="💤"
-          label={copy.sleepQ}
-          value={`${format1(data.avgSleepQuality)}/5`}
-        >
-          <MiniScaleBar value={data.avgSleepQuality} />
-        </MetricCard>
-        <MetricCard
+          abbr={copy.abbrSleepQ}
+          mainNum={format1(data.avgSleepQuality)}
+          unit="/5"
+          statusKind={sq.kind}
+          copy={copy}
+          gauge01={sq.gauge}
+          accent={statusColor(sq.kind)}
+        />
+        <BiometricCard
           icon="💧"
-          label={copy.hydration}
-          value={`${Math.round(data.hydrationOkPercent)}%`}
-          hint={copy.hydrationHint}
-        >
-          <div className="mt-2 h-2 rounded-full bg-bg overflow-hidden border border-border">
-            <div
-              className="h-full bg-success rounded-full transition-all"
-              style={{ width: `${Math.min(100, data.hydrationOkPercent)}%` }}
-            />
-          </div>
-        </MetricCard>
-        <MetricCard
+          abbr={copy.abbrHydration}
+          mainNum={String(Math.round(data.hydrationOkPercent))}
+          unit="%"
+          statusKind={hy.kind}
+          copy={copy}
+          gauge01={hy.gauge}
+          accent={statusColor(hy.kind)}
+          extraHint={copy.hydrationHint}
+        />
+        <BiometricCard
           icon="🧘"
-          label={copy.stress}
-          value={`${format1(data.avgStress)}/5`}
-        >
-          <MiniScaleBar value={data.avgStress} />
-        </MetricCard>
-        <MetricCard
+          abbr={copy.abbrStress}
+          mainNum={format1(data.avgStress)}
+          unit="/5"
+          statusKind={st.kind}
+          copy={copy}
+          gauge01={st.gauge}
+          accent={statusColor(st.kind)}
+        />
+        <BiometricCard
           icon="🔋"
-          label={copy.fatigue}
-          value={`${format1(data.avgFatigue)}/5`}
-        >
-          <MiniScaleBar value={data.avgFatigue} />
-        </MetricCard>
+          abbr={copy.abbrFatigue}
+          mainNum={format1(data.avgFatigue)}
+          unit="/5"
+          statusKind={fa.kind}
+          copy={copy}
+          gauge01={fa.gauge}
+          accent={statusColor(fa.kind)}
+        />
       </div>
 
       {hasZones && (
-        <div className="rounded-xl border border-border bg-bg/60 p-4">
-          <h3 className="text-sm font-semibold text-text-primary mb-2">{copy.zonesTitle}</h3>
-          <p className="text-xs text-text-secondary mb-3">
+        <div className="mt-6 rounded-2xl border border-border/90 bg-bg p-4 shadow-sm sm:p-5">
+          <h3 className="text-sm font-semibold text-text-primary">{copy.zonesTitle}</h3>
+          <p className="mb-3 mt-1 text-xs text-text-secondary">
             {copy.zoneGreen} · {copy.zoneYellow} · {copy.zoneRed}
           </p>
-          <div className="flex h-4 rounded-full overflow-hidden border border-border" role="img" aria-label={copy.zonesTitle}>
+          <div className="flex h-4 overflow-hidden rounded-full border border-border" role="img" aria-label={copy.zonesTitle}>
             {zoneShare.green > 0 && (
               <div
                 className="bg-success min-w-[4px] transition-all"
@@ -157,18 +310,18 @@ export function CheckInWellnessSection({ data, copy }: Props) {
               />
             )}
           </div>
-          <div className="flex flex-wrap gap-4 mt-3 text-xs text-text-secondary">
+          <div className="mt-3 flex flex-wrap gap-4 text-xs text-text-secondary">
             <span>
-              <span className="inline-block w-2 h-2 rounded-full bg-success mr-1 align-middle" /> {copy.zoneGreen}{" "}
-              <span className="text-text-primary font-medium">{format1(zoneShare.green)}%</span>
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-success align-middle" /> {copy.zoneGreen}{" "}
+              <span className="font-medium text-text-primary">{format1(zoneShare.green)}%</span>
             </span>
             <span>
-              <span className="inline-block w-2 h-2 rounded-full bg-warning mr-1 align-middle" /> {copy.zoneYellow}{" "}
-              <span className="text-text-primary font-medium">{format1(zoneShare.yellow)}%</span>
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-warning align-middle" /> {copy.zoneYellow}{" "}
+              <span className="font-medium text-text-primary">{format1(zoneShare.yellow)}%</span>
             </span>
             <span>
-              <span className="inline-block w-2 h-2 rounded-full bg-danger mr-1 align-middle" /> {copy.zoneRed}{" "}
-              <span className="text-text-primary font-medium">{format1(zoneShare.red)}%</span>
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-danger align-middle" /> {copy.zoneRed}{" "}
+              <span className="font-medium text-text-primary">{format1(zoneShare.red)}%</span>
             </span>
           </div>
         </div>
