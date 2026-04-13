@@ -81,3 +81,64 @@
   width: 100%;
   box-sizing: border-box;
 }
+
+/* Seletores minutos:segundos (rolo nativo no mobile) */
+.duration-roll-field {
+  margin-top: 6px;
+}
+
+.duration-roll-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.duration-roll-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.duration-roll-wheel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 120px;
+  min-width: 0;
+  max-width: 200px;
+}
+
+.duration-roll-sublabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.duration-roll-select {
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 8px;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.duration-roll-colon {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 52px;
+  color: var(--text-secondary);
+  padding-bottom: 2px;
+  flex: 0 0 auto;
+}

@@ -68,7 +68,7 @@
 
 ### 3.4 Coach – Timer de rounds
 
-- **Rota:** `/coach/round-timer` — temporizador para treinos (boxe, muay thai, etc.): rounds, descanso, contagem inicial; estado com **timestamps** (`phaseEndsAt`) + `catchUp` ao voltar do background; som (Web Audio), vibração, cores por fase, ecrã inteiro; presets e `localStorage` / `sessionStorage` para config e sessão ativa. Atalho na **home do coach** (`app/coach/page.tsx`). Código: `lib/round-timer/*`, `components/coach/round-timer/RoundTimerClient.tsx`.
+- **Rota:** `/coach/round-timer` — temporizador para treinos (boxe, muay thai, etc.): rounds, descanso, contagem inicial; configuração de tempos com **seletores minutos:segundos** (UX tipo rolo no telemóvel); estado com **timestamps** (`phaseEndsAt`) + `catchUp` ao voltar do background; som (Web Audio: contagem 3‑2‑1, aviso ao entrar nos **últimos 10 s** do round/descanso, **fim de round** em três tons, fim do treino), vibração, cores por fase, ecrã inteiro; presets e `localStorage` / `sessionStorage` para config e sessão ativa. Atalho na **home do coach** (`app/coach/page.tsx`). Código: `lib/round-timer/*`, `components/coach/round-timer/RoundTimerClient.tsx`, `DurationRollPicker.tsx`.
 
 ### 3.5 Admin – Turmas
 

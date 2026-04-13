@@ -31,7 +31,15 @@ import {
   saveStoredConfig,
   type SavedPreset,
 } from "@/lib/round-timer/persistence";
-import { playBeepCountdownTick, playBeepFinish, playBeepRest, playBeepRound, unlockAudio } from "@/lib/round-timer/audio";
+import {
+  playBeepCountdownTick,
+  playBeepEndOfRound,
+  playBeepFinish,
+  playBeepRound,
+  playBeepTenSecondsWarning,
+  unlockAudio,
+} from "@/lib/round-timer/audio";
+import { DurationRollPicker } from "@/components/coach/round-timer/DurationRollPicker";
 import "@/app/coach/round-timer/round-timer.css";
 
 function vibrateMs(pattern: number | number[]) {
@@ -73,6 +81,8 @@ export function RoundTimerClient({ locale }: Props) {
       hintSound: t("coachRoundTimerHintSound"),
       sec: t("coachRoundTimerSec"),
       min: t("coachRoundTimerMin"),
+      ariaMin: t("coachRoundTimerAriaMinutes"),
+      ariaSec: t("coachRoundTimerAriaSeconds"),
     }),
     [t]
   );
@@ -85,6 +95,8 @@ export function RoundTimerClient({ locale }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
   const prevPhase = useRef(timer.phase);
   const lastCountdownSec = useRef<number | null>(null);
+  const prevRemForTenSec = useRef<number | null>(null);
+  const tenSecPhaseKey = `${timer.phase}-${timer.roundIdx}-${timer.completedRoundIdx}`;
 
   useEffect(() => {
     setCustomPresets(loadCustomPresets());
@@ -180,7 +192,7 @@ export function RoundTimerClient({ locale }: Props) {
       playBeepRound();
       vibrateMs(120);
     } else if (is === "rest" && was === "round") {
-      playBeepRest();
+      playBeepEndOfRound();
       vibrateMs(80);
     } else if (is === "finished" && was === "round") {
       playBeepFinish();
@@ -201,6 +213,23 @@ export function RoundTimerClient({ locale }: Props) {
       playBeepCountdownTick();
     }
     if (sec > 3) lastCountdownSec.current = null;
+  }, [timer.phase, timer.phaseEndsAt, displayMs]);
+
+  /* Aviso quando o tempo restante cruza para os últimos 10 s (ignora rounds/descansos já curtos desde o início) */
+  useEffect(() => {
+    prevRemForTenSec.current = null;
+  }, [tenSecPhaseKey]);
+
+  useEffect(() => {
+    if (timer.phase !== "round" && timer.phase !== "rest") return;
+    if (timer.phaseEndsAt == null) return;
+    const rem = displayMs;
+    const prev = prevRemForTenSec.current;
+    prevRemForTenSec.current = rem;
+    const crossedIntoLastTen = prev != null && prev > 10_000 && rem <= 10_000 && rem > 0;
+    if (!crossedIntoLastTen) return;
+    void unlockAudio();
+    playBeepTenSecondsWarning();
   }, [timer.phase, timer.phaseEndsAt, displayMs]);
 
   const canEdit = timer.phase === "idle" || timer.phase === "finished";
@@ -406,39 +435,54 @@ export function RoundTimerClient({ locale }: Props) {
               onChange={(e) => setField("rounds", Number(e.target.value))}
             />
           </label>
-          <label className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
-            {tk.countdown} ({tk.sec})
-            <input
-              type="number"
-              className="round-timer-input mt-1"
-              min={0}
-              max={120}
-              value={config.countdownSec}
-              onChange={(e) => setField("countdownSec", Number(e.target.value))}
+          <div className="col-span-2">
+            <DurationRollPicker
+              label={
+                <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                  {tk.countdown}
+                </span>
+              }
+              valueSec={config.countdownSec}
+              onChangeSec={(n) => setField("countdownSec", n)}
+              minSec={0}
+              maxSec={120}
+              disabled={!canEdit}
+              ariaMinutes={tk.ariaMin}
+              ariaSeconds={tk.ariaSec}
             />
-          </label>
-          <label className="text-xs font-medium col-span-2" style={{ color: "var(--text-secondary)" }}>
-            {tk.roundTime} ({tk.sec})
-            <input
-              type="number"
-              className="round-timer-input mt-1"
-              min={5}
-              max={3600}
-              value={config.roundSec}
-              onChange={(e) => setField("roundSec", Number(e.target.value))}
+          </div>
+          <div className="col-span-2">
+            <DurationRollPicker
+              label={
+                <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                  {tk.roundTime}
+                </span>
+              }
+              valueSec={config.roundSec}
+              onChangeSec={(n) => setField("roundSec", n)}
+              minSec={5}
+              maxSec={3600}
+              disabled={!canEdit}
+              ariaMinutes={tk.ariaMin}
+              ariaSeconds={tk.ariaSec}
             />
-          </label>
-          <label className="text-xs font-medium col-span-2" style={{ color: "var(--text-secondary)" }}>
-            {tk.restTime} ({tk.sec})
-            <input
-              type="number"
-              className="round-timer-input mt-1"
-              min={0}
-              max={3600}
-              value={config.restSec}
-              onChange={(e) => setField("restSec", Number(e.target.value))}
+          </div>
+          <div className="col-span-2">
+            <DurationRollPicker
+              label={
+                <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                  {tk.restTime}
+                </span>
+              }
+              valueSec={config.restSec}
+              onChangeSec={(n) => setField("restSec", n)}
+              minSec={0}
+              maxSec={3600}
+              disabled={!canEdit}
+              ariaMinutes={tk.ariaMin}
+              ariaSeconds={tk.ariaSec}
             />
-          </label>
+          </div>
         </div>
 
         <button type="button" className="round-timer-btn round-timer-btn-secondary w-full text-sm" onClick={onSavePreset}>

@@ -424,9 +424,11 @@ export const messages = {
     coachRoundTimerRoundOf: "Round {n} de {t}",
     coachRoundTimerNextRound: "Próximo: round {n}",
     coachRoundTimerHintSound:
-      "Toca em Iniciar para ativar som e vibração. O tempo segue o relógio do dispositivo e mantém-se preciso em segundo plano.",
+      "Toca em Iniciar para ativar som e vibração. Aviso aos 10 s finais e sinal de fim de round. O tempo segue o relógio do dispositivo e mantém-se preciso em segundo plano.",
     coachRoundTimerSec: "seg",
     coachRoundTimerMin: "min",
+    coachRoundTimerAriaMinutes: "Minutos",
+    coachRoundTimerAriaSeconds: "Segundos",
     coachRoundTimerCardCta: "Rounds, descanso e contagem — som e tempo preciso no telemóvel.",
 
     // Biblioteca (aluno)
@@ -1058,9 +1060,11 @@ export const messages = {
     coachRoundTimerRoundOf: "Round {n} of {t}",
     coachRoundTimerNextRound: "Next: round {n}",
     coachRoundTimerHintSound:
-      "Tap Start to enable sound and vibration. Time follows the device clock and stays accurate in the background.",
+      "Tap Start to enable sound and vibration. Alert in the last 10 seconds and a clear end-of-round signal. Time follows the device clock and stays accurate in the background.",
     coachRoundTimerSec: "sec",
     coachRoundTimerMin: "min",
+    coachRoundTimerAriaMinutes: "Minutes",
+    coachRoundTimerAriaSeconds: "Seconds",
     coachRoundTimerCardCta: "Rounds, rest and countdown — sound and accurate time on your phone.",
 
     libraryTitle: "Library",

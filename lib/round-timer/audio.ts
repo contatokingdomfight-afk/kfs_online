@@ -39,8 +39,16 @@ export function playBeepRound(): void {
   beep(880, 0.12, 0.14);
 }
 
-export function playBeepRest(): void {
-  beep(520, 0.1, 0.11);
+/** Fim do round (antes do descanso): sequência audível tipo “gongo”. */
+export function playBeepEndOfRound(): void {
+  beep(660, 0.1, 0.14);
+  setTimeout(() => beep(440, 0.14, 0.13), 120);
+  setTimeout(() => beep(330, 0.22, 0.12), 300);
+}
+
+/** Aviso único quando faltam ~10 segundos no round ou no descanso. */
+export function playBeepTenSecondsWarning(): void {
+  beep(740, 0.16, 0.15);
 }
 
 export function playBeepFinish(): void {
