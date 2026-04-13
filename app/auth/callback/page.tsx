@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-/**
- * Callback OAuth. O createBrowserClient tem detectSessionInUrl: true que processa
- * automaticamente o ?code= da URL via initialize(). Apenas aguardamos o evento
- * SIGNED_IN ou verificamos getSession() — não chamamos exchangeCodeForSession
- * manualmente (isso consumiria o code_verifier antes do auto-processing e causaria
- * "PKCE code verifier not found").
- */
+const LOG_PREFIX = "[KFS-AUTH-CALLBACK]";
+function dbg(...args: unknown[]) {
+  // eslint-disable-next-line no-console
+  console.log(LOG_PREFIX, ...args);
+}
+
 export default function AuthCallbackPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const handled = useRef(false);
+  const [status, setStatus] = useState("A autenticar…");
 
   useEffect(() => {
     if (handled.current) return;
@@ -23,9 +22,26 @@ export default function AuthCallbackPage() {
     const next = searchParams.get("next");
     const redirectTo = next && next.startsWith("/") ? next : "/dashboard";
     const code = searchParams.get("code");
+    const errorParam = searchParams.get("error");
+    const errorDesc = searchParams.get("error_description");
+
+    dbg("=== INÍCIO DO CALLBACK ===");
+    dbg("URL:", window.location.href);
+    dbg("code presente:", !!code, "| code (primeiros 10 chars):", code?.slice(0, 10));
+    dbg("error param:", errorParam, errorDesc);
+    dbg("Cookies disponíveis:", document.cookie.split(";").map(c => c.trim().split("=")[0]).join(", "));
+
+    if (errorParam) {
+      dbg("ERRO OAuth vindo do Supabase/Google:", errorParam, errorDesc);
+      setStatus(`Erro: ${errorParam}`);
+      window.location.href = `/sign-in?error=oauth_error&desc=${encodeURIComponent(errorDesc ?? errorParam)}`;
+      return;
+    }
 
     if (!code) {
-      router.replace("/sign-in?error=missing_code");
+      dbg("ERRO: Sem ?code= na URL");
+      setStatus("Erro: sem código de autorização");
+      window.location.href = "/sign-in?error=missing_code";
       return;
     }
 
@@ -37,30 +53,35 @@ export default function AuthCallbackPage() {
       finished = true;
       clearTimeout(timeout);
       sub?.unsubscribe();
-      // Navegação completa para garantir que os cookies de sessão recém-criados
-      // pelo browser client são enviados num pedido HTTP fresco ao servidor.
-      // router.replace() usa fetch client-side que pode não incluir os cookies
-      // imediatamente após serem escritos via document.cookie.
+      dbg("FINISH chamado — navegando para:", to);
+      setStatus(`A redirecionar para ${to}…`);
       window.location.href = to;
     }
 
-    // Ouvir sessão que o detectSessionInUrl vai criar automaticamente
+    dbg("Registando onAuthStateChange e aguardando SIGNED_IN…");
+
     const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        dbg("onAuthStateChange:", event, "session presente:", !!session, "user:", session?.user?.email);
         if (session) {
+          dbg("Sessão obtida via onAuthStateChange — redirecionando para dashboard");
           finish(redirectTo);
         }
-        // INITIAL_SESSION sem sessão = initialize() ainda a decorrer, aguardar SIGNED_IN
       }
     );
 
-    // Verificar sessão já disponível (se initialize() já completou antes do subscribe)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) finish(redirectTo);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      dbg("getSession resultado:", !!session, "erro:", error?.message);
+      if (session) {
+        dbg("Sessão já disponível via getSession");
+        finish(redirectTo);
+      }
     });
 
-    // Timeout de segurança — se em 12s nada aconteceu, algo falhou
     const timeout = setTimeout(() => {
+      dbg("TIMEOUT 12s — nenhuma sessão obtida, possível falha no code exchange");
+      dbg("Cookies no timeout:", document.cookie.split(";").map(c => c.trim().split("=")[0]).join(", "));
+      setStatus("Timeout — redirecionando para login");
       finish("/sign-in?error=exchange_failed");
     }, 12000);
 
@@ -69,7 +90,7 @@ export default function AuthCallbackPage() {
       clearTimeout(timeout);
       sub?.unsubscribe();
     };
-  }, [router, searchParams]);
+  }, [searchParams]);
 
   return (
     <div
@@ -81,9 +102,14 @@ export default function AuthCallbackPage() {
         background: "var(--bg, #0a0a0a)",
         color: "var(--text-secondary, #888)",
         fontSize: "1rem",
+        flexDirection: "column",
+        gap: "8px",
       }}
     >
-      A autenticar…
+      <span>{status}</span>
+      <span style={{ fontSize: "0.75rem", opacity: 0.5 }}>
+        (ver consola do browser para detalhes)
+      </span>
     </div>
   );
 }
