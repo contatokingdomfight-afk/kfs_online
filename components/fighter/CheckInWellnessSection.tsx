@@ -126,7 +126,7 @@ function VerticalGauge({ fill01, fillColor }: { fill01: number; fillColor: strin
   const h = Math.max(0, Math.min(100, fill01 * 100));
   return (
     <div
-      className="relative h-[92px] w-3 shrink-0 overflow-hidden rounded-full border border-border/80 bg-bg-secondary shadow-inner"
+      className="relative h-[92px] w-3 shrink-0 overflow-hidden rounded-full border border-border bg-bg-secondary/70"
       role="presentation"
       aria-hidden
     >
@@ -135,7 +135,7 @@ function VerticalGauge({ fill01, fillColor }: { fill01: number; fillColor: strin
         style={{ height: `${h}%`, backgroundColor: fillColor }}
       />
       <div
-        className="pointer-events-none absolute left-1/2 h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 border-white bg-bg shadow-sm"
+        className="pointer-events-none absolute left-1/2 h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 border-border bg-bg"
         style={{ bottom: `calc(${h}% - 5px)` }}
       />
     </div>
@@ -167,10 +167,7 @@ function BiometricCard({
   const c = statusColor(statusKind);
 
   return (
-    <article
-      className="relative flex min-h-[132px] gap-3 rounded-2xl border border-border/90 bg-bg p-4 shadow-md transition-shadow hover:shadow-lg"
-      style={{ boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}
-    >
+    <article className="relative flex min-h-[120px] min-w-0 gap-2 rounded-2xl border border-border bg-transparent p-3 sm:min-h-[132px] sm:gap-3 sm:p-4">
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-2">
           <span className="text-[1.15rem] leading-none opacity-95" aria-hidden>
@@ -178,9 +175,9 @@ function BiometricCard({
           </span>
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-secondary">{abbr}</span>
         </div>
-        <div className="mt-3 flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
-          <span className="text-[1.65rem] font-bold leading-none tabular-nums text-text-primary sm:text-[1.75rem]">{mainNum}</span>
-          <span className="text-sm font-medium text-text-secondary">{unit}</span>
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-1 gap-y-0 sm:mt-3 sm:gap-x-1.5">
+          <span className="text-[1.35rem] font-bold leading-none tabular-nums text-text-primary sm:text-[1.65rem] md:text-[1.75rem]">{mainNum}</span>
+          <span className="text-xs font-medium text-text-secondary sm:text-sm">{unit}</span>
         </div>
         <div className="mt-auto flex items-center gap-1.5 pt-3 text-xs font-semibold" style={{ color: c }}>
           <StatusIcon kind={statusKind} />
@@ -209,7 +206,7 @@ export function CheckInWellnessSection({ data, copy }: Props) {
   const fa = scaleHigherIsBetter(data.avgFatigue);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-bg-secondary p-4 shadow-md sm:p-6">
+    <section className="overflow-hidden rounded-2xl border border-border bg-bg-secondary p-4 sm:p-6">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-text-primary">
@@ -227,7 +224,7 @@ export function CheckInWellnessSection({ data, copy }: Props) {
 
       <p className="mb-4 text-xs text-text-secondary">{copy.scaleHint}</p>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <BiometricCard
           icon="😴"
           abbr={copy.abbrSleepH}
@@ -282,7 +279,7 @@ export function CheckInWellnessSection({ data, copy }: Props) {
       </div>
 
       {hasZones && (
-        <div className="mt-6 rounded-2xl border border-border/90 bg-bg p-4 shadow-sm sm:p-5">
+        <div className="mt-6 rounded-2xl border border-border bg-transparent p-4 sm:p-5">
           <h3 className="text-sm font-semibold text-text-primary">{copy.zonesTitle}</h3>
           <p className="mb-3 mt-1 text-xs text-text-secondary">
             {copy.zoneGreen} · {copy.zoneYellow} · {copy.zoneRed}
