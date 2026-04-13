@@ -9,9 +9,8 @@ import { syncUser } from "@/lib/auth/sync-user";
  */
 export async function syncUserAfterSignUp(): Promise<{ redirect: string } | { error: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user ?? null;
   if (!user) {
     return { error: "Sessão não encontrada. Tenta fazer login novamente." };
   }

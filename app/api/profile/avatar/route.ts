@@ -7,9 +7,8 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user ?? null;
   if (!user) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }

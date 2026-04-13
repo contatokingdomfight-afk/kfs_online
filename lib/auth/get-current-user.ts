@@ -9,9 +9,8 @@ import { syncUser } from "@/lib/auth/sync-user";
  */
 export const getCurrentDbUser = cache(async function getCurrentDbUser() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user ?? null;
   if (!user) return null;
   const { user: dbUser } = await syncUser(user);
   return dbUser;
@@ -23,9 +22,8 @@ export const getCurrentDbUser = cache(async function getCurrentDbUser() {
  */
 export async function getCurrentDbUserUncached() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user ?? null;
   if (!user) return null;
   const { user: dbUser } = await syncUser(user);
   return dbUser;

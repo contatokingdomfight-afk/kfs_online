@@ -16,7 +16,12 @@ import { CTASection } from "@/components/home/CTASection";
 import { Footer } from "@/components/home/Footer";
 import { HomeHeader } from "@/components/home/HomeHeader";
 
-type Props = { searchParams: Promise<{ code?: string; next?: string }> };
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+
+function firstSearchParam(v: string | string[] | undefined): string | undefined {
+  if (v === undefined) return undefined;
+  return typeof v === "string" ? v : v[0];
+}
 
 export const metadata: Metadata = {
   title: "Kingdom Fight School | Treine com Propósito. Lute com Disciplina.",
@@ -42,9 +47,11 @@ export const metadata: Metadata = {
 
 export default async function HomePage({ searchParams }: Props) {
   const params = await searchParams;
-  if (params.code) {
-    const next = params.next ? `&next=${encodeURIComponent(params.next)}` : "";
-    redirect(`/auth/callback?code=${params.code}${next}`);
+  const code = firstSearchParam(params.code);
+  const nextRaw = firstSearchParam(params.next);
+  if (code) {
+    const next = nextRaw ? `&next=${encodeURIComponent(nextRaw)}` : "";
+    redirect(`/auth/callback?code=${encodeURIComponent(code)}${next}`);
   }
 
   const locale = (await getLocaleFromCookies()) as "pt" | "en";

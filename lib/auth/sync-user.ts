@@ -146,7 +146,7 @@ export async function syncUser(supabaseUser: SupabaseUser) {
 
   const { data: user } = await supabase
     .from("User")
-    .select("id, authUserId, email, name, role, createdAt, avatarUrl")
+    .select("id, authUserId, email, name, role, createdAt")
     .eq("id", userId)
     .single();
 

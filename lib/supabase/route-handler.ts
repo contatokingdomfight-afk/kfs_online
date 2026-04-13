@@ -38,10 +38,8 @@ export async function createRouteHandlerClient() {
 export async function requireAdminForRoute(): Promise<{ adminOk: true } | { adminOk: false; status: number; error: string }> {
   try {
     const supabase = await createRouteHandlerClient();
-    const {
-      data: { user },
-      error: authErr,
-    } = await supabase.auth.getUser();
+    const { data: authData, error: authErr } = await supabase.auth.getUser();
+    const user = authData?.user ?? null;
 
     if (authErr || !user) {
       return { adminOk: false, status: 401, error: "Sessão inválida ou expirada." };

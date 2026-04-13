@@ -47,6 +47,17 @@ function isStripeCheckoutApi(pathname: string) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  /**
+   * OAuth (Google): se a Site URL no Supabase for só `http://localhost:3000` (ou raiz em prod.),
+   * o utilizador volta a `/?code=...` em vez de `/auth/callback?code=...`.
+   * O redirect na página inicial pode falhar com cache; aqui garantimos a rota de troca de código.
+   */
+  if (pathname === "/" && request.nextUrl.searchParams.has("code")) {
+    const dest = request.nextUrl.clone();
+    dest.pathname = "/auth/callback";
+    return NextResponse.redirect(dest);
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -78,9 +89,8 @@ export async function middleware(request: NextRequest) {
     });
 
     await supabase.auth.getSession();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user ?? null;
 
     if (isPublicApiPath(pathname)) {
       return response;
