@@ -5,9 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * Callback OAuth client-side: o browser Supabase client faz o exchange do code
- * e guarda a sessão via document.cookie (sem depender de Set-Cookie em redirects
- * server-side, que o Vercel/Next.js 15 pode não propagar corretamente em 307).
+ * Callback OAuth. O createBrowserClient tem detectSessionInUrl: true que processa
+ * automaticamente o ?code= da URL via initialize(). Apenas aguardamos o evento
+ * SIGNED_IN ou verificamos getSession() — não chamamos exchangeCodeForSession
+ * manualmente (isso consumiria o code_verifier antes do auto-processing e causaria
+ * "PKCE code verifier not found").
  */
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -18,9 +20,9 @@ export default function AuthCallbackPage() {
     if (handled.current) return;
     handled.current = true;
 
-    const code = searchParams.get("code");
     const next = searchParams.get("next");
     const redirectTo = next && next.startsWith("/") ? next : "/dashboard";
+    const code = searchParams.get("code");
 
     if (!code) {
       router.replace("/sign-in?error=missing_code");
@@ -28,14 +30,41 @@ export default function AuthCallbackPage() {
     }
 
     const supabase = createClient();
-    supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-      if (error) {
-        console.error("[callback] exchange error:", error.message);
-        router.replace("/sign-in?error=exchange_failed");
-        return;
+    let finished = false;
+
+    function finish(to: string) {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timeout);
+      sub?.unsubscribe();
+      router.replace(to);
+    }
+
+    // Ouvir sessão que o detectSessionInUrl vai criar automaticamente
+    const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          finish(redirectTo);
+        }
+        // INITIAL_SESSION sem sessão = initialize() ainda a decorrer, aguardar SIGNED_IN
       }
-      router.replace(redirectTo);
+    );
+
+    // Verificar sessão já disponível (se initialize() já completou antes do subscribe)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) finish(redirectTo);
     });
+
+    // Timeout de segurança — se em 12s nada aconteceu, algo falhou
+    const timeout = setTimeout(() => {
+      finish("/sign-in?error=exchange_failed");
+    }, 12000);
+
+    return () => {
+      finished = true;
+      clearTimeout(timeout);
+      sub?.unsubscribe();
+    };
   }, [router, searchParams]);
 
   return (
