@@ -37,7 +37,11 @@ export default function AuthCallbackPage() {
       finished = true;
       clearTimeout(timeout);
       sub?.unsubscribe();
-      router.replace(to);
+      // Navegação completa para garantir que os cookies de sessão recém-criados
+      // pelo browser client são enviados num pedido HTTP fresco ao servidor.
+      // router.replace() usa fetch client-side que pode não incluir os cookies
+      // imediatamente após serem escritos via document.cookie.
+      window.location.href = to;
     }
 
     // Ouvir sessão que o detectSessionInUrl vai criar automaticamente
