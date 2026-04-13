@@ -45,6 +45,29 @@ export default function AuthCallbackPage() {
       return;
     }
 
+    // Limpar TODOS os cookies de sessão Supabase antigos antes do code exchange.
+    // Sem esta limpeza, o cliente tenta refrescar a sessão anterior em paralelo
+    // com o detectSessionInUrl — condição de corrida que pode sobrescrever ou
+    // apagar a sessão nova antes da navegação para /dashboard.
+    const supabaseRef = process.env.NEXT_PUBLIC_SUPABASE_URL
+      ?.replace("https://", "")
+      .split(".")[0];
+    if (supabaseRef) {
+      const cookiesToClear = [
+        `sb-${supabaseRef}-auth-token`,
+        `sb-${supabaseRef}-auth-token.0`,
+        `sb-${supabaseRef}-auth-token.1`,
+        `sb-${supabaseRef}-auth-token.2`,
+        `sb-${supabaseRef}-auth-token.3`,
+        `sb-${supabaseRef}-auth-token.4`,
+      ];
+      cookiesToClear.forEach((name) => {
+        document.cookie = `${name}=; max-age=0; path=/; sameSite=lax`;
+      });
+      dbg("Cookies de sessão antigos limpos. Ref:", supabaseRef);
+    }
+    dbg("Cookies após limpeza:", document.cookie.split(";").map(c => c.trim().split("=")[0]).join(", "));
+
     const supabase = createClient();
     let finished = false;
 
@@ -62,21 +85,17 @@ export default function AuthCallbackPage() {
 
     const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        dbg("onAuthStateChange:", event, "session presente:", !!session, "user:", session?.user?.email);
-        if (session) {
-          dbg("Sessão obtida via onAuthStateChange — redirecionando para dashboard");
+        dbg("onAuthStateChange:", event, "session presente:", !!session, "user:", session?.user?.email, "user.id:", session?.user?.id);
+        // Só reagir a SIGNED_IN (novo login) — ignorar INITIAL_SESSION, SIGNED_OUT, etc.
+        if (event === "SIGNED_IN" && session) {
+          dbg("SIGNED_IN confirmado — redirecionando para dashboard");
           finish(redirectTo);
+        }
+        if (event === "SIGNED_OUT") {
+          dbg("SIGNED_OUT recebido durante callback — sessão foi limpa, aguardar SIGNED_IN do code exchange");
         }
       }
     );
-
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      dbg("getSession resultado:", !!session, "erro:", error?.message);
-      if (session) {
-        dbg("Sessão já disponível via getSession");
-        finish(redirectTo);
-      }
-    });
 
     const timeout = setTimeout(() => {
       dbg("TIMEOUT 12s — nenhuma sessão obtida, possível falha no code exchange");
