@@ -12,8 +12,13 @@ export const getCurrentDbUser = cache(async function getCurrentDbUser() {
   const { data } = await supabase.auth.getUser();
   const user = data?.user ?? null;
   if (!user) return null;
-  const { user: dbUser } = await syncUser(user);
-  return dbUser;
+  try {
+    const { user: dbUser } = await syncUser(user);
+    return dbUser;
+  } catch (err) {
+    console.error("[getCurrentDbUser] syncUser falhou — utilizador autenticado mas sem registo na BD:", err);
+    return null;
+  }
 });
 
 /**
@@ -25,6 +30,11 @@ export async function getCurrentDbUserUncached() {
   const { data } = await supabase.auth.getUser();
   const user = data?.user ?? null;
   if (!user) return null;
-  const { user: dbUser } = await syncUser(user);
-  return dbUser;
+  try {
+    const { user: dbUser } = await syncUser(user);
+    return dbUser;
+  } catch (err) {
+    console.error("[getCurrentDbUserUncached] syncUser falhou:", err);
+    return null;
+  }
 }

@@ -1,13 +1,32 @@
-import type { User as SupabaseUser } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
+import type { User as SupabaseUser, SupabaseClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Sincroniza o utilizador do Supabase Auth com a tabela User (e cria Student se não existir).
- * Usa o cliente Supabase (HTTPS) em vez de Prisma para funcionar mesmo quando a conexão
- * direta à BD (porta 5432) não está acessível.
+ *
+ * Usa o service role key (server-only) para contornar o RLS —  é seguro porque:
+ * - Esta função só é chamada em Server Components / Route Handlers (nunca no cliente)
+ * - O service role key não é exposto ao browser (variável sem prefixo NEXT_PUBLIC_)
+ *
+ * Razão: quando chamada a partir de /auth/callback, o cliente Supabase com cookies
+ * ainda não tem a sessão na request (os cookies de sessão são escritos na response),
+ * pelo que qualquer cliente baseado em cookies ficaria anónimo e seria bloqueado pelo RLS.
  */
+function createAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) {
+    throw new Error(
+      "[syncUser] Variáveis NEXT_PUBLIC_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configuradas."
+    );
+  }
+  return createSupabaseClient(url, serviceKey, {
+    auth: { persistSession: false },
+  });
+}
+
 export async function syncUser(supabaseUser: SupabaseUser) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const authUserId = supabaseUser.id;
   const email = supabaseUser.email ?? "";
@@ -39,18 +58,16 @@ export async function syncUser(supabaseUser: SupabaseUser) {
       name,
       role: "ALUNO",
     });
-    
-    // Se der erro de duplicação, significa que outro request criou o user
-    // Buscar o user existente em vez de falhar
+
     if (insertError) {
-      if (insertError.code === '23505') {
-        // Duplicate key - buscar o user que foi criado
+      if (insertError.code === "23505") {
+        // Race condition: outro request criou o utilizador entretanto
         const { data: existingUser } = await supabase
           .from("User")
           .select("id")
           .eq("authUserId", authUserId)
           .single();
-        
+
         if (existingUser) {
           userId = existingUser.id;
         } else {
@@ -73,7 +90,6 @@ export async function syncUser(supabaseUser: SupabaseUser) {
   let studentId: string | null = null;
 
   if (!student) {
-    // Buscar escola padrão (primeira escola ativa)
     const { data: defaultSchool } = await supabase
       .from("School")
       .select("id")
@@ -94,8 +110,8 @@ export async function syncUser(supabaseUser: SupabaseUser) {
       status: "ATIVO",
     });
 
-    // Ignorar erro de duplicação (race condition) - buscar o student existente
     if (studentError && studentError.code === "23505") {
+      // Race condition na criação do Student
       const { data: existingStudent } = await supabase
         .from("Student")
         .select("id")
@@ -103,18 +119,7 @@ export async function syncUser(supabaseUser: SupabaseUser) {
         .single();
       studentId = existingStudent?.id ?? null;
       if (studentId) {
-        const { data: existingProfile } = await supabase
-          .from("StudentProfile")
-          .select("id")
-          .eq("studentId", studentId)
-          .maybeSingle();
-        if (!existingProfile) {
-          await supabase.from("StudentProfile").insert({
-            id: crypto.randomUUID(),
-            studentId,
-            hasCompletedOnboarding: true,
-          });
-        }
+        await ensureStudentProfile(supabase, studentId);
       }
     } else if (studentError) {
       throw studentError;
@@ -128,29 +133,15 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     }
   } else {
     studentId = student.id;
-    // Garantir que StudentProfile existe (alunos antigos podem não ter)
-    // Alunos existentes = registados antes do onboarding → considerar onboarding completo
-    const { data: existingProfile } = await supabase
-      .from("StudentProfile")
-      .select("id")
-      .eq("studentId", studentId)
-      .maybeSingle();
-    if (!existingProfile) {
-      await supabase.from("StudentProfile").insert({
-        id: crypto.randomUUID(),
-        studentId,
-        hasCompletedOnboarding: true,
-      });
-    }
+    await ensureStudentProfile(supabase, student.id);
   }
 
   const { data: user } = await supabase
     .from("User")
-    .select("id, authUserId, email, name, role, createdAt")
+    .select("id, authUserId, email, name, role, createdAt, avatarUrl")
     .eq("id", userId)
     .single();
 
-  // Verificar se precisa de onboarding (para redirecionamento)
   let hasCompletedOnboarding = true;
   if (studentId) {
     const { data: profile } = await supabase
@@ -162,4 +153,20 @@ export async function syncUser(supabaseUser: SupabaseUser) {
   }
 
   return { user, hasCompletedOnboarding };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function ensureStudentProfile(supabase: SupabaseClient<any>, studentId: string) {
+  const { data: existingProfile } = await supabase
+    .from("StudentProfile")
+    .select("id")
+    .eq("studentId", studentId)
+    .maybeSingle();
+  if (!existingProfile) {
+    await supabase.from("StudentProfile").insert({
+      id: crypto.randomUUID(),
+      studentId,
+      hasCompletedOnboarding: true,
+    });
+  }
 }
