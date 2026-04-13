@@ -1,68 +1,51 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { syncUser } from "@/lib/auth/sync-user";
-import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
 
 /**
- * Callback OAuth (ex.: Google). Troca o code por sessão, sincroniza User/Student
- * e redireciona. Os cookies da sessão são definidos na resposta de redirect
- * para garantir que o utilizador fique logado.
+ * Callback OAuth (ex.: Google). Usa createClient() com cookies() do next/headers
+ * para que os cookies de sessão sejam automaticamente incluídos na resposta de
+ * redirect pelo Next.js (mecanismo interno de WorkAsyncStorage).
+ * Em produção, usa x-forwarded-host para obter o domínio correto no Vercel.
  */
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const nextUrl = requestUrl.searchParams.get("next");
-  const origin = requestUrl.origin;
 
-  let redirectPath = nextUrl && nextUrl.startsWith("/") ? nextUrl : "/dashboard";
+  // Em produção no Vercel, x-forwarded-host contém o domínio público correto.
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const origin = forwardedHost
+    ? `https://${forwardedHost}`
+    : requestUrl.origin;
 
-  if (code) {
-    // Armazenar cookies para aplicar na resposta final
-    const cookieStore: { name: string; value: string; options?: Record<string, unknown> }[] = [];
+  const redirectPath = nextUrl && nextUrl.startsWith("/") ? nextUrl : "/dashboard";
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookieOptions: supabaseCookieOptions,
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-            cookieStore.length = 0;
-            cookieStore.push(...cookiesToSet);
-          },
-        },
-      }
-    );
+  if (!code) {
+    return NextResponse.redirect(`${origin}/sign-in?error=missing_code`);
+  }
 
-    try {
-      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-      const session = data?.session;
-      if (exchangeError) {
-        console.error("Auth callback exchange error:", exchangeError);
-        return NextResponse.redirect(`${origin}/sign-in?error=auth_callback_error`);
-      }
-      if (session?.user) {
-        try {
-          await syncUser(session.user);
-        } catch (syncErr) {
-          console.error("Auth callback syncUser (non-fatal):", syncErr);
-        }
-      }
-    } catch (error) {
-      console.error("Error in auth callback:", error);
-      return NextResponse.redirect(`${origin}/sign-in?error=auth_callback_error`);
+  try {
+    const supabase = await createClient();
+    const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (exchangeError) {
+      console.error("Auth callback exchange error:", exchangeError);
+      return NextResponse.redirect(`${origin}/sign-in?error=exchange_failed`);
     }
 
-    // Criar redirect com os cookies da sessão aplicados
-    const response = NextResponse.redirect(`${origin}${redirectPath}`);
-    cookieStore.forEach(({ name, value, options }) => {
-      response.cookies.set(name, value, options ?? {});
-    });
-    return response;
+    const session = data?.session;
+    if (session?.user) {
+      try {
+        await syncUser(session.user);
+      } catch (syncErr) {
+        console.error("Auth callback syncUser (non-fatal):", syncErr);
+      }
+    }
+  } catch (error) {
+    console.error("Error in auth callback:", error);
+    return NextResponse.redirect(`${origin}/sign-in?error=auth_callback_error`);
   }
 
   return NextResponse.redirect(`${origin}${redirectPath}`);
