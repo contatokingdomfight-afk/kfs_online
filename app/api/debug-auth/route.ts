@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { syncUser } from "@/lib/auth/sync-user";
 
 // Endpoint temporário de diagnóstico — REMOVER antes de ir para produção definitiva.
-// Não expõe dados sensíveis: apenas IDs parciais e flags de presença.
 export async function GET() {
   const supabase = await createClient();
 
@@ -12,8 +12,10 @@ export async function GET() {
 
   let authUser: { id: string; email: string | undefined; lastSignIn: string | undefined } | null = null;
   let authError: string | null = null;
-  let dbUser: unknown = null;
-  let dbError: string | null = null;
+  let dbUserDirect: unknown = null;
+  let dbDirectError: string | null = null;
+  let syncResult: unknown = null;
+  let syncError: string | null = null;
 
   try {
     const { data, error } = await supabase.auth.getUser();
@@ -25,13 +27,26 @@ export async function GET() {
         lastSignIn: data.user.last_sign_in_at,
       };
 
+      // Teste 1: leitura direta com client de sessão (RLS)
       const { data: row, error: rowErr } = await supabase
         .from("User")
         .select("id, email, role, authUserId")
         .eq("authUserId", data.user.id)
         .maybeSingle();
-      if (rowErr) dbError = rowErr.message;
-      if (row) dbUser = row;
+      if (rowErr) dbDirectError = rowErr.message;
+      if (row) dbUserDirect = row;
+
+      // Teste 2: syncUser com admin client
+      try {
+        const result = await syncUser(data.user);
+        syncResult = {
+          userId: result.user?.id,
+          role: result.user?.role,
+          hasCompletedOnboarding: result.hasCompletedOnboarding,
+        };
+      } catch (err) {
+        syncError = String(err);
+      }
     }
   } catch (err) {
     authError = String(err);
@@ -44,8 +59,10 @@ export async function GET() {
     },
     authUser,
     authError,
-    dbUser,
-    dbError,
+    dbUserDirect,
+    dbDirectError,
+    syncResult,
+    syncError,
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "(não definida)",
     timestamp: new Date().toISOString(),
   });

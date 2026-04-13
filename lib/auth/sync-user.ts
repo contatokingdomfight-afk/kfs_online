@@ -1,4 +1,4 @@
-import type { User as SupabaseUser, SupabaseClient } from "@supabase/supabase-js";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -35,21 +35,33 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     supabaseUser.user_metadata?.name ??
     null;
 
-  const { data: existing } = await supabase
+  console.log("[syncUser] a sincronizar utilizador", { authUserId, email });
+
+  const { data: existing, error: findErr } = await supabase
     .from("User")
     .select("id, authUserId, email, name, role")
     .eq("authUserId", authUserId)
     .maybeSingle();
 
+  if (findErr) {
+    console.error("[syncUser] erro ao procurar User por authUserId:", findErr);
+    throw findErr;
+  }
+
   let userId: string;
 
   if (existing) {
-    await supabase
+    console.log("[syncUser] utilizador existente encontrado:", existing.id, "role:", existing.role);
+    const { error: updateErr } = await supabase
       .from("User")
       .update({ email, name })
       .eq("id", existing.id);
+    if (updateErr) {
+      console.error("[syncUser] erro ao atualizar User:", updateErr);
+    }
     userId = existing.id;
   } else {
+    console.log("[syncUser] utilizador não encontrado — a criar novo ALUNO");
     const id = crypto.randomUUID();
     const { error: insertError } = await supabase.from("User").insert({
       id,
@@ -60,8 +72,8 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     });
 
     if (insertError) {
+      console.error("[syncUser] erro ao inserir User:", insertError);
       if (insertError.code === "23505") {
-        // Race condition: outro request criou o utilizador entretanto
         const { data: existingUser } = await supabase
           .from("User")
           .select("id")
@@ -81,16 +93,19 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     }
   }
 
-  const { data: student } = await supabase
+  const { data: student, error: studentFindErr } = await supabase
     .from("Student")
     .select("id")
     .eq("userId", userId)
     .maybeSingle();
 
-  let studentId: string | null = null;
+  if (studentFindErr) {
+    console.error("[syncUser] erro ao procurar Student:", studentFindErr);
+  }
 
   if (!student) {
-    const { data: defaultSchool } = await supabase
+    console.log("[syncUser] sem Student — a procurar escola ativa para criar");
+    const { data: defaultSchool, error: schoolErr } = await supabase
       .from("School")
       .select("id")
       .eq("isActive", true)
@@ -98,7 +113,8 @@ export async function syncUser(supabaseUser: SupabaseUser) {
       .limit(1)
       .single();
 
-    if (!defaultSchool) {
+    if (schoolErr || !defaultSchool) {
+      console.error("[syncUser] erro ao procurar escola ativa:", schoolErr);
       throw new Error("Nenhuma escola ativa encontrada. Configure uma escola primeiro.");
     }
 
@@ -111,62 +127,37 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     });
 
     if (studentError && studentError.code === "23505") {
-      // Race condition na criação do Student
+      console.log("[syncUser] Student já existia (race condition) — a recuperar id");
       const { data: existingStudent } = await supabase
         .from("Student")
         .select("id")
         .eq("userId", userId)
         .single();
-      studentId = existingStudent?.id ?? null;
-      if (studentId) {
-        await ensureStudentProfile(supabase, studentId);
-      }
+      // studentId ignorado — não usado para StudentProfile (tabela não existe)
+      void existingStudent;
     } else if (studentError) {
+      console.error("[syncUser] erro ao criar Student:", studentError);
       throw studentError;
     } else {
-      studentId = newStudentId;
-      await supabase.from("StudentProfile").insert({
-        id: crypto.randomUUID(),
-        studentId: newStudentId,
-        hasCompletedOnboarding: true,
-      });
+      console.log("[syncUser] Student criado:", newStudentId);
     }
   } else {
-    studentId = student.id;
-    await ensureStudentProfile(supabase, student.id);
+    console.log("[syncUser] Student encontrado:", student.id);
   }
 
-  const { data: user } = await supabase
+  const { data: user, error: userFetchErr } = await supabase
     .from("User")
     .select("id, authUserId, email, name, role, createdAt, avatarUrl")
     .eq("id", userId)
     .single();
 
-  let hasCompletedOnboarding = true;
-  if (studentId) {
-    const { data: profile } = await supabase
-      .from("StudentProfile")
-      .select("hasCompletedOnboarding")
-      .eq("studentId", studentId)
-      .maybeSingle();
-    hasCompletedOnboarding = profile?.hasCompletedOnboarding ?? false;
+  if (userFetchErr) {
+    console.error("[syncUser] erro ao buscar User final:", userFetchErr);
+    throw userFetchErr;
   }
 
-  return { user, hasCompletedOnboarding };
-}
+  console.log("[syncUser] user retornado:", user?.id, "role:", user?.role);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function ensureStudentProfile(supabase: SupabaseClient<any>, studentId: string) {
-  const { data: existingProfile } = await supabase
-    .from("StudentProfile")
-    .select("id")
-    .eq("studentId", studentId)
-    .maybeSingle();
-  if (!existingProfile) {
-    await supabase.from("StudentProfile").insert({
-      id: crypto.randomUUID(),
-      studentId,
-      hasCompletedOnboarding: true,
-    });
-  }
+  // hasCompletedOnboarding: sem tabela StudentProfile neste projeto, assume-se true
+  return { user, hasCompletedOnboarding: true };
 }
