@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
 
 /** Inclui `/auth/update-password`: link do email de reset traz `?code=`; tem de ser público antes da sessão existir. */
 const publicPaths = [
@@ -65,6 +66,7 @@ export async function middleware(request: NextRequest) {
     let response = NextResponse.next({ request });
 
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookieOptions: supabaseCookieOptions,
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -75,6 +77,7 @@ export async function middleware(request: NextRequest) {
       },
     });
 
+    await supabase.auth.getSession();
     const {
       data: { user },
     } = await supabase.auth.getUser();

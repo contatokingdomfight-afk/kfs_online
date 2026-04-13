@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
 
 /** Uma instância por pedido RSC — evita múltiplos `createServerClient` no mesmo render. */
 async function createSupabaseServerClient() {
@@ -10,6 +11,7 @@ async function createSupabaseServerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: supabaseCookieOptions,
       cookies: {
         getAll() {
           return cookieStore.getAll();

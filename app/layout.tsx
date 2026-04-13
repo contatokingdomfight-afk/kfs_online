@@ -8,6 +8,7 @@ import { PwaDisplayMode } from "@/components/PwaDisplayMode";
 import { PwaServiceWorkerRegister } from "@/components/PwaServiceWorkerRegister";
 import { PwaInstallProvider } from "@/components/PwaInstallProvider";
 import { PwaInstallHint } from "@/components/PwaInstallHint";
+import { AuthSessionKeepAlive } from "@/components/AuthSessionKeepAlive";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -58,6 +59,7 @@ export default async function RootLayout({
     <html lang={locale} data-theme={theme} suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
         <PwaInstallProvider locale={appLocale}>
+          <AuthSessionKeepAlive />
           <PwaDisplayMode />
           <PwaServiceWorkerRegister />
           <PwaInstallHint />

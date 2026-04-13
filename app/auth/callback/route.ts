@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { syncUser } from "@/lib/auth/sync-user";
+import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
 
 /**
  * Callback OAuth (ex.: Google). Troca o code por sessão, sincroniza User/Student
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
+        cookieOptions: supabaseCookieOptions,
         cookies: {
           getAll() {
             return request.cookies.getAll();

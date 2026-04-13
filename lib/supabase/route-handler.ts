@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
 
 /**
  * Cliente Supabase para Route Handlers (`app/api/...`).
@@ -11,6 +12,7 @@ export async function createRouteHandlerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: supabaseCookieOptions,
       cookies: {
         getAll() {
           return cookieStore.getAll();
