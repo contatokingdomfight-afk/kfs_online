@@ -259,6 +259,33 @@ export default async function CoachHomePage() {
         restMessage={t("coachRestMessage")}
       />
 
+      <Link
+        href="/coach/round-timer"
+        className="card"
+        style={{
+          display: "block",
+          padding: "clamp(14px, 3.5vw, 18px) clamp(16px, 4vw, 20px)",
+          textDecoration: "none",
+          borderLeft: "4px solid var(--primary)",
+          fontWeight: 600,
+          fontSize: "clamp(15px, 3.8vw, 17px)",
+          color: "var(--text-primary)",
+        }}
+      >
+        {t("navRoundTimer")}
+        <span
+          style={{
+            display: "block",
+            marginTop: 6,
+            fontSize: "clamp(13px, 3.2vw, 14px)",
+            fontWeight: 400,
+            color: "var(--text-secondary)",
+          }}
+        >
+          {t("coachRoundTimerCardCta")}
+        </span>
+      </Link>
+
       <section
         className="card"
         style={{

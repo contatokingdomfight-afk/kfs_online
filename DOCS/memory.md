@@ -66,6 +66,10 @@
 
 - **`createPayment`** consolida linhas em `Payment` para o mesmo `studentId` + `referenceMonth`: registar **Pago** quando já existia **Em atraso** (ex.: mensalidade gerada) **atualiza** o registo em vez de criar duplicado. Ver **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
 
+### 3.4 Coach – Timer de rounds
+
+- **Rota:** `/coach/round-timer` — temporizador para treinos (boxe, muay thai, etc.): rounds, descanso, contagem inicial; estado com **timestamps** (`phaseEndsAt`) + `catchUp` ao voltar do background; som (Web Audio), vibração, cores por fase, ecrã inteiro; presets e `localStorage` / `sessionStorage` para config e sessão ativa. Atalho na **home do coach** (`app/coach/page.tsx`). Código: `lib/round-timer/*`, `components/coach/round-timer/RoundTimerClient.tsx`.
+
 ### 3.5 Admin – Turmas
 
 - Vista **por semana** / por modalidade; criação de aulas (incl. recorrente / one-off) — ver `app/admin/turmas/`.

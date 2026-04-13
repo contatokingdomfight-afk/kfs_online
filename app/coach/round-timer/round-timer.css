@@ -1,0 +1,83 @@
+/* Round timer — cores por fase (alto contraste em treino) */
+.round-timer-root {
+  --rt-prepare: #ca8a04;
+  --rt-prepare-bg: rgba(234, 179, 8, 0.12);
+  --rt-round: #dc2626;
+  --rt-round-bg: rgba(220, 38, 38, 0.12);
+  --rt-rest: #2563eb;
+  --rt-rest-bg: rgba(37, 99, 235, 0.12);
+  --rt-done: #16a34a;
+  --rt-done-bg: rgba(22, 163, 74, 0.12);
+}
+
+.round-timer-root[data-ui="prepare"] {
+  --rt-accent: var(--rt-prepare);
+  --rt-surface: var(--rt-prepare-bg);
+}
+.round-timer-root[data-ui="round"] {
+  --rt-accent: var(--rt-round);
+  --rt-surface: var(--rt-round-bg);
+}
+.round-timer-root[data-ui="rest"] {
+  --rt-accent: var(--rt-rest);
+  --rt-surface: var(--rt-rest-bg);
+}
+.round-timer-root[data-ui="idle"] {
+  --rt-accent: var(--text-secondary);
+  --rt-surface: var(--bg-secondary);
+}
+.round-timer-root[data-ui="done"] {
+  --rt-accent: var(--rt-done);
+  --rt-surface: var(--rt-done-bg);
+}
+
+.round-timer-root:fullscreen {
+  padding: clamp(16px, 4vw, 32px);
+  box-sizing: border-box;
+  background: var(--bg);
+}
+
+.round-timer-display {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.round-timer-btn {
+  min-height: 52px;
+  min-width: 120px;
+  padding: 14px 20px;
+  font-size: clamp(16px, 4vw, 18px);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.round-timer-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.round-timer-btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.round-timer-btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.round-timer-input {
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  width: 100%;
+  box-sizing: border-box;
+}
