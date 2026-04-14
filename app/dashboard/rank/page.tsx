@@ -65,7 +65,8 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
       modality,
       ageBucket,
     },
-    100
+    100,
+    mySchoolId
   );
 
   const filterMessages = {

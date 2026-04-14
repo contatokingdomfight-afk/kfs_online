@@ -42,6 +42,20 @@ Quando alterares critérios em **Admin → Critérios de avaliação**, o cache 
 
 ---
 
+## Ranking `/dashboard/rank` — `get_leaderboard_filtered`
+
+Se em produção aparecer *Could not find the function public.get_leaderboard_filtered … in the schema cache*, a migração ainda não foi aplicada nesse projeto Supabase.
+
+1. No **SQL Editor**, executa o ficheiro  
+   `supabase/migrations/20260412120000_leaderboard_filtered_rpc.sql`  
+   (adiciona colunas opcionais `Student.primaryModality` / `StudentProfile.dateOfBirth` se faltarem e cria a RPC).
+
+2. Até aplicares isso, a app pode usar **fallback** para `get_leaderboard_my_school` só quando o aluno não usa filtros de **outra escola**, **modalidade** ou **faixa etária** — para filtros completos é obrigatória a RPC nova.
+
+A RPC mais antiga está em `supabase/migrations/20260402120000_leaderboard_school_rpc.sql` (`get_leaderboard_my_school`).
+
+---
+
 ## Nota sobre tipos
 
 Foi adicionado `comp_id::text` nos blocos DO das migrations para compatibilidade com a coluna `"componentId"` da tabela `EvaluationCriterion` (tipo text no teu projeto). Se a coluna for uuid, podes remover o `::text` nas migrations locais e voltar a aplicá-las.
