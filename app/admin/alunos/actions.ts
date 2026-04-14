@@ -278,8 +278,9 @@ export async function clearStudentPlanAccess(
 export type PromoteStudentResult = { error?: string; success?: boolean };
 
 /**
- * Promove o utilizador do aluno a Professor (COACH) ou Administrador (ADMIN).
- * Apenas ADMIN pode executar. Ao promover a Professor, cria o registo Coach e associa à escola do aluno.
+ * Define o papel do utilizador ligado ao aluno como Professor (COACH) ou Administrador (ADMIN).
+ * Apenas ADMIN pode executar. Funciona para qualquer papel atual (ALUNO, COACH ou ADMIN):
+ * no-op se já for o papel pedido; cria Coach + CoachSchool se passar a COACH/ADMIN e ainda não existir.
  */
 export async function promoteStudentToRole(
   _prev: PromoteStudentResult | null,
@@ -311,8 +312,15 @@ export async function promoteStudentToRole(
     .single();
 
   if (!user) return { error: "Utilizador não encontrado." };
-  if (user.role !== "ALUNO") {
-    return { error: "Só é possível promover utilizadores com perfil Aluno. Este utilizador já tem perfil " + user.role + "." };
+
+  const currentRole = user.role as string;
+
+  if (currentRole === newRole) {
+    revalidatePath("/admin/alunos");
+    revalidatePath(`/admin/alunos/${studentId}`);
+    revalidatePath(`/coach/alunos/${studentId}`);
+    revalidatePath("/admin/coaches");
+    return { success: true };
   }
 
   const { error: userUpdateError } = await supabase
@@ -322,7 +330,6 @@ export async function promoteStudentToRole(
 
   if (userUpdateError) return { error: userUpdateError.message };
 
-  // COACH e ADMIN têm permissões de professor: ambos precisam de registo Coach
   if (newRole === "COACH" || newRole === "ADMIN") {
     const { data: existingCoach } = await supabase
       .from("Coach")
@@ -338,7 +345,7 @@ export async function promoteStudentToRole(
         studentId: student.id,
       });
       if (coachError) {
-        await supabase.from("User").update({ role: "ALUNO" }).eq("id", student.userId);
+        await supabase.from("User").update({ role: currentRole }).eq("id", student.userId);
         return { error: coachError.message };
       }
       const { error: csErr } = await supabase.from("CoachSchool").insert({
@@ -347,7 +354,7 @@ export async function promoteStudentToRole(
       });
       if (csErr) {
         await supabase.from("Coach").delete().eq("id", coachId);
-        await supabase.from("User").update({ role: "ALUNO" }).eq("id", student.userId);
+        await supabase.from("User").update({ role: currentRole }).eq("id", student.userId);
         return { error: csErr.message };
       }
     }
@@ -355,6 +362,7 @@ export async function promoteStudentToRole(
 
   revalidatePath("/admin/alunos");
   revalidatePath(`/admin/alunos/${studentId}`);
+  revalidatePath(`/coach/alunos/${studentId}`);
   revalidatePath("/admin/coaches");
   return { success: true };
 }

@@ -105,11 +105,9 @@ export function AdminAlunoQuickActions({
   const [promoteState, promoteFormAction] = useFormState(promoteStudentToRole, null as PromoteStudentResult | null);
   const router = useRouter();
 
-  // Se `role` não vier na resposta (caso raro), alinhar ao comportamento antigo: tratar como ALUNO.
-  const roleNorm = String(editedUserRole ?? "ALUNO")
+  const roleNorm = String(editedUserRole ?? "")
     .trim()
     .toUpperCase();
-  const canPromote = roleNorm === "ALUNO";
   const hasAssignedPlan = Boolean(initialPlanId);
 
   useEffect(() => {
@@ -193,73 +191,61 @@ export function AdminAlunoQuickActions({
         )}
       </div>
 
-      {canPromote ? (
-        <div
-          style={{
-            padding: "clamp(12px, 3vw, 14px)",
-            background: "var(--surface)",
-            borderRadius: "var(--radius-md)",
-            borderLeft: "3px solid var(--text-secondary)",
-          }}
-        >
-          <p style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
-            Alterar perfil
-          </p>
-          <p style={{ margin: "0 0 10px 0", fontSize: 12, color: "var(--text-secondary)" }}>
-            Promover este utilizador (aluno) a Professor ou Administrador. Apenas disponível para perfis Aluno.
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <form action={promoteFormAction} style={{ display: "inline" }}>
-              <input type="hidden" name="studentId" value={studentId} />
-              <input type="hidden" name="newRole" value="COACH" />
-              <button
-                type="submit"
-                className="btn"
-                style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}
-              >
-                Promover a Professor
-              </button>
-            </form>
-            <form action={promoteFormAction} style={{ display: "inline" }}>
-              <input type="hidden" name="studentId" value={studentId} />
-              <input type="hidden" name="newRole" value="ADMIN" />
-              <button
-                type="submit"
-                className="btn"
-                style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}
-              >
-                Promover a Administrador
-              </button>
-            </form>
-          </div>
-          {promoteState?.success && (
-            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Perfil alterado com sucesso.</p>
+      <div
+        style={{
+          padding: "clamp(12px, 3vw, 14px)",
+          background: "var(--surface)",
+          borderRadius: "var(--radius-md)",
+          borderLeft: "3px solid var(--text-secondary)",
+        }}
+      >
+        <p style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+          Alterar perfil na plataforma
+        </p>
+        <p style={{ margin: "0 0 10px 0", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.55 }}>
+          Papel atual:{" "}
+          {roleNorm ? (
+            <>
+              <strong style={{ color: "var(--text-primary)" }}>{roleLabel(roleNorm)}</strong>{" "}
+              <code style={{ fontSize: 11 }}>({roleNorm})</code>
+            </>
+          ) : (
+            <span style={{ color: "var(--text-secondary)" }}>— (sem dados)</span>
           )}
-          {promoteState?.error && (
-            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{promoteState.error}</p>
-          )}
+          . Qualquer utilizador pode ser definido como <strong>Professor</strong> ou <strong>Administrador</strong>; se já tiver esse papel, a
+          ação confirma sem alterar nada.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <form action={promoteFormAction} style={{ display: "inline" }}>
+            <input type="hidden" name="studentId" value={studentId} />
+            <input type="hidden" name="newRole" value="COACH" />
+            <button
+              type="submit"
+              className="btn"
+              style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}
+            >
+              Definir como Professor
+            </button>
+          </form>
+          <form action={promoteFormAction} style={{ display: "inline" }}>
+            <input type="hidden" name="studentId" value={studentId} />
+            <input type="hidden" name="newRole" value="ADMIN" />
+            <button
+              type="submit"
+              className="btn"
+              style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}
+            >
+              Definir como Administrador
+            </button>
+          </form>
         </div>
-      ) : (
-        <div
-          style={{
-            padding: "clamp(12px, 3vw, 14px)",
-            background: "var(--surface)",
-            borderRadius: "var(--radius-md)",
-            borderLeft: "3px solid var(--border)",
-          }}
-        >
-          <p style={{ margin: "0 0 8px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
-            Alterar perfil
-          </p>
-          <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.55 }}>
-            Este utilizador já tem papel <strong style={{ color: "var(--text-primary)" }}>{roleLabel(roleNorm)}</strong> na plataforma (
-            <code style={{ fontSize: 11 }}>{roleNorm || "—"}</code>
-            ). Só quem está como <strong>Aluno</strong> na tabela de utilizadores pode ser promovido aqui.
-            {roleNorm === "ADMIN" && " Administradores e professores costumam ter este registo porque também existem como aluno na escola — é esperado."}
-            {roleNorm === "COACH" && " Para rever permissões, usa Admin → Coaches."}
-          </p>
-        </div>
-      )}
+        {promoteState?.success && (
+          <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>Perfil atualizado.</p>
+        )}
+        {promoteState?.error && (
+          <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{promoteState.error}</p>
+        )}
+      </div>
     </div>
   );
 }
