@@ -683,23 +683,48 @@ async function main() {
       console.log(`TrialClass: ${rows.length}`);
     }
 
-    // 12. Attendance (só colunas MVP)
+    // 12. Attendance (occurrenceDate obrigatório no destino alargado)
     {
-      const { rows } = await src.query(
-        `SELECT id, "lessonId", "studentId", status, "isExperimental", "createdAt" FROM "Attendance"`,
+      const srcA = await pgTableColumns(src, "Attendance");
+      const dstA = await pgTableColumns(dst, "Attendance");
+      const opt = (["checkedInAt", "rpe", "rpeRecordedAt", "countsForGamification"] as const).filter(
+        (c) => srcA.has(c) && dstA.has(c),
       );
+      const optSelect = opt.map((c) => `a."${c}"`).join(", ");
+      const selectSql = `
+        SELECT a.id, a."lessonId", a."studentId", a.status, a."isExperimental", a."createdAt",
+               COALESCE(a."occurrenceDate", l."date"::date) AS "occurrenceDate"
+               ${opt.length ? `, ${optSelect}` : ""}
+        FROM "Attendance" a
+        LEFT JOIN "Lesson" l ON l.id = a."lessonId"
+      `;
+      const insertCols = [
+        "id",
+        "lessonId",
+        "studentId",
+        "status",
+        "isExperimental",
+        "createdAt",
+        "occurrenceDate",
+        ...opt,
+      ] as const;
+      const quotedIns = insertCols.map((c) => `"${c}"`).join(", ");
+      const { rows } = await src.query(selectSql);
+      const placeholders = insertCols
+        .map((c, i) => {
+          const p = i + 1;
+          if (c === "status") return `$${p}::"AttendanceStatus"`;
+          if (c === "occurrenceDate") return `$${p}::date`;
+          if (c === "rpe") return `$${p}::smallint`;
+          if (c === "countsForGamification") return `$${p}::boolean`;
+          return `$${p}`;
+        })
+        .join(", ");
       for (const r of rows) {
+        const vals = insertCols.map((c) => (r as Record<string, unknown>)[c]);
         await dst.query(
-          `INSERT INTO "Attendance" (id, "lessonId", "studentId", status, "isExperimental", "createdAt")
-           VALUES ($1,$2,$3,$4::"AttendanceStatus",$5,$6)`,
-          [
-            r.id,
-            r.lessonId,
-            r.studentId,
-            r.status,
-            r.isExperimental,
-            r.createdAt,
-          ],
+          `INSERT INTO "Attendance" (${quotedIns}) VALUES (${placeholders})`,
+          vals as unknown[],
         );
       }
       console.log(`Attendance: ${rows.length}`);

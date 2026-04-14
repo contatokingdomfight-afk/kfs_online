@@ -198,13 +198,17 @@ model Coach {
 model Lesson {
   id             String    @id @default(cuid())
   modality       Modality
-  date           DateTime  @db.Date
+  /// Null = horário recorrente (usa weekday); preenchido = aula única ou ocorrência base.
+  date           DateTime? @db.Date
+  weekday        Int?
   startTime      String    // "HH:mm"
   endTime        String    // "HH:mm"
   coachId        String
   coach          Coach     @relation(fields: [coachId], references: [id], onDelete: Cascade)
   schoolId       String
   school         School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  locationId     String?
+  location       Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
   capacity       Int?
   planningNotes  String?
   isOneOff       Boolean   @default(false) // true = aula única (evento); false = recorrente semanal
@@ -224,8 +228,13 @@ model Attendance {
   status         AttendanceStatus @default(PENDING)
   isExperimental Boolean          @default(false)
   createdAt      DateTime         @default(now())
+  occurrenceDate DateTime         @db.Date
+  checkedInAt    DateTime?        @db.Timestamptz(6)
+  rpe            Int?             @db.SmallInt
+  rpeRecordedAt  DateTime?        @db.Timestamptz(6)
+  countsForGamification Boolean   @default(true)
 
-  @@unique([lessonId, studentId])
+  @@unique([lessonId, studentId, occurrenceDate])
 }
 
 model TrialClass {
@@ -271,6 +280,8 @@ model Location {
   school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+
+  lessons Lesson[]
 }
 
 model Plan {
