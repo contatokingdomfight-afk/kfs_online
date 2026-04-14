@@ -27,7 +27,7 @@ export const getCurrentDbUser = cache(async function getCurrentDbUser() {
     try {
       const { data: fallbackUser } = await supabase
         .from("User")
-        .select("id, authUserId, email, name, role, createdAt, avatarUrl")
+        .select("id, authUserId, email, name, role, createdAt")
         .eq("authUserId", user.id)
         .maybeSingle();
       if (fallbackUser) return fallbackUser;
@@ -56,7 +56,7 @@ export async function getCurrentDbUserUncached() {
     try {
       const { data: fallbackUser } = await supabase
         .from("User")
-        .select("id, authUserId, email, name, role, createdAt, avatarUrl")
+        .select("id, authUserId, email, name, role, createdAt")
         .eq("authUserId", user.id)
         .maybeSingle();
       if (fallbackUser) return fallbackUser;

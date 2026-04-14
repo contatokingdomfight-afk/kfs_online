@@ -145,9 +145,11 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     console.log("[syncUser] Student encontrado:", student.id);
   }
 
+  // Não incluir avatarUrl aqui: a coluna pode não existir em todas as BD (Prisma User sem avatarUrl).
+  // O perfil volta a ler avatar noutras queries quando a coluna existir.
   const { data: user, error: userFetchErr } = await supabase
     .from("User")
-    .select("id, authUserId, email, name, role, createdAt, avatarUrl")
+    .select("id, authUserId, email, name, role, createdAt")
     .eq("id", userId)
     .single();
 
