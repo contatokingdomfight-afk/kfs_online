@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler";
+import { syncUser } from "@/lib/auth/sync-user";
 
 /**
  * Route Handler server-side para o callback OAuth do Supabase.
  *
  * O browser envia o ?code= e os cookies (incluindo o code-verifier PKCE).
- * O servidor troca o código por sessão e escreve os tokens via Set-Cookie.
- * Isso garante que a sessão está nos cookies ANTES de chegar ao dashboard,
- * sem depender de document.cookie do browser.
+ * O servidor troca o código por sessão e escreve os tokens via Set-Cookie
+ * (com as mesmas cookieOptions que o resto da app).
+ *
+ * Depois chama syncUser(session.user) para garantir User/Student na BD antes
+ * do redirect — evita corrida em que o dashboard renderiza sem linha em User.
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -23,28 +25,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/sign-in?error=missing_code", origin));
   }
 
-  const cookieStore = await cookies();
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch (e) {
-            console.error("[auth/callback] setAll error:", e);
-          }
-        },
-      },
-    }
-  );
+  const supabase = await createRouteHandlerClient();
 
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
@@ -55,6 +36,17 @@ export async function GET(request: Request) {
     );
   }
 
-  console.log("[auth/callback] sessão criada:", data.session?.user?.email, "→ redirect para", redirectTo);
+  const sessionUser = data.session?.user;
+  if (sessionUser) {
+    try {
+      await syncUser(sessionUser);
+    } catch (e) {
+      console.error("[auth/callback] syncUser falhou:", e);
+      const detail = encodeURIComponent(String(e instanceof Error ? e.message : e));
+      return NextResponse.redirect(new URL(`/sign-in?reason=sync-failed&detail=${detail}`, origin));
+    }
+  }
+
+  console.log("[auth/callback] sessão + BD OK:", sessionUser?.email, "→", redirectTo);
   return NextResponse.redirect(new URL(redirectTo, origin));
 }

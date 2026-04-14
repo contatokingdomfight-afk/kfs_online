@@ -74,6 +74,13 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
+    /**
+     * Importante (Supabase + Next.js): ao refrescar a sessão, o cliente escreve cookies.
+     * Só `response.cookies.set` não actualiza o pedido que os Server Components vão ler —
+     * é preciso também `request.cookies.set` e recriar `NextResponse.next({ request })`.
+     * Caso contrário o middleware vê o utilizador e o layout recebe cookies antigos →
+     * `getUser()` falha e aparece `?reason=no-db-user`.
+     */
     let response = NextResponse.next({ request });
 
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -83,7 +90,14 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+          // RequestCookies só aceita name+value; atributos (path, secure…) vão na resposta.
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2]);
+          });
         },
       },
     });
