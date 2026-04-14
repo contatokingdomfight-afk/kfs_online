@@ -133,6 +133,13 @@
 - **Metas mensais / totais no dashboard:** contagens de presenças usam `countsForGamification = true` (`DashboardBelowFold`, `DashboardRestContent`) para alinhar com badges.
 - **Coach:** `/coach/aula?lesson=&date=` — por aluno, zona de pré-treino + RPE (`AttendanceRow`, dados de `PreLessonWellness` + `Attendance.rpe`). `/coach/alunos/[id]` — secção **Bem-estar e carga** (`CoachStudentWellbeingSection`): últimos pré-treinos e RPE (cliente admin).
 
+### 3.15 Planos (Supabase) — colunas, RLS e UI admin (abril 2026)
+
+- **Tabela `Plan`:** colunas alinhadas ao Prisma — `priceMonthly`, `includesDigitalAccess`, `modalityScope`, `isActive` (não usar `price_monthly` / `is_active` nas queries PostgREST). Várias rotas foram corrigidas (`lib/plan-access.ts`, `escolher-plano`, financeiro, webhooks Stripe, etc.).
+- **Admin → listar/editar planos (`/admin/planos`):** leitura com `createClient()` (sessão + anon key), para coincidir com o projeto do login; criar/editar continuam com `SUPABASE_SERVICE_ROLE_KEY` nas server actions. **RLS:** `Plan` precisa de política para `authenticated` (ex. `allow_authenticated`); sem políticas com RLS ativo a lista fica vazia.
+- **`/escolher-plano`:** planos visíveis para `schoolId` do aluno **e** `default-school-001` (catálogo partilhado).
+- **Migrações úteis:** `20260414140000_rls_backfill_core_tables_if_missing.sql`, `20260414150000_plan_price_seed_and_plan_access_updates.sql`, `20260414160000_seed_plans_legacy_kfs_snapshot.sql`; correção de nomes em `20260312120632_plan_access_fields.sql` e preço mensal legado em `20260322000000_create_plan_price_for_subscription_options.sql`.
+
 ---
 
 ## 4. Comandos rápidos

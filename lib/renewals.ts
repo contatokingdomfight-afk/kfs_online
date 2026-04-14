@@ -47,9 +47,9 @@ export async function getRenewalsPending(
   const planIds = [...new Set(students.map((s) => s.planId).filter(Boolean))] as string[];
   const { data: plans } = await supabase
     .from("Plan")
-    .select("id, name, price_monthly")
+    .select("id, name, priceMonthly")
     .in("id", planIds)
-    .eq("is_active", true);
+    .eq("isActive", true);
 
   const planById = new Map((plans ?? []).map((p) => [p.id, p]));
 
@@ -84,7 +84,7 @@ export async function getRenewalsPending(
       studentEmail: user?.email ?? "",
       planId: plan.id,
       planName: plan.name,
-      priceMonthly: Number(plan.price_monthly ?? 0),
+      priceMonthly: Number(plan.priceMonthly ?? 0),
     };
   });
 }

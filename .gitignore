@@ -43,3 +43,8 @@ supabase/.temp/
 client_secret*.json
 
 .vercel
+
+# Dumps de migração (hashes de password / dados sensíveis)
+scripts/tmp-legacy-auth-export.json
+scripts/tmp-mcp-*.json
+scripts/tmp-*.jsonl*

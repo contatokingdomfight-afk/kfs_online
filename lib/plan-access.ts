@@ -51,15 +51,15 @@ export async function getPlanAccess(
   const { data: plan } = await supabase
     .from("Plan")
     .select(
-      "modality_scope, includes_digital_access, includes_performance_tracking, includes_check_in, max_check_ins_per_day, includes_exclusive_benefits"
+      "modalityScope, includesDigitalAccess, includes_performance_tracking, includes_check_in, max_check_ins_per_day, includes_exclusive_benefits"
     )
     .eq("id", student.planId)
-    .eq("is_active", true)
+    .eq("isActive", true)
     .single();
 
   if (!plan) return defaultAccess;
 
-  const modalityScope = (plan.modality_scope as string) ?? "NONE";
+  const modalityScope = (plan.modalityScope as string) ?? "NONE";
   const primaryModality = (student.primaryModality as string | null) ?? null;
 
   let allowedModalities: string[] = [];
@@ -76,7 +76,7 @@ export async function getPlanAccess(
     maxCheckIns === null ? null : maxCheckIns === 1 ? 1 : 0;
 
   return {
-    hasDigitalAccess: plan.includes_digital_access === true,
+    hasDigitalAccess: plan.includesDigitalAccess === true,
     hasPerformanceTracking: (plan.includes_performance_tracking ?? true) === true,
     hasCheckIn: (plan.includes_check_in ?? true) === true,
     maxCheckInsPerDay,

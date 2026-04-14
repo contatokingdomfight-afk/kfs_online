@@ -104,7 +104,7 @@ async function ensureInvestorDemoStudent(supabase: SupabaseClient, userId: strin
     .from("Plan")
     .select("id")
     .eq("schoolId", schoolId)
-    .eq("is_active", true)
+    .eq("isActive", true)
     .order("name", { ascending: true })
     .limit(1)
     .maybeSingle();

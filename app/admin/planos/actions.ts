@@ -40,21 +40,24 @@ export async function createPlan(
 
   const supabase = createAdminClient();
   const id = crypto.randomUUID();
+  const now = new Date().toISOString();
 
   const { error } = await supabase.from("Plan").insert({
     id,
     name,
     description,
-    price_monthly: price,
+    priceMonthly: price,
     schoolId,
-    includes_digital_access: includesDigital,
-    modality_scope: modalityScope,
-    is_active: isActive,
+    includesDigitalAccess: includesDigital,
+    modalityScope,
+    isActive,
     stripePriceId,
     includes_performance_tracking: includesPerformance,
     includes_check_in: includesCheckIn,
     max_check_ins_per_day: maxCheckInsPerDay,
     includes_exclusive_benefits: includesExclusiveBenefits,
+    createdAt: now,
+    updatedAt: now,
   });
 
   if (error) {
@@ -103,10 +106,10 @@ export async function updatePlan(
     .update({
       name,
       description,
-      price_monthly: price,
-      includes_digital_access: includesDigital,
-      modality_scope: modalityScope,
-      is_active: isActive,
+      priceMonthly: price,
+      includesDigitalAccess: includesDigital,
+      modalityScope,
+      isActive,
       stripePriceId,
       includes_performance_tracking: includesPerformance,
       includes_check_in: includesCheckIn,

@@ -49,7 +49,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
       const student = studentRes.data;
       const studentPlanId = student?.planId ?? null;
       const rest = await Promise.all([
-        studentPlanId ? supabase.from("Plan").select("name, price_monthly, includes_digital_access").eq("id", studentPlanId).eq("is_active", true).single() : Promise.resolve({ data: null }),
+        studentPlanId ? supabase.from("Plan").select("name, priceMonthly, includesDigitalAccess").eq("id", studentPlanId).eq("isActive", true).single() : Promise.resolve({ data: null }),
     getAttendanceByModality(supabase, studentId),
     supabase
       .from("Athlete")
@@ -77,7 +77,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
 
   let hasDigitalAccess = false;
   const plan = planRes.data;
-  if (plan) hasDigitalAccess = plan.includes_digital_access === true;
+  if (plan) hasDigitalAccess = plan.includesDigitalAccess === true;
   const attendanceByModality = attByMod;
   const earnedBadges = badgesRes;
   const nextBadge = nextBadgeRes ?? null;

@@ -19,7 +19,7 @@ COMMENT ON TABLE "PlanPrice" IS 'Opções de preço Stripe por plano (ex: mensal
 -- Inserir preços do Kingdom Online (produtos já existem no Stripe)
 INSERT INTO "PlanPrice" ("id", "planId", "stripePriceId", "intervalLabel", "intervalMonths", "amountCents", "sortOrder")
 VALUES
-  ('planprice-online-mensal', 'plan-online', 'price_1TAFWfEnpsjluynENfLzoWWc', 'Mensal', 1, 2000, 1),
+  ('planprice-online-mensal', 'plan-online', 'price_1T4OxORTJGXEa4Ic6QPrh39g', 'Mensal', 1, 2000, 1),
   ('planprice-online-trimestral', 'plan-online', 'price_1TAFWdEnpsjluynES4TuzsBI', 'Trimestral (3 meses)', 3, 5500, 2),
   ('planprice-online-semestral', 'plan-online', 'price_1TAFWdEnpsjluynEBSFr76E7', 'Semestral (6 meses)', 6, 11000, 3),
   ('planprice-online-anual', 'plan-online', 'price_1TAFWdEnpsjluynEj1vmnKbl', 'Anual', 12, 20000, 4)
@@ -27,7 +27,7 @@ ON CONFLICT ("stripePriceId") DO NOTHING;
 
 -- Manter stripePriceId no Plan para compatibilidade (default = mensal)
 UPDATE "Plan"
-SET "stripePriceId" = 'price_1TAFWfEnpsjluynENfLzoWWc'
+SET "stripePriceId" = 'price_1T4OxORTJGXEa4Ic6QPrh39g'
 WHERE id = 'plan-online' AND "stripePriceId" IS NULL;
 
 ALTER TABLE "PlanPrice" ENABLE ROW LEVEL SECURITY;

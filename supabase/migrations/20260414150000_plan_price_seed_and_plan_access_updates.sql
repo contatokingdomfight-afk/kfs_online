@@ -1,13 +1,19 @@
--- Novos campos para controlar permissões por plano
-ALTER TABLE "Plan" ADD COLUMN IF NOT EXISTS "includes_performance_tracking" boolean DEFAULT true;
-ALTER TABLE "Plan" ADD COLUMN IF NOT EXISTS "includes_check_in" boolean DEFAULT true;
-ALTER TABLE "Plan" ADD COLUMN IF NOT EXISTS "max_check_ins_per_day" integer;
-ALTER TABLE "Plan" ADD COLUMN IF NOT EXISTS "includes_exclusive_benefits" boolean DEFAULT false;
+-- Idempotente: preenche PlanPrice + stripePriceId default (legado Stripe Kingdom Online) e
+-- aplica regras de acesso por plano com nomes de colunas Prisma ("modalityScope", "priceMonthly").
+-- Útil quando só correu 20260414130000_eu_legacy_schema_parity (CREATE PlanPrice sem INSERT) ou
+-- quando 20260312120632 não atualizou linhas por causa de nomes de colunas antigos.
 
-COMMENT ON COLUMN "Plan"."includes_performance_tracking" IS 'Acesso à página de performance e métricas';
-COMMENT ON COLUMN "Plan"."includes_check_in" IS 'Acesso ao check-in de aulas presenciais';
-COMMENT ON COLUMN "Plan"."max_check_ins_per_day" IS '0=sem check-in, 1=uma vez/dia, null=ilimitado';
-COMMENT ON COLUMN "Plan"."includes_exclusive_benefits" IS 'Brindes e benefícios exclusivos (FULL)';
+INSERT INTO "PlanPrice" ("id", "planId", "stripePriceId", "intervalLabel", "intervalMonths", "amountCents", "sortOrder")
+VALUES
+  ('planprice-online-mensal', 'plan-online', 'price_1T4OxORTJGXEa4Ic6QPrh39g', 'Mensal', 1, 2000, 1),
+  ('planprice-online-trimestral', 'plan-online', 'price_1TAFWdEnpsjluynES4TuzsBI', 'Trimestral (3 meses)', 3, 5500, 2),
+  ('planprice-online-semestral', 'plan-online', 'price_1TAFWdEnpsjluynEBSFr76E7', 'Semestral (6 meses)', 6, 11000, 3),
+  ('planprice-online-anual', 'plan-online', 'price_1TAFWdEnpsjluynEj1vmnKbl', 'Anual', 12, 20000, 4)
+ON CONFLICT ("stripePriceId") DO NOTHING;
+
+UPDATE "Plan"
+SET "stripePriceId" = 'price_1T4OxORTJGXEa4Ic6QPrh39g'
+WHERE id = 'plan-online' AND "stripePriceId" IS NULL;
 
 -- Kingdom Online: sem performance, sem check-in
 UPDATE "Plan" SET

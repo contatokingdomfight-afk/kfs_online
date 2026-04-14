@@ -35,8 +35,8 @@ export async function loadStudentPaymentRows(
     supabase.from("User").select("id, name, email").in("id", userIds),
     supabase.from("StudentProfile").select("studentId, phone").in("studentId", studentIds),
     planIds.length
-      ? supabase.from("Plan").select("id, name, price_monthly").in("id", planIds)
-      : Promise.resolve({ data: [] as { id: string; name: string | null; price_monthly: number | null }[] }),
+      ? supabase.from("Plan").select("id, name, priceMonthly").in("id", planIds)
+      : Promise.resolve({ data: [] as { id: string; name: string | null; priceMonthly: number | null }[] }),
     supabase.from("Payment").select("studentId, status, amount").eq("referenceMonth", referenceMonth).in("studentId", studentIds),
   ]);
 
@@ -56,7 +56,7 @@ export async function loadStudentPaymentRows(
       email: u?.email ?? null,
       phone: (prof as { phone?: string | null } | undefined)?.phone ?? null,
       planName: plan?.name ?? null,
-      priceMonthly: Number(plan?.price_monthly ?? 0),
+      priceMonthly: Number(plan?.priceMonthly ?? 0),
       referenceMonth,
       existingPayment: pay
         ? { status: String((pay as { status: string }).status), amount: Number((pay as { amount: number }).amount) }

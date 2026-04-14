@@ -30,11 +30,11 @@ export default async function CursoDetailPage({ params }: Props) {
     if (planId) {
       const { data: plan } = await supabase
         .from("Plan")
-        .select("includes_digital_access")
+        .select("includesDigitalAccess")
         .eq("id", planId)
-        .eq("is_active", true)
+        .eq("isActive", true)
         .single();
-      hasDigitalAccess = plan?.includes_digital_access === true;
+      hasDigitalAccess = plan?.includesDigitalAccess === true;
     }
     const { data: purchase } = await supabase
       .from("CoursePurchase")

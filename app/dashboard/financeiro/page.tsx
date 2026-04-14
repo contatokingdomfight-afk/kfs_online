@@ -35,19 +35,19 @@ export default async function DashboardFinanceiroPage() {
     if (student?.planId) {
       const { data: planRow } = await supabase
         .from("Plan")
-        .select("name, price_monthly")
+        .select("name, priceMonthly")
         .eq("id", student.planId)
-        .eq("is_active", true)
+        .eq("isActive", true)
         .single();
       if (planRow) {
-        plan = { name: planRow.name, price_monthly: Number(planRow.price_monthly) };
+        plan = { name: planRow.name, price_monthly: Number(planRow.priceMonthly) };
       }
     }
 
     const { data: plans } = await supabase
       .from("Plan")
-      .select("id, name, price_monthly, stripePriceId")
-      .eq("is_active", true);
+      .select("id, name, priceMonthly, stripePriceId")
+      .eq("isActive", true);
     const { data: planPrices } = await supabase
       .from("PlanPrice")
       .select("planId, stripePriceId, intervalLabel, amountCents")
@@ -68,7 +68,7 @@ export default async function DashboardFinanceiroPage() {
         plansWithStripeData.push({
           id: p.id,
           name: p.name,
-          price_monthly: Number(p.price_monthly),
+          price_monthly: Number(p.priceMonthly),
           stripePriceId: p.stripePriceId,
         });
       }

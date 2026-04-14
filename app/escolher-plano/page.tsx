@@ -35,14 +35,19 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
     }
   }
 
+  // Catálogo partilhado: planos da escola do aluno + planos em default-school-001 (seed / rede).
+  // Só filtrar por .eq(schoolId) escondia todos os planos quando o aluno não estava na mesma escola que o registo do plano.
   let plansQuery = supabase
     .from("Plan")
-    .select("id, name, description, price_monthly, includes_digital_access, includes_performance_tracking, includes_check_in, modality_scope, includes_exclusive_benefits, stripePriceId")
-    .eq("is_active", true);
-  if (schoolId) plansQuery = plansQuery.eq("schoolId", schoolId);
+    .select("id, name, description, priceMonthly, includesDigitalAccess, includes_performance_tracking, includes_check_in, modalityScope, includes_exclusive_benefits, stripePriceId")
+    .eq("isActive", true);
+  if (schoolId) {
+    const schoolIds = Array.from(new Set([schoolId, "default-school-001"]));
+    plansQuery = plansQuery.in("schoolId", schoolIds);
+  }
 
   const [plansRes, planPricesRes] = await Promise.all([
-    plansQuery.order("price_monthly", { ascending: true }),
+    plansQuery.order("priceMonthly", { ascending: true }),
     supabase.from("PlanPrice").select("planId, stripePriceId, intervalLabel, amountCents, sortOrder").eq("isActive", true).order("sortOrder", { ascending: true }),
   ]);
   const plans = plansRes.data;
@@ -114,7 +119,7 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
             const planPricesForCard = prices.length > 0
               ? prices.map((pp) => ({ stripePriceId: pp.stripePriceId, intervalLabel: pp.intervalLabel, amountCents: pp.amountCents }))
               : plan.stripePriceId
-                ? [{ stripePriceId: plan.stripePriceId, intervalLabel: t("perMonth"), amountCents: Math.round(Number(plan.price_monthly) * 100) }]
+                ? [{ stripePriceId: plan.stripePriceId, intervalLabel: t("perMonth"), amountCents: Math.round(Number(plan.priceMonthly) * 100) }]
                 : undefined;
             return (
               <PlanCard
@@ -123,11 +128,11 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
                   id: plan.id,
                   name: plan.name,
                   description: plan.description,
-                  price_monthly: Number(plan.price_monthly),
-                  includes_digital_access: plan.includes_digital_access === true,
+                  price_monthly: Number(plan.priceMonthly),
+                  includes_digital_access: plan.includesDigitalAccess === true,
                   includes_performance_tracking: plan.includes_performance_tracking !== false,
                   includes_check_in: plan.includes_check_in !== false,
-                  modality_scope: plan.modality_scope,
+                  modality_scope: plan.modalityScope,
                   includes_exclusive_benefits: plan.includes_exclusive_benefits === true,
                   hasStripe,
                   planPrices: planPricesForCard,

@@ -296,8 +296,8 @@ export default async function DashboardPerformancePage() {
       const planId = (student?.planId as string | null) ?? null;
       let hasDigitalAccess = false;
       if (planId) {
-        const { data: plan } = await supabase.from("Plan").select("includes_digital_access").eq("id", planId).eq("is_active", true).single();
-        hasDigitalAccess = (plan as { includes_digital_access?: boolean } | null)?.includes_digital_access === true;
+        const { data: plan } = await supabase.from("Plan").select("includesDigitalAccess").eq("id", planId).eq("isActive", true).single();
+        hasDigitalAccess = plan?.includesDigitalAccess === true;
       }
       const [{ data: purchasesData }, { data: coursesData }] = await Promise.all([
         supabase.from("CoursePurchase").select("courseId").eq("studentId", studentId),

@@ -188,10 +188,10 @@ export async function setStudentFullAccess(
     .from("Plan")
     .select("id")
     .eq("schoolId", student.schoolId)
-    .eq("is_active", true)
-    .eq("includes_digital_access", true)
-    .eq("modality_scope", "ALL")
-    .order("price_monthly", { ascending: false })
+    .eq("isActive", true)
+    .eq("includesDigitalAccess", true)
+    .eq("modalityScope", "ALL")
+    .order("priceMonthly", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -201,10 +201,10 @@ export async function setStudentFullAccess(
     const { data: fullPlanAny } = await supabase
       .from("Plan")
       .select("id")
-      .eq("is_active", true)
-      .eq("includes_digital_access", true)
-      .eq("modality_scope", "ALL")
-      .order("price_monthly", { ascending: false })
+      .eq("isActive", true)
+      .eq("includesDigitalAccess", true)
+      .eq("modalityScope", "ALL")
+      .order("priceMonthly", { ascending: false })
       .limit(1)
       .maybeSingle();
     fullPlan = fullPlanAny ?? null;

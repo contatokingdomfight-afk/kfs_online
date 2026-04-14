@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
-import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { AdminConfigMissing } from "@/components/AdminConfigMissing";
+import { unstable_noStore as noStore } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 const MODALITY_SCOPE_LABEL: Record<string, string> = {
   NONE: "Só digital",
@@ -11,16 +13,21 @@ const MODALITY_SCOPE_LABEL: Record<string, string> = {
 };
 
 export default async function AdminPlanosPage() {
+  noStore();
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
-  const result = getAdminClientOrNull();
-  if (!result.client) return <AdminConfigMissing errorType={result.error} />;
-  const supabase = result.client;
-  const { data: plans } = await supabase
+  // Sessão do admin + RLS em Plan (allow_authenticated): mesmo projeto que o login (evita lista vazia
+  // quando SUPABASE_SERVICE_ROLE_KEY / URL na Vercel não coincidem com o projeto onde estão os dados).
+  const supabase = await createClient();
+  const { data: plans, error: plansError } = await supabase
     .from("Plan")
-    .select("id, name, description, price_monthly, includes_digital_access, modality_scope, is_active")
+    .select("id, name, description, priceMonthly, includesDigitalAccess, modalityScope, isActive, schoolId")
     .order("name", { ascending: true });
+
+  if (plansError) {
+    console.error("AdminPlanosPage Plan select:", plansError);
+  }
 
   const list = plans ?? [];
 
@@ -58,7 +65,11 @@ export default async function AdminPlanosPage() {
         </Link>
       </div>
 
-      {list.length === 0 ? (
+      {plansError ? (
+        <p style={{ color: "var(--danger, #c0392b)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>
+          Erro ao carregar planos: {plansError.message}
+        </p>
+      ) : list.length === 0 ? (
         <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>
           Ainda não há planos cadastrados.
         </p>
@@ -89,13 +100,13 @@ export default async function AdminPlanosPage() {
                   <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
                     {p.name}
                   </span>
-                  {!p.is_active && (
+                  {!p.isActive && (
                     <span style={{ fontSize: 12, padding: "2px 6px", background: "var(--text-secondary)", color: "var(--bg)", borderRadius: "var(--radius-md)" }}>
                       Inativo
                     </span>
                   )}
                   <span style={{ marginLeft: "auto", fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--primary)" }}>
-                    €{Number(p.price_monthly).toFixed(0)}/mês
+                    €{Number(p.priceMonthly).toFixed(0)}/mês
                   </span>
                 </div>
                 {p.description && (
@@ -104,8 +115,8 @@ export default async function AdminPlanosPage() {
                   </p>
                 )}
                 <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-                  {MODALITY_SCOPE_LABEL[p.modality_scope] ?? p.modality_scope}
-                  {p.includes_digital_access ? " · Inclui plataforma digital" : ""}
+                  {MODALITY_SCOPE_LABEL[p.modalityScope] ?? p.modalityScope}
+                  {p.includesDigitalAccess ? " · Inclui plataforma digital" : ""}
                 </p>
               </Link>
             </li>

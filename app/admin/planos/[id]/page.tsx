@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { AdminConfigMissing } from "@/components/AdminConfigMissing";
+import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { PlanForm } from "../PlanForm";
@@ -8,20 +7,32 @@ import { PlanPriceForm } from "../PlanPriceForm";
 
 type Props = { params: Promise<{ id: string }> };
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPlanosEditarPage({ params }: Props) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const { id: planId } = await params;
-  const result = getAdminClientOrNull();
-  if (!result.client) return <AdminConfigMissing errorType={result.error} />;
-  const supabase = result.client;
+  const supabase = await createClient();
 
-  const { data: plan } = await supabase
+  const { data: plan, error: planError } = await supabase
     .from("Plan")
-    .select("id, name, description, price_monthly, includes_digital_access, modality_scope, is_active, stripePriceId, schoolId, includes_performance_tracking, includes_check_in, max_check_ins_per_day, includes_exclusive_benefits")
+    .select("id, name, description, priceMonthly, includesDigitalAccess, modalityScope, isActive, stripePriceId, schoolId, includes_performance_tracking, includes_check_in, max_check_ins_per_day, includes_exclusive_benefits")
     .eq("id", planId)
     .single();
+
+  if (planError) {
+    console.error("AdminPlanosEditarPage Plan select:", planError);
+    return (
+      <div>
+        <p style={{ color: "var(--danger, #c0392b)", marginBottom: 16 }}>Erro ao carregar plano: {planError.message}</p>
+        <Link href="/admin/planos" className="btn btn-secondary" style={{ textDecoration: "none" }}>
+          ← Voltar
+        </Link>
+      </div>
+    );
+  }
 
   if (!plan) {
     return (
@@ -60,22 +71,22 @@ export default async function AdminPlanosEditarPage({ params }: Props) {
         Editar plano
       </h1>
       <p style={{ margin: "0 0 clamp(20px, 5vw, 24px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-        {plan.name} · €{Number(plan.price_monthly).toFixed(0)}/mês
+        {plan.name} · €{Number(plan.priceMonthly).toFixed(0)}/mês
       </p>
       <PlanForm
         planId={plan.id}
         initialName={plan.name}
         initialDescription={plan.description ?? ""}
-        initialPriceMonthly={Number(plan.price_monthly)}
-        initialIncludesDigital={plan.includes_digital_access ?? false}
-        initialModalityScope={plan.modality_scope ?? "SINGLE"}
-        initialIsActive={plan.is_active ?? true}
-        initialStripePriceId={(plan as { stripePriceId?: string | null }).stripePriceId ?? ""}
-        initialSchoolId={(plan as { schoolId?: string }).schoolId ?? ""}
-        initialIncludesPerformanceTracking={(plan as { includes_performance_tracking?: boolean }).includes_performance_tracking ?? true}
-        initialIncludesCheckIn={(plan as { includes_check_in?: boolean }).includes_check_in ?? true}
-        initialMaxCheckInsPerDay={(plan as { max_check_ins_per_day?: number | null }).max_check_ins_per_day ?? null}
-        initialIncludesExclusiveBenefits={(plan as { includes_exclusive_benefits?: boolean }).includes_exclusive_benefits ?? false}
+        initialPriceMonthly={Number(plan.priceMonthly)}
+        initialIncludesDigital={plan.includesDigitalAccess ?? false}
+        initialModalityScope={plan.modalityScope ?? "SINGLE"}
+        initialIsActive={plan.isActive ?? true}
+        initialStripePriceId={plan.stripePriceId ?? ""}
+        initialSchoolId={plan.schoolId ?? ""}
+        initialIncludesPerformanceTracking={plan.includes_performance_tracking ?? true}
+        initialIncludesCheckIn={plan.includes_check_in ?? true}
+        initialMaxCheckInsPerDay={plan.max_check_ins_per_day ?? null}
+        initialIncludesExclusiveBenefits={plan.includes_exclusive_benefits ?? false}
       />
       {planPrices && planPrices.length > 0 && (
         <PlanPriceForm planPrices={planPrices.map((pp) => ({ id: pp.id, intervalLabel: pp.intervalLabel, stripePriceId: pp.stripePriceId, amountCents: pp.amountCents }))} />

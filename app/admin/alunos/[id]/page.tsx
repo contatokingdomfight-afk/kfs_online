@@ -73,16 +73,16 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
 
   const { data: plans } = await supabase
     .from("Plan")
-    .select("id, name, price_monthly, schoolId, is_active")
-    .eq("is_active", true)
-    .order("price_monthly", { ascending: true });
+    .select("id, name, priceMonthly, schoolId, isActive")
+    .eq("isActive", true)
+    .order("priceMonthly", { ascending: true });
 
   let planRows = [...(plans ?? [])];
   const currentPlanId = student.planId;
   if (currentPlanId && !planRows.some((p) => p.id === currentPlanId)) {
     const { data: currentPlan } = await supabase
       .from("Plan")
-      .select("id, name, price_monthly, schoolId, is_active")
+      .select("id, name, priceMonthly, schoolId, isActive")
       .eq("id", currentPlanId)
       .maybeSingle();
     if (currentPlan) planRows = [currentPlan, ...planRows];
@@ -100,12 +100,12 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     const aHere = a.schoolId === studentSchoolId ? 0 : 1;
     const bHere = b.schoolId === studentSchoolId ? 0 : 1;
     if (aHere !== bHere) return aHere - bHere;
-    return Number(a.price_monthly) - Number(b.price_monthly);
+    return Number(a.priceMonthly) - Number(b.priceMonthly);
   });
 
   const planOptions = planRows.map((p) => ({
     id: p.id,
-    label: `${p.name} (€${Number(p.price_monthly).toFixed(0)}/mês) — ${schoolNameById.get(p.schoolId ?? "") ?? "Escola?"}`,
+    label: `${p.name} (€${Number(p.priceMonthly).toFixed(0)}/mês) — ${schoolNameById.get(p.schoolId ?? "") ?? "Escola?"}`,
   }));
   const { data: modalityRows } = await supabase
     .from("ModalityRef")

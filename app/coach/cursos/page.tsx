@@ -95,8 +95,8 @@ export default async function CoachCursosPage() {
       const { data: plansWithDigital } = await supabase
         .from("Plan")
         .select("id")
-        .eq("includes_digital_access", true)
-        .eq("is_active", true);
+        .eq("includesDigitalAccess", true)
+        .eq("isActive", true);
       const planIds = (plansWithDigital ?? []).map((p) => p.id);
       if (planIds.length > 0) {
         let studentsQuery = supabase

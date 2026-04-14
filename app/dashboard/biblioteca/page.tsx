@@ -47,11 +47,11 @@ export default async function BibliotecaPage({ searchParams }: Props) {
   if (student?.planId) {
     const { data: plan } = await supabase
       .from("Plan")
-      .select("includes_digital_access")
+      .select("includesDigitalAccess")
       .eq("id", student.planId)
-      .eq("is_active", true)
+      .eq("isActive", true)
       .single();
-    hasDigitalAccess = plan?.includes_digital_access === true;
+    hasDigitalAccess = plan?.includesDigitalAccess === true;
   }
 
   const purchasedCourseIds = new Set((purchasesRes.data ?? []).map((p) => p.courseId));

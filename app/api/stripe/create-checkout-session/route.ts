@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       .from("Plan")
       .select("id, stripePriceId")
       .eq("id", planId)
-      .eq("is_active", true)
+      .eq("isActive", true)
       .single();
     if (!plan?.stripePriceId) {
       const { data: firstPrice } = await supabase

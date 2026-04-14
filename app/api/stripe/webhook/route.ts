@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         const isActive = status === "active" || status === "trialing";
         let planId: string | null = null;
         if (priceId) {
-          const { data: planByPrice } = await supabase.from("Plan").select("id").eq("stripePriceId", priceId).eq("is_active", true).single();
+          const { data: planByPrice } = await supabase.from("Plan").select("id").eq("stripePriceId", priceId).eq("isActive", true).single();
           if (planByPrice) planId = planByPrice.id;
           else {
             const { data: planPrice } = await supabase.from("PlanPrice").select("planId").eq("stripePriceId", priceId).eq("isActive", true).single();

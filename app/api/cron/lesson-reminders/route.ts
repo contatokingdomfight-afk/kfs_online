@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     .from("Plan")
     .select("id")
     .in("id", planIds)
-    .eq("is_active", true);
+    .eq("isActive", true);
   const activePlanIds = new Set((plans ?? []).map((p) => p.id));
 
   const studentsWithPlan = students.filter((s) => s.planId && activePlanIds.has(s.planId));
