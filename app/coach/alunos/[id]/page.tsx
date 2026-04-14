@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
+import { AdminAlunoQuickActions } from "@/app/admin/alunos/[id]/EditarAlunoForm";
 import { AvaliarAlunoButton } from "./AvaliarAlunoButton";
 import { PerformanceStatsSection } from "./_components/PerformanceStatsSection";
 import { PhysicalAssessmentSummary } from "./_components/PhysicalAssessmentSummary";
@@ -35,7 +36,7 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality")
+    .select("id, userId, status, planId, primaryModality, schoolId, adminGrantedFullAccess")
     .eq("id", studentId)
     .single();
 
@@ -51,7 +52,7 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
   }
 
   const [{ data: user }, { data: studentProfile }, planRes, allConfigs, { data: modalityRefs }] = await Promise.all([
-    supabase.from("User").select("id, name, email, avatarUrl").eq("id", student.userId).single(),
+    supabase.from("User").select("id, name, email, avatarUrl, role").eq("id", student.userId).single(),
     supabase.from("StudentProfile").select("weightKg, heightCm, medicalNotes, emergencyContact, phone").eq("studentId", studentId).maybeSingle(),
     student.planId ? supabase.from("Plan").select("name").eq("id", student.planId).single() : Promise.resolve({ data: null }),
     loadAllEvaluationConfigs(supabase),
@@ -150,6 +151,25 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
         modalities={modalitiesForEvaluate}
         evaluationConfigByModality={evaluationConfigByModality}
       />
+
+      {dbUser.role === "ADMIN" && (
+        <>
+          <AdminAlunoQuickActions
+            studentId={studentId}
+            initialPlanId={student.planId ?? ""}
+            initialAdminGrantedFullAccess={Boolean(
+              (student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess
+            )}
+            editedUserRole={user?.role}
+          />
+          <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "var(--text-secondary)" }}>
+            <Link href={`/admin/alunos/${studentId}`} style={{ color: "var(--primary)", fontWeight: 600 }}>
+              Abrir ficha completa na administração
+            </Link>
+            {" — "}plano, escola, estatísticas e mais opções.
+          </p>
+        </>
+      )}
 
       <Suspense fallback={null}>
         <CoachStudentWellbeingSection studentId={studentId} />
