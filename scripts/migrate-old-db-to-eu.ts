@@ -5,6 +5,10 @@
  * Opções:
  *   --no-truncate  (não limpa o destino antes; pode falhar em duplicados de PK)
  *   --ama-only     (só repõe AthleteMissionAward a partir do antigo: apaga no EU e recopia)
+ *
+ * Auth Supabase: os UUID em User."authUserId" têm de existir no MESMO projeto Auth
+ * que a app usa, ou os utilizadores têm de voltar a entrar e alinhar por email.
+ * Isto migra só Postgres (dados da app).
  */
 import { config } from "dotenv";
 import path from "path";
@@ -32,6 +36,17 @@ function mapModality(code: string | null | undefined): Modality {
 function mapModalityText(code: string | null | undefined): string | null {
   if (code == null) return null;
   return mapModality(code);
+}
+
+type PgClient = InstanceType<typeof Client>;
+
+async function pgTableColumns(client: PgClient, tableName: string): Promise<Set<string>> {
+  const { rows } = await client.query<{ column_name: string }>(
+    `SELECT column_name FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = $1`,
+    [tableName],
+  );
+  return new Set(rows.map((r) => r.column_name));
 }
 
 async function migrateAmaOnly(sourceUrl: string, targetUrl: string) {
@@ -146,19 +161,25 @@ async function main() {
       console.log(`School: ${rows.length}`);
     }
 
-    // 2. User (sem avatarUrl)
+    // 2. User (colunas extra se existirem na origem e no destino, ex.: avatarUrl)
     {
-      const { rows } = await src.query(
-        `SELECT id, "authUserId", email, name, role, "createdAt" FROM "User"`,
-      );
+      const srcCols = await pgTableColumns(src, "User");
+      const dstCols = await pgTableColumns(dst, "User");
+      const userExtras = ["avatarUrl"].filter((c) => srcCols.has(c) && dstCols.has(c));
+      const userCols = ["id", "authUserId", "email", "name", "role", "createdAt", ...userExtras];
+      const quoted = userCols.map((c) => `"${c}"`).join(", ");
+      const { rows } = await src.query(`SELECT ${quoted} FROM "User"`);
+      const placeholders = userCols
+        .map((c, i) => (c === "role" ? `$${i + 1}::"Role"` : `$${i + 1}`))
+        .join(", ");
       for (const r of rows) {
+        const values = userCols.map((c) => (r as Record<string, unknown>)[c]);
         await dst.query(
-          `INSERT INTO "User" (id, "authUserId", email, name, role, "createdAt")
-           VALUES ($1,$2,$3,$4,$5::"Role",$6)`,
-          [r.id, r.authUserId, r.email, r.name, r.role, r.createdAt],
+          `INSERT INTO "User" (${quoted}) VALUES (${placeholders})`,
+          values as unknown[],
         );
       }
-      console.log(`User: ${rows.length}`);
+      console.log(`User: ${rows.length}${userExtras.length ? ` (extras: ${userExtras.join(", ")})` : ""}`);
     }
 
     // 3. Plan (mapeamento snake_case → Prisma)
@@ -193,19 +214,35 @@ async function main() {
       console.log(`Plan: ${rows.length}`);
     }
 
-    // 4. Student (só colunas Prisma)
+    // 4. Student (planId, Stripe, grace, etc. se existirem em ambas as BD)
     {
-      const { rows } = await src.query(
-        `SELECT id, "userId", "schoolId", status, "createdAt" FROM "Student"`,
-      );
+      const srcCols = await pgTableColumns(src, "Student");
+      const dstCols = await pgTableColumns(dst, "Student");
+      const studentOptional = [
+        "planId",
+        "primaryModality",
+        "stripeSubscriptionId",
+        "adminGrantedFullAccess",
+        "paymentGraceEndsAt",
+        "paymentGraceReferenceMonth",
+        "paymentSuspendedAt",
+        "suspendedPlanId",
+      ];
+      const studentExtras = studentOptional.filter((c) => srcCols.has(c) && dstCols.has(c));
+      const studentCols = ["id", "userId", "schoolId", "status", "createdAt", ...studentExtras];
+      const quoted = studentCols.map((c) => `"${c}"`).join(", ");
+      const { rows } = await src.query(`SELECT ${quoted} FROM "Student"`);
+      const placeholders = studentCols
+        .map((c, i) => (c === "status" ? `$${i + 1}::"StudentStatus"` : `$${i + 1}`))
+        .join(", ");
       for (const r of rows) {
+        const values = studentCols.map((c) => (r as Record<string, unknown>)[c]);
         await dst.query(
-          `INSERT INTO "Student" (id, "userId", "schoolId", status, "createdAt")
-           VALUES ($1,$2,$3,$4::"StudentStatus",$5)`,
-          [r.id, r.userId, r.schoolId, r.status, r.createdAt],
+          `INSERT INTO "Student" (${quoted}) VALUES (${placeholders})`,
+          values as unknown[],
         );
       }
-      console.log(`Student: ${rows.length}`);
+      console.log(`Student: ${rows.length}${studentExtras.length ? ` (extras: ${studentExtras.join(", ")})` : ""}`);
     }
 
     // 5. Coach
