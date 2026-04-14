@@ -19,7 +19,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const dbUser = await getCurrentDbUser();
-  if (!dbUser) redirect("/sign-in");
+  if (!dbUser) redirect("/sign-in?reason=no-db-user");
 
   if (dbUser.role === "COACH") redirect("/coach");
 

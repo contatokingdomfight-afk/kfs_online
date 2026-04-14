@@ -102,6 +102,7 @@ export async function middleware(request: NextRequest) {
       }
       const url = request.nextUrl.clone();
       url.pathname = "/sign-in";
+      url.searchParams.set("reason", "middleware-no-user");
       if (pathname.startsWith("/check-in/")) {
         url.searchParams.set("next", pathname);
       }

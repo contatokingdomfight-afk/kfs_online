@@ -1,8 +1,10 @@
 /**
  * Service worker mínimo para PWA.
- * Não intercepta pedidos cross-origin nem POST/PUT/PATCH/DELETE —
- * isso causava ERR_FAILED nos pedidos de refresh de token ao Supabase.
- * O handler fetch vazio satisfaz os critérios de instalação PWA no Chrome/Android.
+ * Regras:
+ * - Não interceptar pedidos cross-origin (Supabase, Stripe, Google, etc.)
+ * - Não interceptar navegações de página (mode: navigate) — deixar o browser
+ *   tratar directamente para garantir que os cookies de sessão são enviados
+ * - Não interceptar métodos não-GET
  */
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -15,17 +17,15 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
-  // Ignorar pedidos cross-origin (ex.: Supabase, Stripe, Google)
-  if (!request.url.startsWith(self.location.origin)) {
-    return;
-  }
+  // Ignorar pedidos cross-origin (Supabase, Stripe, Google, CDNs, etc.)
+  if (!request.url.startsWith(self.location.origin)) return;
 
-  // Ignorar métodos não-GET (POST para APIs de auth, etc.)
-  if (request.method !== "GET") {
-    return;
-  }
+  // Ignorar navegações de página — o browser envia cookies nativo sem intervenção do SW
+  if (request.mode === "navigate") return;
 
-  // Para pedidos GET same-origin: pass-through com fallback
+  // Ignorar métodos não-GET
+  if (request.method !== "GET") return;
+
   event.respondWith(
     fetch(request).catch(() => Response.error())
   );
