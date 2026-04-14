@@ -3,7 +3,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
-import { EditarAlunoForm } from "./EditarAlunoForm";
+import { AdminAlunoQuickActions, EditarAlunoForm } from "./EditarAlunoForm";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import {
@@ -291,7 +291,15 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
         )}
       </section>
 
+      <AdminAlunoQuickActions
+        studentId={studentId}
+        initialPlanId={student.planId ?? ""}
+        initialAdminGrantedFullAccess={Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess)}
+        editedUserRole={user?.role}
+      />
+
       <details
+        open
         className="aluno-edit-details"
         style={{
           marginTop: "clamp(24px, 6vw, 32px)",
@@ -325,12 +333,10 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
             initialSchoolId={(student as { schoolId?: string }).schoolId ?? ""}
             schoolOptions={(schools ?? []).map((s) => ({ id: s.id, name: s.name ?? s.id }))}
             initialPlanId={student.planId ?? ""}
-            initialAdminGrantedFullAccess={Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess)}
             initialPrimaryModality={initialPrimaryModality}
             planOptions={planOptions}
             modalityOptions={modalityOptions}
             statusLabels={STATUS_LABEL}
-            currentUserRole={user?.role ?? "ALUNO"}
           />
         </div>
       </details>
