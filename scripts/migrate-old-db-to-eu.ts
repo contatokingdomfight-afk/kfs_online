@@ -3,8 +3,9 @@
  * Requer: OLD_DATABASE_URL (ou MIGRATE_SOURCE_DATABASE_URL) e DATABASE_URL (destino EU).
  * Uso: npx tsx scripts/migrate-old-db-to-eu.ts
  * Opções:
- *   --no-truncate  (não limpa o destino antes; pode falhar em duplicados de PK)
- *   --ama-only     (só repõe AthleteMissionAward a partir do antigo: apaga no EU e recopia)
+ *   --no-truncate    (não limpa o destino antes; pode falhar em duplicados de PK)
+ *   --ama-only       (só repõe AthleteMissionAward a partir do antigo: apaga no EU e recopia)
+ *   --extended-only  (após schema de paridade no EU: copia tabelas alargadas + merge de campos extra em User/Student/Plan/Coach/Lesson/Attendance; sem TRUNCATE)
  *
  * Auth Supabase: os UUID em User."authUserId" têm de existir no MESMO projeto Auth
  * que a app usa, ou os utilizadores têm de voltar a entrar e alinhar por email.
@@ -47,6 +48,250 @@ async function pgTableColumns(client: PgClient, tableName: string): Promise<Set<
     [tableName],
   );
   return new Set(rows.map((r) => r.column_name));
+}
+
+function intersectCols(
+  a: Set<string>,
+  b: Set<string>,
+  table: string,
+): string[] {
+  const out: string[] = [];
+  for (const c of a) {
+    if (b.has(c)) out.push(c);
+  }
+  if (out.length === 0) {
+    throw new Error(`Sem colunas em comum em "${table}" entre origem e destino.`);
+  }
+  return out;
+}
+
+/** Ordem respeitando FKs típicas do legado. */
+const EXTENDED_TABLE_ORDER = [
+  "ModalityRef",
+  "GeneralDimension",
+  "AttendanceGoal",
+  "Course",
+  "CourseModule",
+  "CourseUnit",
+  "CourseCreator",
+  "CourseProgress",
+  "CoursePurchase",
+  "CourseUnitProgress",
+  "WeekTheme",
+  "ModalityEvaluationConfig",
+  "EvaluationComponent",
+  "EvaluationCriterion",
+  "Event",
+  "EventRegistration",
+  "StudentProfile",
+  "Notification",
+  "StudentBadge",
+  "AthleteEvaluation",
+  "LessonCancellation",
+  "LessonCoach",
+  "PlanPrice",
+  "waitlist",
+  "PreLessonWellness",
+  "PainSelfReport",
+  "PhysicalBenchmarkEntry",
+  "BodyWeightEntry",
+] as const;
+
+async function copyTableOnConflictDoNothing(
+  src: PgClient,
+  dst: PgClient,
+  tableName: string,
+): Promise<number> {
+  const sc = await pgTableColumns(src, tableName);
+  const dc = await pgTableColumns(dst, tableName);
+  const cols = intersectCols(sc, dc, tableName);
+  const quoted = cols.map((c) => `"${c}"`).join(", ");
+  const placeholders = cols.map((_, i) => `$${i + 1}`).join(", ");
+  const { rows } = await src.query(`SELECT ${quoted} FROM "${tableName}"`);
+  let n = 0;
+  for (const r of rows) {
+    const vals = cols.map((c) => (r as Record<string, unknown>)[c]);
+    await dst.query(
+      `INSERT INTO "${tableName}" (${quoted}) VALUES (${placeholders}) ON CONFLICT DO NOTHING`,
+      vals as unknown[],
+    );
+    n += 1;
+  }
+  return n;
+}
+
+async function migrateExtendedOnly(sourceUrl: string, targetUrl: string) {
+  const src = new Client({ connectionString: sourceUrl });
+  const dst = new Client({ connectionString: targetUrl });
+  await src.connect();
+  await dst.connect();
+  try {
+    await dst.query("BEGIN");
+    for (const t of EXTENDED_TABLE_ORDER) {
+      const dstHas = await dst.query(
+        `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+        [t],
+      );
+      if (dstHas.rows.length === 0) {
+        console.warn(`Destino sem tabela "${t}" — ignorada (corre migração SQL de paridade primeiro).`);
+        continue;
+      }
+      const n = await copyTableOnConflictDoNothing(src, dst, t);
+      console.log(`${t}: ${n} linhas processadas na origem (INSERT … ON CONFLICT DO NOTHING).`);
+    }
+
+    // Merge campos extra nas tabelas core (mantém contas já criadas no EU)
+    const { rows: urows } = await src.query(
+      `SELECT id, "avatarUrl" FROM "User" WHERE "avatarUrl" IS NOT NULL AND "avatarUrl" <> ''`,
+    );
+    for (const r of urows) {
+      await dst.query(
+        `UPDATE "User" SET "avatarUrl" = COALESCE("avatarUrl", $2) WHERE id = $1`,
+        [r.id, r.avatarUrl],
+      );
+    }
+    console.log(`User: merge avatarUrl em ${urows.length} linhas (com URL na origem).`);
+
+    const stuCols = [
+      "planId",
+      "primaryModality",
+      "stripeCustomerId",
+      "stripeSubscriptionId",
+      "can_create_courses",
+      "paymentGraceEndsAt",
+      "paymentGraceReferenceMonth",
+      "paymentSuspendedAt",
+      "suspendedPlanId",
+      "adminGrantedFullAccess",
+    ];
+    const dstStudent = await pgTableColumns(dst, "Student");
+    const srcStudent = await pgTableColumns(src, "Student");
+    const stuUse = stuCols.filter((c) => dstStudent.has(c) && srcStudent.has(c));
+    if (stuUse.length > 0) {
+      const q = `SELECT id, ${stuUse.map((c) => `"${c}"`).join(", ")} FROM "Student"`;
+      const { rows: srows } = await src.query(q);
+      for (const r of srows) {
+        const sets = stuUse
+          .map((c, i) => {
+            const p = i + 2;
+            if (c === "can_create_courses" || c === "adminGrantedFullAccess") {
+              return `"${c}" = COALESCE("${c}", $${p}::boolean)`;
+            }
+            return `"${c}" = COALESCE("${c}", $${p})`;
+          })
+          .join(", ");
+        const vals = [r.id, ...stuUse.map((c) => (r as Record<string, unknown>)[c])];
+        await dst.query(`UPDATE "Student" SET ${sets} WHERE id = $1`, vals as unknown[]);
+      }
+      console.log(`Student: merge ${stuUse.length} colunas em ${srows.length} linhas.`);
+    }
+
+    const planCols = [
+      "stripePriceId",
+      "includes_performance_tracking",
+      "includes_check_in",
+      "max_check_ins_per_day",
+      "includes_exclusive_benefits",
+    ];
+    const dstPlan = await pgTableColumns(dst, "Plan");
+    const srcPlan = await pgTableColumns(src, "Plan");
+    const planUse = planCols.filter((c) => dstPlan.has(c) && srcPlan.has(c));
+    if (planUse.length > 0) {
+      const q = `SELECT id, ${planUse.map((c) => `"${c}"`).join(", ")} FROM "Plan"`;
+      const { rows: prows } = await src.query(q);
+      for (const r of prows) {
+        const sets = planUse
+          .map((c, i) => {
+            const p = i + 2;
+            if (c === "max_check_ins_per_day") {
+              return `"${c}" = COALESCE("${c}", $${p}::integer)`;
+            }
+            if (c.startsWith("includes_")) {
+              return `"${c}" = COALESCE("${c}", $${p}::boolean)`;
+            }
+            return `"${c}" = COALESCE("${c}", $${p})`;
+          })
+          .join(", ");
+        const vals = [r.id, ...planUse.map((c) => (r as Record<string, unknown>)[c])];
+        await dst.query(`UPDATE "Plan" SET ${sets} WHERE id = $1`, vals as unknown[]);
+      }
+      console.log(`Plan: merge ${planUse.length} colunas em ${prows.length} linhas.`);
+    }
+
+    const coachCols = ["hourly_rate", "is_active", "phone", "date_of_birth"] as const;
+    const dstCoach = await pgTableColumns(dst, "Coach");
+    const srcCoach = await pgTableColumns(src, "Coach");
+    const coachUse = coachCols.filter((c) => dstCoach.has(c) && srcCoach.has(c));
+    if (coachUse.length > 0) {
+      const q = `SELECT id, ${coachUse.map((c) => `"${c}"`).join(", ")} FROM "Coach"`;
+      const { rows: crows } = await src.query(q);
+      for (const r of crows) {
+        const sets = coachUse
+          .map((c, i) => `"${c}" = COALESCE("Coach"."${c}", $${i + 2})`)
+          .join(", ");
+        const vals = [r.id, ...coachUse.map((c) => (r as Record<string, unknown>)[c])];
+        await dst.query(
+          `UPDATE "Coach" SET ${sets} FROM (SELECT 1) AS _ WHERE "Coach".id = $1`,
+          vals as unknown[],
+        );
+      }
+      console.log(`Coach: merge ${coachUse.length} colunas em ${crows.length} linhas.`);
+    }
+
+    const lessonCols = ["weekday", "locationId"] as const;
+    const dstLesson = await pgTableColumns(dst, "Lesson");
+    const srcLesson = await pgTableColumns(src, "Lesson");
+    const lessonUse = lessonCols.filter((c) => dstLesson.has(c) && srcLesson.has(c));
+    if (lessonUse.length > 0) {
+      const q = `SELECT id, ${lessonUse.map((c) => `"${c}"`).join(", ")} FROM "Lesson"`;
+      const { rows: lrows } = await src.query(q);
+      for (const r of lrows) {
+        const sets = lessonUse
+          .map((c, i) => {
+            const p = i + 2;
+            if (c === "weekday") return `"${c}" = COALESCE("${c}", $${p}::integer)`;
+            return `"${c}" = COALESCE("${c}", $${p})`;
+          })
+          .join(", ");
+        const vals = [r.id, ...lessonUse.map((c) => (r as Record<string, unknown>)[c])];
+        await dst.query(`UPDATE "Lesson" SET ${sets} WHERE id = $1`, vals as unknown[]);
+      }
+      console.log(`Lesson: merge ${lessonUse.length} colunas em ${lrows.length} linhas.`);
+    }
+
+    const attCols = ["checkedInAt", "rpe", "rpeRecordedAt", "countsForGamification"] as const;
+    const dstAtt = await pgTableColumns(dst, "Attendance");
+    const srcAtt = await pgTableColumns(src, "Attendance");
+    const attUse = attCols.filter((c) => dstAtt.has(c) && srcAtt.has(c));
+    if (attUse.length > 0) {
+      const q = `SELECT id, ${attUse.map((c) => `"${c}"`).join(", ")} FROM "Attendance"`;
+      const { rows: arows } = await src.query(q);
+      for (const r of arows) {
+        const sets = attUse
+          .map((c, i) => {
+            const p = i + 2;
+            if (c === "countsForGamification") {
+              return `"${c}" = COALESCE("${c}", $${p}::boolean)`;
+            }
+            if (c === "rpe") return `"${c}" = COALESCE("${c}", $${p}::smallint)`;
+            return `"${c}" = COALESCE("${c}", $${p})`;
+          })
+          .join(", ");
+        const vals = [r.id, ...attUse.map((c) => (r as Record<string, unknown>)[c])];
+        await dst.query(`UPDATE "Attendance" SET ${sets} WHERE id = $1`, vals as unknown[]);
+      }
+      console.log(`Attendance: merge ${attUse.length} colunas em ${arows.length} linhas.`);
+    }
+
+    await dst.query("COMMIT");
+    console.log("Migração --extended-only concluída.");
+  } catch (e) {
+    await dst.query("ROLLBACK");
+    throw e;
+  } finally {
+    await src.end();
+    await dst.end();
+  }
 }
 
 async function migrateAmaOnly(sourceUrl: string, targetUrl: string) {
@@ -98,6 +343,11 @@ async function main() {
 
   if (process.argv.includes("--ama-only")) {
     await migrateAmaOnly(sourceUrl, targetUrl);
+    return;
+  }
+
+  if (process.argv.includes("--extended-only")) {
+    await migrateExtendedOnly(sourceUrl, targetUrl);
     return;
   }
 

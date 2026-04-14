@@ -21,7 +21,8 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:migrate-data": "tsx scripts/migrate-old-db-to-eu.ts",
-    "db:migrate-ama-only": "tsx scripts/migrate-old-db-to-eu.ts --ama-only"
+    "db:migrate-ama-only": "tsx scripts/migrate-old-db-to-eu.ts --ama-only",
+    "db:migrate-extended": "tsx scripts/migrate-old-db-to-eu.ts --extended-only"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
