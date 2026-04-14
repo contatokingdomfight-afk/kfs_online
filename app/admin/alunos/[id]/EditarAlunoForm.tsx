@@ -74,6 +74,19 @@ function ClearPlanFormInner({ studentId, disabled }: { studentId: string; disabl
   );
 }
 
+function roleLabel(norm: string): string {
+  switch (norm) {
+    case "COACH":
+      return "Professor";
+    case "ADMIN":
+      return "Administrador";
+    case "ALUNO":
+      return "Aluno";
+    default:
+      return norm || "Desconhecido";
+  }
+}
+
 /** Fora do `<details>` «Editar dados» para acesso rápido e promover ficarem sempre visíveis no admin. */
 export function AdminAlunoQuickActions({
   studentId,
@@ -180,7 +193,7 @@ export function AdminAlunoQuickActions({
         )}
       </div>
 
-      {canPromote && (
+      {canPromote ? (
         <div
           style={{
             padding: "clamp(12px, 3vw, 14px)",
@@ -225,6 +238,26 @@ export function AdminAlunoQuickActions({
           {promoteState?.error && (
             <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{promoteState.error}</p>
           )}
+        </div>
+      ) : (
+        <div
+          style={{
+            padding: "clamp(12px, 3vw, 14px)",
+            background: "var(--surface)",
+            borderRadius: "var(--radius-md)",
+            borderLeft: "3px solid var(--border)",
+          }}
+        >
+          <p style={{ margin: "0 0 8px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+            Alterar perfil
+          </p>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.55 }}>
+            Este utilizador já tem papel <strong style={{ color: "var(--text-primary)" }}>{roleLabel(roleNorm)}</strong> na plataforma (
+            <code style={{ fontSize: 11 }}>{roleNorm || "—"}</code>
+            ). Só quem está como <strong>Aluno</strong> na tabela de utilizadores pode ser promovido aqui.
+            {roleNorm === "ADMIN" && " Administradores e professores costumam ter este registo porque também existem como aluno na escola — é esperado."}
+            {roleNorm === "COACH" && " Para rever permissões, usa Admin → Coaches."}
+          </p>
         </div>
       )}
     </div>
