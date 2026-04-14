@@ -1,6 +1,8 @@
-# Configurar Resend (emails – app + convites Supabase)
+# Configurar Resend (emails – app + Auth Supabase)
 
-O Resend envia os emails da app (confirmação de presença, lembretes) e pode ser usado pelo Supabase para os **emails de convite** (remetente em vez de `noreply@mail.app.supabase.io`). Plano gratuito: 3000 emails/mês.
+O Resend envia pela app (**confirmação de presença** e **lembretes de aulas de amanhã**, com layout HTML de marca em `lib/notifications/email.ts`) e, via **SMTP no Supabase**, os emails de **Auth** (convite, recuperar palavra-passe, magic link, etc.). Plano gratuito: ~3000 emails/mês.
+
+Secções úteis mais abaixo: **§6** fluxo «esqueci-me da senha»; **§6.5** armadilhas Resend; **§7** entrega (spam, DMARC); **§8** onde personalizar a aparência (Supabase templates vs código da app).
 
 ---
 

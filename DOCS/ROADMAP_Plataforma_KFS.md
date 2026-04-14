@@ -1,7 +1,7 @@
 # Roadmap – Plataforma Kingdom Fight School
 
 > Visão do que **já está feito** e do que **falta fazer** na aplicação, alinhada ao [Plano de Negócios](./Plano_de_Negócios_Kingdom_Fight_School.md) e à [Especificação da Plataforma Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md).  
-> Atualizar este ficheiro à medida que forem concluídas novas funcionalidades.
+> Atualizar este ficheiro à medida que forem concluídas novas funcionalidades. **Revisão recente:** 14 abril 2026 (emails transacionais, doc Resend, tabela planos §5, §15 notificações).
 
 ---
 
@@ -70,6 +70,7 @@
 | QR Code da aula (coach) | Feito | `/coach/aula/qr` com QR para a aula |
 | Link de check-in no dashboard do aluno | Feito | Por aula: “abre este link no telemóvel” |
 | Coach confirma/ajusta presença na aula | Feito | Em `/coach/aula?lesson=...` |
+| **Email ao aluno quando a presença é confirmada** | Feito | Resend: `sendCheckInConfirmation` em `lib/notifications/email.ts` — layout HTML com marca + parte texto; requer `RESEND_API_KEY` (e `RESEND_FROM_EMAIL` em produção) |
 | Status de presença: Pendente, Confirmada, Falta | Feito | Em Attendance.status |
 | **Check-in / intenção (RSVP) em aula livre sem plano** | Feito | `lib/perform-check-in.ts` e `setAttendanceIntention` em `app/dashboard/actions.ts` dispensam `hasCheckIn` quando `Lesson.isOpenClass` |
 | Admin: lista de presenças (próximas 2 semanas) | Feito | `/admin/presenca` com link para aula do coach |
@@ -92,9 +93,9 @@
 
 | Item | Estado | Notas |
 |------|--------|--------|
-| Tabela Plan na base de dados | Feito | name, description, price_monthly, includes_digital_access, modality_scope, is_active |
+| Tabela Plan na base de dados | Feito | Colunas PostgREST/Prisma em **camelCase** (`priceMonthly`, `includesDigitalAccess`, `modalityScope`, `isActive`, `stripePriceId`, etc.); ver `memory.md` §3.15 |
 | Ligação Student.planId → Plan | Feito | Opcional |
-| Listar planos | Feito | `/admin/planos` |
+| Listar planos | Feito | `/admin/planos` — leitura com cliente de **sessão**; planos partilhados em `default-school-001` também em `/escolher-plano` |
 | Criar plano | Feito | `/admin/planos/novo` |
 | Editar plano | Feito | `/admin/planos/[id]` |
 | Planos iniciais (Online, Presencial I/II, FULL) | Feito | Inseridos na migration |
@@ -271,7 +272,8 @@ Resumo das áreas descritas na [Especificação da Plataforma Kingdom Digital](.
 | **Modalidades oficiais** (Muay Thai, Boxing, Kickboxing, BJJ, MMA, …) | Feito | Cadastro em **Admin → Modalidades** (`ModalityRef`); aulas, planos e filtro por modalidade usam estes códigos. |
 | **Critérios de avaliação** (pilares **Técnico, Tático, Físico, Mental, Teórico**) por modalidade | Por fazer | A plataforma já tem o modelo (`EvaluationComponent` / `EvaluationCriterion`, Admin **Avaliação**). **Próximo passo operacional:** completar critérios para cada modalidade que ainda não os tenha (em especial **BJJ** e **MMA**), alinhados à metodologia KFS. |
 | Biometria (mencionada no plano) | Parcial | **v1 (abril 2026):** autorrelato no check-in + agregados no perfil de performance (sono, hidratação %, stress, fadiga, zonas GREEN/YELLOW/RED); hub `/dashboard/bem-estar`, RPE, dores, benchmarks, peso. **Por fazer:** integração com dispositivos / métricas além do autorrelato; definição de produto se necessário |
-| Notificações (email/push) | Feito | Resend: confirmação de presença (coach confirma); cron lembrete aulas (GET /api/cron/lesson-reminders). |
+| Notificações (email / cron) | Feito | **Resend:** confirmação de presença (`sendCheckInConfirmation`) e **lembrete do dia seguinte** (`sendLessonReminder`) — HTML com cabeçalho de marca + `text` alternativo (`lib/notifications/email.ts`). **Cron Vercel:** `GET /api/cron/lesson-reminders` (+ `CRON_SECRET`). **Auth (convite, reset password, etc.):** SMTP Resend no Supabase + templates em **Authentication → Email Templates** — ver **`DOCS/CONFIGURAR_RESEND.md`**. |
+| Notificações **push** (browser) | Por fazer | Além de email/cron; ver §14.3 / §16 |
 | Remuneração de coaches (configurável) | Feito | Coach.hourly_rate; /admin/financeiro/coaches (resumo mensal); /coach/financeiro (painel do coach) |
 | Internacionalização (PT/EN) | Feito | Cookie kfs-locale; getTranslations(locale); mensagens em lib/i18n; sidebar e landing traduzidos. |
 | Dark / Light mode | Feito | data-theme no html; tokens em globals.css; ThemeLocaleSwitcher no sidebar e na landing. |
@@ -318,7 +320,7 @@ Com base na especificação e na dependência entre módulos:
 | Qualidade | **E2E** (ex.: Playwright), relatórios/alertas admin em financeiro (melhorias pontuais) | rodapé, §16 |
 | Performance | Re-Lighthouse em `/dashboard` e `/dashboard/performance` em produção; opcional `ANALYZE=true npm run build` (bundle analyzer em `next.config.mjs`) | §2, §16 |
 
-*Itens já cobertos na web:* PWA instalável, i18n PT/EN, dark/light, notificações in-app/email/crons listados em §15; otimizações recentes de bundle/RSC na home do aluno e no perfil de performance (§2, §2b).
+*Itens já cobertos na web:* PWA instalável, i18n PT/EN, dark/light, notificações in-app, **emails transacionais Resend** (presença confirmada + lembretes de aula com layout de marca; Auth via SMTP Supabase — §3 e §15), crons em §18; otimizações recentes de bundle/RSC na home do aluno e no perfil de performance (§2, §2b).
 
 ---
 
@@ -336,7 +338,7 @@ Com base na especificação e na dependência entre módulos:
 
 ---
 
-*Última atualização (abril 2026): **Admin – critérios de avaliação** com subcategorias, replicar critério em várias modalidades, limpeza legacy e config sem cache obsoleto (§2b). **Performance:** streaming RSC na home do aluno (`DashboardBelowFold`), prefetch selectivo no sidebar, radar SVG sem Recharts, lazy-load e tooltips CSS no perfil de performance (§2). **Bem-estar / check-in:** `PreLessonWellness`, hub `/dashboard/bem-estar`, agregados biométricos no perfil (`memory.md` §3.14); modal de sucesso no check-in; inputs com tema consistente. **Modalidades** (`ModalityRef`) — feito ao nível da plataforma. **Próximo foco de produto:** **conteúdo** dos critérios onde faltar (**BJJ/MMA** e outras); **Tribo**; extensões de **Rank**; «Ver como melhorar» → biblioteca; biometria além do autorrelato; Battle Pass; **Capacitor + lojas**; push Web; E2E; revalidar métricas Lighthouse em produção.*
+*Última atualização (14 abr. 2026): **Emails:** `lib/notifications/email.ts` — HTML de marca para **confirmação de presença** e **lembretes de aula**; doc operacional **`DOCS/CONFIGURAR_RESEND.md`** (SMTP, esqueci-me da senha, spam/DMARC, aparência §8). **Auth:** `getPasswordResetSiteUrl` em forgot-password. **Planos / RLS / admin:** colunas camelCase, leitura de planos com sessão, `escolher-plano` + `default-school-001` — `memory.md` §3.15. **Já documentado antes (abril 2026):** critérios admin §2b; performance RSC/radar; bem-estar §3.14 em `memory.md`; `ModalityRef`. **Próximo foco de produto (lista §309–321):** **Tribo**; Rank v2; «Ver como melhorar» → biblioteca; critérios **BJJ/MMA** na BD; biometria além do autorrelato; Capacitor + lojas; push Web; E2E; Lighthouse.*
 
 ---
 

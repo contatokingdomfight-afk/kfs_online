@@ -2,7 +2,7 @@
 
 > **Para continuar noutro chat:** lê este ficheiro primeiro; a documentação de produto e decisões está em **`DOCS/`** (não em `docs/`). Regra do projeto: `.cursor/rules/documentacao-projeto.mdc`.
 
-**Última revisão:** abril 2026.
+**Última revisão:** 14 abril 2026 (emails transacionais, doc Resend, roadmap).
 
 ---
 
@@ -53,7 +53,7 @@
 - **Sessão (evitar logout após idle em mobile):** cookies Supabase com `cookieOptions` partilhado (`lib/supabase/cookie-options.ts`: `maxAge` ~400 dias, `secure` em produção); middleware chama `getSession()` antes de `getUser()` para alinhar refresh; `components/AuthSessionKeepAlive.tsx` no `app/layout.tsx` reage a `visibilitychange` / `pageshow` (bfcache) / `online` e chama `getSession()` com throttle — mitiga timers de refresh suspensos em segundo plano.
 - **Tour no dashboard:** `StudentOnboardingGate` em `app/dashboard/layout.tsx`; wizard opcional em `app/onboarding/`.
 - **Recuperação de senha:** `resetPasswordForEmail` corre numa **Server Action** (`app/auth/forgot-password/actions.ts`) com `createClient` de `@/lib/supabase/server` para o **PKCE code verifier** ficar em **cookies** alinhados ao `@supabase/ssr`. `redirectTo` = `…/auth/callback?next=/auth/update-password`; a troca do `code` é em **`GET /auth/callback`** (servidor). `/auth/update-password` e `/auth/callback` em **`publicPaths`**; Supabase → Redirect URLs: `…/auth/callback` e `…/auth/update-password`. `getPasswordResetSiteUrl()` trata `x-forwarded-host` / `VERCEL_URL` / `NEXT_PUBLIC_APP_URL` para o `redirectTo` em produção.
-- **Emails transacionais (Resend):** confirmação de presença e lembretes de aulas em `lib/notifications/email.ts` — layout HTML com cabeçalho da marca (`wrapTransactionalEmail`, cor `#c1121f`) + corpo em texto simples. Convite / reset / magic link: templates no **Supabase → Authentication → Email Templates**; SMTP Resend: `DOCS/CONFIGURAR_RESEND.md`.
+- **Emails transacionais (Resend):** `lib/notifications/email.ts` — **`sendCheckInConfirmation`** (coach confirma presença) e **`sendLessonReminder`** (resumo das aulas de amanhã) partilham o mesmo **`wrapTransactionalEmail`**: fundo cinza, cartão branco, barra superior `#c1121f`, lista de aulas com blocos estilizados nos lembretes, campo **`text`** + **`html`** no envio. Variáveis: `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (Vercel + `.env`). **Cron:** `GET /api/cron/lesson-reminders` (`vercel.json` + `CRON_SECRET`). **Auth (convite, recuperar senha, magic link):** corpo nos templates **Supabase → Authentication → Email Templates**; SMTP custom Resend em **Project Settings → Auth → SMTP**. Guia completo: **`DOCS/CONFIGURAR_RESEND.md`** (§6 esqueci-me da senha / redirects, §6.5 detalhes Resend, §7 spam/DMARC, §8 aparência e onde editar).
 - **Aula experimental** (`/aula-experimental`): escolha de **escola** + slots por `expandLessonsForDateRange` e `schoolId`; `submitTrialRequest` valida escola, modalidade e ocorrência (`lessonId::occurrenceDate`).
 - **Perfil (`/dashboard/perfil`):** **data de nascimento** em **Dados pessoais** (`StudentProfile.dateOfBirth`); valor normalizado para `input type="date"`; validação na action (`app/dashboard/perfil/actions.ts`); após guardar, revalidação inclui `/dashboard/rank`.
 - **Ranking (Rank):** `/dashboard/rank` — classificação por **XP** (só `Student` ATIVO com `Athlete`). **Filtros (query):** escola (lista de escolas ativas; default = escola do aluno), modalidade (`Student.primaryModality`: Muay Thai, Boxing, Kickboxing, MMA), faixa etária a partir de `StudentProfile.dateOfBirth` (KIDS ≤12, TEENS 13–17, ADULTS 18–49, MASTERS 50+). RPC `get_leaderboard_filtered` (`supabase/migrations/20260412120000_leaderboard_filtered_rpc.sql`); `lib/leaderboard.ts`, `lib/rank-filters.ts`, `app/dashboard/rank/RankFiltersForm.tsx`. A RPC antiga `get_leaderboard_my_school` pode manter-se na BD por compatibilidade; a página usa a filtrada. Menu e acesso alinhados a **performance** (`hasPerformanceTracking`). RLS não expõe `User`/`Student` de terceiros: o ranking usa função `SECURITY DEFINER`.
@@ -160,8 +160,8 @@ npm run generate:pwa-icons   # ícones PWA a partir de KFS Logo.png — ver DOCS
 
 - Editar visibilidade de comentários antigos (PRIVATE ↔ SHARED) — não implementado.
 - **PWA na web** (instalar, Safari modal, menu lateral) — feito; ver **`DOCS/PWA.md`**. **Capacitor** e lojas — por fazer (roadmap §17).
-- **Modalidades** (BJJ, MMA, etc.): cadastro na plataforma — **feito** (`ModalityRef`). **Próximo passo:** **critérios de avaliação** (Técnico, Tático, Físico, Mental, Teórico) por modalidade onde ainda não existam — ver Admin Avaliação / roadmap §15.
-- Roadmap opcional: **Tribo**, extensões de **rankeamento**, «Ver como melhorar» → biblioteca, biometria, Battle Pass, **push Web**, E2E — ver **`DOCS/ROADMAP_Plataforma_KFS.md`** (tabela resumo após §17 e secções 14–17).
+- **Modalidades** (BJJ, MMA, etc.): cadastro na plataforma — **feito** (`ModalityRef`). **Próximo passo operacional:** preencher **critérios de avaliação** por modalidade onde ainda faltem dados na BD (foco **BJJ / MMA**) — ver Admin Avaliação / roadmap §15.
+- Roadmap opcional: **Tribo** (feed social), **Rank v2** (período, evolução por dimensões), «Ver como melhorar» → biblioteca, biometria além do autorrelato, Battle Pass, **push Web**, E2E, melhorias financeiro/Lighthouse — lista explícita em **`DOCS/ROADMAP_Plataforma_KFS.md`** (tabela após §17).
 
 ---
 

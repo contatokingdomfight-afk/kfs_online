@@ -1,6 +1,6 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** abril 2026.  
+> **Última revisão deste índice:** 14 abril 2026.  
 > **Índice de contexto técnico (prioridade para IA / equipa):** [`memory.md`](memory.md)  
 > **Roadmap feito / por fazer:** [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)
 
@@ -129,7 +129,7 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`CONFIGURAR_RESEND.md`](CONFIGURAR_RESEND.md) | Resend (email transacional) |
+| [`CONFIGURAR_RESEND.md`](CONFIGURAR_RESEND.md) | Resend: app (presença + lembretes HTML), variáveis `.env`, SMTP Supabase, esqueci-me da senha (§6), detalhes Resend (§6.5), spam/DMARC (§7), aparência / templates (§8) |
 | [`STACK DE DESENVOLVIMENTO — KINGDOM FIGHT SCHOOL.md`](STACK%20DE%20DESENVOLVIMENTO%20—%20KINGDOM%20FIGHT%20SCHOOL.md) | Stack |
 
 ---

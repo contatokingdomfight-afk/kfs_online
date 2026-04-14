@@ -74,11 +74,13 @@ Supabase aceita qualquer SMTP (Brevo, SendGrid, Postmark, AWS SES, etc.). Em **A
 
 | O que queres mudar | Onde |
 |--------------------|------|
-| Texto do email (assunto e corpo) | Supabase → **Authentication** → **Email Templates** → **Invite user** |
+| Texto do email (assunto e corpo) | Supabase → **Authentication** → **Email Templates** — escolhe o tipo (**Invite user**, **Reset password**, **Magic link**, etc.) |
 | Remetente (nome e email) | Supabase → **Project Settings** → **Auth** → **SMTP Settings** (Custom SMTP) |
 
 Depois de guardar, envia um novo convite (Admin → Alunos → Convidar aluno) para testar.
 
+**Outros templates Auth** (ex. **recuperar palavra-passe**): mesmo sítio — **Email Templates**; o link usa normalmente `{{ .ConfirmationURL }}`. Checklist de redirects e SMTP: **`DOCS/CONFIGURAR_RESEND.md`** (§6 e seguintes). **Emails só da app** (presença confirmada, lembretes de aulas): código em `lib/notifications/email.ts`, não neste painel.
+
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md), [CONFIGURAR_RESEND.md](CONFIGURAR_RESEND.md) — abril 2026.*
