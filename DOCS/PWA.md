@@ -1,7 +1,7 @@
 # Progressive Web App (PWA) — KFS Online
 
 > **Última revisão:** abril 2026.  
-> **Capacitor (Android/iOS)** mantém-se como fase seguinte no roadmap; o PWA é a base web instalável. Ver `DOCS/ROADMAP_Plataforma_KFS.md` §17.
+> **Capacitor (Android/iOS)** mantém-se como fase seguinte no roadmap; o PWA é a base web instalável. Ver `DOCS/ROADMAP_Plataforma_KFS.md` (resumo executivo: mobile / Capacitor).
 
 ## O que está implementado
 

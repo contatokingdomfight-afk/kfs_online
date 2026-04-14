@@ -2,7 +2,7 @@
 
 > **Para continuar noutro chat:** lê este ficheiro primeiro; a documentação de produto e decisões está em **`DOCS/`** (não em `docs/`). Regra do projeto: `.cursor/rules/documentacao-projeto.mdc`.
 
-**Última revisão:** 14 abril 2026 (emails transacionais, doc Resend, roadmap).
+**Última revisão:** 14 abril 2026 (roadmap enxuto, INDEX/memory, numeração §3).
 
 ---
 
@@ -32,7 +32,7 @@
 | Checklist manual por perfil | `DOCS/GUIA_TESTE_VALIDACAO_PERFIS.md` |
 | Índice na raiz | `INDICE_DOCUMENTACAO.md`, `README.md`, `PROXIMOS_PASSOS.md` |
 | Fluxo Git (branch `dev`, merge em `main` só com autorização, DOCS após merge) | `.cursor/rules/fluxo-git-dev-main.mdc` |
-| Bem-estar / RPE / dores / benchmarks / peso (aluno) | `app/dashboard/bem-estar/`, migração `20260410200000_wellness_rpe_pain_benchmark_weight.sql` |
+| Bem-estar / RPE / dores / benchmarks / peso (aluno) | `app/dashboard/bem-estar/`, migração `20260410200000_wellness_rpe_pain_benchmark_weight.sql` (§3.15) |
 
 ---
 
@@ -63,28 +63,28 @@
 - **Unitários:** `npm test` (Vitest) — `lib/dashboard-lesson-filter.test.ts`.
 - **Contas de teste:** `npm run seed:test-users` — precisa `TEST_SEED_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY`, escola ativa; emails em **`DOCS/CONTAS_TESTE.md`**. Ordem dotenv no script: `.env` → `.env.local` (override); **gravar** `.env` antes de correr.
 
-### 3.3 Financeiro – um pagamento por aluno e mês
+### 3.4 Financeiro – um pagamento por aluno e mês
 
 - **`createPayment`** consolida linhas em `Payment` para o mesmo `studentId` + `referenceMonth`: registar **Pago** quando já existia **Em atraso** (ex.: mensalidade gerada) **atualiza** o registo em vez de criar duplicado. Ver **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
 
-### 3.4 Coach – Timer de rounds
+### 3.5 Coach – Timer de rounds
 
 - **Rota:** `/coach/round-timer` — temporizador para treinos (boxe, muay thai, etc.): rounds, descanso, contagem inicial; configuração de tempos com **seletores minutos:segundos** (UX tipo rolo no telemóvel); estado com **timestamps** (`phaseEndsAt`) + `catchUp` ao voltar do background; som (Web Audio: contagem 3‑2‑1, aviso ao entrar nos **últimos 10 s** do round/descanso, **fim de round** em três tons, fim do treino), vibração, cores por fase, ecrã inteiro; presets e `localStorage` / `sessionStorage` para config e sessão ativa. Atalho na **home do coach** (`app/coach/page.tsx`). Código: `lib/round-timer/*`, `components/coach/round-timer/RoundTimerClient.tsx`, `DurationRollPicker.tsx`.
 
-### 3.5 Admin – Turmas
+### 3.6 Admin – Turmas
 
 - Vista **por semana** / por modalidade; criação de aulas (incl. recorrente / one-off) — ver `app/admin/turmas/`.
 - **Modelo de agenda (2026-04):** uma linha em `Lesson` por **definição**; recorrentes usam `weekday` (1–7) e `date` null; ocorrências na agenda são **expandidas** em memória (`lib/lesson-occurrences.ts`). Cancelamento pontual: `LessonCancellation` (só aquela data). Professores N:N: `LessonCoach` (primeiro espelhado em `Lesson.coachId`). Migração: `supabase/migrations/20260401120000_lesson_template_schedule.sql`.
 - **Área Coach** (agenda, presenças na aula, QR, home, presença global, financeiro, experimentais): mesma expansão; links para uma ocorrência usam `?lesson=<id>&date=YYYY-MM-DD`; lista de presenças na aula filtra `Attendance` por `occurrenceDate`. Helper `rowsToLessonDefinitions` em `lib/lesson-occurrences.ts`. Na **home do coach** (`app/coach/page.tsx`), atalhos para presenças da **próxima** aula (ainda não começou) e da **última** já terminada, com ocorrências no intervalo ~21 dias atrás a ~28 à frente e instantes em `Europe/Lisbon` (`lib/coach-presence-shortcuts.ts`). A lista de ocorrências usa o mesmo âmbito que a **agenda** (`lib/coach-schedule-scope.ts`: escolas via `CoachSchool`; se não houver aulas com o `coachId` do professor, todas as da escola). **Hoje** e **minutos do dia** para o cartão «resto do dia» usam calendário e relógio em **Europe/Lisbon** (`calendarDateLisbon` / `minutesSinceMidnightLisbon` em `lib/lesson-check-in-window.ts`), não o dia UTC de `toISOString()`.
 
-### 3.6 Perfil do atleta – critérios por categoria (resultados de avaliação)
+### 3.7 Perfil do atleta – critérios por categoria (resultados de avaliação)
 
 - **Modalidade MMA:** critérios de avaliação alinhados a Muay Thai + Boxing (componentes e critérios clonados na BD; dimensões Mental/Teórico/Físico partilhadas ficam uma vez por nome). Migração: `supabase/migrations/20260411120000_mma_evaluation_clone_muay_boxing.sql`; `ModalityRef` + `load-evaluation-config.ts` (`MMA` em `MODALITIES_USE_COMPONENTS`).
 - **Filtro principal** na área «Critérios por categoria» abre com **Técnico** (não Teórico): `components/evaluation-results/EvaluationResultsDashboard.tsx` (`INITIAL_MAIN_CATEGORY`).
 - **Controle psicológico** pertence ao pilar **Mental** (não Tática): dimensões `MUAY_MENTAL_PSICOLOGICO` / `BOX_MENTAL_PSICOLOGICO` em `GeneralDimension`; componente `Controle psicológico`. Dados antigos com código `*_TATICO_PSICOLOGICO` são mapeados para o eixo mental em `lib/performance-utils.ts`.
 - **Migração:** `supabase/migrations/20260327120000_controle_psicologico_under_mental.sql`.
 
-### 3.7 Admin – Escolas e Coaches (UX)
+### 3.8 Admin – Escolas e Coaches (UX)
 
 - **Escolas:** ao criar ou guardar edição de uma escola, `FormLoadingModal` em `EscolasManager` (mensagens «A criar escola…» / «A guardar alterações…»).
 - **Ficha do coach:** `app/admin/coaches/[id]/loading.tsx` — estado de carregamento ao navegar para a página de detalhe.
@@ -92,40 +92,40 @@
 - **Turmas / editar aula:** `app/admin/turmas/[id]/loading.tsx` — «A abrir edição…» ao navegar para a edição; no formulário, `FormLoadingModal` «A guardar alterações…»; após guardar com sucesso, redireciona para `/admin/turmas` com a mesma query (`view`, `week`, `school`) via `lib/turmas-list-query.ts`. Locais no select: `getLocationsForSchool` por `schoolId` da aula; `getCachedLocations` usa service role no callback de cache para não devolver lista vazia por cache incorreto.
 - **Cancelar aula (edição):** modal em `document.body`. **Recorrente com `?occurrence=YYYY-MM-DD`:** pode **cancelar só essa semana** (`LessonCancellation`) ou **eliminar a definição** (apaga a linha `Lesson`). **Recorrente sem data na URL:** só eliminar definição. **Aula única:** elimina a linha. `lib/admin/delete-lesson.ts` (`performCancelOccurrence`, `performDeleteLessonDefinition`). **`POST /api/admin/turmas/delete-lesson`** com `action`: `cancelOccurrence` | `deleteDefinition`. **Guardar edição:** `POST /api/admin/turmas/update-lesson` — altera **a definição** (incl. vários professores em `LessonCoach`). `EditarAulaForm` com `fetch`. Sucesso: `{ redirectTo }` + `window.location.assign`; `turmasPathAfterDelete` reconstrói a query.
 
-### 3.8 Produção (Vercel) — favicon, RSC e métricas
+### 3.9 Produção (Vercel) — favicon, RSC e métricas
 
 - **Favicon:** `app/icon.tsx` (ImageResponse); rewrite `next.config.mjs`: `/favicon.ico` → `/icon`.
 - **Client vs Server:** carrosséis do dashboard passam só **strings** e **`children`** renderizados no servidor (`OpenClassesCarouselShell` + `LessonPromoBlock`); não passar `Map` nem funções `t` a `"use client"`.
 - **Speed Insights:** avisos de preload (ex.: domínios de terceiros) podem surgir; opcional **`NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS=true`** em `components/VercelMetrics.tsx` para desativar só o Speed Insights (Analytics mantém-se).
 
-### 3.9 PWA (Progressive Web App)
+### 3.10 PWA (Progressive Web App)
 
 - **Manifest** (`app/manifest.ts`): `standalone`, cor de tema **#ED1C24**, ícones em `public/icons/` (gerados com `npm run generate:pwa-icons` a partir de `KFS Logo.png`).
 - **Service worker** (`public/sw.js`): `fetch` com fallback `Response.error()` se a rede falhar; `PwaInstallProvider` + `PwaInstallHint` (telemóvel, aviso inicial) e `SidebarPwaInstall` (menu lateral após «Agora não»). Registo em produção (`PwaServiceWorkerRegister`). Middleware não intercepta `/sw.js` nem `/manifest.webmanifest`.
 - **Instalação vs desinstalação:** não há API para detetar remoção da app no telemóvel; `appinstalled` grava `kfs-pwa-appinstalled-at` em `localStorage` (só instalação concluída). Após desinstalar, o Chrome pode demorar a voltar a emitir `beforeinstallprompt` — ver **`DOCS/PWA.md`**.
 - **Detalhes:** **`DOCS/PWA.md`**. **Capacitor** (Android/iOS) continua no roadmap como passo após o PWA.
 
-### 3.10 Documentação em `DOCS/` (higiene)
+### 3.11 Documentação em `DOCS/` (higiene)
 
-- **Índice:** `DOCS/INDEX.md` lista os ficheiros atuais. Em março 2026 foram removidos resumos de sessão, guias Git obsoletos (repo antigo), texto de treino fora do âmbito do repositório e duplicado curto de marca; **`DEPLOY_VERCEL.md`** foi reescrito para a stack atual (Supabase, sem Clerk). Atualizações de bem-estar / biométricos no perfil: abril 2026 (§3.14).
+- **Índice:** `DOCS/INDEX.md` lista os ficheiros atuais. Ficheiros antigos removidos ou substituídos: histórico no Git. Stack documentada: Supabase (sem Clerk). Bem-estar / biométricos no perfil: abril 2026 (§3.15).
 
-### 3.11 XP / níveis — tempo mínimo na faixa
+### 3.12 XP / níveis — tempo mínimo na faixa
 
 - Para além do XP, a **subida de nível** (faixa mostrada no perfil) exige **tempo mínimo na faixa atual**: **2 → 5 → 11 meses** nas três primeiras faixas (regra 2×+1); **a partir da faixa índice 3** (Verde em `BELT_NAMES`), fixo **12 meses** por degrau — `getMinMonthsInCurrentBeltForNextPromotion` em `lib/belts.ts` (~30 d/mês). Estado: `Athlete.displayBeltIndex`, `Athlete.lastBeltPromotionAt`; migração **`supabase/migrations/20260408120000_athlete_display_belt_time_gate.sql`**. UI: `getRankFromAthleteState` (`lib/xp-missions.ts`); sync: `syncAthleteDisplayBelt`. Missões: `getApplicableMissionTemplates`.
 
-### 3.12 Histórico útil (sessões anteriores)
+### 3.13 Histórico útil (sessões anteriores)
 
 - **Mobile:** avaliação no `CoachStudentProfileModal` (select 1–10, toques maiores).
 - **Admin:** `clearStudentPlanAccess` — remover plano / subscrição (`app/admin/alunos/actions.ts`). **Papel Professor/Admin:** `promoteStudentToRole` aceita qualquer `User.role` atual (ALUNO, COACH, ADMIN); no-op se já for o pedido; cria `Coach`/`CoachSchool` se necessário. UI `AdminAlunoQuickActions` em `/admin/alunos/[id]` e em **`/coach/alunos/[id]`** quando o logado é `ADMIN`.
 - **Feedback aluno:** `lib/resolve-coach-feedback.ts`; comentários `SHARED` vs `PRIVATE`.
 
-### 3.13 Admin – critérios de avaliação e performance (abril 2026)
+### 3.14 Admin – critérios de avaliação e performance (abril 2026)
 
 - **Admin Avaliação** (`app/admin/avaliacao/`): várias subcategorias por dimensão; **replicar o mesmo critério em várias modalidades**; migração `20260410120000_remove_legacy_evaluation_components.sql` para dados legacy inconsistentes.
 - **Config em tempo real:** `lib/load-evaluation-config.ts` **sem** `unstable_cache` (alterações no admin reflectem nas avaliações/radar).
-- **Performance (aluno):** `/dashboard` — `DashboardBelowFold` async + `<Suspense>` para reduzir payload RSC inicial; sidebar com `prefetch: false` em `/como-sou-avaliado` e `/sistema-pontuacao`; `WarriorPanel` com barras via `transform: scaleX`. `/dashboard/performance` — radar **SVG** (sem Recharts), lazy-load de secções, tooltips CSS em conquistas, payload de detalhe condicional. Chunk partilhado grande `1255-*` no browser = runtime Next.js (esperado). Detalhe: **`DOCS/ROADMAP_Plataforma_KFS.md`** (§2, §2b, §18).
+- **Performance (aluno):** `/dashboard` — `DashboardBelowFold` async + `<Suspense>` para reduzir payload RSC inicial; sidebar com `prefetch: false` em `/como-sou-avaliado` e `/sistema-pontuacao`; `WarriorPanel` com barras via `transform: scaleX`. `/dashboard/performance` — radar **SVG** (sem Recharts), lazy-load de secções, tooltips CSS em conquistas, payload de detalhe condicional. Chunk partilhado grande `1255-*` no browser = runtime Next.js (esperado). Detalhe: **`DOCS/ROADMAP_Plataforma_KFS.md`** (resumo executivo + §2 e §2b).
 
-### 3.14 Bem-estar, RPE, dores, benchmarks e peso (abril 2026)
+### 3.15 Bem-estar, RPE, dores, benchmarks e peso (abril 2026)
 
 - **Migração:** `supabase/migrations/20260410200000_wellness_rpe_pain_benchmark_weight.sql` — `PreLessonWellness` (sono, hidratação, stress, fadiga, zona GREEN/YELLOW/RED), `Attendance.rpe` / `rpeRecordedAt`, `Attendance.countsForGamification` (falso se zona vermelha no pré-treino), `PainSelfReport`, `PhysicalBenchmarkEntry`, `BodyWeightEntry`, `StudentProfile.weightGoalKg` / `weightGoalTargetDate`.
 - **Check-in** (`/check-in/[lessonId]`): formulário pré-treino opcional (ou saltar); `lib/wellness-score.ts` calcula zona; `lib/resolve-check-in-occurrence.ts` partilha resolução de data com `performCheckIn`. Zona **vermelha**: presença válida mas **não** entra em `computeBadgeStats` / badges de assiduidade (`lib/gamification.ts` conta por linha `Attendance` + `occurrenceDate`). **UI:** controlos com classe `.input` e `check-in-wellness-form` em `app/globals.css` (tema escuro/claro; `color-scheme`); **sucesso:** modal `CheckInSuccessModal` (não substitui a página inteira) com título tipo «Check-in realizado com sucesso!»; `app/check-in/[lessonId]/CheckInFlow.tsx`.
@@ -134,7 +134,7 @@
 - **Metas mensais / totais no dashboard:** contagens de presenças usam `countsForGamification = true` (`DashboardBelowFold`, `DashboardRestContent`) para alinhar com badges.
 - **Coach:** `/coach/aula?lesson=&date=` — por aluno, zona de pré-treino + RPE (`AttendanceRow`, dados de `PreLessonWellness` + `Attendance.rpe`). `/coach/alunos/[id]` — secção **Bem-estar e carga** (`CoachStudentWellbeingSection`): últimos pré-treinos e RPE (cliente admin).
 
-### 3.15 Planos (Supabase) — colunas, RLS e UI admin (abril 2026)
+### 3.16 Planos (Supabase) — colunas, RLS e UI admin (abril 2026)
 
 - **Tabela `Plan`:** colunas alinhadas ao Prisma — `priceMonthly`, `includesDigitalAccess`, `modalityScope`, `isActive` (não usar `price_monthly` / `is_active` nas queries PostgREST). Várias rotas foram corrigidas (`lib/plan-access.ts`, `escolher-plano`, financeiro, webhooks Stripe, etc.).
 - **Admin → listar/editar planos (`/admin/planos`):** leitura com `createClient()` (sessão + anon key), para coincidir com o projeto do login; criar/editar continuam com `SUPABASE_SERVICE_ROLE_KEY` nas server actions. **RLS:** `Plan` precisa de política para `authenticated` (ex. `allow_authenticated`); sem políticas com RLS ativo a lista fica vazia.
@@ -159,9 +159,9 @@ npm run generate:pwa-icons   # ícones PWA a partir de KFS Logo.png — ver DOCS
 ## 5. Pendências / evoluções (não bloqueantes)
 
 - Editar visibilidade de comentários antigos (PRIVATE ↔ SHARED) — não implementado.
-- **PWA na web** (instalar, Safari modal, menu lateral) — feito; ver **`DOCS/PWA.md`**. **Capacitor** e lojas — por fazer (roadmap §17).
-- **Modalidades** (BJJ, MMA, etc.): cadastro na plataforma — **feito** (`ModalityRef`). **Próximo passo operacional:** preencher **critérios de avaliação** por modalidade onde ainda faltem dados na BD (foco **BJJ / MMA**) — ver Admin Avaliação / roadmap §15.
-- Roadmap opcional: **Tribo** (feed social), **Rank v2** (período, evolução por dimensões), «Ver como melhorar» → biblioteca, biometria além do autorrelato, Battle Pass, **push Web**, E2E, melhorias financeiro/Lighthouse — lista explícita em **`DOCS/ROADMAP_Plataforma_KFS.md`** (tabela após §17).
+- **PWA na web** (instalar, Safari modal, menu lateral) — feito; ver **`DOCS/PWA.md`**. **Capacitor** e lojas — por fazer (roadmap, resumo executivo).
+- **Modalidades** (BJJ, MMA, etc.): cadastro na plataforma — **feito** (`ModalityRef`). **Próximo passo operacional:** preencher **critérios de avaliação** por modalidade onde ainda faltem dados na BD (foco **BJJ / MMA**) — Admin Avaliação; ver roadmap (prioridade 4 na tabela resumo).
+- Roadmap opcional: **Tribo**, **Rank v2**, «Ver como melhorar» → biblioteca, biometria além do autorrelato, Battle Pass, **push Web**, E2E, financeiro/Lighthouse — **`DOCS/ROADMAP_Plataforma_KFS.md`** (tabela «Resumo executivo»).
 
 ---
 

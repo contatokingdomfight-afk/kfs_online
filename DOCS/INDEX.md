@@ -6,7 +6,7 @@
 
 Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confundir com `docs/` na raiz, se existir.
 
-**Removidos ou substituídos (março 2026):** resumo de sessão (fevereiro), guias de primeiro push / GitHub com repo antigo, texto de periodização desportiva (Tailândia) fora de âmbito, ficheiro de «Sociedade» duplicativo da marca — o histórico mantém-se no Git. O guia **`DEPLOY_VERCEL.md`** foi reescrito (Stack atual: Supabase, sem Clerk).
+Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual: Supabase (sem Clerk); ver **`DEPLOY_VERCEL.md`**.
 
 ---
 
@@ -43,9 +43,9 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 | [`SUPABASE_EMAIL_CONVITE.md`](SUPABASE_EMAIL_CONVITE.md) | Emails de convite |
 | [`APLICAR_MIGRATIONS_SUPABASE.md`](APLICAR_MIGRATIONS_SUPABASE.md) | Aplicar migrações |
 | [`REVISAO_SEGURANCA.md`](REVISAO_SEGURANCA.md) | Revisão de segurança |
-| [`WEEK_THEME_MIGRATION.md`](WEEK_THEME_MIGRATION.md) | Migração tema da semana |
-| [`COURSE_UNITS_MIGRATION.md`](COURSE_UNITS_MIGRATION.md) | Unidades de curso |
-| [`BIBLIOTECA_360_MIGRATION.md`](BIBLIOTECA_360_MIGRATION.md) | Biblioteca 360 |
+| [`WEEK_THEME_MIGRATION.md`](WEEK_THEME_MIGRATION.md) | Migração tema da semana *(referência histórica)* |
+| [`COURSE_UNITS_MIGRATION.md`](COURSE_UNITS_MIGRATION.md) | Unidades de curso *(referência histórica)* |
+| [`BIBLIOTECA_360_MIGRATION.md`](BIBLIOTECA_360_MIGRATION.md) | Biblioteca 360 *(referência histórica)* |
 
 ---
 
@@ -63,7 +63,7 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Melhorias do dashboard (carrosséis março 2026; perfil performance / dados biométricos abril 2026 — ver `memory.md` §3.14) |
+| [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Melhorias do dashboard (carrosséis; perfil / biométricos — ver `memory.md` §3.15) |
 | [`CONTAS_TESTE.md`](CONTAS_TESTE.md) | Contas de teste e `seed:test-users` |
 | [`GUIA_TESTE_VALIDACAO_PERFIS.md`](GUIA_TESTE_VALIDACAO_PERFIS.md) | Checklist por perfil |
 | [`GUIA_TESTE_LOJA.md`](GUIA_TESTE_LOJA.md) | Testes da loja |
@@ -94,9 +94,9 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`GOOGLE_OAUTH_SETUP.md`](GOOGLE_OAUTH_SETUP.md) | Setup OAuth |
+| [`GOOGLE_OAUTH_SETUP.md`](GOOGLE_OAUTH_SETUP.md) | Setup principal OAuth |
 | [`GOOGLE_OAUTH_PASSOS_RAPIDOS.md`](GOOGLE_OAUTH_PASSOS_RAPIDOS.md) | Passos rápidos |
-| [`GOOGLE_OAUTH_USAR_EXISTENTE.md`](GOOGLE_OAUTH_USAR_EXISTENTE.md) | Reutilizar cliente OAuth |
+| [`GOOGLE_OAUTH_USAR_EXISTENTE.md`](GOOGLE_OAUTH_USAR_EXISTENTE.md) | Reutilizar cliente existente |
 | [`Login_Google_Supabase.md`](Login_Google_Supabase.md) | Google + Supabase |
 | [`Login_Google_Producao_Hostinger.md`](Login_Google_Producao_Hostinger.md) | Produção / Hostinger |
 
@@ -120,7 +120,7 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 |-----------|----------|
 | [`MISSOES.md`](MISSOES.md) | Missões |
 | [`POPULAR_MISSOES_SUPABASE.md`](POPULAR_MISSOES_SUPABASE.md) | Popular missões |
-| [`PLANO_BIBLIOTECA_MELHORIAS.md`](PLANO_BIBLIOTECA_MELHORIAS.md) | Melhorias biblioteca |
+| [`PLANO_BIBLIOTECA_MELHORIAS.md`](PLANO_BIBLIOTECA_MELHORIAS.md) | Plano legado de melhorias (várias já feitas; ver Git / roadmap) |
 | [`PLANO_ACAO_SISTEMA_PLANOS.md`](PLANO_ACAO_SISTEMA_PLANOS.md) | Planos |
 
 ---
@@ -129,7 +129,7 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`CONFIGURAR_RESEND.md`](CONFIGURAR_RESEND.md) | Resend: app (presença + lembretes HTML), variáveis `.env`, SMTP Supabase, esqueci-me da senha (§6), detalhes Resend (§6.5), spam/DMARC (§7), aparência / templates (§8) |
+| [`CONFIGURAR_RESEND.md`](CONFIGURAR_RESEND.md) | Resend (app + SMTP Supabase), variáveis, spam/DMARC, templates |
 | [`STACK DE DESENVOLVIMENTO — KINGDOM FIGHT SCHOOL.md`](STACK%20DE%20DESENVOLVIMENTO%20—%20KINGDOM%20FIGHT%20SCHOOL.md) | Stack |
 
 ---

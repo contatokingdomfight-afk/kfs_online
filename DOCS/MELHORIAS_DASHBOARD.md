@@ -2,8 +2,8 @@
 
 ## Estado (abril 2026)
 
-- **Perfil de performance (`/dashboard/performance`):** secção **Dados biométricos** (agregados dos check-ins pré-treino: sono, hidratação %, stress, fadiga, zonas GREEN/YELLOW/RED), antes da progressão de níveis; ver **`DOCS/memory.md`** §3.14.
-- **Hub bem-estar:** `/dashboard/bem-estar` (RPE, dores, benchmarks, peso) — mesmo contexto de produto em `memory.md` §3.14.
+- **Perfil de performance (`/dashboard/performance`):** secção **Dados biométricos** (agregados dos check-ins pré-treino: sono, hidratação %, stress, fadiga, zonas GREEN/YELLOW/RED), antes da progressão de níveis; ver **`DOCS/memory.md`** §3.15.
+- **Hub bem-estar:** `/dashboard/bem-estar` (RPE, dores, benchmarks, peso) — mesmo contexto de produto em `memory.md` §3.15.
 
 ---
 

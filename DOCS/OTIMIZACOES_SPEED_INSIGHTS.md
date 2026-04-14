@@ -39,7 +39,7 @@ Melhorias aplicadas para reduzir LCP nas rotas mais lentas do Vercel Speed Insig
 
 - **`/dashboard`:** secção **Painel do Guerreiro + O que há de novo + Explorar** movida para `app/dashboard/DashboardBelowFold.tsx` (async) com `<Suspense>` — primeiro paint com menos serialização RSC. Fallback com skeleton leve.
 - **Sidebar:** `prefetch={false}` em `/como-sou-avaliado` e `/sistema-pontuacao` (evita prefetch longo de páginas informativas pesadas).
-- **`/dashboard/performance`:** radar sem Recharts (SVG); lazy-load de secções; ver também `memory.md` §3.13.
+- **`/dashboard/performance`:** radar sem Recharts (SVG); lazy-load de secções; ver também `memory.md` §3.14.
 
 ## Próximos passos (opcional)
 
