@@ -116,7 +116,7 @@
 ### 3.12 Histórico útil (sessões anteriores)
 
 - **Mobile:** avaliação no `CoachStudentProfileModal` (select 1–10, toques maiores).
-- **Admin:** `clearStudentPlanAccess` — remover plano / subscrição (`app/admin/alunos/actions.ts`).
+- **Admin:** `clearStudentPlanAccess` — remover plano / subscrição (`app/admin/alunos/actions.ts`). **Promover aluno** (Professor / Administrador) e **Acesso rápido:** `AdminAlunoQuickActions` em `/admin/alunos/[id]` e, quando o logado é `ADMIN`, também em **`/coach/alunos/[id]`** (perfil coach — mesmo componente).
 - **Feedback aluno:** `lib/resolve-coach-feedback.ts`; comentários `SHARED` vs `PRIVATE`.
 
 ### 3.13 Admin – critérios de avaliação e performance (abril 2026)
