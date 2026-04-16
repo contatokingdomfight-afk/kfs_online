@@ -34,7 +34,7 @@ Se o `git push` falhar com **403** ou credenciais erradas:
 
 ## 4. Variáveis de ambiente (resumo)
 
-Configurar em **Settings → Environment Variables** (Production e, se necessário, Preview):
+Configurar em **Settings → Environment Variables** da Vercel.
 
 | Área | Exemplos de chaves |
 |------|---------------------|
@@ -48,6 +48,14 @@ Configurar em **Settings → Environment Variables** (Production e, se necessár
 | Opcional | `NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS=true` para desativar só o Speed Insights (ver [`OTIMIZACOES_SPEED_INSIGHTS.md`](OTIMIZACOES_SPEED_INSIGHTS.md)) |
 
 Valores exatos: copiar do `.env.local` de desenvolvimento (sem secrets no Git).
+
+### 4.0 Preview por branch (ex.: `dev` → `kfs-sistema-git-dev-…vercel.app`)
+
+Os **URL de deploy por branch** usam o ambiente **Preview** na Vercel, **não** o de Production.
+
+- Se as variáveis estiverem **só** em **Production**, o build até pode passar, mas em runtime o `@supabase/ssr` falha com: *«Your project's URL and API key are required»* — porque `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` **não existem** no bundle do Preview.
+- **Correção:** no mesmo ecrã de Environment Variables, para cada chave crítica (no mínimo as da tabela acima que a app usa no servidor e no cliente), marcar também **Preview** (e **Development** se usares `vercel dev`). Podes duplicar os mesmos valores que em Production **ou** apontar para um projeto Supabase de staging, se existir.
+- Depois de guardar, **redeploy** o último deployment da branch (Deployments → ⋮ → Redeploy), para o novo env entrar no build.
 
 ### 4.1 Supabase Auth — callbacks e recuperação de senha
 
@@ -86,7 +94,7 @@ Passo a passo para **kingdomfight.com** e DNS: [`Deploy_Vercel_kingdomfight.md`]
 ## 8. Checklist rápido
 
 - [ ] Repositório correto e push atualizado  
-- [ ] Variáveis de ambiente na Vercel (Production)  
+- [ ] Variáveis de ambiente na Vercel (**Production** e **Preview** se usares URLs `*-git-*-*.vercel.app`)  
 - [ ] Build com sucesso  
 - [ ] Login e dashboard acessíveis  
 - [ ] Webhooks Stripe (se pagamentos online) configurados  
