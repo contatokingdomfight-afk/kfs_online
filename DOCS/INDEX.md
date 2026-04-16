@@ -1,6 +1,6 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 14 abril 2026.  
+> **Última revisão deste índice:** 16 abril 2026.  
 > **Índice de contexto técnico (prioridade para IA / equipa):** [`memory.md`](memory.md)  
 > **Roadmap feito / por fazer:** [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)
 
@@ -41,7 +41,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 |-----------|----------|
 | [`SUPABASE_RLS.md`](SUPABASE_RLS.md) | Row Level Security |
 | [`SUPABASE_EMAIL_CONVITE.md`](SUPABASE_EMAIL_CONVITE.md) | Emails de convite |
-| [`APLICAR_MIGRATIONS_SUPABASE.md`](APLICAR_MIGRATIONS_SUPABASE.md) | Aplicar migrações |
+| [`APLICAR_MIGRATIONS_SUPABASE.md`](APLICAR_MIGRATIONS_SUPABASE.md) | Aplicar migrações (incl. secção Ranking: RPCs `get_leaderboard_*`) |
 | [`REVISAO_SEGURANCA.md`](REVISAO_SEGURANCA.md) | Revisão de segurança |
 | [`WEEK_THEME_MIGRATION.md`](WEEK_THEME_MIGRATION.md) | Migração tema da semana *(referência histórica)* |
 | [`COURSE_UNITS_MIGRATION.md`](COURSE_UNITS_MIGRATION.md) | Unidades de curso *(referência histórica)* |

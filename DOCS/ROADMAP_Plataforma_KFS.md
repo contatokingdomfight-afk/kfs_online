@@ -1,7 +1,7 @@
 # Roadmap – Plataforma Kingdom Fight School
 
 > O que **já está feito** vs **por fazer**, alinhado ao [Plano de Negócios](./Plano_de_Negócios_Kingdom_Fight_School.md) e à [Especificação Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md).  
-> **Última revisão:** abril 2026 (admin alunos / papéis, emails Resend, planos camelCase + RLS, doc limpa).
+> **Última revisão:** abril 2026 — ranking em produção (`get_leaderboard_my_school` + `get_leaderboard_filtered` na BD); fallback e mensagem i18n se RPC em falta noutro projeto; admin alunos/papéis, Resend, planos camelCase + RLS.
 
 **Legenda:** **Feito** = em produção. **Por fazer** = não implementado ou só operacional (dados em falta).
 
@@ -20,7 +20,7 @@
 | 7 | Notificações | **Push** no browser |
 | 8 | Qualidade | **E2E** (ex. Playwright); relatórios/alertas no financeiro admin; **Lighthouse** em produção |
 
-**Já entregue (alto nível):** Auth Supabase, multi-escola, turmas/recorrência, check-in + bem-estar no check-in, planos Stripe + presencial + crons Lisboa, biblioteca 360º, loja/eventos, gamificação (XP, faixas, missões, badges, rank v1), tema da semana, emails Resend (presença + lembretes) + SMTP Supabase, i18n PT/EN, dark/light, **definir Professor/Administrador** em qualquer `User.role` (`promoteStudentToRole`), UI em `/admin/alunos/[id]` e `/coach/alunos/[id]` (admin logado).
+**Já entregue (alto nível):** Auth Supabase, multi-escola, turmas/recorrência, check-in + bem-estar no check-in, planos Stripe + presencial + crons Lisboa, biblioteca 360º, loja/eventos, gamificação (XP, faixas, missões, badges, **rank v1** com filtros escola/modalidade/faixa etária e **RPCs na BD de produção**), tema da semana, emails Resend (presença + lembretes) + SMTP Supabase, i18n PT/EN, dark/light, **definir Professor/Administrador** em qualquer `User.role` (`promoteStudentToRole`), UI em `/admin/alunos/[id]` e `/coach/alunos/[id]` (admin logado).
 
 ---
 
@@ -121,8 +121,9 @@ Principais entidades **em uso:** `User`, `Student`, `StudentProfile`, `Coach`, `
 | Next.js 15, Node 20, Vercel | Feito |
 | Crons (`lesson-reminders`, `payment-suspension`) + `CRON_SECRET` | Feito |
 | Vitest (`npm test`), seed testes | Feito |
-| Emails Resend + doc | Feito | `DOCS/CONFIGURAR_RESEND.md` |
-| PWA | Feito | `DOCS/PWA.md` |
+| Emails Resend + doc | Feito — `DOCS/CONFIGURAR_RESEND.md` |
+| PWA | Feito — `DOCS/PWA.md` |
+| RPCs ranking na BD | Feito — `DOCS/APLICAR_MIGRATIONS_SUPABASE.md` (Ranking); novos projetos Supabase: aplicar `20260402120000` e `20260412120000` em ordem |
 | Capacitor / lojas | Por fazer |
 
 ---

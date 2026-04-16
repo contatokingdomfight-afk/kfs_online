@@ -44,7 +44,9 @@ Quando alterares critérios em **Admin → Critérios de avaliação**, o cache 
 
 ## Ranking `/dashboard/rank` — duas funções RPC
 
-A página de rank usa `get_leaderboard_filtered`; se não existir, a app tenta `get_leaderboard_my_school`. Se aparecer *Could not find the function … get_leaderboard_filtered* ou *… get_leaderboard_my_school* no **schema cache**, **nenhuma** das duas foi aplicada nesse projeto Supabase (comum em produção se só se correr parte das migrations).
+A página de rank usa `get_leaderboard_filtered`; se não existir, a app tenta `get_leaderboard_my_school`. Se aparecer *Could not find the function …* no **schema cache**, esse projeto Supabase ainda não tem a(s) função(ões) — aplica os SQL abaixo.
+
+**Produção (abril 2026):** as duas migrações foram aplicadas no projeto KFS (incl. via MCP `user-supabase_kfs_eu` / SQL Editor). **Outro** `project-ref` ou clone novo: repetir os passos aqui.
 
 No **SQL Editor**, executa **sempre nesta ordem** (cola o conteúdo de cada ficheiro e Run):
 
@@ -61,4 +63,4 @@ Foi adicionado `comp_id::text` nos blocos DO das migrations para compatibilidade
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

@@ -2,7 +2,7 @@
 
 > **Para continuar noutro chat:** lê este ficheiro primeiro; a documentação de produto e decisões está em **`DOCS/`** (não em `docs/`). Regra do projeto: `.cursor/rules/documentacao-projeto.mdc`.
 
-**Última revisão:** 14 abril 2026 (roadmap enxuto, INDEX/memory, numeração §3).
+**Última revisão:** 16 abril 2026 (roadmap + ranking RPCs em produção; `DOCS/APLICAR_MIGRATIONS` Ranking).
 
 ---
 
@@ -56,7 +56,7 @@
 - **Emails transacionais (Resend):** `lib/notifications/email.ts` — **`sendCheckInConfirmation`** (coach confirma presença) e **`sendLessonReminder`** (resumo das aulas de amanhã) partilham o mesmo **`wrapTransactionalEmail`**: fundo cinza, cartão branco, barra superior `#c1121f`, lista de aulas com blocos estilizados nos lembretes, campo **`text`** + **`html`** no envio. Variáveis: `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (Vercel + `.env`). **Cron:** `GET /api/cron/lesson-reminders` (`vercel.json` + `CRON_SECRET`). **Auth (convite, recuperar senha, magic link):** corpo nos templates **Supabase → Authentication → Email Templates**; SMTP custom Resend em **Project Settings → Auth → SMTP**. Guia completo: **`DOCS/CONFIGURAR_RESEND.md`** (§6 esqueci-me da senha / redirects, §6.5 detalhes Resend, §7 spam/DMARC, §8 aparência e onde editar).
 - **Aula experimental** (`/aula-experimental`): escolha de **escola** + slots por `expandLessonsForDateRange` e `schoolId`; `submitTrialRequest` valida escola, modalidade e ocorrência (`lessonId::occurrenceDate`).
 - **Perfil (`/dashboard/perfil`):** **data de nascimento** em **Dados pessoais** (`StudentProfile.dateOfBirth`); valor normalizado para `input type="date"`; validação na action (`app/dashboard/perfil/actions.ts`); após guardar, revalidação inclui `/dashboard/rank`.
-- **Ranking (Rank):** `/dashboard/rank` — classificação por **XP** (só `Student` ATIVO com `Athlete`). **Filtros (query):** escola (lista de escolas ativas; default = escola do aluno), modalidade (`Student.primaryModality`: Muay Thai, Boxing, Kickboxing, MMA), faixa etária a partir de `StudentProfile.dateOfBirth` (KIDS ≤12, TEENS 13–17, ADULTS 18–49, MASTERS 50+). RPC `get_leaderboard_filtered` (`supabase/migrations/20260412120000_leaderboard_filtered_rpc.sql`); `lib/leaderboard.ts`, `lib/rank-filters.ts`, `app/dashboard/rank/RankFiltersForm.tsx`. Se `get_leaderboard_filtered` **não existir**, há **fallback** para `get_leaderboard_my_school` só quando não há filtros de outra escola/modalidade/idade. Se **nenhuma** existir na BD, a UI pede para correr **as duas** migrações em ordem (ver **`DOCS/APLICAR_MIGRATIONS_SUPABASE.md`**, secção Ranking). Menu e acesso alinhados a **performance** (`hasPerformanceTracking`). RLS não expõe `User`/`Student` de terceiros: o ranking usa função `SECURITY DEFINER`.
+- **Ranking (Rank):** `/dashboard/rank` — classificação por **XP** (só `Student` ATIVO com `Athlete`). **Filtros (query):** escola, modalidade (`Student.primaryModality`), faixa etária (`StudentProfile.dateOfBirth`: KIDS / TEENS / ADULTS / MASTERS). RPCs **`get_leaderboard_filtered`** e **`get_leaderboard_my_school`** (`20260412120000` / `20260402120000`); **produção** (abril 2026) com ambas aplicadas na BD. `lib/leaderboard.ts`: fallback para `get_leaderboard_my_school` se a RPC filtrada faltar noutro ambiente; `errorKind` + i18n `rankErrorRankingRpcMissing` se **nenhuma** RPC existir. `lib/rank-filters.ts`, `RankFiltersForm.tsx`. Menu: `hasPerformanceTracking`. `SECURITY DEFINER` para contornar RLS em listagens agregadas.
 
 ### 3.3 Testes e seed
 
