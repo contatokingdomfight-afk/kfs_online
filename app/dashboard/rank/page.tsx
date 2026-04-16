@@ -58,7 +58,7 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
 
-  const { rows, error } = await getFilteredSchoolLeaderboard(
+  const { rows, error, errorKind } = await getFilteredSchoolLeaderboard(
     supabase,
     {
       schoolId: resolvedSchoolId,
@@ -109,7 +109,15 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
         messages={filterMessages}
       />
 
-      {error ? (
+      {errorKind === "ranking_rpc_not_deployed" ? (
+        <div
+          className="card p-4 text-sm space-y-2"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <p className="font-semibold text-[var(--text-primary)]">{t("rankError")}</p>
+          <p className="text-[var(--text-secondary)] leading-relaxed">{t("rankErrorRankingRpcMissing")}</p>
+        </div>
+      ) : error ? (
         <div
           className="card p-4 text-sm"
           style={{ color: "var(--danger)", borderColor: "var(--border)" }}

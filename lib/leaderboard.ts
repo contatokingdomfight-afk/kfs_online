@@ -21,13 +21,14 @@ function mapRpcRow(row: Record<string, unknown>): LeaderboardRow {
 }
 
 /** PostgREST quando a função ainda não foi criada / não está no schema cache. */
-function isMissingGetLeaderboardFilteredRpc(error: {
-  message?: string;
-  code?: string;
-}): boolean {
+function isMissingLeaderboardRpc(
+  error: { message?: string },
+  functionName: "get_leaderboard_filtered" | "get_leaderboard_my_school"
+): boolean {
   const m = (error.message ?? "").toLowerCase();
+  const fn = functionName.toLowerCase();
   return (
-    m.includes("get_leaderboard_filtered") &&
+    m.includes(fn) &&
     (m.includes("could not find the function") || m.includes("schema cache"))
   );
 }
@@ -39,11 +40,22 @@ function isMissingGetLeaderboardFilteredRpc(error: {
 async function fetchLeaderboardMySchool(
   supabase: SupabaseClient,
   limit: number
-): Promise<{ rows: LeaderboardRow[]; error: string | null }> {
+): Promise<{
+  rows: LeaderboardRow[];
+  error: string | null;
+  errorKind?: "ranking_rpc_not_deployed";
+}> {
   const { data, error } = await supabase.rpc("get_leaderboard_my_school", {
     p_limit: limit,
   });
   if (error) {
+    if (isMissingLeaderboardRpc(error, "get_leaderboard_my_school")) {
+      return {
+        rows: [],
+        error: null,
+        errorKind: "ranking_rpc_not_deployed",
+      };
+    }
     return { rows: [], error: error.message };
   }
   const list = Array.isArray(data) ? data : [];
@@ -63,6 +75,15 @@ function canFallbackToMySchoolOnly(
   if (!mySchoolId) return false;
   return sid === mySchoolId;
 }
+
+export type LeaderboardErrorKind = "ranking_rpc_not_deployed";
+
+export type LeaderboardResult = {
+  rows: LeaderboardRow[];
+  error: string | null;
+  /** Quando as RPCs de ranking não existem no projeto Supabase (migrações por aplicar). */
+  errorKind?: LeaderboardErrorKind;
+};
 
 export type LeaderboardFilters = {
   /** Escola a listar; omitir ou null = escola do aluno autenticado. */
@@ -88,7 +109,7 @@ export async function getFilteredSchoolLeaderboard(
   filters: LeaderboardFilters,
   limit = 100,
   mySchoolId?: string | null
-): Promise<{ rows: LeaderboardRow[]; error: string | null }> {
+): Promise<LeaderboardResult> {
   const { data, error } = await supabase.rpc("get_leaderboard_filtered", {
     p_school_id: filters.schoolId ?? null,
     p_modality: filters.modality ?? null,
@@ -98,13 +119,20 @@ export async function getFilteredSchoolLeaderboard(
 
   if (
     error &&
-    isMissingGetLeaderboardFilteredRpc(error) &&
+    isMissingLeaderboardRpc(error, "get_leaderboard_filtered") &&
     canFallbackToMySchoolOnly(filters, mySchoolId)
   ) {
     return fetchLeaderboardMySchool(supabase, limit);
   }
 
   if (error) {
+    if (isMissingLeaderboardRpc(error, "get_leaderboard_filtered")) {
+      return {
+        rows: [],
+        error: null,
+        errorKind: "ranking_rpc_not_deployed",
+      };
+    }
     return { rows: [], error: error.message };
   }
 
@@ -122,6 +150,6 @@ export async function getSchoolLeaderboard(
   supabase: SupabaseClient,
   limit = 100,
   mySchoolId?: string | null
-): Promise<{ rows: LeaderboardRow[]; error: string | null }> {
+): Promise<LeaderboardResult> {
   return getFilteredSchoolLeaderboard(supabase, {}, limit, mySchoolId);
 }

@@ -105,6 +105,8 @@ export const messages = {
     rankModalityKick: "Kickboxing",
     rankModalityMma: "MMA",
     rankError: "Não foi possível carregar o ranking",
+    rankErrorRankingRpcMissing:
+      "No projeto Supabase em produção ainda não existem as funções SQL do ranking. Abre o SQL Editor e executa por esta ordem: (1) supabase/migrations/20260402120000_leaderboard_school_rpc.sql — (2) supabase/migrations/20260412120000_leaderboard_filtered_rpc.sql. Guia: DOCS/APLICAR_MIGRATIONS_SUPABASE.md (secção Ranking). Depois de correr o SQL, recarrega esta página.",
     rankYou: "Tu",
     rankColName: "Nome",
     rankColBelt: "Faixa",
@@ -754,6 +756,8 @@ export const messages = {
     rankModalityKick: "Kickboxing",
     rankModalityMma: "MMA",
     rankError: "Could not load the leaderboard",
+    rankErrorRankingRpcMissing:
+      "The ranking SQL functions are not installed on this Supabase project yet. Open the SQL Editor and run in this order: (1) supabase/migrations/20260402120000_leaderboard_school_rpc.sql — (2) supabase/migrations/20260412120000_leaderboard_filtered_rpc.sql. See DOCS/APLICAR_MIGRATIONS_SUPABASE.md (Ranking section). Then reload this page.",
     rankYou: "You",
     rankColName: "Name",
     rankColBelt: "Belt",

@@ -42,17 +42,16 @@ Quando alterares critérios em **Admin → Critérios de avaliação**, o cache 
 
 ---
 
-## Ranking `/dashboard/rank` — `get_leaderboard_filtered`
+## Ranking `/dashboard/rank` — duas funções RPC
 
-Se em produção aparecer *Could not find the function public.get_leaderboard_filtered … in the schema cache*, a migração ainda não foi aplicada nesse projeto Supabase.
+A página de rank usa `get_leaderboard_filtered`; se não existir, a app tenta `get_leaderboard_my_school`. Se aparecer *Could not find the function … get_leaderboard_filtered* ou *… get_leaderboard_my_school* no **schema cache**, **nenhuma** das duas foi aplicada nesse projeto Supabase (comum em produção se só se correr parte das migrations).
 
-1. No **SQL Editor**, executa o ficheiro  
-   `supabase/migrations/20260412120000_leaderboard_filtered_rpc.sql`  
-   (adiciona colunas opcionais `Student.primaryModality` / `StudentProfile.dateOfBirth` se faltarem e cria a RPC).
+No **SQL Editor**, executa **sempre nesta ordem** (cola o conteúdo de cada ficheiro e Run):
 
-2. Até aplicares isso, a app pode usar **fallback** para `get_leaderboard_my_school` só quando o aluno não usa filtros de **outra escola**, **modalidade** ou **faixa etária** — para filtros completos é obrigatória a RPC nova.
+1. `supabase/migrations/20260402120000_leaderboard_school_rpc.sql` — cria `get_leaderboard_my_school(p_limit)`.
+2. `supabase/migrations/20260412120000_leaderboard_filtered_rpc.sql` — colunas opcionais (`Student.primaryModality`, `StudentProfile.dateOfBirth`) e cria `get_leaderboard_filtered(...)`.
 
-A RPC mais antiga está em `supabase/migrations/20260402120000_leaderboard_school_rpc.sql` (`get_leaderboard_my_school`).
+Sem o passo (1), o fallback da app também falha. Depois de aplicar, recarrega `/dashboard/rank`.
 
 ---
 
