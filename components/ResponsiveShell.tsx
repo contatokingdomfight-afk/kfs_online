@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sidebar, type SidebarLink } from "./Sidebar";
 import type { Theme, Locale } from "@/lib/theme-locale";
+
+const SCROLL_DELTA = 8;
 
 function headerAvatarInitials(name: string | null): string {
   if (!name?.trim()) return "?";
@@ -48,9 +50,15 @@ export function ResponsiveShell({
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true); // assume mobile até hidratar (evita sidebar clicável antes do JS)
+  /** Só mobile (<768px): esconde ao scroll para baixo no main; ao subir, mostra já (sem transição). */
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const [mobileHeaderHeight, setMobileHeaderHeight] = useState(56);
   const pathname = usePathname();
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const lastScrollTopRef = useRef(0);
 
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 768px)");
@@ -70,6 +78,44 @@ export function ResponsiveShell({
     const t = setTimeout(() => menuBtnRef.current?.focus({ preventScroll: true }), 0);
     return () => clearTimeout(t);
   }, [pathname]);
+
+  useEffect(() => {
+    if (drawerOpen) setHeaderHidden(false);
+  }, [drawerOpen]);
+
+  useLayoutEffect(() => {
+    if (!isMobile || !headerRef.current) return;
+    setMobileHeaderHeight(headerRef.current.offsetHeight);
+  }, [isMobile, pathname, drawerOpen, headerHidden]);
+
+  const onMainScroll = useCallback(() => {
+    if (!isMobile) return;
+    const el = mainRef.current;
+    if (!el) return;
+    const y = Math.max(0, el.scrollTop);
+    const prev = lastScrollTopRef.current;
+    const delta = y - prev;
+    lastScrollTopRef.current = y;
+
+    if (y < SCROLL_DELTA) {
+      setHeaderHidden(false);
+      return;
+    }
+    if (delta > SCROLL_DELTA) setHeaderHidden(true);
+    else if (delta < -SCROLL_DELTA) setHeaderHidden(false);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setHeaderHidden(false);
+      return;
+    }
+    const el = mainRef.current;
+    if (!el) return;
+    lastScrollTopRef.current = el.scrollTop;
+    el.addEventListener("scroll", onMainScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onMainScroll);
+  }, [isMobile, onMainScroll, pathname]);
 
   // Só usar inert no mobile quando o drawer estiver fechado. No desktop o sidebar fica sempre clicável.
   useLayoutEffect(() => {
@@ -146,8 +192,18 @@ export function ResponsiveShell({
         />
 
         {/* Main area */}
-        <div className="app-shell-main" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <div
+          className="app-shell-main"
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minWidth: 0,
+            ...(isMobile ? { position: "relative" as const } : {}),
+          }}
+        >
           <header
+            ref={headerRef}
             className="app-shell-header"
             style={{
               borderBottom: "1px solid var(--border)",
@@ -157,6 +213,19 @@ export function ResponsiveShell({
               alignItems: "center",
               gap: 12,
               flexShrink: 0,
+              ...(isMobile
+                ? {
+                    position: "absolute" as const,
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 25,
+                    transform: headerHidden ? "translateY(-100%)" : "translateY(0)",
+                    transition: headerHidden ? "transform 0.2s ease-out" : "none",
+                    pointerEvents: headerHidden ? ("none" as const) : ("auto" as const),
+                    willChange: "transform",
+                  }
+                : {}),
             }}
           >
             <button
@@ -229,7 +298,23 @@ export function ResponsiveShell({
               {headerExtra}
             </div>
           </header>
-          <main className={mainClassName} style={{ flex: 1, overflow: "auto", minHeight: 0, minWidth: 0 }}>{children}</main>
+          <main
+            ref={mainRef}
+            className={mainClassName}
+            style={{
+              flex: 1,
+              overflow: "auto",
+              minHeight: 0,
+              minWidth: 0,
+              ...(isMobile
+                ? {
+                    paddingTop: headerHidden ? undefined : mobileHeaderHeight,
+                  }
+                : {}),
+            }}
+          >
+            {children}
+          </main>
         </div>
       </div>
     </div>
