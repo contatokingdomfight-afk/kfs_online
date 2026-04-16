@@ -5,7 +5,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { revalidatePath } from "next/cache";
 import { sendCheckInConfirmation } from "@/lib/notifications/email";
-import { createPresenceConfirmedNotification } from "@/lib/notifications/in-app";
+import { createPresenceConfirmedNotification, notifyStudentOfNewCoachEvaluation } from "@/lib/notifications/in-app";
 import { grantBadgesIfEligible } from "@/lib/gamification";
 
 export async function setAttendanceStatusFromForm(
@@ -182,9 +182,12 @@ export async function saveEvaluationFromLesson(
   const { processMissionAwards } = await import("@/lib/xp-missions");
   await processMissionAwards(supabase, athlete.id);
 
+  await notifyStudentOfNewCoachEvaluation(supabase, { studentId, coachId: effectiveCoachId });
+
   revalidatePath("/coach/aula");
   revalidatePath("/coach/atletas");
   revalidatePath("/dashboard/performance");
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/notificacoes");
   return { success: true };
 }

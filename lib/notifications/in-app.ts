@@ -9,7 +9,8 @@ export type NotificationType =
   | "GENERAL"
   | "PAYMENT_OVERDUE"
   | "PAYMENT_SUSPENDED"
-  | "PAYMENT_RESTORED";
+  | "PAYMENT_RESTORED"
+  | "COACH_EVALUATION";
 
 type InsertPayload = {
   studentId: string;
@@ -29,7 +30,31 @@ export async function createInAppNotification(supabase: SupabaseClient, payload:
     created_at: new Date().toISOString(),
   };
   if (payload.href) row.href = payload.href;
-  await supabase.from("Notification").insert(row);
+  const { error } = await supabase.from("Notification").insert(row);
+  if (error) console.error("[createInAppNotification]", error.message, payload.type, payload.studentId);
+}
+
+/** Central de notificações do aluno: nova avaliação de desempenho (AthleteEvaluation). */
+export async function notifyStudentOfNewCoachEvaluation(
+  supabase: SupabaseClient,
+  params: { studentId: string; coachId: string }
+): Promise<void> {
+  const { data: coach } = await supabase.from("Coach").select("userId").eq("id", params.coachId).maybeSingle();
+  let coachLabel = "O teu treinador";
+  const coachRow = coach as { userId?: string | null } | null;
+  if (coachRow?.userId) {
+    const { data: user } = await supabase.from("User").select("name").eq("id", coachRow.userId).maybeSingle();
+    const name = (user as { name?: string | null } | null)?.name?.trim();
+    if (name) coachLabel = name;
+  }
+
+  await createInAppNotification(supabase, {
+    studentId: params.studentId,
+    type: "COACH_EVALUATION",
+    title: "Nova avaliação do treinador",
+    body: `${coachLabel} registou uma nova avaliação sobre o teu desempenho.`,
+    href: "/dashboard/performance",
+  });
 }
 
 export async function createPresenceConfirmedNotification(

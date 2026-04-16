@@ -6,6 +6,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
+import { notifyStudentOfNewCoachEvaluation } from "@/lib/notifications/in-app";
 
 export type SaveStandaloneEvaluationResult = { error?: string; success?: boolean };
 
@@ -132,12 +133,15 @@ export async function saveStandaloneEvaluation(
   const { processMissionAwards } = await import("@/lib/xp-missions");
   await processMissionAwards(supabase, athlete.id);
 
+  await notifyStudentOfNewCoachEvaluation(supabase, { studentId, coachId: effectiveCoachId });
+
   revalidatePath(`/coach/alunos/${studentId}`);
   revalidatePath("/admin/alunos");
   revalidatePath(`/admin/alunos/${studentId}`);
   revalidatePath("/coach/atletas");
   revalidatePath("/dashboard/performance");
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/notificacoes");
   return { success: true };
 }
 

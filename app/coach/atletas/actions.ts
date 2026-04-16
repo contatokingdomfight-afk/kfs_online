@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { createClient } from "@/lib/supabase/server";
+import { notifyStudentOfNewCoachEvaluation } from "@/lib/notifications/in-app";
 
 export type UpdateAthleteResult = { error?: string };
 
@@ -180,7 +181,7 @@ export async function createEvaluation(
   }
 
   const supabase = await createClient();
-  const { data: athlete } = await supabase.from("Athlete").select("id, mainCoachId").eq("id", athleteId).single();
+  const { data: athlete } = await supabase.from("Athlete").select("id, mainCoachId, studentId").eq("id", athleteId).single();
   if (!athlete) return { error: "Atleta não encontrado." };
   if (athlete.mainCoachId !== coachId && dbUser.role !== "ADMIN") return { error: "Não és o coach deste atleta." };
 
@@ -201,7 +202,12 @@ export async function createEvaluation(
     console.error("createEvaluation error:", error);
     return { error: error.message };
   }
+
+  const sid = (athlete as { studentId?: string }).studentId;
+  if (sid) await notifyStudentOfNewCoachEvaluation(supabase, { studentId: sid, coachId: effectiveCoachId });
+
   revalidatePath(`/coach/atletas/${athleteId}`);
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/notificacoes");
   return {};
 }
