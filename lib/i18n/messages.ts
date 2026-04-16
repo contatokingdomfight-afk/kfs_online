@@ -251,6 +251,8 @@ export const messages = {
     choosePlanStripeSuccess:
       "Pagamento concluído. O teu plano será ativado em segundos — atualiza a página ou espera a confirmação.",
     choosePlanStripeCancel: "Pagamento cancelado. Podes escolher outro plano quando quiseres.",
+    choosePlanStripePriceInvalid:
+      "O preço deste plano não existe na conta Stripe em uso (chave errada, modo test/live, ou ID desatualizado). Não foi possível abrir o pagamento. Contacta a secretaria ou o administrador para alinhar os Price IDs no Stripe e na tabela Plan / PlanPrice.",
     choosePlanSiteHome: "Site público",
     choosePlanBackToDashboard: "Área de aluno",
     freeTierSubscribeToParticipate: "Assine um plano para participar.",
@@ -900,6 +902,8 @@ export const messages = {
     choosePlanStripeSuccess:
       "Payment successful. Your plan will activate in a few seconds — refresh the page or wait for confirmation.",
     choosePlanStripeCancel: "Payment cancelled. You can pick a plan whenever you're ready.",
+    choosePlanStripePriceInvalid:
+      "This plan's Stripe price ID does not exist on the Stripe account linked to the app (wrong keys, test vs live mode, or an outdated/archived price). Checkout could not start. Please contact staff or an admin to align Price IDs in Stripe and in the Plan / PlanPrice tables.",
     choosePlanSiteHome: "Public site",
     choosePlanBackToDashboard: "Student area",
     freeTierSubscribeToParticipate: "Subscribe to a plan to participate.",

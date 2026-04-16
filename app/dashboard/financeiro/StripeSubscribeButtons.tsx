@@ -11,6 +11,8 @@ type Props = {
   subscribeLabel?: string;
   manageLabel?: string;
   perMonthLabel?: string;
+  /** Resposta `errorCode: STRIPE_PRICE_INVALID` da API checkout. */
+  stripePriceInvalidMessage?: string;
 };
 
 export function StripeSubscribeButtons({
@@ -19,6 +21,7 @@ export function StripeSubscribeButtons({
   subscribeLabel = "Subscrever com cartão",
   manageLabel = "Gerir assinatura / cartão",
   perMonthLabel = "/mês",
+  stripePriceInvalidMessage,
 }: Props) {
   const firstPlan = plansWithStripe[0];
   const firstPrice = firstPlan?.planPrices?.[0] ?? (firstPlan?.stripePriceId ? { stripePriceId: firstPlan.stripePriceId, intervalLabel: perMonthLabel, amountCents: Math.round((firstPlan.price_monthly ?? 0) * 100) } : null);
@@ -50,7 +53,7 @@ export function StripeSubscribeButtons({
         body: JSON.stringify({ planId, stripePriceId }),
       });
       const text = await res.text();
-      let data: { url?: string; error?: string } = {};
+      let data: { url?: string; error?: string; errorCode?: string } = {};
       try {
         data = text ? JSON.parse(text) : {};
       } catch {
@@ -59,7 +62,11 @@ export function StripeSubscribeButtons({
         return;
       }
       if (!res.ok) {
-        setError(data.error ?? "Erro ao criar sessão.");
+        if (data.errorCode === "STRIPE_PRICE_INVALID" && stripePriceInvalidMessage) {
+          setError(stripePriceInvalidMessage);
+        } else {
+          setError(data.error ?? "Erro ao criar sessão.");
+        }
         setLoading(null);
         return;
       }

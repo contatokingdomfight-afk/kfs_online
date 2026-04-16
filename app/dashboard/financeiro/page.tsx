@@ -127,6 +127,7 @@ export default async function DashboardFinanceiroPage() {
           subscribeLabel={locale === "en" ? "Subscribe with card" : "Subscrever com cartão"}
           manageLabel={locale === "en" ? "Manage subscription / card" : "Gerir assinatura / cartão"}
           perMonthLabel={t("perMonth")}
+          stripePriceInvalidMessage={t("choosePlanStripePriceInvalid")}
         />
       </section>
 

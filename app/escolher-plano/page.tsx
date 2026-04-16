@@ -142,6 +142,7 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
                 perMonth={t("perMonth")}
                 loading={t("loading")}
                 choosePlanSelect={t("choosePlanSelect")}
+                stripePriceInvalidMessage={t("choosePlanStripePriceInvalid")}
               />
             );
           })}

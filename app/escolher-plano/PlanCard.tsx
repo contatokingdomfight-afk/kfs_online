@@ -24,9 +24,19 @@ type Props = {
   perMonth: string;
   loading: string;
   choosePlanSelect: string;
+  /** Quando Stripe devolve «No such price» (ID na BD ≠ conta Stripe). */
+  stripePriceInvalidMessage: string;
 };
 
-export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLabel, choosePlanSelect }: Props) {
+export function PlanCard({
+  plan,
+  studentId,
+  locale,
+  perMonth,
+  loading: loadingLabel,
+  choosePlanSelect,
+  stripePriceInvalidMessage,
+}: Props) {
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const priceOptions = plan.planPrices ?? [];
@@ -57,7 +67,7 @@ export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLa
         body: JSON.stringify({ planId: plan.id, stripePriceId: stripePriceIdToUse }),
       });
       const text = await res.text();
-      let data: { url?: string; error?: string } = {};
+      let data: { url?: string; error?: string; errorCode?: string } = {};
       try {
         data = text ? JSON.parse(text) : {};
       } catch {
@@ -69,7 +79,14 @@ export function PlanCard({ plan, studentId, locale, perMonth, loading: loadingLa
         window.location.href = data.url;
       } else {
         setLoading(false);
-        setError(data?.error ?? (res.status === 401 ? "Sessão expirada. Por favor, entra novamente." : "Erro ao iniciar pagamento. Tenta novamente."));
+        if (data?.errorCode === "STRIPE_PRICE_INVALID") {
+          setError(stripePriceInvalidMessage);
+        } else {
+          setError(
+            data?.error ??
+              (res.status === 401 ? "Sessão expirada. Por favor, entra novamente." : "Erro ao iniciar pagamento. Tenta novamente.")
+          );
+        }
       }
     } catch (err) {
       setLoading(false);

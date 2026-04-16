@@ -120,8 +120,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Erro ao criar sessão de pagamento.";
+    const raw = err instanceof Error ? err.message : String(err);
     console.error("Stripe checkout error:", err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Preço na BD (Plan / PlanPrice) não existe nesta conta Stripe (outro project, test vs live, ou preço apagado).
+    if (/No such price|No such Price/i.test(raw) || (/resource_missing/i.test(raw) && /price_/i.test(raw))) {
+      return NextResponse.json(
+        { errorCode: "STRIPE_PRICE_INVALID" as const },
+        { status: 502 }
+      );
+    }
+    return NextResponse.json({ error: raw }, { status: 500 });
   }
 }
