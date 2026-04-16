@@ -6,6 +6,7 @@ import { getWeekStartMonday, MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
+import type { ReactNode } from "react";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
 import { ExploreSection } from "./ExploreSection";
@@ -21,6 +22,8 @@ type Props = {
   hasPlan: boolean;
   hasCheckIn: boolean;
   hasPerformanceTracking: boolean;
+  /** Carrossel «Nesta semana — aulas livres» (só com plano; fica após o Painel do guerreiro). */
+  openClassesSlot: ReactNode | null;
 };
 
 export async function DashboardBelowFold({
@@ -29,6 +32,7 @@ export async function DashboardBelowFold({
   hasPlan,
   hasCheckIn,
   hasPerformanceTracking,
+  openClassesSlot,
 }: Props) {
   if (!hasPlan) return null;
 
@@ -245,6 +249,8 @@ export async function DashboardBelowFold({
         t={t as (key: string) => string}
         beltLabel={beltLabel}
       />
+
+      {openClassesSlot}
 
       <WhatIsNew
         weekTheme={weekThemeForPrimary}

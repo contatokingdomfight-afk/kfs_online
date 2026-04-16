@@ -190,6 +190,47 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         ? t("dashboardStripeCancel")
         : null;
 
+  const openClassesSlotForPlan =
+    hasPlan && hasOpenClassesCarousel ? (
+      <OpenClassesCarouselShell
+        itemCount={additionalOpenLessons.length}
+        sectionTitle={t("dashboardOpenClassesThisWeekTitle")}
+        swipeHint={t("dashboardOpenClassesCarouselHint")}
+        ariaLabelPrev={t("dashboardCarouselPrev")}
+        ariaLabelNext={t("dashboardCarouselNext")}
+      >
+        {additionalOpenLessons.map((row) => (
+          <div
+            key={(row.lesson as { occurrenceKey?: string }).occurrenceKey ?? `${row.lesson.id}-${row.lesson.date}`}
+            style={{
+              flex: `0 0 ${OPEN_CLASS_CARD_WIDTH}`,
+              maxWidth: OPEN_CLASS_CARD_WIDTH,
+              scrollSnapAlign: "start",
+              minHeight: 1,
+            }}
+          >
+            <LessonPromoBlock
+              lesson={row.lesson}
+              studentSchoolId={studentSchoolId}
+              checkInWindowOpen={row.checkInWindowOpen}
+              checkInStartTimeLabel={row.checkInStartTimeLabel}
+              locationById={locationById}
+              attendanceByLesson={attendanceByLesson}
+              attendanceLookupKey={`${row.lesson.id}_${row.lesson.date}`}
+              participationAllowedByPlan={isLessonParticipationAllowedByPlan(row.lesson, planFilterInput)}
+              hasPlan={hasPlan}
+              hasCheckIn={hasCheckIn}
+              locale={locale as "pt" | "en"}
+              todayStr={todayStr}
+              isFreeTier={!hasPlan}
+              t={t as (key: string) => string}
+              statusLabels={STATUS_LABEL}
+            />
+          </div>
+        ))}
+      </OpenClassesCarouselShell>
+    ) : null;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
       {!hasPlan && stripeBanner && (
@@ -248,11 +289,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           ))}
         </OpenClassesCarouselShell>
       )}
-      {showNextLessonSection && !hasPrimaryNextCarousel && !hasOpenClassesCarousel && (
+      {showNextLessonSection && !hasPrimaryNextCarousel && !hasOpenClassesCarousel && !hasPlan && (
         <NextLessonCard isFreeTier={!hasPlan} t={t as (key: string) => string} />
       )}
 
-      {hasOpenClassesCarousel && (
+      {!hasPlan && hasOpenClassesCarousel && (
         <OpenClassesCarouselShell
           itemCount={additionalOpenLessons.length}
           sectionTitle={t("dashboardOpenClassesThisWeekTitle")}
@@ -299,6 +340,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           hasPlan={hasPlan}
           hasCheckIn={hasCheckIn}
           hasPerformanceTracking={planAccess.hasPerformanceTracking}
+          openClassesSlot={openClassesSlotForPlan}
         />
       </Suspense>
 
