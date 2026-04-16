@@ -12,24 +12,17 @@ export type NotificationRowData = {
   href: string | null;
   read_at: string | null;
   created_at: string;
+  /** Pré-formatado no servidor (Europe/Lisbon); evita mismatch de hidratação com toLocale no cliente. */
+  createdAtDisplay: string;
 };
 
 type Props = {
   n: NotificationRowData;
-  locale: "pt" | "en";
   markReadLabel: string;
 };
 
-export function NotificationRow({ n, locale, markReadLabel }: Props) {
+export function NotificationRow({ n, markReadLabel }: Props) {
   const [pending, startTransition] = useTransition();
-
-  const dateStr = new Date(n.created_at).toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
   const mark = () =>
     startTransition(() => {
@@ -52,7 +45,7 @@ export function NotificationRow({ n, locale, markReadLabel }: Props) {
     <>
       <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>{n.title}</p>
       {n.body && <p style={{ margin: "6px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{n.body}</p>}
-      <p style={{ margin: "8px 0 0 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", opacity: 0.9 }}>{dateStr}</p>
+      <p style={{ margin: "8px 0 0 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", opacity: 0.9 }}>{n.createdAtDisplay}</p>
     </>
   );
 

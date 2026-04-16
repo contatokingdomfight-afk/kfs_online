@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { formatNotificationCreatedAt } from "@/lib/format-notification-date";
 import { MarkAllReadButton } from "./MarkAllReadButton";
 import { NotificationRow, type NotificationRowData } from "./NotificationRow";
 
@@ -25,12 +26,14 @@ export default async function NotificationsCenterPage() {
 
   const list: NotificationRowData[] = (rows ?? []).map((r) => {
     const row = r as Record<string, unknown>;
+    const created_at = String(row.created_at ?? "");
     return {
       id: String(row.id),
       title: String(row.title ?? ""),
       body: row.body != null ? String(row.body) : null,
       read_at: row.read_at != null ? String(row.read_at) : null,
-      created_at: String(row.created_at ?? ""),
+      created_at,
+      createdAtDisplay: formatNotificationCreatedAt(created_at, locale),
       href: typeof row.href === "string" ? row.href : null,
     };
   });
@@ -67,7 +70,7 @@ export default async function NotificationsCenterPage() {
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
           {list.map((n) => (
-            <NotificationRow key={n.id} n={n} locale={locale} markReadLabel={t("notificationsMarkRead")} />
+            <NotificationRow key={n.id} n={n} markReadLabel={t("notificationsMarkRead")} />
           ))}
         </ul>
       )}
