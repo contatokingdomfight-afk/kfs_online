@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     if (/No such price|No such Price/i.test(raw) || (/resource_missing/i.test(raw) && /price_/i.test(raw))) {
       return NextResponse.json(
         { errorCode: "STRIPE_PRICE_INVALID" as const },
-        { status: 502 }
+        { status: 400 }
       );
     }
     return NextResponse.json({ error: raw }, { status: 500 });
