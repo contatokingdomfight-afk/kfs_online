@@ -198,7 +198,7 @@ Há **dois sítios** — não confundir:
 
 ### 8.1 Supabase Auth (convite, recuperar senha, magic link, confirmação)
 
-Editas **só no Dashboard**: **Authentication → Email Templates**. Cada tipo de email tem o seu template (Invite, Reset password, Confirm signup, etc.). Podes usar **HTML** com estilos **inline** (como no exemplo em [SUPABASE_EMAIL_CONVITE.md](SUPABASE_EMAIL_CONVITE.md)) e as variáveis que o Supabase documenta para cada template (ex. `{{ .ConfirmationURL }}` no convite).
+Editas **só no Dashboard**: **Authentication → Email Templates**. Cada tipo de email tem o seu template (Invite, Reset password, **Confirm signup**, etc.). Podes usar **HTML** com estilos **inline** — exemplos em [SUPABASE_EMAIL_CONVITE.md](SUPABASE_EMAIL_CONVITE.md) (convite na secção 1; **registo público** na secção **1b** com HTML de marca) e as variáveis oficiais por template (ex. `{{ .ConfirmationURL }}`).
 
 - Mantém **um botão** com link claro + **link em texto** por baixo (clientes que não mostram HTML).
 - Cores da marca: podes usar o vermelho `#c1121f` nos botões/bordas para alinhar com a app.
