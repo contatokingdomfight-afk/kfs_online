@@ -32,6 +32,9 @@ enum Modality {
   MUAY_THAI
   BOXING
   KICKBOXING
+  MMA
+  BJJ
+  KRT
 }
 
 enum AttendanceStatus {

@@ -8,6 +8,8 @@ export const MODALITY_LABELS: Record<string, string> = {
   BOXING: "Boxing",
   KICKBOXING: "Kickboxing",
   MMA: "MMA",
+  BJJ: "Jiu-Jitsu",
+  KRT: "Karate",
 };
 
 export function formatLessonDate(dateStr: string): string {
