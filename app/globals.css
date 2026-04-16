@@ -771,6 +771,36 @@
   box-sizing: border-box;
 }
 
+/*
+ * Mobile: altura da viewport fechada + overflow no shell.
+ * Sem isto, o <main> cresce com o conteúdo e o scroll é no documento — o header
+ * (ResponsiveShell) escuta scroll no main e nunca dispara.
+ */
+@media (max-width: 767.98px) {
+  .app-shell {
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
+  .app-shell > .view-as-banner-root {
+    flex: 0 0 auto;
+  }
+
+  .app-shell > .app-shell-inner {
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+  }
+}
+
 /* Desktop: >= 768px – sidebar fixo (sticky) e área principal com scroll */
 @media (min-width: 768px) {
   .app-shell {
