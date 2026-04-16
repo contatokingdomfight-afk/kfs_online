@@ -41,7 +41,7 @@
 |------|--------|--------|
 | Dashboard, carrosséis, aulas livres (`isOpenClass`) | Feito | `lib/dashboard-lesson-filter.ts` |
 | Check-in, histórico, QR (coach) | Feito | `/check-in/[lessonId]`, `Attendance`, Lisboa |
-| Performance, radar SVG, missões, conquistas, rank (v1) | Feito | RPC `get_leaderboard_filtered`; filtros escola/modalidade/faixa etária |
+| Performance, radar SVG, missões, conquistas, rank (v1) | Feito | `get_leaderboard_filtered` + `get_leaderboard_my_school` (migrações `20260402120000` / `20260412120000`); `lib/leaderboard.ts` (fallback se RPC ausente); filtros em `/dashboard/rank` |
 | Metas assiduidade, IMC, metas avaliação | Feito | Admin configurações + dashboard |
 | Bem-estar (hub, RPE, dores, peso, benchmarks) | Feito | `memory.md` §3.15 |
 | «Ver como melhorar» → biblioteca | **Por fazer** | Tabela «Resumo executivo», prioridade 3 |
