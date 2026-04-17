@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  formatStripePriceInvalidUserMessage,
+  type StripePriceInvalidPayload,
+} from "@/lib/stripe/checkout-price-invalid-message";
 
 type PlanPriceOption = { stripePriceId: string; intervalLabel: string; amountCents: number };
 type Plan = {
@@ -67,7 +71,11 @@ export function PlanCard({
         body: JSON.stringify({ planId: plan.id, stripePriceId: stripePriceIdToUse }),
       });
       const text = await res.text();
-      let data: { url?: string; error?: string; errorCode?: string } = {};
+      let data: {
+        url?: string;
+        error?: string;
+        errorCode?: string;
+      } & StripePriceInvalidPayload = {};
       try {
         data = text ? JSON.parse(text) : {};
       } catch {
@@ -80,7 +88,7 @@ export function PlanCard({
       } else {
         setLoading(false);
         if (data?.errorCode === "STRIPE_PRICE_INVALID") {
-          setError(stripePriceInvalidMessage);
+          setError(formatStripePriceInvalidUserMessage(stripePriceInvalidMessage, locale, data));
         } else {
           setError(
             data?.error ??

@@ -124,6 +124,7 @@ export default async function DashboardFinanceiroPage() {
         <StripeSubscribeButtons
           hasStripeCustomer={hasStripeCustomer}
           plansWithStripe={plansWithStripe}
+          locale={locale === "en" ? "en" : "pt"}
           subscribeLabel={locale === "en" ? "Subscribe with card" : "Subscrever com cartão"}
           manageLabel={locale === "en" ? "Manage subscription / card" : "Gerir assinatura / cartão"}
           perMonthLabel={t("perMonth")}

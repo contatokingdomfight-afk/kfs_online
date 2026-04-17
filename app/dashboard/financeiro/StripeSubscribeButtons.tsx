@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  formatStripePriceInvalidUserMessage,
+  type StripePriceInvalidPayload,
+} from "@/lib/stripe/checkout-price-invalid-message";
 
 type PlanPriceOption = { stripePriceId: string; intervalLabel: string; amountCents: number };
 type PlanOption = { id: string; name: string; price_monthly: number; stripePriceId?: string; planPrices?: PlanPriceOption[] };
@@ -11,6 +15,7 @@ type Props = {
   subscribeLabel?: string;
   manageLabel?: string;
   perMonthLabel?: string;
+  locale?: "pt" | "en";
   /** Resposta `errorCode: STRIPE_PRICE_INVALID` da API checkout. */
   stripePriceInvalidMessage?: string;
 };
@@ -21,6 +26,7 @@ export function StripeSubscribeButtons({
   subscribeLabel = "Subscrever com cartão",
   manageLabel = "Gerir assinatura / cartão",
   perMonthLabel = "/mês",
+  locale = "pt",
   stripePriceInvalidMessage,
 }: Props) {
   const firstPlan = plansWithStripe[0];
@@ -53,7 +59,7 @@ export function StripeSubscribeButtons({
         body: JSON.stringify({ planId, stripePriceId }),
       });
       const text = await res.text();
-      let data: { url?: string; error?: string; errorCode?: string } = {};
+      let data: { url?: string; error?: string; errorCode?: string } & StripePriceInvalidPayload = {};
       try {
         data = text ? JSON.parse(text) : {};
       } catch {
@@ -63,7 +69,7 @@ export function StripeSubscribeButtons({
       }
       if (!res.ok) {
         if (data.errorCode === "STRIPE_PRICE_INVALID" && stripePriceInvalidMessage) {
-          setError(stripePriceInvalidMessage);
+          setError(formatStripePriceInvalidUserMessage(stripePriceInvalidMessage, locale, data));
         } else {
           setError(data.error ?? "Erro ao criar sessão.");
         }

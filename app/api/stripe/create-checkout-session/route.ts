@@ -4,6 +4,13 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { stripe } from "@/lib/stripe/server";
 
+function stripeSecretKeyMode(): "live" | "test" | "unknown" {
+  const k = process.env.STRIPE_SECRET_KEY ?? "";
+  if (k.startsWith("sk_live_")) return "live";
+  if (k.startsWith("sk_test_")) return "test";
+  return "unknown";
+}
+
 export async function POST(request: NextRequest) {
   const studentId = await getCurrentStudentId();
   if (!studentId) {
@@ -121,11 +128,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: session.url });
   } catch (err) {
     const raw = err instanceof Error ? err.message : String(err);
-    console.error("Stripe checkout error:", err);
+    const keyMode = stripeSecretKeyMode();
+    console.error("[create-checkout-session] Stripe checkout error:", {
+      priceToUse,
+      stripeKeyMode: keyMode,
+      err,
+    });
     // Preço na BD (Plan / PlanPrice) não existe nesta conta Stripe (outro project, test vs live, ou preço apagado).
     if (/No such price|No such Price/i.test(raw) || (/resource_missing/i.test(raw) && /price_/i.test(raw))) {
       return NextResponse.json(
-        { errorCode: "STRIPE_PRICE_INVALID" as const },
+        {
+          errorCode: "STRIPE_PRICE_INVALID" as const,
+          stripePriceIdUsed: priceToUse,
+          stripeKeyMode: keyMode,
+        },
         { status: 400 }
       );
     }
