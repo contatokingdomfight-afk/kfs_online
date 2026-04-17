@@ -69,7 +69,7 @@
 ### 3.4 Financeiro – um pagamento por aluno e mês
 
 - **`createPayment`** consolida linhas em `Payment` para o mesmo `studentId` + `referenceMonth`: registar **Pago** quando já existia **Em atraso** (ex.: mensalidade gerada) **atualiza** o registo em vez de criar duplicado. Ver **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
-- **Stripe Checkout (`/api/stripe/create-checkout-session`):** os `stripePriceId` em **`Plan`** / **`PlanPrice`** têm de existir na **mesma** conta Stripe que a `STRIPE_SECRET_KEY` em produção (modo test/live alinhado). Preço mensal legado errado: migração **`20260417140000_fix_kingdom_online_monthly_stripe_price_id.sql`** (substitui `price_1T4OxORTJGXEa4Ic6QPrh39g` → `price_1TAFWfEnpsjluynENfLzoWWc`). Resposta `errorCode: STRIPE_PRICE_INVALID` → **HTTP 400** (evita 502 confundir com gateway).
+- **Stripe Checkout (`/api/stripe/create-checkout-session`):** os `stripePriceId` em **`Plan`** / **`PlanPrice`** têm de existir na **mesma** conta Stripe que a `STRIPE_SECRET_KEY` em produção (modo test/live alinhado). Preço mensal legado errado: migração **`20260417140000_fix_kingdom_online_monthly_stripe_price_id.sql`** (substitui `price_1T4OxORTJGXEa4Ic6QPrh39g` → `price_1TAFWfEnpsjluynENfLzoWWc`). Resposta `errorCode: STRIPE_PRICE_INVALID` → **HTTP 400** (evita 502 confundir com gateway). O JSON inclui **`stripePriceIdUsed`** e **`stripeKeyMode`** (`live` / `test`); a UI (`escolher-plano`, dashboard financeiro) acrescenta esses dados à mensagem para diagnóstico. Logs servidor: `[create-checkout-session]` com o mesmo contexto.
 
 ### 3.5 Coach – Timer de rounds
 
