@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { stripe } from "@/lib/stripe/server";
+import { isStripeCustomerInvalidForKey } from "@/lib/stripe/stripe-customer-errors";
 
 export async function POST(request: NextRequest) {
   const studentId = await getCurrentStudentId();
@@ -32,10 +33,29 @@ export async function POST(request: NextRequest) {
   }
 
   const baseUrl = request.nextUrl.origin;
-  const session = await stripe.billingPortal.sessions.create({
-    customer: student.stripeCustomerId,
-    return_url: `${baseUrl}/dashboard/financeiro`,
-  });
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: student.stripeCustomerId,
+      return_url: `${baseUrl}/dashboard/financeiro`,
+    });
 
-  return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    const raw = err instanceof Error ? err.message : String(err);
+    if (isStripeCustomerInvalidForKey(raw)) {
+      await supabase.from("Student").update({ stripeCustomerId: null }).eq("id", studentId);
+      console.warn("[create-portal-session] stripeCustomerId inválido para a chave em uso; limpo.", {
+        studentId,
+      });
+      return NextResponse.json(
+        {
+          error:
+            "O registo de cliente do cartão estava desatualizado (por exemplo, teste vs produção). Volta a subscrever com cartão na página do plano ou em Financeiro para voltar a ativar o portal.",
+        },
+        { status: 400 }
+      );
+    }
+    console.error("[create-portal-session] Stripe error:", err);
+    return NextResponse.json({ error: raw }, { status: 500 });
+  }
 }

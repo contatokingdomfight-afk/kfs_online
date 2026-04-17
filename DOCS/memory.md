@@ -70,6 +70,7 @@
 
 - **`createPayment`** consolida linhas em `Payment` para o mesmo `studentId` + `referenceMonth`: registar **Pago** quando já existia **Em atraso** (ex.: mensalidade gerada) **atualiza** o registo em vez de criar duplicado. Ver **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
 - **Stripe Checkout (`/api/stripe/create-checkout-session`):** os `stripePriceId` em **`Plan`** / **`PlanPrice`** têm de existir na **mesma** conta Stripe que a `STRIPE_SECRET_KEY` em produção (modo test/live alinhado). Preço mensal legado errado: migração **`20260417140000_fix_kingdom_online_monthly_stripe_price_id.sql`** (substitui `price_1T4OxORTJGXEa4Ic6QPrh39g` → `price_1TAFWfEnpsjluynENfLzoWWc`). Resposta `errorCode: STRIPE_PRICE_INVALID` → **HTTP 400** (evita 502 confundir com gateway). O JSON inclui **`stripePriceIdUsed`** e **`stripeKeyMode`** (`live` / `test`); a UI (`escolher-plano`, dashboard financeiro) acrescenta esses dados à mensagem para diagnóstico. Logs servidor: `[create-checkout-session]` com o mesmo contexto.
+- **`Student.stripeCustomerId` test vs live:** se a chave Stripe passar de `sk_test_` para `sk_live_` (ou o contrário), o `cus_…` guardado deixa de existir no modo actual — erro tipo *No such customer; similar object exists in test mode*. O checkout **recria** cliente (limpa `stripeCustomerId`, `customers.create`, repete sessão uma vez). O **portal** (`/api/stripe/create-portal-session`) limpa o ID e devolve **400** com mensagem a pedir nova subscrição pelo checkout.
 
 ### 3.5 Coach – Timer de rounds
 

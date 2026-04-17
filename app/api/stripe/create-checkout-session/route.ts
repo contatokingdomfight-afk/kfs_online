@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { stripe } from "@/lib/stripe/server";
+import { isStripeCustomerInvalidForKey } from "@/lib/stripe/stripe-customer-errors";
 
 function stripeSecretKeyMode(): "live" | "test" | "unknown" {
   const k = process.env.STRIPE_SECRET_KEY ?? "";
@@ -96,55 +97,75 @@ export async function POST(request: NextRequest) {
   const baseUrl = request.nextUrl.origin;
   let customerId = student.stripeCustomerId as string | null | undefined;
 
-  if (!customerId) {
+  async function createStripeCustomerAndPersist(userId: string): Promise<string> {
     const { data: user } = await supabase
       .from("User")
       .select("email, name")
-      .eq("id", student.userId)
+      .eq("id", userId)
       .single();
-    const customer = await stripe.customers.create({
+    const customer = await stripe!.customers.create({
       email: user?.email ?? undefined,
       name: user?.name ?? undefined,
       metadata: { studentId },
     });
-    customerId = customer.id;
-    await supabase.from("Student").update({ stripeCustomerId: customerId }).eq("id", studentId);
+    await supabase.from("Student").update({ stripeCustomerId: customer.id }).eq("id", studentId);
+    return customer.id;
   }
 
-  try {
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      mode: "subscription",
-      line_items: [{ price: priceToUse, quantity: 1 }],
-      success_url: `${baseUrl}/dashboard?stripe=success`,
-      cancel_url: `${baseUrl}/dashboard?stripe=cancel`,
-      subscription_data: {
-        metadata: { studentId },
-        trial_period_days: undefined,
-      },
-      allow_promotion_codes: true,
-    });
+  if (!customerId) {
+    customerId = await createStripeCustomerAndPersist(student.userId);
+  }
 
-    return NextResponse.json({ url: session.url });
-  } catch (err) {
-    const raw = err instanceof Error ? err.message : String(err);
-    const keyMode = stripeSecretKeyMode();
-    console.error("[create-checkout-session] Stripe checkout error:", {
-      priceToUse,
-      stripeKeyMode: keyMode,
-      err,
-    });
-    // Preço na BD (Plan / PlanPrice) não existe nesta conta Stripe (outro project, test vs live, ou preço apagado).
-    if (/No such price|No such Price/i.test(raw) || (/resource_missing/i.test(raw) && /price_/i.test(raw))) {
-      return NextResponse.json(
-        {
-          errorCode: "STRIPE_PRICE_INVALID" as const,
-          stripePriceIdUsed: priceToUse,
-          stripeKeyMode: keyMode,
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId!,
+        mode: "subscription",
+        line_items: [{ price: priceToUse, quantity: 1 }],
+        success_url: `${baseUrl}/dashboard?stripe=success`,
+        cancel_url: `${baseUrl}/dashboard?stripe=cancel`,
+        subscription_data: {
+          metadata: { studentId },
+          trial_period_days: undefined,
         },
-        { status: 400 }
-      );
+        allow_promotion_codes: true,
+      });
+
+      return NextResponse.json({ url: session.url });
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err);
+      const keyMode = stripeSecretKeyMode();
+      console.error("[create-checkout-session] Stripe checkout error:", {
+        priceToUse,
+        stripeKeyMode: keyMode,
+        customerId,
+        attempt,
+        err,
+      });
+      // Preço na BD (Plan / PlanPrice) não existe nesta conta Stripe (outro project, test vs live, ou preço apagado).
+      if (/No such price|No such Price/i.test(raw) || (/resource_missing/i.test(raw) && /price_/i.test(raw))) {
+        return NextResponse.json(
+          {
+            errorCode: "STRIPE_PRICE_INVALID" as const,
+            stripePriceIdUsed: priceToUse,
+            stripeKeyMode: keyMode,
+          },
+          { status: 400 }
+        );
+      }
+      // Cliente criado em test/live na BD mas a chave do servidor mudou de modo (ou cliente apagado no Stripe).
+      if (attempt === 0 && customerId && isStripeCustomerInvalidForKey(raw)) {
+        console.warn("[create-checkout-session] A limpar stripeCustomerId e a recriar cliente Stripe.", {
+          studentId,
+          oldCustomerId: customerId,
+        });
+        await supabase.from("Student").update({ stripeCustomerId: null }).eq("id", studentId);
+        customerId = await createStripeCustomerAndPersist(student.userId);
+        continue;
+      }
+      return NextResponse.json({ error: raw }, { status: 500 });
     }
-    return NextResponse.json({ error: raw }, { status: 500 });
   }
+
+  return NextResponse.json({ error: "Erro inesperado ao criar sessão de pagamento." }, { status: 500 });
 }
