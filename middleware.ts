@@ -102,7 +102,8 @@ export async function middleware(request: NextRequest) {
       },
     });
 
-    await supabase.auth.getSession();
+    // `getUser()` valida o JWT com o Auth e renova tokens em cookie quando expiram
+    // (preferível a `getSession()`, que só lê cookies sem garantir refresh).
     const { data: userData } = await supabase.auth.getUser();
     const user = userData?.user ?? null;
 

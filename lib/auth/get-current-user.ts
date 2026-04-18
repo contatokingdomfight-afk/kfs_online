@@ -13,8 +13,6 @@ import { syncUser } from "@/lib/auth/sync-user";
  */
 export const getCurrentDbUser = cache(async function getCurrentDbUser() {
   const supabase = await createClient();
-  // Alinhar ao middleware: refrescar sessão a partir dos cookies antes de validar o JWT.
-  await supabase.auth.getSession();
   const { data } = await supabase.auth.getUser();
   const user = data?.user ?? null;
   if (!user) return null;
@@ -44,7 +42,6 @@ export const getCurrentDbUser = cache(async function getCurrentDbUser() {
  */
 export async function getCurrentDbUserUncached() {
   const supabase = await createClient();
-  await supabase.auth.getSession();
   const { data } = await supabase.auth.getUser();
   const user = data?.user ?? null;
   if (!user) return null;
