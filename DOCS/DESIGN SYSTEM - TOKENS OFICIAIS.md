@@ -238,4 +238,4 @@ Ou prefere que eu **crie os componentes base (Button, Card, Input)** usando esse
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

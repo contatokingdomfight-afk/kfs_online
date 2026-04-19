@@ -1,6 +1,6 @@
 # Mapeamento de Estados de Execução
 
-> **Nota (março 2026):** documento conceitual. Para o que está implementado no código (presenças, aulas, check-in), ver [`memory.md`](memory.md) e o roadmap em [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md).
+> **Nota (abril 2026):** documento conceitual. Para o que está implementado no código (presenças, aulas, check-in), ver [`memory.md`](memory.md) e o roadmap em [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md).
 
 ## Plataforma Kingdom Fight School (Mobile First)
 
@@ -221,4 +221,4 @@ Próximo passo natural:
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

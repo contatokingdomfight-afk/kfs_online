@@ -49,6 +49,7 @@ CRON_SECRET=
 
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 STRIPE_SECRET_KEY=
+[OBRIGATÓRIO: nome exacto STRIPE_SECRET_KEY — a app NÃO lê STRIPE_API_KEY nem STRIPE_PUBLIC_KEY como chave secreta]
 
 STRIPE_WEBHOOK_SECRET=
 [Stripe → Developers → Webhooks → Add endpoint]

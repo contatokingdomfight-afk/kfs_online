@@ -209,4 +209,4 @@ Editas **só no Dashboard**: **Authentication → Email Templates**. Cada tipo d
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

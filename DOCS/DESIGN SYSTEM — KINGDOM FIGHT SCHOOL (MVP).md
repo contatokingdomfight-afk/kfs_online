@@ -255,4 +255,4 @@ Sim, **vale muito a pena** fazer Design System agora, **mas no formato certo**:
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

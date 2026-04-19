@@ -1,6 +1,6 @@
 # Deploy na Vercel (KFS Online)
 
-> **Última revisão:** março 2026.  
+> **Última revisão:** 18 abril 2026.  
 > **Repo:** `contatokingdomfight-afk/kfs_online` · **Auth:** Supabase (não Clerk).  
 > **Índice:** [`INDEX.md`](INDEX.md) · contexto técnico: [`memory.md`](memory.md)
 
@@ -42,7 +42,7 @@ Configurar em **Settings → Environment Variables** da Vercel.
 | App / URL | `NEXT_PUBLIC_APP_URL` (opcional; ver `.env.example`) |
 | Base de dados | `DATABASE_URL` (Prisma; mesmo projeto Supabase) |
 | Email (Resend) | `RESEND_API_KEY`, `RESEND_FROM_EMAIL` — ver [`CONFIGURAR_RESEND.md`](CONFIGURAR_RESEND.md) |
-| Stripe | `STRIPE_*`, `NEXT_PUBLIC_STRIPE_*`, `STRIPE_WEBHOOK_SECRET` |
+| Stripe | **`STRIPE_SECRET_KEY`** (obrigatório; `sk_test_…` ou `sk_live_…`), **`STRIPE_WEBHOOK_SECRET`** (`whsec_…` do mesmo modo test/live), opcional **`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`** — ver [`STRIPE_KINGDOM_ONLINE.md`](STRIPE_KINGDOM_ONLINE.md). *Não* usar nomes não suportados pelo código (`STRIPE_API_KEY`, `STRIPE_PUBLIC_KEY` como substituto da secreta). |
 | Google OAuth | `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (opcional; ver `DOCS/GOOGLE_OAUTH_SETUP.md`) |
 | Crons | `CRON_SECRET` (rotas em `app/api/cron/*`) |
 | Opcional | `NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS=true` para desativar só o Speed Insights (ver [`OTIMIZACOES_SPEED_INSIGHTS.md`](OTIMIZACOES_SPEED_INSIGHTS.md)) |

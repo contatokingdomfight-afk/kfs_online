@@ -73,4 +73,4 @@ A plataforma estava lenta ao mudar de página ou ao fazer ações (muitas chamad
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

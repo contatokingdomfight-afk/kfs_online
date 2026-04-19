@@ -43,4 +43,4 @@ e, na política de Student, a subquery: `SELECT id FROM "User" WHERE auth_user_i
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

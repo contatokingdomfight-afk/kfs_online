@@ -2,7 +2,7 @@
 
 Melhorias aplicadas para reduzir LCP nas rotas mais lentas do Vercel Speed Insights.
 
-## Estado (março 2026)
+## Estado (abril 2026)
 
 - **`NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS=true`** (variável de ambiente): desativa só o pacote **Speed Insights** em `components/VercelMetrics.tsx`; **Analytics** mantém-se. Útil se aparecerem avisos de preload de recursos de terceiros (ex.: scripts associados ao produto Vercel).
 - O **dashboard** evoluiu (carrosséis «Sua próxima aula» / «Aulas livres»); o skeleton de loading pode não refletir o layout atual linha-a-linha — o objetivo continua a ser LCP percebido.

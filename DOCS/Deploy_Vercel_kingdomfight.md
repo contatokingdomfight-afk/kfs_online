@@ -41,9 +41,9 @@ Em **Settings** do projeto (ou no passo de import), vai a **Environment Variable
 | `CRON_SECRET` | (segredo para /api/cron/...) | Se usares o cron de lembretes |
 | `RESEND_API_KEY` | (se usares email) | Opcional |
 | `RESEND_FROM_EMAIL` | (email Remetente) | Opcional |
-| `STRIPE_SECRET_KEY` | (chave secreta Stripe) | Para pagamentos em produção |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | (chave pública) | Para pagamentos |
-| `STRIPE_WEBHOOK_SECRET` | (whsec_... do webhook produção) | Só quando configurares webhook Stripe em produção |
+| `STRIPE_SECRET_KEY` | (chave secreta Stripe) | Obrigatório para checkout/portal; tem de ser a **Secret key** do Dashboard (`sk_test_…` ou `sk_live_…`). O código **não** lê `STRIPE_API_KEY` nem `STRIPE_PUBLIC_KEY` como substituto. |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | (chave pública `pk_…`) | Opcional no fluxo actual (checkout server-side); alinhar com `.env.example` se usares Stripe no cliente. |
+| `STRIPE_WEBHOOK_SECRET` | (whsec_... do webhook produção) | Modo **Live** ou **Test** conforme a `STRIPE_SECRET_KEY`; ver [`STRIPE_KINGDOM_ONLINE.md`](STRIPE_KINGDOM_ONLINE.md). |
 
 Não precisas de adicionar o `.env` ao repo; preenche cada variável na Vercel e marca para **Production** (e opcionalmente **Preview**).
 
@@ -95,4 +95,4 @@ Qualquer dúvida concreta (um erro de build, uma variável, ou um passo na Hosti
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

@@ -90,7 +90,7 @@ Pagas: comissões Stripe + assinatura do software de faturação. A KFS regista 
 - **“Pago” no mês**: Conta apenas **`Payment.status === "PAID"`** para aquele `YYYY-MM`.
 - **Prazo e bloqueio**: Após LATE, o aluno tem até ao **fim do dia civil 10** (Lisboa) para regularizar; depois o mesmo cron pode **suspender** (`planId` null, `suspendedPlanId`, cancelar subscrição Stripe se existir). Aplica-se a **online e presencial**.
 - **Registar pagamento**: Formulário manual para marcar **PAID** (presencial) ou **LATE**; PAID limpa grace / repõe plano suspenso (`clearGraceOnPaidPayment`).
-- **Webhook Stripe**: Cria `Payment` **PAID** quando a Stripe confirma (ex.: `invoice.paid`); limpa grace.
+- **Webhook Stripe**: Cria `Payment` **PAID** quando a Stripe confirma (ex.: `invoice.paid`); limpa grace. Configuração de chaves, preços e cliente test/live: [`STRIPE_KINGDOM_ONLINE.md`](STRIPE_KINGDOM_ONLINE.md) e `memory.md` §3.4.
 - **Faturação legal**: Ainda não integrada; deve ser feita via **software certificado pela AT** (integrar quando houver fornecedor escolhido).
 
 ---
@@ -101,4 +101,4 @@ Os inserts em `Payment` (Supabase) devem incluir sempre o campo `id` (UUID). Cor
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

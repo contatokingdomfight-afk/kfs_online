@@ -15,6 +15,7 @@
 | **Dica de instalação** | `PwaInstallProvider` + `PwaInstallHint.tsx`: primeiro aviso em ecrãs ≤768px (estilo destacado); «Agora não» ou × grava `kfs-pwa-sidebar-mode` e o aviso some. Depois, `SidebarPwaInstall` no menu lateral: com `beforeinstallprompt` (Chromium) mostra «Instalar app»; no **Safari** e outros sem API nativa, o mesmo estilo de botão abre um **modal** com passos (`lib/pwa-install-ui.ts`). Migração: quem tinha o dismiss antigo passa para modo menu (`lib/pwa-install-storage.ts`). |
 | **Modo standalone** | `components/PwaDisplayMode.tsx` define `data-pwa-standalone` no `<html>`; `app/globals.css` ajusta `min-height` do `body` em modo app. |
 | **Middleware** | `middleware.ts` — matcher exclui `sw.js` e `manifest.webmanifest` para não redirecionar para login. |
+| **Sessão (app instalada)** | O mesmo fluxo Supabase que no browser: `components/AuthSessionKeepAlive.tsx` no layout raiz ajuda a **renovar o JWT** após o telemóvel suspender o separador ou a app em segundo plano — ver **`memory.md`** §3.2. |
 
 ## Desinstalar e voltar a instalar (limitações da plataforma)
 

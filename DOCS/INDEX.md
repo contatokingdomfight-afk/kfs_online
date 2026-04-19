@@ -1,12 +1,14 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 16 abril 2026.  
+> **Última revisão deste índice:** 18 abril 2026.  
 > **Índice de contexto técnico (prioridade para IA / equipa):** [`memory.md`](memory.md)  
 > **Roadmap feito / por fazer:** [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)
 
 Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confundir com `docs/` na raiz, se existir.
 
 Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual: Supabase (sem Clerk); ver **`DEPLOY_VERCEL.md`**.
+
+**Changelog (abril 2026):** revisão cruzada de deploy (`DEPLOY_VERCEL.md`, `Deploy_Vercel_kingdomfight.md`), Stripe (`STRIPE_KINGDOM_ONLINE.md`), troubleshooting Vercel, PWA (nota de sessão instalada), fluxo de onboarding, `VARIAVEIS_AMBIENTE_VERCEL.txt` e **`INDICE_DOCUMENTACAO.md`** na raiz — alinhados a `memory.md` §3.2 (sessão), §3.4 (Stripe) e §3.17.
 
 ---
 

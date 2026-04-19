@@ -1,7 +1,7 @@
 # Roadmap – Plataforma Kingdom Fight School
 
 > O que **já está feito** vs **por fazer**, alinhado ao [Plano de Negócios](./Plano_de_Negócios_Kingdom_Fight_School.md) e à [Especificação Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md).  
-> **Última revisão:** abril 2026 — ranking em produção (`get_leaderboard_my_school` + `get_leaderboard_filtered` na BD); fallback e mensagem i18n se RPC em falta noutro projeto; admin alunos/papéis, Resend, planos camelCase + RLS.
+> **Última revisão:** 18 abril 2026 — ranking em produção (`get_leaderboard_my_school` + `get_leaderboard_filtered` na BD); fallback e mensagem i18n se RPC em falta noutro projeto; admin alunos/papéis, Resend, planos camelCase + RLS; **sessão Supabase em mobile** (middleware só `getUser()`, `AuthSessionKeepAlive` com `resume` + refresh periódico); **Stripe** (payload `STRIPE_PRICE_INVALID`, recuperação `stripeCustomerId` test/live no checkout); docs em `DOCS/` e índice na raiz alinhados.
 
 **Legenda:** **Feito** = em produção. **Por fazer** = não implementado ou só operacional (dados em falta).
 
@@ -32,6 +32,7 @@
 | Sincronização User + Student | Feito | `syncUser`; role inicial ALUNO |
 | Roles ALUNO / COACH / ADMIN | Feito | `User.role` |
 | Áreas aluno / coach / admin | Feito | Rotas `/dashboard`, `/coach`, `/admin` |
+| Sessão após idle (mobile / PWA) | Feito | Middleware só `getUser()`; `AuthSessionKeepAlive` (`startAutoRefresh`, `resume`, intervalo ~45 min com separador visível) — `memory.md` §3.2 |
 
 ---
 

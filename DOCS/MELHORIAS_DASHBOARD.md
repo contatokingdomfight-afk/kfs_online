@@ -7,7 +7,7 @@
 
 ---
 
-## Estado (março 2026)
+## Estado (abril 2026)
 
 - **«Sua próxima aula»:** carrossel horizontal (`OpenClassesCarouselShell`) com **todas** as aulas elegíveis da semana que não são só «aula livre» quando o aluno tem plano (várias modalidades / mesmo dia). **Sem plano:** as aulas livres elegíveis concentram-se nesta secção.
 - **«Nesta semana — aulas livres»:** carrossel à parte quando há plano e aulas livres adicionais; **depois do Painel do Guerreiro**.
@@ -197,8 +197,8 @@ monday.setDate(monday.getDate() - daysToMonday);
 
 ---
 
-**Histórico:** 23 de Fevereiro de 2026 (v1.0) — atualizado março 2026 (carrosséis).
+**Histórico:** 23 de Fevereiro de 2026 (v1.0) — actualizado março 2026 (carrosséis); revisão de rodapé abril 2026.
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

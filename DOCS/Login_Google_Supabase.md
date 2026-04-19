@@ -121,4 +121,4 @@ Depois disto, ao clicar em **“Entrar com Google”** em `/sign-in` ou `/sign-u
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

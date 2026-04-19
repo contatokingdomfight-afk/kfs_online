@@ -4,7 +4,7 @@
 
 **Objetivo:** Implementar um novo fluxo de cadastro e onboarding "self-service" para novos alunos. A meta é reduzir o atrito inicial, permitindo que o utilizador crie uma conta e explore a plataforma num estado "Free Tier" (amostra grátis) antes de se comprometer com um plano. Esta abordagem visa aumentar a taxa de conversão ao demonstrar o valor do produto primeiro.
 
-> **Implementação (abril 2026):** Após cadastro (email ou Google), o utilizador é levado à **área do aluno** (`/dashboard`). O wizard em `/onboarding` é **opcional** (pode preencher dados de perfil quando quiser). O `StudentProfile` de novos alunos marca `hasCompletedOnboarding` como concluído na criação, para não bloquear o dashboard; o **tour guiado** continua disponível no dashboard (`StudentOnboardingGate`, incl. `?replayOnboarding=1`).
+> **Implementação (abril 2026):** Após cadastro (email ou Google), o utilizador é levado à **área do aluno** (`/dashboard`). O wizard em `/onboarding` é **opcional** (pode preencher dados de perfil quando quiser). O `StudentProfile` de novos alunos marca `hasCompletedOnboarding` como concluído na criação, para não bloquear o dashboard; o **tour guiado** continua disponível no dashboard (`StudentOnboardingGate`, incl. `?replayOnboarding=1`). **Sessão em mobile / PWA:** renovação de JWT ao voltar ao separador e refresh periódico — ver **`memory.md`** §3.2 (`AuthSessionKeepAlive`, middleware).
 
 ---
 
@@ -114,4 +114,4 @@ Este é o percurso que um novo utilizador fará desde o registo até à ativaç�
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

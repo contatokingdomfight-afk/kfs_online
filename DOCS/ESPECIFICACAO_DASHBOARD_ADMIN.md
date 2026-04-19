@@ -1,6 +1,6 @@
 # Especificação Funcional: O Novo Painel de Controlo do Admin
 
-> **Nota (março 2026):** esta especificação descreve o alvo de produto. O estado implementado está alinhado em grande parte — ver rotas em `app/admin/` e **`DOCS/ROADMAP_Plataforma_KFS.md`**. Índice geral: **`DOCS/INDEX.md`**.
+> **Nota (abril 2026):** esta especificação descreve o alvo de produto. O estado implementado está alinhado em grande parte — ver rotas em `app/admin/` e **`DOCS/ROADMAP_Plataforma_KFS.md`**. Índice geral: **`DOCS/INDEX.md`**.
 
 ## 1. Visão Geral e Princípios
 
@@ -110,4 +110,4 @@ A página `/admin` será reestruturada nas seguintes secções, por ordem de pri
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

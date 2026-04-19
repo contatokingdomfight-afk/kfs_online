@@ -66,4 +66,4 @@ Testar com um aluno real é a melhor forma de validar o fluxo completo e a exper
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

@@ -75,4 +75,12 @@ O projeto pode ser migrado se o problema na Vercel persistir.
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+## Outros problemas (auth, Stripe, Preview)
+
+- **Variáveis só em Production:** deploys **Preview** (ex. branch `dev`) precisam das mesmas chaves mínimas; ver [`DEPLOY_VERCEL.md`](DEPLOY_VERCEL.md) §4.0.
+- **Stripe / login após mudança de chaves:** [`STRIPE_KINGDOM_ONLINE.md`](STRIPE_KINGDOM_ONLINE.md) e `memory.md` §3.4 (nomes `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, test vs live).
+- **Logout após idle no telemóvel:** `memory.md` §3.2.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

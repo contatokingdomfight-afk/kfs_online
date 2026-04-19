@@ -1,6 +1,6 @@
 # Sistema Multi-Escola - Kingdom Fight School
 
-> **Nota (março 2026):** além do `schoolId` em alunos/aulas/planos, os **coaches** podem estar associados a **várias escolas** via tabela **`CoachSchool`** (relação N:N). A UI de admin usa `CoachSchoolMultiSelect`. Este documento descreve a evolução do modelo; onde houver referência a um único `schoolId` no coach, preferir a documentação atual em **`DOCS/memory.md`**.
+> **Nota (abril 2026):** além do `schoolId` em alunos/aulas/planos, os **coaches** podem estar associados a **várias escolas** via tabela **`CoachSchool`** (relação N:N). A UI de admin usa `CoachSchoolMultiSelect`. Este documento descreve a evolução do modelo; onde houver referência a um único `schoolId` no coach, preferir a documentação atual em **`DOCS/memory.md`**.
 
 ## 📋 Resumo
 
@@ -531,4 +531,4 @@ Todas as queries principais agora filtram por escola:
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

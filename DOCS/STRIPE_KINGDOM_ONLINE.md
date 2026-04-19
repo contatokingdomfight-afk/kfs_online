@@ -26,6 +26,16 @@ O **MCP Stripe** (Cursor) e a **Vercel** podem usar **contas Stripe diferentes**
 2. Developers → API keys → copia a **Secret key** (`sk_test_...` ou `sk_live_...`).
 3. Na Vercel: Project → Settings → Environment Variables → `STRIPE_SECRET_KEY` → cola essa chave e faz redeploy.
 
+### Nomes das variáveis na Vercel (obrigatório)
+
+O código (`lib/stripe/server.ts`) lê **`STRIPE_SECRET_KEY`** e **`STRIPE_WEBHOOK_SECRET`**. Nomes como **`STRIPE_API_KEY`** ou **`STRIPE_PUBLIC_KEY`** **não são usados** — a chave secreta tem de estar em `STRIPE_SECRET_KEY`. A chave pública (se precisares no futuro no browser) segue o `.env.example`: **`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`**.
+
+### Checkout: preço inválido e cliente test vs live
+
+- Resposta **400** com `errorCode: STRIPE_PRICE_INVALID` inclui `stripePriceIdUsed` e `stripeKeyMode` para diagnóstico (UI em `escolher-plano` e dashboard financeiro).
+- Se `Student.stripeCustomerId` for de **teste** e a app usar **`sk_live_`** (ou o contrário), o checkout **limpa o ID**, cria cliente na conta correcta e **repete** a sessão uma vez (`lib/stripe/stripe-customer-errors.ts`). O **portal** de faturação limpa o ID e devolve mensagem para voltar a subscrever pelo checkout.
+- Detalhe técnico: **`memory.md`** §3.4.
+
 ## Modelos de subscrição
 
 | Periodicidade | Preço |
@@ -106,4 +116,4 @@ UPDATE "Plan" SET "stripePriceId" = 'price_TEUMENSAL' WHERE id = 'plan-online';
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

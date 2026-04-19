@@ -200,4 +200,4 @@ Este documento deve ser atualizado à medida que as funcionalidades forem implem
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

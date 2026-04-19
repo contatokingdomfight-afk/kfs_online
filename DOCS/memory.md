@@ -2,7 +2,7 @@
 
 > **Para continuar noutro chat:** lê este ficheiro primeiro; a documentação de produto e decisões está em **`DOCS/`** (não em `docs/`). Regra do projeto: `.cursor/rules/documentacao-projeto.mdc`.
 
-**Última revisão:** 16 abril 2026 (roadmap + ranking RPCs em produção; `DOCS/APLICAR_MIGRATIONS` Ranking).
+**Última revisão:** 18 abril 2026 (sessão mobile pós-idle; Stripe checkout/portal test↔live; sincronização de docs em `DOCS/` e roadmap).
 
 ---
 
@@ -146,6 +146,10 @@
 - **Admin → listar/editar planos (`/admin/planos`):** leitura com `createClient()` (sessão + anon key), para coincidir com o projeto do login; criar/editar continuam com `SUPABASE_SERVICE_ROLE_KEY` nas server actions. **RLS:** `Plan` precisa de política para `authenticated` (ex. `allow_authenticated`); sem políticas com RLS ativo a lista fica vazia.
 - **`/escolher-plano`:** planos visíveis para `schoolId` do aluno **e** `default-school-001` (catálogo partilhado).
 - **Migrações úteis:** `20260414140000_rls_backfill_core_tables_if_missing.sql`, `20260414150000_plan_price_seed_and_plan_access_updates.sql`, `20260414160000_seed_plans_legacy_kfs_snapshot.sql`; correção de nomes em `20260312120632_plan_access_fields.sql` e preço mensal legado em `20260322000000_create_plan_price_for_subscription_options.sql`.
+
+### 3.17 Documentação sincronizada (abril 2026)
+
+- **`DOCS/INDEX.md`**, **`DOCS/ROADMAP_Plataforma_KFS.md`**, **`DEPLOY_VERCEL.md`**, **`Deploy_Vercel_kingdomfight.md`**, **`STRIPE_KINGDOM_ONLINE.md`**, **`FLUXO_DE_CADASTRO_E_ONBOARDING.md`**, **`PWA.md`**, **`VERCEL_DEPLOY_TROUBLESHOOTING.md`**, **`VARIAVEIS_AMBIENTE_VERCEL.txt`**, **`INDICE_DOCUMENTACAO.md`** (raiz): revisão de datas, variáveis Stripe correctas (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, opcional `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`), diagnóstico `STRIPE_PRICE_INVALID`, recuperação automática de `stripeCustomerId` test/live no checkout e limpeza no portal — referências cruzadas a §3.2 (sessão) e §3.4 (Stripe).
 
 ---
 

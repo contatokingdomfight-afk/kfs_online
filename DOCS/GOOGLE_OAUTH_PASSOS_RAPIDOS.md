@@ -221,4 +221,4 @@ Redirect URI: https://kfs-online.vercel.app/auth/callback
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

@@ -591,4 +591,4 @@ Em vez de participação societária, a KFS oferece ao investidor um retorno bas
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

@@ -1,6 +1,6 @@
 # Plano de Melhorias – Biblioteca (Cursos, Módulos e Unidades)
 
-**Data:** 11 março 2026  
+**Data:** 11 março 2026 (conteúdo); **revisão documental:** 18 abril 2026.  
 **Contexto:** Correções e melhorias na Biblioteca – tanto no perfil Admin/Professor (criar curso, adicionar módulos/unidades) quanto no perfil Aluno (visualizar curso).
 
 ---
@@ -160,4 +160,4 @@
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — março 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
