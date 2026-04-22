@@ -15,7 +15,18 @@
 | **Dica de instalação** | `PwaInstallProvider` + `PwaInstallHint.tsx`: primeiro aviso em ecrãs ≤768px (estilo destacado); «Agora não» ou × grava `kfs-pwa-sidebar-mode` e o aviso some. Depois, `SidebarPwaInstall` no menu lateral: com `beforeinstallprompt` (Chromium) mostra «Instalar app»; no **Safari** e outros sem API nativa, o mesmo estilo de botão abre um **modal** com passos (`lib/pwa-install-ui.ts`). Migração: quem tinha o dismiss antigo passa para modo menu (`lib/pwa-install-storage.ts`). |
 | **Modo standalone** | `components/PwaDisplayMode.tsx` define `data-pwa-standalone` no `<html>`; `app/globals.css` ajusta `min-height` do `body` em modo app. |
 | **Middleware** | `middleware.ts` — matcher exclui `sw.js` e `manifest.webmanifest` para não redirecionar para login. |
-| **Sessão (app instalada)** | O mesmo fluxo Supabase que no browser: `components/AuthSessionKeepAlive.tsx` no layout raiz ajuda a **renovar o JWT** após o telemóvel suspender o separador ou a app em segundo plano — ver **`memory.md`** §3.2. |
+| **Sessão (app instalada)** | O mesmo fluxo Supabase que no browser: `components/AuthSessionKeepAlive.tsx` no layout raiz chama `refreshSession()` ao voltar à app / `pageshow` e intervalo com o ecrã visível; `lib/supabase/client.ts` força `persistSession` + `autoRefreshToken`. |
+
+### Sessão longa no telemóvel (evitar “deslogar” sozinho)
+
+**No código** já renovamos tokens ao reabrir a PWA e periodicamente com a app aberta. Ainda assim podes ver logout se:
+
+1. **Supabase Auth (projeto)** — Dashboard → **Authentication** → **Sessions** (ou *Settings* / *Advanced* conforme a UI):
+   - **Inactivity timeout** ou **Time-box user sessions**: se estiverem activos (muitas vezes em planos Pro+), encerram a sessão após X tempo **sem refresh**. Para “ficar logado” o máximo possível, desactiva time-box / inactividade ou aumenta o valor ao que o negócio aceitar em segurança.
+   - **Single session per user**: com isto activo, um novo login (outro telemóvel ou browser) pode invalidar a sessão anterior — parece “logout misterioso”.
+2. **Browser / SO**: pouco espaço, “limpar dados do site”, modo privado ou políticas agressivas (ex.: alguns modos de poupança de dados) podem apagar cookies — não há controlo total pela app.
+
+**Expectativa realista:** “Sempre logado para sempre” sem reautenticar **não** é garantido por segurança e por limites da Web; o objectivo é **manter a sessão o mais longo possível** enquanto o refresh token for válido e os cookies existirem.
 
 ## Desinstalar e voltar a instalar (limitações da plataforma)
 
@@ -39,4 +50,4 @@
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md).*
+*Referência cruzada: [INDEX.md](INDEX.md), [docs/memory.md](../docs/memory.md).*

@@ -5,9 +5,11 @@ import { createClient } from "@/lib/supabase/client";
 
 /**
  * Em mobile/PWA os timers de refresh do Supabase podem ser suspensos com o separador em segundo plano.
- * `getUser()` valida com o Auth e renova o JWT; `startAutoRefresh()` garante o ticker activo após mount.
- * Intervalo enquanto o separador está visível: evita JWT expirado só com timers internos pausados.
- * Eventos `visibilitychange`, `pageshow` (bfcache), `focus`, `online` e `resume` (Page Lifecycle / Android).
+ * `refreshSession()` troca o refresh token por um par novo quando o JWT já expirou (caso típico após horas/dias fechado).
+ * `getUser()` valida com o Auth e também pode renovar — usado como fallback.
+ * `startAutoRefresh()` reactiva o ticker interno após mount.
+ * Intervalo com o separador visível: reforço periódico enquanto a app está aberta.
+ * Eventos: visibilitychange, pageshow (incl. abrir a PWA pelo ícone), focus, online, resume (Android).
  */
 export function AuthSessionKeepAlive() {
   useEffect(() => {
@@ -17,12 +19,32 @@ export function AuthSessionKeepAlive() {
     let lastOnlineBump = 0;
     const onlineThrottleMs = 45_000;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    /** Renovar JWT antes do típico ~1h — reduz logout após idle com o ecrã ligado. */
-    const visibleRefreshIntervalMs = 45 * 60 * 1000;
+    /** ~20 min: JWT default no Supabase costuma ser 1h; renovar antes reduz 401 após idle com app aberta. */
+    const visibleRefreshIntervalMs = 20 * 60 * 1000;
     let visibleInterval: ReturnType<typeof setInterval> | null = null;
 
     const refreshFromServer = () => {
-      void supabase.auth.getUser();
+      void (async () => {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session?.refresh_token) {
+            const { error } = await supabase.auth.refreshSession();
+            if (error) {
+              await supabase.auth.getUser();
+            }
+          } else {
+            await supabase.auth.getUser();
+          }
+        } catch {
+          try {
+            await supabase.auth.getUser();
+          } catch {
+            /* ignorar — rede ou sessão já inválida */
+          }
+        }
+      })();
     };
 
     /** Volta do background / bfcache / outra app: refresh já + outro após debounce. */
@@ -58,8 +80,9 @@ export function AuthSessionKeepAlive() {
       }
     };
 
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) scheduleResumeRefresh();
+    const onPageShow = (_e: PageTransitionEvent) => {
+      // Sempre ao mostrar a página (abrir PWA pelo ícone, voltar de outra app, bfcache).
+      scheduleResumeRefresh();
     };
 
     const onFocus = () => {
