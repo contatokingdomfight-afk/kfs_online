@@ -319,6 +319,18 @@ export function RoundTimerClient({ locale }: Props) {
 
   const allPresets = useMemo(() => [...BUILT_IN_PRESETS, ...customPresets], [customPresets]);
 
+  const matchingPresetId = useMemo(() => {
+    const c = clampConfig(config);
+    const hit = allPresets.find(
+      (p) =>
+        p.config.rounds === c.rounds &&
+        p.config.roundSec === c.roundSec &&
+        p.config.restSec === c.restSec &&
+        p.config.countdownSec === c.countdownSec
+    );
+    return hit?.id ?? "";
+  }, [allPresets, config]);
+
   const setField = (key: keyof TimerConfig, value: number) => {
     setConfig((c) => clampConfig({ ...c, [key]: value }));
   };
@@ -352,23 +364,24 @@ export function RoundTimerClient({ locale }: Props) {
         {tk.title}
       </h1>
 
-      <section className="space-y-3 mb-5" style={{ opacity: canEdit ? 1 : 0.55, pointerEvents: canEdit ? "auto" : "none" }}>
+      <section className="mb-5 space-y-3">
         <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
           {tk.configTitle}
         </p>
 
+        <div className="space-y-3" style={{ opacity: canEdit ? 1 : 0.55, pointerEvents: canEdit ? "auto" : "none" }}>
         <label className="block text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
           {tk.presetLabel}
           <select
             className="round-timer-input mt-1"
-            value=""
+            value={matchingPresetId}
             onChange={(e) => {
               const id = e.target.value;
               const p = allPresets.find((x) => x.id === id);
               if (p) applyPreset(p.config);
             }}
           >
-            <option value="">{locale === "pt" ? "— Escolher —" : "— Choose —"}</option>
+            <option value="">{locale === "pt" ? "— Personalizado —" : "— Custom —"}</option>
             {allPresets.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.label}
@@ -442,18 +455,19 @@ export function RoundTimerClient({ locale }: Props) {
         <button type="button" className="round-timer-btn round-timer-btn-secondary w-full text-sm" onClick={onSavePreset}>
           {tk.savePreset}
         </button>
-      </section>
+        </div>
 
-      <div className="mb-3 flex justify-end">
-        <button
-          type="button"
-          className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0"
-          onClick={() => setTimerViewExpanded((v) => !v)}
-          aria-expanded={timerViewExpanded}
-        >
-          {timerViewExpanded ? tk.minimizeView : tk.maximizeView}
-        </button>
-      </div>
+        <div className="flex justify-end border-t pt-3" style={{ borderColor: "var(--border)" }}>
+          <button
+            type="button"
+            className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0"
+            onClick={() => setTimerViewExpanded((v) => !v)}
+            aria-expanded={timerViewExpanded}
+          >
+            {timerViewExpanded ? tk.minimizeView : tk.maximizeView}
+          </button>
+        </div>
+      </section>
 
       {timerViewExpanded ? (
         <>
