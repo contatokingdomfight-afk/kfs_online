@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
-import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 
 export type PerformanceAvatarCarouselLabels = {
   sectionTitle: string;
@@ -29,21 +28,47 @@ function mergeLabels(labels?: PerformanceAvatarCarouselLabels | null): Performan
   return { ...LABEL_DEFAULTS, ...(labels ?? {}) };
 }
 
+export type BodySilhouetteMode = "neutral" | "personalized";
+
 type Props = {
   radar: ReactNode;
   formData: unknown;
   assessedAtLabel: string | null;
   labels?: PerformanceAvatarCarouselLabels | null;
+  /**
+   * Quando definido (ex.: última ficha física na BD), força o 2.º painel: `personalized` usa medidas se existirem;
+   * `neutral` mostra silhueta de referência sem antropometria mínima.
+   * Omitir mantém o comportamento antigo: 2.º painel só se `formData` tiver ≥2 medidas.
+   */
+  bodySilhouetteMode?: BodySilhouetteMode | null;
 };
 
 /**
- * Carrossel horizontal: 1.º painel radar de competências; 2.º silhueta corporal ilustrativa (se houver antropometria na ficha).
+ * Carrossel horizontal: 1.º painel radar de competências; 2.º silhueta ilustrativa (ficha com medidas ou silhueta neutra).
  */
-export function PerformanceRadarAvatarCarousel({ radar, formData, assessedAtLabel, labels }: Props) {
+export function PerformanceRadarAvatarCarousel({
+  radar,
+  formData,
+  assessedAtLabel,
+  labels,
+  bodySilhouetteMode = null,
+}: Props) {
   const L = mergeLabels(labels);
 
   const parsedForm = normalizePhysicalFormDataJson(formData);
-  const showBodySlide = parsedForm != null && hasIllustrativeAnthropometry(parsedForm);
+  let silhouetteMode: "off" | "neutral" | "personalized";
+  if (bodySilhouetteMode === "neutral") {
+    silhouetteMode = "neutral";
+  } else if (bodySilhouetteMode === "personalized") {
+    silhouetteMode =
+      parsedForm != null && hasIllustrativeAnthropometry(parsedForm) ? "personalized" : "neutral";
+  } else {
+    silhouetteMode =
+      parsedForm != null && hasIllustrativeAnthropometry(parsedForm) ? "personalized" : "off";
+  }
+  const showBodySlide = silhouetteMode !== "off";
+  const neutralReference = silhouetteMode === "neutral";
+  const formForAvatar = neutralReference ? (parsedForm ?? {}) : (parsedForm ?? formData);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
@@ -146,9 +171,10 @@ export function PerformanceRadarAvatarCarousel({ radar, formData, assessedAtLabe
             <p className="text-xs text-[var(--text-secondary)] mb-2 m-0">{L.slideBodyCaption}</p>
             <div className="flex justify-center pt-1">
               <IllustrativeBodyAvatar
-                formData={parsedForm ?? formData}
+                formData={formForAvatar}
                 assessedAtLabel={assessedAtLabel}
                 captionOverride={L.studentAvatarCaption}
+                neutralReference={neutralReference}
                 className="max-w-[min(220px,88vw)]"
               />
             </div>

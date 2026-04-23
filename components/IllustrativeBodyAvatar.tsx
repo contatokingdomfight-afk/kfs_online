@@ -14,14 +14,27 @@ type Props = {
   className?: string;
   /** Se definido, substitui o parágrafo explicativo (ex.: i18n na área do aluno). */
   captionOverride?: string | null;
+  /**
+   * Silhueta de referência (proporções por defeito) quando a ficha existe mas não há antropometria suficiente.
+   * Requer `captionOverride` com texto explicativo (i18n).
+   */
+  neutralReference?: boolean;
 };
 
 /**
  * Silhueta 2D meramente ilustrativa com base em medidas opcionais da ficha; não representa diagnóstico nem composição corporal real.
  */
-export function IllustrativeBodyAvatar({ formData, assessedAtLabel, className, captionOverride }: Props) {
-  const fd = normalizePhysicalFormDataJson(formData);
-  if (!fd || !hasIllustrativeAnthropometry(fd)) return null;
+export function IllustrativeBodyAvatar({
+  formData,
+  assessedAtLabel,
+  className,
+  captionOverride,
+  neutralReference = false,
+}: Props) {
+  const parsed = normalizePhysicalFormDataJson(formData);
+  const fd = neutralReference ? (parsed ?? {}) : parsed;
+  if (!fd) return null;
+  if (!neutralReference && !hasIllustrativeAnthropometry(fd)) return null;
 
   const p = buildSilhouetteParts(fd);
 
@@ -29,10 +42,17 @@ export function IllustrativeBodyAvatar({ formData, assessedAtLabel, className, c
     "Figura meramente ilustrativa a partir das circunferências registadas (não é avaliação médica nem imagem do aluno)." +
     (assessedAtLabel ? ` Dados: ${assessedAtLabel}.` : "");
 
+  const caption =
+    captionOverride?.trim() ||
+    (neutralReference
+      ? "Silhueta de referência genérica (preenche pelo menos duas circunferências na ficha para uma figura aproximada às tuas medidas)." +
+          (assessedAtLabel ? ` Ficha: ${assessedAtLabel}.` : "")
+      : defaultCaption);
+
   return (
     <div className={className}>
       <p className="text-text-secondary" style={{ fontSize: "clamp(11px, 2.8vw, 12px)", margin: "0 0 8px 0", lineHeight: 1.45 }}>
-        {captionOverride?.trim() ? captionOverride : defaultCaption}
+        {caption}
       </p>
       <svg
         viewBox="0 0 100 232"

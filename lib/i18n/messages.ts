@@ -174,6 +174,11 @@ export const messages = {
       "Desliza para o lado ou usa as setas para alternar entre o radar e a silhueta ilustrativa baseada na última avaliação física.",
     perfAvatarStudentCaption:
       "Silhueta meramente ilustrativa com base nas medidas opcionais registadas na ficha física (avaliação de {date}). Não é avaliação clínica nem imagem real — só uma visão aproximada para acompanhares a evolução.",
+    perfCarouselSlideBodyCaptionNeutral: "Silhueta de referência (2.º painel)",
+    perfCarouselSwipeHintNeutral:
+      "Desliza ou usa as setas para ver a silhueta. Ainda não há circunferências suficientes na ficha para personalizar a figura — quando o coach registar pelo menos duas medidas na secção de antropometria, a silhueta reflecte melhor as tuas proporções.",
+    perfAvatarNeutralCaption:
+      "Ficha física registada a {date}. Silhueta genérica de referência até serem preenchidas pelo menos duas medidas antropométricas (circunferências) na ficha. Não é imagem clínica nem foto do aluno.",
     attendanceByModality: "Presenças confirmadas por modalidade",
     myDataTitle: "O teu perfil",
     personalDataTitle: "Dados pessoais",
@@ -812,6 +817,11 @@ export const messages = {
       "Swipe sideways or use the arrows to switch between the radar and the illustrative silhouette from your latest physical assessment.",
     perfAvatarStudentCaption:
       "Illustrative silhouette based on optional measurements from your physical assessment ({date}). Not a clinical evaluation or a real image — only a rough visual to track progress.",
+    perfCarouselSlideBodyCaptionNeutral: "Reference silhouette (2nd panel)",
+    perfCarouselSwipeHintNeutral:
+      "Swipe or use the arrows to view the silhouette. Your form doesn't have enough circumference measurements yet for a personalized figure—once your coach logs at least two values in the anthropometry section, the silhouette will better reflect your proportions.",
+    perfAvatarNeutralCaption:
+      "Physical assessment dated {date}. Generic reference silhouette until at least two anthropometric (circumference) measurements are saved on the form. Not a clinical image or a photo.",
     monthGoal: "Monthly goal",
     conquests: "Achievements",
     recommendedForYou: "Recommended for you",

@@ -33,10 +33,11 @@ type Props = {
   modalityLabels?: Record<string, string>;
   /** Médias por dimensão (tecnico, tatico, …) por modalidade — alinha radar e resumo com o filtro. */
   scoresByModality?: Record<string, Record<string, number>>;
-  /** Silhueta corporal ilustrativa (2.º painel do carrossel) quando a última ficha tem antropometria. */
+  /** Silhueta no 2.º painel quando existe última ficha física (medidas ou silhueta neutra). */
   physicalAvatarCarousel?: {
     formData: unknown;
     assessedAt: string;
+    silhouettePersonalized: boolean;
     labels: PerformanceAvatarCarouselLabels;
   } | null;
 };
@@ -214,6 +215,13 @@ export function EvaluationResultsDashboard({
         formData={physicalAvatarCarousel?.formData ?? null}
         assessedAtLabel={physicalAvatarCarousel?.assessedAt ?? null}
         labels={physicalAvatarCarousel?.labels}
+        bodySilhouetteMode={
+          physicalAvatarCarousel
+            ? physicalAvatarCarousel.silhouettePersonalized
+              ? "personalized"
+              : "neutral"
+            : null
+        }
       />
 
       <StrengthsWeaknesses strengths={strengths} weaknesses={weaknesses} />

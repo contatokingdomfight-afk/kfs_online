@@ -146,6 +146,7 @@ export default async function DashboardPerformancePage() {
   let physicalAvatarCarousel: {
     formData: unknown;
     assessedAt: string;
+    silhouettePersonalized: boolean;
     labels: PerformanceAvatarCarouselLabels;
   } | null = null;
   if (studentId) {
@@ -161,19 +162,26 @@ export default async function DashboardPerformancePage() {
       ? { assessedAt: lastPhysRow.assessedAt, nextDueAt: lastPhysRow.nextDueAt }
       : null;
     const normalizedPhysicalForm = normalizePhysicalFormDataJson(lastPhysRow?.formData ?? null);
-    if (normalizedPhysicalForm && hasIllustrativeAnthropometry(normalizedPhysicalForm)) {
-      const assessedAtStr = String(lastPhysRow!.assessedAt).slice(0, 10);
+    if (lastPhysRow) {
+      const assessedAtStr = String(lastPhysRow.assessedAt).slice(0, 10);
+      const hasAnthro =
+        normalizedPhysicalForm != null && hasIllustrativeAnthropometry(normalizedPhysicalForm);
       physicalAvatarCarousel = {
-        formData: normalizedPhysicalForm,
+        formData: hasAnthro ? normalizedPhysicalForm : (normalizedPhysicalForm ?? {}),
         assessedAt: assessedAtStr,
+        silhouettePersonalized: hasAnthro,
         labels: {
           sectionTitle: t("perfCarouselSectionTitle"),
           slideRadarCaption: t("perfCarouselSlideRadarCaption"),
-          slideBodyCaption: t("perfCarouselSlideBodyCaption"),
-          swipeHint: t("perfCarouselSwipeHint"),
+          slideBodyCaption: hasAnthro
+            ? t("perfCarouselSlideBodyCaption")
+            : t("perfCarouselSlideBodyCaptionNeutral"),
+          swipeHint: hasAnthro ? t("perfCarouselSwipeHint") : t("perfCarouselSwipeHintNeutral"),
           ariaPrev: t("dashboardCarouselPrev"),
           ariaNext: t("dashboardCarouselNext"),
-          studentAvatarCaption: t("perfAvatarStudentCaption").replace("{date}", assessedAtStr),
+          studentAvatarCaption: hasAnthro
+            ? t("perfAvatarStudentCaption").replace("{date}", assessedAtStr)
+            : t("perfAvatarNeutralCaption").replace("{date}", assessedAtStr),
         },
       };
     }

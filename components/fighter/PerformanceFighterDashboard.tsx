@@ -120,10 +120,11 @@ type Props = {
   } | null;
   /** Médias do questionário pré-treino (check-in). */
   checkInWellness?: { data: CheckInWellnessAggregates; copy: CheckInWellnessCopy };
-  /** Radar + silhueta ilustrativa (2.º painel) na última ficha física com antropometria. */
+  /** Radar + silhueta ilustrativa (2.º painel) quando existe última ficha física (personalizada ou neutra). */
   physicalAvatarCarousel?: {
     formData: unknown;
     assessedAt: string;
+    silhouettePersonalized: boolean;
     labels: PerformanceAvatarCarouselLabels;
   } | null;
 };
@@ -233,6 +234,13 @@ export function PerformanceFighterDashboard({
             formData={physicalAvatarCarousel?.formData ?? null}
             assessedAtLabel={physicalAvatarCarousel?.assessedAt ?? null}
             labels={physicalAvatarCarousel?.labels}
+            bodySilhouetteMode={
+              physicalAvatarCarousel
+                ? physicalAvatarCarousel.silhouettePersonalized
+                  ? "personalized"
+                  : "neutral"
+                : null
+            }
           />
         </>
       )}
