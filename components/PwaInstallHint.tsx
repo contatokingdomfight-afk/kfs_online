@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { getTranslations } from "@/lib/i18n";
 import { usePwaInstall } from "@/components/PwaInstallProvider";
+import { isPwaInstalledWindow } from "@/lib/pwa-installed-window";
 
 /**
  * Primeira visita (telemóvel): aviso em baixo mais visível.
@@ -19,9 +20,7 @@ export function PwaInstallHint() {
   useEffect(() => {
     if (!ctx?.storageReady || ctx.preferSidebar) return;
 
-    if (window.matchMedia("(display-mode: standalone)").matches) return;
-    const nav = navigator as Navigator & { standalone?: boolean };
-    if (nav.standalone === true) return;
+    if (isPwaInstalledWindow()) return;
     if (!window.matchMedia("(max-width: 768px)").matches) return;
 
     const ua = navigator.userAgent;
@@ -46,9 +45,7 @@ export function PwaInstallHint() {
   if (!ctx?.storageReady || ctx.preferSidebar) return null;
   if (typeof window === "undefined") return null;
 
-  if (window.matchMedia("(display-mode: standalone)").matches) return null;
-  const nav = navigator as Navigator & { standalone?: boolean };
-  if (nav.standalone === true) return null;
+  if (isPwaInstalledWindow()) return null;
   if (!window.matchMedia("(max-width: 768px)").matches) return null;
 
   if (!hintKind) return null;

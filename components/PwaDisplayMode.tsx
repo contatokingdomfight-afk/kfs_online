@@ -1,19 +1,26 @@
 "use client";
 
 import { useEffect } from "react";
+import { isPwaInstalledWindow } from "@/lib/pwa-installed-window";
 
 /**
- * Expõe `data-pwa-standalone` no `<html>` para estilos quando a app corre como PWA instalada.
+ * Expõe `data-pwa-standalone` no `<html>` para estilos quando a app corre como PWA instalada
+ * (`display: standalone` ou `display: fullscreen` no manifest).
  */
 export function PwaDisplayMode() {
   useEffect(() => {
-    const mq = window.matchMedia("(display-mode: standalone)");
+    const mqStand = window.matchMedia("(display-mode: standalone)");
+    const mqFull = window.matchMedia("(display-mode: fullscreen)");
     const apply = () => {
-      document.documentElement.dataset.pwaStandalone = mq.matches ? "true" : "false";
+      document.documentElement.dataset.pwaStandalone = isPwaInstalledWindow() ? "true" : "false";
     };
     apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
+    mqStand.addEventListener("change", apply);
+    mqFull.addEventListener("change", apply);
+    return () => {
+      mqStand.removeEventListener("change", apply);
+      mqFull.removeEventListener("change", apply);
+    };
   }, []);
 
   return null;

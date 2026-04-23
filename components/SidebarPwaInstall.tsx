@@ -5,6 +5,7 @@ import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/theme-locale";
 import { getPwaInstallHelpVariant } from "@/lib/pwa-install-ui";
 import { usePwaInstall } from "@/components/PwaInstallProvider";
+import { isPwaInstalledWindow } from "@/lib/pwa-installed-window";
 
 type Props = {
   locale: Locale;
@@ -32,12 +33,8 @@ export function SidebarPwaInstall({ locale }: Props) {
   useEffect(() => {
     if (!pwa?.storageReady) return;
 
-    const isStandalone = () =>
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as Navigator & { standalone?: boolean }).standalone === true;
-
     const sync = () => {
-      if (isStandalone()) {
+      if (isPwaInstalledWindow()) {
         setShowBlock(false);
         return;
       }

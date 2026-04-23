@@ -11,7 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Plataforma de gestão e ensino da Kingdom Fight School",
     start_url: "/",
     scope: "/",
-    display: "standalone",
+    display: "fullscreen",
     orientation: "portrait-primary",
     background_color: THEME,
     theme_color: THEME,

@@ -1331,7 +1331,7 @@
   animation: loadingBar 1.5s ease-in-out infinite;
 }
 
-/* PWA instalada — html[data-pwa-standalone="true"] (components/PwaDisplayMode.tsx) */
+/* PWA instalada (manifest standalone ou fullscreen) — html[data-pwa-standalone="true"] (PwaDisplayMode.tsx) */
 html[data-pwa-standalone="true"] body {
   min-height: 100dvh;
 }
