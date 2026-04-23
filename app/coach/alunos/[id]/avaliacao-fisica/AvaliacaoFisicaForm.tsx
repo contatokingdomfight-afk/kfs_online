@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import { savePhysicalAssessment } from "./actions";
 import { ConfirmModal } from "@/components/ConfirmModal";
+
+type SubmitPhase = "idle" | "saving" | "saved";
 import {
   OBJECTIVE_OPTIONS,
   MEDICAL_CONDITIONS,
@@ -19,6 +21,8 @@ import {
 
 type Props = {
   studentId: string;
+  /** Destino após guardar com sucesso (perfil aluno, admin, etc.). */
+  afterSaveHref: string;
   studentName: string;
   studentEmail: string;
   studentDob: string | null;
@@ -30,6 +34,7 @@ type Props = {
 
 export function AvaliacaoFisicaForm({
   studentId,
+  afterSaveHref,
   studentName,
   studentEmail,
   studentDob,
@@ -42,11 +47,24 @@ export function AvaliacaoFisicaForm({
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
 
   useEffect(() => {
-    if (state !== null) setIsSubmitting(false);
+    if (state?.error) {
+      setSubmitPhase("idle");
+    }
+    if (state?.success) {
+      setSubmitPhase("saved");
+    }
   }, [state]);
+
+  useEffect(() => {
+    if (submitPhase !== "saved") return;
+    const t = window.setTimeout(() => {
+      router.push(afterSaveHref);
+    }, 1000);
+    return () => window.clearTimeout(t);
+  }, [submitPhase, afterSaveHref, router]);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -54,7 +72,7 @@ export function AvaliacaoFisicaForm({
 
   const handleConfirmSubmit = () => {
     setShowConfirm(false);
-    setIsSubmitting(true);
+    setSubmitPhase("saving");
     formRef.current?.requestSubmit();
   };
 
@@ -78,53 +96,45 @@ export function AvaliacaoFisicaForm({
         variant="primary"
       />
 
-      {isSubmitting && (
+      {(submitPhase === "saving" || submitPhase === "saved") && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
           role="status"
           aria-live="polite"
-          aria-label="A guardar avaliação"
+          aria-busy={submitPhase === "saving"}
+          aria-label={submitPhase === "saving" ? "A guardar avaliação física" : "Avaliação guardada, a redirecionar"}
         >
           <div className="rounded-2xl bg-[var(--bg-secondary)] border-2 border-[var(--border)] shadow-2xl max-w-md w-full p-6 text-center">
-            <p className="text-lg font-semibold text-[var(--text-primary)] mb-4">
-              A guardar…
-            </p>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">
-              A processar a ficha de avaliação física.
-            </p>
-            <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden">
-              <div
-                className="h-full w-[40%] rounded-full bg-[var(--primary)] animate-loading-bar"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {state?.success && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="success-modal-title"
-        >
-          <div className="rounded-2xl bg-[var(--bg-secondary)] border-2 border-[var(--border)] shadow-2xl max-w-md w-full p-6 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-green-500/30 flex items-center justify-center mb-4" aria-hidden>
-              <span className="text-2xl text-green-600 dark:text-green-400">✓</span>
-            </div>
-            <h2 id="success-modal-title" className="text-lg font-semibold text-[var(--text-primary)] mb-2">
-              Avaliação guardada
-            </h2>
-            <p className="text-sm text-[var(--text-secondary)] mb-6">
-              A ficha foi registada. A próxima renovação está prevista para daqui a 6 meses.
-            </p>
-            <button
-              type="button"
-              onClick={() => router.push(`/coach/alunos/${studentId}`)}
-              className="btn btn-primary w-full"
-            >
-              Ir para o perfil do aluno
-            </button>
+            {submitPhase === "saving" ? (
+              <>
+                <p className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+                  A guardar os dados…
+                </p>
+                <p className="text-sm text-[var(--text-secondary)] mb-4">
+                  Aguarda enquanto a ficha de anamnese e avaliação física é registada no servidor.
+                </p>
+                <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden">
+                  <div className="h-full w-[40%] rounded-full bg-[var(--primary)] animate-loading-bar" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div
+                  className="mx-auto w-12 h-12 rounded-full bg-green-500/30 flex items-center justify-center mb-4"
+                  aria-hidden
+                >
+                  <span className="text-2xl text-green-600 dark:text-green-400">✓</span>
+                </div>
+                <p className="text-lg font-semibold text-[var(--text-primary)] mb-2">Dados guardados</p>
+                <p className="text-sm text-[var(--text-secondary)] mb-4">
+                  A ficha foi registada; a próxima renovação fica agendada para daqui a 6 meses. A redirecionar para a página
+                  anterior…
+                </p>
+                <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden opacity-60">
+                  <div className="h-full w-[40%] rounded-full bg-[var(--primary)] animate-loading-bar" />
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -122,8 +122,16 @@ export type ModalityConfig = {
  * Usa a média das notas do instrutor: condição, mobilidade, coordenação, resistência, força.
  */
 export function getFisicoScoreFromPhysicalAssessment(formData: unknown): number | null {
-  if (!formData || typeof formData !== "object") return null;
-  const fd = formData as Record<string, unknown>;
+  let raw: unknown = formData;
+  if (typeof raw === "string") {
+    try {
+      raw = JSON.parse(raw.trim() || "{}");
+    } catch {
+      return null;
+    }
+  }
+  if (!raw || typeof raw !== "object") return null;
+  const fd = raw as Record<string, unknown>;
   const keys = ["scoreCondition", "scoreMobility", "scoreCoordination", "scoreEndurance", "scoreStrength"];
   const values: number[] = [];
   for (const k of keys) {

@@ -17,8 +17,7 @@ import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evalu
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
 import type { PerformanceAvatarCarouselLabels } from "@/components/fighter/PerformanceRadarAvatarCarousel";
-import { hasIllustrativeAnthropometry } from "@/lib/illustrative-body-silhouette";
-import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
+import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 import {
   PERFORMANCE_DETAIL_BY_DIMENSION,
   PERFORMANCE_DETAIL_ORDER,
@@ -150,6 +149,39 @@ export default async function DashboardPerformancePage() {
     labels: PerformanceAvatarCarouselLabels;
   } | null = null;
   if (studentId) {
+    const { data: lastPhysRow } = await supabase
+      .from("StudentPhysicalAssessment")
+      .select("assessedAt, nextDueAt, formData")
+      .eq("studentId", studentId)
+      .order("assessedAt", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    lastPhysicalAssessment = lastPhysRow
+      ? { assessedAt: lastPhysRow.assessedAt, nextDueAt: lastPhysRow.nextDueAt }
+      : null;
+    const normalizedPhysicalForm = normalizePhysicalFormDataJson(lastPhysRow?.formData ?? null);
+    if (normalizedPhysicalForm && hasIllustrativeAnthropometry(normalizedPhysicalForm)) {
+      const assessedAtStr = String(lastPhysRow!.assessedAt).slice(0, 10);
+      physicalAvatarCarousel = {
+        formData: normalizedPhysicalForm,
+        assessedAt: assessedAtStr,
+        labels: {
+          sectionTitle: t("perfCarouselSectionTitle"),
+          slideRadarCaption: t("perfCarouselSlideRadarCaption"),
+          slideBodyCaption: t("perfCarouselSlideBodyCaption"),
+          swipeHint: t("perfCarouselSwipeHint"),
+          ariaPrev: t("dashboardCarouselPrev"),
+          ariaNext: t("dashboardCarouselNext"),
+          studentAvatarCaption: t("perfAvatarStudentCaption").replace("{date}", assessedAtStr),
+        },
+      };
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    physicalAssessmentDue =
+      !lastPhysicalAssessment ||
+      (lastPhysicalAssessment.nextDueAt != null && lastPhysicalAssessment.nextDueAt <= today);
+
     const achievementContext = await getAchievementUnlockContext(supabase, studentId);
     profileAchievements = getAchievementsWithStatus(achievementContext);
     const { data: athlete } = await supabase.from("Athlete").select("id, xp, createdAt").eq("studentId", studentId).single();
@@ -204,36 +236,6 @@ export default async function DashboardPerformancePage() {
           sharedCommentCoachName = "Treinador";
         }
       }
-      const { data: lastPhys } = await supabase
-        .from("StudentPhysicalAssessment")
-        .select("assessedAt, nextDueAt, formData")
-        .eq("studentId", studentId)
-        .order("assessedAt", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      lastPhysicalAssessment = lastPhys ? { assessedAt: lastPhys.assessedAt, nextDueAt: lastPhys.nextDueAt } : null;
-      if (
-        lastPhys?.formData &&
-        hasIllustrativeAnthropometry((lastPhys.formData as Partial<PhysicalAssessmentFormData>))
-      ) {
-        const assessedAtStr = String(lastPhys.assessedAt).slice(0, 10);
-        physicalAvatarCarousel = {
-          formData: lastPhys.formData,
-          assessedAt: assessedAtStr,
-          labels: {
-            sectionTitle: t("perfCarouselSectionTitle"),
-            slideRadarCaption: t("perfCarouselSlideRadarCaption"),
-            slideBodyCaption: t("perfCarouselSlideBodyCaption"),
-            swipeHint: t("perfCarouselSwipeHint"),
-            ariaPrev: t("dashboardCarouselPrev"),
-            ariaNext: t("dashboardCarouselNext"),
-            studentAvatarCaption: t("perfAvatarStudentCaption").replace("{date}", assessedAtStr),
-          },
-        };
-      }
-      const today = new Date().toISOString().slice(0, 10);
-      physicalAssessmentDue =
-        !lastPhysicalAssessment || (lastPhysicalAssessment.nextDueAt != null && lastPhysicalAssessment.nextDueAt <= today);
       const { data: evalsRows } = await supabase
         .from("AthleteEvaluation")
         .select("gas, technique, strength, theory, scores, modality, coachId, note, created_at")
@@ -251,8 +253,11 @@ export default async function DashboardPerformancePage() {
 
       if (evaluations.length > 0) {
         generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
-        if (lastPhys?.formData && generalPerformanceScores) {
-          generalPerformanceScores = mergePhysicalAssessmentIntoRadar(generalPerformanceScores, lastPhys.formData);
+        if (normalizedPhysicalForm && generalPerformanceScores) {
+          generalPerformanceScores = mergePhysicalAssessmentIntoRadar(
+            generalPerformanceScores,
+            normalizedPhysicalForm
+          );
         }
         scoresByModality = computePerformanceScoresByModality(evaluations, configByModality, LAST_N_PER_MODALITY, true);
         const latestEval = evalsRows![0] as { scores?: Record<string, number> | null; coachId?: string; note?: string | null; created_at?: string | null };
@@ -296,8 +301,8 @@ export default async function DashboardPerformancePage() {
           };
         }
       }
-      if (!generalPerformanceScores && lastPhys?.formData) {
-        const fisico = getFisicoScoreFromPhysicalAssessment(lastPhys.formData);
+      if (!generalPerformanceScores && normalizedPhysicalForm) {
+        const fisico = getFisicoScoreFromPhysicalAssessment(normalizedPhysicalForm);
         if (fisico != null) {
           generalPerformanceScores = {
             tecnico: 1,

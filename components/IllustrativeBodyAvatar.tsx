@@ -1,7 +1,11 @@
 "use client";
 
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
-import { buildSilhouetteParts, hasIllustrativeAnthropometry } from "@/lib/illustrative-body-silhouette";
+import {
+  buildSilhouetteParts,
+  hasIllustrativeAnthropometry,
+  normalizePhysicalFormDataJson,
+} from "@/lib/illustrative-body-silhouette";
 
 type Props = {
   formData: unknown;
@@ -16,9 +20,8 @@ type Props = {
  * Silhueta 2D meramente ilustrativa com base em medidas opcionais da ficha; não representa diagnóstico nem composição corporal real.
  */
 export function IllustrativeBodyAvatar({ formData, assessedAtLabel, className, captionOverride }: Props) {
-  if (!formData || typeof formData !== "object") return null;
-  const fd = formData as Partial<PhysicalAssessmentFormData>;
-  if (!hasIllustrativeAnthropometry(fd)) return null;
+  const fd = normalizePhysicalFormDataJson(formData);
+  if (!fd || !hasIllustrativeAnthropometry(fd)) return null;
 
   const p = buildSilhouetteParts(fd);
 

@@ -17,8 +17,7 @@ import { ComentariosAtleta } from "./ComentariosAtleta";
 import { PerformanceRadar } from "@/components/PerformanceRadarDynamic";
 import { AvaliacaoAtleta } from "./AvaliacaoAtleta";
 import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
-import { hasIllustrativeAnthropometry } from "@/lib/illustrative-body-silhouette";
-import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
+import { storedFormDataHasSilhouette } from "@/lib/illustrative-body-silhouette";
 
 const LEVEL_LABEL: Record<string, string> = {
   INICIANTE: "Iniciante",
@@ -191,10 +190,7 @@ export default async function CoachAtletaPage({ params }: Props) {
             Última: {String(lastPhysicalAssessment.assessedAt).slice(0, 10)} · Próxima: {String(lastPhysicalAssessment.nextDueAt).slice(0, 10)}
           </p>
         )}
-        {lastPhysicalAssessment &&
-          hasIllustrativeAnthropometry(
-            (lastPhysicalAssessment.formData ?? {}) as Partial<PhysicalAssessmentFormData>
-          ) && (
+        {lastPhysicalAssessment && storedFormDataHasSilhouette(lastPhysicalAssessment.formData) && (
             <div style={{ marginBottom: "clamp(12px, 3vw, 16px)", maxWidth: "min(200px, 55vw)" }}>
               <IllustrativeBodyAvatar
                 formData={lastPhysicalAssessment.formData}
@@ -203,7 +199,7 @@ export default async function CoachAtletaPage({ params }: Props) {
             </div>
           )}
         <Link
-          href={`/coach/alunos/${athlete.studentId}/avaliacao-fisica`}
+          href={`/coach/alunos/${athlete.studentId}/avaliacao-fisica?next=${encodeURIComponent(`/coach/atletas/${athleteId}`)}`}
           className="btn btn-secondary"
           style={{ textDecoration: "none" }}
         >

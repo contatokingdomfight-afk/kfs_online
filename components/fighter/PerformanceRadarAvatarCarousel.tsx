@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
-import { hasIllustrativeAnthropometry } from "@/lib/illustrative-body-silhouette";
+import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 
 export type PerformanceAvatarCarouselLabels = {
@@ -42,10 +42,8 @@ type Props = {
 export function PerformanceRadarAvatarCarousel({ radar, formData, assessedAtLabel, labels }: Props) {
   const L = mergeLabels(labels);
 
-  const showBodySlide =
-    formData != null &&
-    typeof formData === "object" &&
-    hasIllustrativeAnthropometry(formData as Partial<PhysicalAssessmentFormData>);
+  const parsedForm = normalizePhysicalFormDataJson(formData);
+  const showBodySlide = parsedForm != null && hasIllustrativeAnthropometry(parsedForm);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
@@ -148,7 +146,7 @@ export function PerformanceRadarAvatarCarousel({ radar, formData, assessedAtLabe
             <p className="text-xs text-[var(--text-secondary)] mb-2 m-0">{L.slideBodyCaption}</p>
             <div className="flex justify-center pt-1">
               <IllustrativeBodyAvatar
-                formData={formData}
+                formData={parsedForm ?? formData}
                 assessedAtLabel={assessedAtLabel}
                 captionOverride={L.studentAvatarCaption}
                 className="max-w-[min(220px,88vw)]"

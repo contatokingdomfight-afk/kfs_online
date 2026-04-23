@@ -123,5 +123,6 @@ export async function savePhysicalAssessment(
 
   revalidatePath(`/coach/alunos/${studentId}`);
   revalidatePath(`/coach/alunos/${studentId}/avaliacao-fisica`);
+  revalidatePath(`/admin/alunos/${studentId}`);
   return { success: true };
 }

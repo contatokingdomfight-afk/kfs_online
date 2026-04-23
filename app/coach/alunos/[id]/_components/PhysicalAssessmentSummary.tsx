@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
-import { hasIllustrativeAnthropometry } from "@/lib/illustrative-body-silhouette";
-import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
+import { storedFormDataHasSilhouette } from "@/lib/illustrative-body-silhouette";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
 type Props = { studentId: string };
@@ -82,9 +81,7 @@ export async function PhysicalAssessmentSummary({ studentId }: Props) {
               {assessmentDue && " (em atraso)"}
             </p>
           </div>
-          {hasIllustrativeAnthropometry(
-            (lastAssessment.formData ?? {}) as Partial<PhysicalAssessmentFormData>
-          ) && (
+          {storedFormDataHasSilhouette(lastAssessment.formData) && (
             <div style={{ flexShrink: 0, maxWidth: "min(160px, 42vw)" }}>
               <IllustrativeBodyAvatar
                 formData={lastAssessment.formData}

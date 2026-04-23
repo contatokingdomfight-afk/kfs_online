@@ -225,7 +225,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
         lastEvalScoresByModality={Object.keys(lastEvalScoresByModality).length > 0 ? lastEvalScoresByModality : undefined}
       />
       <Link
-        href={`/coach/alunos/${studentId}/avaliacao-fisica`}
+        href={`/coach/alunos/${studentId}/avaliacao-fisica?next=${encodeURIComponent(`/admin/alunos/${studentId}`)}`}
         className="btn btn-secondary"
         style={{ marginTop: 10, textDecoration: "none", display: "inline-block" }}
       >

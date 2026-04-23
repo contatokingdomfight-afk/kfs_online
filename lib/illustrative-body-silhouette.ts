@@ -25,6 +25,38 @@ function avg(a: number, b: number): number {
   return (a + b) / 2;
 }
 
+/**
+ * O campo `formData` na BD pode chegar já como objeto ou como string JSON (consoante o cliente).
+ * Sem isto, `typeof raw === "string"` falha checagens e a silhueta não aparece.
+ */
+export function normalizePhysicalFormDataJson(
+  raw: unknown
+): Partial<PhysicalAssessmentFormData> | null {
+  if (raw == null) return null;
+  if (typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Partial<PhysicalAssessmentFormData>;
+  }
+  if (typeof raw === "string") {
+    const s = raw.trim();
+    if (!s) return null;
+    try {
+      const p = JSON.parse(s) as unknown;
+      if (typeof p === "object" && p !== null && !Array.isArray(p)) {
+        return p as Partial<PhysicalAssessmentFormData>;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/** Combina parse JSON + regra de contagem mínima de medidas (para dados vindos da BD). */
+export function storedFormDataHasSilhouette(formData: unknown): boolean {
+  const p = normalizePhysicalFormDataJson(formData);
+  return p != null && hasIllustrativeAnthropometry(p);
+}
+
 /** Pelo menos duas medidas para evitar silhueta a partir de um único valor isolado. */
 export function hasIllustrativeAnthropometry(d: Partial<PhysicalAssessmentFormData>): boolean {
   const vals = [
