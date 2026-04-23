@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+import { getTranslations } from "@/lib/i18n";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
 import {
@@ -49,6 +51,9 @@ export default async function CoachAulaPage({
     return { lessonId: selectedLessonId, selectedLesson: first ?? null };
   };
   const { lessonId, selectedLesson } = resolveSelected();
+
+  const locale = await getLocaleFromCookies();
+  const t = getTranslations(locale);
 
   type WellnessZone = "GREEN" | "YELLOW" | "RED";
 
@@ -229,7 +234,12 @@ export default async function CoachAulaPage({
         <Link href="/coach" className="coach-aula-back">
           ← Voltar
         </Link>
-        <h1 className="coach-aula-title">Presenças na aula</h1>
+        <h1 className="coach-aula-title" style={{ flex: 1, minWidth: 0 }}>
+          Presenças na aula
+        </h1>
+        <Link href="/coach/round-timer" className="coach-aula-back" style={{ flexShrink: 0 }}>
+          {t("navRoundTimer")}
+        </Link>
       </header>
 
       {lessons.length === 0 ? (

@@ -82,26 +82,36 @@ export function Sidebar({
       >
         {links.map((item) => {
           const hasChildren = item.children && item.children.length > 0;
-          // Só considerar ativo por prefixo em itens com filhos (ex: /admin e /admin/coaches). Caso contrário exato (evita /coach ativo em /coach/alunos).
-          const isParentActive = activeHref === item.href
-            || (hasChildren && activeHref && (activeHref === item.href || activeHref.startsWith(item.href + "/")));
+          // Sem filhos: só URL exacta (evita /coach a activar em /coach/aula). Com filhos: item, prefixo do item, ou qualquer filho.
+          const navHighlighted = (() => {
+            if (!activeHref) return false;
+            if (hasChildren) {
+              return (
+                activeHref === item.href ||
+                activeHref.startsWith(`${item.href}/`) ||
+                item.children!.some((c) => activeHref === c.href || activeHref.startsWith(`${c.href}/`))
+              );
+            }
+            return activeHref === item.href;
+          })();
           return (
             <div key={item.href}>
               <Link
                 href={item.href}
                 prefetch={item.prefetch}
                 className="app-sidebar-nav-link"
-                style={linkStyle(Boolean(hasChildren ? activeHref === item.href : isParentActive))}
+                style={linkStyle(navHighlighted)}
               >
                 {item.label}
               </Link>
               {hasChildren && (
                 <div style={{ paddingLeft: 20 }}>
-                  {item.children!.map((child) => {
-                    const isChildActive = activeHref === child.href;
+                  {item.children!.map((child, childIdx) => {
+                    const isChildActive =
+                      !!activeHref && (activeHref === child.href || activeHref.startsWith(`${child.href}/`));
                     return (
                       <Link
-                        key={child.href}
+                        key={`${child.href}-${childIdx}`}
                         href={child.href}
                         prefetch={child.prefetch}
                         className="app-sidebar-nav-link"

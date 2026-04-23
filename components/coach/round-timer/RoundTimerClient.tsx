@@ -78,7 +78,8 @@ export function RoundTimerClient({ locale }: Props) {
       statePaused: t("coachRoundTimerStatePaused"),
       roundOf: t("coachRoundTimerRoundOf"),
       nextRound: t("coachRoundTimerNextRound"),
-      hintSound: t("coachRoundTimerHintSound"),
+      maximizeView: t("coachRoundTimerMaximizeView"),
+      minimizeView: t("coachRoundTimerMinimizeView"),
       sec: t("coachRoundTimerSec"),
       min: t("coachRoundTimerMin"),
       ariaMin: t("coachRoundTimerAriaMinutes"),
@@ -93,6 +94,7 @@ export function RoundTimerClient({ locale }: Props) {
   const [displayMs, setDisplayMs] = useState(0);
   const [customPresets, setCustomPresets] = useState<SavedPreset[]>([]);
   const [fullscreen, setFullscreen] = useState(false);
+  const [timerViewExpanded, setTimerViewExpanded] = useState(true);
   const prevPhase = useRef(timer.phase);
   const lastCountdownSec = useRef<number | null>(null);
   const prevRemForTenSec = useRef<number | null>(null);
@@ -346,59 +348,11 @@ export function RoundTimerClient({ locale }: Props) {
         </button>
       </div>
 
-      <h1 className="text-xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+      <h1 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
         {tk.title}
       </h1>
-      <p className="text-xs mb-4" style={{ color: "var(--text-secondary)" }}>
-        {tk.hintSound}
-      </p>
 
-      <div
-        className="round-timer-display text-center mb-6 select-none"
-        style={{
-          fontSize: "clamp(3rem, 14vw, 4.5rem)",
-          fontWeight: 800,
-          lineHeight: 1,
-          color: "var(--rt-accent, var(--primary))",
-        }}
-      >
-        {formatMmSsFromMs(displayMs)}
-      </div>
-
-      <p className="text-center text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-        {labelState}
-      </p>
-      <p className="text-center text-base mb-6" style={{ color: "var(--text-secondary)" }}>
-        {roundLabel}
-      </p>
-
-      <div className="flex flex-wrap justify-center gap-3 mb-8">
-        {timer.phase === "idle" || timer.phase === "finished" ? (
-          <button type="button" className="round-timer-btn round-timer-btn-primary px-8" onClick={() => void onStart()}>
-            {tk.start}
-          </button>
-        ) : timer.phase === "paused" ? (
-          <>
-            <button type="button" className="round-timer-btn round-timer-btn-primary px-8" onClick={() => void onResume()}>
-              {tk.resume}
-            </button>
-            <button type="button" className="round-timer-btn round-timer-btn-secondary" onClick={onReset}>
-              {tk.reset}
-            </button>
-          </>
-        ) : (
-          <>
-            <button type="button" className="round-timer-btn round-timer-btn-primary" onClick={onPause}>
-              {tk.pause}
-            </button>
-            <button type="button" className="round-timer-btn round-timer-btn-secondary" onClick={onReset}>
-              {tk.reset}
-            </button>
-          </>
-        )}
-      </div>
-
-      <section className="space-y-3" style={{ opacity: canEdit ? 1 : 0.55, pointerEvents: canEdit ? "auto" : "none" }}>
+      <section className="space-y-3 mb-5" style={{ opacity: canEdit ? 1 : 0.55, pointerEvents: canEdit ? "auto" : "none" }}>
         <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
           {tk.configTitle}
         </p>
@@ -489,6 +443,108 @@ export function RoundTimerClient({ locale }: Props) {
           {tk.savePreset}
         </button>
       </section>
+
+      <div className="mb-3 flex justify-end">
+        <button
+          type="button"
+          className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0"
+          onClick={() => setTimerViewExpanded((v) => !v)}
+          aria-expanded={timerViewExpanded}
+        >
+          {timerViewExpanded ? tk.minimizeView : tk.maximizeView}
+        </button>
+      </div>
+
+      {timerViewExpanded ? (
+        <>
+          <div
+            className="round-timer-display text-center mb-6 select-none"
+            style={{
+              fontSize: "clamp(3rem, 14vw, 4.5rem)",
+              fontWeight: 800,
+              lineHeight: 1,
+              color: "var(--rt-accent, var(--primary))",
+            }}
+          >
+            {formatMmSsFromMs(displayMs)}
+          </div>
+
+          <p className="text-center text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
+            {labelState}
+          </p>
+          <p className="text-center text-base mb-6" style={{ color: "var(--text-secondary)" }}>
+            {roundLabel}
+          </p>
+
+          <div className="flex flex-wrap justify-center gap-3 mb-2">
+            {timer.phase === "idle" || timer.phase === "finished" ? (
+              <button type="button" className="round-timer-btn round-timer-btn-primary px-8" onClick={() => void onStart()}>
+                {tk.start}
+              </button>
+            ) : timer.phase === "paused" ? (
+              <>
+                <button type="button" className="round-timer-btn round-timer-btn-primary px-8" onClick={() => void onResume()}>
+                  {tk.resume}
+                </button>
+                <button type="button" className="round-timer-btn round-timer-btn-secondary" onClick={onReset}>
+                  {tk.reset}
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className="round-timer-btn round-timer-btn-primary" onClick={onPause}>
+                  {tk.pause}
+                </button>
+                <button type="button" className="round-timer-btn round-timer-btn-secondary" onClick={onReset}>
+                  {tk.reset}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        <div
+          className="mb-2 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-3 select-none"
+          style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+        >
+          <div className="min-w-0 flex-1">
+            <div
+              className="font-extrabold tabular-nums leading-none"
+              style={{ fontSize: "clamp(1.75rem, 8vw, 2.25rem)", color: "var(--rt-accent, var(--primary))" }}
+            >
+              {formatMmSsFromMs(displayMs)}
+            </div>
+            <p className="mt-1 truncate text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
+              {labelState} · {roundLabel}
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap justify-end gap-2">
+            {timer.phase === "idle" || timer.phase === "finished" ? (
+              <button type="button" className="round-timer-btn round-timer-btn-primary px-4 py-2 text-sm" onClick={() => void onStart()}>
+                {tk.start}
+              </button>
+            ) : timer.phase === "paused" ? (
+              <>
+                <button type="button" className="round-timer-btn round-timer-btn-primary px-4 py-2 text-sm" onClick={() => void onResume()}>
+                  {tk.resume}
+                </button>
+                <button type="button" className="round-timer-btn round-timer-btn-secondary px-3 py-2 text-sm" onClick={onReset}>
+                  {tk.reset}
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className="round-timer-btn round-timer-btn-primary px-4 py-2 text-sm" onClick={onPause}>
+                  {tk.pause}
+                </button>
+                <button type="button" className="round-timer-btn round-timer-btn-secondary px-3 py-2 text-sm" onClick={onReset}>
+                  {tk.reset}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
