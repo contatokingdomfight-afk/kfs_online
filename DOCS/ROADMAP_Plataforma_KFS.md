@@ -1,7 +1,7 @@
 # Roadmap – Plataforma Kingdom Fight School
 
 > O que **já está feito** vs **por fazer**, alinhado ao [Plano de Negócios](./Plano_de_Negócios_Kingdom_Fight_School.md) e à [Especificação Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md).  
-> **Última revisão:** 18 abril 2026 — ranking em produção (`get_leaderboard_my_school` + `get_leaderboard_filtered` na BD); fallback e mensagem i18n se RPC em falta noutro projeto; admin alunos/papéis, Resend, planos camelCase + RLS; **sessão Supabase em mobile** (middleware só `getUser()`, `AuthSessionKeepAlive` com `resume` + refresh periódico); **Stripe** (payload `STRIPE_PRICE_INVALID`, recuperação `stripeCustomerId` test/live no checkout); docs em `DOCS/` e índice na raiz alinhados.
+> **Última revisão:** 22 abril 2026 — roadmap: **anamnese** com circunferências alargadas + **avatar corporal** ilustrativo (§2c); **peso pós-treino** no check-in (§3); anterior 18 abril 2026 — ranking em produção (`get_leaderboard_my_school` + `get_leaderboard_filtered` na BD); fallback e mensagem i18n se RPC em falta noutro projeto; admin alunos/papéis, Resend, planos camelCase + RLS; **sessão Supabase em mobile** (middleware só `getUser()`, `AuthSessionKeepAlive` com `resume` + refresh periódico); **Stripe** (payload `STRIPE_PRICE_INVALID`, recuperação `stripeCustomerId` test/live no checkout); docs em `DOCS/` e índice na raiz alinhados.
 
 **Legenda:** **Feito** = em produção. **Por fazer** = não implementado ou só operacional (dados em falta).
 
@@ -19,6 +19,8 @@
 | 6 | Mobile | **Capacitor** + lojas; testes em dispositivos reais (**PWA** web já feito — `DOCS/PWA.md`) |
 | 7 | Notificações | **Push** no browser |
 | 8 | Qualidade | **E2E** (ex. Playwright); relatórios/alertas no financeiro admin; **Lighthouse** em produção |
+| 9 | Bem-estar / check-in | **Peso após o treino** no fluxo de recolha biométrica do check-in (além do pré-aula) — permitir estimar **variação de peso/líquido por sessão** e **médias por aluno** (com contexto: modalidade, duração, hidratação já recolhida) |
+| 10 | Avaliação física / aluno | **Antropometria alargada na ficha (anamnese)** + **avatar corporal** derivado dos dados (MVP 2D/SVG ilustrativo; futuro: ajuste de atributos / cenários de meta); ver §2c |
 
 **Já entregue (alto nível):** Auth Supabase, multi-escola, turmas/recorrência, check-in + bem-estar no check-in, planos Stripe + presencial + crons Lisboa, biblioteca 360º, loja/eventos, gamificação (XP, faixas, missões, badges, **rank v1** com filtros escola/modalidade/faixa etária e **RPCs na BD de produção**), tema da semana, emails Resend (presença + lembretes) + SMTP Supabase, i18n PT/EN, dark/light, **definir Professor/Administrador** em qualquer `User.role` (`promoteStudentToRole`), UI em `/admin/alunos/[id]` e `/coach/alunos/[id]` (admin logado).
 
@@ -59,6 +61,19 @@
 
 ---
 
+## 2c. Ficha de anamnese / avaliação física — antropometria e avatar
+
+Objetivo: enriquecer a ficha com **circunferências e medidas** que permitam um **avatar corporal ilustrativo** (não clínico) e, mais tarde, **exploração visual** de atributos ligados a dados ou a metas explícitas.
+
+| Item | Estado | Notas |
+|------|--------|--------|
+| **Circunferências e medidas** na ficha | **Feito** | Campos opcionais em cm + calçado (texto) + comprimento do pé; `PhysicalAssessmentFormData` + `savePhysicalAssessment`; persistência em `StudentPhysicalAssessment.formData` (JSON; sem migração colunar). Formulário: `/coach/alunos/[id]/avaliacao-fisica` |
+| **Avatar corporal** (MVP) | **Feito** | Silhueta **2D/SVG** parametrizada (`lib/illustrative-body-silhouette.ts`, `components/IllustrativeBodyAvatar.tsx`): aparece no resumo do aluno (`PhysicalAssessmentSummary`) e na ficha do atleta (`/coach/atletas/[id]`) quando existem **≥2** medidas antropométricas na última avaliação; copy **ilustrativo** + data da ficha |
+| **Privacidade e permissões** | **Parcial** | Silhueta visível ao aluno em **Performance** (`/dashboard/performance`), 2.º painel do carrossel junto ao radar, com copy ilustrativo; coach mantém perfil aluno/atleta; sem partilha pública |
+| **Futuro: “mexer nos atributos”** | **Por fazer** | Cenários / **metas** (“e se…”) com distinção explícita de **projecção** vs. dados reais da última avaliação; evitar substituir a ficha clínica |
+
+---
+
 ## 3. Check-in e presença operacional
 
 | Item | Estado | Notas |
@@ -66,6 +81,7 @@
 | Confirmação coach, RSVP aula livre | Feito | |
 | Email presença confirmada + lembrete amanhã | Feito | `lib/notifications/email.ts`, cron `lesson-reminders` |
 | Admin lista presenças | Feito | `/admin/presenca` |
+| **Peso pós-treino** (check-in biométrico) | **Por fazer** | Campo opcional após a aula (app ou janela temporal pós-check-in); BD (`PreLessonWellness` estende ou registo pós-aula ligado a `Attendance` + `occurrenceDate`); agregados no hub bem-estar / visão coach — média de **Δ peso** por sessão (proxy perda de líquido) e tendência por aluno |
 
 ---
 
@@ -106,7 +122,7 @@ Principais entidades **em uso:** `User`, `Student`, `StudentProfile`, `Coach`, `
 
 | Bloco especificação | Estado |
 |---------------------|--------|
-| Performance + KPIs + sugestões biblioteca + biométricos check-in | **Feito** (falta ligação «ver como melhorar» → biblioteca) |
+| Performance + KPIs + sugestões biblioteca + biométricos check-in | **Feito** (falta ligação «ver como melhorar» → biblioteca); **extensões:** peso pós-treino (§3, prioridade 9); antropometria + avatar ilustrativo (§2c — coach + aluno em `/dashboard/performance`, 2.º painel do carrossel) |
 | Biblioteca 360º | **Feito** |
 | Gamificação + presença (exc. rank v2 / Battle Pass) | **Feito** |
 | Sala invertida (tema da semana) | **Feito** |

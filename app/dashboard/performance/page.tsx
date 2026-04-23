@@ -16,6 +16,9 @@ import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanc
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
+import type { PerformanceAvatarCarouselLabels } from "@/components/fighter/PerformanceRadarAvatarCarousel";
+import { hasIllustrativeAnthropometry } from "@/lib/illustrative-body-silhouette";
+import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import {
   PERFORMANCE_DETAIL_BY_DIMENSION,
   PERFORMANCE_DETAIL_ORDER,
@@ -141,6 +144,11 @@ export default async function DashboardPerformancePage() {
     overallScore: number;
     scoresForRadar: Record<string, number>;
   } | null = null;
+  let physicalAvatarCarousel: {
+    formData: unknown;
+    assessedAt: string;
+    labels: PerformanceAvatarCarouselLabels;
+  } | null = null;
   if (studentId) {
     const achievementContext = await getAchievementUnlockContext(supabase, studentId);
     profileAchievements = getAchievementsWithStatus(achievementContext);
@@ -204,6 +212,25 @@ export default async function DashboardPerformancePage() {
         .limit(1)
         .maybeSingle();
       lastPhysicalAssessment = lastPhys ? { assessedAt: lastPhys.assessedAt, nextDueAt: lastPhys.nextDueAt } : null;
+      if (
+        lastPhys?.formData &&
+        hasIllustrativeAnthropometry((lastPhys.formData as Partial<PhysicalAssessmentFormData>))
+      ) {
+        const assessedAtStr = String(lastPhys.assessedAt).slice(0, 10);
+        physicalAvatarCarousel = {
+          formData: lastPhys.formData,
+          assessedAt: assessedAtStr,
+          labels: {
+            sectionTitle: t("perfCarouselSectionTitle"),
+            slideRadarCaption: t("perfCarouselSlideRadarCaption"),
+            slideBodyCaption: t("perfCarouselSlideBodyCaption"),
+            swipeHint: t("perfCarouselSwipeHint"),
+            ariaPrev: t("dashboardCarouselPrev"),
+            ariaNext: t("dashboardCarouselNext"),
+            studentAvatarCaption: t("perfAvatarStudentCaption").replace("{date}", assessedAtStr),
+          },
+        };
+      }
       const today = new Date().toISOString().slice(0, 10);
       physicalAssessmentDue =
         !lastPhysicalAssessment || (lastPhysicalAssessment.nextDueAt != null && lastPhysicalAssessment.nextDueAt <= today);
@@ -394,6 +421,7 @@ export default async function DashboardPerformancePage() {
       profileAchievements={profileAchievements}
       evaluationResultsData={evaluationResultsData}
       checkInWellness={checkInWellness}
+      physicalAvatarCarousel={physicalAvatarCarousel}
     />
   );
 }

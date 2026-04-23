@@ -248,6 +248,67 @@ export function AvaliacaoFisicaForm({
         <input type="text" name="posturalNotes" className="input mt-2 w-full" placeholder="Observações" />
       </fieldset>
 
+      {/* 6.4 Antropometria (opcional) */}
+      <fieldset className="rounded-xl bg-bg-secondary border border-border p-4">
+        <legend className="text-base font-semibold text-text-primary">
+          6.4 Circunferências e medidas (opcional)
+        </legend>
+        <p className="text-xs text-text-secondary mt-1 mb-3">
+          Valores em centímetros (inteiro). Esquerda/direita permitem assimetrias. Não substitui avaliação
+          clínica; serve para acompanhamento desportivo e evolução (ex.: representação ilustrativa).
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <label className="text-sm">
+            Pescoço (cm):{" "}
+            <input type="number" name="circNeckCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+          <label className="text-sm">
+            Cabeça (cm):{" "}
+            <input type="number" name="circHeadCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+          <label className="text-sm">
+            Braço esq. (cm):{" "}
+            <input type="number" name="circArmLeftCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+          <label className="text-sm">
+            Braço dir. (cm):{" "}
+            <input type="number" name="circArmRightCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+          <label className="text-sm">
+            Abdómen (cm):{" "}
+            <input type="number" name="circAbdomenCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+          <label className="text-sm">
+            Quadril (cm):{" "}
+            <input type="number" name="circHipCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+          <label className="text-sm">
+            Coxa esq. (cm):{" "}
+            <input type="number" name="circThighLeftCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+          <label className="text-sm">
+            Coxa dir. (cm):{" "}
+            <input type="number" name="circThighRightCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+          <label className="text-sm">
+            Panturrilha esq. (cm):{" "}
+            <input type="number" name="circCalfLeftCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+          <label className="text-sm">
+            Panturrilha dir. (cm):{" "}
+            <input type="number" name="circCalfRightCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+          <label className="text-sm">
+            Nº calçado (BR ou nota):{" "}
+            <input type="text" name="shoeSizeBr" maxLength={16} className="input w-28" placeholder="ex.: 40" />
+          </label>
+          <label className="text-sm">
+            Comprimento do pé (cm):{" "}
+            <input type="number" name="footLengthCm" min={8} max={320} step={1} className="input w-24" />
+          </label>
+        </div>
+      </fieldset>
+
       {/* 7. Testes */}
       <fieldset className="rounded-xl bg-bg-secondary border border-border p-4">
         <legend className="text-base font-semibold text-text-primary">7. Testes físicos básicos</legend>

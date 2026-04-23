@@ -18,6 +18,10 @@ import type { DimensionScore, CriterionScoreItem } from "@/lib/evaluation-result
 import type { BeltTimeGateInfo } from "@/lib/xp-missions";
 import { CheckInWellnessSection, type CheckInWellnessCopy } from "@/components/fighter/CheckInWellnessSection";
 import type { CheckInWellnessAggregates } from "@/lib/check-in-wellness-aggregates";
+import {
+  PerformanceRadarAvatarCarousel,
+  type PerformanceAvatarCarouselLabels,
+} from "@/components/fighter/PerformanceRadarAvatarCarousel";
 
 const BeltProgressionSection = dynamic(
   () => import("@/components/belt-progression").then((m) => ({ default: m.BeltProgressionSection })),
@@ -116,6 +120,12 @@ type Props = {
   } | null;
   /** Médias do questionário pré-treino (check-in). */
   checkInWellness?: { data: CheckInWellnessAggregates; copy: CheckInWellnessCopy };
+  /** Radar + silhueta ilustrativa (2.º painel) na última ficha física com antropometria. */
+  physicalAvatarCarousel?: {
+    formData: unknown;
+    assessedAt: string;
+    labels: PerformanceAvatarCarouselLabels;
+  } | null;
 };
 
 export function PerformanceFighterDashboard({
@@ -145,6 +155,7 @@ export function PerformanceFighterDashboard({
   profileAchievements,
   evaluationResultsData,
   checkInWellness,
+  physicalAvatarCarousel = null,
 }: Props) {
   const systemMissions = buildMissionsFromScores(scores, axes, maxScore);
   const customAsMissions: Mission[] = customMissions.map((c) => ({
@@ -192,6 +203,7 @@ export function PerformanceFighterDashboard({
           scoresForRadar={evaluationResultsData.scoresForRadar}
           modalityLabels={modalityLabels}
           scoresByModality={scoresByModality}
+          physicalAvatarCarousel={physicalAvatarCarousel}
         />
       ) : (
         <>
@@ -216,12 +228,12 @@ export function PerformanceFighterDashboard({
             </div>
           </section>
 
-          <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-            <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-3">
-              Perfil de competências
-            </h2>
-            <RadarStats scores={scores} axes={axes} maxScore={maxScore} />
-          </section>
+          <PerformanceRadarAvatarCarousel
+            radar={<RadarStats scores={scores} axes={axes} maxScore={maxScore} />}
+            formData={physicalAvatarCarousel?.formData ?? null}
+            assessedAtLabel={physicalAvatarCarousel?.assessedAt ?? null}
+            labels={physicalAvatarCarousel?.labels}
+          />
         </>
       )}
 

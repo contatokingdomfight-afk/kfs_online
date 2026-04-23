@@ -8,6 +8,15 @@ import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types
 
 const MONTHS_UNTIL_NEXT = 6;
 
+/** Circunferências / comprimentos em cm: vazio → null; fora do intervalo → null (ignora silenciosamente entradas inválidas). */
+function parseCircCm(formData: FormData, name: string): number | null {
+  const raw = (formData.get(name) as string)?.trim();
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  if (Number.isNaN(n) || n < 8 || n > 320) return null;
+  return n;
+}
+
 export type SaveAssessmentResult = { error?: string; success?: boolean };
 
 export async function savePhysicalAssessment(
@@ -62,6 +71,21 @@ export async function savePhysicalAssessment(
     mobilityNotes: (formData.get("mobilityNotes") as string)?.trim() || undefined,
     posturalAssessment: formData.getAll("posturalAssessment") as string[],
     posturalNotes: (formData.get("posturalNotes") as string)?.trim() || undefined,
+    circArmLeftCm: parseCircCm(formData, "circArmLeftCm"),
+    circArmRightCm: parseCircCm(formData, "circArmRightCm"),
+    circHipCm: parseCircCm(formData, "circHipCm"),
+    circAbdomenCm: parseCircCm(formData, "circAbdomenCm"),
+    circHeadCm: parseCircCm(formData, "circHeadCm"),
+    circNeckCm: parseCircCm(formData, "circNeckCm"),
+    circThighLeftCm: parseCircCm(formData, "circThighLeftCm"),
+    circThighRightCm: parseCircCm(formData, "circThighRightCm"),
+    circCalfLeftCm: parseCircCm(formData, "circCalfLeftCm"),
+    circCalfRightCm: parseCircCm(formData, "circCalfRightCm"),
+    shoeSizeBr: (() => {
+      const s = (formData.get("shoeSizeBr") as string)?.trim();
+      return s ? s.slice(0, 16) : null;
+    })(),
+    footLengthCm: parseCircCm(formData, "footLengthCm"),
     pushups1min: parseInt(String(formData.get("pushups1min")), 10) || null,
     situps1min: parseInt(String(formData.get("situps1min")), 10) || null,
     plankSeconds: parseInt(String(formData.get("plankSeconds")), 10) || null,

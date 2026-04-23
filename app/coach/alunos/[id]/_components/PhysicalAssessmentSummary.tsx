@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
+import { hasIllustrativeAnthropometry } from "@/lib/illustrative-body-silhouette";
+import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
 type Props = { studentId: string };
@@ -10,7 +13,7 @@ export async function PhysicalAssessmentSummary({ studentId }: Props) {
 
   const { data: lastAssessment } = await supabase
     .from("StudentPhysicalAssessment")
-    .select("assessedAt, nextDueAt, clearance")
+    .select("assessedAt, nextDueAt, clearance, formData")
     .eq("studentId", studentId)
     .order("assessedAt", { ascending: false })
     .limit(1)
@@ -34,17 +37,37 @@ export async function PhysicalAssessmentSummary({ studentId }: Props) {
         Ficha de anamnese e avaliação inicial. Obrigatória a cada 6 meses.
       </p>
       {lastAssessment ? (
-        <>
-          <p style={{ margin: "0 0 4px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-primary)" }}>
-            Última: {String(lastAssessment.assessedAt).slice(0, 10)}
-            {lastAssessment.clearance &&
-              ` · ${lastAssessment.clearance === "APTO" ? "Apto" : lastAssessment.clearance === "APTO_RESTRICOES" ? "Apto c/ restrições" : "Aval. médica"}`}
-          </p>
-          <p style={{ margin: "0 0 12px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-            Próxima renovação: {String(lastAssessment.nextDueAt).slice(0, 10)}
-            {assessmentDue && " (em atraso)"}
-          </p>
-        </>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "clamp(16px, 4vw, 24px)",
+            alignItems: "flex-start",
+            marginBottom: "12px",
+          }}
+        >
+          <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+            <p style={{ margin: "0 0 4px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-primary)" }}>
+              Última: {String(lastAssessment.assessedAt).slice(0, 10)}
+              {lastAssessment.clearance &&
+                ` · ${lastAssessment.clearance === "APTO" ? "Apto" : lastAssessment.clearance === "APTO_RESTRICOES" ? "Apto c/ restrições" : "Aval. médica"}`}
+            </p>
+            <p style={{ margin: 0, fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+              Próxima renovação: {String(lastAssessment.nextDueAt).slice(0, 10)}
+              {assessmentDue && " (em atraso)"}
+            </p>
+          </div>
+          {hasIllustrativeAnthropometry(
+            (lastAssessment.formData ?? {}) as Partial<PhysicalAssessmentFormData>
+          ) && (
+            <div style={{ flexShrink: 0, maxWidth: "min(160px, 42vw)" }}>
+              <IllustrativeBodyAvatar
+                formData={lastAssessment.formData}
+                assessedAtLabel={String(lastAssessment.assessedAt).slice(0, 10)}
+              />
+            </div>
+          )}
+        </div>
       ) : (
         <p style={{ margin: "0 0 12px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
           Nenhuma avaliação física registada.

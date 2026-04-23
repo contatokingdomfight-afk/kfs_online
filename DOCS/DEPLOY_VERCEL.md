@@ -55,7 +55,8 @@ Os **URL de deploy por branch** usam o ambiente **Preview** na Vercel, **não** 
 
 - Se as variáveis estiverem **só** em **Production**, o build até pode passar, mas em runtime o `@supabase/ssr` falha com: *«Your project's URL and API key are required»* — porque `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` **não existem** no bundle do Preview.
 - **Correção:** no mesmo ecrã de Environment Variables, para cada chave crítica (no mínimo as da tabela acima que a app usa no servidor e no cliente), marcar também **Preview** (e **Development** se usares `vercel dev`). Podes duplicar os mesmos valores que em Production **ou** apontar para um projeto Supabase de staging, se existir.
-- Depois de guardar, **redeploy** o último deployment da branch (Deployments → ⋮ → Redeploy), para o novo env entrar no build.
+- **Branch:** ao editar uma variável, verifica se não está limitada a «só `main`» (ou outra lista). O deploy Preview da branch **`dev`** só herda variáveis que incluam essa branch ou **All branches**.
+- As `NEXT_PUBLIC_*` são **gravadas no JavaScript no build**. Depois de guardar variáveis, faz **Redeploy** do deployment Preview; se ainda falhar, **Redeploy** com **Clear build cache** (ou «Redeploy without using cache»), para não reutilizar um bundle antigo sem as chaves.
 
 ### 4.1 Supabase Auth — callbacks e recuperação de senha
 

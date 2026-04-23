@@ -167,6 +167,13 @@ export const messages = {
     perfWellnessAbbrStress: "Stress",
     perfWellnessAbbrFatigue: "Fadiga",
     perfEmptyBackLink: "Voltar ao início",
+    perfCarouselSectionTitle: "Perfil de competências",
+    perfCarouselSlideRadarCaption: "Radar por dimensão (escala 1–10)",
+    perfCarouselSlideBodyCaption: "Silhueta da ficha física (2.º painel)",
+    perfCarouselSwipeHint:
+      "Desliza para o lado ou usa as setas para alternar entre o radar e a silhueta ilustrativa baseada na última avaliação física.",
+    perfAvatarStudentCaption:
+      "Silhueta meramente ilustrativa com base nas medidas opcionais registadas na ficha física (avaliação de {date}). Não é avaliação clínica nem imagem real — só uma visão aproximada para acompanhares a evolução.",
     attendanceByModality: "Presenças confirmadas por modalidade",
     myDataTitle: "O teu perfil",
     personalDataTitle: "Dados pessoais",
@@ -798,6 +805,13 @@ export const messages = {
     perfWellnessAbbrStress: "Stress",
     perfWellnessAbbrFatigue: "Fatigue",
     perfEmptyBackLink: "Back to home",
+    perfCarouselSectionTitle: "Competency profile",
+    perfCarouselSlideRadarCaption: "Radar by dimension (scale 1–10)",
+    perfCarouselSlideBodyCaption: "Physical assessment silhouette (2nd panel)",
+    perfCarouselSwipeHint:
+      "Swipe sideways or use the arrows to switch between the radar and the illustrative silhouette from your latest physical assessment.",
+    perfAvatarStudentCaption:
+      "Illustrative silhouette based on optional measurements from your physical assessment ({date}). Not a clinical evaluation or a real image — only a rough visual to track progress.",
     monthGoal: "Monthly goal",
     conquests: "Achievements",
     recommendedForYou: "Recommended for you",

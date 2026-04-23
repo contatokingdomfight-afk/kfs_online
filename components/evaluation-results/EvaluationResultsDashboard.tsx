@@ -15,6 +15,10 @@ import { SkillCategory } from "./SkillCategory";
 import { CriteriaMainCategoryChips } from "./CriteriaMainCategoryChips";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import type { RadarAxis } from "@/components/fighter/RadarStatsDynamic";
+import {
+  PerformanceRadarAvatarCarousel,
+  type PerformanceAvatarCarouselLabels,
+} from "@/components/fighter/PerformanceRadarAvatarCarousel";
 
 /** Filtro principal pré-selecionado ao abrir (valor comparado com `mainCategoryOptions`, PT, case-insensitive). */
 const INITIAL_MAIN_CATEGORY = "técnico";
@@ -29,6 +33,12 @@ type Props = {
   modalityLabels?: Record<string, string>;
   /** Médias por dimensão (tecnico, tatico, …) por modalidade — alinha radar e resumo com o filtro. */
   scoresByModality?: Record<string, Record<string, number>>;
+  /** Silhueta corporal ilustrativa (2.º painel do carrossel) quando a última ficha tem antropometria. */
+  physicalAvatarCarousel?: {
+    formData: unknown;
+    assessedAt: string;
+    labels: PerformanceAvatarCarouselLabels;
+  } | null;
 };
 
 export function EvaluationResultsDashboard({
@@ -40,6 +50,7 @@ export function EvaluationResultsDashboard({
   scoresForRadar,
   modalityLabels = {},
   scoresByModality,
+  physicalAvatarCarousel = null,
 }: Props) {
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
   /** null = mostrar todas as subcategorias; valor = filtrar por prefixo principal (derivado dos dados). */
@@ -198,16 +209,12 @@ export function EvaluationResultsDashboard({
         maxScore={maxScore}
       />
 
-      <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 sm:p-5 shadow-md">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-3">
-          Perfil de competências
-        </h2>
-        <RadarStats
-          scores={activeRadarScores}
-          axes={axes}
-          maxScore={maxScore}
-        />
-      </section>
+      <PerformanceRadarAvatarCarousel
+        radar={<RadarStats scores={activeRadarScores} axes={axes} maxScore={maxScore} />}
+        formData={physicalAvatarCarousel?.formData ?? null}
+        assessedAtLabel={physicalAvatarCarousel?.assessedAt ?? null}
+        labels={physicalAvatarCarousel?.labels}
+      />
 
       <StrengthsWeaknesses strengths={strengths} weaknesses={weaknesses} />
 

@@ -36,6 +36,21 @@ export type PhysicalAssessmentFormData = {
   /** 6.3 Postural */
   posturalAssessment?: string[];
   posturalNotes?: string;
+  /** 6.4 Antropometria (opcional; cm salvo como número inteiro) — base para avatar / evolução */
+  circArmLeftCm?: number | null;
+  circArmRightCm?: number | null;
+  circHipCm?: number | null;
+  circAbdomenCm?: number | null;
+  circHeadCm?: number | null;
+  circNeckCm?: number | null;
+  circThighLeftCm?: number | null;
+  circThighRightCm?: number | null;
+  circCalfLeftCm?: number | null;
+  circCalfRightCm?: number | null;
+  /** Tamanho do calçado (ex.: BR 40); livre para evitar ambiguidade BR/EU no MVP */
+  shoeSizeBr?: string | null;
+  /** Comprimento do pé medido (opcional), cm */
+  footLengthCm?: number | null;
   /** 7. Testes físicos */
   pushups1min?: number | null;
   situps1min?: number | null;

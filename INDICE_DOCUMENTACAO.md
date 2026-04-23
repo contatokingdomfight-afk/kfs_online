@@ -1,10 +1,11 @@
 # Índice da documentação – KFS Online
 
-> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **18 abril 2026**.
+> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **22 abril 2026**.
 
 ### Actualização abril 2026 (sincronização de docs)
 
-- **Sessão mobile / idle:** `memory.md` §3.2; roadmap §1.
+- **Sessão mobile / PWA / Supabase:** `DOCS/memory.md` §3.2 e **§3.18**; `DOCS/PWA.md` (sessão longa + Livre vs Pro). Pasta `docs/memory.md` na raiz: **apontador** para `DOCS/memory.md`.
+- **Sessão mobile / idle (histórico):** `memory.md` §3.2; roadmap §1.
 - **Stripe (env vars, checkout, test/live):** `DOCS/STRIPE_KINGDOM_ONLINE.md`, `memory.md` §3.4; `VARIAVEIS_AMBIENTE_VERCEL.txt`; `DEPLOY_VERCEL.md` / `Deploy_Vercel_kingdomfight.md`.
 - **Índice canónico:** `DOCS/INDEX.md` (changelog no topo).
 

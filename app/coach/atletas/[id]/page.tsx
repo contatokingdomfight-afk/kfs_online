@@ -16,6 +16,9 @@ import { EditarAtletaForm } from "./EditarAtletaForm";
 import { ComentariosAtleta } from "./ComentariosAtleta";
 import { PerformanceRadar } from "@/components/PerformanceRadarDynamic";
 import { AvaliacaoAtleta } from "./AvaliacaoAtleta";
+import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
+import { hasIllustrativeAnthropometry } from "@/lib/illustrative-body-silhouette";
+import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 
 const LEVEL_LABEL: Record<string, string> = {
   INICIANTE: "Iniciante",
@@ -98,7 +101,7 @@ export default async function CoachAtletaPage({ params }: Props) {
 
   const { data: lastPhysicalAssessment } = await supabase
     .from("StudentPhysicalAssessment")
-    .select("assessedAt, nextDueAt, clearance")
+    .select("assessedAt, nextDueAt, clearance, formData")
     .eq("studentId", athlete.studentId)
     .order("assessedAt", { ascending: false })
     .limit(1)
@@ -188,6 +191,17 @@ export default async function CoachAtletaPage({ params }: Props) {
             Última: {String(lastPhysicalAssessment.assessedAt).slice(0, 10)} · Próxima: {String(lastPhysicalAssessment.nextDueAt).slice(0, 10)}
           </p>
         )}
+        {lastPhysicalAssessment &&
+          hasIllustrativeAnthropometry(
+            (lastPhysicalAssessment.formData ?? {}) as Partial<PhysicalAssessmentFormData>
+          ) && (
+            <div style={{ marginBottom: "clamp(12px, 3vw, 16px)", maxWidth: "min(200px, 55vw)" }}>
+              <IllustrativeBodyAvatar
+                formData={lastPhysicalAssessment.formData}
+                assessedAtLabel={String(lastPhysicalAssessment.assessedAt).slice(0, 10)}
+              />
+            </div>
+          )}
         <Link
           href={`/coach/alunos/${athlete.studentId}/avaliacao-fisica`}
           className="btn btn-secondary"
