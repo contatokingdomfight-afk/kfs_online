@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
-import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
+import {
+  hasIllustrativeAnthropometry,
+  normalizePhysicalFormDataJson,
+  type ProfileBodyMetrics,
+} from "@/lib/illustrative-body-silhouette";
 
 export type PerformanceAvatarCarouselLabels = {
   sectionTitle: string;
@@ -41,6 +45,8 @@ type Props = {
    * Omitir mantém o comportamento antigo: 2.º painel só se `formData` tiver ≥2 medidas.
    */
   bodySilhouetteMode?: BodySilhouetteMode | null;
+  /** Altura/peso do perfil para escala ilustrativa da silhueta. */
+  profileBodyMetrics?: ProfileBodyMetrics | null;
 };
 
 /**
@@ -52,6 +58,7 @@ export function PerformanceRadarAvatarCarousel({
   assessedAtLabel,
   labels,
   bodySilhouetteMode = null,
+  profileBodyMetrics = null,
 }: Props) {
   const L = mergeLabels(labels);
 
@@ -175,6 +182,7 @@ export function PerformanceRadarAvatarCarousel({
                 assessedAtLabel={assessedAtLabel}
                 captionOverride={L.studentAvatarCaption}
                 neutralReference={neutralReference}
+                bodyScaleFromProfile={profileBodyMetrics}
                 className="max-w-[min(220px,88vw)]"
               />
             </div>

@@ -3,6 +3,7 @@
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import {
   buildSilhouetteParts,
+  computeGlobalBodyScale,
   hasIllustrativeAnthropometry,
   normalizePhysicalFormDataJson,
 } from "@/lib/illustrative-body-silhouette";
@@ -19,6 +20,8 @@ type Props = {
    * Requer `captionOverride` com texto explicativo (i18n).
    */
   neutralReference?: boolean;
+  /** Altura/peso do perfil (Meus dados) para escala global meramente ilustrativa da silhueta. */
+  bodyScaleFromProfile?: { heightCm?: number | null; weightKg?: number | null } | null;
 };
 
 /**
@@ -30,6 +33,7 @@ export function IllustrativeBodyAvatar({
   className,
   captionOverride,
   neutralReference = false,
+  bodyScaleFromProfile = null,
 }: Props) {
   const parsed = normalizePhysicalFormDataJson(formData);
   const fd = neutralReference ? (parsed ?? {}) : parsed;
@@ -37,6 +41,14 @@ export function IllustrativeBodyAvatar({
   if (!neutralReference && !hasIllustrativeAnthropometry(fd)) return null;
 
   const p = buildSilhouetteParts(fd);
+  const scale = computeGlobalBodyScale(
+    bodyScaleFromProfile?.heightCm ?? undefined,
+    bodyScaleFromProfile?.weightKg ?? undefined
+  );
+  const bodyTransform =
+    scale !== 1 && Number.isFinite(scale)
+      ? `translate(50,118) scale(${scale}) translate(-50,-118)`
+      : undefined;
 
   const defaultCaption =
     "Figura meramente ilustrativa a partir das circunferências registadas (não é avaliação médica nem imagem do aluno)." +
@@ -61,6 +73,7 @@ export function IllustrativeBodyAvatar({
         aria-hidden
       >
         <g
+          transform={bodyTransform}
           fill="var(--text-secondary)"
           fillOpacity={0.42}
           stroke="var(--border)"

@@ -71,6 +71,7 @@ export default async function DashboardLayout({
         { label: t("navEvents"), href: "/dashboard/eventos" },
         { label: t("navFinance"), href: "/dashboard/financeiro" },
         { label: t("navProfile"), href: "/dashboard/perfil" },
+        { label: t("navPhysicalFicha"), href: "/dashboard/ficha-fisica" },
         ...(planAccess.hasExclusiveBenefits ? [{ label: t("navExclusiveBenefits"), href: "/dashboard/beneficios" }] : []),
         { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
       ]
@@ -80,6 +81,7 @@ export default async function DashboardLayout({
         { label: "✨ " + t("choosePlanTitle"), href: "/escolher-plano" },
         { label: t("navLibrary"), href: "/dashboard/biblioteca" },
         { label: t("navProfile"), href: "/dashboard/perfil" },
+        { label: t("navPhysicalFicha"), href: "/dashboard/ficha-fisica" },
       ];
 
   const onboardingSteps = [

@@ -145,7 +145,7 @@ export default async function DashboardPerformancePage() {
   } | null = null;
   let physicalAvatarCarousel: ReturnType<typeof buildPhysicalAvatarCarouselForStudentView> | null = null;
   if (studentId) {
-    const [achievementContext, physRes] = await Promise.all([
+    const [achievementContext, physRes, profileRes] = await Promise.all([
       getAchievementUnlockContext(supabase, studentId),
       supabase
         .from("StudentPhysicalAssessment")
@@ -153,6 +153,7 @@ export default async function DashboardPerformancePage() {
         .eq("studentId", studentId)
         .order("assessedAt", { ascending: false })
         .limit(1),
+      supabase.from("StudentProfile").select("heightCm, weightKg").eq("studentId", studentId).maybeSingle(),
     ]);
 
     profileAchievements = getAchievementsWithStatus(achievementContext);
@@ -162,8 +163,13 @@ export default async function DashboardPerformancePage() {
       ? { assessedAt: lastPhysRow.assessedAt, nextDueAt: lastPhysRow.nextDueAt }
       : null;
     const normalizedPhysicalForm = normalizePhysicalFormDataJson(lastPhysRow?.formData ?? null);
+    const profileBodyMetrics = {
+      heightCm: profileRes.data?.heightCm != null ? Number(profileRes.data.heightCm) : null,
+      weightKg: profileRes.data?.weightKg != null ? Number(profileRes.data.weightKg) : null,
+    };
     physicalAvatarCarousel = buildPhysicalAvatarCarouselForStudentView(t, lastPhysRow, {
       hasPhysicalAssessmentFromPlatform: achievementContext.hasPhysicalAssessment,
+      profileBodyMetrics,
     });
     const today = new Date().toISOString().slice(0, 10);
     physicalAssessmentDue =
@@ -412,6 +418,10 @@ export default async function DashboardPerformancePage() {
       evaluationResultsData={evaluationResultsData}
       checkInWellness={checkInWellness}
       physicalAvatarCarousel={physicalAvatarCarousel}
+      physicalFichaReadOnlyLink={{
+        href: "/dashboard/ficha-fisica",
+        label: t("perfLinkFullPhysicalFicha"),
+      }}
     />
   );
 }

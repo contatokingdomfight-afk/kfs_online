@@ -4,6 +4,9 @@
  */
 import type { PhysicalAssessmentFormData } from "./physical-assessment-types";
 
+/** Altura e peso do perfil do aluno (ex. `StudentProfile`) para escala ilustrativa da silhueta. */
+export type ProfileBodyMetrics = { heightCm: number | null; weightKg: number | null };
+
 const REF = {
   head: 56,
   neck: 37,
@@ -91,6 +94,39 @@ export type SilhouetteParts = {
 };
 
 const CX = 50;
+
+/** Altura de referência (cm) para escalar a silhueta quando só há altura/peso do perfil. */
+const REF_HEIGHT_CM = 172;
+
+/**
+ * Factor multiplicativo (≈0,86–1,14) para a silhueta com base em altura e, secundariamente, peso do perfil.
+ * Não substitui medidas antropométricas na ficha.
+ */
+export function computeGlobalBodyScale(
+  heightCm?: number | null,
+  weightKg?: number | null
+): number {
+  const h = typeof heightCm === "number" && heightCm >= 130 && heightCm <= 220 ? heightCm : null;
+  const w = typeof weightKg === "number" && weightKg >= 35 && weightKg <= 200 ? weightKg : null;
+
+  if (h != null) {
+    const fromHeight = h / REF_HEIGHT_CM;
+    let s = Math.min(1.14, Math.max(0.86, fromHeight));
+    if (w != null && h > 0) {
+      const bmi = w / ((h / 100) * (h / 100));
+      const bmiAdj = 1 + Math.min(0.06, Math.max(-0.06, (bmi - 22) * 0.012));
+      s = Math.min(1.14, Math.max(0.86, s * bmiAdj));
+    }
+    return s;
+  }
+
+  if (w != null) {
+    const fromWeight = Math.sqrt(w / 72);
+    return Math.min(1.1, Math.max(0.9, fromWeight));
+  }
+
+  return 1;
+}
 
 export function buildSilhouetteParts(fd: Partial<PhysicalAssessmentFormData>): SilhouetteParts {
   const rHead = scale(fd.circHeadCm, REF.head);

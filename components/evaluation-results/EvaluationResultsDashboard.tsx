@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import Link from "next/link";
+import type { PhysicalAvatarCarouselPayload } from "@/lib/build-performance-physical-carousel";
 import type { DimensionScore } from "@/lib/evaluation-results-data";
 import type { CriterionScoreItem } from "@/lib/evaluation-results-data";
 import {
@@ -15,10 +17,7 @@ import { SkillCategory } from "./SkillCategory";
 import { CriteriaMainCategoryChips } from "./CriteriaMainCategoryChips";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import type { RadarAxis } from "@/components/fighter/RadarStatsDynamic";
-import {
-  PerformanceRadarAvatarCarousel,
-  type PerformanceAvatarCarouselLabels,
-} from "@/components/fighter/PerformanceRadarAvatarCarousel";
+import { PerformanceRadarAvatarCarousel } from "@/components/fighter/PerformanceRadarAvatarCarousel";
 
 /** Filtro principal pré-selecionado ao abrir (valor comparado com `mainCategoryOptions`, PT, case-insensitive). */
 const INITIAL_MAIN_CATEGORY = "técnico";
@@ -34,12 +33,8 @@ type Props = {
   /** Médias por dimensão (tecnico, tatico, …) por modalidade — alinha radar e resumo com o filtro. */
   scoresByModality?: Record<string, Record<string, number>>;
   /** Silhueta no 2.º painel quando existe última ficha física (medidas ou silhueta neutra). */
-  physicalAvatarCarousel?: {
-    formData: unknown;
-    assessedAt: string;
-    silhouettePersonalized: boolean;
-    labels: PerformanceAvatarCarouselLabels;
-  } | null;
+  physicalAvatarCarousel?: PhysicalAvatarCarouselPayload | null;
+  physicalFichaReadOnlyLink?: { href: string; label: string } | null;
 };
 
 export function EvaluationResultsDashboard({
@@ -52,6 +47,7 @@ export function EvaluationResultsDashboard({
   modalityLabels = {},
   scoresByModality,
   physicalAvatarCarousel = null,
+  physicalFichaReadOnlyLink = null,
 }: Props) {
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
   /** null = mostrar todas as subcategorias; valor = filtrar por prefixo principal (derivado dos dados). */
@@ -210,19 +206,32 @@ export function EvaluationResultsDashboard({
         maxScore={maxScore}
       />
 
-      <PerformanceRadarAvatarCarousel
-        radar={<RadarStats scores={activeRadarScores} axes={axes} maxScore={maxScore} />}
-        formData={physicalAvatarCarousel?.formData ?? null}
-        assessedAtLabel={physicalAvatarCarousel?.assessedAt ?? null}
-        labels={physicalAvatarCarousel?.labels}
-        bodySilhouetteMode={
-          physicalAvatarCarousel
-            ? physicalAvatarCarousel.silhouettePersonalized
-              ? "personalized"
-              : "neutral"
-            : null
-        }
-      />
+      <div className="space-y-2">
+        <PerformanceRadarAvatarCarousel
+          radar={<RadarStats scores={activeRadarScores} axes={axes} maxScore={maxScore} />}
+          formData={physicalAvatarCarousel?.formData ?? null}
+          assessedAtLabel={physicalAvatarCarousel?.assessedAt ?? null}
+          labels={physicalAvatarCarousel?.labels}
+          bodySilhouetteMode={
+            physicalAvatarCarousel
+              ? physicalAvatarCarousel.silhouettePersonalized
+                ? "personalized"
+                : "neutral"
+              : null
+          }
+          profileBodyMetrics={physicalAvatarCarousel?.profileBodyMetrics ?? null}
+        />
+        {physicalFichaReadOnlyLink ? (
+          <p className="text-center text-xs m-0">
+            <Link
+              href={physicalFichaReadOnlyLink.href}
+              className="text-[var(--primary)] font-medium no-underline hover:underline"
+            >
+              {physicalFichaReadOnlyLink.label}
+            </Link>
+          </p>
+        ) : null}
+      </div>
 
       <StrengthsWeaknesses strengths={strengths} weaknesses={weaknesses} />
 

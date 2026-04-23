@@ -247,8 +247,18 @@ export async function PerformanceContent({ studentId }: Props) {
 
   const locale = await getLocaleFromCookies();
   const tPerf = getTranslations(locale as "pt" | "en");
+  const { data: coachStudentProfile } = await supabase
+    .from("StudentProfile")
+    .select("heightCm, weightKg")
+    .eq("studentId", studentId)
+    .maybeSingle();
   const physicalAvatarCarousel = buildPhysicalAvatarCarouselForStudentView(tPerf, lastPhysSnapshot, {
     perspective: "coach",
+    hasPhysicalAssessmentFromPlatform: lastPhysSnapshot != null,
+    profileBodyMetrics: {
+      heightCm: coachStudentProfile?.heightCm != null ? Number(coachStudentProfile.heightCm) : null,
+      weightKg: coachStudentProfile?.weightKg != null ? Number(coachStudentProfile.weightKg) : null,
+    },
   });
 
   return (

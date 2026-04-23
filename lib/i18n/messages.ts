@@ -82,6 +82,7 @@ export const messages = {
     navStore: "Loja",
     navExclusiveBenefits: "Benefícios exclusivos",
     navProfile: "Perfil",
+    navPhysicalFicha: "Ficha física",
     navConquests: "Conquistas",
     navRank: "Rank",
     rankTitle: "Ranking",
@@ -192,6 +193,17 @@ export const messages = {
       "A tua avaliação física consta na plataforma, mas os detalhes da ficha não carregaram neste momento. Silhueta genérica de referência — atualiza a página ou contacta a escola se o problema continuar.",
     perfAvatarPhysicalRegisteredAnomalyCoach:
       "A avaliação física deste aluno consta na plataforma, mas os detalhes da ficha não carregaram neste momento. Silhueta genérica — atualiza ou verifica o registo na base de dados.",
+    perfCarouselSlideBodyAnamnesis: "Anamnese na ficha — silhueta genérica (2.º painel)",
+    perfAvatarAnamnesisNoAnthroCaption:
+      "A ficha de anamnese e avaliação foi registada a {date}. A silhueta personalizada precisa de pelo menos duas circunferências na secção 6.4 da ficha; até lá vês uma figura de referência. Consulta todos os dados em «Ficha física» no menu.",
+    perfLinkFullPhysicalFicha: "Ver ficha completa (anamnese e avaliação)",
+    fichaFisicaEmptyTitle: "Ainda não tens ficha registada",
+    fichaFisicaEmptyBody:
+      "A tua escola ainda não guardou uma avaliação física na plataforma. Pede ao instrutor para preencher a ficha em «Avaliação física». Podes já registar altura e peso no teu perfil — ajudam no ajuste ilustrativo da silhueta na performance.",
+    fichaFisicaLinkPerfil: "Ir para o perfil (altura / peso)",
+    fichaFisicaBackPerformance: "Perfil do atleta",
+    fichaFisicaProfileHint:
+      "Altura e peso em «Perfil» são usados só para um ajuste de escala ilustrativa da silhueta na página de performance (opcional, não substitui medidas na ficha).",
     attendanceByModality: "Presenças confirmadas por modalidade",
     myDataTitle: "O teu perfil",
     personalDataTitle: "Dados pessoais",
@@ -761,6 +773,7 @@ export const messages = {
     navStore: "Store",
     navExclusiveBenefits: "Exclusive benefits",
     navProfile: "Profile",
+    navPhysicalFicha: "Physical assessment",
     navConquests: "Achievements",
     navRank: "Rank",
     rankTitle: "Leaderboard",
@@ -848,6 +861,17 @@ export const messages = {
       "Your physical assessment is on file, but the form details did not load this time. This is a generic reference silhouette — refresh the page or contact your school if it persists.",
     perfAvatarPhysicalRegisteredAnomalyCoach:
       "This student has a physical assessment on file, but the form details did not load. Generic silhouette — refresh or verify the record in the database.",
+    perfCarouselSlideBodyAnamnesis: "Health form on file — generic silhouette (2nd panel)",
+    perfAvatarAnamnesisNoAnthroCaption:
+      "Your health and physical assessment form was saved on {date}. A personalized silhouette needs at least two circumference values in section 6.4; until then you see a reference figure. Open the full record under «Physical assessment» in the menu.",
+    perfLinkFullPhysicalFicha: "View full form (health & physical assessment)",
+    fichaFisicaEmptyTitle: "No assessment saved yet",
+    fichaFisicaEmptyBody:
+      "Your school has not saved a physical assessment in the app yet. Ask your coach to complete it under «Physical assessment». You can already add height and weight in your profile — they help scale the illustrative silhouette on performance.",
+    fichaFisicaLinkPerfil: "Go to profile (height / weight)",
+    fichaFisicaBackPerformance: "Athlete profile",
+    fichaFisicaProfileHint:
+      "Height and weight in «Profile» are only used for optional illustrative scaling of the silhouette on the performance page (they do not replace measurements on the form).",
     monthGoal: "Monthly goal",
     conquests: "Achievements",
     recommendedForYou: "Recommended for you",

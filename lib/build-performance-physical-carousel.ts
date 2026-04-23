@@ -1,12 +1,21 @@
 import type { PerformanceAvatarCarouselLabels } from "@/components/fighter/PerformanceRadarAvatarCarousel";
-import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
+import {
+  hasIllustrativeAnthropometry,
+  normalizePhysicalFormDataJson,
+  type ProfileBodyMetrics,
+} from "@/lib/illustrative-body-silhouette";
+import { hasAnamnesisOrNonAnthroAssessmentContent } from "@/lib/physical-assessment-content-flags";
 import type { MessageKey } from "@/lib/i18n";
+
+export type { ProfileBodyMetrics };
 
 export type PhysicalAvatarCarouselPayload = {
   formData: unknown;
   assessedAt: string;
   silhouettePersonalized: boolean;
   labels: PerformanceAvatarCarouselLabels;
+  /** Altura/peso do perfil do aluno para escala fina da silhueta (opcional). */
+  profileBodyMetrics?: ProfileBodyMetrics | null;
 };
 
 export type BuildPhysicalAvatarCarouselOptions = {
@@ -17,6 +26,7 @@ export type BuildPhysicalAvatarCarouselOptions = {
    * mesmo que a query principal com `formData` não devolva linha — evita mensagem «sem ficha» incorreta.
    */
   hasPhysicalAssessmentFromPlatform?: boolean;
+  profileBodyMetrics?: ProfileBodyMetrics | null;
 };
 
 /**
@@ -35,6 +45,8 @@ export function buildPhysicalAvatarCarouselForStudentView(
   const normalizedPhysicalForm = normalizePhysicalFormDataJson(lastPhysRow?.formData ?? null);
   const hasAnthro = normalizedPhysicalForm != null && hasIllustrativeAnthropometry(normalizedPhysicalForm);
   const assessedAtStr = hasRowPayload ? String(lastPhysRow.assessedAt).slice(0, 10) : "";
+  const hasAnamnesis =
+    normalizedPhysicalForm != null && hasAnamnesisOrNonAnthroAssessmentContent(normalizedPhysicalForm);
 
   const noFichaCaption =
     perspective === "coach" ? t("perfAvatarNoFichaCaptionCoach") : t("perfAvatarNoFichaCaption");
@@ -45,28 +57,41 @@ export function buildPhysicalAvatarCarouselForStudentView(
       ? t("perfAvatarPhysicalRegisteredAnomalyCoach")
       : t("perfAvatarPhysicalRegisteredAnomaly");
 
+  let slideBodyCaption: string;
+  let studentAvatarCaption: string;
+
+  if (hasAnthro) {
+    slideBodyCaption = t("perfCarouselSlideBodyCaption");
+    studentAvatarCaption = t("perfAvatarStudentCaption").replace("{date}", assessedAtStr);
+  } else if (hasRowPayload) {
+    if (hasAnamnesis) {
+      slideBodyCaption = t("perfCarouselSlideBodyAnamnesis");
+      studentAvatarCaption = t("perfAvatarAnamnesisNoAnthroCaption").replace("{date}", assessedAtStr);
+    } else {
+      slideBodyCaption = t("perfCarouselSlideBodyCaptionNeutral");
+      studentAvatarCaption = t("perfAvatarNeutralCaption").replace("{date}", assessedAtStr);
+    }
+  } else if (datasetSaysPhysical) {
+    slideBodyCaption = t("perfCarouselSlideBodyCaptionNeutral");
+    studentAvatarCaption = anomalyCaption;
+  } else {
+    slideBodyCaption = t("perfCarouselSlideBodyCaptionNoFicha");
+    studentAvatarCaption = noFichaCaption;
+  }
+
   return {
     formData: hasAnthro ? normalizedPhysicalForm : (normalizedPhysicalForm ?? {}),
     assessedAt: assessedAtStr,
     silhouettePersonalized: hasAnthro,
+    profileBodyMetrics: options?.profileBodyMetrics ?? null,
     labels: {
       sectionTitle: t("perfCarouselSectionTitle"),
       slideRadarCaption: t("perfCarouselSlideRadarCaption"),
-      slideBodyCaption: hasAnthro
-        ? t("perfCarouselSlideBodyCaption")
-        : hasRowPayload || datasetSaysPhysical
-          ? t("perfCarouselSlideBodyCaptionNeutral")
-          : t("perfCarouselSlideBodyCaptionNoFicha"),
+      slideBodyCaption,
       swipeHint: "",
       ariaPrev: t("dashboardCarouselPrev"),
       ariaNext: t("dashboardCarouselNext"),
-      studentAvatarCaption: hasAnthro
-        ? t("perfAvatarStudentCaption").replace("{date}", assessedAtStr)
-        : hasRowPayload
-          ? t("perfAvatarNeutralCaption").replace("{date}", assessedAtStr)
-          : datasetSaysPhysical
-            ? anomalyCaption
-            : noFichaCaption,
+      studentAvatarCaption,
     },
   };
 }
