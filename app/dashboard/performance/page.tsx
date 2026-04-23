@@ -145,26 +145,30 @@ export default async function DashboardPerformancePage() {
   } | null = null;
   let physicalAvatarCarousel: ReturnType<typeof buildPhysicalAvatarCarouselForStudentView> | null = null;
   if (studentId) {
-    const { data: lastPhysRow } = await supabase
-      .from("StudentPhysicalAssessment")
-      .select("assessedAt, nextDueAt, formData")
-      .eq("studentId", studentId)
-      .order("assessedAt", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const [achievementContext, physRes] = await Promise.all([
+      getAchievementUnlockContext(supabase, studentId),
+      supabase
+        .from("StudentPhysicalAssessment")
+        .select("assessedAt, nextDueAt, formData")
+        .eq("studentId", studentId)
+        .order("assessedAt", { ascending: false })
+        .limit(1),
+    ]);
 
+    profileAchievements = getAchievementsWithStatus(achievementContext);
+
+    const lastPhysRow = physRes.data?.[0] ?? null;
     lastPhysicalAssessment = lastPhysRow
       ? { assessedAt: lastPhysRow.assessedAt, nextDueAt: lastPhysRow.nextDueAt }
       : null;
     const normalizedPhysicalForm = normalizePhysicalFormDataJson(lastPhysRow?.formData ?? null);
-    physicalAvatarCarousel = buildPhysicalAvatarCarouselForStudentView(t, lastPhysRow);
+    physicalAvatarCarousel = buildPhysicalAvatarCarouselForStudentView(t, lastPhysRow, {
+      hasPhysicalAssessmentFromPlatform: achievementContext.hasPhysicalAssessment,
+    });
     const today = new Date().toISOString().slice(0, 10);
     physicalAssessmentDue =
       !lastPhysicalAssessment ||
       (lastPhysicalAssessment.nextDueAt != null && lastPhysicalAssessment.nextDueAt <= today);
-
-    const achievementContext = await getAchievementUnlockContext(supabase, studentId);
-    profileAchievements = getAchievementsWithStatus(achievementContext);
     const { data: athlete } = await supabase.from("Athlete").select("id, xp, createdAt").eq("studentId", studentId).single();
     if (athlete) {
       const synced = await syncAthleteDisplayBelt(supabase, athlete.id);

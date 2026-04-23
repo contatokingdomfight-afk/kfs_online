@@ -188,6 +188,10 @@ export const messages = {
       "Silhueta de referência. Quando a ficha de avaliação física deste aluno for registada na plataforma, esta zona reflecte o ficheiro (e medidas opcionais para uma figura aproximada).",
     perfAvatarNoFichaCaptionCoach:
       "Este aluno ainda não tem ficha de avaliação física registada na plataforma. Completa a ficha em «Avaliação física» no perfil do aluno para associar dados à conta dele.",
+    perfAvatarPhysicalRegisteredAnomaly:
+      "A tua avaliação física consta na plataforma, mas os detalhes da ficha não carregaram neste momento. Silhueta genérica de referência — atualiza a página ou contacta a escola se o problema continuar.",
+    perfAvatarPhysicalRegisteredAnomalyCoach:
+      "A avaliação física deste aluno consta na plataforma, mas os detalhes da ficha não carregaram neste momento. Silhueta genérica — atualiza ou verifica o registo na base de dados.",
     attendanceByModality: "Presenças confirmadas por modalidade",
     myDataTitle: "O teu perfil",
     personalDataTitle: "Dados pessoais",
@@ -840,6 +844,10 @@ export const messages = {
       "Reference silhouette. Once this student's physical assessment is saved on the platform, this area will reflect their file (and optional measurements for an approximate figure).",
     perfAvatarNoFichaCaptionCoach:
       "This student does not have a physical assessment saved on the platform yet. Complete the form under «Physical assessment» on their profile to attach data to their account.",
+    perfAvatarPhysicalRegisteredAnomaly:
+      "Your physical assessment is on file, but the form details did not load this time. This is a generic reference silhouette — refresh the page or contact your school if it persists.",
+    perfAvatarPhysicalRegisteredAnomalyCoach:
+      "This student has a physical assessment on file, but the form details did not load. Generic silhouette — refresh or verify the record in the database.",
     monthGoal: "Monthly goal",
     conquests: "Achievements",
     recommendedForYou: "Recommended for you",

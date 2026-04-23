@@ -180,9 +180,11 @@ export function PerformanceRadarAvatarCarousel({
             </div>
           </div>
         </div>
-        <p className="text-xs text-[var(--text-secondary)] mt-2 mb-0" style={{ lineHeight: 1.45 }}>
-          {L.swipeHint}
-        </p>
+        {L.swipeHint.trim() ? (
+          <p className="text-xs text-[var(--text-secondary)] mt-2 mb-0" style={{ lineHeight: 1.45 }}>
+            {L.swipeHint}
+          </p>
+        ) : null}
       </div>
     </section>
   );

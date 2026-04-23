@@ -8,4 +8,4 @@ Edita sempre **`DOCS/memory.md`** (pasta `DOCS/` em maiúsculas), não este fich
 
 ## Performance (área do aluno)
 
-- Na performance (aluno e vista coach do aluno), o carrossel radar + silhueta tem **sempre** 2.º painel: silhueta **personalizada** com ≥2 circunferências na ficha; **neutra** com ficha sem medidas suficientes; **neutra + texto «sem ficha»** se ainda não existir `StudentPhysicalAssessment` na plataforma. Helper: `lib/build-performance-physical-carousel.ts`. Ao gravar ficha: `revalidatePath('/dashboard/performance')`.
+- Na performance (aluno e vista coach do aluno), o carrossel radar + silhueta tem **sempre** 2.º painel: silhueta **personalizada** com ≥2 circunferências na ficha; **neutra** com ficha sem medidas suficientes; **neutra + texto «sem ficha»** só se `getAchievementUnlockContext` também não encontrar ficha. Se a plataforma indica ficha mas a query com `formData` falhar, texto de «detalhes não carregaram». Helper: `lib/build-performance-physical-carousel.ts`. Texto de swipe sob o carrossel omitido quando vazio. Ao gravar ficha: `revalidatePath('/dashboard/performance')`.
