@@ -224,6 +224,13 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
         evaluationConfigByModality={evaluationConfigByModality}
         lastEvalScoresByModality={Object.keys(lastEvalScoresByModality).length > 0 ? lastEvalScoresByModality : undefined}
       />
+      <Link
+        href={`/coach/alunos/${studentId}/avaliacao-fisica`}
+        className="btn btn-secondary"
+        style={{ marginTop: 10, textDecoration: "none", display: "inline-block" }}
+      >
+        Ficha de anamnese e avaliação física
+      </Link>
 
       <section
         className="card"

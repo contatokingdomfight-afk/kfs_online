@@ -151,6 +151,13 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
         modalities={modalitiesForEvaluate}
         evaluationConfigByModality={evaluationConfigByModality}
       />
+      <Link
+        href={`/coach/alunos/${studentId}/avaliacao-fisica`}
+        className="btn btn-secondary"
+        style={{ marginTop: 10, textDecoration: "none", display: "inline-block" }}
+      >
+        Ficha de anamnese e avaliação física
+      </Link>
 
       {dbUser.role === "ADMIN" && (
         <>
