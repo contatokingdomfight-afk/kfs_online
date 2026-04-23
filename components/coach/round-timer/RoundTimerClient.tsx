@@ -51,9 +51,10 @@ function vibrateMs(pattern: number | number[]) {
   }
 }
 
-type Props = { locale: Locale };
+type Props = { locale: Locale; /** Na página de presenças: sem «voltar» nem título H1 duplicado. */ variant?: "page" | "embedded" };
 
-export function RoundTimerClient({ locale }: Props) {
+export function RoundTimerClient({ locale, variant = "page" }: Props) {
+  const isEmbedded = variant === "embedded";
   const t = getTranslations(locale);
   const tk = useMemo(
     () => ({
@@ -353,7 +354,7 @@ export function RoundTimerClient({ locale }: Props) {
   return (
     <div
       ref={rootRef}
-      className="round-timer-root max-w-[min(520px,100%)] mx-auto pb-10 px-3"
+      className={`round-timer-root px-3 ${isEmbedded ? "max-w-none pb-4" : "mx-auto max-w-[min(520px,100%)] pb-10"}`}
       data-ui={uk}
       style={{
         borderRadius: "var(--radius-lg)",
@@ -362,22 +363,32 @@ export function RoundTimerClient({ locale }: Props) {
         padding: "clamp(16px, 4vw, 24px)",
       }}
     >
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <Link
-          href="/coach"
-          className="text-sm font-medium no-underline hover:opacity-90"
-          style={{ color: "var(--text-secondary)" }}
-        >
-          ← {tk.back}
-        </Link>
-        <button type="button" className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0" onClick={toggleFullscreen}>
-          {fullscreen ? tk.exitFs : tk.fullscreen}
-        </button>
-      </div>
+      {isEmbedded ? (
+        <div className="mb-3 flex justify-end">
+          <button type="button" className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0" onClick={toggleFullscreen}>
+            {fullscreen ? tk.exitFs : tk.fullscreen}
+          </button>
+        </div>
+      ) : (
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <Link
+            href="/coach"
+            className="text-sm font-medium no-underline hover:opacity-90"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            ← {tk.back}
+          </Link>
+          <button type="button" className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0" onClick={toggleFullscreen}>
+            {fullscreen ? tk.exitFs : tk.fullscreen}
+          </button>
+        </div>
+      )}
 
-      <h1 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-        {tk.title}
-      </h1>
+      {!isEmbedded && (
+        <h1 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
+          {tk.title}
+        </h1>
+      )}
 
       <section className="mb-5 space-y-3">
         {!configPanelExpanded ? (

@@ -39,14 +39,7 @@ export default async function CoachLayout({
       ? [{ label: "Admin", href: "/admin" as string }]
       : []),
     { label: t("navHome"), href: "/coach" },
-    {
-      label: t("navManageClasses"),
-      href: "/coach/aula",
-      children: [
-        { label: t("navCheckInClass"), href: "/coach/aula" },
-        { label: t("navRoundTimer"), href: "/coach/round-timer" },
-      ],
-    },
+    { label: t("navManageClasses"), href: "/coach/aula" },
     { label: t("navWeekTheme"), href: "/coach/tema-semana" },
     { label: t("navAgenda"), href: "/coach/agenda" },
     { label: t("navStudents"), href: "/coach/alunos" },

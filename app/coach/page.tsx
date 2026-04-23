@@ -260,7 +260,7 @@ export default async function CoachHomePage() {
       />
 
       <Link
-        href="/coach/round-timer"
+        href="/coach/aula"
         className="card"
         style={{
           display: "block",

@@ -1130,6 +1130,10 @@
   border-radius: var(--radius-sm);
 }
 
+.coach-aula-timer-section {
+  margin-bottom: var(--space-5);
+}
+
 .coach-aula-list-title {
   margin: 0 0 var(--space-3) 0;
   font-size: var(--text-lg);

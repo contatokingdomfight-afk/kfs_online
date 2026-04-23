@@ -11,6 +11,8 @@ import {
 } from "@/lib/lesson-occurrences";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
 import { getCachedLocations } from "@/lib/cached-reference-data";
+import type { Locale } from "@/lib/i18n";
+import { RoundTimerClient } from "@/components/coach/round-timer/RoundTimerClient";
 import { AttendanceRow } from "./AttendanceRow";
 
 export default async function CoachAulaPage({
@@ -54,6 +56,7 @@ export default async function CoachAulaPage({
 
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale);
+  const timerLocale = (locale === "en" ? "en" : "pt") as Locale;
 
   type WellnessZone = "GREEN" | "YELLOW" | "RED";
 
@@ -237,9 +240,6 @@ export default async function CoachAulaPage({
         <h1 className="coach-aula-title" style={{ flex: 1, minWidth: 0 }}>
           Presenças na aula
         </h1>
-        <Link href="/coach/round-timer" className="coach-aula-back" style={{ flexShrink: 0 }}>
-          {t("navRoundTimer")}
-        </Link>
       </header>
 
       {lessons.length === 0 ? (
@@ -295,6 +295,13 @@ export default async function CoachAulaPage({
                   <span aria-hidden>📱</span> QR Code
                 </Link>
               </div>
+
+              <section className="coach-aula-timer-section" aria-labelledby="coach-aula-timer-heading">
+                <h2 id="coach-aula-timer-heading" className="coach-aula-list-title">
+                  {t("navRoundTimer")}
+                </h2>
+                <RoundTimerClient locale={timerLocale} variant="embedded" />
+              </section>
 
               <h2 id="lista-presencas-heading" className="coach-aula-list-title">
                 Lista de presenças
