@@ -16,7 +16,7 @@ import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanc
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
-import type { PerformanceAvatarCarouselLabels } from "@/components/fighter/PerformanceRadarAvatarCarousel";
+import { buildPhysicalAvatarCarouselForStudentView } from "@/lib/build-performance-physical-carousel";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 import {
   PERFORMANCE_DETAIL_BY_DIMENSION,
@@ -143,12 +143,7 @@ export default async function DashboardPerformancePage() {
     overallScore: number;
     scoresForRadar: Record<string, number>;
   } | null = null;
-  let physicalAvatarCarousel: {
-    formData: unknown;
-    assessedAt: string;
-    silhouettePersonalized: boolean;
-    labels: PerformanceAvatarCarouselLabels;
-  } | null = null;
+  let physicalAvatarCarousel: ReturnType<typeof buildPhysicalAvatarCarouselForStudentView> | null = null;
   if (studentId) {
     const { data: lastPhysRow } = await supabase
       .from("StudentPhysicalAssessment")
@@ -162,29 +157,7 @@ export default async function DashboardPerformancePage() {
       ? { assessedAt: lastPhysRow.assessedAt, nextDueAt: lastPhysRow.nextDueAt }
       : null;
     const normalizedPhysicalForm = normalizePhysicalFormDataJson(lastPhysRow?.formData ?? null);
-    if (lastPhysRow) {
-      const assessedAtStr = String(lastPhysRow.assessedAt).slice(0, 10);
-      const hasAnthro =
-        normalizedPhysicalForm != null && hasIllustrativeAnthropometry(normalizedPhysicalForm);
-      physicalAvatarCarousel = {
-        formData: hasAnthro ? normalizedPhysicalForm : (normalizedPhysicalForm ?? {}),
-        assessedAt: assessedAtStr,
-        silhouettePersonalized: hasAnthro,
-        labels: {
-          sectionTitle: t("perfCarouselSectionTitle"),
-          slideRadarCaption: t("perfCarouselSlideRadarCaption"),
-          slideBodyCaption: hasAnthro
-            ? t("perfCarouselSlideBodyCaption")
-            : t("perfCarouselSlideBodyCaptionNeutral"),
-          swipeHint: hasAnthro ? t("perfCarouselSwipeHint") : t("perfCarouselSwipeHintNeutral"),
-          ariaPrev: t("dashboardCarouselPrev"),
-          ariaNext: t("dashboardCarouselNext"),
-          studentAvatarCaption: hasAnthro
-            ? t("perfAvatarStudentCaption").replace("{date}", assessedAtStr)
-            : t("perfAvatarNeutralCaption").replace("{date}", assessedAtStr),
-        },
-      };
-    }
+    physicalAvatarCarousel = buildPhysicalAvatarCarouselForStudentView(t, lastPhysRow);
     const today = new Date().toISOString().slice(0, 10);
     physicalAssessmentDue =
       !lastPhysicalAssessment ||

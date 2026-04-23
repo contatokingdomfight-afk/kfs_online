@@ -8,4 +8,4 @@ Edita sempre **`DOCS/memory.md`** (pasta `DOCS/` em maiúsculas), não este fich
 
 ## Performance (área do aluno)
 
-- Com registo em `StudentPhysicalAssessment`, o carrossel na página de performance mostra o 2.º painel (radar + silhueta). Silhueta **personalizada** quando a ficha tem pelo menos duas circunferências antropométricas; caso contrário, **silhueta de referência** neutra com texto explicativo (i18n).
+- Na performance (aluno e vista coach do aluno), o carrossel radar + silhueta tem **sempre** 2.º painel: silhueta **personalizada** com ≥2 circunferências na ficha; **neutra** com ficha sem medidas suficientes; **neutra + texto «sem ficha»** se ainda não existir `StudentPhysicalAssessment` na plataforma. Helper: `lib/build-performance-physical-carousel.ts`. Ao gravar ficha: `revalidatePath('/dashboard/performance')`.

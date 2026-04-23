@@ -62,7 +62,7 @@ export function IllustrativeBodyAvatar({
       >
         <g
           fill="var(--text-secondary)"
-          fillOpacity={0.28}
+          fillOpacity={0.42}
           stroke="var(--border)"
           strokeWidth={0.35}
           strokeOpacity={0.9}

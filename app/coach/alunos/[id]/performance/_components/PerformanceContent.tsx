@@ -26,6 +26,9 @@ import { getApplicableMissionTemplates } from "@/lib/missions";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+import { getTranslations } from "@/lib/i18n";
+import { buildPhysicalAvatarCarouselForStudentView } from "@/lib/build-performance-physical-carousel";
 
 const GENERAL_LAST_N = 10;
 
@@ -80,6 +83,7 @@ export async function PerformanceContent({ studentId }: Props) {
   let coachName: string | null = null;
   let omitLastEvaluationNoteBody = false;
   let lastEvaluation: { coachName: string; date: string; note: string | null } | null = null;
+  let lastPhysSnapshot: { assessedAt: string; nextDueAt: string | null; formData?: unknown } | null = null;
 
   const { data: athlete } = await supabase.from("Athlete").select("id, xp, createdAt").eq("studentId", studentId).single();
 
@@ -149,6 +153,7 @@ export async function PerformanceContent({ studentId }: Props) {
     }
 
     const lastPhys = lastPhysRes.data;
+    lastPhysSnapshot = lastPhys ?? null;
     lastPhysicalAssessment = lastPhys ? { assessedAt: lastPhys.assessedAt, nextDueAt: lastPhys.nextDueAt } : null;
     const today = new Date().toISOString().slice(0, 10);
     physicalAssessmentDue =
@@ -240,6 +245,12 @@ export async function PerformanceContent({ studentId }: Props) {
 
   const scoresForDetail = enrichScoresForDetail(generalPerformanceScores!, groupedOrder);
 
+  const locale = await getLocaleFromCookies();
+  const tPerf = getTranslations(locale as "pt" | "en");
+  const physicalAvatarCarousel = buildPhysicalAvatarCarouselForStudentView(tPerf, lastPhysSnapshot, {
+    perspective: "coach",
+  });
+
   return (
     <PerformanceFighterDashboard
       backHref={`/coach/alunos/${studentId}`}
@@ -273,6 +284,7 @@ export async function PerformanceContent({ studentId }: Props) {
       omitLastEvaluationNoteBody={omitLastEvaluationNoteBody}
       lastEvaluation={lastEvaluation ?? undefined}
       evaluationsHistoryHref={`/coach/alunos/${studentId}/avaliacoes`}
+      physicalAvatarCarousel={physicalAvatarCarousel}
     />
   );
 }

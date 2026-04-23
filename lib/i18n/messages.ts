@@ -179,6 +179,15 @@ export const messages = {
       "Desliza ou usa as setas para ver a silhueta. Ainda não há circunferências suficientes na ficha para personalizar a figura — quando o coach registar pelo menos duas medidas na secção de antropometria, a silhueta reflecte melhor as tuas proporções.",
     perfAvatarNeutralCaption:
       "Ficha física registada a {date}. Silhueta genérica de referência até serem preenchidas pelo menos duas medidas antropométricas (circunferências) na ficha. Não é imagem clínica nem foto do aluno.",
+    perfCarouselSlideBodyCaptionNoFicha: "Silhueta de referência (ficha física)",
+    perfCarouselSwipeHintNoFicha:
+      "Desliza ou usa as setas para ver a silhueta de referência. Quando a tua escola registar a ficha de avaliação física na plataforma, esta zona passa a reflectir a tua ficha (e medidas opcionais para uma figura aproximada).",
+    perfAvatarNoFichaCaption:
+      "Ainda não há ficha de avaliação física associada à tua conta nesta plataforma. A silhueta é só de referência — pede ao teu instrutor para completar a ficha em «Avaliação física».",
+    perfCarouselSwipeHintNoFichaCoach:
+      "Silhueta de referência. Quando a ficha de avaliação física deste aluno for registada na plataforma, esta zona reflecte o ficheiro (e medidas opcionais para uma figura aproximada).",
+    perfAvatarNoFichaCaptionCoach:
+      "Este aluno ainda não tem ficha de avaliação física registada na plataforma. Completa a ficha em «Avaliação física» no perfil do aluno para associar dados à conta dele.",
     attendanceByModality: "Presenças confirmadas por modalidade",
     myDataTitle: "O teu perfil",
     personalDataTitle: "Dados pessoais",
@@ -822,6 +831,15 @@ export const messages = {
       "Swipe or use the arrows to view the silhouette. Your form doesn't have enough circumference measurements yet for a personalized figure—once your coach logs at least two values in the anthropometry section, the silhouette will better reflect your proportions.",
     perfAvatarNeutralCaption:
       "Physical assessment dated {date}. Generic reference silhouette until at least two anthropometric (circumference) measurements are saved on the form. Not a clinical image or a photo.",
+    perfCarouselSlideBodyCaptionNoFicha: "Reference silhouette (physical assessment)",
+    perfCarouselSwipeHintNoFicha:
+      "Swipe or use the arrows to view the reference silhouette. Once your school saves your physical assessment form here, this area will reflect your file (and optional measurements for an approximate figure).",
+    perfAvatarNoFichaCaption:
+      "No physical assessment form is linked to your account on the platform yet. This is a generic reference silhouette — ask your coach to complete the form under «Physical assessment».",
+    perfCarouselSwipeHintNoFichaCoach:
+      "Reference silhouette. Once this student's physical assessment is saved on the platform, this area will reflect their file (and optional measurements for an approximate figure).",
+    perfAvatarNoFichaCaptionCoach:
+      "This student does not have a physical assessment saved on the platform yet. Complete the form under «Physical assessment» on their profile to attach data to their account.",
     monthGoal: "Monthly goal",
     conquests: "Achievements",
     recommendedForYou: "Recommended for you",
