@@ -7,6 +7,7 @@ import { getTranslations } from "@/lib/i18n";
 import {
   applyPhaseEnd,
   catchUp,
+  formatMmSs,
   formatMmSsFromMs,
   initialState,
   nextRoundDisplay1Based,
@@ -80,6 +81,8 @@ export function RoundTimerClient({ locale }: Props) {
       nextRound: t("coachRoundTimerNextRound"),
       maximizeView: t("coachRoundTimerMaximizeView"),
       minimizeView: t("coachRoundTimerMinimizeView"),
+      expandConfig: t("coachRoundTimerExpandConfig"),
+      collapseConfig: t("coachRoundTimerCollapseConfig"),
       sec: t("coachRoundTimerSec"),
       min: t("coachRoundTimerMin"),
       ariaMin: t("coachRoundTimerAriaMinutes"),
@@ -95,6 +98,7 @@ export function RoundTimerClient({ locale }: Props) {
   const [customPresets, setCustomPresets] = useState<SavedPreset[]>([]);
   const [fullscreen, setFullscreen] = useState(false);
   const [timerViewExpanded, setTimerViewExpanded] = useState(true);
+  const [configPanelExpanded, setConfigPanelExpanded] = useState(false);
   const prevPhase = useRef(timer.phase);
   const lastCountdownSec = useRef<number | null>(null);
   const prevRemForTenSec = useRef<number | null>(null);
@@ -319,8 +323,14 @@ export function RoundTimerClient({ locale }: Props) {
 
   const allPresets = useMemo(() => [...BUILT_IN_PRESETS, ...customPresets], [customPresets]);
 
+  /** Config em ecrã: em idle/finished segue o editor; em treino segue a sessão. */
+  const configForSummary = useMemo(() => {
+    if (timer.phase === "idle" || timer.phase === "finished") return clampConfig(config);
+    return clampConfig(timer.config);
+  }, [config, timer.config, timer.phase]);
+
   const matchingPresetId = useMemo(() => {
-    const c = clampConfig(config);
+    const c = configForSummary;
     const hit = allPresets.find(
       (p) =>
         p.config.rounds === c.rounds &&
@@ -329,7 +339,15 @@ export function RoundTimerClient({ locale }: Props) {
         p.config.countdownSec === c.countdownSec
     );
     return hit?.id ?? "";
-  }, [allPresets, config]);
+  }, [allPresets, configForSummary]);
+
+  const configSummaryLine = useMemo(() => {
+    const c = configForSummary;
+    const preset = matchingPresetId ? allPresets.find((p) => p.id === matchingPresetId) : null;
+    const label = preset?.label;
+    const times = `${c.rounds}×${formatMmSs(c.roundSec)} · ${locale === "pt" ? "desc." : "rest"} ${formatMmSs(c.restSec)}`;
+    return label ? `${label} · ${times}` : times;
+  }, [allPresets, configForSummary, locale, matchingPresetId]);
 
   const setField = (key: keyof TimerConfig, value: number) => {
     setConfig((c) => clampConfig({ ...c, [key]: value }));
@@ -365,11 +383,55 @@ export function RoundTimerClient({ locale }: Props) {
       </h1>
 
       <section className="mb-5 space-y-3">
-        <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-          {tk.configTitle}
-        </p>
+        {!configPanelExpanded ? (
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-3"
+            style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                {tk.configTitle}
+              </p>
+              <p className="mt-0.5 truncate text-xs" style={{ color: "var(--text-secondary)" }}>
+                {configSummaryLine}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0"
+                onClick={() => setConfigPanelExpanded(true)}
+                aria-expanded={false}
+              >
+                {tk.expandConfig}
+              </button>
+              <button
+                type="button"
+                className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0"
+                onClick={() => setTimerViewExpanded((v) => !v)}
+                aria-expanded={timerViewExpanded}
+              >
+                {timerViewExpanded ? tk.minimizeView : tk.maximizeView}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                {tk.configTitle}
+              </p>
+              <button
+                type="button"
+                className="round-timer-btn round-timer-btn-secondary shrink-0 text-sm py-2 min-h-0"
+                onClick={() => setConfigPanelExpanded(false)}
+                aria-expanded={true}
+              >
+                {tk.collapseConfig}
+              </button>
+            </div>
 
-        <div className="space-y-3" style={{ opacity: canEdit ? 1 : 0.55, pointerEvents: canEdit ? "auto" : "none" }}>
+            <div className="space-y-3" style={{ opacity: canEdit ? 1 : 0.55, pointerEvents: canEdit ? "auto" : "none" }}>
         <label className="block text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
           {tk.presetLabel}
           <select
@@ -457,16 +519,18 @@ export function RoundTimerClient({ locale }: Props) {
         </button>
         </div>
 
-        <div className="flex justify-end border-t pt-3" style={{ borderColor: "var(--border)" }}>
-          <button
-            type="button"
-            className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0"
-            onClick={() => setTimerViewExpanded((v) => !v)}
-            aria-expanded={timerViewExpanded}
-          >
-            {timerViewExpanded ? tk.minimizeView : tk.maximizeView}
-          </button>
-        </div>
+            <div className="flex justify-end border-t pt-3" style={{ borderColor: "var(--border)" }}>
+              <button
+                type="button"
+                className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0"
+                onClick={() => setTimerViewExpanded((v) => !v)}
+                aria-expanded={timerViewExpanded}
+              >
+                {timerViewExpanded ? tk.minimizeView : tk.maximizeView}
+              </button>
+            </div>
+          </>
+        )}
       </section>
 
       {timerViewExpanded ? (
