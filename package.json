@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
-    "@react-three/fiber": "^8.17.14",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.0",
     "@vercel/analytics": "^2.0.0",
@@ -66,9 +65,5 @@
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vitest": "^3.0.5"
-  },
-  "overrides": {
-    "react": "$react",
-    "react-dom": "$react-dom"
   }
 }
