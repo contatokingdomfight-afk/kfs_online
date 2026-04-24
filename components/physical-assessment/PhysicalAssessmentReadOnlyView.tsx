@@ -189,11 +189,32 @@ export function PhysicalAssessmentReadOnlyView({
           {line(L ? "Itens" : "Items", postural ?? "—")}
           {d.posturalNotes?.trim() ? line(L ? "Notas" : "Notes", d.posturalNotes) : null}
           <p className="text-xs font-semibold text-[var(--text-secondary)] m-0 mt-2">
-            {L ? "6.4 Circunferências (cm)" : "6.4 Circumferences (cm)"}
+            {L ? "6.4 Medidas (cm)" : "6.4 Measures (cm)"}
+          </p>
+          <p className="text-[11px] text-[var(--text-secondary)] m-0 mt-1 mb-0">
+            {L ? "Comprimentos" : "Lengths"}
+          </p>
+          {line(
+            L ? "Braço ombro → ponta do dedo (esq. / dir.)" : "Arm shoulder → fingertip (L / R)",
+            [d.lenArmShoulderFingertipLeftCm, d.lenArmShoulderFingertipRightCm].filter((x) => x != null).join(" / ") || "—"
+          )}
+          <p className="text-[11px] text-[var(--text-secondary)] m-0 mt-2 mb-0">
+            {L ? "Circunferências" : "Circumferences"}
           </p>
           {line(L ? "Pescoço" : "Neck", d.circNeckCm ?? "—")}
           {line(L ? "Cabeça" : "Head", d.circHeadCm ?? "—")}
-          {line(L ? "Braço esq. / dir." : "Arm L / R", [d.circArmLeftCm, d.circArmRightCm].filter((x) => x != null).join(" / ") || "—")}
+          {line(
+            L ? "Braço relax. / meio braço (esq. / dir.)" : "Upper arm relaxed (L / R)",
+            [d.circArmLeftCm, d.circArmRightCm].filter((x) => x != null).join(" / ") || "—"
+          )}
+          {line(
+            L ? "Bíceps (esq. / dir.)" : "Biceps (L / R)",
+            [d.circBicepsLeftCm, d.circBicepsRightCm].filter((x) => x != null).join(" / ") || "—"
+          )}
+          {line(
+            L ? "Antebraço (esq. / dir.)" : "Forearm (L / R)",
+            [d.circForearmLeftCm, d.circForearmRightCm].filter((x) => x != null).join(" / ") || "—"
+          )}
           {line(L ? "Abdómen" : "Abdomen", d.circAbdomenCm ?? "—")}
           {line(L ? "Quadril" : "Hip", d.circHipCm ?? "—")}
           {line(L ? "Coxa esq. / dir." : "Thigh L / R", [d.circThighLeftCm, d.circThighRightCm].filter((x) => x != null).join(" / ") || "—")}

@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
@@ -71,8 +72,14 @@ export async function savePhysicalAssessment(
     mobilityNotes: (formData.get("mobilityNotes") as string)?.trim() || undefined,
     posturalAssessment: formData.getAll("posturalAssessment") as string[],
     posturalNotes: (formData.get("posturalNotes") as string)?.trim() || undefined,
+    lenArmShoulderFingertipLeftCm: parseCircCm(formData, "lenArmShoulderFingertipLeftCm"),
+    lenArmShoulderFingertipRightCm: parseCircCm(formData, "lenArmShoulderFingertipRightCm"),
     circArmLeftCm: parseCircCm(formData, "circArmLeftCm"),
     circArmRightCm: parseCircCm(formData, "circArmRightCm"),
+    circBicepsLeftCm: parseCircCm(formData, "circBicepsLeftCm"),
+    circBicepsRightCm: parseCircCm(formData, "circBicepsRightCm"),
+    circForearmLeftCm: parseCircCm(formData, "circForearmLeftCm"),
+    circForearmRightCm: parseCircCm(formData, "circForearmRightCm"),
     circHipCm: parseCircCm(formData, "circHipCm"),
     circAbdomenCm: parseCircCm(formData, "circAbdomenCm"),
     circHeadCm: parseCircCm(formData, "circHeadCm"),
@@ -108,6 +115,7 @@ export async function savePhysicalAssessment(
   if (!finalCoachId) return { error: "Nenhum coach encontrado para associar à avaliação." };
 
   const { error } = await supabase.from("StudentPhysicalAssessment").insert({
+    id: randomUUID(),
     studentId,
     coachId: finalCoachId,
     assessedAt: assessedAt.toISOString().slice(0, 10),

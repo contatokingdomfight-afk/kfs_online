@@ -65,12 +65,12 @@ export default async function CoachAlunoAvaliacaoFisicaPage({ params, searchPara
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="p-4 max-w-3xl mx-auto pb-12">
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <Link href={`/coach/alunos/${studentId}`} className="text-sm font-medium text-text-secondary hover:text-primary no-underline">
+    <div className="p-4 sm:p-6 max-w-3xl xl:max-w-6xl 2xl:max-w-7xl mx-auto pb-12">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-4 sm:gap-y-1 mb-6">
+        <Link href={`/coach/alunos/${studentId}`} className="text-sm font-medium text-text-secondary hover:text-primary no-underline shrink-0">
           ← Perfil do aluno
         </Link>
-        <h1 className="text-xl font-semibold text-text-primary m-0">
+        <h1 className="text-xl sm:text-2xl font-semibold text-text-primary m-0">
           Ficha de Anamnese e Avaliação Física
         </h1>
       </div>

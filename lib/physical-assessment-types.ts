@@ -37,8 +37,16 @@ export type PhysicalAssessmentFormData = {
   posturalAssessment?: string[];
   posturalNotes?: string;
   /** 6.4 Antropometria (opcional; cm salvo como número inteiro) — base para avatar / evolução */
+  /** Comprimento do braço: ombro até ponta do dedo médio (ou extremo da mão), por lado */
+  lenArmShoulderFingertipLeftCm?: number | null;
+  lenArmShoulderFingertipRightCm?: number | null;
   circArmLeftCm?: number | null;
   circArmRightCm?: number | null;
+  /** Circunferência do bíceps (ex.: braço flexionado), por lado */
+  circBicepsLeftCm?: number | null;
+  circBicepsRightCm?: number | null;
+  circForearmLeftCm?: number | null;
+  circForearmRightCm?: number | null;
   circHipCm?: number | null;
   circAbdomenCm?: number | null;
   circHeadCm?: number | null;
