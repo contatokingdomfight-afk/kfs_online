@@ -306,6 +306,37 @@ function orientModelUprightAndFaceCamera(model: THREE.Object3D): void {
     }
   }
   model.rotation.set(bestRx, bestRy, bestRz);
+  model.updateMatrixWorld(true);
+  /** Com Rx/Rz ≠ 0, Euler «Y» não é yaw em torno do Y mundial — perfil vs frente fica errado. */
+  refineWorldYawForFrontal(model);
+}
+
+const WORLD_UP = new THREE.Vector3(0, 1, 0);
+
+/** Maximiza largura em X vs profundidade em Z (câmara em +Z a olhar para a origem) com rotações em torno do Y mundial. */
+function refineWorldYawForFrontal(model: THREE.Object3D): void {
+  const measure = (): number => {
+    model.updateMatrixWorld(true);
+    const s = new THREE.Vector3();
+    new THREE.Box3().setFromObject(model).getSize(s);
+    return s.x / Math.max(0.06, s.z);
+  };
+  const base = measure();
+  let best = base;
+  let bestDelta = 0;
+  for (const delta of [HALF_PI, -HALF_PI, Math.PI] as const) {
+    model.rotateOnWorldAxis(WORLD_UP, delta);
+    const m = measure();
+    if (m > best + 1e-4) {
+      best = m;
+      bestDelta = delta;
+    }
+    model.rotateOnWorldAxis(WORLD_UP, -delta);
+  }
+  if (bestDelta !== 0) {
+    model.rotateOnWorldAxis(WORLD_UP, bestDelta);
+  }
+  model.updateMatrixWorld(true);
 }
 
 function fitGltfModel(model: THREE.Object3D, _joints: AvatarRigJoints2D): void {
