@@ -27,7 +27,7 @@ export function Avatar({ modality = "boxing", measurements, className, poseTag =
 
   return (
     <div className={className} style={ROOT_STYLE}>
-      <svg viewBox="0 0 200 400" className="mx-auto block w-full max-w-[200px]" style={{ overflow: "visible" }} aria-hidden>
+      <svg viewBox="-18 -4 236 404" className="mx-auto block w-full max-w-[200px]" style={{ overflow: "visible" }} aria-hidden>
         <defs>
           <radialGradient id={`${pid}-head`} cx="38%" cy="32%" r="72%">
             <stop offset="0%" stopColor="var(--avatar-fill-hi)" stopOpacity={1} />

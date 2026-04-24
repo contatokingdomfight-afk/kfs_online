@@ -77,18 +77,19 @@ export function getPoseLayout(
   const torsoPivot = { x: cx, y: 128 };
 
   if (poseTag === "star") {
-    const sl = { x: 66, y: 104 };
-    const sr = { x: 134, y: 104 };
-    const armLen = armLenBase * 0.82;
-    const armLdeg = -122;
-    const armRdeg = 122;
-    const { handL, handR } = handsFromArms(sl, sr, armLdeg, armRdeg, armLen, { x: -2, y: 0 }, { x: 2, y: 0 });
+    /** T-pose 2D: braços ~horizontais (±88° a partir do braço «pendurado»), ombros mais afastados, pernas abertas. */
+    const sl = { x: 54, y: 102 };
+    const sr = { x: 146, y: 102 };
+    const armLen = armLenBase * 0.94;
+    const armLdeg = 88;
+    const armRdeg = -88;
+    const { handL, handR } = handsFromArms(sl, sr, armLdeg, armRdeg, armLen, { x: 0, y: 0 }, { x: 0, y: 0 });
     return {
       modality,
       poseTag,
       torsoDeg: 0,
       torsoPivot,
-      stanceDx: 52,
+      stanceDx: 58,
       shoulderL: sl,
       shoulderR: sr,
       armLdeg,
@@ -98,9 +99,9 @@ export function getPoseLayout(
       handR,
       hipL,
       hipR,
-      legLdeg: -28,
-      legRdeg: 28,
-      legSpreadBonus: 38,
+      legLdeg: -36,
+      legRdeg: 36,
+      legSpreadBonus: 46,
     };
   }
 

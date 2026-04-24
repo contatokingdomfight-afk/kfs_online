@@ -239,9 +239,9 @@ export function mountProceduralHumanoidScene(container: HTMLElement, joints: Ava
   const group = buildHumanoidGroup(joints);
   scene.add(group);
 
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.08, 22);
-  const lookY = 1.58 * 0.44;
-  camera.position.set(0, 0.78, 1.42);
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.06, 32);
+  const lookY = 0.58;
+  camera.position.set(0, 0.62, 2.55);
   camera.lookAt(0, lookY, 0);
 
   const renderer = new THREE.WebGLRenderer({

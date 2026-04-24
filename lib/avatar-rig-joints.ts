@@ -1,5 +1,5 @@
 /**
- * Pontos 2D do rig (viewBox 200×400) alinhados a `Body.tsx` / `TechnicalRigSvg`.
+ * Pontos 2D do rig (viewBox alargado, ex. −18…218 em X) alinhados a `Body.tsx` / `TechnicalRigSvg`.
  * Partilhado entre o diagrama SVG e o humanóide 3D procedural.
  */
 import type { BodyScaleFactors } from "@/components/avatar/avatar-utils";

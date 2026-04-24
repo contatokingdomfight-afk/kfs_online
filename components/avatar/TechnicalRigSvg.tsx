@@ -54,7 +54,7 @@ export function TechnicalRigSvg({ scales, pose, className }: Props) {
 
   return (
     <div className={className} style={ROOT_STYLE}>
-      <svg viewBox="0 0 200 400" className="mx-auto block w-full max-w-[200px]" style={{ overflow: "visible" }} aria-hidden>
+      <svg viewBox="-18 -4 236 404" className="mx-auto block w-full max-w-[200px]" style={{ overflow: "visible" }} aria-hidden>
         <defs>
           <linearGradient id={gidBone} gradientUnits="userSpaceOnUse" x1="72" y1="300" x2="128" y2="36">
             <stop offset="0%" stopColor="var(--rig-bone-deep)" stopOpacity={1} />

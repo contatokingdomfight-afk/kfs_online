@@ -14,6 +14,9 @@ type Vec3 = readonly [number, number, number];
 
 const DEFAULT_GLTF = "/models/human-base.glb";
 const TARGET_HEIGHT = 1.58;
+/** Altura alvo do GLB no mundo (ligeiramente menor que o rig 2D para caber no painel). */
+const GLB_FIT_HEIGHT = 1.12;
+const HALF_PI = Math.PI / 2;
 
 function rigTo3(joints: AvatarRigJoints2D) {
   const headTop = joints.headCy - joints.headRy;
@@ -134,7 +137,33 @@ function applySkinnedBindPose(root: THREE.Object3D): void {
   });
 }
 
+/**
+ * Escolhe rotação Y ∈ {0, ±90°, 180°} para maximizar largura em X vs profundidade em Z
+ * (câmara olha ao longo de −Z: corpo «de frente» costuma ter caixa mais larga em X que em Z).
+ */
+function orientModelFacingCamera(model: THREE.Object3D): void {
+  let bestRy = 0;
+  let bestScore = -Infinity;
+  for (const ry of [0, HALF_PI, Math.PI, -HALF_PI]) {
+    model.rotation.set(0, ry, 0);
+    model.updateMatrixWorld(true);
+    const s = new THREE.Vector3();
+    new THREE.Box3().setFromObject(model).getSize(s);
+    const score = s.x / Math.max(0.06, s.z);
+    if (score > bestScore) {
+      bestScore = score;
+      bestRy = ry;
+    }
+  }
+  model.rotation.set(0, bestRy, 0);
+}
+
 function fitGltfModel(model: THREE.Object3D, _joints: AvatarRigJoints2D): void {
+  model.position.set(0, 0, 0);
+  model.rotation.set(0, 0, 0);
+  model.scale.set(1, 1, 1);
+  model.updateMatrixWorld(true);
+  orientModelFacingCamera(model);
   model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
@@ -146,23 +175,11 @@ function fitGltfModel(model: THREE.Object3D, _joints: AvatarRigJoints2D): void {
   /**
    * Escala **uniforme** apenas: escala não uniforme no pai de `SkinnedMesh` quebra a matriz de skinning
    * no Three.js (malhas «desmontadas» / cabeça separada do tronco).
-   * Largura de ombros da ficha fica para uma futura morph/retarget; aqui priorizamos corpo íntegro.
    */
-  const s0 = TARGET_HEIGHT / extent;
+  const s0 = GLB_FIT_HEIGHT / extent;
   model.scale.setScalar(s0);
   model.updateMatrixWorld(true);
   const box3 = new THREE.Box3().setFromObject(model);
-  const sz3 = box3.getSize(new THREE.Vector3());
-  /** Se a malha ficou quase um plano na profundidade, rodar 90° para a câmara (+Z) ver o corpo de frente. */
-  if (sz3.z < sz3.x * 0.4 || sz3.z < sz3.y * 0.12) {
-    model.rotation.y += Math.PI / 2;
-    model.updateMatrixWorld(true);
-    const box4 = new THREE.Box3().setFromObject(model);
-    const cx4 = (box4.min.x + box4.max.x) / 2;
-    model.position.x -= cx4;
-    model.position.y -= box4.min.y;
-    return;
-  }
   const cx = (box3.min.x + box3.max.x) / 2;
   model.position.x -= cx;
   model.position.y -= box3.min.y;
@@ -237,9 +254,9 @@ function mountGltfViewport(container: HTMLElement, modelRoot: THREE.Object3D, jo
   addGuides(world, joints, to3);
   scene.add(world);
 
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.08, 22);
-  const lookY = TARGET_HEIGHT * 0.44;
-  camera.position.set(0, 0.78, 1.42);
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.06, 32);
+  const lookY = 0.58;
+  camera.position.set(0, 0.62, 2.55);
   camera.lookAt(0, lookY, 0);
 
   const renderer = new THREE.WebGLRenderer({
