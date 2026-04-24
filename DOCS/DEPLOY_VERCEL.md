@@ -1,6 +1,6 @@
 # Deploy na Vercel (KFS Online)
 
-> **Última revisão:** 18 abril 2026.  
+> **Última revisão:** 24 abril 2026.  
 > **Repo:** `contatokingdomfight-afk/kfs_online` · **Auth:** Supabase (não Clerk).  
 > **Índice:** [`INDEX.md`](INDEX.md) · contexto técnico: [`memory.md`](memory.md)
 
@@ -15,6 +15,8 @@
 ---
 
 ## 2. Git e push
+
+Se a Vercel **não** arrancou um deploy após `git push` (ex.: rollback com `--force` e webhook falhou), um **commit trivial** na branch de produção (`main`) — mesmo só documentação — volta a disparar o build.
 
 Se o `git push` falhar com **403** ou credenciais erradas:
 
