@@ -92,16 +92,36 @@ function meshTriangleCount(mesh: THREE.Mesh): number {
   return Math.max(0, Math.floor(n / 3));
 }
 
-/** Packs Sketchfab com dois rigs: mantém só o `SkinnedMesh` com mais geometria (evita bbox absurdo e «fatia» vazia). */
-function keepLargestSkinnedMeshOnly(root: THREE.Object3D): void {
+/**
+ * Packs com **dois personagens** (dois rigs distintos): após `SkeletonUtils.clone` cada `SkinnedMesh`
+ * tem o seu próprio `Skeleton`, por isso **não** podemos esconder «o segundo por triângulos» — isso
+ * cortava cabeça/mãos quando eram malhas separadas do **mesmo** boneco.
+ * Aqui só escondemos grupos que claramente são um **segundo corpo** (outro esqueleto com muito menos geometria).
+ */
+function hideSecondaryCharacterRigsIfObvious(root: THREE.Object3D): void {
   const skinned: THREE.SkinnedMesh[] = [];
   root.traverse((o) => {
     if (o instanceof THREE.SkinnedMesh) skinned.push(o);
   });
   if (skinned.length <= 1) return;
-  skinned.sort((a, b) => meshTriangleCount(b) - meshTriangleCount(a));
-  for (let i = 1; i < skinned.length; i++) {
-    skinned[i]!.visible = false;
+
+  const bySkel = new Map<string, { meshes: THREE.SkinnedMesh[]; tris: number }>();
+  for (const m of skinned) {
+    const id = m.skeleton?.uuid ?? m.uuid;
+    const g = bySkel.get(id) ?? { meshes: [], tris: 0 };
+    g.meshes.push(m);
+    g.tris += meshTriangleCount(m);
+    bySkel.set(id, g);
+  }
+  if (bySkel.size <= 1) return;
+
+  const groups = [...bySkel.values()].sort((a, b) => b.tris - a.tris);
+  const primary = groups[0]!;
+  const secondary = groups[1]!;
+  /** Só esconder o «extra» se for claramente um segundo rig (menos de ~18 % dos triângulos do principal). */
+  if (secondary.tris >= primary.tris * 0.18) return;
+  for (const m of secondary.meshes) {
+    m.visible = false;
   }
 }
 
@@ -114,8 +134,7 @@ function applySkinnedBindPose(root: THREE.Object3D): void {
   });
 }
 
-function fitGltfModel(model: THREE.Object3D, joints: AvatarRigJoints2D): void {
-  const { kk } = rigTo3(joints);
+function fitGltfModel(model: THREE.Object3D, _joints: AvatarRigJoints2D): void {
   model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
@@ -124,22 +143,13 @@ function fitGltfModel(model: THREE.Object3D, joints: AvatarRigJoints2D): void {
   if (extent < 0.02 || extent > 24) {
     throw new Error(`humanoid gltf: caixa inválida (extent=${extent})`);
   }
+  /**
+   * Escala **uniforme** apenas: escala não uniforme no pai de `SkinnedMesh` quebra a matriz de skinning
+   * no Three.js (malhas «desmontadas» / cabeça separada do tronco).
+   * Largura de ombros da ficha fica para uma futura morph/retarget; aqui priorizamos corpo íntegro.
+   */
   const s0 = TARGET_HEIGHT / extent;
   model.scale.setScalar(s0);
-  model.updateMatrixWorld(true);
-  const box2 = new THREE.Box3().setFromObject(model);
-  const shoulderW = Math.abs(joints.shoulderLw.x - joints.shoulderRw.x) * kk * 0.92;
-  const dx = Math.max(1e-4, box2.max.x - box2.min.x);
-  const dz = Math.max(1e-4, box2.max.z - box2.min.z);
-  /** Largura à frente da câmara: o maior dos eixos horizontais (boneco virado de lado tinha w minúsculo só em X). */
-  const w = Math.max(dx, dz);
-  const sxRaw = shoulderW / w;
-  const sx = THREE.MathUtils.lerp(1, THREE.MathUtils.clamp(sxRaw, 0.5, 2.15), 0.62);
-  if (dx >= dz) {
-    model.scale.x *= sx;
-  } else {
-    model.scale.z *= sx;
-  }
   model.updateMatrixWorld(true);
   const box3 = new THREE.Box3().setFromObject(model);
   const sz3 = box3.getSize(new THREE.Vector3());
@@ -309,7 +319,7 @@ export async function mountHumanoidGltfOrProcedural(
     });
     /** `Object3D.clone(true)` não religa ossos em todos os GLBs; Mixamo / rigged dependem disto. */
     const model = cloneSkinnedHierarchy(gltf.scene);
-    keepLargestSkinnedMeshOnly(model);
+    hideSecondaryCharacterRigsIfObvious(model);
     prepareImportedModel(model);
     applySkinnedBindPose(model);
     fitGltfModel(model, joints);

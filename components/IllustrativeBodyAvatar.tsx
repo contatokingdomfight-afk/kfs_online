@@ -65,7 +65,8 @@ export function IllustrativeBodyAvatar({
   defaultBodyView = "technical",
   allowLazyHumanoid3d = false,
 }: Props) {
-  const [poseTag, setPoseTag] = useState<PoseTag>("auto");
+  /** Por defeito «estrela» (braços abertos + pernas mais abertas); «Guarda» mantém a pose típica da modalidade. */
+  const [poseTag, setPoseTag] = useState<PoseTag>("star");
   const [bodyView, setBodyView] = useState<BodyView>(defaultBodyView);
 
   useEffect(() => {

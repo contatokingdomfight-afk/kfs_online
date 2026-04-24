@@ -5,6 +5,6 @@ Origem actual (pack rigged masculino/feminino):
 - URL: https://sketchfab.com/3d-models/human-models-set-malefemale-rigged-7311fcfdc03e4234900eeced42a1e669
 - Licença: Creative Commons Attribution (CC-BY) — manter crédito ao autor e ao Sketchfab onde apropriado.
 
-Nota técnica: o runtime usa apenas o SkinnedMesh com mais triângulos quando o GLB contém vários corpos, para encaixe e escala correctos.
+Nota técnica: várias malhas SkinnedMesh do mesmo boneco (cabeça + corpo) mantêm-se todas visíveis; só se tenta ocultar um segundo personagem no mesmo ficheiro se tiver muito menos geometria que o principal.
 
 Substituição: podes trocar este ficheiro por outro GLB (ex. Mixamo→Blender→GLB) mantendo o nome human-base.glb ou usar NEXT_PUBLIC_HUMAN_BASE_GLTF_URL.
