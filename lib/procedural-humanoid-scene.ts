@@ -240,7 +240,9 @@ export function mountProceduralHumanoidScene(container: HTMLElement, joints: Ava
   scene.add(group);
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.08, 22);
-  camera.position.set(0, 0.8, 1.38);
+  const lookY = 1.58 * 0.44;
+  camera.position.set(0, 0.78, 1.42);
+  camera.lookAt(0, lookY, 0);
 
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
@@ -260,6 +262,7 @@ export function mountProceduralHumanoidScene(container: HTMLElement, joints: Ava
     const h = Math.max(1, container.clientHeight);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    camera.lookAt(0, lookY, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
     renderer.setSize(w, h, false);
     renderer.render(scene, camera);

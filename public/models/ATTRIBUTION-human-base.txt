@@ -1,8 +1,10 @@
-Ficheiro predefinido: human-base.glb
-Origem: Khronos glTF Sample Models — "RiggedSimple"
-Licença: Creative Commons Attribution 4.0 International (CC-BY 4.0)
-Dono / nota: doado por Cesium para testes glTF — ver README do modelo em:
-https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/RiggedSimple
+Ficheiro: public/models/human-base.glb
 
-Podes substituir este ficheiro por um GLB teu (ex. manequim CC0) mantendo o nome human-base.glb
-ou configurar NEXT_PUBLIC_HUMAN_BASE_GLTF_URL.
+Origem actual (pack rigged masculino/feminino):
+- Sketchfab — "Human Models Set - Male/Female (Rigged)" por lzyassoul
+- URL: https://sketchfab.com/3d-models/human-models-set-malefemale-rigged-7311fcfdc03e4234900eeced42a1e669
+- Licença: Creative Commons Attribution (CC-BY) — manter crédito ao autor e ao Sketchfab onde apropriado.
+
+Nota técnica: o runtime usa apenas o SkinnedMesh com mais triângulos quando o GLB contém vários corpos, para encaixe e escala correctos.
+
+Substituição: podes trocar este ficheiro por outro GLB (ex. Mixamo→Blender→GLB) mantendo o nome human-base.glb ou usar NEXT_PUBLIC_HUMAN_BASE_GLTF_URL.

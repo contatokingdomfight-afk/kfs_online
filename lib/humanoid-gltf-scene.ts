@@ -70,25 +70,89 @@ function disposeObject3D(root: THREE.Object3D): void {
   });
 }
 
+/** Altura «corporal» para escala: em T-pose o maior eixo pode ser a envergadura; usamos o valor médio dos três eixos como robustez. */
+function bodyHeightExtent(size: THREE.Vector3): number {
+  const ax = Math.max(1e-4, size.x);
+  const ay = Math.max(1e-4, size.y);
+  const az = Math.max(1e-4, size.z);
+  const sorted = [ax, ay, az].sort((a, b) => a - b);
+  const mid = sorted[1]!;
+  const max = sorted[2]!;
+  /** Se um eixo domina claramente (braços abertos), o «meio» costuma aproximar altura útil. */
+  if (max > mid * 1.35) return THREE.MathUtils.clamp(mid * 1.08, max * 0.52, max * 0.98);
+  return max;
+}
+
+function meshTriangleCount(mesh: THREE.Mesh): number {
+  const g = mesh.geometry;
+  if (!g) return 0;
+  const idx = g.index;
+  if (idx) return Math.max(0, Math.floor(idx.count / 3));
+  const n = g.attributes.position?.count ?? 0;
+  return Math.max(0, Math.floor(n / 3));
+}
+
+/** Packs Sketchfab com dois rigs: mantém só o `SkinnedMesh` com mais geometria (evita bbox absurdo e «fatia» vazia). */
+function keepLargestSkinnedMeshOnly(root: THREE.Object3D): void {
+  const skinned: THREE.SkinnedMesh[] = [];
+  root.traverse((o) => {
+    if (o instanceof THREE.SkinnedMesh) skinned.push(o);
+  });
+  if (skinned.length <= 1) return;
+  skinned.sort((a, b) => meshTriangleCount(b) - meshTriangleCount(a));
+  for (let i = 1; i < skinned.length; i++) {
+    skinned[i]!.visible = false;
+  }
+}
+
+function applySkinnedBindPose(root: THREE.Object3D): void {
+  root.traverse((o) => {
+    if (o instanceof THREE.SkinnedMesh && o.skeleton) {
+      o.skeleton.pose();
+      o.updateMatrixWorld(true);
+    }
+  });
+}
+
 function fitGltfModel(model: THREE.Object3D, joints: AvatarRigJoints2D): void {
   const { kk } = rigTo3(joints);
   model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
   box.getSize(size);
-  /** GLB de teste pode ter «altura» em X ou Z; usamos a maior extensão. */
-  const extent = Math.max(0.001, size.x, size.y, size.z);
+  const extent = bodyHeightExtent(size);
+  if (extent < 0.02 || extent > 24) {
+    throw new Error(`humanoid gltf: caixa inválida (extent=${extent})`);
+  }
   const s0 = TARGET_HEIGHT / extent;
   model.scale.setScalar(s0);
   model.updateMatrixWorld(true);
   const box2 = new THREE.Box3().setFromObject(model);
   const shoulderW = Math.abs(joints.shoulderLw.x - joints.shoulderRw.x) * kk * 0.92;
-  const w = Math.max(0.001, box2.max.x - box2.min.x);
-  /** Evita explosão se a caixa for quase plana ou o GLB tiver escala estranha. */
-  const sx = THREE.MathUtils.clamp(shoulderW / w, 0.35, 2.8);
-  model.scale.x *= sx;
+  const dx = Math.max(1e-4, box2.max.x - box2.min.x);
+  const dz = Math.max(1e-4, box2.max.z - box2.min.z);
+  /** Largura à frente da câmara: o maior dos eixos horizontais (boneco virado de lado tinha w minúsculo só em X). */
+  const w = Math.max(dx, dz);
+  const sxRaw = shoulderW / w;
+  const sx = THREE.MathUtils.lerp(1, THREE.MathUtils.clamp(sxRaw, 0.5, 2.15), 0.62);
+  if (dx >= dz) {
+    model.scale.x *= sx;
+  } else {
+    model.scale.z *= sx;
+  }
   model.updateMatrixWorld(true);
   const box3 = new THREE.Box3().setFromObject(model);
+  const sz3 = box3.getSize(new THREE.Vector3());
+  /** Se a malha ficou quase um plano na profundidade, rodar 90° para a câmara (+Z) ver o corpo de frente. */
+  if (sz3.z < sz3.x * 0.4 || sz3.z < sz3.y * 0.12) {
+    model.rotation.y += Math.PI / 2;
+    model.updateMatrixWorld(true);
+    const box4 = new THREE.Box3().setFromObject(model);
+    const cx4 = (box4.min.x + box4.max.x) / 2;
+    model.position.x -= cx4;
+    model.position.y -= box4.min.y;
+    return;
+  }
   const cx = (box3.min.x + box3.max.x) / 2;
   model.position.x -= cx;
   model.position.y -= box3.min.y;
@@ -116,13 +180,31 @@ function prepareImportedModel(root: THREE.Object3D): void {
   }
 
   root.traverse((o) => {
-    if (!(o instanceof THREE.Mesh) || o instanceof THREE.InstancedMesh || !o.geometry) return;
+    if (!(o instanceof THREE.Mesh) || o instanceof THREE.InstancedMesh || !o.visible || !o.geometry) return;
     const g = o.geometry;
     if (g.getAttribute("color")) g.deleteAttribute("color");
 
     const old = o.material;
     const oldList = Array.isArray(old) ? old : [old];
-    const newList = oldList.map(() => {
+    const newList = oldList.map((m) => {
+      if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshPhysicalMaterial) {
+        m.vertexColors = false;
+        return m;
+      }
+      if (m instanceof THREE.MeshBasicMaterial || m instanceof THREE.MeshLambertMaterial || m instanceof THREE.MeshPhongMaterial) {
+        const basic = m as THREE.MeshBasicMaterial;
+        const map = "map" in basic && basic.map ? basic.map : null;
+        (m as THREE.Material).dispose?.();
+        return new THREE.MeshStandardMaterial({
+          color: basic.color?.getHex() ?? 0xc4b5fd,
+          map,
+          roughness: 0.55,
+          metalness: 0.06,
+          flatShading: false,
+          side: THREE.DoubleSide,
+        });
+      }
+      (m as THREE.Material).dispose?.();
       return new THREE.MeshStandardMaterial({
         color: 0xc4b5fd,
         roughness: 0.52,
@@ -131,7 +213,6 @@ function prepareImportedModel(root: THREE.Object3D): void {
         side: THREE.DoubleSide,
       });
     });
-    for (const m of oldList) (m as THREE.Material)?.dispose?.();
     o.material = newList.length === 1 ? newList[0]! : newList;
   });
 }
@@ -147,7 +228,9 @@ function mountGltfViewport(container: HTMLElement, modelRoot: THREE.Object3D, jo
   scene.add(world);
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.08, 22);
-  camera.position.set(0, 0.8, 1.38);
+  const lookY = TARGET_HEIGHT * 0.44;
+  camera.position.set(0, 0.78, 1.42);
+  camera.lookAt(0, lookY, 0);
 
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
@@ -185,6 +268,7 @@ function mountGltfViewport(container: HTMLElement, modelRoot: THREE.Object3D, jo
     const h = Math.max(1, container.clientHeight);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    camera.lookAt(0, lookY, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
     renderer.setSize(w, h, false);
     renderer.render(scene, camera);
@@ -225,7 +309,9 @@ export async function mountHumanoidGltfOrProcedural(
     });
     /** `Object3D.clone(true)` não religa ossos em todos os GLBs; Mixamo / rigged dependem disto. */
     const model = cloneSkinnedHierarchy(gltf.scene);
+    keepLargestSkinnedMeshOnly(model);
     prepareImportedModel(model);
+    applySkinnedBindPose(model);
     fitGltfModel(model, joints);
     return mountGltfViewport(container, model, joints);
   } catch (err) {

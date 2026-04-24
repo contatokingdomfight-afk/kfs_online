@@ -3,7 +3,7 @@
 ## Comportamento
 
 - O painel tenta carregar **`/models/human-base.glb`** (pasta `public/models/` no repositório).
-- O modelo é **escalado** para altura ~1,58 unidades (igual ao manequim procedural) e **esticado em X** para aproximar a **largura de ombros** derivada da ficha (`computeAvatarRigJoints` / `StudentPhysicalAssessment.formData`).
+- O modelo é **escalado** para altura ~1,58 unidades (igual ao manequim procedural), com heurística para **T-pose** (envergadura), e ajuste suave à **largura de ombros** da ficha no **eixo horizontal dominante** (X ou Z, conforme a orientação do GLB).
 - São desenhadas **linhas guia IK** (tracejadas) por cima, alinhadas ao diagrama 2D.
 - Se o URL falhar (404, rede, GLB inválido), usa-se o **humanóide procedural** como fallback.
 
@@ -29,7 +29,9 @@ O carregador usa `GLTFLoader` + clone com `SkeletonUtils.clone` (`lib/humanoid-g
 
 ## Ficheiro incluído no repositório (predefinição)
 
-O GLB **RiggedSimple** dos [glTF Sample Models](https://github.com/KhronosGroup/glTF-Sample-Models) (Khronos / doado por Cesium) está licenciado sob **CC-BY 4.0** — ver `public/models/ATTRIBUTION-human-base.txt`. Serve como **placeholder técnico**; para produção convém trocar por um manequim humano CC0/CC-BY com aspeto adequado à marca, ou por um export Mixamo→Blender→GLB conforme acima.
+O `human-base.glb` em `public/models/` é o pack **[Human Models Set – Male/Female (Rigged)](https://sketchfab.com/3d-models/human-models-set-malefemale-rigged-7311fcfdc03e4234900eeced42a1e669)** (Sketchfab, autor **lzyassoul**, **CC-BY**) — ver `public/models/ATTRIBUTION-human-base.txt`. O código **mostra só o maior `SkinnedMesh`** se o ficheiro trouxer mais do que um corpo, e aplica escala a partir da ficha (altura alvo + ombros).
+
+Alternativa histórica: **RiggedSimple** dos [glTF Sample Models](https://github.com/KhronosGroup/glTF-Sample-Models) (CC-BY 4.0) também serviu como placeholder técnico.
 
 ## Dados da ficha
 
