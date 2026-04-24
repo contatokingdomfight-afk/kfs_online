@@ -170,7 +170,7 @@ export const messages = {
     perfEmptyBackLink: "Voltar ao início",
     perfCarouselSectionTitle: "Perfil de competências",
     perfCarouselSlideRadarCaption: "Radar por dimensão (escala 1–10)",
-    perfCarouselSlideBodyCaption: "Silhueta da ficha física (2.º painel)",
+    perfCarouselSlideBodyCaption: "",
     perfCarouselSwipeHint:
       "Desliza para o lado ou usa as setas para alternar entre o radar e a silhueta ilustrativa baseada na última avaliação física.",
     perfAvatarStudentCaption:
@@ -196,9 +196,9 @@ export const messages = {
     perfCarouselSlideBodyAnamnesis: "Anamnese na ficha — silhueta genérica (2.º painel)",
     perfAvatarAnamnesisNoAnthroCaption:
       "A ficha de anamnese e avaliação foi registada a {date}. A silhueta personalizada precisa de pelo menos duas circunferências na secção 6.4 da ficha; até lá vês uma figura de referência. Consulta todos os dados em «Ficha física» no menu.",
-    perfAvatarCaptionShortPersonalized: "Silhueta ilustrativa a partir da ficha (não clínica).",
+    perfAvatarCaptionShortPersonalized: "",
     perfAvatarCaptionShortGeneric: "Silhueta de referência (ilustrativa, não clínica).",
-    perfHumanoid3dFootnoteShort: "Modelo 3D ilustrativo (GLB ou manequim).",
+    perfHumanoid3dFootnoteShort: "",
     perfHumanoid3dFootnoteDetail:
       "Modelo 3D a partir de ficheiro base (GLB) ajustado às tuas medidas; se não existir GLB, mostra-se o manequim procedural. Ilustrativo, não clínico.",
     perfHumanoid3dOrbitHint:
@@ -847,7 +847,7 @@ export const messages = {
     perfEmptyBackLink: "Back to home",
     perfCarouselSectionTitle: "Competency profile",
     perfCarouselSlideRadarCaption: "Radar by dimension (scale 1–10)",
-    perfCarouselSlideBodyCaption: "Physical assessment silhouette (2nd panel)",
+    perfCarouselSlideBodyCaption: "",
     perfCarouselSwipeHint:
       "Swipe sideways or use the arrows to switch between the radar and the illustrative silhouette from your latest physical assessment.",
     perfAvatarStudentCaption:
@@ -873,9 +873,9 @@ export const messages = {
     perfCarouselSlideBodyAnamnesis: "Health form on file — generic silhouette (2nd panel)",
     perfAvatarAnamnesisNoAnthroCaption:
       "Your health and physical assessment form was saved on {date}. A personalized silhouette needs at least two circumference values in section 6.4; until then you see a reference figure. Open the full record under «Physical assessment» in the menu.",
-    perfAvatarCaptionShortPersonalized: "Illustrative silhouette from your form (not clinical).",
+    perfAvatarCaptionShortPersonalized: "",
     perfAvatarCaptionShortGeneric: "Reference silhouette (illustrative, not clinical).",
-    perfHumanoid3dFootnoteShort: "Illustrative 3D model (GLB or procedural mannequin).",
+    perfHumanoid3dFootnoteShort: "",
     perfHumanoid3dFootnoteDetail:
       "3D model from a base GLB file scaled to your measurements; if the GLB is missing, a procedural mannequin is shown. Illustrative, not clinical.",
     perfHumanoid3dOrbitHint:

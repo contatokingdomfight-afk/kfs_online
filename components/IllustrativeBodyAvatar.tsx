@@ -14,7 +14,7 @@ const Humanoid3DPanelLazy = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[272px] max-w-[220px] mx-auto items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-xs text-[var(--text-secondary)]">
+      <div className="flex h-[300px] max-w-[min(280px,92vw)] mx-auto items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-xs text-[var(--text-secondary)]">
         A carregar vista 3D…
       </div>
     ),
@@ -125,7 +125,7 @@ export function IllustrativeBodyAvatar({
       <Humanoid3DPanelLazy
         scales={scales}
         pose={pose}
-        className="max-w-[min(220px,88vw)]"
+        className="max-w-[min(280px,92vw)]"
         gltfBodyHint={gltfBodyHint}
         footnote={humanoidFootnote}
         orbitHint={humanoid3dOrbitHint}

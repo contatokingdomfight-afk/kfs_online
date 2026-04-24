@@ -191,7 +191,9 @@ export function PerformanceRadarAvatarCarousel({
             {radar}
           </div>
           <div className="min-w-full shrink-0 snap-start box-border px-1">
-            <p className="text-xs text-[var(--text-secondary)] mb-2 m-0">{L.slideBodyCaption}</p>
+            {L.slideBodyCaption.trim() ? (
+              <p className="text-xs text-[var(--text-secondary)] mb-2 m-0">{L.slideBodyCaption}</p>
+            ) : null}
             <div className="flex justify-center pt-1">
               <IllustrativeBodyAvatar
                 formData={formForAvatar}
@@ -213,7 +215,7 @@ export function PerformanceRadarAvatarCarousel({
                 }
                 silhouetteInfoAria={L.infoTipAriaSilhouette.trim() || null}
                 humanoid3dOrbitHint={allowLazyHumanoid3d && L.humanoid3dOrbitHint.trim() ? L.humanoid3dOrbitHint : null}
-                className="max-w-[min(220px,88vw)]"
+                className="max-w-[min(280px,92vw)]"
               />
             </div>
           </div>

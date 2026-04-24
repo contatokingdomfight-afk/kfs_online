@@ -55,32 +55,25 @@ export function Humanoid3DPanel({
     };
   }, [joints, gltfBodyHint, orbitHint]);
 
-  const defaultFootnote =
-    "Modelo 3D a partir de ficheiro base (GLB) ajustado às tuas medidas; se não existir GLB, mostra-se o manequim procedural. Ilustrativo, não clínico.";
-
   return (
     <div className={className}>
       <div
         ref={mountRef}
-        className="h-[272px] w-full max-w-[220px] mx-auto rounded-xl border border-[var(--border)] overflow-hidden bg-[color-mix(in_srgb,var(--bg-secondary)_94%,transparent)]"
+        className="h-[300px] w-full max-w-[280px] mx-auto rounded-xl border border-[var(--border)] overflow-hidden bg-[color-mix(in_srgb,var(--bg-secondary)_94%,transparent)]"
       />
       {orbitHint?.trim() ? (
         <p className="text-[9px] text-center text-[var(--text-secondary)] px-2 pt-1 m-0 leading-snug">
           {orbitHint.trim()}
         </p>
       ) : null}
-      {footnote ? (
+      {footnote?.short?.trim() ? (
         <div className="flex items-start justify-center gap-1.5 px-2 pt-1">
           <p className="text-[10px] text-center text-[var(--text-secondary)] m-0 leading-snug flex-1 min-w-0">
             {footnote.short}
           </p>
           <InlineInfoTip detail={footnote.detail} ariaLabel={footnote.infoAria} className="pt-0.5" />
         </div>
-      ) : (
-        <p className="text-[10px] text-center text-[var(--text-secondary)] px-2 pt-1 m-0 leading-snug">
-          {defaultFootnote}
-        </p>
-      )}
+      ) : null}
     </div>
   );
 }
