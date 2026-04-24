@@ -1,0 +1,8 @@
+Ficheiro predefinido: human-base.glb
+Origem: Khronos glTF Sample Models — "RiggedSimple"
+Licença: Creative Commons Attribution 4.0 International (CC-BY 4.0)
+Dono / nota: doado por Cesium para testes glTF — ver README do modelo em:
+https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/RiggedSimple
+
+Podes substituir este ficheiro por um GLB teu (ex. manequim CC0) mantendo o nome human-base.glb
+ou configurar NEXT_PUBLIC_HUMAN_BASE_GLTF_URL.

@@ -66,6 +66,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | Documento | Conteúdo |
 |-----------|----------|
 | [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Melhorias do dashboard (carrosséis; perfil / biométricos — ver `memory.md` §3.15) |
+| [`AVATAR_3D_BASE_GLTF.md`](AVATAR_3D_BASE_GLTF.md) | Vista 3D performance: GLB base `public/models/human-base.glb`, escala e fallback |
 | [`CONTAS_TESTE.md`](CONTAS_TESTE.md) | Contas de teste e `seed:test-users` |
 | [`GUIA_TESTE_VALIDACAO_PERFIS.md`](GUIA_TESTE_VALIDACAO_PERFIS.md) | Checklist por perfil |
 | [`GUIA_TESTE_LOJA.md`](GUIA_TESTE_LOJA.md) | Testes da loja |
