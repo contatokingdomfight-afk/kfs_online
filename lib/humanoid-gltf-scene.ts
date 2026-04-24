@@ -268,6 +268,50 @@ function applySkinnedBindPose(root: THREE.Object3D): void {
 const YAW_CANDIDATES = [0, HALF_PI, Math.PI, -HALF_PI] as const;
 const ROLL_PITCH_CANDIDATES = [0, HALF_PI, -HALF_PI, Math.PI] as const;
 
+const WORLD_UP = new THREE.Vector3(0, 1, 0);
+const WORLD_X = new THREE.Vector3(1, 0, 0);
+const WORLD_Z = new THREE.Vector3(0, 0, 1);
+
+/** Quão «em pé» está a caixa AABB: altura Y vs maior dimensão horizontal (X ou Z). */
+function humanoidAabbUprightMetric(model: THREE.Object3D): number {
+  model.updateMatrixWorld(true);
+  const s = new THREE.Vector3();
+  new THREE.Box3().setFromObject(model).getSize(s);
+  return s.y / (Math.max(s.x, s.z) + 0.02);
+}
+
+/**
+ * Após Euler, o eixo cabeça–pés pode continuar no plano XZ (ex.: peito à câmara, corpo «de lado» no ecrã).
+ * Gira em torno de **X e Z mundiais** até a métrica de «em pé» subir (greedy, poucos passes).
+ */
+function refineWorldAxesUntilStanding(model: THREE.Object3D): void {
+  const deltas = [HALF_PI, -HALF_PI, Math.PI] as const;
+  const axes = [WORLD_X, WORLD_Z] as const;
+  for (let pass = 0; pass < 5; pass++) {
+    const score0 = humanoidAabbUprightMetric(model);
+    if (score0 >= 1.22) break;
+
+    let best = score0;
+    let bestAxis: (typeof axes)[number] | null = null;
+    let bestDelta = 0;
+    for (const axis of axes) {
+      for (const delta of deltas) {
+        model.rotateOnWorldAxis(axis, delta);
+        const m = humanoidAabbUprightMetric(model);
+        if (m > best + 1e-4) {
+          best = m;
+          bestAxis = axis;
+          bestDelta = delta;
+        }
+        model.rotateOnWorldAxis(axis, -delta);
+      }
+    }
+    if (bestAxis == null || bestDelta === 0) break;
+    model.rotateOnWorldAxis(bestAxis, bestDelta);
+  }
+  model.updateMatrixWorld(true);
+}
+
 /**
  * GLBs (ex. Sketchfab) podem vir com o eixo longo do corpo em X ou Z em vez de Y («deitados»).
  * Escolhe Rx, Rz que maximizem altura em Y relativamente à pegada em XZ; depois Ry para «frente» à câmara.
@@ -280,10 +324,7 @@ function orientModelUprightAndFaceCamera(model: THREE.Object3D): void {
     for (const rz of ROLL_PITCH_CANDIDATES) {
       model.rotation.set(rx, 0, rz);
       model.updateMatrixWorld(true);
-      const s = new THREE.Vector3();
-      new THREE.Box3().setFromObject(model).getSize(s);
-      /** Em pé: dimensão em Y dominante face ao maior eixo horizontal. */
-      const upright = s.y / (Math.max(s.x, s.z) + 0.02);
+      const upright = humanoidAabbUprightMetric(model);
       if (upright > bestUpright) {
         bestUpright = upright;
         bestRx = rx;
@@ -307,11 +348,11 @@ function orientModelUprightAndFaceCamera(model: THREE.Object3D): void {
   }
   model.rotation.set(bestRx, bestRy, bestRz);
   model.updateMatrixWorld(true);
+  /** Corpo ao longo de X ou Z mundial com A-pose / caixa larga — Euler sozinho falha. */
+  refineWorldAxesUntilStanding(model);
   /** Com Rx/Rz ≠ 0, Euler «Y» não é yaw em torno do Y mundial — perfil vs frente fica errado. */
   refineWorldYawForFrontal(model);
 }
-
-const WORLD_UP = new THREE.Vector3(0, 1, 0);
 
 /** Maximiza largura em X vs profundidade em Z (câmara em +Z a olhar para a origem) com rotações em torno do Y mundial. */
 function refineWorldYawForFrontal(model: THREE.Object3D): void {
