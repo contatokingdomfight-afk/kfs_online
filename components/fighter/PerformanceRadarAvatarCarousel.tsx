@@ -183,6 +183,7 @@ export function PerformanceRadarAvatarCarousel({
                 captionOverride={L.studentAvatarCaption}
                 neutralReference={neutralReference}
                 bodyScaleFromProfile={profileBodyMetrics}
+                showPoseTags
                 className="max-w-[min(220px,88vw)]"
               />
             </div>

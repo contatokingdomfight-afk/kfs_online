@@ -1,8 +1,9 @@
 "use client";
 
-import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
+import { useState } from "react";
 import { Avatar } from "@/components/avatar/Avatar";
-import { mapFormDataToAvatarMeasurements, type Modality } from "@/components/avatar/avatar-utils";
+import { AvatarPoseTagSelector } from "@/components/avatar/AvatarPoseTagSelector";
+import { mapFormDataToAvatarMeasurements, type Modality, type PoseTag } from "@/components/avatar/avatar-utils";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 
 type Props = {
@@ -19,8 +20,10 @@ type Props = {
   neutralReference?: boolean;
   /** Altura/peso do perfil (Meus dados) para escala global meramente ilustrativa da silhueta. */
   bodyScaleFromProfile?: { heightCm?: number | null; weightKg?: number | null } | null;
-  /** Modalidade para pose e equipamento (luvas / wraps / sem luvas). */
+  /** Modalidade para equipamento e guarda por defeito (luvas / wraps / sem luvas). */
   modality?: Modality;
+  /** Mostra chips «Guarda» / «Estrela» por cima do SVG. */
+  showPoseTags?: boolean;
 };
 
 /**
@@ -34,7 +37,10 @@ export function IllustrativeBodyAvatar({
   neutralReference = false,
   bodyScaleFromProfile = null,
   modality = "boxing",
+  showPoseTags = false,
 }: Props) {
+  const [poseTag, setPoseTag] = useState<PoseTag>("auto");
+
   const parsed = normalizePhysicalFormDataJson(formData);
   const fd = neutralReference ? (parsed ?? {}) : parsed;
   if (!fd) return null;
@@ -60,7 +66,12 @@ export function IllustrativeBodyAvatar({
       <p className="text-text-secondary" style={{ fontSize: "clamp(11px, 2.8vw, 12px)", margin: "0 0 8px 0", lineHeight: 1.45 }}>
         {caption}
       </p>
-      <Avatar modality={modality} measurements={measurements} />
+      {showPoseTags ? (
+        <div className="mb-2">
+          <AvatarPoseTagSelector value={poseTag} onChange={setPoseTag} />
+        </div>
+      ) : null}
+      <Avatar modality={modality} measurements={measurements} poseTag={poseTag} />
     </div>
   );
 }

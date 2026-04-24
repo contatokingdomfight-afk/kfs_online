@@ -45,7 +45,7 @@ export function Equipment({ type, handL, handR }: Props) {
   const rightStrands = wrapStroke(handR, 1);
 
   return (
-    <g className="avatar-equipment" fill="none" stroke={gear} strokeWidth={1.15} strokeLinecap="round" opacity={0.92}>
+    <g className="avatar-equipment" fill="none" stroke={gear} strokeWidth={1.45} strokeLinecap="round" opacity={0.94}>
       {leftStrands.map((d, i) => (
         <path key={`wl-${i}`} d={d} />
       ))}

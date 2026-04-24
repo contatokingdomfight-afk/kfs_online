@@ -1,24 +1,32 @@
-import type { Modality } from "./avatar-utils";
+import type { Modality, PoseTag } from "./avatar-utils";
 
-/** Âncoras e rotações por modalidade (graus, px de deslocamento). */
+export type PoseContext = {
+  cx: number;
+  yHip: number;
+  halfHipW: number;
+};
+
+/** Âncoras, rotações e extras de pernas (spread em px, não confundir com stroke). */
 export type PoseLayout = {
   modality: Modality;
-  /** Rotação do grupo do torso (graus, pivô em cx,cy). */
+  poseTag: PoseTag;
   torsoDeg: number;
   torsoPivot: { x: number; y: number };
-  /** Abertura horizontal dos pés (metade do deslocamento por lado). */
   stanceDx: number;
-  /** Ombro esquerdo / direito — pivôs para braços. */
   shoulderL: { x: number; y: number };
   shoulderR: { x: number; y: number };
-  /** Rotação braço esq/dir (graus), positivo = sentido horário no SVG. */
   armLdeg: number;
   armRdeg: number;
-  /** Comprimento visual do braço (antes de escala de medida). */
   armLen: number;
-  /** Posição aproximada das mãos (para luvas / wraps) em coords do viewBox. */
   handL: { x: number; y: number };
   handR: { x: number; y: number };
+  hipL: { x: number; y: number };
+  hipR: { x: number; y: number };
+  /** Rotação da perna inteira em torno da anca (graus). */
+  legLdeg: number;
+  legRdeg: number;
+  /** Soma em px ao afastamento do joelho (fora do eixo do corpo). */
+  legSpreadBonus: number;
 };
 
 const DEG = Math.PI / 180;
@@ -38,81 +46,147 @@ function rotatePoint(
   return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
 }
 
-/**
- * Calcula pose: braços como hastes a partir do ombro com rotação.
- * viewBox 200×400; figura centrada em x≈100.
- */
-export function getPoseLayout(modality: Modality, armLenBase: number): PoseLayout {
-  const armLen = armLenBase;
-  const sl = { x: 78, y: 108 };
-  const sr = { x: 122, y: 108 };
+function handsFromArms(
+  sl: { x: number; y: number },
+  sr: { x: number; y: number },
+  armLdeg: number,
+  armRdeg: number,
+  armLen: number,
+  wristBiasL: { x: number; y: number },
+  wristBiasR: { x: number; y: number }
+): { handL: { x: number; y: number }; handR: { x: number; y: number } } {
+  const hl = rotatePoint(sl.x + wristBiasL.x, sl.y + armLen + wristBiasL.y, sl.x, sl.y, armLdeg);
+  const hr = rotatePoint(sr.x + wristBiasR.x, sr.y + armLen + wristBiasR.y, sr.x, sr.y, armRdeg);
+  return { handL: hl, handR: hr };
+}
 
-  if (modality === "boxing") {
-    const armLdeg = -58;
-    const armRdeg = 58;
-    const hl = rotatePoint(sl.x, sl.y + armLen, sl.x, sl.y, armLdeg);
-    const hr = rotatePoint(sr.x, sr.y + armLen, sr.x, sr.y, armRdeg);
+/**
+ * `poseTag === "star"` → braços e pernas bem abertos (independente da modalidade para o corpo).
+ * `auto` → guarda típica por modalidade (equipamento continua a seguir `modality`).
+ */
+export function getPoseLayout(
+  modality: Modality,
+  armLenBase: number,
+  poseTag: PoseTag,
+  ctx: PoseContext
+): PoseLayout {
+  const { cx, yHip, halfHipW } = ctx;
+  const hipL = { x: cx - halfHipW * 0.52, y: yHip };
+  const hipR = { x: cx + halfHipW * 0.52, y: yHip };
+  const torsoPivot = { x: cx, y: 128 };
+
+  if (poseTag === "star") {
+    const sl = { x: 66, y: 104 };
+    const sr = { x: 134, y: 104 };
+    const armLen = armLenBase * 0.82;
+    const armLdeg = -122;
+    const armRdeg = 122;
+    const { handL, handR } = handsFromArms(sl, sr, armLdeg, armRdeg, armLen, { x: -2, y: 0 }, { x: 2, y: 0 });
     return {
       modality,
+      poseTag,
       torsoDeg: 0,
-      torsoPivot: { x: 100, y: 130 },
-      stanceDx: 0,
+      torsoPivot,
+      stanceDx: 52,
       shoulderL: sl,
       shoulderR: sr,
       armLdeg,
       armRdeg,
       armLen,
-      handL: hl,
-      handR: hr,
+      handL,
+      handR,
+      hipL,
+      hipR,
+      legLdeg: -28,
+      legRdeg: 28,
+      legSpreadBonus: 38,
     };
   }
 
-  if (modality === "muay_thai") {
-    const armLdeg = -42;
-    const armRdeg = 42;
-    const hl = rotatePoint(sl.x, sl.y + armLen * 0.95, sl.x, sl.y, armLdeg);
-    const hr = rotatePoint(sr.x, sr.y + armLen * 0.95, sr.x, sr.y, armRdeg);
+  /* auto — por modalidade */
+  const sl = { x: 71, y: 106 };
+  const sr = { x: 129, y: 106 };
+  const armLen = armLenBase * 0.9;
+
+  if (modality === "boxing") {
+    const armLdeg = -50;
+    const armRdeg = 50;
+    const { handL, handR } = handsFromArms(sl, sr, armLdeg, armRdeg, armLen, { x: -1, y: 0 }, { x: 1, y: 0 });
     return {
       modality,
+      poseTag,
       torsoDeg: 0,
-      torsoPivot: { x: 100, y: 130 },
-      stanceDx: 14,
+      torsoPivot,
+      stanceDx: 6,
       shoulderL: sl,
       shoulderR: sr,
       armLdeg,
       armRdeg,
-      armLen: armLen * 1.02,
-      handL: hl,
-      handR: hr,
+      armLen,
+      handL,
+      handR,
+      hipL,
+      hipR,
+      legLdeg: 0,
+      legRdeg: 0,
+      legSpreadBonus: 4,
+    };
+  }
+
+  if (modality === "muay_thai") {
+    const armLdeg = -40;
+    const armRdeg = 40;
+    const { handL, handR } = handsFromArms(sl, sr, armLdeg, armRdeg, armLen * 0.98, { x: -1, y: 0 }, { x: 1, y: 0 });
+    return {
+      modality,
+      poseTag,
+      torsoDeg: 0,
+      torsoPivot,
+      stanceDx: 18,
+      shoulderL: sl,
+      shoulderR: sr,
+      armLdeg,
+      armRdeg,
+      armLen: armLen * 0.98,
+      handL,
+      handR,
+      hipL,
+      hipR,
+      legLdeg: -6,
+      legRdeg: 6,
+      legSpreadBonus: 10,
     };
   }
 
   /* bjj */
-  const armLdeg = -102;
-  const armRdeg = 102;
-  const hl = rotatePoint(sl.x - 8, sl.y + armLen * 1.05, sl.x, sl.y, armLdeg);
-  const hr = rotatePoint(sr.x + 8, sr.y + armLen * 1.05, sr.x, sr.y, armRdeg);
+  const armLdeg = -98;
+  const armRdeg = 98;
+  const { handL, handR } = handsFromArms(sl, sr, armLdeg, armRdeg, armLen * 1.05, { x: -6, y: 4 }, { x: 6, y: 4 });
   return {
     modality,
-    torsoDeg: 14,
-    torsoPivot: { x: 100, y: 125 },
-    stanceDx: 6,
+    poseTag,
+    torsoDeg: 12,
+    torsoPivot: { x: cx, y: 122 },
+    stanceDx: 10,
     shoulderL: sl,
     shoulderR: sr,
     armLdeg,
     armRdeg,
-    armLen: armLen * 1.08,
-    handL: hl,
-    handR: hr,
+    armLen: armLen * 1.05,
+    handL,
+    handR,
+    hipL,
+    hipR,
+    legLdeg: -4,
+    legRdeg: 4,
+    legSpreadBonus: 6,
   };
 }
 
-/** Marcador sem geometria extra — útil para testes / acessibilidade futura. */
-export function Pose({ type }: { type: Modality }) {
-  return <g data-avatar-pose={type} aria-hidden />;
+export function Pose({ type, poseTag }: { type: Modality; poseTag: PoseTag }) {
+  return <g data-avatar-modality={type} data-avatar-pose-tag={poseTag} aria-hidden />;
 }
 
-/** Posição das mãos no espaço do viewBox (após rotação do torso, se existir). */
 export function getWorldHandPositions(pose: PoseLayout): { handL: { x: number; y: number }; handR: { x: number; y: number } } {
   if (!pose.torsoDeg) {
     return { handL: { ...pose.handL }, handR: { ...pose.handR } };

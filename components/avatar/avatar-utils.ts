@@ -7,6 +7,14 @@ import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types
 
 export type Modality = "boxing" | "muay_thai" | "bjj";
 
+/** Pose do corpo (independente da modalidade, que define sobretudo equipamento). */
+export type PoseTag = "auto" | "star";
+
+export const POSE_TAG_LABELS: Record<PoseTag, string> = {
+  auto: "Guarda",
+  star: "Estrela",
+};
+
 export type AvatarMeasurements = {
   shoulders?: number;
   waist?: number;
@@ -22,6 +30,8 @@ export type AvatarProps = {
   modality?: Modality;
   measurements?: AvatarMeasurements;
   className?: string;
+  /** `auto` = guarda típica da modalidade; `star` = braços e pernas bem abertos. */
+  poseTag?: PoseTag;
 };
 
 /** Referências antropométricas (cm) — valores médios de referência ilustrativa. */

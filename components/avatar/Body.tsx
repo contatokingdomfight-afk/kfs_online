@@ -7,13 +7,14 @@ type Props = {
 };
 
 /**
- * Corpo em paths curvos; braços com rotação a partir do ombro (pose).
+ * Corpo em paths curvos; pernas com espessura mínima (evita “agulhas”);
+ * afastamento do joelho em px real (não usar largura de stroke como coordenada).
  */
 export function Body({ scales, pose }: Props) {
   const { shoulder, waist, hip, thigh, calf, height, bulk } = scales;
 
-  const headRx = 22 * height * 0.92;
-  const headRy = 28 * height * 0.95;
+  const headRx = Math.max(18, 22 * height * 0.92);
+  const headRy = Math.max(22, 28 * height * 0.95);
   const cx = 100;
   const headCy = 52;
 
@@ -46,64 +47,76 @@ export function Body({ scales, pose }: Props) {
     Z
   `.replace(/\s+/g, " ");
 
-  const tw = 5.5 * thigh * bulk;
-  const cw = 4.8 * calf * bulk;
-  const thighLen = 72 * height * 0.98;
-  const calfLen = 68 * height * 0.96;
+  const thighLen = 58 * height;
+  const calfLen = 52 * height;
   const dx = pose.stanceDx;
+  const bonus = pose.legSpreadBonus ?? 0;
+  /** Afastamento horizontal do joelho em px (antropometria + pose). */
+  const kneeOut = 14 * thigh * bulk + bonus;
 
   const hipY = yHip;
-  const kneeY = hipY + thighLen * 0.55;
-  const ankleY = hipY + thighLen + calfLen * 0.92;
-  const footY = ankleY + 10;
+  const kneeY = hipY + thighLen * 0.52;
+  const ankleY = hipY + thighLen + calfLen * 0.88;
+  const footY = ankleY + 12;
+
+  const { hipL, hipR } = pose;
 
   const leftLegPath = `
-    M ${cx - hW * 0.55 + dx},${hipY}
-    C ${cx - hW * 0.35 + dx * 0.5},${hipY + thighLen * 0.35} ${cx - tw + dx},${kneeY} ${cx - tw * 0.92 + dx * 0.3},${hipY + thighLen}
-    C ${cx - cw + dx * 0.2},${hipY + thighLen + calfLen * 0.4} ${cx - cw * 0.95},${ankleY} ${cx - cw * 0.85 + dx},${footY}
+    M ${hipL.x},${hipL.y}
+    C ${hipL.x - kneeOut * 0.12 + dx * 0.08},${hipY + thighLen * 0.28} ${hipL.x - kneeOut * 0.88},${kneeY - 2} ${hipL.x - kneeOut * 0.95},${hipY + thighLen}
+    C ${hipL.x - kneeOut * 1.02 - dx * 0.12},${hipY + thighLen + calfLen * 0.32} ${hipL.x - kneeOut * 1.08 - dx * 0.35},${ankleY} ${hipL.x - kneeOut * 1.05 - dx * 0.5},${footY}
   `.replace(/\s+/g, " ");
 
   const rightLegPath = `
-    M ${cx + hW * 0.55 - dx},${hipY}
-    C ${cx + hW * 0.35 - dx * 0.5},${hipY + thighLen * 0.35} ${cx + tw - dx},${kneeY} ${cx + tw * 0.92 - dx * 0.3},${hipY + thighLen}
-    C ${cx + cw - dx * 0.2},${hipY + thighLen + calfLen * 0.4} ${cx + cw * 0.95},${ankleY} ${cx + cw * 0.85 - dx},${footY}
+    M ${hipR.x},${hipR.y}
+    C ${hipR.x + kneeOut * 0.12 - dx * 0.08},${hipY + thighLen * 0.28} ${hipR.x + kneeOut * 0.88},${kneeY - 2} ${hipR.x + kneeOut * 0.95},${hipY + thighLen}
+    C ${hipR.x + kneeOut * 1.02 + dx * 0.12},${hipY + thighLen + calfLen * 0.32} ${hipR.x + kneeOut * 1.08 + dx * 0.35},${ankleY} ${hipR.x + kneeOut * 1.05 + dx * 0.5},${footY}
   `.replace(/\s+/g, " ");
 
-  const armStroke = 5.2 * scales.arm * bulk;
+  const thighStroke = Math.max(11, 12.5 * thigh * bulk);
+  const calfStroke = Math.max(9, 10.5 * calf * bulk);
+  const armStroke = Math.max(8.2, 6.8 * scales.arm * bulk);
+
   const al = pose.shoulderL;
   const ar = pose.shoulderR;
   const armLen = pose.armLen;
 
   const leftArmPath = `
     M ${al.x},${al.y}
-    Q ${al.x - 6},${al.y + armLen * 0.45} ${al.x - 2},${al.y + armLen}
+    Q ${al.x - 8},${al.y + armLen * 0.42} ${al.x - 3},${al.y + armLen}
   `.replace(/\s+/g, " ");
 
   const rightArmPath = `
     M ${ar.x},${ar.y}
-    Q ${ar.x + 6},${ar.y + armLen * 0.45} ${ar.x + 2},${ar.y + armLen}
+    Q ${ar.x + 8},${ar.y + armLen * 0.42} ${ar.x + 3},${ar.y + armLen}
   `.replace(/\s+/g, " ");
 
   const tt = pose.torsoDeg !== 0 ? `rotate(${pose.torsoDeg}, ${pose.torsoPivot.x}, ${pose.torsoPivot.y})` : undefined;
+  const legLt = pose.legLdeg !== 0 ? `rotate(${pose.legLdeg}, ${pose.hipL.x}, ${pose.hipL.y})` : undefined;
+  const legRt = pose.legRdeg !== 0 ? `rotate(${pose.legRdeg}, ${pose.hipR.x}, ${pose.hipR.y})` : undefined;
 
   return (
-    <g className="avatar-body" fill="var(--avatar-fill)" stroke="var(--avatar-stroke)" strokeWidth={0.6} strokeOpacity={0.85}>
+    <g className="avatar-body" fill="var(--avatar-fill)" stroke="var(--avatar-stroke)" strokeOpacity={0.92}>
       <g transform={tt}>
-        <ellipse cx={cx} cy={headCy} rx={headRx} ry={headRy} />
-        <path d={neckPath} strokeWidth={0.45} />
-        <path d={torsoPath} />
+        <ellipse cx={cx} cy={headCy} rx={headRx} ry={headRy} strokeWidth={0.85} />
+        <path d={neckPath} strokeWidth={0.65} />
+        <path d={torsoPath} strokeWidth={1.05} />
         <g transform={`rotate(${pose.armLdeg}, ${al.x}, ${al.y})`}>
-          <path d={leftArmPath} fill="none" strokeWidth={armStroke} strokeLinecap="round" />
+          <path d={leftArmPath} fill="none" strokeWidth={armStroke} strokeLinecap="round" strokeLinejoin="round" />
         </g>
         <g transform={`rotate(${pose.armRdeg}, ${ar.x}, ${ar.y})`}>
-          <path d={rightArmPath} fill="none" strokeWidth={armStroke} strokeLinecap="round" />
+          <path d={rightArmPath} fill="none" strokeWidth={armStroke} strokeLinecap="round" strokeLinejoin="round" />
         </g>
       </g>
-      <g>
-        <path d={leftLegPath} fill="none" strokeWidth={tw * 1.35} strokeLinecap="round" strokeLinejoin="round" />
-        <path d={rightLegPath} fill="none" strokeWidth={tw * 1.35} strokeLinecap="round" strokeLinejoin="round" />
-        <path d={leftLegPath} fill="none" strokeWidth={cw * 1.15} strokeLinecap="round" opacity={0.95} />
-        <path d={rightLegPath} fill="none" strokeWidth={cw * 1.15} strokeLinecap="round" opacity={0.95} />
+      <g transform={legLt}>
+        <path d={leftLegPath} fill="none" strokeWidth={thighStroke + 1.2} strokeLinecap="round" strokeLinejoin="round" opacity={0.35} />
+        <path d={leftLegPath} fill="none" strokeWidth={thighStroke} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={leftLegPath} fill="none" strokeWidth={calfStroke} strokeLinecap="round" strokeLinejoin="round" opacity={0.88} />
+      </g>
+      <g transform={legRt}>
+        <path d={rightLegPath} fill="none" strokeWidth={thighStroke + 1.2} strokeLinecap="round" strokeLinejoin="round" opacity={0.35} />
+        <path d={rightLegPath} fill="none" strokeWidth={thighStroke} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={rightLegPath} fill="none" strokeWidth={calfStroke} strokeLinecap="round" strokeLinejoin="round" opacity={0.88} />
       </g>
     </g>
   );
