@@ -271,6 +271,8 @@ const ROLL_PITCH_CANDIDATES = [0, HALF_PI, -HALF_PI, Math.PI] as const;
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 const WORLD_X = new THREE.Vector3(1, 0, 0);
 const WORLD_Z = new THREE.Vector3(0, 0, 1);
+/** Câmara olha da direcção +Z para a origem — o peito deve apontar ~+Z no plano horizontal. */
+const TOWARD_CAMERA_XZ = new THREE.Vector3(0, 0, 1);
 
 /** Quão «em pé» está a caixa AABB: altura Y vs maior dimensão horizontal (X ou Z). */
 function humanoidAabbUprightMetric(model: THREE.Object3D): number {
@@ -354,6 +356,8 @@ function orientModelUprightAndFaceCamera(model: THREE.Object3D): void {
   refineWorldYawForFrontal(model);
   /** Caixa AABB não sabe se a cabeça está em cima ou em baixo. */
   correctUpsideDownIfNeeded(model);
+  /** AABB frontal vs costas é simétrica — alinhar frente do rig com +Z usando ossos. */
+  maximizeFacingTowardCameraXZ(model);
 }
 
 /** Maximiza largura em X vs profundidade em Z (câmara em +Z a olhar para a origem) com rotações em torno do Y mundial. */
@@ -426,6 +430,78 @@ function correctUpsideDownIfNeeded(model: THREE.Object3D): void {
   if (!inverted) return;
 
   model.rotateOnWorldAxis(WORLD_X, Math.PI);
+  model.updateMatrixWorld(true);
+}
+
+function averageBonePositions(pts: THREE.Vector3[]): THREE.Vector3 | null {
+  if (!pts.length) return null;
+  const o = new THREE.Vector3();
+  for (const p of pts) o.add(p);
+  o.multiplyScalar(1 / pts.length);
+  return o;
+}
+
+/**
+ * Vector unitário no plano XZ: peito ≈ `right × up` (ombro direito − esquerdo, ancas→cabeça).
+ */
+function facingDirectionXZFromBones(model: THREE.Object3D): THREE.Vector3 | null {
+  model.updateMatrixWorld(true);
+  const leftS: THREE.Vector3[] = [];
+  const rightS: THREE.Vector3[] = [];
+  const pelvis: THREE.Vector3[] = [];
+  const heads: THREE.Vector3[] = [];
+  model.traverse((o) => {
+    if (!(o instanceof THREE.SkinnedMesh) || !o.skeleton) return;
+    for (const b of o.skeleton.bones) {
+      const n = b.name.toLowerCase();
+      const v = new THREE.Vector3();
+      b.getWorldPosition(v);
+      const isShoulder = n.includes("shoulder") || n.includes("clavicle") || n.includes("collar");
+      if (isShoulder) {
+        const isL =
+          n.includes("left") || n.includes("_l") || n.includes(".l") || n.includes(" l ") || /left/.test(n);
+        const isR =
+          n.includes("right") || n.includes("_r") || n.includes(".r") || n.includes(" r ") || /right/.test(n);
+        if (isL && !isR) leftS.push(v.clone());
+        else if (isR && !isL) rightS.push(v.clone());
+      }
+      if (n.includes("hips") || n.includes("pelvis")) pelvis.push(v.clone());
+      if (n.includes("head") && !n.includes("end") && !n.includes("headend")) heads.push(v.clone());
+    }
+  });
+  const L = averageBonePositions(leftS);
+  const R = averageBonePositions(rightS);
+  const P = averageBonePositions(pelvis);
+  if (!L || !R || !P) return null;
+  const right = new THREE.Vector3().subVectors(R, L);
+  if (right.lengthSq() < 1e-8) return null;
+  right.normalize();
+  const H = averageBonePositions(heads);
+  const up = H ? new THREE.Vector3().subVectors(H, P) : new THREE.Vector3(0, 1, 0);
+  if (up.lengthSq() < 1e-8) return null;
+  up.normalize();
+  const fwd = new THREE.Vector3().crossVectors(right, up);
+  if (fwd.lengthSq() < 1e-8) return null;
+  fwd.normalize();
+  fwd.y = 0;
+  if (fwd.lengthSq() < 1e-8) return null;
+  fwd.normalize();
+  return fwd;
+}
+
+/** Escolhe 0 ou π em Y mundial para o peito não ficar de costas à câmara (+Z). */
+function maximizeFacingTowardCameraXZ(model: THREE.Object3D): void {
+  const score = (): number => {
+    const d = facingDirectionXZFromBones(model);
+    return d ? d.dot(TOWARD_CAMERA_XZ) : 0;
+  };
+  const s0 = score();
+  model.rotateOnWorldAxis(WORLD_UP, Math.PI);
+  model.updateMatrixWorld(true);
+  const s1 = score();
+  if (s1 <= s0 + 0.04) {
+    model.rotateOnWorldAxis(WORLD_UP, Math.PI);
+  }
   model.updateMatrixWorld(true);
 }
 
