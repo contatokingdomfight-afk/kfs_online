@@ -422,6 +422,7 @@ export default async function DashboardPerformancePage() {
         href: "/dashboard/ficha-fisica",
         label: t("perfLinkFullPhysicalFicha"),
       }}
+      allowLazyHumanoid3d
     />
   );
 }

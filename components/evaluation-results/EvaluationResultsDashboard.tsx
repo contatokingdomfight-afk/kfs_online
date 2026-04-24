@@ -35,6 +35,7 @@ type Props = {
   /** Silhueta no 2.º painel quando existe última ficha física (medidas ou silhueta neutra). */
   physicalAvatarCarousel?: PhysicalAvatarCarouselPayload | null;
   physicalFichaReadOnlyLink?: { href: string; label: string } | null;
+  allowLazyHumanoid3d?: boolean;
 };
 
 export function EvaluationResultsDashboard({
@@ -48,6 +49,7 @@ export function EvaluationResultsDashboard({
   scoresByModality,
   physicalAvatarCarousel = null,
   physicalFichaReadOnlyLink = null,
+  allowLazyHumanoid3d = false,
 }: Props) {
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
   /** null = mostrar todas as subcategorias; valor = filtrar por prefixo principal (derivado dos dados). */
@@ -220,6 +222,7 @@ export function EvaluationResultsDashboard({
               : null
           }
           profileBodyMetrics={physicalAvatarCarousel?.profileBodyMetrics ?? null}
+          allowLazyHumanoid3d={allowLazyHumanoid3d}
         />
         {physicalFichaReadOnlyLink ? (
           <p className="text-center text-xs m-0">

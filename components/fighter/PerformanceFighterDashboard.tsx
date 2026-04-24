@@ -122,6 +122,8 @@ type Props = {
   physicalAvatarCarousel?: PhysicalAvatarCarouselPayload | null;
   /** Link opcional para ver a ficha completa (área do aluno). */
   physicalFichaReadOnlyLink?: { href: string; label: string } | null;
+  /** Vista 3D opcional no carrossel da ficha (só performance aluno / coach). */
+  allowLazyHumanoid3d?: boolean;
 };
 
 export function PerformanceFighterDashboard({
@@ -153,6 +155,7 @@ export function PerformanceFighterDashboard({
   checkInWellness,
   physicalAvatarCarousel = null,
   physicalFichaReadOnlyLink = null,
+  allowLazyHumanoid3d = false,
 }: Props) {
   const systemMissions = buildMissionsFromScores(scores, axes, maxScore);
   const customAsMissions: Mission[] = customMissions.map((c) => ({
@@ -202,6 +205,7 @@ export function PerformanceFighterDashboard({
           scoresByModality={scoresByModality}
           physicalAvatarCarousel={physicalAvatarCarousel}
           physicalFichaReadOnlyLink={physicalFichaReadOnlyLink}
+          allowLazyHumanoid3d={allowLazyHumanoid3d}
         />
       ) : (
         <>
@@ -240,6 +244,7 @@ export function PerformanceFighterDashboard({
                   : null
               }
               profileBodyMetrics={physicalAvatarCarousel?.profileBodyMetrics ?? null}
+              allowLazyHumanoid3d={allowLazyHumanoid3d}
             />
             {physicalFichaReadOnlyLink ? (
               <p className="text-center text-xs m-0">

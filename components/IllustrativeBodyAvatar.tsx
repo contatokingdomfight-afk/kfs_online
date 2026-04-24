@@ -1,12 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/avatar/Avatar";
 import { AvatarPoseTagSelector } from "@/components/avatar/AvatarPoseTagSelector";
 import { buildAvatarPoseLayout } from "@/components/avatar/build-avatar-layout";
 import { TechnicalRigSvg } from "@/components/avatar/TechnicalRigSvg";
 import { mapFormDataToAvatarMeasurements, type Modality, type PoseTag } from "@/components/avatar/avatar-utils";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
+
+const Humanoid3DPanelLazy = dynamic(
+  () => import("@/components/humanoid-3d/Humanoid3DPanel").then((m) => ({ default: m.Humanoid3DPanel })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[272px] max-w-[220px] mx-auto items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-xs text-[var(--text-secondary)]">
+        A carregar vista 3D…
+      </div>
+    ),
+  }
+);
+
+type BodyView = "illustration" | "technical" | "3d";
 
 type Props = {
   formData: unknown;
@@ -28,10 +43,15 @@ type Props = {
   showPoseTags?: boolean;
   /** Vista inicial: «technical» = diagrama ossos/malha; «illustration» = corpo suave + equipamento. */
   defaultBodyView?: "illustration" | "technical";
+  /**
+   * Quando true, mostra a opção «3D» (WebGL + Three.js). O chunk só é descarregado ao escolher 3D.
+   * Usar só em `/dashboard/performance` e performance do coach no aluno.
+   */
+  allowLazyHumanoid3d?: boolean;
 };
 
 /**
- * Figura 2D ilustrativa (SVG modular); não representa diagnóstico nem composição corporal real.
+ * Figura ilustrativa (2D ou 3D procedural); não representa diagnóstico nem composição corporal real.
  */
 export function IllustrativeBodyAvatar({
   formData,
@@ -43,9 +63,14 @@ export function IllustrativeBodyAvatar({
   modality = "boxing",
   showPoseTags = false,
   defaultBodyView = "technical",
+  allowLazyHumanoid3d = false,
 }: Props) {
   const [poseTag, setPoseTag] = useState<PoseTag>("auto");
-  const [bodyView, setBodyView] = useState<"illustration" | "technical">(defaultBodyView);
+  const [bodyView, setBodyView] = useState<BodyView>(defaultBodyView);
+
+  useEffect(() => {
+    if (!allowLazyHumanoid3d && bodyView === "3d") setBodyView("technical");
+  }, [allowLazyHumanoid3d, bodyView]);
 
   const parsed = normalizePhysicalFormDataJson(formData);
   const fd = neutralReference ? (parsed ?? {}) : parsed;
@@ -66,11 +91,13 @@ export function IllustrativeBodyAvatar({
     (assessedAtLabel ? ` Dados: ${assessedAtLabel}.` : "");
 
   const technicalExtra =
-    bodyView === "technical" && !neutralReference
-      ? " Vista em diagrama (malha suave + ossos + guias) proporcional aos dados da ficha; ilustrativo, não é modelo 3D nem exame clínico."
-      : bodyView === "technical" && neutralReference
-        ? " Diagrama de referência; com mais medidas na ficha, as proporções aproximam-se ao teu perfil."
-        : "";
+    bodyView === "3d" && allowLazyHumanoid3d
+      ? " Vista 3D procedural (WebGL); o código mais pesado só é descarregado ao escolheres «3D». Ilustrativo, não clínico."
+      : bodyView === "technical" && !neutralReference
+        ? " Vista em diagrama (malha suave + ossos + guias) proporcional aos dados da ficha; ilustrativo, não é modelo 3D nem exame clínico."
+        : bodyView === "technical" && neutralReference
+          ? " Diagrama de referência; com mais medidas na ficha, as proporções aproximam-se ao teu perfil."
+          : "";
 
   const caption =
     captionOverride?.trim() ||
@@ -115,9 +142,25 @@ export function IllustrativeBodyAvatar({
           >
             Ilustração
           </button>
+          {allowLazyHumanoid3d ? (
+            <button
+              type="button"
+              className={`px-2.5 py-1.5 font-medium transition-colors ${
+                bodyView === "3d"
+                  ? "bg-[var(--primary)] text-[var(--primary-foreground,var(--bg))]"
+                  : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]/40"
+              }`}
+              aria-pressed={bodyView === "3d"}
+              onClick={() => setBodyView("3d")}
+            >
+              3D
+            </button>
+          ) : null}
         </div>
       </div>
-      {bodyView === "technical" ? (
+      {bodyView === "3d" && allowLazyHumanoid3d ? (
+        <Humanoid3DPanelLazy scales={scales} pose={pose} className="max-w-[min(220px,88vw)]" />
+      ) : bodyView === "technical" ? (
         <TechnicalRigSvg scales={scales} pose={pose} className="max-w-[min(220px,88vw)]" />
       ) : (
         <Avatar modality={modality} measurements={measurements} poseTag={poseTag} className="max-w-[min(220px,88vw)]" />

@@ -47,6 +47,8 @@ type Props = {
   bodySilhouetteMode?: BodySilhouetteMode | null;
   /** Altura/peso do perfil para escala ilustrativa da silhueta. */
   profileBodyMetrics?: ProfileBodyMetrics | null;
+  /** Vista 3D opcional (WebGL); chunk carregado só ao escolher «3D». */
+  allowLazyHumanoid3d?: boolean;
 };
 
 /**
@@ -59,6 +61,7 @@ export function PerformanceRadarAvatarCarousel({
   labels,
   bodySilhouetteMode = null,
   profileBodyMetrics = null,
+  allowLazyHumanoid3d = false,
 }: Props) {
   const L = mergeLabels(labels);
 
@@ -184,6 +187,7 @@ export function PerformanceRadarAvatarCarousel({
                 neutralReference={neutralReference}
                 bodyScaleFromProfile={profileBodyMetrics}
                 showPoseTags
+                allowLazyHumanoid3d={allowLazyHumanoid3d}
                 className="max-w-[min(220px,88vw)]"
               />
             </div>
