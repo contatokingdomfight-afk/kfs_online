@@ -1,38 +1,45 @@
-# Vista 3D — ficheiro base GLB
+# Vista 3D — ficheiros base GLB
 
 ## Comportamento
 
-- O painel tenta carregar **`/models/human-base.glb`** (pasta `public/models/` no repositório).
-- O modelo é **escalado** de forma **uniforme** para altura ~1,58 unidades (igual ao manequim procedural), com heurística para **T-pose** (envergadura). **Não** se aplica escala não uniforme ao GLB com `SkinnedMesh` (quebraria o skinning no Three.js); largura de ombros da ficha pode vir numa iteração futura com morph/retarget.
-- São desenhadas **linhas guia IK** (tracejadas) por cima, alinhadas ao diagrama 2D.
-- Se o URL falhar (404, rede, GLB inválido), usa-se o **humanóide procedural** como fallback.
+- O painel carrega **dois GLBs opcionais** em `public/models/`:
+  - **`human-base-male.glb`** — homem (predefinição quando o hint é `auto` e o env não for `female`).
+  - **`human-base-female.glb`** — mulher.
+- A escolha do ficheiro segue: `humanoid3dBodyVariant` (`FEMALE` / `MALE`) no `formData` da ficha → `NEXT_PUBLIC_HUMANOID_BODY_HINT` (`female`/`f`, `male`/`m`) → em `auto` sem env, **masculino**.
+- **Cadeia de fallback** (por ordem): URL primário (M ou F) → **`/models/human-base.glb`** (pack legado único, se existir) → **humanóide procedural** se tudo falhar (404, rede, GLB inválido).
+- O modelo é **escalado** de forma **uniforme** (ver `lib/humanoid-gltf-scene.ts`); **não** se aplica escala não uniforme a `SkinnedMesh`. Linhas guia IK alinham-se ao diagrama 2D.
+- GLBs com **mais de um rig** no mesmo ficheiro: mantém-se um esqueleto visível (hint + heurística por nomes/triângulos). Com **um GLB por género**, este passo costuma ser redundante.
 
-## Substituir o manequim
+## Variáveis de ambiente (opcional)
 
-1. Exporta um GLB **Y-up**, de preferência um manequim humano **CC0** (ex.: [Prototyping Mannequin](https://burning-barb.itch.io/mannequin) — ver licença no download).
-2. Grava como **`public/models/human-base.glb`** (substitui o ficheiro existente).
-3. Faz deploy. Opcional: define **`NEXT_PUBLIC_HUMAN_BASE_GLTF_URL`** com URL absoluto para um GLB alojado noutro sítio (CDN).
+| Variável | Efeito |
+|----------|--------|
+| `NEXT_PUBLIC_HUMAN_BASE_GLTF_URL` | Um único GLB para **todos** (ignora M/F em disco **só se** não definires `NEXT_PUBLIC_HUMAN_BASE_GLTF_URL_MALE` nem `NEXT_PUBLIC_HUMAN_BASE_GLTF_URL_FEMALE`). Útil para CDN com um ficheiro legado. |
+| `NEXT_PUBLIC_HUMAN_BASE_GLTF_URL_MALE` | URL absoluto do GLB masculino (substitui `/models/human-base-male.glb`). |
+| `NEXT_PUBLIC_HUMAN_BASE_GLTF_URL_FEMALE` | URL absoluto do GLB feminino (substitui `/models/human-base-female.glb`). |
+| `NEXT_PUBLIC_HUMANOID_BODY_HINT` | `female` / `male` quando a ficha não fixa `humanoid3dBodyVariant`. |
+
+## Substituir / atualizar os manequins
+
+1. Exportar GLB **Y-up**, rig humano (Mixamo → Blender → glTF, etc.).
+2. Gravar como **`public/models/human-base-male.glb`** e/ou **`public/models/human-base-female.glb`** (ou só um deles + manter `human-base.glb` como fallback).
+3. Deploy. Opcional: URLs absolutos nas variáveis acima (CDN).
 
 ## Mixamo (Adobe) como base
 
-[Mixamo](https://www.mixamo.com/) oferece personagens e animações 3D gratuitas; a **licença e condições de uso** são da Adobe — rever o texto legal atual antes de usar em produção ou marca.
+[Mixamo](https://www.mixamo.com/) oferece personagens e animações; rever a **licença Adobe** antes de produção.
 
-**Porque pode ser “melhor” que um placeholder técnico:** malhas pensadas para jogo, materiais **PBR** e **normais** consistentes, rig humano completo e ecossistema de animações (útil se no futuro ligarmos `AnimationMixer` à vista 3D).
+Fluxo típico: personagem em T-pose ou A-pose → Blender (Y-up) → exportar `.glb` → colocar em `public/models/` com os nomes acima.
 
-**Fluxo típico para este projeto (só precisamos de GLB estático):**
+O carregador usa `GLTFLoader` + `SkeletonUtils.clone` (`lib/humanoid-gltf-scene.ts`) para rigs `SkinnedMesh` não ficarem partidos após o clone.
 
-1. No Mixamo, escolher um personagem (T-pose ou A-pose) e descarregar **FBX** (ex.: *FBX for Unity* / *Binary*).
-2. Abrir no **Blender**, aplicar transformações se necessário, orientação **Y-up**, exportar **glTF 2.0 / `.glb`**.
-3. Substituir `public/models/human-base.glb` **ou** definir `NEXT_PUBLIC_HUMAN_BASE_GLTF_URL` com um URL absoluto para o GLB.
+## Atribuição / licença
 
-O carregador usa `GLTFLoader` + clone com `SkeletonUtils.clone` (`lib/humanoid-gltf-scene.ts`) para **rigged meshes** não ficarem partidos após o clone (comum com personagens Mixamo / GLB com `SkinnedMesh`).
-
-## Ficheiro incluído no repositório (predefinição)
-
-O `human-base.glb` em `public/models/` é o pack **[Human Models Set – Male/Female (Rigged)](https://sketchfab.com/3d-models/human-models-set-malefemale-rigged-7311fcfdc03e4234900eeced42a1e669)** (Sketchfab, autor **lzyassoul**, **CC-BY**) — ver `public/models/ATTRIBUTION-human-base.txt`. Com **várias** malhas `SkinnedMesh` do **mesmo** boneco (cabeça, corpo, etc.) mantêm-se **todas** visíveis; só se tenta esconder um **segundo rig** claramente menor (outro personagem no mesmo GLB). Escala uniforme à altura da ficha.
-
-Alternativa histórica: **RiggedSimple** dos [glTF Sample Models](https://github.com/KhronosGroup/glTF-Sample-Models) (CC-BY 4.0) também serviu como placeholder técnico.
+- **`ATTRIBUTION-human-base-male-female.txt`** — ficheiros masculino/feminino actuais do repo (confirmar licença antes de redistribuir).
+- **`ATTRIBUTION-human-base.txt`** — referência ao pack legado opcional Sketchfab *Human Models Set* (CC-BY), se usares `human-base.glb`.
 
 ## Dados da ficha
 
-As proporções vêm do mesmo fluxo que o SVG: `formData` normalizado da última `StudentPhysicalAssessment` + `mapFormDataToAvatarMeasurements` + `buildAvatarPoseLayout` → `computeAvatarRigJoints`.
+Proporções: `formData` → `mapFormDataToAvatarMeasurements` → `buildAvatarPoseLayout` → `computeAvatarRigJoints` (igual ao SVG 2D).
+
+Campo opcional JSON **`humanoid3dBodyVariant`**: `"FEMALE"` | `"MALE"` (tipos em `lib/physical-assessment-types.ts`).

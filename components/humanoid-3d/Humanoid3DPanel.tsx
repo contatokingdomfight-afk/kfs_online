@@ -18,8 +18,8 @@ type Props = {
 };
 
 /**
- * Painel WebGL: GLB base em `/models/human-base.glb` (substituível) com escala a partir da ficha;
- * se o ficheiro falhar, cai no humanóide procedural.
+ * Painel WebGL: GLB por género (`/models/human-base-male.glb` / `human-base-female.glb`, substituível por env)
+ * com escala a partir da ficha; cadeia de fallback + humanóide procedural se tudo falhar.
  */
 export function Humanoid3DPanel({
   scales,

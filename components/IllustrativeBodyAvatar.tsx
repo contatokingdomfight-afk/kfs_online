@@ -107,7 +107,7 @@ export function IllustrativeBodyAvatar({
 
   const technicalExtra =
     bodyView === "3d" && allowLazyHumanoid3d
-      ? " Vista 3D (WebGL + Three.js): modelo GLB base em `/models/human-base.glb` ajustado às medidas, com fallback procedural se o ficheiro não carregar. O chunk só é descarregado ao escolheres «3D». Ilustrativo, não clínico."
+      ? " Vista 3D (WebGL + Three.js): GLB `/models/human-base-male.glb` ou `human-base-female.glb` (ou URL em env) ajustado às medidas; fallback `human-base.glb` e manequim procedural. O chunk só é descarregado ao escolheres «3D». Ilustrativo, não clínico."
       : bodyView === "technical" && !neutralReference
         ? " Vista em diagrama (malha suave + ossos + guias) proporcional aos dados da ficha; ilustrativo, não é modelo 3D nem exame clínico."
         : bodyView === "technical" && neutralReference

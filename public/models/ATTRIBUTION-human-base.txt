@@ -1,6 +1,8 @@
-Ficheiro: public/models/human-base.glb
+Ficheiro (opcional / fallback): public/models/human-base.glb
 
-Origem actual (pack rigged masculino/feminino):
+Se usas apenas **human-base-male.glb** + **human-base-female.glb**, este ficheiro não é obrigatório; a app tenta-o na cadeia de fallback antes do manequim procedural.
+
+Origem de referência (pack rigged masculino/feminino no mesmo GLB):
 - Sketchfab — "Human Models Set - Male/Female (Rigged)" por lzyassoul
 - URL: https://sketchfab.com/3d-models/human-models-set-malefemale-rigged-7311fcfdc03e4234900eeced42a1e669
 - Licença: Creative Commons Attribution (CC-BY) — manter crédito ao autor e ao Sketchfab onde apropriado.

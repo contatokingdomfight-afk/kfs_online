@@ -13,6 +13,27 @@ import { mountProceduralHumanoidScene, type HumanoidMountHandle } from "@/lib/pr
 type Vec3 = readonly [number, number, number];
 
 const DEFAULT_GLTF = "/models/human-base.glb";
+/** GLBs separados (homem / mulher) em `public/models/` — ver `DOCS/AVATAR_3D_BASE_GLTF.md`. */
+const DEFAULT_MALE_GLTF = "/models/human-base-male.glb";
+const DEFAULT_FEMALE_GLTF = "/models/human-base-female.glb";
+
+function trimPublicEnv(key: string): string {
+  if (typeof process === "undefined") return "";
+  return process.env[key]?.trim() ?? "";
+}
+
+function dedupeUrlChain(urls: readonly string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const u of urls) {
+    const s = u.trim();
+    if (!s || seen.has(s)) continue;
+    seen.add(s);
+    out.push(s);
+  }
+  return out;
+}
+
 const TARGET_HEIGHT = 1.58;
 /** Altura alvo do GLB no mundo (ligeiramente menor que o rig 2D para caber no painel). */
 const GLB_FIT_HEIGHT = 1.12;
@@ -110,6 +131,31 @@ function readEnvBodyHint(): HumanoidGltfBodyHint {
   if (v === "female" || v === "f") return "female";
   if (v === "male" || v === "m") return "male";
   return "auto";
+}
+
+/**
+ * Lista de URLs a tentar por ordem.
+ * - Só `NEXT_PUBLIC_HUMAN_BASE_GLTF_URL` (sem M/F): legado + fallback `human-base.glb`.
+ * - Caso contrário: `human-base-male.glb` / `human-base-female.glb` (ou env) consoante hint/env, depois `human-base.glb`.
+ */
+function buildGltfUrlAttemptList(modelUrlOverride: string | undefined, bodyHint: HumanoidGltfBodyHint): string[] {
+  const explicit = modelUrlOverride?.trim();
+  if (explicit) return [explicit];
+
+  const legacySingle = trimPublicEnv("NEXT_PUBLIC_HUMAN_BASE_GLTF_URL");
+  const maleOverride = trimPublicEnv("NEXT_PUBLIC_HUMAN_BASE_GLTF_URL_MALE");
+  const femaleOverride = trimPublicEnv("NEXT_PUBLIC_HUMAN_BASE_GLTF_URL_FEMALE");
+
+  if (legacySingle && !maleOverride && !femaleOverride) {
+    return dedupeUrlChain([legacySingle, DEFAULT_GLTF]);
+  }
+
+  const maleUrl = maleOverride || DEFAULT_MALE_GLTF;
+  const femaleUrl = femaleOverride || DEFAULT_FEMALE_GLTF;
+  const effective = bodyHint !== "auto" ? bodyHint : readEnvBodyHint();
+  const primary = effective === "female" ? femaleUrl : maleUrl;
+
+  return dedupeUrlChain([primary, DEFAULT_GLTF]);
 }
 
 function collectHierarchyNames(obj: THREE.Object3D): string {
@@ -399,8 +445,8 @@ function mountGltfViewport(container: HTMLElement, modelRoot: THREE.Object3D, jo
 }
 
 /**
- * Tenta carregar `modelUrl` (por defeito `/models/human-base.glb`); se falhar, usa o humanóide procedural.
- * `NEXT_PUBLIC_HUMAN_BASE_GLTF_URL` sobrepõe o URL (CDN próprio, etc.).
+ * Carrega GLB por género (`human-base-male.glb` / `human-base-female.glb` em `public/models/`) ou legado único
+ * (`NEXT_PUBLIC_HUMAN_BASE_GLTF_URL` / `human-base.glb`). Várias URLs são tentadas em cadeia; se todas falharem, procedural.
  */
 export async function mountHumanoidGltfOrProcedural(
   container: HTMLElement,
@@ -408,26 +454,32 @@ export async function mountHumanoidGltfOrProcedural(
   modelUrl?: string,
   bodyHint: HumanoidGltfBodyHint = "auto"
 ): Promise<HumanoidMountHandle> {
-  const url =
-    modelUrl?.trim() ||
-    (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_HUMAN_BASE_GLTF_URL?.trim() : "") ||
-    DEFAULT_GLTF;
-  try {
-    const loader = new GLTFLoader();
-    const gltf = await new Promise<{ scene: THREE.Object3D }>((resolve, reject) => {
-      loader.load(url, resolve, undefined, reject);
-    });
-    /** `Object3D.clone(true)` não religa ossos em todos os GLBs; Mixamo / rigged dependem disto. */
-    const model = cloneSkinnedHierarchy(gltf.scene);
-    selectPrimarySkinnedGroupAndHideOthers(model, bodyHint);
-    prepareImportedModel(model);
-    applySkinnedBindPose(model);
-    fitGltfModel(model, joints);
-    return mountGltfViewport(container, model, joints);
-  } catch (err) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[humanoid 3d] GLB falhou, a usar manequim procedural:", url, err);
+  const attempts = buildGltfUrlAttemptList(modelUrl, bodyHint);
+  const loader = new GLTFLoader();
+  let lastErr: unknown;
+
+  for (const url of attempts) {
+    try {
+      const gltf = await new Promise<{ scene: THREE.Object3D }>((resolve, reject) => {
+        loader.load(url, resolve, undefined, reject);
+      });
+      /** `Object3D.clone(true)` não religa ossos em todos os GLBs; Mixamo / rigged dependem disto. */
+      const model = cloneSkinnedHierarchy(gltf.scene);
+      selectPrimarySkinnedGroupAndHideOthers(model, bodyHint);
+      prepareImportedModel(model);
+      applySkinnedBindPose(model);
+      fitGltfModel(model, joints);
+      return mountGltfViewport(container, model, joints);
+    } catch (err) {
+      lastErr = err;
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[humanoid 3d] GLB falhou, a tentar seguinte URL:", url, err);
+      }
     }
-    return mountProceduralHumanoidScene(container, joints);
   }
+
+  if (process.env.NODE_ENV === "development") {
+    console.warn("[humanoid 3d] Todas as URLs GLB falharam, a usar manequim procedural:", attempts, lastErr);
+  }
+  return mountProceduralHumanoidScene(container, joints);
 }

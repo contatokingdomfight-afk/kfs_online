@@ -1,0 +1,8 @@
+Ficheiros: public/models/human-base-male.glb, public/models/human-base-female.glb
+
+Origem: assets fornecidos pelo projeto (homem A-pose / mulher T-pose, materiais metal/costume).
+Antes de redistribuir publicamente, confirma a licença e os créditos do autor ou da loja de onde foram obtidos.
+
+Predefinição na app: a vista 3D tenta estes dois URLs consoante `humanoid3dBodyVariant` na ficha,
+`NEXT_PUBLIC_HUMANOID_BODY_HINT` ou (em modo auto) masculino por defeito; se falharem, tenta-se
+`human-base.glb` e por fim o manequim procedural.

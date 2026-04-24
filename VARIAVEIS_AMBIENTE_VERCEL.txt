@@ -82,12 +82,22 @@ NEXT_PUBLIC_APP_URL=https://teu-dominio.vercel.app
 8) AVATAR 3D / GLB (opcional)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+Por defeito a app usa dois ficheiros em public/models/:
+  /models/human-base-male.glb
+  /models/human-base-female.glb
+Consoante humanoid3dBodyVariant na ficha, NEXT_PUBLIC_HUMANOID_BODY_HINT, ou (auto) masculino.
+
 NEXT_PUBLIC_HUMAN_BASE_GLTF_URL=
-[URL do GLB base; por defeito a app usa /models/human-base.glb]
+[Um único GLB para todos — só aplica se NÃO definires NEXT_PUBLIC_HUMAN_BASE_GLTF_URL_MALE nem ..._FEMALE; fallback após falha do URL M/F continua a ser /models/human-base.glb]
+
+NEXT_PUBLIC_HUMAN_BASE_GLTF_URL_MALE=
+[URL absoluto do GLB masculino — substitui /models/human-base-male.glb]
+
+NEXT_PUBLIC_HUMAN_BASE_GLTF_URL_FEMALE=
+[URL absoluto do GLB feminino — substitui /models/human-base-female.glb]
 
 NEXT_PUBLIC_HUMANOID_BODY_HINT=female
-ou male — só relevante se o GLB tiver **dois** rigs (ex.: pack M+F) e não houver humanoid3dBodyVariant na ficha.
-Valores aceites: female, f, male, m (case-insensitive).
+ou male — quando a ficha não tem humanoid3dBodyVariant: escolhe qual dos dois GLBs (male/female) em modo auto parcial; valores: female, f, male, m (case-insensitive). Com variante na ficha, a ficha ganha.
 
 ==============================================
 INSTRUÇÕES
