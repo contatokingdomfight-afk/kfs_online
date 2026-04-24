@@ -6,6 +6,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { revalidatePath } from "next/cache";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
+import { notifyStudentOfNewPhysicalAssessment } from "@/lib/notifications/in-app";
 
 const MONTHS_UNTIL_NEXT = 6;
 
@@ -129,10 +130,18 @@ export async function savePhysicalAssessment(
     return { error: error.message };
   }
 
+  try {
+    await notifyStudentOfNewPhysicalAssessment(supabase, { studentId, coachId: finalCoachId });
+  } catch (e) {
+    console.error("notifyStudentOfNewPhysicalAssessment:", e);
+  }
+
   revalidatePath(`/coach/alunos/${studentId}`);
   revalidatePath(`/coach/alunos/${studentId}/avaliacao-fisica`);
   revalidatePath(`/admin/alunos/${studentId}`);
   revalidatePath(`/dashboard/performance`);
   revalidatePath(`/dashboard/ficha-fisica`);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/notificacoes");
   return { success: true };
 }

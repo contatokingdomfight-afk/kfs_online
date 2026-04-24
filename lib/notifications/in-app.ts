@@ -10,7 +10,8 @@ export type NotificationType =
   | "PAYMENT_OVERDUE"
   | "PAYMENT_SUSPENDED"
   | "PAYMENT_RESTORED"
-  | "COACH_EVALUATION";
+  | "COACH_EVALUATION"
+  | "PHYSICAL_ASSESSMENT";
 
 type InsertPayload = {
   studentId: string;
@@ -54,6 +55,29 @@ export async function notifyStudentOfNewCoachEvaluation(
     title: "Nova avaliação do treinador",
     body: `${coachLabel} registou uma nova avaliação sobre o teu desempenho.`,
     href: "/dashboard/performance",
+  });
+}
+
+/** Central de notificações: nova ficha de anamnese / avaliação física (`StudentPhysicalAssessment`). */
+export async function notifyStudentOfNewPhysicalAssessment(
+  supabase: SupabaseClient,
+  params: { studentId: string; coachId: string }
+): Promise<void> {
+  const { data: coach } = await supabase.from("Coach").select("userId").eq("id", params.coachId).maybeSingle();
+  let coachLabel = "O teu treinador";
+  const coachRow = coach as { userId?: string | null } | null;
+  if (coachRow?.userId) {
+    const { data: user } = await supabase.from("User").select("name").eq("id", coachRow.userId).maybeSingle();
+    const name = (user as { name?: string | null } | null)?.name?.trim();
+    if (name) coachLabel = name;
+  }
+
+  await createInAppNotification(supabase, {
+    studentId: params.studentId,
+    type: "PHYSICAL_ASSESSMENT",
+    title: "Nova avaliação física",
+    body: `${coachLabel} registou a tua ficha de anamnese e avaliação física.`,
+    href: "/dashboard/ficha-fisica",
   });
 }
 
