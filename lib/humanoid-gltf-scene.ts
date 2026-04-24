@@ -265,25 +265,47 @@ function applySkinnedBindPose(root: THREE.Object3D): void {
   });
 }
 
+const YAW_CANDIDATES = [0, HALF_PI, Math.PI, -HALF_PI] as const;
+const ROLL_PITCH_CANDIDATES = [0, HALF_PI, -HALF_PI, Math.PI] as const;
+
 /**
- * Escolhe rotação Y ∈ {0, ±90°, 180°} para maximizar largura em X vs profundidade em Z
- * (câmara olha ao longo de −Z: corpo «de frente» costuma ter caixa mais larga em X que em Z).
+ * GLBs (ex. Sketchfab) podem vir com o eixo longo do corpo em X ou Z em vez de Y («deitados»).
+ * Escolhe Rx, Rz que maximizem altura em Y relativamente à pegada em XZ; depois Ry para «frente» à câmara.
  */
-function orientModelFacingCamera(model: THREE.Object3D): void {
+function orientModelUprightAndFaceCamera(model: THREE.Object3D): void {
+  let bestRx = 0;
+  let bestRz = 0;
+  let bestUpright = -Infinity;
+  for (const rx of ROLL_PITCH_CANDIDATES) {
+    for (const rz of ROLL_PITCH_CANDIDATES) {
+      model.rotation.set(rx, 0, rz);
+      model.updateMatrixWorld(true);
+      const s = new THREE.Vector3();
+      new THREE.Box3().setFromObject(model).getSize(s);
+      /** Em pé: dimensão em Y dominante face ao maior eixo horizontal. */
+      const upright = s.y / (Math.max(s.x, s.z) + 0.02);
+      if (upright > bestUpright) {
+        bestUpright = upright;
+        bestRx = rx;
+        bestRz = rz;
+      }
+    }
+  }
+
   let bestRy = 0;
-  let bestScore = -Infinity;
-  for (const ry of [0, HALF_PI, Math.PI, -HALF_PI]) {
-    model.rotation.set(0, ry, 0);
+  let bestFace = -Infinity;
+  for (const ry of YAW_CANDIDATES) {
+    model.rotation.set(bestRx, ry, bestRz);
     model.updateMatrixWorld(true);
     const s = new THREE.Vector3();
     new THREE.Box3().setFromObject(model).getSize(s);
     const score = s.x / Math.max(0.06, s.z);
-    if (score > bestScore) {
-      bestScore = score;
+    if (score > bestFace) {
+      bestFace = score;
       bestRy = ry;
     }
   }
-  model.rotation.set(0, bestRy, 0);
+  model.rotation.set(bestRx, bestRy, bestRz);
 }
 
 function fitGltfModel(model: THREE.Object3D, _joints: AvatarRigJoints2D): void {
@@ -291,7 +313,7 @@ function fitGltfModel(model: THREE.Object3D, _joints: AvatarRigJoints2D): void {
   model.rotation.set(0, 0, 0);
   model.scale.set(1, 1, 1);
   model.updateMatrixWorld(true);
-  orientModelFacingCamera(model);
+  orientModelUprightAndFaceCamera(model);
   model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
