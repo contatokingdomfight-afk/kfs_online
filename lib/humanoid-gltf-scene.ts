@@ -4,6 +4,7 @@
 import * as THREE from "three";
 import { ColorManagement } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { clone as cloneSkinnedHierarchy } from "three/addons/utils/SkeletonUtils.js";
 
 ColorManagement.enabled = true;
 import type { AvatarRigJoints2D } from "@/lib/avatar-rig-joints";
@@ -83,7 +84,8 @@ function fitGltfModel(model: THREE.Object3D, joints: AvatarRigJoints2D): void {
   const box2 = new THREE.Box3().setFromObject(model);
   const shoulderW = Math.abs(joints.shoulderLw.x - joints.shoulderRw.x) * kk * 0.92;
   const w = Math.max(0.001, box2.max.x - box2.min.x);
-  const sx = shoulderW / w;
+  /** Evita explosão se a caixa for quase plana ou o GLB tiver escala estranha. */
+  const sx = THREE.MathUtils.clamp(shoulderW / w, 0.35, 2.8);
   model.scale.x *= sx;
   model.updateMatrixWorld(true);
   const box3 = new THREE.Box3().setFromObject(model);
@@ -114,7 +116,7 @@ function prepareImportedModel(root: THREE.Object3D): void {
   }
 
   root.traverse((o) => {
-    if (!(o instanceof THREE.Mesh) || !o.geometry) return;
+    if (!(o instanceof THREE.Mesh) || o instanceof THREE.InstancedMesh || !o.geometry) return;
     const g = o.geometry;
     if (g.getAttribute("color")) g.deleteAttribute("color");
 
@@ -221,11 +223,15 @@ export async function mountHumanoidGltfOrProcedural(
     const gltf = await new Promise<{ scene: THREE.Object3D }>((resolve, reject) => {
       loader.load(url, resolve, undefined, reject);
     });
-    const model = gltf.scene.clone(true);
+    /** `Object3D.clone(true)` não religa ossos em todos os GLBs; Mixamo / rigged dependem disto. */
+    const model = cloneSkinnedHierarchy(gltf.scene);
     prepareImportedModel(model);
     fitGltfModel(model, joints);
     return mountGltfViewport(container, model, joints);
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[humanoid 3d] GLB falhou, a usar manequim procedural:", url, err);
+    }
     return mountProceduralHumanoidScene(container, joints);
   }
 }
