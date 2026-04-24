@@ -40,6 +40,17 @@ export type PhysicalAssessmentFormData = {
   /** Comprimento do braço: ombro até ponta do dedo médio (ou extremo da mão), por lado */
   lenArmShoulderFingertipLeftCm?: number | null;
   lenArmShoulderFingertipRightCm?: number | null;
+  /**
+   * Comprimento da perna (entrepé): virilha ao tornozelo na face interna da perna, por lado.
+   * Complementa a altura total do aluno (perfil) para proporção perna/torso ilustrativa.
+   */
+  lenLegInseamLeftCm?: number | null;
+  lenLegInseamRightCm?: number | null;
+  /**
+   * Largura entre acrómios (biaquatorial), cm — fita na linha dos ombros, costas eretas.
+   * Preferível à estimativa a partir do pescoço/tórax para o avatar e silhueta.
+   */
+  breadthShoulderCm?: number | null;
   circArmLeftCm?: number | null;
   circArmRightCm?: number | null;
   /** Circunferência do bíceps (ex.: braço flexionado), por lado */
@@ -49,6 +60,8 @@ export type PhysicalAssessmentFormData = {
   circForearmRightCm?: number | null;
   circHipCm?: number | null;
   circAbdomenCm?: number | null;
+  /** Circunferência do tórax (ex.: nível dos mamilos; protocolo ISAK da escola). */
+  circChestCm?: number | null;
   circHeadCm?: number | null;
   circNeckCm?: number | null;
   circThighLeftCm?: number | null;

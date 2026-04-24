@@ -19,6 +19,24 @@ function parseCircCm(formData: FormData, name: string): number | null {
   return n;
 }
 
+/** Entrepé (cm): intervalo típico perna; fora → null. */
+function parseInseamCm(formData: FormData, name: string): number | null {
+  const raw = (formData.get(name) as string)?.trim();
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  if (Number.isNaN(n) || n < 28 || n > 150) return null;
+  return n;
+}
+
+/** Largura biaquatorial (cm); fora do intervalo → null. */
+function parseShoulderBreadthCm(formData: FormData, name: string): number | null {
+  const raw = (formData.get(name) as string)?.trim();
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  if (Number.isNaN(n) || n < 18 || n > 75) return null;
+  return n;
+}
+
 export type SaveAssessmentResult = { error?: string; success?: boolean };
 
 export async function savePhysicalAssessment(
@@ -75,6 +93,9 @@ export async function savePhysicalAssessment(
     posturalNotes: (formData.get("posturalNotes") as string)?.trim() || undefined,
     lenArmShoulderFingertipLeftCm: parseCircCm(formData, "lenArmShoulderFingertipLeftCm"),
     lenArmShoulderFingertipRightCm: parseCircCm(formData, "lenArmShoulderFingertipRightCm"),
+    lenLegInseamLeftCm: parseInseamCm(formData, "lenLegInseamLeftCm"),
+    lenLegInseamRightCm: parseInseamCm(formData, "lenLegInseamRightCm"),
+    breadthShoulderCm: parseShoulderBreadthCm(formData, "breadthShoulderCm"),
     circArmLeftCm: parseCircCm(formData, "circArmLeftCm"),
     circArmRightCm: parseCircCm(formData, "circArmRightCm"),
     circBicepsLeftCm: parseCircCm(formData, "circBicepsLeftCm"),
@@ -83,6 +104,7 @@ export async function savePhysicalAssessment(
     circForearmRightCm: parseCircCm(formData, "circForearmRightCm"),
     circHipCm: parseCircCm(formData, "circHipCm"),
     circAbdomenCm: parseCircCm(formData, "circAbdomenCm"),
+    circChestCm: parseCircCm(formData, "circChestCm"),
     circHeadCm: parseCircCm(formData, "circHeadCm"),
     circNeckCm: parseCircCm(formData, "circNeckCm"),
     circThighLeftCm: parseCircCm(formData, "circThighLeftCm"),

@@ -11,14 +11,14 @@ type Props = {
  * afastamento do joelho em px real (não usar largura de stroke como coordenada).
  */
 export function Body({ scales, pose }: Props) {
-  const { shoulder, waist, hip, thigh, calf, height, bulk } = scales;
+  const { shoulder, chest, waist, hip, thigh, calf, height, bulk, legInseam } = scales;
 
   const headRx = Math.max(18, 22 * height * 0.92);
   const headRy = Math.max(22, 28 * height * 0.95);
   const cx = 100;
   const headCy = 52;
 
-  const shW = 34 * shoulder * bulk;
+  const shW = 34 * shoulder * bulk * (0.88 + 0.12 * chest);
   const wW = 22 * waist * bulk;
   const hW = 40 * hip * bulk;
 
@@ -47,8 +47,9 @@ export function Body({ scales, pose }: Props) {
     Z
   `.replace(/\s+/g, " ");
 
-  const thighLen = 58 * height;
-  const calfLen = 52 * height;
+  const legLenMul = 0.9 + 0.1 * legInseam;
+  const thighLen = 58 * height * legLenMul;
+  const calfLen = 52 * height * legLenMul;
   const dx = pose.stanceDx;
   const bonus = pose.legSpreadBonus ?? 0;
   /** Afastamento horizontal do joelho em px (antropometria + pose). */

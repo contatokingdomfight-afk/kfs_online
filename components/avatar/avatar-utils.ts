@@ -17,11 +17,15 @@ export const POSE_TAG_LABELS: Record<PoseTag, string> = {
 
 export type AvatarMeasurements = {
   shoulders?: number;
+  /** Circunferência do tórax (cm) — refina largura de ombros/torso no SVG. */
+  chest?: number;
   waist?: number;
   hips?: number;
   thigh?: number;
   calf?: number;
   arm?: number;
+  /** Entrepé médio (cm) — ajusta comprimento visual da perna vs altura. */
+  legInseam?: number;
   height?: number;
   weight?: number;
 };
@@ -37,11 +41,13 @@ export type AvatarProps = {
 /** Referências antropométricas (cm) — valores médios de referência ilustrativa. */
 export const REF = {
   shoulders: 112,
+  chest: 96,
   waist: 82,
   hips: 98,
   thigh: 54,
   calf: 36,
   arm: 32,
+  legInseam: 78,
   height: 172,
   weight: 74,
 } as const;
@@ -64,11 +70,13 @@ export function bulkFactor(height?: number, weight?: number): number {
 
 export type BodyScaleFactors = {
   shoulder: number;
+  chest: number;
   waist: number;
   hip: number;
   thigh: number;
   calf: number;
   arm: number;
+  legInseam: number;
   height: number;
   bulk: number;
 };
@@ -77,11 +85,13 @@ export function buildBodyScaleFactors(m?: AvatarMeasurements | null): BodyScaleF
   const x = m ?? {};
   return {
     shoulder: scaleMeasurement(x.shoulders, REF.shoulders),
+    chest: scaleMeasurement(x.chest, REF.chest),
     waist: scaleMeasurement(x.waist, REF.waist),
     hip: scaleMeasurement(x.hips, REF.hips),
     thigh: scaleMeasurement(x.thigh, REF.thigh),
     calf: scaleMeasurement(x.calf, REF.calf),
     arm: scaleMeasurement(x.arm, REF.arm),
+    legInseam: scaleMeasurement(x.legInseam, REF.legInseam),
     height: scaleMeasurement(x.height, REF.height),
     bulk: bulkFactor(x.height, x.weight),
   };
@@ -106,14 +116,27 @@ export function mapFormDataToAvatarMeasurements(
       : fore != null
         ? fore * 3.1
         : undefined;
+  const fromChest =
+    typeof fd.circChestCm === "number" && fd.circChestCm > 0 ? fd.circChestCm * 1.09 : undefined;
+  const shouldersFromEstimates =
+    fromChest != null && shouldersGuess != null
+      ? Math.max(shouldersGuess, fromChest)
+      : (fromChest ?? shouldersGuess);
+  const measuredBreadth =
+    typeof fd.breadthShoulderCm === "number" && fd.breadthShoulderCm >= 18 && fd.breadthShoulderCm <= 75
+      ? fd.breadthShoulderCm
+      : undefined;
+  const shoulders = measuredBreadth ?? shouldersFromEstimates;
 
   return {
-    shoulders: shouldersGuess,
+    shoulders,
+    chest: fd.circChestCm ?? undefined,
     waist: fd.circAbdomenCm ?? undefined,
     hips: fd.circHipCm ?? undefined,
     thigh: avgPair(fd.circThighLeftCm, fd.circThighRightCm),
     calf: avgPair(fd.circCalfLeftCm, fd.circCalfRightCm),
     arm: armCirc,
+    legInseam: avgPair(fd.lenLegInseamLeftCm, fd.lenLegInseamRightCm),
     height: profile?.heightCm != null ? Number(profile.heightCm) : undefined,
     weight: profile?.weightKg != null ? Number(profile.weightKg) : undefined,
   };

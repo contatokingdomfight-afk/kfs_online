@@ -11,6 +11,7 @@ const REF = {
   head: 56,
   neck: 37,
   arm: 32,
+  shoulderBreadth: 41,
   abdomen: 84,
   hip: 98,
   thigh: 56,
@@ -74,12 +75,16 @@ export function hasIllustrativeAnthropometry(d: Partial<PhysicalAssessmentFormDa
     d.circForearmLeftCm,
     d.circForearmRightCm,
     d.circAbdomenCm,
+    d.circChestCm,
     d.circHipCm,
     d.circThighLeftCm,
     d.circThighRightCm,
     d.circCalfLeftCm,
     d.circCalfRightCm,
     d.footLengthCm,
+    d.lenLegInseamLeftCm,
+    d.lenLegInseamRightCm,
+    d.breadthShoulderCm,
   ];
   const n = vals.filter((v) => typeof v === "number" && v > 0).length;
   return n >= 2;
@@ -139,6 +144,7 @@ export function buildSilhouetteParts(fd: Partial<PhysicalAssessmentFormData>): S
   const rNeck = scale(fd.circNeckCm, REF.neck);
   const rArmL = scale(fd.circArmLeftCm, REF.arm);
   const rArmR = scale(fd.circArmRightCm, REF.arm);
+  const rShoulderBreadth = scale(fd.breadthShoulderCm, REF.shoulderBreadth);
   const rAbd = scale(fd.circAbdomenCm, REF.abdomen);
   const rHip = scale(fd.circHipCm, REF.hip);
   const rThL = scale(fd.circThighLeftCm, REF.thigh);
@@ -156,7 +162,12 @@ export function buildSilhouetteParts(fd: Partial<PhysicalAssessmentFormData>): S
   const yMid = 70;
   const yWaist = 94;
   const yHip = 116;
-  const wTop = 16 * avg(rArmL, rArmR);
+  const wTopFromArms = 16 * avg(rArmL, rArmR);
+  const wTopFromBreadth = 10.2 * rShoulderBreadth;
+  const wTop =
+    typeof fd.breadthShoulderCm === "number" && fd.breadthShoulderCm >= 18
+      ? avg(wTopFromArms, wTopFromBreadth)
+      : wTopFromArms;
   const wWaist = 9.5 * rAbd;
   const wMid = avg(wTop, wWaist);
   const wHip = 14.5 * rHip;

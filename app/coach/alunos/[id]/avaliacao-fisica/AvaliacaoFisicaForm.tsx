@@ -315,6 +315,20 @@ export function AvaliacaoFisicaForm({
         </p>
         <p className="text-xs text-text-secondary font-medium mb-2">Comprimentos</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-6 gap-y-3 mb-6">
+          <label className="flex flex-col gap-1.5 text-sm min-w-0 sm:col-span-2 xl:col-span-2">
+            <span>Largura dos ombros — biaquatorial (cm)</span>
+            <input
+              type="number"
+              name="breadthShoulderCm"
+              min={18}
+              max={75}
+              step={1}
+              className="input w-full max-w-[7.5rem]"
+            />
+            <span className="text-[11px] text-text-secondary leading-snug">
+              Distância entre os acrómios (pontas dos ombros), costas eretas; protocolo da escola (ex.: ISAK).
+            </span>
+          </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Braço esq.: ombro → ponta do dedo (cm)</span>
             <input type="number" name="lenArmShoulderFingertipLeftCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
@@ -322,6 +336,17 @@ export function AvaliacaoFisicaForm({
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Braço dir.: ombro → ponta do dedo (cm)</span>
             <input type="number" name="lenArmShoulderFingertipRightCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm min-w-0">
+            <span>Perna esq.: entrepé (virilha → tornozelo int., cm)</span>
+            <input type="number" name="lenLegInseamLeftCm" min={35} max={145} step={1} className="input w-full max-w-[7.5rem]" />
+            <span className="text-[11px] text-text-secondary leading-snug">
+              Complementa a altura no perfil; protocolo da escola (ex.: ISAK).
+            </span>
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm min-w-0">
+            <span>Perna dir.: entrepé (virilha → tornozelo int., cm)</span>
+            <input type="number" name="lenLegInseamRightCm" min={35} max={145} step={1} className="input w-full max-w-[7.5rem]" />
           </label>
         </div>
         <p className="text-xs text-text-secondary font-medium mb-2">Circunferências</p>
@@ -363,6 +388,11 @@ export function AvaliacaoFisicaForm({
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Abdómen (cm)</span>
             <input type="number" name="circAbdomenCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm min-w-0">
+            <span>Tórax (cm)</span>
+            <input type="number" name="circChestCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <span className="text-[11px] text-text-secondary leading-snug">ex.: nível dos mamilos; seguir protocolo da escola</span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Quadril (cm)</span>

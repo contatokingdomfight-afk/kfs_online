@@ -195,8 +195,16 @@ export function PhysicalAssessmentReadOnlyView({
             {L ? "Comprimentos" : "Lengths"}
           </p>
           {line(
+            L ? "Largura dos ombros (biaquatorial)" : "Shoulder breadth (biacromial)",
+            d.breadthShoulderCm ?? "—"
+          )}
+          {line(
             L ? "Braço ombro → ponta do dedo (esq. / dir.)" : "Arm shoulder → fingertip (L / R)",
             [d.lenArmShoulderFingertipLeftCm, d.lenArmShoulderFingertipRightCm].filter((x) => x != null).join(" / ") || "—"
+          )}
+          {line(
+            L ? "Perna entrepé (esq. / dir.)" : "Leg inseam (L / R)",
+            [d.lenLegInseamLeftCm, d.lenLegInseamRightCm].filter((x) => x != null).join(" / ") || "—"
           )}
           <p className="text-[11px] text-[var(--text-secondary)] m-0 mt-2 mb-0">
             {L ? "Circunferências" : "Circumferences"}
@@ -216,6 +224,7 @@ export function PhysicalAssessmentReadOnlyView({
             [d.circForearmLeftCm, d.circForearmRightCm].filter((x) => x != null).join(" / ") || "—"
           )}
           {line(L ? "Abdómen" : "Abdomen", d.circAbdomenCm ?? "—")}
+          {line(L ? "Tórax" : "Chest", d.circChestCm ?? "—")}
           {line(L ? "Quadril" : "Hip", d.circHipCm ?? "—")}
           {line(L ? "Coxa esq. / dir." : "Thigh L / R", [d.circThighLeftCm, d.circThighRightCm].filter((x) => x != null).join(" / ") || "—")}
           {line(L ? "Panturrilha esq. / dir." : "Calf L / R", [d.circCalfLeftCm, d.circCalfRightCm].filter((x) => x != null).join(" / ") || "—")}
