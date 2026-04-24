@@ -18,7 +18,7 @@ export function Body({ scales, pose }: Props) {
   const cx = 100;
   const headCy = 52;
 
-  const shW = 34 * shoulder * bulk * (0.88 + 0.12 * chest);
+  const shW = 34 * shoulder * bulk * (0.78 + 0.22 * chest);
   const wW = 22 * waist * bulk;
   const hW = 40 * hip * bulk;
 
@@ -47,7 +47,7 @@ export function Body({ scales, pose }: Props) {
     Z
   `.replace(/\s+/g, " ");
 
-  const legLenMul = 0.9 + 0.1 * legInseam;
+  const legLenMul = 0.82 + 0.18 * legInseam;
   const thighLen = 58 * height * legLenMul;
   const calfLen = 52 * height * legLenMul;
   const dx = pose.stanceDx;

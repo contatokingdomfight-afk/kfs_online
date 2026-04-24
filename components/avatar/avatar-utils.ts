@@ -17,6 +17,11 @@ export const POSE_TAG_LABELS: Record<PoseTag, string> = {
 
 export type AvatarMeasurements = {
   shoulders?: number;
+  /**
+   * Quando true, `shoulders` é largura biaquatorial (cm) e deve escalar com ref ~41 cm.
+   * Sem isto, valores ~40 cm comparados com REF.shoulders 112 ficam sempre no chão do factor (avatar “congelado”).
+   */
+  shouldersAreBiacromialCm?: boolean;
   /** Circunferência do tórax (cm) — refina largura de ombros/torso no SVG. */
   chest?: number;
   waist?: number;
@@ -38,8 +43,12 @@ export type AvatarProps = {
   poseTag?: PoseTag;
 };
 
+/** Largura biaquatorial típica (cm) — para `breadthShoulderCm` na ficha. */
+export const REF_SHOULDER_BIACROMIAL_CM = 41;
+
 /** Referências antropométricas (cm) — valores médios de referência ilustrativa. */
 export const REF = {
+  /** Proxy “largo” (~pescoço×2,75) usado quando não há medida biaquatorial direta. */
   shoulders: 112,
   chest: 96,
   waist: 82,
@@ -83,8 +92,9 @@ export type BodyScaleFactors = {
 
 export function buildBodyScaleFactors(m?: AvatarMeasurements | null): BodyScaleFactors {
   const x = m ?? {};
+  const shoulderRef = x.shouldersAreBiacromialCm ? REF_SHOULDER_BIACROMIAL_CM : REF.shoulders;
   return {
-    shoulder: scaleMeasurement(x.shoulders, REF.shoulders),
+    shoulder: scaleMeasurement(x.shoulders, shoulderRef),
     chest: scaleMeasurement(x.chest, REF.chest),
     waist: scaleMeasurement(x.waist, REF.waist),
     hip: scaleMeasurement(x.hips, REF.hips),
@@ -130,6 +140,7 @@ export function mapFormDataToAvatarMeasurements(
 
   return {
     shoulders,
+    shouldersAreBiacromialCm: measuredBreadth != null,
     chest: fd.circChestCm ?? undefined,
     waist: fd.circAbdomenCm ?? undefined,
     hips: fd.circHipCm ?? undefined,
