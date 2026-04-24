@@ -2,7 +2,10 @@
  * Vista 3D com modelo GLB base (encaixe às proporções do rig) + fallback procedural.
  */
 import * as THREE from "three";
+import { ColorManagement } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+ColorManagement.enabled = true;
 import type { AvatarRigJoints2D } from "@/lib/avatar-rig-joints";
 import { mountProceduralHumanoidScene, type HumanoidMountHandle } from "@/lib/procedural-humanoid-scene";
 
@@ -72,8 +75,9 @@ function fitGltfModel(model: THREE.Object3D, joints: AvatarRigJoints2D): void {
   const box = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
   box.getSize(size);
-  const h = Math.max(0.001, size.y);
-  const s0 = TARGET_HEIGHT / h;
+  /** GLB de teste pode ter «altura» em X ou Z; usamos a maior extensão. */
+  const extent = Math.max(0.001, size.x, size.y, size.z);
+  const s0 = TARGET_HEIGHT / extent;
   model.scale.setScalar(s0);
   model.updateMatrixWorld(true);
   const box2 = new THREE.Box3().setFromObject(model);
@@ -88,18 +92,45 @@ function fitGltfModel(model: THREE.Object3D, joints: AvatarRigJoints2D): void {
   model.position.y -= box3.min.y;
 }
 
-function enhanceMaterials(root: THREE.Object3D): void {
+/**
+ * RiggedSimple e similares usam MeshBasicMaterial + vertexColors (ex. verde) — ignoram luzes.
+ * Remove cores por vértice, linhas de debug e normaliza para MeshStandardMaterial iluminado.
+ */
+function prepareImportedModel(root: THREE.Object3D): void {
+  const removeList: THREE.Object3D[] = [];
   root.traverse((o) => {
-    if (!(o instanceof THREE.Mesh)) return;
-    const m = o.material;
-    const mats = Array.isArray(m) ? m : [m];
-    for (const mat of mats) {
-      if (mat instanceof THREE.MeshStandardMaterial) {
-        mat.metalness = Math.min(0.15, mat.metalness + 0.02);
-        mat.roughness = Math.min(0.85, mat.roughness + 0.05);
-        mat.envMapIntensity = 0.4;
-      }
+    if (o instanceof THREE.Line || o instanceof THREE.LineSegments || o instanceof THREE.Points) {
+      removeList.push(o);
     }
+  });
+  for (const o of removeList) {
+    o.parent?.remove(o);
+    if (o instanceof THREE.Line || o instanceof THREE.LineSegments || o instanceof THREE.Points) {
+      o.geometry?.dispose();
+      const m = o.material as THREE.Material | THREE.Material[] | undefined;
+      if (Array.isArray(m)) m.forEach((x) => x.dispose());
+      else m?.dispose?.();
+    }
+  }
+
+  root.traverse((o) => {
+    if (!(o instanceof THREE.Mesh) || !o.geometry) return;
+    const g = o.geometry;
+    if (g.getAttribute("color")) g.deleteAttribute("color");
+
+    const old = o.material;
+    const oldList = Array.isArray(old) ? old : [old];
+    const newList = oldList.map(() => {
+      return new THREE.MeshStandardMaterial({
+        color: 0xc4b5fd,
+        roughness: 0.52,
+        metalness: 0.07,
+        flatShading: false,
+        side: THREE.DoubleSide,
+      });
+    });
+    for (const m of oldList) (m as THREE.Material)?.dispose?.();
+    o.material = newList.length === 1 ? newList[0]! : newList;
   });
 }
 
@@ -123,6 +154,8 @@ function mountGltfViewport(container: HTMLElement, modelRoot: THREE.Object3D, jo
     stencil: false,
   });
   renderer.setClearColor(0x000000, 0);
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = 1;
   if ("outputColorSpace" in renderer) {
     (renderer as THREE.WebGLRenderer & { outputColorSpace: THREE.ColorSpace }).outputColorSpace =
       THREE.SRGBColorSpace;
@@ -133,13 +166,16 @@ function mountGltfViewport(container: HTMLElement, modelRoot: THREE.Object3D, jo
   canvas.style.height = "100%";
   container.appendChild(canvas);
 
-  const amb = new THREE.AmbientLight(0xffffff, 0.72);
+  scene.background = null;
+  const amb = new THREE.AmbientLight(0xf8fafc, 0.55);
   scene.add(amb);
-  const d1 = new THREE.DirectionalLight(0xffffff, 0.68);
-  d1.position.set(1.1, 2.2, 1.65);
+  const hemi = new THREE.HemisphereLight(0xf1f5f9, 0x475569, 0.42);
+  scene.add(hemi);
+  const d1 = new THREE.DirectionalLight(0xffffff, 0.55);
+  d1.position.set(1.15, 2.35, 1.55);
   scene.add(d1);
-  const d2 = new THREE.DirectionalLight(0xffffff, 0.24);
-  d2.position.set(-1.35, 1.05, -0.75);
+  const d2 = new THREE.DirectionalLight(0xe2e8f0, 0.22);
+  d2.position.set(-1.4, 0.9, -0.85);
   scene.add(d2);
 
   const setSize = () => {
@@ -186,7 +222,7 @@ export async function mountHumanoidGltfOrProcedural(
       loader.load(url, resolve, undefined, reject);
     });
     const model = gltf.scene.clone(true);
-    enhanceMaterials(model);
+    prepareImportedModel(model);
     fitGltfModel(model, joints);
     return mountGltfViewport(container, model, joints);
   } catch {

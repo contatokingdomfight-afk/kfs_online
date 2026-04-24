@@ -1,16 +1,26 @@
 import type { BodyScaleFactors } from "./avatar-utils";
 import type { PoseLayout } from "./Pose";
 
+export type BodyPaintIds = {
+  head: string;
+  torso: string;
+  neck: string;
+  limb: string;
+  softShadow: string;
+};
+
 type Props = {
   scales: BodyScaleFactors;
   pose: PoseLayout;
+  /** Gradientes / sombra definidos no `<svg><defs>` do pai (ex.: `Avatar`). */
+  paintIds?: BodyPaintIds;
 };
 
 /**
  * Corpo em paths curvos; pernas com espessura mínima (evita “agulhas”);
  * afastamento do joelho em px real (não usar largura de stroke como coordenada).
  */
-export function Body({ scales, pose }: Props) {
+export function Body({ scales, pose, paintIds }: Props) {
   const { shoulder, chest, waist, hip, thigh, calf, height, bulk, legInseam } = scales;
 
   const headRx = Math.max(18, 22 * height * 0.92);
@@ -96,25 +106,37 @@ export function Body({ scales, pose }: Props) {
   const legLt = pose.legLdeg !== 0 ? `rotate(${pose.legLdeg}, ${pose.hipL.x}, ${pose.hipL.y})` : undefined;
   const legRt = pose.legRdeg !== 0 ? `rotate(${pose.legRdeg}, ${pose.hipR.x}, ${pose.hipR.y})` : undefined;
 
+  const fillHead = paintIds ? `url(#${paintIds.head})` : "var(--avatar-fill)";
+  const fillTorso = paintIds ? `url(#${paintIds.torso})` : "var(--avatar-fill)";
+  const fillNeck = paintIds ? `url(#${paintIds.neck})` : "var(--avatar-fill)";
+  const strokeLimb = paintIds ? `url(#${paintIds.limb})` : "var(--avatar-stroke)";
+  const softFilter = paintIds ? `url(#${paintIds.softShadow})` : undefined;
+
   return (
-    <g className="avatar-body" fill="var(--avatar-fill)" stroke="var(--avatar-stroke)" strokeOpacity={0.92}>
-      <g transform={tt}>
-        <ellipse cx={cx} cy={headCy} rx={headRx} ry={headRy} strokeWidth={0.85} />
-        <path d={neckPath} strokeWidth={0.65} />
+    <g
+      className="avatar-body"
+      fill={paintIds ? undefined : "var(--avatar-fill)"}
+      stroke={paintIds ? undefined : "var(--avatar-stroke)"}
+      strokeOpacity={paintIds ? undefined : 0.92}
+      filter={softFilter}
+    >
+      <g transform={tt} fill={fillTorso} stroke="var(--avatar-stroke)" strokeOpacity={0.92}>
+        <ellipse cx={cx} cy={headCy} rx={headRx} ry={headRy} fill={fillHead} strokeWidth={0.85} />
+        <path d={neckPath} fill={fillNeck} strokeWidth={0.65} />
         <path d={torsoPath} strokeWidth={1.05} />
         <g transform={`rotate(${pose.armLdeg}, ${al.x}, ${al.y})`}>
-          <path d={leftArmPath} fill="none" strokeWidth={armStroke} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={leftArmPath} fill="none" stroke={strokeLimb} strokeWidth={armStroke} strokeLinecap="round" strokeLinejoin="round" />
         </g>
         <g transform={`rotate(${pose.armRdeg}, ${ar.x}, ${ar.y})`}>
-          <path d={rightArmPath} fill="none" strokeWidth={armStroke} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={rightArmPath} fill="none" stroke={strokeLimb} strokeWidth={armStroke} strokeLinecap="round" strokeLinejoin="round" />
         </g>
       </g>
-      <g transform={legLt}>
+      <g transform={legLt} stroke={strokeLimb}>
         <path d={leftLegPath} fill="none" strokeWidth={thighStroke + 1.2} strokeLinecap="round" strokeLinejoin="round" opacity={0.35} />
         <path d={leftLegPath} fill="none" strokeWidth={thighStroke} strokeLinecap="round" strokeLinejoin="round" />
         <path d={leftLegPath} fill="none" strokeWidth={calfStroke} strokeLinecap="round" strokeLinejoin="round" opacity={0.88} />
       </g>
-      <g transform={legRt}>
+      <g transform={legRt} stroke={strokeLimb}>
         <path d={rightLegPath} fill="none" strokeWidth={thighStroke + 1.2} strokeLinecap="round" strokeLinejoin="round" opacity={0.35} />
         <path d={rightLegPath} fill="none" strokeWidth={thighStroke} strokeLinecap="round" strokeLinejoin="round" />
         <path d={rightLegPath} fill="none" strokeWidth={calfStroke} strokeLinecap="round" strokeLinejoin="round" opacity={0.88} />
