@@ -20,6 +20,7 @@ export type PerformanceAvatarCarouselLabels = {
   studentAvatarCaptionShort: string;
   humanoid3dFootnoteShort: string;
   humanoid3dFootnoteDetail: string;
+  humanoid3dOrbitHint: string;
   infoTipAriaSilhouette: string;
   infoTipAriaHumanoid3d: string;
 };
@@ -35,6 +36,7 @@ const LABEL_DEFAULTS: PerformanceAvatarCarouselLabels = {
   studentAvatarCaptionShort: "",
   humanoid3dFootnoteShort: "",
   humanoid3dFootnoteDetail: "",
+  humanoid3dOrbitHint: "",
   infoTipAriaSilhouette: "Texto completo sobre a silhueta ilustrativa",
   infoTipAriaHumanoid3d: "Texto completo sobre o modelo 3D",
 };
@@ -211,6 +213,7 @@ export function PerformanceRadarAvatarCarousel({
                     : null
                 }
                 silhouetteInfoAria={L.infoTipAriaSilhouette.trim() || null}
+                humanoid3dOrbitHint={allowLazyHumanoid3d && L.humanoid3dOrbitHint.trim() ? L.humanoid3dOrbitHint : null}
                 className="max-w-[min(220px,88vw)]"
               />
             </div>

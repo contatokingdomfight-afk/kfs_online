@@ -201,6 +201,8 @@ export const messages = {
     perfHumanoid3dFootnoteShort: "Modelo 3D ilustrativo (GLB ou manequim).",
     perfHumanoid3dFootnoteDetail:
       "Modelo 3D a partir de ficheiro base (GLB) ajustado às tuas medidas; se não existir GLB, mostra-se o manequim procedural. Ilustrativo, não clínico.",
+    perfHumanoid3dOrbitHint:
+      "Arrasta para rodar · scroll ou pinça para aproximar/afastar · botão direito ou dois dedos para mover.",
     perfInfoTipAriaSilhouette: "Texto completo sobre a silhueta ilustrativa",
     perfInfoTipAriaHumanoid3d: "Texto completo sobre o modelo 3D",
     perfLinkFullPhysicalFicha: "Ver ficha completa (anamnese e avaliação)",
@@ -876,6 +878,8 @@ export const messages = {
     perfHumanoid3dFootnoteShort: "Illustrative 3D model (GLB or procedural mannequin).",
     perfHumanoid3dFootnoteDetail:
       "3D model from a base GLB file scaled to your measurements; if the GLB is missing, a procedural mannequin is shown. Illustrative, not clinical.",
+    perfHumanoid3dOrbitHint:
+      "Drag to orbit · scroll or pinch to zoom · right-click or two fingers to pan.",
     perfInfoTipAriaSilhouette: "Full text about the illustrative silhouette",
     perfInfoTipAriaHumanoid3d: "Full text about the 3D model",
     perfLinkFullPhysicalFicha: "View full form (health & physical assessment)",

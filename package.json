@@ -17,6 +17,7 @@
     "seed:test-users": "tsx scripts/seed-test-users.ts",
     "seed:demo-anamnesis": "tsx scripts/seed-demo-anamnesis.ts",
     "generate:pwa-icons": "tsx scripts/generate-pwa-icons.ts",
+    "list-humanoid-glb-bones": "tsx scripts/list-humanoid-glb-bones.ts",
     "clean": "node -e \"const fs=require('fs');const path=require('path');['.next','node_modules/.cache'].forEach(d=>{try{fs.rmSync(path.join(process.cwd(),d),{recursive:true,force:true});console.log('Removed',d);}catch(e){if(e.code!=='ENOENT')throw e;}});\"",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

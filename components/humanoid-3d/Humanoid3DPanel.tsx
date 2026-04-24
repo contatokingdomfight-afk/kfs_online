@@ -15,6 +15,8 @@ type Props = {
   gltfBodyHint?: HumanoidGltfBodyHint;
   /** Se definido, nota curta + tooltip em vez de parágrafo longo fixo. */
   footnote?: { short: string; detail: string; infoAria: string } | null;
+  /** Dica de interação (orbit / zoom / pan); também vira `title` no canvas. */
+  orbitHint?: string | null;
 };
 
 /**
@@ -27,6 +29,7 @@ export function Humanoid3DPanel({
   className,
   gltfBodyHint = "auto",
   footnote = null,
+  orbitHint = null,
 }: Props) {
   const joints = useMemo(() => computeAvatarRigJoints(scales, pose), [scales, pose]);
   const mountRef = useRef<HTMLDivElement>(null);
@@ -36,7 +39,8 @@ export function Humanoid3DPanel({
     const el = mountRef.current;
     if (!el) return;
     let cancelled = false;
-    void mountHumanoidGltfOrProcedural(el, joints, undefined, gltfBodyHint).then((h) => {
+    const orbitOpts = orbitHint?.trim() ? { canvasTitle: orbitHint.trim() } : undefined;
+    void mountHumanoidGltfOrProcedural(el, joints, undefined, gltfBodyHint, orbitOpts).then((h) => {
       if (cancelled) {
         h.destroy();
         return;
@@ -49,7 +53,7 @@ export function Humanoid3DPanel({
       handleRef.current?.destroy();
       handleRef.current = null;
     };
-  }, [joints, gltfBodyHint]);
+  }, [joints, gltfBodyHint, orbitHint]);
 
   const defaultFootnote =
     "Modelo 3D a partir de ficheiro base (GLB) ajustado às tuas medidas; se não existir GLB, mostra-se o manequim procedural. Ilustrativo, não clínico.";
@@ -60,6 +64,11 @@ export function Humanoid3DPanel({
         ref={mountRef}
         className="h-[272px] w-full max-w-[220px] mx-auto rounded-xl border border-[var(--border)] overflow-hidden bg-[color-mix(in_srgb,var(--bg-secondary)_94%,transparent)]"
       />
+      {orbitHint?.trim() ? (
+        <p className="text-[9px] text-center text-[var(--text-secondary)] px-2 pt-1 m-0 leading-snug">
+          {orbitHint.trim()}
+        </p>
+      ) : null}
       {footnote ? (
         <div className="flex items-start justify-center gap-1.5 px-2 pt-1">
           <p className="text-[10px] text-center text-[var(--text-secondary)] m-0 leading-snug flex-1 min-w-0">

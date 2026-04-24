@@ -2,6 +2,7 @@
  * Cena Three.js imperativa (sem @react-three/fiber) — evita duplicar React / erro #525 no Next.
  */
 import * as THREE from "three";
+import { attachHumanoidOrbitViewport, type HumanoidOrbitViewportOptions } from "@/lib/humanoid-three-orbit-viewport";
 import type { AvatarRigJoints2D } from "@/lib/avatar-rig-joints";
 
 type Vec3 = readonly [number, number, number];
@@ -232,7 +233,11 @@ export type HumanoidMountHandle = { destroy: () => void };
 /**
  * Monta WebGL dentro de `container` (esvazia filhos existentes).
  */
-export function mountProceduralHumanoidScene(container: HTMLElement, joints: AvatarRigJoints2D): HumanoidMountHandle {
+export function mountProceduralHumanoidScene(
+  container: HTMLElement,
+  joints: AvatarRigJoints2D,
+  orbitOptions?: HumanoidOrbitViewportOptions,
+): HumanoidMountHandle {
   while (container.firstChild) container.removeChild(container.firstChild);
 
   const scene = new THREE.Scene();
@@ -257,24 +262,11 @@ export function mountProceduralHumanoidScene(container: HTMLElement, joints: Ava
   canvas.style.height = "100%";
   container.appendChild(canvas);
 
-  const setSize = () => {
-    const w = Math.max(1, container.clientWidth);
-    const h = Math.max(1, container.clientHeight);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    camera.lookAt(0, lookY, 0);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
-    renderer.setSize(w, h, false);
-    renderer.render(scene, camera);
-  };
-
-  setSize();
-  const ro = new ResizeObserver(() => setSize());
-  ro.observe(container);
+  const detachOrbit = attachHumanoidOrbitViewport(container, scene, camera, renderer, lookY, orbitOptions);
 
   return {
     destroy: () => {
-      ro.disconnect();
+      detachOrbit();
       disposeObject3D(group);
       scene.remove(group);
       renderer.dispose();

@@ -8,6 +8,7 @@ import { clone as cloneSkinnedHierarchy } from "three/addons/utils/SkeletonUtils
 
 ColorManagement.enabled = true;
 import type { AvatarRigJoints2D } from "@/lib/avatar-rig-joints";
+import { attachHumanoidOrbitViewport, type HumanoidOrbitViewportOptions } from "@/lib/humanoid-three-orbit-viewport";
 import { mountProceduralHumanoidScene, type HumanoidMountHandle } from "@/lib/procedural-humanoid-scene";
 
 type Vec3 = readonly [number, number, number];
@@ -441,13 +442,127 @@ function averageBonePositions(pts: THREE.Vector3[]): THREE.Vector3 | null {
   return o;
 }
 
+function projectToUnitXZ(v: THREE.Vector3): THREE.Vector3 | null {
+  const u = v.clone();
+  u.y = 0;
+  if (u.lengthSq() < 1e-10) return null;
+  u.normalize();
+  return u;
+}
+
+function boneNameIsLeftSide(n: string): boolean {
+  return (
+    n.includes("left") ||
+    n.includes("_l") ||
+    n.includes(".l") ||
+    n.includes(" l ") ||
+    /(^|[^a-z])l_/.test(n) ||
+    n.endsWith("_l")
+  );
+}
+
+function boneNameIsRightSide(n: string): boolean {
+  return (
+    n.includes("right") ||
+    n.includes("_r") ||
+    n.includes(".r") ||
+    n.includes(" r ") ||
+    /(^|[^a-z])r_/.test(n) ||
+    n.endsWith("_r")
+  );
+}
+
+type LrBuckets = { L: THREE.Vector3[]; R: THREE.Vector3[] };
+
+function firstNonEmptyLr(...candidates: (LrBuckets | null)[]): LrBuckets | null {
+  for (const c of candidates) {
+    if (c && c.L.length && c.R.length) return c;
+  }
+  return null;
+}
+
 /**
- * Vector unitário no plano XZ: peito ≈ `right × up` (ombro direito − esquerdo, ancas→cabeça).
+ * Par esquerdo/direito no plano horizontal: ombros (ideal), senão pés/tornozelos (T/A-pose),
+ * senão ossos de braço superior (ex. Mixamo `LeftArm` quando não há «shoulder» no nome).
+ */
+function pushLateralUnique(bucket: LrBuckets, side: "L" | "R", boneName: string, p: THREE.Vector3, seen: Set<string>): void {
+  const key = `${boneName}\0${side}`;
+  if (seen.has(key)) return;
+  seen.add(key);
+  if (side === "L") bucket.L.push(p);
+  else bucket.R.push(p);
+}
+
+/**
+ * Par esquerdo/direito: ombros → pés → coxa/upleg (largura na anca) → braço superior.
+ * Deduplica por nome do osso (vários `SkinnedMesh` podem repetir o mesmo esqueleto).
+ */
+function collectLateralLeftRightBuckets(model: THREE.Object3D): LrBuckets | null {
+  const shoulder: LrBuckets = { L: [], R: [] };
+  const foot: LrBuckets = { L: [], R: [] };
+  const thigh: LrBuckets = { L: [], R: [] };
+  const upperArm: LrBuckets = { L: [], R: [] };
+  const seenS = new Set<string>();
+  const seenF = new Set<string>();
+  const seenT = new Set<string>();
+  const seenA = new Set<string>();
+
+  model.traverse((o) => {
+    if (!(o instanceof THREE.SkinnedMesh) || !o.skeleton) return;
+    for (const b of o.skeleton.bones) {
+      const n = b.name.toLowerCase();
+      const isL = boneNameIsLeftSide(n) && !boneNameIsRightSide(n);
+      const isR = boneNameIsRightSide(n) && !boneNameIsLeftSide(n);
+      if (!isL && !isR) continue;
+
+      const v = new THREE.Vector3();
+      b.getWorldPosition(v);
+      const p = v.clone();
+      const side: "L" | "R" = isL ? "L" : "R";
+
+      const isShoulder = n.includes("shoulder") || n.includes("clavicle") || n.includes("collar");
+      const isFootLike =
+        (n.includes("foot") ||
+          n.includes("ankle") ||
+          n.includes("heel") ||
+          n.includes("toe") ||
+          n.includes("ball")) &&
+        !n.includes("finger") &&
+        !n.includes("hand") &&
+        !n.includes("wrist");
+      const isThighLike =
+        (n.includes("thigh") || n.includes("upleg")) && !n.includes("twist") && !n.includes("calf");
+      const isUpperArm =
+        !n.includes("twist") &&
+        (n.includes("upperarm") ||
+          n.includes("uparm") ||
+          (n.includes("arm") &&
+            !n.includes("fore") &&
+            !n.includes("hand") &&
+            !n.includes("wrist") &&
+            !n.includes("finger")));
+
+      if (isShoulder) {
+        pushLateralUnique(shoulder, side, b.name, p, seenS);
+      } else if (isFootLike) {
+        pushLateralUnique(foot, side, b.name, p, seenF);
+      } else if (isThighLike) {
+        pushLateralUnique(thigh, side, b.name, p, seenT);
+      } else if (isUpperArm) {
+        pushLateralUnique(upperArm, side, b.name, p, seenA);
+      }
+    }
+  });
+
+  return firstNonEmptyLr(shoulder, foot, thigh, upperArm);
+}
+
+/**
+ * «Frente» no plano XZ a partir de eixo lateral corpo (ombros → pés → braços) + ancas/cabeça.
+ * Testa `R−L` e `L−R` e `right×up` vs `up×right`; escolhe o que melhor alinha com +Z.
  */
 function facingDirectionXZFromBones(model: THREE.Object3D): THREE.Vector3 | null {
   model.updateMatrixWorld(true);
-  const leftS: THREE.Vector3[] = [];
-  const rightS: THREE.Vector3[] = [];
   const pelvis: THREE.Vector3[] = [];
   const heads: THREE.Vector3[] = [];
   model.traverse((o) => {
@@ -456,51 +571,73 @@ function facingDirectionXZFromBones(model: THREE.Object3D): THREE.Vector3 | null
       const n = b.name.toLowerCase();
       const v = new THREE.Vector3();
       b.getWorldPosition(v);
-      const isShoulder = n.includes("shoulder") || n.includes("clavicle") || n.includes("collar");
-      if (isShoulder) {
-        const isL =
-          n.includes("left") || n.includes("_l") || n.includes(".l") || n.includes(" l ") || /left/.test(n);
-        const isR =
-          n.includes("right") || n.includes("_r") || n.includes(".r") || n.includes(" r ") || /right/.test(n);
-        if (isL && !isR) leftS.push(v.clone());
-        else if (isR && !isL) rightS.push(v.clone());
-      }
       if (n.includes("hips") || n.includes("pelvis")) pelvis.push(v.clone());
       if (n.includes("head") && !n.includes("end") && !n.includes("headend")) heads.push(v.clone());
     }
   });
-  const L = averageBonePositions(leftS);
-  const R = averageBonePositions(rightS);
+
+  const lat = collectLateralLeftRightBuckets(model);
+  if (!lat) return null;
+  const L = averageBonePositions(lat.L);
+  const R = averageBonePositions(lat.R);
   const P = averageBonePositions(pelvis);
   if (!L || !R || !P) return null;
-  const right = new THREE.Vector3().subVectors(R, L);
-  if (right.lengthSq() < 1e-8) return null;
-  right.normalize();
   const H = averageBonePositions(heads);
-  const up = H ? new THREE.Vector3().subVectors(H, P) : new THREE.Vector3(0, 1, 0);
-  if (up.lengthSq() < 1e-8) return null;
-  up.normalize();
-  const fwd = new THREE.Vector3().crossVectors(right, up);
-  if (fwd.lengthSq() < 1e-8) return null;
-  fwd.normalize();
-  fwd.y = 0;
-  if (fwd.lengthSq() < 1e-8) return null;
-  fwd.normalize();
-  return fwd;
+  const upFromBones = H ? new THREE.Vector3().subVectors(H, P) : null;
+  const upCandidates: THREE.Vector3[] = [];
+  if (upFromBones && upFromBones.lengthSq() > 1e-8) {
+    upCandidates.push(upFromBones.clone().normalize());
+  }
+  /** Com cabeça/pescoço inclinados no bind, `H−P` inclina o «frente»; Y mundial costuma ser mais estável após `orientModelUprightAndFaceCamera`. */
+  upCandidates.push(WORLD_UP.clone());
+
+  const rl = new THREE.Vector3().subVectors(R, L);
+  const lr = new THREE.Vector3().subVectors(L, R);
+  if (rl.lengthSq() < 1e-8) return null;
+  rl.normalize();
+  lr.normalize();
+
+  let best: THREE.Vector3 | null = null;
+  let bestDot = -2;
+  for (const up of upCandidates) {
+    if (up.lengthSq() < 1e-10) continue;
+    for (const rightAxis of [rl, lr] as const) {
+      const c1 = new THREE.Vector3().crossVectors(rightAxis, up);
+      const c2 = new THREE.Vector3().crossVectors(up, rightAxis);
+      for (const raw of [c1, c2]) {
+        const xz = projectToUnitXZ(raw);
+        if (!xz) continue;
+        const d = xz.dot(TOWARD_CAMERA_XZ);
+        if (d > bestDot + 1e-6) {
+          bestDot = d;
+          best = xz;
+        }
+      }
+    }
+  }
+  return best;
 }
 
-/** Escolhe 0 ou π em Y mundial para o peito não ficar de costas à câmara (+Z). */
+/** Gira em Y mundial (±90° / 180°) para maximizar `frente·(0,0,1)` — costas vs frente nem sempre é só π. */
 function maximizeFacingTowardCameraXZ(model: THREE.Object3D): void {
   const score = (): number => {
     const d = facingDirectionXZFromBones(model);
-    return d ? d.dot(TOWARD_CAMERA_XZ) : 0;
+    return d ? d.dot(TOWARD_CAMERA_XZ) : -1;
   };
-  const s0 = score();
-  model.rotateOnWorldAxis(WORLD_UP, Math.PI);
-  model.updateMatrixWorld(true);
-  const s1 = score();
-  if (s1 <= s0 + 0.04) {
-    model.rotateOnWorldAxis(WORLD_UP, Math.PI);
+  let best = score();
+  let bestDelta = 0;
+  for (const delta of [HALF_PI, -HALF_PI, Math.PI] as const) {
+    model.rotateOnWorldAxis(WORLD_UP, delta);
+    model.updateMatrixWorld(true);
+    const s = score();
+    if (s > best + 1e-4) {
+      best = s;
+      bestDelta = delta;
+    }
+    model.rotateOnWorldAxis(WORLD_UP, -delta);
+  }
+  if (bestDelta !== 0) {
+    model.rotateOnWorldAxis(WORLD_UP, bestDelta);
   }
   model.updateMatrixWorld(true);
 }
@@ -591,7 +728,12 @@ function prepareImportedModel(root: THREE.Object3D): void {
   });
 }
 
-function mountGltfViewport(container: HTMLElement, modelRoot: THREE.Object3D, joints: AvatarRigJoints2D): HumanoidMountHandle {
+function mountGltfViewport(
+  container: HTMLElement,
+  modelRoot: THREE.Object3D,
+  joints: AvatarRigJoints2D,
+  orbitOptions?: HumanoidOrbitViewportOptions,
+): HumanoidMountHandle {
   while (container.firstChild) container.removeChild(container.firstChild);
 
   const scene = new THREE.Scene();
@@ -637,24 +779,11 @@ function mountGltfViewport(container: HTMLElement, modelRoot: THREE.Object3D, jo
   d2.position.set(-1.4, 0.9, -0.85);
   scene.add(d2);
 
-  const setSize = () => {
-    const w = Math.max(1, container.clientWidth);
-    const h = Math.max(1, container.clientHeight);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    camera.lookAt(0, lookY, 0);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
-    renderer.setSize(w, h, false);
-    renderer.render(scene, camera);
-  };
-
-  setSize();
-  const ro = new ResizeObserver(() => setSize());
-  ro.observe(container);
+  const detachOrbit = attachHumanoidOrbitViewport(container, scene, camera, renderer, lookY, orbitOptions);
 
   return {
     destroy: () => {
-      ro.disconnect();
+      detachOrbit();
       disposeObject3D(world);
       scene.remove(world);
       renderer.dispose();
@@ -671,7 +800,8 @@ export async function mountHumanoidGltfOrProcedural(
   container: HTMLElement,
   joints: AvatarRigJoints2D,
   modelUrl?: string,
-  bodyHint: HumanoidGltfBodyHint = "auto"
+  bodyHint: HumanoidGltfBodyHint = "auto",
+  orbitOptions?: HumanoidOrbitViewportOptions,
 ): Promise<HumanoidMountHandle> {
   const attempts = buildGltfUrlAttemptList(modelUrl, bodyHint);
   const loader = new GLTFLoader();
@@ -688,7 +818,7 @@ export async function mountHumanoidGltfOrProcedural(
       prepareImportedModel(model);
       applySkinnedBindPose(model);
       fitGltfModel(model, joints);
-      return mountGltfViewport(container, model, joints);
+      return mountGltfViewport(container, model, joints, orbitOptions);
     } catch (err) {
       lastErr = err;
       if (process.env.NODE_ENV === "development") {
@@ -700,5 +830,5 @@ export async function mountHumanoidGltfOrProcedural(
   if (process.env.NODE_ENV === "development") {
     console.warn("[humanoid 3d] Todas as URLs GLB falharam, a usar manequim procedural:", attempts, lastErr);
   }
-  return mountProceduralHumanoidScene(container, joints);
+  return mountProceduralHumanoidScene(container, joints, orbitOptions);
 }

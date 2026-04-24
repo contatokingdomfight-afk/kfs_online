@@ -97,6 +97,7 @@ export function buildPhysicalAvatarCarouselForStudentView(
         : t("perfAvatarCaptionShortGeneric"),
       humanoid3dFootnoteShort: t("perfHumanoid3dFootnoteShort"),
       humanoid3dFootnoteDetail: t("perfHumanoid3dFootnoteDetail"),
+      humanoid3dOrbitHint: t("perfHumanoid3dOrbitHint"),
       infoTipAriaSilhouette: t("perfInfoTipAriaSilhouette"),
       infoTipAriaHumanoid3d: t("perfInfoTipAriaHumanoid3d"),
     },

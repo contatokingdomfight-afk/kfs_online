@@ -56,6 +56,8 @@ type Props = {
   captionSummary?: string | null;
   /** Nota curta + detalhe sob o viewport 3D (i18n); só quando `allowLazyHumanoid3d`. */
   humanoidFootnote?: { short: string; detail: string; infoAria: string } | null;
+  /** Dica de controlos 3D (orbit / zoom / pan), ex. i18n `perfHumanoid3dOrbitHint`. */
+  humanoid3dOrbitHint?: string | null;
   /** `aria-label` do «i» da legenda principal em modo tooltip. */
   silhouetteInfoAria?: string | null;
 };
@@ -77,6 +79,7 @@ export function IllustrativeBodyAvatar({
   explainCaption = "inline",
   captionSummary = null,
   humanoidFootnote = null,
+  humanoid3dOrbitHint = null,
   silhouetteInfoAria = null,
 }: Props) {
   /** Por defeito «estrela» (braços abertos + pernas mais abertas); «Guarda» mantém a pose típica da modalidade. */
@@ -197,6 +200,7 @@ export function IllustrativeBodyAvatar({
           className="max-w-[min(220px,88vw)]"
           gltfBodyHint={gltfBodyHint}
           footnote={humanoidFootnote}
+          orbitHint={allowLazyHumanoid3d ? humanoid3dOrbitHint : null}
         />
       ) : bodyView === "technical" ? (
         <TechnicalRigSvg scales={scales} pose={pose} className="max-w-[min(220px,88vw)]" />
