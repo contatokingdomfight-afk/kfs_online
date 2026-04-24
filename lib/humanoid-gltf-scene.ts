@@ -352,6 +352,8 @@ function orientModelUprightAndFaceCamera(model: THREE.Object3D): void {
   refineWorldAxesUntilStanding(model);
   /** Com Rx/Rz ≠ 0, Euler «Y» não é yaw em torno do Y mundial — perfil vs frente fica errado. */
   refineWorldYawForFrontal(model);
+  /** Caixa AABB não sabe se a cabeça está em cima ou em baixo. */
+  correctUpsideDownIfNeeded(model);
 }
 
 /** Maximiza largura em X vs profundidade em Z (câmara em +Z a olhar para a origem) com rotações em torno do Y mundial. */
@@ -377,6 +379,53 @@ function refineWorldYawForFrontal(model: THREE.Object3D): void {
   if (bestDelta !== 0) {
     model.rotateOnWorldAxis(WORLD_UP, bestDelta);
   }
+  model.updateMatrixWorld(true);
+}
+
+/**
+ * A métrica da caixa é simétrica: «em pé» pode ser de cabeça para baixo.
+ * Usa posições mundiais de ossos (Mixamo / Sketchfab) para detetar e corrigir com meia-volta em X.
+ */
+function correctUpsideDownIfNeeded(model: THREE.Object3D): void {
+  model.updateMatrixWorld(true);
+  const headYs: number[] = [];
+  const footYs: number[] = [];
+  const hipYs: number[] = [];
+  model.traverse((o) => {
+    if (!(o instanceof THREE.SkinnedMesh) || !o.skeleton) return;
+    for (const b of o.skeleton.bones) {
+      const n = b.name.toLowerCase();
+      const v = new THREE.Vector3();
+      b.getWorldPosition(v);
+      const isHead =
+        (n.includes("head") || (n.includes("neck") && !n.includes("twist"))) &&
+        !n.includes("_end") &&
+        !n.includes("end") &&
+        !n.includes("headend");
+      if (isHead) headYs.push(v.y);
+      if (
+        (n.includes("foot") || n.includes("ankle") || n.includes("heel") || n.includes("toe")) &&
+        !n.includes("finger") &&
+        !n.includes("hand") &&
+        !n.includes("wrist")
+      ) {
+        footYs.push(v.y);
+      }
+      if (n.includes("hips") || n.includes("pelvis") || n === "root" || n.endsWith(":root")) {
+        hipYs.push(v.y);
+      }
+    }
+  });
+  const headAvg = headYs.length ? headYs.reduce((a, c) => a + c, 0) / headYs.length : null;
+  const footAvg = footYs.length ? footYs.reduce((a, c) => a + c, 0) / footYs.length : null;
+  const hipAvg = hipYs.length ? hipYs.reduce((a, c) => a + c, 0) / hipYs.length : null;
+
+  let inverted = false;
+  if (headAvg != null && footAvg != null && headAvg < footAvg - 0.03) inverted = true;
+  if (!inverted && headAvg != null && hipAvg != null && headAvg < hipAvg - 0.02) inverted = true;
+  if (!inverted) return;
+
+  model.rotateOnWorldAxis(WORLD_X, Math.PI);
   model.updateMatrixWorld(true);
 }
 
