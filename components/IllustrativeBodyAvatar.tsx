@@ -1,8 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
-import { Avatar } from "@/components/avatar/Avatar";
+import { useMemo, useState } from "react";
 import { AvatarPoseTagSelector } from "@/components/avatar/AvatarPoseTagSelector";
 import { buildAvatarPoseLayout } from "@/components/avatar/build-avatar-layout";
 import { mapFormDataToAvatarMeasurements, type Modality, type PoseTag } from "@/components/avatar/avatar-utils";
@@ -22,8 +21,6 @@ const Humanoid3DPanelLazy = dynamic(
   }
 );
 
-type BodyView = "illustration" | "3d";
-
 type Props = {
   formData: unknown;
   /** ISO date da avaliação (mostrado na legenda) */
@@ -36,24 +33,17 @@ type Props = {
    * Requer `captionOverride` com texto explicativo (i18n).
    */
   neutralReference?: boolean;
-  /** Altura/peso do perfil (Meus dados) para escala global meramente ilustrativa da silhueta. */
+  /** Altura/peso do perfil (Meus dados) ou da ficha para escala global meramente ilustrativa. */
   bodyScaleFromProfile?: { heightCm?: number | null; weightKg?: number | null } | null;
-  /** Modalidade para equipamento e guarda por defeito (luvas / wraps / sem luvas). */
+  /** Modalidade para pose «Guarda» (chips) e equipamento implícito no rig 3D. */
   modality?: Modality;
-  /** Mostra chips «Guarda» / «Estrela» por cima do SVG. */
+  /** Mostra chips «Guarda» / «Estrela» (afeta a pose do modelo 3D). */
   showPoseTags?: boolean;
-  /** Vista inicial quando existe opção 3D: «illustration» ou «3d». */
-  defaultBodyView?: BodyView;
-  /**
-   * Quando true, mostra a opção «3D» (WebGL + Three.js). O chunk só é descarregado ao escolher 3D.
-   * Usar só em `/dashboard/performance` e performance do coach no aluno.
-   */
-  allowLazyHumanoid3d?: boolean;
   /** `tooltip`: linha curta + ícone com texto completo (ex.: carrossel de performance). */
   explainCaption?: "inline" | "tooltip";
   /** Obrigatório com `explainCaption="tooltip"` — texto visível antes do «i». */
   captionSummary?: string | null;
-  /** Nota curta + detalhe sob o viewport 3D (i18n); só quando `allowLazyHumanoid3d`. */
+  /** Nota curta + detalhe sob o viewport 3D (i18n); opcional (ex. carrossel de performance). */
   humanoidFootnote?: { short: string; detail: string; infoAria: string } | null;
   /** Dica de controlos 3D (orbit / zoom / pan), ex. i18n `perfHumanoid3dOrbitHint`. */
   humanoid3dOrbitHint?: string | null;
@@ -62,7 +52,7 @@ type Props = {
 };
 
 /**
- * Figura ilustrativa (2D ou 3D procedural); não representa diagnóstico nem composição corporal real.
+ * Silhueta ilustrativa em 3D (WebGL); não representa diagnóstico nem composição corporal real.
  */
 export function IllustrativeBodyAvatar({
   formData,
@@ -73,8 +63,6 @@ export function IllustrativeBodyAvatar({
   bodyScaleFromProfile = null,
   modality = "boxing",
   showPoseTags = false,
-  defaultBodyView = "illustration",
-  allowLazyHumanoid3d = false,
   explainCaption = "inline",
   captionSummary = null,
   humanoidFootnote = null,
@@ -83,11 +71,6 @@ export function IllustrativeBodyAvatar({
 }: Props) {
   /** Por defeito «estrela» (braços abertos + pernas mais abertas); «Guarda» mantém a pose típica da modalidade. */
   const [poseTag, setPoseTag] = useState<PoseTag>("star");
-  const [bodyView, setBodyView] = useState<BodyView>(defaultBodyView);
-
-  useEffect(() => {
-    if (!allowLazyHumanoid3d && bodyView === "3d") setBodyView("illustration");
-  }, [allowLazyHumanoid3d, bodyView]);
 
   const parsed = normalizePhysicalFormDataJson(formData);
   const fd = neutralReference ? (parsed ?? {}) : parsed;
@@ -104,20 +87,15 @@ export function IllustrativeBodyAvatar({
   );
 
   const defaultCaption =
-    "Figura meramente ilustrativa a partir das circunferências registadas (não é avaliação médica nem imagem do aluno)." +
+    "Figura meramente ilustrativa em 3D a partir das circunferências registadas (não é avaliação médica nem imagem do aluno)." +
     (assessedAtLabel ? ` Dados: ${assessedAtLabel}.` : "");
-
-  const technicalExtra =
-    bodyView === "3d" && allowLazyHumanoid3d
-      ? " Vista 3D (WebGL + Three.js): GLB `/models/human-base-male.glb` ou `human-base-female.glb` (ou URL em env) ajustado às medidas; fallback `human-base.glb` e manequim procedural. O chunk só é descarregado ao escolheres «3D». Ilustrativo, não clínico."
-      : "";
 
   const caption =
     captionOverride?.trim() ||
     (neutralReference
-      ? "Silhueta de referência genérica (preenche pelo menos duas circunferências na ficha para uma figura aproximada às tuas medidas)." +
+      ? "Silhueta de referência genérica em 3D (preenche pelo menos duas circunferências na ficha para uma figura aproximada às tuas medidas)." +
           (assessedAtLabel ? ` Ficha: ${assessedAtLabel}.` : "")
-      : defaultCaption) + technicalExtra;
+      : defaultCaption);
 
   const gltfBodyHint = humanoidHintFromFormVariant(fd.humanoid3dBodyVariant);
   const captionTooltipMode = explainCaption === "tooltip" && Boolean(captionSummary?.trim());
@@ -143,51 +121,15 @@ export function IllustrativeBodyAvatar({
       )}
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {showPoseTags ? <AvatarPoseTagSelector value={poseTag} onChange={setPoseTag} /> : null}
-        {allowLazyHumanoid3d ? (
-          <div
-            className="inline-flex rounded-lg border border-[var(--border)] overflow-hidden text-xs shrink-0"
-            role="group"
-            aria-label="Tipo de figura"
-          >
-            <button
-              type="button"
-              className={`px-2.5 py-1.5 font-medium transition-colors ${
-                bodyView === "illustration"
-                  ? "bg-[var(--primary)] text-[var(--primary-foreground,var(--bg))]"
-                  : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]/40"
-              }`}
-              aria-pressed={bodyView === "illustration"}
-              onClick={() => setBodyView("illustration")}
-            >
-              Ilustração
-            </button>
-            <button
-              type="button"
-              className={`px-2.5 py-1.5 font-medium transition-colors ${
-                bodyView === "3d"
-                  ? "bg-[var(--primary)] text-[var(--primary-foreground,var(--bg))]"
-                  : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]/40"
-              }`}
-              aria-pressed={bodyView === "3d"}
-              onClick={() => setBodyView("3d")}
-            >
-              3D
-            </button>
-          </div>
-        ) : null}
       </div>
-      {bodyView === "3d" && allowLazyHumanoid3d ? (
-        <Humanoid3DPanelLazy
-          scales={scales}
-          pose={pose}
-          className="max-w-[min(220px,88vw)]"
-          gltfBodyHint={gltfBodyHint}
-          footnote={humanoidFootnote}
-          orbitHint={allowLazyHumanoid3d ? humanoid3dOrbitHint : null}
-        />
-      ) : (
-        <Avatar modality={modality} measurements={measurements} poseTag={poseTag} className="max-w-[min(220px,88vw)]" />
-      )}
+      <Humanoid3DPanelLazy
+        scales={scales}
+        pose={pose}
+        className="max-w-[min(220px,88vw)]"
+        gltfBodyHint={gltfBodyHint}
+        footnote={humanoidFootnote}
+        orbitHint={humanoid3dOrbitHint}
+      />
     </div>
   );
 }

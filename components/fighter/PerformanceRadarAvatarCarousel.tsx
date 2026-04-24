@@ -200,7 +200,6 @@ export function PerformanceRadarAvatarCarousel({
                 neutralReference={neutralReference}
                 bodyScaleFromProfile={profileBodyMetrics}
                 showPoseTags
-                allowLazyHumanoid3d={allowLazyHumanoid3d}
                 explainCaption={L.studentAvatarCaptionShort.trim() ? "tooltip" : "inline"}
                 captionSummary={L.studentAvatarCaptionShort.trim() || null}
                 humanoidFootnote={
