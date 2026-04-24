@@ -78,6 +78,17 @@ RESEND_FROM_EMAIL=
 
 NEXT_PUBLIC_APP_URL=https://teu-dominio.vercel.app
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8) AVATAR 3D / GLB (opcional)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NEXT_PUBLIC_HUMAN_BASE_GLTF_URL=
+[URL do GLB base; por defeito a app usa /models/human-base.glb]
+
+NEXT_PUBLIC_HUMANOID_BODY_HINT=female
+ou male — só relevante se o GLB tiver **dois** rigs (ex.: pack M+F) e não houver humanoid3dBodyVariant na ficha.
+Valores aceites: female, f, male, m (case-insensitive).
+
 ==============================================
 INSTRUÇÕES
 ==============================================

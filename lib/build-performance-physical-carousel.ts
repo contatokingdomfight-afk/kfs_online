@@ -92,6 +92,13 @@ export function buildPhysicalAvatarCarouselForStudentView(
       ariaPrev: t("dashboardCarouselPrev"),
       ariaNext: t("dashboardCarouselNext"),
       studentAvatarCaption,
+      studentAvatarCaptionShort: hasAnthro
+        ? t("perfAvatarCaptionShortPersonalized")
+        : t("perfAvatarCaptionShortGeneric"),
+      humanoid3dFootnoteShort: t("perfHumanoid3dFootnoteShort"),
+      humanoid3dFootnoteDetail: t("perfHumanoid3dFootnoteDetail"),
+      infoTipAriaSilhouette: t("perfInfoTipAriaSilhouette"),
+      infoTipAriaHumanoid3d: t("perfInfoTipAriaHumanoid3d"),
     },
   };
 }

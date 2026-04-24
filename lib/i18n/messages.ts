@@ -196,6 +196,13 @@ export const messages = {
     perfCarouselSlideBodyAnamnesis: "Anamnese na ficha — silhueta genérica (2.º painel)",
     perfAvatarAnamnesisNoAnthroCaption:
       "A ficha de anamnese e avaliação foi registada a {date}. A silhueta personalizada precisa de pelo menos duas circunferências na secção 6.4 da ficha; até lá vês uma figura de referência. Consulta todos os dados em «Ficha física» no menu.",
+    perfAvatarCaptionShortPersonalized: "Silhueta ilustrativa a partir da ficha (não clínica).",
+    perfAvatarCaptionShortGeneric: "Silhueta de referência (ilustrativa, não clínica).",
+    perfHumanoid3dFootnoteShort: "Modelo 3D ilustrativo (GLB ou manequim).",
+    perfHumanoid3dFootnoteDetail:
+      "Modelo 3D a partir de ficheiro base (GLB) ajustado às tuas medidas; se não existir GLB, mostra-se o manequim procedural. Ilustrativo, não clínico.",
+    perfInfoTipAriaSilhouette: "Texto completo sobre a silhueta ilustrativa",
+    perfInfoTipAriaHumanoid3d: "Texto completo sobre o modelo 3D",
     perfLinkFullPhysicalFicha: "Ver ficha completa (anamnese e avaliação)",
     fichaFisicaEmptyTitle: "Ainda não tens ficha registada",
     fichaFisicaEmptyBody:
@@ -864,6 +871,13 @@ export const messages = {
     perfCarouselSlideBodyAnamnesis: "Health form on file — generic silhouette (2nd panel)",
     perfAvatarAnamnesisNoAnthroCaption:
       "Your health and physical assessment form was saved on {date}. A personalized silhouette needs at least two circumference values in section 6.4; until then you see a reference figure. Open the full record under «Physical assessment» in the menu.",
+    perfAvatarCaptionShortPersonalized: "Illustrative silhouette from your form (not clinical).",
+    perfAvatarCaptionShortGeneric: "Reference silhouette (illustrative, not clinical).",
+    perfHumanoid3dFootnoteShort: "Illustrative 3D model (GLB or procedural mannequin).",
+    perfHumanoid3dFootnoteDetail:
+      "3D model from a base GLB file scaled to your measurements; if the GLB is missing, a procedural mannequin is shown. Illustrative, not clinical.",
+    perfInfoTipAriaSilhouette: "Full text about the illustrative silhouette",
+    perfInfoTipAriaHumanoid3d: "Full text about the 3D model",
     perfLinkFullPhysicalFicha: "View full form (health & physical assessment)",
     fichaFisicaEmptyTitle: "No assessment saved yet",
     fichaFisicaEmptyBody:

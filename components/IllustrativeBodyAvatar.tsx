@@ -7,7 +7,9 @@ import { AvatarPoseTagSelector } from "@/components/avatar/AvatarPoseTagSelector
 import { buildAvatarPoseLayout } from "@/components/avatar/build-avatar-layout";
 import { TechnicalRigSvg } from "@/components/avatar/TechnicalRigSvg";
 import { mapFormDataToAvatarMeasurements, type Modality, type PoseTag } from "@/components/avatar/avatar-utils";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
+import { humanoidHintFromFormVariant } from "@/lib/humanoid-gltf-scene";
 
 const Humanoid3DPanelLazy = dynamic(
   () => import("@/components/humanoid-3d/Humanoid3DPanel").then((m) => ({ default: m.Humanoid3DPanel })),
@@ -48,6 +50,14 @@ type Props = {
    * Usar só em `/dashboard/performance` e performance do coach no aluno.
    */
   allowLazyHumanoid3d?: boolean;
+  /** `tooltip`: linha curta + ícone com texto completo (ex.: carrossel de performance). */
+  explainCaption?: "inline" | "tooltip";
+  /** Obrigatório com `explainCaption="tooltip"` — texto visível antes do «i». */
+  captionSummary?: string | null;
+  /** Nota curta + detalhe sob o viewport 3D (i18n); só quando `allowLazyHumanoid3d`. */
+  humanoidFootnote?: { short: string; detail: string; infoAria: string } | null;
+  /** `aria-label` do «i» da legenda principal em modo tooltip. */
+  silhouetteInfoAria?: string | null;
 };
 
 /**
@@ -64,6 +74,10 @@ export function IllustrativeBodyAvatar({
   showPoseTags = false,
   defaultBodyView = "technical",
   allowLazyHumanoid3d = false,
+  explainCaption = "inline",
+  captionSummary = null,
+  humanoidFootnote = null,
+  silhouetteInfoAria = null,
 }: Props) {
   /** Por defeito «estrela» (braços abertos + pernas mais abertas); «Guarda» mantém a pose típica da modalidade. */
   const [poseTag, setPoseTag] = useState<PoseTag>("star");
@@ -107,11 +121,28 @@ export function IllustrativeBodyAvatar({
           (assessedAtLabel ? ` Ficha: ${assessedAtLabel}.` : "")
       : defaultCaption) + technicalExtra;
 
+  const gltfBodyHint = humanoidHintFromFormVariant(fd.humanoid3dBodyVariant);
+  const captionTooltipMode = explainCaption === "tooltip" && Boolean(captionSummary?.trim());
+
   return (
     <div className={className}>
-      <p className="text-text-secondary" style={{ fontSize: "clamp(11px, 2.8vw, 12px)", margin: "0 0 8px 0", lineHeight: 1.45 }}>
-        {caption}
-      </p>
+      {captionTooltipMode ? (
+        <div
+          className="flex items-start gap-1.5"
+          style={{ margin: "0 0 8px 0", fontSize: "clamp(11px, 2.8vw, 12px)", lineHeight: 1.45 }}
+        >
+          <p className="text-text-secondary m-0 flex-1 min-w-0">{captionSummary}</p>
+          <InlineInfoTip
+            detail={caption}
+            ariaLabel={silhouetteInfoAria?.trim() || "Sobre esta figura ilustrativa"}
+            className="shrink-0"
+          />
+        </div>
+      ) : (
+        <p className="text-text-secondary" style={{ fontSize: "clamp(11px, 2.8vw, 12px)", margin: "0 0 8px 0", lineHeight: 1.45 }}>
+          {caption}
+        </p>
+      )}
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {showPoseTags ? <AvatarPoseTagSelector value={poseTag} onChange={setPoseTag} /> : null}
         <div
@@ -160,7 +191,13 @@ export function IllustrativeBodyAvatar({
         </div>
       </div>
       {bodyView === "3d" && allowLazyHumanoid3d ? (
-        <Humanoid3DPanelLazy scales={scales} pose={pose} className="max-w-[min(220px,88vw)]" />
+        <Humanoid3DPanelLazy
+          scales={scales}
+          pose={pose}
+          className="max-w-[min(220px,88vw)]"
+          gltfBodyHint={gltfBodyHint}
+          footnote={humanoidFootnote}
+        />
       ) : bodyView === "technical" ? (
         <TechnicalRigSvg scales={scales} pose={pose} className="max-w-[min(220px,88vw)]" />
       ) : (

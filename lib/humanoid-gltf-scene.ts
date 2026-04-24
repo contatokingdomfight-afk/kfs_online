@@ -95,36 +95,118 @@ function meshTriangleCount(mesh: THREE.Mesh): number {
   return Math.max(0, Math.floor(n / 3));
 }
 
+export type HumanoidGltfBodyHint = "auto" | "female" | "male";
+
+/** Valor opcional em `PhysicalAssessmentFormData.humanoid3dBodyVariant`. */
+export function humanoidHintFromFormVariant(v: unknown): HumanoidGltfBodyHint {
+  if (v === "FEMALE") return "female";
+  if (v === "MALE") return "male";
+  return "auto";
+}
+
+function readEnvBodyHint(): HumanoidGltfBodyHint {
+  if (typeof process === "undefined") return "auto";
+  const v = process.env.NEXT_PUBLIC_HUMANOID_BODY_HINT?.trim().toLowerCase();
+  if (v === "female" || v === "f") return "female";
+  if (v === "male" || v === "m") return "male";
+  return "auto";
+}
+
+function collectHierarchyNames(obj: THREE.Object3D): string {
+  const parts: string[] = [];
+  let o: THREE.Object3D | null = obj;
+  while (o) {
+    if (o.name?.trim()) parts.push(o.name.toLowerCase());
+    o = o.parent;
+  }
+  return parts.join(" ");
+}
+
+function nameFemaleScore(s: string): number {
+  const t = s.toLowerCase();
+  if (t.includes("female") || t.includes("woman") || t.includes("mulher") || t.includes("girl")) return 4;
+  if ((t.includes("male") && !t.includes("female")) || t.includes("homem")) return -2;
+  return 0;
+}
+
+function nameMaleScore(s: string): number {
+  const t = s.toLowerCase();
+  if ((t.includes("male") && !t.includes("female")) || t.includes("homem") || /\bman\b/.test(t)) return 4;
+  if (t.includes("female") || t.includes("woman") || t.includes("mulher")) return -2;
+  return 0;
+}
+
+function nameHintsForMesh(mesh: THREE.SkinnedMesh): { f: number; m: number } {
+  const s = collectHierarchyNames(mesh);
+  return { f: nameFemaleScore(s), m: nameMaleScore(s) };
+}
+
+type SkelGroup = {
+  id: string;
+  meshes: THREE.SkinnedMesh[];
+  tris: number;
+  f: number;
+  m: number;
+};
+
+function comparePrimarySkelGroup(a: SkelGroup, b: SkelGroup, hint: HumanoidGltfBodyHint, envHint: HumanoidGltfBodyHint): number {
+  const effective: HumanoidGltfBodyHint =
+    hint !== "auto" ? hint : envHint !== "auto" ? envHint : "auto";
+
+  if (effective === "female") {
+    const d = b.f - b.m - (a.f - a.m);
+    if (d !== 0) return d;
+    if (b.tris !== a.tris) return b.tris - a.tris;
+    return a.id.localeCompare(b.id);
+  }
+  if (effective === "male") {
+    const d = b.m - b.f - (a.m - a.f);
+    if (d !== 0) return d;
+    if (b.tris !== a.tris) return b.tris - a.tris;
+    return a.id.localeCompare(b.id);
+  }
+
+  const maxTr = Math.max(a.tris, b.tris, 1);
+  const triDiff = b.tris - a.tris;
+  if (Math.abs(triDiff) > maxTr * 0.06) return triDiff;
+
+  const nameSignal = Math.max(b.f, b.m) - Math.max(a.f, a.m);
+  if (nameSignal !== 0) return nameSignal;
+
+  if (triDiff !== 0) return triDiff;
+  return a.id.localeCompare(b.id);
+}
+
 /**
- * Packs com **dois personagens** (dois rigs distintos): após `SkeletonUtils.clone` cada `SkinnedMesh`
- * tem o seu próprio `Skeleton`, por isso **não** podemos esconder «o segundo por triângulos» — isso
- * cortava cabeça/mãos quando eram malhas separadas do **mesmo** boneco.
- * Aqui só escondemos grupos que claramente são um **segundo corpo** (outro esqueleto com muito menos geometria).
+ * GLBs com **vários rigs** (ex.: pack masculino + feminino): mantém **um** esqueleto visível.
+ * `hint` vem da ficha (`humanoid3dBodyVariant`); `NEXT_PUBLIC_HUMANOID_BODY_HINT` reforça o modo `auto`.
  */
-function hideSecondaryCharacterRigsIfObvious(root: THREE.Object3D): void {
+function selectPrimarySkinnedGroupAndHideOthers(root: THREE.Object3D, hint: HumanoidGltfBodyHint): void {
   const skinned: THREE.SkinnedMesh[] = [];
   root.traverse((o) => {
     if (o instanceof THREE.SkinnedMesh) skinned.push(o);
   });
   if (skinned.length <= 1) return;
 
-  const bySkel = new Map<string, { meshes: THREE.SkinnedMesh[]; tris: number }>();
-  for (const m of skinned) {
-    const id = m.skeleton?.uuid ?? m.uuid;
-    const g = bySkel.get(id) ?? { meshes: [], tris: 0 };
-    g.meshes.push(m);
-    g.tris += meshTriangleCount(m);
+  const bySkel = new Map<string, SkelGroup>();
+  for (const mesh of skinned) {
+    const id = mesh.skeleton?.uuid ?? mesh.uuid;
+    const g = bySkel.get(id) ?? { id, meshes: [], tris: 0, f: 0, m: 0 };
+    g.meshes.push(mesh);
+    g.tris += meshTriangleCount(mesh);
+    const h = nameHintsForMesh(mesh);
+    g.f = Math.max(g.f, h.f);
+    g.m = Math.max(g.m, h.m);
     bySkel.set(id, g);
   }
   if (bySkel.size <= 1) return;
 
-  const groups = [...bySkel.values()].sort((a, b) => b.tris - a.tris);
-  const primary = groups[0]!;
-  const secondary = groups[1]!;
-  /** Só esconder o «extra» se for claramente um segundo rig (menos de ~18 % dos triângulos do principal). */
-  if (secondary.tris >= primary.tris * 0.18) return;
-  for (const m of secondary.meshes) {
-    m.visible = false;
+  const envHint = readEnvBodyHint();
+  const groups = [...bySkel.values()].sort((a, b) => comparePrimarySkelGroup(a, b, hint, envHint));
+  const keepId = groups[0]!.id;
+  for (const g of groups) {
+    if (g.id === keepId) continue;
+    for (const m of g.meshes) m.visible = false;
   }
 }
 
@@ -323,7 +405,8 @@ function mountGltfViewport(container: HTMLElement, modelRoot: THREE.Object3D, jo
 export async function mountHumanoidGltfOrProcedural(
   container: HTMLElement,
   joints: AvatarRigJoints2D,
-  modelUrl?: string
+  modelUrl?: string,
+  bodyHint: HumanoidGltfBodyHint = "auto"
 ): Promise<HumanoidMountHandle> {
   const url =
     modelUrl?.trim() ||
@@ -336,7 +419,7 @@ export async function mountHumanoidGltfOrProcedural(
     });
     /** `Object3D.clone(true)` não religa ossos em todos os GLBs; Mixamo / rigged dependem disto. */
     const model = cloneSkinnedHierarchy(gltf.scene);
-    hideSecondaryCharacterRigsIfObvious(model);
+    selectPrimarySkinnedGroupAndHideOthers(model, bodyHint);
     prepareImportedModel(model);
     applySkinnedBindPose(model);
     fitGltfModel(model, joints);

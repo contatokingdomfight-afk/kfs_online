@@ -36,6 +36,11 @@ export type PhysicalAssessmentFormData = {
   /** 6.3 Postural */
   posturalAssessment?: string[];
   posturalNotes?: string;
+  /**
+   * Opcional: num GLB com dois personagens (ex.: pack M/F), qual malha mostrar na vista 3D.
+   * Quando omitido, usa `NEXT_PUBLIC_HUMANOID_BODY_HINT` ou heurística por nomes / triângulos.
+   */
+  humanoid3dBodyVariant?: "FEMALE" | "MALE" | null;
   /** 6.4 Antropometria (opcional; cm salvo como número inteiro) — base para avatar / evolução */
   /** Comprimento do braço: ombro até ponta do dedo médio (ou extremo da mão), por lado */
   lenArmShoulderFingertipLeftCm?: number | null;

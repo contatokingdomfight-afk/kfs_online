@@ -16,6 +16,12 @@ export type PerformanceAvatarCarouselLabels = {
   ariaPrev: string;
   ariaNext: string;
   studentAvatarCaption: string;
+  /** Linha curta visível; texto longo fica no tooltip (ícone «i»). */
+  studentAvatarCaptionShort: string;
+  humanoid3dFootnoteShort: string;
+  humanoid3dFootnoteDetail: string;
+  infoTipAriaSilhouette: string;
+  infoTipAriaHumanoid3d: string;
 };
 
 const LABEL_DEFAULTS: PerformanceAvatarCarouselLabels = {
@@ -26,6 +32,11 @@ const LABEL_DEFAULTS: PerformanceAvatarCarouselLabels = {
   ariaPrev: "Anterior",
   ariaNext: "Seguinte",
   studentAvatarCaption: "",
+  studentAvatarCaptionShort: "",
+  humanoid3dFootnoteShort: "",
+  humanoid3dFootnoteDetail: "",
+  infoTipAriaSilhouette: "Texto completo sobre a silhueta ilustrativa",
+  infoTipAriaHumanoid3d: "Texto completo sobre o modelo 3D",
 };
 
 function mergeLabels(labels?: PerformanceAvatarCarouselLabels | null): PerformanceAvatarCarouselLabels {
@@ -188,6 +199,18 @@ export function PerformanceRadarAvatarCarousel({
                 bodyScaleFromProfile={profileBodyMetrics}
                 showPoseTags
                 allowLazyHumanoid3d={allowLazyHumanoid3d}
+                explainCaption={L.studentAvatarCaptionShort.trim() ? "tooltip" : "inline"}
+                captionSummary={L.studentAvatarCaptionShort.trim() || null}
+                humanoidFootnote={
+                  allowLazyHumanoid3d && L.humanoid3dFootnoteShort.trim()
+                    ? {
+                        short: L.humanoid3dFootnoteShort,
+                        detail: L.humanoid3dFootnoteDetail,
+                        infoAria: L.infoTipAriaHumanoid3d,
+                      }
+                    : null
+                }
+                silhouetteInfoAria={L.infoTipAriaSilhouette.trim() || null}
                 className="max-w-[min(220px,88vw)]"
               />
             </div>
