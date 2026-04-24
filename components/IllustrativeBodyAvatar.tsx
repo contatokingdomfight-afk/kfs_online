@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Avatar } from "@/components/avatar/Avatar";
 import { AvatarPoseTagSelector } from "@/components/avatar/AvatarPoseTagSelector";
+import { buildAvatarPoseLayout } from "@/components/avatar/build-avatar-layout";
+import { TechnicalRigSvg } from "@/components/avatar/TechnicalRigSvg";
 import { mapFormDataToAvatarMeasurements, type Modality, type PoseTag } from "@/components/avatar/avatar-utils";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 
@@ -24,6 +26,8 @@ type Props = {
   modality?: Modality;
   /** Mostra chips «Guarda» / «Estrela» por cima do SVG. */
   showPoseTags?: boolean;
+  /** Vista inicial: «technical» = diagrama ossos/malha; «illustration» = corpo suave + equipamento. */
+  defaultBodyView?: "illustration" | "technical";
 };
 
 /**
@@ -38,8 +42,10 @@ export function IllustrativeBodyAvatar({
   bodyScaleFromProfile = null,
   modality = "boxing",
   showPoseTags = false,
+  defaultBodyView = "technical",
 }: Props) {
   const [poseTag, setPoseTag] = useState<PoseTag>("auto");
+  const [bodyView, setBodyView] = useState<"illustration" | "technical">(defaultBodyView);
 
   const parsed = normalizePhysicalFormDataJson(formData);
   const fd = neutralReference ? (parsed ?? {}) : parsed;
@@ -50,28 +56,72 @@ export function IllustrativeBodyAvatar({
     ? mapFormDataToAvatarMeasurements({}, bodyScaleFromProfile)
     : mapFormDataToAvatarMeasurements(fd, bodyScaleFromProfile);
 
+  const { scales, pose } = useMemo(
+    () => buildAvatarPoseLayout(measurements, modality, poseTag),
+    [measurements, modality, poseTag]
+  );
+
   const defaultCaption =
     "Figura meramente ilustrativa a partir das circunferências registadas (não é avaliação médica nem imagem do aluno)." +
     (assessedAtLabel ? ` Dados: ${assessedAtLabel}.` : "");
+
+  const technicalExtra =
+    bodyView === "technical" && !neutralReference
+      ? " Vista em diagrama (malha suave + ossos + guias) proporcional aos dados da ficha; ilustrativo, não é modelo 3D nem exame clínico."
+      : bodyView === "technical" && neutralReference
+        ? " Diagrama de referência; com mais medidas na ficha, as proporções aproximam-se ao teu perfil."
+        : "";
 
   const caption =
     captionOverride?.trim() ||
     (neutralReference
       ? "Silhueta de referência genérica (preenche pelo menos duas circunferências na ficha para uma figura aproximada às tuas medidas)." +
           (assessedAtLabel ? ` Ficha: ${assessedAtLabel}.` : "")
-      : defaultCaption);
+      : defaultCaption) + technicalExtra;
 
   return (
     <div className={className}>
       <p className="text-text-secondary" style={{ fontSize: "clamp(11px, 2.8vw, 12px)", margin: "0 0 8px 0", lineHeight: 1.45 }}>
         {caption}
       </p>
-      {showPoseTags ? (
-        <div className="mb-2">
-          <AvatarPoseTagSelector value={poseTag} onChange={setPoseTag} />
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        {showPoseTags ? <AvatarPoseTagSelector value={poseTag} onChange={setPoseTag} /> : null}
+        <div
+          className="inline-flex rounded-lg border border-[var(--border)] overflow-hidden text-xs shrink-0"
+          role="group"
+          aria-label="Tipo de figura"
+        >
+          <button
+            type="button"
+            className={`px-2.5 py-1.5 font-medium transition-colors ${
+              bodyView === "technical"
+                ? "bg-[var(--primary)] text-[var(--primary-foreground,var(--bg))]"
+                : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]/40"
+            }`}
+            aria-pressed={bodyView === "technical"}
+            onClick={() => setBodyView("technical")}
+          >
+            Diagrama
+          </button>
+          <button
+            type="button"
+            className={`px-2.5 py-1.5 font-medium transition-colors ${
+              bodyView === "illustration"
+                ? "bg-[var(--primary)] text-[var(--primary-foreground,var(--bg))]"
+                : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]/40"
+            }`}
+            aria-pressed={bodyView === "illustration"}
+            onClick={() => setBodyView("illustration")}
+          >
+            Ilustração
+          </button>
         </div>
-      ) : null}
-      <Avatar modality={modality} measurements={measurements} poseTag={poseTag} />
+      </div>
+      {bodyView === "technical" ? (
+        <TechnicalRigSvg scales={scales} pose={pose} className="max-w-[min(220px,88vw)]" />
+      ) : (
+        <Avatar modality={modality} measurements={measurements} poseTag={poseTag} className="max-w-[min(220px,88vw)]" />
+      )}
     </div>
   );
 }

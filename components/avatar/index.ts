@@ -1,3 +1,5 @@
+export { TechnicalRigSvg } from "./TechnicalRigSvg";
+export { buildAvatarPoseLayout } from "./build-avatar-layout";
 export { Avatar } from "./Avatar";
 export { Body } from "./Body";
 export { Equipment } from "./Equipment";

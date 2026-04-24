@@ -1,10 +1,11 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { buildBodyScaleFactors, type AvatarProps } from "./avatar-utils";
+import { type AvatarProps } from "./avatar-utils";
+import { buildAvatarPoseLayout } from "./build-avatar-layout";
 import { Body } from "./Body";
 import { Equipment } from "./Equipment";
-import { getPoseLayout, getWorldHandPositions, Pose } from "./Pose";
+import { getWorldHandPositions, Pose } from "./Pose";
 
 const ROOT_STYLE: CSSProperties = {
   ["--avatar-fill" as string]: "color-mix(in srgb, var(--text-secondary) 86%, transparent)",
@@ -16,14 +17,7 @@ const ROOT_STYLE: CSSProperties = {
  * Avatar SVG modular: corpo curvo, pose por modalidade, equipamento (luvas / wraps).
  */
 export function Avatar({ modality = "boxing", measurements, className, poseTag = "auto" }: AvatarProps) {
-  const scales = buildBodyScaleFactors(measurements);
-  const armLenBase = 58 * scales.arm * scales.bulk;
-  const poseCtx = {
-    cx: 100,
-    yHip: 188,
-    halfHipW: 40 * scales.hip * scales.bulk,
-  };
-  const pose = getPoseLayout(modality, armLenBase, poseTag, poseCtx);
+  const { scales, pose } = buildAvatarPoseLayout(measurements, modality, poseTag);
   const hands = getWorldHandPositions(pose);
 
   return (

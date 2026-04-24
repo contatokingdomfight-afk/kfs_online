@@ -31,7 +31,8 @@ export type PoseLayout = {
 
 const DEG = Math.PI / 180;
 
-function rotatePoint(
+/** Rotação 2D (graus) em torno de um pivô — partilhado com o diagrama técnico de rig. */
+export function rotatePoint(
   x: number,
   y: number,
   cx: number,
