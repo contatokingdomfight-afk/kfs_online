@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/avatar/Avatar";
 import { AvatarPoseTagSelector } from "@/components/avatar/AvatarPoseTagSelector";
 import { buildAvatarPoseLayout } from "@/components/avatar/build-avatar-layout";
-import { TechnicalRigSvg } from "@/components/avatar/TechnicalRigSvg";
 import { mapFormDataToAvatarMeasurements, type Modality, type PoseTag } from "@/components/avatar/avatar-utils";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
@@ -23,7 +22,7 @@ const Humanoid3DPanelLazy = dynamic(
   }
 );
 
-type BodyView = "illustration" | "technical" | "3d";
+type BodyView = "illustration" | "3d";
 
 type Props = {
   formData: unknown;
@@ -43,8 +42,8 @@ type Props = {
   modality?: Modality;
   /** Mostra chips «Guarda» / «Estrela» por cima do SVG. */
   showPoseTags?: boolean;
-  /** Vista inicial: «technical» = diagrama ossos/malha; «illustration» = corpo suave + equipamento. */
-  defaultBodyView?: "illustration" | "technical";
+  /** Vista inicial quando existe opção 3D: «illustration» ou «3d». */
+  defaultBodyView?: BodyView;
   /**
    * Quando true, mostra a opção «3D» (WebGL + Three.js). O chunk só é descarregado ao escolher 3D.
    * Usar só em `/dashboard/performance` e performance do coach no aluno.
@@ -74,7 +73,7 @@ export function IllustrativeBodyAvatar({
   bodyScaleFromProfile = null,
   modality = "boxing",
   showPoseTags = false,
-  defaultBodyView = "technical",
+  defaultBodyView = "illustration",
   allowLazyHumanoid3d = false,
   explainCaption = "inline",
   captionSummary = null,
@@ -87,7 +86,7 @@ export function IllustrativeBodyAvatar({
   const [bodyView, setBodyView] = useState<BodyView>(defaultBodyView);
 
   useEffect(() => {
-    if (!allowLazyHumanoid3d && bodyView === "3d") setBodyView("technical");
+    if (!allowLazyHumanoid3d && bodyView === "3d") setBodyView("illustration");
   }, [allowLazyHumanoid3d, bodyView]);
 
   const parsed = normalizePhysicalFormDataJson(formData);
@@ -111,11 +110,7 @@ export function IllustrativeBodyAvatar({
   const technicalExtra =
     bodyView === "3d" && allowLazyHumanoid3d
       ? " Vista 3D (WebGL + Three.js): GLB `/models/human-base-male.glb` ou `human-base-female.glb` (ou URL em env) ajustado às medidas; fallback `human-base.glb` e manequim procedural. O chunk só é descarregado ao escolheres «3D». Ilustrativo, não clínico."
-      : bodyView === "technical" && !neutralReference
-        ? " Vista em diagrama (malha suave + ossos + guias) proporcional aos dados da ficha; ilustrativo, não é modelo 3D nem exame clínico."
-        : bodyView === "technical" && neutralReference
-          ? " Diagrama de referência; com mais medidas na ficha, as proporções aproximam-se ao teu perfil."
-          : "";
+      : "";
 
   const caption =
     captionOverride?.trim() ||
@@ -148,36 +143,24 @@ export function IllustrativeBodyAvatar({
       )}
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {showPoseTags ? <AvatarPoseTagSelector value={poseTag} onChange={setPoseTag} /> : null}
-        <div
-          className="inline-flex rounded-lg border border-[var(--border)] overflow-hidden text-xs shrink-0"
-          role="group"
-          aria-label="Tipo de figura"
-        >
-          <button
-            type="button"
-            className={`px-2.5 py-1.5 font-medium transition-colors ${
-              bodyView === "technical"
-                ? "bg-[var(--primary)] text-[var(--primary-foreground,var(--bg))]"
-                : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]/40"
-            }`}
-            aria-pressed={bodyView === "technical"}
-            onClick={() => setBodyView("technical")}
+        {allowLazyHumanoid3d ? (
+          <div
+            className="inline-flex rounded-lg border border-[var(--border)] overflow-hidden text-xs shrink-0"
+            role="group"
+            aria-label="Tipo de figura"
           >
-            Diagrama
-          </button>
-          <button
-            type="button"
-            className={`px-2.5 py-1.5 font-medium transition-colors ${
-              bodyView === "illustration"
-                ? "bg-[var(--primary)] text-[var(--primary-foreground,var(--bg))]"
-                : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]/40"
-            }`}
-            aria-pressed={bodyView === "illustration"}
-            onClick={() => setBodyView("illustration")}
-          >
-            Ilustração
-          </button>
-          {allowLazyHumanoid3d ? (
+            <button
+              type="button"
+              className={`px-2.5 py-1.5 font-medium transition-colors ${
+                bodyView === "illustration"
+                  ? "bg-[var(--primary)] text-[var(--primary-foreground,var(--bg))]"
+                  : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]/40"
+              }`}
+              aria-pressed={bodyView === "illustration"}
+              onClick={() => setBodyView("illustration")}
+            >
+              Ilustração
+            </button>
             <button
               type="button"
               className={`px-2.5 py-1.5 font-medium transition-colors ${
@@ -190,8 +173,8 @@ export function IllustrativeBodyAvatar({
             >
               3D
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
       {bodyView === "3d" && allowLazyHumanoid3d ? (
         <Humanoid3DPanelLazy
@@ -202,8 +185,6 @@ export function IllustrativeBodyAvatar({
           footnote={humanoidFootnote}
           orbitHint={allowLazyHumanoid3d ? humanoid3dOrbitHint : null}
         />
-      ) : bodyView === "technical" ? (
-        <TechnicalRigSvg scales={scales} pose={pose} className="max-w-[min(220px,88vw)]" />
       ) : (
         <Avatar modality={modality} measurements={measurements} poseTag={poseTag} className="max-w-[min(220px,88vw)]" />
       )}

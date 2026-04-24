@@ -172,6 +172,15 @@ export function PhysicalAssessmentReadOnlyView({
       {section(
         L ? "6. Avaliação física" : "6. Physical evaluation",
         <>
+          {d.heightCm != null || d.weightKg != null ? (
+            <>
+              <p className="text-xs font-semibold text-[var(--text-secondary)] m-0 mt-1">
+                {L ? "Altura e peso (nesta avaliação)" : "Height & weight (this assessment)"}
+              </p>
+              {line(L ? "Altura (cm)" : "Height (cm)", d.heightCm ?? "—")}
+              {line(L ? "Peso (kg)" : "Weight (kg)", d.weightKg ?? "—")}
+            </>
+          ) : null}
           <p className="text-xs font-semibold text-[var(--text-secondary)] m-0 mt-1">
             {L ? "6.1 Sinais vitais" : "6.1 Vitals"}
           </p>

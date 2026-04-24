@@ -26,6 +26,12 @@ export type PhysicalAssessmentFormData = {
   previousMartialArts?: boolean;
   previousModality?: string;
   previousPracticeTime?: string;
+  /**
+   * Altura (cm) e peso (kg) na data desta avaliação — opcionais.
+   * No formulário do coach sugerem-se a partir do perfil do aluno; o professor pode corrigir.
+   */
+  heightCm?: number | null;
+  weightKg?: number | null;
   /** 6.1 Sinais vitais */
   heartRateRest?: number | null;
   bloodPressure?: string | null;

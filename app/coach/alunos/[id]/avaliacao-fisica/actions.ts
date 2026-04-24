@@ -37,6 +37,24 @@ function parseShoulderBreadthCm(formData: FormData, name: string): number | null
   return n;
 }
 
+/** Altura na ficha (cm): vazio → null; fora do intervalo → null. */
+function parseHeightCmField(formData: FormData, name: string): number | null {
+  const raw = (formData.get(name) as string)?.trim();
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  if (Number.isNaN(n) || n < 100 || n > 250) return null;
+  return n;
+}
+
+/** Peso na ficha (kg): vazio → null; fora do intervalo → null. */
+function parseWeightKgField(formData: FormData, name: string): number | null {
+  const raw = (formData.get(name) as string)?.trim();
+  if (!raw) return null;
+  const n = parseFloat(raw.replace(",", "."));
+  if (Number.isNaN(n) || n < 20 || n > 300) return null;
+  return Math.round(n * 10) / 10;
+}
+
 export type SaveAssessmentResult = { error?: string; success?: boolean };
 
 export async function savePhysicalAssessment(
@@ -84,6 +102,8 @@ export async function savePhysicalAssessment(
     previousMartialArts: formData.get("previousMartialArts") === "true",
     previousModality: (formData.get("previousModality") as string)?.trim() || undefined,
     previousPracticeTime: (formData.get("previousPracticeTime") as string)?.trim() || undefined,
+    heightCm: parseHeightCmField(formData, "heightCm"),
+    weightKg: parseWeightKgField(formData, "weightKg"),
     heartRateRest: parseInt(String(formData.get("heartRateRest")), 10) || null,
     bloodPressure: (formData.get("bloodPressure") as string)?.trim() || null,
     saturationO2: (formData.get("saturationO2") as string)?.trim() || null,

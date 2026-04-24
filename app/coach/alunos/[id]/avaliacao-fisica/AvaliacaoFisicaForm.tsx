@@ -267,6 +267,40 @@ export function AvaliacaoFisicaForm({
       {/* 6. Avaliação física */}
       <fieldset className="rounded-xl bg-bg-secondary border border-border p-4 md:p-6">
         <legend className="text-base font-semibold text-text-primary">6. Avaliação física</legend>
+        <p className="text-sm text-text-secondary mt-2 mb-2 font-medium">Altura e peso (opcional)</p>
+        <p className="text-xs text-text-secondary mb-3 max-w-3xl leading-relaxed">
+          Sugestão a partir do perfil do aluno (Medidas corporais em «Perfil»). Podes corrigir aqui o valor
+          medido ou registado nesta avaliação; o que guardares fica nesta ficha e é usado na silhueta
+          ilustrativa quando existir.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mb-6">
+          <label className="flex flex-col gap-1.5 text-sm min-w-0">
+            <span>Altura (cm)</span>
+            <input
+              type="number"
+              name="heightCm"
+              min={100}
+              max={250}
+              step={1}
+              defaultValue={studentHeight ?? ""}
+              placeholder="ex.: 172"
+              className="input w-full max-w-[10rem]"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm min-w-0">
+            <span>Peso (kg)</span>
+            <input
+              type="number"
+              name="weightKg"
+              min={20}
+              max={300}
+              step={0.1}
+              defaultValue={studentWeight ?? ""}
+              placeholder="ex.: 70,5"
+              className="input w-full max-w-[10rem]"
+            />
+          </label>
+        </div>
         <p className="text-sm text-text-secondary mt-2 mb-2 font-medium">6.1 Sinais vitais (opcional)</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
           <label className="flex flex-col gap-1.5 text-sm min-w-0">

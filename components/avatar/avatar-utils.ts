@@ -148,7 +148,17 @@ export function mapFormDataToAvatarMeasurements(
     calf: avgPair(fd.circCalfLeftCm, fd.circCalfRightCm),
     arm: armCirc,
     legInseam: avgPair(fd.lenLegInseamLeftCm, fd.lenLegInseamRightCm),
-    height: profile?.heightCm != null ? Number(profile.heightCm) : undefined,
-    weight: profile?.weightKg != null ? Number(profile.weightKg) : undefined,
+    height:
+      typeof fd.heightCm === "number" && fd.heightCm > 0 && Number.isFinite(fd.heightCm)
+        ? fd.heightCm
+        : profile?.heightCm != null
+          ? Number(profile.heightCm)
+          : undefined,
+    weight:
+      typeof fd.weightKg === "number" && fd.weightKg > 0 && Number.isFinite(fd.weightKg)
+        ? fd.weightKg
+        : profile?.weightKg != null
+          ? Number(profile.weightKg)
+          : undefined,
   };
 }
