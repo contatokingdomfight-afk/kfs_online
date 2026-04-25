@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
+import { getTranslations } from "@/lib/i18n";
 import { storedFormDataHasSilhouette } from "@/lib/illustrative-body-silhouette";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 
 type Props = { studentId: string };
 
 export async function PhysicalAssessmentSummary({ studentId }: Props) {
+  const locale = await getLocaleFromCookies();
+  const t = getTranslations(locale as "pt" | "en");
   const result = getAdminClientOrNull();
   if (!result.client) {
     return (
@@ -86,6 +90,7 @@ export async function PhysicalAssessmentSummary({ studentId }: Props) {
               <IllustrativeBodyAvatar
                 formData={lastAssessment.formData}
                 assessedAtLabel={String(lastAssessment.assessedAt).slice(0, 10)}
+                figureAriaLabel={t("perfAvatarFigureAria")}
               />
             </div>
           )}

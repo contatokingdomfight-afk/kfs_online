@@ -47,6 +47,11 @@ function isStripeCheckoutApi(pathname: string) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  /** Playground interno de silhueta: nunca em produção na Vercel. */
+  if (pathname.startsWith("/dev/") && process.env.VERCEL_ENV === "production") {
+    return new NextResponse(null, { status: 404 });
+  }
+
   /**
    * OAuth (Google): se a Site URL no Supabase for só `http://localhost:3000` (ou raiz em prod.),
    * o utilizador volta a `/?code=...` em vez de `/auth/callback?code=...`.

@@ -90,13 +90,16 @@ Função exportada: **`formDataProfileToAvatarScales`** em `lib/illustrative-bod
 Partial<PhysicalAssessmentFormData> + perfil opcional (altura/peso)
   → mapFormDataToAvatarMeasurements
   → buildBodyScaleFactors
-  → { measurements, scales }
+  → computeGlobalBodyScale (altura/peso nas medidas)
+  → { measurements, scales, globalEnvelopeScale }
 ```
+
+`globalEnvelopeScale` expõe o helper do **motor B** para comparação e ferramentas (ex. playground `/dev/silhueta-2d`); o desenho do **motor A** no produto continua a basear-se em `scales` por região (evitar duplicar escala de altura no mesmo eixo).
 
 `IllustrativeBodyAvatar` obtém `measurements` através deste pipeline (neutral: `fd` vazio + mesmo perfil).  
 `buildAvatarPoseLayout` continua a receber `measurements` e a devolver `pose` + as mesmas `scales`.
 
-Testes: `lib/illustrative-body-2d-pipeline.test.ts` (Vitest) — casos mínimo, neutro com perfil, ficha rica (clamps), `normalizePhysicalFormDataJson`.
+Testes: `lib/illustrative-body-2d-pipeline.test.ts` e `lib/illustrative-body-silhouette.test.ts` (Vitest) — casos mínimo, neutro com perfil, ficha rica (clamps), `normalizePhysicalFormDataJson`, `computeGlobalBodyScale`.
 
 ---
 
@@ -130,7 +133,7 @@ Testes: `lib/illustrative-body-2d-pipeline.test.ts` (Vitest) — casos mínimo, 
 3. **Performance** — sem ficha: referência + texto «sem ficha» (e variante **coach** na vista coach).
 4. **Anomalia** — plataforma com ficha mas `formData` vazio: mensagem de «detalhes não carregaram», não tratar como «sem ficha».
 5. **Contraste / zoom** — legenda legível em tema claro e escuro; largura não estoura em mobile estreito.
-6. **Leitor de ecrã** — região do carrossel com `aria-label`; figura com `role="img"` quando há etiqueta dedicada (performance).
+6. **Leitor de ecrã** — região do carrossel com `aria-label`; figura com `role="img"` quando há etiqueta dedicada (**performance**, **resumo avaliação física** do aluno, **ficha do atleta** coach — i18n `perfAvatarFigureAria`).
 
 ---
 
@@ -138,9 +141,14 @@ Testes: `lib/illustrative-body-2d-pipeline.test.ts` (Vitest) — casos mínimo, 
 
 | Ficheiro | Responsabilidade |
 |----------|------------------|
-| `lib/illustrative-body-2d-pipeline.ts` | Pipeline documentado ficha + perfil → escalas |
+| `lib/illustrative-body-2d-pipeline.ts` | Pipeline documentado ficha + perfil → escalas + `globalEnvelopeScale` |
 | `lib/illustrative-body-2d-pipeline.test.ts` | Vitest: antropometria mínima, clamps, JSON |
+| `lib/illustrative-body-silhouette.test.ts` | Vitest: `computeGlobalBodyScale` |
 | `lib/illustrative-body-silhouette.ts` | `normalizePhysicalFormDataJson`, `hasIllustrativeAnthropometry`, motor B, `computeGlobalBodyScale` |
+| `app/dev/silhueta-2d/*` | Playground dev: motor A vs B, JSON de exemplo (404 em `VERCEL_ENV=production`; `middleware` idem) |
+| `middleware.ts` | Bloqueio `/dev/*` em produção na Vercel |
+| `e2e/dev-silhouette.spec.ts` | Playwright (opcional): `npm run test:e2e` com app a correr |
+| `playwright.config.ts` | Configuração Playwright |
 | `components/avatar/avatar-utils.ts` | `mapFormDataToAvatarMeasurements`, `REF`, `scaleMeasurement`, `buildBodyScaleFactors`, `bulkFactor` |
 | `components/avatar/Body.tsx` | Paths do torso, pernas, braços |
 | `components/avatar/build-avatar-layout.ts` | `buildAvatarPoseLayout` |
@@ -157,3 +165,12 @@ Testes: `lib/illustrative-body-2d-pipeline.test.ts` (Vitest) — casos mínimo, 
 ## 11. Roadmap relacionado
 
 Ver **`ROADMAP_Plataforma_KFS.md`** § **2c** (antropometria, avatar MVP, privacidade, futuro «e se…» / metas).
+
+---
+
+## 12. Ferramentas opcionais (pós‑MVP deste doc)
+
+| Ferramenta | Uso |
+|------------|-----|
+| **`/dev/silhueta-2d`** | Comparação lado a lado motor A (`IllustrativeBodyAvatar`) vs motor B (`SilhouetteMotorBPreview`), edição de JSON, leitura de `globalEnvelopeScale` e `scales`. |
+| **`npm run test:e2e`** | Playwright: smoke na rota dev (requer `npm run dev` noutro terminal ou `PLAYWRIGHT_BASE_URL`; instalar browsers com `npx playwright install` na primeira vez). |

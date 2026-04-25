@@ -24,13 +24,15 @@ describe("hasIllustrativeAnthropometry", () => {
 
 describe("formDataProfileToAvatarScales", () => {
   it("neutro: escalas ~1 sem medidas na ficha mas com altura de perfil", () => {
-    const { measurements, scales } = formDataProfileToAvatarScales(
+    const { measurements, scales, globalEnvelopeScale } = formDataProfileToAvatarScales(
       {},
       { heightCm: 172, weightKg: 74 }
     );
     expect(measurements.height).toBe(172);
     expect(scales.height).toBeGreaterThanOrEqual(0.7);
     expect(scales.height).toBeLessThanOrEqual(1.31);
+    expect(globalEnvelopeScale).toBeGreaterThanOrEqual(0.86);
+    expect(globalEnvelopeScale).toBeLessThanOrEqual(1.14);
   });
 
   it("mínimo útil: duas circunferências alteram tórax/cintura em relação ao vazio", () => {
@@ -63,7 +65,9 @@ describe("formDataProfileToAvatarScales", () => {
       heightCm: 178,
       weightKg: 82,
     };
-    const { scales } = formDataProfileToAvatarScales(rich, null);
+    const { scales, globalEnvelopeScale } = formDataProfileToAvatarScales(rich, null);
+    expect(globalEnvelopeScale).toBeGreaterThanOrEqual(0.86);
+    expect(globalEnvelopeScale).toBeLessThanOrEqual(1.14);
     expect(scales.shoulder).toBeGreaterThanOrEqual(0.58);
     expect(scales.shoulder).toBeLessThanOrEqual(1.48);
     expect(scales.waist).toBeGreaterThanOrEqual(0.54);

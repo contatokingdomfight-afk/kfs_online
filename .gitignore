@@ -44,6 +44,11 @@ client_secret*.json
 
 .vercel
 
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+
 # Dumps de migração (hashes de password / dados sensíveis)
 scripts/tmp-legacy-auth-export.json
 scripts/tmp-mcp-*.json

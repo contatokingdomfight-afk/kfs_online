@@ -17,7 +17,9 @@ import { ComentariosAtleta } from "./ComentariosAtleta";
 import { PerformanceRadar } from "@/components/PerformanceRadarDynamic";
 import { AvaliacaoAtleta } from "./AvaliacaoAtleta";
 import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
+import { getTranslations } from "@/lib/i18n";
 import { storedFormDataHasSilhouette } from "@/lib/illustrative-body-silhouette";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 
 const LEVEL_LABEL: Record<string, string> = {
   INICIANTE: "Iniciante",
@@ -33,6 +35,8 @@ export default async function CoachAtletaPage({ params }: Props) {
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const { id: athleteId } = await params;
+  const locale = await getLocaleFromCookies();
+  const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
 
   const { data: athlete } = await supabase.from("Athlete").select("id, studentId, level, mainCoachId").eq("id", athleteId).single();
@@ -195,6 +199,7 @@ export default async function CoachAtletaPage({ params }: Props) {
               <IllustrativeBodyAvatar
                 formData={lastPhysicalAssessment.formData}
                 assessedAtLabel={String(lastPhysicalAssessment.assessedAt).slice(0, 10)}
+                figureAriaLabel={t("perfAvatarFigureAria")}
               />
             </div>
           )}

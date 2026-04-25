@@ -10,6 +10,7 @@ import {
   type AvatarMeasurements,
   type BodyScaleFactors,
 } from "@/components/avatar/avatar-utils";
+import { computeGlobalBodyScale } from "@/lib/illustrative-body-silhouette";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 
 export type ProfileHeightWeight = { heightCm?: number | null; weightKg?: number | null } | null;
@@ -17,6 +18,12 @@ export type ProfileHeightWeight = { heightCm?: number | null; weightKg?: number 
 export type Illustrative2DPipelineResult = {
   measurements: AvatarMeasurements;
   scales: BodyScaleFactors;
+  /**
+   * Escala global heurística (motor B, `computeGlobalBodyScale`) a partir da altura/peso
+   * já reflectidos em `measurements`. Útil para ferramentas de desenvolvimento e comparação;
+   * o `Avatar` modular continua a usar sobretudo `scales` por região (evitar duplicar no mesmo eixo).
+   */
+  globalEnvelopeScale: number;
 };
 
 export function formDataProfileToAvatarScales(
@@ -25,5 +32,6 @@ export function formDataProfileToAvatarScales(
 ): Illustrative2DPipelineResult {
   const measurements = mapFormDataToAvatarMeasurements(fd, profile ?? null);
   const scales = buildBodyScaleFactors(measurements);
-  return { measurements, scales };
+  const globalEnvelopeScale = computeGlobalBodyScale(measurements.height, measurements.weight);
+  return { measurements, scales, globalEnvelopeScale };
 }
