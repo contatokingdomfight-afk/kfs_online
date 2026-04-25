@@ -172,21 +172,21 @@ export const messages = {
     perfCarouselSlideRadarCaption: "Radar por dimensão (escala 1–10)",
     perfCarouselSlideBodyCaption: "",
     perfCarouselSwipeHint:
-      "Desliza para o lado ou usa as setas para alternar entre o radar e a silhueta ilustrativa baseada na última avaliação física.",
+      "Desliza para o lado ou usa as setas: vês a silhueta 2D ilustrativa (última avaliação física, medidas opcionais) e o radar de competências (escala 1–10). Se existir opção 3D, podes alternar dentro do painel da figura.",
     perfAvatarStudentCaption:
       "Vista 2D meramente ilustrativa com base nas medidas opcionais da ficha física (avaliação de {date}). Não é avaliação clínica nem imagem real — só uma visão aproximada para acompanhares a evolução. Podes alternar para o modelo 3D quando disponível.",
     perfCarouselSlideBodyCaptionNeutral: "Silhueta de referência (2.º painel)",
     perfCarouselSwipeHintNeutral:
-      "Desliza ou usa as setas para ver a silhueta. Ainda não há circunferências suficientes na ficha para personalizar a figura — quando o coach registar pelo menos duas medidas na secção de antropometria, a silhueta reflecte melhor as tuas proporções.",
+      "Desliza ou usa as setas: a silhueta 2D é genérica até haver pelo menos duas circunferências na antropometria da ficha; depois reflecte melhor as tuas proporções. No outro painel está o radar de competências (1–10).",
     perfAvatarNeutralCaption:
       "Ficha física registada a {date}. Silhueta genérica de referência até serem preenchidas pelo menos duas medidas antropométricas (circunferências) na ficha. Não é imagem clínica nem foto do aluno.",
     perfCarouselSlideBodyCaptionNoFicha: "Silhueta de referência (ficha física)",
     perfCarouselSwipeHintNoFicha:
-      "Desliza ou usa as setas para ver a silhueta de referência. Quando a tua escola registar a ficha de avaliação física na plataforma, esta zona passa a reflectir a tua ficha (e medidas opcionais para uma figura aproximada).",
+      "Desliza ou usa as setas: vês a silhueta 2D de referência até a escola registar a ficha de avaliação física; a seguir esta zona pode reflectir a tua ficha e medidas opcionais. No outro painel está o radar de competências.",
     perfAvatarNoFichaCaption:
       "Ainda não há ficha de avaliação física associada à tua conta nesta plataforma. A silhueta é só de referência — pede ao teu instrutor para completar a ficha em «Avaliação física».",
     perfCarouselSwipeHintNoFichaCoach:
-      "Silhueta de referência. Quando a ficha de avaliação física deste aluno for registada na plataforma, esta zona reflecte o ficheiro (e medidas opcionais para uma figura aproximada).",
+      "Desliza ou usa as setas: silhueta 2D de referência até existir ficha de avaliação física na plataforma; depois reflecte os dados do aluno. No outro painel está o radar de competências.",
     perfAvatarNoFichaCaptionCoach:
       "Este aluno ainda não tem ficha de avaliação física registada na plataforma. Completa a ficha em «Avaliação física» no perfil do aluno para associar dados à conta dele.",
     perfAvatarPhysicalRegisteredAnomaly:
@@ -852,21 +852,21 @@ export const messages = {
     perfCarouselSlideRadarCaption: "Radar by dimension (scale 1–10)",
     perfCarouselSlideBodyCaption: "",
     perfCarouselSwipeHint:
-      "Swipe sideways or use the arrows to switch between the radar and the illustrative silhouette from your latest physical assessment.",
+      "Swipe sideways or use the arrows: you'll see the illustrative 2D silhouette (latest physical assessment, optional measurements) and the competency radar (scale 1–10). If a 3D option is available, you can switch it inside the figure panel.",
     perfAvatarStudentCaption:
       "Illustrative 2D view from optional measurements on your physical assessment ({date}). Not a clinical evaluation or a real image — only a rough visual to track progress. You can switch to the 3D model when available.",
     perfCarouselSlideBodyCaptionNeutral: "Reference silhouette (2nd panel)",
     perfCarouselSwipeHintNeutral:
-      "Swipe or use the arrows to view the silhouette. Your form doesn't have enough circumference measurements yet for a personalized figure—once your coach logs at least two values in the anthropometry section, the silhouette will better reflect your proportions.",
+      "Swipe or use the arrows: the 2D silhouette stays generic until at least two circumference values are saved in anthropometry; then it better reflects your proportions. The other panel shows the competency radar (1–10).",
     perfAvatarNeutralCaption:
       "Physical assessment dated {date}. Generic reference silhouette until at least two anthropometric (circumference) measurements are saved on the form. Not a clinical image or a photo.",
     perfCarouselSlideBodyCaptionNoFicha: "Reference silhouette (physical assessment)",
     perfCarouselSwipeHintNoFicha:
-      "Swipe or use the arrows to view the reference silhouette. Once your school saves your physical assessment form here, this area will reflect your file (and optional measurements for an approximate figure).",
+      "Swipe or use the arrows: you'll see a reference 2D silhouette until your school saves your physical assessment; then this area can reflect your file and optional measurements. The other panel shows the competency radar.",
     perfAvatarNoFichaCaption:
       "No physical assessment form is linked to your account on the platform yet. This is a generic reference silhouette — ask your coach to complete the form under «Physical assessment».",
     perfCarouselSwipeHintNoFichaCoach:
-      "Reference silhouette. Once this student's physical assessment is saved on the platform, this area will reflect their file (and optional measurements for an approximate figure).",
+      "Swipe or use the arrows: reference 2D silhouette until this student's physical assessment is saved on the platform; then it reflects their data. The other panel shows the competency radar.",
     perfAvatarNoFichaCaptionCoach:
       "This student does not have a physical assessment saved on the platform yet. Complete the form under «Physical assessment» on their profile to attach data to their account.",
     perfAvatarPhysicalRegisteredAnomaly:

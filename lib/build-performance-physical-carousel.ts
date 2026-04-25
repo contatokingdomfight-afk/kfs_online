@@ -79,6 +79,16 @@ export function buildPhysicalAvatarCarouselForStudentView(
     studentAvatarCaption = noFichaCaption;
   }
 
+  let swipeHint: string;
+  if (hasAnthro) {
+    swipeHint = t("perfCarouselSwipeHint");
+  } else if (hasRowPayload || datasetSaysPhysical) {
+    swipeHint = t("perfCarouselSwipeHintNeutral");
+  } else {
+    swipeHint =
+      perspective === "coach" ? t("perfCarouselSwipeHintNoFichaCoach") : t("perfCarouselSwipeHintNoFicha");
+  }
+
   return {
     formData: hasAnthro ? normalizedPhysicalForm : (normalizedPhysicalForm ?? {}),
     assessedAt: assessedAtStr,
@@ -88,7 +98,7 @@ export function buildPhysicalAvatarCarouselForStudentView(
       sectionTitle: t("perfCarouselSectionTitle"),
       slideRadarCaption: t("perfCarouselSlideRadarCaption"),
       slideBodyCaption,
-      swipeHint: "",
+      swipeHint,
       ariaPrev: t("dashboardCarouselPrev"),
       ariaNext: t("dashboardCarouselNext"),
       studentAvatarCaption,

@@ -30,6 +30,9 @@ export function Body({ scales, pose, paintIds }: Props) {
 
   const shW = 34 * shoulder * bulk * (0.78 + 0.22 * chest);
   const wW = 22 * waist * bulk;
+  /** Cintura vs anca: ligeiro reforço visual do ratio (ilustrativo). */
+  const wh = Math.min(Math.max(waist / Math.max(hip, 0.01), 0.75), 1.32);
+  const wWAdjusted = wW * (0.92 + 0.08 * wh);
   const hW = 40 * hip * bulk;
 
   const yNeck = 72;
@@ -39,11 +42,11 @@ export function Body({ scales, pose, paintIds }: Props) {
 
   const torsoPath = `
     M ${cx - shW},${yShoulder}
-    C ${cx - shW * 1.05},${(yShoulder + yWaist) / 2} ${cx - wW * 0.95},${yWaist - 8} ${cx - wW},${yWaist}
-    C ${cx - wW * 0.88},${yWaist + 14} ${cx - hW * 0.92},${yHip - 10} ${cx - hW},${yHip}
+    C ${cx - shW * 1.05},${(yShoulder + yWaist) / 2} ${cx - wWAdjusted * 0.95},${yWaist - 8} ${cx - wWAdjusted},${yWaist}
+    C ${cx - wWAdjusted * 0.88},${yWaist + 14} ${cx - hW * 0.92},${yHip - 10} ${cx - hW},${yHip}
     L ${cx + hW},${yHip}
-    C ${cx + hW * 0.92},${yHip - 10} ${cx + wW * 0.88},${yWaist + 14} ${cx + wW},${yWaist}
-    C ${cx + wW * 0.95},${yWaist - 8} ${cx + shW * 1.05},${(yShoulder + yWaist) / 2} ${cx + shW},${yShoulder}
+    C ${cx + hW * 0.92},${yHip - 10} ${cx + wWAdjusted * 0.88},${yWaist + 14} ${cx + wWAdjusted},${yWaist}
+    C ${cx + wWAdjusted * 0.95},${yWaist - 8} ${cx + shW * 1.05},${(yShoulder + yWaist) / 2} ${cx + shW},${yShoulder}
     L ${cx + shW * 0.55},${yNeck}
     Q ${cx},${yNeck - 6} ${cx - shW * 0.55},${yNeck}
     Z

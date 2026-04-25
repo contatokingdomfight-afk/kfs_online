@@ -61,11 +61,25 @@ export const REF = {
   weight: 74,
 } as const;
 
-export function scaleMeasurement(measured: number | undefined, ref: number): number {
+export type ScaleMeasurementOpts = {
+  /** Expoente < 1 amplia diferenças visuais sem «partir» a silhueta. */
+  exponent?: number;
+  min?: number;
+  max?: number;
+};
+
+export function scaleMeasurement(
+  measured: number | undefined,
+  ref: number,
+  opts?: ScaleMeasurementOpts
+): number {
   if (measured == null || measured <= 0 || !Number.isFinite(measured)) return 1;
   const ratio = measured / ref;
-  const s = Math.pow(ratio, 0.6);
-  return Math.min(Math.max(s, 0.6), 1.5);
+  const exp = opts?.exponent ?? 0.6;
+  const s = Math.pow(ratio, exp);
+  const min = opts?.min ?? 0.58;
+  const max = opts?.max ?? 1.52;
+  return Math.min(Math.max(s, min), max);
 }
 
 /** Peso vs altura → factor subtil de “volume” de torso (ilustrativo, não clínico). */
@@ -74,7 +88,7 @@ export function bulkFactor(height?: number, weight?: number): number {
   const hM = height / 100;
   const bmi = weight / (hM * hM);
   const t = (bmi - 22) / 10;
-  return Math.min(1.12, Math.max(0.88, 1 + t * 0.06));
+  return Math.min(1.14, Math.max(0.86, 1 + t * 0.065));
 }
 
 export type BodyScaleFactors = {
@@ -94,15 +108,15 @@ export function buildBodyScaleFactors(m?: AvatarMeasurements | null): BodyScaleF
   const x = m ?? {};
   const shoulderRef = x.shouldersAreBiacromialCm ? REF_SHOULDER_BIACROMIAL_CM : REF.shoulders;
   return {
-    shoulder: scaleMeasurement(x.shoulders, shoulderRef),
-    chest: scaleMeasurement(x.chest, REF.chest),
-    waist: scaleMeasurement(x.waist, REF.waist),
-    hip: scaleMeasurement(x.hips, REF.hips),
-    thigh: scaleMeasurement(x.thigh, REF.thigh),
-    calf: scaleMeasurement(x.calf, REF.calf),
-    arm: scaleMeasurement(x.arm, REF.arm),
-    legInseam: scaleMeasurement(x.legInseam, REF.legInseam),
-    height: scaleMeasurement(x.height, REF.height),
+    shoulder: scaleMeasurement(x.shoulders, shoulderRef, { exponent: 0.58, min: 0.58, max: 1.48 }),
+    chest: scaleMeasurement(x.chest, REF.chest, { exponent: 0.62, min: 0.56, max: 1.52 }),
+    waist: scaleMeasurement(x.waist, REF.waist, { exponent: 0.68, min: 0.54, max: 1.56 }),
+    hip: scaleMeasurement(x.hips, REF.hips, { exponent: 0.64, min: 0.54, max: 1.56 }),
+    thigh: scaleMeasurement(x.thigh, REF.thigh, { exponent: 0.63, min: 0.58, max: 1.52 }),
+    calf: scaleMeasurement(x.calf, REF.calf, { exponent: 0.62, min: 0.58, max: 1.5 }),
+    arm: scaleMeasurement(x.arm, REF.arm, { exponent: 0.63, min: 0.56, max: 1.52 }),
+    legInseam: scaleMeasurement(x.legInseam, REF.legInseam, { exponent: 0.58, min: 0.7, max: 1.44 }),
+    height: scaleMeasurement(x.height, REF.height, { exponent: 0.55, min: 0.7, max: 1.3 }),
     bulk: bulkFactor(x.height, x.weight),
   };
 }
@@ -119,6 +133,12 @@ export function mapFormDataToAvatarMeasurements(
   profile?: { heightCm?: number | null; weightKg?: number | null } | null
 ): AvatarMeasurements {
   const armCirc = avgPair(fd.circArmLeftCm, fd.circArmRightCm);
+  const bicepsAvg = avgPair(fd.circBicepsLeftCm, fd.circBicepsRightCm);
+  /** Mistura braço (secção 6.4) com bíceps quando ambos existem; proxy leve se só bíceps. */
+  const arm =
+    armCirc != null && bicepsAvg != null
+      ? armCirc * 0.55 + bicepsAvg * 0.45
+      : armCirc ?? (bicepsAvg != null ? bicepsAvg * 1.08 : undefined);
   const fore = avgPair(fd.circForearmLeftCm, fd.circForearmRightCm);
   const shouldersGuess =
     typeof fd.circNeckCm === "number" && fd.circNeckCm > 0
@@ -146,7 +166,7 @@ export function mapFormDataToAvatarMeasurements(
     hips: fd.circHipCm ?? undefined,
     thigh: avgPair(fd.circThighLeftCm, fd.circThighRightCm),
     calf: avgPair(fd.circCalfLeftCm, fd.circCalfRightCm),
-    arm: armCirc,
+    arm,
     legInseam: avgPair(fd.lenLegInseamLeftCm, fd.lenLegInseamRightCm),
     height:
       typeof fd.heightCm === "number" && fd.heightCm > 0 && Number.isFinite(fd.heightCm)
