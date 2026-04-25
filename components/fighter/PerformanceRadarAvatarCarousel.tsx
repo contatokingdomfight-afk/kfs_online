@@ -23,6 +23,8 @@ export type PerformanceAvatarCarouselLabels = {
   humanoid3dOrbitHint: string;
   infoTipAriaSilhouette: string;
   infoTipAriaHumanoid3d: string;
+  /** `aria-label` do contentor `role="img"` em volta da figura (2D/3D + pose). */
+  silhouetteFigureAria: string;
   /** Rótulos da alternância 2D / 3D (`IllustrativeBodyAvatar` quando `allowLazyHumanoid3d`). */
   bodyViewLabel2d: string;
   bodyViewLabel3d: string;
@@ -43,6 +45,7 @@ const LABEL_DEFAULTS: PerformanceAvatarCarouselLabels = {
   humanoid3dOrbitHint: "",
   infoTipAriaSilhouette: "Texto completo sobre a silhueta ilustrativa",
   infoTipAriaHumanoid3d: "Texto completo sobre o modelo 3D",
+  silhouetteFigureAria: "",
   bodyViewLabel2d: "Silhueta 2D",
   bodyViewLabel3d: "Modelo 3D",
   bodyViewGroupAria: "Tipo de vista da figura",
@@ -222,6 +225,7 @@ export function PerformanceRadarAvatarCarousel({
                     : null
                 }
                 silhouetteInfoAria={L.infoTipAriaSilhouette.trim() || null}
+                figureAriaLabel={L.silhouetteFigureAria.trim() || null}
                 humanoid3dOrbitHint={allowLazyHumanoid3d && L.humanoid3dOrbitHint.trim() ? L.humanoid3dOrbitHint : null}
                 bodyViewLabel2d={L.bodyViewLabel2d}
                 bodyViewLabel3d={L.bodyViewLabel3d}

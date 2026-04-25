@@ -205,6 +205,8 @@ export const messages = {
       "Arrasta para rodar · scroll ou pinça para aproximar/afastar · botão direito ou dois dedos para mover.",
     perfInfoTipAriaSilhouette: "Texto completo sobre a silhueta ilustrativa",
     perfInfoTipAriaHumanoid3d: "Texto completo sobre o modelo 3D",
+    perfAvatarFigureAria:
+      "Ilustração aproximada da silhueta corporal com base em dados opcionais da ficha de avaliação física; não é imagem clínica nem foto do aluno.",
     perfBodyView2d: "Silhueta 2D",
     perfBodyView3d: "Modelo 3D",
     perfBodyViewGroupAria: "Tipo de vista da figura",
@@ -885,6 +887,8 @@ export const messages = {
       "Drag to orbit · scroll or pinch to zoom · right-click or two fingers to pan.",
     perfInfoTipAriaSilhouette: "Full text about the illustrative silhouette",
     perfInfoTipAriaHumanoid3d: "Full text about the 3D model",
+    perfAvatarFigureAria:
+      "Approximate body silhouette from optional physical assessment data; not a clinical image or a photo of the student.",
     perfBodyView2d: "2D silhouette",
     perfBodyView3d: "3D model",
     perfBodyViewGroupAria: "Figure view type",

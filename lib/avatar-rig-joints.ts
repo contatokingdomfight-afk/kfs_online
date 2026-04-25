@@ -1,6 +1,7 @@
 /**
  * Pontos 2D do rig (viewBox alargado, ex. −18…218 em X) alinhados a `Body.tsx` / `TechnicalRigSvg`.
  * Partilhado entre o diagrama SVG e o humanóide 3D procedural.
+ * Contrato de dados: `DOCS/SILHUETA_CORPORAL_2D_ILUSTRATIVA.md` §7.
  */
 import type { BodyScaleFactors } from "@/components/avatar/avatar-utils";
 import type { PoseLayout } from "@/components/avatar/Pose";

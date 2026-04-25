@@ -1,6 +1,6 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 22 abril 2026.  
+> **Última revisão deste índice:** 22 abril 2026 (silhueta 2D: `SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`).  
 > **Índice de contexto técnico (prioridade para IA / equipa):** [`memory.md`](memory.md)  
 > **Roadmap feito / por fazer:** [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)
 
@@ -67,6 +67,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 |-----------|----------|
 | [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Melhorias do dashboard (carrosséis; perfil / biométricos — ver `memory.md` §3.15) |
 | [`AVATAR_3D_BASE_GLTF.md`](AVATAR_3D_BASE_GLTF.md) | Vista 3D: GLBs M/F (`human-base-male.glb` / `human-base-female.glb`), fallback e env |
+| [`SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`](SILHUETA_CORPORAL_2D_ILUSTRATIVA.md) | Silhueta 2D ilustrativa: campo ↔ corpo, pipeline, 2D/3D, critérios de aceite, checklist de regressão |
 | [`CONTAS_TESTE.md`](CONTAS_TESTE.md) | Contas de teste e `seed:test-users` |
 | [`GUIA_TESTE_VALIDACAO_PERFIS.md`](GUIA_TESTE_VALIDACAO_PERFIS.md) | Checklist por perfil |
 | [`GUIA_TESTE_LOJA.md`](GUIA_TESTE_LOJA.md) | Testes da loja |

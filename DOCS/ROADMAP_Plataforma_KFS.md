@@ -68,7 +68,7 @@ Objetivo: enriquecer a ficha com **circunferências e medidas** que permitam um 
 | Item | Estado | Notas |
 |------|--------|--------|
 | **Circunferências e medidas** na ficha | **Feito** | Campos opcionais em cm + calçado (texto) + comprimento do pé; `PhysicalAssessmentFormData` + `savePhysicalAssessment`; persistência em `StudentPhysicalAssessment.formData` (JSON; sem migração colunar). Formulário: `/coach/alunos/[id]/avaliacao-fisica` |
-| **Avatar corporal** (MVP) | **Feito** | Silhueta **2D/SVG** parametrizada (`lib/illustrative-body-silhouette.ts`, `components/IllustrativeBodyAvatar.tsx`): aparece no resumo do aluno (`PhysicalAssessmentSummary`) e na ficha do atleta (`/coach/atletas/[id]`) quando existem **≥2** medidas antropométricas na última avaliação; copy **ilustrativo** + data da ficha |
+| **Avatar corporal** (MVP) | **Feito** | Silhueta **2D/SVG** parametrizada (`lib/illustrative-body-silhouette.ts`, `components/IllustrativeBodyAvatar.tsx`, `lib/illustrative-body-2d-pipeline.ts`): aparece no resumo do aluno (`PhysicalAssessmentSummary`) e na ficha do atleta (`/coach/atletas/[id]`) quando existem **≥2** medidas antropométricas na última avaliação; copy **ilustrativo** + data da ficha. Especificação e regressão: **`DOCS/SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`** |
 | **Privacidade e permissões** | **Parcial** | Silhueta visível ao aluno em **Performance** (`/dashboard/performance`), 2.º painel do carrossel junto ao radar, com copy ilustrativo; coach mantém perfil aluno/atleta; sem partilha pública |
 | **Futuro: “mexer nos atributos”** | **Por fazer** | Cenários / **metas** (“e se…”) com distinção explícita de **projecção** vs. dados reais da última avaliação; evitar substituir a ficha clínica |
 

@@ -25,6 +25,7 @@ const ROOT_STYLE = {
 /**
  * Vista técnica 2D estilo «mesh + ossos»: linhas de ossos, nós, guias tipo IK e malha muito suave.
  * Usa os mesmos `BodyScaleFactors` e `PoseLayout` que o avatar ilustrativo (dados da ficha 6.4 + perfil).
+ * Manter paridade com `Body.tsx` / `lib/avatar-rig-joints.ts` — ver `DOCS/SILHUETA_CORPORAL_2D_ILUSTRATIVA.md` §7.
  */
 export function TechnicalRigSvg({ scales, pose, className }: Props) {
   const j = computeAvatarRigJoints(scales, pose);

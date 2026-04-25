@@ -5,8 +5,9 @@ import { useMemo, useState } from "react";
 import { Avatar } from "@/components/avatar/Avatar";
 import { AvatarPoseTagSelector } from "@/components/avatar/AvatarPoseTagSelector";
 import { buildAvatarPoseLayout } from "@/components/avatar/build-avatar-layout";
-import { mapFormDataToAvatarMeasurements, type Modality, type PoseTag } from "@/components/avatar/avatar-utils";
+import { type Modality, type PoseTag } from "@/components/avatar/avatar-utils";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
+import { formDataProfileToAvatarScales } from "@/lib/illustrative-body-2d-pipeline";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import { humanoidHintFromFormVariant } from "@/lib/humanoid-gltf-scene";
@@ -54,6 +55,11 @@ type Props = {
   /** `aria-label` do «i» da legenda principal em modo tooltip. */
   silhouetteInfoAria?: string | null;
   /**
+   * Quando preenchido, o bloco da figura (chips 2D/3D, pose e canvas) fica em `role="img"` com este texto
+   * (ex. i18n `perfAvatarFigureAria` no carrossel de performance).
+   */
+  figureAriaLabel?: string | null;
+  /**
    * Mostra alternância «Silhueta 2D» / «Modelo 3D» e carrega WebGL só na vista 3D.
    * No carrossel de performance costuma seguir `allowLazyHumanoid3d`.
    */
@@ -81,6 +87,7 @@ export function IllustrativeBodyAvatar({
   humanoidFootnote = null,
   humanoid3dOrbitHint = null,
   silhouetteInfoAria = null,
+  figureAriaLabel = null,
   show3dViewOption = false,
   bodyViewLabel2d = "Silhueta 2D",
   bodyViewLabel3d = "Modelo 3D",
@@ -90,19 +97,26 @@ export function IllustrativeBodyAvatar({
   const [bodyView, setBodyView] = useState<BodyViewMode>("2d");
 
   const parsed = normalizePhysicalFormDataJson(formData);
-  const fd = neutralReference ? (parsed ?? {}) : parsed;
-  if (!fd) return null;
-  if (!neutralReference && !hasIllustrativeAnthropometry(fd)) return null;
 
   const measurements = useMemo(() => {
-    if (neutralReference) return mapFormDataToAvatarMeasurements({}, bodyScaleFromProfile);
-    return mapFormDataToAvatarMeasurements(parsed as Partial<PhysicalAssessmentFormData>, bodyScaleFromProfile);
+    if (neutralReference) {
+      return formDataProfileToAvatarScales({}, bodyScaleFromProfile).measurements;
+    }
+    if (!parsed || !hasIllustrativeAnthropometry(parsed)) {
+      return formDataProfileToAvatarScales({}, null).measurements;
+    }
+    return formDataProfileToAvatarScales(parsed as Partial<PhysicalAssessmentFormData>, bodyScaleFromProfile)
+      .measurements;
   }, [neutralReference, parsed, bodyScaleFromProfile]);
 
   const { scales, pose } = useMemo(
     () => buildAvatarPoseLayout(measurements, modality, poseTag),
     [measurements, modality, poseTag]
   );
+
+  const fd = neutralReference ? (parsed ?? {}) : parsed;
+  if (!fd) return null;
+  if (!neutralReference && !hasIllustrativeAnthropometry(fd)) return null;
 
   const defaultCaption =
     "Figura meramente ilustrativa em 2D a partir das circunferências e medidas da ficha (não é avaliação médica nem imagem do aluno)." +
@@ -117,26 +131,10 @@ export function IllustrativeBodyAvatar({
 
   const gltfBodyHint = humanoidHintFromFormVariant(fd.humanoid3dBodyVariant);
   const captionTooltipMode = explainCaption === "tooltip" && Boolean(captionSummary?.trim());
+  const figureAria = figureAriaLabel?.trim() ?? "";
 
-  return (
-    <div className={className}>
-      {captionTooltipMode ? (
-        <div
-          className="flex items-start gap-1.5"
-          style={{ margin: "0 0 8px 0", fontSize: "clamp(11px, 2.8vw, 12px)", lineHeight: 1.45 }}
-        >
-          <p className="text-text-secondary m-0 flex-1 min-w-0">{captionSummary}</p>
-          <InlineInfoTip
-            detail={caption}
-            ariaLabel={silhouetteInfoAria?.trim() || "Sobre esta figura ilustrativa"}
-            className="shrink-0"
-          />
-        </div>
-      ) : (
-        <p className="text-text-secondary" style={{ fontSize: "clamp(11px, 2.8vw, 12px)", margin: "0 0 8px 0", lineHeight: 1.45 }}>
-          {caption}
-        </p>
-      )}
+  const figureBlock = (
+    <>
       {show3dViewOption ? (
         <div className="mb-2 flex flex-wrap justify-center gap-2" role="group" aria-label={bodyViewGroupAria}>
           {(["2d", "3d"] as const).map((mode) => {
@@ -174,6 +172,35 @@ export function IllustrativeBodyAvatar({
           footnote={humanoidFootnote}
           orbitHint={humanoid3dOrbitHint}
         />
+      )}
+    </>
+  );
+
+  return (
+    <div className={className}>
+      {captionTooltipMode ? (
+        <div
+          className="flex items-start gap-1.5"
+          style={{ margin: "0 0 8px 0", fontSize: "clamp(11px, 2.8vw, 12px)", lineHeight: 1.45 }}
+        >
+          <p className="text-text-secondary m-0 flex-1 min-w-0">{captionSummary}</p>
+          <InlineInfoTip
+            detail={caption}
+            ariaLabel={silhouetteInfoAria?.trim() || "Sobre esta figura ilustrativa"}
+            className="shrink-0"
+          />
+        </div>
+      ) : (
+        <p className="text-text-secondary" style={{ fontSize: "clamp(11px, 2.8vw, 12px)", margin: "0 0 8px 0", lineHeight: 1.45 }}>
+          {caption}
+        </p>
+      )}
+      {figureAria ? (
+        <div role="img" aria-label={figureAria} className="min-w-0">
+          {figureBlock}
+        </div>
+      ) : (
+        figureBlock
       )}
     </div>
   );
