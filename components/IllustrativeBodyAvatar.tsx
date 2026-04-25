@@ -65,7 +65,7 @@ type Props = {
 };
 
 /**
- * Silhueta ilustrativa a partir da ficha: **SVG 2D** (`Avatar`) por defeito; vista **3D** opcional (`Humanoid3DPanel`).
+ * Silhueta ilustrativa a partir da ficha: SVG 2D (`Avatar`) por defeito; vista 3D opcional (`Humanoid3DPanel`).
  */
 export function IllustrativeBodyAvatar({
   formData,
