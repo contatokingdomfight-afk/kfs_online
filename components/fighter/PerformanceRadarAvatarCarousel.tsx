@@ -65,7 +65,7 @@ type Props = {
 };
 
 /**
- * Carrossel horizontal: 1.º painel radar de competências; 2.º silhueta ilustrativa (ficha com medidas ou silhueta neutra).
+ * Carrossel horizontal: 1.º painel radar de competências; 2.º silhueta ilustrativa 2D (e opção 3D se `allowLazyHumanoid3d`).
  */
 export function PerformanceRadarAvatarCarousel({
   radar,
@@ -202,6 +202,7 @@ export function PerformanceRadarAvatarCarousel({
                 neutralReference={neutralReference}
                 bodyScaleFromProfile={profileBodyMetrics}
                 showPoseTags
+                show3dViewOption={allowLazyHumanoid3d}
                 explainCaption={L.studentAvatarCaptionShort.trim() ? "tooltip" : "inline"}
                 captionSummary={L.studentAvatarCaptionShort.trim() || null}
                 humanoidFootnote={

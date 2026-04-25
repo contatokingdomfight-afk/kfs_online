@@ -2,11 +2,13 @@
 
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
+import { Avatar } from "@/components/avatar/Avatar";
 import { AvatarPoseTagSelector } from "@/components/avatar/AvatarPoseTagSelector";
 import { buildAvatarPoseLayout } from "@/components/avatar/build-avatar-layout";
 import { mapFormDataToAvatarMeasurements, type Modality, type PoseTag } from "@/components/avatar/avatar-utils";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
+import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import { humanoidHintFromFormVariant } from "@/lib/humanoid-gltf-scene";
 
 const Humanoid3DPanelLazy = dynamic(
@@ -20,6 +22,8 @@ const Humanoid3DPanelLazy = dynamic(
     ),
   }
 );
+
+type BodyViewMode = "2d" | "3d";
 
 type Props = {
   formData: unknown;
@@ -37,7 +41,7 @@ type Props = {
   bodyScaleFromProfile?: { heightCm?: number | null; weightKg?: number | null } | null;
   /** Modalidade para pose «Guarda» (chips) e equipamento implícito no rig 3D. */
   modality?: Modality;
-  /** Mostra chips «Guarda» / «Estrela» (afeta a pose do modelo 3D). */
+  /** Mostra chips «Guarda» / «Estrela» (afecta pose 2D e 3D). */
   showPoseTags?: boolean;
   /** `tooltip`: linha curta + ícone com texto completo (ex.: carrossel de performance). */
   explainCaption?: "inline" | "tooltip";
@@ -49,10 +53,15 @@ type Props = {
   humanoid3dOrbitHint?: string | null;
   /** `aria-label` do «i» da legenda principal em modo tooltip. */
   silhouetteInfoAria?: string | null;
+  /**
+   * Mostra alternância «Silhueta 2D» / «Modelo 3D» e carrega WebGL só na vista 3D.
+   * No carrossel de performance costuma seguir `allowLazyHumanoid3d`.
+   */
+  show3dViewOption?: boolean;
 };
 
 /**
- * Silhueta ilustrativa em 3D (WebGL); não representa diagnóstico nem composição corporal real.
+ * Silhueta ilustrativa a partir da ficha: **SVG 2D** (`Avatar`) por defeito; vista **3D** opcional (`Humanoid3DPanel`).
  */
 export function IllustrativeBodyAvatar({
   formData,
@@ -68,18 +77,20 @@ export function IllustrativeBodyAvatar({
   humanoidFootnote = null,
   humanoid3dOrbitHint = null,
   silhouetteInfoAria = null,
+  show3dViewOption = false,
 }: Props) {
-  /** Por defeito «estrela» (braços abertos + pernas mais abertas); «Guarda» mantém a pose típica da modalidade. */
   const [poseTag, setPoseTag] = useState<PoseTag>("star");
+  const [bodyView, setBodyView] = useState<BodyViewMode>("2d");
 
   const parsed = normalizePhysicalFormDataJson(formData);
   const fd = neutralReference ? (parsed ?? {}) : parsed;
   if (!fd) return null;
   if (!neutralReference && !hasIllustrativeAnthropometry(fd)) return null;
 
-  const measurements = neutralReference
-    ? mapFormDataToAvatarMeasurements({}, bodyScaleFromProfile)
-    : mapFormDataToAvatarMeasurements(fd, bodyScaleFromProfile);
+  const measurements = useMemo(() => {
+    if (neutralReference) return mapFormDataToAvatarMeasurements({}, bodyScaleFromProfile);
+    return mapFormDataToAvatarMeasurements(parsed as Partial<PhysicalAssessmentFormData>, bodyScaleFromProfile);
+  }, [neutralReference, parsed, bodyScaleFromProfile]);
 
   const { scales, pose } = useMemo(
     () => buildAvatarPoseLayout(measurements, modality, poseTag),
@@ -87,13 +98,13 @@ export function IllustrativeBodyAvatar({
   );
 
   const defaultCaption =
-    "Figura meramente ilustrativa em 3D a partir das circunferências registadas (não é avaliação médica nem imagem do aluno)." +
+    "Figura meramente ilustrativa em 2D a partir das circunferências e medidas da ficha (não é avaliação médica nem imagem do aluno)." +
     (assessedAtLabel ? ` Dados: ${assessedAtLabel}.` : "");
 
   const caption =
     captionOverride?.trim() ||
     (neutralReference
-      ? "Silhueta de referência genérica em 3D (preenche pelo menos duas circunferências na ficha para uma figura aproximada às tuas medidas)." +
+      ? "Silhueta de referência genérica em 2D (preenche pelo menos duas circunferências na ficha para uma figura aproximada às tuas medidas)." +
           (assessedAtLabel ? ` Ficha: ${assessedAtLabel}.` : "")
       : defaultCaption);
 
@@ -119,17 +130,44 @@ export function IllustrativeBodyAvatar({
           {caption}
         </p>
       )}
-      <div className="mb-2 flex flex-wrap items-center gap-2">
+      {show3dViewOption ? (
+        <div className="mb-2 flex flex-wrap justify-center gap-2" role="group" aria-label="Tipo de vista da figura">
+          {(["2d", "3d"] as const).map((mode) => {
+            const active = bodyView === mode;
+            const label = mode === "2d" ? "Silhueta 2D" : "Modelo 3D";
+            return (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setBodyView(mode)}
+                className={[
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  active
+                    ? "border-primary bg-primary/15 text-text-primary"
+                    : "border-border bg-bg-secondary text-text-secondary hover:border-primary/50 hover:text-text-primary",
+                ].join(" ")}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+      <div className="mb-2 flex flex-wrap items-center justify-center gap-2">
         {showPoseTags ? <AvatarPoseTagSelector value={poseTag} onChange={setPoseTag} /> : null}
       </div>
-      <Humanoid3DPanelLazy
-        scales={scales}
-        pose={pose}
-        className="max-w-[min(280px,92vw)]"
-        gltfBodyHint={gltfBodyHint}
-        footnote={humanoidFootnote}
-        orbitHint={humanoid3dOrbitHint}
-      />
+      {bodyView === "2d" ? (
+        <Avatar modality={modality} measurements={measurements} poseTag={poseTag} className="max-w-[min(280px,92vw)] mx-auto" />
+      ) : (
+        <Humanoid3DPanelLazy
+          scales={scales}
+          pose={pose}
+          className="max-w-[min(280px,92vw)]"
+          gltfBodyHint={gltfBodyHint}
+          footnote={humanoidFootnote}
+          orbitHint={humanoid3dOrbitHint}
+        />
+      )}
     </div>
   );
 }
