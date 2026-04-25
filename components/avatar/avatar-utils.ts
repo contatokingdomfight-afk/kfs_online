@@ -12,7 +12,8 @@ export type PoseTag = "auto" | "star";
 
 export const POSE_TAG_LABELS: Record<PoseTag, string> = {
   auto: "Guarda",
-  star: "Estrela",
+  /** Braços horizontais e pernas abertas (silhueta de referência tipo homem vitruviano). */
+  star: "Vitruviano",
 };
 
 export type AvatarMeasurements = {

@@ -1,5 +1,5 @@
 import type { BodyScaleFactors } from "./avatar-utils";
-import type { PoseLayout } from "./Pose";
+import { getWorldHandPositions, type PoseLayout } from "./Pose";
 
 export type BodyPaintIds = {
   head: string;
@@ -22,13 +22,18 @@ type Props = {
  */
 export function Body({ scales, pose, paintIds }: Props) {
   const { shoulder, chest, waist, hip, thigh, calf, height, bulk, legInseam } = scales;
+  const isVitruvian = pose.poseTag === "star";
 
-  const headRx = Math.max(18, 22 * height * 0.92);
-  const headRy = Math.max(22, 28 * height * 0.95);
+  /** Cabeça ligeiramente mais pequena na pose vitruviana (≈ 1/7,5 do corpo visível). */
+  const headMul = isVitruvian ? 0.88 : 1;
+  const headRx = Math.max(16, 20 * height * 0.92) * headMul;
+  const headRy = Math.max(20, 25 * height * 0.95) * headMul;
   const cx = 100;
   const headCy = 52;
 
-  const shW = 34 * shoulder * bulk * (0.78 + 0.22 * chest);
+  const shWBase = 34 * shoulder * bulk * (0.78 + 0.22 * chest);
+  /** Ombros alinhados ao T-pose vitruviano (braços estendidos). */
+  const shW = isVitruvian ? shWBase * 1.1 : shWBase;
   const wW = 22 * waist * bulk;
   /** Cintura vs anca: ligeiro reforço visual do ratio (ilustrativo). */
   const wh = Math.min(Math.max(waist / Math.max(hip, 0.01), 0.75), 1.32);
@@ -66,7 +71,9 @@ export function Body({ scales, pose, paintIds }: Props) {
   const dx = pose.stanceDx;
   const bonus = pose.legSpreadBonus ?? 0;
   /** Afastamento horizontal do joelho em px (antropometria + pose). */
-  const kneeOut = 14 * thigh * bulk + bonus;
+  const kneeOutBase = 14 * thigh * bulk + bonus;
+  /** Pernas mais verticais na pose vitruviana (menos «sapo»). */
+  const kneeOut = isVitruvian ? kneeOutBase * 0.66 : kneeOutBase;
 
   const hipY = yHip;
   const kneeY = hipY + thighLen * 0.52;
@@ -94,6 +101,7 @@ export function Body({ scales, pose, paintIds }: Props) {
   const al = pose.shoulderL;
   const ar = pose.shoulderR;
   const armLen = pose.armLen;
+  const handsWorld = getWorldHandPositions(pose);
 
   const leftArmPath = `
     M ${al.x},${al.y}
@@ -127,12 +135,35 @@ export function Body({ scales, pose, paintIds }: Props) {
         <ellipse cx={cx} cy={headCy} rx={headRx} ry={headRy} fill={fillHead} strokeWidth={0.85} />
         <path d={neckPath} fill={fillNeck} strokeWidth={0.65} />
         <path d={torsoPath} strokeWidth={1.05} />
-        <g transform={`rotate(${pose.armLdeg}, ${al.x}, ${al.y})`}>
-          <path d={leftArmPath} fill="none" stroke={strokeLimb} strokeWidth={armStroke} strokeLinecap="round" strokeLinejoin="round" />
-        </g>
-        <g transform={`rotate(${pose.armRdeg}, ${ar.x}, ${ar.y})`}>
-          <path d={rightArmPath} fill="none" stroke={strokeLimb} strokeWidth={armStroke} strokeLinecap="round" strokeLinejoin="round" />
-        </g>
+        {isVitruvian ? (
+          <g stroke={strokeLimb} fill="none" strokeLinecap="round" strokeLinejoin="round">
+            <line
+              x1={al.x}
+              y1={al.y}
+              x2={handsWorld.handL.x}
+              y2={handsWorld.handL.y}
+              strokeWidth={armStroke}
+            />
+            <line
+              x1={ar.x}
+              y1={ar.y}
+              x2={handsWorld.handR.x}
+              y2={handsWorld.handR.y}
+              strokeWidth={armStroke}
+            />
+            <circle cx={handsWorld.handL.x} cy={handsWorld.handL.y} r={Math.max(3.2, armStroke * 0.32)} fill={strokeLimb} />
+            <circle cx={handsWorld.handR.x} cy={handsWorld.handR.y} r={Math.max(3.2, armStroke * 0.32)} fill={strokeLimb} />
+          </g>
+        ) : (
+          <>
+            <g transform={`rotate(${pose.armLdeg}, ${al.x}, ${al.y})`}>
+              <path d={leftArmPath} fill="none" stroke={strokeLimb} strokeWidth={armStroke} strokeLinecap="round" strokeLinejoin="round" />
+            </g>
+            <g transform={`rotate(${pose.armRdeg}, ${ar.x}, ${ar.y})`}>
+              <path d={rightArmPath} fill="none" stroke={strokeLimb} strokeWidth={armStroke} strokeLinecap="round" strokeLinejoin="round" />
+            </g>
+          </>
+        )}
       </g>
       <g transform={legLt} stroke={strokeLimb}>
         <path d={leftLegPath} fill="none" strokeWidth={thighStroke + 1.2} strokeLinecap="round" strokeLinejoin="round" opacity={0.35} />

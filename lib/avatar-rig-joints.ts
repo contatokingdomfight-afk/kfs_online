@@ -88,11 +88,15 @@ export function computeAvatarRigJoints(scales: BodyScaleFactors, pose: PoseLayou
   const { shoulder, chest, waist, hip, thigh, calf, height, bulk, legInseam } = scales;
   const cx = 100;
   const headCy = 52;
-  const headRx = Math.max(18, 22 * height * 0.92);
-  const headRy = Math.max(22, 28 * height * 0.95);
+  const headMul = pose.poseTag === "star" ? 0.88 : 1;
+  const headRx = Math.max(16, 20 * height * 0.92) * headMul;
+  const headRy = Math.max(20, 25 * height * 0.95) * headMul;
 
-  const shW = 34 * shoulder * bulk * (0.78 + 0.22 * chest);
+  const shWBase = 34 * shoulder * bulk * (0.78 + 0.22 * chest);
+  const shW = pose.poseTag === "star" ? shWBase * 1.1 : shWBase;
   const wW = 22 * waist * bulk;
+  const wh = Math.min(Math.max(waist / Math.max(hip, 0.01), 0.75), 1.32);
+  const wWAdjusted = wW * (0.92 + 0.08 * wh);
   const hW = 40 * hip * bulk;
   const yNeck = 72;
   const yShoulder = 88;
@@ -101,11 +105,11 @@ export function computeAvatarRigJoints(scales: BodyScaleFactors, pose: PoseLayou
 
   const torsoPath = `
     M ${cx - shW},${yShoulder}
-    C ${cx - shW * 1.05},${(yShoulder + yWaist) / 2} ${cx - wW * 0.95},${yWaist - 8} ${cx - wW},${yWaist}
-    C ${cx - wW * 0.88},${yWaist + 14} ${cx - hW * 0.92},${yHip - 10} ${cx - hW},${yHip}
+    C ${cx - shW * 1.05},${(yShoulder + yWaist) / 2} ${cx - wWAdjusted * 0.95},${yWaist - 8} ${cx - wWAdjusted},${yWaist}
+    C ${cx - wWAdjusted * 0.88},${yWaist + 14} ${cx - hW * 0.92},${yHip - 10} ${cx - hW},${yHip}
     L ${cx + hW},${yHip}
-    C ${cx + hW * 0.92},${yHip - 10} ${cx + wW * 0.88},${yWaist + 14} ${cx + wW},${yWaist}
-    C ${cx + wW * 0.95},${yWaist - 8} ${cx + shW * 1.05},${(yShoulder + yWaist) / 2} ${cx + shW},${yShoulder}
+    C ${cx + hW * 0.92},${yHip - 10} ${cx + wWAdjusted * 0.88},${yWaist + 14} ${cx + wWAdjusted},${yWaist}
+    C ${cx + wWAdjusted * 0.95},${yWaist - 8} ${cx + shW * 1.05},${(yShoulder + yWaist) / 2} ${cx + shW},${yShoulder}
     L ${cx + shW * 0.55},${yNeck}
     Q ${cx},${yNeck - 6} ${cx - shW * 0.55},${yNeck}
     Z
@@ -116,7 +120,8 @@ export function computeAvatarRigJoints(scales: BodyScaleFactors, pose: PoseLayou
   const calfLen = 52 * height * legLenMul;
   const dx = pose.stanceDx;
   const bonus = pose.legSpreadBonus ?? 0;
-  const kneeOut = 14 * thigh * bulk + bonus;
+  const kneeOutBase = 14 * thigh * bulk + bonus;
+  const kneeOut = pose.poseTag === "star" ? kneeOutBase * 0.66 : kneeOutBase;
   const hipY = yHip;
   const kneeY = hipY + thighLen * 0.52;
   const ankleY = hipY + thighLen + calfLen * 0.88;
@@ -154,10 +159,22 @@ export function computeAvatarRigJoints(scales: BodyScaleFactors, pose: PoseLayou
   const ctrlR = { x: ar.x + 8, y: ar.y + armLen * 0.42 };
   const endR = { x: ar.x + 3, y: ar.y + armLen };
 
-  const elbowL = armWorld(al, quadBezierPoint(al, ctrlL, endL, 0.52), pose.armLdeg, pose.torsoDeg, pose.torsoPivot);
-  const elbowR = armWorld(ar, quadBezierPoint(ar, ctrlR, endR, 0.52), pose.armRdeg, pose.torsoDeg, pose.torsoPivot);
   const wristL = rotatePoint(pose.handL.x, pose.handL.y, pose.torsoPivot.x, pose.torsoPivot.y, pose.torsoDeg);
   const wristR = rotatePoint(pose.handR.x, pose.handR.y, pose.torsoPivot.x, pose.torsoPivot.y, pose.torsoDeg);
+  const elbowL =
+    pose.poseTag === "star"
+      ? {
+          x: al.x + (wristL.x - al.x) * 0.5,
+          y: al.y + (wristL.y - al.y) * 0.5,
+        }
+      : armWorld(al, quadBezierPoint(al, ctrlL, endL, 0.52), pose.armLdeg, pose.torsoDeg, pose.torsoPivot);
+  const elbowR =
+    pose.poseTag === "star"
+      ? {
+          x: ar.x + (wristR.x - ar.x) * 0.5,
+          y: ar.y + (wristR.y - ar.y) * 0.5,
+        }
+      : armWorld(ar, quadBezierPoint(ar, ctrlR, endR, 0.52), pose.armRdeg, pose.torsoDeg, pose.torsoPivot);
 
   const sternum = rotatePoint(cx, yShoulder - 2, pose.torsoPivot.x, pose.torsoPivot.y, pose.torsoDeg);
   const shoulderLw = rotatePoint(al.x, al.y, pose.torsoPivot.x, pose.torsoPivot.y, pose.torsoDeg);

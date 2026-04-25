@@ -19,7 +19,7 @@ const ROOT_STYLE: CSSProperties = {
 /**
  * Avatar SVG modular: corpo curvo, pose por modalidade, equipamento (luvas / wraps).
  */
-export function Avatar({ modality = "boxing", measurements, className, poseTag = "auto" }: AvatarProps) {
+export function Avatar({ modality = "boxing", measurements, className, poseTag = "star" }: AvatarProps) {
   const { scales, pose } = buildAvatarPoseLayout(measurements, modality, poseTag);
   const hands = getWorldHandPositions(pose);
   const rawId = useId().replace(/:/g, "");

@@ -77,19 +77,22 @@ export function getPoseLayout(
   const torsoPivot = { x: cx, y: 128 };
 
   if (poseTag === "star") {
-    /** T-pose 2D: braços ~horizontais (±88° a partir do braço «pendurado»), ombros mais afastados, pernas abertas. */
-    const sl = { x: 54, y: 102 };
-    const sr = { x: 146, y: 102 };
-    const armLen = armLenBase * 0.94;
-    const armLdeg = 88;
-    const armRdeg = -88;
+    /**
+     * Pose «homem vitruviano» (referência clássica): simétrica, braços ao nível dos ombros ~horizontais,
+     * pernas em aberto moderado (não «sapo»), centrada em `cx`.
+     */
+    const sl = { x: 46, y: 96 };
+    const sr = { x: 154, y: 96 };
+    const armLen = armLenBase * 1.02;
+    const armLdeg = 90;
+    const armRdeg = -90;
     const { handL, handR } = handsFromArms(sl, sr, armLdeg, armRdeg, armLen, { x: 0, y: 0 }, { x: 0, y: 0 });
     return {
       modality,
       poseTag,
       torsoDeg: 0,
       torsoPivot,
-      stanceDx: 58,
+      stanceDx: 38,
       shoulderL: sl,
       shoulderR: sr,
       armLdeg,
@@ -99,9 +102,9 @@ export function getPoseLayout(
       handR,
       hipL,
       hipR,
-      legLdeg: -36,
-      legRdeg: 36,
-      legSpreadBonus: 46,
+      legLdeg: -17,
+      legRdeg: 17,
+      legSpreadBonus: 30,
     };
   }
 
