@@ -100,6 +100,9 @@ export function buildPhysicalAvatarCarouselForStudentView(
       humanoid3dOrbitHint: t("perfHumanoid3dOrbitHint"),
       infoTipAriaSilhouette: t("perfInfoTipAriaSilhouette"),
       infoTipAriaHumanoid3d: t("perfInfoTipAriaHumanoid3d"),
+      bodyViewLabel2d: t("perfBodyView2d"),
+      bodyViewLabel3d: t("perfBodyView3d"),
+      bodyViewGroupAria: t("perfBodyViewGroupAria"),
     },
   };
 }

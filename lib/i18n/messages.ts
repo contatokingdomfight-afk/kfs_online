@@ -174,7 +174,7 @@ export const messages = {
     perfCarouselSwipeHint:
       "Desliza para o lado ou usa as setas para alternar entre o radar e a silhueta ilustrativa baseada na última avaliação física.",
     perfAvatarStudentCaption:
-      "Silhueta meramente ilustrativa com base nas medidas opcionais registadas na ficha física (avaliação de {date}). Não é avaliação clínica nem imagem real — só uma visão aproximada para acompanhares a evolução.",
+      "Vista 2D meramente ilustrativa com base nas medidas opcionais da ficha física (avaliação de {date}). Não é avaliação clínica nem imagem real — só uma visão aproximada para acompanhares a evolução. Podes alternar para o modelo 3D quando disponível.",
     perfCarouselSlideBodyCaptionNeutral: "Silhueta de referência (2.º painel)",
     perfCarouselSwipeHintNeutral:
       "Desliza ou usa as setas para ver a silhueta. Ainda não há circunferências suficientes na ficha para personalizar a figura — quando o coach registar pelo menos duas medidas na secção de antropometria, a silhueta reflecte melhor as tuas proporções.",
@@ -205,6 +205,9 @@ export const messages = {
       "Arrasta para rodar · scroll ou pinça para aproximar/afastar · botão direito ou dois dedos para mover.",
     perfInfoTipAriaSilhouette: "Texto completo sobre a silhueta ilustrativa",
     perfInfoTipAriaHumanoid3d: "Texto completo sobre o modelo 3D",
+    perfBodyView2d: "Silhueta 2D",
+    perfBodyView3d: "Modelo 3D",
+    perfBodyViewGroupAria: "Tipo de vista da figura",
     perfLinkFullPhysicalFicha: "Ver ficha completa (anamnese e avaliação)",
     fichaFisicaEmptyTitle: "Ainda não tens ficha registada",
     fichaFisicaEmptyBody:
@@ -851,7 +854,7 @@ export const messages = {
     perfCarouselSwipeHint:
       "Swipe sideways or use the arrows to switch between the radar and the illustrative silhouette from your latest physical assessment.",
     perfAvatarStudentCaption:
-      "Illustrative silhouette based on optional measurements from your physical assessment ({date}). Not a clinical evaluation or a real image — only a rough visual to track progress.",
+      "Illustrative 2D view from optional measurements on your physical assessment ({date}). Not a clinical evaluation or a real image — only a rough visual to track progress. You can switch to the 3D model when available.",
     perfCarouselSlideBodyCaptionNeutral: "Reference silhouette (2nd panel)",
     perfCarouselSwipeHintNeutral:
       "Swipe or use the arrows to view the silhouette. Your form doesn't have enough circumference measurements yet for a personalized figure—once your coach logs at least two values in the anthropometry section, the silhouette will better reflect your proportions.",
@@ -882,6 +885,9 @@ export const messages = {
       "Drag to orbit · scroll or pinch to zoom · right-click or two fingers to pan.",
     perfInfoTipAriaSilhouette: "Full text about the illustrative silhouette",
     perfInfoTipAriaHumanoid3d: "Full text about the 3D model",
+    perfBodyView2d: "2D silhouette",
+    perfBodyView3d: "3D model",
+    perfBodyViewGroupAria: "Figure view type",
     perfLinkFullPhysicalFicha: "View full form (health & physical assessment)",
     fichaFisicaEmptyTitle: "No assessment saved yet",
     fichaFisicaEmptyBody:

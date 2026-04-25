@@ -58,6 +58,10 @@ type Props = {
    * No carrossel de performance costuma seguir `allowLazyHumanoid3d`.
    */
   show3dViewOption?: boolean;
+  /** Rótulos da alternância 2D/3D (i18n no carrossel de performance). */
+  bodyViewLabel2d?: string;
+  bodyViewLabel3d?: string;
+  bodyViewGroupAria?: string;
 };
 
 /**
@@ -78,6 +82,9 @@ export function IllustrativeBodyAvatar({
   humanoid3dOrbitHint = null,
   silhouetteInfoAria = null,
   show3dViewOption = false,
+  bodyViewLabel2d = "Silhueta 2D",
+  bodyViewLabel3d = "Modelo 3D",
+  bodyViewGroupAria = "Tipo de vista da figura",
 }: Props) {
   const [poseTag, setPoseTag] = useState<PoseTag>("star");
   const [bodyView, setBodyView] = useState<BodyViewMode>("2d");
@@ -131,10 +138,10 @@ export function IllustrativeBodyAvatar({
         </p>
       )}
       {show3dViewOption ? (
-        <div className="mb-2 flex flex-wrap justify-center gap-2" role="group" aria-label="Tipo de vista da figura">
+        <div className="mb-2 flex flex-wrap justify-center gap-2" role="group" aria-label={bodyViewGroupAria}>
           {(["2d", "3d"] as const).map((mode) => {
             const active = bodyView === mode;
-            const label = mode === "2d" ? "Silhueta 2D" : "Modelo 3D";
+            const label = mode === "2d" ? bodyViewLabel2d : bodyViewLabel3d;
             return (
               <button
                 key={mode}
