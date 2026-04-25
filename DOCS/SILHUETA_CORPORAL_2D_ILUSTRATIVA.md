@@ -12,7 +12,7 @@ Este documento fecha as **fases 0–4** do trabalho da silhueta: inventário cam
 
 | Decisão | Estado |
 |--------|--------|
-| Vista **principal** na app e no carrossel de performance | **SVG 2D** (`Avatar` → `Body` + pose + equipamento) |
+| Vista **principal** na app e no carrossel de performance | **SVG 2D** (`Avatar` → `Body` + pose + equipamento). Por defeito **Vitruviano** (`poseTag "star"`): braços horizontais, pernas em aberto moderado, membros superiores como linhas rectas até às mãos. |
 | **WebGL / modelo 3D** (`Humanoid3DPanel`) | **Opcional**: chips «Silhueta 2D» / «Modelo 3D» quando `show3dViewOption` / `allowLazyHumanoid3d`; chunk 3D carregado só ao escolher 3D (`next/dynamic`, `ssr: false`) |
 | Natureza dos dados | **Ilustrativo**, não clínico, não foto do aluno; copy em i18n e legendas |
 
