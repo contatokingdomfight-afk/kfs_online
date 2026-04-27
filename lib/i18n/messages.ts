@@ -219,6 +219,26 @@ export const messages = {
     fichaFisicaBackPerformance: "Perfil do atleta",
     fichaFisicaProfileHint:
       "Altura e peso em «Perfil» são usados só para um ajuste de escala ilustrativa do mapa corporal na página de performance (opcional, não substitui medidas na ficha).",
+    physAssessRequestTitle: "Pedir avaliação física na escola",
+    physAssessRequestIntro:
+      "Envia um pedido à equipa da tua escola. Os professores ligados à tua unidade veem-no no painel e podem contigo preencher a ficha em «Avaliação física».",
+    physAssessRequestNoteLabel: "Mensagem opcional para a equipa",
+    physAssessRequestNotePlaceholder: "Ex.: preferência de horário ou dúvidas",
+    physAssessRequestSubmit: "Enviar pedido",
+    physAssessRequestPendingTitle: "Pedido enviado",
+    physAssessRequestPendingBody:
+      "Já existe um pedido ativo. Os professores da tua escola podem vê-lo no painel. Quando a ficha for registada, o pedido fecha automaticamente. Podes retirar o pedido se já não for preciso.",
+    physAssessRequestCancelButton: "Retirar pedido",
+    physAssessRequestErrorNotStudent: "Apenas alunos podem pedir avaliação desta forma.",
+    physAssessRequestErrorNoStudent: "Conta de aluno não encontrada.",
+    physAssessRequestErrorNoSchool: "Não foi possível identificar a tua escola.",
+    physAssessRequestErrorAlreadyPending: "Já tens um pedido pendente. Retira-o ou espera que a equipa registe a ficha.",
+    physAssessRequestErrorGeneric: "Não foi possível concluir o pedido. Tenta de novo.",
+    coachPhysAssessRequestsTitle: "Pedidos de avaliação física",
+    coachPhysAssessRequestsEmpty: "Nenhum aluno da tua escola pediu avaliação física neste momento.",
+    coachPhysAssessOpenAssessment: "Abrir ficha de avaliação",
+    coachNotificationsCenterIntro:
+      "Pedidos de avaliação física, lembretes da equipa e outras atualizações ligadas à tua área de professor.",
     attendanceByModality: "Presenças confirmadas por modalidade",
     myDataTitle: "O teu perfil",
     personalDataTitle: "Dados pessoais",
@@ -902,6 +922,26 @@ export const messages = {
     fichaFisicaBackPerformance: "Athlete profile",
     fichaFisicaProfileHint:
       "Height and weight in «Profile» are only used for optional illustrative scaling of the body map on the performance page (they do not replace measurements on the form).",
+    physAssessRequestTitle: "Request a physical assessment at your school",
+    physAssessRequestIntro:
+      "Send a request to your school team. Coaches linked to your unit see it on their dashboard and can complete the form with you under «Physical assessment».",
+    physAssessRequestNoteLabel: "Optional message for the team",
+    physAssessRequestNotePlaceholder: "E.g. preferred time or questions",
+    physAssessRequestSubmit: "Send request",
+    physAssessRequestPendingTitle: "Request sent",
+    physAssessRequestPendingBody:
+      "You already have an active request. Coaches at your school can see it on their dashboard. When the assessment is saved, the request closes automatically. You can withdraw the request if you no longer need it.",
+    physAssessRequestCancelButton: "Withdraw request",
+    physAssessRequestErrorNotStudent: "Only students can request an assessment this way.",
+    physAssessRequestErrorNoStudent: "Student account not found.",
+    physAssessRequestErrorNoSchool: "Could not identify your school.",
+    physAssessRequestErrorAlreadyPending: "You already have a pending request. Withdraw it or wait for the team to save the form.",
+    physAssessRequestErrorGeneric: "Could not complete the request. Please try again.",
+    coachPhysAssessRequestsTitle: "Physical assessment requests",
+    coachPhysAssessRequestsEmpty: "No students at your school have requested a physical assessment right now.",
+    coachPhysAssessOpenAssessment: "Open assessment form",
+    coachNotificationsCenterIntro:
+      "Physical assessment requests, team reminders, and other updates related to your coach area.",
     monthGoal: "Monthly goal",
     conquests: "Achievements",
     recommendedForYou: "Recommended for you",

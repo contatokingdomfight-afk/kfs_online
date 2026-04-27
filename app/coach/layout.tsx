@@ -7,6 +7,7 @@ import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-se
 import { getTranslations } from "@/lib/i18n";
 import { ViewAsBanner } from "@/components/ViewAsBanner";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
+import { CoachNotificationBell } from "@/components/CoachNotificationBell";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
 export default async function CoachLayout({
@@ -39,6 +40,7 @@ export default async function CoachLayout({
       ? [{ label: "Admin", href: "/admin" as string }]
       : []),
     { label: t("navHome"), href: "/coach" },
+    { label: t("navNotificationsCenter"), href: "/coach/notificacoes" },
     { label: t("navManageClasses"), href: "/coach/aula" },
     { label: t("navWeekTheme"), href: "/coach/tema-semana" },
     { label: t("navAgenda"), href: "/coach/agenda" },
@@ -77,7 +79,12 @@ export default async function CoachLayout({
           displayName: dbUser.name,
           ariaLabel: t("headerProfileAria"),
         }}
-        headerExtra={<span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>}
+        headerExtra={
+          <>
+            <CoachNotificationBell locale={locale as "pt" | "en"} />
+            <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>
+          </>
+        }
         viewAsBanner={showViewAsBanner ? <ViewAsBanner viewAs="coach" /> : undefined}
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
       >

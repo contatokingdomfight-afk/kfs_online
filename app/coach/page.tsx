@@ -15,6 +15,7 @@ import { TodayScheduleCard } from "./_components/TodayScheduleCard";
 import { WeekThemeCard } from "./_components/WeekThemeCard";
 import { TrialClassesCard } from "./_components/TrialClassesCard";
 import { MonitoredAthletesList } from "./_components/MonitoredAthletesList";
+import { PhysicalAssessmentRequestsCoachCard } from "./_components/PhysicalAssessmentRequestsCoachCard";
 
 const LEVEL_LABEL: Record<string, string> = {
   INICIANTE: "Iniciante",
@@ -230,6 +231,51 @@ export default async function CoachHomePage() {
     };
   });
 
+  let physicalAssessmentPendingRows: {
+    id: string;
+    createdAt: string;
+    note: string | null;
+    studentId: string;
+    studentName: string | null;
+  }[] = [];
+  if (coachId) {
+    const { data: coachSchoolLinks } = await supabase.from("CoachSchool").select("schoolId").eq("coachId", coachId);
+    const coachSchoolIds = [...new Set((coachSchoolLinks ?? []).map((l) => l.schoolId).filter(Boolean))] as string[];
+    if (coachSchoolIds.length > 0) {
+      const { data: physReqRows } = await supabase
+        .from("PhysicalAssessmentRequest")
+        .select("id, createdAt, note, studentId")
+        .in("schoolId", coachSchoolIds)
+        .eq("status", "PENDING")
+        .order("createdAt", { ascending: false })
+        .limit(40);
+      const pendingStudentIds = [...new Set((physReqRows ?? []).map((r) => r.studentId))];
+      const nameByStudentId = new Map<string, string | null>();
+      if (pendingStudentIds.length > 0) {
+        const { data: pendingStudents } = await supabase
+          .from("Student")
+          .select("id, userId")
+          .in("id", pendingStudentIds);
+        const pendingUserIds = [...new Set((pendingStudents ?? []).map((s) => s.userId))];
+        const { data: pendingUsers } =
+          pendingUserIds.length > 0
+            ? await supabase.from("User").select("id, name").in("id", pendingUserIds)
+            : { data: [] };
+        const nameByUserId = new Map((pendingUsers ?? []).map((u) => [u.id, u.name as string | null]));
+        for (const s of pendingStudents ?? []) {
+          nameByStudentId.set(s.id, nameByUserId.get(s.userId) ?? null);
+        }
+      }
+      physicalAssessmentPendingRows = (physReqRows ?? []).map((r) => ({
+        id: r.id,
+        createdAt: String(r.createdAt),
+        note: r.note,
+        studentId: r.studentId,
+        studentName: nameByStudentId.get(r.studentId) ?? null,
+      }));
+    }
+  }
+
   return (
     <div
       style={{
@@ -390,6 +436,15 @@ export default async function CoachHomePage() {
           formatDate={(d) => formatLessonDate(d)}
         />
       </div>
+
+      <PhysicalAssessmentRequestsCoachCard
+        rows={physicalAssessmentPendingRows}
+        title={t("coachPhysAssessRequestsTitle")}
+        emptyMessage={t("coachPhysAssessRequestsEmpty")}
+        openAssessmentLabel={t("coachPhysAssessOpenAssessment")}
+        unnamedStudentLabel={t("coachAthleteUnnamed")}
+        locale={locale as "pt" | "en"}
+      />
 
       {/* Secção 3: ACOMPANHAMENTO DE ATLETAS */}
       <MonitoredAthletesList

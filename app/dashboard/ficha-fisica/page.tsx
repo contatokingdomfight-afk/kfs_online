@@ -8,6 +8,7 @@ import { getTranslations } from "@/lib/i18n";
 import { normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 import { BodyMapSkeletonInvite } from "@/components/physical-assessment/BodyMapSkeletonInvite";
 import { PhysicalAssessmentReadOnlyView } from "@/components/physical-assessment/PhysicalAssessmentReadOnlyView";
+import { RequestPhysicalAssessmentPanel } from "@/components/physical-assessment/RequestPhysicalAssessmentPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function DashboardFichaFisicaPage() {
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
 
-  const [{ data: physRows }, { data: student }, { data: profile }] = await Promise.all([
+  const [{ data: physRows }, { data: student }, { data: profile }, { data: pendingRequestRow }] = await Promise.all([
     supabase
       .from("StudentPhysicalAssessment")
       .select("assessedAt, nextDueAt, clearance, formData, coachId")
@@ -29,7 +30,16 @@ export default async function DashboardFichaFisicaPage() {
       .limit(1),
     supabase.from("Student").select("userId").eq("id", studentId).single(),
     supabase.from("StudentProfile").select("heightCm, weightKg").eq("studentId", studentId).maybeSingle(),
+    supabase
+      .from("PhysicalAssessmentRequest")
+      .select("id")
+      .eq("studentId", studentId)
+      .eq("status", "PENDING")
+      .limit(1)
+      .maybeSingle(),
   ]);
+
+  const hasPendingPhysicalRequest = Boolean(pendingRequestRow?.id);
 
   const row = physRows?.[0] ?? null;
   const { data: user } = student?.userId
@@ -53,6 +63,7 @@ export default async function DashboardFichaFisicaPage() {
         <h1 className="text-xl font-bold text-[var(--text-primary)] m-0">{t("fichaFisicaEmptyTitle")}</h1>
         <p className="text-[var(--text-secondary)] m-0">{t("fichaFisicaEmptyBody")}</p>
         <BodyMapSkeletonInvite locale={locale as "pt" | "en"} scheduleHref="/dashboard/perfil" className="max-w-md" />
+        <RequestPhysicalAssessmentPanel locale={locale as "pt" | "en"} initialPending={hasPendingPhysicalRequest} />
         <div className="flex flex-wrap gap-3 pt-2">
           <Link href="/dashboard/perfil" className="btn btn-secondary no-underline">
             {t("fichaFisicaLinkPerfil")}
@@ -93,6 +104,9 @@ export default async function DashboardFichaFisicaPage() {
       {profile?.heightCm != null || profile?.weightKg != null ? (
         <p className="text-xs text-[var(--text-secondary)] px-4 mt-4 max-w-2xl mx-auto">{t("fichaFisicaProfileHint")}</p>
       ) : null}
+      <div className="px-4 mt-8 max-w-[min(720px,100%)] mx-auto">
+        <RequestPhysicalAssessmentPanel locale={locale as "pt" | "en"} initialPending={hasPendingPhysicalRequest} />
+      </div>
     </div>
   );
 }

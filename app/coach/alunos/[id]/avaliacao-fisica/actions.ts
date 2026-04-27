@@ -7,6 +7,7 @@ import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { revalidatePath } from "next/cache";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import { notifyStudentOfNewPhysicalAssessment } from "@/lib/notifications/in-app";
+import { fulfillPendingPhysicalAssessmentRequests } from "@/lib/physical-assessment-request-helpers";
 
 const MONTHS_UNTIL_NEXT = 6;
 
@@ -172,6 +173,8 @@ export async function savePhysicalAssessment(
     return { error: error.message };
   }
 
+  await fulfillPendingPhysicalAssessmentRequests(supabase, studentId);
+
   try {
     await notifyStudentOfNewPhysicalAssessment(supabase, { studentId, coachId: finalCoachId });
   } catch (e) {
@@ -185,5 +188,6 @@ export async function savePhysicalAssessment(
   revalidatePath(`/dashboard/ficha-fisica`);
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/notificacoes");
+  revalidatePath("/coach");
   return { success: true };
 }
