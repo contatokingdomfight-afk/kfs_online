@@ -169,29 +169,31 @@ export const messages = {
     perfWellnessAbbrFatigue: "Fadiga",
     perfWellnessBodyMapSectionTitle: "Mapa corporal (ilustrativo)",
     perfWellnessBodyMapEvalHint:
-      "No resumo acima, o segundo painel junta o mapa corporal ilustrativo (com base na última ficha ou referência genérica) e o radar de competências. O filtro por modalidade aplica-se ao radar. Para ver ou pedir a ficha completa, usa a ligação abaixo.",
+      "Acima vês só o radar de competências (o filtro por modalidade aplica-se a ele). O mapa corporal ilustrativo e o link para a ficha completa estão nesta secção, abaixo dos dados biométricos do check-in.",
     perfWellnessBodyMapEmptyScoresHint:
-      "Ainda não há médias de avaliação para mostrar nesta página. O radar abaixo fica a zero como referência; o mapa corporal segue a tua ficha física ou uma silhueta genérica. Quando existirem avaliações, o resumo completo aparece aqui.",
+      "Ainda não há médias de avaliação. O radar acima fica a zero como referência. O mapa corporal ilustrativo (ficha ou silhueta genérica) está nesta secção; quando existirem avaliações, o resumo completo aparece na página de performance.",
     perfEmptyBackLink: "Voltar ao início",
     perfCarouselSectionTitle: "Perfil de competências",
     perfCarouselSlideRadarCaption: "Radar por dimensão (escala 1–10)",
+    perfCarouselRadarOnlyHint:
+      "O mapa corporal ilustrativo (ficha ou convite) está na secção de dados biométricos do check-in, mais abaixo nesta página.",
     perfCarouselSlideBodyCaption: "",
     perfCarouselSwipeHint:
-      "Desliza para o lado ou usa as setas: vês o mapa corporal ilustrativo (última avaliação física, medidas opcionais) e o radar de competências (escala 1–10).",
+      "Neste painel está o radar de competências (escala 1–10). Desliza ou usa as setas para o 2.º painel: mapa corporal ilustrativo com base na última avaliação física (medidas opcionais).",
     perfAvatarStudentCaption:
       "Mapa corporal meramente ilustrativo com base nas medidas da ficha física (avaliação de {date}). A figura escala de forma aproximada com os dados; não é avaliação clínica nem imagem real do teu corpo.",
     perfCarouselSlideBodyCaptionNeutral: "Mapa corporal (2.º painel)",
     perfCarouselSwipeHintNeutral:
-      "Desliza ou usa as setas: o mapa corporal usa referência genérica até haver antropometria suficiente na ficha; depois ajusta-se melhor às tuas medidas. No outro painel está o radar de competências (1–10).",
+      "Neste painel está o radar de competências (1–10). Desliza ou usa as setas para o 2.º painel: mapa corporal com referência genérica até haver antropometria suficiente na ficha; depois ajusta-se melhor às tuas medidas.",
     perfAvatarNeutralCaption:
       "Ficha física registada a {date}. Mapa de referência até serem preenchidas medidas antropométricas na ficha. Não é imagem clínica nem foto do aluno.",
     perfCarouselSlideBodyCaptionNoFicha: "Convite à avaliação física (2.º painel)",
     perfCarouselSwipeHintNoFicha:
-      "Desliza ou usa as setas: vês um convite com esqueleto até a escola registar a ficha de avaliação física; depois aparece o mapa corporal com os teus dados. No outro painel está o radar de competências.",
+      "Neste painel está o radar de competências (1–10). Desliza ou usa as setas para o 2.º painel: convite com esqueleto até a escola registar a ficha de avaliação física; depois aparece o mapa corporal com os teus dados.",
     perfAvatarNoFichaCaption:
       "Ainda não há ficha de avaliação física associada à tua conta nesta plataforma. Usa o botão abaixo para saberes como renovar ou pede ao teu instrutor para completar a ficha em «Avaliação física».",
     perfCarouselSwipeHintNoFichaCoach:
-      "Desliza ou usa as setas: convite até existir ficha de avaliação física na plataforma; depois o mapa reflecte os dados do aluno. No outro painel está o radar de competências.",
+      "Neste painel está o radar de competências (1–10). Desliza ou usa as setas para o 2.º painel: convite até existir ficha de avaliação física na plataforma; depois o mapa reflecte os dados do aluno.",
     perfAvatarNoFichaCaptionCoach:
       "Este aluno ainda não tem ficha de avaliação física registada na plataforma. Completa a ficha em «Avaliação física» no perfil do aluno para associar dados à conta dele.",
     perfAvatarPhysicalRegisteredAnomaly:
@@ -881,29 +883,31 @@ export const messages = {
     perfWellnessAbbrFatigue: "Fatigue",
     perfWellnessBodyMapSectionTitle: "Body map (illustrative)",
     perfWellnessBodyMapEvalHint:
-      "In the summary above, the second panel combines the illustrative body map (from your latest form or a generic reference) and the competency radar. The modality filter applies to the radar. Use the link below to view or request the full form.",
+      "Above you only see the competency radar (the modality filter applies to it). The illustrative body map and the link to the full form are in this section, below your check-in biometric data.",
     perfWellnessBodyMapEmptyScoresHint:
-      "There are no evaluation averages to show on this page yet. The radar below stays at zero as a placeholder; the body map follows your physical form or a generic silhouette. Once evaluations exist, the full summary appears here.",
+      "There are no evaluation averages yet. The radar above stays at zero as a placeholder. The illustrative body map (your form or a generic silhouette) is in this section; once evaluations exist, the full summary appears on the performance page.",
     perfEmptyBackLink: "Back to home",
     perfCarouselSectionTitle: "Competency profile",
     perfCarouselSlideRadarCaption: "Radar by dimension (scale 1–10)",
+    perfCarouselRadarOnlyHint:
+      "The illustrative body map (your form or the invite) is in the check-in biometric section further down this page.",
     perfCarouselSlideBodyCaption: "",
     perfCarouselSwipeHint:
-      "Swipe sideways or use the arrows: you'll see the illustrative body map (latest physical assessment, optional measurements) and the competency radar (scale 1–10).",
+      "This panel shows the competency radar (scale 1–10). Swipe sideways or use the arrows for the second panel: illustrative body map from your latest physical assessment (optional measurements).",
     perfAvatarStudentCaption:
       "Illustrative body map from your physical assessment data ({date}). The figure scales approximately from your measurements; not a clinical evaluation or a real image of your body.",
     perfCarouselSlideBodyCaptionNeutral: "Body map (2nd panel)",
     perfCarouselSwipeHintNeutral:
-      "Swipe or use the arrows: the body map uses a generic reference until enough anthropometry is saved; then it better reflects your proportions. The other panel shows the competency radar (1–10).",
+      "This panel shows the competency radar (1–10). Swipe or use the arrows for the second panel: body map with a generic reference until enough anthropometry is saved on the form; then it better reflects your proportions.",
     perfAvatarNeutralCaption:
       "Physical assessment dated {date}. Reference map until anthropometric measurements are saved on the form. Not a clinical image or a photo.",
     perfCarouselSlideBodyCaptionNoFicha: "Physical assessment invite (2nd panel)",
     perfCarouselSwipeHintNoFicha:
-      "Swipe or use the arrows: you'll see a skeleton invite until your school saves your physical assessment; then the body map shows your data. The other panel shows the competency radar.",
+      "This panel shows the competency radar (1–10). Swipe or use the arrows for the second panel: skeleton invite until your school saves your physical assessment; then the body map shows your data.",
     perfAvatarNoFichaCaption:
       "No physical assessment form is linked to your account on the platform yet. Use the button below for next steps, or ask your coach to complete the form under «Physical assessment».",
     perfCarouselSwipeHintNoFichaCoach:
-      "Swipe or use the arrows: invite until this student's physical assessment is saved on the platform; then the map reflects their data. The other panel shows the competency radar.",
+      "This panel shows the competency radar (1–10). Swipe or use the arrows for the second panel: invite until this student's physical assessment is saved on the platform; then the map reflects their data.",
     perfAvatarNoFichaCaptionCoach:
       "This student does not have a physical assessment saved on the platform yet. Complete the form under «Physical assessment» on their profile to attach data to their account.",
     perfAvatarPhysicalRegisteredAnomaly:

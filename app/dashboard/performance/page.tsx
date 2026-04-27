@@ -16,7 +16,10 @@ import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanc
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
-import { PerformanceRadarAvatarCarousel } from "@/components/fighter/PerformanceRadarAvatarCarousel";
+import {
+  PerformanceRadarAvatarCarousel,
+  PhysicalAssessmentBodyMapPanel,
+} from "@/components/fighter/PerformanceRadarAvatarCarousel";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { buildPhysicalAvatarCarouselForStudentView } from "@/lib/build-performance-physical-carousel";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
@@ -386,43 +389,41 @@ export default async function DashboardPerformancePage() {
     return (
       <div className="max-w-[min(720px,100%)] mx-auto space-y-6 pb-8">
         {checkInWellness && wellnessCopyEmptyScores ? (
-          <CheckInWellnessSection
-            data={checkInWellness.data}
-            copy={wellnessCopyEmptyScores}
-            bodyMappingSlot={
-              evaluationResultsData ? (
-                <p className="text-center text-xs m-0 sm:text-left">
-                  <Link
-                    href="/dashboard/ficha-fisica"
-                    className="text-[var(--primary)] font-medium no-underline hover:underline"
-                  >
-                    {t("perfLinkFullPhysicalFicha")}
-                  </Link>
-                </p>
-              ) : (
-                <>
-                  <PerformanceRadarAvatarCarousel
-                    radar={
-                      <RadarStats
-                        scores={radarScoresPlaceholder}
-                        axes={[...GENERAL_PERFORMANCE_AXES]}
-                        maxScore={10}
-                      />
-                    }
-                    payload={physicalAvatarCarousel}
+          <>
+            <div className="space-y-2">
+              <PerformanceRadarAvatarCarousel
+                radar={
+                  <RadarStats
+                    scores={radarScoresPlaceholder}
+                    axes={[...GENERAL_PERFORMANCE_AXES]}
+                    maxScore={10}
                   />
-                  <p className="text-center text-xs m-0 sm:text-left">
+                }
+                payload={physicalAvatarCarousel}
+                radarOnly
+                radarOnlyHint={t("perfCarouselRadarOnlyHint")}
+              />
+            </div>
+            <CheckInWellnessSection
+              data={checkInWellness.data}
+              copy={wellnessCopyEmptyScores}
+              bodyMappingSlot={
+                <>
+                  {physicalAvatarCarousel ? (
+                    <PhysicalAssessmentBodyMapPanel payload={physicalAvatarCarousel} />
+                  ) : null}
+                  <p className="m-0 text-center text-xs sm:text-left">
                     <Link
                       href="/dashboard/ficha-fisica"
-                      className="text-[var(--primary)] font-medium no-underline hover:underline"
+                      className="font-medium text-[var(--primary)] no-underline hover:underline"
                     >
                       {t("perfLinkFullPhysicalFicha")}
                     </Link>
                   </p>
                 </>
-              )
-            }
-          />
+              }
+            />
+          </>
         ) : null}
         <div className="rounded-2xl bg-bg-secondary border border-border p-6 shadow-md">
           <h1 className="text-xl font-bold text-text-primary mb-2">{t("navAthleteProfile")}</h1>
@@ -486,6 +487,7 @@ export default async function DashboardPerformancePage() {
         href: "/dashboard/ficha-fisica",
         label: t("perfLinkFullPhysicalFicha"),
       }}
+      physicalRadarOnlyHint={checkInWellness ? t("perfCarouselRadarOnlyHint") : undefined}
     />
   );
 }

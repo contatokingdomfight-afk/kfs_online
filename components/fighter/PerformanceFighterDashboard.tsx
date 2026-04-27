@@ -19,7 +19,10 @@ import type { DimensionScore, CriterionScoreItem } from "@/lib/evaluation-result
 import type { BeltTimeGateInfo } from "@/lib/xp-missions";
 import { CheckInWellnessSection, type CheckInWellnessCopy } from "@/components/fighter/CheckInWellnessSection";
 import type { CheckInWellnessAggregates } from "@/lib/check-in-wellness-aggregates";
-import { PerformanceRadarAvatarCarousel } from "@/components/fighter/PerformanceRadarAvatarCarousel";
+import {
+  PerformanceRadarAvatarCarousel,
+  PhysicalAssessmentBodyMapPanel,
+} from "@/components/fighter/PerformanceRadarAvatarCarousel";
 
 const BeltProgressionSection = dynamic(
   () => import("@/components/belt-progression").then((m) => ({ default: m.BeltProgressionSection })),
@@ -122,6 +125,8 @@ type Props = {
   physicalAvatarCarousel?: PhysicalAvatarCarouselPayload | null;
   /** Link opcional para ver a ficha completa (área do aluno). */
   physicalFichaReadOnlyLink?: { href: string; label: string } | null;
+  /** Dica sob o radar em modo só-radar (mapa na secção de dados biométricos). */
+  physicalRadarOnlyHint?: string | null;
 };
 
 export function PerformanceFighterDashboard({
@@ -153,6 +158,7 @@ export function PerformanceFighterDashboard({
   checkInWellness,
   physicalAvatarCarousel = null,
   physicalFichaReadOnlyLink = null,
+  physicalRadarOnlyHint = null,
 }: Props) {
   const systemMissions = buildMissionsFromScores(scores, axes, maxScore);
   const customAsMissions: Mission[] = customMissions.map((c) => ({
@@ -202,6 +208,8 @@ export function PerformanceFighterDashboard({
           scoresByModality={scoresByModality}
           physicalAvatarCarousel={physicalAvatarCarousel}
           physicalFichaReadOnlyLink={physicalFichaReadOnlyLink}
+          physicalBodyMapOnlyInWellness={Boolean(checkInWellness)}
+          physicalRadarOnlyHint={physicalRadarOnlyHint}
         />
       ) : (
         <>
@@ -226,24 +234,24 @@ export function PerformanceFighterDashboard({
             </div>
           </section>
 
-          {!checkInWellness ? (
-            <div className="space-y-2">
-              <PerformanceRadarAvatarCarousel
-                radar={<RadarStats scores={scores} axes={axes} maxScore={maxScore} />}
-                payload={physicalAvatarCarousel}
-              />
-              {physicalFichaReadOnlyLink ? (
-                <p className="text-center text-xs m-0">
-                  <Link
-                    href={physicalFichaReadOnlyLink.href}
-                    className="text-[var(--primary)] font-medium no-underline hover:underline"
-                  >
-                    {physicalFichaReadOnlyLink.label}
-                  </Link>
-                </p>
-              ) : null}
-            </div>
-          ) : null}
+          <div className="space-y-2">
+            <PerformanceRadarAvatarCarousel
+              radar={<RadarStats scores={scores} axes={axes} maxScore={maxScore} />}
+              payload={physicalAvatarCarousel}
+              radarOnly={Boolean(checkInWellness)}
+              radarOnlyHint={checkInWellness ? physicalRadarOnlyHint : undefined}
+            />
+            {physicalFichaReadOnlyLink && !checkInWellness ? (
+              <p className="m-0 text-center text-xs">
+                <Link
+                  href={physicalFichaReadOnlyLink.href}
+                  className="font-medium text-[var(--primary)] no-underline hover:underline"
+                >
+                  {physicalFichaReadOnlyLink.label}
+                </Link>
+              </p>
+            ) : null}
+          </div>
         </>
       )}
 
@@ -321,35 +329,21 @@ export function PerformanceFighterDashboard({
           data={checkInWellness.data}
           copy={checkInWellness.copy}
           bodyMappingSlot={
-            evaluationResultsData ? (
-              physicalFichaReadOnlyLink ? (
-                <p className="text-center text-xs m-0 sm:text-left">
+            <>
+              {physicalAvatarCarousel ? (
+                <PhysicalAssessmentBodyMapPanel payload={physicalAvatarCarousel} />
+              ) : null}
+              {physicalFichaReadOnlyLink ? (
+                <p className="m-0 text-center text-xs sm:text-left">
                   <Link
                     href={physicalFichaReadOnlyLink.href}
-                    className="text-[var(--primary)] font-medium no-underline hover:underline"
+                    className="font-medium text-[var(--primary)] no-underline hover:underline"
                   >
                     {physicalFichaReadOnlyLink.label}
                   </Link>
                 </p>
-              ) : null
-            ) : (
-              <>
-                <PerformanceRadarAvatarCarousel
-                  radar={<RadarStats scores={scores} axes={axes} maxScore={maxScore} />}
-                  payload={physicalAvatarCarousel}
-                />
-                {physicalFichaReadOnlyLink ? (
-                  <p className="text-center text-xs m-0 sm:text-left">
-                    <Link
-                      href={physicalFichaReadOnlyLink.href}
-                      className="text-[var(--primary)] font-medium no-underline hover:underline"
-                    >
-                      {physicalFichaReadOnlyLink.label}
-                    </Link>
-                  </p>
-                ) : null}
-              </>
-            )
+              ) : null}
+            </>
           }
         />
       )}

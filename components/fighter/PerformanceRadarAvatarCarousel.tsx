@@ -35,23 +35,82 @@ function mergeLabels(labels?: PerformanceAvatarCarouselLabels | null): Performan
   return { ...LABEL_DEFAULTS, ...(labels ?? {}) };
 }
 
+/** Mapa corporal / convite à ficha (conteúdo do 2.º painel do carrossel), reutilizável na secção de dados biométricos. */
+export function PhysicalAssessmentBodyMapPanel({
+  payload,
+  className,
+}: {
+  payload: PhysicalAvatarCarouselPayload;
+  className?: string;
+}) {
+  const L = mergeLabels(payload.labels ?? null);
+  const invite = Boolean(payload.invitePhysicalAssessment);
+  const parsedForm = normalizePhysicalFormDataJson(payload.formData);
+  const neutralReference = !payload.silhouettePersonalized;
+  const formForMap = neutralReference ? (parsedForm ?? {}) : (parsedForm ?? payload.formData ?? {});
+  const locale = payload.locale;
+  const profileBodyMetrics = payload.profileBodyMetrics ?? null;
+  const assessedAtLabel = payload.assessedAt?.trim() ? payload.assessedAt : null;
+
+  return (
+    <div
+      className={[
+        "mx-auto flex max-w-[min(360px,94vw)] flex-col items-center gap-2 pt-1",
+        className ?? "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {L.slideBodyCaption.trim() ? (
+        <p className="m-0 mb-0 w-full text-xs text-[var(--text-secondary)]">{L.slideBodyCaption}</p>
+      ) : null}
+      {invite ? (
+        <BodyMapSkeletonInvite locale={locale} scheduleHref={payload.inviteScheduleHref} className="w-full" />
+      ) : (
+        <AnatomicalBodyMap
+          formData={formForMap}
+          locale={locale}
+          assessedAtLabel={assessedAtLabel}
+          variant="compact"
+          neutralReference={neutralReference}
+          profileBodyMetrics={profileBodyMetrics}
+          className="w-full border-0 bg-transparent p-0"
+        />
+      )}
+      {L.studentAvatarCaption.trim() ? (
+        <div className="flex justify-center pt-0.5">
+          <InlineInfoTip
+            detail={L.studentAvatarCaption}
+            ariaLabel={L.bodyMapDisclaimerTipAria?.trim() || "Info"}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 type Props = {
   radar: ReactNode;
   /** Quando `null`, só o radar é mostrado (sem 2.º painel). */
   payload: PhysicalAvatarCarouselPayload | null;
+  /** Se `true`, não mostra o 2.º painel (mapa convite/ficha) — usar quando o mapa está doutro lado (ex.: dados biométricos). */
+  radarOnly?: boolean;
+  /** Texto curto sob o radar quando `radarOnly` (ex.: indicar que o mapa está na secção de dados biométricos). */
+  radarOnlyHint?: string | null;
 };
 
 /**
  * Carrossel horizontal: 1.º painel radar; 2.º mapa corporal ilustrativo (ou convite com esqueleto se ainda não há ficha).
  */
-export function PerformanceRadarAvatarCarousel({ radar, payload }: Props) {
+export function PerformanceRadarAvatarCarousel({
+  radar,
+  payload,
+  radarOnly = false,
+  radarOnlyHint = null,
+}: Props) {
   const L = mergeLabels(payload?.labels ?? null);
 
-  const showBodySlide = Boolean(payload);
-  const invite = Boolean(payload?.invitePhysicalAssessment);
-  const parsedForm = payload ? normalizePhysicalFormDataJson(payload.formData) : null;
-  const neutralReference = payload ? !payload.silhouettePersonalized : true;
-  const formForMap = neutralReference ? (parsedForm ?? {}) : (parsedForm ?? payload?.formData ?? {});
+  const showBodySlide = Boolean(payload) && !radarOnly;
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
@@ -86,14 +145,18 @@ export function PerformanceRadarAvatarCarousel({ radar, payload }: Props) {
         <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-3">
           {L.sectionTitle}
         </h2>
+        {L.slideRadarCaption.trim() ? (
+          <p className="m-0 mb-2 text-xs text-[var(--text-secondary)]">{L.slideRadarCaption}</p>
+        ) : null}
         {radar}
+        {radarOnly && radarOnlyHint?.trim() ? (
+          <p className="m-0 mt-3 max-w-prose text-xs leading-relaxed text-[var(--text-secondary)]">
+            {radarOnlyHint}
+          </p>
+        ) : null}
       </section>
     );
   }
-
-  const locale = payload!.locale;
-  const profileBodyMetrics = payload!.profileBodyMetrics ?? null;
-  const assessedAtLabel = payload!.assessedAt?.trim() ? payload!.assessedAt : null;
 
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 sm:p-5 shadow-md">
@@ -155,32 +218,7 @@ export function PerformanceRadarAvatarCarousel({ radar, payload }: Props) {
             {radar}
           </div>
           <div className="min-w-full shrink-0 snap-start box-border px-1">
-            {L.slideBodyCaption.trim() ? (
-              <p className="text-xs text-[var(--text-secondary)] mb-2 m-0">{L.slideBodyCaption}</p>
-            ) : null}
-            <div className="flex flex-col items-center pt-1 gap-2 max-w-[min(360px,94vw)] mx-auto">
-              {invite ? (
-                <BodyMapSkeletonInvite locale={locale} scheduleHref={payload!.inviteScheduleHref} className="w-full" />
-              ) : (
-                <AnatomicalBodyMap
-                  formData={formForMap}
-                  locale={locale}
-                  assessedAtLabel={assessedAtLabel}
-                  variant="compact"
-                  neutralReference={neutralReference}
-                  profileBodyMetrics={profileBodyMetrics}
-                  className="w-full border-0 bg-transparent p-0"
-                />
-              )}
-              {L.studentAvatarCaption.trim() ? (
-                <div className="flex justify-center pt-0.5">
-                  <InlineInfoTip
-                    detail={L.studentAvatarCaption}
-                    ariaLabel={L.bodyMapDisclaimerTipAria?.trim() || "Info"}
-                  />
-                </div>
-              ) : null}
-            </div>
+            <PhysicalAssessmentBodyMapPanel payload={payload!} />
           </div>
         </div>
         {L.swipeHint.trim() ? (

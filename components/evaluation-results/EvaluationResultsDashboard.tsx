@@ -35,6 +35,9 @@ type Props = {
   /** Mapa corporal no 2.º painel (última ficha ou convite). */
   physicalAvatarCarousel?: PhysicalAvatarCarouselPayload | null;
   physicalFichaReadOnlyLink?: { href: string; label: string } | null;
+  /** Quando o mapa corporal está na secção de dados biométricos, o carrossel mostra só o radar. */
+  physicalBodyMapOnlyInWellness?: boolean;
+  physicalRadarOnlyHint?: string | null;
 };
 
 export function EvaluationResultsDashboard({
@@ -48,6 +51,8 @@ export function EvaluationResultsDashboard({
   scoresByModality,
   physicalAvatarCarousel = null,
   physicalFichaReadOnlyLink = null,
+  physicalBodyMapOnlyInWellness = false,
+  physicalRadarOnlyHint = null,
 }: Props) {
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
   /** null = mostrar todas as subcategorias; valor = filtrar por prefixo principal (derivado dos dados). */
@@ -210,12 +215,14 @@ export function EvaluationResultsDashboard({
         <PerformanceRadarAvatarCarousel
           radar={<RadarStats scores={activeRadarScores} axes={axes} maxScore={maxScore} />}
           payload={physicalAvatarCarousel}
+          radarOnly={physicalBodyMapOnlyInWellness}
+          radarOnlyHint={physicalBodyMapOnlyInWellness ? physicalRadarOnlyHint : undefined}
         />
-        {physicalFichaReadOnlyLink ? (
-          <p className="text-center text-xs m-0">
+        {physicalFichaReadOnlyLink && !physicalBodyMapOnlyInWellness ? (
+          <p className="m-0 text-center text-xs">
             <Link
               href={physicalFichaReadOnlyLink.href}
-              className="text-[var(--primary)] font-medium no-underline hover:underline"
+              className="font-medium text-[var(--primary)] no-underline hover:underline"
             >
               {physicalFichaReadOnlyLink.label}
             </Link>

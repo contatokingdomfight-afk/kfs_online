@@ -85,7 +85,20 @@ export function buildPhysicalAvatarCarouselForStudentView(
     studentAvatarCaption = noFichaCaption;
   }
 
-  const swipeHint = "";
+  let swipeHint: string;
+  if (invitePhysicalAssessment) {
+    swipeHint =
+      perspective === "coach" ? t("perfCarouselSwipeHintNoFichaCoach") : t("perfCarouselSwipeHintNoFicha");
+  } else if (hasAnthro) {
+    swipeHint = t("perfCarouselSwipeHint");
+  } else if (hasRowPayload) {
+    swipeHint = t("perfCarouselSwipeHintNeutral");
+  } else if (datasetSaysPhysical) {
+    swipeHint = t("perfCarouselSwipeHintNeutral");
+  } else {
+    swipeHint =
+      perspective === "coach" ? t("perfCarouselSwipeHintNoFichaCoach") : t("perfCarouselSwipeHintNoFicha");
+  }
 
   return {
     formData: hasAnthro ? normalizedPhysicalForm : (normalizedPhysicalForm ?? {}),
