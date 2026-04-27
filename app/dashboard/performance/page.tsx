@@ -16,6 +16,8 @@ import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanc
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
+import { PerformanceRadarAvatarCarousel } from "@/components/fighter/PerformanceRadarAvatarCarousel";
+import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { buildPhysicalAvatarCarouselForStudentView } from "@/lib/build-performance-physical-carousel";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 import {
@@ -368,11 +370,60 @@ export default async function DashboardPerformancePage() {
   const hasScores = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
 
   if (!hasScores) {
+    const radarScoresPlaceholder = Object.fromEntries(
+      GENERAL_PERFORMANCE_AXES.map((a) => [a.id, 0])
+    ) as Record<string, number>;
+    const wellnessCopyEmptyScores =
+      checkInWellness &&
+      ({
+        ...checkInWellness.copy,
+        bodyMapSectionTitle: t("perfWellnessBodyMapSectionTitle"),
+        bodyMapEvalHint: evaluationResultsData
+          ? t("perfWellnessBodyMapEvalHint")
+          : t("perfWellnessBodyMapEmptyScoresHint"),
+      } satisfies CheckInWellnessCopy);
+
     return (
       <div className="max-w-[min(720px,100%)] mx-auto space-y-6 pb-8">
-        {checkInWellness && (
-          <CheckInWellnessSection data={checkInWellness.data} copy={checkInWellness.copy} />
-        )}
+        {checkInWellness && wellnessCopyEmptyScores ? (
+          <CheckInWellnessSection
+            data={checkInWellness.data}
+            copy={wellnessCopyEmptyScores}
+            bodyMappingSlot={
+              evaluationResultsData ? (
+                <p className="text-center text-xs m-0 sm:text-left">
+                  <Link
+                    href="/dashboard/ficha-fisica"
+                    className="text-[var(--primary)] font-medium no-underline hover:underline"
+                  >
+                    {t("perfLinkFullPhysicalFicha")}
+                  </Link>
+                </p>
+              ) : (
+                <>
+                  <PerformanceRadarAvatarCarousel
+                    radar={
+                      <RadarStats
+                        scores={radarScoresPlaceholder}
+                        axes={[...GENERAL_PERFORMANCE_AXES]}
+                        maxScore={10}
+                      />
+                    }
+                    payload={physicalAvatarCarousel}
+                  />
+                  <p className="text-center text-xs m-0 sm:text-left">
+                    <Link
+                      href="/dashboard/ficha-fisica"
+                      className="text-[var(--primary)] font-medium no-underline hover:underline"
+                    >
+                      {t("perfLinkFullPhysicalFicha")}
+                    </Link>
+                  </p>
+                </>
+              )
+            }
+          />
+        ) : null}
         <div className="rounded-2xl bg-bg-secondary border border-border p-6 shadow-md">
           <h1 className="text-xl font-bold text-text-primary mb-2">{t("navAthleteProfile")}</h1>
           <p className="text-base text-text-secondary mb-4">{t("evaluationPlaceholder")}</p>
@@ -418,7 +469,18 @@ export default async function DashboardPerformancePage() {
       suggestedCourses={suggestedCourses.length > 0 ? suggestedCourses : undefined}
       profileAchievements={profileAchievements}
       evaluationResultsData={evaluationResultsData}
-      checkInWellness={checkInWellness}
+      checkInWellness={
+        checkInWellness
+          ? {
+              ...checkInWellness,
+              copy: {
+                ...checkInWellness.copy,
+                bodyMapSectionTitle: t("perfWellnessBodyMapSectionTitle"),
+                bodyMapEvalHint: evaluationResultsData ? t("perfWellnessBodyMapEvalHint") : undefined,
+              },
+            }
+          : undefined
+      }
       physicalAvatarCarousel={physicalAvatarCarousel}
       physicalFichaReadOnlyLink={{
         href: "/dashboard/ficha-fisica",

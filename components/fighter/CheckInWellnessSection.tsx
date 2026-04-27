@@ -25,6 +25,10 @@ export type CheckInWellnessCopy = {
   abbrHydration: string;
   abbrStress: string;
   abbrFatigue: string;
+  /** Subsecção «mapa corporal» dentro deste bloco (dados biométricos). */
+  bodyMapSectionTitle?: string;
+  /** Texto quando o radar/mapa está no resumo de resultados (não duplicamos o carrossel aqui). */
+  bodyMapEvalHint?: string;
 };
 
 function format1(v: number): string {
@@ -193,9 +197,11 @@ function BiometricCard({
 type Props = {
   data: CheckInWellnessAggregates;
   copy: CheckInWellnessCopy;
+  /** Mapa corporal + radar (layout clássico) ou conteúdo extra; renderizado no fim da secção biométrica. */
+  bodyMappingSlot?: ReactNode;
 };
 
-export function CheckInWellnessSection({ data, copy }: Props) {
+export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
   const { zoneShare } = data;
   const hasZones = zoneShare.green + zoneShare.yellow + zoneShare.red > 0;
 
@@ -323,6 +329,18 @@ export function CheckInWellnessSection({ data, copy }: Props) {
           </div>
         </div>
       )}
+
+      {(bodyMappingSlot != null || Boolean(copy.bodyMapEvalHint)) ? (
+        <div className="mt-6 space-y-3 border-t border-border pt-6">
+          {copy.bodyMapSectionTitle ? (
+            <h3 className="text-sm font-semibold tracking-tight text-text-primary">{copy.bodyMapSectionTitle}</h3>
+          ) : null}
+          {copy.bodyMapEvalHint ? (
+            <p className="m-0 max-w-prose text-sm leading-relaxed text-text-secondary">{copy.bodyMapEvalHint}</p>
+          ) : null}
+          {bodyMappingSlot}
+        </div>
+      ) : null}
     </section>
   );
 }

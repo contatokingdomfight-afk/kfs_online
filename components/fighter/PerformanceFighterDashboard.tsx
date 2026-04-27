@@ -226,22 +226,24 @@ export function PerformanceFighterDashboard({
             </div>
           </section>
 
-          <div className="space-y-2">
-            <PerformanceRadarAvatarCarousel
-              radar={<RadarStats scores={scores} axes={axes} maxScore={maxScore} />}
-              payload={physicalAvatarCarousel}
-            />
-            {physicalFichaReadOnlyLink ? (
-              <p className="text-center text-xs m-0">
-                <Link
-                  href={physicalFichaReadOnlyLink.href}
-                  className="text-[var(--primary)] font-medium no-underline hover:underline"
-                >
-                  {physicalFichaReadOnlyLink.label}
-                </Link>
-              </p>
-            ) : null}
-          </div>
+          {!checkInWellness ? (
+            <div className="space-y-2">
+              <PerformanceRadarAvatarCarousel
+                radar={<RadarStats scores={scores} axes={axes} maxScore={maxScore} />}
+                payload={physicalAvatarCarousel}
+              />
+              {physicalFichaReadOnlyLink ? (
+                <p className="text-center text-xs m-0">
+                  <Link
+                    href={physicalFichaReadOnlyLink.href}
+                    className="text-[var(--primary)] font-medium no-underline hover:underline"
+                  >
+                    {physicalFichaReadOnlyLink.label}
+                  </Link>
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </>
       )}
 
@@ -315,7 +317,41 @@ export function PerformanceFighterDashboard({
       <MissionCard missions={missions} />
 
       {checkInWellness && (
-        <CheckInWellnessSection data={checkInWellness.data} copy={checkInWellness.copy} />
+        <CheckInWellnessSection
+          data={checkInWellness.data}
+          copy={checkInWellness.copy}
+          bodyMappingSlot={
+            evaluationResultsData ? (
+              physicalFichaReadOnlyLink ? (
+                <p className="text-center text-xs m-0 sm:text-left">
+                  <Link
+                    href={physicalFichaReadOnlyLink.href}
+                    className="text-[var(--primary)] font-medium no-underline hover:underline"
+                  >
+                    {physicalFichaReadOnlyLink.label}
+                  </Link>
+                </p>
+              ) : null
+            ) : (
+              <>
+                <PerformanceRadarAvatarCarousel
+                  radar={<RadarStats scores={scores} axes={axes} maxScore={maxScore} />}
+                  payload={physicalAvatarCarousel}
+                />
+                {physicalFichaReadOnlyLink ? (
+                  <p className="text-center text-xs m-0 sm:text-left">
+                    <Link
+                      href={physicalFichaReadOnlyLink.href}
+                      className="text-[var(--primary)] font-medium no-underline hover:underline"
+                    >
+                      {physicalFichaReadOnlyLink.label}
+                    </Link>
+                  </p>
+                ) : null}
+              </>
+            )
+          }
+        />
       )}
 
       {/* Progressão de Níveis e XP */}

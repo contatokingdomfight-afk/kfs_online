@@ -167,6 +167,11 @@ export const messages = {
     perfWellnessAbbrHydration: "Hidrat.",
     perfWellnessAbbrStress: "Stress",
     perfWellnessAbbrFatigue: "Fadiga",
+    perfWellnessBodyMapSectionTitle: "Mapa corporal (ilustrativo)",
+    perfWellnessBodyMapEvalHint:
+      "No resumo acima, o segundo painel junta o mapa corporal ilustrativo (com base na última ficha ou referência genérica) e o radar de competências. O filtro por modalidade aplica-se ao radar. Para ver ou pedir a ficha completa, usa a ligação abaixo.",
+    perfWellnessBodyMapEmptyScoresHint:
+      "Ainda não há médias de avaliação para mostrar nesta página. O radar abaixo fica a zero como referência; o mapa corporal segue a tua ficha física ou uma silhueta genérica. Quando existirem avaliações, o resumo completo aparece aqui.",
     perfEmptyBackLink: "Voltar ao início",
     perfCarouselSectionTitle: "Perfil de competências",
     perfCarouselSlideRadarCaption: "Radar por dimensão (escala 1–10)",
@@ -874,6 +879,11 @@ export const messages = {
     perfWellnessAbbrHydration: "Hydr.",
     perfWellnessAbbrStress: "Stress",
     perfWellnessAbbrFatigue: "Fatigue",
+    perfWellnessBodyMapSectionTitle: "Body map (illustrative)",
+    perfWellnessBodyMapEvalHint:
+      "In the summary above, the second panel combines the illustrative body map (from your latest form or a generic reference) and the competency radar. The modality filter applies to the radar. Use the link below to view or request the full form.",
+    perfWellnessBodyMapEmptyScoresHint:
+      "There are no evaluation averages to show on this page yet. The radar below stays at zero as a placeholder; the body map follows your physical form or a generic silhouette. Once evaluations exist, the full summary appears here.",
     perfEmptyBackLink: "Back to home",
     perfCarouselSectionTitle: "Competency profile",
     perfCarouselSlideRadarCaption: "Radar by dimension (scale 1–10)",
