@@ -61,31 +61,31 @@ export default async function DashboardFichaFisicaPage() {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 pb-12 pt-4 sm:px-6 lg:px-8 lg:pb-16 lg:pt-8">
         <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:items-start lg:gap-10 xl:gap-12">
-          <aside className="order-2 lg:order-1 lg:col-span-5">
+          <header className="space-y-2 lg:col-span-7 lg:col-start-6 lg:row-start-1">
+            <h1 className="m-0 text-xl font-bold text-[var(--text-primary)] sm:text-2xl lg:text-[1.65rem] lg:leading-snug">
+              {t("fichaFisicaEmptyTitle")}
+            </h1>
+            <p className="m-0 max-w-prose text-[15px] leading-relaxed text-[var(--text-secondary)] sm:text-base">
+              {t("fichaFisicaEmptyBody")}
+            </p>
+          </header>
+          <aside className="lg:col-span-5 lg:col-start-1 lg:row-span-3 lg:row-start-1">
             <BodyMapSkeletonInvite
               locale={locale as "pt" | "en"}
               scheduleHref="/dashboard/perfil"
               className="mx-auto max-w-md shadow-sm lg:sticky lg:top-6 lg:mx-0 lg:max-w-none lg:self-start lg:py-6"
             />
           </aside>
-          <div className="order-1 flex flex-col gap-5 lg:order-2 lg:col-span-7">
-            <header className="space-y-2">
-              <h1 className="m-0 text-xl font-bold text-[var(--text-primary)] sm:text-2xl lg:text-[1.65rem] lg:leading-snug">
-                {t("fichaFisicaEmptyTitle")}
-              </h1>
-              <p className="m-0 max-w-prose text-[15px] leading-relaxed text-[var(--text-secondary)] sm:text-base">
-                {t("fichaFisicaEmptyBody")}
-              </p>
-            </header>
+          <div className="lg:col-span-7 lg:col-start-6 lg:row-start-2">
             <RequestPhysicalAssessmentPanel locale={locale as "pt" | "en"} initialPending={hasPendingPhysicalRequest} />
-            <div className="flex flex-wrap gap-3 pt-1">
-              <Link href="/dashboard/perfil" className="btn btn-secondary no-underline">
-                {t("fichaFisicaLinkPerfil")}
-              </Link>
-              <Link href="/dashboard/performance" className="btn btn-primary no-underline">
-                {t("fichaFisicaBackPerformance")}
-              </Link>
-            </div>
+          </div>
+          <div className="flex flex-wrap gap-3 pt-1 lg:col-span-7 lg:col-start-6 lg:row-start-3">
+            <Link href="/dashboard/perfil" className="btn btn-secondary no-underline">
+              {t("fichaFisicaLinkPerfil")}
+            </Link>
+            <Link href="/dashboard/performance" className="btn btn-primary no-underline">
+              {t("fichaFisicaBackPerformance")}
+            </Link>
           </div>
         </div>
       </div>
