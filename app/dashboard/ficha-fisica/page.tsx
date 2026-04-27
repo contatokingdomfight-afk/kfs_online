@@ -52,7 +52,7 @@ export default async function DashboardFichaFisicaPage() {
       <div className="max-w-[min(640px,100%)] mx-auto space-y-4 p-4 pb-12">
         <h1 className="text-xl font-bold text-[var(--text-primary)] m-0">{t("fichaFisicaEmptyTitle")}</h1>
         <p className="text-[var(--text-secondary)] m-0">{t("fichaFisicaEmptyBody")}</p>
-        <BodyMapSkeletonInvite locale={locale as "pt" | "en"} scheduleHref="/dashboard/performance" className="max-w-md" />
+        <BodyMapSkeletonInvite locale={locale as "pt" | "en"} scheduleHref="/dashboard/perfil" className="max-w-md" />
         <div className="flex flex-wrap gap-3 pt-2">
           <Link href="/dashboard/perfil" className="btn btn-secondary no-underline">
             {t("fichaFisicaLinkPerfil")}

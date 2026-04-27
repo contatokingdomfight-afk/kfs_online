@@ -40,7 +40,7 @@ export function buildPhysicalAvatarCarouselForStudentView(
 ): PhysicalAvatarCarouselPayload {
   const perspective = options?.perspective ?? "student";
   const locale = options?.locale ?? "pt";
-  const inviteScheduleHref = options?.inviteScheduleHref ?? "/dashboard/performance";
+  const inviteScheduleHref = options?.inviteScheduleHref ?? "/dashboard/ficha-fisica";
 
   const hasRowPayload = lastPhysRow != null;
   const datasetSaysPhysical = Boolean(options?.hasPhysicalAssessmentFromPlatform);

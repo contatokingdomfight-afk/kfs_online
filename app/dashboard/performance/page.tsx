@@ -171,7 +171,7 @@ export default async function DashboardPerformancePage() {
       hasPhysicalAssessmentFromPlatform: achievementContext.hasPhysicalAssessment,
       profileBodyMetrics,
       locale: locale as "pt" | "en",
-      inviteScheduleHref: "/dashboard/performance",
+      inviteScheduleHref: "/dashboard/ficha-fisica",
     });
     const today = new Date().toISOString().slice(0, 10);
     physicalAssessmentDue =
