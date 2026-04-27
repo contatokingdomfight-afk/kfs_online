@@ -1,5 +1,6 @@
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import { MOBILITY_LABELS, POSTURAL_LABELS } from "@/lib/physical-assessment-types";
+import type { ProfileBodyMetrics } from "@/lib/illustrative-body-silhouette";
 
 export type AnatomicalBodyMapRegionId =
   | "head"
@@ -231,12 +232,26 @@ export function anatomicalBodyMapHasAnyRegionData(
 
 export function anatomicalBodyMapOverall(
   d: Partial<PhysicalAssessmentFormData>,
-  locale: "pt" | "en"
+  locale: "pt" | "en",
+  /** Altura/peso do perfil quando a ficha não os traz — mesmo critério que o avatar ilustrativo. */
+  profile?: ProfileBodyMetrics | null
 ): { weightLabel: string; heightLabel: string; bmiLabel: string; weight?: string; height?: string; bmi?: string } {
   const L = locale === "pt";
-  const w = d.weightKg != null ? `${d.weightKg} kg` : undefined;
-  const h = d.heightCm != null ? `${d.heightCm} cm` : undefined;
-  const b = bmi(d.heightCm, d.weightKg);
+  const heightCm =
+    typeof d.heightCm === "number" && d.heightCm > 0 && Number.isFinite(d.heightCm)
+      ? d.heightCm
+      : profile?.heightCm != null && Number(profile.heightCm) > 0
+        ? Number(profile.heightCm)
+        : null;
+  const weightKg =
+    typeof d.weightKg === "number" && d.weightKg > 0 && Number.isFinite(d.weightKg)
+      ? d.weightKg
+      : profile?.weightKg != null && Number(profile.weightKg) > 0
+        ? Number(profile.weightKg)
+        : null;
+  const w = weightKg != null ? `${weightKg} kg` : undefined;
+  const h = heightCm != null ? `${heightCm} cm` : undefined;
+  const b = bmi(heightCm, weightKg);
   const bStr = b != null ? String(b) : undefined;
   return {
     weightLabel: L ? "Peso" : "Weight",

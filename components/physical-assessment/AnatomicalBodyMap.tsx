@@ -324,7 +324,10 @@ export function AnatomicalBodyMap({
 
   const labels = useMemo(() => anatomicalBodyMapRegionLabels(locale), [locale]);
   const regions = useMemo(() => buildAnatomicalBodyMapRegions(fd, locale), [fd, locale]);
-  const overall = useMemo(() => anatomicalBodyMapOverall(fd, locale), [fd, locale]);
+  const overall = useMemo(
+    () => anatomicalBodyMapOverall(fd, locale, profileBodyMetrics),
+    [fd, locale, profileBodyMetrics]
+  );
   const hasRegionData = useMemo(() => anatomicalBodyMapHasAnyRegionData(regions), [regions]);
 
   const useNeutralTransform = neutralReference || !hasIllustrativeAnthropometry(fd);

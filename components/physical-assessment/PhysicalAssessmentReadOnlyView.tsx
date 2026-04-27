@@ -104,7 +104,7 @@ export function PhysicalAssessmentReadOnlyView({
       : null;
 
   const bodyMapRegions = buildAnatomicalBodyMapRegions(d, locale);
-  const bodyMapOverall = anatomicalBodyMapOverall(d, locale);
+  const bodyMapOverall = anatomicalBodyMapOverall(d, locale, profileBodyMetrics);
   const showAnatomicalBodyMap =
     anatomicalBodyMapHasAnyRegionData(bodyMapRegions) ||
     bodyMapOverall.weight != null ||

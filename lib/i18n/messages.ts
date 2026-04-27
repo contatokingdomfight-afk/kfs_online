@@ -204,6 +204,7 @@ export const messages = {
     perfHumanoid3dOrbitHint:
       "Arrasta para rodar · scroll ou pinça para aproximar/afastar · botão direito ou dois dedos para mover.",
     perfInfoTipAriaSilhouette: "Texto completo sobre a silhueta ilustrativa",
+    perfInfoTipAriaBodyMapDisclaimer: "Informação completa sobre o mapa corporal ilustrativo",
     perfInfoTipAriaHumanoid3d: "Texto completo sobre o modelo 3D",
     perfAvatarFigureAria:
       "Ilustração aproximada da silhueta corporal com base em dados opcionais da ficha de avaliação física; não é imagem clínica nem foto do aluno.",
@@ -886,6 +887,7 @@ export const messages = {
     perfHumanoid3dOrbitHint:
       "Drag to orbit · scroll or pinch to zoom · right-click or two fingers to pan.",
     perfInfoTipAriaSilhouette: "Full text about the illustrative silhouette",
+    perfInfoTipAriaBodyMapDisclaimer: "Full information about the illustrative body map",
     perfInfoTipAriaHumanoid3d: "Full text about the 3D model",
     perfAvatarFigureAria:
       "Approximate body silhouette from optional physical assessment data; not a clinical image or a photo of the student.",

@@ -85,17 +85,7 @@ export function buildPhysicalAvatarCarouselForStudentView(
     studentAvatarCaption = noFichaCaption;
   }
 
-  let swipeHint: string;
-  if (invitePhysicalAssessment) {
-    swipeHint = perspective === "coach" ? t("perfCarouselSwipeHintNoFichaCoach") : t("perfCarouselSwipeHintNoFicha");
-  } else if (hasAnthro) {
-    swipeHint = t("perfCarouselSwipeHint");
-  } else if (hasRowPayload || datasetSaysPhysical) {
-    swipeHint = t("perfCarouselSwipeHintNeutral");
-  } else {
-    swipeHint =
-      perspective === "coach" ? t("perfCarouselSwipeHintNoFichaCoach") : t("perfCarouselSwipeHintNoFicha");
-  }
+  const swipeHint = "";
 
   return {
     formData: hasAnthro ? normalizedPhysicalForm : (normalizedPhysicalForm ?? {}),
@@ -113,6 +103,7 @@ export function buildPhysicalAvatarCarouselForStudentView(
       ariaPrev: t("dashboardCarouselPrev"),
       ariaNext: t("dashboardCarouselNext"),
       studentAvatarCaption,
+      bodyMapDisclaimerTipAria: t("perfInfoTipAriaBodyMapDisclaimer"),
     },
   };
 }

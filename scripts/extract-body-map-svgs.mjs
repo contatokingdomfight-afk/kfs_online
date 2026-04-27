@@ -1,3 +1,9 @@
+/**
+ * Extrai os SVG «illu-front» / «illu-back» de `body-map-anatomical.html` para:
+ * - `public/anatomical-body/*.svg` (referência / links diretos)
+ * - `components/physical-assessment/generated/anatomical-svg-inners.ts` (bundle da app)
+ * Para alterar o desenho, edita o HTML (secção dos &lt;svg&gt;) e corre este script ou `npm run build`.
+ */
 import fs from "fs";
 
 const htmlPath = new URL("../body-map-anatomical.html", import.meta.url);

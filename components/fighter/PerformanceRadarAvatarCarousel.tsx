@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AnatomicalBodyMap } from "@/components/physical-assessment/AnatomicalBodyMap";
 import { BodyMapSkeletonInvite } from "@/components/physical-assessment/BodyMapSkeletonInvite";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import type { PhysicalAvatarCarouselPayload } from "@/lib/build-performance-physical-carousel";
 import { normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 
@@ -15,6 +16,8 @@ export type PerformanceAvatarCarouselLabels = {
   ariaNext: string;
   /** Texto longo sob o mapa (contexto da ficha / convite a completar medidas). */
   studentAvatarCaption: string;
+  /** Aria-label do botão «i» quando o texto acima vai só para o tooltip. */
+  bodyMapDisclaimerTipAria?: string;
 };
 
 const LABEL_DEFAULTS: PerformanceAvatarCarouselLabels = {
@@ -25,6 +28,7 @@ const LABEL_DEFAULTS: PerformanceAvatarCarouselLabels = {
   ariaPrev: "Anterior",
   ariaNext: "Seguinte",
   studentAvatarCaption: "",
+  bodyMapDisclaimerTipAria: "",
 };
 
 function mergeLabels(labels?: PerformanceAvatarCarouselLabels | null): PerformanceAvatarCarouselLabels {
@@ -169,9 +173,12 @@ export function PerformanceRadarAvatarCarousel({ radar, payload }: Props) {
                 />
               )}
               {L.studentAvatarCaption.trim() ? (
-                <p className="text-xs text-[var(--text-secondary)] m-0 text-center leading-relaxed px-1">
-                  {L.studentAvatarCaption}
-                </p>
+                <div className="flex justify-center pt-0.5">
+                  <InlineInfoTip
+                    detail={L.studentAvatarCaption}
+                    ariaLabel={L.bodyMapDisclaimerTipAria?.trim() || "Info"}
+                  />
+                </div>
               ) : null}
             </div>
           </div>
