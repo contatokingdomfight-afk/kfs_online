@@ -59,18 +59,34 @@ export default async function DashboardFichaFisicaPage() {
 
   if (!row) {
     return (
-      <div className="max-w-[min(640px,100%)] mx-auto space-y-4 p-4 pb-12">
-        <h1 className="text-xl font-bold text-[var(--text-primary)] m-0">{t("fichaFisicaEmptyTitle")}</h1>
-        <p className="text-[var(--text-secondary)] m-0">{t("fichaFisicaEmptyBody")}</p>
-        <BodyMapSkeletonInvite locale={locale as "pt" | "en"} scheduleHref="/dashboard/perfil" className="max-w-md" />
-        <RequestPhysicalAssessmentPanel locale={locale as "pt" | "en"} initialPending={hasPendingPhysicalRequest} />
-        <div className="flex flex-wrap gap-3 pt-2">
-          <Link href="/dashboard/perfil" className="btn btn-secondary no-underline">
-            {t("fichaFisicaLinkPerfil")}
-          </Link>
-          <Link href="/dashboard/performance" className="btn btn-primary no-underline">
-            {t("fichaFisicaBackPerformance")}
-          </Link>
+      <div className="mx-auto w-full max-w-6xl px-4 pb-12 pt-4 sm:px-6 lg:px-8 lg:pb-16 lg:pt-8">
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:items-start lg:gap-10 xl:gap-12">
+          <div className="flex flex-col gap-5 lg:col-span-7">
+            <header className="space-y-2">
+              <h1 className="m-0 text-xl font-bold text-[var(--text-primary)] sm:text-2xl lg:text-[1.65rem] lg:leading-snug">
+                {t("fichaFisicaEmptyTitle")}
+              </h1>
+              <p className="m-0 max-w-prose text-[15px] leading-relaxed text-[var(--text-secondary)] sm:text-base">
+                {t("fichaFisicaEmptyBody")}
+              </p>
+            </header>
+            <RequestPhysicalAssessmentPanel locale={locale as "pt" | "en"} initialPending={hasPendingPhysicalRequest} />
+            <div className="flex flex-wrap gap-3 pt-1">
+              <Link href="/dashboard/perfil" className="btn btn-secondary no-underline">
+                {t("fichaFisicaLinkPerfil")}
+              </Link>
+              <Link href="/dashboard/performance" className="btn btn-primary no-underline">
+                {t("fichaFisicaBackPerformance")}
+              </Link>
+            </div>
+          </div>
+          <aside className="lg:col-span-5">
+            <BodyMapSkeletonInvite
+              locale={locale as "pt" | "en"}
+              scheduleHref="/dashboard/perfil"
+              className="mx-auto max-w-md shadow-sm lg:sticky lg:top-6 lg:mx-0 lg:max-w-none lg:self-start lg:py-6"
+            />
+          </aside>
         </div>
       </div>
     );
@@ -82,8 +98,8 @@ export default async function DashboardFichaFisicaPage() {
   const clearance = String(row.clearance ?? "");
 
   return (
-    <div className="max-w-[min(720px,100%)] mx-auto pb-8">
-      <div className="px-4 pt-2 pb-4 flex flex-wrap gap-3 items-center">
+    <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-2 sm:px-6 lg:max-w-4xl lg:px-8 lg:pb-14">
+      <div className="flex flex-wrap items-center gap-3 pb-4 pt-2">
         <Link href="/dashboard/performance" className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] no-underline">
           ← {t("fichaFisicaBackPerformance")}
         </Link>
@@ -102,11 +118,11 @@ export default async function DashboardFichaFisicaPage() {
         }}
       />
       {profile?.heightCm != null || profile?.weightKg != null ? (
-        <p className="text-xs text-[var(--text-secondary)] px-4 mt-4 max-w-2xl mx-auto">{t("fichaFisicaProfileHint")}</p>
+        <p className="mx-auto mt-4 max-w-2xl px-0 text-xs text-[var(--text-secondary)] sm:px-1">{t("fichaFisicaProfileHint")}</p>
       ) : null}
-      <div className="px-4 mt-8 max-w-[min(720px,100%)] mx-auto">
+      <section className="mt-10 border-t border-[var(--border)] pt-8 lg:mt-12 lg:pt-10">
         <RequestPhysicalAssessmentPanel locale={locale as "pt" | "en"} initialPending={hasPendingPhysicalRequest} />
-      </div>
+      </section>
     </div>
   );
 }

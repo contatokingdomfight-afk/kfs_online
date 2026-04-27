@@ -32,10 +32,15 @@ export function BodyMapSkeletonInvite({ locale, scheduleHref, className }: Props
     >
       <div>
         <p className="m-0 text-base font-semibold text-[var(--text-primary)]">{copy.title}</p>
-        <p className="m-0 mt-1 text-xs text-[var(--text-secondary)] leading-relaxed max-w-sm mx-auto">{copy.body}</p>
+        <p className="m-0 mt-1 max-w-sm text-xs leading-relaxed text-[var(--text-secondary)] sm:max-w-md lg:max-w-none lg:text-sm mx-auto">
+          {copy.body}
+        </p>
       </div>
 
-      <div className="w-full max-w-[200px] aspect-[200/369] mx-auto text-[var(--text-secondary)]" aria-hidden>
+      <div
+        className="mx-auto aspect-[200/369] w-full max-w-[200px] text-[var(--text-secondary)] sm:max-w-[220px] lg:max-w-[240px]"
+        aria-hidden
+      >
         <svg viewBox="0 0 200 369" className="h-full w-full" fill="none" stroke="currentColor" strokeWidth="1.2">
           <ellipse cx="100" cy="28" rx="14" ry="18" />
           <path d="M100 46 L100 72" />

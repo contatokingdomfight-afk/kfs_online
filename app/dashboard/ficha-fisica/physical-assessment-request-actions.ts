@@ -18,10 +18,10 @@ export async function createPhysicalAssessmentRequest(
   const dbUser = await getCurrentDbUser();
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
   const t = getTranslations(locale);
-  if (!dbUser || dbUser.role !== "ALUNO") {
-    return { error: t("physAssessRequestErrorNotStudent") };
-  }
+  if (!dbUser) return { error: t("physAssessRequestErrorNotStudent") };
+
   const studentId = await getCurrentStudentId();
+  // Mesmo critério que a página da ficha: conta com registo Student (ALUNO, ADMIN em vista aluno, etc.).
   if (!studentId) return { error: t("physAssessRequestErrorNoStudent") };
 
   const supabase = await createClient();
@@ -70,9 +70,8 @@ export async function cancelPhysicalAssessmentRequest(): Promise<PhysicalAssessm
   const dbUser = await getCurrentDbUser();
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
   const t = getTranslations(locale);
-  if (!dbUser || dbUser.role !== "ALUNO") {
-    return { error: t("physAssessRequestErrorNotStudent") };
-  }
+  if (!dbUser) return { error: t("physAssessRequestErrorNotStudent") };
+
   const studentId = await getCurrentStudentId();
   if (!studentId) return { error: t("physAssessRequestErrorNoStudent") };
 
