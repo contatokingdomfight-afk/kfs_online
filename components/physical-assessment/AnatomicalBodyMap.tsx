@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import { ANATOMICAL_BACK_SVG_INNER, ANATOMICAL_FRONT_SVG_INNER } from "@/components/physical-assessment/generated/anatomical-svg-inners";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import {
@@ -18,6 +18,41 @@ import {
 } from "@/lib/illustrative-body-silhouette";
 
 type ViewSide = "front" | "back";
+
+/** Realces suaves na cabeça (vista frontal) — por cima da ilustração, por baixo dos hotspots. */
+function AnatomicalFrontFaceOverlay({ idBase }: { idBase: string }) {
+  const g = `${idBase}-glow`;
+  const f = `${idBase}-forehead`;
+  const l = `${idBase}-cheek-l`;
+  const r = `${idBase}-cheek-r`;
+  return (
+    <g className="pointer-events-none" aria-hidden>
+      <defs>
+        <radialGradient id={g} cx="50%" cy="38%" r="58%">
+          <stop offset="0%" stopColor="#e8d2c4" stopOpacity="0.55" />
+          <stop offset="42%" stopColor="#cfa589" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#1a1512" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={f} cx="50%" cy="28%" r="45%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
+          <stop offset="70%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={l} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#fff8f4" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#fff8f4" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={r} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#fff8f4" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#fff8f4" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <ellipse cx="100" cy="31" rx="20" ry="25" fill={`url(#${g})`} style={{ mixBlendMode: "soft-light" }} />
+      <ellipse cx="100" cy="23" rx="12" ry="10" fill={`url(#${f})`} style={{ mixBlendMode: "overlay", opacity: 0.75 }} />
+      <ellipse cx="90" cy="33" rx="7" ry="5.5" fill={`url(#${l})`} style={{ mixBlendMode: "soft-light", opacity: 0.9 }} />
+      <ellipse cx="110" cy="33" rx="7" ry="5.5" fill={`url(#${r})`} style={{ mixBlendMode: "soft-light", opacity: 0.9 }} />
+    </g>
+  );
+}
 
 const FRONT_REGIONS: AnatomicalBodyMapRegionId[] = [
   "head",
@@ -283,6 +318,7 @@ export function AnatomicalBodyMap({
   const [view, setView] = useState<ViewSide>("front");
   const [pinned, setPinned] = useState<AnatomicalBodyMapRegionId | null>(null);
   const [hover, setHover] = useState<AnatomicalBodyMapRegionId | null>(null);
+  const faceOverlayIdBase = `abm-face-${useId().replace(/\W/g, "")}`;
 
   const fd = useMemo((): Partial<PhysicalAssessmentFormData> => normalizePhysicalFormDataJson(formData) ?? {}, [formData]);
 
@@ -408,11 +444,12 @@ export function AnatomicalBodyMap({
               aria-label={view === "front" ? ui.stageFrontAria : ui.stageBackAria}
             >
               <g
-                className="pointer-events-none [filter:sepia(0.12)_hue-rotate(-8deg)_saturate(0.9)_contrast(0.95)]"
+                className="pointer-events-none [filter:sepia(0.09)_hue-rotate(-5deg)_saturate(0.86)_contrast(0.9)_brightness(1.05)]"
                 dangerouslySetInnerHTML={{
                   __html: view === "front" ? ANATOMICAL_FRONT_SVG_INNER : ANATOMICAL_BACK_SVG_INNER,
                 }}
               />
+              {view === "front" ? <AnatomicalFrontFaceOverlay idBase={faceOverlayIdBase} /> : null}
               {view === "front" ? (
                 <HotspotsFront onPick={onPick} onHover={setHover} active={activeAllowed} labels={labels} />
               ) : (
