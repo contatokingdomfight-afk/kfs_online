@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
+import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
 import { revalidatePath } from "next/cache";
 
 export type SaveProfileResult = { error?: string; success?: boolean };
@@ -11,7 +12,8 @@ export async function saveStudentProfile(_prev: SaveProfileResult | null, formDa
   if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
 
   const name = (formData.get("name") as string)?.trim() || null;
-  const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
+  const avatarRaw = (formData.get("avatarUrl") as string)?.trim() || null;
+  const avatarUrl = avatarRaw ? (rewriteSupabaseLegacyStoragePublicUrl(avatarRaw) ?? avatarRaw) : null;
   const phone = (formData.get("phone") as string)?.trim() || null;
   const weightRaw = (formData.get("weightKg") as string)?.trim();
   const heightRaw = (formData.get("heightCm") as string)?.trim();

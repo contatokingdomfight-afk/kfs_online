@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
+import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
 import { revalidatePath } from "next/cache";
 
 export type SaveCoachProfileResult = { error?: string; success?: boolean };
@@ -16,7 +17,8 @@ export async function saveCoachProfile(
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Acesso negado." };
 
   const name = (formData.get("name") as string)?.trim() || null;
-  const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
+  const avatarRaw = (formData.get("avatarUrl") as string)?.trim() || null;
+  const avatarUrl = avatarRaw ? (rewriteSupabaseLegacyStoragePublicUrl(avatarRaw) ?? avatarRaw) : null;
   const phone = (formData.get("phone") as string)?.trim() || null;
   const dateOfBirth = (formData.get("dateOfBirth") as string)?.trim() || null;
 

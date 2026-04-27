@@ -13,6 +13,7 @@ import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import type { CategoryConfig, CriterionConfig } from "@/lib/evaluation-config";
 import { getAllCriterionIds } from "@/lib/evaluation-config";
+import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
 
 const SCORES_1_5 = [1, 2, 3, 4, 5];
 const SCORES_1_10 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -387,7 +388,13 @@ export function CoachStudentProfileModal(props: Props) {
               <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">Dados do aluno</h3>
               <div className="flex items-center gap-3 mb-2">
                 {profile.avatarUrl ? (
-                  <img src={profile.avatarUrl} alt="" width={56} height={56} className="rounded-full object-cover border-2 border-[var(--border)]" />
+                  <img
+                    src={rewriteSupabaseLegacyStoragePublicUrl(profile.avatarUrl) ?? profile.avatarUrl}
+                    alt=""
+                    width={56}
+                    height={56}
+                    className="rounded-full object-cover border-2 border-[var(--border)]"
+                  />
                 ) : null}
                 <div>
                   <p className="m-0 font-semibold text-[var(--text-primary)] text-base">

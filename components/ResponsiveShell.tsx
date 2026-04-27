@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sidebar, type SidebarLink } from "./Sidebar";
 import type { Theme, Locale } from "@/lib/theme-locale";
+import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
 
 const SCROLL_DELTA = 8;
 
@@ -284,7 +285,7 @@ export function ResponsiveShell({
                   {headerAvatar.imageUrl?.trim() ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={headerAvatar.imageUrl}
+                      src={rewriteSupabaseLegacyStoragePublicUrl(headerAvatar.imageUrl) ?? headerAvatar.imageUrl}
                       alt=""
                       width={36}
                       height={36}

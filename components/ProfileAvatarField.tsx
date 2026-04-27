@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/theme-locale";
 import { getTranslations } from "@/lib/i18n";
+import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
 
 function initialsFromName(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -21,7 +22,8 @@ type Props = {
 export function ProfileAvatarField({ initialAvatarUrl, displayName, locale }: Props) {
   const router = useRouter();
   const t = getTranslations(locale);
-  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
+  const normalizedInitial = rewriteSupabaseLegacyStoragePublicUrl(initialAvatarUrl) ?? initialAvatarUrl;
+  const [avatarUrl, setAvatarUrl] = useState(normalizedInitial);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +46,7 @@ export function ProfileAvatarField({ initialAvatarUrl, displayName, locale }: Pr
         return;
       }
       if (data.url) {
-        setAvatarUrl(data.url);
+        setAvatarUrl(rewriteSupabaseLegacyStoragePublicUrl(data.url) ?? data.url);
         router.refresh();
       }
     } catch {
@@ -54,7 +56,8 @@ export function ProfileAvatarField({ initialAvatarUrl, displayName, locale }: Pr
     }
   };
 
-  const preview = avatarUrl.trim();
+  const previewRaw = avatarUrl.trim();
+  const preview = previewRaw ? (rewriteSupabaseLegacyStoragePublicUrl(previewRaw) ?? previewRaw) : "";
   const size = 96;
 
   return (
