@@ -270,7 +270,7 @@ export function AvaliacaoFisicaForm({
         <p className="text-sm text-text-secondary mt-2 mb-2 font-medium">Altura e peso (opcional)</p>
         <p className="text-xs text-text-secondary mb-3 max-w-3xl leading-relaxed">
           Sugestão a partir do perfil do aluno (Medidas corporais em «Perfil»). Podes corrigir aqui o valor
-          medido ou registado nesta avaliação; o que guardares fica nesta ficha e é usado na silhueta
+          medido ou registado nesta avaliação; o que guardares fica nesta ficha e é usado no mapa corporal
           ilustrativa quando existir.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mb-6">

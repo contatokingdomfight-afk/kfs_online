@@ -8,6 +8,13 @@ import {
   POSTURAL_LABELS,
   CLEARANCE_OPTIONS,
 } from "@/lib/physical-assessment-types";
+import { AnatomicalBodyMap } from "@/components/physical-assessment/AnatomicalBodyMap";
+import {
+  anatomicalBodyMapHasAnyRegionData,
+  anatomicalBodyMapOverall,
+  buildAnatomicalBodyMapRegions,
+} from "@/lib/anatomical-body-map-from-form";
+import { hasIllustrativeAnthropometry, type ProfileBodyMetrics } from "@/lib/illustrative-body-silhouette";
 
 function simNao(v: boolean | undefined | null, locale: "pt" | "en"): string {
   if (v === true) return locale === "pt" ? "Sim" : "Yes";
@@ -52,6 +59,8 @@ type Props = {
   coachName: string | null;
   studentName: string;
   locale: "pt" | "en";
+  /** Altura/peso do perfil para escala neutra do mapa quando a ficha não tem antropometria suficiente. */
+  profileBodyMetrics?: ProfileBodyMetrics | null;
 };
 
 /**
@@ -65,6 +74,7 @@ export function PhysicalAssessmentReadOnlyView({
   coachName,
   studentName,
   locale,
+  profileBodyMetrics = null,
 }: Props) {
   const L = locale === "pt";
   const objectives =
@@ -92,6 +102,14 @@ export function PhysicalAssessmentReadOnlyView({
     Array.isArray(d.posturalAssessment) && d.posturalAssessment.length > 0
       ? d.posturalAssessment.map((p) => POSTURAL_LABELS[p] ?? p).join(", ")
       : null;
+
+  const bodyMapRegions = buildAnatomicalBodyMapRegions(d, locale);
+  const bodyMapOverall = anatomicalBodyMapOverall(d, locale);
+  const showAnatomicalBodyMap =
+    anatomicalBodyMapHasAnyRegionData(bodyMapRegions) ||
+    bodyMapOverall.weight != null ||
+    bodyMapOverall.height != null ||
+    bodyMapOverall.bmi != null;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-10 px-4 pt-2">
@@ -172,6 +190,16 @@ export function PhysicalAssessmentReadOnlyView({
       {section(
         L ? "6. Avaliação física" : "6. Physical evaluation",
         <>
+          {showAnatomicalBodyMap ? (
+            <AnatomicalBodyMap
+              formData={d}
+              locale={locale}
+              assessedAtLabel={assessedAt}
+              className="mb-4"
+              neutralReference={!hasIllustrativeAnthropometry(d)}
+              profileBodyMetrics={profileBodyMetrics}
+            />
+          ) : null}
           {d.heightCm != null || d.weightKg != null ? (
             <>
               <p className="text-xs font-semibold text-[var(--text-secondary)] m-0 mt-1">

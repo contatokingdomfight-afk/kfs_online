@@ -259,6 +259,8 @@ export async function PerformanceContent({ studentId }: Props) {
       heightCm: coachStudentProfile?.heightCm != null ? Number(coachStudentProfile.heightCm) : null,
       weightKg: coachStudentProfile?.weightKg != null ? Number(coachStudentProfile.weightKg) : null,
     },
+    locale: locale as "pt" | "en",
+    inviteScheduleHref: `/coach/alunos/${studentId}/avaliacao-fisica`,
   });
 
   return (
@@ -295,7 +297,6 @@ export async function PerformanceContent({ studentId }: Props) {
       lastEvaluation={lastEvaluation ?? undefined}
       evaluationsHistoryHref={`/coach/alunos/${studentId}/avaliacoes`}
       physicalAvatarCarousel={physicalAvatarCarousel}
-      allowLazyHumanoid3d
     />
   );
 }

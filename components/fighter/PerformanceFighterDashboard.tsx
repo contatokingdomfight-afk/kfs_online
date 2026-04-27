@@ -118,12 +118,10 @@ type Props = {
   } | null;
   /** Médias do questionário pré-treino (check-in). */
   checkInWellness?: { data: CheckInWellnessAggregates; copy: CheckInWellnessCopy };
-  /** Radar + silhueta ilustrativa (2.º painel) quando existe última ficha física (personalizada ou neutra). */
+  /** Radar + mapa corporal (2.º painel) a partir da última ficha física (ou convite se ainda não há ficha). */
   physicalAvatarCarousel?: PhysicalAvatarCarouselPayload | null;
   /** Link opcional para ver a ficha completa (área do aluno). */
   physicalFichaReadOnlyLink?: { href: string; label: string } | null;
-  /** Vista 3D opcional no carrossel da ficha (só performance aluno / coach). */
-  allowLazyHumanoid3d?: boolean;
 };
 
 export function PerformanceFighterDashboard({
@@ -155,7 +153,6 @@ export function PerformanceFighterDashboard({
   checkInWellness,
   physicalAvatarCarousel = null,
   physicalFichaReadOnlyLink = null,
-  allowLazyHumanoid3d = false,
 }: Props) {
   const systemMissions = buildMissionsFromScores(scores, axes, maxScore);
   const customAsMissions: Mission[] = customMissions.map((c) => ({
@@ -205,7 +202,6 @@ export function PerformanceFighterDashboard({
           scoresByModality={scoresByModality}
           physicalAvatarCarousel={physicalAvatarCarousel}
           physicalFichaReadOnlyLink={physicalFichaReadOnlyLink}
-          allowLazyHumanoid3d={allowLazyHumanoid3d}
         />
       ) : (
         <>
@@ -233,18 +229,7 @@ export function PerformanceFighterDashboard({
           <div className="space-y-2">
             <PerformanceRadarAvatarCarousel
               radar={<RadarStats scores={scores} axes={axes} maxScore={maxScore} />}
-              formData={physicalAvatarCarousel?.formData ?? null}
-              assessedAtLabel={physicalAvatarCarousel?.assessedAt ?? null}
-              labels={physicalAvatarCarousel?.labels}
-              bodySilhouetteMode={
-                physicalAvatarCarousel
-                  ? physicalAvatarCarousel.silhouettePersonalized
-                    ? "personalized"
-                    : "neutral"
-                  : null
-              }
-              profileBodyMetrics={physicalAvatarCarousel?.profileBodyMetrics ?? null}
-              allowLazyHumanoid3d={allowLazyHumanoid3d}
+              payload={physicalAvatarCarousel}
             />
             {physicalFichaReadOnlyLink ? (
               <p className="text-center text-xs m-0">

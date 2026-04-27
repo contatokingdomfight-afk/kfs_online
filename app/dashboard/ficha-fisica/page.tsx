@@ -6,6 +6,7 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
+import { BodyMapSkeletonInvite } from "@/components/physical-assessment/BodyMapSkeletonInvite";
 import { PhysicalAssessmentReadOnlyView } from "@/components/physical-assessment/PhysicalAssessmentReadOnlyView";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,7 @@ export default async function DashboardFichaFisicaPage() {
       <div className="max-w-[min(640px,100%)] mx-auto space-y-4 p-4 pb-12">
         <h1 className="text-xl font-bold text-[var(--text-primary)] m-0">{t("fichaFisicaEmptyTitle")}</h1>
         <p className="text-[var(--text-secondary)] m-0">{t("fichaFisicaEmptyBody")}</p>
+        <BodyMapSkeletonInvite locale={locale as "pt" | "en"} scheduleHref="/dashboard/performance" className="max-w-md" />
         <div className="flex flex-wrap gap-3 pt-2">
           <Link href="/dashboard/perfil" className="btn btn-secondary no-underline">
             {t("fichaFisicaLinkPerfil")}
@@ -83,6 +85,10 @@ export default async function DashboardFichaFisicaPage() {
         coachName={coachName}
         studentName={studentName}
         locale={locale as "pt" | "en"}
+        profileBodyMetrics={{
+          heightCm: profile?.heightCm != null ? Number(profile.heightCm) : null,
+          weightKg: profile?.weightKg != null ? Number(profile.weightKg) : null,
+        }}
       />
       {profile?.heightCm != null || profile?.weightKg != null ? (
         <p className="text-xs text-[var(--text-secondary)] px-4 mt-4 max-w-2xl mx-auto">{t("fichaFisicaProfileHint")}</p>

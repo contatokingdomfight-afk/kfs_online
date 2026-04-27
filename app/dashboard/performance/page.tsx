@@ -170,6 +170,8 @@ export default async function DashboardPerformancePage() {
     physicalAvatarCarousel = buildPhysicalAvatarCarouselForStudentView(t, lastPhysRow, {
       hasPhysicalAssessmentFromPlatform: achievementContext.hasPhysicalAssessment,
       profileBodyMetrics,
+      locale: locale as "pt" | "en",
+      inviteScheduleHref: "/dashboard/performance",
     });
     const today = new Date().toISOString().slice(0, 10);
     physicalAssessmentDue =
@@ -422,7 +424,6 @@ export default async function DashboardPerformancePage() {
         href: "/dashboard/ficha-fisica",
         label: t("perfLinkFullPhysicalFicha"),
       }}
-      allowLazyHumanoid3d
     />
   );
 }

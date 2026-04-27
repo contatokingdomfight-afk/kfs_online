@@ -1,12 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
-import {
-  hasIllustrativeAnthropometry,
-  normalizePhysicalFormDataJson,
-  type ProfileBodyMetrics,
-} from "@/lib/illustrative-body-silhouette";
+import { AnatomicalBodyMap } from "@/components/physical-assessment/AnatomicalBodyMap";
+import { BodyMapSkeletonInvite } from "@/components/physical-assessment/BodyMapSkeletonInvite";
+import type { PhysicalAvatarCarouselPayload } from "@/lib/build-performance-physical-carousel";
+import { normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 
 export type PerformanceAvatarCarouselLabels = {
   sectionTitle: string;
@@ -15,93 +13,41 @@ export type PerformanceAvatarCarouselLabels = {
   swipeHint: string;
   ariaPrev: string;
   ariaNext: string;
+  /** Texto longo sob o mapa (contexto da ficha / convite a completar medidas). */
   studentAvatarCaption: string;
-  /** Linha curta visível; texto longo fica no tooltip (ícone «i»). */
-  studentAvatarCaptionShort: string;
-  humanoid3dFootnoteShort: string;
-  humanoid3dFootnoteDetail: string;
-  humanoid3dOrbitHint: string;
-  infoTipAriaSilhouette: string;
-  infoTipAriaHumanoid3d: string;
-  /** `aria-label` do contentor `role="img"` em volta da figura (2D/3D + pose). */
-  silhouetteFigureAria: string;
-  /** Rótulos da alternância 2D / 3D (`IllustrativeBodyAvatar` quando `allowLazyHumanoid3d`). */
-  bodyViewLabel2d: string;
-  bodyViewLabel3d: string;
-  bodyViewGroupAria: string;
 };
 
 const LABEL_DEFAULTS: PerformanceAvatarCarouselLabels = {
   sectionTitle: "Perfil de competências",
   slideRadarCaption: "Radar por dimensão (1–10)",
-  slideBodyCaption: "Silhueta da ficha física",
+  slideBodyCaption: "Mapa corporal da ficha física",
   swipeHint: "",
   ariaPrev: "Anterior",
   ariaNext: "Seguinte",
   studentAvatarCaption: "",
-  studentAvatarCaptionShort: "",
-  humanoid3dFootnoteShort: "",
-  humanoid3dFootnoteDetail: "",
-  humanoid3dOrbitHint: "",
-  infoTipAriaSilhouette: "Texto completo sobre a silhueta ilustrativa",
-  infoTipAriaHumanoid3d: "Texto completo sobre o modelo 3D",
-  silhouetteFigureAria: "",
-  bodyViewLabel2d: "Silhueta 2D",
-  bodyViewLabel3d: "Modelo 3D",
-  bodyViewGroupAria: "Tipo de vista da figura",
 };
 
 function mergeLabels(labels?: PerformanceAvatarCarouselLabels | null): PerformanceAvatarCarouselLabels {
   return { ...LABEL_DEFAULTS, ...(labels ?? {}) };
 }
 
-export type BodySilhouetteMode = "neutral" | "personalized";
-
 type Props = {
   radar: ReactNode;
-  formData: unknown;
-  assessedAtLabel: string | null;
-  labels?: PerformanceAvatarCarouselLabels | null;
-  /**
-   * Quando definido (ex.: última ficha física na BD), força o 2.º painel: `personalized` usa medidas se existirem;
-   * `neutral` mostra silhueta de referência sem antropometria mínima.
-   * Omitir mantém o comportamento antigo: 2.º painel só se `formData` tiver ≥2 medidas.
-   */
-  bodySilhouetteMode?: BodySilhouetteMode | null;
-  /** Altura/peso do perfil para escala ilustrativa da silhueta. */
-  profileBodyMetrics?: ProfileBodyMetrics | null;
-  /** Vista 3D opcional (WebGL); chunk carregado só ao escolher «3D». */
-  allowLazyHumanoid3d?: boolean;
+  /** Quando `null`, só o radar é mostrado (sem 2.º painel). */
+  payload: PhysicalAvatarCarouselPayload | null;
 };
 
 /**
- * Carrossel horizontal: 1.º painel radar de competências; 2.º silhueta ilustrativa 2D (e opção 3D se `allowLazyHumanoid3d`).
+ * Carrossel horizontal: 1.º painel radar; 2.º mapa corporal ilustrativo (ou convite com esqueleto se ainda não há ficha).
  */
-export function PerformanceRadarAvatarCarousel({
-  radar,
-  formData,
-  assessedAtLabel,
-  labels,
-  bodySilhouetteMode = null,
-  profileBodyMetrics = null,
-  allowLazyHumanoid3d = false,
-}: Props) {
-  const L = mergeLabels(labels);
+export function PerformanceRadarAvatarCarousel({ radar, payload }: Props) {
+  const L = mergeLabels(payload?.labels ?? null);
 
-  const parsedForm = normalizePhysicalFormDataJson(formData);
-  let silhouetteMode: "off" | "neutral" | "personalized";
-  if (bodySilhouetteMode === "neutral") {
-    silhouetteMode = "neutral";
-  } else if (bodySilhouetteMode === "personalized") {
-    silhouetteMode =
-      parsedForm != null && hasIllustrativeAnthropometry(parsedForm) ? "personalized" : "neutral";
-  } else {
-    silhouetteMode =
-      parsedForm != null && hasIllustrativeAnthropometry(parsedForm) ? "personalized" : "off";
-  }
-  const showBodySlide = silhouetteMode !== "off";
-  const neutralReference = silhouetteMode === "neutral";
-  const formForAvatar = neutralReference ? (parsedForm ?? {}) : (parsedForm ?? formData);
+  const showBodySlide = Boolean(payload);
+  const invite = Boolean(payload?.invitePhysicalAssessment);
+  const parsedForm = payload ? normalizePhysicalFormDataJson(payload.formData) : null;
+  const neutralReference = payload ? !payload.silhouettePersonalized : true;
+  const formForMap = neutralReference ? (parsedForm ?? {}) : (parsedForm ?? payload?.formData ?? {});
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
@@ -140,6 +86,10 @@ export function PerformanceRadarAvatarCarousel({
       </section>
     );
   }
+
+  const locale = payload!.locale;
+  const profileBodyMetrics = payload!.profileBodyMetrics ?? null;
+  const assessedAtLabel = payload!.assessedAt?.trim() ? payload!.assessedAt : null;
 
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 sm:p-5 shadow-md">
@@ -204,34 +154,25 @@ export function PerformanceRadarAvatarCarousel({
             {L.slideBodyCaption.trim() ? (
               <p className="text-xs text-[var(--text-secondary)] mb-2 m-0">{L.slideBodyCaption}</p>
             ) : null}
-            <div className="flex justify-center pt-1">
-              <IllustrativeBodyAvatar
-                formData={formForAvatar}
-                assessedAtLabel={assessedAtLabel}
-                captionOverride={L.studentAvatarCaption}
-                neutralReference={neutralReference}
-                bodyScaleFromProfile={profileBodyMetrics}
-                showPoseTags
-                show3dViewOption={allowLazyHumanoid3d}
-                explainCaption={L.studentAvatarCaptionShort.trim() ? "tooltip" : "inline"}
-                captionSummary={L.studentAvatarCaptionShort.trim() || null}
-                humanoidFootnote={
-                  allowLazyHumanoid3d && L.humanoid3dFootnoteShort.trim()
-                    ? {
-                        short: L.humanoid3dFootnoteShort,
-                        detail: L.humanoid3dFootnoteDetail,
-                        infoAria: L.infoTipAriaHumanoid3d,
-                      }
-                    : null
-                }
-                silhouetteInfoAria={L.infoTipAriaSilhouette.trim() || null}
-                figureAriaLabel={L.silhouetteFigureAria.trim() || null}
-                humanoid3dOrbitHint={allowLazyHumanoid3d && L.humanoid3dOrbitHint.trim() ? L.humanoid3dOrbitHint : null}
-                bodyViewLabel2d={L.bodyViewLabel2d}
-                bodyViewLabel3d={L.bodyViewLabel3d}
-                bodyViewGroupAria={L.bodyViewGroupAria}
-                className="max-w-[min(280px,92vw)]"
-              />
+            <div className="flex flex-col items-center pt-1 gap-2 max-w-[min(360px,94vw)] mx-auto">
+              {invite ? (
+                <BodyMapSkeletonInvite locale={locale} scheduleHref={payload!.inviteScheduleHref} className="w-full" />
+              ) : (
+                <AnatomicalBodyMap
+                  formData={formForMap}
+                  locale={locale}
+                  assessedAtLabel={assessedAtLabel}
+                  variant="compact"
+                  neutralReference={neutralReference}
+                  profileBodyMetrics={profileBodyMetrics}
+                  className="w-full border-0 bg-transparent p-0"
+                />
+              )}
+              {L.studentAvatarCaption.trim() ? (
+                <p className="text-xs text-[var(--text-secondary)] m-0 text-center leading-relaxed px-1">
+                  {L.studentAvatarCaption}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>

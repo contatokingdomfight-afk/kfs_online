@@ -16,9 +16,8 @@ import { EditarAtletaForm } from "./EditarAtletaForm";
 import { ComentariosAtleta } from "./ComentariosAtleta";
 import { PerformanceRadar } from "@/components/PerformanceRadarDynamic";
 import { AvaliacaoAtleta } from "./AvaliacaoAtleta";
-import { IllustrativeBodyAvatar } from "@/components/IllustrativeBodyAvatar";
-import { getTranslations } from "@/lib/i18n";
-import { storedFormDataHasSilhouette } from "@/lib/illustrative-body-silhouette";
+import { AnatomicalBodyMap } from "@/components/physical-assessment/AnatomicalBodyMap";
+import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -36,7 +35,6 @@ export default async function CoachAtletaPage({ params }: Props) {
 
   const { id: athleteId } = await params;
   const locale = await getLocaleFromCookies();
-  const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
 
   const { data: athlete } = await supabase.from("Athlete").select("id, studentId, level, mainCoachId").eq("id", athleteId).single();
@@ -102,13 +100,16 @@ export default async function CoachAtletaPage({ params }: Props) {
     }));
   }
 
-  const { data: lastPhysicalAssessment } = await supabase
-    .from("StudentPhysicalAssessment")
-    .select("assessedAt, nextDueAt, clearance, formData")
-    .eq("studentId", athlete.studentId)
-    .order("assessedAt", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: lastPhysicalAssessment }, { data: athleteProfile }] = await Promise.all([
+    supabase
+      .from("StudentPhysicalAssessment")
+      .select("assessedAt, nextDueAt, clearance, formData")
+      .eq("studentId", athlete.studentId)
+      .order("assessedAt", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("StudentProfile").select("heightCm, weightKg").eq("studentId", athlete.studentId).maybeSingle(),
+  ]);
 
   const { data: evaluations } = await supabase
     .from("AthleteEvaluation")
@@ -194,15 +195,21 @@ export default async function CoachAtletaPage({ params }: Props) {
             Última: {String(lastPhysicalAssessment.assessedAt).slice(0, 10)} · Próxima: {String(lastPhysicalAssessment.nextDueAt).slice(0, 10)}
           </p>
         )}
-        {lastPhysicalAssessment && storedFormDataHasSilhouette(lastPhysicalAssessment.formData) && (
-            <div style={{ marginBottom: "clamp(12px, 3vw, 16px)", maxWidth: "min(200px, 55vw)" }}>
-              <IllustrativeBodyAvatar
-                formData={lastPhysicalAssessment.formData}
-                assessedAtLabel={String(lastPhysicalAssessment.assessedAt).slice(0, 10)}
-                figureAriaLabel={t("perfAvatarFigureAria")}
-              />
-            </div>
-          )}
+        {lastPhysicalAssessment ? (
+          <div style={{ marginBottom: "clamp(12px, 3vw, 16px)", maxWidth: "min(320px, 100%)" }}>
+            <AnatomicalBodyMap
+              formData={lastPhysicalAssessment.formData}
+              locale={locale as "pt" | "en"}
+              assessedAtLabel={String(lastPhysicalAssessment.assessedAt).slice(0, 10)}
+              variant="compact"
+              neutralReference={!hasIllustrativeAnthropometry(normalizePhysicalFormDataJson(lastPhysicalAssessment.formData) ?? {})}
+              profileBodyMetrics={{
+                heightCm: athleteProfile?.heightCm != null ? Number(athleteProfile.heightCm) : null,
+                weightKg: athleteProfile?.weightKg != null ? Number(athleteProfile.weightKg) : null,
+              }}
+            />
+          </div>
+        ) : null}
         <Link
           href={`/coach/alunos/${athlete.studentId}/avaliacao-fisica?next=${encodeURIComponent(`/coach/atletas/${athleteId}`)}`}
           className="btn btn-secondary"

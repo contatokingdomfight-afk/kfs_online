@@ -32,10 +32,9 @@ type Props = {
   modalityLabels?: Record<string, string>;
   /** Médias por dimensão (tecnico, tatico, …) por modalidade — alinha radar e resumo com o filtro. */
   scoresByModality?: Record<string, Record<string, number>>;
-  /** Silhueta no 2.º painel quando existe última ficha física (medidas ou silhueta neutra). */
+  /** Mapa corporal no 2.º painel (última ficha ou convite). */
   physicalAvatarCarousel?: PhysicalAvatarCarouselPayload | null;
   physicalFichaReadOnlyLink?: { href: string; label: string } | null;
-  allowLazyHumanoid3d?: boolean;
 };
 
 export function EvaluationResultsDashboard({
@@ -49,7 +48,6 @@ export function EvaluationResultsDashboard({
   scoresByModality,
   physicalAvatarCarousel = null,
   physicalFichaReadOnlyLink = null,
-  allowLazyHumanoid3d = false,
 }: Props) {
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
   /** null = mostrar todas as subcategorias; valor = filtrar por prefixo principal (derivado dos dados). */
@@ -211,18 +209,7 @@ export function EvaluationResultsDashboard({
       <div className="space-y-2">
         <PerformanceRadarAvatarCarousel
           radar={<RadarStats scores={activeRadarScores} axes={axes} maxScore={maxScore} />}
-          formData={physicalAvatarCarousel?.formData ?? null}
-          assessedAtLabel={physicalAvatarCarousel?.assessedAt ?? null}
-          labels={physicalAvatarCarousel?.labels}
-          bodySilhouetteMode={
-            physicalAvatarCarousel
-              ? physicalAvatarCarousel.silhouettePersonalized
-                ? "personalized"
-                : "neutral"
-              : null
-          }
-          profileBodyMetrics={physicalAvatarCarousel?.profileBodyMetrics ?? null}
-          allowLazyHumanoid3d={allowLazyHumanoid3d}
+          payload={physicalAvatarCarousel}
         />
         {physicalFichaReadOnlyLink ? (
           <p className="text-center text-xs m-0">
