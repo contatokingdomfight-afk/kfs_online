@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { ANATOMICAL_BACK_SVG_INNER, ANATOMICAL_FRONT_SVG_INNER } from "@/components/physical-assessment/generated/anatomical-svg-inners";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import {
   type AnatomicalBodyMapRegionId,
@@ -17,10 +18,6 @@ import {
 } from "@/lib/illustrative-body-silhouette";
 
 type ViewSide = "front" | "back";
-
-/** Servidos em `public/` — fora do SW (ver `public/sw.js`) para carregar na PWA. */
-const ANATOMICAL_PUBLIC_FRONT = "/anatomical-body/front.svg";
-const ANATOMICAL_PUBLIC_BACK = "/anatomical-body/back.svg";
 
 const FRONT_REGIONS: AnatomicalBodyMapRegionId[] = [
   "head",
@@ -401,33 +398,27 @@ export function AnatomicalBodyMap({
             })}
           </div>
 
-          <div
-            className={["relative mx-auto w-full aspect-[200/369]", stageMax].join(" ")}
-            aria-label={view === "front" ? ui.stageFrontAria : ui.stageBackAria}
-          >
-            <div className="absolute inset-0 transition-transform duration-300 ease-out" style={illustrationStyle}>
-              <img
-                src={view === "front" ? ANATOMICAL_PUBLIC_FRONT : ANATOMICAL_PUBLIC_BACK}
-                alt=""
-                width={200}
-                height={369}
-                decoding="async"
-                fetchPriority="low"
-                className="pointer-events-none absolute inset-0 h-full w-full object-contain [filter:sepia(0.12)_hue-rotate(-8deg)_saturate(0.9)_contrast(0.95)]"
+          <div className={["relative mx-auto w-full aspect-[200/369]", stageMax].join(" ")}>
+            <svg
+              className="absolute inset-0 h-full w-full transition-transform duration-300 ease-out"
+              style={illustrationStyle}
+              viewBox="0 0 200 369"
+              preserveAspectRatio="xMidYMid meet"
+              role="img"
+              aria-label={view === "front" ? ui.stageFrontAria : ui.stageBackAria}
+            >
+              <g
+                className="pointer-events-none [filter:sepia(0.12)_hue-rotate(-8deg)_saturate(0.9)_contrast(0.95)]"
+                dangerouslySetInnerHTML={{
+                  __html: view === "front" ? ANATOMICAL_FRONT_SVG_INNER : ANATOMICAL_BACK_SVG_INNER,
+                }}
               />
-              <svg
-                className="absolute inset-0 h-full w-full"
-                viewBox="0 0 200 369"
-                preserveAspectRatio="xMidYMid meet"
-                role="presentation"
-              >
-                {view === "front" ? (
-                  <HotspotsFront onPick={onPick} onHover={setHover} active={activeAllowed} labels={labels} />
-                ) : (
-                  <HotspotsBack onPick={onPick} onHover={setHover} active={activeAllowed} labels={labels} />
-                )}
-              </svg>
-            </div>
+              {view === "front" ? (
+                <HotspotsFront onPick={onPick} onHover={setHover} active={activeAllowed} labels={labels} />
+              ) : (
+                <HotspotsBack onPick={onPick} onHover={setHover} active={activeAllowed} labels={labels} />
+              )}
+            </svg>
           </div>
         </div>
 
