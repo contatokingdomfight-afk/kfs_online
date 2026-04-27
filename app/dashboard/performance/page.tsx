@@ -381,9 +381,7 @@ export default async function DashboardPerformancePage() {
       ({
         ...checkInWellness.copy,
         bodyMapSectionTitle: t("perfWellnessBodyMapSectionTitle"),
-        bodyMapEvalHint: evaluationResultsData
-          ? t("perfWellnessBodyMapEvalHint")
-          : t("perfWellnessBodyMapEmptyScoresHint"),
+        bodyMapEvalHint: evaluationResultsData ? undefined : t("perfWellnessBodyMapEmptyScoresHint"),
       } satisfies CheckInWellnessCopy);
 
     return (
@@ -477,7 +475,6 @@ export default async function DashboardPerformancePage() {
               copy: {
                 ...checkInWellness.copy,
                 bodyMapSectionTitle: t("perfWellnessBodyMapSectionTitle"),
-                bodyMapEvalHint: evaluationResultsData ? t("perfWellnessBodyMapEvalHint") : undefined,
               },
             }
           : undefined

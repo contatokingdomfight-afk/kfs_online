@@ -168,8 +168,6 @@ export const messages = {
     perfWellnessAbbrStress: "Stress",
     perfWellnessAbbrFatigue: "Fadiga",
     perfWellnessBodyMapSectionTitle: "Mapa corporal (ilustrativo)",
-    perfWellnessBodyMapEvalHint:
-      "Acima vês só o radar de competências (o filtro por modalidade aplica-se a ele). O mapa corporal ilustrativo e o link para a ficha completa estão nesta secção, abaixo dos dados biométricos do check-in.",
     perfWellnessBodyMapEmptyScoresHint:
       "Ainda não há médias de avaliação. O radar acima fica a zero como referência. O mapa corporal ilustrativo (ficha ou silhueta genérica) está nesta secção; quando existirem avaliações, o resumo completo aparece na página de performance.",
     perfEmptyBackLink: "Voltar ao início",
@@ -882,8 +880,6 @@ export const messages = {
     perfWellnessAbbrStress: "Stress",
     perfWellnessAbbrFatigue: "Fatigue",
     perfWellnessBodyMapSectionTitle: "Body map (illustrative)",
-    perfWellnessBodyMapEvalHint:
-      "Above you only see the competency radar (the modality filter applies to it). The illustrative body map and the link to the full form are in this section, below your check-in biometric data.",
     perfWellnessBodyMapEmptyScoresHint:
       "There are no evaluation averages yet. The radar above stays at zero as a placeholder. The illustrative body map (your form or a generic silhouette) is in this section; once evaluations exist, the full summary appears on the performance page.",
     perfEmptyBackLink: "Back to home",

@@ -27,7 +27,7 @@ export type CheckInWellnessCopy = {
   abbrFatigue: string;
   /** Subsecção «mapa corporal» dentro deste bloco (dados biométricos). */
   bodyMapSectionTitle?: string;
-  /** Texto quando o radar/mapa está no resumo de resultados (não duplicamos o carrossel aqui). */
+  /** Texto opcional acima do mapa (ex.: página de performance sem médias de avaliação). */
   bodyMapEvalHint?: string;
 };
 
