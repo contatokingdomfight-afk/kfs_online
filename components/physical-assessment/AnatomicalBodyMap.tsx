@@ -1,10 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
-import {
-  ANATOMICAL_ILLUSTRATION_BACK_SRC,
-  ANATOMICAL_ILLUSTRATION_FRONT_SRC,
-} from "@/components/physical-assessment/anatomical-illustration-urls";
+import anatomicalBackIllustration from "./anatomical-illustration/back.svg";
+import anatomicalFrontIllustration from "./anatomical-illustration/front.svg";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import {
   type AnatomicalBodyMapRegionId,
@@ -406,11 +405,13 @@ export function AnatomicalBodyMap({
             aria-label={view === "front" ? ui.stageFrontAria : ui.stageBackAria}
           >
             <div className="absolute inset-0 transition-transform duration-300 ease-out" style={illustrationStyle}>
-              <img
-                src={view === "front" ? ANATOMICAL_ILLUSTRATION_FRONT_SRC : ANATOMICAL_ILLUSTRATION_BACK_SRC}
+              <Image
+                src={view === "front" ? anatomicalFrontIllustration : anatomicalBackIllustration}
                 alt=""
-                className="pointer-events-none absolute inset-0 h-full w-full object-contain [filter:sepia(0.12)_hue-rotate(-8deg)_saturate(0.9)_contrast(0.95)]"
-                decoding="async"
+                fill
+                unoptimized
+                sizes={compact ? "240px" : "280px"}
+                className="pointer-events-none object-contain [filter:sepia(0.12)_hue-rotate(-8deg)_saturate(0.9)_contrast(0.95)]"
               />
               <svg
                 className="absolute inset-0 h-full w-full"

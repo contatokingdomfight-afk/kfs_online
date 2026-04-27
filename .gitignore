@@ -53,3 +53,6 @@ client_secret*.json
 scripts/tmp-legacy-auth-export.json
 scripts/tmp-mcp-*.json
 scripts/tmp-*.jsonl*
+
+# Modelo GLB grande (opcional em dev; não versionar)
+/player.glb
