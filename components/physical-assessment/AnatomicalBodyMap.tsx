@@ -1,6 +1,10 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import {
+  ANATOMICAL_ILLUSTRATION_BACK_SRC,
+  ANATOMICAL_ILLUSTRATION_FRONT_SRC,
+} from "@/components/physical-assessment/anatomical-illustration-urls";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import {
   type AnatomicalBodyMapRegionId,
@@ -403,7 +407,7 @@ export function AnatomicalBodyMap({
           >
             <div className="absolute inset-0 transition-transform duration-300 ease-out" style={illustrationStyle}>
               <img
-                src={view === "front" ? "/anatomical-body/front.svg" : "/anatomical-body/back.svg"}
+                src={view === "front" ? ANATOMICAL_ILLUSTRATION_FRONT_SRC : ANATOMICAL_ILLUSTRATION_BACK_SRC}
                 alt=""
                 className="pointer-events-none absolute inset-0 h-full w-full object-contain [filter:sepia(0.12)_hue-rotate(-8deg)_saturate(0.9)_contrast(0.95)]"
                 decoding="async"

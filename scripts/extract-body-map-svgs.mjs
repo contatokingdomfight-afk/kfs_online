@@ -14,7 +14,7 @@ function extractSvg(id) {
   return sub.slice(0, end + "</svg>".length);
 }
 
-const outDir = new URL("../public/anatomical-body/", import.meta.url);
+const outDir = new URL("../components/physical-assessment/anatomical-illustration/", import.meta.url);
 fs.mkdirSync(outDir, { recursive: true });
 const front = extractSvg("illu-front");
 const back = extractSvg("illu-back");
