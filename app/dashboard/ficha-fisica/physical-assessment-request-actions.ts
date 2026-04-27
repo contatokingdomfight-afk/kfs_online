@@ -2,6 +2,7 @@
 
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
@@ -10,6 +11,41 @@ import { getTranslations } from "@/lib/i18n";
 import { notifyCoachesOfPhysicalAssessmentRequest } from "@/lib/notifications/in-app";
 
 export type PhysicalAssessmentRequestActionResult = { error?: string; success?: boolean };
+
+type TFn = ReturnType<typeof getTranslations>;
+
+function mapPhysicalRequestError(error: PostgrestError, t: TFn): string {
+  const code = error.code ?? "";
+  const msg = (error.message ?? "").toLowerCase();
+  const details = (error.details ?? "").toLowerCase();
+
+  if (code === "23505" || msg.includes("duplicate") || msg.includes("unique") || details.includes("unique")) {
+    return t("physAssessRequestErrorAlreadyPending");
+  }
+  if (
+    code === "42P01" ||
+    code === "PGRST205" ||
+    msg.includes("does not exist") ||
+    msg.includes("schema cache") ||
+    msg.includes("could not find the table")
+  ) {
+    return t("physAssessRequestErrorDbNotReady");
+  }
+  if (
+    code === "42501" ||
+    msg.includes("permission denied") ||
+    msg.includes("row-level security") ||
+    msg.includes("new row violates row-level security")
+  ) {
+    return t("physAssessRequestErrorPermission");
+  }
+  if (code === "23503" || msg.includes("foreign key") || msg.includes("violates foreign key")) {
+    return t("physAssessRequestErrorNoSchool");
+  }
+
+  console.error("PhysicalAssessmentRequest mutation:", code, error.message, error.details, error.hint);
+  return t("physAssessRequestErrorGeneric");
+}
 
 export async function createPhysicalAssessmentRequest(
   _prev: PhysicalAssessmentRequestActionResult | null,
@@ -43,14 +79,11 @@ export async function createPhysicalAssessmentRequest(
     id: randomUUID(),
     studentId,
     schoolId: st.schoolId,
-    status: "PENDING",
     note,
   });
 
   if (error) {
-    console.error("createPhysicalAssessmentRequest:", error);
-    if (error.code === "23505") return { error: t("physAssessRequestErrorAlreadyPending") };
-    return { error: t("physAssessRequestErrorGeneric") };
+    return { error: mapPhysicalRequestError(error, t) };
   }
 
   try {
@@ -83,8 +116,7 @@ export async function cancelPhysicalAssessmentRequest(): Promise<PhysicalAssessm
     .eq("status", "PENDING");
 
   if (error) {
-    console.error("cancelPhysicalAssessmentRequest:", error);
-    return { error: t("physAssessRequestErrorGeneric") };
+    return { error: mapPhysicalRequestError(error, t) };
   }
 
   revalidatePath("/dashboard/ficha-fisica");

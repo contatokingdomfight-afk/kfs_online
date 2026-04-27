@@ -61,7 +61,14 @@ export default async function DashboardFichaFisicaPage() {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 pb-12 pt-4 sm:px-6 lg:px-8 lg:pb-16 lg:pt-8">
         <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:items-start lg:gap-10 xl:gap-12">
-          <div className="flex flex-col gap-5 lg:col-span-7">
+          <aside className="order-2 lg:order-1 lg:col-span-5">
+            <BodyMapSkeletonInvite
+              locale={locale as "pt" | "en"}
+              scheduleHref="/dashboard/perfil"
+              className="mx-auto max-w-md shadow-sm lg:sticky lg:top-6 lg:mx-0 lg:max-w-none lg:self-start lg:py-6"
+            />
+          </aside>
+          <div className="order-1 flex flex-col gap-5 lg:order-2 lg:col-span-7">
             <header className="space-y-2">
               <h1 className="m-0 text-xl font-bold text-[var(--text-primary)] sm:text-2xl lg:text-[1.65rem] lg:leading-snug">
                 {t("fichaFisicaEmptyTitle")}
@@ -80,13 +87,6 @@ export default async function DashboardFichaFisicaPage() {
               </Link>
             </div>
           </div>
-          <aside className="lg:col-span-5">
-            <BodyMapSkeletonInvite
-              locale={locale as "pt" | "en"}
-              scheduleHref="/dashboard/perfil"
-              className="mx-auto max-w-md shadow-sm lg:sticky lg:top-6 lg:mx-0 lg:max-w-none lg:self-start lg:py-6"
-            />
-          </aside>
         </div>
       </div>
     );

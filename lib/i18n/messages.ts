@@ -234,6 +234,10 @@ export const messages = {
     physAssessRequestErrorNoSchool: "Não foi possível identificar a tua escola.",
     physAssessRequestErrorAlreadyPending: "Já tens um pedido pendente. Retira-o ou espera que a equipa registe a ficha.",
     physAssessRequestErrorGeneric: "Não foi possível concluir o pedido. Tenta de novo.",
+    physAssessRequestErrorDbNotReady:
+      "A base de dados ainda não tem a tabela de pedidos de avaliação (ou não foi atualizada). Pede à equipa técnica para aplicar as migrações Supabase mais recentes no projeto.",
+    physAssessRequestErrorPermission:
+      "Sem permissão para registar o pedido (sessão ou políticas da base de dados). Tenta sair e voltar a entrar; se continuar, contacta a escola.",
     coachPhysAssessRequestsTitle: "Pedidos de avaliação física",
     coachPhysAssessRequestsEmpty: "Nenhum aluno da tua escola pediu avaliação física neste momento.",
     coachPhysAssessOpenAssessment: "Abrir ficha de avaliação",
@@ -937,6 +941,10 @@ export const messages = {
     physAssessRequestErrorNoSchool: "Could not identify your school.",
     physAssessRequestErrorAlreadyPending: "You already have a pending request. Withdraw it or wait for the team to save the form.",
     physAssessRequestErrorGeneric: "Could not complete the request. Please try again.",
+    physAssessRequestErrorDbNotReady:
+      "The database does not have the physical-assessment request table yet (or it was not migrated). Ask your team to apply the latest Supabase migrations.",
+    physAssessRequestErrorPermission:
+      "No permission to save this request (session or database policies). Try signing out and back in; if it persists, contact your school.",
     coachPhysAssessRequestsTitle: "Physical assessment requests",
     coachPhysAssessRequestsEmpty: "No students at your school have requested a physical assessment right now.",
     coachPhysAssessOpenAssessment: "Open assessment form",
