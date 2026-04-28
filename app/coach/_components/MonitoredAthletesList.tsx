@@ -6,6 +6,8 @@ import { useMemo, useState } from "react";
 type Athlete = {
   studentId: string;
   name: string | null;
+  /** Conta tem email em `User` mesmo quando `name` está vazio. */
+  email: string | null;
   level: string;
 };
 
@@ -31,12 +33,20 @@ export function MonitoredAthletesList({
 }: Props) {
   const [query, setQuery] = useState("");
 
+  const displayLabel = (a: Athlete) => {
+    const n = a.name?.trim();
+    if (n) return n;
+    if (a.email?.trim()) return a.email.trim();
+    return `${unnamedAthleteLabel} · ${a.studentId.slice(-6)}`;
+  };
+
   const filtered = useMemo(() => {
     if (!query.trim()) return athletes;
     const q = query.trim().toLowerCase();
     return athletes.filter(
       (a) =>
         (a.name ?? "").toLowerCase().includes(q) ||
+        (a.email ?? "").toLowerCase().includes(q) ||
         (levelLabels[a.level] ?? a.level).toLowerCase().includes(q)
     );
   }, [athletes, query, levelLabels]);
@@ -110,11 +120,7 @@ export function MonitoredAthletesList({
                   textDecoration: "none",
                 }}
               >
-                <span style={{ fontWeight: 500 }}>
-                  {a.name?.trim()
-                    ? a.name
-                    : `${unnamedAthleteLabel} · ${a.studentId.slice(-6)}`}
-                </span>
+                <span style={{ fontWeight: 500 }}>{displayLabel(a)}</span>
                 <span
                   style={{
                     marginLeft: 8,

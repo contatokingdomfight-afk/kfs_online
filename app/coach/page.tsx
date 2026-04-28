@@ -237,8 +237,12 @@ export default async function CoachHomePage() {
       : { data: [] };
   const userIds = [...new Set((students ?? []).map((s) => s.userId))];
   const { data: users } =
-    userIds.length > 0 ? await supabase.from("User").select("id, name").in("id", userIds) : { data: [] };
-  const userById = new Map((users ?? []).map((u) => [u.id, u]));
+    userIds.length > 0
+      ? await supabase.from("User").select("id, name, email").in("id", userIds)
+      : { data: [] };
+  const userById = new Map(
+    (users ?? []).map((u) => [u.id, u as { id: string; name: string | null; email: string }])
+  );
   const studentToUser = new Map((students ?? []).map((s) => [s.id, userById.get(s.userId)]));
 
   const athletesWithNames = athleteList.map((a) => {
@@ -246,6 +250,7 @@ export default async function CoachHomePage() {
     return {
       studentId: a.studentId,
       name: u?.name ?? null,
+      email: u?.email ?? null,
       level: a.level,
     };
   });
