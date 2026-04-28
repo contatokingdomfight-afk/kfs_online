@@ -620,8 +620,10 @@ export const messages = {
     themeTitlePlaceholder: "Ex.: Defesa de low kicks",
     libraryVideoOptional: "Vídeo da biblioteca (opcional)",
     noCourseOption: "— Nenhum / só título",
-
-    // Coach dashboard
+    themeSaveSaving: "A guardar o tema…",
+    themeSaveSuccessTitle: "Tema guardado",
+    themeSaveSuccessBody: "O tema desta semana foi guardado com sucesso.",
+    themeSaveSuccessOk: "Entendido",
     coachStats: "Estatísticas",
     coachTotalStudents: "Alunos na escola",
     coachLessonsThisWeek: "Aulas esta semana",
@@ -1346,6 +1348,10 @@ export const messages = {
     themeTitlePlaceholder: "E.g. Low kick defense",
     libraryVideoOptional: "Library video (optional)",
     noCourseOption: "— None / title only",
+    themeSaveSaving: "Saving theme…",
+    themeSaveSuccessTitle: "Theme saved",
+    themeSaveSuccessBody: "This week's theme was saved successfully.",
+    themeSaveSuccessOk: "OK",
 
     coachStats: "Statistics",
     coachTotalStudents: "Students at school",

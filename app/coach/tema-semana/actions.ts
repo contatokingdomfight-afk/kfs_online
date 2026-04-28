@@ -7,7 +7,7 @@ import { getWeekStartMonday, getWeekStartMondayForDate } from "@/lib/lesson-util
 
 const MODALITIES = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
-export type SaveWeekThemeResult = { error?: string };
+export type SaveWeekThemeResult = { error?: string; success?: true };
 
 export async function saveWeekTheme(
   _prev: SaveWeekThemeResult | null,
@@ -51,5 +51,5 @@ export async function saveWeekTheme(
   revalidatePath("/coach/tema-semana");
   revalidatePath("/coach");
   revalidatePath("/dashboard");
-  return {};
+  return { success: true };
 }

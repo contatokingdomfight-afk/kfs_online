@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useId, useState, type CSSProperties } from "react";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { saveWeekTheme, type SaveWeekThemeResult } from "./actions";
@@ -16,30 +17,146 @@ type Props = {
   initialLocale: Locale;
 };
 
+const overlayStyle: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 9998,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 20,
+  background: "color-mix(in srgb, var(--bg) 40%, #000 45%)",
+};
+
+const dialogCardStyle: CSSProperties = {
+  maxWidth: "min(400px, 100%)",
+  width: "100%",
+  padding: "clamp(20px, 5vw, 28px)",
+  borderRadius: "var(--radius-md)",
+  background: "var(--surface)",
+  border: "1px solid var(--border)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+};
+
+function ThemeSavePendingLayer({ savingLabel }: { savingLabel: string }) {
+  const { pending } = useFormStatus();
+  if (!pending) return null;
+  return (
+    <div style={overlayStyle} role="status" aria-live="assertive" aria-busy>
+      <div
+        style={{
+          ...dialogCardStyle,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 20,
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "3px solid var(--border)",
+            borderTopColor: "var(--primary)",
+            animation: "coachTemaSaveSpin 0.75s linear infinite",
+          }}
+        />
+        <p style={{ margin: 0, textAlign: "center", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          {savingLabel}
+        </p>
+        <style>{`@keyframes coachTemaSaveSpin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    </div>
+  );
+}
+
+function ThemeSaveSubmitButton({ label, savingLabel }: { label: string; savingLabel: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="btn btn-primary" style={{ minHeight: 44 }} disabled={pending}>
+      {pending ? savingLabel : label}
+    </button>
+  );
+}
+
+type SuccessModalProps = {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  body: string;
+  okLabel: string;
+};
+
+function ThemeSaveSuccessModal({ open, onClose, title, body, okLabel }: SuccessModalProps) {
+  const titleId = useId();
+  if (!open) return null;
+  return (
+    <div
+      style={{ ...overlayStyle, zIndex: 9999 }}
+      role="dialog"
+      aria-modal
+      aria-labelledby={titleId}
+    >
+      <div style={dialogCardStyle}>
+        <h2 id={titleId} style={{ margin: "0 0 12px 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 700, color: "var(--text-primary)" }}>
+          {title}
+        </h2>
+        <p style={{ margin: "0 0 20px 0", fontSize: "clamp(15px, 3.8vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+          {body}
+        </p>
+        <button type="button" className="btn btn-primary" style={{ minHeight: 44, width: "100%" }} onClick={onClose}>
+          {okLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ThemeSaveSuccessGate(props: SuccessModalProps) {
+  const { pending } = useFormStatus();
+  if (pending) return null;
+  return <ThemeSaveSuccessModal {...props} />;
+}
+
 export function TemaSemanaForm({ weekStart, modality, initialTitle, initialCourseId, initialVideoUrl, courses, initialLocale }: Props) {
   const t = getTranslations(initialLocale);
   const [state, formAction] = useFormState(saveWeekTheme, null as SaveWeekThemeResult | null);
+  const [successOpen, setSuccessOpen] = useState(false);
+
+  useEffect(() => {
+    if (state?.error) setSuccessOpen(false);
+    if (state?.success) setSuccessOpen(true);
+  }, [state]);
 
   return (
     <form
       action={formAction}
       className="card"
       style={{
+        position: "relative",
         padding: "clamp(16px, 4vw, 20px)",
         display: "flex",
         flexDirection: "column",
         gap: "clamp(12px, 3vw, 16px)",
       }}
     >
+      <ThemeSavePendingLayer savingLabel={t("themeSaveSaving")} />
+      <ThemeSaveSuccessGate
+        open={successOpen && state?.success === true}
+        onClose={() => setSuccessOpen(false)}
+        title={t("themeSaveSuccessTitle")}
+        body={t("themeSaveSuccessBody")}
+        okLabel={t("themeSaveSuccessOk")}
+      />
       <input type="hidden" name="modality" value={modality} />
       <input type="hidden" name="week_start" value={weekStart} />
       <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
         {MODALITY_LABELS[modality] ?? modality}
       </p>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          {t("themeTitleLabel")}
-        </span>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("themeTitleLabel")}</span>
         <input
           type="text"
           name="title"
@@ -52,9 +169,7 @@ export function TemaSemanaForm({ weekStart, modality, initialTitle, initialCours
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          {t("libraryVideoOptional")}
-        </span>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("libraryVideoOptional")}</span>
         <select name="course_id" className="input" defaultValue={initialCourseId ?? ""} style={{ minHeight: 44 }}>
           <option value="">{t("noCourseOption")}</option>
           {courses.map((c) => (
@@ -65,9 +180,7 @@ export function TemaSemanaForm({ weekStart, modality, initialTitle, initialCours
         </select>
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          URL do vídeo (opcional)
-        </span>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>URL do vídeo (opcional)</span>
         <input
           type="url"
           name="video_url"
@@ -81,12 +194,8 @@ export function TemaSemanaForm({ weekStart, modality, initialTitle, initialCours
           Se não escolher um curso acima, pode colar aqui um link direto para o vídeo.
         </span>
       </label>
-      {state?.error && (
-        <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>{state.error}</p>
-      )}
-      <button type="submit" className="btn btn-primary" style={{ minHeight: 44 }}>
-        {t("saveTheme")}
-      </button>
+      {state?.error && <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>{state.error}</p>}
+      <ThemeSaveSubmitButton label={t("saveTheme")} savingLabel={t("themeSaveSaving")} />
     </form>
   );
 }
