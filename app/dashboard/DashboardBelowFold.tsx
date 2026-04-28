@@ -80,15 +80,19 @@ export async function DashboardBelowFold({
   const athlete = athleteRes.data;
 
   if (studentId) {
-    const { count: monthAttCount } = await supabase
-      .from("Attendance")
-      .select("id", { count: "exact", head: true })
-      .eq("studentId", studentId)
-      .eq("status", "CONFIRMED")
-      .eq("countsForGamification", true)
-      .gte("occurrenceDate", monthStart)
-      .lte("occurrenceDate", monthEnd);
+    const attBase = () =>
+      supabase
+        .from("Attendance")
+        .select("id", { count: "exact", head: true })
+        .eq("studentId", studentId)
+        .eq("status", "CONFIRMED")
+        .eq("countsForGamification", true);
+    const [{ count: monthAttCount }, { count: totalAttCount }] = await Promise.all([
+      attBase().gte("occurrenceDate", monthStart).lte("occurrenceDate", monthEnd),
+      attBase(),
+    ]);
     currentMonthCount = monthAttCount ?? 0;
+    totalPresences = totalAttCount ?? 0;
   }
 
   if (athlete) {
@@ -106,13 +110,7 @@ export async function DashboardBelowFold({
       synced?.xp ??
       ((athlete as { xp?: number; currentXP?: number }).xp ?? (athlete as { currentXP?: number }).currentXP ?? 0);
 
-    const [countRes, missions, latestCommentRes, latestEvalRes] = await Promise.all([
-      supabase
-        .from("Attendance")
-        .select("*", { count: "exact", head: true })
-        .eq("studentId", studentId)
-        .eq("status", "CONFIRMED")
-        .eq("countsForGamification", true),
+    const [missions, latestCommentRes, latestEvalRes] = await Promise.all([
       getApplicableMissionTemplates(
         supabase,
         athlete.id,
@@ -137,8 +135,6 @@ export async function DashboardBelowFold({
         .limit(1)
         .maybeSingle(),
     ]);
-
-    totalPresences = countRes.count ?? 0;
 
     if (studentPrimaryModality) {
       const theme = temaSemanaList.find((th) => th.modality === studentPrimaryModality);
