@@ -8,6 +8,7 @@ import { normalizeModalityCode } from "@/lib/modality-normalize";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
+import { evaluationHasFeedbackContent } from "@/lib/athlete-evaluation-content";
 import type { ReactNode } from "react";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
@@ -60,21 +61,23 @@ export async function DashboardBelowFold({
   let currentMonthCount = 0;
   let attendanceGoal = 10;
 
-  const [goalRes, athleteRes, weekThemesRes] = await Promise.all([
+  const [goalRes, athleteRes, weekThemesRes, activeMissionTemplateCountRes] = await Promise.all([
     supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
     studentId
       ? supabase
           .from("Athlete")
           .select("id, currentBelt, currentXP, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
           .eq("studentId", studentId)
-          .single()
+          .maybeSingle()
       : Promise.resolve({ data: null }),
     supabase
       .from("WeekTheme")
       .select("modality, title, course_id, video_url")
       .eq("week_start", weekStart)
       .order("modality", { ascending: true }),
+    supabase.from("MissionTemplate").select("id", { count: "exact", head: true }).eq("isActive", true),
   ]);
+  const activeMissionTemplateCount = activeMissionTemplateCountRes.count ?? 0;
 
   if (goalRes.data) attendanceGoal = goalRes.data.target_value ?? 10;
 
@@ -173,7 +176,7 @@ export async function DashboardBelowFold({
         .maybeSingle(),
       supabase
         .from("AthleteEvaluation")
-        .select("note, coachId, created_at")
+        .select("note, coachId, created_at, gas, technique, strength, theory, scores, modality")
         .eq("athleteId", athlete.id)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -190,6 +193,11 @@ export async function DashboardBelowFold({
       note?: string | null;
       coachId?: string | null;
       created_at?: string | null;
+      gas?: number | null;
+      technique?: number | null;
+      strength?: number | null;
+      theory?: number | null;
+      scores?: unknown;
     } | null;
 
     let sharedCommentContent: string | null = null;
@@ -218,9 +226,13 @@ export async function DashboardBelowFold({
     let lastEvalCoachName: string | null = null;
     let lastEvalNote: string | null = null;
     let lastEvalDate: string | null = null;
-    if (latestEval?.coachId && latestEval.note?.trim()) {
-      lastEvalNote = latestEval.note ?? null;
+    if (latestEval?.coachId && evaluationHasFeedbackContent(latestEval)) {
       lastEvalDate = latestEval.created_at ?? null;
+      if (latestEval.note?.trim()) {
+        lastEvalNote = latestEval.note ?? null;
+      } else {
+        lastEvalNote = t("dashboardFeedbackEvalScoresOnly");
+      }
       const { data: coachRow } = await supabase
         .from("Coach")
         .select("userId")
@@ -255,6 +267,16 @@ export async function DashboardBelowFold({
     ? t(("belt_" + athleteStats.currentBelt) as "belt_WHITE")
     : "—";
 
+  const noMissionsMessage = !athlete
+    ? t("dashboardNoMissionsNoAthlete")
+    : activeMissionTemplateCount === 0
+      ? t("dashboardMissionsNotConfigured")
+      : t("dashboardNoMissions");
+
+  const noCoachFeedbackMessage = !athlete
+    ? t("dashboardNoFeedbackNeedAthlete")
+    : t("dashboardNoCoachFeedback");
+
   return (
     <>
       <WarriorPanel
@@ -287,8 +309,9 @@ export async function DashboardBelowFold({
           viewVideo: t("dashboardViewVideo"),
           noWeekTheme: t("dashboardNoWeekTheme"),
           viewAllMissions: t("dashboardViewAllMissions"),
-          noMissions: t("dashboardNoMissions"),
-          noCoachFeedback: t("dashboardNoCoachFeedback"),
+          noMissions: noMissionsMessage,
+          noCoachFeedback: noCoachFeedbackMessage,
+          viewPerformanceLink: t("myPerformance"),
         }}
       />
 

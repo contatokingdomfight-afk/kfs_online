@@ -35,6 +35,8 @@ type WhatIsNewLabels = {
   viewAllMissions: string;
   noMissions: string;
   noCoachFeedback: string;
+  /** Texto do link para a página de desempenho (com feedback com avaliação). */
+  viewPerformanceLink: string;
 };
 
 type Props = {
@@ -178,6 +180,19 @@ export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, label
                   <p style={{ margin: 0, fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>
                     — {coachFeedback.coachName} · {new Date(coachFeedback.date).toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
+                  <Link
+                    href="/dashboard/performance"
+                    style={{
+                      display: "inline-block",
+                      marginTop: 10,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      color: "var(--primary)",
+                      fontWeight: 500,
+                      textDecoration: "none",
+                    }}
+                  >
+                    {labels.viewPerformanceLink} →
+                  </Link>
                 </>
               ) : (
                 <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
