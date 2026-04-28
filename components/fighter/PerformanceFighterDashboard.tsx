@@ -11,7 +11,9 @@ import { MissionCard, type Mission } from "./MissionCard";
 import { CoachFeedback } from "./CoachFeedback";
 import type { DimensionDetail } from "@/lib/performance-detail-structure";
 import type { RadarAxis } from "./RadarStatsDynamic";
-import { XP_PER_MISSION, getRankNameForIndex } from "@/lib/xp-missions";
+import { getRankNameForIndex } from "@/lib/xp-missions";
+import { buildMissionsFromScores } from "@/lib/fighter-missions";
+import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
 import { beltIdFromRankName } from "@/components/belt-progression/belt-progression-data";
 import type { AchievementWithStatus } from "@/lib/achievements";
 import { EvaluationResultsDashboard } from "@/components/evaluation-results";
@@ -60,23 +62,6 @@ const AXIS_ICONS: Record<string, string> = {
   mental: "🧠",
   teorico: "📚",
 };
-
-function buildMissionsFromScores(
-  scores: Record<string, number>,
-  axes: RadarAxis[],
-  maxScore: number
-): Mission[] {
-  const entries = axes
-    .map((a) => ({ id: a.id, label: a.label, score: scores[a.id] ?? 0 }))
-    .filter((e) => e.score < maxScore)
-    .sort((a, b) => a.score - b.score);
-  return entries.slice(0, 3).map((e) => ({
-    id: e.id,
-    target: `Subir ${e.label} para ${Math.min(maxScore, Math.ceil(e.score) + 1)}`,
-    xpReward: XP_PER_MISSION,
-    progress: Math.min(100, (e.score / maxScore) * 100 + 15),
-  }));
-}
 
 type Props = {
   backHref: string;
@@ -160,7 +145,7 @@ export function PerformanceFighterDashboard({
   physicalFichaReadOnlyLink = null,
   physicalRadarOnlyHint = null,
 }: Props) {
-  const systemMissions = buildMissionsFromScores(scores, axes, maxScore);
+  const systemMissions: Mission[] = buildMissionsFromScores(scores, axes, maxScore);
   const customAsMissions: Mission[] = customMissions.map((c) => ({
     id: `custom-${c.id}`,
     target: c.name,
@@ -412,10 +397,7 @@ export function PerformanceFighterDashboard({
 
       {/* Coach feedback (comentário geral do treinador) */}
       <CoachFeedback
-        quote={
-          coachFeedback ??
-          "Continua a treinar com consistência. Foca nos atributos mais baixos para equilibrar o teu perfil."
-        }
+        quote={coachFeedback ?? FALLBACK_COACH_ENCOURAGEMENT}
         coachName={coachName}
       />
 

@@ -5,11 +5,11 @@ import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getWeekStartMondayLisbon } from "@/lib/lisbon-week";
 import { normalizeModalityCode } from "@/lib/modality-normalize";
-import { getApplicableMissionTemplates } from "@/lib/missions";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
-import { evaluationHasFeedbackContent } from "@/lib/athlete-evaluation-content";
 import { getWarriorBeltBarFromAthleteState } from "@/lib/athlete-warrior-stats";
+import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
+import { getWhatIsNewNextMission } from "@/lib/whatisnew-next-mission.server";
 import type { ReactNode } from "react";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
@@ -57,7 +57,7 @@ export async function DashboardBelowFold({
   let currentMonthCount = 0;
   let attendanceGoal = 10;
 
-  const [goalRes, athleteRes, weekThemesRes, activeMissionTemplateCountRes] = await Promise.all([
+  const [goalRes, athleteRes, weekThemesRes] = await Promise.all([
     supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
     studentId
       ? supabase
@@ -74,9 +74,7 @@ export async function DashboardBelowFold({
       .select("modality, title, course_id, video_url")
       .eq("week_start", weekStart)
       .order("modality", { ascending: true }),
-    supabase.from("MissionTemplate").select("id", { count: "exact", head: true }).eq("isActive", true),
   ]);
-  const activeMissionTemplateCount = activeMissionTemplateCountRes.count ?? 0;
 
   type AthleteRow = {
     id: string;
@@ -160,14 +158,16 @@ export async function DashboardBelowFold({
 
     const xpForMissions = xpTotal;
 
-    const [missions, latestCommentRes, latestEvalRes] = await Promise.all([
-      getApplicableMissionTemplates(
-        supabase,
-        athlete.id,
-        xpForMissions,
-        studentPrimaryModality,
-        synced?.displayBeltIndex,
-      ),
+    const [nextFromProfile, latestCommentRes, latestEvalRes] = await Promise.all([
+      studentId
+        ? getWhatIsNewNextMission(supabase, {
+            studentId,
+            athleteId: athlete.id,
+            athleteXp: xpForMissions,
+            primaryModality: studentPrimaryModality,
+            displayBeltIndex: dIdx,
+          })
+        : Promise.resolve(null),
       supabase
         .from("Comment")
         .select("content, authorCoachId, createdAt")
@@ -185,10 +185,13 @@ export async function DashboardBelowFold({
         .limit(1)
         .maybeSingle(),
     ]);
-
-    if (missions.length > 0) {
-      const m = missions[0];
-      nextMission = { id: m.id, name: m.name, description: m.description, xpReward: m.xpReward };
+    if (nextFromProfile) {
+      nextMission = {
+        id: nextFromProfile.id,
+        name: nextFromProfile.name,
+        description: nextFromProfile.description,
+        xpReward: nextFromProfile.xpReward,
+      };
     }
 
     const latestComment = latestCommentRes.data;
@@ -196,11 +199,6 @@ export async function DashboardBelowFold({
       note?: string | null;
       coachId?: string | null;
       created_at?: string | null;
-      gas?: number | null;
-      technique?: number | null;
-      strength?: number | null;
-      theory?: number | null;
-      scores?: unknown;
     } | null;
 
     let sharedCommentContent: string | null = null;
@@ -229,13 +227,10 @@ export async function DashboardBelowFold({
     let lastEvalCoachName: string | null = null;
     let lastEvalNote: string | null = null;
     let lastEvalDate: string | null = null;
-    if (latestEval?.coachId && evaluationHasFeedbackContent(latestEval)) {
+    if (latestEval?.coachId) {
+      const rawNote = latestEval.note?.trim() ?? null;
+      lastEvalNote = rawNote;
       lastEvalDate = latestEval.created_at ?? null;
-      if (latestEval.note?.trim()) {
-        lastEvalNote = latestEval.note ?? null;
-      } else {
-        lastEvalNote = t("dashboardFeedbackEvalScoresOnly");
-      }
       const { data: coachRow } = await supabase
         .from("Coach")
         .select("userId")
@@ -256,12 +251,17 @@ export async function DashboardBelowFold({
       lastEvaluationNote: lastEvalNote,
     });
     if (homeFeedbackResolved.quote) {
-      const dateStr =
-        homeFeedbackResolved.source === "comment" ? sharedCommentDate : lastEvalDate;
+      const dateStr = homeFeedbackResolved.source === "comment" ? sharedCommentDate : lastEvalDate;
       coachFeedback = {
         content: homeFeedbackResolved.quote,
         coachName: homeFeedbackResolved.coachName ?? "Treinador",
         date: dateStr ?? new Date().toISOString(),
+      };
+    } else {
+      coachFeedback = {
+        content: FALLBACK_COACH_ENCOURAGEMENT,
+        coachName: "Teu treinador",
+        date: lastEvalDate ?? new Date().toISOString(),
       };
     }
   }
@@ -270,11 +270,7 @@ export async function DashboardBelowFold({
     ? t(("belt_" + athleteStats.currentBelt) as "belt_WHITE")
     : "—";
 
-  const noMissionsMessage = !athlete
-    ? t("dashboardNoMissionsNoAthlete")
-    : activeMissionTemplateCount === 0
-      ? t("dashboardMissionsNotConfigured")
-      : t("dashboardNoMissions");
+  const noMissionsMessage = !athlete ? t("dashboardNoMissionsNoAthlete") : t("dashboardNoMissions");
 
   const noCoachFeedbackMessage = !athlete
     ? t("dashboardNoFeedbackNeedAthlete")
