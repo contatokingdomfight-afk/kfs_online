@@ -204,13 +204,31 @@ export default async function CoachHomePage() {
   // Atletas do coach (mainCoachId)
   let athletesQuery = supabase
     .from("Athlete")
-    .select("id, studentId, level")
+    .select("id, studentId, level, createdAt")
     .order("id");
   if (coachId) {
     athletesQuery = athletesQuery.eq("mainCoachId", coachId);
   }
   const { data: athletes } = await athletesQuery;
-  const athleteList = athletes ?? [];
+  const rawAthleteList = athletes ?? [];
+  /** Um aluno = uma linha: podem existir 2+ `Athlete` com o mesmo `studentId` (legado). */
+  const athleteList = (() => {
+    const byStudent = new Map<string, (typeof rawAthleteList)[0]>();
+    for (const a of rawAthleteList) {
+      const sid = a.studentId;
+      const prev = byStudent.get(sid);
+      if (!prev) {
+        byStudent.set(sid, a);
+        continue;
+      }
+      const aT = (a as { createdAt?: string }).createdAt ?? "";
+      const pT = (prev as { createdAt?: string }).createdAt ?? "";
+      if (aT > pT || (aT === pT && String(a.id) > String(prev.id))) {
+        byStudent.set(sid, a);
+      }
+    }
+    return [...byStudent.values()];
+  })();
 
   const studentIds = athleteList.map((a) => a.studentId);
   const { data: students } =

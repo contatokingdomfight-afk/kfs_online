@@ -110,7 +110,11 @@ export function MonitoredAthletesList({
                   textDecoration: "none",
                 }}
               >
-                <span style={{ fontWeight: 500 }}>{a.name?.trim() || unnamedAthleteLabel}</span>
+                <span style={{ fontWeight: 500 }}>
+                  {a.name?.trim()
+                    ? a.name
+                    : `${unnamedAthleteLabel} · ${a.studentId.slice(-6)}`}
+                </span>
                 <span
                   style={{
                     marginLeft: 8,
