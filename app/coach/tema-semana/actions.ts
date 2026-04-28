@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { getWeekStartMonday, getWeekStartMondayForDate } from "@/lib/lesson-utils";
+import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
+import { getWeekStartMondayForDateInLisbon, getWeekStartMondayLisbon } from "@/lib/lisbon-week";
+import { getModalitiesForWeekThemeEditor } from "@/lib/coach-week-theme-modalities";
+
+const YMD = /^\d{4}-\d{2}-\d{2}$/;
 
 const MODALITIES = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
@@ -29,8 +33,14 @@ export async function saveWeekTheme(
   }
   if (!title) return { error: "Título do tema é obrigatório." };
 
-  const weekStart = weekParam ? getWeekStartMondayForDate(new Date(weekParam)) : getWeekStartMonday();
   const supabase = await createClient();
+  const allowedModalities = await getModalitiesForWeekThemeEditor(supabase, dbUser.role, await getCurrentCoachId());
+  if (!allowedModalities.includes(modality)) {
+    return { error: "Não podes definir tema para esta modalidade." };
+  }
+
+  const weekStart =
+    weekParam && YMD.test(weekParam) ? getWeekStartMondayForDateInLisbon(weekParam) : getWeekStartMondayLisbon();
 
   const { error } = await supabase.from("WeekTheme").upsert(
     {
@@ -50,6 +60,7 @@ export async function saveWeekTheme(
 
   revalidatePath("/coach/tema-semana");
   revalidatePath("/coach");
+  revalidatePath("/coach/aula");
   revalidatePath("/dashboard");
   return { success: true };
 }

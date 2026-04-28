@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import { CreateLessonForm } from "./CreateLessonForm";
 import { TurmasViewSwitcher } from "./TurmasViewSwitcher";
 import { TurmasSchoolFilter } from "./TurmasSchoolFilter";
-import { getWeekStartMonday, getWeekEndSunday } from "@/lib/lesson-utils";
+import { getWeekStartMondayLisbon } from "@/lib/lisbon-week";
+import { getWeekEndSunday } from "@/lib/lesson-utils";
 import { getCachedLocations, getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { buildTurmasListQueryFromState } from "@/lib/turmas-list-query";
 import {
@@ -28,10 +29,10 @@ export default async function AdminTurmasPage({
   const weekParam = params.week?.trim() || null;
   const weekMonday =
     view === "semana"
-      ? (weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam) ? weekParam : getWeekStartMonday())
+      ? (weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam) ? weekParam : getWeekStartMondayLisbon())
       : null;
   const weekEnd = weekMonday ? getWeekEndSunday(weekMonday) : null;
-  const weekMondayForLink = weekMonday ?? (view === "semana" ? getWeekStartMonday() : getWeekStartMonday());
+  const weekMondayForLink = weekMonday ?? getWeekStartMondayLisbon();
   const schoolFilterParam = params.school?.trim() || null;
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");

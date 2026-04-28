@@ -21,22 +21,9 @@ import {
   type LessonDefinitionRow,
 } from "@/lib/lesson-occurrences";
 
-const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
-const MODALITY_ALIASES: Record<string, string> = {
-  MUAY_THAI: "MUAY_THAI",
-  "MUAY THAI": "MUAY_THAI",
-  MUAYTHAI: "MUAY_THAI",
-  BOXING: "BOXING",
-  KICKBOXING: "KICKBOXING",
-  "KICK BOXING": "KICKBOXING",
-  MMA: "MMA",
-};
+import { normalizeModalityCode } from "@/lib/modality-normalize";
 
-function normalizeModalityCode(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const key = value.trim().toUpperCase();
-  return MODALITY_ALIASES[key] ?? null;
-}
+const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
 function BelowFoldSkeleton() {
   return (

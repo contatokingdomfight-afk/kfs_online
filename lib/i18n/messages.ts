@@ -612,7 +612,11 @@ export const messages = {
     presencesLink: "Presenças →",
     viewQrForCheckIn: "Ver QR Code para check-in",
     weekThemeDescriptionCoach: "Os alunos veem o tema e o vídeo no dashboard antes da aula.",
-    weekThemeHint: "Define um tema por modalidade e, se quiseres, associa um curso da biblioteca. Assim o aluno estuda a teoria no telemóvel e aproveita melhor o tempo no tatame.",
+    weekThemeNoCoachLessons:
+      "Ainda não tens aulas atribuídas a ti nesta plataforma. Quando tiveres, as modalidades em que dás aulas aparecem aqui para definires o tema da semana.",
+    weekThemeHint:
+      "Define um tema por modalidade e, se quiseres, associa um curso da biblioteca. Assim o aluno estuda a teoria no telemóvel e aproveita melhor o tempo no tatame.",
+    coachAulaWeekThemeTitle: "Tema da semana (esta modalidade e semana)",
     saveTheme: "Guardar tema",
     viewAgenda: "Ver agenda",
     athletesUnderCoaching: "Atletas em acompanhamento",
@@ -1344,7 +1348,10 @@ export const messages = {
     presencesLink: "Presences →",
     viewQrForCheckIn: "View QR Code for check-in",
     weekThemeDescriptionCoach: "Students see the theme and video on the dashboard before class.",
+    weekThemeNoCoachLessons:
+      "You have no classes assigned to you on this platform yet. When you do, the modalities you teach will appear here so you can set the week theme.",
     weekThemeHint: "Set a theme per modality and optionally link a library course. Students study theory on their phone and make the most of mat time.",
+    coachAulaWeekThemeTitle: "Week theme (this modality and week)",
     saveTheme: "Save theme",
     viewAgenda: "View agenda",
     athletesUnderCoaching: "Athletes under coaching",

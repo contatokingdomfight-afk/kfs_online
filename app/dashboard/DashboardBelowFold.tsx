@@ -2,7 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getTranslations } from "@/lib/i18n";
-import { getWeekStartMonday, MODALITY_LABELS } from "@/lib/lesson-utils";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { getWeekStartMondayLisbon } from "@/lib/lisbon-week";
+import { normalizeModalityCode } from "@/lib/modality-normalize";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
@@ -42,7 +44,8 @@ export async function DashboardBelowFold({
     getCurrentDbUser(),
   ]);
   const t = getTranslations(locale as "pt" | "en");
-  const weekStart = getWeekStartMonday();
+  /** Alinhar a `WeekTheme.week_start` com o calendário em Lisboa (evita desvio UTC no servidor). */
+  const weekStart = getWeekStartMondayLisbon();
   const monthStart = new Date().toISOString().slice(0, 7) + "-01";
   const monthEnd = new Date(
     new Date().getFullYear(),
@@ -51,7 +54,6 @@ export async function DashboardBelowFold({
   ).toISOString().slice(0, 10);
 
   let athleteStats: { currentBelt: string | null; currentXP: number; nextLevelXP: number } | null = null;
-  let weekThemeForPrimary: { modality: string; title: string; course_id: string | null; video_url: string | null } | null = null;
   let nextMission: { id: string; name: string; description: string | null; xpReward: number } | null = null;
   let coachFeedback: { content: string; coachName: string; date: string } | null = null;
   let totalPresences = 0;
@@ -77,6 +79,48 @@ export async function DashboardBelowFold({
   if (goalRes.data) attendanceGoal = goalRes.data.target_value ?? 10;
 
   const temaSemanaList = weekThemesRes.data ?? [];
+
+  /**
+   * Tema a mostrar no dashboard: linhas `WeekTheme` com `week_start` = segunda em Lisboa.
+   * 1) Preferir modalidade primária do aluno (já normalizada no page) vs `WeekTheme.modality` (normalizado aqui).
+   * 2) Sem match ou sem primária: primeiro registo (ordem por modality na query).
+   * 3) Sem linhas: null → UI «Nenhum tema…».
+   */
+  const pickWeekThemeForStudent = (): {
+    modality: string;
+    title: string;
+    course_id: string | null;
+    video_url: string | null;
+  } | null => {
+    if (temaSemanaList.length === 0) return null;
+    if (studentPrimaryModality) {
+      const theme = temaSemanaList.find(
+        (th) => normalizeModalityCode((th as { modality?: string }).modality) === studentPrimaryModality
+      );
+      if (theme) {
+        return {
+          modality: theme.modality,
+          title: theme.title,
+          course_id: theme.course_id,
+          video_url: (theme as { video_url?: string | null }).video_url ?? null,
+        };
+      }
+    }
+    const theme = temaSemanaList[0];
+    return {
+      modality: theme.modality,
+      title: theme.title,
+      course_id: theme.course_id,
+      video_url: (theme as { video_url?: string | null }).video_url ?? null,
+    };
+  };
+
+  let weekThemeForPrimary: {
+    modality: string;
+    title: string;
+    course_id: string | null;
+    video_url: string | null;
+  } | null = pickWeekThemeForStudent();
   const athlete = athleteRes.data;
 
   if (studentId) {
@@ -135,25 +179,6 @@ export async function DashboardBelowFold({
         .limit(1)
         .maybeSingle(),
     ]);
-
-    if (studentPrimaryModality) {
-      const theme = temaSemanaList.find((th) => th.modality === studentPrimaryModality);
-      if (theme)
-        weekThemeForPrimary = {
-          modality: theme.modality,
-          title: theme.title,
-          course_id: theme.course_id,
-          video_url: (theme as { video_url?: string | null }).video_url ?? null,
-        };
-    } else if (temaSemanaList.length > 0) {
-      const theme = temaSemanaList[0];
-      weekThemeForPrimary = {
-        modality: theme.modality,
-        title: theme.title,
-        course_id: theme.course_id,
-        video_url: (theme as { video_url?: string | null }).video_url ?? null,
-      };
-    }
 
     if (missions.length > 0) {
       const m = missions[0];

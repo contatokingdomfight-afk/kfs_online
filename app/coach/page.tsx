@@ -6,7 +6,8 @@ import { getCurrentSchoolId } from "@/lib/auth/get-current-school";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { coachPresenceUrl, pickLastAndNextOccurrence } from "@/lib/coach-presence-shortcuts";
-import { MODALITY_LABELS, formatLessonDate, formatNextLessonDate, getWeekStartMonday } from "@/lib/lesson-utils";
+import { MODALITY_LABELS, formatLessonDate, formatNextLessonDate } from "@/lib/lesson-utils";
+import { getWeekStartMondayLisbon } from "@/lib/lisbon-week";
 import { ymdAddDays } from "@/lib/lesson-occurrences";
 import { loadCoachScheduleBundle } from "@/lib/coach-schedule-scope";
 import { calendarDateLisbon, minutesSinceMidnightLisbon } from "@/lib/lesson-check-in-window";
@@ -71,7 +72,7 @@ export default async function CoachHomePage() {
   const now = new Date();
   const today = calendarDateLisbon(now);
   const nowMinutes = minutesSinceMidnightLisbon(now);
-  const weekStart = getWeekStartMonday();
+  const weekStart = getWeekStartMondayLisbon();
 
   const rangeStart = ymdAddDays(today, -21);
   const rangeEnd = ymdAddDays(today, 28);

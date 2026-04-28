@@ -4,6 +4,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
+import { getWeekStartMondayForDateInLisbon } from "@/lib/lisbon-week";
 import {
   expandLessonsForDateRange,
   fetchLessonCancellations,
@@ -90,6 +91,18 @@ export default async function CoachAulaPage({
   }
 
   const occurrenceYmd = selectedLesson?.occurrenceDate ?? "";
+
+  let weekThemeThisLesson: { title: string; course_id: string | null; video_url: string | null } | null = null;
+  if (selectedLesson?.modality && occurrenceYmd) {
+    const weekStart = getWeekStartMondayForDateInLisbon(occurrenceYmd);
+    const { data: wt } = await supabase
+      .from("WeekTheme")
+      .select("title, course_id, video_url")
+      .eq("week_start", weekStart)
+      .eq("modality", selectedLesson.modality)
+      .maybeSingle();
+    if (wt) weekThemeThisLesson = wt;
+  }
 
   if (lessonId && selectedLesson && occurrenceYmd) {
     const { data: attList } = await supabase
@@ -295,6 +308,43 @@ export default async function CoachAulaPage({
                   <span aria-hidden>📱</span> QR Code
                 </Link>
               </div>
+
+              {weekThemeThisLesson ? (
+                <section
+                  className="coach-aula-week-theme"
+                  style={{
+                    marginBottom: "clamp(16px, 4vw, 20px)",
+                    padding: "clamp(12px, 3vw, 16px)",
+                    borderRadius: "var(--radius-md)",
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                  }}
+                  aria-labelledby="coach-aula-week-theme-h"
+                >
+                  <h2 id="coach-aula-week-theme-h" className="coach-aula-list-title" style={{ fontSize: "clamp(15px, 3.5vw, 16px)", marginTop: 0, marginBottom: 8 }}>
+                    {t("coachAulaWeekThemeTitle")}
+                  </h2>
+                  <p style={{ margin: "0 0 10px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>{weekThemeThisLesson.title}</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {weekThemeThisLesson.course_id ? (
+                      <Link href={`/coach/biblioteca/${weekThemeThisLesson.course_id}`} className="btn btn-secondary" style={{ textDecoration: "none", minHeight: 40 }}>
+                        {t("dashboardViewTheory")}
+                      </Link>
+                    ) : null}
+                    {weekThemeThisLesson.video_url ? (
+                      <a
+                        href={weekThemeThisLesson.video_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary"
+                        style={{ textDecoration: "none", minHeight: 40, display: "inline-flex", alignItems: "center" }}
+                      >
+                        {t("dashboardViewVideo")}
+                      </a>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
 
               <section className="coach-aula-timer-section" aria-labelledby="coach-aula-timer-heading">
                 <h2 id="coach-aula-timer-heading" className="coach-aula-list-title">

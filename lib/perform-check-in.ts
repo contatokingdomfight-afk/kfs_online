@@ -18,22 +18,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { computeWellnessZone, type WellnessCheckInInput } from "@/lib/wellness-score";
 import { resolveOccurrenceYmd } from "@/lib/resolve-check-in-occurrence";
-
-const MODALITY_ALIASES: Record<string, string> = {
-  MUAY_THAI: "MUAY_THAI",
-  "MUAY THAI": "MUAY_THAI",
-  MUAYTHAI: "MUAY_THAI",
-  BOXING: "BOXING",
-  KICKBOXING: "KICKBOXING",
-  "KICK BOXING": "KICKBOXING",
-  MMA: "MMA",
-};
-
-function normalizeModalityCode(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const key = value.trim().toUpperCase();
-  return MODALITY_ALIASES[key] ?? null;
-}
+import { normalizeModalityCode } from "@/lib/modality-normalize";
 
 /**
  * Check-in (QR / link). `occurrenceDate` opcional: obrigatório para aulas recorrentes (`Lesson.date` null).

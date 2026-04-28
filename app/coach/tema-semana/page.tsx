@@ -4,10 +4,12 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { getWeekStartMonday, getWeekStartMondayForDate } from "@/lib/lesson-utils";
+import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
+import { getModalitiesForWeekThemeEditor } from "@/lib/coach-week-theme-modalities";
+import { getWeekStartMondayForDateInLisbon, getWeekStartMondayLisbon } from "@/lib/lisbon-week";
 import { TemaSemanaForm } from "./TemaSemanaForm";
 
-const MODALITIES = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
+const YMD = /^\d{4}-\d{2}-\d{2}$/;
 
 function formatWeekLabel(weekStart: string, locale: string): string {
   try {
@@ -26,7 +28,8 @@ function addWeeks(weekStart: string, delta: number): string {
   const [y, m, d] = weekStart.split("-").map(Number);
   const d2 = new Date(y, m - 1, d);
   d2.setDate(d2.getDate() + delta * 7);
-  return getWeekStartMondayForDate(d2);
+  const ymd = `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, "0")}-${String(d2.getDate()).padStart(2, "0")}`;
+  return getWeekStartMondayForDateInLisbon(ymd);
 }
 
 type Props = { searchParams: Promise<{ week?: string }> };
@@ -36,16 +39,17 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
   if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) redirect("/dashboard");
 
   const params = await searchParams;
-  const currentWeek = getWeekStartMonday();
+  const currentWeek = getWeekStartMondayLisbon();
   let weekStart = currentWeek;
-  if (params.week) {
-    const parsed = getWeekStartMondayForDate(new Date(params.week));
-    if (parsed) weekStart = parsed;
+  const w = params.week?.trim() ?? "";
+  if (w && YMD.test(w)) {
+    weekStart = getWeekStartMondayForDateInLisbon(w);
   }
 
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
+  const modalitiesForEditor = await getModalitiesForWeekThemeEditor(supabase, dbUser.role, await getCurrentCoachId());
 
   const { data: themes } = await supabase
     .from("WeekTheme")
@@ -147,11 +151,30 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
         </Link>
       )}
 
-      <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-        {t("weekThemeHint")}
-      </p>
+      {modalitiesForEditor.length > 0 ? (
+        <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+          {t("weekThemeHint")}
+        </p>
+      ) : null}
 
-      {MODALITIES.map((modality) => {
+      {modalitiesForEditor.length === 0 ? (
+        <p
+          style={{
+            margin: 0,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            color: "var(--text-secondary)",
+            lineHeight: 1.5,
+            padding: "clamp(12px, 3vw, 16px)",
+            background: "var(--surface)",
+            borderRadius: "var(--radius-md)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {t("weekThemeNoCoachLessons")}
+        </p>
+      ) : null}
+
+      {modalitiesForEditor.map((modality) => {
         const theme = themeByModality.get(modality);
         return (
           <TemaSemanaForm

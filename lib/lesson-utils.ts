@@ -75,7 +75,7 @@ export function getWeekStartMondayForDate(d: Date): string {
   return `${y}-${String(m).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
 }
 
-/** Segunda-feira da semana atual em YYYY-MM-DD (para Tema da Semana). */
+/** Segunda-feira da semana atual em YYYY-MM-DD (timezone local do **runtime** do Node). Para Tema da Semana e chaves de negócio em Lisboa, preferir `getWeekStartMondayLisbon` em `@/lib/lisbon-week`. */
 export function getWeekStartMonday(): string {
   return getWeekStartMondayForDate(new Date());
 }
