@@ -624,6 +624,10 @@ export const messages = {
     themeSaveSuccessTitle: "Tema guardado",
     themeSaveSuccessBody: "O tema desta semana foi guardado com sucesso.",
     themeSaveSuccessOk: "Entendido",
+    themeVideoUrlLabel: "URL do vídeo (opcional)",
+    themeVideoUrlHint:
+      "Se não escolheres um curso acima, podes colar aqui um link direto para o vídeo.",
+    themeVideoUrlPlaceholder: "https://…",
     coachStats: "Estatísticas",
     coachTotalStudents: "Alunos na escola",
     coachLessonsThisWeek: "Aulas esta semana",
@@ -1352,6 +1356,9 @@ export const messages = {
     themeSaveSuccessTitle: "Theme saved",
     themeSaveSuccessBody: "This week's theme was saved successfully.",
     themeSaveSuccessOk: "OK",
+    themeVideoUrlLabel: "Video URL (optional)",
+    themeVideoUrlHint: "If you do not pick a course above, paste a direct link to the video here.",
+    themeVideoUrlPlaceholder: "https://…",
 
     coachStats: "Statistics",
     coachTotalStudents: "Students at school",

@@ -180,19 +180,17 @@ export function TemaSemanaForm({ weekStart, modality, initialTitle, initialCours
         </select>
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>URL do vídeo (opcional)</span>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("themeVideoUrlLabel")}</span>
         <input
           type="url"
           name="video_url"
           defaultValue={initialVideoUrl}
           className="input"
-          placeholder="https://..."
+          placeholder={t("themeVideoUrlPlaceholder")}
           autoComplete="off"
           style={{ minHeight: 44 }}
         />
-        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-          Se não escolher um curso acima, pode colar aqui um link direto para o vídeo.
-        </span>
+        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t("themeVideoUrlHint")}</span>
       </label>
       {state?.error && <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>{state.error}</p>}
       <ThemeSaveSubmitButton label={t("saveTheme")} savingLabel={t("themeSaveSaving")} />
