@@ -9,15 +9,11 @@ import { getApplicableMissionTemplates } from "@/lib/missions";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
 import { evaluationHasFeedbackContent } from "@/lib/athlete-evaluation-content";
+import { getWarriorBeltBarFromAthleteState } from "@/lib/athlete-warrior-stats";
 import type { ReactNode } from "react";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
 import { ExploreSection } from "./ExploreSection";
-
-const BELT_LEVELS = [
-  "WHITE", "YELLOW", "ORANGE", "GREEN", "BLUE", "PURPLE",
-  "BROWN", "BLACK", "BLACK_1", "BLACK_2", "BLACK_3", "GOLDEN",
-];
 
 type Props = {
   studentId: string | null;
@@ -66,7 +62,8 @@ export async function DashboardBelowFold({
     studentId
       ? supabase
           .from("Athlete")
-          .select("id, currentBelt, currentXP, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
+          /** Sem currentBelt/currentXP na BD (só xp + displayBeltIndex); colunas inexistentes falham a query. */
+          .select("id, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
           .eq("studentId", studentId)
           /** Não usar maybeSingle: com 2+ linhas (dados legados) o PostgREST devolve erro e data=null. */
           .order("createdAt", { ascending: true })
@@ -83,8 +80,6 @@ export async function DashboardBelowFold({
 
   type AthleteRow = {
     id: string;
-    currentBelt: string | null;
-    currentXP: number | null;
     xp: number | null;
     displayBeltIndex: number | null;
     lastBeltPromotionAt: string | null;
@@ -156,19 +151,14 @@ export async function DashboardBelowFold({
   }
 
   if (athlete) {
-    const currentIndex = BELT_LEVELS.indexOf(athlete.currentBelt || "WHITE");
-    const baseXP = 1000;
-    const nextLevelXP = currentIndex >= 0 ? baseXP * Math.pow(2, currentIndex) : baseXP;
-    athleteStats = {
-      currentBelt: athlete.currentBelt,
-      currentXP: athlete.currentXP || 0,
-      nextLevelXP,
-    };
-
     const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
-    const xpForMissions =
-      synced?.xp ??
-      ((athlete as { xp?: number; currentXP?: number }).xp ?? (athlete as { currentXP?: number }).currentXP ?? 0);
+    const xpTotal = synced?.xp ?? (athlete.xp ?? 0);
+    const dIdx = synced?.displayBeltIndex ?? (athlete.displayBeltIndex ?? 0);
+    const lastP = synced?.lastBeltPromotionAt ?? athlete.lastBeltPromotionAt;
+    const created = synced?.createdAt ?? athlete.createdAt;
+    athleteStats = getWarriorBeltBarFromAthleteState(xpTotal, dIdx, lastP, created);
+
+    const xpForMissions = xpTotal;
 
     const [missions, latestCommentRes, latestEvalRes] = await Promise.all([
       getApplicableMissionTemplates(

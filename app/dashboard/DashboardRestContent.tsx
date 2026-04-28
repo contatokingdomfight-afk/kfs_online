@@ -10,6 +10,7 @@ import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evalu
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
+import { getWarriorBeltBarFromAthleteState } from "@/lib/athlete-warrior-stats";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
@@ -53,7 +54,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
     getAttendanceByModality(supabase, studentId),
     supabase
       .from("Athlete")
-      .select("id, currentBelt, currentXP, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
+      .select("id, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
       .eq("studentId", studentId)
       .order("createdAt", { ascending: true })
       .limit(1),
@@ -109,8 +110,6 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
   const athleteRows = athleteRes.data as
     | {
         id: string;
-        currentBelt: string | null;
-        currentXP: number | null;
         xp: number | null;
         displayBeltIndex: number | null;
         lastBeltPromotionAt: string | null;
@@ -220,10 +219,12 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
   let athleteStats: { currentBelt: string | null; currentXP: number; nextLevelXP: number; totalPresences: number } | null = null;
   let activeMissions: Array<{ id: string; name: string; description: string | null; xpReward: number }> = [];
   if (athlete) {
-    const beltLevels = ["WHITE", "YELLOW", "ORANGE", "GREEN", "BLUE", "PURPLE", "BROWN", "BLACK", "BLACK_1", "BLACK_2", "BLACK_3", "GOLDEN"];
-    const currentIndex = beltLevels.indexOf(athlete.currentBelt || "WHITE");
-    const baseXP = 1000;
-    const nextLevelXP = currentIndex >= 0 ? baseXP * Math.pow(2, currentIndex) : baseXP;
+    const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
+    const xpTotal = synced?.xp ?? (athlete.xp ?? 0);
+    const dIdx = synced?.displayBeltIndex ?? (athlete.displayBeltIndex ?? 0);
+    const lastP = synced?.lastBeltPromotionAt ?? athlete.lastBeltPromotionAt;
+    const created = synced?.createdAt ?? athlete.createdAt;
+    const bar = getWarriorBeltBarFromAthleteState(xpTotal, dIdx, lastP, created);
     const { count: totalPresences } = await supabase
       .from("Attendance")
       .select("*", { count: "exact", head: true })
@@ -231,15 +232,12 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
       .eq("status", "CONFIRMED")
       .eq("countsForGamification", true);
     athleteStats = {
-      currentBelt: athlete.currentBelt,
-      currentXP: athlete.currentXP || 0,
-      nextLevelXP,
+      currentBelt: bar.currentBelt,
+      currentXP: bar.currentXP,
+      nextLevelXP: bar.nextLevelXP,
       totalPresences: totalPresences || 0,
     };
-    const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
-    const xpForMissions =
-      synced?.xp ??
-      ((athlete as { xp?: number; currentXP?: number }).xp ?? (athlete as { currentXP?: number }).currentXP ?? 0);
+    const xpForMissions = xpTotal;
     const missions = await getApplicableMissionTemplates(
       supabase,
       athlete.id,

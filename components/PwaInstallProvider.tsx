@@ -54,6 +54,10 @@ export function PwaInstallProvider({ locale, children }: { locale: Locale; child
   }, []);
 
   useEffect(() => {
+    /**
+     * Capturar o evento suprime o mini-infobar nativo; o install real faz-se com `prompt()` no menu
+     * (ex.: `SidebarPwaInstall`). O Chrome DevTools pode mostrar aviso informativo — é esperado.
+     */
     const onBip = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as InstallPromptEvent);
