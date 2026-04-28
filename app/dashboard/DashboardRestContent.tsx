@@ -55,7 +55,8 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
       .from("Athlete")
       .select("id, currentBelt, currentXP, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
       .eq("studentId", studentId)
-      .single(),
+      .order("createdAt", { ascending: true })
+      .limit(1),
     getEarnedBadges(supabase, studentId),
     getNextBadgeProgress(supabase, studentId),
     supabase.from("StudentProfile").select("weightKg, heightCm, dateOfBirth, medicalNotes, emergencyContact, updatedAt").eq("studentId", studentId).maybeSingle(),
@@ -105,7 +106,18 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
 
   const pastAttData = pastAttRes.data ?? [];
   const pastLessonIds = pastAttData.length > 0 ? [...new Set(pastAttData.map((a) => a.lessonId))] : [];
-  const athlete = athleteRes.data;
+  const athleteRows = athleteRes.data as
+    | {
+        id: string;
+        currentBelt: string | null;
+        currentXP: number | null;
+        xp: number | null;
+        displayBeltIndex: number | null;
+        lastBeltPromotionAt: string | null;
+        createdAt: string;
+      }[]
+    | null;
+  const athlete = athleteRows?.[0] ?? null;
   const [evalsRes, pastLessonsRes] = await Promise.all([
     athlete ? supabase.from("AthleteEvaluation").select("gas, technique, strength, theory, scores, modality").eq("athleteId", athlete.id).order("created_at", { ascending: false }).limit(GENERAL_LAST_N) : Promise.resolve({ data: [] }),
     pastLessonIds.length > 0 ? supabase.from("Lesson").select("id, modality, date, startTime, endTime, locationId").in("id", pastLessonIds).lt("date", todayStr).order("date", { ascending: false }).limit(30) : Promise.resolve({ data: [] }),

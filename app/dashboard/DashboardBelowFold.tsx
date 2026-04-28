@@ -68,8 +68,10 @@ export async function DashboardBelowFold({
           .from("Athlete")
           .select("id, currentBelt, currentXP, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
           .eq("studentId", studentId)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
+          /** Não usar maybeSingle: com 2+ linhas (dados legados) o PostgREST devolve erro e data=null. */
+          .order("createdAt", { ascending: true })
+          .limit(1)
+      : Promise.resolve({ data: [] }),
     supabase
       .from("WeekTheme")
       .select("modality, title, course_id, video_url")
@@ -78,6 +80,18 @@ export async function DashboardBelowFold({
     supabase.from("MissionTemplate").select("id", { count: "exact", head: true }).eq("isActive", true),
   ]);
   const activeMissionTemplateCount = activeMissionTemplateCountRes.count ?? 0;
+
+  type AthleteRow = {
+    id: string;
+    currentBelt: string | null;
+    currentXP: number | null;
+    xp: number | null;
+    displayBeltIndex: number | null;
+    lastBeltPromotionAt: string | null;
+    createdAt: string;
+  };
+  const athleteList = athleteRes.data as AthleteRow[] | null;
+  const athlete: AthleteRow | null = athleteList?.[0] ?? null;
 
   if (goalRes.data) attendanceGoal = goalRes.data.target_value ?? 10;
 
@@ -124,7 +138,6 @@ export async function DashboardBelowFold({
     course_id: string | null;
     video_url: string | null;
   } | null = pickWeekThemeForStudent();
-  const athlete = athleteRes.data;
 
   if (studentId) {
     const attBase = () =>
