@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { getAdminBackofficeSidebarLinks } from "@/lib/admin-sidebar-links";
 import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 
@@ -16,37 +17,7 @@ export default async function AdminLayout({
 
   const [theme, locale] = await Promise.all([getThemeFromCookies(), getLocaleFromCookies()]);
   const t = getTranslations(locale as "pt" | "en");
-  const adminLinks = [
-    { label: t("navHome"), href: "/admin" },
-    {
-      label: "Avaliação e pontuação",
-      href: "/como-sou-avaliado",
-      children: [
-        { label: "Como sou avaliado", href: "/como-sou-avaliado" },
-        { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
-      ],
-    },
-    { label: t("navSchools"), href: "/admin/escolas" },
-    { label: t("navStudents"), href: "/admin/alunos" },
-    { label: t("navAthletes"), href: "/admin/atletas" },
-    { label: t("navClasses"), href: "/admin/turmas" },
-    { label: t("navModalities"), href: "/admin/modalidades" },
-    { label: t("navLocations"), href: "/admin/locais" },
-    { label: t("navPlans"), href: "/admin/planos" },
-    { label: t("navCourses"), href: "/admin/cursos" },
-    { label: t("navEventsAdmin"), href: "/admin/eventos" },
-    { label: t("navSettings"), href: "/admin/configuracoes" },
-    {
-      label: t("navEvaluationCriteria"),
-      href: "/admin/avaliacao",
-      children: [{ label: t("navGeneralDimensions"), href: "/admin/componentes-gerais" }],
-    },
-    { label: t("navMissions"), href: "/admin/missoes" },
-    { label: t("navFinance"), href: "/admin/financeiro" },
-    { label: t("navTrials"), href: "/admin/experimentais" },
-    { label: t("navCoaches"), href: "/admin/coaches" },
-    { label: t("navLeads"), href: "/admin/leads" },
-  ];
+  const adminLinks = getAdminBackofficeSidebarLinks(t);
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--bg)", color: "var(--text-primary)" }}>

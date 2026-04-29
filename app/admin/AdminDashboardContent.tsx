@@ -63,6 +63,7 @@ export async function AdminDashboardContent({ client, schoolId }: Props) {
         { href: "/admin/configuracoes", icon: "⚙️", label: t("navSettings") },
         { href: "/admin/missoes", icon: "🎯", label: t("navMissions") },
         { href: "/admin/avaliacao", icon: "📊", label: t("navEvaluationCriteria") },
+        { href: "/admin/permissoes", icon: "🔐", label: t("navPermissions") },
       ],
     },
   ];

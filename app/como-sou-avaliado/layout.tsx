@@ -55,6 +55,7 @@ export default async function ComoSouAvaliadoLayout({
       { label: t("navTrials"), href: "/admin/experimentais" },
       { label: t("navCoaches"), href: "/admin/coaches" },
       { label: t("navLeads"), href: "/admin/leads" },
+      { label: t("navPermissions"), href: "/admin/permissoes" },
     ];
   } else if (dbUser.role === "COACH") {
     sidebarTitle = t("coachTitle");

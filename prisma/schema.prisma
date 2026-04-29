@@ -91,10 +91,38 @@ model User {
   email      String
   name       String?
   role       Role
+  /// Se "true" e `role` = ADMIN, aplica `UserAdminPermission`; se "false", trata-se como acesso total ao backoffice (legado / super).
+  adminUseGranularPermissions Boolean @default(false)
   createdAt  DateTime @default(now())
 
-  student Student?
-  coach   Coach?
+  student              Student?
+  coach                Coach?
+  userAdminPermissions UserAdminPermission[]
+}
+
+/// Conjunto canónico v1 (código estável) — ver `lib/permissions/constants.ts` e ecrã `/admin/permissoes`.
+model AdminPermission {
+  code      String   @id
+  module    String
+  labelPt   String
+  labelEn   String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  userGrants UserAdminPermission[]
+
+  @@map("AdminPermission")
+}
+
+model UserAdminPermission {
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionCode String
+  permission     AdminPermission @relation(fields: [permissionCode], references: [code], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([userId, permissionCode])
+  @@index([userId])
+  @@map("UserAdminPermission")
 }
 
 model Student {
