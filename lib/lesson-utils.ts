@@ -1,3 +1,7 @@
+import { formatInTimeZone, toDate } from "date-fns-tz";
+import { ymdAddDays } from "./lesson-occurrences";
+import { LISBON_TZ } from "./lisbon-payment-dates";
+
 /** Valor especial: todas as modalidades (ex.: plano Presencial MMA). */
 export const PRIMARY_MODALITY_ALL = "ALL";
 
@@ -61,6 +65,27 @@ export function getThisWeekRange(): { today: string; endOfWeek: string } {
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
   return { today: toYYYYMMDD(today), endOfWeek: toYYYYMMDD(endOfWeek) };
+}
+
+/**
+ * Hoje (YYYY-MM-DD) e fim do bloco semanal alinhado a `isLessonEligibleForNextCard` / `calendarDateLisbon`
+ * (Europe/Lisbon). **Usar no dashboard do aluno** em vez de `getThisWeekRange` — no Vercel o “hoje” do servidor
+ * (UTC) desvia do calendário de Portugal e esvazia a lista de aulas fechadas correctas, deixando só aulas abertas (fallback do carrossel).
+ */
+export function getThisWeekRangeLisbon(now: Date = new Date()): { today: string; endOfWeek: string } {
+  const today = formatInTimeZone(now, LISBON_TZ, "yyyy-MM-dd");
+  const inst = toDate(`${today}T12:00:00`, { timeZone: LISBON_TZ });
+  const shortW = new Intl.DateTimeFormat("en-US", { timeZone: LISBON_TZ, weekday: "short" })
+    .format(inst)
+    .replace(/\.$/, "")
+    .trim();
+  const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(shortW);
+  if (dayOfWeek < 0) {
+    return getThisWeekRange();
+  }
+  const daysUntilSunday = dayOfWeek === 0 ? 0 : 6 - dayOfWeek;
+  const endOfWeek = ymdAddDays(today, daysUntilSunday);
+  return { today, endOfWeek };
 }
 
 /** Segunda-feira da semana de uma data em YYYY-MM-DD. */

@@ -4,9 +4,12 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { getThisWeekRange } from "@/lib/lesson-utils";
-import { getLessonCheckInUiState, isLessonEligibleForNextCard } from "@/lib/lesson-check-in-window";
-import { getCachedLocations } from "@/lib/cached-reference-data";
+import { getThisWeekRangeLisbon } from "@/lib/lesson-utils";
+import {
+  calendarDateLisbon,
+  getLessonCheckInUiState,
+  isLessonEligibleForNextCard,
+} from "@/lib/lesson-check-in-window";
 import { getCachedPlanAccess } from "@/lib/plan-access";
 import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
 import { LessonPromoBlock } from "./LessonPromoBlock";
@@ -63,8 +66,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const planAccess = await getCachedPlanAccess(studentId);
   const { hasCheckIn, allowedModalities } = planAccess;
 
-  const { today, endOfWeek } = getThisWeekRange();
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const { today, endOfWeek } = getThisWeekRangeLisbon();
+  const todayStr = calendarDateLisbon(new Date());
 
   let studentSchoolId: string | null = null;
   let studentPrimaryModality: string | null = null;

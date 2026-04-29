@@ -25,7 +25,10 @@ export function filterDashboardLessonsByPlanModality<
   if (!only) return lessons;
   return lessons.filter((l) => {
     if (Boolean(l.isOpenClass)) return true;
-    return normalizeModalityCode(l.modality) === only;
+    const n =
+      normalizeModalityCode(l.modality) ??
+      (l.modality ? String(l.modality).trim().toUpperCase() : null);
+    return n === only;
   });
 }
 
