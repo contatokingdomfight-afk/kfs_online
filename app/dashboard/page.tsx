@@ -10,8 +10,7 @@ import {
   getLessonCheckInUiState,
   isLessonEligibleForNextCard,
 } from "@/lib/lesson-check-in-window";
-import { getCachedPlanAccess } from "@/lib/plan-access";
-import { getCachedLocations } from "@/lib/cached-reference-data";
+import { getCachedPlanAccess, getCachedLocations } from "@/lib/plan-access";
 import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
 import { LessonPromoBlock } from "./LessonPromoBlock";
 import { NextLessonCard } from "./NextLessonCard";

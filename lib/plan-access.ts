@@ -109,3 +109,6 @@ export const getCachedPlanAccess = cache(async (studentId: string | null) => {
   const supabase = await createClient();
   return getPlanAccess(supabase, studentId);
 });
+
+/** Re-export: páginas que importam `getCachedPlanAccess` usam a mesma linha e evitam omitir `getCachedLocations` no build. */
+export { getCachedLocations } from "./cached-reference-data";
