@@ -8,7 +8,11 @@ import { getTranslations } from "@/lib/i18n";
 import { ViewAsBanner } from "@/components/ViewAsBanner";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import { CoachNotificationBell } from "@/components/CoachNotificationBell";
-import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
+import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
+import { canAccessAdminPathname } from "@/lib/permissions/paths";
+import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
+import { getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
 
 export default async function CoachLayout({
   children,
@@ -24,45 +28,26 @@ export default async function CoachLayout({
     if (!coachId) redirect("/dashboard?message=coach-access-revoked");
   }
 
-  const result = getAdminClientOrNull();
-  const supabase = result.client;
-
-  const [viewAs, theme, locale, coachStudentId] = await Promise.all([
+  const [viewAs, theme, locale, coachStudentId, access, kfsPath] = await Promise.all([
     dbUser.role === "ADMIN" ? getViewAsFromCookies() : Promise.resolve(null),
     getThemeFromCookies(),
     getLocaleFromCookies(),
     getCoachStudentId(),
+    getCachedResolvedAdminAccess(),
+    getKfsPathnameFromRequest(),
   ]);
 
+  if (access.kind === "granted" && kfsPath && !canAccessAdminPathname(access, kfsPath)) {
+    redirect("/coach");
+  }
+
   const t = getTranslations(locale as "pt" | "en");
-  const coachLinks = [
-    ...(dbUser.role === "ADMIN"
-      ? [{ label: "Admin", href: "/admin" as string }]
-      : []),
-    { label: t("navHome"), href: "/coach" },
-    { label: t("navNotificationsCenter"), href: "/coach/notificacoes" },
-    { label: t("navManageClasses"), href: "/coach/aula" },
-    { label: t("navWeekTheme"), href: "/coach/tema-semana" },
-    { label: t("navAgenda"), href: "/coach/agenda" },
-    { label: t("navStudents"), href: "/coach/alunos" },
-    { label: t("navAthletesCoach"), href: "/coach/atletas" },
-    { label: t("navTrials"), href: "/coach/experimentais" },
-    {
-      label: "Avaliação e pontuação",
-      href: "/como-sou-avaliado",
-      children: [
-        { label: "Como sou avaliado", href: "/como-sou-avaliado" },
-        { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
-      ],
-    },
-    { label: "Meus Cursos", href: "/coach/cursos" as string },
-    { label: t("libraryTitle"), href: "/coach/biblioteca" as string },
-    { label: "Financeiro", href: "/coach/financeiro" as string },
-    { label: t("navSettings"), href: "/coach/configuracoes" as string },
-    ...(coachStudentId
-      ? [{ label: t("myStudentArea"), href: "/dashboard" as string }]
-      : []),
-  ];
+  const fullCoachNav = getCoachShellSidebarLinks(t, {
+    showAdminEntry: dbUser.role === "ADMIN",
+    coachStudentId: coachStudentId || null,
+  });
+  const coachLinks =
+    access.kind === "granted" ? filterAdminLinksForAccess(fullCoachNav, access) : fullCoachNav;
   const showViewAsBanner = dbUser.role === "ADMIN";
 
   return (

@@ -37,6 +37,10 @@ export default async function AdminPermissoesUserPage(props: PageProps) {
     adminUseGranularPermissions: boolean | null;
   };
 
+  if (u.role !== "ADMIN" && u.role !== "COACH") {
+    notFound();
+  }
+
   const { count: adminN, error: cErr } = await admin.client
     .from("User")
     .select("id", { count: "exact", head: true })
@@ -52,7 +56,7 @@ export default async function AdminPermissoesUserPage(props: PageProps) {
   }
 
   const { data: grants } =
-    u.role === "ADMIN"
+    u.role === "ADMIN" || u.role === "COACH"
       ? await admin.client.from("UserAdminPermission").select("permissionCode").eq("userId", userId)
       : { data: null };
 
@@ -81,14 +85,14 @@ export default async function AdminPermissoesUserPage(props: PageProps) {
           color: "var(--text-primary)",
         }}
       >
-        {t("permissionsDetailTitle")}
+        {u.role === "COACH" ? t("permissionsDetailTitleCoach") : t("permissionsDetailTitle")}
       </h1>
       <p style={{ margin: "0 0 20px 0", color: "var(--text-secondary)", fontSize: 15 }}>
         {u.name || u.email}
         {u.name ? ` — ${u.email}` : null}
       </p>
 
-      {catalog.length === 0 && u.role === "ADMIN" && (
+      {catalog.length === 0 && (u.role === "ADMIN" || u.role === "COACH") && (
         <p style={{ color: "var(--error)", marginBottom: 16 }} role="alert">
           {locale === "pt"
             ? "Migração de permissões não encontrada (tabela AdminPermission vazia ou inexistente)."
@@ -101,7 +105,8 @@ export default async function AdminPermissoesUserPage(props: PageProps) {
         initialGranular={!!u.adminUseGranularPermissions}
         initialCodes={initialCodes}
         catalog={catalog}
-        readonlyCoach={u.role === "COACH" || u.role === "ALUNO"}
+        readonlyAluno={false}
+        targetRole={u.role as "ADMIN" | "COACH"}
         soleAdmin={soleAdmin && u.role === "ADMIN"}
         locale={locale}
       />

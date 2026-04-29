@@ -9,10 +9,10 @@ export type ResolvedAdminAccess =
   | { kind: "granted"; codes: Set<AdminPermissionCode> };
 
 /**
- * Resolve o conjunto efectivo de permissões para um `User.id` (role ADMIN).
- * - Não-ADMIN: `none`
- * - ADMIN sem granular: `all` (compatível com admins existentes)
- * - ADMIN com granular: `granted` (apenas códigos na tabela `UserAdminPermission`)
+ * Resolve o conjunto efectivo de permissões para `User.id` (ADMIN ou COACH, staff).
+ * - Não-ADMIN/COACH: `none`
+ * - Staff sem granular: `all` (comportamento por defeito; admins e coaches existentes)
+ * - Com granular: `granted` (códigos em `UserAdminPermission`)
  */
 export async function resolveAdminPermissionsForUserId(
   supabase: SupabaseClient,
@@ -24,7 +24,7 @@ export async function resolveAdminPermissionsForUserId(
     .eq("id", userId)
     .maybeSingle();
   if (error || !row) return { kind: "none" };
-  if (row.role !== "ADMIN") return { kind: "none" };
+  if (row.role !== "ADMIN" && row.role !== "COACH") return { kind: "none" };
   if (!row.adminUseGranularPermissions) {
     return { kind: "all" };
   }

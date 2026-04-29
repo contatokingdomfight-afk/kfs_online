@@ -28,6 +28,20 @@ const ORDERED_PATH_RULES: readonly Rule[] = [
   { prefix: "/admin/planos", read: "admin:planos:read", write: "admin:planos:write" },
   { prefix: "/admin/cursos", read: "admin:cursos:read", write: "admin:cursos:write" },
   { prefix: "/admin/coaches", read: "admin:coaches:read", write: "admin:coaches:write" },
+  /* Coach: cobre /coach/aula/qr, /coach/cursos/..., /coach/biblioteca/..., /coach/alunos/.../..., etc. */
+  { prefix: "/coach/configuracoes", read: "admin:sistema:read", write: "admin:sistema:write" },
+  { prefix: "/coach/cursos", read: "admin:cursos:read", write: "admin:cursos:write" },
+  { prefix: "/coach/biblioteca", read: "admin:cursos:read", write: "admin:cursos:write" },
+  { prefix: "/coach/financeiro", read: "admin:financeiro:read", write: "admin:financeiro:write" },
+  { prefix: "/coach/experimentais", read: "admin:comercial:read", write: "admin:comercial:write" },
+  { prefix: "/coach/tema-semana", read: "admin:sistema:read", write: "admin:sistema:write" },
+  { prefix: "/coach/aula", read: "admin:turmas:read", write: "admin:turmas:write" },
+  { prefix: "/coach/agenda", read: "admin:turmas:read", write: "admin:turmas:write" },
+  { prefix: "/coach/presenca", read: "admin:turmas:read", write: "admin:turmas:write" },
+  { prefix: "/coach/round-timer", read: "admin:turmas:read", write: "admin:turmas:write" },
+  { prefix: "/coach/alunos", read: "admin:alunos:read", write: "admin:alunos:write" },
+  { prefix: "/coach/atletas", read: "admin:alunos:read", write: "admin:alunos:write" },
+  { prefix: "/coach/notificacoes", read: "admin:sistema:read", write: "admin:sistema:write" },
   { prefix: "/como-sou-avaliado", read: "admin:sistema:read", write: "admin:sistema:write" },
   { prefix: "/sistema-pontuacao", read: "admin:sistema:read", write: "admin:sistema:write" },
 ];
@@ -45,6 +59,10 @@ function ruleForPathname(pathname: string): Rule | null {
   return null;
 }
 
+/**
+ * Acesso a rotas de backoffice (admin) e de coach; a mesma matriz v1 de códigos.
+ * `/dashboard` (ver como aluno) é sempre permitido para o fluxo do menu do coach.
+ */
 export function canAccessAdminPathname(
   access: ResolvedAdminAccess,
   pathname: string
@@ -53,13 +71,18 @@ export function canAccessAdminPathname(
   if (access.kind === "all") return true;
 
   const p = normalize(pathname);
+  if (p === "/dashboard" || p.startsWith("/dashboard/")) return true;
+
   if (p === "/admin" || p === "/admin/") {
+    return access.codes.size > 0;
+  }
+  if (p === "/coach" || p === "/coach/") {
     return access.codes.size > 0;
   }
 
   const rule = ruleForPathname(p);
   if (!rule) {
-    if (p.startsWith("/admin")) {
+    if (p.startsWith("/admin") || p.startsWith("/coach")) {
       return false;
     }
     return false;

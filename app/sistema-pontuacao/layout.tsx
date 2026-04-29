@@ -11,6 +11,7 @@ import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resol
 import { canAccessAdminPathname } from "@/lib/permissions/paths";
 import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
 import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
+import { getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
 
 export default async function SistemaPontuacaoLayout({
   children,
@@ -47,28 +48,18 @@ export default async function SistemaPontuacaoLayout({
     const full = getAdminBackofficeSidebarLinks(t);
     sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
   } else if (dbUser.role === "COACH") {
+    const access = await getCachedResolvedAdminAccess();
+    const kfsPath = await getKfsPathnameFromRequest();
+    if (access.kind === "granted" && kfsPath && !canAccessAdminPathname(access, kfsPath)) {
+      redirect("/coach");
+    }
     sidebarTitle = t("coachTitle");
     headerExtra = <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>;
-    sidebarLinks = [
-      { label: t("navHome"), href: "/coach" },
-      {
-        label: "Avaliação e pontuação",
-        href: "/como-sou-avaliado",
-        children: [
-          { label: "Como sou avaliado", href: "/como-sou-avaliado" },
-          { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
-        ],
-      },
-      { label: t("navEnterClass"), href: "/coach/aula" },
-      { label: t("navWeekTheme"), href: "/coach/tema-semana" },
-      { label: t("navStudents"), href: "/coach/alunos" },
-      { label: t("navAthletesCoach"), href: "/coach/atletas" },
-      { label: "Meus Cursos", href: "/coach/cursos" as string },
-      { label: t("libraryTitle"), href: "/coach/biblioteca" as string },
-      { label: "Financeiro", href: "/coach/financeiro" as string },
-      { label: t("navSettings"), href: "/coach/configuracoes" as string },
-      ...(coachStudentId ? [{ label: t("myStudentArea"), href: "/dashboard" as string }] : []),
-    ];
+    const full = getCoachShellSidebarLinks(t, {
+      showAdminEntry: false,
+      coachStudentId: coachStudentId || null,
+    });
+    sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
   } else {
     sidebarTitle = t("studentArea");
     sidebarLinks = [

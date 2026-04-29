@@ -127,7 +127,8 @@ export function AdminUserPermissionsForm({
   initialGranular,
   initialCodes,
   catalog,
-  readonlyCoach,
+  readonlyAluno,
+  targetRole,
   soleAdmin,
   locale,
 }: {
@@ -135,7 +136,8 @@ export function AdminUserPermissionsForm({
   initialGranular: boolean;
   initialCodes: string[];
   catalog: AdminPermissionRow[];
-  readonlyCoach: boolean;
+  readonlyAluno: boolean;
+  targetRole: "ADMIN" | "COACH";
   soleAdmin: boolean;
   locale: "pt" | "en";
 }) {
@@ -178,9 +180,9 @@ export function AdminUserPermissionsForm({
     };
   }, [showSuccessModal]);
 
-  if (readonlyCoach) {
+  if (readonlyAluno) {
     return (
-      <p style={{ color: "var(--text-secondary)", lineHeight: 1.5, maxWidth: 520 }}>{t("permissionsCoachBlock")}</p>
+      <p style={{ color: "var(--text-secondary)", lineHeight: 1.5, maxWidth: 520 }}>{t("permissionsAlunoBlock")}</p>
     );
   }
 
@@ -218,8 +220,12 @@ export function AdminUserPermissionsForm({
             }}
           />
           <span>
-            <span style={{ fontWeight: 600, display: "block" }}>{t("permissionsGranularLabel")}</span>
-            <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>{t("permissionsGranularHint")}</span>
+            <span style={{ fontWeight: 600, display: "block" }}>
+              {t(targetRole === "COACH" ? "permissionsGranularLabelCoach" : "permissionsGranularLabel")}
+            </span>
+            <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+              {t(targetRole === "COACH" ? "permissionsGranularHintCoach" : "permissionsGranularHint")}
+            </span>
             {soleAdmin && (
               <span style={{ display: "block", marginTop: 8, fontSize: 13, color: "var(--text-secondary)" }}>
                 {locale === "pt"

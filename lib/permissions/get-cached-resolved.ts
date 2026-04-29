@@ -6,11 +6,11 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { resolveAdminPermissionsForUserId, type ResolvedAdminAccess } from "@/lib/permissions/resolve";
 
 /**
- * Cache por pedido: permissões efectivas do admin no servidor (service role se disponível).
+ * Cache por pedido: permissões efectivas de staff (ADMIN/COACH) no servidor.
  */
 export const getCachedResolvedAdminAccess = cache(async function getCachedResolvedAdminAccess(): Promise<ResolvedAdminAccess> {
   const u = await getCurrentDbUser();
-  if (!u || u.role !== "ADMIN") return { kind: "none" };
+  if (!u || (u.role !== "ADMIN" && u.role !== "COACH")) return { kind: "none" };
   const admin = getAdminClientOrNull();
   if (!admin.client) return { kind: "all" };
   return resolveAdminPermissionsForUserId(admin.client, u.id);

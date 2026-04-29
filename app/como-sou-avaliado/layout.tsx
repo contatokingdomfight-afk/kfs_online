@@ -11,6 +11,7 @@ import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resol
 import { canAccessAdminPathname } from "@/lib/permissions/paths";
 import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
 import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
+import { getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
 
 export default async function ComoSouAvaliadoLayout({
   children,
@@ -42,21 +43,18 @@ export default async function ComoSouAvaliadoLayout({
     const full = getAdminBackofficeSidebarLinks(t);
     sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
   } else if (dbUser.role === "COACH") {
+    const access = await getCachedResolvedAdminAccess();
+    const kfsPath = await getKfsPathnameFromRequest();
+    if (access.kind === "granted" && kfsPath && !canAccessAdminPathname(access, kfsPath)) {
+      redirect("/coach");
+    }
     sidebarTitle = t("coachTitle");
     headerExtra = <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>;
-    sidebarLinks = [
-      { label: t("navHome"), href: "/coach" },
-      { label: "Como sou avaliado", href: "/como-sou-avaliado" },
-      { label: t("navEnterClass"), href: "/coach/aula" },
-      { label: t("navWeekTheme"), href: "/coach/tema-semana" },
-      { label: t("navStudents"), href: "/coach/alunos" },
-      { label: t("navAthletesCoach"), href: "/coach/atletas" },
-      { label: "Meus Cursos", href: "/coach/cursos" },
-      { label: t("libraryTitle"), href: "/coach/biblioteca" },
-      { label: "Financeiro", href: "/coach/financeiro" },
-      { label: t("navSettings"), href: "/coach/configuracoes" },
-      ...(coachStudentId ? [{ label: t("myStudentArea"), href: "/dashboard" }] : []),
-    ];
+    const full = getCoachShellSidebarLinks(t, {
+      showAdminEntry: false,
+      coachStudentId: coachStudentId || null,
+    });
+    sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
   } else {
     sidebarTitle = t("studentArea");
     sidebarLinks = [

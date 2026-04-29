@@ -135,7 +135,7 @@ export default async function AdminPermissoesListPage() {
                   <td style={{ padding: "12px 16px" }}>{row.name || "—"}</td>
                   <td style={{ padding: "12px 16px" }}>{roleLabel(row.role)}</td>
                   <td style={{ padding: "12px 16px" }}>
-                    {row.role === "COACH" ? "—" : row.adminUseGranularPermissions ? t("permissionsModeGranular") : t("permissionsModeFull")}
+                    {row.adminUseGranularPermissions ? t("permissionsModeGranular") : t("permissionsModeFull")}
                   </td>
                   <td style={{ padding: "12px 16px", textAlign: "right" }}>
                     <Link

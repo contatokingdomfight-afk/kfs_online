@@ -493,7 +493,7 @@ export const messages = {
 
     permissionsPageTitle: "Contas e permissões",
     permissionsPageIntro:
-      "Define, por administrador, se a conta usa acesso completo ao backoffice (por defeito) ou permissões detalhadas. Aplica-se apenas a utilizadores com função de administrador; coaches e alunos seguem o modelo actual.",
+      "Define, por conta de administrador ou de treinador (coach), se usa acesso completo (por defeito) ou permissões detalhadas. Alunos seguem o modelo actual (dashboard, etc.).",
     permissionsTableEmail: "Email",
     permissionsTableName: "Nome",
     permissionsTableRole: "Função",
@@ -502,11 +502,16 @@ export const messages = {
     permissionsModeGranular: "Permissões detalhadas",
     permissionsOpenDetail: "Editar",
     permissionsDetailTitle: "Permissões do administrador",
+    permissionsDetailTitleCoach: "Permissões do treinador (coach)",
     permissionsGranularLabel: "Usar permissões detalhadas (em vez de acesso completo)",
+    permissionsGranularLabelCoach:
+      "Usar permissões detalhadas (em vez de acesso completo à área de coach)",
     permissionsGranularHint:
-      "Enquanto esta opção estiver desligada, a conta alinha-se ao acesso de administrador completo. A ligar, só as permissões abaixo contam.",
-    permissionsCoachBlock:
-      "A gestão de permissões detalhadas aplica-se a contas com função de administrador. Coaches e alunos usam o modelo actual de aplicação (área de coach, dashboard, etc.).",
+      "Enquanto esta opção estiver desligada, a conta de administrador tem acesso completo ao backoffice. A ligar, aplicam-se apenas as permissões assinalhadas abaixo.",
+    permissionsGranularHintCoach:
+      "Enquanto desligada, a conta de treinador tem acesso completo à área de coach (menus, ecrãs e rotas de coach). A ligar, aplica-se a mesma grelha de permissões do admin, limitando o que esta conta consegue abrir ou fazer no coach (e ecrãs partilhados, como avaliação e pontuação).",
+    permissionsAlunoBlock:
+      "A gestão de permissões detalhadas aplica-se a contas de administrador ou de treinador. Contas de aluno usam o modelo actual de aplicação (dashboard, etc.).",
     permissionsSelectAtLeastOne: "Com permissões detalhadas activas, selecção vazia não é permitida.",
     permissionsGroupPrefix: "Módulo: ",
     permissionsSave: "Guardar",
@@ -1286,7 +1291,7 @@ export const messages = {
 
     permissionsPageTitle: "Accounts and permissions",
     permissionsPageIntro:
-      "For each admin account, choose between full backoffice access (default) or granular permissions. This applies only to users with the administrator role; coaches and students use the current app model.",
+      "For each administrator or coach account, choose between full access (default) or granular permissions. Students keep the current app experience.",
     permissionsTableEmail: "Email",
     permissionsTableName: "Name",
     permissionsTableRole: "Role",
@@ -1295,11 +1300,15 @@ export const messages = {
     permissionsModeGranular: "Granular permissions",
     permissionsOpenDetail: "Edit",
     permissionsDetailTitle: "Admin permissions",
+    permissionsDetailTitleCoach: "Coach account permissions",
     permissionsGranularLabel: "Use granular permissions (instead of full access)",
+    permissionsGranularLabelCoach: "Use granular permissions (instead of full access to the coach area)",
     permissionsGranularHint:
-      "While off, the account is treated as full backoffice access. When on, only the checkboxes below apply.",
-    permissionsCoachBlock:
-      "Granular admin permissions only apply to administrator accounts. Coaches and students keep the current app behaviour.",
+      "While off, this admin account has full backoffice access. When on, only the permissions you select below apply.",
+    permissionsGranularHintCoach:
+      "While off, this coach account has full access to the coach area (navigation and coach routes). When on, the same admin permission matrix applies, restricting what this account can open or do in the coach app (and shared pages such as evaluation and scoring).",
+    permissionsAlunoBlock:
+      "Granular permissions apply to administrator or coach accounts. Student accounts keep the current app behaviour.",
     permissionsSelectAtLeastOne: "When granular access is on, the selection cannot be empty.",
     permissionsGroupPrefix: "Module: ",
     permissionsSave: "Save",

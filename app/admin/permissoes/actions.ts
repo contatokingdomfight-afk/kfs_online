@@ -44,16 +44,18 @@ export async function updateUserAdminPermissions(
     .eq("id", targetId)
     .single();
   if (tErr || !target) return { error: "Utilizador não encontrado." };
-  if (target.role !== "ADMIN") {
-    return { error: "Permissões detalhadas aplicam-se apenas a contas com função de administrador." };
+  if (target.role !== "ADMIN" && target.role !== "COACH") {
+    return { error: "As permissões detalhadas aplicam-se a contas de administrador ou de treinador (coach)." };
   }
 
   if (granular && codes.length === 0) {
     return { error: "Com permissões detalhadas activas, escolhe pelo menos um item." };
   }
 
-  const lockErr = await assertAtLeastOneFullAdminAfter(supabase, targetId, granular);
-  if (lockErr) return { error: lockErr };
+  if (target.role === "ADMIN") {
+    const lockErr = await assertAtLeastOneFullAdminAfter(supabase, targetId, granular);
+    if (lockErr) return { error: lockErr };
+  }
 
   const { error: uErr } = await supabase
     .from("User")
@@ -74,6 +76,7 @@ export async function updateUserAdminPermissions(
 
   revalidatePath("/admin/permissoes");
   revalidatePath(`/admin/permissoes/${targetId}`);
+  revalidatePath("/coach");
   return { success: true };
 }
 
