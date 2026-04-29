@@ -8,7 +8,7 @@ import { ManagementGrid } from "./_components/ManagementGrid";
 import { OverviewChartsDynamic } from "./_components/OverviewChartsDynamic";
 import { getTranslations } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
-import type { ResolvedAdminAccess } from "@/lib/permissions/resolve";
+import { hasAllV1AdminPermissions, type ResolvedAdminAccess } from "@/lib/permissions/resolve";
 import { isGranularRestrictedDashboard } from "@/lib/permissions/paths";
 
 type Props = {
@@ -25,7 +25,7 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
   ]);
   const t = getTranslations(locale as "pt" | "en");
 
-  if (isGranularRestrictedDashboard(access)) {
+  if (isGranularRestrictedDashboard(access) && !hasAllV1AdminPermissions(access)) {
     return (
       <p
         style={{

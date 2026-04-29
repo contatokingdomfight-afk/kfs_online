@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ALL_ADMIN_PERMISSION_SET, type AdminPermissionCode } from "@/lib/permissions/constants";
+import { ALL_ADMIN_PERMISSION_SET, ALL_ADMIN_PERMISSION_CODES, type AdminPermissionCode } from "@/lib/permissions/constants";
 
 export type ResolvedAdminAccess =
   | { kind: "none" }
@@ -48,4 +48,16 @@ export function adminAccessAllows(
   if (access.kind === "none") return false;
   if (access.kind === "all") return true;
   return access.codes.has(code);
+}
+
+/**
+ * `granted` com as 18 permissões v1 — efeito equivalente ao acesso "completo" para o painel inicial
+ * (receita, gráficos, grelha); o menu continua a ser o mesmo que com `kind: all` se o filtro permitir tudo.
+ */
+export function hasAllV1AdminPermissions(access: ResolvedAdminAccess): boolean {
+  if (access.kind !== "granted") return false;
+  for (const c of ALL_ADMIN_PERMISSION_CODES) {
+    if (!access.codes.has(c)) return false;
+  }
+  return true;
 }
