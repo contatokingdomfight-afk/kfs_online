@@ -3,6 +3,10 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getAdminBackofficeSidebarLinks } from "@/lib/admin-sidebar-links";
+import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
+import { canAccessAdminPathname } from "@/lib/permissions/paths";
+import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
+import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
 import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 
@@ -15,9 +19,17 @@ export default async function AdminLayout({
   if (!dbUser) redirect("/sign-in");
   if (dbUser.role !== "ADMIN") redirect("/dashboard");
 
+  const access = await getCachedResolvedAdminAccess();
+  const kfsPath = await getKfsPathnameFromRequest();
+  if (access.kind === "granted" && kfsPath && !canAccessAdminPathname(access, kfsPath)) {
+    redirect("/admin");
+  }
+
   const [theme, locale] = await Promise.all([getThemeFromCookies(), getLocaleFromCookies()]);
   const t = getTranslations(locale as "pt" | "en");
-  const adminLinks = getAdminBackofficeSidebarLinks(t);
+  const full = getAdminBackofficeSidebarLinks(t);
+  const adminLinks =
+    access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--bg)", color: "var(--text-primary)" }}>

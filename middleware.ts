@@ -1,5 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
 
 /** Inclui `/auth/update-password`: link do email de reset traz `?code=`; tem de ser público antes da sessão existir. */
@@ -47,6 +47,12 @@ function isStripeCheckoutApi(pathname: string) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  function withKfsPathname(r: NextRequest) {
+    const h = new Headers(r.headers);
+    h.set("x-kfs-pathname", r.nextUrl.pathname);
+    return new NextRequest(r, { headers: h });
+  }
+
   /** Playground interno de silhueta: nunca em produção na Vercel. */
   if (pathname.startsWith("/dev/") && process.env.VERCEL_ENV === "production") {
     return new NextResponse(null, { status: 404 });
@@ -70,7 +76,7 @@ export async function middleware(request: NextRequest) {
       "[middleware] Variáveis NEXT_PUBLIC_SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_ANON_KEY em falta — verifica o ambiente (ex.: Vercel → Settings → Environment Variables)."
     );
     if (isPublicBrowserPath(pathname) || isPublicApiPath(pathname)) {
-      return NextResponse.next({ request });
+      return NextResponse.next({ request: withKfsPathname(request) });
     }
     const u = request.nextUrl.clone();
     u.pathname = "/sign-in";
@@ -86,7 +92,7 @@ export async function middleware(request: NextRequest) {
      * Caso contrário o middleware vê o utilizador e o layout recebe cookies antigos →
      * `getUser()` falha e aparece `?reason=no-db-user`.
      */
-    let response = NextResponse.next({ request });
+    let response = NextResponse.next({ request: withKfsPathname(request) });
 
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookieOptions: supabaseCookieOptions,
@@ -99,7 +105,7 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request: withKfsPathname(request) });
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2]);
           });
@@ -184,7 +190,7 @@ export async function middleware(request: NextRequest) {
   } catch (err) {
     console.error("[middleware] Erro não tratado (Edge):", err);
     if (isPublicBrowserPath(pathname) || isPublicApiPath(pathname)) {
-      return NextResponse.next({ request });
+      return NextResponse.next({ request: withKfsPathname(request) });
     }
     const fallback = request.nextUrl.clone();
     fallback.pathname = "/sign-in";

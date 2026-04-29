@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ALL_ADMIN_PERMISSION_SET } from "@/lib/permissions/constants";
+import { adminAccessAllows, resolveAdminPermissionsForUserId } from "@/lib/permissions/resolve";
 
 export type UpdateUserAdminPermsResult = { error?: string; success?: boolean };
 
@@ -32,6 +33,11 @@ export async function updateUserAdminPermissions(
   const codes = parseSelectedCodes(formData);
 
   const supabase = createAdminClient();
+  const access = await resolveAdminPermissionsForUserId(supabase, dbUser.id);
+  if (access.kind === "granted" && !adminAccessAllows(access, "admin:sistema:write")) {
+    return { error: "Não autorizado a alterar permissões (necessária permissão de sistema — escrita)." };
+  }
+
   const { data: target, error: tErr } = await supabase
     .from("User")
     .select("id, role")

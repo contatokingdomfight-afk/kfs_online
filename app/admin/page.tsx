@@ -6,6 +6,7 @@ import { getTranslations } from "@/lib/i18n";
 import { Suspense } from "react";
 import { AdminDashboardSkeleton } from "./AdminDashboardSkeleton";
 import { AdminDashboardContent } from "./AdminDashboardContent";
+import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
 
 type SearchParams = Promise<{ school?: string }>;
 
@@ -19,6 +20,8 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Se
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
 
+  const access = await getCachedResolvedAdminAccess();
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)", minWidth: 0, overflowX: "hidden" }}>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "clamp(12px, 3vw, 16px)", justifyContent: "space-between" }}>
@@ -28,7 +31,7 @@ export default async function AdminHomePage({ searchParams }: { searchParams: Se
       </div>
 
       <Suspense fallback={<AdminDashboardSkeleton />}>
-        <AdminDashboardContent client={result.client} schoolId={schoolId} />
+        <AdminDashboardContent client={result.client} schoolId={schoolId} access={access} />
       </Suspense>
     </div>
   );

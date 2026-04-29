@@ -8,19 +8,38 @@ import { ManagementGrid } from "./_components/ManagementGrid";
 import { OverviewChartsDynamic } from "./_components/OverviewChartsDynamic";
 import { getTranslations } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+import type { ResolvedAdminAccess } from "@/lib/permissions/resolve";
+import { isGranularRestrictedDashboard } from "@/lib/permissions/paths";
 
 type Props = {
   client: SupabaseClient;
   schoolId: string | null;
+  access: ResolvedAdminAccess;
 };
 
-export async function AdminDashboardContent({ client, schoolId }: Props) {
+export async function AdminDashboardContent({ client, schoolId, access }: Props) {
   const [locale, stats, actionItems] = await Promise.all([
     getLocaleFromCookies(),
     getAdminDashboardStats(client, schoolId),
     getActionItemsData(client, schoolId),
   ]);
   const t = getTranslations(locale as "pt" | "en");
+
+  if (isGranularRestrictedDashboard(access)) {
+    return (
+      <p
+        style={{
+          margin: 0,
+          maxWidth: 560,
+          fontSize: "clamp(15px, 3.8vw, 17px)",
+          lineHeight: 1.6,
+          color: "var(--text-secondary)",
+        }}
+      >
+        {t("adminGranularHomeHint")}
+      </p>
+    );
+  }
 
   const modalityNames: Record<string, string> = {};
   stats.studentsByModality.forEach((m) => {

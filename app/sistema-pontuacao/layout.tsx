@@ -6,6 +6,11 @@ import { getTranslations } from "@/lib/i18n";
 import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import type { SidebarLink } from "@/components/Sidebar";
+import { getAdminBackofficeSidebarLinks } from "@/lib/admin-sidebar-links";
+import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
+import { canAccessAdminPathname } from "@/lib/permissions/paths";
+import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
+import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
 
 export default async function SistemaPontuacaoLayout({
   children,
@@ -27,6 +32,11 @@ export default async function SistemaPontuacaoLayout({
   let headerExtra: React.ReactNode = null;
 
   if (dbUser.role === "ADMIN") {
+    const access = await getCachedResolvedAdminAccess();
+    const kfsPath = await getKfsPathnameFromRequest();
+    if (access.kind === "granted" && kfsPath && !canAccessAdminPathname(access, kfsPath)) {
+      redirect("/admin");
+    }
     sidebarTitle = "Admin";
     headerExtra = (
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -34,38 +44,8 @@ export default async function SistemaPontuacaoLayout({
         <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
       </div>
     );
-    sidebarLinks = [
-      { label: t("navHome"), href: "/admin" },
-      {
-        label: "Avaliação e pontuação",
-        href: "/como-sou-avaliado",
-        children: [
-          { label: "Como sou avaliado", href: "/como-sou-avaliado" },
-          { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
-        ],
-      },
-      { label: t("navSchools"), href: "/admin/escolas" },
-      { label: t("navStudents"), href: "/admin/alunos" },
-      { label: t("navAthletes"), href: "/admin/atletas" },
-      { label: t("navClasses"), href: "/admin/turmas" },
-      { label: t("navModalities"), href: "/admin/modalidades" },
-      { label: t("navPlans"), href: "/admin/planos" },
-      { label: t("navCourses"), href: "/admin/cursos" },
-      { label: t("navEventsAdmin"), href: "/admin/eventos" },
-      { label: t("navSettings"), href: "/admin/configuracoes" },
-      { label: t("navPresence"), href: "/admin/presenca" },
-      {
-        label: t("navEvaluationCriteria"),
-        href: "/admin/avaliacao",
-        children: [{ label: t("navGeneralDimensions"), href: "/admin/componentes-gerais" }],
-      },
-      { label: t("navMissions"), href: "/admin/missoes" },
-      { label: t("navFinance"), href: "/admin/financeiro" },
-      { label: t("navTrials"), href: "/admin/experimentais" },
-      { label: t("navCoaches"), href: "/admin/coaches" },
-      { label: t("navLeads"), href: "/admin/leads" },
-      { label: t("navPermissions"), href: "/admin/permissoes" },
-    ];
+    const full = getAdminBackofficeSidebarLinks(t);
+    sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
   } else if (dbUser.role === "COACH") {
     sidebarTitle = t("coachTitle");
     headerExtra = <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>;
