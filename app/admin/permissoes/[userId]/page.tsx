@@ -104,7 +104,6 @@ export default async function AdminPermissoesUserPage(props: PageProps) {
         readonlyCoach={u.role === "COACH" || u.role === "ALUNO"}
         soleAdmin={soleAdmin && u.role === "ADMIN"}
         locale={locale}
-        t={t}
       />
     </div>
   );

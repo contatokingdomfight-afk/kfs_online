@@ -2,7 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { useCallback, useMemo, useState } from "react";
-import type { MessageKey } from "@/lib/i18n";
+import { getTranslations, type MessageKey } from "@/lib/i18n";
 import type { AdminPermissionRow, UpdateUserAdminPermsResult } from "./actions";
 import { updateUserAdminPermissions } from "./actions";
 
@@ -32,7 +32,6 @@ export function AdminUserPermissionsForm({
   readonlyCoach,
   soleAdmin,
   locale,
-  t,
 }: {
   userId: string;
   initialGranular: boolean;
@@ -41,8 +40,8 @@ export function AdminUserPermissionsForm({
   readonlyCoach: boolean;
   soleAdmin: boolean;
   locale: "pt" | "en";
-  t: (key: MessageKey) => string;
 }) {
+  const t = getTranslations(locale);
   const [state, formAction] = useFormState(updateUserAdminPermissions, null as UpdateUserAdminPermsResult | null);
   const [granular, setGranular] = useState(initialGranular);
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initialCodes));
