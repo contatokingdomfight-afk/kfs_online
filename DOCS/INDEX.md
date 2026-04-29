@@ -1,6 +1,7 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 22 abril 2026 (silhueta 2D: `SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`).  
+> **Última revisão deste índice:** 27 abril 2026 (plano de ação **permissões admin / RBAC:** `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`).  
+> **Anterior:** 22 abril 2026 (silhueta 2D: `SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`).
 > **Índice de contexto técnico (prioridade para IA / equipa):** [`memory.md`](memory.md)  
 > **Roadmap feito / por fazer:** [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)
 
@@ -81,6 +82,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 |-----------|----------|
 | [`ESPECIFICACAO_DASHBOARD_ADMIN.md`](ESPECIFICACAO_DASHBOARD_ADMIN.md) | Especificação painel admin |
 | [`ESPECIFICACAO_DASHBOARD_COACH.md`](ESPECIFICACAO_DASHBOARD_COACH.md) | Especificação painel coach |
+| [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md) | Plano de ação: ecrã e modelo de **permissões (RBAC)** no admin; fases, RLS, checklist; ver também [ROADMAP_Plataforma_KFS.md](./ROADMAP_Plataforma_KFS.md) |
 
 ---
 

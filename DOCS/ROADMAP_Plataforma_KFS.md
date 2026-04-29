@@ -1,7 +1,7 @@
 # Roadmap – Plataforma Kingdom Fight School
 
 > O que **já está feito** vs **por fazer**, alinhado ao [Plano de Negócios](./Plano_de_Negócios_Kingdom_Fight_School.md) e à [Especificação Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md).  
-> **Última revisão:** 22 abril 2026 — roadmap: **anamnese** com circunferências alargadas + **avatar corporal** ilustrativo (§2c); **peso pós-treino** no check-in (§3); anterior 18 abril 2026 — ranking em produção (`get_leaderboard_my_school` + `get_leaderboard_filtered` na BD); fallback e mensagem i18n se RPC em falta noutro projeto; admin alunos/papéis, Resend, planos camelCase + RLS; **sessão Supabase em mobile** (middleware só `getUser()`, `AuthSessionKeepAlive` com `resume` + refresh periódico); **Stripe** (payload `STRIPE_PRICE_INVALID`, recuperação `stripeCustomerId` test/live no checkout); docs em `DOCS/` e índice na raiz alinhados.
+> **Última revisão:** 27 abril 2026 — **roadmap:** tarefa **Permissões admin (RBAC)** + plano de ação `DOCS/PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`; anterior 22 abril 2026 — roadmap: **anamnese** com circunferências alargadas + **avatar corporal** ilustrativo (§2c); **peso pós-treino** no check-in (§3); anterior 18 abril 2026 — ranking em produção (`get_leaderboard_my_school` + `get_leaderboard_filtered` na BD); fallback e mensagem i18n se RPC em falta noutro projeto; admin alunos/papéis, Resend, planos camelCase + RLS; **sessão Supabase em mobile** (middleware só `getUser()`, `AuthSessionKeepAlive` com `resume` + refresh periódico); **Stripe** (payload `STRIPE_PRICE_INVALID`, recuperação `stripeCustomerId` test/live no checkout); docs em `DOCS/` e índice na raiz alinhados.
 
 **Legenda:** **Feito** = em produção. **Por fazer** = não implementado ou só operacional (dados em falta).
 
@@ -21,6 +21,7 @@
 | 8 | Qualidade | **E2E** (ex. Playwright); relatórios/alertas no financeiro admin; **Lighthouse** em produção |
 | 9 | Bem-estar / check-in | **Peso após o treino** no fluxo de recolha biométrica do check-in (além do pré-aula) — permitir estimar **variação de peso/líquido por sessão** e **médias por aluno** (com contexto: modalidade, duração, hidratação já recolhida) |
 | 10 | Avaliação física / aluno | **Antropometria alargada na ficha (anamnese)** + **avatar corporal** derivado dos dados (MVP 2D/SVG ilustrativo; futuro: ajuste de atributos / cenários de meta); ver §2c |
+| 11 | Admin / plataforma | **Permissões (RBAC)** — ecrã admin e modelo: controlar o que cada utilizador de backoffice vê/edita/executa; fases em [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](./PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md) (alinhado a RLS + server actions) |
 
 **Já entregue (alto nível):** Auth Supabase, multi-escola, turmas/recorrência, check-in + bem-estar no check-in, planos Stripe + presencial + crons Lisboa, biblioteca 360º, loja/eventos, gamificação (XP, faixas, missões, badges, **rank v1** com filtros escola/modalidade/faixa etária e **RPCs na BD de produção**), tema da semana, emails Resend (presença + lembretes) + SMTP Supabase, i18n PT/EN, dark/light, **definir Professor/Administrador** em qualquer `User.role` (`promoteStudentToRole`), UI em `/admin/alunos/[id]` e `/coach/alunos/[id]` (admin logado).
 
@@ -91,6 +92,7 @@ Objetivo: enriquecer a ficha com **circunferências e medidas** que permitam um 
 |------|--------|--------|
 | Lista, convite, edição, planos, acesso total | Feito | |
 | **Definir Professor / Administrador** | Feito | `promoteStudentToRole` — qualquer papel atual; no-op se igual; `AdminAlunoQuickActions` em `/admin/alunos/[id]` e `/coach/alunos/[id]` (admin) |
+| **Ecrã e modelo de permissões (RBAC)** | **Por fazer** | Ver [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](./PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md): permissões v1, guards no servidor, UI `/admin`, alinhamento RLS |
 
 ---
 

@@ -1,8 +1,10 @@
 # Índice da documentação – KFS Online
 
-> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **22 abril 2026**.
+> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **27 abril 2026**.
 
 ### Actualização abril 2026 (sincronização de docs)
+
+- **Permissões admin (RBAC):** plano de ação `DOCS/PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`; tarefa no `DOCS/ROADMAP_Plataforma_KFS.md` (prioridade 11).
 
 - **Sessão mobile / PWA / Supabase:** `DOCS/memory.md` §3.2 e **§3.18**; `DOCS/PWA.md` (sessão longa + Livre vs Pro). Pasta `docs/memory.md` na raiz: **apontador** para `DOCS/memory.md`.
 - **Sessão mobile / idle (histórico):** `memory.md` §3.2; roadmap §1.

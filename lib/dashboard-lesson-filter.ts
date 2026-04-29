@@ -11,20 +11,22 @@ export type DashboardModalityViewInput = {
 
 /**
  * Plano com uma única modalidade (ex.: Presencial I com `modalityScope` SINGLE e `primaryModality`):
- * o aluno só deve ver aulas dessa modalidade no dashboard.
+ * o aluno vê aulas **dessa modalidade** e **todas as aulas livres** (`isOpenClass`), de qualquer modalidade.
  */
 export function shouldRestrictDashboardToSingleModality(input: DashboardModalityViewInput): boolean {
   return input.hasPlan && input.allowedModalities.length === 1 && input.studentPrimaryModality != null;
 }
 
-export function filterDashboardLessonsByPlanModality<T extends { modality: string }>(
-  lessons: T[],
-  input: DashboardModalityViewInput
-): T[] {
+export function filterDashboardLessonsByPlanModality<
+  T extends { modality: string; isOpenClass?: boolean | null }
+>(lessons: T[], input: DashboardModalityViewInput): T[] {
   if (!shouldRestrictDashboardToSingleModality(input)) return lessons;
   const only = normalizeModalityCode(input.allowedModalities[0] ?? input.studentPrimaryModality ?? "");
   if (!only) return lessons;
-  return lessons.filter((l) => normalizeModalityCode(l.modality) === only);
+  return lessons.filter((l) => {
+    if (Boolean(l.isOpenClass)) return true;
+    return normalizeModalityCode(l.modality) === only;
+  });
 }
 
 export type DashboardLessonRow = {

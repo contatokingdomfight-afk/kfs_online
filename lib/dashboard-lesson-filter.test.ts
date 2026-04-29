@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { filterLessonsForDashboard } from "./dashboard-lesson-filter";
+import {
+  filterDashboardLessonsByPlanModality,
+  filterLessonsForDashboard,
+} from "./dashboard-lesson-filter";
 
 const MOD_LEN = 3;
 
@@ -73,5 +76,33 @@ describe("filterLessonsForDashboard", () => {
       hasCheckIn: false,
     });
     expect(out.map((l) => l.modality)).toEqual(["BOXING"]);
+  });
+});
+
+describe("filterDashboardLessonsByPlanModality (Presencial I: lista de cartões)", () => {
+  const single = {
+    hasPlan: true,
+    allowedModalities: ["MUAY_THAI"],
+    studentPrimaryModality: "MUAY_THAI" as string | null,
+  };
+
+  it("inclui aula livre de outra modalidade; exclui aula fechada de outra modalidade", () => {
+    const lessons = [
+      { modality: "BOXING", isOpenClass: false, id: "1" },
+      { modality: "BOXING", isOpenClass: true, id: "2" },
+      { modality: "MUAY_THAI", isOpenClass: false, id: "3" },
+    ];
+    const out = filterDashboardLessonsByPlanModality(lessons, single);
+    expect(out.map((l) => l.id).sort()).toEqual(["2", "3"]);
+  });
+
+  it("plano com várias modalidades: não restringe à lista (pass-through)", () => {
+    const lessons = [{ modality: "BOXING", isOpenClass: false, id: "1" }];
+    const out = filterDashboardLessonsByPlanModality(lessons, {
+      hasPlan: true,
+      allowedModalities: ["MUAY_THAI", "BOXING"],
+      studentPrimaryModality: "MUAY_THAI",
+    });
+    expect(out).toEqual(lessons);
   });
 });
