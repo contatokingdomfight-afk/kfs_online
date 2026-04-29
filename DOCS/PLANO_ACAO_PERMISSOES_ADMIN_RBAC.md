@@ -125,4 +125,4 @@
 
 ---
 
-*Documento gerado para acompanhamento de produto e engenharia. Última revisão: 27 abril 2026.*
+*Documento gerado para acompanhamento de produto e engenharia. Última revisão: 27 abril 2026. Referência a entregas de produto em curso: [`memory.md`](./memory.md) (ex.: secção *Dashboard aluno*).*

@@ -64,13 +64,14 @@ A plataforma estava lenta ao mudar de página ou ao fazer ações (muitas chamad
 
 - **Índices:** Migration `add_performance_indexes.sql` com índices em Lesson (date, schoolId+date) e Attendance (studentId, studentId+status).
 - **next/dynamic:** `PerformanceRadar` e `RadarStats` carregados via `PerformanceRadarDynamic` e `RadarStatsDynamic` (ssr: false, loading placeholder) para reduzir first-load JS.
-- **Cache Location/ModalityRef:** `lib/cached-reference-data.ts` com `getCachedLocations(supabase)` e `getCachedModalityRefs(supabase)` (unstable_cache, revalidate 300s). Usado em dashboard, admin (turmas, alunos), coach (aula, alunos, performance).
+- **Cache Location/ModalityRef:** `lib/cached-reference-data.ts` com `getCachedLocations(supabase)` e `getCachedModalityRefs(supabase)` (unstable_cache, revalidate 300s). Usado em dashboard, admin (turmas, alunos), coach (aula, alunos, performance). Em `app/dashboard/page.tsx`, `getCachedLocations` é consumida via re-export em `lib/plan-access.ts` (junto com `getCachedPlanAccess`) para estabilidade do build.
 - **Streaming (Suspense):** Dashboard do aluno: a página faz apenas o fetch da agenda (aulas da semana, locais, tema da semana, presenças). O bloco “abaixo da dobra” (estatísticas, missões, notificações, histórico, progresso semanal, performance, conquistas, etc.) está em `<Suspense>` com o componente async `DashboardRestContent`, que faz o seu próprio fetch. A agenda é enviada primeiro (streaming); o resto é enviado quando o servidor termina de renderizar `DashboardRestContent`.
+- **Semana em Lisboa (2026):** `getThisWeekRangeLisbon` + datas do cartão alinhadas a `calendarDateLisbon` — ver `DOCS/memory.md` (*Dashboard aluno*).
 
 ---
 
-*Última atualização: índices, next/dynamic, cache Location/ModalityRef, Suspense no dashboard.*
+*Última atualização:* índices, next/dynamic, cache Location/ModalityRef, Suspense no dashboard; fevereiro 2026 — re-export `getCachedLocations` em `plan-access`, semana Lisboa no dashboard, filtro Presencial I + aulas abertas (`lib/dashboard-lesson-filter.ts`).
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — fevereiro 2026.*

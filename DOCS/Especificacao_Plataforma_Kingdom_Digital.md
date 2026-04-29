@@ -1,7 +1,8 @@
 # Especificação da Plataforma Kingdom Digital
 
 > Documento que descreve as funcionalidades da plataforma digital KFS a desenvolver ou expandir, alinhadas ao Plano de Negócios e à metodologia "Style Kingdom Fight".  
-> Complementa o [Modelo de Dados (MVP)](./Modelo%20de%20Dados%20–%20Kingdom%20Fight%20School%20(MVP).md) e o [Fluxo Lógico Completo](./Fluxo%20Lógico%20Completo%20–%20Plataforma%20Kingdom%20Fight%20School.md).
+> Complementa o [Modelo de Dados (MVP)](./Modelo%20de%20Dados%20–%20Kingdom%20Fight%20School%20(MVP).md) e o [Fluxo Lógico Completo](./Fluxo%20Lógico%20Completo%20–%20Plataforma%20Kingdom%20Fight%20School.md).  
+> **Nota (2026):** a página de **início** do aluno (`/dashboard` — aulas da semana, carrosséis, plano Presencial I, aulas abertas) está descrita tecnicamente em [`DOCS/memory.md`](./memory.md) (secção *Dashboard aluno*) e em [`DOCS/MELHORIAS_DASHBOARD.md`](./MELHORIAS_DASHBOARD.md).
 
 ---
 

@@ -1,5 +1,14 @@
 # Melhorias do Dashboard - Kingdom Fight School
 
+## Comportamento actual — início aluno (`/dashboard`, 2026)
+
+- **Semana civil** usada para expandir aulas: **Europe/Lisbon** (`getThisWeekRangeLisbon`, `calendarDateLisbon` em `app/dashboard/page.tsx`), alinhada à janela de check-in — evita desvio em deploy (Vercel/UTC) que deixava só aulas abertas visíveis.
+- **Plano de uma modalidade (ex. Presencial I, `modalityScope` SINGLE + `Student.primaryModality`):** na lista da semana, o aluno vê aulas **fechadas** só da **sua** modalidade e **todas** as aulas com **`isOpenClass`** (livres), de qualquer modalidade. Plano com acesso a todas as modalidades: sem este recorte na lista.
+- **Lógica:** `lib/dashboard-lesson-filter.ts` (`filterDashboardLessonsByPlanModality`, `isLessonParticipationAllowedByPlan`); testes em `lib/dashboard-lesson-filter.test.ts`. **Locais:** `getCachedLocations` importado com `getCachedPlanAccess` de `@/lib/plan-access` (re-export).
+- Contexto técnico: **`DOCS/memory.md`** (secção *Dashboard aluno*).
+
+---
+
 ## Estado (abril 2026)
 
 - **Perfil de performance (`/dashboard/performance`):** secção **Dados biométricos** (agregados dos check-ins pré-treino: sono, hidratação %, stress, fadiga, zonas GREEN/YELLOW/RED), antes da progressão de níveis; ver **`DOCS/memory.md`** §3.15.

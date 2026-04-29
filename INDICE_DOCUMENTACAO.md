@@ -1,6 +1,10 @@
 # Índice da documentação – KFS Online
 
-> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **27 abril 2026**.
+> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **10 fevereiro 2026** (dashboard aluno, documentação alinhada).
+
+### Actualização fevereiro 2026 (dashboard + docs)
+
+- **Dashboard aluno** (`/dashboard`): semana em **Lisboa** (`getThisWeekRangeLisbon`), filtro **Presencial I** (modalidade + aulas abertas), `getCachedLocations` via `lib/plan-access.ts` — detalhe em `DOCS/memory.md`, `DOCS/MELHORIAS_DASHBOARD.md`, `DOCS/ROADMAP_Plataforma_KFS.md` sec. 2.
 
 ### Actualização abril 2026 (sincronização de docs)
 

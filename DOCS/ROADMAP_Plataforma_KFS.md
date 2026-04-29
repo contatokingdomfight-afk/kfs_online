@@ -1,7 +1,7 @@
 # Roadmap – Plataforma Kingdom Fight School
 
 > O que **já está feito** vs **por fazer**, alinhado ao [Plano de Negócios](./Plano_de_Negócios_Kingdom_Fight_School.md) e à [Especificação Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md).  
-> **Última revisão:** 27 abril 2026 — **roadmap:** tarefa **Permissões admin (RBAC)** + plano de ação `DOCS/PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`; anterior 22 abril 2026 — roadmap: **anamnese** com circunferências alargadas + **avatar corporal** ilustrativo (§2c); **peso pós-treino** no check-in (§3); anterior 18 abril 2026 — ranking em produção (`get_leaderboard_my_school` + `get_leaderboard_filtered` na BD); fallback e mensagem i18n se RPC em falta noutro projeto; admin alunos/papéis, Resend, planos camelCase + RLS; **sessão Supabase em mobile** (middleware só `getUser()`, `AuthSessionKeepAlive` com `resume` + refresh periódico); **Stripe** (payload `STRIPE_PRICE_INVALID`, recuperação `stripeCustomerId` test/live no checkout); docs em `DOCS/` e índice na raiz alinhados.
+> **Última revisão (documentação):** 10 fevereiro 2026 — dashboard aluno: semana em **Lisboa** (`getThisWeekRangeLisbon`), filtro plano **Presencial I** (modalidade + aulas abertas), re-export de `getCachedLocations` em `lib/plan-access.ts`; *histórico de entregas em linhas anteriores:* 27 abr. 2026 (RBAC + `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`); 22 abr. 2026 (anamnese, avatar, peso pós-treino); 18 abr. 2026 (ranking `get_leaderboard_*`); alinhamento admin/Resend/RLS, sessão mobile, Stripe, índice `DOCS/`.
 
 **Legenda:** **Feito** = em produção. **Por fazer** = não implementado ou só operacional (dados em falta).
 
@@ -43,7 +43,7 @@
 
 | Item | Estado | Notas |
 |------|--------|--------|
-| Dashboard, carrosséis, aulas livres (`isOpenClass`) | Feito | `lib/dashboard-lesson-filter.ts` |
+| Dashboard, carrosséis, aulas livres (`isOpenClass`) | Feito | `lib/dashboard-lesson-filter.ts` — semana em **Lisboa** (`getThisWeekRangeLisbon` + `calendarDateLisbon` em `app/dashboard/page.tsx`); com plano **uma modalidade** (ex. Presencial I) filtra aulas fechadas à modalidade e mostra **todas** as aulas abertas; `getCachedLocations` via re-export em `lib/plan-access.ts` |
 | Check-in, histórico, QR (coach) | Feito | `/check-in/[lessonId]`, `Attendance`, Lisboa |
 | Performance, radar SVG, missões, conquistas, rank (v1) | Feito | `get_leaderboard_filtered` + `get_leaderboard_my_school` (migrações `20260402120000` / `20260412120000`); `lib/leaderboard.ts` (fallback se RPC ausente); filtros em `/dashboard/rank` |
 | Metas assiduidade, IMC, metas avaliação | Feito | Admin configurações + dashboard |

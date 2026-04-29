@@ -1,13 +1,15 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 27 abril 2026 (plano de ação **permissões admin / RBAC:** `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`).  
-> **Anterior:** 22 abril 2026 (silhueta 2D: `SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`).
+> **Última revisão deste índice:** 10 fevereiro 2026 (dashboard aluno: semana Lisboa, Presencial I + aulas abertas, `plan-access` + `getCachedLocations`).  
+> **Anterior:** 27 abril 2026 (plano de ação **permissões admin / RBAC:** `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`); 22 abril 2026 (silhueta 2D: `SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`).
 > **Índice de contexto técnico (prioridade para IA / equipa):** [`memory.md`](memory.md)  
 > **Roadmap feito / por fazer:** [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)
 
 Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confundir com `docs/` na raiz, se existir.
 
 Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual: Supabase (sem Clerk); ver **`DEPLOY_VERCEL.md`**.
+
+**Changelog (fevereiro 2026):** dashboard aluno — `getThisWeekRangeLisbon`, filtro de modalidade com plano Presencial I + aulas abertas, testes `dashboard-lesson-filter`, re-export `getCachedLocations` em `plan-access` (ver `DOCS/memory.md`).
 
 **Changelog (abril 2026):** revisão cruzada de deploy (`DEPLOY_VERCEL.md`, `Deploy_Vercel_kingdomfight.md`), Stripe (`STRIPE_KINGDOM_ONLINE.md`), troubleshooting Vercel, PWA (sessão instalada + Supabase Livre/Pro), fluxo de onboarding, `VARIAVEIS_AMBIENTE_VERCEL.txt` e **`INDICE_DOCUMENTACAO.md`** na raiz — alinhados a `memory.md` §3.2 (sessão), §3.4 (Stripe), §3.17 e **§3.18** (auth abril 2026).
 
@@ -66,7 +68,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Melhorias do dashboard (carrosséis; perfil / biométricos — ver `memory.md` §3.15) |
+| [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Dashboard aluno (`/dashboard`): carrosséis, Presencial I, aulas abertas, Lisboa; ver também `memory.md` (secção *Dashboard aluno*) e biométricos em `memory.md` |
 | [`AVATAR_3D_BASE_GLTF.md`](AVATAR_3D_BASE_GLTF.md) | Vista 3D: GLBs M/F (`human-base-male.glb` / `human-base-female.glb`), fallback e env |
 | [`SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`](SILHUETA_CORPORAL_2D_ILUSTRATIVA.md) | Silhueta 2D ilustrativa: campo ↔ corpo, pipeline, 2D/3D, critérios de aceite, checklist de regressão |
 | [`CONTAS_TESTE.md`](CONTAS_TESTE.md) | Contas de teste e `seed:test-users` |
