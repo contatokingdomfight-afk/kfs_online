@@ -99,12 +99,16 @@ export async function updateStudent(
     if (!school) return { error: "Escola inválida ou inativa." };
   }
 
-  // Planos sem modalidade única: Presencial MMA = Todas; Kingdom Online = apenas digital (sem modalidade)
+  // Só `modalityScope === "SINGLE"` (Presencial I) mantém modalidade principal; ALL/NONE limpam.
   let effectivePlanId: string | null = planId === "" ? null : planId;
   if (planId) {
-    const { data: plan } = await supabase.from("Plan").select("name, schoolId").eq("id", planId).single();
-    const planName = plan?.name ? String(plan.name) : "";
-    if (planName.includes("Presencial MMA") || planName.includes("Kingdom Online")) {
+    const { data: plan } = await supabase
+      .from("Plan")
+      .select("name, schoolId, modalityScope")
+      .eq("id", planId)
+      .single();
+    const scope = (plan as { modalityScope?: string } | null)?.modalityScope;
+    if (scope && scope !== "SINGLE") {
       newPrimaryModality = null;
     }
     // O mesmo catálogo de planos pode ser reutilizado entre escolas (registo Plan liga-se a uma escola
@@ -246,7 +250,7 @@ export async function clearStudentPlanAccess(
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, stripeSubscriptionId, planId")
+    .select("id, stripeSubscriptionId, planId, digitalLibraryAddonSubscriptionId")
     .eq("id", studentId)
     .single();
 
@@ -256,6 +260,14 @@ export async function clearStudentPlanAccess(
   }
 
   const subId = (student as { stripeSubscriptionId?: string | null }).stripeSubscriptionId;
+  const addOnSub = (student as { digitalLibraryAddonSubscriptionId?: string | null }).digitalLibraryAddonSubscriptionId;
+  if (addOnSub && stripe) {
+    try {
+      await stripe.subscriptions.cancel(addOnSub);
+    } catch (e) {
+      console.warn("Stripe add-on library subscription cancel failed:", e);
+    }
+  }
   if (subId && stripe) {
     try {
       await stripe.subscriptions.cancel(subId);
@@ -266,7 +278,13 @@ export async function clearStudentPlanAccess(
 
   const { error } = await supabase
     .from("Student")
-    .update({ planId: null, stripeSubscriptionId: null, adminGrantedFullAccess: false })
+    .update({
+      planId: null,
+      stripeSubscriptionId: null,
+      adminGrantedFullAccess: false,
+      digitalLibraryAddon: false,
+      digitalLibraryAddonSubscriptionId: null,
+    })
     .eq("id", studentId);
   if (error) return { error: error.message };
 

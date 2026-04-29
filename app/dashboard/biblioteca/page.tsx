@@ -6,19 +6,24 @@ import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { BibliotecaFilters } from "./BibliotecaFilters";
 
+import { getCachedPlanAccess } from "@/lib/plan-access";
+import { DigitalLibraryAddonBanner } from "./DigitalLibraryAddonBanner";
+
 const LEVEL_LABELS: Record<string, string> = {
   INICIANTE: "Iniciante",
   INTERMEDIARIO: "Intermediário",
   AVANCADO: "Avançado",
 };
 
-type Props = { searchParams: Promise<{ cat?: string; mod?: string; lvl?: string }> };
+type Props = { searchParams: Promise<{ cat?: string; mod?: string; lvl?: string; library_addon?: string }> };
 
 export default async function BibliotecaPage({ searchParams }: Props) {
   const params = await searchParams;
   const supabase = await createClient();
   const [locale, studentId] = await Promise.all([getLocaleFromCookies(), getCurrentStudentId()]);
   const t = getTranslations(locale as "pt" | "en");
+  const addonBanner = params.library_addon;
+  const addonSuccessBanner = addonBanner === "success" ? t("libraryAddonStripeSuccess") : addonBanner === "cancel" ? t("libraryAddonStripeCancel") : null;
   const CATEGORY_LABEL: Record<string, string> = {
     TECHNIQUE: t("categoryTechnique"),
     MINDSET: t("categoryMindset"),
@@ -35,25 +40,14 @@ export default async function BibliotecaPage({ searchParams }: Props) {
   if (params.mod) coursesQuery = coursesQuery.eq("modality", params.mod);
   if (params.lvl) coursesQuery = coursesQuery.eq("level", params.lvl);
 
-  const [coursesRes, studentRes, purchasesRes] = await Promise.all([
+  const [coursesRes, planAccess, purchasesRes] = await Promise.all([
     coursesQuery,
-    studentId ? supabase.from("Student").select("planId").eq("id", studentId).single() : Promise.resolve({ data: null }),
+    getCachedPlanAccess(studentId),
     studentId ? supabase.from("CoursePurchase").select("courseId").eq("studentId", studentId) : Promise.resolve({ data: [] }),
   ]);
-
-  const student = studentRes.data;
-  const isFreeTierLibrary = Boolean(studentId && student && !student.planId);
-  let hasDigitalAccess = false;
-  if (student?.planId) {
-    const { data: plan } = await supabase
-      .from("Plan")
-      .select("includesDigitalAccess")
-      .eq("id", student.planId)
-      .eq("isActive", true)
-      .single();
-    hasDigitalAccess = plan?.includesDigitalAccess === true;
-  }
-
+  const hasDigitalAccess = planAccess.hasDigitalAccess;
+  const canSubscribeLibraryAddon = planAccess.canSubscribeDigitalLibraryAddon;
+  const isFreeTierLibrary = Boolean(studentId && !planAccess.currentPlanId);
   const purchasedCourseIds = new Set((purchasesRes.data ?? []).map((p) => p.courseId));
   const courses = coursesRes.data;
 
@@ -70,6 +64,32 @@ export default async function BibliotecaPage({ searchParams }: Props) {
         </p>
         <BibliotecaFilters currentCategory={params.cat} currentModality={params.mod} currentLevel={params.lvl} />
       </div>
+
+      {addonSuccessBanner && (
+        <div
+          role="status"
+          className="card"
+          style={{
+            padding: "clamp(14px, 3.5vw, 18px)",
+            borderLeft: "4px solid var(--primary)",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            color: "var(--text-primary)",
+          }}
+        >
+          {addonSuccessBanner}
+        </div>
+      )}
+
+      {canSubscribeLibraryAddon && (
+        <DigitalLibraryAddonBanner
+          locale={locale as "pt" | "en"}
+          title={t("libraryAddonTitle")}
+          body={t("libraryAddonBody")}
+          cta={t("libraryAddonCta")}
+          priceHint={t("libraryAddonPriceHint")}
+          loading={t("libraryAddonLoading")}
+        />
+      )}
 
       {list.length === 0 ? (
         <div className="card" style={{ padding: "clamp(20px, 5vw, 24px)" }}>

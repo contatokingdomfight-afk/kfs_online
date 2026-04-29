@@ -42,6 +42,23 @@ export async function POST(request: NextRequest) {
         const priceId = sub.items?.data?.[0]?.price?.id;
         const status = sub.status;
         const isActive = status === "active" || status === "trialing";
+        const addonPriceEnv = process.env.STRIPE_DIGITAL_LIBRARY_ADDON_PRICE_ID?.trim();
+        const isDigitalAddon =
+          sub.metadata?.subscriptionRole === "digital_library_addon" ||
+          (Boolean(addonPriceEnv) && priceId === addonPriceEnv);
+        if (isDigitalAddon) {
+          await supabase
+            .from("Student")
+            .update({
+              digitalLibraryAddon: isActive,
+              digitalLibraryAddonSubscriptionId: isActive ? sub.id : null,
+            })
+            .eq("id", studentId);
+          if (isActive) {
+            await clearGraceOnPaidPayment(supabase, studentId);
+          }
+          break;
+        }
         let planId: string | null = null;
         if (priceId) {
           const { data: planByPrice } = await supabase.from("Plan").select("id").eq("stripePriceId", priceId).eq("isActive", true).single();
@@ -68,6 +85,18 @@ export async function POST(request: NextRequest) {
         const sub = event.data.object as Stripe.Subscription;
         const studentId = sub.metadata?.studentId;
         if (!studentId) break;
+        const addonPriceEnv = process.env.STRIPE_DIGITAL_LIBRARY_ADDON_PRICE_ID?.trim();
+        const priceId = sub.items?.data?.[0]?.price?.id;
+        const isDigitalAddon =
+          sub.metadata?.subscriptionRole === "digital_library_addon" ||
+          (Boolean(addonPriceEnv) && priceId === addonPriceEnv);
+        if (isDigitalAddon) {
+          await supabase
+            .from("Student")
+            .update({ digitalLibraryAddon: false, digitalLibraryAddonSubscriptionId: null })
+            .eq("id", studentId);
+          break;
+        }
         await supabase
           .from("Student")
           .update({ stripeSubscriptionId: null, planId: null, adminGrantedFullAccess: false })
@@ -83,6 +112,9 @@ export async function POST(request: NextRequest) {
         const subId = typeof (invoice as any).subscription === "string" ? (invoice as any).subscription : (invoice as any).subscription?.id;
         if (!subId) break;
         const sub = await stripe!.subscriptions.retrieve(subId);
+        if (sub.metadata?.subscriptionRole === "digital_library_addon") {
+          break;
+        }
         const studentId = sub.metadata?.studentId;
         if (!studentId) break;
         const amount = (invoice.amount_paid ?? 0) / 100;

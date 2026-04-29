@@ -17,6 +17,7 @@ import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AvaliarAlunoButton } from "@/app/coach/alunos/[id]/AvaliarAlunoButton";
 import { DeleteStudentButton } from "./DeleteStudentButton";
+import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
 
 const GENERAL_LAST_N = 10;
 
@@ -73,7 +74,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
 
   const { data: plans } = await supabase
     .from("Plan")
-    .select("id, name, priceMonthly, schoolId, isActive")
+    .select("id, name, priceMonthly, schoolId, isActive, modalityScope")
     .eq("isActive", true)
     .order("priceMonthly", { ascending: true });
 
@@ -82,7 +83,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   if (currentPlanId && !planRows.some((p) => p.id === currentPlanId)) {
     const { data: currentPlan } = await supabase
       .from("Plan")
-      .select("id, name, priceMonthly, schoolId, isActive")
+      .select("id, name, priceMonthly, schoolId, isActive, modalityScope")
       .eq("id", currentPlanId)
       .maybeSingle();
     if (currentPlan) planRows = [currentPlan, ...planRows];
@@ -116,8 +117,8 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     ...(modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code })),
   ];
   const studentPlan = planRows.find((p) => p.id === student.planId);
-  const planName = studentPlan?.name ? String(studentPlan.name) : "";
-  const isPlanWithoutModality = planName.includes("Presencial MMA") || planName.includes("Kingdom Online");
+  const scope = (studentPlan as { modalityScope?: string } | undefined)?.modalityScope;
+  const isPlanWithoutModality = !planRequiresPrimaryModality(scope);
   const rawPrimary = (student as { primaryModality?: string | null }).primaryModality ?? null;
   const initialPrimaryModality = isPlanWithoutModality || rawPrimary == null || rawPrimary === "" ? "" : rawPrimary;
 

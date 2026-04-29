@@ -534,6 +534,14 @@ export const messages = {
     // Biblioteca (aluno)
     libraryTitle: "Biblioteca",
     libraryDescription: "Cursos e vídeos para estudar técnica, mindset e performance. O acesso vem do teu plano digital.",
+    libraryAddonTitle: "Biblioteca digital (add-on)",
+    libraryAddonBody:
+      "Com o Kingdom Presencial I podes subscrever a biblioteca de cursos em separado. O pagamento é mensal e recorrente (Stripe), em adição ao teu plano presencial.",
+    libraryAddonCta: "Ativar biblioteca digital",
+    libraryAddonPriceHint: "Cerca de +20€/mês — o valor exato aparece no checkout.",
+    libraryAddonLoading: "A abrir o pagamento…",
+    libraryAddonStripeSuccess: "Se o pagamento foi concluído, o acesso à biblioteca fica ativo em breve (após confirmação do Stripe).",
+    libraryAddonStripeCancel: "Pagamento do add-on cancelado. Podes tentar de novo quando quiseres.",
     libraryEmpty: "Ainda não há cursos disponíveis. Em breve a escola adicionará conteúdo aqui.",
     buyCourse: "Comprar",
     includedInDigitalPlan: "Incluído em planos com acesso digital",
@@ -1279,6 +1287,14 @@ export const messages = {
 
     libraryTitle: "Library",
     libraryDescription: "Courses and videos to study technique, mindset and performance. Access comes from your digital plan.",
+    libraryAddonTitle: "Digital library (add-on)",
+    libraryAddonBody:
+      "With Kingdom Presencial I you can subscribe to the course library separately. Payment is monthly via Stripe, in addition to your in-person plan.",
+    libraryAddonCta: "Enable digital library",
+    libraryAddonPriceHint: "Around +20€/month — exact amount is shown at checkout.",
+    libraryAddonLoading: "Opening payment…",
+    libraryAddonStripeSuccess: "If payment completed, library access will turn on shortly after Stripe confirms.",
+    libraryAddonStripeCancel: "Add-on payment cancelled. You can try again anytime.",
     libraryEmpty: "No courses available yet. The school will add content here soon.",
     buyCourse: "Buy",
     includedInDigitalPlan: "Included in plans with digital access",

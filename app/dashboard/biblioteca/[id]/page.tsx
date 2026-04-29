@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { getCachedPlanAccess } from "@/lib/plan-access";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { CourseContentViewer } from "../CourseContentViewer";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
@@ -20,22 +21,11 @@ export default async function CursoDetailPage({ params }: Props) {
     PERFORMANCE: t("categoryPerformance"),
   };
   const studentId = await getCurrentStudentId();
-
-  let planId: string | null = null;
-  let hasDigitalAccess = false;
+  const planAccess = await getCachedPlanAccess(studentId);
+  const hasDigitalAccess = planAccess.hasDigitalAccess;
+  const planId = planAccess.currentPlanId;
   let hasPurchased = false;
   if (studentId) {
-    const { data: student } = await supabase.from("Student").select("planId").eq("id", studentId).single();
-    planId = student?.planId ?? null;
-    if (planId) {
-      const { data: plan } = await supabase
-        .from("Plan")
-        .select("includesDigitalAccess")
-        .eq("id", planId)
-        .eq("isActive", true)
-        .single();
-      hasDigitalAccess = plan?.includesDigitalAccess === true;
-    }
     const { data: purchase } = await supabase
       .from("CoursePurchase")
       .select("id")

@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
         success_url: `${baseUrl}/dashboard?stripe=success`,
         cancel_url: `${baseUrl}/dashboard?stripe=cancel`,
         subscription_data: {
-          metadata: { studentId },
+          metadata: { studentId, subscriptionRole: "main" },
           trial_period_days: undefined,
         },
         allow_promotion_codes: true,

@@ -8,6 +8,8 @@ import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
+import { KINGDOM_PLAN_PRESENCIAL_I_ID } from "./kingdom-plans-constants";
+
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
 export type PlanAccess = {
@@ -18,6 +20,10 @@ export type PlanAccess = {
   hasExclusiveBenefits: boolean;
   allowedModalities: string[];
   primaryModality: string | null;
+  /** `Student.planId` (plano de subscrição/base). */
+  currentPlanId: string | null;
+  /** Só com Kingdom Presencial I, sem o add-on da biblioteca ainda ativo. */
+  canSubscribeDigitalLibraryAddon: boolean;
 };
 
 /**
@@ -36,13 +42,15 @@ export async function getPlanAccess(
     hasExclusiveBenefits: false,
     allowedModalities: [],
     primaryModality: null,
+    currentPlanId: null,
+    canSubscribeDigitalLibraryAddon: false,
   };
 
   if (!studentId) return defaultAccess;
 
   const { data: student } = await supabase
     .from("Student")
-    .select("planId, primaryModality")
+    .select("planId, primaryModality, digitalLibraryAddon")
     .eq("id", studentId)
     .single();
 
@@ -51,7 +59,7 @@ export async function getPlanAccess(
   const { data: plan } = await supabase
     .from("Plan")
     .select(
-      "modalityScope, includesDigitalAccess, includes_performance_tracking, includes_check_in, max_check_ins_per_day, includes_exclusive_benefits"
+      "id, modalityScope, includesDigitalAccess, includes_performance_tracking, includes_check_in, max_check_ins_per_day, includes_exclusive_benefits"
     )
     .eq("id", student.planId)
     .eq("isActive", true)
@@ -75,14 +83,24 @@ export async function getPlanAccess(
   const maxCheckInsPerDay: 0 | 1 | null =
     maxCheckIns === null ? null : maxCheckIns === 1 ? 1 : 0;
 
+  const planRowId = (plan as { id: string }).id;
+  const baseDigital = plan.includesDigitalAccess === true;
+  const addon = (student as { digitalLibraryAddon?: boolean | null }).digitalLibraryAddon === true;
+  const hasDigitalAccess =
+    baseDigital || (planRowId === KINGDOM_PLAN_PRESENCIAL_I_ID && addon);
+  const canSubscribeDigitalLibraryAddon =
+    planRowId === KINGDOM_PLAN_PRESENCIAL_I_ID && !addon;
+
   return {
-    hasDigitalAccess: plan.includesDigitalAccess === true,
+    hasDigitalAccess,
     hasPerformanceTracking: (plan.includes_performance_tracking ?? true) === true,
     hasCheckIn: (plan.includes_check_in ?? true) === true,
     maxCheckInsPerDay,
     hasExclusiveBenefits: plan.includes_exclusive_benefits === true,
     allowedModalities,
     primaryModality,
+    currentPlanId: student.planId,
+    canSubscribeDigitalLibraryAddon,
   };
 }
 

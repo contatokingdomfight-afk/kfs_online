@@ -57,6 +57,9 @@ STRIPE_WEBHOOK_SECRET=
 [Eventos conforme app (ex.: invoice.paid, checkout)]
 [Começa com: whsec_...]
 
+# Add-on biblioteca digital (Kingdom Presencial I, +20€/mês) — criado via MCP Stripe (prod + price live)
+STRIPE_DIGITAL_LIBRARY_ADDON_PRICE_ID=price_1TRbP0EnpsjluynE09LZFE1k
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 5) GOOGLE OAUTH (opcional — muito configurado no Supabase)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

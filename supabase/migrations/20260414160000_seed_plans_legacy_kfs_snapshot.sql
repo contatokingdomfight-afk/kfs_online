@@ -56,7 +56,7 @@ INSERT INTO "Plan" (
     'plan-presencial-i',
     'Kingdom Presencial Modalidade (Plano I)',
     'Acesso presencial ilimitado a uma modalidade (Muay Thai, Jiu-Jitsu ou Boxing). Não inclui plataforma digital.',
-    50,
+    55,
     'default-school-001',
     false,
     'SINGLE',
