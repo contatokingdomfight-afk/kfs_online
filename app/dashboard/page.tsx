@@ -14,7 +14,10 @@ import { NextLessonCard } from "./NextLessonCard";
 import { OPEN_CLASS_CARD_WIDTH } from "./open-classes-carousel-constants";
 import { OpenClassesCarouselShell } from "./OpenClassesCarouselShell";
 import { DashboardBelowFold } from "./DashboardBelowFold";
-import { isLessonParticipationAllowedByPlan } from "@/lib/dashboard-lesson-filter";
+import {
+  filterDashboardLessonsByPlanModality,
+  isLessonParticipationAllowedByPlan,
+} from "@/lib/dashboard-lesson-filter";
 import {
   expandLessonsForDateRange,
   fetchLessonCancellations,
@@ -116,12 +119,17 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   });
 
   const expanded = expandLessonsForDateRange(lessonsAsDefs, cancellations, today, endOfWeek);
-  const lessons = expanded.map((L) => ({
+  const lessonsRawExpanded = expanded.map((L) => ({
     ...L,
     date: L.occurrenceDate,
     modality: L.modality ?? "",
     schoolName: L.schoolId ? schoolNameById.get(L.schoolId) ?? null : null,
   }));
+  const lessons = filterDashboardLessonsByPlanModality(lessonsRawExpanded, {
+    hasPlan,
+    allowedModalities,
+    studentPrimaryModality,
+  });
 
   const planFilterInput = {
     hasPlan,

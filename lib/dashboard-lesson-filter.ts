@@ -1,5 +1,32 @@
 /** Filtro de aulas da semana no dashboard do aluno (próxima aula / lista). */
 
+import { normalizeModalityCode } from "@/lib/modality-normalize";
+
+export type DashboardModalityViewInput = {
+  hasPlan: boolean;
+  /** De `getPlanAccess.allowedModalities` */
+  allowedModalities: string[];
+  studentPrimaryModality: string | null;
+};
+
+/**
+ * Plano com uma única modalidade (ex.: Presencial I com `modalityScope` SINGLE e `primaryModality`):
+ * o aluno só deve ver aulas dessa modalidade no dashboard.
+ */
+export function shouldRestrictDashboardToSingleModality(input: DashboardModalityViewInput): boolean {
+  return input.hasPlan && input.allowedModalities.length === 1 && input.studentPrimaryModality != null;
+}
+
+export function filterDashboardLessonsByPlanModality<T extends { modality: string }>(
+  lessons: T[],
+  input: DashboardModalityViewInput
+): T[] {
+  if (!shouldRestrictDashboardToSingleModality(input)) return lessons;
+  const only = normalizeModalityCode(input.allowedModalities[0] ?? input.studentPrimaryModality ?? "");
+  if (!only) return lessons;
+  return lessons.filter((l) => normalizeModalityCode(l.modality) === only);
+}
+
 export type DashboardLessonRow = {
   modality: string;
   isOpenClass?: boolean | null;
