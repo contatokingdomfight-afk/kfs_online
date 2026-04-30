@@ -535,20 +535,56 @@ export function FinanceiroModals({
 
   return (
     <>
-      <p style={{ margin: "0 0 12px 0", color: "var(--text-secondary)", fontSize: "clamp(13px, 3.2vw, 15px)", lineHeight: 1.5 }}>
+      <p
+        style={{
+          margin: "0 0 14px 0",
+          color: "var(--text-secondary)",
+          fontSize: "clamp(13px, 3.2vw, 15px)",
+          lineHeight: 1.5,
+        }}
+      >
         {labels.modalsHint}
       </p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: "clamp(20px, 4vw, 28px)" }}>
-        <button type="button" className="btn" style={{ background: "var(--bg-secondary)" }} onClick={() => setOpen("renewals")}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 10,
+          width: "100%",
+          maxWidth: "100%",
+          marginBottom: "clamp(20px, 4vw, 28px)",
+        }}
+      >
+        <button
+          type="button"
+          className="btn btn-secondary"
+          style={{ width: "100%" }}
+          onClick={() => setOpen("renewals")}
+        >
           {labels.openRenewals} ({renewalsPending.length})
         </button>
-        <button type="button" className="btn" style={{ background: "var(--bg-secondary)" }} onClick={() => setOpen("payments")}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          style={{ width: "100%" }}
+          onClick={() => setOpen("payments")}
+        >
           {labels.openPayments} ({allPaymentRows.length})
         </button>
-        <button type="button" className="btn" style={{ background: "var(--bg-secondary)" }} onClick={() => setOpen("expenses")}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          style={{ width: "100%" }}
+          onClick={() => setOpen("expenses")}
+        >
           {labels.openExpenses} ({expenses.length})
         </button>
-        <button type="button" className="btn" style={{ background: "var(--bg-secondary)" }} onClick={() => setOpen("revenue")}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          style={{ width: "100%" }}
+          onClick={() => setOpen("revenue")}
+        >
           {labels.openRevenue} ({revenue.rows.length})
         </button>
       </div>
