@@ -11,9 +11,13 @@ import type { RenewalPending } from "@/lib/renewals";
 type Props = {
   referenceMonth: string;
   pending: RenewalPending[];
+  /** Quando dentro de outro cartão (ex.: modal), evita `className="card"` no envoltório. */
+  noOuterCard?: boolean;
+  /** Não mostrar o título «Renovações do mês (…)» (ex.: título no cabeçalho do modal). */
+  suppressTitle?: boolean;
 };
 
-export function RenewalsSection({ referenceMonth, pending }: Props) {
+export function RenewalsSection({ referenceMonth, pending, noOuterCard, suppressTitle }: Props) {
   const [state, formAction] = useFormState(
     generateMonthlyPaymentsFormAction,
     null as GenerateMonthlyPaymentsResult | null
@@ -21,24 +25,20 @@ export function RenewalsSection({ referenceMonth, pending }: Props) {
 
   const monthLabel = `${referenceMonth.slice(5)}/${referenceMonth.slice(0, 4)}`;
 
-  return (
-    <section
-      className="card"
-      style={{
-        padding: "clamp(16px, 4vw, 20px)",
-        marginBottom: "clamp(20px, 5vw, 24px)",
-      }}
-    >
-      <h2
-        style={{
-          margin: "0 0 clamp(12px, 3vw, 16px) 0",
-          fontSize: "clamp(17px, 4.2vw, 19px)",
-          fontWeight: 600,
-          color: "var(--text-primary)",
-        }}
-      >
-        Renovações do mês ({monthLabel})
-      </h2>
+  const inner = (
+    <>
+      {!suppressTitle && (
+        <h2
+          style={{
+            margin: "0 0 clamp(12px, 3vw, 16px) 0",
+            fontSize: "clamp(17px, 4.2vw, 19px)",
+            fontWeight: 600,
+            color: "var(--text-primary)",
+          }}
+        >
+          Renovações do mês ({monthLabel})
+        </h2>
+      )}
       <p
         style={{
           margin: "0 0 clamp(12px, 3vw, 16px) 0",
@@ -156,6 +156,22 @@ export function RenewalsSection({ referenceMonth, pending }: Props) {
           </ul>
         </>
       )}
+    </>
+  );
+
+  if (noOuterCard) {
+    return <div style={{ minWidth: 0 }}>{inner}</div>;
+  }
+
+  return (
+    <section
+      className="card"
+      style={{
+        padding: "clamp(16px, 4vw, 20px)",
+        marginBottom: "clamp(20px, 5vw, 24px)",
+      }}
+    >
+      {inner}
     </section>
   );
 }
