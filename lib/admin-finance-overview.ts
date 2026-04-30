@@ -3,12 +3,15 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 
+export type FinancialExpenseKind = "FIXED" | "VARIABLE";
+
 export type FinancialExpenseRow = {
   id: string;
   amount: number;
   description: string;
   occurredOn: string;
   createdAt: string;
+  kind: FinancialExpenseKind;
 };
 
 function monthDateBounds(yyyyMm: string): { start: string; end: string } {
@@ -38,6 +41,10 @@ export type FinanceiroOverview = {
   activeStudents: number;
   revenueCurrentMonth: number;
   expensesCurrentMonth: number;
+  /** Soma das despesas com data no mês e kind FIXED. */
+  expensesFixedMonth: number;
+  /** Soma das despesas com data no mês e kind VARIABLE. */
+  expensesVariableMonth: number;
   balanceCurrentMonth: number;
   allExpenses: FinancialExpenseRow[];
   expensesError: string | null;
@@ -52,6 +59,8 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
     activeStudents: 0,
     revenueCurrentMonth: 0,
     expensesCurrentMonth: 0,
+    expensesFixedMonth: 0,
+    expensesVariableMonth: 0,
     balanceCurrentMonth: 0,
     allExpenses: [],
     expensesError: null,
@@ -60,7 +69,7 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
 
   const { data: expenseRows, error: exErr } = await supabase
     .from("FinancialExpense")
-    .select("id, amount, description, occurredOn, createdAt")
+    .select("id, amount, description, occurredOn, createdAt, kind")
     .order("occurredOn", { ascending: false })
     .order("createdAt", { ascending: false });
 
@@ -69,20 +78,33 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
   }
 
   const all: FinancialExpenseRow[] = (expenseRows ?? []).map((r) => {
-    const x = r as { id: string; amount: string | number; description: string; occurredOn: string; createdAt: string };
+    const x = r as {
+      id: string;
+      amount: string | number;
+      description: string;
+      occurredOn: string;
+      createdAt: string;
+      kind?: string;
+    };
+    const kind: FinancialExpenseKind = x.kind === "FIXED" ? "FIXED" : "VARIABLE";
     return {
       id: x.id,
       amount: Number(x.amount),
       description: x.description,
       occurredOn: typeof x.occurredOn === "string" ? x.occurredOn.slice(0, 10) : String(x.occurredOn).slice(0, 10),
       createdAt: x.createdAt,
+      kind,
     };
   });
 
   let expensesCurrentMonth = 0;
+  let expensesFixedMonth = 0;
+  let expensesVariableMonth = 0;
   for (const e of all) {
     if (e.occurredOn >= start && e.occurredOn <= end) {
       expensesCurrentMonth += e.amount;
+      if (e.kind === "FIXED") expensesFixedMonth += e.amount;
+      else expensesVariableMonth += e.amount;
     }
   }
 
@@ -92,6 +114,8 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
       ...base,
       allExpenses: all,
       expensesCurrentMonth,
+      expensesFixedMonth,
+      expensesVariableMonth,
       balanceCurrentMonth: 0 - expensesCurrentMonth,
       expensesError: null,
       overviewError: stErr.message,
@@ -114,6 +138,8 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
         activeStudents,
         allExpenses: all,
         expensesCurrentMonth,
+        expensesFixedMonth,
+        expensesVariableMonth,
         balanceCurrentMonth: revenueCurrentMonth - expensesCurrentMonth,
         expensesError: null,
         overviewError: payErr.message,
@@ -129,6 +155,8 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
     activeStudents,
     revenueCurrentMonth,
     expensesCurrentMonth,
+    expensesFixedMonth,
+    expensesVariableMonth,
     balanceCurrentMonth: revenueCurrentMonth - expensesCurrentMonth,
     allExpenses: all,
     expensesError: null,

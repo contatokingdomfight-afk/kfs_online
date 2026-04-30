@@ -14,6 +14,9 @@ function SubmitButton({ label }: { label: string }) {
 }
 
 type Labels = {
+  kindField: string;
+  kindFixed: string;
+  kindVariable: string;
   amount: string;
   description: string;
   date: string;
@@ -30,6 +33,8 @@ export function AddExpenseForm({ defaultDate, labels }: { defaultDate: string; l
       formRef.current?.reset();
       const dateInput = formRef.current?.querySelector<HTMLInputElement>('input[name="occurredOn"]');
       if (dateInput) dateInput.value = defaultDate;
+      const v = formRef.current?.querySelector<HTMLInputElement>('input[name="kind"][value="VARIABLE"]');
+      if (v) v.checked = true;
     }
   }, [state, defaultDate]);
 
@@ -69,6 +74,19 @@ export function AddExpenseForm({ defaultDate, labels }: { defaultDate: string; l
             style={{ maxWidth: "100%" }}
           />
         </label>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.kindField}</span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px 20px" }}>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+              <input type="radio" name="kind" value="FIXED" />
+              <span>{labels.kindFixed}</span>
+            </label>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+              <input type="radio" name="kind" value="VARIABLE" defaultChecked />
+              <span>{labels.kindVariable}</span>
+            </label>
+          </div>
+        </div>
         <div
           style={{
             display: "grid",

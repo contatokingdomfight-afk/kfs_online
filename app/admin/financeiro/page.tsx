@@ -24,15 +24,6 @@ function formatMoneyN(n: number, locale: "pt" | "en") {
   });
 }
 
-function formatTableDate(yyyyMmDd: string, locale: "pt" | "en") {
-  const d = new Date(yyyyMmDd + "T12:00:00Z");
-  return d.toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 export default async function AdminFinanceiroPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
@@ -93,9 +84,6 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
     locale === "en" ? "en-GB" : "pt-PT",
     { month: "long", year: "numeric" }
   );
-
-  const mapMoney = (n: number) => formatMoneyN(n, locale);
-  const mapTable = (d: string) => formatTableDate(d, locale);
 
   return (
     <div style={{ maxWidth: "min(900px, 100%)" }}>
@@ -182,14 +170,20 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           <div className="card" style={{ padding: 14, background: "var(--bg)" }}>
             <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>{t("adminFinanceRevenueMonth")}</div>
             <div style={{ fontSize: "clamp(20px, 4vw, 24px)", fontWeight: 700, color: "var(--text-primary)" }}>
-              {mapMoney(overview.revenueCurrentMonth)}
+              {formatMoneyN(overview.revenueCurrentMonth, locale)}
             </div>
           </div>
           <div className="card" style={{ padding: 14, background: "var(--bg)" }}>
             <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>{t("adminFinanceCostsMonth")}</div>
             <div style={{ fontSize: "clamp(20px, 4vw, 24px)", fontWeight: 700, color: "var(--text-primary)" }}>
-              {mapMoney(overview.expensesCurrentMonth)}
+              {formatMoneyN(overview.expensesCurrentMonth, locale)}
             </div>
+            {overview.expensesError ? null : (
+              <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
+                {t("adminFinanceLabelFixed")}: {formatMoneyN(overview.expensesFixedMonth, locale)} · {t("adminFinanceLabelVariable")}:{" "}
+                {formatMoneyN(overview.expensesVariableMonth, locale)}
+              </p>
+            )}
           </div>
           <div className="card" style={{ padding: 14, background: "var(--bg)" }}>
             <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>{t("adminFinanceBalanceMonth")}</div>
@@ -200,7 +194,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
                 color: overview.balanceCurrentMonth < 0 ? "var(--error, #b91c1c)" : "var(--text-primary)",
               }}
             >
-              {mapMoney(overview.balanceCurrentMonth)}
+              {formatMoneyN(overview.balanceCurrentMonth, locale)}
             </div>
           </div>
         </div>
@@ -215,8 +209,8 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
         <p role="alert" className="card" style={{ padding: 12, color: "var(--error)", marginBottom: 12, fontSize: 14 }}>
           {overview.expensesError}
           {locale === "pt"
-            ? " — aplica a migração add_financial_expense.sql (Supabase) e recarrega se a tabela ainda não existir."
-            : " — run migration add_financial_expense.sql (Supabase) if the table is missing."}
+            ? " — aplica as migrações add_financial_expense.sql e add_financial_expense_kind.sql (Supabase) e recarrega se faltar tabela ou coluna «kind»."
+            : " — run migrations add_financial_expense.sql and add_financial_expense_kind.sql (Supabase) if the table or «kind» column is missing."}
         </p>
       )}
 
@@ -245,25 +239,28 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           expensesTableTitle: t("adminFinanceTableTitle"),
           colDate: t("adminFinanceColDate"),
           colDescription: t("adminFinanceColDescription"),
+          colKind: t("adminFinanceColKind"),
           colAmount: t("adminFinanceColAmount"),
           colActions: t("adminFinanceColActions"),
           noExpenses: t("adminFinanceNoExpenses"),
           formAmount: t("adminFinanceFormAmount"),
           formDescription: t("adminFinanceFormDescription"),
           formDate: t("adminFinanceFormDate"),
+          formKindField: t("adminFinanceFormKind"),
+          formKindFixed: t("adminFinanceKindFixed"),
+          formKindVariable: t("adminFinanceKindVariable"),
           formSubmit: t("adminFinanceFormSubmit"),
           expenseSaved: t("adminFinanceExpenseSaved"),
           deleteLabel: t("adminFinanceDelete"),
           expenseErrorSuffix:
             locale === "pt"
-              ? "— aplica a migração add_financial_expense.sql (Supabase) e recarrega se a tabela ainda não existir."
-              : "— run migration add_financial_expense.sql (Supabase) if the table is missing.",
+              ? "— aplica as migrações add_financial_expense.sql e add_financial_expense_kind.sql (Supabase) se faltar tabela ou coluna «kind»."
+              : "— run add_financial_expense.sql and add_financial_expense_kind.sql (Supabase) if the table or «kind» column is missing.",
           openRenewals: t("adminFinanceOpenRenewals"),
           openPayments: t("adminFinanceOpenPayments"),
           openExpenses: t("adminFinanceOpenExpenses"),
         }}
-        formatMoney={mapMoney}
-        formatTableDate={mapTable}
+        locale={locale}
       />
 
       {deduped !== undefined && deduped !== "" && (

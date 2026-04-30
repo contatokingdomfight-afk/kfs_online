@@ -47,12 +47,16 @@ type Labels = {
   expensesTableTitle: string;
   colDate: string;
   colDescription: string;
+  colKind: string;
   colAmount: string;
   colActions: string;
   noExpenses: string;
   formAmount: string;
   formDescription: string;
   formDate: string;
+  formKindField: string;
+  formKindFixed: string;
+  formKindVariable: string;
   formSubmit: string;
   expenseSaved: string;
   deleteLabel: string;
@@ -70,10 +74,26 @@ type Props = {
   expensesError: string | null;
   expenseErrorFromUrl: string | null;
   defaultExpenseDate: string;
+  /** Apenas serializável (sem funções do servidor). */
+  locale: "pt" | "en";
   labels: Labels;
-  formatMoney: (n: number) => string;
-  formatTableDate: (isoDate: string) => string;
 };
+
+function formatMoneyN(n: number, locale: "pt" | "en") {
+  return n.toLocaleString(locale === "en" ? "en-GB" : "pt-PT", {
+    style: "currency",
+    currency: "EUR",
+  });
+}
+
+function formatTableDate(yyyyMmDd: string, locale: "pt" | "en") {
+  const d = new Date(yyyyMmDd + "T12:00:00Z");
+  return d.toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 function modalCardStyle(maxWidth: number): React.CSSProperties {
   return {
@@ -96,8 +116,7 @@ export function FinanceiroModals({
   expenseErrorFromUrl,
   defaultExpenseDate,
   labels,
-  formatMoney,
-  formatTableDate,
+  locale,
 }: Props) {
   const [open, setOpen] = useState<ModalId | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -290,6 +309,9 @@ export function FinanceiroModals({
               <AddExpenseForm
                 defaultDate={defaultExpenseDate}
                 labels={{
+                  kindField: labels.formKindField,
+                  kindFixed: labels.formKindFixed,
+                  kindVariable: labels.formKindVariable,
                   amount: labels.formAmount,
                   description: labels.formDescription,
                   date: labels.formDate,
@@ -319,6 +341,7 @@ export function FinanceiroModals({
                       <tr style={{ background: "var(--bg-secondary)", textAlign: "left" }}>
                         <th style={{ padding: "8px 10px" }}>{labels.colDate}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colDescription}</th>
+                        <th style={{ padding: "8px 10px" }}>{labels.colKind}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colAmount}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colActions}</th>
                       </tr>
@@ -326,9 +349,12 @@ export function FinanceiroModals({
                     <tbody>
                       {expenses.map((e) => (
                         <tr key={e.id} style={{ borderTop: "1px solid var(--card-border, rgba(0,0,0,.06))" }}>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatTableDate(e.occurredOn)}</td>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatTableDate(e.occurredOn, locale)}</td>
                           <td style={{ padding: "8px 10px" }}>{e.description}</td>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoney(e.amount)}</td>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
+                            {e.kind === "FIXED" ? labels.formKindFixed : labels.formKindVariable}
+                          </td>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(e.amount, locale)}</td>
                           <td style={{ padding: "8px 10px" }}>
                             <form action={deleteFinancialExpense} style={{ margin: 0 }}>
                               <input type="hidden" name="id" value={e.id} />
