@@ -253,6 +253,8 @@ export async function createFinancialExpense(
   const amount = parseFloat(amountStr ?? "");
   if (Number.isNaN(amount) || amount <= 0) return { error: "Indica um valor positivo." };
   if (!occurredOn) return { error: "Data inválida (AAAA-MM-DD)." };
+  const kindRaw = (formData.get("kind") as string)?.trim();
+  const kind = kindRaw === "FIXED" || kindRaw === "VARIABLE" ? kindRaw : "VARIABLE";
 
   const supabase = createAdminClient();
   const id = crypto.randomUUID();
@@ -261,6 +263,7 @@ export async function createFinancialExpense(
     amount: amount.toFixed(2),
     description,
     occurredOn,
+    kind,
   });
   if (error) return { error: error.message };
   revalidatePath("/admin/financeiro");
