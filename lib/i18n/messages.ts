@@ -627,6 +627,8 @@ export const messages = {
     adminEmptyPayments: "Nenhum pagamento pendente. Ótimo trabalho!",
     adminEmptyTrials: "Nenhuma aula experimental a aguardar ação.",
     adminEmptyLowAttendance: "Todas as turmas têm boa previsão de adesão.",
+    adminActionItemsCloseModal: "Fechar",
+    adminActionItemsCardHint: "Clica numa categoria para ver a lista e agir.",
     adminManagementTitle: "Gestão da Plataforma",
     adminGranularHomeHint:
       "O teu acesso restringe-se a módulos concretos. Usa o menu à esquerda. Os blocos de receita, tabelas e gráficos desta página estão reservados a contas de administrador com acesso completo (sem permissões detalhadas).",
@@ -1419,6 +1421,8 @@ export const messages = {
     adminEmptyPayments: "No pending payments. Great job!",
     adminEmptyTrials: "No trial classes awaiting action.",
     adminEmptyLowAttendance: "All classes have good attendance forecast.",
+    adminActionItemsCloseModal: "Close",
+    adminActionItemsCardHint: "Choose a category to see the list and take action.",
     adminManagementTitle: "Platform management",
     adminGranularHomeHint:
       "Your access is limited to the modules you were given. Use the sidebar to navigate. Revenue, tables and charts on this page are only shown for full-access admin accounts (without granular permissions).",

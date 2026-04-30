@@ -122,6 +122,8 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
           emptyPayments: t("adminEmptyPayments"),
           emptyTrials: t("adminEmptyTrials"),
           emptyLowAttendance: t("adminEmptyLowAttendance"),
+          closeModal: t("adminActionItemsCloseModal"),
+          cardHint: t("adminActionItemsCardHint"),
         }}
       />
 

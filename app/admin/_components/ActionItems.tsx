@@ -1,11 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import type { PendingPayment, PendingTrial, LowAttendanceLesson } from "@/lib/admin-action-items";
 import { AcceptTrialButton } from "../experimentais/AcceptTrialButton";
 import { ConvertTrialButton } from "../experimentais/ConvertTrialButton";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
+
+const overlayStyle: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 10000,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 16,
+  overflow: "auto",
+};
 
 type Props = {
   pendingPayments: PendingPayment[];
@@ -21,6 +34,8 @@ type Props = {
     emptyPayments: string;
     emptyTrials: string;
     emptyLowAttendance: string;
+    closeModal: string;
+    cardHint: string;
   };
 };
 
@@ -32,7 +47,37 @@ export function ActionItems({
   lowAttendanceLessons,
   labels,
 }: Props) {
+  const [modalOpen, setModalOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("payments");
+  const [mounted, setMounted] = useState(false);
+  const titleId = useId();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const openForTab = (t: Tab) => {
+    setTab(t);
+    setModalOpen(true);
+  };
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeModal();
+    };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [modalOpen, closeModal]);
 
   const tabs = [
     { id: "payments" as Tab, label: labels.tabPayments, count: pendingPayments.length },
@@ -40,41 +85,12 @@ export function ActionItems({
     { id: "low" as Tab, label: labels.tabLowAttendance, count: lowAttendanceLessons.length },
   ];
 
-  return (
-    <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)", minWidth: 0 }}>
-      <h2
-        style={{
-          margin: "0 0 clamp(16px, 4vw, 20px) 0",
-          fontSize: "clamp(18px, 4.5vw, 20px)",
-          fontWeight: 600,
-          color: "var(--text-primary)",
-        }}
-      >
-        {labels.title}
-      </h2>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: "clamp(16px, 4vw, 20px)" }}>
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className="btn"
-            style={{
-              backgroundColor: tab === t.id ? "var(--primary)" : "var(--bg-secondary)",
-              color: tab === t.id ? "#fff" : "var(--text-primary)",
-              fontSize: "clamp(13px, 3.2vw, 15px)",
-              padding: "8px 14px",
-            }}
-          >
-            {t.label} ({t.count})
-          </button>
-        ))}
-      </div>
-
+  const tabPanel = (
+    <>
       {tab === "payments" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
           {pendingPayments.length === 0 ? (
-            <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)", margin: 0 }}>
               {labels.emptyPayments}
             </p>
           ) : (
@@ -113,7 +129,7 @@ export function ActionItems({
       {tab === "trials" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
           {pendingTrials.length === 0 ? (
-            <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)", margin: 0 }}>
               {labels.emptyTrials}
             </p>
           ) : (
@@ -143,7 +159,7 @@ export function ActionItems({
       {tab === "low" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
           {lowAttendanceLessons.length === 0 ? (
-            <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)", margin: 0 }}>
               {labels.emptyLowAttendance}
             </p>
           ) : (
@@ -179,6 +195,112 @@ export function ActionItems({
           )}
         </div>
       )}
+    </>
+  );
+
+  return (
+    <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)", minWidth: 0 }}>
+      <h2
+        style={{
+          margin: "0 0 clamp(8px, 2vw, 10px) 0",
+          fontSize: "clamp(18px, 4.5vw, 20px)",
+          fontWeight: 600,
+          color: "var(--text-primary)",
+        }}
+      >
+        {labels.title}
+      </h2>
+      <p
+        style={{
+          margin: "0 0 clamp(16px, 4vw, 20px) 0",
+          color: "var(--text-secondary)",
+          fontSize: "clamp(13px, 3.2vw, 15px)",
+          lineHeight: 1.45,
+        }}
+      >
+        {labels.cardHint}
+      </p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => openForTab(t.id)}
+            className="btn"
+            style={{
+              backgroundColor: "var(--bg-secondary)",
+              color: "var(--text-primary)",
+              fontSize: "clamp(13px, 3.2vw, 15px)",
+              padding: "10px 16px",
+              textAlign: "left",
+            }}
+            aria-label={`${t.label} — ${t.count}`}
+          >
+            {t.label} ({t.count})
+          </button>
+        ))}
+      </div>
+
+      {mounted && modalOpen
+        ? createPortal(
+            <div style={overlayStyle} role="presentation" onClick={(e) => e.target === e.currentTarget && closeModal()}>
+              <div
+                className="card"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  maxWidth: 640,
+                  width: "100%",
+                  maxHeight: "min(85vh, 700px)",
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: "clamp(20px, 4vw, 24px)",
+                  boxSizing: "border-box",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    marginBottom: 16,
+                  }}
+                >
+                  <h2 id={titleId} style={{ margin: 0, fontSize: "clamp(17px, 4.2vw, 20px)", fontWeight: 600 }}>
+                    {labels.title}
+                  </h2>
+                  <button type="button" className="button" onClick={closeModal} style={{ minWidth: 88, flexShrink: 0 }}>
+                    {labels.closeModal}
+                  </button>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: "clamp(14px, 3.5vw, 18px)" }}>
+                  {tabs.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setTab(t.id)}
+                      className="btn"
+                      style={{
+                        backgroundColor: tab === t.id ? "var(--primary)" : "var(--bg-secondary)",
+                        color: tab === t.id ? "#fff" : "var(--text-primary)",
+                        fontSize: "clamp(12px, 3vw, 14px)",
+                        padding: "8px 12px",
+                      }}
+                    >
+                      {t.label} ({t.count})
+                    </button>
+                  ))}
+                </div>
+                <div style={{ overflow: "auto", minHeight: 0, paddingRight: 2 }}>{tabPanel}</div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </section>
   );
 }
