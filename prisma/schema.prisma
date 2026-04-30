@@ -343,6 +343,17 @@ model FinancialExpense {
   @@map("FinancialExpense")
 }
 
+/// Receita manual (entradas noutras rubricas) registada no painel financeiro admin.
+model FinancialRevenue {
+  id          String   @id @default(cuid())
+  amount      Decimal  @db.Decimal(10, 2)
+  description String
+  occurredOn  DateTime @db.Date
+  createdAt   DateTime @default(now())
+
+  @@map("FinancialRevenue")
+}
+
 model Location {
   id        String   @id @default(cuid())
   name      String
