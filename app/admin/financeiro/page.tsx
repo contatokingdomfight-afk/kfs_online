@@ -9,6 +9,7 @@ import { getRenewalsPending } from "@/lib/renewals";
 import { getFinanceiroOverview } from "@/lib/admin-finance-overview";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { FinanceiroModals, type PaymentListRow } from "./_components/FinanceiroModals";
 
 type SearchParams = Promise<{
@@ -135,19 +136,30 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       </div>
 
       <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)", marginBottom: 20, minWidth: 0 }}>
-        <h2
+        <div
           style={{
-            margin: "0 0 8px 0",
-            fontSize: "clamp(17px, 4.2vw, 19px)",
-            fontWeight: 600,
-            color: "var(--text-primary)",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "baseline",
+            gap: "8px 10px",
+            margin: "0 0 20px 0",
           }}
         >
-          {t("adminFinanceOverviewTitle")} — {periodLabel}
-        </h2>
-        <p style={{ margin: "0 0 20px 0", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.45 }}>
-          {t("adminFinancePeriodHint")}
-        </p>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: "clamp(17px, 4.2vw, 19px)",
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("adminFinanceOverviewTitle")} — {periodLabel}
+          </h2>
+          <InlineInfoTip
+            detail={t("adminFinancePeriodHint")}
+            ariaLabel={t("adminFinancePeriodInfoAria")}
+          />
+        </div>
         {overview.overviewError && (
           <p role="alert" style={{ color: "var(--error)", marginBottom: 16, fontSize: 14 }}>
             {overview.overviewError}
@@ -174,16 +186,28 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
             </div>
           </div>
           <div className="card" style={{ padding: 14, background: "var(--bg)" }}>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>{t("adminFinanceCostsMonth")}</div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 6,
+                fontSize: 12,
+                color: "var(--text-secondary)",
+                marginBottom: 4,
+              }}
+            >
+              <span>{t("adminFinanceCostsMonth")}</span>
+              {overview.expensesError ? null : (
+                <InlineInfoTip
+                  detail={`${t("adminFinanceLabelFixed")}: ${formatMoneyN(overview.expensesFixedMonth, locale)} · ${t("adminFinanceLabelVariable")}: ${formatMoneyN(overview.expensesVariableMonth, locale)}`}
+                  ariaLabel={t("adminFinanceDespesasDetailAria")}
+                />
+              )}
+            </div>
             <div style={{ fontSize: "clamp(20px, 4vw, 24px)", fontWeight: 700, color: "var(--text-primary)" }}>
               {formatMoneyN(overview.expensesCurrentMonth, locale)}
             </div>
-            {overview.expensesError ? null : (
-              <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
-                {t("adminFinanceLabelFixed")}: {formatMoneyN(overview.expensesFixedMonth, locale)} · {t("adminFinanceLabelVariable")}:{" "}
-                {formatMoneyN(overview.expensesVariableMonth, locale)}
-              </p>
-            )}
           </div>
           <div className="card" style={{ padding: 14, background: "var(--bg)" }}>
             <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>{t("adminFinanceBalanceMonth")}</div>
