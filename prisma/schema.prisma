@@ -325,6 +325,17 @@ model Payment {
   createdAt      DateTime      @default(now())
 }
 
+/// Despesa geral (custos) registada no painel financeiro admin.
+model FinancialExpense {
+  id          String   @id @default(cuid())
+  amount      Decimal  @db.Decimal(10, 2)
+  description String
+  occurredOn  DateTime @db.Date
+  createdAt   DateTime @default(now())
+
+  @@map("FinancialExpense")
+}
+
 model Location {
   id        String   @id @default(cuid())
   name      String
