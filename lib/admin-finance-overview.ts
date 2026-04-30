@@ -67,14 +67,38 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
     overviewError: null,
   };
 
-  const { data: expenseRows, error: exErr } = await supabase
+  let expenseRows: unknown[] | null = null;
+  let expensesError: string | null = null;
+
+  const withKind = await supabase
     .from("FinancialExpense")
     .select("id, amount, description, occurredOn, createdAt, kind")
     .order("occurredOn", { ascending: false })
     .order("createdAt", { ascending: false });
 
-  if (exErr) {
-    return { ...base, expensesError: exErr.message };
+  if (withKind.error) {
+    const msg = withKind.error.message ?? "";
+    const kindMissing =
+      /kind/i.test(msg) && (/does not exist|column/i.test(msg) || /42703/.test(msg));
+    if (kindMissing) {
+      const noKind = await supabase
+        .from("FinancialExpense")
+        .select("id, amount, description, occurredOn, createdAt")
+        .order("occurredOn", { ascending: false })
+        .order("createdAt", { ascending: false });
+      if (noKind.error) {
+        expensesError = noKind.error.message;
+        expenseRows = [];
+      } else {
+        expenseRows = noKind.data as unknown[];
+        expensesError = null;
+      }
+    } else {
+      expensesError = withKind.error.message;
+      expenseRows = [];
+    }
+  } else {
+    expenseRows = withKind.data as unknown[];
   }
 
   const all: FinancialExpenseRow[] = (expenseRows ?? []).map((r) => {
@@ -117,7 +141,7 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
       expensesFixedMonth,
       expensesVariableMonth,
       balanceCurrentMonth: 0 - expensesCurrentMonth,
-      expensesError: null,
+      expensesError,
       overviewError: stErr.message,
     };
   }
@@ -141,7 +165,7 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
         expensesFixedMonth,
         expensesVariableMonth,
         balanceCurrentMonth: revenueCurrentMonth - expensesCurrentMonth,
-        expensesError: null,
+        expensesError,
         overviewError: payErr.message,
       };
     }
@@ -159,7 +183,7 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
     expensesVariableMonth,
     balanceCurrentMonth: revenueCurrentMonth - expensesCurrentMonth,
     allExpenses: all,
-    expensesError: null,
+    expensesError: expensesError,
     overviewError: null,
   };
 }
