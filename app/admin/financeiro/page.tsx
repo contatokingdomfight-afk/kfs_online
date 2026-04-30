@@ -11,9 +11,7 @@ import { getRevenueBreakdown, type RevenueBreakdownRow } from "@/lib/admin-reven
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
-import { AddManualRevenueForm } from "./_components/AddManualRevenueForm";
 import { FinanceiroModals, type PaymentListRow } from "./_components/FinanceiroModals";
-import { deleteManualRevenue } from "./actions";
 
 type SearchParams = Promise<{
   deduped?: string;
@@ -108,6 +106,13 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
     locale === "en" ? "en-GB" : "pt-PT",
     { month: "long", year: "numeric" }
   );
+
+  const revenueDisplayRows = revenue.rows.map((r) => ({
+    key: r.key,
+    displayLabel: formatRevenueRowLabel(t, r),
+    amount: r.amount,
+    isManual: r.category === "MANUAL",
+  }));
 
   return (
     <div style={{ maxWidth: "min(900px, 100%)" }}>
@@ -247,145 +252,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
         </div>
       </section>
 
-      <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)", marginBottom: 20, minWidth: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "baseline",
-            gap: "8px 10px",
-            margin: "0 0 16px 0",
-          }}
-        >
-          <h2
-            style={{
-              margin: 0,
-              fontSize: "clamp(17px, 4.2vw, 19px)",
-              fontWeight: 600,
-              color: "var(--text-primary)",
-            }}
-          >
-            {t("adminFinanceRevenueBySourceTitle")} — {periodLabel}
-          </h2>
-          <InlineInfoTip
-            detail={t("adminFinanceRevenueSectionHint")}
-            ariaLabel={t("adminFinanceRevenueSectionInfoAria")}
-          />
-        </div>
-
-        {revenue.error && (
-          <p role="alert" style={{ color: "var(--error)", marginBottom: 12, fontSize: 14 }}>
-            {revenue.error}
-            {` ${t("adminFinanceRevenueMigratedHint")}`}
-          </p>
-        )}
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr)",
-            gap: 20,
-            alignItems: "start",
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
-              gap: 20,
-              alignItems: "start",
-            }}
-          >
-            <div style={{ minWidth: 0, overflow: "auto" }}>
-              {!revenue.error && revenue.rows.length === 0 ? (
-                <p style={{ margin: 0, fontSize: 15, color: "var(--text-secondary)" }}>{t("adminFinanceRevenueNoRows")}</p>
-              ) : !revenue.error ? (
-                <div
-                  style={{
-                    overflowX: "auto",
-                    border: "1px solid var(--card-border, rgba(0,0,0,.1))",
-                    borderRadius: "var(--radius-sm)",
-                  }}
-                >
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      fontSize: 14,
-                    }}
-                  >
-                    <thead>
-                      <tr style={{ background: "var(--bg-secondary)", textAlign: "left" }}>
-                        <th style={{ padding: "8px 10px" }}>{t("adminFinanceRevenueTableFront")}</th>
-                        <th style={{ padding: "8px 10px" }}>{t("adminFinanceRevenueTableAmount")}</th>
-                        <th style={{ padding: "8px 10px" }}>{t("adminFinanceRevenueTableActions")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {revenue.rows.map((row) => (
-                        <tr key={row.key} style={{ borderTop: "1px solid var(--card-border, rgba(0,0,0,.06))" }}>
-                          <td style={{ padding: "8px 10px" }}>{formatRevenueRowLabel(t, row)}</td>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(row.amount, locale)}</td>
-                          <td style={{ padding: "8px 10px" }}>
-                            {row.category === "MANUAL" ? (
-                              <form action={deleteManualRevenue} style={{ margin: 0 }}>
-                                <input
-                                  type="hidden"
-                                  name="id"
-                                  value={row.key.replace(/^manual:/, "")}
-                                />
-                                <button type="submit" className="btn" style={{ fontSize: 12, padding: "4px 8px" }}>
-                                  {t("adminFinanceDelete")}
-                                </button>
-                              </form>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    {revenue.rows.length > 0 && (
-                      <tfoot>
-                        <tr style={{ background: "var(--bg-secondary)", fontWeight: 600 }}>
-                          <td style={{ padding: "8px 10px" }}>{t("adminFinanceRevenueTotal")}</td>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(revenue.total, locale)}</td>
-                          <td style={{ padding: "8px 10px" }} />
-                        </tr>
-                      </tfoot>
-                    )}
-                  </table>
-                </div>
-              ) : null}
-            </div>
-
-            <div style={{ minWidth: 0 }}>
-              <h3
-                style={{
-                  margin: "0 0 12px 0",
-                  fontSize: 16,
-                  fontWeight: 600,
-                  color: "var(--text-primary)",
-                }}
-              >
-                {t("adminFinanceRevenueAddBlockTitle")}
-              </h3>
-              <AddManualRevenueForm
-                defaultDate={todayYmd}
-                labels={{
-                  amount: t("adminFinanceRevenueFormAmount"),
-                  description: t("adminFinanceRevenueFormDescription"),
-                  date: t("adminFinanceRevenueFormDate"),
-                  submit: t("adminFinanceRevenueFormSubmit"),
-                  success: t("adminFinanceRevenueSaved"),
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {revenueError && !revenue.error && (
+      {revenueError && (
         <p role="alert" className="card" style={{ padding: 12, color: "var(--error)", marginBottom: 12, fontSize: 14 }}>
           {decodeURIComponent(revenueError.replace(/\+/g, " "))}
         </p>
@@ -413,6 +280,28 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
         expensesError={overview.expensesError}
         expenseErrorFromUrl={expenseError ?? null}
         defaultExpenseDate={todayYmd}
+        revenue={{
+          error: revenue.error,
+          errorHint: t("adminFinanceRevenueMigratedHint"),
+          modalTitle: `${t("adminFinanceRevenueBySourceTitle")} — ${periodLabel}`,
+          sectionHint: t("adminFinanceRevenueSectionHint"),
+          sectionHintAria: t("adminFinanceRevenueSectionInfoAria"),
+          tableFront: t("adminFinanceRevenueTableFront"),
+          tableAmount: t("adminFinanceRevenueTableAmount"),
+          tableActions: t("adminFinanceRevenueTableActions"),
+          noRows: t("adminFinanceRevenueNoRows"),
+          totalLabel: t("adminFinanceRevenueTotal"),
+          addBlockTitle: t("adminFinanceRevenueAddBlockTitle"),
+          formAmount: t("adminFinanceRevenueFormAmount"),
+          formDescription: t("adminFinanceRevenueFormDescription"),
+          formDate: t("adminFinanceRevenueFormDate"),
+          formSubmit: t("adminFinanceRevenueFormSubmit"),
+          formSuccess: t("adminFinanceRevenueSaved"),
+          rows: revenueDisplayRows,
+          total: revenue.total,
+        }}
+        revenueErrorFromUrl={revenueError ?? null}
+        defaultManualRevenueDate={todayYmd}
         labels={{
           modalsHint: t("adminFinanceModalsHint"),
           close: t("adminActionItemsCloseModal"),
@@ -450,6 +339,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           openRenewals: t("adminFinanceOpenRenewals"),
           openPayments: t("adminFinanceOpenPayments"),
           openExpenses: t("adminFinanceOpenExpenses"),
+          openRevenue: t("adminFinanceOpenRevenue"),
         }}
         locale={locale}
       />
