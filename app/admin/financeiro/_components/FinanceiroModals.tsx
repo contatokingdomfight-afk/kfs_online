@@ -4,7 +4,9 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { RenewalsSection } from "../RenewalsSection";
 import { AddExpenseForm } from "./AddExpenseForm";
-import { dedupeDuplicatePaymentsAction, deleteFinancialExpense } from "../actions";
+import { AddManualRevenueForm } from "./AddManualRevenueForm";
+import { dedupeDuplicatePaymentsAction, deleteFinancialExpense, deleteManualRevenue } from "../actions";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import type { RenewalPending } from "@/lib/renewals";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
 
@@ -28,7 +30,35 @@ export type PaymentListRow = {
   amount: number;
 };
 
-type ModalId = "renewals" | "payments" | "expenses";
+type ModalId = "renewals" | "payments" | "expenses" | "revenue";
+
+export type RevenueModalRow = {
+  key: string;
+  displayLabel: string;
+  amount: number;
+  isManual: boolean;
+};
+
+export type RevenueModalData = {
+  error: string | null;
+  errorHint: string;
+  modalTitle: string;
+  sectionHint: string;
+  sectionHintAria: string;
+  tableFront: string;
+  tableAmount: string;
+  tableActions: string;
+  noRows: string;
+  totalLabel: string;
+  addBlockTitle: string;
+  formAmount: string;
+  formDescription: string;
+  formDate: string;
+  formSubmit: string;
+  formSuccess: string;
+  rows: RevenueModalRow[];
+  total: number;
+};
 
 type Labels = {
   modalsHint: string;
@@ -64,6 +94,7 @@ type Labels = {
   openRenewals: string;
   openPayments: string;
   openExpenses: string;
+  openRevenue: string;
 };
 
 type Props = {
@@ -77,6 +108,9 @@ type Props = {
   /** Apenas serializável (sem funções do servidor). */
   locale: "pt" | "en";
   labels: Labels;
+  revenue: RevenueModalData;
+  revenueErrorFromUrl: string | null;
+  defaultManualRevenueDate: string;
 };
 
 function formatMoneyN(n: number, locale: "pt" | "en") {
@@ -115,6 +149,9 @@ export function FinanceiroModals({
   expensesError,
   expenseErrorFromUrl,
   defaultExpenseDate,
+  revenue,
+  revenueErrorFromUrl,
+  defaultManualRevenueDate,
   labels,
   locale,
 }: Props) {
@@ -373,6 +410,126 @@ export function FinanceiroModals({
           </div>
         </div>
       )}
+
+      {open === "revenue" && (
+        <div style={overlayStyle} role="presentation" onClick={(e) => e.target === e.currentTarget && closeModal()}>
+          <div
+            className="card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId + "-v"}
+            onClick={(e) => e.stopPropagation()}
+            style={modalCardStyle(900)}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "6px 10px", minWidth: 0 }}>
+                <h2 id={titleId + "-v"} style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
+                  {revenue.modalTitle}
+                </h2>
+                <InlineInfoTip detail={revenue.sectionHint} ariaLabel={revenue.sectionHintAria} />
+              </div>
+              <button type="button" className="button" onClick={closeModal} style={{ flexShrink: 0 }}>
+                {labels.close}
+              </button>
+            </div>
+            {revenueErrorFromUrl && (
+              <p role="alert" className="card" style={{ padding: 10, color: "var(--error)", marginBottom: 10, fontSize: 13 }}>
+                {decodeURIComponent(revenueErrorFromUrl.replace(/\+/g, " "))}
+              </p>
+            )}
+            {revenue.error && (
+              <p role="alert" className="card" style={{ padding: 10, color: "var(--error)", marginBottom: 10, fontSize: 13 }}>
+                {revenue.error} {revenue.errorHint}
+              </p>
+            )}
+
+            <div
+              style={{
+                overflow: "auto",
+                minHeight: 0,
+                flex: 1,
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+                gap: 20,
+                alignItems: "start",
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                {!revenue.error && revenue.rows.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: 15, color: "var(--text-secondary)" }}>{revenue.noRows}</p>
+                ) : !revenue.error ? (
+                  <div
+                    style={{
+                      overflowX: "auto",
+                      border: "1px solid var(--card-border, rgba(0,0,0,.1))",
+                      borderRadius: "var(--radius-sm)",
+                    }}
+                  >
+                    <table
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        fontSize: 14,
+                      }}
+                    >
+                      <thead>
+                        <tr style={{ background: "var(--bg-secondary)", textAlign: "left" }}>
+                          <th style={{ padding: "8px 10px" }}>{revenue.tableFront}</th>
+                          <th style={{ padding: "8px 10px" }}>{revenue.tableAmount}</th>
+                          <th style={{ padding: "8px 10px" }}>{revenue.tableActions}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {revenue.rows.map((row) => (
+                          <tr key={row.key} style={{ borderTop: "1px solid var(--card-border, rgba(0,0,0,.06))" }}>
+                            <td style={{ padding: "8px 10px" }}>{row.displayLabel}</td>
+                            <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(row.amount, locale)}</td>
+                            <td style={{ padding: "8px 10px" }}>
+                              {row.isManual ? (
+                                <form action={deleteManualRevenue} style={{ margin: 0 }}>
+                                  <input type="hidden" name="id" value={row.key.replace(/^manual:/, "")} />
+                                  <button type="submit" className="btn" style={{ fontSize: 12, padding: "4px 8px" }}>
+                                    {labels.deleteLabel}
+                                  </button>
+                                </form>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      {revenue.rows.length > 0 && (
+                        <tfoot>
+                          <tr style={{ background: "var(--bg-secondary)", fontWeight: 600 }}>
+                            <td style={{ padding: "8px 10px" }}>{revenue.totalLabel}</td>
+                            <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(revenue.total, locale)}</td>
+                            <td style={{ padding: "8px 10px" }} />
+                          </tr>
+                        </tfoot>
+                      )}
+                    </table>
+                  </div>
+                ) : null}
+              </div>
+
+              <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{revenue.addBlockTitle}</h3>
+                <AddManualRevenueForm
+                  defaultDate={defaultManualRevenueDate}
+                  labels={{
+                    amount: revenue.formAmount,
+                    description: revenue.formDescription,
+                    date: revenue.formDate,
+                    submit: revenue.formSubmit,
+                    success: revenue.formSuccess,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 
@@ -390,6 +547,9 @@ export function FinanceiroModals({
         </button>
         <button type="button" className="btn" style={{ background: "var(--bg-secondary)" }} onClick={() => setOpen("expenses")}>
           {labels.openExpenses} ({expenses.length})
+        </button>
+        <button type="button" className="btn" style={{ background: "var(--bg-secondary)" }} onClick={() => setOpen("revenue")}>
+          {labels.openRevenue} ({revenue.rows.length})
         </button>
       </div>
       {mounted && createPortal(modals, document.body)}
