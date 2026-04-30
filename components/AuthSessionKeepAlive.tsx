@@ -3,13 +3,18 @@
 import { useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+/** Se faltar menos disto para o JWT expirar, pedimos refresh explícito (evita 401 no middleware). */
+const JWT_REFRESH_WHEN_WITHIN_MS = 22 * 60 * 1000;
+/** Verificação periódica com o ecrã visível (não força refresh a cada tick — só perto do expiry). */
+const VISIBLE_CHECK_INTERVAL_MS = 10 * 60 * 1000;
+
 /**
  * Em mobile/PWA os timers de refresh do Supabase podem ser suspensos com o separador em segundo plano.
- * `refreshSession()` troca o refresh token por um par novo quando o JWT já expirou (caso típico após horas/dias fechado).
- * `getUser()` valida com o Auth e também pode renovar — usado como fallback.
- * `startAutoRefresh()` reactiva o ticker interno após mount.
- * Intervalo com o separador visível: reforço periódico enquanto a app está aberta.
- * Eventos: visibilitychange, pageshow (incl. abrir a PWA pelo ícone), focus, online, resume (Android).
+ * Importante: **não** chamar `refreshSession()` em loop fixo sempre que há refresh_token — isso roda o token
+ * constantemente e pode aumentar falhas/revogações. Só renovamos o JWT quando está perto de expirar; ao voltar
+ * do background fazemos recuperação mais agressiva.
+ * `startAutoRefresh()` reactiva o ticker interno do cliente após mount.
+ * Eventos: visibilitychange, pageshow, focus, online, resume (Android).
  */
 export function AuthSessionKeepAlive() {
   useEffect(() => {
@@ -19,11 +24,37 @@ export function AuthSessionKeepAlive() {
     let lastOnlineBump = 0;
     const onlineThrottleMs = 45_000;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    /** ~20 min: JWT default no Supabase costuma ser 1h; renovar antes reduz 401 após idle com app aberta. */
-    const visibleRefreshIntervalMs = 20 * 60 * 1000;
     let visibleInterval: ReturnType<typeof setInterval> | null = null;
 
-    const refreshFromServer = () => {
+    /** Renova JWT só se estiver quase a expirar; caso contrário confia no access token actual. */
+    const refreshIfJwtNearExpiry = () => {
+      void (async () => {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (!session) {
+            await supabase.auth.getUser();
+            return;
+          }
+          const expMs = session.expires_at ? session.expires_at * 1000 : 0;
+          const msLeft = expMs > 0 ? expMs - Date.now() : 0;
+          if ((!expMs || msLeft < JWT_REFRESH_WHEN_WITHIN_MS) && session.refresh_token) {
+            const { error } = await supabase.auth.refreshSession();
+            if (error) await supabase.auth.getUser();
+          }
+        } catch {
+          try {
+            await supabase.auth.getUser();
+          } catch {
+            /* ignorar */
+          }
+        }
+      })();
+    };
+
+    /** Voltar de outra app / PWA / muito tempo em background: tentar refresh explícito se ainda houver refresh token. */
+    const refreshAfterResume = () => {
       void (async () => {
         try {
           const {
@@ -31,9 +62,7 @@ export function AuthSessionKeepAlive() {
           } = await supabase.auth.getSession();
           if (session?.refresh_token) {
             const { error } = await supabase.auth.refreshSession();
-            if (error) {
-              await supabase.auth.getUser();
-            }
+            if (error) await supabase.auth.getUser();
           } else {
             await supabase.auth.getUser();
           }
@@ -47,21 +76,21 @@ export function AuthSessionKeepAlive() {
       })();
     };
 
-    /** Volta do background / bfcache / outra app: refresh já + outro após debounce. */
+    /** Volta do background / bfcache / outra app: recuperação agressiva + segundo passe após debounce. */
     const scheduleResumeRefresh = () => {
-      refreshFromServer();
+      refreshAfterResume();
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         debounceTimer = null;
-        refreshFromServer();
+        refreshAfterResume();
       }, 400);
     };
 
     const startVisibleInterval = () => {
       if (visibleInterval) return;
       visibleInterval = setInterval(() => {
-        if (document.visibilityState === "visible") refreshFromServer();
-      }, visibleRefreshIntervalMs);
+        if (document.visibilityState === "visible") refreshIfJwtNearExpiry();
+      }, VISIBLE_CHECK_INTERVAL_MS);
     };
 
     const stopVisibleInterval = () => {
@@ -93,7 +122,7 @@ export function AuthSessionKeepAlive() {
       const now = Date.now();
       if (now - lastOnlineBump < onlineThrottleMs) return;
       lastOnlineBump = now;
-      refreshFromServer();
+      refreshAfterResume();
     };
 
     /** Page Lifecycle API: separador descongelado (ex.: Chrome em Android). */
@@ -104,7 +133,7 @@ export function AuthSessionKeepAlive() {
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
     document.addEventListener("resume", onResume as EventListener);
-    refreshFromServer();
+    refreshAfterResume();
     if (document.visibilityState === "visible") startVisibleInterval();
 
     return () => {
