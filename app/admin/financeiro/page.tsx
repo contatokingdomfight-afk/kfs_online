@@ -116,51 +116,75 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
 
   return (
     <div style={{ maxWidth: "min(900px, 100%)" }}>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: "clamp(12px, 3vw, 16px)",
-          marginBottom: "clamp(20px, 5vw, 24px)",
-        }}
-      >
-        <Link
-          href="/admin"
+      <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
+        <div
           style={{
-            color: "var(--text-secondary)",
-            fontSize: "clamp(15px, 3.8vw, 17px)",
-            textDecoration: "none",
-            fontWeight: 500,
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: "10px 14px",
+            marginBottom: 14,
           }}
         >
-          ← Voltar
-        </Link>
-        <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Financeiro
-        </h1>
-        <Link
-          href="/admin/financeiro/compras"
-          className="btn"
+          <Link
+            href="/admin"
+            style={{
+              color: "var(--text-secondary)",
+              fontSize: "clamp(15px, 3.8vw, 17px)",
+              textDecoration: "none",
+              fontWeight: 500,
+            }}
+          >
+            ← Voltar
+          </Link>
+          <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
+            Financeiro
+          </h1>
+        </div>
+        <nav
+          aria-label="Acções do financeiro"
           style={{
-            marginLeft: "auto",
-            textDecoration: "none",
-            backgroundColor: "var(--bg-secondary)",
-            color: "var(--text-primary)",
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: 10,
+            width: "100%",
           }}
         >
-          Compras e inscrições
-        </Link>
-        <Link
-          href="/admin/financeiro/coaches"
-          className="btn"
-          style={{ textDecoration: "none", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}
-        >
-          Pagamentos a coaches
-        </Link>
-        <Link href="/admin/financeiro/novo" className="btn btn-primary" style={{ textDecoration: "none" }}>
-          Registar pagamento
-        </Link>
+          <Link
+            href="/admin/financeiro/compras"
+            className="btn btn-secondary"
+            style={{
+              textDecoration: "none",
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            Compras e inscrições
+          </Link>
+          <Link
+            href="/admin/financeiro/coaches"
+            className="btn btn-secondary"
+            style={{
+              textDecoration: "none",
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            Pagamentos a coaches
+          </Link>
+          <Link
+            href="/admin/financeiro/novo"
+            className="btn btn-primary"
+            style={{
+              textDecoration: "none",
+              width: "100%",
+              textAlign: "center",
+              gridColumn: "1 / -1",
+            }}
+          >
+            Registar pagamento
+          </Link>
+        </nav>
       </div>
 
       <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)", marginBottom: 20, minWidth: 0 }}>
