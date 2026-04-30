@@ -94,6 +94,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
     const u = studentToUser.get(p.studentId);
     return {
       id: p.id,
+      studentId: p.studentId,
       displayName: u?.name || u?.email || "—",
       status: p.status,
       referenceMonth: p.referenceMonth,
@@ -364,6 +365,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           openPayments: t("adminFinanceOpenPayments"),
           openExpenses: t("adminFinanceOpenExpenses"),
           openRevenue: t("adminFinanceOpenRevenue"),
+          registerPaymentCta: t("adminFinancePaymentsRegisterCta"),
         }}
         locale={locale}
       />

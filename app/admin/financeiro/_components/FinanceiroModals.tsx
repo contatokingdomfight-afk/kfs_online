@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { RenewalsSection } from "../RenewalsSection";
@@ -24,6 +25,7 @@ const overlayStyle: React.CSSProperties = {
 
 export type PaymentListRow = {
   id: string;
+  studentId: string;
   displayName: string;
   status: string;
   referenceMonth: string;
@@ -95,6 +97,8 @@ type Labels = {
   openPayments: string;
   openExpenses: string;
   openRevenue: string;
+  /** Botão por linha «Em atraso» → registo de pagamento (admin). */
+  registerPaymentCta: string;
 };
 
 type Props = {
@@ -284,7 +288,14 @@ export function FinanceiroModals({
                     gap: 8,
                   }}
                 >
-                  {filteredPayments.map((p) => (
+                  {filteredPayments.map((p) => {
+                    const registerParams = new URLSearchParams({
+                      studentId: p.studentId,
+                      referenceMonth: p.referenceMonth,
+                      amount: p.amount.toFixed(2),
+                    });
+                    const registerHref = `/admin/financeiro/novo?${registerParams.toString()}`;
+                    return (
                     <li key={p.id} className="card" style={{ padding: 12 }}>
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
                         <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{p.displayName}</span>
@@ -303,8 +314,27 @@ export function FinanceiroModals({
                       <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
                         {p.referenceMonth} · {p.amount.toFixed(2)} €
                       </p>
+                      {p.status === "LATE" && (
+                        <div style={{ marginTop: 10 }}>
+                          <Link
+                            href={registerHref}
+                            className="btn btn-primary"
+                            style={{
+                              display: "inline-flex",
+                              width: "100%",
+                              justifyContent: "center",
+                              textDecoration: "none",
+                              fontSize: 14,
+                            }}
+                            onClick={closeModal}
+                          >
+                            {labels.registerPaymentCta}
+                          </Link>
+                        </div>
+                      )}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </div>
