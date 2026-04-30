@@ -282,3 +282,46 @@ export async function deleteFinancialExpense(formData: FormData) {
   }
   revalidatePath("/admin/financeiro");
 }
+
+export type ManualRevenueActionResult = { error?: string; success?: boolean };
+
+export async function createManualRevenue(
+  _prev: ManualRevenueActionResult | null,
+  formData: FormData
+): Promise<ManualRevenueActionResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const amountStr = (formData.get("amount") as string)?.trim();
+  const description = (formData.get("description") as string)?.trim() ?? "";
+  const occurredOn = parseDateOnly((formData.get("occurredOn") as string) ?? "");
+  if (!description) return { error: "Descrição é obrigatória." };
+  const amount = parseFloat(amountStr ?? "");
+  if (Number.isNaN(amount) || amount <= 0) return { error: "Indica um valor positivo." };
+  if (!occurredOn) return { error: "Data inválida (AAAA-MM-DD)." };
+
+  const supabase = createAdminClient();
+  const id = crypto.randomUUID();
+  const { error } = await supabase.from("FinancialRevenue").insert({
+    id,
+    amount: amount.toFixed(2),
+    description,
+    occurredOn,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/admin/financeiro");
+  return { success: true };
+}
+
+export async function deleteManualRevenue(formData: FormData) {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  const id = (formData.get("id") as string)?.trim();
+  if (!id) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("FinancialRevenue").delete().eq("id", id);
+  if (error) {
+    redirect(`/admin/financeiro?revenueError=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath("/admin/financeiro");
+}

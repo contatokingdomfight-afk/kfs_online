@@ -7,16 +7,37 @@ import { currentReferenceMonthLisbon, LISBON_TZ } from "@/lib/lisbon-payment-dat
 import { formatInTimeZone } from "date-fns-tz";
 import { getRenewalsPending } from "@/lib/renewals";
 import { getFinanceiroOverview } from "@/lib/admin-finance-overview";
+import { getRevenueBreakdown, type RevenueBreakdownRow } from "@/lib/admin-revenue-breakdown";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
+import { AddManualRevenueForm } from "./_components/AddManualRevenueForm";
 import { FinanceiroModals, type PaymentListRow } from "./_components/FinanceiroModals";
+import { deleteManualRevenue } from "./actions";
 
 type SearchParams = Promise<{
   deduped?: string;
   dedupedError?: string;
   expenseError?: string;
+  revenueError?: string;
 }>;
+
+function formatRevenueRowLabel(t: (key: import("@/lib/i18n").MessageKey) => string, row: RevenueBreakdownRow): string {
+  switch (row.category) {
+    case "PLAN":
+      return `${t("adminFinanceRevenueTagPlan")}: ${row.label}`;
+    case "PLAN_NONE":
+      return t("adminFinanceRevenueTagPlanNone");
+    case "COURSE":
+      return `${t("adminFinanceRevenueTagCourse")}: ${row.label}`;
+    case "EVENT":
+      return `${t("adminFinanceRevenueTagEvent")}: ${row.label}`;
+    case "MANUAL":
+      return `${t("adminFinanceRevenueTagManual")}: ${row.label}`;
+    default:
+      return row.label;
+  }
+}
 
 function formatMoneyN(n: number, locale: "pt" | "en") {
   return n.toLocaleString(locale === "en" ? "en-GB" : "pt-PT", {
@@ -33,6 +54,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   const deduped = params.deduped;
   const dedupedError = params.dedupedError;
   const expenseError = params.expenseError;
+  const revenueError = params.revenueError;
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -42,6 +64,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
     getLocaleFromCookies() as Promise<"pt" | "en">,
     getFinanceiroOverview(supabase),
   ]);
+  const revenue = await getRevenueBreakdown(supabase, overview.referenceMonth);
   const t = getTranslations(locale);
   const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
 
@@ -223,6 +246,150 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           </div>
         </div>
       </section>
+
+      <section className="card" style={{ padding: "clamp(18px, 4.5vw, 24px)", marginBottom: 20, minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "baseline",
+            gap: "8px 10px",
+            margin: "0 0 16px 0",
+          }}
+        >
+          <h2
+            style={{
+              margin: 0,
+              fontSize: "clamp(17px, 4.2vw, 19px)",
+              fontWeight: 600,
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("adminFinanceRevenueBySourceTitle")} — {periodLabel}
+          </h2>
+          <InlineInfoTip
+            detail={t("adminFinanceRevenueSectionHint")}
+            ariaLabel={t("adminFinanceRevenueSectionInfoAria")}
+          />
+        </div>
+
+        {revenue.error && (
+          <p role="alert" style={{ color: "var(--error)", marginBottom: 12, fontSize: 14 }}>
+            {revenue.error}
+            {` ${t("adminFinanceRevenueMigratedHint")}`}
+          </p>
+        )}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: 20,
+            alignItems: "start",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+              gap: 20,
+              alignItems: "start",
+            }}
+          >
+            <div style={{ minWidth: 0, overflow: "auto" }}>
+              {!revenue.error && revenue.rows.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 15, color: "var(--text-secondary)" }}>{t("adminFinanceRevenueNoRows")}</p>
+              ) : !revenue.error ? (
+                <div
+                  style={{
+                    overflowX: "auto",
+                    border: "1px solid var(--card-border, rgba(0,0,0,.1))",
+                    borderRadius: "var(--radius-sm)",
+                  }}
+                >
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: 14,
+                    }}
+                  >
+                    <thead>
+                      <tr style={{ background: "var(--bg-secondary)", textAlign: "left" }}>
+                        <th style={{ padding: "8px 10px" }}>{t("adminFinanceRevenueTableFront")}</th>
+                        <th style={{ padding: "8px 10px" }}>{t("adminFinanceRevenueTableAmount")}</th>
+                        <th style={{ padding: "8px 10px" }}>{t("adminFinanceRevenueTableActions")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {revenue.rows.map((row) => (
+                        <tr key={row.key} style={{ borderTop: "1px solid var(--card-border, rgba(0,0,0,.06))" }}>
+                          <td style={{ padding: "8px 10px" }}>{formatRevenueRowLabel(t, row)}</td>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(row.amount, locale)}</td>
+                          <td style={{ padding: "8px 10px" }}>
+                            {row.category === "MANUAL" ? (
+                              <form action={deleteManualRevenue} style={{ margin: 0 }}>
+                                <input
+                                  type="hidden"
+                                  name="id"
+                                  value={row.key.replace(/^manual:/, "")}
+                                />
+                                <button type="submit" className="btn" style={{ fontSize: 12, padding: "4px 8px" }}>
+                                  {t("adminFinanceDelete")}
+                                </button>
+                              </form>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    {revenue.rows.length > 0 && (
+                      <tfoot>
+                        <tr style={{ background: "var(--bg-secondary)", fontWeight: 600 }}>
+                          <td style={{ padding: "8px 10px" }}>{t("adminFinanceRevenueTotal")}</td>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(revenue.total, locale)}</td>
+                          <td style={{ padding: "8px 10px" }} />
+                        </tr>
+                      </tfoot>
+                    )}
+                  </table>
+                </div>
+              ) : null}
+            </div>
+
+            <div style={{ minWidth: 0 }}>
+              <h3
+                style={{
+                  margin: "0 0 12px 0",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+              >
+                {t("adminFinanceRevenueAddBlockTitle")}
+              </h3>
+              <AddManualRevenueForm
+                defaultDate={todayYmd}
+                labels={{
+                  amount: t("adminFinanceRevenueFormAmount"),
+                  description: t("adminFinanceRevenueFormDescription"),
+                  date: t("adminFinanceRevenueFormDate"),
+                  submit: t("adminFinanceRevenueFormSubmit"),
+                  success: t("adminFinanceRevenueSaved"),
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {revenueError && !revenue.error && (
+        <p role="alert" className="card" style={{ padding: 12, color: "var(--error)", marginBottom: 12, fontSize: 14 }}>
+          {decodeURIComponent(revenueError.replace(/\+/g, " "))}
+        </p>
+      )}
 
       {expenseError && !overview.expensesError && (
         <p role="alert" className="card" style={{ padding: 12, color: "var(--error)", marginBottom: 12, fontSize: 14 }}>
