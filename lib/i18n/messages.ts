@@ -641,11 +641,6 @@ export const messages = {
     eventValidateScanQrError: "Não foi possível iniciar a câmara neste dispositivo.",
     eventValidateScanQrUnreadable: "Este QR não contém um ingresso válido. Tenta outro código.",
     eventCheckInTitle: "Check-in do evento",
-    eventCheckInIntro:
-      "Pesquisa um participante com inscrição confirmada (nome ou e-mail) e regista a entrada, ou usa a câmara para ler o QR do ingresso.",
-    eventCheckInPasteUrlHint:
-      "Se tiveres o link do ingresso, também podes colar na barra de endereços o URL completo (com o parâmetro token).",
-    eventCheckInQrSectionTitle: "Ler por código QR",
     eventCheckInManualHeading: "Check-in manual",
     eventCheckInManualPlaceholder: "Nome ou e-mail do participante",
     eventCheckInManualHint: "Só aparecem inscrições já confirmadas neste evento.",
@@ -1573,11 +1568,6 @@ export const messages = {
     eventValidateScanQrError: "Could not start the camera on this device.",
     eventValidateScanQrUnreadable: "This QR does not contain a valid ticket. Try another code.",
     eventCheckInTitle: "Event check-in",
-    eventCheckInIntro:
-      "Search for a participant with a confirmed registration (name or email) and record check-in, or use the camera to scan the ticket QR code.",
-    eventCheckInPasteUrlHint:
-      "If you have the ticket link, you can also paste the full URL (with the token parameter) in the address bar.",
-    eventCheckInQrSectionTitle: "Scan QR code",
     eventCheckInManualHeading: "Manual check-in",
     eventCheckInManualPlaceholder: "Participant name or email",
     eventCheckInManualHint: "Only registrations already confirmed for this event are listed.",

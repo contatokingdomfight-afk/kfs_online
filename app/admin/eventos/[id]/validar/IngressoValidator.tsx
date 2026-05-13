@@ -78,12 +78,7 @@ export function IngressoValidator({
       locale,
       participants,
       <div className="card" style={{ padding: 24, maxWidth: 520 }}>
-        <h1 style={{ margin: "0 0 12px 0", fontSize: 20, fontWeight: 600, color: "var(--text-primary)" }}>{t("eventCheckInTitle")}</h1>
-        <p style={{ margin: "0 0 16px 0", color: "var(--text-secondary)", lineHeight: 1.5 }}>{t("eventCheckInIntro")}</p>
-        <div style={{ paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-          <p style={{ margin: "0 0 6px 0", fontWeight: 600, fontSize: 14, color: "var(--text-primary)" }}>{t("eventCheckInQrSectionTitle")}</p>
-          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>{t("eventCheckInPasteUrlHint")}</p>
-        </div>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "var(--text-primary)" }}>{t("eventCheckInTitle")}</h1>
       </div>
     );
   }
