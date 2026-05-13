@@ -1,5 +1,6 @@
 "use client";
 
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { useFormState } from "react-dom";
 import { createEvent, updateEvent, type EventFormResult } from "./actions";
 import { EventBannerField } from "./EventBannerField";
@@ -196,6 +197,7 @@ export function EventForm({
       <button type="submit" className="btn btn-primary" style={{ minHeight: 44 }}>
         {eventId ? "Guardar" : "Criar evento"}
       </button>
+      <FormLoadingModal message={eventId ? "A guardar os dados do evento…" : "A criar o evento…"} />
     </form>
   );
 }
