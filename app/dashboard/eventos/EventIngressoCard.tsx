@@ -16,11 +16,17 @@ type Props = {
 
 export function EventIngressoCard({ eventId, eventName, checkinToken, checkinUsedAt, locale }: Props) {
   const t = getTranslations(locale);
+  const [showQr, setShowQr] = useState(false);
   const [dataUrl, setDataUrl] = useState<string | null>(null);
+  const used = Boolean(checkinUsedAt);
 
   useEffect(() => {
+    if (!showQr || used || !checkinToken || !eventId) {
+      setDataUrl(null);
+      return;
+    }
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    if (!origin || !checkinToken || !eventId) return;
+    if (!origin) return;
     const url = buildEventTicketCheckinUrl(origin, eventId, checkinToken);
     let cancelled = false;
     QRCode.toDataURL(url, { width: 240, margin: 2, errorCorrectionLevel: "M" })
@@ -33,22 +39,20 @@ export function EventIngressoCard({ eventId, eventName, checkinToken, checkinUse
     return () => {
       cancelled = true;
     };
-  }, [checkinToken, eventId]);
-
-  const used = Boolean(checkinUsedAt);
+  }, [showQr, used, checkinToken, eventId]);
 
   return (
     <div
       style={{
         marginTop: 12,
-        padding: "clamp(14px, 3.5vw, 18px)",
+        padding: "clamp(12px, 3vw, 16px)",
         borderRadius: "var(--radius-md)",
         border: "1px solid var(--border)",
         background: "var(--surface)",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
-        gap: 12,
+        alignItems: "stretch",
+        gap: 10,
       }}
     >
       <p style={{ margin: 0, fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)", textAlign: "center" }}>
@@ -57,28 +61,50 @@ export function EventIngressoCard({ eventId, eventName, checkinToken, checkinUse
       <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.45 }}>
         {t("eventTicketSubtitle").replace("{name}", eventName)}
       </p>
+
       {used ? (
-        <p
-          style={{
-            margin: 0,
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontWeight: 600,
-            color: "var(--primary)",
-            textAlign: "center",
-          }}
-        >
-          {t("eventTicketUsedBadge")}
-        </p>
-      ) : null}
-      {dataUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={dataUrl} alt="" width={240} height={240} style={{ display: "block", borderRadius: 8 }} />
+        <>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontWeight: 600,
+              color: "var(--primary)",
+              textAlign: "center",
+            }}
+          >
+            {t("eventTicketUsedBadge")}
+          </p>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.45 }}>
+            {t("eventTicketUsedHint")}
+          </p>
+        </>
       ) : (
-        <div style={{ width: 240, height: 240, background: "var(--bg-secondary)", borderRadius: 8 }} aria-hidden />
+        <>
+          {!showQr ? (
+            <button type="button" className="btn btn-primary" style={{ width: "100%", minHeight: 44 }} onClick={() => setShowQr(true)}>
+              {t("eventTicketShowForEntryCta")}
+            </button>
+          ) : (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                {dataUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={dataUrl} alt="" width={240} height={240} style={{ display: "block", borderRadius: 8 }} />
+                ) : (
+                  <div style={{ width: 240, height: 240, background: "var(--bg-secondary)", borderRadius: 8 }} aria-hidden />
+                )}
+                <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.45 }}>
+                  {t("eventTicketQrHint")}
+                </p>
+              </div>
+              <button type="button" className="btn btn-secondary" style={{ width: "100%", minHeight: 44 }} onClick={() => setShowQr(false)}>
+                {t("eventTicketHideForEntryCta")}
+              </button>
+            </>
+          )}
+        </>
       )}
-      <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.45 }}>
-        {used ? t("eventTicketUsedHint") : t("eventTicketQrHint")}
-      </p>
     </div>
   );
 }
