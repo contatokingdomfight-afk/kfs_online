@@ -3,6 +3,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { toIsoDateOnlyForInput } from "@/lib/event-form-dates";
+import { timeInputValueFromDb } from "@/lib/event-times";
 import { redirect } from "next/navigation";
 import { EventForm } from "../EventForm";
 import { DeleteEventoButton } from "./DeleteEventoButton";
@@ -23,7 +24,9 @@ export default async function AdminEventosEditarPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from("Event")
-    .select("id, name, description, type, event_date, start_date, end_date, price, max_participants, is_active")
+    .select(
+      "id, name, description, type, event_date, start_date, end_date, start_time, end_time, location, banner_url, price, max_participants, is_active"
+    )
     .eq("id", eventId)
     .single();
 
@@ -93,6 +96,10 @@ export default async function AdminEventosEditarPage({ params }: Props) {
         initialEndDate={toIsoDateOnlyForInput(
           (event as { end_date?: string }).end_date ?? event.event_date ?? ""
         )}
+        initialStartTime={timeInputValueFromDb((event as { start_time?: string | null }).start_time)}
+        initialEndTime={timeInputValueFromDb((event as { end_time?: string | null }).end_time)}
+        initialLocation={(event as { location?: string | null }).location ?? ""}
+        initialBannerUrl={(event as { banner_url?: string | null }).banner_url ?? ""}
         initialPrice={Number(event.price)}
         initialMaxParticipants={event.max_participants}
         initialIsActive={event.is_active ?? true}
