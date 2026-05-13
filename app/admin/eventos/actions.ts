@@ -168,7 +168,7 @@ export async function updateEvent(
   revalidatePath("/admin/eventos");
   revalidatePath(`/admin/eventos/${eventId}`);
   revalidatePath("/dashboard/eventos");
-  return {};
+  redirect("/admin/eventos");
 }
 
 export async function deleteEvent(eventId: string): Promise<{ error?: string }> {
