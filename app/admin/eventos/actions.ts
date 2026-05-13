@@ -231,12 +231,15 @@ export type RedeemTicketResult =
 
 /**
  * Marca o ingresso como utilizado (entrada registada). Só ADMIN.
+ * `eventId` tem de coincidir com o evento do ingresso (validação por evento).
  */
-export async function redeemEventTicket(checkinToken: string): Promise<RedeemTicketResult> {
+export async function redeemEventTicket(checkinToken: string, eventId: string): Promise<RedeemTicketResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { ok: false, error: "Não autorizado." };
 
   const token = checkinToken.trim();
+  const eid = eventId.trim();
+  if (!eid) return { ok: false, error: "Evento inválido." };
   if (!/^[a-f0-9]{48}$/i.test(token)) return { ok: false, error: "Código de ingresso inválido." };
 
   const supabase = createAdminClient();
@@ -244,10 +247,11 @@ export async function redeemEventTicket(checkinToken: string): Promise<RedeemTic
     .from("EventRegistration")
     .select("id, status, checkin_used_at, eventId, studentId")
     .eq("checkin_token", token)
+    .eq("eventId", eid)
     .maybeSingle();
 
   if (findErr) return { ok: false, error: findErr.message };
-  if (!reg) return { ok: false, error: "Ingresso não encontrado." };
+  if (!reg) return { ok: false, error: "Ingresso não encontrado para este evento." };
   if (reg.status !== "CONFIRMED") return { ok: false, error: "Inscrição ainda não está confirmada." };
   if (reg.checkin_used_at) return { ok: false, error: "Este ingresso já foi utilizado." };
 
@@ -271,8 +275,8 @@ export async function redeemEventTicket(checkinToken: string): Promise<RedeemTic
   }
 
   revalidatePath("/admin/eventos");
-  revalidatePath("/admin/eventos/ingresso");
-  revalidatePath(`/admin/eventos/${reg.eventId}`);
+  revalidatePath(`/admin/eventos/${eid}/validar`);
+  revalidatePath(`/admin/eventos/${eid}`);
   revalidatePath("/dashboard/eventos");
   return { ok: true, eventName: (event as { name?: string })?.name ?? "Evento", studentName };
 }

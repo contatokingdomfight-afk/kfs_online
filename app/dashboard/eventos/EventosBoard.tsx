@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
-import { EventCalendar, eventTouchesDay, type EventCalendarRow } from "./EventCalendar";
+import { EventCalendar, eventTouchesDay, type EventCalendarRow } from "@/components/events/EventCalendar";
 import { EventIngressoCard } from "./EventIngressoCard";
 import { InscreverMeButton } from "./InscreverMeButton";
 
@@ -194,6 +194,7 @@ export function EventosBoard({
                             {t("registered")}
                           </p>
                           <EventIngressoCard
+                            eventId={e.id}
                             eventName={e.name}
                             checkinToken={reg.checkin_token.trim()}
                             checkinUsedAt={reg.checkin_used_at}

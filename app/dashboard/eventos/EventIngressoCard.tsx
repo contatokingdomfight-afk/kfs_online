@@ -7,20 +7,21 @@ import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
 type Props = {
+  eventId: string;
   eventName: string;
   checkinToken: string;
   checkinUsedAt: string | null;
   locale: Locale;
 };
 
-export function EventIngressoCard({ eventName, checkinToken, checkinUsedAt, locale }: Props) {
+export function EventIngressoCard({ eventId, eventName, checkinToken, checkinUsedAt, locale }: Props) {
   const t = getTranslations(locale);
   const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    if (!origin || !checkinToken) return;
-    const url = buildEventTicketCheckinUrl(origin, checkinToken);
+    if (!origin || !checkinToken || !eventId) return;
+    const url = buildEventTicketCheckinUrl(origin, eventId, checkinToken);
     let cancelled = false;
     QRCode.toDataURL(url, { width: 240, margin: 2, errorCorrectionLevel: "M" })
       .then((u) => {
@@ -32,7 +33,7 @@ export function EventIngressoCard({ eventName, checkinToken, checkinUsedAt, loca
     return () => {
       cancelled = true;
     };
-  }, [checkinToken]);
+  }, [checkinToken, eventId]);
 
   const used = Boolean(checkinUsedAt);
 

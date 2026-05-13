@@ -1,9 +1,9 @@
 /**
- * URL absoluta no QR do ingresso (admin valida em /admin/eventos/ingresso).
- * No cliente usa window.location.origin; no servidor requer NEXT_PUBLIC_APP_URL.
+ * URL absoluta no QR do ingresso: validação por evento em /admin/eventos/[eventId]/validar.
+ * No cliente usa window.location.origin; em SSR define NEXT_PUBLIC_APP_URL.
  */
-export function buildEventTicketCheckinUrl(origin: string, checkinToken: string): string {
+export function buildEventTicketCheckinUrl(origin: string, eventId: string, checkinToken: string): string {
   const base = origin.replace(/\/$/, "");
   const q = new URLSearchParams({ token: checkinToken });
-  return `${base}/admin/eventos/ingresso?${q.toString()}`;
+  return `${base}/admin/eventos/${encodeURIComponent(eventId)}/validar?${q.toString()}`;
 }

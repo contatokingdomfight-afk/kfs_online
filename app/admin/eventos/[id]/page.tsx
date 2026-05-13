@@ -5,6 +5,8 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { toIsoDateOnlyForInput } from "@/lib/event-form-dates";
 import { timeInputValueFromDb } from "@/lib/event-times";
 import { redirect } from "next/navigation";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+import { getTranslations } from "@/lib/i18n";
 import { EventForm } from "../EventForm";
 import { DeleteEventoButton } from "./DeleteEventoButton";
 import { ConfirmRegistrationButton } from "./ConfirmRegistrationButton";
@@ -18,6 +20,9 @@ export default async function AdminEventosEditarPage({ params }: Props) {
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const { id: eventId } = await params;
+  const locale = await getLocaleFromCookies();
+  const t = getTranslations(locale);
+
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
@@ -76,34 +81,66 @@ export default async function AdminEventosEditarPage({ params }: Props) {
             fontWeight: 500,
           }}
         >
-          ← Voltar
+          ← {t("back")}
         </Link>
       </div>
       <h1 style={{ margin: "0 0 4px 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
         Editar evento
       </h1>
-      <p style={{ margin: "0 0 clamp(20px, 5vw, 24px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+      <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
         {event.name} · {TYPE_LABELS[event.type]} · €{Number(event.price).toFixed(0)}
       </p>
-      <EventForm
-        eventId={event.id}
-        initialName={event.name}
-        initialDescription={event.description ?? ""}
-        initialType={event.type}
-        initialStartDate={toIsoDateOnlyForInput(
-          (event as { start_date?: string }).start_date ?? event.event_date ?? ""
-        )}
-        initialEndDate={toIsoDateOnlyForInput(
-          (event as { end_date?: string }).end_date ?? event.event_date ?? ""
-        )}
-        initialStartTime={timeInputValueFromDb((event as { start_time?: string | null }).start_time)}
-        initialEndTime={timeInputValueFromDb((event as { end_time?: string | null }).end_time)}
-        initialLocation={(event as { location?: string | null }).location ?? ""}
-        initialBannerUrl={(event as { banner_url?: string | null }).banner_url ?? ""}
-        initialPrice={Number(event.price)}
-        initialMaxParticipants={event.max_participants}
-        initialIsActive={event.is_active ?? true}
-      />
+      <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0" }}>
+        <Link
+          href={`/admin/eventos/${event.id}/validar`}
+          className="btn btn-secondary"
+          style={{ textDecoration: "none", display: "inline-block" }}
+        >
+          {t("adminEventValidateTicketsLink")}
+        </Link>
+      </p>
+      <details
+        style={{
+          marginBottom: "clamp(20px, 5vw, 24px)",
+          borderRadius: "var(--radius-md)",
+          border: "1px solid var(--border)",
+          background: "var(--surface)",
+        }}
+      >
+        <summary
+          style={{
+            cursor: "pointer",
+            padding: "clamp(12px, 3vw, 14px) clamp(14px, 3.5vw, 16px)",
+            fontWeight: 600,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            color: "var(--text-primary)",
+            listStyle: "none",
+          }}
+        >
+          {t("adminEventEditSummary")}
+        </summary>
+        <div style={{ padding: "0 clamp(14px, 3.5vw, 16px) clamp(14px, 3.5vw, 16px)" }}>
+          <EventForm
+            eventId={event.id}
+            initialName={event.name}
+            initialDescription={event.description ?? ""}
+            initialType={event.type}
+            initialStartDate={toIsoDateOnlyForInput(
+              (event as { start_date?: string }).start_date ?? event.event_date ?? ""
+            )}
+            initialEndDate={toIsoDateOnlyForInput(
+              (event as { end_date?: string }).end_date ?? event.event_date ?? ""
+            )}
+            initialStartTime={timeInputValueFromDb((event as { start_time?: string | null }).start_time)}
+            initialEndTime={timeInputValueFromDb((event as { end_time?: string | null }).end_time)}
+            initialLocation={(event as { location?: string | null }).location ?? ""}
+            initialBannerUrl={(event as { banner_url?: string | null }).banner_url ?? ""}
+            initialPrice={Number(event.price)}
+            initialMaxParticipants={event.max_participants}
+            initialIsActive={event.is_active ?? true}
+          />
+        </div>
+      </details>
       <div style={{ marginTop: "clamp(32px, 8vw, 40px)" }}>
         <h2 style={{ fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
           Inscrições ({regs?.length ?? 0})
