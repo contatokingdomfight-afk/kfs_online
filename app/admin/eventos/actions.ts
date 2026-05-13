@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { parseEventDay } from "@/lib/event-form-dates";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const EVENT_TYPES = ["CAMP", "WORKSHOP"] as const;
@@ -29,7 +30,12 @@ export async function createEvent(
   if (!type || !EVENT_TYPES.includes(type as (typeof EVENT_TYPES)[number])) return { error: "Tipo inválido." };
   if (!startDate) return { error: "Data de início é obrigatória." };
   if (!endDate) return { error: "Data de fim é obrigatória." };
-  if (startDate > endDate) return { error: "A data de fim deve ser igual ou posterior à data de início." };
+  const startDay = parseEventDay(startDate);
+  const endDay = parseEventDay(endDate);
+  if (!startDay.ok) return { error: "Data de início inválida. Use o formato AAAA-MM-DD." };
+  if (!endDay.ok) return { error: "Data de fim inválida. Use o formato AAAA-MM-DD." };
+  if (startDay.utcMs > endDay.utcMs)
+    return { error: "A data de fim deve ser igual ou posterior à data de início." };
   const price = priceStr ? parseFloat(priceStr) : 0;
   if (isNaN(price) || price < 0) return { error: "Preço inválido." };
   const maxParticipants = maxParticipantsStr ? parseInt(maxParticipantsStr, 10) : null;
@@ -40,9 +46,9 @@ export async function createEvent(
     name,
     description,
     type,
-    start_date: startDate,
-    end_date: endDate,
-    event_date: startDate,
+    start_date: startDay.iso,
+    end_date: endDay.iso,
+    event_date: startDay.iso,
     price,
     max_participants: maxParticipants,
     is_active: isActive,
@@ -80,7 +86,12 @@ export async function updateEvent(
   if (!type || !EVENT_TYPES.includes(type as (typeof EVENT_TYPES)[number])) return { error: "Tipo inválido." };
   if (!startDate) return { error: "Data de início é obrigatória." };
   if (!endDate) return { error: "Data de fim é obrigatória." };
-  if (startDate > endDate) return { error: "A data de fim deve ser igual ou posterior à data de início." };
+  const startDay = parseEventDay(startDate);
+  const endDay = parseEventDay(endDate);
+  if (!startDay.ok) return { error: "Data de início inválida. Use o formato AAAA-MM-DD." };
+  if (!endDay.ok) return { error: "Data de fim inválida. Use o formato AAAA-MM-DD." };
+  if (startDay.utcMs > endDay.utcMs)
+    return { error: "A data de fim deve ser igual ou posterior à data de início." };
   const price = priceStr ? parseFloat(priceStr) : 0;
   if (isNaN(price) || price < 0) return { error: "Preço inválido." };
   const maxParticipants = maxParticipantsStr ? parseInt(maxParticipantsStr, 10) : null;
@@ -93,9 +104,9 @@ export async function updateEvent(
       name,
       description,
       type,
-      start_date: startDate,
-      end_date: endDate,
-      event_date: startDate,
+      start_date: startDay.iso,
+      end_date: endDay.iso,
+      event_date: startDay.iso,
       price,
       max_participants: maxParticipants,
       is_active: isActive,

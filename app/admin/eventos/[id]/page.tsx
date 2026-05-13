@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { toIsoDateOnlyForInput } from "@/lib/event-form-dates";
 import { redirect } from "next/navigation";
 import { EventForm } from "../EventForm";
 import { DeleteEventoButton } from "./DeleteEventoButton";
@@ -86,8 +87,12 @@ export default async function AdminEventosEditarPage({ params }: Props) {
         initialName={event.name}
         initialDescription={event.description ?? ""}
         initialType={event.type}
-        initialStartDate={(event as { start_date?: string }).start_date ?? event.event_date ?? ""}
-        initialEndDate={(event as { end_date?: string }).end_date ?? event.event_date ?? ""}
+        initialStartDate={toIsoDateOnlyForInput(
+          (event as { start_date?: string }).start_date ?? event.event_date ?? ""
+        )}
+        initialEndDate={toIsoDateOnlyForInput(
+          (event as { end_date?: string }).end_date ?? event.event_date ?? ""
+        )}
         initialPrice={Number(event.price)}
         initialMaxParticipants={event.max_participants}
         initialIsActive={event.is_active ?? true}
