@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -192,12 +193,86 @@ export async function setRegistrationStatus(
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
 
   const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("EventRegistration")
-    .update({ status })
-    .eq("id", registrationId);
-  if (error) return { error: error.message };
+  const rid = registrationId.trim();
+  if (!rid) return { error: "ID inválido." };
+
+  if (status === "CONFIRMED") {
+    const { data: row, error: selErr } = await supabase
+      .from("EventRegistration")
+      .select("checkin_token, eventId")
+      .eq("id", rid)
+      .maybeSingle();
+    if (selErr) return { error: selErr.message };
+    const eventIdForPath = (row as { eventId?: string } | null)?.eventId;
+    const existing = (row as { checkin_token?: string | null } | null)?.checkin_token?.trim();
+    const token = existing || randomBytes(24).toString("hex");
+    const { error } = await supabase
+      .from("EventRegistration")
+      .update({ status: "CONFIRMED", checkin_token: token })
+      .eq("id", rid);
+    if (error) return { error: error.message };
+    if (eventIdForPath) revalidatePath(`/admin/eventos/${eventIdForPath}`);
+  } else {
+    const { data: row } = await supabase.from("EventRegistration").select("eventId").eq("id", rid).maybeSingle();
+    const eventIdForPath = (row as { eventId?: string } | null)?.eventId;
+    const { error } = await supabase.from("EventRegistration").update({ status }).eq("id", rid);
+    if (error) return { error: error.message };
+    if (eventIdForPath) revalidatePath(`/admin/eventos/${eventIdForPath}`);
+  }
+
   revalidatePath("/admin/eventos");
   revalidatePath("/dashboard/eventos");
   return {};
+}
+
+export type RedeemTicketResult =
+  | { ok: true; eventName: string; studentName: string }
+  | { ok: false; error: string };
+
+/**
+ * Marca o ingresso como utilizado (entrada registada). Só ADMIN.
+ */
+export async function redeemEventTicket(checkinToken: string): Promise<RedeemTicketResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { ok: false, error: "Não autorizado." };
+
+  const token = checkinToken.trim();
+  if (!/^[a-f0-9]{48}$/i.test(token)) return { ok: false, error: "Código de ingresso inválido." };
+
+  const supabase = createAdminClient();
+  const { data: reg, error: findErr } = await supabase
+    .from("EventRegistration")
+    .select("id, status, checkin_used_at, eventId, studentId")
+    .eq("checkin_token", token)
+    .maybeSingle();
+
+  if (findErr) return { ok: false, error: findErr.message };
+  if (!reg) return { ok: false, error: "Ingresso não encontrado." };
+  if (reg.status !== "CONFIRMED") return { ok: false, error: "Inscrição ainda não está confirmada." };
+  if (reg.checkin_used_at) return { ok: false, error: "Este ingresso já foi utilizado." };
+
+  const { data: updated, error: upErr } = await supabase
+    .from("EventRegistration")
+    .update({ checkin_used_at: new Date().toISOString() })
+    .eq("id", reg.id)
+    .is("checkin_used_at", null)
+    .select("id")
+    .maybeSingle();
+
+  if (upErr) return { ok: false, error: upErr.message };
+  if (!updated) return { ok: false, error: "Este ingresso já foi utilizado." };
+
+  const { data: event } = await supabase.from("Event").select("name").eq("id", reg.eventId).maybeSingle();
+  const { data: student } = await supabase.from("Student").select("userId").eq("id", reg.studentId).maybeSingle();
+  let studentName = "Aluno";
+  if (student?.userId) {
+    const { data: u } = await supabase.from("User").select("name").eq("id", student.userId).maybeSingle();
+    if (u?.name?.trim()) studentName = u.name.trim();
+  }
+
+  revalidatePath("/admin/eventos");
+  revalidatePath("/admin/eventos/ingresso");
+  revalidatePath(`/admin/eventos/${reg.eventId}`);
+  revalidatePath("/dashboard/eventos");
+  return { ok: true, eventName: (event as { name?: string })?.name ?? "Evento", studentName };
 }

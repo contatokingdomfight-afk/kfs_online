@@ -11,13 +11,14 @@ export async function registerForEvent(eventId: string): Promise<{ error?: strin
   const supabase = await createClient();
   const { data: event } = await supabase
     .from("Event")
-    .select("id, name, is_active, event_date, max_participants")
+    .select("id, name, is_active, event_date, end_date, max_participants")
     .eq("id", eventId)
     .single();
 
   if (!event || !event.is_active) return { error: "Evento não encontrado ou não disponível." };
   const today = new Date().toISOString().slice(0, 10);
-  if (event.event_date < today) return { error: "As inscrições para este evento já terminaram." };
+  const lastDay = ((event as { end_date?: string | null }).end_date ?? event.event_date).slice(0, 10);
+  if (lastDay < today) return { error: "As inscrições para este evento já terminaram." };
 
   if (event.max_participants != null) {
     const { count } = await supabase

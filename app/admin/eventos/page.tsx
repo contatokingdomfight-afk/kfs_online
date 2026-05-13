@@ -70,13 +70,14 @@ export default async function AdminEventosPage() {
         <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Eventos
         </h1>
-        <Link
-          href="/admin/eventos/novo"
-          className="btn btn-primary"
-          style={{ marginLeft: "auto", textDecoration: "none" }}
-        >
-          Novo evento
-        </Link>
+        <div style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <Link href="/admin/eventos/ingresso" className="btn btn-secondary" style={{ textDecoration: "none" }}>
+            Validar ingresso (QR)
+          </Link>
+          <Link href="/admin/eventos/novo" className="btn btn-primary" style={{ textDecoration: "none" }}>
+            Novo evento
+          </Link>
+        </div>
       </div>
 
       <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>

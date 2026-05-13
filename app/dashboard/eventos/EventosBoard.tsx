@@ -5,11 +5,18 @@ import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
 import { EventCalendar, eventTouchesDay, type EventCalendarRow } from "./EventCalendar";
+import { EventIngressoCard } from "./EventIngressoCard";
 import { InscreverMeButton } from "./InscreverMeButton";
 
 const TYPE_LABELS: Record<string, string> = {
   CAMP: "Camp",
   WORKSHOP: "Workshop",
+};
+
+export type EventRegistrationSummary = {
+  status: string;
+  checkin_token: string | null;
+  checkin_used_at: string | null;
 };
 
 export type DashboardEventRow = {
@@ -57,11 +64,11 @@ function formatTimeRange(st: string | null, et: string | null): string | null {
 export function EventosBoard({
   events,
   locale,
-  registeredIds,
+  registrationsByEventId,
 }: {
   events: DashboardEventRow[];
   locale: Locale;
-  registeredIds: string[];
+  registrationsByEventId: Record<string, EventRegistrationSummary>;
 }) {
   const t = getTranslations(locale);
   const [selectedIso, setSelectedIso] = useState<string | null>(null);
@@ -99,7 +106,7 @@ export function EventosBoard({
     ? t("eventsListCountFiltered").replace("{n}", String(list.length))
     : t("eventsListCountAll").replace("{n}", String(events.length));
 
-  const registeredSet = useMemo(() => new Set(registeredIds), [registeredIds]);
+  const regMap = registrationsByEventId;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
@@ -122,7 +129,8 @@ export function EventosBoard({
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
           {list.map((e) => {
-            const isRegistered = registeredSet.has(e.id);
+            const reg = regMap[e.id];
+            const isRegistered = reg && (reg.status === "PENDING" || reg.status === "CONFIRMED");
             const banner = e.banner_url?.trim()
               ? (rewriteSupabaseLegacyStoragePublicUrl(e.banner_url.trim()) ?? e.banner_url.trim())
               : "";
@@ -179,9 +187,29 @@ export function EventosBoard({
                     </p>
                   )}
                   {isRegistered ? (
-                    <p style={{ margin: "8px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500 }}>
-                      {t("registered")}
-                    </p>
+                    <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+                      {reg?.status === "CONFIRMED" && reg.checkin_token?.trim() ? (
+                        <>
+                          <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500 }}>
+                            {t("registered")}
+                          </p>
+                          <EventIngressoCard
+                            eventName={e.name}
+                            checkinToken={reg.checkin_token.trim()}
+                            checkinUsedAt={reg.checkin_used_at}
+                            locale={locale}
+                          />
+                        </>
+                      ) : reg?.status === "CONFIRMED" ? (
+                        <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500 }}>
+                          {t("registered")}
+                        </p>
+                      ) : (
+                        <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.45 }}>
+                          {t("registeredPendingDetail")}
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <InscreverMeButton eventId={e.id} eventName={e.name} price={Number(e.price)} initialLocale={locale} />
                   )}

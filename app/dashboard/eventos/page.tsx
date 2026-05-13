@@ -3,7 +3,7 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { requirePlan } from "@/lib/require-plan";
-import { EventosBoard, type DashboardEventRow } from "./EventosBoard";
+import { EventosBoard, type DashboardEventRow, type EventRegistrationSummary } from "./EventosBoard";
 
 export default async function EventosPage() {
   await requirePlan();
@@ -29,15 +29,23 @@ export default async function EventosPage() {
     })
     .filter(Boolean) as DashboardEventRow[];
 
-  let registeredIds: string[] = [];
+  let registrationsByEventId: Record<string, EventRegistrationSummary> = {};
   if (studentId && events.length > 0) {
     const eventIds = events.map((e) => e.id);
     const { data: regs } = await supabase
       .from("EventRegistration")
-      .select("eventId")
+      .select("eventId, status, checkin_token, checkin_used_at")
       .eq("studentId", studentId)
-      .in("eventId", eventIds);
-    registeredIds = (regs ?? []).map((r) => r.eventId as string);
+      .in("eventId", eventIds)
+      .in("status", ["PENDING", "CONFIRMED"]);
+    for (const r of regs ?? []) {
+      const eventId = r.eventId as string;
+      registrationsByEventId[eventId] = {
+        status: r.status as string,
+        checkin_token: (r as { checkin_token?: string | null }).checkin_token ?? null,
+        checkin_used_at: (r as { checkin_used_at?: string | null }).checkin_used_at ?? null,
+      };
+    }
   }
 
   return (
@@ -51,7 +59,7 @@ export default async function EventosPage() {
         </p>
       </div>
 
-      <EventosBoard events={events} locale={locale as "pt" | "en"} registeredIds={registeredIds} />
+      <EventosBoard events={events} locale={locale as "pt" | "en"} registrationsByEventId={registrationsByEventId} />
     </div>
   );
 }
