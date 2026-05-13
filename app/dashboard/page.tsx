@@ -12,6 +12,7 @@ import {
 } from "@/lib/lesson-check-in-window";
 import { getCachedPlanAccess, getCachedLocations } from "@/lib/plan-access";
 import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
+import { DashboardUpcomingEventsStrip } from "./DashboardUpcomingEventsStrip";
 import { LessonPromoBlock } from "./LessonPromoBlock";
 import { NextLessonCard } from "./NextLessonCard";
 import { OPEN_CLASS_CARD_WIDTH } from "./open-classes-carousel-constants";
@@ -248,6 +249,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {!hasPlan && (
         <ChoosePlanCTA message={t("freeTierCtaMessage")} ctaLabel={t("freeTierCtaButton")} />
       )}
+      <DashboardUpcomingEventsStrip studentId={studentId} locale={locale as "pt" | "en"} />
       {showNextLessonSection && hasPrimaryNextCarousel && (
         <OpenClassesCarouselShell
           itemCount={primaryNextRows.length}

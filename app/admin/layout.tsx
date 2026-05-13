@@ -9,6 +9,7 @@ import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
 import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
 import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
+import { CoachNotificationBell } from "@/components/CoachNotificationBell";
 
 export default async function AdminLayout({
   children,
@@ -41,6 +42,7 @@ export default async function AdminLayout({
         headerTitle="Kingdom Fight School"
         headerExtra={
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <CoachNotificationBell locale={locale as "pt" | "en"} />
             <ViewAsSwitcher />
             <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
           </div>

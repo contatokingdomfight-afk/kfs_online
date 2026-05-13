@@ -8,6 +8,7 @@ import type { MessageKey } from "@/lib/i18n";
 export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): SidebarLink[] {
   return [
     { label: t("navHome"), href: "/admin" },
+    { label: t("navNotificationsCenter"), href: "/admin/notificacoes" },
     {
       label: "Avaliação e pontuação",
       href: "/como-sou-avaliado",

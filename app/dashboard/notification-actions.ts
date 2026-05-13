@@ -39,6 +39,8 @@ export async function markNotificationRead(notificationId: string): Promise<{ ok
   revalidatePath("/dashboard/notificacoes");
   revalidatePath("/coach");
   revalidatePath("/coach/notificacoes");
+  revalidatePath("/admin");
+  revalidatePath("/admin/notificacoes");
   return { ok: true };
 }
 
@@ -73,6 +75,8 @@ export async function markAllNotificationsRead(): Promise<{ ok?: boolean; error?
 
     revalidatePath("/coach");
     revalidatePath("/coach/notificacoes");
+    revalidatePath("/admin");
+    revalidatePath("/admin/notificacoes");
     return { ok: true };
   }
 

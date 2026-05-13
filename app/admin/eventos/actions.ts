@@ -7,6 +7,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { parseEventDay } from "@/lib/event-form-dates";
 import { normalizeTimeForDb } from "@/lib/event-times";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createInAppNotification } from "@/lib/notifications/in-app";
 
 const EVENT_TYPES = ["CAMP", "WORKSHOP", "OTHER"] as const;
 
@@ -199,11 +200,12 @@ export async function setRegistrationStatus(
   if (status === "CONFIRMED") {
     const { data: row, error: selErr } = await supabase
       .from("EventRegistration")
-      .select("checkin_token, eventId")
+      .select("checkin_token, eventId, studentId")
       .eq("id", rid)
       .maybeSingle();
     if (selErr) return { error: selErr.message };
     const eventIdForPath = (row as { eventId?: string } | null)?.eventId;
+    const studentIdForNotify = (row as { studentId?: string } | null)?.studentId;
     let skipQrToken = false;
     if (eventIdForPath) {
       const { data: ev } = await supabase.from("Event").select("type").eq("id", eventIdForPath).maybeSingle();
@@ -216,6 +218,23 @@ export async function setRegistrationStatus(
     const { error } = await supabase.from("EventRegistration").update(payload).eq("id", rid);
     if (error) return { error: error.message };
     if (eventIdForPath) revalidatePath(`/admin/eventos/${eventIdForPath}`);
+    if (studentIdForNotify && eventIdForPath) {
+      const { data: evn } = await supabase.from("Event").select("name").eq("id", eventIdForPath).maybeSingle();
+      const evName = (evn as { name?: string } | null)?.name?.trim() ?? "evento";
+      try {
+        await createInAppNotification(supabase, {
+          studentId: studentIdForNotify,
+          type: "GENERAL",
+          title: "Inscrição confirmada",
+          body: `A tua inscrição em «${evName}» foi confirmada.`,
+          href: "/dashboard/eventos",
+        });
+      } catch (e) {
+        console.error("[setRegistrationStatus] student notification", e);
+      }
+      revalidatePath("/dashboard/notificacoes");
+    }
+    revalidatePath("/admin/notificacoes");
   } else {
     const { data: row } = await supabase.from("EventRegistration").select("eventId").eq("id", rid).maybeSingle();
     const eventIdForPath = (row as { eventId?: string } | null)?.eventId;

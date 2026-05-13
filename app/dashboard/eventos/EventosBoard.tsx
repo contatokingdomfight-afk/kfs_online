@@ -74,6 +74,7 @@ export function EventosBoard({
 }) {
   const t = getTranslations(locale);
   const [selectedIso, setSelectedIso] = useState<string | null>(null);
+  const [regFilter, setRegFilter] = useState<"all" | "registered">("all");
 
   const calendarRows: EventCalendarRow[] = useMemo(
     () =>
@@ -88,10 +89,18 @@ export function EventosBoard({
     [events]
   );
 
-  const list = useMemo(() => {
+  const listByDay = useMemo(() => {
     if (!selectedIso) return events;
     return events.filter((e) => eventTouchesDay(selectedIso, e));
   }, [events, selectedIso]);
+
+  const displayList = useMemo(() => {
+    if (regFilter !== "registered") return listByDay;
+    return listByDay.filter((e) => {
+      const r = registrationsByEventId[e.id];
+      return r && (r.status === "PENDING" || r.status === "CONFIRMED");
+    });
+  }, [listByDay, regFilter, registrationsByEventId]);
 
   const labels = useMemo(() => {
     const tr = getTranslations(locale);
@@ -104,14 +113,35 @@ export function EventosBoard({
     };
   }, [locale]);
 
-  const countLabel = selectedIso
-    ? t("eventsListCountFiltered").replace("{n}", String(list.length))
-    : t("eventsListCountAll").replace("{n}", String(events.length));
+  const countLabel = (() => {
+    if (selectedIso) return t("eventsListCountFiltered").replace("{n}", String(displayList.length));
+    if (regFilter === "registered") return t("eventsListCountRegistered").replace("{n}", String(displayList.length));
+    return t("eventsListCountAll").replace("{n}", String(events.length));
+  })();
 
   const regMap = registrationsByEventId;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }} role="group" aria-label={t("eventsFilterGroupAria")}>
+        <button
+          type="button"
+          className={regFilter === "all" ? "btn btn-primary" : "btn btn-secondary"}
+          style={{ minHeight: 40 }}
+          onClick={() => setRegFilter("all")}
+        >
+          {t("eventsFilterAll")}
+        </button>
+        <button
+          type="button"
+          className={regFilter === "registered" ? "btn btn-primary" : "btn btn-secondary"}
+          style={{ minHeight: 40 }}
+          onClick={() => setRegFilter("registered")}
+        >
+          {t("eventsFilterRegisteredActive")}
+        </button>
+      </div>
+
       <details
         style={{
           borderRadius: "var(--radius-md)",
@@ -144,15 +174,19 @@ export function EventosBoard({
 
       <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>{countLabel}</p>
 
-      {list.length === 0 ? (
+      {displayList.length === 0 ? (
         <div className="card" style={{ padding: "clamp(20px, 5vw, 24px)" }}>
           <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>
-            {events.length === 0 ? t("eventsEmpty") : t("eventsEmptyDay")}
+            {events.length === 0
+              ? t("eventsEmpty")
+              : regFilter === "registered"
+                ? t("eventsEmptyRegisteredFilter")
+                : t("eventsEmptyDay")}
           </p>
         </div>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
-          {list.map((e) => {
+          {displayList.map((e) => {
             const reg = regMap[e.id];
             const isRegistered = reg && (reg.status === "PENDING" || reg.status === "CONFIRMED");
             const banner = e.banner_url?.trim()

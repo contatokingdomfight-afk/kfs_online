@@ -6,7 +6,8 @@ import { getTranslations } from "@/lib/i18n";
 type Props = { locale: "pt" | "en" };
 
 /**
- * Sino com contador de não lidas para professores (notificações com `coachUserId`).
+ * Sino com contador de não lidas para staff (notificações com `coachUserId` = id do utilizador).
+ * Admin abre a central em `/admin/notificacoes`; coach em `/coach/notificacoes`.
  */
 export async function CoachNotificationBell({ locale }: Props) {
   const dbUser = await getCurrentDbUser();
@@ -23,9 +24,11 @@ export async function CoachNotificationBell({ locale }: Props) {
   const n = count ?? 0;
   const label = n > 99 ? "99+" : String(n);
 
+  const href = dbUser.role === "ADMIN" ? "/admin/notificacoes" : "/coach/notificacoes";
+
   return (
     <Link
-      href="/coach/notificacoes"
+      href={href}
       aria-label={t("notificationsCenterAria")}
       title={t("navNotificationsCenter")}
       style={{

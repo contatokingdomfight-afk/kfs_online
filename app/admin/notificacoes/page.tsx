@@ -1,34 +1,28 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { formatNotificationCreatedAt } from "@/lib/format-notification-date";
-import { MarkAllReadButton } from "./MarkAllReadButton";
-import { NotificationRow, type NotificationRowData } from "./NotificationRow";
+import { MarkAllReadButton } from "@/app/dashboard/notificacoes/MarkAllReadButton";
+import { NotificationRow, type NotificationRowData } from "@/app/dashboard/notificacoes/NotificationRow";
 
 const PAGE_SIZE = 80;
 
-export default async function NotificationsCenterPage() {
-  const locale = (await getLocaleFromCookies()) as "pt" | "en";
-  const t = getTranslations(locale);
+export default async function AdminNotificationsPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser) redirect("/sign-in");
+  if (dbUser.role !== "ADMIN") redirect("/dashboard");
 
-  const studentId = await getCurrentStudentId();
-  if (!studentId) {
-    if (dbUser.role === "ADMIN") redirect("/admin/notificacoes");
-    if (dbUser.role === "COACH") redirect("/coach/notificacoes");
-    redirect("/dashboard");
-  }
+  const locale = (await getLocaleFromCookies()) as "pt" | "en";
+  const t = getTranslations(locale);
 
   const supabase = await createClient();
   const { data: rows } = await supabase
     .from("Notification")
     .select("*")
-    .eq("studentId", studentId)
+    .eq("coachUserId", dbUser.id)
     .order("created_at", { ascending: false })
     .limit(PAGE_SIZE);
 
@@ -49,10 +43,10 @@ export default async function NotificationsCenterPage() {
   const unreadCount = list.filter((n) => !n.read_at).length;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 24px)" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 24px)", padding: "clamp(12px, 3vw, 16px)" }}>
       <div>
         <Link
-          href="/dashboard"
+          href="/admin"
           style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", textDecoration: "none", fontWeight: 500 }}
         >
           ← {t("back")}
@@ -61,7 +55,7 @@ export default async function NotificationsCenterPage() {
           {t("notificationsCenterTitle")}
         </h1>
         <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", maxWidth: 560 }}>
-          {t("notificationsCenterIntro")}
+          {t("adminNotificationsCenterIntro")}
         </p>
       </div>
 
