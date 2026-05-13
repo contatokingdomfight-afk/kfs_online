@@ -23,6 +23,8 @@ type Props = {
   hasPerformanceTracking: boolean;
   /** Carrossel «Nesta semana — aulas livres» (só com plano; fica após o Painel do guerreiro). */
   openClassesSlot: ReactNode | null;
+  /** Próximos eventos — antes da secção Explorar. */
+  upcomingEventsSlot: ReactNode | null;
 };
 
 export async function DashboardBelowFold({
@@ -32,6 +34,7 @@ export async function DashboardBelowFold({
   hasCheckIn,
   hasPerformanceTracking,
   openClassesSlot,
+  upcomingEventsSlot,
 }: Props) {
   if (!hasPlan) return null;
 
@@ -313,6 +316,8 @@ export async function DashboardBelowFold({
           viewPerformanceLink: t("myPerformance"),
         }}
       />
+
+      {upcomingEventsSlot}
 
       <ExploreSection
         hasPerformanceTracking={hasPerformanceTracking}

@@ -249,7 +249,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {!hasPlan && (
         <ChoosePlanCTA message={t("freeTierCtaMessage")} ctaLabel={t("freeTierCtaButton")} />
       )}
-      <DashboardUpcomingEventsStrip studentId={studentId} locale={locale as "pt" | "en"} />
       {showNextLessonSection && hasPrimaryNextCarousel && (
         <OpenClassesCarouselShell
           itemCount={primaryNextRows.length}
@@ -333,6 +332,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </OpenClassesCarouselShell>
       )}
 
+      {!hasPlan && (
+        <DashboardUpcomingEventsStrip studentId={studentId} locale={locale as "pt" | "en"} />
+      )}
+
       <Suspense fallback={<BelowFoldSkeleton />}>
         <DashboardBelowFold
           studentId={studentId}
@@ -341,6 +344,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           hasCheckIn={hasCheckIn}
           hasPerformanceTracking={planAccess.hasPerformanceTracking}
           openClassesSlot={openClassesSlotForPlan}
+          upcomingEventsSlot={
+            hasPlan ? (
+              <DashboardUpcomingEventsStrip studentId={studentId} locale={locale as "pt" | "en"} />
+            ) : null
+          }
         />
       </Suspense>
 
