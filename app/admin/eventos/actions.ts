@@ -229,6 +229,49 @@ export type RedeemTicketResult =
   | { ok: true; eventName: string; studentName: string }
   | { ok: false; error: string };
 
+type RegCheckinRow = {
+  id: string;
+  status: string;
+  checkin_used_at: string | null;
+  eventId: string;
+  studentId: string;
+};
+
+async function executeEventCheckin(
+  supabase: ReturnType<typeof createAdminClient>,
+  reg: RegCheckinRow,
+  eid: string
+): Promise<RedeemTicketResult> {
+  if (reg.status !== "CONFIRMED") return { ok: false, error: "Inscrição ainda não está confirmada." };
+  if (reg.checkin_used_at) return { ok: false, error: "Este ingresso já foi utilizado." };
+
+  const { data: updated, error: upErr } = await supabase
+    .from("EventRegistration")
+    .update({ checkin_used_at: new Date().toISOString() })
+    .eq("id", reg.id)
+    .eq("eventId", eid)
+    .is("checkin_used_at", null)
+    .select("id")
+    .maybeSingle();
+
+  if (upErr) return { ok: false, error: upErr.message };
+  if (!updated) return { ok: false, error: "Este ingresso já foi utilizado." };
+
+  const { data: event } = await supabase.from("Event").select("name").eq("id", reg.eventId).maybeSingle();
+  const { data: student } = await supabase.from("Student").select("userId").eq("id", reg.studentId).maybeSingle();
+  let studentName = "Aluno";
+  if (student?.userId) {
+    const { data: u } = await supabase.from("User").select("name").eq("id", student.userId).maybeSingle();
+    if (u?.name?.trim()) studentName = u.name.trim();
+  }
+
+  revalidatePath("/admin/eventos");
+  revalidatePath(`/admin/eventos/${eid}/validar`);
+  revalidatePath(`/admin/eventos/${eid}`);
+  revalidatePath("/dashboard/eventos");
+  return { ok: true, eventName: (event as { name?: string })?.name ?? "Evento", studentName };
+}
+
 /**
  * Marca o ingresso como utilizado (entrada registada). Só ADMIN.
  * `eventId` tem de coincidir com o evento do ingresso (validação por evento).
@@ -252,31 +295,34 @@ export async function redeemEventTicket(checkinToken: string, eventId: string): 
 
   if (findErr) return { ok: false, error: findErr.message };
   if (!reg) return { ok: false, error: "Ingresso não encontrado para este evento." };
-  if (reg.status !== "CONFIRMED") return { ok: false, error: "Inscrição ainda não está confirmada." };
-  if (reg.checkin_used_at) return { ok: false, error: "Este ingresso já foi utilizado." };
 
-  const { data: updated, error: upErr } = await supabase
+  return executeEventCheckin(supabase, reg as RegCheckinRow, eid);
+}
+
+/**
+ * Check-in manual por ID de inscrição (lista por nome). Só ADMIN.
+ */
+export async function redeemEventCheckinByRegistrationId(
+  registrationId: string,
+  eventId: string
+): Promise<RedeemTicketResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { ok: false, error: "Não autorizado." };
+
+  const rid = registrationId.trim();
+  const eid = eventId.trim();
+  if (!rid || !eid) return { ok: false, error: "Dados inválidos." };
+
+  const supabase = createAdminClient();
+  const { data: reg, error: findErr } = await supabase
     .from("EventRegistration")
-    .update({ checkin_used_at: new Date().toISOString() })
-    .eq("id", reg.id)
-    .is("checkin_used_at", null)
-    .select("id")
+    .select("id, status, checkin_used_at, eventId, studentId")
+    .eq("id", rid)
+    .eq("eventId", eid)
     .maybeSingle();
 
-  if (upErr) return { ok: false, error: upErr.message };
-  if (!updated) return { ok: false, error: "Este ingresso já foi utilizado." };
+  if (findErr) return { ok: false, error: findErr.message };
+  if (!reg) return { ok: false, error: "Inscrição não encontrada neste evento." };
 
-  const { data: event } = await supabase.from("Event").select("name").eq("id", reg.eventId).maybeSingle();
-  const { data: student } = await supabase.from("Student").select("userId").eq("id", reg.studentId).maybeSingle();
-  let studentName = "Aluno";
-  if (student?.userId) {
-    const { data: u } = await supabase.from("User").select("name").eq("id", student.userId).maybeSingle();
-    if (u?.name?.trim()) studentName = u.name.trim();
-  }
-
-  revalidatePath("/admin/eventos");
-  revalidatePath(`/admin/eventos/${eid}/validar`);
-  revalidatePath(`/admin/eventos/${eid}`);
-  revalidatePath("/dashboard/eventos");
-  return { ok: true, eventName: (event as { name?: string })?.name ?? "Evento", studentName };
+  return executeEventCheckin(supabase, reg as RegCheckinRow, eid);
 }

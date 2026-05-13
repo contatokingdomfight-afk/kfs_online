@@ -4,6 +4,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { redirect } from "next/navigation";
+import { fetchEventCheckInParticipants } from "@/lib/event-checkin-participants";
 import { IngressoValidator, type IngressoPreview } from "./IngressoValidator";
 
 type Props = {
@@ -46,6 +47,7 @@ export default async function AdminEventoValidarIngressoPage({ params, searchPar
           invalidToken={invalidToken}
           notAdmin={notAdmin}
           wrongEvent={wrongEvent}
+          participants={[]}
         />
       </div>
     );
@@ -55,8 +57,11 @@ export default async function AdminEventoValidarIngressoPage({ params, searchPar
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: evMeta } = await supabase.from("Event").select("name").eq("id", eventId).maybeSingle();
-  if (evMeta?.name?.trim()) eventTitle = evMeta.name.trim();
+  const [participants, eventNameRes] = await Promise.all([
+    fetchEventCheckInParticipants(eventId),
+    supabase.from("Event").select("name").eq("id", eventId).maybeSingle(),
+  ]);
+  if (eventNameRes.data?.name?.trim()) eventTitle = eventNameRes.data.name.trim();
 
   if (token && !invalidToken) {
     const { data: anyReg } = await supabase.from("EventRegistration").select("eventId").eq("checkin_token", token).maybeSingle();
@@ -107,6 +112,7 @@ export default async function AdminEventoValidarIngressoPage({ params, searchPar
         invalidToken={invalidToken}
         notAdmin={false}
         wrongEvent={wrongEvent}
+        participants={participants}
       />
     </div>
   );

@@ -640,6 +640,19 @@ export const messages = {
     eventValidateScanQrDenied: "Não foi possível aceder à câmara. Verifica as permissões do browser.",
     eventValidateScanQrError: "Não foi possível iniciar a câmara neste dispositivo.",
     eventValidateScanQrUnreadable: "Este QR não contém um ingresso válido. Tenta outro código.",
+    eventCheckInTitle: "Check-in do evento",
+    eventCheckInIntro:
+      "Pesquisa um participante com inscrição confirmada (nome ou e-mail) e regista a entrada, ou usa a câmara para ler o QR do ingresso.",
+    eventCheckInPasteUrlHint:
+      "Se tiveres o link do ingresso, também podes colar na barra de endereços o URL completo (com o parâmetro token).",
+    eventCheckInQrSectionTitle: "Ler por código QR",
+    eventCheckInManualHeading: "Check-in manual",
+    eventCheckInManualPlaceholder: "Nome ou e-mail do participante",
+    eventCheckInManualHint: "Só aparecem inscrições já confirmadas neste evento.",
+    eventCheckInManualMinChars: "Escreve pelo menos 2 letras ou números.",
+    eventCheckInManualEmpty: "Nenhum participante encontrado com esse texto.",
+    eventCheckInManualNoConfirmed: "Não há inscrições confirmadas neste evento. Confirma inscrições na página do evento.",
+    eventCheckInUsedBadge: "Entrada já registada",
     eventsCalendarTitle: "Calendário de eventos",
     eventsCalendarHint: "Dias realçados têm eventos. Carrega num dia para filtrar a lista em baixo.",
     eventsCalendarPrev: "Mês anterior",
@@ -667,7 +680,7 @@ export const messages = {
     adminEventsEmpty: "Ainda não há eventos. Cria o primeiro em «Novo evento».",
     adminEventInactiveBadge: "Inativo",
     adminEventEditSummary: "Dados do evento — clicar para expandir e editar",
-    adminEventValidateTicketsLink: "Validar ingressos (QR deste evento)",
+    adminEventValidateTicketsLink: "Check-in do evento (nome ou QR)",
 
     // Admin home / dashboard
     helloAdmin: "Olá,",
@@ -1559,6 +1572,19 @@ export const messages = {
     eventValidateScanQrDenied: "Camera access was blocked. Check your browser permissions.",
     eventValidateScanQrError: "Could not start the camera on this device.",
     eventValidateScanQrUnreadable: "This QR does not contain a valid ticket. Try another code.",
+    eventCheckInTitle: "Event check-in",
+    eventCheckInIntro:
+      "Search for a participant with a confirmed registration (name or email) and record check-in, or use the camera to scan the ticket QR code.",
+    eventCheckInPasteUrlHint:
+      "If you have the ticket link, you can also paste the full URL (with the token parameter) in the address bar.",
+    eventCheckInQrSectionTitle: "Scan QR code",
+    eventCheckInManualHeading: "Manual check-in",
+    eventCheckInManualPlaceholder: "Participant name or email",
+    eventCheckInManualHint: "Only registrations already confirmed for this event are listed.",
+    eventCheckInManualMinChars: "Type at least 2 characters.",
+    eventCheckInManualEmpty: "No participant matches that text.",
+    eventCheckInManualNoConfirmed: "There are no confirmed registrations for this event. Confirm registrations on the event page.",
+    eventCheckInUsedBadge: "Check-in already recorded",
     eventsCalendarTitle: "Events calendar",
     eventsCalendarHint: "Highlighted days have events. Tap a day to filter the list below.",
     eventsCalendarPrev: "Previous month",
@@ -1584,7 +1610,7 @@ export const messages = {
     adminEventsEmpty: "No events yet. Create the first one with «New event».",
     adminEventInactiveBadge: "Inactive",
     adminEventEditSummary: "Event details — click to expand and edit",
-    adminEventValidateTicketsLink: "Validate tickets (QR for this event)",
+    adminEventValidateTicketsLink: "Event check-in (name or QR)",
 
     helloAdmin: "Hello,",
     adminRevenueThisMonth: "Revenue this month",
