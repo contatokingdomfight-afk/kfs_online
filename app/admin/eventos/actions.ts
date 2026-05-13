@@ -8,7 +8,7 @@ import { parseEventDay } from "@/lib/event-form-dates";
 import { normalizeTimeForDb } from "@/lib/event-times";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const EVENT_TYPES = ["CAMP", "WORKSHOP"] as const;
+const EVENT_TYPES = ["CAMP", "WORKSHOP", "OTHER"] as const;
 
 export type EventFormResult = { error?: string };
 
@@ -204,12 +204,16 @@ export async function setRegistrationStatus(
       .maybeSingle();
     if (selErr) return { error: selErr.message };
     const eventIdForPath = (row as { eventId?: string } | null)?.eventId;
+    let skipQrToken = false;
+    if (eventIdForPath) {
+      const { data: ev } = await supabase.from("Event").select("type").eq("id", eventIdForPath).maybeSingle();
+      if ((ev as { type?: string } | null)?.type === "OTHER") skipQrToken = true;
+    }
     const existing = (row as { checkin_token?: string | null } | null)?.checkin_token?.trim();
-    const token = existing || randomBytes(24).toString("hex");
-    const { error } = await supabase
-      .from("EventRegistration")
-      .update({ status: "CONFIRMED", checkin_token: token })
-      .eq("id", rid);
+    const payload = skipQrToken
+      ? { status: "CONFIRMED" as const, checkin_token: null }
+      : { status: "CONFIRMED" as const, checkin_token: existing || randomBytes(24).toString("hex") };
+    const { error } = await supabase.from("EventRegistration").update(payload).eq("id", rid);
     if (error) return { error: error.message };
     if (eventIdForPath) revalidatePath(`/admin/eventos/${eventIdForPath}`);
   } else {

@@ -11,7 +11,7 @@ import { EventForm } from "../EventForm";
 import { DeleteEventoButton } from "./DeleteEventoButton";
 import { ConfirmRegistrationButton } from "./ConfirmRegistrationButton";
 
-const TYPE_LABELS: Record<string, string> = { CAMP: "Camp", WORKSHOP: "Workshop" };
+const TYPE_LABELS: Record<string, string> = { CAMP: "Camp", WORKSHOP: "Workshop", OTHER: "Outro" };
 
 type Props = { params: Promise<{ id: string }> };
 

@@ -661,6 +661,11 @@ export const messages = {
     eventsLocationPrefix: "Local",
     eventsTimePrefix: "Horário",
     eventsEmptyDay: "Nenhum evento neste dia. Escolhe outro dia ou mostra todos.",
+    eventsTypeCamp: "Camp",
+    eventsTypeWorkshop: "Workshop",
+    eventsTypeOther: "Outro",
+    eventOtherNoQrDetail:
+      "Ingresso tratado pela escola (venda própria). Não há código QR na app para este tipo de evento.",
 
     // Loja (produtos físicos: camisetas, chaveiros, etc.)
     storeTitle: "Loja",
@@ -1591,6 +1596,11 @@ export const messages = {
     eventsLocationPrefix: "Venue",
     eventsTimePrefix: "Time",
     eventsEmptyDay: "No events on this day. Pick another day or show all.",
+    eventsTypeCamp: "Camp",
+    eventsTypeWorkshop: "Workshop",
+    eventsTypeOther: "Other",
+    eventOtherNoQrDetail:
+      "Ticket handled by the school (direct sales). There is no in-app QR code for this event type.",
 
     storeTitle: "Store",
     storeDescription: "KFS products: t-shirts, keychains and merchandise. Buy at the school.",

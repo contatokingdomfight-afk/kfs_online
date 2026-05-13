@@ -8,10 +8,12 @@ import { EventCalendar, eventTouchesDay, type EventCalendarRow } from "@/compone
 import { EventIngressoCard } from "./EventIngressoCard";
 import { InscreverMeButton } from "./InscreverMeButton";
 
-const TYPE_LABELS: Record<string, string> = {
-  CAMP: "Camp",
-  WORKSHOP: "Workshop",
-};
+function eventTypeLabel(type: string, t: ReturnType<typeof getTranslations>): string {
+  if (type === "CAMP") return t("eventsTypeCamp");
+  if (type === "WORKSHOP") return t("eventsTypeWorkshop");
+  if (type === "OTHER") return t("eventsTypeOther");
+  return type;
+}
 
 export type EventRegistrationSummary = {
   status: string;
@@ -183,7 +185,7 @@ export function EventosBoard({
                         color: "var(--text-secondary)",
                       }}
                     >
-                      {TYPE_LABELS[e.type] ?? e.type}
+                      {eventTypeLabel(e.type, t)}
                     </span>
                     <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                       {formatDateRangeLine(e, locale)}
@@ -210,7 +212,16 @@ export function EventosBoard({
                   )}
                   {isRegistered ? (
                     <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
-                      {reg?.status === "CONFIRMED" && reg.checkin_token?.trim() ? (
+                      {reg?.status === "CONFIRMED" && e.type === "OTHER" ? (
+                        <>
+                          <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500 }}>
+                            {t("registered")}
+                          </p>
+                          <p style={{ margin: 0, fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)", lineHeight: 1.45 }}>
+                            {t("eventOtherNoQrDetail")}
+                          </p>
+                        </>
+                      ) : reg?.status === "CONFIRMED" && reg.checkin_token?.trim() ? (
                         <>
                           <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500 }}>
                             {t("registered")}

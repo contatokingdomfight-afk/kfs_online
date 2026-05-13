@@ -21,6 +21,7 @@ export type AdminEventListRow = {
 const TYPE_LABELS: Record<string, string> = {
   CAMP: "Camp",
   WORKSHOP: "Workshop",
+  OTHER: "Outro",
 };
 
 function formatEventDate(dateStr: string): string {

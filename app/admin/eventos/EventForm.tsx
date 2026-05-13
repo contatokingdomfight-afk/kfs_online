@@ -8,6 +8,7 @@ import { EventBannerField } from "./EventBannerField";
 const TYPES = [
   { value: "CAMP", label: "Camp" },
   { value: "WORKSHOP", label: "Workshop" },
+  { value: "OTHER", label: "Outro" },
 ] as const;
 
 type Props = {
@@ -103,15 +104,16 @@ export function EventForm({
           display: "grid",
           gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
           gap: "clamp(12px, 3vw, 16px)",
+          alignItems: "stretch",
         }}
       >
-        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
           <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
             Data de início
           </span>
           <input type="date" name="start_date" defaultValue={initialStartDate} className="input" required />
         </label>
-        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
           <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
             Data de fim
           </span>
@@ -124,24 +126,24 @@ export function EventForm({
           display: "grid",
           gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
           gap: "clamp(12px, 3vw, 16px)",
+          alignItems: "stretch",
         }}
       >
-        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
           <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-            Hora de início (opcional)
+            Hora de início
           </span>
+          <span style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.3 }}>(opcional)</span>
           <input type="time" name="start_time" defaultValue={initialStartTime} className="input" />
         </label>
-        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
           <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-            Hora de fim (opcional)
+            Hora de fim
           </span>
+          <span style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.3 }}>(opcional)</span>
           <input type="time" name="end_time" defaultValue={initialEndTime} className="input" />
         </label>
       </div>
-      <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
-        Se preencheres uma hora, preenche as duas. No mesmo dia, a hora de fim tem de ser depois da de início.
-      </p>
 
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
