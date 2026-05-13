@@ -94,13 +94,35 @@ export function AdminEventosBoard({ events, locale }: { events: AdminEventListRo
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
-      <EventCalendar
-        events={calendarRows}
-        locale={calLocale}
-        labels={labels}
-        selectedIso={selectedIso}
-        onSelectIso={setSelectedIso}
-      />
+      <details
+        style={{
+          borderRadius: "var(--radius-md)",
+          border: "1px solid var(--border)",
+          background: "var(--surface)",
+        }}
+      >
+        <summary
+          style={{
+            cursor: "pointer",
+            padding: "clamp(12px, 3vw, 14px) clamp(14px, 3.5vw, 16px)",
+            fontWeight: 600,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            color: "var(--text-primary)",
+            listStyle: "none",
+          }}
+        >
+          {t("adminEventsCalendarSummary")}
+        </summary>
+        <div style={{ padding: "0 clamp(14px, 3.5vw, 16px) clamp(14px, 3.5vw, 16px)" }}>
+          <EventCalendar
+            events={calendarRows}
+            locale={calLocale}
+            labels={labels}
+            selectedIso={selectedIso}
+            onSelectIso={setSelectedIso}
+          />
+        </div>
+      </details>
       <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>{countLabel}</p>
 
       {list.length === 0 ? (

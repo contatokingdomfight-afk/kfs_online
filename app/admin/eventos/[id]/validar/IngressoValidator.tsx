@@ -1,10 +1,12 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { redeemEventTicket } from "../../actions";
+import { TicketQrScanner } from "./TicketQrScanner";
 
 export type IngressoPreview = {
   eventName: string;
@@ -23,6 +25,18 @@ type Props = {
   wrongEvent: boolean;
 };
 
+function withAdminScanner(notAdmin: boolean, eventId: string, locale: Locale, node: ReactNode) {
+  if (notAdmin) return node;
+  return (
+    <>
+      {node}
+      <div style={{ maxWidth: 480, width: "100%" }}>
+        <TicketQrScanner eventId={eventId} locale={locale} />
+      </div>
+    </>
+  );
+}
+
 export function IngressoValidator({ eventId, locale, token, preview, invalidToken, notAdmin, wrongEvent }: Props) {
   const t = getTranslations(locale);
   const router = useRouter();
@@ -39,7 +53,10 @@ export function IngressoValidator({ eventId, locale, token, preview, invalidToke
   }
 
   if (!token) {
-    return (
+    return withAdminScanner(
+      notAdmin,
+      eventId,
+      locale,
       <div className="card" style={{ padding: 24, maxWidth: 520 }}>
         <h1 style={{ margin: "0 0 12px 0", fontSize: 20, fontWeight: 600 }}>{t("eventValidateTitle")}</h1>
         <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: 1.5 }}>{t("eventValidateNoTokenBody")}</p>
@@ -48,7 +65,10 @@ export function IngressoValidator({ eventId, locale, token, preview, invalidToke
   }
 
   if (invalidToken) {
-    return (
+    return withAdminScanner(
+      notAdmin,
+      eventId,
+      locale,
       <div className="card" style={{ padding: 24, maxWidth: 480 }}>
         <p style={{ margin: 0, color: "var(--danger)" }}>{t("eventValidateInvalidToken")}</p>
       </div>
@@ -56,7 +76,10 @@ export function IngressoValidator({ eventId, locale, token, preview, invalidToke
   }
 
   if (wrongEvent) {
-    return (
+    return withAdminScanner(
+      notAdmin,
+      eventId,
+      locale,
       <div className="card" style={{ padding: 24, maxWidth: 520 }}>
         <p style={{ margin: 0, color: "var(--danger)" }}>{t("eventTicketWrongEvent")}</p>
       </div>
@@ -64,7 +87,10 @@ export function IngressoValidator({ eventId, locale, token, preview, invalidToke
   }
 
   if (!preview) {
-    return (
+    return withAdminScanner(
+      notAdmin,
+      eventId,
+      locale,
       <div className="card" style={{ padding: 24, maxWidth: 480 }}>
         <p style={{ margin: 0, color: "var(--danger)" }}>{t("eventValidateNotFound")}</p>
       </div>
@@ -72,7 +98,10 @@ export function IngressoValidator({ eventId, locale, token, preview, invalidToke
   }
 
   if (preview.status !== "CONFIRMED") {
-    return (
+    return withAdminScanner(
+      notAdmin,
+      eventId,
+      locale,
       <div className="card" style={{ padding: 24, maxWidth: 520 }}>
         <p style={{ margin: 0, color: "var(--text-secondary)" }}>{t("eventValidatePendingReg")}</p>
       </div>
@@ -92,7 +121,10 @@ export function IngressoValidator({ eventId, locale, token, preview, invalidToke
     router.refresh();
   }
 
-  return (
+  return withAdminScanner(
+    notAdmin,
+    eventId,
+    locale,
     <div className="card" style={{ padding: "clamp(20px, 5vw, 28px)", maxWidth: 480 }}>
       <h1 style={{ margin: "0 0 16px 0", fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 600 }}>{t("eventValidateTitle")}</h1>
       <p style={{ margin: "0 0 8px 0", fontSize: 15, color: "var(--text-primary)" }}>
