@@ -16,7 +16,6 @@ export function getCoachShellSidebarLinks(
   return [
     ...(showAdminEntry ? [{ label: "Admin", href: "/admin" as string }] : []),
     { label: t("navHome"), href: "/coach" },
-    { label: t("navNotificationsCenter"), href: "/coach/notificacoes" },
     { label: t("navManageClasses"), href: "/coach/aula" },
     { label: t("navAgenda"), href: "/coach/agenda" },
     { label: t("navWeekTheme"), href: "/coach/tema-semana" },
