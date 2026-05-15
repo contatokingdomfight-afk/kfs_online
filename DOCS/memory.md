@@ -46,7 +46,7 @@ Referência legível (fluxos e rotas): [`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`]
 
 - **Rotas:** `/coach/round-timer` (página); timer embutido em `/coach/aula` com `RoundTimerClient` em `variant="embedded"`.
 - **Sons:** `lib/round-timer/audio.ts` + ficheiros em `public/sounds/round-timer/`. Sino **`end__boxing-bell.wav`** no **início** e no **fim** de cada round. **`digital-beep.wav`** nos últimos 5 s do preparo (5→2), últimos 10 s + últimos 5 s do round, últimos 5 s do descanso — detalhe em [`DOCS/ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md).
-- **UI:** `app/coach/round-timer/round-timer.css` (`.round-timer-actions`, botões primário/secundário por fase, `prefers-reduced-motion`).
+- **UI:** `app/coach/round-timer/round-timer.css` (`.round-timer-actions`, botões primário/secundário por fase, sombra suave, `prefers-reduced-motion`).
 - **Motor / estado:** `lib/round-timer/engine.ts`, persistência `lib/round-timer/persistence.ts`.
 
 ## Roadmap (referência)

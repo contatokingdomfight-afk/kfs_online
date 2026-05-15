@@ -51,9 +51,9 @@ Vibração curta acompanha algumas transições (ver efeitos em `RoundTimerClien
 
 ## Interface (botões)
 
-- Classe **`.round-timer-actions`**: agrupa Iniciar / Pausa / Continuar / Saltar fase / Repor com fundo e borda ligados à cor da fase.  
-- **`.round-timer-btn-primary`**: botão “pill”, gradiente 3D e cor por `data-ui` (laranja em idle, dourado em preparo, vermelho em round, azul em descanso, verde quando o treino terminou).  
-- **`.round-timer-btn-secondary`**: secundários com hover com anel da cor de destaque.  
+- Classe **`.round-timer-actions`**: agrupa Iniciar / Pausa / Continuar / Saltar fase / Repor; fundo `var(--bg-secondary)` e borda simples.  
+- **`.round-timer-btn-primary`**: fundo sólido por fase (preparo / round / descanso / concluído) ou `var(--primary)` em idle; cantos `radius-md`, sombra leve, sem maiúsculas forçadas.  
+- **`.round-timer-btn-secondary`**: fundo `var(--bg)`, borda `var(--border)`, hover com leve realce da cor da fase.  
 - **`.round-timer-btn.text-sm`**: variantes compactas (ecrã inteiro, expandir config, guardar preset).  
 - **`prefers-reduced-motion`:** reduz animações de hover/active.
 
