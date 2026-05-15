@@ -36,9 +36,9 @@ import {
 import {
   playBeepCountdownTick,
   playBeepEndOfRound,
-  playBeepFinish,
-  playBeepRound,
-  playBeepTenSecondsWarning,
+  playDigitalBeep,
+  playRoundStartBell,
+  playWorkoutEndBell,
   unlockAudio,
 } from "@/lib/round-timer/audio";
 import { DurationRollPicker } from "@/components/coach/round-timer/DurationRollPicker";
@@ -107,6 +107,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
   const prevPhase = useRef(timer.phase);
   const lastCountdownSec = useRef<number | null>(null);
   const prevRemForTenSec = useRef<number | null>(null);
+  const lastRoundUrgentSec = useRef<number | null>(null);
   const tenSecPhaseKey = `${timer.phase}-${timer.roundIdx}-${timer.completedRoundIdx}`;
 
   useEffect(() => {
@@ -262,13 +263,13 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     void unlockAudio();
 
     if (is === "round" && (was === "countdown" || was === "rest")) {
-      playBeepRound();
+      playRoundStartBell();
       vibrateMs(120);
     } else if (is === "rest" && was === "round") {
       playBeepEndOfRound();
       vibrateMs(80);
     } else if (is === "finished" && was === "round") {
-      playBeepFinish();
+      playWorkoutEndBell();
       vibrateMs([100, 80, 100]);
     }
   }, [timer.phase]);
@@ -291,10 +292,12 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
   /* Aviso quando o tempo restante cruza para os últimos 10 s (ignora rounds/descansos já curtos desde o início) */
   useEffect(() => {
     prevRemForTenSec.current = null;
+    lastRoundUrgentSec.current = null;
   }, [tenSecPhaseKey]);
 
+  /* Últimos 10 s do round: um digital-beep ao cruzar o limiar. */
   useEffect(() => {
-    if (timer.phase !== "round" && timer.phase !== "rest") return;
+    if (timer.phase !== "round") return;
     if (timer.phaseEndsAt == null) return;
     const rem = displayMs;
     const prev = prevRemForTenSec.current;
@@ -302,8 +305,27 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     const crossedIntoLastTen = prev != null && prev > 10_000 && rem <= 10_000 && rem > 0;
     if (!crossedIntoLastTen) return;
     void unlockAudio();
-    playBeepTenSecondsWarning();
+    playDigitalBeep();
     vibrateMs(40);
+  }, [timer.phase, timer.phaseEndsAt, displayMs]);
+
+  /* Últimos 5 s do round: um bip por segundo visível 5→4→3→2 (4 toques). */
+  useEffect(() => {
+    if (timer.phase !== "round" || timer.phaseEndsAt == null) {
+      lastRoundUrgentSec.current = null;
+      return;
+    }
+    const rem = displayMs;
+    if (rem <= 0 || rem > 5000) {
+      lastRoundUrgentSec.current = null;
+      return;
+    }
+    const sec = Math.ceil(rem / 1000);
+    if (sec < 2 || sec > 5) return;
+    if (lastRoundUrgentSec.current === sec) return;
+    lastRoundUrgentSec.current = sec;
+    void unlockAudio();
+    playDigitalBeep();
   }, [timer.phase, timer.phaseEndsAt, displayMs]);
 
   const canEdit = timer.phase === "idle" || timer.phase === "finished";
