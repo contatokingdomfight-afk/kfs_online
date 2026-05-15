@@ -35,10 +35,9 @@ import {
 } from "@/lib/round-timer/persistence";
 import {
   playBeepCountdownTick,
-  playBeepEndOfRound,
   playDigitalBeep,
+  playRoundEndBell,
   playRoundStartBell,
-  playWorkoutEndBell,
   unlockAudio,
 } from "@/lib/round-timer/audio";
 import { DurationRollPicker } from "@/components/coach/round-timer/DurationRollPicker";
@@ -269,10 +268,10 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       playRoundStartBell();
       vibrateMs(120);
     } else if (is === "rest" && was === "round") {
-      playBeepEndOfRound();
+      playRoundEndBell();
       vibrateMs(80);
     } else if (is === "finished" && was === "round") {
-      playWorkoutEndBell();
+      playRoundEndBell();
       vibrateMs([100, 80, 100]);
     }
   }, [timer.phase]);

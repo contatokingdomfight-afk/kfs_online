@@ -51,9 +51,14 @@ export function playRoundStartBell(): void {
   playSample(SOUND_START_ROUND);
 }
 
-/** Treino concluído (último round terminou). */
-export function playWorkoutEndBell(): void {
+/** Fim de um round (antes do descanso ou treino concluído). */
+export function playRoundEndBell(): void {
   playSample(SOUND_END_WORKOUT);
+}
+
+/** Alias: mesmo som que `playRoundEndBell` (último round → finished). */
+export function playWorkoutEndBell(): void {
+  playRoundEndBell();
 }
 
 /** Aviso digital (10 s antes do fim do round; últimos 5 s do round em sequência). */
@@ -76,13 +81,6 @@ function beep(freq: number, durationSec: number, volume = 0.12): void {
   g.gain.exponentialRampToValueAtTime(0.001, t + durationSec);
   o.start(t);
   o.stop(t + durationSec + 0.05);
-}
-
-/** Fim do round (antes do descanso): sequência sintética (sem ficheiro dedicado). */
-export function playBeepEndOfRound(): void {
-  beep(660, 0.1, 0.14);
-  setTimeout(() => beep(440, 0.14, 0.13), 120);
-  setTimeout(() => beep(330, 0.22, 0.12), 300);
 }
 
 export function playBeepCountdownTick(): void {
