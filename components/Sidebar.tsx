@@ -5,7 +5,14 @@ import { SidebarPwaInstall } from "@/components/SidebarPwaInstall";
 import type { Theme } from "@/lib/theme-locale";
 import type { Locale } from "@/lib/theme-locale";
 
-export type SidebarLink = { label: string; href: string; prefetch?: boolean; children?: SidebarLink[] };
+export type SidebarLink = {
+  label: string;
+  href: string;
+  prefetch?: boolean;
+  children?: SidebarLink[];
+  /** Sem `children`: considerar activo se `activeHref` for igual a algum destes prefixos (exact ou sub-rota). */
+  groupActiveHrefs?: string[];
+};
 
 export function Sidebar({
   title,
@@ -82,7 +89,7 @@ export function Sidebar({
       >
         {links.map((item) => {
           const hasChildren = item.children && item.children.length > 0;
-          // Sem filhos: só URL exacta (evita /coach a activar em /coach/aula). Com filhos: item, prefixo do item, ou qualquer filho.
+          // Sem filhos: URL exacta, ou `groupActiveHrefs` se definido. Com filhos: item, prefixo do item, ou qualquer filho.
           const navHighlighted = (() => {
             if (!activeHref) return false;
             if (hasChildren) {
@@ -91,6 +98,10 @@ export function Sidebar({
                 activeHref.startsWith(`${item.href}/`) ||
                 item.children!.some((c) => activeHref === c.href || activeHref.startsWith(`${c.href}/`))
               );
+            }
+            const group = item.groupActiveHrefs;
+            if (group?.length) {
+              return group.some((h) => activeHref === h || activeHref.startsWith(`${h}/`));
             }
             return activeHref === item.href;
           })();

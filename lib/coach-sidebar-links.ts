@@ -24,12 +24,9 @@ export function getCoachShellSidebarLinks(
     { label: t("navAthletesCoach"), href: "/coach/atletas" },
     { label: t("navTrials"), href: "/coach/experimentais" },
     {
-      label: "Avaliação e pontuação",
+      label: t("navEvaluationDocs"),
       href: "/como-sou-avaliado",
-      children: [
-        { label: "Como sou avaliado", href: "/como-sou-avaliado" },
-        { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
-      ],
+      groupActiveHrefs: ["/como-sou-avaliado", "/sistema-pontuacao"],
     },
     { label: "Meus Cursos", href: "/coach/cursos" as string },
     { label: t("libraryTitle"), href: "/coach/biblioteca" as string },

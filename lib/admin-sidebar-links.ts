@@ -22,12 +22,9 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
     { label: t("navCourses"), href: "/admin/cursos" },
     { label: t("navEventsAdmin"), href: "/admin/eventos" },
     {
-      label: "Avaliação e pontuação",
+      label: t("navEvaluationDocs"),
       href: "/como-sou-avaliado",
-      children: [
-        { label: "Como sou avaliado", href: "/como-sou-avaliado" },
-        { label: "Sistema de pontuação", href: "/sistema-pontuacao" },
-      ],
+      groupActiveHrefs: ["/como-sou-avaliado", "/sistema-pontuacao"],
     },
     {
       label: t("navEvaluationCriteria"),

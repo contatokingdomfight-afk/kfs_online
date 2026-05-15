@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+import { getTranslations } from "@/lib/i18n";
 import { PilaresAccordion } from "./PilaresAccordion";
 import { NiveisXPSection } from "./NiveisXPSection";
 
@@ -7,7 +9,10 @@ export const metadata: Metadata = {
   description: "Como funciona a avaliação, os 5 pilares, os níveis e o XP na plataforma Kingdom Fight School.",
 };
 
-export default function SistemaPontuacaoPage() {
+export default async function SistemaPontuacaoPage() {
+  const locale = await getLocaleFromCookies();
+  const t = getTranslations(locale as "pt" | "en");
+
   return (
     <div style={{ maxWidth: "min(640px, 100%)", margin: "0 auto", padding: "clamp(20px, 5vw, 32px) 0" }}>
       <h1 style={{ margin: "0 0 clamp(16px, 4vw, 24px) 0", fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 700, color: "var(--text-primary)" }}>
@@ -48,7 +53,7 @@ export default function SistemaPontuacaoPage() {
       </section>
 
       <p style={{ margin: "clamp(24px, 6vw, 32px) 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-        Use o menu lateral para voltar ao Início ou navegar na plataforma.
+        {t("evalDocsFooterHint")}
       </p>
     </div>
   );

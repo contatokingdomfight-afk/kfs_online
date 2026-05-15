@@ -55,13 +55,10 @@ export default async function DashboardLayout({
             ]
           : []),
         {
-          label: "Avaliação e pontuação",
+          label: t("navEvaluationDocs"),
           href: "/como-sou-avaliado",
           prefetch: false,
-          children: [
-            { label: "Como sou avaliado", href: "/como-sou-avaliado", prefetch: false },
-            { label: "Sistema de pontuação", href: "/sistema-pontuacao", prefetch: false },
-          ],
+          groupActiveHrefs: ["/como-sou-avaliado", "/sistema-pontuacao"],
         },
         ...(planAccess.hasPerformanceTracking ? [{ label: t("navConquests"), href: "/dashboard/conquistas" }] : []),
         ...(planAccess.hasPerformanceTracking ? [{ label: t("navRank"), href: "/dashboard/rank" }] : []),

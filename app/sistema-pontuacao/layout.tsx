@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCoachStudentId } from "@/lib/auth/get-coach-student-id";
+import { getViewAsFromCookies } from "@/lib/view-as-server";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
@@ -12,6 +13,8 @@ import { canAccessAdminPathname } from "@/lib/permissions/paths";
 import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
 import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
 import { getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
+import { EvaluationDocsTabs } from "@/components/evaluation-docs/EvaluationDocsTabs";
+import { getEvaluationDocsStudentShellLinks } from "@/lib/sidebar-evaluation-docs-shell";
 
 export default async function SistemaPontuacaoLayout({
   children,
@@ -21,10 +24,11 @@ export default async function SistemaPontuacaoLayout({
   const dbUser = await getCurrentDbUser();
   if (!dbUser) redirect("/sign-in");
 
-  const [theme, locale, coachStudentId] = await Promise.all([
+  const [theme, locale, coachStudentId, viewAs] = await Promise.all([
     getThemeFromCookies(),
     getLocaleFromCookies(),
-    (dbUser.role === "COACH" || dbUser.role === "ADMIN") ? getCoachStudentId() : Promise.resolve(null),
+    dbUser.role === "COACH" || dbUser.role === "ADMIN" ? getCoachStudentId() : Promise.resolve(null),
+    dbUser.role === "ADMIN" ? getViewAsFromCookies() : Promise.resolve(null),
   ]);
   const t = getTranslations(locale as "pt" | "en");
 
@@ -32,7 +36,7 @@ export default async function SistemaPontuacaoLayout({
   let sidebarLinks: SidebarLink[];
   let headerExtra: React.ReactNode = null;
 
-  if (dbUser.role === "ADMIN") {
+  if (dbUser.role === "ADMIN" && viewAs !== "aluno") {
     const access = await getCachedResolvedAdminAccess();
     const kfsPath = await getKfsPathnameFromRequest();
     if (access.kind === "granted" && kfsPath && !canAccessAdminPathname(access, kfsPath)) {
@@ -62,17 +66,7 @@ export default async function SistemaPontuacaoLayout({
     sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
   } else {
     sidebarTitle = t("studentArea");
-    sidebarLinks = [
-      { label: t("navHome"), href: "/dashboard" },
-      { label: t("navAthleteProfile"), href: "/dashboard/performance" },
-      { label: t("navConquests"), href: "/dashboard/conquistas" },
-      { label: t("navStore"), href: "/dashboard/loja" },
-      { label: t("navLibrary"), href: "/dashboard/biblioteca" },
-      { label: t("navEvents"), href: "/dashboard/eventos" },
-      { label: t("navFinance"), href: "/dashboard/financeiro" },
-      { label: t("navProfile"), href: "/dashboard/perfil" },
-      { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
-    ];
+    sidebarLinks = getEvaluationDocsStudentShellLinks(t);
   }
 
   return (
@@ -87,6 +81,13 @@ export default async function SistemaPontuacaoLayout({
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
         mainClassName={dbUser.role === "ADMIN" ? "admin-main" : undefined}
       >
+        <div style={{ maxWidth: "min(640px, 100%)", margin: "0 auto", padding: "0 clamp(16px, 4vw, 24px)" }}>
+          <EvaluationDocsTabs
+            labelComo={t("evalDocsTabHow")}
+            labelSistema={t("evalDocsTabScoring")}
+            ariaLabel={t("evalDocsTabsAria")}
+          />
+        </div>
         {children}
       </ResponsiveShell>
     </div>

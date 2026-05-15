@@ -490,6 +490,11 @@ export const messages = {
     navCoaches: "Coaches",
     navLeads: "Leads",
     navPermissions: "Permissões",
+    navEvaluationDocs: "Avaliação e pontuação",
+    evalDocsTabHow: "Como sou avaliado",
+    evalDocsTabScoring: "Sistema de pontuação",
+    evalDocsTabsAria: "Secções de avaliação e pontuação",
+    evalDocsFooterHint: "Podes alternar entre as duas secções pelas abas em cima.",
 
     permissionsPageTitle: "Contas e permissões",
     permissionsPageIntro:
@@ -1448,6 +1453,11 @@ export const messages = {
     navCoaches: "Coaches",
     navLeads: "Leads",
     navPermissions: "Permissions",
+    navEvaluationDocs: "Evaluation & scoring",
+    evalDocsTabHow: "How I'm evaluated",
+    evalDocsTabScoring: "Scoring system",
+    evalDocsTabsAria: "Evaluation and scoring sections",
+    evalDocsFooterHint: "Use the tabs above to switch between the two sections.",
 
     permissionsPageTitle: "Accounts and permissions",
     permissionsPageIntro:
