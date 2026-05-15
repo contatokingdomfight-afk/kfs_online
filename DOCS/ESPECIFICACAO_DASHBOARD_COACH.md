@@ -82,4 +82,11 @@ A página `/coach` será reestruturada nas seguintes secções, por ordem de pri
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026; maio 2026 — `NOTIFICACOES_IN_APP_E_EVENTOS.md`.*
+### Timer de rounds
+
+*   **Rotas:** `/coach/round-timer` (página completa); na gestão da aula (`/coach/aula`), o mesmo componente em modo embutido para uso durante a sessão.
+*   **Documentação técnica:** [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md) — fases, sons (`end__boxing-bell`, `digital-beep`), CSS dos botões, localStorage e ficheiros de código.
+
+---
+
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026; maio 2026 — `NOTIFICACOES_IN_APP_E_EVENTOS.md`, `ROUND_TIMER_COACH.md`.*

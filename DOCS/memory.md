@@ -1,6 +1,6 @@
 # Memória do projeto
 
-Contexto técnico e decisões recentes (**prioridade para continuidade** e alinhamento de código). Índice geral da pasta `DOCS/`: [`INDEX.md`](INDEX.md). Notificações e eventos (rotas, gatilhos): [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
+Contexto técnico e decisões recentes (**prioridade para continuidade** e alinhamento de código). Índice geral da pasta `DOCS/`: [`INDEX.md`](INDEX.md). Notificações e eventos (rotas, gatilhos): [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md). **Timer de rounds (coach):** [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md).
 
 > Não confundir com ficheiros duplicados fora de `DOCS/`; a canónica é **`DOCS/memory.md`**.
 
@@ -41,6 +41,13 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Sem registo `Student`:** visita a `/dashboard/notificacoes` redirecciona admin → `/admin/notificacoes`, coach → `/coach/notificacoes`, outros → `/dashboard` (`app/dashboard/notificacoes/page.tsx`).
 
 Referência legível (fluxos e rotas): [`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
+
+## Timer de rounds (coach)
+
+- **Rotas:** `/coach/round-timer` (página); timer embutido em `/coach/aula` com `RoundTimerClient` em `variant="embedded"`.
+- **Sons:** `lib/round-timer/audio.ts` + ficheiros em `public/sounds/round-timer/`. Sino **`end__boxing-bell.wav`** no **início** e no **fim** de cada round. **`digital-beep.wav`** nos últimos 5 s do preparo (5→2), últimos 10 s + últimos 5 s do round, últimos 5 s do descanso — detalhe em [`DOCS/ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md).
+- **UI:** `app/coach/round-timer/round-timer.css` (`.round-timer-actions`, botões primário/secundário por fase, `prefers-reduced-motion`).
+- **Motor / estado:** `lib/round-timer/engine.ts`, persistência `lib/round-timer/persistence.ts`.
 
 ## Roadmap (referência)
 

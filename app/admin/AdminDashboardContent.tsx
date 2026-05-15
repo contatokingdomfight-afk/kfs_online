@@ -53,9 +53,10 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
       title: t("adminGroupPeople"),
       items: [
         { href: "/admin/alunos", icon: "🧑‍🎓", label: t("navStudents") },
-        { href: "/admin/coaches", icon: "👨‍🏫", label: t("navCoaches") },
         { href: "/admin/atletas", icon: "🤸", label: t("navAthletes") },
+        { href: "/admin/coaches", icon: "👨‍🏫", label: t("navCoaches") },
         { href: "/admin/experimentais", icon: "🧪", label: t("navTrials") },
+        { href: "/admin/leads", icon: "📇", label: t("navLeads") },
       ],
     },
     {
@@ -70,18 +71,18 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
     {
       title: t("adminGroupContentFinance"),
       items: [
+        { href: "/admin/planos", icon: "💳", label: t("navPlans") },
         { href: "/admin/cursos", icon: "📚", label: t("navCourses") },
-        { href: "/admin/planos", icon: "💰", label: t("navPlans") },
-        { href: "/admin/financeiro", icon: "💶", label: t("navFinance") },
         { href: "/admin/eventos", icon: "✨", label: t("navEventsAdmin") },
+        { href: "/admin/financeiro", icon: "💶", label: t("navFinance") },
       ],
     },
     {
       title: t("adminGroupPlatform"),
       items: [
-        { href: "/admin/configuracoes", icon: "⚙️", label: t("navSettings") },
-        { href: "/admin/missoes", icon: "🎯", label: t("navMissions") },
         { href: "/admin/avaliacao", icon: "📊", label: t("navEvaluationCriteria") },
+        { href: "/admin/missoes", icon: "🎯", label: t("navMissions") },
+        { href: "/admin/configuracoes", icon: "⚙️", label: t("navSettings") },
         { href: "/admin/permissoes", icon: "🔐", label: t("navPermissions") },
       ],
     },

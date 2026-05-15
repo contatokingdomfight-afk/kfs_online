@@ -1,6 +1,7 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 13 maio 2026 (eventos no dashboard: filtro inscritos, strip «próximos eventos»; centrais de notificações admin + fluxos in-app para eventos — ver [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md) e [`memory.md`](memory.md)).  
+> **Última revisão deste índice:** 15 maio 2026 — **timer de rounds (coach):** sons, últimos segundos, UI dos botões — [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md), [`memory.md`](memory.md).  
+> **Anterior:** 13 maio 2026 (eventos no dashboard; centrais de notificações — [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md)).  
 > **Anterior:** 10 fevereiro 2026 (dashboard aluno: semana Lisboa, Presencial I + aulas abertas, `plan-access` + `getCachedLocations`).  
 > **Anterior:** 27 abril 2026 (plano de ação **permissões admin / RBAC:** `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`); 22 abril 2026 (silhueta 2D: `SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`).
 
@@ -11,6 +12,7 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 
 Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual: Supabase (sem Clerk); ver **`DEPLOY_VERCEL.md`**.
 
+**Changelog (maio 2026):** timer de rounds — documentação [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md) (rotas `/coach/round-timer` e embutido em `/coach/aula`, sons WAV, digital-beep em preparo / round / descanso, UI `.round-timer-actions` e botões por fase).  
 **Changelog (maio 2026):** eventos no dashboard (filtro *Inscritos e ativos*, strip *próximos eventos* na home antes de *Explorar*); centrais `/admin/notificacoes` e `/coach/notificacoes`; notificações in-app para inscrições em eventos — [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
 
 **Changelog (fevereiro 2026):** dashboard aluno — `getThisWeekRangeLisbon`, filtro de modalidade com plano Presencial I + aulas abertas, testes `dashboard-lesson-filter`, re-export `getCachedLocations` em `plan-access` (ver `DOCS/memory.md`).
@@ -88,7 +90,8 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | Documento | Conteúdo |
 |-----------|----------|
 | [`ESPECIFICACAO_DASHBOARD_ADMIN.md`](ESPECIFICACAO_DASHBOARD_ADMIN.md) | Especificação painel admin (incl. navegação para eventos e central de notificações) |
-| [`ESPECIFICACAO_DASHBOARD_COACH.md`](ESPECIFICACAO_DASHBOARD_COACH.md) | Especificação painel coach |
+| [`ESPECIFICACAO_DASHBOARD_COACH.md`](ESPECIFICACAO_DASHBOARD_COACH.md) | Especificação painel coach (incl. timer de rounds) |
+| [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md) | Timer de rounds: rotas, sons, CSS, motor, persistência |
 | [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md) | Plano de ação: ecrã e modelo de **permissões (RBAC)** no admin; fases, RLS, checklist; ver também [ROADMAP_Plataforma_KFS.md](./ROADMAP_Plataforma_KFS.md) |
 
 ---

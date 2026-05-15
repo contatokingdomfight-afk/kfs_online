@@ -1,6 +1,10 @@
 # Índice da documentação – KFS Online
 
-> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **13 maio 2026** (eventos no dashboard aluno, centrais de notificações admin/coach, doc `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`).
+> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **15 maio 2026** (timer de rounds coach: `DOCS/ROUND_TIMER_COACH.md`, `memory.md`).
+
+### Actualização maio 2026 (timer de rounds)
+
+- **Coach:** `/coach/round-timer` e timer embutido em `/coach/aula` — sons, últimos segundos, UI. Ver **`DOCS/ROUND_TIMER_COACH.md`** e **`DOCS/memory.md`** (secção timer).
 
 ### Actualização maio 2026 (eventos + notificações)
 
@@ -93,6 +97,9 @@
 - **`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`**
   - Centrais de notificações (aluno, coach, admin) e gatilhos (eventos)
 
+- **`DOCS/ROUND_TIMER_COACH.md`**
+  - Timer de rounds (coach): rotas, sons WAV, avisos nos últimos segundos, UI, motor
+
 - **`DOCS/ROADMAP_Plataforma_KFS.md`**
   - Roadmap de desenvolvimento
   - Fases do projeto
@@ -181,6 +188,7 @@ kfs_online/
 │
 ├── 📁 DOCS/                              # Documentação do produto
 │   ├── NOTIFICACOES_IN_APP_E_EVENTOS.md  # Centrais + gatilhos (eventos, etc.)
+│   ├── ROUND_TIMER_COACH.md              # Timer de rounds (coach): rotas, sons, UI
 │   ├── Especificacao_Plataforma_Kingdom_Digital.md
 │   ├── ROADMAP_Plataforma_KFS.md
 │   ├── CONTAS_TESTE.md

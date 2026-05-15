@@ -712,7 +712,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
         {roundLabel}
       </p>
 
-      <div className="flex flex-wrap justify-center gap-3 mb-2">
+      <div className="round-timer-actions flex flex-wrap justify-center gap-3 mb-2">
         {timer.phase === "idle" || timer.phase === "finished" ? (
           <button type="button" className="round-timer-btn round-timer-btn-primary px-8" onClick={() => void onStart()}>
             {tk.start}
