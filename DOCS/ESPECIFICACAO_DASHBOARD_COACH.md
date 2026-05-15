@@ -73,6 +73,8 @@ A página `/coach` será reestruturada nas seguintes secções, por ordem de pri
 
 ## 3. Outros Elementos da Interface
 
+*   **Central de notificações in-app:** rota `/coach/notificacoes`; sino no header (`CoachNotificationBell`). Conteúdo: notificações com `coachUserId` = id do utilizador (ex.: futuras alertas operacionais). **Inscrições pendentes em eventos** notificam **todos os utilizadores `ADMIN`** (ver [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md)).
+
 *   **Acesso à Área de Aluno:**
     *   **Condição:** Apenas visível se o professor também tiver um perfil de aluno associado (`coach.studentId` existe).
     *   **Posição:** Para evitar confusão de contexto, este link **não** deve estar no conteúdo do dashboard de coach. Deve ser um item persistente na navegação principal da aplicação (na barra lateral ou no menu do perfil do utilizador).
@@ -80,4 +82,4 @@ A página `/coach` será reestruturada nas seguintes secções, por ordem de pri
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026; maio 2026 — `NOTIFICACOES_IN_APP_E_EVENTOS.md`.*

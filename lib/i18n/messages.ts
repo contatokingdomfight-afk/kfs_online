@@ -571,6 +571,9 @@ export const messages = {
     coachRoundTimerAriaMinutes: "Minutos",
     coachRoundTimerAriaSeconds: "Segundos",
     coachRoundTimerCardCta: "Rounds, descanso e contagem — som e tempo preciso no telemóvel.",
+    coachRoundTimerSkipPhase: "Saltar fase",
+    coachRoundTimerSkipAria: "Terminar esta fase de imediato e passar à seguinte",
+    coachRoundTimerProgressAria: "Progresso do tempo na fase actual",
 
     // Biblioteca (aluno)
     libraryTitle: "Biblioteca",
@@ -693,6 +696,13 @@ export const messages = {
     adminEventInactiveBadge: "Inativo",
     adminEventEditSummary: "Dados do evento — clicar para expandir e editar",
     adminEventValidateTicketsLink: "Check-in do evento (nome ou QR)",
+    adminEventDeleteButton: "Apagar evento",
+    adminEventDeleteModalTitle: "Apagar evento",
+    adminEventDeleteModalBody:
+      "Tem a certeza de que deseja apagar o evento «{name}»? Todas as inscrições serão removidas. Esta ação não pode ser desfeita.",
+    adminEventDeleteModalConfirm: "Apagar definitivamente",
+    adminEventDeletePending: "A apagar…",
+    adminEventDeleteError: "Não foi possível apagar o evento.",
 
     // Admin home / dashboard
     helloAdmin: "Olá,",
@@ -1517,6 +1527,9 @@ export const messages = {
     coachRoundTimerAriaMinutes: "Minutes",
     coachRoundTimerAriaSeconds: "Seconds",
     coachRoundTimerCardCta: "Rounds, rest and countdown — sound and accurate time on your phone.",
+    coachRoundTimerSkipPhase: "Skip phase",
+    coachRoundTimerSkipAria: "End this phase now and go to the next",
+    coachRoundTimerProgressAria: "Progress in the current phase",
 
     libraryTitle: "Library",
     libraryDescription: "Courses and videos to study technique, mindset and performance. Access comes from your digital plan.",
@@ -1635,6 +1648,13 @@ export const messages = {
     adminEventInactiveBadge: "Inactive",
     adminEventEditSummary: "Event details — click to expand and edit",
     adminEventValidateTicketsLink: "Event check-in (name or QR)",
+    adminEventDeleteButton: "Delete event",
+    adminEventDeleteModalTitle: "Delete event",
+    adminEventDeleteModalBody:
+      "Are you sure you want to delete the event «{name}»? All registrations will be removed. This cannot be undone.",
+    adminEventDeleteModalConfirm: "Delete permanently",
+    adminEventDeletePending: "Deleting…",
+    adminEventDeleteError: "Could not delete the event.",
 
     helloAdmin: "Hello,",
     adminRevenueThisMonth: "Revenue this month",

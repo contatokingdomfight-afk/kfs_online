@@ -9,15 +9,18 @@
 
 ---
 
-## Estado (abril 2026)
+## Maio 2026 — eventos na home e no ecrã de eventos
 
-- **Perfil de performance (`/dashboard/performance`):** secção **Dados biométricos** (agregados dos check-ins pré-treino: sono, hidratação %, stress, fadiga, zonas GREEN/YELLOW/RED), antes da progressão de níveis; ver **`DOCS/memory.md`** §3.15.
-- **Hub bem-estar:** `/dashboard/bem-estar` (RPE, dores, benchmarks, peso) — mesmo contexto de produto em `memory.md` §3.15.
+- **`/dashboard/eventos`:** filtro da lista **Todos** / **Inscritos e ativos** (`EventosBoard.tsx`); calendário mantém marcação por dia com a lista completa de eventos.
+- **Home:** `DashboardUpcomingEventsStrip` — com plano, injectado em `DashboardBelowFold` como `upcomingEventsSlot`, **antes** de `ExploreSection`; sem plano, na `page.tsx` antes do `Suspense` do below-fold.
+- **Notificações de eventos:** ver **`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`**.
 
 ---
 
 ## Estado (abril 2026)
 
+- **Perfil de performance (`/dashboard/performance`):** secção **Dados biométricos** (agregados dos check-ins pré-treino: sono, hidratação %, stress, fadiga, zonas GREEN/YELLOW/RED), antes da progressão de níveis; ver **`DOCS/memory.md`** §3.15.
+- **Hub bem-estar:** `/dashboard/bem-estar` (RPE, dores, benchmarks, peso) — mesmo contexto de produto em `memory.md` §3.15.
 - **«Sua próxima aula»:** carrossel horizontal (`OpenClassesCarouselShell`) com **todas** as aulas elegíveis da semana que não são só «aula livre» quando o aluno tem plano (várias modalidades / mesmo dia). **Sem plano:** as aulas livres elegíveis concentram-se nesta secção.
 - **«Nesta semana — aulas livres»:** carrossel à parte quando há plano e aulas livres adicionais; **depois do Painel do Guerreiro**.
 - **Componentes:** `app/dashboard/page.tsx`, `LessonPromoBlock.tsx`, `OpenClassesCarouselShell.tsx`, `open-classes-carousel-constants.ts`; estado vazio em `NextLessonCard.tsx` (apenas mensagem sem aulas).

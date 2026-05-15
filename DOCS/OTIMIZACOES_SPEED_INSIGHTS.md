@@ -37,7 +37,7 @@ Melhorias aplicadas para reduzir LCP nas rotas mais lentas do Vercel Speed Insig
 
 ## Estado (abril 2026) — dashboard aluno e performance
 
-- **`/dashboard`:** secção **Painel do Guerreiro + O que há de novo + Explorar** movida para `app/dashboard/DashboardBelowFold.tsx` (async) com `<Suspense>` — primeiro paint com menos serialização RSC. Fallback com skeleton leve.
+- **`/dashboard`:** secção **Painel do Guerreiro + O que há de novo + próximos eventos (slot) + Explorar** em `app/dashboard/DashboardBelowFold.tsx` (async) com `<Suspense>` — primeiro paint com menos serialização RSC. Fallback com skeleton leve.
 - **Sidebar:** `prefetch={false}` em `/como-sou-avaliado` e `/sistema-pontuacao` (evita prefetch longo de páginas informativas pesadas).
 - **`/dashboard/performance`:** radar sem Recharts (SVG); lazy-load de secções; ver também `memory.md` §3.14.
 
@@ -51,4 +51,4 @@ Melhorias aplicadas para reduzir LCP nas rotas mais lentas do Vercel Speed Insig
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md), [ROADMAP_Plataforma_KFS.md](ROADMAP_Plataforma_KFS.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md), [NOTIFICACOES_IN_APP_E_EVENTOS.md](NOTIFICACOES_IN_APP_E_EVENTOS.md) — maio 2026.*

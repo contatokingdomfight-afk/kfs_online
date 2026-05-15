@@ -277,6 +277,8 @@ Coach → Aula → Presença → Avaliação | Perfil do aluno → Avaliação f
 
 Admin → Tudo organizado, sem papel | Missões (configuráveis por modalidade/faixa)
 
+**Eventos (app):** aluno → `/dashboard/eventos` (ou strip na home) → inscrição pendente → admins notificados → admin confirma em `/admin/eventos/[id]` → aluno notificado. Detalhe: [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
+
 ---
 
 ## 11. Princípio Central do Fluxo
@@ -303,4 +305,4 @@ Próximo passo natural:
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026; maio 2026 — `NOTIFICACOES_IN_APP_E_EVENTOS.md`.*

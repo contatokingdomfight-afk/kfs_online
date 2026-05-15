@@ -4,7 +4,8 @@
 
 **Estado:** planeamento (não implementado).  
 **Alinhado com:** [SUPABASE_RLS.md](./SUPABASE_RLS.md), [ESPECIFICACAO_DASHBOARD_ADMIN.md](./ESPECIFICACAO_DASHBOARD_ADMIN.md), [REVISAO_SEGURANCA.md](./REVISAO_SEGURANCA.md).  
-**Roadmap:** [ROADMAP_Plataforma_KFS.md](./ROADMAP_Plataforma_KFS.md) (secção Admin — permissões).
+**Roadmap:** [ROADMAP_Plataforma_KFS.md](./ROADMAP_Plataforma_KFS.md) (secção Admin — permissões).  
+**Implementado antes do RBAC (maio 2026):** matriz de prefixos em `lib/permissions/paths.ts` (ex.: `/admin/notificacoes` → `admin:sistema:read/write`) e doc operacional [NOTIFICACOES_IN_APP_E_EVENTOS.md](./NOTIFICACOES_IN_APP_E_EVENTOS.md).
 
 ---
 

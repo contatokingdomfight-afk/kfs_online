@@ -1,6 +1,6 @@
 # Testar com um aluno real
 
-A plataforma está **pronta para testes com um aluno real**. O núcleo (auth, dashboard, presenças, perfil, conquistas, biblioteca, loja, eventos, performance) está implementado.
+A plataforma está **pronta para testes com um aluno real**. O núcleo (auth, dashboard, presenças, perfil, conquistas, biblioteca, loja, **eventos com inscrições e notificações in-app**, performance) está implementado.
 
 ---
 

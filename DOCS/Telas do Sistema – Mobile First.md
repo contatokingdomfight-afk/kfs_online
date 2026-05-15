@@ -1,5 +1,7 @@
 # 📱 SISTEMA DE TELAS — VERSÃO ATUALIZADA (MOBILE FIRST)
 
+> **Nota maio 2026:** rotas de **eventos** dedicadas ao aluno (`/dashboard/eventos`), strip **próximos eventos** na home (antes de Explorar com plano) e **centrais de notificações** (`/dashboard/notificacoes`, `/coach/notificacoes`, `/admin/notificacoes`) documentadas em **`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`** e **`DOCS/memory.md`**.
+
 ## 1️⃣ Login / Entrada
 
 **Tela: Login**

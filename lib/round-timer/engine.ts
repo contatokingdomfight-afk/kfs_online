@@ -151,6 +151,15 @@ export function nextRoundDisplay1Based(completedRoundIdx: number): number {
   return completedRoundIdx + 2;
 }
 
+/** Duração total da fase actual (para barra de progresso). Mínimo 1 ms para evitar divisão por zero. */
+export function phaseDurationMs(phase: TimerPhase, config: TimerConfig, paused: PausedSnapshot | null): number {
+  const eff = phase === "paused" && paused ? paused.phase : phase;
+  if (eff === "countdown") return Math.max(1, config.countdownSec * 1000);
+  if (eff === "round") return Math.max(1, config.roundSec * 1000);
+  if (eff === "rest") return Math.max(1, config.restSec * 1000);
+  return 1;
+}
+
 export type UiKind = "idle" | "prepare" | "round" | "rest" | "done";
 
 export function uiKind(phase: TimerPhase): UiKind {

@@ -1,6 +1,11 @@
 # Índice da documentação – KFS Online
 
-> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **10 fevereiro 2026** (dashboard aluno, documentação alinhada).
+> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **13 maio 2026** (eventos no dashboard aluno, centrais de notificações admin/coach, doc `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`).
+
+### Actualização maio 2026 (eventos + notificações)
+
+- **Aluno:** `/dashboard/eventos` — filtro **Inscritos e ativos**; na home, secção **próximos eventos** antes de **Explorar** (com plano). Ver `DOCS/memory.md`, `DOCS/MELHORIAS_DASHBOARD.md`, `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`.
+- **Admin / coach:** central `/admin/notificacoes` e sino no header admin; notificações in-app para **novas inscrições** em eventos (todos os admins) e confirmação ao aluno — mesmo doc.
 
 ### Actualização fevereiro 2026 (dashboard + docs)
 
@@ -11,13 +16,14 @@
 - **Permissões admin (RBAC):** plano de ação `DOCS/PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`; tarefa no `DOCS/ROADMAP_Plataforma_KFS.md` (prioridade 11).
 
 - **Sessão mobile / PWA / Supabase:** `DOCS/memory.md` §3.2 e **§3.18**; `DOCS/PWA.md` (sessão longa + Livre vs Pro). Pasta `docs/memory.md` na raiz: **apontador** para `DOCS/memory.md`.
-- **Sessão mobile / idle (histórico):** `memory.md` §3.2; roadmap §1.
-- **Stripe (env vars, checkout, test/live):** `DOCS/STRIPE_KINGDOM_ONLINE.md`, `memory.md` §3.4; `VARIAVEIS_AMBIENTE_VERCEL.txt`; `DEPLOY_VERCEL.md` / `Deploy_Vercel_kingdomfight.md`.
+- **Sessão mobile / idle (histórico):** `DOCS/memory.md` §3.2; roadmap §1.
+- **Stripe (env vars, checkout, test/live):** `DOCS/STRIPE_KINGDOM_ONLINE.md`, `DOCS/memory.md` §3.4; `VARIAVEIS_AMBIENTE_VERCEL.txt`; `DEPLOY_VERCEL.md` / `Deploy_Vercel_kingdomfight.md`.
 - **Índice canónico:** `DOCS/INDEX.md` (changelog no topo).
 
 ### Documentação canónica em `DOCS/`
 
 - **`DOCS/INDEX.md`** — índice mestre de todos os ficheiros em `DOCS/`
+- **`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`** — centrais de notificações e gatilhos (eventos)
 - **`DOCS/memory.md`** — contexto técnico e decisões recentes (prioridade para continuidade)
 
 ## 🚀 Deploy & Configuração
@@ -83,6 +89,9 @@
   - Visão geral do produto
   - Funcionalidades principais
   - Arquitetura
+
+- **`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`**
+  - Centrais de notificações (aluno, coach, admin) e gatilhos (eventos)
 
 - **`DOCS/ROADMAP_Plataforma_KFS.md`**
   - Roadmap de desenvolvimento
@@ -171,6 +180,7 @@ kfs_online/
 ├── 📚 INDICE_DOCUMENTACAO.md             # Este ficheiro
 │
 ├── 📁 DOCS/                              # Documentação do produto
+│   ├── NOTIFICACOES_IN_APP_E_EVENTOS.md  # Centrais + gatilhos (eventos, etc.)
 │   ├── Especificacao_Plataforma_Kingdom_Digital.md
 │   ├── ROADMAP_Plataforma_KFS.md
 │   ├── CONTAS_TESTE.md
@@ -259,4 +269,4 @@ kfs_online/
 
 **💡 Dica:** Adicione este ficheiro aos favoritos para acesso rápido à documentação!
 
-**Última actualização:** 18 abril 2026
+**Última actualização:** 13 maio 2026

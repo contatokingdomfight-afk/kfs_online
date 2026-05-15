@@ -1,6 +1,6 @@
 # Início rápido – Deploy na Vercel (KFS Online)
 
-> **Março 2026:** Projeto **`kfs_online`** · **Next.js 15** · Node **20**. Estado atual: **`README.md`**, **`PROXIMOS_PASSOS.md`**, **`VARIAVEIS_AMBIENTE_VERCEL.txt`** (lista atualizada). Define **`CRON_SECRET`** para os endpoints em `/api/cron/*`. Webhook Stripe: **`/api/stripe/webhook`**.
+> **Maio 2026:** Projeto **`kfs_online`** · **Next.js 15** · Node **20**. Estado atual: **`README.md`**, **`PROXIMOS_PASSOS.md`**, **`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`** (notificações/eventos), **`VARIAVEIS_AMBIENTE_VERCEL.txt`** (lista actualizada). Define **`CRON_SECRET`** para os endpoints em `/api/cron/*`. Webhook Stripe: **`/api/stripe/webhook`**.
 
 ## Objetivo
 

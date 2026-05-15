@@ -6,7 +6,7 @@ import { toIsoDateOnlyForInput } from "@/lib/event-form-dates";
 import { timeInputValueFromDb } from "@/lib/event-times";
 import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
-import { getTranslations } from "@/lib/i18n";
+import { getTranslations, type Locale } from "@/lib/i18n";
 import { EventForm } from "../EventForm";
 import { DeleteEventoButton } from "./DeleteEventoButton";
 import { ConfirmRegistrationButton } from "./ConfirmRegistrationButton";
@@ -186,7 +186,7 @@ export default async function AdminEventosEditarPage({ params }: Props) {
           </ul>
         )}
       </div>
-      <DeleteEventoButton eventId={event.id} eventName={event.name} />
+      <DeleteEventoButton eventId={event.id} eventName={event.name} locale={locale as Locale} />
     </div>
   );
 }

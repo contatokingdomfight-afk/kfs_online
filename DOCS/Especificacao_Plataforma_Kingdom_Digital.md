@@ -183,6 +183,7 @@ Produtos e eventos que aumentam a margem (Camps, Workshops, cursos avulsos) deve
   - Botão "Comprar" ou "Inscrever-me" quando aplicável.
 - Registo da compra/inscrição (vínculo aluno–produto/evento) e, se necessário, integração com o módulo **Financeiro** (pagamento registado).
 - Após compra/inscrição, o aluno passa a ter acesso ao conteúdo ou ao evento (presencial/digital conforme o produto).
+- **Notificações in-app (implementado para eventos):** ao pedir inscrição num evento, o aluno recebe confirmação do pedido; todos os administradores recebem aviso de inscrição pendente; ao confirmar a inscrição, o aluno recebe «inscrição confirmada». Detalhe operacional: [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
 
 ---
 
@@ -201,4 +202,4 @@ Este documento deve ser atualizado à medida que as funcionalidades forem implem
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026; maio 2026 — `NOTIFICACOES_IN_APP_E_EVENTOS.md`.*

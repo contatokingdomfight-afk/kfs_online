@@ -1,6 +1,6 @@
 # COMECE AQUI – KFS Online
 
-> **Actualização 18 abril 2026:** Projeto **KFS Online** (`kfs_online`), **Next.js 15**, Node **20**. Leitura essencial: **`README.md`**, **`PROXIMOS_PASSOS.md`**, **`DOCS/ROADMAP_Plataforma_KFS.md`**, **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**, **`DOCS/memory.md`**. Para testes locais: **`DOCS/CONTAS_TESTE.md`** (seed + `npm test`).
+> **Actualização 13 maio 2026:** Inclui **eventos** no dashboard (`/dashboard/eventos`, próximos eventos na home) e **notificações in-app** — `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`. Leitura essencial: **`README.md`**, **`PROXIMOS_PASSOS.md`**, **`DOCS/ROADMAP_Plataforma_KFS.md`**, **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**, **`DOCS/memory.md`**. Para testes locais: **`DOCS/CONTAS_TESTE.md`** (seed + `npm test`).
 
 ## Bem-vindo
 

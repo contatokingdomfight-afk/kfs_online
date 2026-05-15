@@ -135,12 +135,12 @@
 |----------------|-------------|-------------|
 | Loja | `/dashboard/loja` | — |
 | Biblioteca (cursos) | `/dashboard/biblioteca` | `/admin/cursos` |
-| Eventos | `/dashboard/eventos` | `/admin/eventos` |
+| Eventos | `/dashboard/eventos` (filtro inscritos; inscrição com notificações in-app) | `/admin/eventos` |
 | Compras e inscrições | — | `/admin/financeiro/compras` |
 
 ---
 
-*Última atualização: fevereiro 2026*
+*Última atualização: maio 2026* — alinhar testes manuais de inscrição com **`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`**.
 
 ---
 

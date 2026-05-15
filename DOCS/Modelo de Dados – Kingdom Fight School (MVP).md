@@ -289,6 +289,11 @@ Quando a funcionalidade for implementada, poderá existir uma entidade de **conf
 - Comment → Athlete ou Lesson
 - MissionTemplate → AthleteMissionCompletion
     
+---
+
+## Complemento (maio 2026) — eventos e notificações in-app
+
+- Em produção (ver `prisma/schema.prisma`): **`Event`**, **`EventRegistration`** (ligação aluno–evento; estados como `PENDING` / `CONFIRMED`), **`Notification`** (destino por `studentId` **ou** `coachUserId` para staff). Fluxos de produto: **`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`**.
 
 ---
 
@@ -317,4 +322,4 @@ Quando a funcionalidade for implementada, poderá existir uma entidade de **conf
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026; maio 2026 — `NOTIFICACOES_IN_APP_E_EVENTOS.md`.*

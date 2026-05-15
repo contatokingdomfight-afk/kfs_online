@@ -42,6 +42,21 @@
   letter-spacing: -0.02em;
 }
 
+.round-timer-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.round-timer-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--rt-accent, var(--primary));
+  transition: width 0.12s linear;
+}
+
 .round-timer-btn {
   min-height: 52px;
   min-width: 120px;

@@ -38,6 +38,7 @@ Validar que o Admin vê e acede a:
 | Planos | `/admin/planos` | Listar, criar e editar planos (preço, acesso digital, âmbito modalidades) |
 | Cursos / Biblioteca | `/admin/cursos` | Listar cursos; criar/editar curso; módulos e unidades; co-criadores |
 | Eventos | `/admin/eventos` | Listar, criar e editar eventos (Camps, Workshops) |
+| Central de notificações | `/admin/notificacoes` | Lista in-app; sino no header; inscrições pendentes em eventos (para admins) |
 | Configurações | `/admin/configuracoes` | Meta de assiduidade global; outras configs |
 | Presença | `/admin/presenca` | Lista de presenças (próximas 2 semanas); link para aula do coach |
 | Dimensões gerais | `/admin/componentes-gerais` | Configuração de dimensões (avaliação) |
@@ -188,11 +189,11 @@ Validar que o Admin vê e acede a:
 
 | Menu | Rota | Descrição |
 |------|------|------------|
-| Início | `/dashboard` | Próxima aula, esta semana, plano, meta do mês, meta IMC, metas avaliação, conquistas, tema da semana, cursos recomendados, notificações |
+| Início | `/dashboard` | Próxima aula, esta semana, plano; com plano: Painel do guerreiro, «O que há de novo», **próximos eventos**, **Explorar**; notificações (menu / central) |
 | Conquistas | `/dashboard/conquistas` | Próxima conquista; grelha de conquistas gerais; todas as conquistas desbloqueadas |
 | Loja | `/dashboard/loja` | Cursos à venda; eventos; comprar / inscrever-me |
 | Biblioteca | `/dashboard/biblioteca` | Cursos a que tem acesso (plano ou compra); entrar no curso |
-| Eventos | `/dashboard/eventos` | Eventos futuros; inscrições |
+| Eventos | `/dashboard/eventos` | Eventos futuros; inscrições; filtro **Inscritos e ativos** |
 | Financeiro | `/dashboard/financeiro` | Plano atual; link Stripe (se config); últimos pagamentos |
 | Meus dados | `/dashboard/perfil` | Editar nome, peso, altura, contacto, notas médicas, etc. |
 | Performance | `/dashboard/performance` | (Se atleta) Faixa, XP, radar, missões, detalhe por dimensão |

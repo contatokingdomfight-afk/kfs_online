@@ -13,6 +13,7 @@ import {
   nextRoundDisplay1Based,
   parseSession,
   pauseState,
+  phaseDurationMs,
   remainingMs,
   resetState,
   resumeState,
@@ -86,17 +87,23 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       min: t("coachRoundTimerMin"),
       ariaMin: t("coachRoundTimerAriaMinutes"),
       ariaSec: t("coachRoundTimerAriaSeconds"),
+      skipPhase: t("coachRoundTimerSkipPhase"),
+      skipAria: t("coachRoundTimerSkipAria"),
+      progressAria: t("coachRoundTimerProgressAria"),
     }),
     [t]
   );
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const [config, setConfig] = useState<TimerConfig>(() => loadStoredConfig());
   const [timer, setTimer] = useState<RoundTimerState>(() => initialState(loadStoredConfig()));
   const [displayMs, setDisplayMs] = useState(0);
   const [customPresets, setCustomPresets] = useState<SavedPreset[]>([]);
   const [fullscreen, setFullscreen] = useState(false);
   const [configPanelExpanded, setConfigPanelExpanded] = useState(false);
+  const timerPhaseRef = useRef<TimerPhase>("idle");
+  timerPhaseRef.current = timer.phase;
   const prevPhase = useRef(timer.phase);
   const lastCountdownSec = useRef<number | null>(null);
   const prevRemForTenSec = useRef<number | null>(null);
@@ -110,6 +117,68 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     const onFs = () => setFullscreen(typeof document !== "undefined" && !!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function releaseWake() {
+      try {
+        await wakeLockRef.current?.release();
+      } catch {
+        /* */
+      } finally {
+        wakeLockRef.current = null;
+      }
+    }
+    async function acquireWake() {
+      if (typeof navigator === "undefined") return;
+      const nav = navigator as Navigator & {
+        wakeLock?: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> };
+      };
+      if (!nav.wakeLock?.request) return;
+      try {
+        await releaseWake();
+        if (cancelled) return;
+        const lock = await nav.wakeLock.request("screen");
+        if (cancelled) {
+          await lock.release();
+          return;
+        }
+        wakeLockRef.current = lock;
+      } catch {
+        wakeLockRef.current = null;
+      }
+    }
+    const active = timer.phase === "countdown" || timer.phase === "round" || timer.phase === "rest";
+    if (active) void acquireWake();
+    else void releaseWake();
+    return () => {
+      cancelled = true;
+      void releaseWake();
+    };
+  }, [timer.phase]);
+
+  useEffect(() => {
+    function onVis() {
+      void (async () => {
+        if (typeof navigator === "undefined" || document.visibilityState !== "visible") return;
+        const p = timerPhaseRef.current;
+        if (p !== "countdown" && p !== "round" && p !== "rest") return;
+        const nav = navigator as Navigator & {
+          wakeLock?: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> };
+        };
+        if (!nav.wakeLock?.request) return;
+        try {
+          await wakeLockRef.current?.release().catch(() => {});
+          wakeLockRef.current = null;
+          wakeLockRef.current = await nav.wakeLock.request("screen");
+        } catch {
+          wakeLockRef.current = null;
+        }
+      })();
+    }
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
   /* Hidratar sessão (refresh / voltar ao separador) */
@@ -234,6 +303,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     if (!crossedIntoLastTen) return;
     void unlockAudio();
     playBeepTenSecondsWarning();
+    vibrateMs(40);
   }, [timer.phase, timer.phaseEndsAt, displayMs]);
 
   const canEdit = timer.phase === "idle" || timer.phase === "finished";
@@ -270,6 +340,14 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     return "—";
   }, [timer.phase, timer.roundIdx, timer.completedRoundIdx, timer.config.rounds, tk]);
 
+  const phaseProgress01 = useMemo(() => {
+    if (timer.phase === "finished") return 1;
+    if (timer.phase === "idle") return 0;
+    const total = phaseDurationMs(timer.phase, timer.config, timer.paused);
+    const elapsed = Math.max(0, total - displayMs);
+    return Math.min(1, elapsed / total);
+  }, [timer.phase, timer.config, timer.paused, displayMs]);
+
   const onStart = async () => {
     await unlockAudio();
     const c = clampConfig(config);
@@ -289,6 +367,16 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
   const onReset = () => {
     setTimer(resetState(clampConfig(config)));
     saveSessionSnapshot(null);
+  };
+
+  const onSkipPhase = () => {
+    void unlockAudio();
+    const now = Date.now();
+    setTimer((s) => {
+      if (s.phase === "idle" || s.phase === "finished" || s.phase === "paused") return s;
+      const after = applyPhaseEnd(s, now);
+      return catchUp(after, now);
+    });
   };
 
   const toggleFullscreen = () => {
@@ -534,6 +622,17 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
         {formatMmSsFromMs(displayMs)}
       </div>
 
+      <div
+        className="round-timer-progress"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(phaseProgress01 * 100)}
+        aria-label={tk.progressAria}
+      >
+        <div className="round-timer-progress-fill" style={{ width: `${phaseProgress01 * 100}%` }} />
+      </div>
+
       <p className="text-center text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
         {labelState}
       </p>
@@ -559,6 +658,15 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
           <>
             <button type="button" className="round-timer-btn round-timer-btn-primary" onClick={onPause}>
               {tk.pause}
+            </button>
+            <button
+              type="button"
+              className="round-timer-btn round-timer-btn-secondary"
+              onClick={onSkipPhase}
+              aria-label={tk.skipAria}
+              title={tk.skipAria}
+            >
+              {tk.skipPhase}
             </button>
             <button type="button" className="round-timer-btn round-timer-btn-secondary" onClick={onReset}>
               {tk.reset}

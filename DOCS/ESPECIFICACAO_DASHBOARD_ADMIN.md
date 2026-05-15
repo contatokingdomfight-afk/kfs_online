@@ -107,7 +107,8 @@ A página `/admin` será reestruturada nas seguintes secções, por ordem de pri
         *   `[ ⚙️ Configurações ]` → `/admin/configuracoes`
         *   `[ 🎯 Missões ]` → `/admin/missoes`
         *   `[ 📊 Critérios de Avaliação ]` → `/admin/avaliacao`
+        *   **Central de notificações** (menu lateral) → `/admin/notificacoes` — sino no header com contador de não lidas (`CoachNotificationBell`); notificações de **novas inscrições em eventos** para todos os `User` com papel ADMIN (ver [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md)).
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026; notificações / eventos — maio 2026 em `NOTIFICACOES_IN_APP_E_EVENTOS.md`.*

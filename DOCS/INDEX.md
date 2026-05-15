@@ -1,13 +1,17 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 10 fevereiro 2026 (dashboard aluno: semana Lisboa, Presencial I + aulas abertas, `plan-access` + `getCachedLocations`).  
+> **Última revisão deste índice:** 13 maio 2026 (eventos no dashboard: filtro inscritos, strip «próximos eventos»; centrais de notificações admin + fluxos in-app para eventos — ver [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md) e [`memory.md`](memory.md)).  
+> **Anterior:** 10 fevereiro 2026 (dashboard aluno: semana Lisboa, Presencial I + aulas abertas, `plan-access` + `getCachedLocations`).  
 > **Anterior:** 27 abril 2026 (plano de ação **permissões admin / RBAC:** `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`); 22 abril 2026 (silhueta 2D: `SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`).
+
 > **Índice de contexto técnico (prioridade para IA / equipa):** [`memory.md`](memory.md)  
 > **Roadmap feito / por fazer:** [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)
 
 Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confundir com `docs/` na raiz, se existir.
 
 Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual: Supabase (sem Clerk); ver **`DEPLOY_VERCEL.md`**.
+
+**Changelog (maio 2026):** eventos no dashboard (filtro *Inscritos e ativos*, strip *próximos eventos* na home antes de *Explorar*); centrais `/admin/notificacoes` e `/coach/notificacoes`; notificações in-app para inscrições em eventos — [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
 
 **Changelog (fevereiro 2026):** dashboard aluno — `getThisWeekRangeLisbon`, filtro de modalidade com plano Presencial I + aulas abertas, testes `dashboard-lesson-filter`, re-export `getCachedLocations` em `plan-access` (ver `DOCS/memory.md`).
 
@@ -19,6 +23,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md) | Centrais de notificações (aluno / coach / admin), gatilhos de eventos, rotas e permissões |
 | [`memory.md`](memory.md) | Índice de contexto: arquitetura, entregas recentes, comandos, pendências |
 | [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) | Roadmap por área (aluno, admin, coach, BD, deploy) |
 | [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md) | Especificação geral da plataforma |
@@ -68,7 +73,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Dashboard aluno (`/dashboard`): carrosséis, Presencial I, aulas abertas, Lisboa; ver também `memory.md` (secção *Dashboard aluno*) e biométricos em `memory.md` |
+| [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Dashboard aluno (`/dashboard`): carrosséis, Presencial I, aulas abertas, Lisboa; **eventos** (home + `/dashboard/eventos`); ver `memory.md` |
 | [`AVATAR_3D_BASE_GLTF.md`](AVATAR_3D_BASE_GLTF.md) | Vista 3D: GLBs M/F (`human-base-male.glb` / `human-base-female.glb`), fallback e env |
 | [`SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`](SILHUETA_CORPORAL_2D_ILUSTRATIVA.md) | Silhueta 2D ilustrativa: campo ↔ corpo, pipeline, 2D/3D, critérios de aceite, checklist de regressão |
 | [`CONTAS_TESTE.md`](CONTAS_TESTE.md) | Contas de teste e `seed:test-users` |
@@ -82,7 +87,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`ESPECIFICACAO_DASHBOARD_ADMIN.md`](ESPECIFICACAO_DASHBOARD_ADMIN.md) | Especificação painel admin |
+| [`ESPECIFICACAO_DASHBOARD_ADMIN.md`](ESPECIFICACAO_DASHBOARD_ADMIN.md) | Especificação painel admin (incl. navegação para eventos e central de notificações) |
 | [`ESPECIFICACAO_DASHBOARD_COACH.md`](ESPECIFICACAO_DASHBOARD_COACH.md) | Especificação painel coach |
 | [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md) | Plano de ação: ecrã e modelo de **permissões (RBAC)** no admin; fases, RLS, checklist; ver também [ROADMAP_Plataforma_KFS.md](./ROADMAP_Plataforma_KFS.md) |
 

@@ -4,6 +4,7 @@ import {
   catchUp,
   clampConfig,
   initialState,
+  phaseDurationMs,
   startFromIdle,
 } from "./engine";
 
@@ -36,5 +37,12 @@ describe("round-timer engine", () => {
     expect(s.phase).toBe("countdown");
     s = catchUp(s, 10_000);
     expect(s.phase).toBe("round");
+  });
+
+  it("phaseDurationMs matches config phases", () => {
+    const cfg = clampConfig({ rounds: 3, roundSec: 90, restSec: 30, countdownSec: 10 });
+    expect(phaseDurationMs("countdown", cfg, null)).toBe(10_000);
+    expect(phaseDurationMs("round", cfg, null)).toBe(90_000);
+    expect(phaseDurationMs("rest", cfg, null)).toBe(30_000);
   });
 });

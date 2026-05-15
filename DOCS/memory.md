@@ -1,10 +1,8 @@
 # Memória do projeto
 
-A documentação **canónica** de contexto (arquitetura, entregas recentes, sessão, etc.) está em:
+Contexto técnico e decisões recentes (**prioridade para continuidade** e alinhamento de código). Índice geral da pasta `DOCS/`: [`INDEX.md`](INDEX.md). Notificações e eventos (rotas, gatilhos): [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
 
-**[`DOCS/memory.md`](../DOCS/memory.md)**
-
-Edita sempre **`DOCS/memory.md`** (pasta `DOCS/` em maiúsculas), não este ficheiro, para evitar duplicados.
+> Não confundir com ficheiros duplicados fora de `DOCS/`; a canónica é **`DOCS/memory.md`**.
 
 ## Performance (área do aluno)
 
@@ -26,6 +24,23 @@ Edita sempre **`DOCS/memory.md`** (pasta `DOCS/` em maiúsculas), não este fich
 - **Participação / RSVP / check-in** por aula: `isLessonParticipationAllowedByPlan` (aulas abertas continuam permitidas no plano para participação, como antes). Testes: `lib/dashboard-lesson-filter.test.ts`.
 - **Locais em cache na página do dashboard:** `getCachedPlanAccess` e `getCachedLocations` importados de `@/lib/plan-access` — `getCachedLocations` é **reexportado** em `plan-access.ts` a partir de `cached-reference-data` para o dashboard não perder o símbolo no build após refactors de imports.
 - Pormenores UX e carrosséis: `DOCS/MELHORIAS_DASHBOARD.md`.
+
+## Eventos — aluno e admin
+
+- **Lista + calendário:** `/dashboard/eventos` — `app/dashboard/eventos/EventosBoard.tsx`; filtro **Todos** / **Inscritos e ativos** (lista filtrada; calendário continua a marcar dias com todos os eventos visíveis ao aluno). Inscrição: `registerForEvent` em `app/dashboard/eventos/actions.ts` → `EventRegistration` com `PENDING` (validações: evento activo, datas, lotação, duplicado).
+- **Secção «Próximos eventos» na home:** `DashboardUpcomingEventsStrip` (`app/dashboard/DashboardUpcomingEventsStrip.tsx`). **Com plano:** passa como `upcomingEventsSlot` para `DashboardBelowFold`, **depois** de «O que há de novo» e **antes** de «Explorar…». **Sem plano:** renderizada na `page.tsx` antes do `<Suspense>` do below-fold (o below-fold devolve `null` sem plano). Link «ver todos» → `/dashboard/eventos`.
+- **Admin:** CRUD e inscrições em `/admin/eventos`, detalhe `/admin/eventos/[id]`; confirmação de inscrição `setRegistrationStatus` em `app/admin/eventos/actions.ts`.
+
+## Notificações in-app (`Notification` — Supabase)
+
+- **Aluno:** linhas com `studentId`; central `/dashboard/notificacoes`; acções `app/dashboard/notification-actions.ts` (marcar lida / todas lidas).
+- **Staff (coach ou admin):** mesma tabela com `coachUserId` = `User.id` do destinatário (`createCoachInAppNotification` em `lib/notifications/in-app.ts`). Rotas: `/coach/notificacoes`, `/admin/notificacoes`. **Sino:** `components/CoachNotificationBell.tsx` — `href` conforme `User.role` (ADMIN → central admin). Incluído no header do layout coach e do **admin** (`app/admin/layout.tsx`). Item de menu: `lib/admin-sidebar-links.ts` (Central de notificações).
+- **Eventos — quando disparam:** (1) **Aluno** ao inscrever-se: confirmação de pedido + link `/dashboard/eventos`. (2) **Todos os admins** (`User.role === ADMIN`): `notifyAllAdminsOfEventRegistrationPending` em `lib/notifications/notify-admins.ts` — nova inscrição pendente, link `/admin/eventos/{eventId}`. (3) **Aluno** quando o admin define a inscrição como **CONFIRMED**: «Inscrição confirmada». Não há notificação automática aos admins só por confirmar.
+- **Revalidação:** após eventos, `revalidatePath` inclui frequentemente `/dashboard/eventos`, `/dashboard/notificacoes`, `/admin/notificacoes`; `markNotificationRead` / `markAllNotificationsRead` revalidam também `/admin`, `/coach` e respectivas centrais.
+- **Permissões granulares (admin sub-perfis):** `lib/permissions/paths.ts` — prefixo `/admin/notificacoes` com `admin:sistema:read` / `write`.
+- **Sem registo `Student`:** visita a `/dashboard/notificacoes` redirecciona admin → `/admin/notificacoes`, coach → `/coach/notificacoes`, outros → `/dashboard` (`app/dashboard/notificacoes/page.tsx`).
+
+Referência legível (fluxos e rotas): [`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
 
 ## Roadmap (referência)
 
