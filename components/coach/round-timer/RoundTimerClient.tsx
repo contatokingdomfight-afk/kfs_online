@@ -106,9 +106,12 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
   timerPhaseRef.current = timer.phase;
   const prevPhase = useRef(timer.phase);
   const lastCountdownSec = useRef<number | null>(null);
+  const lastCountdownUrgentSec = useRef<number | null>(null);
   const prevRemForTenSec = useRef<number | null>(null);
   const lastRoundUrgentSec = useRef<number | null>(null);
   const tenSecPhaseKey = `${timer.phase}-${timer.roundIdx}-${timer.completedRoundIdx}`;
+  const countdownUrgentKey =
+    timer.phase === "countdown" && timer.phaseEndsAt != null ? String(timer.phaseEndsAt) : "";
 
   useEffect(() => {
     setCustomPresets(loadCustomPresets());
@@ -274,19 +277,42 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     }
   }, [timer.phase]);
 
-  /* Beep nos últimos 3s do countdown */
+  useEffect(() => {
+    lastCountdownUrgentSec.current = null;
+  }, [countdownUrgentKey]);
+
+  /* Beep sintético só no último segundo do preparo (5→2 usam digital-beep). */
   useEffect(() => {
     if (timer.phase !== "countdown" || timer.phaseEndsAt == null) {
       lastCountdownSec.current = null;
       return;
     }
     const sec = Math.ceil(remainingMs(timer.phaseEndsAt, Date.now()) / 1000);
-    if (sec <= 3 && sec >= 1 && lastCountdownSec.current !== sec) {
+    if (sec === 1 && lastCountdownSec.current !== sec) {
       lastCountdownSec.current = sec;
       void unlockAudio();
       playBeepCountdownTick();
     }
-    if (sec > 3) lastCountdownSec.current = null;
+    if (sec > 1) lastCountdownSec.current = null;
+  }, [timer.phase, timer.phaseEndsAt, displayMs]);
+
+  /* Últimos 5 s do preparo (countdown): digital-beep em 5→4→3→2 (4 toques). */
+  useEffect(() => {
+    if (timer.phase !== "countdown" || timer.phaseEndsAt == null) {
+      lastCountdownUrgentSec.current = null;
+      return;
+    }
+    const rem = displayMs;
+    if (rem <= 0 || rem > 5000) {
+      lastCountdownUrgentSec.current = null;
+      return;
+    }
+    const sec = Math.ceil(rem / 1000);
+    if (sec < 2 || sec > 5) return;
+    if (lastCountdownUrgentSec.current === sec) return;
+    lastCountdownUrgentSec.current = sec;
+    void unlockAudio();
+    playDigitalBeep();
   }, [timer.phase, timer.phaseEndsAt, displayMs]);
 
   /* Aviso quando o tempo restante cruza para os últimos 10 s (ignora rounds/descansos já curtos desde o início) */
