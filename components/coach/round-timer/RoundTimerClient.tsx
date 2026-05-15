@@ -108,9 +108,11 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
   const lastCountdownUrgentSec = useRef<number | null>(null);
   const prevRemForTenSec = useRef<number | null>(null);
   const lastRoundUrgentSec = useRef<number | null>(null);
+  const lastRestUrgentSec = useRef<number | null>(null);
   const tenSecPhaseKey = `${timer.phase}-${timer.roundIdx}-${timer.completedRoundIdx}`;
   const countdownUrgentKey =
     timer.phase === "countdown" && timer.phaseEndsAt != null ? String(timer.phaseEndsAt) : "";
+  const restUrgentKey = timer.phase === "rest" && timer.phaseEndsAt != null ? String(timer.phaseEndsAt) : "";
 
   useEffect(() => {
     setCustomPresets(loadCustomPresets());
@@ -280,6 +282,10 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     lastCountdownUrgentSec.current = null;
   }, [countdownUrgentKey]);
 
+  useEffect(() => {
+    lastRestUrgentSec.current = null;
+  }, [restUrgentKey]);
+
   /* Beep sintético só no último segundo do preparo (5→2 usam digital-beep). */
   useEffect(() => {
     if (timer.phase !== "countdown" || timer.phaseEndsAt == null) {
@@ -349,6 +355,25 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     if (sec < 2 || sec > 5) return;
     if (lastRoundUrgentSec.current === sec) return;
     lastRoundUrgentSec.current = sec;
+    void unlockAudio();
+    playDigitalBeep();
+  }, [timer.phase, timer.phaseEndsAt, displayMs]);
+
+  /* Últimos 5 s do descanso: digital-beep 5→4→3→2 antes do próximo round. */
+  useEffect(() => {
+    if (timer.phase !== "rest" || timer.phaseEndsAt == null) {
+      lastRestUrgentSec.current = null;
+      return;
+    }
+    const rem = displayMs;
+    if (rem <= 0 || rem > 5000) {
+      lastRestUrgentSec.current = null;
+      return;
+    }
+    const sec = Math.ceil(rem / 1000);
+    if (sec < 2 || sec > 5) return;
+    if (lastRestUrgentSec.current === sec) return;
+    lastRestUrgentSec.current = sec;
     void unlockAudio();
     playDigitalBeep();
   }, [timer.phase, timer.phaseEndsAt, displayMs]);
