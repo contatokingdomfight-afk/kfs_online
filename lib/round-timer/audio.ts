@@ -1,6 +1,5 @@
-/** Sons do timer de rounds em `public/sounds/round-timer/`. */
-const SOUND_START_ROUND = "/sounds/round-timer/start__boxing-bell.wav";
-const SOUND_END_WORKOUT = "/sounds/round-timer/end__boxing-bell.wav";
+/** Sino de início e fim de cada round (`end__boxing-bell.wav`). */
+const SOUND_ROUND_BOXING_BELL = "/sounds/round-timer/end__boxing-bell.wav";
 const SOUND_DIGITAL_BEEP = "/sounds/round-timer/digital-beep.wav";
 
 let audioCtx: AudioContext | null = null;
@@ -48,12 +47,12 @@ function playSample(url: string, volume = 0.95): void {
 
 /** Início de um round (após preparação ou após descanso). */
 export function playRoundStartBell(): void {
-  playSample(SOUND_START_ROUND);
+  playSample(SOUND_ROUND_BOXING_BELL);
 }
 
 /** Fim de um round (antes do descanso ou treino concluído). */
 export function playRoundEndBell(): void {
-  playSample(SOUND_END_WORKOUT);
+  playSample(SOUND_ROUND_BOXING_BELL);
 }
 
 /** Alias: mesmo som que `playRoundEndBell` (último round → finished). */
