@@ -32,6 +32,26 @@ type Props = {
   assessmentDate: string;
 };
 
+/** No blur: ajusta `type=number` com min/max ao intervalo (evita erro nativo ao guardar). */
+function clampNumberInputToMinMax(el: HTMLInputElement) {
+  if (el.type !== "number") return;
+  const raw = el.value.trim();
+  if (raw === "") return;
+  const n = Number(raw.replace(",", "."));
+  if (!Number.isFinite(n)) return;
+  let v = n;
+  if (el.hasAttribute("min")) {
+    const lo = Number(el.min);
+    if (Number.isFinite(lo)) v = Math.max(v, lo);
+  }
+  if (el.hasAttribute("max")) {
+    const hi = Number(el.max);
+    if (Number.isFinite(hi)) v = Math.min(v, hi);
+  }
+  const rounded = Math.round(v);
+  if (rounded !== n) el.value = String(rounded);
+}
+
 export function AvaliacaoFisicaForm({
   studentId,
   afterSaveHref,
@@ -74,6 +94,7 @@ export function AvaliacaoFisicaForm({
     setShowConfirm(false);
     const form = formRef.current;
     if (!form) return;
+    form.querySelectorAll<HTMLInputElement>('input[type="number"]').forEach(clampNumberInputToMinMax);
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
@@ -88,6 +109,9 @@ export function AvaliacaoFisicaForm({
       action={formAction}
       className="space-y-6 md:space-y-8 w-full"
       onInvalid={() => setSubmitPhase("idle")}
+      onBlur={(e) => {
+        if (e.target instanceof HTMLInputElement) clampNumberInputToMinMax(e.target);
+      }}
     >
       <input type="hidden" name="studentId" value={studentId} />
       {state?.error && (
