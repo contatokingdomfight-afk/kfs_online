@@ -72,12 +72,23 @@ export function AvaliacaoFisicaForm({
 
   const handleConfirmSubmit = () => {
     setShowConfirm(false);
+    const form = formRef.current;
+    if (!form) return;
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
     setSubmitPhase("saving");
-    formRef.current?.requestSubmit();
+    queueMicrotask(() => form.requestSubmit());
   };
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-6 md:space-y-8 w-full">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="space-y-6 md:space-y-8 w-full"
+      onInvalid={() => setSubmitPhase("idle")}
+    >
       <input type="hidden" name="studentId" value={studentId} />
       {state?.error && (
         <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-2 text-sm text-red-600 dark:text-red-400">
