@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
@@ -75,6 +76,26 @@ export function EventosBoard({
   const t = getTranslations(locale);
   const [selectedIso, setSelectedIso] = useState<string | null>(null);
   const [regFilter, setRegFilter] = useState<"all" | "registered">("all");
+  const [bannerLightbox, setBannerLightbox] = useState<{ src: string; eventName: string } | null>(null);
+  const [bannerPortalReady, setBannerPortalReady] = useState(false);
+
+  useEffect(() => {
+    setBannerPortalReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!bannerLightbox) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") setBannerLightbox(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [bannerLightbox]);
 
   const calendarRows: EventCalendarRow[] = useMemo(
     () =>
@@ -287,6 +308,94 @@ export function EventosBoard({
           })}
         </ul>
       )}
+
+      {bannerPortalReady && bannerLightbox
+        ? createPortal(
+            <div
+              role="dialog"
+              aria-modal={true}
+              aria-label={bannerLightbox.eventName}
+              onClick={() => setBannerLightbox(null)}
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 10060,
+                background: "rgba(0, 0, 0, 0.88)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding:
+                  "max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))",
+                boxSizing: "border-box",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setBannerLightbox(null)}
+                aria-label={t("close")}
+                style={{
+                  position: "absolute",
+                  top: "max(12px, env(safe-area-inset-top))",
+                  right: "max(12px, env(safe-area-inset-right))",
+                  minWidth: 44,
+                  minHeight: 44,
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid rgba(255,255,255,0.35)",
+                  background: "rgba(0,0,0,0.45)",
+                  color: "#fff",
+                  fontSize: 22,
+                  lineHeight: 1,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ×
+              </button>
+              <div
+                onClick={(ev) => ev.stopPropagation()}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 12,
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={bannerLightbox.src}
+                  alt={bannerLightbox.eventName}
+                  style={{
+                    maxWidth: "min(100%, 960px)",
+                    maxHeight: "min(85dvh, 100%)",
+                    width: "auto",
+                    height: "auto",
+                    objectFit: "contain",
+                    borderRadius: "var(--radius-md)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                  }}
+                />
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.95)",
+                    textAlign: "center",
+                    maxWidth: "min(100%, 560px)",
+                    lineHeight: 1.35,
+                  }}
+                >
+                  {bannerLightbox.eventName}
+                </p>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
