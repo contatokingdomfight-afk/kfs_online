@@ -337,9 +337,9 @@ export function ResponsiveShell({
                 config={mobileBottomNav}
                 sheetFooter={
                   <>
-                    <SidebarPwaInstall locale={initialLocale} />
                     {logoutLabel ? <LogoutButton label={logoutLabel} variant="sidebar" /> : null}
                     <ThemeLocaleSwitcher initialTheme={initialTheme} initialLocale={initialLocale} variant="inline" />
+                    <SidebarPwaInstall locale={initialLocale} />
                   </>
                 }
               />

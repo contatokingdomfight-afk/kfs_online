@@ -355,7 +355,7 @@ export function MobileAppBottomNav({
               borderBottom: "none",
               paddingLeft: "max(16px, env(safe-area-inset-left, 0px))",
               paddingRight: "max(16px, env(safe-area-inset-right, 0px))",
-              paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))",
+              paddingBottom: 0,
               display: "flex",
               flexDirection: "column",
               minHeight: 0,
@@ -419,6 +419,7 @@ export function MobileAppBottomNav({
                 display: "flex",
                 flexDirection: "column",
                 gap: 2,
+                paddingBottom: 4,
               }}
             >
               {config.overflow.length === 0 ? (
@@ -455,22 +456,22 @@ export function MobileAppBottomNav({
                   );
                 })
               )}
+              {sheetFooter ? (
+                <div
+                  style={{
+                    marginTop: 12,
+                    paddingTop: 16,
+                    paddingBottom: "max(16px, env(safe-area-inset-bottom, 0px))",
+                    borderTop: "1px solid var(--border)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                  }}
+                >
+                  {sheetFooter}
+                </div>
+              ) : null}
             </div>
-            {sheetFooter ? (
-              <div
-                style={{
-                  flexShrink: 0,
-                  marginTop: 8,
-                  paddingTop: 12,
-                  borderTop: "1px solid var(--border)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12,
-                }}
-              >
-                {sheetFooter}
-              </div>
-            ) : null}
           </div>
         </>
       ) : null}
