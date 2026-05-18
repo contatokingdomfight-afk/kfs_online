@@ -240,9 +240,7 @@ export function ResponsiveShell({
                 : {}),
             }}
           >
-            {hideMobileDrawerTrigger ? (
-              <div style={{ width: "clamp(44px, 11vw, 48px)", flexShrink: 0 }} aria-hidden />
-            ) : (
+            {!hideMobileDrawerTrigger ? (
             <button
               ref={menuBtnRef}
               type="button"
@@ -273,8 +271,20 @@ export function ResponsiveShell({
                 <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
-            )}
-            <h1 style={{ margin: 0, fontSize: "clamp(17px, 4.2vw, 20px)", fontWeight: 600, flex: 1 }}>{headerTitle}</h1>
+            ) : null}
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "clamp(17px, 4.2vw, 20px)",
+                fontWeight: 600,
+                flex: 1,
+                minWidth: 0,
+                textAlign: "left",
+                lineHeight: 1.2,
+              }}
+            >
+              {headerTitle}
+            </h1>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
               {headerAvatar && (
                 <Link
