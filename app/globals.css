@@ -804,6 +804,11 @@
   .app-shell-main > main.dashboard-main {
     padding-bottom: max(48px, calc(env(safe-area-inset-bottom, 0px) + 28px));
   }
+
+  /* Barra inferior 4 + Mais: mais espaço para não tapar conteúdo. */
+  .app-shell-main > main.dashboard-main.dashboard-main--bottom-tabs {
+    padding-bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 72px));
+  }
 }
 
 /* Desktop: >= 768px – sidebar fixo (sticky) e área principal com scroll */

@@ -12,6 +12,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { StudentOnboardingGate } from "@/components/onboarding/StudentOnboardingGate";
 import { getCachedPlanAccess } from "@/lib/plan-access";
 import { DashboardSplash } from "@/components/DashboardSplash";
+import { buildStudentMobileBottomNav } from "@/lib/dashboard-student-mobile-nav";
 
 export default async function DashboardLayout({
   children,
@@ -80,6 +81,18 @@ export default async function DashboardLayout({
         { label: t("navPhysicalFicha"), href: "/dashboard/ficha-fisica" },
       ];
 
+  const mobileBottomNav = buildStudentMobileBottomNav(baseLinks, {
+    hasPlan,
+    hasPerformanceTracking: planAccess.hasPerformanceTracking,
+    moreLabel: locale === "pt" ? "Mais" : "More",
+    wellnessLabel: locale === "pt" ? "Bem-estar e treino" : "Wellness & training",
+    navHome: t("navHome"),
+    navEvents: t("navEvents"),
+    navAthleteProfile: t("navAthleteProfile"),
+    navLibrary: t("navLibrary"),
+    choosePlanLabel: "✨ " + t("choosePlanTitle"),
+  });
+
   const onboardingSteps = [
     { title: t("onboardingWelcomeTitle"), description: t("onboardingWelcomeDesc") },
     { title: t("onboardingHomeTitle"), description: t("onboardingHomeDesc") },
@@ -118,6 +131,7 @@ export default async function DashboardLayout({
         viewAsBanner={dbUser.role === "ADMIN" && viewAs === "aluno" ? <ViewAsBanner viewAs="aluno" /> : undefined}
         mainClassName="dashboard-main"
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
+        mobileBottomNav={mobileBottomNav}
       >
         <DashboardSplash locale={locale} displayName={dbUser.name} />
         <Suspense fallback={null}>

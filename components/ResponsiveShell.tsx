@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sidebar, type SidebarLink } from "./Sidebar";
 import type { Theme, Locale } from "@/lib/theme-locale";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
+import { MobileAppBottomNav, type MobileAppBottomNavConfig } from "./MobileAppBottomNav";
 
 const SCROLL_DELTA = 8;
 
@@ -33,6 +34,8 @@ type Props = {
   viewAsBanner?: React.ReactNode;
   mainClassName?: string;
   logoutLabel?: string;
+  /** Só em mobile: barra inferior com 4 atalhos + «Mais» (área do aluno). */
+  mobileBottomNav?: MobileAppBottomNavConfig | null;
   children: React.ReactNode;
 };
 
@@ -47,6 +50,7 @@ export function ResponsiveShell({
   viewAsBanner,
   mainClassName,
   logoutLabel,
+  mobileBottomNav,
   children,
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -301,7 +305,7 @@ export function ResponsiveShell({
           </header>
           <main
             ref={mainRef}
-            className={mainClassName}
+            className={[mainClassName, mobileBottomNav ? "dashboard-main--bottom-tabs" : ""].filter(Boolean).join(" ")}
             style={{
               flex: 1,
               overflow: "auto",
@@ -316,6 +320,11 @@ export function ResponsiveShell({
           >
             {children}
           </main>
+          {isMobile && mobileBottomNav ? (
+            <Suspense fallback={null}>
+              <MobileAppBottomNav config={mobileBottomNav} />
+            </Suspense>
+          ) : null}
         </div>
       </div>
     </div>
