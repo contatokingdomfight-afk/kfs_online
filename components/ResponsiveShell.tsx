@@ -27,6 +27,10 @@ type Props = {
   initialLocale: Locale;
   headerTitle: string;
   headerExtra?: React.ReactNode;
+  /** Só no header quando não há barra inferior mobile (ex.: «Ver como» no desktop). */
+  headerExtrasDesktopOnly?: React.ReactNode;
+  /** Conteúdo extra no topo do sheet «Mais» (só mobile com barra inferior). */
+  mobileBottomNavSheetLead?: React.ReactNode;
   /** Miniatura no canto (link para o ecrã de perfil / definições). */
   headerAvatar?: {
     href: string;
@@ -49,8 +53,10 @@ export function ResponsiveShell({
   initialLocale,
   headerTitle,
   headerExtra,
+  headerExtrasDesktopOnly,
   headerAvatar,
   viewAsBanner,
+  mobileBottomNavSheetLead,
   mainClassName,
   logoutLabel,
   mobileBottomNav,
@@ -64,6 +70,7 @@ export function ResponsiveShell({
   const pathname = usePathname();
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const hideMobileDrawerTrigger = isMobile && !!mobileBottomNav;
+  const showHeaderDesktopOnlyExtras = !(isMobile && mobileBottomNav);
   /** Uma linha: título + ações — em ecrãs estreitos o título encolhe a 0 e o texto sobrepõe-se aos ícones. */
   const splitMobileHeaderActionsRow =
     isMobile && hideMobileDrawerTrigger && Boolean(headerAvatar || headerExtra);
@@ -338,6 +345,7 @@ export function ResponsiveShell({
                     </Link>
                   )}
                   {headerExtra}
+                  {showHeaderDesktopOnlyExtras ? headerExtrasDesktopOnly : null}
                 </div>
               ) : null}
             </div>
@@ -391,6 +399,7 @@ export function ResponsiveShell({
                   </Link>
                 )}
                 {headerExtra}
+                {showHeaderDesktopOnlyExtras ? headerExtrasDesktopOnly : null}
               </div>
             ) : null}
           </header>
@@ -415,6 +424,7 @@ export function ResponsiveShell({
             <Suspense fallback={null}>
               <MobileAppBottomNav
                 config={mobileBottomNav}
+                sheetLead={mobileBottomNavSheetLead}
                 sheetFooter={
                   <>
                     {logoutLabel ? <LogoutButton label={logoutLabel} variant="sidebar" /> : null}

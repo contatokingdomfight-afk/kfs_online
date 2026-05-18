@@ -221,9 +221,12 @@ function NavIcon({ id, active }: { id: MobileNavIconId; active: boolean }) {
 
 export function MobileAppBottomNav({
   config,
+  sheetLead,
   sheetFooter,
 }: {
   config: MobileAppBottomNavConfig;
+  /** Bloco opcional no topo do sheet (ex.: «Ver como»), antes dos links em excesso. */
+  sheetLead?: ReactNode;
   /** Tema, idioma, sair, PWA — quando o hamburger está oculto. */
   sheetFooter?: ReactNode;
 }) {
@@ -471,6 +474,18 @@ export function MobileAppBottomNav({
                 paddingBottom: 4,
               }}
             >
+              {sheetLead ? (
+                <div
+                  style={{
+                    flexShrink: 0,
+                    padding: "4px 12px 14px",
+                    borderBottom: "1px solid var(--border)",
+                    marginBottom: 6,
+                  }}
+                >
+                  {sheetLead}
+                </div>
+              ) : null}
               {config.overflow.length === 0 ? (
                 <p style={{ margin: "8px 0", fontSize: 14, color: "var(--text-secondary)", textAlign: "center" }}>
                   —
