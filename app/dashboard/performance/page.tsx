@@ -12,7 +12,8 @@ import {
   type CheckInWellnessCopy,
 } from "@/components/fighter/CheckInWellnessSection";
 import type { CheckInWellnessAggregates } from "@/lib/check-in-wellness-aggregates";
-import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality, enrichScoresForDetail, getFisicoScoreFromPhysicalAssessment, mergePhysicalAssessmentIntoRadar, EVALUATION_CRITERION_AGGREGATION_BASELINE } from "@/lib/performance-utils";
+import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, enrichScoresForDetail, getFisicoScoreFromPhysicalAssessment } from "@/lib/performance-utils";
+import { buildEvaluationResultsFromAthleteEvaluations } from "@/lib/build-performance-evaluation-results";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
@@ -39,16 +40,10 @@ import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getAchievementUnlockContext, getAchievementsWithStatus } from "@/lib/achievements";
 import type { AchievementWithStatus } from "@/lib/achievements";
-import {
-  buildCriterionScores,
-  buildCriterionScoresFromDimensionScores,
-  type DimensionScore,
-  type CriterionScoreItem,
-} from "@/lib/evaluation-results-data";
+import type { DimensionScore, CriterionScoreItem } from "@/lib/evaluation-results-data";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
 
 const GENERAL_LAST_N = 10;
-const LAST_N_PER_MODALITY = 5;
 
 export const dynamic = "force-dynamic";
 
@@ -240,57 +235,28 @@ export default async function DashboardPerformancePage() {
         .eq("athleteId", athlete.id)
         .order("created_at", { ascending: false })
         .limit(GENERAL_LAST_N);
-      const evaluations = (evalsRows ?? []).map((e) => ({
+      const aggregateRows = (evalsRows ?? []).map((e) => ({
         gas: e.gas,
         technique: e.technique,
         strength: e.strength,
         theory: e.theory,
         scores: e.scores as Record<string, number> | null,
-        modality: e.modality,
+        modality: (e.modality as string | null) ?? null,
       }));
 
-      if (evaluations.length > 0) {
-        generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
-        if (normalizedPhysicalForm && generalPerformanceScores) {
-          generalPerformanceScores = mergePhysicalAssessmentIntoRadar(
-            generalPerformanceScores,
-            normalizedPhysicalForm
-          );
-        }
-        scoresByModality = computePerformanceScoresByModality(evaluations, configByModality, LAST_N_PER_MODALITY, true);
-        const latestEval = evalsRows![0] as { scores?: Record<string, number> | null; coachId?: string; note?: string | null; created_at?: string | null };
-        const previousEval = evalsRows!.length > 1 ? (evalsRows![1] as { scores?: Record<string, number> | null }) : null;
-        const criterionScoresFromEval = buildCriterionScores(
-          latestEval?.scores ?? null,
+      if (aggregateRows.length > 0) {
+        const bundle = buildEvaluationResultsFromAthleteEvaluations(
+          aggregateRows,
           configsForDetail,
-          previousEval?.scores ?? null,
-          {
-            implicitCriterionBaseline: EVALUATION_CRITERION_AGGREGATION_BASELINE,
-            evaluationModality: (latestEval as { modality?: string | null }).modality ?? null,
-          }
+          configByModality,
+          { normalizedPhysicalForm, generalLastN: GENERAL_LAST_N }
         );
-        if (generalPerformanceScores !== null) {
-          const dimensionScores: DimensionScore[] = GENERAL_PERFORMANCE_AXES.map((a) => ({
-            id: a.id,
-            label: a.label,
-            score: generalPerformanceScores![a.id] ?? 0,
-            maxScore: 10,
-          }));
-          const overallScore = dimensionScores.length > 0
-            ? dimensionScores.reduce((s, d) => s + d.score, 0) / dimensionScores.length
-            : 0;
-          const scoresForRadar = { ...generalPerformanceScores };
-          const criterionScores =
-            criterionScoresFromEval.length > 0
-              ? criterionScoresFromEval
-              : buildCriterionScoresFromDimensionScores(configsForDetail, generalPerformanceScores);
-          evaluationResultsData = {
-            dimensionScores,
-            criterionScores,
-            overallScore,
-            scoresForRadar,
-          };
+        if (bundle) {
+          generalPerformanceScores = bundle.generalPerformanceScores;
+          scoresByModality = bundle.scoresByModality;
+          evaluationResultsData = bundle.evaluationResultsData;
         }
+        const latestEval = evalsRows![0] as { scores?: Record<string, number> | null; coachId?: string; note?: string | null; created_at?: string | null };
         if (latestEval?.coachId) {
           let evalCoachName = "Treinador";
           const { data: coachRow } = await supabase.from("Coach").select("userId").eq("id", latestEval.coachId).single();

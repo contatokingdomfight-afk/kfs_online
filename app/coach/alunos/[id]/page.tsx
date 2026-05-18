@@ -85,7 +85,7 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
   };
 
   return (
-    <div style={{ maxWidth: "min(420px, 100%)" }}>
+    <div style={{ maxWidth: "min(720px, 100%)" }}>
       <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
         <Link
           href="/coach/alunos"

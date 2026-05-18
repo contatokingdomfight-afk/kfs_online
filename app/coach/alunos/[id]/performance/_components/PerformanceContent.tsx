@@ -5,11 +5,11 @@ import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import {
   type ModalityConfig,
   GENERAL_PERFORMANCE_AXES,
-  computeGeneralPerformanceScores,
   enrichScoresForDetail,
   getFisicoScoreFromPhysicalAssessment,
-  mergePhysicalAssessmentIntoRadar,
 } from "@/lib/performance-utils";
+import { buildEvaluationResultsFromAthleteEvaluations } from "@/lib/build-performance-evaluation-results";
+import { normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
 import {
   PERFORMANCE_DETAIL_BY_DIMENSION,
@@ -68,6 +68,13 @@ export async function PerformanceContent({ studentId }: Props) {
   }
 
   let generalPerformanceScores: Record<string, number> | null = null;
+  let evaluationResultsData: {
+    dimensionScores: import("@/lib/evaluation-results-data").DimensionScore[];
+    criterionScores: import("@/lib/evaluation-results-data").CriterionScoreItem[];
+    overallScore: number;
+    scoresForRadar: Record<string, number>;
+  } | null = null;
+  let scoresByModality: Record<string, Record<string, number>> = {};
   let rankInfo: {
     level: number;
     rankIndex: number;
@@ -160,19 +167,27 @@ export async function PerformanceContent({ studentId }: Props) {
       !lastPhysicalAssessment || (lastPhysicalAssessment.nextDueAt != null && lastPhysicalAssessment.nextDueAt <= today);
 
     const evalsRows = evalsRes.data ?? [];
-    const evaluations = evalsRows.map((e) => ({
+    const normalizedPhysicalForm = normalizePhysicalFormDataJson(lastPhys?.formData ?? null);
+    const aggregateRows = evalsRows.map((e) => ({
       gas: e.gas,
       technique: e.technique,
       strength: e.strength,
       theory: e.theory,
       scores: e.scores as Record<string, number> | null,
-      modality: e.modality,
+      modality: (e.modality as string | null) ?? null,
     }));
 
-    if (evaluations.length > 0) {
-      generalPerformanceScores = computeGeneralPerformanceScores(evaluations, configByModality, GENERAL_LAST_N, true);
-      if (lastPhys?.formData && generalPerformanceScores) {
-        generalPerformanceScores = mergePhysicalAssessmentIntoRadar(generalPerformanceScores, lastPhys.formData);
+    if (aggregateRows.length > 0) {
+      const bundle = buildEvaluationResultsFromAthleteEvaluations(
+        aggregateRows,
+        configsForDetail,
+        configByModality,
+        { normalizedPhysicalForm, generalLastN: GENERAL_LAST_N }
+      );
+      if (bundle) {
+        generalPerformanceScores = bundle.generalPerformanceScores;
+        scoresByModality = bundle.scoresByModality;
+        evaluationResultsData = bundle.evaluationResultsData;
       }
       const latestEval = evalsRows[0];
       if (latestEval?.coachId) {
@@ -191,8 +206,8 @@ export async function PerformanceContent({ studentId }: Props) {
         };
       }
     }
-    if (!generalPerformanceScores && lastPhys?.formData) {
-      const fisico = getFisicoScoreFromPhysicalAssessment(lastPhys.formData);
+    if (!generalPerformanceScores && normalizedPhysicalForm) {
+      const fisico = getFisicoScoreFromPhysicalAssessment(normalizedPhysicalForm);
       if (fisico != null) {
         generalPerformanceScores = {
           tecnico: 1,
@@ -279,6 +294,9 @@ export async function PerformanceContent({ studentId }: Props) {
       beltTimeGate={rankInfo?.beltTimeGate}
       customMissions={customMissions}
       primaryModalityLabel={primaryModalityLabel}
+      evaluationResultsData={evaluationResultsData ?? undefined}
+      scoresByModality={Object.keys(scoresByModality).length > 0 ? scoresByModality : undefined}
+      modalityLabels={Object.fromEntries(modalityLabels)}
       physicalAssessmentMission={
         physicalAssessmentDue
           ? {
