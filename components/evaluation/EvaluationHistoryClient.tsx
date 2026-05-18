@@ -4,6 +4,29 @@ import { useState } from "react";
 import Link from "next/link";
 import type { EvaluationHistoryModalDetail } from "@/lib/evaluation-history-modal-types";
 
+/** Linha de base 1–10 alinhada com o formulário do treinador (valores só a 5 = “não avaliado” em registos antigos). */
+const EVAL_HISTORY_BASELINE_10 = 5;
+
+/**
+ * Registos legados gravavam todos os critérios a 5/10; esconde esse ruído quando há pelo menos uma nota ≠ 5.
+ * Mantém 5/10 quando a evolução mostra mudança face à avaliação anterior (ex.: 7 → 5).
+ */
+function filterScoresForHistoryModal(
+  scores: Record<string, number>,
+  previous: EvaluationHistoryModalDetail["previous"]
+): Record<string, number> {
+  const entries = Object.entries(scores);
+  const hasNonBaseline = entries.some(([, v]) => v !== EVAL_HISTORY_BASELINE_10);
+  if (!hasNonBaseline) return scores;
+  return Object.fromEntries(
+    entries.filter(([id, v]) => {
+      if (v !== EVAL_HISTORY_BASELINE_10) return true;
+      const prevRaw = previous?.scores?.[id];
+      return typeof prevRaw === "number" && !Number.isNaN(prevRaw) && prevRaw !== EVAL_HISTORY_BASELINE_10;
+    })
+  );
+}
+
 function formatModality(mod: string | null): string {
   if (!mod) return "";
   return mod.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -164,7 +187,7 @@ export function EvaluationHistoryClient({ list, getEvaluationById, backHref, bac
                 <div>
                   <p className="text-xs font-semibold text-text-secondary uppercase mb-2">Critérios avaliados (1–10)</p>
                   <ul className="space-y-2 text-sm">
-                    {Object.entries(modalEval.scores).map(([criterionId, value]) => {
+                    {Object.entries(filterScoresForHistoryModal(modalEval.scores, modalEval.previous)).map(([criterionId, value]) => {
                       const label = modalEval.criterionLabels?.[criterionId] ?? criterionId;
                       const prevRaw = modalEval.previous?.scores?.[criterionId];
                       const prev = typeof prevRaw === "number" && !Number.isNaN(prevRaw) ? prevRaw : undefined;

@@ -219,14 +219,13 @@ export function CoachStudentProfileModal(props: Props) {
     if (!criterionIds.length) return;
     const initial = initialScoresByModalityRef.current?.[selectedModality];
     const o: Record<string, number> = {};
-    const touched = new Set<string>();
     criterionIds.forEach((id) => {
       const v = initial && typeof initial[id] === "number" ? initial[id] : DEFAULT_BASELINE;
       o[id] = Math.min(MAX_SCORE, Math.max(MIN_SCORE, v));
-      if (initial && initial[id] != null) touched.add(id);
     });
     setScores(o);
-    setTouchedIds(touched);
+    // Só gravamos critérios que o treinador mexer nesta sessão; pré-preencher última avaliação não conta como "tocado".
+    setTouchedIds(new Set());
   }, [criterionIds.join(","), selectedModality]);
 
   useEffect(() => {
@@ -299,6 +298,15 @@ export function CoachStudentProfileModal(props: Props) {
     withAvg.sort((a, b) => a.avg - b.avg);
     return withAvg.slice(0, 3).map((x) => x.name);
   }, [evaluationConfig, scores, touchedIds.size]);
+
+  const submittedScoresJson = useMemo(() => {
+    const o: Record<string, number> = {};
+    touchedIds.forEach((id) => {
+      const v = scores[id];
+      if (typeof v === "number" && !Number.isNaN(v)) o[id] = v;
+    });
+    return JSON.stringify(o);
+  }, [scores, touchedIds]);
 
   return (
     <div
@@ -431,7 +439,7 @@ export function CoachStudentProfileModal(props: Props) {
                 {!isStandalone && <input type="hidden" name="lessonId" value={lessonId!} />}
                 <input type="hidden" name="studentId" value={studentId} />
                 <input type="hidden" name="modality" value={selectedModality} />
-                <input type="hidden" name="scoresJson" value={JSON.stringify(scores)} />
+                <input type="hidden" name="scoresJson" value={submittedScoresJson} />
                 {isStandalone && modalities.length > 0 && (
                   <label className="flex flex-col gap-1">
                     <span className="text-sm text-[var(--text-secondary)]">Modalidade</span>
