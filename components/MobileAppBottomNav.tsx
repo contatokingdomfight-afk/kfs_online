@@ -21,7 +21,12 @@ export type MobileNavIconId =
   | "file"
   | "star"
   | "sparkles"
-  | "more";
+  | "more"
+  | "users"
+  | "gear"
+  | "building"
+  | "layers"
+  | "flag";
 
 export type MobileAppBottomNavItem = {
   label: string;
@@ -164,6 +169,44 @@ function NavIcon({ id, active }: { id: MobileNavIconId; active: boolean }) {
           <path d="M9 11 12 2l3 9 9 3-9 3-3 9-3-9-9-3z" strokeLinejoin="round" />
         </svg>
       );
+    case "users":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" style={s}>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" />
+        </svg>
+      );
+    case "gear":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" style={s}>
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M12 1v2M12 21v2M4.22 4.22l1.41 1.41M18.36 18.36l1.41 1.41M1 12h2M21 12h2M4.22 19.78l1.41-1.41M18.36 5.64l1.41-1.41"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
+    case "building":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" style={s}>
+          <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3M9 9v0M9 13v0M9 17v0M15 11v0M15 15v0" strokeLinecap="round" />
+        </svg>
+      );
+    case "layers":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" style={s}>
+          <path d="M12 2 2 7l10 5 10-5-10-5Z" strokeLinejoin="round" />
+          <path d="m2 17 10 5 10-5M2 12l10 5 10-5" strokeLinejoin="round" />
+        </svg>
+      );
+    case "flag":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" style={s}>
+          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" strokeLinejoin="round" />
+          <path d="M4 22v-7" strokeLinecap="round" />
+        </svg>
+      );
     case "more":
     default:
       return (
@@ -198,6 +241,12 @@ export function MobileAppBottomNav({
       if (item.href === "/dashboard") {
         if (searchParams.get("replayOnboarding") === "1") return false;
         return pathname === "/dashboard";
+      }
+      if (item.href === "/coach") {
+        return pathname === "/coach";
+      }
+      if (item.href === "/admin") {
+        return pathname === "/admin";
       }
       return pathMatchesItem(pathname, item);
     },

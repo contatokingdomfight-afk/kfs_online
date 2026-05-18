@@ -10,6 +10,11 @@ import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
 import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import { CoachNotificationBell } from "@/components/CoachNotificationBell";
+import {
+  buildShellMobileBottomNav,
+  dedupeSidebarFlatLinks,
+  flattenSidebarLinks,
+} from "@/lib/shell-mobile-bottom-nav";
 
 export default async function AdminLayout({
   children,
@@ -32,6 +37,9 @@ export default async function AdminLayout({
   const adminLinks =
     access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
 
+  const flatAdmin = dedupeSidebarFlatLinks(flattenSidebarLinks(adminLinks));
+  const mobileBottomNav = buildShellMobileBottomNav("admin", flatAdmin, locale === "pt" ? "Mais" : "More");
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--bg)", color: "var(--text-primary)" }}>
       <ResponsiveShell
@@ -40,6 +48,12 @@ export default async function AdminLayout({
         initialTheme={theme}
         initialLocale={locale}
         headerTitle="Kingdom Fight School"
+        headerAvatar={{
+          href: "/admin/configuracoes",
+          imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,
+          displayName: dbUser.name,
+          ariaLabel: t("headerProfileAria"),
+        }}
         headerExtra={
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <CoachNotificationBell locale={locale as "pt" | "en"} />
@@ -49,6 +63,7 @@ export default async function AdminLayout({
         }
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
         mainClassName="admin-main"
+        mobileBottomNav={mobileBottomNav}
       >
         {children}
       </ResponsiveShell>

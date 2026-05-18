@@ -13,6 +13,11 @@ import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resol
 import { canAccessAdminPathname } from "@/lib/permissions/paths";
 import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
 import { getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
+import {
+  buildShellMobileBottomNav,
+  dedupeSidebarFlatLinks,
+  flattenSidebarLinks,
+} from "@/lib/shell-mobile-bottom-nav";
 
 export default async function CoachLayout({
   children,
@@ -48,6 +53,8 @@ export default async function CoachLayout({
   });
   const coachLinks =
     access.kind === "granted" ? filterAdminLinksForAccess(fullCoachNav, access) : fullCoachNav;
+  const flatCoach = dedupeSidebarFlatLinks(flattenSidebarLinks(coachLinks));
+  const mobileBottomNav = buildShellMobileBottomNav("coach", flatCoach, locale === "pt" ? "Mais" : "More");
   const showViewAsBanner = dbUser.role === "ADMIN";
 
   return (
@@ -72,6 +79,8 @@ export default async function CoachLayout({
         }
         viewAsBanner={showViewAsBanner ? <ViewAsBanner viewAs="coach" /> : undefined}
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
+        mainClassName="coach-main"
+        mobileBottomNav={mobileBottomNav}
       >
         {children}
       </ResponsiveShell>

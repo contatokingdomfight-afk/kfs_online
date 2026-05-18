@@ -805,8 +805,14 @@
     padding-bottom: max(48px, calc(env(safe-area-inset-bottom, 0px) + 28px));
   }
 
-  /* Barra inferior 4 + Mais: mais espaço para não tapar conteúdo. */
-  .app-shell-main > main.dashboard-main.dashboard-main--bottom-tabs {
+  /* Coach / admin (mobile): respiro inferior semelhante ao dashboard. */
+  .app-shell-main > main.coach-main,
+  .app-shell-main > main.admin-main {
+    padding-bottom: max(48px, calc(env(safe-area-inset-bottom, 0px) + 28px));
+  }
+
+  /* Barra inferior (aluno, coach, admin): espaço para não tapar conteúdo. */
+  .app-shell-main > main.shell-main--bottom-tabs {
     padding-bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 72px));
   }
 }

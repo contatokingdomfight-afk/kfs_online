@@ -316,7 +316,7 @@ export function ResponsiveShell({
           </header>
           <main
             ref={mainRef}
-            className={[mainClassName, mobileBottomNav ? "dashboard-main--bottom-tabs" : ""].filter(Boolean).join(" ")}
+            className={[mainClassName, mobileBottomNav ? "shell-main--bottom-tabs" : ""].filter(Boolean).join(" ")}
             style={{
               flex: 1,
               overflow: "auto",

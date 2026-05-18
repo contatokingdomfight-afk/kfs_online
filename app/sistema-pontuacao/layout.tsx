@@ -6,6 +6,7 @@ import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-se
 import { getTranslations } from "@/lib/i18n";
 import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
+import type { MobileAppBottomNavConfig } from "@/components/MobileAppBottomNav";
 import type { SidebarLink } from "@/components/Sidebar";
 import { getAdminBackofficeSidebarLinks } from "@/lib/admin-sidebar-links";
 import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
@@ -17,6 +18,12 @@ import { EvaluationDocsTabs } from "@/components/evaluation-docs/EvaluationDocsT
 import { getEvaluationDocsStudentShellLinks } from "@/lib/sidebar-evaluation-docs-shell";
 import { NotificationBell } from "@/components/NotificationBell";
 import { getStudentMobileBottomNavConfig } from "@/lib/dashboard-student-mobile-nav";
+import {
+  buildShellMobileBottomNav,
+  dedupeSidebarFlatLinks,
+  flattenSidebarLinks,
+} from "@/lib/shell-mobile-bottom-nav";
+import { CoachNotificationBell } from "@/components/CoachNotificationBell";
 
 export default async function SistemaPontuacaoLayout({
   children,
@@ -38,7 +45,7 @@ export default async function SistemaPontuacaoLayout({
   let sidebarLinks: SidebarLink[];
   let headerExtra: React.ReactNode = null;
   let mainShellClass: string | undefined;
-  let mobileBottomNav: Awaited<ReturnType<typeof getStudentMobileBottomNavConfig>> | null = null;
+  let mobileBottomNav: MobileAppBottomNavConfig | null = null;
   let headerAvatar:
     | { href: string; imageUrl: string | null; displayName: string | null; ariaLabel: string }
     | undefined;
@@ -52,13 +59,22 @@ export default async function SistemaPontuacaoLayout({
     sidebarTitle = "Admin";
     headerExtra = (
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <CoachNotificationBell locale={locale as "pt" | "en"} />
         <ViewAsSwitcher />
         <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
       </div>
     );
     const full = getAdminBackofficeSidebarLinks(t);
     sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
+    const flatAd = dedupeSidebarFlatLinks(flattenSidebarLinks(sidebarLinks));
+    mobileBottomNav = buildShellMobileBottomNav("admin", flatAd, locale === "pt" ? "Mais" : "More");
     mainShellClass = "admin-main";
+    headerAvatar = {
+      href: "/admin/configuracoes",
+      imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,
+      displayName: dbUser.name,
+      ariaLabel: t("headerProfileAria"),
+    };
   } else if (dbUser.role === "COACH") {
     const access = await getCachedResolvedAdminAccess();
     const kfsPath = await getKfsPathnameFromRequest();
@@ -66,12 +82,26 @@ export default async function SistemaPontuacaoLayout({
       redirect("/coach");
     }
     sidebarTitle = t("coachTitle");
-    headerExtra = <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>;
+    headerExtra = (
+      <>
+        <CoachNotificationBell locale={locale as "pt" | "en"} />
+        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>
+      </>
+    );
     const full = getCoachShellSidebarLinks(t, {
       showAdminEntry: false,
       coachStudentId: coachStudentId || null,
     });
     sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
+    const flatCh = dedupeSidebarFlatLinks(flattenSidebarLinks(sidebarLinks));
+    mobileBottomNav = buildShellMobileBottomNav("coach", flatCh, locale === "pt" ? "Mais" : "More");
+    mainShellClass = "coach-main";
+    headerAvatar = {
+      href: "/coach/configuracoes",
+      imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,
+      displayName: dbUser.name,
+      ariaLabel: t("headerProfileAria"),
+    };
   } else {
     sidebarTitle = t("studentArea");
     sidebarLinks = getEvaluationDocsStudentShellLinks(t);
