@@ -38,11 +38,14 @@ export async function submitTrialRequest(
 
   const { data: lesson } = await supabase
     .from("Lesson")
-    .select("id, date, modality, weekday, schoolId, isOneOff")
+    .select("id, date, modality, weekday, schoolId, isOneOff, offerTrialBooking")
     .eq("id", lessonId)
     .single();
 
   if (!lesson) return { error: "Aula selecionada não encontrada. Tenta novamente." };
+  if ((lesson as { offerTrialBooking?: boolean }).offerTrialBooking === false) {
+    return { error: "Esta aula já não está disponível para inscrição experimental. Escolhe outro horário." };
+  }
   if ((lesson as { schoolId?: string }).schoolId !== schoolId) {
     return { error: "A aula não corresponde ao local escolhido." };
   }

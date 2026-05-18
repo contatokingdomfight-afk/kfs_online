@@ -257,6 +257,12 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
           Aula livre (aberta a alunos de qualquer modalidade da escola)
         </span>
       </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <input type="checkbox" name="excludeTrialBooking" value="on" style={{ width: 18, height: 18, accentColor: "#c1121f" }} />
+        <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
+          Ocultar do formulário público de aula experimental (/aula-experimental)
+        </span>
+      </label>
       <label style={{ minWidth: 0 }}>
         <span style={{ display: "block", marginBottom: 4, fontSize: 12, color: "#a1a1aa" }}>
           Notas de planeamento (opcional)

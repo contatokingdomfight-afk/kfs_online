@@ -17,6 +17,8 @@ export type LessonDefinitionRow = {
   planningNotes: string | null;
   isOneOff: boolean;
   isOpenClass: boolean;
+  /** false = não expandir para /aula-experimental (definição ainda existe na agenda interna). */
+  offerTrialBooking?: boolean;
   createdAt?: string;
 };
 
@@ -38,6 +40,7 @@ export function rowsToLessonDefinitions(rows: unknown[] | null | undefined): Les
       planningNotes: (r.planningNotes as string | null) ?? null,
       isOneOff: Boolean(r.isOneOff),
       isOpenClass: Boolean(r.isOpenClass),
+      offerTrialBooking: r.offerTrialBooking === false ? false : true,
     };
   });
 }

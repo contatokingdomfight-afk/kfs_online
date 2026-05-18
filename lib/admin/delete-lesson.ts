@@ -13,6 +13,7 @@ function revalidatePathsAfterLessonDelete() {
   revalidatePath("/admin/presenca");
   revalidatePath("/coach");
   revalidatePath("/coach/agenda");
+  revalidatePath("/aula-experimental");
 }
 
 export type DeleteLessonResult = {

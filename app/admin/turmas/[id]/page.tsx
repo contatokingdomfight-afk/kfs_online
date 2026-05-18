@@ -30,7 +30,7 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
   const { data: lesson } = await supabase
     .from("Lesson")
     .select(
-      "id, modality, date, weekday, startTime, endTime, coachId, schoolId, locationId, capacity, planningNotes, isOneOff, isOpenClass"
+      "id, modality, date, weekday, startTime, endTime, coachId, schoolId, locationId, capacity, planningNotes, isOneOff, isOpenClass, offerTrialBooking"
     )
     .eq("id", lessonId)
     .single();
@@ -168,6 +168,7 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
         initialCapacity={lesson.capacity ?? ""}
         initialPlanningNotes={lesson.planningNotes ?? ""}
         initialIsOpenClass={Boolean((lesson as { isOpenClass?: boolean }).isOpenClass)}
+        initialOfferTrialBooking={(lesson as { offerTrialBooking?: boolean }).offerTrialBooking !== false}
         coachOptions={coachOptions}
         locationOptions={locationOptions ?? []}
         modalityOptions={modalityOptions ?? []}

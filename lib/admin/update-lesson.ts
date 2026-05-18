@@ -22,6 +22,8 @@ export type UpdateLessonPayload = {
   capacity: number | null;
   planningNotes: string | null;
   isOpenClass: boolean;
+  /** Incluir no formulário público /aula-experimental (default true em novas turmas). */
+  offerTrialBooking: boolean;
   /** Recorrente: 1–7. */
   weekday?: number | null;
 };
@@ -38,6 +40,7 @@ export async function performUpdateLesson(payload: UpdateLessonPayload): Promise
     capacity,
     planningNotes,
     isOpenClass,
+    offerTrialBooking,
     weekday,
   } = payload;
 
@@ -103,6 +106,7 @@ export async function performUpdateLesson(payload: UpdateLessonPayload): Promise
     capacity,
     planningNotes: planningNotes || null,
     isOpenClass,
+    offerTrialBooking,
   };
 
   if (isOneOff) {
@@ -131,5 +135,6 @@ export async function performUpdateLesson(payload: UpdateLessonPayload): Promise
   revalidatePath("/coach");
   revalidatePath("/coach/agenda");
   revalidatePath("/dashboard");
+  revalidatePath("/aula-experimental");
   return { success: true };
 }

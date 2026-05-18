@@ -40,6 +40,7 @@ export async function createLesson(formData: FormData) {
   const planningNotes = (formData.get("planningNotes") as string) || null;
   const isOneOff = formData.get("isOneOff") === "on"; // checkbox: marcado = aula única
   const isOpenClass = formData.get("isOpenClass") === "on";
+  const offerTrialBooking = formData.get("excludeTrialBooking") !== "on";
   const weekdayStr = (formData.get("weekday") as string | null)?.trim() || null;
 
   if (!modality || !startTime || !endTime) {
@@ -125,6 +126,7 @@ export async function createLesson(formData: FormData) {
   revalidatePath("/admin/turmas");
   revalidatePath("/admin");
   revalidatePath("/dashboard");
+  revalidatePath("/aula-experimental");
   return {
     success: true,
     created: 1,
@@ -156,6 +158,7 @@ export async function updateLesson(
   const capacityStr = (formData.get("capacity") as string)?.trim() || null;
   const planningNotes = (formData.get("planningNotes") as string)?.trim() || null;
   const isOpenClass = formData.get("isOpenClass") === "on";
+  const offerTrialBooking = formData.get("excludeTrialBooking") !== "on";
   const weekdayStr = (formData.get("weekday") as string | null)?.trim() ?? "";
 
   if (!lessonId || !modality || !startTime || !endTime) {
@@ -195,6 +198,7 @@ export async function updateLesson(
     capacity,
     planningNotes,
     isOpenClass,
+    offerTrialBooking,
     weekday,
   });
 }

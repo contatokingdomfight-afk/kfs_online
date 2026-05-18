@@ -50,6 +50,9 @@ export async function POST(request: Request) {
 
   const isOpenClass = body.isOpenClass === true;
 
+  const offerTrialBooking =
+    body.offerTrialBooking === false || body.offerTrialBooking === "false" ? false : true;
+
   let weekday: number | null = null;
   const wdRaw = body.weekday;
   if (wdRaw !== undefined && wdRaw !== null && wdRaw !== "") {
@@ -69,6 +72,7 @@ export async function POST(request: Request) {
       capacity,
       planningNotes,
       isOpenClass,
+      offerTrialBooking,
       weekday,
     });
     return NextResponse.json(result);

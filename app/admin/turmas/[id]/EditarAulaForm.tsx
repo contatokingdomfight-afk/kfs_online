@@ -35,6 +35,8 @@ type Props = {
   initialCapacity: string | number;
   initialPlanningNotes: string;
   initialIsOpenClass?: boolean;
+  /** Quando false, a turma não aparece no formulário público /aula-experimental. */
+  initialOfferTrialBooking?: boolean;
   coachOptions: CoachOption[];
   locationOptions: LocationOption[];
   modalityOptions: ModalityOption[];
@@ -54,6 +56,7 @@ export function EditarAulaForm({
   initialCapacity,
   initialPlanningNotes,
   initialIsOpenClass = false,
+  initialOfferTrialBooking = true,
   coachOptions,
   locationOptions,
   modalityOptions,
@@ -386,6 +389,18 @@ export function EditarAulaForm({
         />
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
           Aula livre (aberta a alunos de qualquer modalidade da escola)
+        </span>
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <input
+          type="checkbox"
+          name="excludeTrialBooking"
+          value="on"
+          defaultChecked={!initialOfferTrialBooking}
+          style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
+        />
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
+          Ocultar do formulário público de aula experimental (/aula-experimental)
         </span>
       </label>
       {state?.error && (

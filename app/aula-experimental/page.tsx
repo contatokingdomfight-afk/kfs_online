@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
+import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { formatLessonDate } from "@/lib/lesson-utils";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import {
@@ -28,7 +29,7 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} backHref="/" backLabel="← Voltar à página inicial" />;
   const supabase = result.client;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = calendarDateLisbon(new Date());
   const rangeEnd = addDaysYmd(today, 56);
 
   const [modalities, schoolsRes, lessonsRes] = await Promise.all([
@@ -37,7 +38,7 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
     supabase
       .from("Lesson")
       .select(
-        "id, modality, date, weekday, startTime, endTime, schoolId, isOneOff, isOpenClass, locationId, coachId, capacity, planningNotes"
+        "id, modality, date, weekday, startTime, endTime, schoolId, isOneOff, isOpenClass, offerTrialBooking, locationId, coachId, capacity, planningNotes"
       )
       .order("startTime", { ascending: true }),
   ]);
@@ -46,8 +47,11 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
   const lessonsRaw = lessonsRes.data ?? [];
   const schoolIds = new Set(schools.map((s) => s.id));
   const lessonsForActiveSchools = lessonsRaw.filter((row) => {
-    const sid = (row as { schoolId?: string }).schoolId;
-    return sid && schoolIds.has(sid);
+    const r = row as { schoolId?: string; offerTrialBooking?: boolean };
+    const sid = r.schoolId;
+    if (!sid || !schoolIds.has(sid)) return false;
+    if (r.offerTrialBooking === false) return false;
+    return true;
   });
 
   const lessonIds = lessonsForActiveSchools.map((l) => (l as { id: string }).id);
