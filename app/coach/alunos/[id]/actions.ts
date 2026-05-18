@@ -7,8 +7,14 @@ import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
 import { notifyStudentOfNewCoachEvaluation } from "@/lib/notifications/in-app";
+import type { EvaluationHistoryModalDetail } from "@/lib/evaluation-history-modal-types";
+import { evaluationHistoryCoachDisplayName, evaluationHistoryFetchPreviousSnapshot } from "@/lib/evaluation-history-helpers";
 
 export type SaveStandaloneEvaluationResult = { error?: string; success?: boolean };
+
+export type { EvaluationHistoryModalDetail };
+/** @deprecated use EvaluationHistoryModalDetail */
+export type EvaluationDetail = EvaluationHistoryModalDetail;
 
 /** Avaliação do aluno fora da aula (a partir do perfil do aluno). */
 export async function saveStandaloneEvaluation(
@@ -145,23 +151,8 @@ export async function saveStandaloneEvaluation(
   return { success: true };
 }
 
-export type EvaluationDetail = {
-  id: string;
-  coachName: string;
-  date: string;
-  note: string | null;
-  modality: string | null;
-  gas: number | null;
-  technique: number | null;
-  strength: number | null;
-  theory: number | null;
-  scores: Record<string, number> | null;
-  /** Nomes dos critérios (id → label) para mostrar no modal em vez de UUID. */
-  criterionLabels?: Record<string, string>;
-};
-
 /** Obtém uma avaliação por id (para modal de histórico). Coach/Admin com acesso ao aluno. */
-export async function getEvaluationById(evalId: string): Promise<EvaluationDetail | { error: string }> {
+export async function getEvaluationById(evalId: string): Promise<EvaluationHistoryModalDetail | { error: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) return { error: "Sem permissão." };
 
@@ -186,14 +177,7 @@ export async function getEvaluationById(evalId: string): Promise<EvaluationDetai
     if (!canTeach) return { error: "Acesso negado." };
   }
 
-  let coachName = "Treinador";
-  if (evalRow.coachId) {
-    const { data: coach } = await supabase.from("Coach").select("userId").eq("id", evalRow.coachId).single();
-    if (coach) {
-      const { data: user } = await supabase.from("User").select("name").eq("id", coach.userId).single();
-      coachName = user?.name ?? coachName;
-    }
-  }
+  const coachName = await evaluationHistoryCoachDisplayName(supabase, evalRow.coachId as string | null);
 
   const dateStr = evalRow.created_at
     ? new Date(evalRow.created_at).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
@@ -211,8 +195,12 @@ export async function getEvaluationById(evalId: string): Promise<EvaluationDetai
     });
   }
 
+  const createdAt = evalRow.created_at as string | undefined;
+  const previous =
+    createdAt != null ? await evaluationHistoryFetchPreviousSnapshot(supabase, evalRow.athleteId as string, createdAt) : null;
+
   return {
-    id: evalRow.id,
+    id: evalRow.id as string,
     coachName,
     date: dateStr,
     note: (evalRow.note as string | null) ?? null,
@@ -223,5 +211,6 @@ export async function getEvaluationById(evalId: string): Promise<EvaluationDetai
     theory: evalRow.theory ?? null,
     scores,
     criterionLabels,
+    previous,
   };
 }

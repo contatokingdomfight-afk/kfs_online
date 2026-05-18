@@ -4,7 +4,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { getEvaluationById } from "../actions";
-import { EvaluationHistoryClient } from "./EvaluationHistoryClient";
+import { EvaluationHistoryClient } from "@/components/evaluation/EvaluationHistoryClient";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -64,12 +64,14 @@ export default async function CoachAlunoAvaliacoesPage({ params }: Props) {
   const userIds = [...new Set((coaches ?? []).map((c) => c.userId))];
   const { data: users } = await supabase
     .from("User")
-    .select("id, name")
+    .select("id, name, email")
     .in("id", userIds);
   const nameByCoachId = new Map<string, string>();
   (coaches ?? []).forEach((c) => {
     const u = (users ?? []).find((u) => u.id === c.userId);
-    nameByCoachId.set(c.id, u?.name ?? "Treinador");
+    const nm = (u as { name?: string | null })?.name?.trim();
+    const em = (u as { email?: string | null })?.email?.trim();
+    nameByCoachId.set(c.id, nm || (em ? em.split("@")[0]! : "") || "Treinador");
   });
 
   const list = (evals ?? []).map((e) => ({
