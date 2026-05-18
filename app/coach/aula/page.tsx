@@ -244,6 +244,24 @@ export default async function CoachAulaPage({
     }
   }
 
+  type TrialInSession = { id: string; name: string; contact: string; modality: string };
+  let trialsInSession: TrialInSession[] = [];
+  if (lessonId && occurrenceYmd) {
+    const { data: trialList } = await supabase
+      .from("TrialClass")
+      .select("id, name, contact, modality")
+      .eq("lessonId", lessonId)
+      .eq("lessonDate", occurrenceYmd)
+      .eq("convertedToStudent", false)
+      .order("createdAt", { ascending: true });
+    trialsInSession = (trialList ?? []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      contact: row.contact,
+      modality: String(row.modality),
+    }));
+  }
+
   return (
     <div className="coach-aula-page">
       <header className="coach-aula-header">
@@ -353,6 +371,74 @@ export default async function CoachAulaPage({
                 <RoundTimerClient locale={timerLocale} variant="embedded" />
               </section>
 
+              {trialsInSession.length > 0 ? (
+                <section
+                  className="coach-aula-trials-section"
+                  aria-labelledby="coach-aula-trials-heading"
+                  style={{
+                    marginBottom: "clamp(16px, 4vw, 20px)",
+                    padding: "clamp(12px, 3vw, 16px)",
+                    borderRadius: "var(--radius-md)",
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <h2 id="coach-aula-trials-heading" className="coach-aula-list-title" style={{ marginTop: 0 }}>
+                    {t("coachAulaTrialsTitle")}
+                  </h2>
+                  <p className="coach-aula-wellness-hint" style={{ margin: "0 0 12px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                    {t("coachAulaTrialsIntro")}
+                  </p>
+                  <ul className="coach-aula-attendance-list" role="list" style={{ margin: 0 }}>
+                    {trialsInSession.map((tr) => (
+                      <li
+                        key={tr.id}
+                        className="coach-aula-trial-row"
+                        style={{
+                          listStyle: "none",
+                          padding: "clamp(12px, 3vw, 14px)",
+                          borderRadius: "var(--radius-sm)",
+                          background: "var(--bg)",
+                          border: "1px solid var(--border)",
+                          marginBottom: 8,
+                        }}
+                      >
+                        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 8 }}>
+                          <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>{tr.name}</span>
+                          <span
+                            style={{
+                              fontSize: "clamp(11px, 2.8vw, 12px)",
+                              fontWeight: 600,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.04em",
+                              color: "var(--primary)",
+                              border: "1px solid var(--border)",
+                              borderRadius: 999,
+                              padding: "2px 8px",
+                            }}
+                          >
+                            {t("coachTrialInSessionBadge")}
+                          </span>
+                        </div>
+                        <p style={{ margin: "6px 0 0 0", fontSize: "clamp(14px, 3.5vw, 15px)", color: "var(--text-secondary)" }}>
+                          {tr.contact}
+                        </p>
+                        <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 14px)", color: "var(--text-secondary)" }}>
+                          {MODALITY_LABELS[tr.modality] ?? tr.modality}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/coach/experimentais"
+                    className="btn btn-secondary"
+                    style={{ marginTop: 12, textDecoration: "none", display: "inline-block" }}
+                  >
+                    {t("coachManageAllTrials")} →
+                  </Link>
+                </section>
+              ) : null}
+
               <h2 id="lista-presencas-heading" className="coach-aula-list-title">
                 Lista de presenças
               </h2>
@@ -363,8 +449,14 @@ export default async function CoachAulaPage({
               {attendances.length === 0 ? (
                 <div className="coach-aula-empty-list">
                   <span className="coach-aula-empty-icon" aria-hidden>👥</span>
-                  <p>Ninguém marcou presença ainda.</p>
-                  <p className="coach-aula-empty-hint">Os alunos podem fazer check-in com o QR Code da aula.</p>
+                  {trialsInSession.length > 0 ? (
+                    <p>{t("coachAulaEmptyPresencesWithTrials")}</p>
+                  ) : (
+                    <>
+                      <p>Ninguém marcou presença ainda.</p>
+                      <p className="coach-aula-empty-hint">Os alunos podem fazer check-in com o QR Code da aula.</p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <ul className="coach-aula-attendance-list" role="list">

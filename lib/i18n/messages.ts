@@ -844,6 +844,12 @@ export const messages = {
     weekThemeHint:
       "Define um tema por modalidade e, se quiseres, associa um curso da biblioteca. Assim o aluno estuda a teoria no telemóvel e aproveita melhor o tempo no tatame.",
     coachAulaWeekThemeTitle: "Tema da semana (esta modalidade e semana)",
+    coachAulaTrialsTitle: "Aulas experimentais nesta sessão",
+    coachAulaTrialsIntro:
+      "Inscritos com esta aula e data (ainda sem conta na app). Contacta para confirmar presença ou converte em aluno em Experimentais.",
+    coachTrialInSessionBadge: "Experimental",
+    coachAulaEmptyPresencesWithTrials:
+      "Ainda não há presenças marcadas na app para esta sessão. Se houver experimentais inscritos, aparecem acima.",
     saveTheme: "Guardar tema",
     viewAgenda: "Ver agenda",
     athletesUnderCoaching: "Atletas em acompanhamento",
@@ -886,7 +892,8 @@ export const messages = {
     coachNoThemeHint: "Nenhum tema definido para a tua modalidade principal.",
     coachTrialClasses: "Aulas Experimentais",
     coachManageAllTrials: "Gerir todos os experimentais",
-    coachTrialClassesEmpty: "Nenhum experimental agendado.",
+    coachTrialClassesEmpty:
+      "Nenhum experimental por associar a uma aula. Quando a administração ligar a inscrição a uma sessão, o nome aparece em Presenças na aula ao escolheres essa aula e data.",
     coachYourAthletes: "Seus Atletas",
     coachSearchAthletes: "Pesquisar atletas…",
     coachNoAthletes: "Nenhum atleta em acompanhamento.",
@@ -1804,6 +1811,12 @@ export const messages = {
       "You have no classes assigned to you on this platform yet. When you do, the modalities you teach will appear here so you can set the week theme.",
     weekThemeHint: "Set a theme per modality and optionally link a library course. Students study theory on their phone and make the most of mat time.",
     coachAulaWeekThemeTitle: "Week theme (this modality and week)",
+    coachAulaTrialsTitle: "Trial classes in this session",
+    coachAulaTrialsIntro:
+      "Sign-ups for this lesson and date (no app account yet). Contact to confirm attendance or convert to a student under Trial classes.",
+    coachTrialInSessionBadge: "Trial",
+    coachAulaEmptyPresencesWithTrials:
+      "No check-ins in the app for this session yet. If there are trial sign-ups, they are listed above.",
     saveTheme: "Save theme",
     viewAgenda: "View agenda",
     athletesUnderCoaching: "Athletes under coaching",
@@ -1845,7 +1858,8 @@ export const messages = {
     coachNoThemeHint: "No theme set for your main modality.",
     coachTrialClasses: "Trial Classes",
     coachManageAllTrials: "Manage all trial classes",
-    coachTrialClassesEmpty: "No trial classes scheduled.",
+    coachTrialClassesEmpty:
+      "No trial class pending lesson assignment. Once linked to a session, names show in Class presences when you open that lesson and date.",
     coachYourAthletes: "Your Athletes",
     coachSearchAthletes: "Search athletes…",
     coachNoAthletes: "No athletes under coaching.",

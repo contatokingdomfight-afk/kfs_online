@@ -76,7 +76,7 @@ export default async function CoachHomePage() {
 
   const rangeStart = ymdAddDays(today, -21);
   const rangeEnd = ymdAddDays(today, 28);
-  const { defs, expanded: expandedRange } = await loadCoachScheduleBundle(
+  const { expanded: expandedRange } = await loadCoachScheduleBundle(
     supabase,
     coachId,
     schoolId,
@@ -169,17 +169,6 @@ export default async function CoachHomePage() {
     .eq("modality", mainModality);
   const theme = weekThemes?.[0] ?? null;
 
-  const trialLessons =
-    defs.length > 0
-      ? defs.map((l) => ({
-          id: l.id,
-          modality: l.modality ?? "",
-          startTime: l.startTime,
-          endTime: l.endTime,
-        }))
-      : [];
-
-  const coachLessonIds = new Set(trialLessons.map((l) => l.id));
   const { data: trials } = await supabase
     .from("TrialClass")
     .select("id, name, modality, lessonDate, lessonId")
@@ -187,19 +176,19 @@ export default async function CoachHomePage() {
     .gte("lessonDate", today)
     .order("lessonDate", { ascending: true });
 
-  const coachTrials = (trials ?? []).filter((t) => t.lessonId && coachLessonIds.has(t.lessonId));
-  const lessonById = new Map(trialLessons.map((l) => [l.id, l]));
-  const trialsWithLesson = coachTrials.map((t) => {
-    const lesson = t.lessonId ? lessonById.get(t.lessonId) : null;
-    return {
+  /** Só na home: inscrições ainda sem aula associada. Com `lessonId`, aparecem na sessão (Presenças na aula). */
+  const trialsForHomeCard = (trials ?? [])
+    .filter((t) => {
+      if (t.lessonId) return false;
+      const ld = String(t.lessonDate).slice(0, 10);
+      return ld >= today;
+    })
+    .map((t) => ({
       id: t.id,
       name: t.name,
-      modality: t.modality,
+      modality: t.modality as string,
       lessonDate: String(t.lessonDate),
-      startTime: lesson?.startTime,
-      endTime: lesson?.endTime,
-    };
-  });
+    }));
 
   // Atletas do coach (mainCoachId)
   let athletesQuery = supabase
@@ -452,7 +441,7 @@ export default async function CoachHomePage() {
           noThemeHint={t("coachNoThemeHint")}
         />
         <TrialClassesCard
-          trials={trialsWithLesson}
+          trials={trialsForHomeCard}
           modalityLabels={MODALITY_LABELS}
           title={t("coachTrialClasses")}
           manageAllLabel={t("coachManageAllTrials")}
