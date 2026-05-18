@@ -894,6 +894,8 @@ export const messages = {
     coachManageAllTrials: "Gerir todos os experimentais",
     coachTrialClassesEmpty:
       "Nenhum experimental por associar a uma aula. Quando a administração ligar a inscrição a uma sessão, o nome aparece em Presenças na aula ao escolheres essa aula e data.",
+    coachExperimentaisPageEmpty:
+      "Nenhuma inscrição experimental futura nas aulas em que estás como professor (titular ou equipa), nem inscrições só com data à espera de turma. Confirma na administração a ligação à aula certa.",
     coachYourAthletes: "Seus Atletas",
     coachSearchAthletes: "Pesquisar atletas…",
     coachNoAthletes: "Nenhum atleta em acompanhamento.",
@@ -1860,6 +1862,8 @@ export const messages = {
     coachManageAllTrials: "Manage all trial classes",
     coachTrialClassesEmpty:
       "No trial class pending lesson assignment. Once linked to a session, names show in Class presences when you open that lesson and date.",
+    coachExperimentaisPageEmpty:
+      "No upcoming trial sign-ups for lessons where you teach (as lead or on the team), nor date-only sign-ups waiting for a class. Ask admin to link the correct lesson.",
     coachYourAthletes: "Your Athletes",
     coachSearchAthletes: "Search athletes…",
     coachNoAthletes: "No athletes under coaching.",
