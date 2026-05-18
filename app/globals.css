@@ -799,6 +799,11 @@
     overflow: hidden;
     display: flex;
   }
+
+  /* Área do aluno: últimos cartões (ex. ingresso digital com QR em Eventos) não ficam sob a barra inicial / gestos. */
+  .app-shell-main > main.dashboard-main {
+    padding-bottom: max(48px, calc(env(safe-area-inset-bottom, 0px) + 28px));
+  }
 }
 
 /* Desktop: >= 768px – sidebar fixo (sticky) e área principal com scroll */

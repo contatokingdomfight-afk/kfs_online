@@ -5,6 +5,8 @@ export type EventCheckInParticipantRow = {
   displayName: string;
   email: string;
   alreadyUsed: boolean;
+  /** ISO quando `alreadyUsed`; para ordenar e mostrar na lista consolidada. */
+  checkinUsedAt: string | null;
 };
 
 /** Inscrições confirmadas do evento, para check-in manual (nome / e-mail). */
@@ -26,6 +28,7 @@ export async function fetchEventCheckInParticipants(eventId: string): Promise<Ev
       displayName: "Participante",
       email: "",
       alreadyUsed: Boolean(r.checkin_used_at),
+      checkinUsedAt: (r.checkin_used_at as string | null) ?? null,
     }));
   }
 
@@ -45,6 +48,7 @@ export async function fetchEventCheckInParticipants(eventId: string): Promise<Ev
       displayName,
       email,
       alreadyUsed: Boolean(r.checkin_used_at),
+      checkinUsedAt: (r.checkin_used_at as string | null) ?? null,
     };
   });
 
