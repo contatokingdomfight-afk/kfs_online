@@ -56,6 +56,34 @@ function parseWeightKgField(formData: FormData, name: string): number | null {
   return Math.round(n * 10) / 10;
 }
 
+function parseReps1min(formData: FormData, name: string, max: number): number | null {
+  const raw = (formData.get(name) as string)?.trim();
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  if (Number.isNaN(n) || n < 0 || n > max) return null;
+  return n;
+}
+
+function parseHeartRateBpm(formData: FormData, name: string, min: number, max: number): number | null {
+  const raw = (formData.get(name) as string)?.trim();
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  if (Number.isNaN(n) || n < min || n > max) return null;
+  return n;
+}
+
+/** Distância percorrida em 1 min: valor + unidade m|km → metros inteiros. */
+function parseRunDistance1minMeters(formData: FormData): number | null {
+  const raw = (formData.get("runDistance1minValue") as string)?.trim();
+  if (!raw) return null;
+  const n = parseFloat(raw.replace(",", "."));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const unit = ((formData.get("runDistance1minUnit") as string)?.trim() || "m").toLowerCase();
+  const meters = unit === "km" ? Math.round(n * 1000) : Math.round(n);
+  if (meters < 1 || meters > 200_000) return null;
+  return meters;
+}
+
 export type SaveAssessmentResult = { error?: string; success?: boolean };
 
 export async function savePhysicalAssessment(
@@ -105,7 +133,8 @@ export async function savePhysicalAssessment(
     previousPracticeTime: (formData.get("previousPracticeTime") as string)?.trim() || undefined,
     heightCm: parseHeightCmField(formData, "heightCm"),
     weightKg: parseWeightKgField(formData, "weightKg"),
-    heartRateRest: parseInt(String(formData.get("heartRateRest")), 10) || null,
+    heartRateRest: parseHeartRateBpm(formData, "heartRateRest", 30, 200),
+    heartRateActivity: parseHeartRateBpm(formData, "heartRateActivity", 40, 220),
     bloodPressure: (formData.get("bloodPressure") as string)?.trim() || null,
     saturationO2: (formData.get("saturationO2") as string)?.trim() || null,
     mobilityLimitations: formData.getAll("mobilityLimitations") as string[],
@@ -137,10 +166,12 @@ export async function savePhysicalAssessment(
       return s ? s.slice(0, 16) : null;
     })(),
     footLengthCm: parseCircCm(formData, "footLengthCm"),
-    pushups1min: parseInt(String(formData.get("pushups1min")), 10) || null,
-    situps1min: parseInt(String(formData.get("situps1min")), 10) || null,
-    plankSeconds: parseInt(String(formData.get("plankSeconds")), 10) || null,
-    squats1min: parseInt(String(formData.get("squats1min")), 10) || null,
+    pushups1min: parseReps1min(formData, "pushups1min", 500),
+    pullUps1min: parseReps1min(formData, "pullUps1min", 200),
+    situps1min: parseReps1min(formData, "situps1min", 500),
+    plankSeconds: parseReps1min(formData, "plankSeconds", 36000),
+    squats1min: parseReps1min(formData, "squats1min", 500),
+    runDistance1minMeters: parseRunDistance1minMeters(formData),
     runTest: (formData.get("runTest") as string)?.trim() || null,
     scoreCondition: parseInt(String(formData.get("scoreCondition")), 10) || null,
     scoreMobility: parseInt(String(formData.get("scoreMobility")), 10) || null,

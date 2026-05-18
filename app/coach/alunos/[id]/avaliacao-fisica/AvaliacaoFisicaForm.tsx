@@ -337,10 +337,17 @@ export function AvaliacaoFisicaForm({
           </label>
         </div>
         <p className="text-sm text-text-secondary mt-2 mb-2 font-medium">6.1 Sinais vitais (opcional)</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl">
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>FC repouso (bpm)</span>
             <input type="number" name="heartRateRest" min={30} max={200} className="input w-full max-w-[8rem]" />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm min-w-0">
+            <span>FC em atividade (bpm)</span>
+            <input type="number" name="heartRateActivity" min={40} max={220} className="input w-full max-w-[8rem]" />
+            <span className="text-[11px] text-text-secondary leading-snug">
+              Ex.: após aquecimento ou após um teste leve; regista o contexto nas notas se precisares.
+            </span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>PA</span>
@@ -500,22 +507,47 @@ export function AvaliacaoFisicaForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 mt-3 max-w-4xl">
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Flexões / 1 min</span>
-            <input type="number" name="pushups1min" min={0} className="input w-full max-w-[8rem]" />
+            <input type="number" name="pushups1min" min={0} max={500} className="input w-full max-w-[8rem]" />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm min-w-0">
+            <span>Barras (pull-ups) / 1 min</span>
+            <input type="number" name="pullUps1min" min={0} max={200} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Abdominais / 1 min</span>
-            <input type="number" name="situps1min" min={0} className="input w-full max-w-[8rem]" />
+            <input type="number" name="situps1min" min={0} max={500} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Prancha (seg)</span>
-            <input type="number" name="plankSeconds" min={0} className="input w-full max-w-[8rem]" />
+            <input type="number" name="plankSeconds" min={0} max={36000} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Agachamentos / 1 min</span>
-            <input type="number" name="squats1min" min={0} className="input w-full max-w-[8rem]" />
+            <input type="number" name="squats1min" min={0} max={500} className="input w-full max-w-[8rem]" />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm min-w-0 sm:col-span-2 lg:col-span-1">
-            <span>Corrida (opcional)</span>
+          <label className="flex flex-col gap-1.5 text-sm min-w-0 sm:col-span-2 lg:col-span-3">
+            <span>Distância em 1 min (corrida ou esteira)</span>
+            <div className="flex flex-wrap items-end gap-2">
+              <input
+                type="number"
+                name="runDistance1minValue"
+                min={1}
+                max={200000}
+                step="any"
+                className="input w-full max-w-[9rem]"
+                placeholder="ex.: 280 ou 1,2"
+              />
+              <select name="runDistance1minUnit" className="input max-w-[5.5rem]" defaultValue="m" aria-label="Unidade (metros ou quilómetros)">
+                <option value="m">metros (m)</option>
+                <option value="km">quilómetros (km)</option>
+              </select>
+            </div>
+            <span className="text-[11px] text-text-secondary leading-snug">
+              O valor é guardado em metros; escolhe km se registaste a distância em quilómetros (ex.: 0,35 km → 350 m).
+            </span>
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm min-w-0 sm:col-span-2 lg:col-span-3">
+            <span>Corrida — observações (opcional)</span>
             <input type="text" name="runTest" className="input w-full max-w-md" />
           </label>
         </div>

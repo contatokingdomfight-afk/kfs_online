@@ -27,6 +27,7 @@ export function hasAnamnesisOrNonAnthroAssessmentContent(
   if (d.previousPracticeTime?.trim()) return true;
 
   if (typeof d.heartRateRest === "number" && d.heartRateRest > 0) return true;
+  if (typeof d.heartRateActivity === "number" && d.heartRateActivity > 0) return true;
   if (d.bloodPressure?.trim()) return true;
   if (d.saturationO2?.trim()) return true;
 
@@ -36,9 +37,11 @@ export function hasAnamnesisOrNonAnthroAssessmentContent(
   if (d.posturalNotes?.trim()) return true;
 
   if (typeof d.pushups1min === "number" && d.pushups1min > 0) return true;
+  if (typeof d.pullUps1min === "number" && d.pullUps1min > 0) return true;
   if (typeof d.situps1min === "number" && d.situps1min > 0) return true;
   if (typeof d.plankSeconds === "number" && d.plankSeconds > 0) return true;
   if (typeof d.squats1min === "number" && d.squats1min > 0) return true;
+  if (typeof d.runDistance1minMeters === "number" && d.runDistance1minMeters > 0) return true;
   if (d.runTest?.trim()) return true;
 
   if (typeof d.scoreCondition === "number" && d.scoreCondition > 0) return true;

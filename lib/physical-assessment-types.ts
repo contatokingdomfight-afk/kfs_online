@@ -34,6 +34,8 @@ export type PhysicalAssessmentFormData = {
   weightKg?: number | null;
   /** 6.1 Sinais vitais */
   heartRateRest?: number | null;
+  /** FC durante esforço leve a moderado (ex.: após teste), bpm */
+  heartRateActivity?: number | null;
   bloodPressure?: string | null;
   saturationO2?: string | null;
   /** 6.2 Mobilidade */
@@ -85,9 +87,13 @@ export type PhysicalAssessmentFormData = {
   footLengthCm?: number | null;
   /** 7. Testes físicos */
   pushups1min?: number | null;
+  /** Barras (pull-ups / chin-ups) em 1 min */
+  pullUps1min?: number | null;
   situps1min?: number | null;
   plankSeconds?: number | null;
   squats1min?: number | null;
+  /** Distância em corrida/caminhada em 1 min, armazenada em metros (o formulário pode pedir m ou km). */
+  runDistance1minMeters?: number | null;
   runTest?: string | null;
   /** 8. Avaliação instrutor (1-10) */
   scoreCondition?: number | null;
