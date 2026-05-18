@@ -6,6 +6,8 @@ import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { getLessonIdsForCoach } from "@/lib/coach-lesson-ids";
+import { AcceptTrialButton } from "@/app/admin/experimentais/AcceptTrialButton";
+import { ConvertTrialButton } from "@/app/admin/experimentais/ConvertTrialButton";
 
 export default async function CoachExperimentaisPage() {
   const coachId = await getCurrentCoachId();
@@ -35,7 +37,7 @@ export default async function CoachExperimentaisPage() {
   // Experimentais não convertidos: com aula onde o coach é titular ou em LessonCoach; ou ainda sem lessonId (só data/modalidade).
   const { data: trials } = await supabase
     .from("TrialClass")
-    .select("id, name, contact, modality, lessonDate, lessonId, convertedToStudent")
+    .select("id, name, contact, modality, lessonDate, lessonId, convertedToStudent, acceptedAt")
     .eq("convertedToStudent", false)
     .order("lessonDate", { ascending: true })
     .order("createdAt", { ascending: false });
@@ -111,6 +113,19 @@ export default async function CoachExperimentaisPage() {
                   >
                     {trial.name}
                   </span>
+                  {trial.lessonId && coachLessonIds.has(trial.lessonId) ? (
+                    <span
+                      style={{
+                        fontSize: "clamp(12px, 3vw, 14px)",
+                        padding: "2px 8px",
+                        borderRadius: "var(--radius-md)",
+                        backgroundColor: trial.acceptedAt ? "var(--info, #0ea5e9)" : "var(--warning)",
+                        color: trial.acceptedAt ? "#fff" : "var(--text-primary)",
+                      }}
+                    >
+                      {trial.acceptedAt ? "Aceite" : "Pendente"}
+                    </span>
+                  ) : null}
                 </div>
                 <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                   {trial.contact}
@@ -121,6 +136,20 @@ export default async function CoachExperimentaisPage() {
                     ? ` · ${formatLessonDate(String(trial.lessonDate))} ${lesson.startTime}–${lesson.endTime}`
                     : ` · ${formatLessonDate(String(trial.lessonDate))}`}
                 </p>
+                {trial.lessonId && coachLessonIds.has(trial.lessonId) && (
+                  <div
+                    style={{
+                      marginTop: "clamp(8px, 2vw, 12px)",
+                      display: "flex",
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    {!trial.acceptedAt ? <AcceptTrialButton trialId={trial.id} /> : null}
+                    {trial.contact.includes("@") ? <ConvertTrialButton trialId={trial.id} /> : null}
+                  </div>
+                )}
                 {trial.lessonId && (
                   <Link
                     href={`/coach/aula?lesson=${trial.lessonId}&date=${encodeURIComponent(String(trial.lessonDate).slice(0, 10))}`}

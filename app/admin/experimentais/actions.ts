@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { getLessonIdsForCoach } from "@/lib/coach-lesson-ids";
 
 export type CreateTrialResult = { error?: string };
 
@@ -53,7 +56,7 @@ export async function acceptTrialRequest(
   formData: FormData
 ): Promise<AcceptTrialResult> {
   const dbUser = await getCurrentDbUser();
-  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "COACH")) return { error: "Não autorizado." };
 
   const trialId = (formData.get("trialId") as string)?.trim();
   if (!trialId) return { error: "Inscrição inválida." };
@@ -62,12 +65,22 @@ export async function acceptTrialRequest(
 
   const { data: trial } = await supabase
     .from("TrialClass")
-    .select("id, acceptedAt, convertedToStudent")
+    .select("id, acceptedAt, convertedToStudent, lessonId, lessonDate")
     .eq("id", trialId)
     .single();
   if (!trial) return { error: "Inscrição não encontrada." };
   if (trial.convertedToStudent) return { error: "Já foi convertida em aluno." };
   if (trial.acceptedAt) return { error: "Pedido já foi aceite." };
+
+  if (dbUser.role === "COACH") {
+    const lessonId = trial.lessonId as string | null;
+    if (!lessonId) return { error: "Inscrição sem aula atribuída. Contacta a administração." };
+    const coachId = await getCurrentCoachId();
+    if (!coachId) return { error: "Perfil de coach não encontrado." };
+    const coachSupabase = await createClient();
+    const allowed = await getLessonIdsForCoach(coachSupabase, coachId);
+    if (!allowed.has(lessonId)) return { error: "Sem permissão para gerir esta inscrição." };
+  }
 
   const { error: updateError } = await supabase
     .from("TrialClass")
@@ -77,7 +90,16 @@ export async function acceptTrialRequest(
   if (updateError) return { error: updateError.message };
 
   revalidatePath("/admin/experimentais");
-  redirect("/admin/experimentais");
+  revalidatePath("/coach/aula");
+  revalidatePath("/coach/experimentais");
+  revalidatePath("/coach");
+
+  if (dbUser.role === "ADMIN") {
+    redirect("/admin/experimentais");
+  }
+  const lid = trial.lessonId as string;
+  const d = String(trial.lessonDate).slice(0, 10);
+  redirect(`/coach/aula?lesson=${encodeURIComponent(lid)}&date=${encodeURIComponent(d)}`);
 }
 
 export type ConvertTrialResult = { error?: string };
@@ -87,16 +109,30 @@ export async function convertTrialToStudent(
   formData: FormData
 ): Promise<ConvertTrialResult> {
   const dbUser = await getCurrentDbUser();
-  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "COACH")) return { error: "Não autorizado." };
 
   const trialId = (formData.get("trialId") as string)?.trim();
   if (!trialId) return { error: "Inscrição inválida." };
 
   const supabase = createAdminClient();
 
-  const { data: trial } = await supabase.from("TrialClass").select("id, name, contact, convertedToStudent").eq("id", trialId).single();
+  const { data: trial } = await supabase
+    .from("TrialClass")
+    .select("id, name, contact, convertedToStudent, lessonId, lessonDate")
+    .eq("id", trialId)
+    .single();
   if (!trial) return { error: "Inscrição não encontrada." };
   if (trial.convertedToStudent) return { error: "Já foi convertida em aluno." };
+
+  if (dbUser.role === "COACH") {
+    const lessonId = trial.lessonId as string | null;
+    if (!lessonId) return { error: "Inscrição sem aula atribuída. Contacta a administração." };
+    const coachId = await getCurrentCoachId();
+    if (!coachId) return { error: "Perfil de coach não encontrado." };
+    const coachSupabase = await createClient();
+    const allowed = await getLessonIdsForCoach(coachSupabase, coachId);
+    if (!allowed.has(lessonId)) return { error: "Sem permissão para gerir esta inscrição." };
+  }
 
   const email = trial.contact.trim();
   if (!email.includes("@")) return { error: "O contacto não é um email. Adiciona o aluno manualmente em Alunos." };
@@ -141,5 +177,17 @@ export async function convertTrialToStudent(
 
   revalidatePath("/admin/experimentais");
   revalidatePath("/admin/alunos");
-  redirect("/admin/experimentais");
+  revalidatePath("/coach/aula");
+  revalidatePath("/coach/experimentais");
+  revalidatePath("/coach");
+
+  if (dbUser.role === "ADMIN") {
+    redirect("/admin/experimentais");
+  }
+  const lid = trial.lessonId as string | null;
+  if (lid) {
+    const d = String(trial.lessonDate).slice(0, 10);
+    redirect(`/coach/aula?lesson=${encodeURIComponent(lid)}&date=${encodeURIComponent(d)}`);
+  }
+  redirect("/coach/experimentais");
 }

@@ -14,6 +14,8 @@ import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import type { Locale } from "@/lib/i18n";
 import { RoundTimerClient } from "@/components/coach/round-timer/RoundTimerClient";
+import { AcceptTrialButton } from "@/app/admin/experimentais/AcceptTrialButton";
+import { ConvertTrialButton } from "@/app/admin/experimentais/ConvertTrialButton";
 import { AttendanceRow } from "./AttendanceRow";
 
 export default async function CoachAulaPage({
@@ -244,12 +246,18 @@ export default async function CoachAulaPage({
     }
   }
 
-  type TrialInSession = { id: string; name: string; contact: string; modality: string };
+  type TrialInSession = {
+    id: string;
+    name: string;
+    contact: string;
+    modality: string;
+    acceptedAt: string | null;
+  };
   let trialsInSession: TrialInSession[] = [];
   if (lessonId && occurrenceYmd) {
     const { data: trialList } = await supabase
       .from("TrialClass")
-      .select("id, name, contact, modality")
+      .select("id, name, contact, modality, acceptedAt")
       .eq("lessonId", lessonId)
       .eq("lessonDate", occurrenceYmd)
       .eq("convertedToStudent", false)
@@ -259,6 +267,7 @@ export default async function CoachAulaPage({
       name: row.name,
       contact: row.contact,
       modality: String(row.modality),
+      acceptedAt: (row as { acceptedAt?: string | null }).acceptedAt ?? null,
     }));
   }
 
@@ -419,6 +428,37 @@ export default async function CoachAulaPage({
                           >
                             {t("coachTrialInSessionBadge")}
                           </span>
+                          {tr.acceptedAt ? (
+                            <span
+                              style={{
+                                fontSize: "clamp(11px, 2.8vw, 12px)",
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.04em",
+                                color: "#fff",
+                                backgroundColor: "var(--info, #0ea5e9)",
+                                borderRadius: 999,
+                                padding: "2px 8px",
+                              }}
+                            >
+                              Aceite
+                            </span>
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: "clamp(11px, 2.8vw, 12px)",
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.04em",
+                                color: "var(--text-primary)",
+                                backgroundColor: "var(--warning)",
+                                borderRadius: 999,
+                                padding: "2px 8px",
+                              }}
+                            >
+                              Pendente
+                            </span>
+                          )}
                         </div>
                         <p style={{ margin: "6px 0 0 0", fontSize: "clamp(14px, 3.5vw, 15px)", color: "var(--text-secondary)" }}>
                           {tr.contact}
@@ -426,6 +466,18 @@ export default async function CoachAulaPage({
                         <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 14px)", color: "var(--text-secondary)" }}>
                           {MODALITY_LABELS[tr.modality] ?? tr.modality}
                         </p>
+                        <div
+                          style={{
+                            marginTop: "clamp(8px, 2vw, 12px)",
+                            display: "flex",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          {!tr.acceptedAt ? <AcceptTrialButton trialId={tr.id} /> : null}
+                          {tr.contact.includes("@") ? <ConvertTrialButton trialId={tr.id} /> : null}
+                        </div>
                       </li>
                     ))}
                   </ul>

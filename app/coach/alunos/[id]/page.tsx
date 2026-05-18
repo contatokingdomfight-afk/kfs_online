@@ -144,20 +144,42 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
           </span>
         )}
       </div>
-      <AvaliarAlunoButton
-        studentId={studentId}
-        profile={profileForModal}
-        primaryModality={primaryModality ?? null}
-        modalities={modalitiesForEvaluate}
-        evaluationConfigByModality={evaluationConfigByModality}
-      />
-      <Link
-        href={`/coach/alunos/${studentId}/avaliacao-fisica`}
-        className="btn btn-secondary"
-        style={{ marginTop: 10, textDecoration: "none", display: "inline-block" }}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: 8,
+          marginTop: 12,
+          width: "100%",
+          alignItems: "stretch",
+        }}
       >
-        Avaliação Física
-      </Link>
+        <AvaliarAlunoButton
+          stretchInRow
+          studentId={studentId}
+          profile={profileForModal}
+          primaryModality={primaryModality ?? null}
+          modalities={modalitiesForEvaluate}
+          evaluationConfigByModality={evaluationConfigByModality}
+        />
+        <Link
+          href={`/coach/alunos/${studentId}/avaliacao-fisica`}
+          className="btn btn-secondary"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            marginTop: 0,
+            textDecoration: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            minHeight: 44,
+          }}
+        >
+          Avaliação Física
+        </Link>
+      </div>
 
       {dbUser.role === "ADMIN" && (
         <>

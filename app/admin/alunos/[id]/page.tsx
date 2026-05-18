@@ -217,21 +217,43 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
       <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
         {user?.email}
       </p>
-      <AvaliarAlunoButton
-        studentId={studentId}
-        profile={profileForModal}
-        primaryModality={rawPrimary}
-        modalities={modalitiesForEvaluate}
-        evaluationConfigByModality={evaluationConfigByModality}
-        lastEvalScoresByModality={Object.keys(lastEvalScoresByModality).length > 0 ? lastEvalScoresByModality : undefined}
-      />
-      <Link
-        href={`/coach/alunos/${studentId}/avaliacao-fisica?next=${encodeURIComponent(`/admin/alunos/${studentId}`)}`}
-        className="btn btn-secondary"
-        style={{ marginTop: 10, textDecoration: "none", display: "inline-block" }}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: 8,
+          marginTop: 12,
+          width: "100%",
+          alignItems: "stretch",
+        }}
       >
-        Ficha de anamnese e avaliação física
-      </Link>
+        <AvaliarAlunoButton
+          stretchInRow
+          studentId={studentId}
+          profile={profileForModal}
+          primaryModality={rawPrimary}
+          modalities={modalitiesForEvaluate}
+          evaluationConfigByModality={evaluationConfigByModality}
+          lastEvalScoresByModality={Object.keys(lastEvalScoresByModality).length > 0 ? lastEvalScoresByModality : undefined}
+        />
+        <Link
+          href={`/coach/alunos/${studentId}/avaliacao-fisica?next=${encodeURIComponent(`/admin/alunos/${studentId}`)}`}
+          className="btn btn-secondary"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            marginTop: 0,
+            textDecoration: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            minHeight: 44,
+          }}
+        >
+          Ficha de anamnese e avaliação física
+        </Link>
+      </div>
 
       <section
         className="card"
