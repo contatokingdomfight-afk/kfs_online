@@ -115,19 +115,23 @@ export async function processMissionAwards(
     .select("code")
     .order("sortOrder", { ascending: true });
 
+  const modalityCodes = (modalitiesList ?? []).map((m) => (m as { code: string }).code);
+  const loadedConfigs = await Promise.all(
+    modalityCodes.map((code) => loadEvaluationConfigForModality(supabase, code))
+  );
   const configByModality = new Map<
     string,
     { criterionToCategory: Map<string, string>; criterionToDimensionCode?: Map<string, string> }
   >();
-  for (const mod of modalitiesList ?? []) {
-    const config = await loadEvaluationConfigForModality(supabase, mod.code);
+  modalityCodes.forEach((code, i) => {
+    const config = loadedConfigs[i];
     if (config) {
-      configByModality.set(mod.code, {
+      configByModality.set(code, {
         criterionToCategory: getCriterionToCategory(config),
         criterionToDimensionCode: getCriterionToDimensionCode(config),
       });
     }
-  }
+  });
 
   const { data: evalsRows } = await supabase
     .from("AthleteEvaluation")

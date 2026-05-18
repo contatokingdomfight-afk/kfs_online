@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { saveEvaluationFromLesson } from "@/app/coach/aula/actions";
-import { saveStandaloneEvaluation } from "@/app/coach/alunos/[id]/actions";
+import { saveCoachStudentEvaluation } from "@/app/coach/save-student-evaluation-action";
 import {
   EVALUATION_LABELS_BY_MODALITY,
   GENERAL_PERFORMANCE_AXES,
@@ -159,10 +158,7 @@ export function CoachStudentProfileModal(props: Props) {
   const initialScoresByModalityRef = useRef(initialScoresByModality);
   initialScoresByModalityRef.current = initialScoresByModality;
 
-  const [stateLesson, formActionLesson] = useFormState(saveEvaluationFromLesson, null);
-  const [stateStandalone, formActionStandalone] = useFormState(saveStandaloneEvaluation, null);
-  const state = isStandalone ? stateStandalone : stateLesson;
-  const formAction = isStandalone ? formActionStandalone : formActionLesson;
+  const [state, formAction] = useFormState(saveCoachStudentEvaluation, null);
 
   const formRef = useRef<HTMLFormElement>(null);
   const categorySectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -228,9 +224,21 @@ export function CoachStudentProfileModal(props: Props) {
     setTouchedIds(new Set());
   }, [criterionIds.join(","), selectedModality]);
 
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
+  const prevHadSuccessRef = useRef(false);
+
   useEffect(() => {
-    if (state && (state as { success?: boolean }).success && onSuccess) onSuccess();
-  }, [state, onSuccess]);
+    const ok = Boolean(state && (state as { success?: boolean }).success);
+    if (ok && !prevHadSuccessRef.current) {
+      prevHadSuccessRef.current = true;
+      const id = requestAnimationFrame(() => {
+        onSuccessRef.current?.();
+      });
+      return () => cancelAnimationFrame(id);
+    }
+    if (!ok) prevHadSuccessRef.current = false;
+  }, [state]);
 
   const applyBaselineToAll = useCallback(() => {
     const v = Math.min(MAX_SCORE, Math.max(MIN_SCORE, globalBaseline));

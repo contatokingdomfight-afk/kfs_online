@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useFormState } from "react-dom";
 import { useRouter } from "next/navigation";
 import { setAttendanceStatusFromForm } from "./actions";
@@ -85,11 +85,13 @@ export function AttendanceRow({
           ? "Pré: Vermelho"
           : null;
 
-  const handleEvaluationSuccess = () => {
+  const handleEvaluationSuccess = useCallback(() => {
     setModalOpen(false);
     setShowSuccessConfirm(true);
-    router.refresh();
-  };
+    window.setTimeout(() => {
+      router.refresh();
+    }, 0);
+  }, [router]);
 
   return (
     <>

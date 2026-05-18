@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
@@ -34,11 +34,13 @@ export function AvaliarAlunoButton({
       ? primaryModality
       : modalities[0]?.value ?? "";
 
-  const handleSuccess = () => {
+  const handleSuccess = useCallback(() => {
     setModalOpen(false);
     setShowSuccess(true);
-    router.refresh();
-  };
+    window.setTimeout(() => {
+      router.refresh();
+    }, 0);
+  }, [router]);
 
   return (
     <>
