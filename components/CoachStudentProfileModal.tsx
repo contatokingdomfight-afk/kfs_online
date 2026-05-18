@@ -336,7 +336,7 @@ export function CoachStudentProfileModal(props: Props) {
 
         <div className="flex justify-between items-start shrink-0 p-5 pb-0">
           <h2 id="modal-title" className="m-0 text-lg font-semibold text-[var(--text-primary)]">
-            {isStandalone ? "Avaliar aluno" : "Perfil e avaliação"}
+            {isStandalone ? "Avaliar performance" : "Perfil e avaliação"}
           </h2>
           <button type="button" onClick={onClose} className="btn w-10 h-10 p-0 flex items-center justify-center rounded-lg" aria-label="Fechar">
             ×

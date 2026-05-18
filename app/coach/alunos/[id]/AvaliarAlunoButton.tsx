@@ -52,7 +52,7 @@ export function AvaliarAlunoButton({
         disabled={modalities.length === 0}
         title={modalities.length === 0 ? "Configura critérios de avaliação para esta modalidade no Admin (Avaliação)." : undefined}
       >
-        Avaliar aluno
+        Avaliar performance
       </button>
       {modalOpen && (
         <CoachStudentProfileModal

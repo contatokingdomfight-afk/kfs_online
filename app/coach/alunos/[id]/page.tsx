@@ -156,7 +156,7 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
         className="btn btn-secondary"
         style={{ marginTop: 10, textDecoration: "none", display: "inline-block" }}
       >
-        Ficha de anamnese e avaliação física
+        Avaliação Física
       </Link>
 
       {dbUser.role === "ADMIN" && (
