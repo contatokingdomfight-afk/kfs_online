@@ -83,6 +83,8 @@ export function LessonPromoBlock({
   const showRsvpBlocked = Boolean(blockedCopy) && !openClassParticipation;
 
   const checkInHref = `/check-in/${lesson.id}?date=${encodeURIComponent(lesson.date)}`;
+  const checkInAlreadyDone = Boolean(att?.checkedInAt);
+  const showCheckInCta = canUseCheckInLink && !checkInAlreadyDone;
 
   return (
     <div
@@ -180,7 +182,7 @@ export function LessonPromoBlock({
           {t("dashboardCheckInAvailableFrom").replace("{time}", checkInStartTimeLabel)}
         </p>
       )}
-      {canUseCheckInLink && (
+      {showCheckInCta && (
         <Link
           href={checkInHref}
           className="btn"
@@ -202,7 +204,7 @@ export function LessonPromoBlock({
           📲 {t("dashboardCheckInButton")}
         </Link>
       )}
-      {canUseCheckInLink && (
+      {showCheckInCta && (
         <p style={{ marginTop: 12, marginBottom: 0, fontSize: "clamp(12px, 3vw, 14px)", opacity: 0.9 }}>
           {t("atGymScanQr")}{" "}
           <Link href={checkInHref} style={{ color: "#fff", textDecoration: "underline" }}>
