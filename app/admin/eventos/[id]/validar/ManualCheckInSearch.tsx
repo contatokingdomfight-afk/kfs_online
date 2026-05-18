@@ -95,11 +95,10 @@ export function ManualCheckInSearch({ participants, eventId, locale }: Props) {
 
       {checkedIn.length > 0 ? (
         <div style={{ marginBottom: 18 }}>
-          <h3 style={{ margin: "0 0 6px 0", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
+          <h3 style={{ margin: "0 0 10px 0", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
             {t("eventCheckInRecordedHeading")}{" "}
             <span style={{ fontWeight: 500, color: "var(--text-secondary)" }}>({checkedIn.length})</span>
           </h3>
-          <p style={{ margin: "0 0 10px 0", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.45 }}>{t("eventCheckInRecordedHint")}</p>
           <ul
             style={{
               listStyle: "none",

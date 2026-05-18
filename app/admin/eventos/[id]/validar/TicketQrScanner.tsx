@@ -9,9 +9,11 @@ import { parseEventTicketQrPayload } from "@/lib/parse-event-ticket-qr";
 type Props = {
   eventId: string;
   locale: Locale;
+  /** Quando o bloco é o primeiro da página: sem margem/borda superior (antes vinha depois do manual). */
+  placement?: "top" | "afterContent";
 };
 
-export function TicketQrScanner({ eventId, locale }: Props) {
+export function TicketQrScanner({ eventId, locale, placement = "afterContent" }: Props) {
   const t = getTranslations(locale);
   const router = useRouter();
   const reactId = useId().replace(/:/g, "");
@@ -114,12 +116,14 @@ export function TicketQrScanner({ eventId, locale }: Props) {
     }
   }
 
+  const isTop = placement === "top";
+
   return (
     <div
       style={{
-        marginTop: 16,
-        paddingTop: 16,
-        borderTop: "1px solid var(--border)",
+        marginTop: isTop ? 0 : 16,
+        paddingTop: isTop ? 0 : 16,
+        borderTop: isTop ? "none" : "1px solid var(--border)",
       }}
     >
       {!cameraOn ? (
