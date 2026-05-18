@@ -34,7 +34,13 @@ export async function POST(request: Request) {
 
   if (upErr) {
     console.error("avatar upload:", upErr);
-    return NextResponse.json({ error: upErr.message }, { status: 500 });
+    const raw = upErr.message ?? "";
+    const lower = raw.toLowerCase();
+    const error =
+      lower.includes("bucket") && (lower.includes("not found") || lower.includes("does not exist"))
+        ? "O armazenamento de fotos de perfil não está disponível neste ambiente. Contacta o suporte técnico."
+        : raw || "Erro ao enviar a imagem.";
+    return NextResponse.json({ error }, { status: 500 });
   }
 
   const {
