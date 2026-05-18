@@ -71,7 +71,6 @@ export default async function ComoSouAvaliadoLayout({
     headerExtra = (
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <CoachNotificationBell locale={locale as "pt" | "en"} />
-        <ViewAsSwitcher />
         <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
       </div>
     );
@@ -125,6 +124,8 @@ export default async function ComoSouAvaliadoLayout({
         initialLocale={locale}
         headerTitle="Kingdom Fight School"
         headerExtra={headerExtra}
+        headerExtrasDesktopOnly={<ViewAsSwitcher />}
+        mobileBottomNavSheetLead={<ViewAsSwitcher />}
         headerAvatar={headerAvatar}
         mainClassName={mainShellClass}
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}

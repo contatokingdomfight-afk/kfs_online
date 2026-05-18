@@ -60,7 +60,6 @@ export default async function SistemaPontuacaoLayout({
     headerExtra = (
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <CoachNotificationBell locale={locale as "pt" | "en"} />
-        <ViewAsSwitcher />
         <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
       </div>
     );
@@ -125,6 +124,8 @@ export default async function SistemaPontuacaoLayout({
         initialLocale={locale}
         headerTitle="Kingdom Fight School"
         headerExtra={headerExtra}
+        headerExtrasDesktopOnly={<ViewAsSwitcher />}
+        mobileBottomNavSheetLead={<ViewAsSwitcher />}
         headerAvatar={headerAvatar}
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
         mainClassName={mainShellClass}
