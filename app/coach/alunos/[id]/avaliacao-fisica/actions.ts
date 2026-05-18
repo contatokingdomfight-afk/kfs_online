@@ -173,11 +173,17 @@ export async function savePhysicalAssessment(
     squats1min: parseReps1min(formData, "squats1min", 500),
     runDistance1minMeters: parseRunDistance1minMeters(formData),
     runTest: (formData.get("runTest") as string)?.trim() || null,
+    referenceSex: (() => {
+      const s = (formData.get("referenceSex") as string)?.trim();
+      if (s === "F" || s === "M") return s;
+      return null;
+    })(),
     scoreCondition: parseInt(String(formData.get("scoreCondition")), 10) || null,
     scoreMobility: parseInt(String(formData.get("scoreMobility")), 10) || null,
     scoreCoordination: parseInt(String(formData.get("scoreCoordination")), 10) || null,
     scoreEndurance: parseInt(String(formData.get("scoreEndurance")), 10) || null,
     scoreStrength: parseInt(String(formData.get("scoreStrength")), 10) || null,
+    scoreSpeed: parseInt(String(formData.get("scoreSpeed")), 10) || null,
     instructorNotes: (formData.get("instructorNotes") as string)?.trim() || undefined,
     signatureDate: (formData.get("signatureDate") as string)?.trim() || undefined,
   };

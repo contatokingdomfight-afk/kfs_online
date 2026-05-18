@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import { savePhysicalAssessment } from "./actions";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { PhysicalAssessmentInstructorScoreHints } from "@/components/physical-assessment/PhysicalAssessmentInstructorScoreHints";
 
 type SubmitPhase = "idle" | "saving" | "saved";
 import {
@@ -556,17 +557,38 @@ export function AvaliacaoFisicaForm({
       {/* 8. Avaliação instrutor */}
       <fieldset className="rounded-xl bg-bg-secondary border border-border p-4 md:p-6">
         <legend className="text-base font-semibold text-text-primary">8. Avaliação do instrutor (1–10)</legend>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-3 mt-3 max-w-5xl">
-          {["Condição física", "Mobilidade", "Coordenação", "Resistência", "Força"].map((label, i) => (
-            <label key={label} className="flex flex-col gap-1.5 text-sm min-w-0">
+        <p className="text-xs text-text-secondary mt-1 mb-3 max-w-4xl leading-relaxed">
+          Normas de referência (tabelas por idade 9–18, raparigas/rapazes): indica o sexo para calcular sugestões a partir
+          de flexões, abdominais, IMC e (opcionalmente) distância em 1 min. Podes ajustar todas as notas manualmente.
+        </p>
+        <div className="flex flex-wrap gap-4 mb-2">
+          <span className="text-sm text-text-secondary shrink-0">Sexo para tabelas:</span>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="radio" name="referenceSex" value="" defaultChecked className="rounded-full" />
+            Não indicar
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="radio" name="referenceSex" value="F" className="rounded-full" />
+            Raparigas
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="radio" name="referenceSex" value="M" className="rounded-full" />
+            Rapazes
+          </label>
+        </div>
+        <PhysicalAssessmentInstructorScoreHints formRef={formRef} studentDob={studentDob} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-3 mt-3 max-w-6xl">
+          {[
+            { label: "Condição física", name: "scoreCondition" },
+            { label: "Mobilidade", name: "scoreMobility" },
+            { label: "Coordenação", name: "scoreCoordination" },
+            { label: "Resistência", name: "scoreEndurance" },
+            { label: "Força", name: "scoreStrength" },
+            { label: "Velocidade", name: "scoreSpeed" },
+          ].map(({ label, name }) => (
+            <label key={name} className="flex flex-col gap-1.5 text-sm min-w-0">
               <span className="leading-snug">{label}</span>
-              <input
-                type="number"
-                name={["scoreCondition", "scoreMobility", "scoreCoordination", "scoreEndurance", "scoreStrength"][i]}
-                min={1}
-                max={10}
-                className="input w-full max-w-[4.5rem]"
-              />
+              <input type="number" name={name} min={1} max={10} className="input w-full max-w-[4.5rem]" />
             </label>
           ))}
         </div>

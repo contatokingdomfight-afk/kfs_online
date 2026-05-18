@@ -26,6 +26,8 @@ export function hasAnamnesisOrNonAnthroAssessmentContent(
   if (d.previousModality?.trim()) return true;
   if (d.previousPracticeTime?.trim()) return true;
 
+  if (d.referenceSex === "F" || d.referenceSex === "M") return true;
+
   if (typeof d.heartRateRest === "number" && d.heartRateRest > 0) return true;
   if (typeof d.heartRateActivity === "number" && d.heartRateActivity > 0) return true;
   if (d.bloodPressure?.trim()) return true;
@@ -49,6 +51,7 @@ export function hasAnamnesisOrNonAnthroAssessmentContent(
   if (typeof d.scoreCoordination === "number" && d.scoreCoordination > 0) return true;
   if (typeof d.scoreEndurance === "number" && d.scoreEndurance > 0) return true;
   if (typeof d.scoreStrength === "number" && d.scoreStrength > 0) return true;
+  if (typeof d.scoreSpeed === "number" && d.scoreSpeed > 0) return true;
   if (d.instructorNotes?.trim()) return true;
 
   if (d.signatureDate?.trim()) return true;

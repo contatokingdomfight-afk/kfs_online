@@ -71,11 +71,13 @@ function buildDemoFormData(signatureDate: string): PhysicalAssessmentFormData {
     squats1min: 30,
     runDistance1minMeters: 320,
     runTest: "5 km leve / ocasional",
+    referenceSex: "M",
     scoreCondition: 7,
     scoreMobility: 8,
     scoreCoordination: 7,
     scoreEndurance: 7,
     scoreStrength: 7,
+    scoreSpeed: 7,
     instructorNotes: "Ficha de demonstração com valores médios; acompanhamento desportivo.",
     signatureDate,
   };

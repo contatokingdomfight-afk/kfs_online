@@ -95,12 +95,16 @@ export type PhysicalAssessmentFormData = {
   /** Distância em corrida/caminhada em 1 min, armazenada em metros (o formulário pode pedir m ou km). */
   runDistance1minMeters?: number | null;
   runTest?: string | null;
+  /** Sexo biológico para consulta das tabelas de referência (raparigas / rapazes). */
+  referenceSex?: "F" | "M" | null;
   /** 8. Avaliação instrutor (1-10) */
   scoreCondition?: number | null;
   scoreMobility?: number | null;
   scoreCoordination?: number | null;
   scoreEndurance?: number | null;
   scoreStrength?: number | null;
+  /** Velocidade (1–10); tabelas de referência usam 20/40 m — muitas vezes manual. */
+  scoreSpeed?: number | null;
   instructorNotes?: string;
   /** 9. Termo */
   signatureDate?: string;

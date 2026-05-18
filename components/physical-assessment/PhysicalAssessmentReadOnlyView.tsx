@@ -15,6 +15,10 @@ import {
   buildAnatomicalBodyMapRegions,
 } from "@/lib/anatomical-body-map-from-form";
 import { hasIllustrativeAnthropometry, type ProfileBodyMetrics } from "@/lib/illustrative-body-silhouette";
+import {
+  ageYearsAtAssessment,
+  computePhysicalAssessmentReferenceScores,
+} from "@/lib/physical-assessment-reference-scores";
 
 function simNao(v: boolean | undefined | null, locale: "pt" | "en"): string {
   if (v === true) return locale === "pt" ? "Sim" : "Yes";
@@ -74,6 +78,8 @@ type Props = {
   coachName: string | null;
   studentName: string;
   locale: "pt" | "en";
+  /** Data de nascimento (YYYY-MM-DD) para idade à data da avaliação nas tabelas de referência. */
+  studentDateOfBirth?: string | null;
   /** Altura/peso do perfil para escala neutra do mapa quando a ficha não tem antropometria suficiente. */
   profileBodyMetrics?: ProfileBodyMetrics | null;
 };
@@ -89,6 +95,7 @@ export function PhysicalAssessmentReadOnlyView({
   coachName,
   studentName,
   locale,
+  studentDateOfBirth = null,
   profileBodyMetrics = null,
 }: Props) {
   const L = locale === "pt";
@@ -116,6 +123,19 @@ export function PhysicalAssessmentReadOnlyView({
   const postural =
     Array.isArray(d.posturalAssessment) && d.posturalAssessment.length > 0
       ? d.posturalAssessment.map((p) => POSTURAL_LABELS[p] ?? p).join(", ")
+      : null;
+
+  const ageYears = ageYearsAtAssessment(studentDateOfBirth, assessedAt);
+  const refBreakdown =
+    ageYears != null &&
+    ageYears >= 9 &&
+    (d.referenceSex === "F" || d.referenceSex === "M")
+      ? computePhysicalAssessmentReferenceScores(d, {
+          ageYears,
+          sex: d.referenceSex,
+          heightCm: d.heightCm ?? profileBodyMetrics?.heightCm ?? null,
+          weightKg: d.weightKg ?? profileBodyMetrics?.weightKg ?? null,
+        })
       : null;
 
   const bodyMapRegions = buildAnatomicalBodyMapRegions(d, locale);
@@ -305,12 +325,60 @@ export function PhysicalAssessmentReadOnlyView({
       {section(
         L ? "8. Avaliação do instrutor (1–10)" : "8. Instructor scores (1–10)",
         <>
+          {d.referenceSex === "F" || d.referenceSex === "M"
+            ? line(
+                L ? "Sexo (normas de referência)" : "Sex (reference norms)",
+                d.referenceSex === "F" ? (L ? "Raparigas" : "Girls") : L ? "Rapazes" : "Boys"
+              )
+            : null}
           {line(L ? "Condição física" : "Condition", d.scoreCondition ?? "—")}
           {line(L ? "Mobilidade" : "Mobility", d.scoreMobility ?? "—")}
           {line(L ? "Coordenação" : "Coordination", d.scoreCoordination ?? "—")}
           {line(L ? "Resistência" : "Endurance", d.scoreEndurance ?? "—")}
           {line(L ? "Força" : "Strength", d.scoreStrength ?? "—")}
+          {line(L ? "Velocidade" : "Speed", d.scoreSpeed ?? "—")}
           {d.instructorNotes?.trim() ? line(L ? "Notas do instrutor" : "Instructor notes", d.instructorNotes) : null}
+          {refBreakdown && (refBreakdown.linesPt.length > 0 || refBreakdown.linesEn.length > 0) ? (
+            <div
+              className="mt-3 rounded-lg border border-[color-mix(in_srgb,var(--primary)_35%,transparent)] bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] p-3 space-y-2"
+              role="region"
+              aria-label={L ? "Interpretação automática das tabelas" : "Automatic table interpretation"}
+            >
+              <p className="text-xs font-semibold text-[var(--text-primary)] m-0">
+                {L
+                  ? "Interpretação automática (tabelas de referência por idade)"
+                  : "Automatic interpretation (age-based reference tables)"}
+              </p>
+              <p className="text-[11px] text-[var(--text-secondary)] m-0 leading-relaxed">
+                {L
+                  ? "Complementa as notas do instrutor; não substitui avaliação clínica. Velocidade e resistência aeróbia oficiais usam VAIVÉM, milha ou tempos 20/40 m — quando não existem na ficha, usam-se aproximações indicadas abaixo."
+                  : "Complements instructor scores; not a clinical assessment. Official aerobic speed/endurance uses shuttle, mile or 20/40 m — when missing, approximations are noted below."}
+              </p>
+              <ul className="text-xs text-[var(--text-secondary)] m-0 pl-4 list-disc space-y-1 max-w-prose">
+                {(L ? refBreakdown.linesPt : refBreakdown.linesEn).map((lineText, i) => (
+                  <li key={i}>{lineText}</li>
+                ))}
+              </ul>
+            </div>
+          ) : d.referenceSex !== "F" && d.referenceSex !== "M" ? (
+            <p className="text-[11px] text-[var(--text-secondary)] m-0 mt-2">
+              {L
+                ? "Sem sexo indicado para normas na ficha — a interpretação automática por tabelas não está disponível."
+                : "Sex for norms was not saved on this form — automatic table interpretation is unavailable."}
+            </p>
+          ) : !studentDateOfBirth ? (
+            <p className="text-[11px] text-[var(--text-secondary)] m-0 mt-2">
+              {L
+                ? "Completa a data de nascimento no perfil para calcular a idade nas tabelas."
+                : "Add your date of birth in your profile to compute age for the reference tables."}
+            </p>
+          ) : ageYears != null && ageYears < 9 ? (
+            <p className="text-[11px] text-[var(--text-secondary)] m-0 mt-2">
+              {L
+                ? "As tabelas de referência usadas nesta leitura automática aplicam-se habitualmente a partir dos 9 anos."
+                : "The reference tables used in this automatic readout typically apply from age 9 onwards."}
+            </p>
+          ) : null}
         </>
       )}
 

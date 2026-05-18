@@ -29,7 +29,7 @@ export default async function DashboardFichaFisicaPage() {
       .order("assessedAt", { ascending: false })
       .limit(1),
     supabase.from("Student").select("userId").eq("id", studentId).single(),
-    supabase.from("StudentProfile").select("heightCm, weightKg").eq("studentId", studentId).maybeSingle(),
+    supabase.from("StudentProfile").select("heightCm, weightKg, dateOfBirth").eq("studentId", studentId).maybeSingle(),
     supabase
       .from("PhysicalAssessmentRequest")
       .select("id")
@@ -112,6 +112,7 @@ export default async function DashboardFichaFisicaPage() {
         coachName={coachName}
         studentName={studentName}
         locale={locale as "pt" | "en"}
+        studentDateOfBirth={profile?.dateOfBirth != null ? String(profile.dateOfBirth).slice(0, 10) : null}
         profileBodyMetrics={{
           heightCm: profile?.heightCm != null ? Number(profile.heightCm) : null,
           weightKg: profile?.weightKg != null ? Number(profile.weightKg) : null,

@@ -132,7 +132,14 @@ export function getFisicoScoreFromPhysicalAssessment(formData: unknown): number 
   }
   if (!raw || typeof raw !== "object") return null;
   const fd = raw as Record<string, unknown>;
-  const keys = ["scoreCondition", "scoreMobility", "scoreCoordination", "scoreEndurance", "scoreStrength"];
+  const keys = [
+    "scoreCondition",
+    "scoreMobility",
+    "scoreCoordination",
+    "scoreEndurance",
+    "scoreStrength",
+    "scoreSpeed",
+  ];
   const values: number[] = [];
   for (const k of keys) {
     const v = fd[k];
