@@ -7,6 +7,9 @@ import { Sidebar, type SidebarLink } from "./Sidebar";
 import type { Theme, Locale } from "@/lib/theme-locale";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
 import { MobileAppBottomNav, type MobileAppBottomNavConfig } from "./MobileAppBottomNav";
+import { ThemeLocaleSwitcher } from "./ThemeLocaleSwitcher";
+import { LogoutButton } from "./LogoutButton";
+import { SidebarPwaInstall } from "./SidebarPwaInstall";
 
 const SCROLL_DELTA = 8;
 
@@ -60,6 +63,7 @@ export function ResponsiveShell({
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(56);
   const pathname = usePathname();
   const menuBtnRef = useRef<HTMLButtonElement>(null);
+  const hideMobileDrawerTrigger = isMobile && !!mobileBottomNav;
   const drawerRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -80,9 +84,12 @@ export function ResponsiveShell({
 
   useEffect(() => {
     setDrawerOpen(false);
-    const t = setTimeout(() => menuBtnRef.current?.focus({ preventScroll: true }), 0);
-    return () => clearTimeout(t);
-  }, [pathname]);
+    if (!hideMobileDrawerTrigger) {
+      const t = setTimeout(() => menuBtnRef.current?.focus({ preventScroll: true }), 0);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [pathname, hideMobileDrawerTrigger]);
 
   useEffect(() => {
     if (drawerOpen) setHeaderHidden(false);
@@ -233,6 +240,9 @@ export function ResponsiveShell({
                 : {}),
             }}
           >
+            {hideMobileDrawerTrigger ? (
+              <div style={{ width: "clamp(44px, 11vw, 48px)", flexShrink: 0 }} aria-hidden />
+            ) : (
             <button
               ref={menuBtnRef}
               type="button"
@@ -263,6 +273,7 @@ export function ResponsiveShell({
                 <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
+            )}
             <h1 style={{ margin: 0, fontSize: "clamp(17px, 4.2vw, 20px)", fontWeight: 600, flex: 1 }}>{headerTitle}</h1>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
               {headerAvatar && (
@@ -322,7 +333,16 @@ export function ResponsiveShell({
           </main>
           {isMobile && mobileBottomNav ? (
             <Suspense fallback={null}>
-              <MobileAppBottomNav config={mobileBottomNav} />
+              <MobileAppBottomNav
+                config={mobileBottomNav}
+                sheetFooter={
+                  <>
+                    <SidebarPwaInstall locale={initialLocale} />
+                    {logoutLabel ? <LogoutButton label={logoutLabel} variant="sidebar" /> : null}
+                    <ThemeLocaleSwitcher initialTheme={initialTheme} initialLocale={initialLocale} variant="inline" />
+                  </>
+                }
+              />
             </Suspense>
           ) : null}
         </div>

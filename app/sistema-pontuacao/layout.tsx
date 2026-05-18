@@ -15,6 +15,8 @@ import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
 import { getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
 import { EvaluationDocsTabs } from "@/components/evaluation-docs/EvaluationDocsTabs";
 import { getEvaluationDocsStudentShellLinks } from "@/lib/sidebar-evaluation-docs-shell";
+import { NotificationBell } from "@/components/NotificationBell";
+import { getStudentMobileBottomNavConfig } from "@/lib/dashboard-student-mobile-nav";
 
 export default async function SistemaPontuacaoLayout({
   children,
@@ -35,6 +37,11 @@ export default async function SistemaPontuacaoLayout({
   let sidebarTitle: string;
   let sidebarLinks: SidebarLink[];
   let headerExtra: React.ReactNode = null;
+  let mainShellClass: string | undefined;
+  let mobileBottomNav: Awaited<ReturnType<typeof getStudentMobileBottomNavConfig>> | null = null;
+  let headerAvatar:
+    | { href: string; imageUrl: string | null; displayName: string | null; ariaLabel: string }
+    | undefined;
 
   if (dbUser.role === "ADMIN" && viewAs !== "aluno") {
     const access = await getCachedResolvedAdminAccess();
@@ -51,6 +58,7 @@ export default async function SistemaPontuacaoLayout({
     );
     const full = getAdminBackofficeSidebarLinks(t);
     sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
+    mainShellClass = "admin-main";
   } else if (dbUser.role === "COACH") {
     const access = await getCachedResolvedAdminAccess();
     const kfsPath = await getKfsPathnameFromRequest();
@@ -67,6 +75,15 @@ export default async function SistemaPontuacaoLayout({
   } else {
     sidebarTitle = t("studentArea");
     sidebarLinks = getEvaluationDocsStudentShellLinks(t);
+    mobileBottomNav = await getStudentMobileBottomNavConfig(locale as "pt" | "en", t);
+    mainShellClass = "dashboard-main";
+    headerAvatar = {
+      href: "/dashboard/perfil",
+      imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,
+      displayName: dbUser.name,
+      ariaLabel: t("headerProfileAria"),
+    };
+    headerExtra = <NotificationBell locale={locale as "pt" | "en"} />;
   }
 
   return (
@@ -78,8 +95,10 @@ export default async function SistemaPontuacaoLayout({
         initialLocale={locale}
         headerTitle="Kingdom Fight School"
         headerExtra={headerExtra}
+        headerAvatar={headerAvatar}
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
-        mainClassName={dbUser.role === "ADMIN" ? "admin-main" : undefined}
+        mainClassName={mainShellClass}
+        mobileBottomNav={mobileBottomNav}
       >
         <div style={{ maxWidth: "min(640px, 100%)", margin: "0 auto", padding: "0 clamp(16px, 4vw, 24px)" }}>
           <EvaluationDocsTabs

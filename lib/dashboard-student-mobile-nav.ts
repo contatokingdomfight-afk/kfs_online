@@ -3,13 +3,12 @@ import type {
   MobileAppBottomNavItem,
   MobileNavIconId,
 } from "@/components/MobileAppBottomNav";
-
-export type DashboardNavLinkInput = {
-  label: string;
-  href: string;
-  prefetch?: boolean;
-  groupActiveHrefs?: string[];
-};
+import type { DashboardNavLinkInput } from "@/lib/dashboard-student-base-links";
+import { getCurrentStudentId } from "@/lib/auth/get-current-student";
+import { getCachedPlanAccess } from "@/lib/plan-access";
+import { createClient } from "@/lib/supabase/server";
+import { getDashboardStudentBaseLinks } from "@/lib/dashboard-student-base-links";
+import type { MessageKey } from "@/lib/i18n";
 
 function iconForStudentNavHref(href: string): MobileNavIconId {
   if (href.includes("replayOnboarding=1")) return "star";
@@ -96,4 +95,26 @@ export function buildStudentMobileBottomNav(
     overflow,
     moreLabel: opts.moreLabel,
   };
+}
+
+/** Barra inferior do aluno (mobile), com base no plano — para layouts fora de `/dashboard`. */
+export async function getStudentMobileBottomNavConfig(locale: "pt" | "en", t: (key: MessageKey) => string): Promise<MobileAppBottomNavConfig> {
+  const studentId = await getCurrentStudentId();
+  const [planAccess, supabase] = await Promise.all([getCachedPlanAccess(studentId), createClient()]);
+  const studentRes = studentId
+    ? await supabase.from("Student").select("planId").eq("id", studentId).single()
+    : { data: null };
+  const hasPlan = !!studentRes.data?.planId;
+  const baseLinks = getDashboardStudentBaseLinks({ t, locale, planAccess, hasPlan });
+  return buildStudentMobileBottomNav(baseLinks, {
+    hasPlan,
+    hasPerformanceTracking: planAccess.hasPerformanceTracking,
+    moreLabel: locale === "pt" ? "Mais" : "More",
+    wellnessLabel: locale === "pt" ? "Bem-Estar" : "Wellness",
+    navHome: t("navHome"),
+    navEvents: t("navEvents"),
+    navAthleteProfile: t("navAthleteProfile"),
+    navLibrary: t("navLibrary"),
+    choosePlanLabel: "✨ " + t("choosePlanTitle"),
+  });
 }

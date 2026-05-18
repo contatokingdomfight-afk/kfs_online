@@ -13,6 +13,7 @@ import { StudentOnboardingGate } from "@/components/onboarding/StudentOnboarding
 import { getCachedPlanAccess } from "@/lib/plan-access";
 import { DashboardSplash } from "@/components/DashboardSplash";
 import { buildStudentMobileBottomNav } from "@/lib/dashboard-student-mobile-nav";
+import { getDashboardStudentBaseLinks } from "@/lib/dashboard-student-base-links";
 
 export default async function DashboardLayout({
   children,
@@ -44,48 +45,18 @@ export default async function DashboardLayout({
   ]);
   const hasPlan = !!studentRes.data?.planId;
 
-  const baseLinks = hasPlan
-    ? [
-        { label: t("navHome"), href: "/dashboard" },
-        { label: locale === "pt" ? "Bem-estar e treino" : "Wellness & training", href: "/dashboard/bem-estar" },
-        ...(planAccess.hasPerformanceTracking
-          ? [
-              { label: t("navAthleteProfile"), href: "/dashboard/performance" },
-              { label: "Histórico de avaliações", href: "/dashboard/performance/historico" },
-            ]
-          : []),
-        {
-          label: t("navEvaluationDocs"),
-          href: "/como-sou-avaliado",
-          prefetch: false,
-          groupActiveHrefs: ["/como-sou-avaliado", "/sistema-pontuacao"],
-        },
-        ...(planAccess.hasPerformanceTracking ? [{ label: t("navConquests"), href: "/dashboard/conquistas" }] : []),
-        ...(planAccess.hasPerformanceTracking ? [{ label: t("navRank"), href: "/dashboard/rank" }] : []),
-        ...(planAccess.hasCheckIn ? [{ label: t("navHistoricoPresencas"), href: "/dashboard/historico" }] : []),
-        { label: t("navStore"), href: "/dashboard/loja" },
-        { label: t("navLibrary"), href: "/dashboard/biblioteca" },
-        { label: t("navEvents"), href: "/dashboard/eventos" },
-        { label: t("navFinance"), href: "/dashboard/financeiro" },
-        { label: t("navProfile"), href: "/dashboard/perfil" },
-        { label: t("navPhysicalFicha"), href: "/dashboard/ficha-fisica" },
-        ...(planAccess.hasExclusiveBenefits ? [{ label: t("navExclusiveBenefits"), href: "/dashboard/beneficios" }] : []),
-        { label: t("onboardingReplayTour"), href: "/dashboard?replayOnboarding=1" },
-      ]
-    : [
-        { label: t("navHome"), href: "/dashboard" },
-        { label: locale === "pt" ? "Bem-estar e treino" : "Wellness & training", href: "/dashboard/bem-estar" },
-        { label: "✨ " + t("choosePlanTitle"), href: "/escolher-plano" },
-        { label: t("navLibrary"), href: "/dashboard/biblioteca" },
-        { label: t("navProfile"), href: "/dashboard/perfil" },
-        { label: t("navPhysicalFicha"), href: "/dashboard/ficha-fisica" },
-      ];
+  const baseLinks = getDashboardStudentBaseLinks({
+    t,
+    locale: locale as "pt" | "en",
+    planAccess,
+    hasPlan,
+  });
 
   const mobileBottomNav = buildStudentMobileBottomNav(baseLinks, {
     hasPlan,
     hasPerformanceTracking: planAccess.hasPerformanceTracking,
     moreLabel: locale === "pt" ? "Mais" : "More",
-    wellnessLabel: locale === "pt" ? "Bem-estar e treino" : "Wellness & training",
+    wellnessLabel: locale === "pt" ? "Bem-Estar" : "Wellness",
     navHome: t("navHome"),
     navEvents: t("navEvents"),
     navAthleteProfile: t("navAthleteProfile"),

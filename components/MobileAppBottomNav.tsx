@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
@@ -36,8 +37,9 @@ export type MobileAppBottomNavConfig = {
   moreLabel: string;
 };
 
-const BAR_Z = 920;
-const SHEET_Z = 930;
+const BAR_Z = 20_000;
+const BACKDROP_Z = 20_400;
+const SHEET_Z = 20_500;
 
 function pathMatchesItem(activePath: string, item: MobileAppBottomNavItem): boolean {
   const group = item.groupActiveHrefs;
@@ -174,10 +176,18 @@ function NavIcon({ id, active }: { id: MobileNavIconId; active: boolean }) {
   }
 }
 
-export function MobileAppBottomNav({ config }: { config: MobileAppBottomNavConfig }) {
+export function MobileAppBottomNav({
+  config,
+  sheetFooter,
+}: {
+  config: MobileAppBottomNavConfig;
+  /** Tema, idioma, sair, PWA — quando o hamburger está oculto. */
+  sheetFooter?: ReactNode;
+}) {
   const pathname = usePathname() ?? "";
   const searchParams = useSearchParams();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
 
   const itemActive = useCallback(
@@ -211,10 +221,14 @@ export function MobileAppBottomNav({ config }: { config: MobileAppBottomNavConfi
   }, [sheetOpen, closeSheet]);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     closeSheet();
   }, [pathname, closeSheet]);
 
-  return (
+  const portalContent = (
     <>
       <nav
         aria-label="Menu inferior"
@@ -304,16 +318,21 @@ export function MobileAppBottomNav({ config }: { config: MobileAppBottomNavConfi
           <button
             type="button"
             aria-label="Fechar"
-            onClick={closeSheet}
+            onClick={(e) => {
+              e.preventDefault();
+              closeSheet();
+            }}
             style={{
               position: "fixed",
               inset: 0,
-              zIndex: SHEET_Z - 1,
+              zIndex: BACKDROP_Z,
               border: "none",
               padding: 0,
               margin: 0,
-              background: "rgba(0,0,0,0.45)",
+              background: "rgba(0,0,0,0.5)",
               cursor: "pointer",
+              WebkitTapHighlightColor: "transparent",
+              touchAction: "manipulation",
             }}
           />
           <div
@@ -321,6 +340,7 @@ export function MobileAppBottomNav({ config }: { config: MobileAppBottomNavConfi
             role="dialog"
             aria-modal="true"
             aria-label={config.moreLabel}
+            onClick={(e) => e.stopPropagation()}
             style={{
               position: "fixed",
               left: 0,
@@ -333,26 +353,74 @@ export function MobileAppBottomNav({ config }: { config: MobileAppBottomNavConfi
               borderTopRightRadius: 16,
               border: "1px solid var(--border)",
               borderBottom: "none",
-              paddingTop: 10,
-              paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))",
               paddingLeft: "max(16px, env(safe-area-inset-left, 0px))",
               paddingRight: "max(16px, env(safe-area-inset-right, 0px))",
+              paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))",
               display: "flex",
               flexDirection: "column",
+              minHeight: 0,
               boxShadow: "0 -8px 32px rgba(0,0,0,0.25)",
             }}
           >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                flexShrink: 0,
+                paddingTop: 8,
+                paddingBottom: 8,
+              }}
+            >
+              <span style={{ fontWeight: 600, fontSize: "clamp(16px, 4vw, 18px)", color: "var(--text-primary)" }}>
+                {config.moreLabel}
+              </span>
+              <button
+                type="button"
+                onClick={closeSheet}
+                aria-label="Fechar"
+                style={{
+                  minWidth: 44,
+                  minHeight: 44,
+                  padding: 0,
+                  border: "none",
+                  borderRadius: 8,
+                  background: "var(--bg)",
+                  color: "var(--text-primary)",
+                  fontSize: 22,
+                  lineHeight: 1,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  WebkitTapHighlightColor: "transparent",
+                }}
+              >
+                ✕
+              </button>
+            </div>
             <div
               style={{
                 width: 40,
                 height: 4,
                 borderRadius: 2,
                 background: "var(--border)",
-                margin: "0 auto 12px",
+                margin: "0 auto 10px",
                 flexShrink: 0,
               }}
             />
-            <div style={{ overflowY: "auto", WebkitOverflowScrolling: "touch", display: "flex", flexDirection: "column", gap: 2 }}>
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: "auto",
+                WebkitOverflowScrolling: "touch",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
               {config.overflow.length === 0 ? (
                 <p style={{ margin: "8px 0", fontSize: 14, color: "var(--text-secondary)", textAlign: "center" }}>
                   —
@@ -388,9 +456,27 @@ export function MobileAppBottomNav({ config }: { config: MobileAppBottomNavConfi
                 })
               )}
             </div>
+            {sheetFooter ? (
+              <div
+                style={{
+                  flexShrink: 0,
+                  marginTop: 8,
+                  paddingTop: 12,
+                  borderTop: "1px solid var(--border)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                {sheetFooter}
+              </div>
+            ) : null}
           </div>
         </>
       ) : null}
     </>
   );
+
+  if (!mounted) return null;
+  return createPortal(portalContent, document.body);
 }
