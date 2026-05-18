@@ -226,8 +226,24 @@ export function EventosBoard({
                 }}
               >
                 {banner ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={banner} alt="" style={{ width: "100%", height: 160, objectFit: "cover", display: "block" }} />
+                  <button
+                    type="button"
+                    onClick={() => setBannerLightbox({ src: banner, eventName: e.name })}
+                    aria-label={t("eventsBannerOpenFullAria")}
+                    style={{
+                      border: "none",
+                      padding: 0,
+                      margin: 0,
+                      display: "block",
+                      width: "100%",
+                      cursor: "zoom-in",
+                      background: "transparent",
+                      WebkitTapHighlightColor: "transparent",
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={banner} alt="" style={{ width: "100%", height: 160, objectFit: "cover", display: "block", pointerEvents: "none" }} />
+                  </button>
                 ) : null}
                 <div style={{ padding: "clamp(16px, 4vw, 20px)", display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
