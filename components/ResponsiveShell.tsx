@@ -64,6 +64,9 @@ export function ResponsiveShell({
   const pathname = usePathname();
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const hideMobileDrawerTrigger = isMobile && !!mobileBottomNav;
+  /** Uma linha: título + ações — em ecrãs estreitos o título encolhe a 0 e o texto sobrepõe-se aos ícones. */
+  const splitMobileHeaderActionsRow =
+    isMobile && hideMobileDrawerTrigger && Boolean(headerAvatar || headerExtra);
   const drawerRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -98,7 +101,7 @@ export function ResponsiveShell({
   useLayoutEffect(() => {
     if (!isMobile || !headerRef.current) return;
     setMobileHeaderHeight(headerRef.current.offsetHeight);
-  }, [isMobile, pathname, drawerOpen, headerHidden]);
+  }, [isMobile, pathname, drawerOpen, headerHidden, splitMobileHeaderActionsRow]);
 
   const onMainScroll = useCallback(() => {
     if (!isMobile) return;
@@ -222,8 +225,9 @@ export function ResponsiveShell({
               backgroundColor: "var(--bg-secondary)",
               padding: "12px 16px",
               display: "flex",
-              alignItems: "center",
-              gap: 12,
+              flexDirection: splitMobileHeaderActionsRow ? ("column" as const) : ("row" as const),
+              alignItems: splitMobileHeaderActionsRow ? ("stretch" as const) : ("center" as const),
+              gap: splitMobileHeaderActionsRow ? 10 : 12,
               flexShrink: 0,
               ...(isMobile
                 ? {
@@ -240,89 +244,155 @@ export function ResponsiveShell({
                 : {}),
             }}
           >
-            {!hideMobileDrawerTrigger ? (
-            <button
-              ref={menuBtnRef}
-              type="button"
-              className="app-shell-menu-btn"
-              onClick={() => setDrawerOpen(true)}
-              aria-label="Abrir menu"
+            <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                minWidth: "clamp(44px, 11vw, 48px)",
-                minHeight: "clamp(44px, 11vw, 48px)",
-                width: "clamp(44px, 11vw, 48px)",
-                height: "clamp(44px, 11vw, 48px)",
-                padding: 0,
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                backgroundColor: "var(--bg)",
-                color: "var(--text-primary)",
-                cursor: "pointer",
-                flexShrink: 0,
-                WebkitTapHighlightColor: "transparent",
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ width: "clamp(20px, 5vw, 24px)", height: "clamp(20px, 5vw, 24px)" }}>
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
-            ) : null}
-            <h1
-              style={{
-                margin: 0,
-                fontSize: "clamp(17px, 4.2vw, 20px)",
-                fontWeight: 600,
-                flex: 1,
+                gap: 12,
                 minWidth: 0,
-                textAlign: "left",
-                lineHeight: 1.2,
+                width: "100%",
+                /* Com column no header, .app-shell-header (CSS) usa align-items:center e encolhe esta linha — o h1 fica estreito e o texto sobrepõe-se às ações. */
+                alignSelf: splitMobileHeaderActionsRow ? ("stretch" as const) : undefined,
               }}
             >
-              {headerTitle}
-            </h1>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-              {headerAvatar && (
-                <Link
-                  href={headerAvatar.href}
-                  aria-label={headerAvatar.ariaLabel}
+              {!hideMobileDrawerTrigger ? (
+                <button
+                  ref={menuBtnRef}
+                  type="button"
+                  className="app-shell-menu-btn"
+                  onClick={() => setDrawerOpen(true)}
+                  aria-label="Abrir menu"
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    border: "1px solid var(--border)",
-                    overflow: "hidden",
-                    flexShrink: 0,
-                    background: "var(--bg-secondary)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--text-secondary)",
-                    textDecoration: "none",
+                    minWidth: "clamp(44px, 11vw, 48px)",
+                    minHeight: "clamp(44px, 11vw, 48px)",
+                    width: "clamp(44px, 11vw, 48px)",
+                    height: "clamp(44px, 11vw, 48px)",
+                    padding: 0,
+                    border: "1px solid var(--border)",
+                    borderRadius: 8,
+                    backgroundColor: "var(--bg)",
+                    color: "var(--text-primary)",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                    WebkitTapHighlightColor: "transparent",
                   }}
                 >
-                  {headerAvatar.imageUrl?.trim() ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={rewriteSupabaseLegacyStoragePublicUrl(headerAvatar.imageUrl) ?? headerAvatar.imageUrl}
-                      alt=""
-                      width={36}
-                      height={36}
-                      style={{ objectFit: "cover", width: "100%", height: "100%" }}
-                    />
-                  ) : (
-                    headerAvatarInitials(headerAvatar.displayName)
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ width: "clamp(20px, 5vw, 24px)", height: "clamp(20px, 5vw, 24px)" }}>
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                </button>
+              ) : null}
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "clamp(17px, 4.2vw, 20px)",
+                  fontWeight: 600,
+                  flex: 1,
+                  minWidth: 0,
+                  textAlign: "left",
+                  lineHeight: 1.2,
+                }}
+              >
+                {headerTitle}
+              </h1>
+              {!splitMobileHeaderActionsRow ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  {headerAvatar && (
+                    <Link
+                      href={headerAvatar.href}
+                      aria-label={headerAvatar.ariaLabel}
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        border: "1px solid var(--border)",
+                        overflow: "hidden",
+                        flexShrink: 0,
+                        background: "var(--bg-secondary)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "var(--text-secondary)",
+                        textDecoration: "none",
+                      }}
+                    >
+                      {headerAvatar.imageUrl?.trim() ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={rewriteSupabaseLegacyStoragePublicUrl(headerAvatar.imageUrl) ?? headerAvatar.imageUrl}
+                          alt=""
+                          width={36}
+                          height={36}
+                          style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                        />
+                      ) : (
+                        headerAvatarInitials(headerAvatar.displayName)
+                      )}
+                    </Link>
                   )}
-                </Link>
-              )}
-              {headerExtra}
+                  {headerExtra}
+                </div>
+              ) : null}
             </div>
+            {splitMobileHeaderActionsRow ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  rowGap: 8,
+                  minWidth: 0,
+                  width: "100%",
+                  alignSelf: "stretch",
+                }}
+              >
+                {headerAvatar && (
+                  <Link
+                    href={headerAvatar.href}
+                    aria-label={headerAvatar.ariaLabel}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      border: "1px solid var(--border)",
+                      overflow: "hidden",
+                      flexShrink: 0,
+                      background: "var(--bg-secondary)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--text-secondary)",
+                      textDecoration: "none",
+                    }}
+                  >
+                    {headerAvatar.imageUrl?.trim() ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={rewriteSupabaseLegacyStoragePublicUrl(headerAvatar.imageUrl) ?? headerAvatar.imageUrl}
+                        alt=""
+                        width={36}
+                        height={36}
+                        style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                      />
+                    ) : (
+                      headerAvatarInitials(headerAvatar.displayName)
+                    )}
+                  </Link>
+                )}
+                {headerExtra}
+              </div>
+            ) : null}
           </header>
           <main
             ref={mainRef}
