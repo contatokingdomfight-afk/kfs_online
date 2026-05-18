@@ -117,6 +117,30 @@ export type ModalityConfig = {
   criterionToDimensionCode?: Map<string, string>;
 };
 
+/** Linha de base 1–10 dos critérios não explicitamente avaliados (igual ao formulário do treinador). */
+export const EVALUATION_CRITERION_AGGREGATION_BASELINE = 5;
+
+/**
+ * Para médias do radar / por modalidade: o JSON gravado pode ser esparsos (só critérios tocados).
+ * Preenche critérios em falta com a linha de base, para o agregado coincidir com o modelo antigo (template completo).
+ */
+export function expandEvalScoresForAggregation(
+  scores: Record<string, number> | null | undefined,
+  modality: string,
+  configByModality: Map<string, ModalityConfig>
+): Record<string, number> | null {
+  if (scores == null || typeof scores !== "object") return null;
+  const cfg = modality && configByModality.get(modality);
+  if (!cfg || cfg.criterionToCategory.size === 0) return { ...scores };
+  const out: Record<string, number> = { ...scores };
+  for (const id of cfg.criterionToCategory.keys()) {
+    if (out[id] === undefined || out[id] === null || Number.isNaN(Number(out[id]))) {
+      out[id] = EVALUATION_CRITERION_AGGREGATION_BASELINE;
+    }
+  }
+  return out;
+}
+
 /**
  * Extrai um score Físico (1–10) do formData da avaliação física (ficha de anamnese).
  * Usa a média das notas do instrutor: condição, mobilidade, coordenação, resistência, força.
@@ -187,9 +211,11 @@ export function computeGeneralPerformanceScores(
 
     if (hasScores && modality && configByModality.has(modality)) {
       const { criterionToCategory, criterionToDimensionCode } = configByModality.get(modality)!;
+      const expanded =
+        expandEvalScoresForAggregation(ev.scores, modality, configByModality) ?? ev.scores!;
       const byDim: Record<string, number[]> = {};
       GENERAL_DIMENSION_IDS.forEach((id) => (byDim[id] = []));
-      for (const [criterionId, value] of Object.entries(ev.scores!)) {
+      for (const [criterionId, value] of Object.entries(expanded)) {
         if (typeof value !== "number" || value < 1 || value > 10) continue;
         const rawDim =
           criterionToDimensionCode?.get(criterionId) ??

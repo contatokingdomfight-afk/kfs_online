@@ -12,7 +12,7 @@ import {
   type CheckInWellnessCopy,
 } from "@/components/fighter/CheckInWellnessSection";
 import type { CheckInWellnessAggregates } from "@/lib/check-in-wellness-aggregates";
-import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality, enrichScoresForDetail, getFisicoScoreFromPhysicalAssessment, mergePhysicalAssessmentIntoRadar } from "@/lib/performance-utils";
+import { type ModalityConfig, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, computePerformanceScoresByModality, enrichScoresForDetail, getFisicoScoreFromPhysicalAssessment, mergePhysicalAssessmentIntoRadar, EVALUATION_CRITERION_AGGREGATION_BASELINE } from "@/lib/performance-utils";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { PerformanceFighterDashboard } from "@/components/fighter/PerformanceFighterDashboard";
@@ -260,7 +260,15 @@ export default async function DashboardPerformancePage() {
         scoresByModality = computePerformanceScoresByModality(evaluations, configByModality, LAST_N_PER_MODALITY, true);
         const latestEval = evalsRows![0] as { scores?: Record<string, number> | null; coachId?: string; note?: string | null; created_at?: string | null };
         const previousEval = evalsRows!.length > 1 ? (evalsRows![1] as { scores?: Record<string, number> | null }) : null;
-        const criterionScoresFromEval = buildCriterionScores(latestEval?.scores ?? null, configsForDetail, previousEval?.scores ?? null);
+        const criterionScoresFromEval = buildCriterionScores(
+          latestEval?.scores ?? null,
+          configsForDetail,
+          previousEval?.scores ?? null,
+          {
+            implicitCriterionBaseline: EVALUATION_CRITERION_AGGREGATION_BASELINE,
+            evaluationModality: (latestEval as { modality?: string | null }).modality ?? null,
+          }
+        );
         if (generalPerformanceScores !== null) {
           const dimensionScores: DimensionScore[] = GENERAL_PERFORMANCE_AXES.map((a) => ({
             id: a.id,

@@ -22,26 +22,55 @@ export type CriterionScoreItem = {
   previousScore?: number;
 };
 
+export type BuildCriterionScoresOptions = {
+  /**
+   * Critérios em falta no JSON (avaliação esparsa) assumem esta nota, **apenas** para linhas da
+   * `evaluationModality` indicada — evita inventar notas noutras modalidades no mesmo mapa.
+   */
+  implicitCriterionBaseline?: number;
+  evaluationModality?: string | null;
+};
+
 /** Constrói lista de critérios com score e metadados a partir do scores da avaliação e dos configs. */
 export function buildCriterionScores(
   evalScores: Record<string, number> | null | undefined,
   configs: { modality: string; config: ModalityEvaluationConfigPayload }[],
-  previousEvalScores?: Record<string, number> | null
+  previousEvalScores?: Record<string, number> | null,
+  options?: BuildCriterionScoresOptions
 ): CriterionScoreItem[] {
   if (!evalScores || typeof evalScores !== "object") return [];
   const maxScore = 10;
   const result: CriterionScoreItem[] = [];
   const seen = new Set<string>();
+  const fill =
+    options?.implicitCriterionBaseline != null &&
+    Number.isFinite(options.implicitCriterionBaseline)
+      ? Math.min(maxScore, Math.max(0, options.implicitCriterionBaseline))
+      : null;
+  const evalMod = options?.evaluationModality ?? null;
 
   for (const { modality, config } of configs) {
+    const applyFill = fill != null && evalMod != null && modality === evalMod;
     for (const cat of config.categorias) {
       const categoryName = cat.nome;
       for (const c of cat.criterios) {
-        const score = evalScores[c.id];
-        if (score == null || seen.has(c.id)) continue;
+        if (seen.has(c.id)) continue;
+        const raw = evalScores[c.id];
+        const resolved =
+          raw != null && typeof raw === "number" && !Number.isNaN(raw)
+            ? raw
+            : applyFill
+              ? fill
+              : null;
+        if (resolved == null) continue;
         seen.add(c.id);
-        const numScore = typeof score === "number" ? score : Number(score);
+        const numScore = typeof resolved === "number" ? resolved : Number(resolved);
         if (Number.isNaN(numScore)) continue;
+        const prevRaw = previousEvalScores?.[c.id];
+        const previousScore =
+          prevRaw != null && typeof prevRaw === "number" && !Number.isNaN(prevRaw)
+            ? Math.min(maxScore, Math.max(0, prevRaw))
+            : undefined;
         result.push({
           criterionId: c.id,
           label: c.label,
@@ -49,10 +78,7 @@ export function buildCriterionScores(
           maxScore,
           modality,
           categoryName,
-          previousScore:
-            previousEvalScores && previousEvalScores[c.id] != null
-              ? Math.min(maxScore, Math.max(0, Number(previousEvalScores[c.id])))
-              : undefined,
+          previousScore,
         });
       }
     }
