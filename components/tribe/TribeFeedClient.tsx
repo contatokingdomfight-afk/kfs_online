@@ -25,6 +25,37 @@ type CommentRow = {
   isMine: boolean;
 };
 
+function CommentBubbleIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.5-8.5z" />
+    </svg>
+  );
+}
+
+function ShareNodesIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  );
+}
+
 function BoxingGloveIcon({ active }: { active: boolean }) {
   const c = active ? "var(--primary)" : "var(--text-secondary)";
   return (
@@ -240,7 +271,12 @@ function PostCard({
               {post.visibility === "ALL_SCHOOLS" ? t("tribeVisibilityAll") : t("tribeVisibilitySchool")}
             </span>
           </div>
-          <time className="text-xs" style={{ color: "var(--text-secondary)" }} dateTime={post.createdAt}>
+          <time
+            className="text-xs"
+            style={{ color: "var(--text-secondary)" }}
+            dateTime={post.createdAt}
+            suppressHydrationWarning
+          >
             {dateLabel}
           </time>
         </div>
@@ -283,15 +319,29 @@ function PostCard({
           <BoxingGloveIcon active={post.likedByMe} />
           <span className="text-sm font-medium">{post.likeCount}</span>
         </button>
-        <button type="button" className="btn btn-secondary text-sm px-3 py-2 rounded-xl" onClick={onToggleComments}>
-          {t("tribeComments")} ({post.commentCount})
+        <button
+          type="button"
+          className="btn btn-secondary inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl"
+          onClick={onToggleComments}
+          aria-expanded={commentsOpen}
+        >
+          <CommentBubbleIcon />
+          <span className="font-medium">
+            {t("tribeComments")} ({post.commentCount})
+          </span>
         </button>
-        <button type="button" className="btn btn-secondary text-sm px-3 py-2 rounded-xl" onClick={onShare}>
-          {shareFlash ? t("tribeShareCopied") : t("tribeShare")}
+        <button type="button" className="btn btn-secondary inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl" onClick={onShare}>
+          <ShareNodesIcon />
+          <span>{shareFlash ? t("tribeShareCopied") : t("tribeShare")}</span>
         </button>
         {isMine ? (
-          <button type="button" className="btn btn-secondary text-sm px-3 py-2 rounded-xl ml-auto" onClick={onDelete}>
-            {t("tribeDeletePost")}
+          <button
+            type="button"
+            className="btn btn-secondary inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl ml-auto"
+            onClick={onDelete}
+          >
+            <TrashIcon />
+            <span>{t("tribeDeletePost")}</span>
           </button>
         ) : null}
       </div>
@@ -304,7 +354,7 @@ function PostCard({
                 <span className="font-medium" style={{ color: "var(--primary)" }}>
                   {c.authorName ?? "—"}
                 </span>
-                <span className="text-xs ml-2" style={{ color: "var(--text-secondary)" }}>
+                <span className="text-xs ml-2" style={{ color: "var(--text-secondary)" }} suppressHydrationWarning>
                   {new Date(c.createdAt).toLocaleString(locale === "en" ? "en-GB" : "pt-PT", { dateStyle: "short", timeStyle: "short" })}
                 </span>
                 <p className="mt-1 whitespace-pre-wrap" style={{ color: "var(--text-primary)" }}>
