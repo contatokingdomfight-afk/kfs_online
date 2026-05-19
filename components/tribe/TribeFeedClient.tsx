@@ -14,6 +14,7 @@ import {
   toggleTribeLikeAction,
 } from "@/app/dashboard/tribo/actions";
 import type { TribeVisibility } from "@/app/dashboard/tribo/actions";
+import { TRIBE_IMAGE_MIMES, TRIBE_MAX_MEDIA_BYTES, TRIBE_MAX_MEDIA_FILES } from "@/lib/tribe/constants";
 
 type CommentRow = {
   id: string;
@@ -358,6 +359,7 @@ export function TribeFeedClient({
   const [body, setBody] = useState("");
   const [visibility, setVisibility] = useState<TribeVisibility>("SCHOOL_ONLY");
   const [files, setFiles] = useState<File[]>([]);
+  const [fileNotes, setFileNotes] = useState<string[]>([]);
 
   const refresh = useCallback(() => {
     router.refresh();
@@ -378,6 +380,7 @@ export function TribeFeedClient({
     setModal({ open: true, variant: "success" });
     setBody("");
     setFiles([]);
+    setFileNotes([]);
     setVisibility("SCHOOL_ONLY");
     setComposerOpen(false);
     refresh();
@@ -404,14 +407,28 @@ export function TribeFeedClient({
             {t("tribeSubtitle")}
           </p>
         </div>
-        <button type="button" className="btn btn-primary shrink-0 rounded-xl px-4 py-2" onClick={() => setComposerOpen(true)}>
+        <button
+          type="button"
+          className="btn btn-primary shrink-0 rounded-xl px-4 py-2"
+          onClick={() => {
+            setFileNotes([]);
+            setComposerOpen(true);
+          }}
+        >
           {t("tribeNewPost")}
         </button>
       </div>
 
       {composerOpen && mounted
         ? createPortal(
-            <div className="tribe-modal-backdrop" role="presentation" onClick={() => setComposerOpen(false)}>
+            <div
+              className="tribe-modal-backdrop"
+              role="presentation"
+              onClick={() => {
+                setComposerOpen(false);
+                setFileNotes([]);
+              }}
+            >
               <div
                 className="tribe-modal-panel text-left max-h-[90vh] overflow-y-auto"
                 style={{ width: "min(100%, 26rem)" }}
@@ -476,12 +493,57 @@ export function TribeFeedClient({
                       accept="image/jpeg,image/png,image/webp,image/gif"
                       multiple
                       className="mt-2 block w-full text-sm"
-                      onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 4))}
+                      onChange={(e) => {
+                        const picked = Array.from(e.target.files ?? []);
+                        const accepted: File[] = [];
+                        const notes: string[] = [];
+                        for (const f of picked) {
+                          if (!TRIBE_IMAGE_MIMES.has(f.type)) {
+                            notes.push(`${f.name} — ${t("tribeFileErrorType")}`);
+                            continue;
+                          }
+                          if (f.size > TRIBE_MAX_MEDIA_BYTES) {
+                            notes.push(`${f.name} — ${t("tribeFileErrorSize")}`);
+                            continue;
+                          }
+                          if (accepted.length >= TRIBE_MAX_MEDIA_FILES) {
+                            notes.push(`${f.name} — ${t("tribeFileErrorLimit")}`);
+                            continue;
+                          }
+                          accepted.push(f);
+                        }
+                        setFiles(accepted);
+                        setFileNotes(notes);
+                        e.target.value = "";
+                      }}
                     />
                   </label>
+                  {fileNotes.length > 0 ? (
+                    <ul
+                      className="mt-2 text-sm space-y-1 rounded-lg px-3 py-2"
+                      style={{ background: "color-mix(in srgb, var(--primary) 12%, transparent)", color: "var(--text-primary)" }}
+                      aria-live="polite"
+                    >
+                      {fileNotes.map((line, i) => (
+                        <li key={`${line}-${i}`}>{line}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {files.length > 0 && fileNotes.length === 0 ? (
+                    <p className="mt-2 text-xs" style={{ color: "var(--text-secondary)" }}>
+                      {t("tribeFilesAttached").replace(/\{\{count\}\}/g, String(files.length))}
+                    </p>
+                  ) : null}
 
                   <div className="flex gap-2 pt-2">
-                    <button type="button" className="btn btn-secondary flex-1" onClick={() => setComposerOpen(false)}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary flex-1"
+                      onClick={() => {
+                        setComposerOpen(false);
+                        setFileNotes([]);
+                      }}
+                    >
                       {t("cancel")}
                     </button>
                     <button type="submit" className="btn btn-primary flex-1">

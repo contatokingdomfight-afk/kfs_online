@@ -105,7 +105,7 @@ Detalhe SQL: migração `supabase/migrations/20260520140000_tribe_mvp.sql`; apli
 
 ## 7. Rotas
 
-- **Aluno (app):** `/dashboard/tribo` — feed, compositor, detalhe com `?post=`. Modais do compositor usam `z-index` acima da barra inferior mobile (`MobileAppBottomNav`); ver `tribo-feed.css`.
+- **Aluno (app):** `/dashboard/tribo` — feed, compositor, detalhe com `?post=`. Modais do compositor usam `z-index` acima da barra inferior mobile (`MobileAppBottomNav`); ver `tribo-feed.css`. Validação de anexos (tamanho/tipo/limite) no cliente ao escolher ficheiros + confirmação do servidor.
 - **Partilha pública:** `/t/p/[postId]` — OG/meta, CTA registo, redirect se já autenticado.
 - **Admin (fase seguinte):** `/admin/tribo` se necessário lista por escola.
 
