@@ -98,6 +98,8 @@ export const messages = {
     tribeFilesAttached: "{{count}} ficheiro(s) anexado(s).",
     tribePublish: "Publicar",
     tribePublishing: "A publicar…",
+    tribePublishNetworkError:
+      "Não foi possível concluir o envio (rede ou limite do servidor). Tenta com imagens mais pequenas ou verifica a ligação.",
     tribePublishSuccess: "Publicação criada!",
     tribeComments: "Comentários",
     tribeCommentPlaceholder: "Escreve um comentário…",
@@ -1129,6 +1131,8 @@ export const messages = {
     tribeFilesAttached: "{{count}} file(s) attached.",
     tribePublish: "Publish",
     tribePublishing: "Publishing…",
+    tribePublishNetworkError:
+      "Could not finish the upload (network or server limit). Try smaller images or check your connection.",
     tribePublishSuccess: "Post created!",
     tribeComments: "Comments",
     tribeCommentPlaceholder: "Write a comment…",

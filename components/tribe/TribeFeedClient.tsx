@@ -372,18 +372,22 @@ export function TribeFeedClient({
     fd.set("body", body);
     fd.set("visibility", visibility);
     files.forEach((f) => fd.append("images", f));
-    const res = await createTribePostAction(fd);
-    if (res.error) {
-      setModal({ open: true, variant: "error", msg: res.error });
-      return;
+    try {
+      const res = await createTribePostAction(fd);
+      if (res.error) {
+        setModal({ open: true, variant: "error", msg: res.error });
+        return;
+      }
+      setModal({ open: true, variant: "success" });
+      setBody("");
+      setFiles([]);
+      setFileNotes([]);
+      setVisibility("SCHOOL_ONLY");
+      setComposerOpen(false);
+      refresh();
+    } catch {
+      setModal({ open: true, variant: "error", msg: t("tribePublishNetworkError") });
     }
-    setModal({ open: true, variant: "success" });
-    setBody("");
-    setFiles([]);
-    setFileNotes([]);
-    setVisibility("SCHOOL_ONLY");
-    setComposerOpen(false);
-    refresh();
   }
 
   const posts = initialPosts;
