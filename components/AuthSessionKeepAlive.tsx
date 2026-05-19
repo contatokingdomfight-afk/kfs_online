@@ -26,6 +26,15 @@ export function AuthSessionKeepAlive() {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let visibleInterval: ReturnType<typeof setInterval> | null = null;
 
+    /** Só pede refresh ao Auth quando o access JWT está ausente, expirado ou perto de expirar (alinhado ao ticker interno). */
+    function shouldRefreshAccessJwt(session: { expires_at?: number; refresh_token?: string } | null): boolean {
+      if (!session?.refresh_token) return false;
+      const expMs = session.expires_at ? session.expires_at * 1000 : 0;
+      if (!expMs) return true;
+      const msLeft = expMs - Date.now();
+      return msLeft <= 0 || msLeft < JWT_REFRESH_WHEN_WITHIN_MS;
+    }
+
     /** Renova JWT só se estiver quase a expirar; caso contrário confia no access token actual. */
     const refreshIfJwtNearExpiry = () => {
       void (async () => {
@@ -37,9 +46,7 @@ export function AuthSessionKeepAlive() {
             await supabase.auth.getUser();
             return;
           }
-          const expMs = session.expires_at ? session.expires_at * 1000 : 0;
-          const msLeft = expMs > 0 ? expMs - Date.now() : 0;
-          if ((!expMs || msLeft < JWT_REFRESH_WHEN_WITHIN_MS) && session.refresh_token) {
+          if (shouldRefreshAccessJwt(session)) {
             const { error } = await supabase.auth.refreshSession();
             if (error) await supabase.auth.getUser();
           }
@@ -53,14 +60,18 @@ export function AuthSessionKeepAlive() {
       })();
     };
 
-    /** Voltar de outra app / PWA / muito tempo em background: tentar refresh explícito se ainda houver refresh token. */
+    /**
+     * Voltar de outra app / PWA / background: antes fazíamos `refreshSession()` sempre que existia refresh_token,
+     * o que batia em `/auth/v1/token` sem necessidade e podia coincidir com o auto-refresh / outro separador.
+     * Agora só pedimos refresh quando o access JWT já expirou ou está perto de expirar (igual ao intervalo visível).
+     */
     const refreshAfterResume = () => {
       void (async () => {
         try {
           const {
             data: { session },
           } = await supabase.auth.getSession();
-          if (session?.refresh_token) {
+          if (shouldRefreshAccessJwt(session)) {
             const { error } = await supabase.auth.refreshSession();
             if (error) await supabase.auth.getUser();
           } else {

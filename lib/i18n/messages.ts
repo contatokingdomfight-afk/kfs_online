@@ -128,7 +128,9 @@ export const messages = {
     tribeBlockedNoStudent:
       "Não encontrámos o registo de aluno nesta sessão. Volta ao início ou inicia sessão novamente.",
     tribeBlockedNoPlan: "Precisas de um plano ativo para ver a Tribo.",
-    tribeBlockedWrongRole: "A Tribo destina-se a alunos com plano.",
+    tribeBlockedWrongRole: "A Tribo é só para contas de aluno com plano activo.",
+    tribeBlockedAdminViewNoProfile:
+      "Em «Ver como aluno», a Tribo usa o teu perfil de aluno (ou o de professor com registo de aluno ligado). Se só tens conta de administrador, volta ao Admin ou testa com uma conta de aluno.",
     tribeBlockedGeneric: "Não foi possível abrir a Tribo. Tenta novamente ou contacta o suporte.",
     tribeBlockedBack: "Ir para o início",
     navStore: "Loja",
@@ -1161,7 +1163,9 @@ export const messages = {
     tribeBlockedNoStudent:
       "We could not find a student record for this session. Go back home or sign in again.",
     tribeBlockedNoPlan: "You need an active plan to view the Tribe.",
-    tribeBlockedWrongRole: "The Tribe is for students with a plan.",
+    tribeBlockedWrongRole: "The Tribe is only for student accounts with an active plan.",
+    tribeBlockedAdminViewNoProfile:
+      "In “View as student”, the Tribe uses your linked student profile (or a coach profile with a linked student record). If you only have an administrator account, return to Admin or test with a student account.",
     tribeBlockedGeneric: "We could not open the Tribe. Try again or contact support.",
     tribeBlockedBack: "Go to home",
     navStore: "Store",

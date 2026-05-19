@@ -48,6 +48,15 @@ export default async function TriboPage() {
         />
       );
     }
+    if (gate.error === "admin_view_no_profile") {
+      return (
+        <TribeAccessBlocked
+          title={t("tribeBlockedTitle")}
+          message={t("tribeBlockedAdminViewNoProfile")}
+          backLabel={t("tribeBlockedBack")}
+        />
+      );
+    }
     if (gate.error === "student") {
       return (
         <TribeAccessBlocked
