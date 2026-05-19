@@ -14,11 +14,20 @@ async function assertCanManageAssistantForStudent(
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { ok: false, error: "Sessão inválida." };
 
-  const { data: student } = await supabase
+  /** RLS em `Student` só permite SELECT ao próprio aluno; coach/admin precisam de leitura via service role. */
+  const adminRead = getAdminClientOrNull().client;
+  if (!adminRead) {
+    return {
+      ok: false,
+      error: "Configuração em falta no servidor (SUPABASE_SERVICE_ROLE_KEY). Não foi possível validar o aluno.",
+    };
+  }
+
+  const { data: student } = await adminRead
     .from("Student")
     .select("id, schoolId, userId, status")
     .eq("id", studentId)
-    .single();
+    .maybeSingle();
   if (!student?.schoolId || !student.userId) return { ok: false, error: "Aluno não encontrado." };
 
   if (dbUser.role === "ADMIN") return { ok: true, student };
@@ -43,7 +52,12 @@ export async function promoteSchoolAssistantCoach(studentId: string): Promise<{ 
   const gate = await assertCanManageAssistantForStudent(supabase, trimmed);
   if (!gate.ok) return { error: gate.error };
 
-  const { data: targetUser } = await supabase.from("User").select("id, role").eq("id", gate.student.userId).single();
+  const adminRead = getAdminClientOrNull().client;
+  if (!adminRead) {
+    return { error: "Configuração em falta no servidor (SUPABASE_SERVICE_ROLE_KEY)." };
+  }
+
+  const { data: targetUser } = await adminRead.from("User").select("id, role").eq("id", gate.student.userId).maybeSingle();
   if (!targetUser) return { error: "Utilizador do aluno não encontrado." };
   if (targetUser.role !== "ALUNO") return { error: "Só alunos podem ser assistentes." };
   if (gate.student.status === "INATIVO") return { error: "Aluno inativo não pode ser assistente." };
