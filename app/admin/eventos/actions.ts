@@ -4,6 +4,8 @@ import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { createClient } from "@/lib/supabase/server";
+import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 import { parseEventDay } from "@/lib/event-form-dates";
 import { normalizeTimeForDb } from "@/lib/event-times";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -260,6 +262,24 @@ type RegCheckinRow = {
   studentId: string;
 };
 
+/** ADMIN ou treinador assistente activo (só inscrições de alunos da mesma escola). */
+async function assertAdminOrSchoolAssistantForStudent(
+  dbUser: NonNullable<Awaited<ReturnType<typeof getCurrentDbUser>>>,
+  regStudentId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (dbUser.role === "ADMIN") return { ok: true };
+  if (dbUser.role !== "ALUNO") return { ok: false, error: "Não autorizado." };
+  const supabase = await createClient();
+  const assistant = await getActiveSchoolAssistantForUserId(supabase, dbUser.id);
+  if (!assistant) return { ok: false, error: "Não autorizado." };
+  const admin = createAdminClient();
+  const { data: st } = await admin.from("Student").select("schoolId").eq("id", regStudentId).maybeSingle();
+  if (!st?.schoolId || st.schoolId !== assistant.schoolId) {
+    return { ok: false, error: "Este participante não pertence à tua escola." };
+  }
+  return { ok: true };
+}
+
 async function executeEventCheckin(
   supabase: ReturnType<typeof createAdminClient>,
   reg: RegCheckinRow,
@@ -292,16 +312,18 @@ async function executeEventCheckin(
   revalidatePath(`/admin/eventos/${eid}/validar`);
   revalidatePath(`/admin/eventos/${eid}`);
   revalidatePath("/dashboard/eventos");
+  revalidatePath("/coach/eventos");
+  revalidatePath(`/coach/eventos/${eid}/validar`);
   return { ok: true, eventName: (event as { name?: string })?.name ?? "Evento", studentName };
 }
 
 /**
- * Marca o ingresso como utilizado (entrada registada). Só ADMIN.
+ * Marca o ingresso como utilizado (entrada registada). ADMIN ou treinador assistente (só alunos da escola do assistente).
  * `eventId` tem de coincidir com o evento do ingresso (validação por evento).
  */
 export async function redeemEventTicket(checkinToken: string, eventId: string): Promise<RedeemTicketResult> {
   const dbUser = await getCurrentDbUser();
-  if (!dbUser || dbUser.role !== "ADMIN") return { ok: false, error: "Não autorizado." };
+  if (!dbUser) return { ok: false, error: "Não autorizado." };
 
   const token = checkinToken.trim();
   const eid = eventId.trim();
@@ -319,18 +341,21 @@ export async function redeemEventTicket(checkinToken: string, eventId: string): 
   if (findErr) return { ok: false, error: findErr.message };
   if (!reg) return { ok: false, error: "Ingresso não encontrado para este evento." };
 
+  const gate = await assertAdminOrSchoolAssistantForStudent(dbUser, (reg as { studentId: string }).studentId);
+  if (!gate.ok) return { ok: false, error: gate.error };
+
   return executeEventCheckin(supabase, reg as RegCheckinRow, eid);
 }
 
 /**
- * Check-in manual por ID de inscrição (lista por nome). Só ADMIN.
+ * Check-in manual por ID de inscrição (lista por nome). ADMIN ou treinador assistente (escola do participante).
  */
 export async function redeemEventCheckinByRegistrationId(
   registrationId: string,
   eventId: string
 ): Promise<RedeemTicketResult> {
   const dbUser = await getCurrentDbUser();
-  if (!dbUser || dbUser.role !== "ADMIN") return { ok: false, error: "Não autorizado." };
+  if (!dbUser) return { ok: false, error: "Não autorizado." };
 
   const rid = registrationId.trim();
   const eid = eventId.trim();
@@ -346,6 +371,9 @@ export async function redeemEventCheckinByRegistrationId(
 
   if (findErr) return { ok: false, error: findErr.message };
   if (!reg) return { ok: false, error: "Inscrição não encontrada neste evento." };
+
+  const gate = await assertAdminOrSchoolAssistantForStudent(dbUser, (reg as { studentId: string }).studentId);
+  if (!gate.ok) return { ok: false, error: gate.error };
 
   return executeEventCheckin(supabase, reg as RegCheckinRow, eid);
 }

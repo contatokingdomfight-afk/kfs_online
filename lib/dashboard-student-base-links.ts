@@ -16,13 +16,17 @@ export function getDashboardStudentBaseLinks(params: {
   locale: "pt" | "en";
   planAccess: PlanAccess;
   hasPlan: boolean;
+  /** Treinador assistente: atalho para presenças na escola. */
+  hasSchoolAssistantCoach?: boolean;
 }): DashboardNavLinkInput[] {
-  const { t, locale, planAccess, hasPlan } = params;
+  const { t, locale, planAccess, hasPlan, hasSchoolAssistantCoach } = params;
   const bemEstarLabel = locale === "pt" ? "Bem-estar e treino" : "Wellness & training";
+  const assistantLabel = locale === "pt" ? "Assistente (presenças na escola)" : "Assistant (school check-in)";
 
   if (hasPlan) {
     return [
       { label: t("navHome"), href: "/dashboard" },
+      ...(hasSchoolAssistantCoach ? [{ label: assistantLabel, href: "/coach" }] : []),
       { label: bemEstarLabel, href: "/dashboard/bem-estar" },
       ...(planAccess.hasPerformanceTracking
         ? [
@@ -52,6 +56,7 @@ export function getDashboardStudentBaseLinks(params: {
 
   return [
     { label: t("navHome"), href: "/dashboard" },
+    ...(hasSchoolAssistantCoach ? [{ label: assistantLabel, href: "/coach" }] : []),
     { label: bemEstarLabel, href: "/dashboard/bem-estar" },
     { label: "✨ " + t("choosePlanTitle"), href: "/escolher-plano" },
     { label: t("navLibrary"), href: "/dashboard/biblioteca" },

@@ -16,6 +16,9 @@ import { PerformanceStatsSkeleton } from "./_components/PerformanceStatsSkeleton
 import { PhysicalAssessmentSkeleton } from "./_components/PhysicalAssessmentSkeleton";
 import { CoachNotesSkeleton } from "./_components/CoachNotesSkeleton";
 import { CoachStudentWellbeingSection } from "./_components/CoachStudentWellbeingSection";
+import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
+import { coachTeachesAtSchool } from "@/lib/coach-schools";
+import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
@@ -72,6 +75,19 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
     .filter((opt) => evaluationConfigByModality[opt.value] != null);
 
   const primaryModality = (student as { primaryModality?: string | null }).primaryModality;
+
+  const { data: assistRow } = await supabase
+    .from("SchoolAssistantCoach")
+    .select("id, revokedAt")
+    .eq("studentId", studentId)
+    .maybeSingle();
+  const assistantActive = Boolean(assistRow?.id && assistRow.revokedAt == null);
+
+  let canManageAssistant = dbUser.role === "ADMIN";
+  if (dbUser.role === "COACH") {
+    const coachId = await getCurrentCoachId();
+    canManageAssistant = coachId ? await coachTeachesAtSchool(supabase, coachId, student.schoolId) : false;
+  }
 
   const profileForModal = {
     name: user?.name ?? "",
@@ -180,6 +196,15 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
           Avaliação Física
         </Link>
       </div>
+
+      {canManageAssistant ? (
+        <SchoolAssistantCoachControls
+          studentId={studentId}
+          assistantActive={assistantActive}
+          targetUserRole={user?.role}
+          studentStatus={student.status}
+        />
+      ) : null}
 
       {dbUser.role === "ADMIN" && (
         <>

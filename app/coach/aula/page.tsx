@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -17,6 +18,7 @@ import { RoundTimerClient } from "@/components/coach/round-timer/RoundTimerClien
 import { AcceptTrialButton } from "@/app/admin/experimentais/AcceptTrialButton";
 import { ConvertTrialButton } from "@/app/admin/experimentais/ConvertTrialButton";
 import { AttendanceRow } from "./AttendanceRow";
+import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 
 export default async function CoachAulaPage({
   searchParams,
@@ -24,17 +26,27 @@ export default async function CoachAulaPage({
   searchParams: Promise<{ lesson?: string; date?: string }>;
 }) {
   const supabase = await createClient();
+  const dbUser = await getCurrentDbUser();
+  const schoolAssistant =
+    dbUser?.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabase, dbUser.id) : null;
+  const canEvaluateLesson = !schoolAssistant;
+  const showTrialsAndWeekLibrary = !schoolAssistant;
+
   const { today, endOfWeek } = getThisWeekRange();
   const params = await searchParams;
   const selectedLessonId = params.lesson ?? null;
   const dateParam = params.date?.trim().slice(0, 10) ?? null;
 
-  const { data: lessonsRaw } = await supabase
+  let lessonsRaw = (await supabase
     .from("Lesson")
     .select(
       "id, modality, date, weekday, startTime, endTime, locationId, schoolId, isOneOff, coachId, isOpenClass, capacity, planningNotes"
     )
-    .order("startTime", { ascending: true });
+    .order("startTime", { ascending: true })).data ?? [];
+
+  if (schoolAssistant) {
+    lessonsRaw = lessonsRaw.filter((row) => (row as { schoolId?: string }).schoolId === schoolAssistant.schoolId);
+  }
 
   const lessonIdsAll = (lessonsRaw ?? []).map((l) => (l as { id: string }).id);
   const cancellations = await fetchLessonCancellations(supabase, lessonIdsAll);
@@ -336,7 +348,7 @@ export default async function CoachAulaPage({
                 </Link>
               </div>
 
-              {weekThemeThisLesson ? (
+              {showTrialsAndWeekLibrary && weekThemeThisLesson ? (
                 <section
                   className="coach-aula-week-theme"
                   style={{
@@ -380,7 +392,7 @@ export default async function CoachAulaPage({
                 <RoundTimerClient locale={timerLocale} variant="embedded" />
               </section>
 
-              {trialsInSession.length > 0 ? (
+              {showTrialsAndWeekLibrary && trialsInSession.length > 0 ? (
                 <section
                   className="coach-aula-trials-section"
                   aria-labelledby="coach-aula-trials-heading"
@@ -501,7 +513,7 @@ export default async function CoachAulaPage({
               {attendances.length === 0 ? (
                 <div className="coach-aula-empty-list">
                   <span className="coach-aula-empty-icon" aria-hidden>👥</span>
-                  {trialsInSession.length > 0 ? (
+                  {trialsInSession.length > 0 && showTrialsAndWeekLibrary ? (
                     <p>{t("coachAulaEmptyPresencesWithTrials")}</p>
                   ) : (
                     <>
@@ -539,6 +551,7 @@ export default async function CoachAulaPage({
                         medicalNotes: a.medicalNotes,
                         emergencyContact: a.emergencyContact,
                       }}
+                      canEvaluate={canEvaluateLesson}
                     />
                   ))}
                 </ul>

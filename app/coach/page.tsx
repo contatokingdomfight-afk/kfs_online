@@ -11,6 +11,7 @@ import { getWeekStartMondayLisbon } from "@/lib/lisbon-week";
 import { ymdAddDays } from "@/lib/lesson-occurrences";
 import { loadCoachScheduleBundle } from "@/lib/coach-schedule-scope";
 import { calendarDateLisbon, minutesSinceMidnightLisbon } from "@/lib/lesson-check-in-window";
+import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 import { CurrentOrNextClassCard } from "./_components/CurrentOrNextClassCard";
 import { TodayScheduleCard } from "./_components/TodayScheduleCard";
 import { WeekThemeCard } from "./_components/WeekThemeCard";
@@ -61,13 +62,17 @@ function getCurrentOrNextScenario(
 
 export default async function CoachHomePage() {
   const dbUser = await getCurrentDbUser();
+  const supabase = await createClient();
+  const schoolAssistant =
+    dbUser?.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabase, dbUser.id) : null;
+  const isSchoolAssistantHome = Boolean(schoolAssistant);
+
   const [coachId, schoolId, locale] = await Promise.all([
     getCurrentCoachId(),
     getCurrentSchoolId(),
     getLocaleFromCookies(),
   ]);
   const t = getTranslations(locale as "pt" | "en");
-  const supabase = await createClient();
 
   const now = new Date();
   const today = calendarDateLisbon(now);
@@ -418,57 +423,77 @@ export default async function CoachHomePage() {
         </div>
       </section>
 
-      {/* Secção 2: PREPARAÇÃO E PLANEAMENTO */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "clamp(12px, 3vw, 16px)",
-        }}
-      >
-        <TodayScheduleCard
-          lessons={restOfDayLessons}
-          modalityLabels={MODALITY_LABELS}
-          title={t("coachRestOfDay")}
-          viewAgendaLabel={t("coachViewFullAgenda")}
-          noLessonsLabel={t("coachNoLessonsRestToday")}
-        />
-        <WeekThemeCard
-          title={t("navWeekTheme")}
-          themeTitle={theme?.title ?? null}
-          modalityLabel={MODALITY_LABELS[mainModality] ?? mainModality}
-          defineLabel={t("coachDefineTheme")}
-          noThemeHint={t("coachNoThemeHint")}
-        />
-        <TrialClassesCard
-          trials={trialsForHomeCard}
-          modalityLabels={MODALITY_LABELS}
-          title={t("coachTrialClasses")}
-          manageAllLabel={t("coachManageAllTrials")}
-          emptyMessage={t("coachTrialClassesEmpty")}
-          formatDate={(d) => formatLessonDate(d)}
-        />
-      </div>
+      {isSchoolAssistantHome ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "clamp(12px, 3vw, 16px)",
+          }}
+        >
+          <TodayScheduleCard
+            lessons={restOfDayLessons}
+            modalityLabels={MODALITY_LABELS}
+            title={t("coachRestOfDay")}
+            viewAgendaLabel={t("coachViewFullAgenda")}
+            noLessonsLabel={t("coachNoLessonsRestToday")}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Secção 2: PREPARAÇÃO E PLANEAMENTO */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "clamp(12px, 3vw, 16px)",
+            }}
+          >
+            <TodayScheduleCard
+              lessons={restOfDayLessons}
+              modalityLabels={MODALITY_LABELS}
+              title={t("coachRestOfDay")}
+              viewAgendaLabel={t("coachViewFullAgenda")}
+              noLessonsLabel={t("coachNoLessonsRestToday")}
+            />
+            <WeekThemeCard
+              title={t("navWeekTheme")}
+              themeTitle={theme?.title ?? null}
+              modalityLabel={MODALITY_LABELS[mainModality] ?? mainModality}
+              defineLabel={t("coachDefineTheme")}
+              noThemeHint={t("coachNoThemeHint")}
+            />
+            <TrialClassesCard
+              trials={trialsForHomeCard}
+              modalityLabels={MODALITY_LABELS}
+              title={t("coachTrialClasses")}
+              manageAllLabel={t("coachManageAllTrials")}
+              emptyMessage={t("coachTrialClassesEmpty")}
+              formatDate={(d) => formatLessonDate(d)}
+            />
+          </div>
 
-      <PhysicalAssessmentRequestsCoachCard
-        rows={physicalAssessmentPendingRows}
-        title={t("coachPhysAssessRequestsTitle")}
-        emptyMessage={t("coachPhysAssessRequestsEmpty")}
-        openAssessmentLabel={t("coachPhysAssessOpenAssessment")}
-        unnamedStudentLabel={t("coachAthleteUnnamed")}
-        locale={locale as "pt" | "en"}
-      />
+          <PhysicalAssessmentRequestsCoachCard
+            rows={physicalAssessmentPendingRows}
+            title={t("coachPhysAssessRequestsTitle")}
+            emptyMessage={t("coachPhysAssessRequestsEmpty")}
+            openAssessmentLabel={t("coachPhysAssessOpenAssessment")}
+            unnamedStudentLabel={t("coachAthleteUnnamed")}
+            locale={locale as "pt" | "en"}
+          />
 
-      {/* Secção 3: ACOMPANHAMENTO DE ATLETAS */}
-      <MonitoredAthletesList
-        athletes={athletesWithNames}
-        title={t("coachYourAthletes")}
-        searchPlaceholder={t("coachSearchAthletes")}
-        levelLabels={LEVEL_LABEL}
-        unnamedAthleteLabel={t("coachAthleteUnnamed")}
-        emptyMessage={t("coachNoAthletes")}
-        noResultsMessage={t("coachNoSearchResults")}
-      />
+          {/* Secção 3: ACOMPANHAMENTO DE ATLETAS */}
+          <MonitoredAthletesList
+            athletes={athletesWithNames}
+            title={t("coachYourAthletes")}
+            searchPlaceholder={t("coachSearchAthletes")}
+            levelLabels={LEVEL_LABEL}
+            unnamedAthleteLabel={t("coachAthleteUnnamed")}
+            emptyMessage={t("coachNoAthletes")}
+            noResultsMessage={t("coachNoSearchResults")}
+          />
+        </>
+      )}
     </div>
   );
 }

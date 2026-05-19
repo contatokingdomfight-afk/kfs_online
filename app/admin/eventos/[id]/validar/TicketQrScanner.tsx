@@ -11,9 +11,11 @@ type Props = {
   locale: Locale;
   /** Quando o bloco é o primeiro da página: sem margem/borda superior (antes vinha depois do manual). */
   placement?: "top" | "afterContent";
+  /** Base para `.../[id]/validar` após ler o QR (defeito: admin). */
+  eventsBasePath?: string;
 };
 
-export function TicketQrScanner({ eventId, locale, placement = "afterContent" }: Props) {
+export function TicketQrScanner({ eventId, locale, placement = "afterContent", eventsBasePath = "/admin/eventos" }: Props) {
   const t = getTranslations(locale);
   const router = useRouter();
   const reactId = useId().replace(/:/g, "");
@@ -60,10 +62,10 @@ export function TicketQrScanner({ eventId, locale, placement = "afterContent" }:
       setBusy(true);
       setError(null);
       await stopCamera();
-      const path = `/admin/eventos/${encodeURIComponent(parsed.targetEventId)}/validar?token=${encodeURIComponent(parsed.token)}`;
+      const path = `${eventsBasePath}/${encodeURIComponent(parsed.targetEventId)}/validar?token=${encodeURIComponent(parsed.token)}`;
       router.push(path);
     },
-    [eventId, router, stopCamera, t]
+    [eventId, eventsBasePath, router, stopCamera, t]
   );
 
   async function startCamera() {

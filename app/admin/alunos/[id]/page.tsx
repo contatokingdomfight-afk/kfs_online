@@ -18,6 +18,7 @@ import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AvaliarAlunoButton } from "@/app/coach/alunos/[id]/AvaliarAlunoButton";
 import { DeleteStudentButton } from "./DeleteStudentButton";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
+import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
 
 const GENERAL_LAST_N = 10;
 
@@ -196,6 +197,13 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     emergencyContact: studentProfile?.emergencyContact ?? null,
   };
 
+  const { data: assistRow } = await supabase
+    .from("SchoolAssistantCoach")
+    .select("id, revokedAt")
+    .eq("studentId", studentId)
+    .maybeSingle();
+  const assistantActive = Boolean(assistRow?.id && assistRow.revokedAt == null);
+
   return (
     <div style={{ maxWidth: "min(420px, 100%)" }}>
       <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
@@ -254,6 +262,13 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
           Ficha de anamnese e avaliação física
         </Link>
       </div>
+
+      <SchoolAssistantCoachControls
+        studentId={studentId}
+        assistantActive={assistantActive}
+        targetUserRole={user?.role}
+        studentStatus={student.status}
+      />
 
       <section
         className="card"

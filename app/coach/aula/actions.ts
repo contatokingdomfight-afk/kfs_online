@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { sendCheckInConfirmation } from "@/lib/notifications/email";
 import { createPresenceConfirmedNotification, notifyStudentOfNewCoachEvaluation } from "@/lib/notifications/in-app";
 import { grantBadgesIfEligible } from "@/lib/gamification";
+import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 
 export async function setAttendanceStatusFromForm(
   _prev: { error?: string } | null,
@@ -25,10 +26,21 @@ export async function setAttendanceStatus(
 ): Promise<{ error?: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Sessão inválida." };
-  if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")
-    return { error: "Sem permissão." };
 
   const supabase = await createClient();
+  const schoolAssistant =
+    dbUser.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabase, dbUser.id) : null;
+  if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN" && !schoolAssistant) return { error: "Sem permissão." };
+
+  if (schoolAssistant) {
+    const { data: att } = await supabase.from("Attendance").select("lessonId").eq("id", attendanceId).single();
+    if (!att?.lessonId) return { error: "Presença não encontrada." };
+    const { data: lesson } = await supabase.from("Lesson").select("schoolId").eq("id", att.lessonId).single();
+    if (!lesson?.schoolId || lesson.schoolId !== schoolAssistant.schoolId) {
+      return { error: "Esta aula não pertence à tua escola." };
+    }
+  }
+
   const { error } = await supabase
     .from("Attendance")
     .update({ status })
@@ -87,6 +99,11 @@ export async function saveEvaluationFromLesson(
 ): Promise<SaveEvaluationFromLessonResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Sessão inválida." };
+
+  const supabaseCheck = await createClient();
+  const assistantUser = await getActiveSchoolAssistantForUserId(supabaseCheck, dbUser.id);
+  if (assistantUser) return { error: "Treinadores assistentes não podem registar avaliações." };
+
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Sem permissão." };
 
   const currentCoachId = await getCurrentCoachId();

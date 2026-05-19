@@ -42,6 +42,16 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 Referência legível (fluxos e rotas): [`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
 
+## Treinador assistente (escola)
+
+- **Conceito:** aluno (`User.role === ALUNO`) com registo activo em `SchoolAssistantCoach` (um registo por `studentId`; `revokedAt` não nulo = revogado). Âmbito **só da escola** do aluno (`schoolId` alinhado com `Student.schoolId`).
+- **Quem promove / revoga:** professor (`COACH`) que lecciona nessa escola (`coachTeachesAtSchool`) ou `ADMIN`. UI: `components/SchoolAssistantCoachControls.tsx` em `app/coach/alunos/[id]/page.tsx` e `app/admin/alunos/[id]/page.tsx`; acções em `app/coach/school-assistant-actions.ts`.
+- **Área coach:** layout `app/coach/layout.tsx` permite `ALUNO` com assistente activo; navegação reduzida em `lib/coach-sidebar-links.ts` (inclui **Eventos (check-in escola)** → `/coach/eventos`); outras rotas `/coach/*` redireccionam para `/coach`. Atalho no menu do aluno: `lib/dashboard-student-base-links.ts` (`hasSchoolAssistantCoach`).
+- **Presenças:** `setAttendanceStatus` em `app/coach/aula/actions.ts` valida `Lesson.schoolId` vs escola do assistente. **Avaliações:** `saveEvaluationFromLesson` recusa quem tem assistente activo (defesa em profundidade); na UI, `AttendanceRow` com `canEvaluate={false}` em `app/coach/aula/page.tsx`.
+- **Eventos (fase 2):** lista `/coach/eventos` e validação `/coach/eventos/[id]/validar` só para assistente activo; participantes filtrados por escola (`lib/event-checkin-participants-school.ts`). `redeemEventTicket` / `redeemEventCheckinByRegistrationId` em `app/admin/eventos/actions.ts` aceitam **ADMIN** ou **assistente** (só inscrições de alunos da mesma escola). QR scanner: `eventsBasePath` em `TicketQrScanner` / `IngressoValidator`.
+- **Dados:** aulas e QR filtrados por escola em `app/coach/aula/page.tsx` e `app/coach/aula/qr/page.tsx`. Home coach simplificada para assistente em `app/coach/page.tsx`. Agenda: `app/coach/agenda/page.tsx`.
+- **Migração Supabase:** `supabase/migrations/20260519120000_school_assistant_coach.sql`. Modelo Prisma: `SchoolAssistantCoach` em `prisma/schema.prisma`. Helper: `lib/school-assistant-coach.ts`.
+
 ## Timer de rounds (coach)
 
 - **Rotas:** `/coach/round-timer` (página); timer embutido em `/coach/aula` com `RoundTimerClient` em `variant="embedded"`.

@@ -10,9 +10,19 @@ type TFn = (key: MessageKey) => string;
  */
 export function getCoachShellSidebarLinks(
   t: TFn,
-  options: { showAdminEntry: boolean; coachStudentId: string | null }
+  options: { showAdminEntry: boolean; coachStudentId: string | null; isSchoolAssistant?: boolean }
 ): SidebarLink[] {
-  const { showAdminEntry, coachStudentId } = options;
+  const { showAdminEntry, coachStudentId, isSchoolAssistant } = options;
+  if (isSchoolAssistant) {
+    return [
+      { label: t("navHome"), href: "/coach" },
+      { label: t("navManageClasses"), href: "/coach/aula" },
+      { label: t("navAgenda"), href: "/coach/agenda" },
+      { label: t("navEventsSchoolCheckIn"), href: "/coach/eventos" },
+      { label: t("navSettings"), href: "/coach/configuracoes" as string },
+      { label: t("myStudentArea"), href: "/dashboard" as string },
+    ];
+  }
   return [
     ...(showAdminEntry ? [{ label: "Admin", href: "/admin" as string }] : []),
     { label: t("navHome"), href: "/coach" },

@@ -12,12 +12,17 @@ import {
   fetchLessonCancellations,
   rowsToLessonDefinitions,
 } from "@/lib/lesson-occurrences";
+import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 
 type SearchParams = Promise<{ coach?: string }>;
 
 export default async function CoachAgendaPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
-  if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "COACH")) redirect("/coach");
+  const supabase = await createClient();
+  const schoolAssistant =
+    dbUser?.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabase, dbUser.id) : null;
+
+  if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "COACH" && !schoolAssistant)) redirect("/coach");
 
   const [coachId, schoolId, locale, params] = await Promise.all([
     getCurrentCoachId(),
@@ -26,7 +31,6 @@ export default async function CoachAgendaPage({ searchParams }: { searchParams: 
     searchParams,
   ]);
   const t = getTranslations(locale as "pt" | "en");
-  const supabase = await createClient();
 
   const filterCoachId = params.coach ?? null;
   const today = new Date().toISOString().slice(0, 10);

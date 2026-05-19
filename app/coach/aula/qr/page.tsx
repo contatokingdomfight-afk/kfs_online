@@ -9,6 +9,8 @@ import {
   rowsToLessonDefinitions,
 } from "@/lib/lesson-occurrences";
 import QRCode from "qrcode";
+import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 
 async function getBaseUrl(): Promise<string> {
   if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
@@ -28,17 +30,28 @@ type Props = { searchParams: Promise<{ lesson?: string; date?: string }> };
 export default async function CoachAulaQrPage({ searchParams }: Props) {
   const baseUrl = await getBaseUrl();
   const supabase = await createClient();
+  const dbUser = await getCurrentDbUser();
+  const schoolAssistant =
+    dbUser?.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabase, dbUser.id) : null;
+
   const { today, endOfWeek } = getThisWeekRange();
   const params = await searchParams;
   const lessonId = params.lesson ?? null;
   const dateParam = params.date?.trim().slice(0, 10) ?? null;
 
-  const { data: lessonsRaw } = await supabase
-    .from("Lesson")
-    .select(
-      "id, modality, date, weekday, startTime, endTime, locationId, schoolId, isOneOff, coachId, isOpenClass, capacity, planningNotes"
-    )
-    .order("startTime", { ascending: true });
+  let lessonsRaw =
+    (
+      await supabase
+        .from("Lesson")
+        .select(
+          "id, modality, date, weekday, startTime, endTime, locationId, schoolId, isOneOff, coachId, isOpenClass, capacity, planningNotes"
+        )
+        .order("startTime", { ascending: true })
+    ).data ?? [];
+
+  if (schoolAssistant) {
+    lessonsRaw = lessonsRaw.filter((row) => (row as { schoolId?: string }).schoolId === schoolAssistant.schoolId);
+  }
 
   const lessonIds = (lessonsRaw ?? []).map((l) => (l as { id: string }).id);
   const cancellations = await fetchLessonCancellations(supabase, lessonIds);

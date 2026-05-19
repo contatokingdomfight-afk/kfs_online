@@ -23,24 +23,28 @@ type Props = {
   token: string;
   preview: IngressoPreview | null;
   invalidToken: boolean;
-  notAdmin: boolean;
+  /** ADMIN na rota admin, ou assistente na rota coach — controla leitor QR e lista manual. */
+  allowStaffCheckIn: boolean;
   wrongEvent: boolean;
   participants: EventCheckInParticipantRow[];
+  /** Prefixo para redireccionar após scan QR (ex.: `/admin/eventos` ou `/coach/eventos`). */
+  eventsBasePath?: string;
 };
 
-/** Staff: leitor QR no topo, check-in manual, e opcionalmente cartão de validação por token (só quando necessário). */
-function withAdminExtras(
-  notAdmin: boolean,
+/** Staff com ferramentas de check-in (QR + pesquisa manual). */
+function withStaffCheckInExtras(
+  allowStaffCheckIn: boolean,
   eventId: string,
   locale: Locale,
   participants: EventCheckInParticipantRow[],
-  tokenCard: ReactNode | null
+  tokenCard: ReactNode | null,
+  eventsBasePath: string
 ) {
-  if (notAdmin) return tokenCard;
+  if (!allowStaffCheckIn) return tokenCard;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 520, width: "100%" }}>
       <div className="card" style={{ padding: 24 }}>
-        <TicketQrScanner eventId={eventId} locale={locale} placement="top" />
+        <TicketQrScanner eventId={eventId} locale={locale} placement="top" eventsBasePath={eventsBasePath} />
       </div>
       <ManualCheckInSearch participants={participants} eventId={eventId} locale={locale} />
       {tokenCard}
@@ -54,9 +58,10 @@ export function IngressoValidator({
   token,
   preview,
   invalidToken,
-  notAdmin,
+  allowStaffCheckIn,
   wrongEvent,
   participants,
+  eventsBasePath = "/admin/eventos",
 }: Props) {
   const t = getTranslations(locale);
   const router = useRouter();
@@ -64,7 +69,7 @@ export function IngressoValidator({
   const [msg, setMsg] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  if (notAdmin) {
+  if (!allowStaffCheckIn) {
     return (
       <div className="card" style={{ padding: 24, maxWidth: 480 }}>
         <p style={{ margin: 0, color: "var(--text-secondary)" }}>{t("eventValidateNotAdmin")}</p>
@@ -73,63 +78,67 @@ export function IngressoValidator({
   }
 
   if (!token) {
-    return withAdminExtras(notAdmin, eventId, locale, participants, null);
+    return withStaffCheckInExtras(allowStaffCheckIn, eventId, locale, participants, null, eventsBasePath);
   }
 
   if (invalidToken) {
-    return withAdminExtras(
-      notAdmin,
+    return withStaffCheckInExtras(
+      allowStaffCheckIn,
       eventId,
       locale,
       participants,
       <div className="card" style={{ padding: 24 }}>
         <h2 style={{ margin: "0 0 12px 0", fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>{t("eventCheckInTitle")}</h2>
         <p style={{ margin: 0, color: "var(--danger)" }}>{t("eventValidateInvalidToken")}</p>
-      </div>
+      </div>,
+      eventsBasePath
     );
   }
 
   if (wrongEvent) {
-    return withAdminExtras(
-      notAdmin,
+    return withStaffCheckInExtras(
+      allowStaffCheckIn,
       eventId,
       locale,
       participants,
       <div className="card" style={{ padding: 24 }}>
         <h2 style={{ margin: "0 0 12px 0", fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>{t("eventCheckInTitle")}</h2>
         <p style={{ margin: 0, color: "var(--danger)" }}>{t("eventTicketWrongEvent")}</p>
-      </div>
+      </div>,
+      eventsBasePath
     );
   }
 
   if (!preview) {
-    return withAdminExtras(
-      notAdmin,
+    return withStaffCheckInExtras(
+      allowStaffCheckIn,
       eventId,
       locale,
       participants,
       <div className="card" style={{ padding: 24 }}>
         <h2 style={{ margin: "0 0 12px 0", fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>{t("eventCheckInTitle")}</h2>
         <p style={{ margin: 0, color: "var(--danger)" }}>{t("eventValidateNotFound")}</p>
-      </div>
+      </div>,
+      eventsBasePath
     );
   }
 
   if (preview.status !== "CONFIRMED") {
-    return withAdminExtras(
-      notAdmin,
+    return withStaffCheckInExtras(
+      allowStaffCheckIn,
       eventId,
       locale,
       participants,
       <div className="card" style={{ padding: 24 }}>
         <h2 style={{ margin: "0 0 12px 0", fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>{t("eventCheckInTitle")}</h2>
         <p style={{ margin: 0, color: "var(--text-secondary)" }}>{t("eventValidatePendingReg")}</p>
-      </div>
+      </div>,
+      eventsBasePath
     );
   }
 
   if (preview.alreadyUsed) {
-    return withAdminExtras(notAdmin, eventId, locale, participants, null);
+    return withStaffCheckInExtras(allowStaffCheckIn, eventId, locale, participants, null, eventsBasePath);
   }
 
   async function onRedeem() {
@@ -145,8 +154,8 @@ export function IngressoValidator({
     router.refresh();
   }
 
-  return withAdminExtras(
-    notAdmin,
+  return withStaffCheckInExtras(
+    allowStaffCheckIn,
     eventId,
     locale,
     participants,
@@ -175,6 +184,7 @@ export function IngressoValidator({
           {msg}
         </p>
       )}
-    </div>
+    </div>,
+    eventsBasePath
   );
 }

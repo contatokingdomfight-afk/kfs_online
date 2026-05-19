@@ -27,6 +27,8 @@ type Props = {
   preLessonWellness: { zone: WellnessZone; tooltip: string } | null;
   rpe: number | null;
   rpeRecordedAt: string | null;
+  /** Se false, não mostra avaliação (ex.: treinador assistente). */
+  canEvaluate?: boolean;
 };
 
 export function AttendanceRow({
@@ -45,6 +47,7 @@ export function AttendanceRow({
   preLessonWellness,
   rpe,
   rpeRecordedAt,
+  canEvaluate = true,
 }: Props) {
   const router = useRouter();
   const [state, formAction] = useFormState(setAttendanceStatusFromForm, null as { error?: string } | null);
@@ -138,9 +141,11 @@ export function AttendanceRow({
           )}
         </div>
         <div className="coach-attendance-actions">
-          <button type="button" onClick={() => setModalOpen(true)} className="btn btn-secondary">
-            Ver perfil e avaliar
-          </button>
+          {canEvaluate ? (
+            <button type="button" onClick={() => setModalOpen(true)} className="btn btn-secondary">
+              Ver perfil e avaliar
+            </button>
+          ) : null}
           {status === "PENDING" && (
             <form action={formAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
               <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
@@ -165,7 +170,7 @@ export function AttendanceRow({
           <span style={{ width: "100%", fontSize: "var(--text-sm)", color: "var(--danger)" }}>{state.error}</span>
         )}
       </li>
-      {modalOpen && (
+      {modalOpen && canEvaluate && (
         <CoachStudentProfileModal
           studentId={studentId}
           lessonId={lessonId}

@@ -14,6 +14,7 @@ import { getCachedPlanAccess } from "@/lib/plan-access";
 import { DashboardSplash } from "@/components/DashboardSplash";
 import { buildStudentMobileBottomNav } from "@/lib/dashboard-student-mobile-nav";
 import { getDashboardStudentBaseLinks } from "@/lib/dashboard-student-base-links";
+import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 
 export default async function DashboardLayout({
   children,
@@ -39,9 +40,10 @@ export default async function DashboardLayout({
   ]);
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
-  const [planAccess, studentRes] = await Promise.all([
+  const [planAccess, studentRes, schoolAssistant] = await Promise.all([
     getCachedPlanAccess(studentId),
     studentId ? supabase.from("Student").select("planId").eq("id", studentId).single() : Promise.resolve({ data: null }),
+    dbUser.role === "ALUNO" ? getActiveSchoolAssistantForUserId(supabase, dbUser.id) : Promise.resolve(null),
   ]);
   const hasPlan = !!studentRes.data?.planId;
 
@@ -50,6 +52,7 @@ export default async function DashboardLayout({
     locale: locale as "pt" | "en",
     planAccess,
     hasPlan,
+    hasSchoolAssistantCoach: Boolean(schoolAssistant),
   });
 
   const mobileBottomNav = buildStudentMobileBottomNav(baseLinks, {

@@ -13,6 +13,8 @@ import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resol
 import { canAccessAdminPathname } from "@/lib/permissions/paths";
 import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
 import { getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
+import { createClient } from "@/lib/supabase/server";
+import { getActiveSchoolAssistantForUserId, isSchoolAssistantCoachPathAllowed } from "@/lib/school-assistant-coach";
 import {
   buildShellMobileBottomNav,
   dedupeSidebarFlatLinks,
@@ -26,7 +28,13 @@ export default async function CoachLayout({
 }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser) redirect("/sign-in");
-  if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") redirect("/dashboard");
+
+  const supabaseForAssistant = await createClient();
+  const schoolAssistant =
+    dbUser.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabaseForAssistant, dbUser.id) : null;
+  const isSchoolAssistant = Boolean(schoolAssistant);
+
+  if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN" && !isSchoolAssistant) redirect("/dashboard");
 
   if (dbUser.role === "COACH") {
     const coachId = await getCurrentCoachId();
@@ -46,10 +54,15 @@ export default async function CoachLayout({
     redirect("/coach");
   }
 
+  if (isSchoolAssistant && kfsPath && !isSchoolAssistantCoachPathAllowed(kfsPath)) {
+    redirect("/coach");
+  }
+
   const t = getTranslations(locale as "pt" | "en");
   const fullCoachNav = getCoachShellSidebarLinks(t, {
     showAdminEntry: dbUser.role === "ADMIN",
     coachStudentId: coachStudentId || null,
+    isSchoolAssistant,
   });
   const coachLinks =
     access.kind === "granted" ? filterAdminLinksForAccess(fullCoachNav, access) : fullCoachNav;
@@ -74,7 +87,9 @@ export default async function CoachLayout({
         headerExtra={
           <>
             <CoachNotificationBell locale={locale as "pt" | "en"} />
-            <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach</span>
+            <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+              {isSchoolAssistant ? "Assistente" : "Coach"}
+            </span>
           </>
         }
         viewAsBanner={showViewAsBanner ? <ViewAsBanner viewAs="coach" /> : undefined}
