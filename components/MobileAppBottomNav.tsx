@@ -47,15 +47,17 @@ const BACKDROP_Z = 20_400;
 const SHEET_Z = 20_500;
 
 function pathMatchesItem(activePath: string, item: MobileAppBottomNavItem): boolean {
+  const sameBase = (base: string) =>
+    activePath === base || activePath.startsWith(`${base}/`) || activePath.startsWith(`${base}?`);
   const group = item.groupActiveHrefs;
   if (group?.length) {
-    return group.some((h) => activePath === h || activePath.startsWith(`${h}/`));
+    return group.some((h) => sameBase(h));
   }
   if (item.href.includes("?")) {
     const [path] = item.href.split("?");
-    return activePath === path || activePath.startsWith(`${path}/`);
+    return sameBase(path);
   }
-  return activePath === item.href || activePath.startsWith(`${item.href}/`);
+  return sameBase(item.href);
 }
 
 function isReplayOnboardingHref(href: string): boolean {
@@ -282,27 +284,39 @@ export function MobileAppBottomNav({
 
   const portalContent = (
     <>
-      <nav
-        aria-label="Menu inferior"
+      {/* Wrapper com fundo até ao limite inferior do ecrã (safe-area no exterior evita faixa de 1px / conteúdo visível por baixo). */}
+      <div
         style={{
           position: "fixed",
           left: 0,
           right: 0,
           bottom: 0,
+          width: "100%",
           zIndex: BAR_Z,
-          display: "flex",
-          alignItems: "stretch",
-          justifyContent: "space-around",
-          gap: 0,
-          paddingBottom: "max(6px, env(safe-area-inset-bottom, 0px))",
-          paddingTop: 6,
-          paddingLeft: "max(4px, env(safe-area-inset-left, 0px))",
-          paddingRight: "max(4px, env(safe-area-inset-right, 0px))",
+          boxSizing: "border-box",
           backgroundColor: "var(--bg-secondary)",
-          borderTop: "1px solid var(--border)",
-          boxShadow: "0 -4px 20px rgba(0,0,0,0.12)",
+          paddingBottom: "max(10px, calc(env(safe-area-inset-bottom, 0px) + 3px))",
+          WebkitBackfaceVisibility: "hidden",
+          transform: "translateZ(0)",
         }}
       >
+        <nav
+          aria-label="Menu inferior"
+          style={{
+            display: "flex",
+            width: "100%",
+            alignItems: "stretch",
+            justifyContent: "space-around",
+            gap: 0,
+            paddingTop: 6,
+            paddingLeft: "max(4px, env(safe-area-inset-left, 0px))",
+            paddingRight: "max(4px, env(safe-area-inset-right, 0px))",
+            borderTop: "1px solid var(--border)",
+            boxShadow: "0 -4px 20px rgba(0,0,0,0.12)",
+            backgroundColor: "transparent",
+            boxSizing: "border-box",
+          }}
+        >
         {config.primary.map((item) => {
           const active = itemActive(item);
           return (
@@ -363,7 +377,8 @@ export function MobileAppBottomNav({
           <NavIcon id="more" active={sheetOpen || overflowActive} />
           <span>{config.moreLabel}</span>
         </button>
-      </nav>
+        </nav>
+      </div>
 
       {sheetOpen ? (
         <>
