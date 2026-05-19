@@ -308,40 +308,46 @@ function PostCard({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2 pt-1">
-        <button
-          type="button"
-          className="btn btn-secondary inline-flex items-center gap-2 px-3 py-2 rounded-xl"
-          onClick={onToggleLike}
-          aria-pressed={post.likedByMe}
-          aria-label={t("tribeLikes")}
-        >
-          <BoxingGloveIcon active={post.likedByMe} />
-          <span className="text-sm font-medium">{post.likeCount}</span>
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl"
-          onClick={onToggleComments}
-          aria-expanded={commentsOpen}
-        >
-          <CommentBubbleIcon />
-          <span className="font-medium">
-            {t("tribeComments")} ({post.commentCount})
-          </span>
-        </button>
-        <button type="button" className="btn btn-secondary inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl" onClick={onShare}>
-          <ShareNodesIcon />
-          <span>{shareFlash ? t("tribeShareCopied") : t("tribeShare")}</span>
-        </button>
+      <div className="flex flex-nowrap items-center justify-between gap-2 pt-1 w-full">
+        <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 min-w-0">
+          <button
+            type="button"
+            className="btn btn-secondary inline-flex items-center justify-center gap-1.5 min-h-[2.75rem] min-w-[2.75rem] px-2.5 py-2 rounded-xl shrink-0"
+            onClick={onToggleLike}
+            aria-pressed={post.likedByMe}
+            aria-label={`${t("tribeLikes")} (${post.likeCount})`}
+          >
+            <BoxingGloveIcon active={post.likedByMe} />
+            <span className="text-sm font-medium tabular-nums">{post.likeCount}</span>
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary inline-flex items-center justify-center gap-1.5 min-h-[2.75rem] min-w-[2.75rem] px-2.5 py-2 rounded-xl shrink-0"
+            onClick={onToggleComments}
+            aria-expanded={commentsOpen}
+            aria-label={`${t("tribeComments")} (${post.commentCount})`}
+          >
+            <CommentBubbleIcon />
+            <span className="text-sm font-medium tabular-nums">{post.commentCount}</span>
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary inline-flex items-center justify-center min-h-[2.75rem] min-w-[2.75rem] p-2 rounded-xl shrink-0"
+            onClick={onShare}
+            aria-label={shareFlash ? t("tribeShareCopied") : t("tribeShare")}
+            title={shareFlash ? t("tribeShareCopied") : t("tribeShare")}
+          >
+            <ShareNodesIcon />
+          </button>
+        </div>
         {isMine ? (
           <button
             type="button"
-            className="btn btn-secondary inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl ml-auto"
+            className="btn btn-secondary inline-flex items-center justify-center min-h-[2.75rem] min-w-[2.75rem] p-2 rounded-xl shrink-0"
             onClick={onDelete}
+            aria-label={t("tribeDeletePost")}
           >
             <TrashIcon />
-            <span>{t("tribeDeletePost")}</span>
           </button>
         ) : null}
       </div>
