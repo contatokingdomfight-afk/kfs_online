@@ -47,17 +47,19 @@ function toMobileItem(link: DashboardNavLinkInput): MobileAppBottomNavItem {
 
 /**
  * Quatro atalhos na barra + "Mais" com o restante do menu do aluno (mobile).
- * Com plano: Início, Bem-estar, Tribo, Eventos — Perfil de atleta / Biblioteca ficam em «Mais» conforme o plano.
+ * Com plano: Início, Perfil de atleta (ou Biblioteca), Tribo, Eventos — Bem-estar e o resto em «Mais».
  */
 export function buildStudentMobileBottomNav(
   baseLinks: DashboardNavLinkInput[],
   opts: {
     hasPlan: boolean;
+    hasPerformanceTracking: boolean;
     moreLabel: string;
     wellnessLabel: string;
     navHome: string;
     navEvents: string;
     navTribe: string;
+    navAthleteProfile: string;
     navLibrary: string;
     choosePlanLabel: string;
   }
@@ -67,9 +69,13 @@ export function buildStudentMobileBottomNav(
   let primary: MobileAppBottomNavItem[];
 
   if (opts.hasPlan) {
+    const slot2: MobileAppBottomNavItem = opts.hasPerformanceTracking
+      ? { label: opts.navAthleteProfile, href: "/dashboard/performance", icon: "chart" }
+      : { label: opts.navLibrary, href: "/dashboard/biblioteca", icon: "book" };
+
     primary = [
       { label: opts.navHome, href: "/dashboard", icon: "home" },
-      { label: opts.wellnessLabel, href: "/dashboard/bem-estar", icon: "heart" },
+      slot2,
       { label: opts.navTribe, href: "/dashboard/tribo", icon: "users" },
       { label: opts.navEvents, href: "/dashboard/eventos", icon: "calendar" },
     ];
@@ -120,11 +126,13 @@ export async function getStudentMobileBottomNavConfig(locale: "pt" | "en", t: (k
   });
   return buildStudentMobileBottomNav(baseLinks, {
     hasPlan,
+    hasPerformanceTracking: planAccess.hasPerformanceTracking,
     moreLabel: locale === "pt" ? "Mais" : "More",
     wellnessLabel: locale === "pt" ? "Bem-Estar" : "Wellness",
     navHome: t("navHome"),
     navEvents: t("navEvents"),
     navTribe: t("navTribe"),
+    navAthleteProfile: t("navAthleteProfile"),
     navLibrary: t("navLibrary"),
     choosePlanLabel: "✨ " + t("choosePlanTitle"),
   });

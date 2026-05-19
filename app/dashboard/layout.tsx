@@ -57,11 +57,13 @@ export default async function DashboardLayout({
 
   const mobileBottomNav = buildStudentMobileBottomNav(baseLinks, {
     hasPlan,
+    hasPerformanceTracking: planAccess.hasPerformanceTracking,
     moreLabel: locale === "pt" ? "Mais" : "More",
     wellnessLabel: locale === "pt" ? "Bem-Estar" : "Wellness",
     navHome: t("navHome"),
     navEvents: t("navEvents"),
     navTribe: t("navTribe"),
+    navAthleteProfile: t("navAthleteProfile"),
     navLibrary: t("navLibrary"),
     choosePlanLabel: "✨ " + t("choosePlanTitle"),
   });
