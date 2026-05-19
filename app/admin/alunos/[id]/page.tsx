@@ -19,6 +19,7 @@ import { AvaliarAlunoButton } from "@/app/coach/alunos/[id]/AvaliarAlunoButton";
 import { DeleteStudentButton } from "./DeleteStudentButton";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
 import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
+import { SchoolAssistantBadge } from "@/components/SchoolAssistantBadge";
 
 const GENERAL_LAST_N = 10;
 
@@ -225,6 +226,11 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
       <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
         {user?.email}
       </p>
+      {assistantActive ? (
+        <div style={{ marginTop: 4, marginBottom: 4, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          <SchoolAssistantBadge active />
+        </div>
+      ) : null}
       <div
         style={{
           display: "flex",

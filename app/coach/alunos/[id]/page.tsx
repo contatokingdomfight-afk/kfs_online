@@ -19,6 +19,7 @@ import { CoachStudentWellbeingSection } from "./_components/CoachStudentWellbein
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
+import { SchoolAssistantBadge } from "@/components/SchoolAssistantBadge";
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
@@ -159,6 +160,7 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
             {MODALITY_LABELS[primaryModality] ?? primaryModality}
           </span>
         )}
+        <SchoolAssistantBadge active={assistantActive} />
       </div>
       <div
         style={{
