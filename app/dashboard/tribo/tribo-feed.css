@@ -70,8 +70,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10040;
+  /* Acima de MobileAppBottomNav (BAR 20_000 / SHEET 20_500) para o compositor e modais funcionarem no telemóvel */
+  z-index: 21000;
   padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   animation: tribe-fade-in 0.2s ease-out;
 }
 
