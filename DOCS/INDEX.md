@@ -1,6 +1,7 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 15 maio 2026 — **timer de rounds (coach):** sons, últimos segundos, UI dos botões — [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md), [`memory.md`](memory.md).  
+> **Última revisão deste índice:** 19 maio 2026 — **Tribo (comunidade):** MVP planeado — [`TRIBO_MVP.md`](TRIBO_MVP.md), secção 7 em [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md), [`memory.md`](memory.md).  
+> **Anterior:** 15 maio 2026 — **timer de rounds (coach):** sons, últimos segundos, UI dos botões — [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md), [`memory.md`](memory.md).  
 > **Anterior:** 13 maio 2026 (eventos no dashboard; centrais de notificações — [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md)).  
 > **Anterior:** 10 fevereiro 2026 (dashboard aluno: semana Lisboa, Presencial I + aulas abertas, `plan-access` + `getCachedLocations`).  
 > **Anterior:** 27 abril 2026 (plano de ação **permissões admin / RBAC:** `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`); 22 abril 2026 (silhueta 2D: `SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`).
@@ -12,6 +13,7 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 
 Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual: Supabase (sem Clerk); ver **`DEPLOY_VERCEL.md`**.
 
+**Changelog (maio 2026):** Tribo (comunidade) — [`TRIBO_MVP.md`](TRIBO_MVP.md) (feed por escola, media, comentários, curtidas, partilha por link, moderação, RLS/Storage); secção 7 em [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md).  
 **Changelog (maio 2026):** timer de rounds — documentação [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md) (rotas `/coach/round-timer` e embutido em `/coach/aula`, sons WAV, digital-beep em preparo / round / descanso, UI `.round-timer-actions` e botões por fase).  
 **Changelog (maio 2026):** eventos no dashboard (filtro *Inscritos e ativos*, strip *próximos eventos* na home antes de *Explorar*); centrais `/admin/notificacoes` e `/coach/notificacoes`; notificações in-app para inscrições em eventos — [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
 
@@ -28,7 +30,8 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md) | Centrais de notificações (aluno / coach / admin), gatilhos de eventos, rotas e permissões |
 | [`memory.md`](memory.md) | Índice de contexto: arquitetura, entregas recentes, comandos, pendências |
 | [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) | Roadmap por área (aluno, admin, coach, BD, deploy) |
-| [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md) | Especificação geral da plataforma |
+| [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md) | Especificação geral da plataforma (inclui secção Tribo / comunidade) |
+| [`TRIBO_MVP.md`](TRIBO_MVP.md) | Tribo (comunidade): MVP — feed por escola, dados, Storage, RLS, moderação, critérios de aceite |
 | [`Fluxo Lógico Completo – Plataforma Kingdom Fight School.md`](Fluxo%20Lógico%20Completo%20–%20Plataforma%20Kingdom%20Fight%20School.md) | Fluxos de negócio |
 | [`FLUXO_DE_CADASTRO_E_ONBOARDING.md`](FLUXO_DE_CADASTRO_E_ONBOARDING.md) | Cadastro e onboarding |
 

@@ -2,7 +2,7 @@
 
 > Documento que descreve as funcionalidades da plataforma digital KFS a desenvolver ou expandir, alinhadas ao Plano de Negócios e à metodologia "Style Kingdom Fight".  
 > Complementa o [Modelo de Dados (MVP)](./Modelo%20de%20Dados%20–%20Kingdom%20Fight%20School%20(MVP).md) e o [Fluxo Lógico Completo](./Fluxo%20Lógico%20Completo%20–%20Plataforma%20Kingdom%20Fight%20School.md).  
-> **Nota (2026):** a página de **início** do aluno (`/dashboard` — aulas da semana, carrosséis, plano Presencial I, aulas abertas) está descrita tecnicamente em [`DOCS/memory.md`](./memory.md) (secção *Dashboard aluno*) e em [`DOCS/MELHORIAS_DASHBOARD.md`](./MELHORIAS_DASHBOARD.md).
+> **Nota (2026):** a página de **início** do aluno (`/dashboard` — aulas da semana, carrosséis, plano Presencial I, aulas abertas) está descrita tecnicamente em [`DOCS/memory.md`](./memory.md) (secção *Dashboard aluno*) e em [`DOCS/MELHORIAS_DASHBOARD.md`](./MELHORIAS_DASHBOARD.md). **Tribo (comunidade)** — planeado: secção 7 neste documento; detalhe de implementação em [`TRIBO_MVP.md`](./TRIBO_MVP.md).
 
 ---
 
@@ -187,6 +187,26 @@ Produtos e eventos que aumentam a margem (Camps, Workshops, cursos avulsos) deve
 
 ---
 
+## 7. Tribo (comunidade)
+
+Módulo **planeado** — estado no roadmap: [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) (prioridade 1; secção 14).
+
+### 7.1 Conceito
+
+- **Tribo** = feed social **por escola**: publicações com texto e media (fotos; vídeo curto conforme decisão de release), **comentários**, **curtidas** e **partilha** no MVP como link interno.
+- Objectivo: comunidade **dentro da plataforma**, alinhada à escola do aluno (`schoolId`), sem feed global entre escolas.
+
+### 7.2 O que entra no MVP vs fora
+
+- **Dentro:** feed cronológico, anexos em Storage com políticas por escola, moderação mínima por admin, notificações in-app desejáveis (ex.: novo comentário no teu post).
+- **Fora (explícito):** DM, stories, algoritmo de feed, hashtags/menções, comunidade cruzada entre escolas, gamificação por post — ver lista completa em [`TRIBO_MVP.md`](TRIBO_MVP.md).
+
+### 7.3 Documentação de implementação
+
+- Especificação técnica e critérios de aceite: **[`TRIBO_MVP.md`](TRIBO_MVP.md)** (entidades sugeridas, RLS, rotas, Storage).
+
+---
+
 ## Resumo de prioridades (sugestão)
 
 | Área                         | Descrição resumida                                                                 |
@@ -197,9 +217,10 @@ Produtos e eventos que aumentam a margem (Camps, Workshops, cursos avulsos) deve
 | Dashboard performance       | KPIs por modalidade, gráfico radar, sugestões de conteúdo.                          |
 | Gamificação                 | Badges por check-ins, metas de assiduidade.                                         |
 | Receita adicional           | Página de cursos/eventos com compra para quem não tem acesso.                       |
+| Tribo (comunidade)          | Feed por escola; media, comentários, curtidas, partilha (link); moderação — ver [`TRIBO_MVP.md`](TRIBO_MVP.md). |
 
 Este documento deve ser atualizado à medida que as funcionalidades forem implementadas ou que novas decisões de produto forem tomadas.
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026; maio 2026 — `NOTIFICACOES_IN_APP_E_EVENTOS.md`.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026; maio 2026 — `NOTIFICACOES_IN_APP_E_EVENTOS.md`; maio 2026 — Tribo (comunidade): `TRIBO_MVP.md`.*

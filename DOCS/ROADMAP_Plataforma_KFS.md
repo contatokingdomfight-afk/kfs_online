@@ -1,8 +1,8 @@
 # Roadmap – Plataforma Kingdom Fight School
 
 > O que **já está feito** vs **por fazer**, alinhado ao [Plano de Negócios](./Plano_de_Negócios_Kingdom_Fight_School.md) e à [Especificação Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md).  
-> **Última revisão (documentação):** 13 maio 2026 — eventos no dashboard aluno (filtro inscritos, strip próximos eventos); centrais `/admin/notificacoes` e `/coach/notificacoes`; notificações in-app para inscrições em eventos — `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md` e `DOCS/memory.md`.  
-> *Histórico:* 10 fevereiro 2026 — dashboard aluno Lisboa + Presencial I; 27 abr. 2026 (RBAC + `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`); 22 abr. 2026 (anamnese, avatar); 18 abr. 2026 (ranking); alinhamento admin/Resend/RLS, sessão mobile, Stripe, índice `DOCS/`.
+> **Última revisão (documentação):** 19 maio 2026 — Tribo (comunidade): doc MVP [`TRIBO_MVP.md`](TRIBO_MVP.md); eventos no dashboard aluno (filtro inscritos, strip próximos eventos); centrais `/admin/notificacoes` e `/coach/notificacoes`; notificações in-app para inscrições em eventos — `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md` e `DOCS/memory.md`.  
+> *Histórico:* 19 maio 2026 — Tribo: `TRIBO_MVP.md` + secção 7 na Especificação Kingdom Digital; 10 fevereiro 2026 — dashboard aluno Lisboa + Presencial I; 27 abr. 2026 (RBAC + `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`); 22 abr. 2026 (anamnese, avatar); 18 abr. 2026 (ranking); alinhamento admin/Resend/RLS, sessão mobile, Stripe, índice `DOCS/`.
 
 **Legenda:** **Feito** = em produção. **Por fazer** = não implementado ou só operacional (dados em falta).
 
@@ -12,7 +12,7 @@
 
 | Prioridade | Área | O quê |
 |------------|------|--------|
-| 1 | Comunidade | **Tribo** — feed social (fotos/vídeos, comentários, curtidas, partilhas); BD + Storage + moderação |
+| 1 | Comunidade | **Tribo** — feed social (fotos/vídeos, comentários, curtidas, partilhas); BD + Storage + moderação — especificação MVP: [`TRIBO_MVP.md`](TRIBO_MVP.md) |
 | 2 | Gamificação | **Rank v2** — filtro por período; ranking por evolução nas dimensões (não só XP); anti-abuso |
 | 3 | Performance | **«Ver como melhorar»** nos critérios → ligação a conteúdos da biblioteca |
 | 4 | Avaliação (dados) | Completar **critérios dos 5 pilares** na BD por modalidade (foco **BJJ / MMA** onde faltar) — o Admin **Avaliação** já existe |
@@ -130,7 +130,7 @@ Principais entidades **em uso:** `User`, `Student`, `StudentProfile`, `Coach`, `
 | Gamificação + presença (exc. rank v2 / Battle Pass) | **Feito** |
 | Sala invertida (tema da semana) | **Feito** |
 | Loja / eventos | **Feito** (incl. `/dashboard/eventos`, strip na home, notificações in-app de inscrição — `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`) |
-| Tribo (comunidade) | **Por fazer** |
+| Tribo (comunidade) | **Por fazer** — [`TRIBO_MVP.md`](TRIBO_MVP.md) |
 
 ---
 

@@ -1,6 +1,6 @@
 # Memória do projeto
 
-Contexto técnico e decisões recentes (**prioridade para continuidade** e alinhamento de código). Índice geral da pasta `DOCS/`: [`INDEX.md`](INDEX.md). Notificações e eventos (rotas, gatilhos): [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md). **Timer de rounds (coach):** [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md).
+Contexto técnico e decisões recentes (**prioridade para continuidade** e alinhamento de código). Índice geral da pasta `DOCS/`: [`INDEX.md`](INDEX.md). Notificações e eventos (rotas, gatilhos): [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md). **Timer de rounds (coach):** [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md). **Tribo (comunidade) — MVP planeado:** [`TRIBO_MVP.md`](TRIBO_MVP.md).
 
 > Não confundir com ficheiros duplicados fora de `DOCS/`; a canónica é **`DOCS/memory.md`**.
 
@@ -62,3 +62,9 @@ Referência legível (fluxos e rotas): [`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`]
 ## Roadmap (referência)
 
 - **Permissões admin (RBAC):** plano de ação e fases em [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md); tarefa no [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) (resumo — prioridade 11; sec. 4 — alunos). Estado: **planeado**, não implementado.
+
+## Tribo (comunidade) — especificação MVP
+
+- **Estado:** não implementado; prioridade de produto no [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) (resumo executivo; secção 14).
+- **Doc canónica:** [`TRIBO_MVP.md`](TRIBO_MVP.md) — âmbito por `schoolId`, papéis (aluno / coach / admin), entidades sugeridas, Storage, RLS, moderação mínima, rotas propostas (`/dashboard/tribo`, admin), fora de âmbito e critérios de aceite.
+- **Resumo na especificação geral:** [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md) secção 7. Após código e migrações, actualizar esta secção e `TRIBO_MVP.md` com nomes finais de tabelas e rotas.
