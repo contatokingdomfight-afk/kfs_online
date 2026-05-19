@@ -99,6 +99,7 @@ Este documento fecha a lacuna entre o roadmap e a **implementação**. A [Especi
 - Isto evita duplicar políticas complexas no SQL na primeira entrega; endurecer com políticas `SELECT`/`INSERT` por JWT fica como evolução.
 - **Acesso negado ao feed:** a página não redirecciona silenciosamente para o início; mostra mensagens (ex.: conta sem `schoolId`, config admin em falta) e i18n `tribeBlocked*` — ver `app/dashboard/tribo/page.tsx` e `getTribeStudentWriteContext`.
 - **Anexos no compositor:** `next.config.mjs` define `experimental.serverActions.bodySizeLimit` (ex.: 15mb) — o default do Next (1mb) cortava pedidos com fotos da câmara; sem isto o modal «a guardar» podia ficar preso. Em deploy (ex.: Vercel) pode existir outro tecto de payload além deste.
+- **Feed (cartão):** datas com `toLocaleString` no cliente podem diferir ligeiramente entre SSR (Node) e o browser; o `<time>` da publicação (e o texto da data nos comentários) usa `suppressHydrationWarning` para evitar o erro React minificado #418 em produção. Botões de comentários, partilhar e apagar incluem ícones SVG em `components/tribe/TribeFeedClient.tsx`.
 
 Detalhe SQL: migração `supabase/migrations/20260520140000_tribe_mvp.sql`; aplicar em produção: [`APLICAR_MIGRATIONS_SUPABASE.md`](APLICAR_MIGRATIONS_SUPABASE.md).
 
