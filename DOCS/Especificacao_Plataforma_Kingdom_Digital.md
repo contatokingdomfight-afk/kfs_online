@@ -189,21 +189,24 @@ Produtos e eventos que aumentam a margem (Camps, Workshops, cursos avulsos) deve
 
 ## 7. Tribo (comunidade)
 
-Módulo **planeado** — estado no roadmap: [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) (prioridade 1; secção 14).
+Módulo em **MVP** — roadmap: [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) (prioridade 1; secção 14).
 
 ### 7.1 Conceito
 
-- **Tribo** = feed social **por escola**: publicações com texto e media (fotos; vídeo curto conforme decisão de release), **comentários**, **curtidas** e **partilha** no MVP como link interno.
-- Objectivo: comunidade **dentro da plataforma**, alinhada à escola do aluno (`schoolId`), sem feed global entre escolas.
+- **Tribo** = feed social com **escola de origem** em cada post e **visibilidade** escolhida pelo autor: **só a minha escola** ou **todas as escolas** (comunidade alargada KFS).
+- **Media (v1):** imagens e **GIF**; **sem vídeo** nesta fase.
+- **Curtidas:** luva de boxe + micro-animação de «soco» sobre a media ao curtir (com acessibilidade).
+- **Comentários**; **partilha** com URL pública e encaminhamento de visitantes **sem conta** para **criação de conta** (`/sign-up?next=…`).
+- **UX:** mobile first, modais de carregamento/gravação, transições suaves.
 
 ### 7.2 O que entra no MVP vs fora
 
-- **Dentro:** feed cronológico, anexos em Storage com políticas por escola, moderação mínima por admin, notificações in-app desejáveis (ex.: novo comentário no teu post).
-- **Fora (explícito):** DM, stories, algoritmo de feed, hashtags/menções, comunidade cruzada entre escolas, gamificação por post — ver lista completa em [`TRIBO_MVP.md`](TRIBO_MVP.md).
+- **Dentro:** feed paginado, Storage `tribe-media`, moderação admin, notificações in-app (comentários), landing `/t/p/[id]`.
+- **Fora:** vídeo, DM, stories, algoritmo, hashtags/menções, gamificação por post — [`TRIBO_MVP.md`](TRIBO_MVP.md).
 
 ### 7.3 Documentação de implementação
 
-- Especificação técnica e critérios de aceite: **[`TRIBO_MVP.md`](TRIBO_MVP.md)** (entidades sugeridas, RLS, rotas, Storage).
+- **[`TRIBO_MVP.md`](TRIBO_MVP.md)** — dados, RLS, rotas, critérios de aceite, partilha e visibilidade.
 
 ---
 
@@ -217,7 +220,7 @@ Módulo **planeado** — estado no roadmap: [`ROADMAP_Plataforma_KFS.md`](ROADMA
 | Dashboard performance       | KPIs por modalidade, gráfico radar, sugestões de conteúdo.                          |
 | Gamificação                 | Badges por check-ins, metas de assiduidade.                                         |
 | Receita adicional           | Página de cursos/eventos com compra para quem não tem acesso.                       |
-| Tribo (comunidade)          | Feed por escola; media, comentários, curtidas, partilha (link); moderação — ver [`TRIBO_MVP.md`](TRIBO_MVP.md). |
+| Tribo (comunidade)          | Feed; visibilidade escola/todas; imagens+GIF; curtir (luva+soco); partilha → sign-up; UX mobile — [`TRIBO_MVP.md`](TRIBO_MVP.md). |
 
 Este documento deve ser atualizado à medida que as funcionalidades forem implementadas ou que novas decisões de produto forem tomadas.
 

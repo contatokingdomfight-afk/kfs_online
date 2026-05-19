@@ -12,7 +12,8 @@ export type NotificationType =
   | "PAYMENT_RESTORED"
   | "COACH_EVALUATION"
   | "PHYSICAL_ASSESSMENT"
-  | "PHYSICAL_ASSESSMENT_REQUEST";
+  | "PHYSICAL_ASSESSMENT_REQUEST"
+  | "TRIBE_COMMENT";
 
 type InsertPayload = {
   studentId: string;

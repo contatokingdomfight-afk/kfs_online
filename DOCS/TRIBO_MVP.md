@@ -1,16 +1,19 @@
 # Tribo (comunidade) — MVP e alinhamento técnico
 
-> **Estado:** planeado, **não implementado** (ver [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) — prioridade 1 no resumo executivo; secção 14 Kingdom Digital).  
-> **Última revisão (documentação):** 19 maio 2026 — doc canónica para desenvolvimento da primeira versão da **Tribo**.
+> **Estado:** em desenvolvimento / MVP (código + migrações).  
+> **Última revisão (documentação):** 19 maio 2026 — alinhado a decisões de produto (media, curtir, partilha, âmbito, UX).
 
-Este documento fecha a lacuna entre a linha de roadmap («feed social + BD + Storage + moderação») e decisões mínimas para **implementação** (âmbito, papéis, dados, RLS, fora de âmbito). A [Especificação Kingdom Digital](Especificacao_Plataforma_Kingdom_Digital.md) resume o produto; aqui ficam os **critérios de aceite** e **riscos** do MVP.
+Este documento fecha a lacuna entre o roadmap e a **implementação**. A [Especificação Kingdom Digital](Especificacao_Plataforma_Kingdom_Digital.md) resume o produto; aqui ficam critérios de aceite, dados e UX.
 
 ---
 
 ## 1. Objetivo do MVP
 
-- Dar à **comunidade da mesma escola** um espaço simples para **publicar**, **reagir** e **comentar**, reforçando pertença sem competir com redes sociais abertas.
-- **Isolamento por escola:** todo o conteúdo visível num feed está ligado a um `schoolId`; utilizadores só veem a Tribo da escola onde são alunos/staff dessa escola (regra alinhada a [`SISTEMA_MULTI_ESCOLA.md`](SISTEMA_MULTI_ESCOLA.md) e ao modelo `Student` / `CoachSchool`).
+- Dar à comunidade KFS um espaço para **publicar**, **reagir** e **comentar**, reforçando pertença.
+- **Escola de origem** (`schoolId`): toda a publicação tem escola de origem (moderation, Storage, identidade).
+- **Âmbito de visibilidade** (escolha no ato de publicar, ver §3.1):
+  - **Só a minha escola** — apenas utilizadores cuja escola activa coincide com `schoolId` do post.
+  - **Todas as escolas** — qualquer aluno autenticado com `Student` activo em **qualquer** escola vê no feed global da Tribo; continua a existir isolamento de dados por escola para conteúdo «só minha escola».
 
 ---
 
@@ -18,118 +21,117 @@ Este documento fecha a lacuna entre a linha de roadmap («feed social + BD + Sto
 
 | Papel | MVP |
 |--------|-----|
-| **Aluno** (`User.role === ALUNO` com `Student` activo na escola) | Ver feed da sua escola; criar publicação (texto + anexos conforme limites); editar/apagar **as próprias** publicações e comentários; curtir; comentar; denunciar (se existir fluxo mínimo). |
-| **Coach** (ligado à escola via `CoachSchool` ou equivalente em produto) | Igual ao aluno **ou** só moderar/destacar — **decisão de produto:** por defeito no MVP, **mesmas capacidades de publicação que o aluno** na Tribo da escola onde treina; sem poderes especiais até haver UI de moderação coach. |
-| **Administrador** (`User.role === ADMIN`) | Ver feed por escola (selector ou rota admin); **ocultar / apagar** qualquer publicação ou comentário na escola; rever fila de denúncias (se implementada); configurar toggles simples (ex. «Tribo activa nesta escola») se existir `School` settings. |
-| **Treinador assistente (escola)** | Tratar como **aluno** na Tribo para publicar/interagir **se** fizer sentido de produto; **não** obrigar paridade com coach até definido; documentar em `memory.md` quando implementado. |
-
-**Fora do MVP:** RBAC granular no admin para «só ver Tribo» (usar `ADMIN` global ou sub-perfis quando [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md) estiver alinhado a esta área).
+| **Aluno** (`User.role === ALUNO` com `Student` activo) | Ver feed conforme §3.1; criar publicação com escolha de âmbito; editar/apagar **as próprias** publicações e comentários; curtir; comentar. |
+| **Coach** | Mesmas capacidades **quando** existir área `/coach/tribo` ou equivalente; na primeira entrega a UI pode estar só em `/dashboard/tribo` (aluno). |
+| **Administrador** | Moderação (ocultar / apagar); ver conteúdo por `schoolId` de origem. |
+| **Treinador assistente** | Igual aluno na Tribo se aceder pelo dashboard e tiver plano/regras iguais aos restantes alunos. |
 
 ---
 
 ## 3. Funcionalidades no âmbito do MVP
 
-### 3.1 Feed
+### 3.1 Feed e visibilidade
 
-- Lista cronológica (mais recente primeiro), **paginada** (cursor ou offset com limite baixo).
-- Cada **publicação** inclui: autor, texto (comprimento máximo definido), data, estado (`ACTIVE` / `HIDDEN` / `DELETED` soft), opcionalmente **anexos** (ver Storage).
+- Lista **cronológica** (mais recente primeiro), **paginada**.
+- Cada publicação: autor, texto, `schoolId` de origem, **`visibility`**: `SCHOOL_ONLY` | `ALL_SCHOOLS`, data, estado (`ACTIVE` / `HIDDEN` / `DELETED` soft), anexos de media.
+- **Query de leitura:** o utilizador vê posts onde `status = ACTIVE` e (`visibility = ALL_SCHOOLS` **ou** (`visibility = SCHOOL_ONLY` e `schoolId` = escola do seu `Student` activo)).
 
-### 3.2 Anexos (fotos / vídeo curto)
+### 3.2 Media (v1)
 
-- **Fotos:** permitir uma ou várias imagens por publicação (limite de ficheiros e MB por política).
-- **Vídeo:** MVP pode limitar a **um vídeo curto** por post (duração e MB máximos) para controlar custo Storage e transcoding; ou **só imagens** na v0 e vídeo na v0.1 — escolher na implementação e registar na migração / release notes.
-- **Formatos:** validar MIME no servidor; rejeitar executáveis e tipos estranhos.
+- **Inclui:** imagens estáticas **e GIF** (MIME `image/gif` tratado como animação; também JPEG, PNG, WebP).
+- **Exclui (v1):** vídeo (sem ficheiros `video/*` no MVP). Vídeo fica para iteração posterior.
 
-### 3.3 Interações
+### 3.3 Interações — curtir (identidade visual)
 
-- **Curtidas:** um utilizador autenticado dá toggle «curtir» num post (e opcionalmente num comentário — **v0:** só em posts simplifica contagem).
-- **Comentários:** thread plana (sem sub-comentários infinitos no MVP; no máximo **uma** profundidade de resposta se necessário para UX).
-- **Partilhas:** no MVP interpretar como **«copiar link»** ou **«partilhar URL interna»** do post (deep link para `/dashboard/tribo?post=…` ou rota acordada). **Repost** / quote-tweet fica fora do MVP.
+- O controlo de «curtir» usa **ícone de luva de boxe** (em vez de coração genérico).
+- Ao **curtir** uma publicação com foto/GIF, mostrar um **efeito breve de «soco»** por cima da media (overlay animado, respeitando `prefers-reduced-motion`: versão estática ou sem animação).
 
-### 3.4 Moderação (mínimo viável)
+### 3.4 Comentários
 
-- **Admin:** acções «ocultar» (deixa de aparecer no feed público; autor pode ver estado «removido pela equipa» conforme copy) e «apagar» (soft delete).
-- **Denúncia (opcional v0):** botão «Reportar» cria registo `TribeReport` com motivo enum + texto curto; notificação in-app a admins (padrão semelhante a [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md)) — se atrasar o lançamento, lançar sem denúncias e acrescentar na primeira iteração.
+- Thread **plana** (sem árvore profunda no MVP).
 
-### 3.5 Notificações
+### 3.5 Partilha (redes externas + conversão)
 
-- **Desejável no MVP:** notificar o autor quando alguém comenta no seu post (in-app, tabela `Notification` existente).
-- **Nice-to-have:** notificar quando recebe curtida (pode gerar ruído; configurável mais tarde).
+- A publicação tem **URL pública** de convite (ex. `/t/p/[postId]`) para partilhar em redes sociais.
+- Visitante **sem sessão**: a landing deve **orientar para criação de conta** (`/sign-up`) com `next` (URL codificada) a apontar de volta para o conteúdo (ex. `/dashboard/tribo?post=…` ou `/t/p/…` após login), para maximizar conversão.
+- **Web Share API** no mobile quando disponível; fallback: copiar link e/ou abrir redes com `url` pré-preenchido onde aplicável.
+
+### 3.6 Moderação (mínimo viável)
+
+- **Admin:** ocultar / apagar (soft) publicações e comentários.
+
+### 3.7 Notificações
+
+- Notificar o autor (in-app) quando alguém **comentar** no seu post (tipo dedicado ou `GENERAL` com copy Tribo).
+
+### 3.8 UX e UI (requisitos transversais)
+
+- **Mobile first**, touch targets confortáveis, composição e leitura em ecrã pequeno.
+- **Modais / overlays** de **carregamento** e **sucesso / erro** ao criar publicação, enviar comentário e acções lentas (padrão familiar: spinner, estado desactivado no botão, feedback explícito).
+- **Transições suaves** (entrada de cartões, hover/focus em desktop) e animações **curtas** e não intrusivas; respeitar **reduced motion**.
 
 ---
 
-## 4. Modelo de dados (proposta — nomes indicativos)
+## 4. Modelo de dados (implementação)
 
-Não existe ainda em `prisma/schema.prisma`; na implementação, alinhar nomes ao projeto e criar migração Supabase + Prisma.
-
-| Entidade | Campos mínimos sugeridos |
-|----------|-------------------------|
-| `TribePost` | `id`, `schoolId`, `authorUserId`, `body` (text), `status`, `createdAt`, `updatedAt`, `hiddenAt`, `hiddenByUserId` (nullable) |
-| `TribePostMedia` | `id`, `postId`, `storagePath`, `mimeType`, `width`, `height`, `sortOrder` |
-| `TribeComment` | `id`, `postId`, `authorUserId`, `body`, `status`, `createdAt`, `parentCommentId` (nullable) |
+| Entidade | Campos principais |
+|----------|-------------------|
+| `TribePost` | `id`, `schoolId`, `authorUserId`, `body`, `visibility` (`SCHOOL_ONLY` \| `ALL_SCHOOLS`), `status`, `createdAt`, `updatedAt`, `hiddenAt`, `hiddenByUserId` |
+| `TribePostMedia` | `id`, `postId`, `publicUrl`, `mimeType`, `sortOrder`, `createdAt` |
+| `TribeComment` | `id`, `postId`, `authorUserId`, `body`, `status`, `createdAt` |
 | `TribeLike` | `id`, `postId`, `userId`, `createdAt` — **unique** (`postId`, `userId`) |
-| `TribeReport` (opcional) | `id`, `postId` ou `commentId`, `reporterUserId`, `reason`, `note`, `createdAt`, `resolvedAt` |
 
-Índices: `(schoolId, createdAt DESC)` para feed; FKs com `ON DELETE` coerente com soft delete.
+Índices: `(schoolId, createdAt DESC)`; filtro global pode usar `(visibility, status, createdAt DESC)`.
 
 ---
 
 ## 5. Storage (Supabase)
 
-- **Bucket dedicado** (ex. `tribe-media`) com prefixo por escola: `schoolId/postId/...` para listagens e políticas.
-- **Políticas:** upload só por utilizadores com `Student.schoolId` ou staff da mesma escola do prefixo; leitura pública **não** recomendada — URLs assinadas ou proxy pela app conforme padrão já usado noutros uploads do projeto.
-- **Limites:** tamanho máximo por ficheiro e por utilizador/dia (rate limit em server action) para mitigar abuso.
-
-Referência geral de segurança: [`SUPABASE_RLS.md`](SUPABASE_RLS.md), [`REVISAO_SEGURANCA.md`](REVISAO_SEGURANCA.md).
+- Bucket **`tribe-media`** (público leitura, escrita via API servidor com validação — alinhado a `event-banners`).
+- Prefixo sugerido: `tribe/{schoolId}/{postId}/{uuid}.{ext}`.
+- **Limites:** MIME só imagens+gif (§3.2); tamanho máximo por ficheiro definido no código (ex. 3 MB).
 
 ---
 
-## 6. RLS (princípios)
+## 6. RLS e acesso à BD
 
-- **Leitura** de `TribePost` / comentários / likes: apenas linhas com `schoolId` igual à escola do utilizador (derivado de `Student` ou vínculo coach/admin com essa escola).
-- **Insert:** `authorUserId` = `auth.uid()` e `schoolId` validado server-side contra a escola do aluno/staff (não confiar só no cliente).
-- **Update/Delete:** autor nos próprios conteúdos; admin com política extra para `status` / moderação.
-- **Service role:** apenas em jobs/admin explícitos, nunca exposto ao browser.
+- As tabelas `TribePost`, `TribePostMedia`, `TribeComment` e `TribeLike` têm **RLS activa** sem políticas para o role `authenticated` — o acesso directo com a chave anon do browser **não** consegue ler nem escrever; o código da app usa **`SUPABASE_SERVICE_ROLE_KEY`** (cliente admin) **só no servidor**, após validar sessão e regras de visibilidade em TypeScript (`lib/tribe/*`, `app/dashboard/tribo/actions.ts`).
+- Isto evita duplicar políticas complexas no SQL na primeira entrega; endurecer com políticas `SELECT`/`INSERT` por JWT fica como evolução.
 
-Detalhar políticas SQL no mesmo PR que as tabelas, com testes manuais ou notas em [`APLICAR_MIGRATIONS_SUPABASE.md`](APLICAR_MIGRATIONS_SUPABASE.md).
+Detalhe SQL: migração `supabase/migrations/20260520140000_tribe_mvp.sql`; aplicar em produção: [`APLICAR_MIGRATIONS_SUPABASE.md`](APLICAR_MIGRATIONS_SUPABASE.md).
 
 ---
 
-## 7. Rotas e UI (sugestão)
+## 7. Rotas
 
-- **Aluno:** `/dashboard/tribo` (ou nome final i18n «Comunidade» / «Tribo») — feed + compositor + detalhe de post.
-- **Admin:** `/admin/tribo` ou secção dentro da escola já existente — lista por escola + moderação.
-- **Navegação:** entrada no menu do dashboard aluno e, se aplicável, atalho na home (não obrigatório no primeiro PR).
-
-Mobile first, coerente com [`Telas do Sistema – Mobile First.md`](Telas%20do%20Sistema%20–%20Mobile%20First.md) quando houver wireframes.
+- **Aluno (app):** `/dashboard/tribo` — feed, compositor, detalhe com `?post=`.
+- **Partilha pública:** `/t/p/[postId]` — OG/meta, CTA registo, redirect se já autenticado.
+- **Admin (fase seguinte):** `/admin/tribo` se necessário lista por escola.
 
 ---
 
-## 8. Fora de âmbito do MVP (explícito)
+## 8. Fora de âmbito do MVP actual
 
-- Mensagens directas (DM) e chats em tempo real.
-- Stories / conteúdo efémero.
-- Feed algorítmico (ranking, «para ti»).
-- Hashtags, menções `@`, páginas de perfil social além do perfil já existente.
-- Comunidade **entre** escolas ou feed global da marca.
-- Moderador coach dedicado com filas separadas (pode vir depois).
-- Integração XP/gamificação por post (avaliar impacto anti-spam antes).
+- Vídeo (`video/*`).
+- DM, stories, feed algorítmico, hashtags, menções, repost estilo quote.
+- Gamificação por post (XP).
 
 ---
 
 ## 9. Critérios de aceite (release MVP)
 
-1. Utilizador A da escola X **não** vê publicações da escola Y (teste com dois `schoolId`).
-2. Autor pode apagar o próprio post; comentários deixam de aparecer ou mostram estado coerente.
-3. Admin pode ocultar post alheio; feed deixa de o listar para alunos.
-4. Upload recusado fora do MIME/tamanho permitido; URL de media não expõe bucket sem controlo de acesso.
-5. Curtidas não duplicam para o mesmo utilizador no mesmo post (constraint + UX idempotente).
+1. Post `SCHOOL_ONLY` da escola Y **não** aparece no feed do aluno da escola X.
+2. Post `ALL_SCHOOLS` aparece para alunos de X e Y.
+3. Curtir com luva + efeito de soco na media (com fallback reduced motion).
+4. Partilha externa abre URL pública; visitante sem conta é guiado para **sign-up** com retorno ao conteúdo.
+5. Apenas imagens + GIF aceites no upload; vídeo rejeitado.
+6. Modais/estados de carregamento e gravação nas acções principais; layout mobile first.
 
 ---
 
 ## 10. Referências cruzadas
 
 - Roadmap: [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)  
-- Especificação produto (resumo Tribo): [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md)  
-- Contexto técnico vivo após implementação: [`memory.md`](memory.md)  
+- Especificação produto: [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md)  
+- Contexto técnico: [`memory.md`](memory.md)  
 - Índice: [`INDEX.md`](INDEX.md)

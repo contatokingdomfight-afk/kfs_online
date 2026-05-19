@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
-export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
+export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Locale; initialNext?: string | null }) {
   const t = getTranslations(initialLocale);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,9 +23,10 @@ export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
     setGoogleLoading(true);
     const supabase = createClient();
     const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const nextPath = initialNext && initialNext.startsWith("/") ? initialNext : "/dashboard";
     const { data, error: err } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${origin}/auth/callback` },
+      options: { redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}` },
     });
     setGoogleLoading(false);
     if (err) {
@@ -54,7 +55,8 @@ export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
     // Se há sessão (email confirmation desativado), redirecionar para dashboard.
     // O sync User/Student/StudentProfile acontece no carregamento da página via getCurrentDbUser.
     if (data?.session) {
-      router.push("/dashboard");
+      const target = initialNext && initialNext.startsWith("/") ? initialNext : "/dashboard";
+      router.push(target);
       router.refresh();
       return;
     }
@@ -124,7 +126,11 @@ export function SignUpForm({ initialLocale }: { initialLocale: Locale }) {
         </form>
         <p className="text-mobile-base text-center mt-6" style={{ color: "var(--text-secondary)" }}>
           {t("alreadyHaveAccount")}{" "}
-          <Link href="/sign-in" className="font-semibold" style={{ color: "var(--primary)" }}>
+          <Link
+            href={initialNext && initialNext.startsWith("/") ? `/sign-in?next=${encodeURIComponent(initialNext)}` : "/sign-in"}
+            className="font-semibold"
+            style={{ color: "var(--primary)" }}
+          >
             {t("signIn")}
           </Link>
         </p>

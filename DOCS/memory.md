@@ -4,6 +4,13 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 > Não confundir com ficheiros duplicados fora de `DOCS/`; a canónica é **`DOCS/memory.md`**.
 
+## Supabase EU — histórico de migrações
+
+- **Lista canónica** de nomes já registados no projecto EU (`supabase_migrations.schema_migrations`): `scripts/lib/supabase-eu-remote-migration-names.mjs`. Actualizar quando o MCP `list_migrations` (servidor `user-supabase_kfs_eu`) mostrar entradas novas.
+- **Pendentes locais vs EU:** `node scripts/list-pending-supabase-migrations.mjs` (usa o módulo acima + equivalências de slug, ex. ficheiro com prefixo data vs nome curto no remoto).
+- **Aplicar SQL na BD sem passar pelo dashboard:** `node scripts/apply-pending-migrations-pg.mjs` (`DATABASE_URL` no `.env`). Opção `--resume=nome_base` para continuar após falha parcial. Não preenche o histórico Supabase por si só.
+- **Backfill do histórico** (registar migrações já reflectidas na BD mas ainda sem linha no histórico): `node scripts/backfill-supabase-migration-history.mjs` (ou `--out ficheiro.sql`) e executar o SQL gerado com MCP `execute_sql`. Os `INSERT` usam `version` = basename do ficheiro para evitar colisões entre migrações com o mesmo prefixo numérico.
+
 ## Performance (área do aluno)
 
 - Na performance (aluno e vista coach do aluno), o carrossel radar + silhueta tem **sempre** 2.º painel: silhueta **personalizada** com ≥2 circunferências na ficha; **neutra** com ficha sem medidas suficientes; **neutra + texto «sem ficha»** só se `getAchievementUnlockContext` também não encontrar ficha. Se a plataforma indica ficha mas a query com `formData` falhar, texto de «detalhes não carregaram». Helper: `lib/build-performance-physical-carousel.ts`. **Título do 2.º painel** (`perfCarouselSlideBodyCaption`) omitido quando a string i18n está vazia. **Dica de swipe** (`perfCarouselSwipeHint*` em `lib/i18n/messages.ts`): preenchida no builder (texto menciona primeiro a silhueta 2D, depois o radar). **Copy da silhueta:** com `perfAvatarCaptionShort*` preenchido → linha curta + tooltip (`components/ui/InlineInfoTip.tsx`); vazio → só o parágrafo longo inline. **Rodapé sob o canvas 3D** em `Humanoid3DPanel` só quando `humanoidFootnote.short` existe (sem texto por defeito). Ao gravar ficha: `revalidatePath('/dashboard/performance')`.
@@ -63,8 +70,9 @@ Referência legível (fluxos e rotas): [`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`]
 
 - **Permissões admin (RBAC):** plano de ação e fases em [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md); tarefa no [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) (resumo — prioridade 11; sec. 4 — alunos). Estado: **planeado**, não implementado.
 
-## Tribo (comunidade) — especificação MVP
+## Tribo (comunidade)
 
-- **Estado:** não implementado; prioridade de produto no [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) (resumo executivo; secção 14).
-- **Doc canónica:** [`TRIBO_MVP.md`](TRIBO_MVP.md) — âmbito por `schoolId`, papéis (aluno / coach / admin), entidades sugeridas, Storage, RLS, moderação mínima, rotas propostas (`/dashboard/tribo`, admin), fora de âmbito e critérios de aceite.
-- **Resumo na especificação geral:** [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md) secção 7. Após código e migrações, actualizar esta secção e `TRIBO_MVP.md` com nomes finais de tabelas e rotas.
+- **Doc canónica:** [`TRIBO_MVP.md`](TRIBO_MVP.md) — visibilidade `SCHOOL_ONLY` | `ALL_SCHOOLS`; media só **imagem + GIF** (sem vídeo v1); curtir com **luva** + efeito **soco** na media; **partilha** `/t/p/[id]` → visitante sem sessão para [`/sign-up`](./sign-up) com `next`; UX mobile first + modais de carregamento/gravação.
+- **Rotas:** `/dashboard/tribo` (aluno com plano — `requirePlan`), partilha pública `/t/p/[postId]` (middleware: prefixo `/t` público).
+- **Código (referência):** `app/dashboard/tribo/`, `app/t/p/[postId]/`, `app/api/tribe/upload/route.ts`, `lib/tribe/*`, migração `supabase/migrations/*_tribe_mvp.sql`, modelos Prisma `TribePost*`, `TribeComment`, `TribeLike`.
+- **Resumo produto:** [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md) secção 7.

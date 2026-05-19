@@ -46,6 +46,7 @@ export function getDashboardStudentBaseLinks(params: {
       { label: t("navStore"), href: "/dashboard/loja" },
       { label: t("navLibrary"), href: "/dashboard/biblioteca" },
       { label: t("navEvents"), href: "/dashboard/eventos" },
+      { label: t("navTribe"), href: "/dashboard/tribo" },
       { label: t("navFinance"), href: "/dashboard/financeiro" },
       { label: t("navProfile"), href: "/dashboard/perfil" },
       { label: t("navPhysicalFicha"), href: "/dashboard/ficha-fisica" },

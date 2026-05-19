@@ -18,6 +18,7 @@ const publicPaths = [
 const studentAllowedWithoutPlanPrefixes = ["/onboarding", "/escolher-plano", "/auth/callback", "/auth/update-password"];
 
 function isPublicBrowserPath(pathname: string) {
+  if (pathname === "/t" || pathname.startsWith("/t/")) return true;
   return publicPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 

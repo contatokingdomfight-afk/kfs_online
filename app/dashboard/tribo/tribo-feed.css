@@ -1,0 +1,146 @@
+.tribe-punch-overlay {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  z-index: 3;
+  animation: tribe-punch-fx 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.tribe-punch-glove {
+  font-size: clamp(2.5rem, 12vw, 4rem);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+  transform-origin: 70% 80%;
+}
+
+@keyframes tribe-punch-fx {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  15% {
+    opacity: 1;
+    backdrop-filter: blur(2px);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tribe-punch-overlay {
+    animation: none;
+    opacity: 0.92;
+    background: rgba(0, 0, 0, 0.25);
+  }
+}
+
+.tribe-card-enter {
+  animation: tribe-card-in 0.42s ease-out both;
+}
+
+@keyframes tribe-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tribe-card-enter {
+    animation: none;
+  }
+}
+
+.tribe-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10040;
+  padding: 1rem;
+  animation: tribe-fade-in 0.2s ease-out;
+}
+
+.tribe-modal-panel {
+  width: min(100%, 22rem);
+  border-radius: 1rem;
+  padding: 1.35rem 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+@keyframes tribe-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tribe-spinner {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--primary);
+  margin: 0 auto 0.75rem;
+  animation: tribe-spin 0.75s linear infinite;
+}
+
+@keyframes tribe-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tribe-spinner {
+    animation: none;
+    border-top-color: var(--primary);
+    opacity: 0.85;
+  }
+}
+
+.tribe-visibility-card {
+  border-radius: 0.85rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid transparent;
+  background: var(--bg-primary);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.tribe-visibility-card:hover {
+  transform: translateY(-1px);
+}
+
+.tribe-visibility-card[data-active="true"] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+.tribe-visibility-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

@@ -88,6 +88,7 @@ model School {
   locations                  Location[]
   plans                      Plan[]
   physicalAssessmentRequests PhysicalAssessmentRequest[]
+  tribePosts                 TribePost[]
 }
 
 // Utilizador (sincronizado com Supabase Auth; role definido na plataforma)
@@ -104,6 +105,10 @@ model User {
   student              Student?
   coach                Coach?
   userAdminPermissions UserAdminPermission[]
+  tribePostsAuthored   TribePost[]         @relation("TribePostAuthor")
+  tribePostsHidden     TribePost[]         @relation("TribePostHiddenBy")
+  tribeComments        TribeComment[]      @relation("TribeCommentAuthor")
+  tribeLikes           TribeLike[]
 }
 
 /// Conjunto canónico v1 (código estável) — ver `lib/permissions/constants.ts` e ecrã `/admin/permissoes`.
@@ -395,5 +400,81 @@ model Plan {
   modalityScope           String   @default("ALL") // NONE | SINGLE | ALL
   isActive                Boolean  @default(true)
   createdAt               DateTime @default(now())
-  updatedAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+enum TribePostVisibility {
+  SCHOOL_ONLY
+  ALL_SCHOOLS
+}
+
+enum TribePostStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+enum TribeCommentStatus {
+  ACTIVE
+  HIDDEN
+}
+
+model TribePost {
+  id               String              @id @default(cuid())
+  schoolId         String
+  school           School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  authorUserId     String
+  author           User                @relation("TribePostAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
+  body             String
+  visibility       TribePostVisibility @default(SCHOOL_ONLY)
+  status           TribePostStatus     @default(ACTIVE)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  hiddenAt         DateTime?
+  hiddenByUserId   String?
+  hiddenBy         User?               @relation("TribePostHiddenBy", fields: [hiddenByUserId], references: [id], onDelete: SetNull)
+
+  media    TribePostMedia[]
+  comments TribeComment[]
+  likes    TribeLike[]
+
+  @@index([schoolId, createdAt(sort: Desc)])
+  @@index([visibility, status, createdAt(sort: Desc)])
+}
+
+model TribePostMedia {
+  id        String    @id @default(cuid())
+  postId    String
+  post      TribePost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  publicUrl String
+  mimeType  String
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  @@index([postId])
+}
+
+model TribeComment {
+  id           String             @id @default(cuid())
+  postId       String
+  post         TribePost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorUserId String
+  author       User               @relation("TribeCommentAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
+  body         String
+  status       TribeCommentStatus @default(ACTIVE)
+  createdAt    DateTime           @default(now())
+
+  @@index([postId, createdAt])
+}
+
+model TribeLike {
+  id        String    @id @default(cuid())
+  postId    String
+  post      TribePost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@unique([postId, userId])
+  @@index([postId])
 }

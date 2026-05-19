@@ -12,7 +12,7 @@
 
 | Prioridade | Área | O quê |
 |------------|------|--------|
-| 1 | Comunidade | **Tribo** — feed social (fotos/vídeos, comentários, curtidas, partilhas); BD + Storage + moderação — especificação MVP: [`TRIBO_MVP.md`](TRIBO_MVP.md) |
+| 1 | Comunidade | **Tribo** — feed (imagens+GIF, comentários, curtidas luva/soco, visibilidade escola/todas, partilha `/t/p` → registo); MVP aluno em curso — [`TRIBO_MVP.md`](TRIBO_MVP.md) |
 | 2 | Gamificação | **Rank v2** — filtro por período; ranking por evolução nas dimensões (não só XP); anti-abuso |
 | 3 | Performance | **«Ver como melhorar»** nos critérios → ligação a conteúdos da biblioteca |
 | 4 | Avaliação (dados) | Completar **critérios dos 5 pilares** na BD por modalidade (foco **BJJ / MMA** onde faltar) — o Admin **Avaliação** já existe |
@@ -130,7 +130,7 @@ Principais entidades **em uso:** `User`, `Student`, `StudentProfile`, `Coach`, `
 | Gamificação + presença (exc. rank v2 / Battle Pass) | **Feito** |
 | Sala invertida (tema da semana) | **Feito** |
 | Loja / eventos | **Feito** (incl. `/dashboard/eventos`, strip na home, notificações in-app de inscrição — `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`) |
-| Tribo (comunidade) | **Por fazer** — [`TRIBO_MVP.md`](TRIBO_MVP.md) |
+| Tribo (comunidade) | **Em curso (MVP aluno)** — [`TRIBO_MVP.md`](TRIBO_MVP.md); `/dashboard/tribo`, `/t/p/[id]`, migração `20260520140000_tribe_mvp.sql` |
 
 ---
 

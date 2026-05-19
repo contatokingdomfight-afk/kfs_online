@@ -24,6 +24,7 @@ function iconForStudentNavHref(href: string): MobileNavIconId {
   if (href.startsWith("/dashboard/loja")) return "shopping";
   if (href.startsWith("/dashboard/biblioteca")) return "book";
   if (href.startsWith("/dashboard/eventos")) return "calendar";
+  if (href.startsWith("/dashboard/tribo")) return "users";
   if (href.startsWith("/dashboard/financeiro")) return "credit";
   if (href.startsWith("/dashboard/perfil")) return "user";
   if (href.startsWith("/dashboard/ficha-fisica")) return "file";
