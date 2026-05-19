@@ -116,6 +116,15 @@ export const messages = {
     tribePublicLogin: "Já tenho conta",
     tribePublicSchoolPost: "Publicação da tua escola na app.",
     tribePublicGlobalPost: "Publicação visível em todas as escolas.",
+    tribeBlockedTitle: "Tribo indisponível",
+    tribeBlockedMissingSchool:
+      "A tua conta de aluno não está associada a uma escola. Contacta a secretaria da KFS para corrigires o registo.",
+    tribeBlockedNoStudent:
+      "Não encontrámos o registo de aluno nesta sessão. Volta ao início ou inicia sessão novamente.",
+    tribeBlockedNoPlan: "Precisas de um plano ativo para ver a Tribo.",
+    tribeBlockedWrongRole: "A Tribo destina-se a alunos com plano.",
+    tribeBlockedGeneric: "Não foi possível abrir a Tribo. Tenta novamente ou contacta o suporte.",
+    tribeBlockedBack: "Ir para o início",
     navStore: "Loja",
     navExclusiveBenefits: "Benefícios exclusivos",
     navProfile: "Perfil",
@@ -1134,6 +1143,15 @@ export const messages = {
     tribePublicLogin: "I already have an account",
     tribePublicSchoolPost: "A post from a school on the app.",
     tribePublicGlobalPost: "A post visible across all schools.",
+    tribeBlockedTitle: "Tribe unavailable",
+    tribeBlockedMissingSchool:
+      "Your student account is not linked to a school. Please contact KFS support so we can fix your profile.",
+    tribeBlockedNoStudent:
+      "We could not find a student record for this session. Go back home or sign in again.",
+    tribeBlockedNoPlan: "You need an active plan to view the Tribe.",
+    tribeBlockedWrongRole: "The Tribe is for students with a plan.",
+    tribeBlockedGeneric: "We could not open the Tribe. Try again or contact support.",
+    tribeBlockedBack: "Go to home",
     navStore: "Store",
     navExclusiveBenefits: "Exclusive benefits",
     navProfile: "Profile",

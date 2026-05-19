@@ -16,6 +16,8 @@ export const getCurrentStudentId = cache(async function getCurrentStudentId(): P
     .from("Student")
     .select("id")
     .eq("userId", dbUser.id)
+    .order("createdAt", { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   return student?.id ?? null;

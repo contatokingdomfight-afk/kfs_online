@@ -10,14 +10,18 @@ export type TribeStudentContext = {
   userId: string;
 };
 
+export type TribeGateError =
+  | { ok: false; error: "admin"; adminDetail: "missing" | "wrong_key" }
+  | { ok: false; error: "auth" | "role" | "student" | "missing_school" | "no_plan_student" };
+
 /**
  * Contexto para mutações Tribo no servidor: aluno autenticado + escola + cliente admin (RLS nas tabelas Tribo).
  */
-export async function getTribeStudentWriteContext(): Promise<
-  { ok: true; ctx: TribeStudentContext } | { ok: false; error: "auth" | "role" | "admin" | "student" }
-> {
+export async function getTribeStudentWriteContext(): Promise<{ ok: true; ctx: TribeStudentContext } | TribeGateError> {
   const admin = getAdminClientOrNull();
-  if (!admin.client) return { ok: false, error: "admin" };
+  if (!admin.client) {
+    return { ok: false, error: "admin", adminDetail: admin.error };
+  }
 
   const [dbUser, studentId] = await Promise.all([getCurrentDbUser(), getCurrentStudentId()]);
   if (!dbUser) return { ok: false, error: "auth" };
@@ -25,15 +29,17 @@ export async function getTribeStudentWriteContext(): Promise<
   if (!studentId) return { ok: false, error: "student" };
 
   const { data: st, error } = await admin.client.from("Student").select("id, schoolId, planId").eq("id", studentId).maybeSingle();
-  if (error || !st?.schoolId) return { ok: false, error: "student" };
-  if (!st.planId) return { ok: false, error: "student" };
+  if (error || !st) return { ok: false, error: "student" };
+  if (!st.planId) return { ok: false, error: "no_plan_student" };
+  const schoolId = typeof st.schoolId === "string" ? st.schoolId.trim() : "";
+  if (!schoolId) return { ok: false, error: "missing_school" };
 
   return {
     ok: true,
     ctx: {
       supabase: admin.client,
       studentId: st.id as string,
-      schoolId: st.schoolId as string,
+      schoolId,
       userId: dbUser.id,
     },
   };

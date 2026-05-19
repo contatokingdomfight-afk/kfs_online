@@ -97,6 +97,7 @@ Este documento fecha a lacuna entre o roadmap e a **implementação**. A [Especi
 
 - As tabelas `TribePost`, `TribePostMedia`, `TribeComment` e `TribeLike` têm **RLS activa** sem políticas para o role `authenticated` — o acesso directo com a chave anon do browser **não** consegue ler nem escrever; o código da app usa **`SUPABASE_SERVICE_ROLE_KEY`** (cliente admin) **só no servidor**, após validar sessão e regras de visibilidade em TypeScript (`lib/tribe/*`, `app/dashboard/tribo/actions.ts`).
 - Isto evita duplicar políticas complexas no SQL na primeira entrega; endurecer com políticas `SELECT`/`INSERT` por JWT fica como evolução.
+- **Acesso negado ao feed:** a página não redirecciona silenciosamente para o início; mostra mensagens (ex.: conta sem `schoolId`, config admin em falta) e i18n `tribeBlocked*` — ver `app/dashboard/tribo/page.tsx` e `getTribeStudentWriteContext`.
 
 Detalhe SQL: migração `supabase/migrations/20260520140000_tribe_mvp.sql`; aplicar em produção: [`APLICAR_MIGRATIONS_SUPABASE.md`](APLICAR_MIGRATIONS_SUPABASE.md).
 

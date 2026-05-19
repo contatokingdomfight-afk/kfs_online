@@ -18,8 +18,12 @@ export type TribeVisibility = "SCHOOL_ONLY" | "ALL_SCHOOLS";
 export async function createTribePostAction(formData: FormData): Promise<{ error?: string; postId?: string }> {
   const gate = await getTribeStudentWriteContext();
   if (!gate.ok) {
-    if (gate.error === "student") return { error: "Precisas de sessão de aluno com plano activo para publicar na Tribo." };
     if (gate.error === "admin") return { error: "Serviço temporariamente indisponível." };
+    if (gate.error === "missing_school") {
+      return { error: "A tua conta não está associada a uma escola; não é possível publicar na Tribo." };
+    }
+    if (gate.error === "no_plan_student") return { error: "Precisas de um plano activo para publicar na Tribo." };
+    if (gate.error === "student") return { error: "Precisas de sessão de aluno com plano activo para publicar na Tribo." };
     return { error: "Não autorizado." };
   }
   const { supabase, schoolId, userId } = gate.ctx;
