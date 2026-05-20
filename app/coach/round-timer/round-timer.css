@@ -1,34 +1,43 @@
-/* Round timer — cores por fase (alto contraste em treino) */
+/* Round timer — cores por fase (contraste à distância; calma / combate / recuperação) */
 .round-timer-root {
-  --rt-prepare: #ca8a04;
-  --rt-prepare-bg: rgba(234, 179, 8, 0.12);
-  --rt-round: #dc2626;
-  --rt-round-bg: rgba(220, 38, 38, 0.12);
-  --rt-rest: #2563eb;
-  --rt-rest-bg: rgba(37, 99, 235, 0.12);
-  --rt-done: #16a34a;
-  --rt-done-bg: rgba(22, 163, 74, 0.12);
+  --rt-prepare: #38bdf8;
+  --rt-prepare-bg: color-mix(in srgb, #0c4a6e 55%, var(--bg-secondary));
+  --rt-prepare-clock: #e0f2fe;
+  --rt-round: #f87171;
+  --rt-round-bg: color-mix(in srgb, #7f1d1d 50%, var(--bg-secondary));
+  --rt-round-clock: #fef2f2;
+  --rt-rest: #a3a37a;
+  --rt-rest-bg: color-mix(in srgb, #3f3f2e 55%, var(--bg-secondary));
+  --rt-rest-clock: #f5f5dc;
+  --rt-done: #22c55e;
+  --rt-done-bg: rgba(22, 163, 74, 0.14);
+  --rt-done-clock: #ecfccb;
 }
 
 .round-timer-root[data-ui="prepare"] {
   --rt-accent: var(--rt-prepare);
   --rt-surface: var(--rt-prepare-bg);
+  --rt-clock: var(--rt-prepare-clock);
 }
 .round-timer-root[data-ui="round"] {
   --rt-accent: var(--rt-round);
   --rt-surface: var(--rt-round-bg);
+  --rt-clock: var(--rt-round-clock);
 }
 .round-timer-root[data-ui="rest"] {
   --rt-accent: var(--rt-rest);
   --rt-surface: var(--rt-rest-bg);
+  --rt-clock: var(--rt-rest-clock);
 }
 .round-timer-root[data-ui="idle"] {
   --rt-accent: var(--text-secondary);
   --rt-surface: var(--bg-secondary);
+  --rt-clock: var(--text-primary);
 }
 .round-timer-root[data-ui="done"] {
   --rt-accent: var(--rt-done);
   --rt-surface: var(--rt-done-bg);
+  --rt-clock: var(--rt-done-clock);
 }
 
 .round-timer-root:fullscreen {
@@ -38,8 +47,47 @@
 }
 
 .round-timer-display {
+  font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
+}
+
+/* Últimos ~10 s do round: aviso periférico (respeitar reduced-motion) */
+.round-timer-root[data-ui="round"][data-rt-urgent] {
+  animation: rt-urgent-surface 1.1s ease-in-out infinite;
+}
+
+.round-timer-root[data-ui="round"][data-rt-urgent] .round-timer-display {
+  color: #facc15 !important;
+}
+
+@keyframes rt-urgent-surface {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.14);
+  }
+}
+
+.round-timer-focus--tappable {
+  cursor: pointer;
+  border-radius: var(--radius-lg, 14px);
+  outline: 1px solid color-mix(in srgb, var(--rt-accent, var(--primary)) 35%, transparent);
+  outline-offset: 2px;
+  padding-bottom: 0.25rem;
+}
+
+.round-timer-meta-top {
+  font-size: clamp(0.95rem, 3.5vw, 1.125rem);
+  line-height: 1.25;
+}
+
+.round-timer-meta-bottom {
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .round-timer-progress {
@@ -50,11 +98,45 @@
   margin-bottom: 1.25rem;
 }
 
+.round-timer-progress-top {
+  height: 4px;
+  margin-bottom: 1rem;
+  opacity: 0.95;
+}
+
 .round-timer-progress-fill {
   height: 100%;
   border-radius: 999px;
   background: var(--rt-accent, var(--primary));
   transition: width 0.12s linear;
+}
+
+.round-timer-stepper-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  min-height: 52px;
+  padding: 0 16px;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  border-radius: var(--radius-md, 10px);
+  border: 2px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.round-timer-stepper-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--rt-accent, var(--primary)) 50%, var(--border));
+  background: color-mix(in srgb, var(--rt-accent, var(--primary)) 8%, var(--bg-secondary));
+}
+
+.round-timer-stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* Barra principal Iniciar / Pausa / etc. */
@@ -115,8 +197,8 @@
 }
 
 .round-timer-root[data-ui="prepare"] .round-timer-btn-primary {
-  background: #a16207;
-  border-color: color-mix(in srgb, #a16207 75%, #000);
+  background: #0369a1;
+  border-color: color-mix(in srgb, #0369a1 75%, #000);
 }
 
 .round-timer-root[data-ui="round"] .round-timer-btn-primary {
@@ -125,8 +207,8 @@
 }
 
 .round-timer-root[data-ui="rest"] .round-timer-btn-primary {
-  background: #1d4ed8;
-  border-color: color-mix(in srgb, #1d4ed8 75%, #000);
+  background: #57534e;
+  border-color: color-mix(in srgb, #57534e 75%, #000);
 }
 
 .round-timer-root[data-ui="done"] .round-timer-btn-primary {
@@ -175,6 +257,12 @@
   .round-timer-btn-primary:active:not(:disabled),
   .round-timer-btn-secondary:active:not(:disabled) {
     transform: none;
+  }
+  .round-timer-root[data-rt-urgent] {
+    animation: none;
+  }
+  .round-timer-progress-fill {
+    transition: none;
   }
 }
 

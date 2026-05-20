@@ -1,6 +1,6 @@
 # Timer de rounds (área Coach)
 
-> **Última revisão:** 15 maio 2026 — sons (`public/sounds/round-timer/`), avisos nos últimos segundos, UI dos botões.  
+> **Última revisão:** 19 maio 2026 — UX «luvas calçadas» (zona larga para pausar/continuar, Enter), pausa automática ao esconder o separador, hierarquia em 3 zonas, duas barras de progresso (restante no topo, decorrido em baixo), feedback visual nos últimos 10 s do round, presets como «rotinas», contagem inicial por defeito 12 s.  
 > **Rotas:** página dedicada **`/coach/round-timer`**; variante embutida na gestão da aula **`/coach/aula`** (`RoundTimerClient` com `variant="embedded"`).
 
 ## Ficheiros principais
@@ -25,7 +25,13 @@
 4. **Rest** — descanso entre rounds (pode ser 0 s; último round vai directamente para **finished** sem descanso).  
 5. **Paused** — snapshot da fase actual.
 
-O atributo `data-ui` na raiz (idle / prepare / round / rest / done) vem de `uiKind()` e pinta `--rt-accent` e os gradientes dos botões primários.
+O atributo `data-ui` na raiz (idle / prepare / round / rest / done) vem de `uiKind()` sobre a fase efectiva (em pausa, a fase congelada) e pinta `--rt-accent`, `--rt-surface`, `--rt-clock` e os botões primários. Nos últimos ~10 s de um **round** a correr, `data-rt-urgent` activa pulso suave de fundo e dígitos amarelos (respeita `prefers-reduced-motion`).
+
+## UX em treino (distância / luvas)
+
+- **Zona de toque:** com o cronómetro a correr ou em pausa, a área central (contexto + tempo + linha de estado) funciona como atalho gigante para **pausar** ou **continuar**; toques em `button`, `a`, `input` ou `select` não disparam o toggle. Há também suporte por teclado (**Enter** / **espaço**) quando a zona está focada. As barras de progresso ficam **fora** desta zona para evitar papéis ARIA aninhados (`progressbar` dentro de `button`).
+- **Pausa ao fundo:** `visibilitychange` / `pagehide` com documento **hidden** chamam `pauseState` — chamadas ou mudança de app não devem «roubar» tempo; a sessão continua gravada em `localStorage` como antes.
+- **Configuração:** ordem dos pilares — duração do assalto, descanso, número de assaltos (`+` / `−`), contagem inicial; preset **«Guardar como rotina»**.
 
 ## Sons (ficheiros estáticos)
 

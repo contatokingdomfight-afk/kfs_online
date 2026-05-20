@@ -609,7 +609,9 @@ export const messages = {
     coachRoundTimerRestTime: "Descanso entre rounds",
     coachRoundTimerCountdown: "Contagem inicial",
     coachRoundTimerPresetLabel: "Presets",
-    coachRoundTimerSavePreset: "Guardar configuração atual como preset",
+    coachRoundTimerSavePreset: "Guardar como rotina",
+    coachRoundTimerTapToPause:
+      "Com o treino a correr: toca na zona grande do tempo para pausar ou continuar (útil com luvas). Os botões abaixo continuam disponíveis.",
     coachRoundTimerStart: "Iniciar",
     coachRoundTimerPause: "Pausar",
     coachRoundTimerResume: "Continuar",
@@ -633,6 +635,8 @@ export const messages = {
     coachRoundTimerSkipPhase: "Saltar fase",
     coachRoundTimerSkipAria: "Terminar esta fase de imediato e passar à seguinte",
     coachRoundTimerProgressAria: "Progresso do tempo na fase actual",
+    coachRoundTimerProgressRemainingAria: "Tempo restante na fase (barra que esvazia)",
+    coachRoundTimerProgressElapsedAria: "Tempo já decorrido na fase",
 
     // Biblioteca (aluno)
     libraryTitle: "Biblioteca",
@@ -1639,7 +1643,9 @@ export const messages = {
     coachRoundTimerRestTime: "Rest between rounds",
     coachRoundTimerCountdown: "Start countdown",
     coachRoundTimerPresetLabel: "Presets",
-    coachRoundTimerSavePreset: "Save current setup as preset",
+    coachRoundTimerSavePreset: "Save as routine",
+    coachRoundTimerTapToPause:
+      "While the timer runs: tap the large time area to pause or resume (gloves-friendly). The buttons below still work.",
     coachRoundTimerStart: "Start",
     coachRoundTimerPause: "Pause",
     coachRoundTimerResume: "Resume",
@@ -1663,6 +1669,8 @@ export const messages = {
     coachRoundTimerSkipPhase: "Skip phase",
     coachRoundTimerSkipAria: "End this phase now and go to the next",
     coachRoundTimerProgressAria: "Progress in the current phase",
+    coachRoundTimerProgressRemainingAria: "Time remaining in this phase (emptying bar)",
+    coachRoundTimerProgressElapsedAria: "Elapsed time in this phase",
 
     libraryTitle: "Library",
     libraryDescription: "Courses and videos to study technique, mindset and performance. Access comes from your digital plan.",

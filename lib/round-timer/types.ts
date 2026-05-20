@@ -31,5 +31,6 @@ export const DEFAULT_CONFIG: TimerConfig = {
   rounds: 3,
   roundSec: 180,
   restSec: 60,
-  countdownSec: 10,
+  /** Contagem antes do 1.º round (tempo para luvas / ringue); 10–15 s é o intervalo típico em boxe. */
+  countdownSec: 12,
 };

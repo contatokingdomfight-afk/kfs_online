@@ -88,7 +88,9 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       ariaSec: t("coachRoundTimerAriaSeconds"),
       skipPhase: t("coachRoundTimerSkipPhase"),
       skipAria: t("coachRoundTimerSkipAria"),
-      progressAria: t("coachRoundTimerProgressAria"),
+      progressRemainingAria: t("coachRoundTimerProgressRemainingAria"),
+      progressElapsedAria: t("coachRoundTimerProgressElapsedAria"),
+      tapToPause: t("coachRoundTimerTapToPause"),
     }),
     [t]
   );
@@ -162,6 +164,23 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       void releaseWake();
     };
   }, [timer.phase]);
+
+  /* Ao sair da app / ecrã bloqueado: pausar e manter tempo exacto (persistência já grava a sessão). */
+  useEffect(() => {
+    const onHide = () => {
+      if (typeof document === "undefined" || document.visibilityState !== "hidden") return;
+      setTimer((s) => {
+        if (s.phase !== "countdown" && s.phase !== "round" && s.phase !== "rest") return s;
+        return pauseState(s, Date.now());
+      });
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onHide);
+    };
+  }, []);
 
   useEffect(() => {
     function onVis() {
@@ -399,19 +418,6 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     }
   }, [timer.phase, timer.paused, tk]);
 
-  const roundLabel = useMemo(() => {
-    if (timer.phase === "round") {
-      return tk.roundOf.replace("{n}", String(timer.roundIdx + 1)).replace("{t}", String(timer.config.rounds));
-    }
-    if (timer.phase === "rest") {
-      return tk.nextRound.replace("{n}", String(nextRoundDisplay1Based(timer.completedRoundIdx)));
-    }
-    if (timer.phase === "countdown") {
-      return tk.roundOf.replace("{n}", "1").replace("{t}", String(timer.config.rounds));
-    }
-    return "—";
-  }, [timer.phase, timer.roundIdx, timer.completedRoundIdx, timer.config.rounds, tk]);
-
   const phaseProgress01 = useMemo(() => {
     if (timer.phase === "finished") return 1;
     if (timer.phase === "idle") return 0;
@@ -419,6 +425,45 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     const elapsed = Math.max(0, total - displayMs);
     return Math.min(1, elapsed / total);
   }, [timer.phase, timer.config, timer.paused, displayMs]);
+
+  /** Proporção de tempo restante na fase (1 → esvazia até 0); útil para barra periférica. */
+  const remainingPhase01 = useMemo(() => {
+    if (timer.phase === "finished") return 0;
+    if (timer.phase === "idle") return 1;
+    const total = phaseDurationMs(timer.phase, timer.config, timer.paused);
+    if (total <= 0) return 0;
+    return Math.min(1, Math.max(0, displayMs / total));
+  }, [timer.phase, timer.config, timer.paused, displayMs]);
+
+  const isRoundUrgentVisual =
+    timer.phase === "round" && timer.phaseEndsAt != null && displayMs > 0 && displayMs <= 10_000;
+
+  const focusSubline = useMemo(() => {
+    if (timer.phase === "paused") {
+      return locale === "pt" ? "Toque para continuar" : "Tap to resume";
+    }
+    if (timer.phase === "countdown") {
+      return locale === "pt" ? "A seguir: 1.º round" : "Up next: first round";
+    }
+    if (timer.phase === "round") {
+      const isLast = timer.roundIdx >= timer.config.rounds - 1;
+      if (timer.config.restSec > 0) {
+        return locale === "pt" ? "A seguir: descanso" : "Next: rest";
+      }
+      if (!isLast) {
+        return tk.nextRound.replace("{n}", String(timer.roundIdx + 2));
+      }
+      return locale === "pt" ? "A seguir: fim do treino" : "Next: workout ends";
+    }
+    if (timer.phase === "rest") {
+      return tk.nextRound.replace("{n}", String(nextRoundDisplay1Based(timer.completedRoundIdx)));
+    }
+    if (timer.phase === "finished") return tk.stateDone;
+    if (timer.phase === "idle") {
+      return locale === "pt" ? "Configura acima e inicia" : "Set up above, then start";
+    }
+    return "—";
+  }, [timer, tk, locale]);
 
   const onStart = async () => {
     await unlockAudio();
@@ -470,7 +515,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
   };
 
   const onSavePreset = () => {
-    const name = window.prompt(locale === "pt" ? "Nome do preset" : "Preset name");
+    const name = window.prompt(locale === "pt" ? "Nome da rotina" : "Routine name");
     if (!name?.trim()) return;
     const id = `custom-${Date.now()}`;
     const preset: SavedPreset = { id, label: name.trim(), config: clampConfig(config) };
@@ -507,8 +552,58 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
     return label ? `${label} · ${times}` : times;
   }, [allPresets, configForSummary, locale, matchingPresetId]);
 
+  const roundLabel = useMemo(() => {
+    if (timer.phase === "idle" || timer.phase === "finished") {
+      const line = configSummaryLine;
+      return line.length > 52 ? `${line.slice(0, 49)}…` : line;
+    }
+    if (timer.phase === "paused" && timer.paused) {
+      const ph = timer.paused.phase;
+      if (ph === "round") {
+        return tk.roundOf.replace("{n}", String(timer.roundIdx + 1)).replace("{t}", String(timer.config.rounds));
+      }
+      if (ph === "rest") {
+        return tk.nextRound.replace("{n}", String(nextRoundDisplay1Based(timer.completedRoundIdx)));
+      }
+      if (ph === "countdown") {
+        return tk.roundOf.replace("{n}", "1").replace("{t}", String(timer.config.rounds));
+      }
+    }
+    if (timer.phase === "round") {
+      return tk.roundOf.replace("{n}", String(timer.roundIdx + 1)).replace("{t}", String(timer.config.rounds));
+    }
+    if (timer.phase === "rest") {
+      return tk.nextRound.replace("{n}", String(nextRoundDisplay1Based(timer.completedRoundIdx)));
+    }
+    if (timer.phase === "countdown") {
+      return tk.roundOf.replace("{n}", "1").replace("{t}", String(timer.config.rounds));
+    }
+    return "—";
+  }, [timer.phase, timer.roundIdx, timer.completedRoundIdx, timer.config.rounds, timer.paused, tk, configSummaryLine]);
+
   const setField = (key: keyof TimerConfig, value: number) => {
     setConfig((c) => clampConfig({ ...c, [key]: value }));
+  };
+
+  const showTapZone =
+    timer.phase === "countdown" || timer.phase === "round" || timer.phase === "rest" || timer.phase === "paused";
+
+  const toggleTimerFromFocus = () => {
+    const p = timerPhaseRef.current;
+    if (p === "paused") void onResume();
+    else if (p === "countdown" || p === "round" || p === "rest") onPause();
+  };
+
+  const handleFocusTap = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement | null;
+    if (target?.closest("a, button, input, select, textarea, [contenteditable='true']")) return;
+    toggleTimerFromFocus();
+  };
+
+  const handleFocusKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    toggleTimerFromFocus();
   };
 
   return (
@@ -516,6 +611,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       ref={rootRef}
       className={`round-timer-root px-3 ${isEmbedded ? "max-w-none pb-4" : "mx-auto max-w-[min(520px,100%)] pb-10"}`}
       data-ui={uk}
+      data-rt-urgent={isRoundUrgentVisual ? true : undefined}
       style={{
         borderRadius: "var(--radius-lg)",
         background: "var(--rt-surface, var(--bg-secondary))",
@@ -612,66 +708,80 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
           </select>
         </label>
 
-        <div className="grid grid-cols-2 gap-3">
-          <label className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
-            {tk.rounds}
-            <input
-              type="number"
-              className="round-timer-input mt-1"
-              min={1}
-              max={99}
-              value={config.rounds}
-              onChange={(e) => setField("rounds", Number(e.target.value))}
-            />
-          </label>
-          <div className="col-span-2">
-            <DurationRollPicker
-              label={
-                <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
-                  {tk.countdown}
-                </span>
-              }
-              valueSec={config.countdownSec}
-              onChangeSec={(n) => setField("countdownSec", n)}
-              minSec={0}
-              maxSec={120}
-              disabled={!canEdit}
-              ariaMinutes={tk.ariaMin}
-              ariaSeconds={tk.ariaSec}
-            />
+        <div className="grid grid-cols-1 gap-3">
+          <DurationRollPicker
+            label={
+              <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                {tk.roundTime}
+              </span>
+            }
+            valueSec={config.roundSec}
+            onChangeSec={(n) => setField("roundSec", n)}
+            minSec={5}
+            maxSec={3600}
+            disabled={!canEdit}
+            ariaMinutes={tk.ariaMin}
+            ariaSeconds={tk.ariaSec}
+          />
+          <DurationRollPicker
+            label={
+              <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                {tk.restTime}
+              </span>
+            }
+            valueSec={config.restSec}
+            onChangeSec={(n) => setField("restSec", n)}
+            minSec={0}
+            maxSec={3600}
+            disabled={!canEdit}
+            ariaMinutes={tk.ariaMin}
+            ariaSeconds={tk.ariaSec}
+          />
+          <div>
+            <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+              {tk.rounds}
+            </span>
+            <div className="mt-1 flex min-h-[52px] items-center justify-center gap-4">
+              <button
+                type="button"
+                className="round-timer-stepper-btn"
+                disabled={!canEdit || config.rounds <= 1}
+                aria-label={locale === "pt" ? "Menos um assalto" : "One fewer round"}
+                onClick={() => setField("rounds", Math.max(1, config.rounds - 1))}
+              >
+                −
+              </button>
+              <span
+                className="min-w-[3ch] text-center text-3xl font-black tabular-nums"
+                style={{ color: "var(--text-primary)" }}
+              >
+                {config.rounds}
+              </span>
+              <button
+                type="button"
+                className="round-timer-stepper-btn"
+                disabled={!canEdit || config.rounds >= 99}
+                aria-label={locale === "pt" ? "Mais um assalto" : "One more round"}
+                onClick={() => setField("rounds", Math.min(99, config.rounds + 1))}
+              >
+                +
+              </button>
+            </div>
           </div>
-          <div className="col-span-2">
-            <DurationRollPicker
-              label={
-                <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
-                  {tk.roundTime}
-                </span>
-              }
-              valueSec={config.roundSec}
-              onChangeSec={(n) => setField("roundSec", n)}
-              minSec={5}
-              maxSec={3600}
-              disabled={!canEdit}
-              ariaMinutes={tk.ariaMin}
-              ariaSeconds={tk.ariaSec}
-            />
-          </div>
-          <div className="col-span-2">
-            <DurationRollPicker
-              label={
-                <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
-                  {tk.restTime}
-                </span>
-              }
-              valueSec={config.restSec}
-              onChangeSec={(n) => setField("restSec", n)}
-              minSec={0}
-              maxSec={3600}
-              disabled={!canEdit}
-              ariaMinutes={tk.ariaMin}
-              ariaSeconds={tk.ariaSec}
-            />
-          </div>
+          <DurationRollPicker
+            label={
+              <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                {tk.countdown}
+              </span>
+            }
+            valueSec={config.countdownSec}
+            onChangeSec={(n) => setField("countdownSec", n)}
+            minSec={0}
+            maxSec={120}
+            disabled={!canEdit}
+            ariaMinutes={tk.ariaMin}
+            ariaSeconds={tk.ariaSec}
+          />
         </div>
 
         <button type="button" className="round-timer-btn round-timer-btn-secondary w-full text-sm" onClick={onSavePreset}>
@@ -683,33 +793,72 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       </section>
 
       <div
-        className="round-timer-display text-center mb-6 select-none"
-        style={{
-          fontSize: "clamp(3rem, 14vw, 4.5rem)",
-          fontWeight: 800,
-          lineHeight: 1,
-          color: "var(--rt-accent, var(--primary))",
-        }}
+        className="round-timer-progress round-timer-progress-top mb-4"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(remainingPhase01 * 100)}
+        aria-label={tk.progressRemainingAria}
       >
-        {formatMmSsFromMs(displayMs)}
+        <div className="round-timer-progress-fill" style={{ width: `${remainingPhase01 * 100}%` }} />
       </div>
 
       <div
-        className="round-timer-progress"
+        className={`round-timer-focus mb-2 select-none ${showTapZone ? "round-timer-focus--tappable" : ""}`}
+        onClick={showTapZone ? handleFocusTap : undefined}
+        onKeyDown={showTapZone ? handleFocusKeyDown : undefined}
+        role={showTapZone ? "button" : undefined}
+        tabIndex={showTapZone ? 0 : undefined}
+        aria-label={
+          showTapZone
+            ? locale === "pt"
+              ? "Zona do cronómetro: toque ou Enter para pausar ou continuar"
+              : "Timer area: tap or Enter to pause or resume"
+            : undefined
+        }
+      >
+        <p
+          className="round-timer-meta-top mb-3 text-center font-semibold tracking-tight"
+          style={{ color: "var(--text-primary)" }}
+        >
+          {roundLabel}
+        </p>
+
+        <div
+          className="round-timer-display text-center"
+          style={{
+            fontSize: "clamp(3.25rem, 16vw, 5rem)",
+            fontWeight: 900,
+            lineHeight: 1.05,
+            color: "var(--rt-clock, var(--rt-accent, var(--primary)))",
+          }}
+        >
+          {formatMmSsFromMs(displayMs)}
+        </div>
+
+        <div className="round-timer-meta-bottom mt-4 text-center">
+          <p className="text-sm font-bold uppercase tracking-wide" style={{ color: "var(--text-primary)" }}>
+            {labelState}
+          </p>
+          <p className="mt-1 text-xs font-medium leading-snug" style={{ color: "var(--text-secondary)" }}>
+            {focusSubline}
+          </p>
+        </div>
+      </div>
+
+      <div
+        className="round-timer-progress mb-4"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(phaseProgress01 * 100)}
-        aria-label={tk.progressAria}
+        aria-label={tk.progressElapsedAria}
       >
         <div className="round-timer-progress-fill" style={{ width: `${phaseProgress01 * 100}%` }} />
       </div>
 
-      <p className="text-center text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-        {labelState}
-      </p>
-      <p className="text-center text-base mb-6" style={{ color: "var(--text-secondary)" }}>
-        {roundLabel}
+      <p className="mb-4 text-center text-xs leading-snug" style={{ color: "var(--text-secondary)" }}>
+        {tk.tapToPause}
       </p>
 
       <div className="round-timer-actions flex flex-wrap justify-center gap-3 mb-2">
