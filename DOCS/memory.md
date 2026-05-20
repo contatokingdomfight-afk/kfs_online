@@ -6,7 +6,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 ## Sessão web (Supabase Auth)
 
-- **Manter-me ligado:** checkbox em `/sign-in` e `/sign-up` (por defeito activo). Grava o cookie de preferência `kfs_auth_long` (`lib/auth/remember-device.ts`); `middleware`, `lib/supabase/server.ts`, `route-handler` e `lib/supabase/client.ts` usam `resolveSupabaseCookieOptions` em `lib/supabase/cookie-options.ts` — **longo** (~400 d de `maxAge` nos cookies de sessão) vs **curto** (30 d) quando desmarcado (PC partilhado). Renovação do access JWT: `components/AuthSessionKeepAlive.tsx` e `DOCS/PWA.md`.
+- **Manter-me ligado:** checkbox em `/sign-in` e `/sign-up` (por defeito activo), **por baixo** do botão principal (Entrar / Criar conta). Grava o cookie de preferência `kfs_auth_long` (`lib/auth/remember-device.ts`); `middleware`, `lib/supabase/server.ts`, `route-handler` e `lib/supabase/client.ts` usam `resolveSupabaseCookieOptions` em `lib/supabase/cookie-options.ts` — **longo** (~400 d de `maxAge` nos cookies de sessão) vs **curto** (30 d) quando desmarcado (PC partilhado). Renovação do access JWT: `components/AuthSessionKeepAlive.tsx` e `DOCS/PWA.md`.
 
 ## Supabase EU — histórico de migrações
 

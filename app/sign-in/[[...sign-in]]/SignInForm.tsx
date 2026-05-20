@@ -93,23 +93,6 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
         <h1 className="text-mobile-lg font-semibold text-center mb-6" style={{ color: "var(--text-primary)" }}>
           {t("signIn")}
         </h1>
-        <label className="mb-4 flex cursor-pointer items-start gap-3 text-left">
-          <input
-            type="checkbox"
-            checked={rememberDevice}
-            onChange={(e) => setRememberDevice(e.target.checked)}
-            disabled={overlayOpen}
-            className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]"
-          />
-          <span>
-            <span className="block text-mobile-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-              {t("rememberDevice")}
-            </span>
-            <span className="mt-0.5 block text-mobile-sm leading-snug" style={{ color: "var(--text-secondary)" }}>
-              {t("rememberDeviceHint")}
-            </span>
-          </span>
-        </label>
         <button
           type="button"
           onClick={handleGoogleSignIn}
@@ -156,6 +139,18 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
             {t("signIn")}
           </button>
         </form>
+        <label className="mt-4 flex cursor-pointer items-center gap-3 text-left">
+          <input
+            type="checkbox"
+            checked={rememberDevice}
+            onChange={(e) => setRememberDevice(e.target.checked)}
+            disabled={overlayOpen}
+            className="h-4 w-4 shrink-0 accent-[var(--primary)]"
+          />
+          <span className="text-mobile-sm font-medium" style={{ color: "var(--text-primary)" }}>
+            {t("rememberDevice")}
+          </span>
+        </label>
         <p className="text-mobile-base text-center mt-6" style={{ color: "var(--text-secondary)" }}>
           {t("noAccountYet")}{" "}
           <Link href="/sign-up" className="font-semibold" style={{ color: "var(--primary)" }}>

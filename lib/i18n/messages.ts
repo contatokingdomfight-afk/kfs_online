@@ -977,8 +977,6 @@ export const messages = {
     signInSuccessRedirect: "Sessão iniciada. A redirecionar…",
     signInOpeningGoogle: "A abrir o login do Google…",
     rememberDevice: "Manter-me ligado neste dispositivo",
-    rememberDeviceHint:
-      "Recomendado no telemóvel. Desmarca só em computadores partilhados (a sessão deixa de ser guardada tanto tempo nos cookies).",
     noAccountYet: "Ainda não tens conta?",
     alreadyHaveAccount: "Já tens conta?",
     creatingAccount: "A criar conta…",
@@ -2005,8 +2003,6 @@ export const messages = {
     signInSuccessRedirect: "Signed in. Redirecting…",
     signInOpeningGoogle: "Opening Google sign-in…",
     rememberDevice: "Keep me signed in on this device",
-    rememberDeviceHint:
-      "Recommended on your phone. Uncheck only on shared computers (session cookies are kept for a shorter time).",
     noAccountYet: "Don't have an account yet?",
     alreadyHaveAccount: "Already have an account?",
     creatingAccount: "Creating account…",
