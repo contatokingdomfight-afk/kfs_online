@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
+import {
+  REMEMBER_DEVICE_COOKIE_NAME,
+  rememberLongSessionFromCookieValue,
+  resolveSupabaseCookieOptions,
+} from "@/lib/supabase/cookie-options";
 
 /**
  * Cliente Supabase para Route Handlers (`app/api/...`).
@@ -8,11 +12,12 @@ import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
  */
 export async function createRouteHandlerClient() {
   const cookieStore = await cookies();
+  const rememberLong = rememberLongSessionFromCookieValue(cookieStore.get(REMEMBER_DEVICE_COOKIE_NAME)?.value);
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: supabaseCookieOptions,
+      cookieOptions: resolveSupabaseCookieOptions(rememberLong),
       cookies: {
         getAll() {
           return cookieStore.getAll();

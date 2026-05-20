@@ -1,17 +1,22 @@
 import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
+import {
+  REMEMBER_DEVICE_COOKIE_NAME,
+  rememberLongSessionFromCookieValue,
+  resolveSupabaseCookieOptions,
+} from "@/lib/supabase/cookie-options";
 
 /** Uma instância por pedido RSC — evita múltiplos `createServerClient` no mesmo render. */
 async function createSupabaseServerClient() {
   const cookieStore = await cookies();
+  const rememberLong = rememberLongSessionFromCookieValue(cookieStore.get(REMEMBER_DEVICE_COOKIE_NAME)?.value);
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: supabaseCookieOptions,
+      cookieOptions: resolveSupabaseCookieOptions(rememberLong),
       cookies: {
         getAll() {
           return cookieStore.getAll();

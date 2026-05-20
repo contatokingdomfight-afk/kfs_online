@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { persistRememberDeviceChoice } from "@/lib/auth/remember-device";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
@@ -14,6 +15,7 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [savePhase, setSavePhase] = useState<"idle" | "saving" | "success">("idle");
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -39,6 +41,7 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
     e.preventDefault();
     setError(null);
     setSavePhase("saving");
+    persistRememberDeviceChoice(rememberDevice);
     const supabase = createClient();
     const { error: err } = await supabase.auth.signInWithPassword({
       email,
@@ -60,6 +63,7 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
   async function handleGoogleSignIn() {
     setError(null);
     setGoogleLoading(true);
+    persistRememberDeviceChoice(rememberDevice);
     const supabase = createClient();
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const redirectTo = nextUrl && nextUrl.startsWith("/")
@@ -89,6 +93,23 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
         <h1 className="text-mobile-lg font-semibold text-center mb-6" style={{ color: "var(--text-primary)" }}>
           {t("signIn")}
         </h1>
+        <label className="mb-4 flex cursor-pointer items-start gap-3 text-left">
+          <input
+            type="checkbox"
+            checked={rememberDevice}
+            onChange={(e) => setRememberDevice(e.target.checked)}
+            disabled={overlayOpen}
+            className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]"
+          />
+          <span>
+            <span className="block text-mobile-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              {t("rememberDevice")}
+            </span>
+            <span className="mt-0.5 block text-mobile-sm leading-snug" style={{ color: "var(--text-secondary)" }}>
+              {t("rememberDeviceHint")}
+            </span>
+          </span>
+        </label>
         <button
           type="button"
           onClick={handleGoogleSignIn}

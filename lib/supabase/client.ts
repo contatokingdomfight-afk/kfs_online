@@ -1,5 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
-import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
+import { readRememberLongSessionFromDocumentCookie } from "@/lib/auth/remember-device";
+import { resolveSupabaseCookieOptions } from "@/lib/supabase/cookie-options";
 
 function readPublicSupabaseEnv() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -18,11 +19,12 @@ export function createClient() {
         "Valores: Supabase → Project Settings → API."
     );
   }
+  const rememberLong = readRememberLongSessionFromDocumentCookie();
   return createBrowserClient(
     url,
     key,
     {
-      cookieOptions: supabaseCookieOptions,
+      cookieOptions: resolveSupabaseCookieOptions(rememberLong),
       auth: {
         persistSession: true,
         autoRefreshToken: true,

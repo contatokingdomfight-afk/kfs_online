@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { persistRememberDeviceChoice } from "@/lib/auth/remember-device";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -15,12 +16,14 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
 
   async function handleGoogleSignIn() {
     setError(null);
     setGoogleLoading(true);
+    persistRememberDeviceChoice(rememberDevice);
     const supabase = createClient();
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const nextPath = initialNext && initialNext.startsWith("/") ? initialNext : "/dashboard";
@@ -41,6 +44,7 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
     setError(null);
     setMessage(null);
     setLoading(true);
+    persistRememberDeviceChoice(rememberDevice);
     const supabase = createClient();
     const { data, error: err } = await supabase.auth.signUp({
       email,
@@ -70,6 +74,23 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
         <h1 className="text-mobile-lg font-semibold text-center mb-6" style={{ color: "var(--text-primary)" }}>
           {t("signUp")}
         </h1>
+        <label className="mb-4 flex cursor-pointer items-start gap-3 text-left">
+          <input
+            type="checkbox"
+            checked={rememberDevice}
+            onChange={(e) => setRememberDevice(e.target.checked)}
+            disabled={loading || googleLoading}
+            className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]"
+          />
+          <span>
+            <span className="block text-mobile-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              {t("rememberDevice")}
+            </span>
+            <span className="mt-0.5 block text-mobile-sm leading-snug" style={{ color: "var(--text-secondary)" }}>
+              {t("rememberDeviceHint")}
+            </span>
+          </span>
+        </label>
         <button
           type="button"
           onClick={handleGoogleSignIn}

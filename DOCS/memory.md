@@ -4,6 +4,10 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 > Não confundir com ficheiros duplicados fora de `DOCS/`; a canónica é **`DOCS/memory.md`**.
 
+## Sessão web (Supabase Auth)
+
+- **Manter-me ligado:** checkbox em `/sign-in` e `/sign-up` (por defeito activo). Grava o cookie de preferência `kfs_auth_long` (`lib/auth/remember-device.ts`); `middleware`, `lib/supabase/server.ts`, `route-handler` e `lib/supabase/client.ts` usam `resolveSupabaseCookieOptions` em `lib/supabase/cookie-options.ts` — **longo** (~400 d de `maxAge` nos cookies de sessão) vs **curto** (30 d) quando desmarcado (PC partilhado). Renovação do access JWT: `components/AuthSessionKeepAlive.tsx` e `DOCS/PWA.md`.
+
 ## Supabase EU — histórico de migrações
 
 - **Lista canónica** de nomes já registados no projecto EU (`supabase_migrations.schema_migrations`): `scripts/lib/supabase-eu-remote-migration-names.mjs`. Actualizar quando o MCP `list_migrations` (servidor `user-supabase_kfs_eu`) mostrar entradas novas.

@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, NextRequest } from "next/server";
-import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
+import {
+  REMEMBER_DEVICE_COOKIE_NAME,
+  rememberLongSessionFromCookieValue,
+  resolveSupabaseCookieOptions,
+} from "@/lib/supabase/cookie-options";
 
 /** Inclui `/auth/update-password`: link do email de reset traz `?code=`; tem de ser público antes da sessão existir. */
 const publicPaths = [
@@ -95,8 +99,9 @@ export async function middleware(request: NextRequest) {
      */
     let response = NextResponse.next({ request: withKfsPathname(request) });
 
+    const rememberLong = rememberLongSessionFromCookieValue(request.cookies.get(REMEMBER_DEVICE_COOKIE_NAME)?.value);
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-      cookieOptions: supabaseCookieOptions,
+      cookieOptions: resolveSupabaseCookieOptions(rememberLong),
       cookies: {
         getAll() {
           return request.cookies.getAll();
