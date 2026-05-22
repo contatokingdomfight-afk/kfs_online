@@ -1,7 +1,7 @@
 # Roadmap – Plataforma Kingdom Fight School
 
 > O que **já está feito** vs **por fazer**, alinhado ao [Plano de Negócios](./Plano_de_Negócios_Kingdom_Fight_School.md) e à [Especificação Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md).  
-> **Última revisão (documentação):** 19 maio 2026 — Tribo (comunidade): doc MVP [`TRIBO_MVP.md`](TRIBO_MVP.md); eventos no dashboard aluno (filtro inscritos, strip próximos eventos); centrais `/admin/notificacoes` e `/coach/notificacoes`; notificações in-app para inscrições em eventos — `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md` e `DOCS/memory.md`.  
+> **Última revisão (documentação):** 19 maio 2026 — **Mobile / PWA:** distribuição inicial pelo site (faixa «instalar» na homepage) sem lojas — [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md); Capacitor + lojas mantidos como fase opcional no resumo executivo. *Histórico:* 19 maio 2026 — Tribo (comunidade): doc MVP [`TRIBO_MVP.md`](TRIBO_MVP.md); eventos no dashboard aluno (filtro inscritos, strip próximos eventos); centrais `/admin/notificacoes` e `/coach/notificacoes`; notificações in-app para inscrições em eventos — `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md` e `DOCS/memory.md`.  
 > *Histórico:* 19 maio 2026 — Tribo: `TRIBO_MVP.md` + secção 7 na Especificação Kingdom Digital; 10 fevereiro 2026 — dashboard aluno Lisboa + Presencial I; 27 abr. 2026 (RBAC + `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`); 22 abr. 2026 (anamnese, avatar); 18 abr. 2026 (ranking); alinhamento admin/Resend/RLS, sessão mobile, Stripe, índice `DOCS/`.
 
 **Legenda:** **Feito** = em produção. **Por fazer** = não implementado ou só operacional (dados em falta).
@@ -17,7 +17,7 @@
 | 3 | Performance | **«Ver como melhorar»** nos critérios → ligação a conteúdos da biblioteca |
 | 4 | Avaliação (dados) | Completar **critérios dos 5 pilares** na BD por modalidade (foco **BJJ / MMA** onde faltar) — o Admin **Avaliação** já existe |
 | 5 | Bem-estar | **Biometria** além do autorrelato (dispositivos / métricas) — v1 check-in + agregados já feitos |
-| 6 | Mobile | **Capacitor** + lojas; testes em dispositivos reais (**PWA** web já feito — `DOCS/PWA.md`) |
+| 6 | Mobile | **Fase 1 (actual):** PWA pelo **site** — CTA «instalar» na homepage + fluxo existente no menu / dicas (`DOCS/MOBILE_APP_DISTRIBUICAO.md`, `DOCS/PWA.md`). **Fase seguinte (opcional):** **Capacitor** + lojas; testes em dispositivos reais |
 | 7 | Notificações | **Push** no browser *(in-app na plataforma, incl. eventos — ver `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`)* |
 | 8 | Qualidade | **E2E** (ex. Playwright); relatórios/alertas no financeiro admin; **Lighthouse** em produção |
 | 9 | Bem-estar / check-in | **Peso após o treino** no fluxo de recolha biométrica do check-in (além do pré-aula) — permitir estimar **variação de peso/líquido por sessão** e **médias por aluno** (com contexto: modalidade, duração, hidratação já recolhida) |

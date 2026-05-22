@@ -1,12 +1,13 @@
 # Memória do projeto
 
-Contexto técnico e decisões recentes (**prioridade para continuidade** e alinhamento de código). Índice geral da pasta `DOCS/`: [`INDEX.md`](INDEX.md). Notificações e eventos (rotas, gatilhos): [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md). **Timer de rounds (coach):** [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md). **Tribo (comunidade) — MVP planeado:** [`TRIBO_MVP.md`](TRIBO_MVP.md).
+Contexto técnico e decisões recentes (**prioridade para continuidade** e alinhamento de código). Índice geral da pasta `DOCS/`: [`INDEX.md`](INDEX.md). Notificações e eventos (rotas, gatilhos): [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md). **Timer de rounds (coach):** [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md). **Tribo (comunidade) — MVP planeado:** [`TRIBO_MVP.md`](TRIBO_MVP.md). **Mobile — PWA só pelo site (sem lojas):** [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md).
 
 > Não confundir com ficheiros duplicados fora de `DOCS/`; a canónica é **`DOCS/memory.md`**.
 
 ## Sessão web (Supabase Auth)
 
 - **Manter-me ligado:** checkbox em `/sign-in` e `/sign-up` (por defeito activo), **por baixo** do botão principal (Entrar / Criar conta). Grava o cookie de preferência `kfs_auth_long` (`lib/auth/remember-device.ts`); `middleware`, `lib/supabase/server.ts`, `route-handler` e `lib/supabase/client.ts` usam `resolveSupabaseCookieOptions` em `lib/supabase/cookie-options.ts` — **longo** (~400 d de `maxAge` nos cookies de sessão) vs **curto** (30 d) quando desmarcado (PC partilhado). Renovação do access JWT: `components/AuthSessionKeepAlive.tsx` e `DOCS/PWA.md`.
+- **PWA / distribuição mobile (fase 1):** instalação pelo **site** (atalho no ecrã), sem lojas — faixa na homepage `components/home/HomePwaInstallBand.tsx`, mais `SidebarPwaInstall` e `PwaInstallHint`; ver [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md) e roadmap.
 
 ## Supabase EU — histórico de migrações
 

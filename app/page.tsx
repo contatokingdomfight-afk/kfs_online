@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getHomeContent } from "@/lib/home-content";
 import { Hero } from "@/components/home/Hero";
+import { HomePwaInstallBand } from "@/components/home/HomePwaInstallBand";
 import { Stats } from "@/components/home/Stats";
 import { About } from "@/components/home/About";
 import { HowItWorks } from "@/components/home/HowItWorks";
@@ -62,6 +63,7 @@ export default async function HomePage({ searchParams }: Props) {
       <HomeHeader ctaLabel={content.headerCta} />
 
       <Hero content={content} />
+      <HomePwaInstallBand locale={locale} title={content.pwaBandTitle} subtitle={content.pwaBandSub} />
       <Stats content={content} />
       <About content={content} />
       <YouTubeShortsSection content={content} />

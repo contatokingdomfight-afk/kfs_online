@@ -1,7 +1,7 @@
 # Progressive Web App (PWA) — KFS Online
 
-> **Última revisão:** 20 maio 2026 (`sw.js`: listener `fetch` sem `respondWith` — evita erros de rede no DevTools em prefetch/RSC).  
-> **Capacitor (Android/iOS)** mantém-se como fase seguinte no roadmap; o PWA é a base web instalável. Ver `DOCS/ROADMAP_Plataforma_KFS.md` (resumo executivo: mobile / Capacitor).
+> **Última revisão:** 19 maio 2026 — faixa **HomePwaInstallBand** na homepage (`app/page.tsx`); doc `MOBILE_APP_DISTRIBUICAO.md`. *Anterior:* 20 maio 2026 (`sw.js`: listener `fetch` sem `respondWith` — evita erros de rede no DevTools em prefetch/RSC).  
+> **Capacitor (Android/iOS)** mantém-se como fase seguinte no roadmap; o PWA é a base web instalável. Ver `DOCS/ROADMAP_Plataforma_KFS.md` (resumo executivo: mobile) e **`DOCS/MOBILE_APP_DISTRIBUICAO.md`** (site primeiro, sem lojas).
 
 ## O que está implementado
 
@@ -12,7 +12,7 @@
 | **Regenerar ícones** | `npm run generate:pwa-icons` (script: `scripts/generate-pwa-icons.ts`, usa **sharp**). |
 | **Metadados** | `app/layout.tsx` — `applicationName`, `appleWebApp`, `icons` (favicon dinâmico continua em `app/icon.tsx`, alinhado à cor de marca). |
 | **Service worker** | `public/sw.js` — `install` / `activate` + listener `fetch` **vazio** (não chama `respondWith`): pass-through nativo do browser, sem interceptar GET nem devolver `Response.error()` em falhas (evita avisos «FetchEvent … network error» em `/admin` ou prefetch). Registo só em **produção** via `components/PwaServiceWorkerRegister.tsx`. |
-| **Dica de instalação** | `PwaInstallProvider` + `PwaInstallHint.tsx`: primeiro aviso em ecrãs ≤768px (estilo destacado); «Agora não» ou × grava `kfs-pwa-sidebar-mode` e o aviso some. Depois, `SidebarPwaInstall` no menu lateral: com `beforeinstallprompt` (Chromium) mostra «Instalar app»; no **Safari** e outros sem API nativa, o mesmo estilo de botão abre um **modal** com passos (`lib/pwa-install-ui.ts`). Migração: quem tinha o dismiss antigo passa para modo menu (`lib/pwa-install-storage.ts`). |
+| **Dica de instalação** | `PwaInstallProvider` + `PwaInstallHint.tsx`: primeiro aviso em ecrãs ≤768px (estilo destacado); «Agora não» ou × grava `kfs-pwa-sidebar-mode` e o aviso some. Depois, `SidebarPwaInstall` no menu lateral: com `beforeinstallprompt` (Chromium) mostra «Instalar app»; no **Safari** e outros sem API nativa, o mesmo estilo de botão abre um **modal** com passos (`lib/pwa-install-ui.ts`). **Homepage pública:** `HomePwaInstallBand` (`components/home/HomePwaInstallBand.tsx`) — mesma lógica de instalação / modal, sem o gate de ecrã estreito do sidebar. Migração: quem tinha o dismiss antigo passa para modo menu (`lib/pwa-install-storage.ts`). |
 | **Modo app (standalone / fullscreen)** | `lib/pwa-installed-window.ts` + `components/PwaDisplayMode.tsx` definem `data-pwa-standalone` no `<html>` quando `display-mode` é `standalone` ou `fullscreen` (ou iOS `navigator.standalone`); `app/globals.css` ajusta `min-height` do `body` em modo app. |
 | **Middleware** | `middleware.ts` — matcher exclui `sw.js` e `manifest.webmanifest` para não redirecionar para login. |
 | **Sessão (app instalada)** | O mesmo fluxo Supabase que no browser: `components/AuthSessionKeepAlive.tsx` no layout raiz chama `refreshSession()` **só quando o access JWT está expirado ou perto de expirar** (ao voltar à app / `pageshow` / foco / online, e no intervalo com o ecrã visível); `lib/supabase/client.ts` força `persistSession` + `autoRefreshToken`. |

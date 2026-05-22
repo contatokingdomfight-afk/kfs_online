@@ -103,6 +103,11 @@ export const homeContent = {
     ctaSub: "Dê o primeiro passo. Aula experimental gratuita.",
     ctaButton: "Começar Agora",
 
+    /** Faixa PWA na homepage — distribuição sem lojas de aplicativos */
+    pwaBandTitle: "Plataforma no telemóvel",
+    pwaBandSub:
+      "Instale um atalho no ecrã inicial — aceda como numa app, com o mesmo login. Sem Google Play ou App Store.",
+
     // Social
     youtubeUrl: "https://www.youtube.com/@Kingdom_Fight",
     instagramUrl: "https://www.instagram.com/kingdomfightschool",
@@ -214,6 +219,10 @@ export const homeContent = {
     ctaHeadline: "Your transformation starts now.",
     ctaSub: "Take the first step. Free trial class.",
     ctaButton: "Start Now",
+
+    pwaBandTitle: "Platform on your phone",
+    pwaBandSub:
+      "Add a shortcut to your home screen — open like an app with the same login. No Google Play or App Store required.",
 
     youtubeUrl: "https://www.youtube.com/@Kingdom_Fight",
     instagramUrl: "https://www.instagram.com/kingdomfightschool",
