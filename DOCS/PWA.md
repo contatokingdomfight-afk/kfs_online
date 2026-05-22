@@ -1,6 +1,6 @@
 # Progressive Web App (PWA) — KFS Online
 
-> **Última revisão:** 19 maio 2026 (resume: refresh só perto do expiry do JWT; intervalo visível ~10 min).  
+> **Última revisão:** 20 maio 2026 (`sw.js`: listener `fetch` sem `respondWith` — evita erros de rede no DevTools em prefetch/RSC).  
 > **Capacitor (Android/iOS)** mantém-se como fase seguinte no roadmap; o PWA é a base web instalável. Ver `DOCS/ROADMAP_Plataforma_KFS.md` (resumo executivo: mobile / Capacitor).
 
 ## O que está implementado
@@ -11,7 +11,7 @@
 | **Ícones** | `public/icons/` — `icon-192.png`, `icon-512.png`, `icon-512-maskable.png`, `apple-touch-icon.png` gerados a partir de **`KFS Logo.png`** na raiz. |
 | **Regenerar ícones** | `npm run generate:pwa-icons` (script: `scripts/generate-pwa-icons.ts`, usa **sharp**). |
 | **Metadados** | `app/layout.tsx` — `applicationName`, `appleWebApp`, `icons` (favicon dinâmico continua em `app/icon.tsx`, alinhado à cor de marca). |
-| **Service worker** | `public/sw.js` — `install` / `activate` + handler `fetch` que em caso de falha devolve `Response.error()` (critérios de instalação no Chrome Android; sem promessa rejeitada no SW). Registo só em **produção** via `components/PwaServiceWorkerRegister.tsx`. |
+| **Service worker** | `public/sw.js` — `install` / `activate` + listener `fetch` **vazio** (não chama `respondWith`): pass-through nativo do browser, sem interceptar GET nem devolver `Response.error()` em falhas (evita avisos «FetchEvent … network error» em `/admin` ou prefetch). Registo só em **produção** via `components/PwaServiceWorkerRegister.tsx`. |
 | **Dica de instalação** | `PwaInstallProvider` + `PwaInstallHint.tsx`: primeiro aviso em ecrãs ≤768px (estilo destacado); «Agora não» ou × grava `kfs-pwa-sidebar-mode` e o aviso some. Depois, `SidebarPwaInstall` no menu lateral: com `beforeinstallprompt` (Chromium) mostra «Instalar app»; no **Safari** e outros sem API nativa, o mesmo estilo de botão abre um **modal** com passos (`lib/pwa-install-ui.ts`). Migração: quem tinha o dismiss antigo passa para modo menu (`lib/pwa-install-storage.ts`). |
 | **Modo app (standalone / fullscreen)** | `lib/pwa-installed-window.ts` + `components/PwaDisplayMode.tsx` definem `data-pwa-standalone` no `<html>` quando `display-mode` é `standalone` ou `fullscreen` (ou iOS `navigator.standalone`); `app/globals.css` ajusta `min-height` do `body` em modo app. |
 | **Middleware** | `middleware.ts` — matcher exclui `sw.js` e `manifest.webmanifest` para não redirecionar para login. |
