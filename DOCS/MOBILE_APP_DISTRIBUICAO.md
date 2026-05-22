@@ -1,6 +1,6 @@
 # Distribuição mobile: site + PWA (sem lojas)
 
-> **Última revisão:** 19 maio 2026 — decisão de produto: fase inicial **só pelo site**, com **botão de instalar** (PWA); lojas de aplicativos **não** na primeira fase.
+> **Última revisão:** 19 maio 2026 — fase 1 PWA pelo site; fase 2 Capacitor com scaffold Android/iOS — [`CAPACITOR.md`](CAPACITOR.md).
 
 ## Objetivo
 
@@ -24,10 +24,11 @@ Disponibilizar a experiência «em app» **a partir do site**, com **instalaçã
 - Distribuição **100% web**: URL do site + CTA de instalação PWA.
 - Sem revisão Apple/Google, sem binários nas lojas.
 
-## Fase seguinte (opcional)
+## Fase 2 — Capacitor (em curso)
 
-- **Capacitor** (ou wrapper semelhante) para APK / IPA e eventual publicação em **Play Store / App Store**, se fizer sentido comercial ou técnico.
-- Custos e restrições (conta Apple Developer, guidelines, pipeline de build) avaliam-se nessa altura.
+- Projetos `android/` e `ios/`, ícones/splash KFS, OAuth Google via browser do sistema + deep link `/auth/callback`.
+- Guia: [`CAPACITOR.md`](CAPACITOR.md).
+- **Por fazer:** builds assinados, `assetlinks.json`, publicação nas lojas.
 
 ## Roadmap
 

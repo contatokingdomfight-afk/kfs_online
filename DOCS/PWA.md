@@ -1,7 +1,7 @@
 # Progressive Web App (PWA) — KFS Online
 
 > **Última revisão:** 19 maio 2026 — faixa **HomePwaInstallBand** na homepage (`app/page.tsx`); doc `MOBILE_APP_DISTRIBUICAO.md`. *Anterior:* 20 maio 2026 (`sw.js`: listener `fetch` sem `respondWith` — evita erros de rede no DevTools em prefetch/RSC).  
-> **Capacitor (Android/iOS)** mantém-se como fase seguinte no roadmap; o PWA é a base web instalável. Ver `DOCS/ROADMAP_Plataforma_KFS.md` (resumo executivo: mobile) e **`DOCS/MOBILE_APP_DISTRIBUICAO.md`** (site primeiro, sem lojas).
+> **Capacitor (Android/iOS):** scaffold em **`DOCS/CAPACITOR.md`** (WebView → mesmo site). O PWA continua a base no browser. Ver também **`DOCS/MOBILE_APP_DISTRIBUICAO.md`** e o roadmap mobile.
 
 ## O que está implementado
 

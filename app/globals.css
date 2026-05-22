@@ -1369,6 +1369,7 @@
 }
 
 /* PWA instalada (manifest standalone ou fullscreen) — html[data-pwa-standalone="true"] (PwaDisplayMode.tsx) */
-html[data-pwa-standalone="true"] body {
+html[data-pwa-standalone="true"] body,
+html[data-kfs-native="capacitor"] body {
   min-height: 100dvh;
 }

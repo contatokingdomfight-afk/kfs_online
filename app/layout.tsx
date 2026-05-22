@@ -9,6 +9,7 @@ import { PwaServiceWorkerRegister } from "@/components/PwaServiceWorkerRegister"
 import { PwaInstallProvider } from "@/components/PwaInstallProvider";
 import { PwaInstallHint } from "@/components/PwaInstallHint";
 import { AuthSessionKeepAlive } from "@/components/AuthSessionKeepAlive";
+import { CapacitorNativeBridge } from "@/components/CapacitorNativeBridge";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -60,6 +61,7 @@ export default async function RootLayout({
       <body className={`${inter.variable} font-sans`}>
         <PwaInstallProvider locale={appLocale}>
           <AuthSessionKeepAlive />
+          <CapacitorNativeBridge />
           <PwaDisplayMode />
           <PwaServiceWorkerRegister />
           <PwaInstallHint />

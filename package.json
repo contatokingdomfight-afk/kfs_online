@@ -20,6 +20,11 @@
     "seed:demo-anamnesis": "tsx scripts/seed-demo-anamnesis.ts",
     "seed:demo2": "tsx scripts/seed-demo2-user.ts",
     "generate:pwa-icons": "tsx scripts/generate-pwa-icons.ts",
+    "cap:sync": "cap sync",
+    "cap:copy": "cap copy",
+    "cap:open:android": "cap open android",
+    "cap:open:ios": "cap open ios",
+    "generate:capacitor-assets": "node scripts/prepare-capacitor-assets.mjs && capacitor-assets generate --ios --android",
     "list-humanoid-glb-bones": "tsx scripts/list-humanoid-glb-bones.ts",
     "clean": "node -e \"const fs=require('fs');const path=require('path');['.next','node_modules/.cache'].forEach(d=>{try{fs.rmSync(path.join(process.cwd(),d),{recursive:true,force:true});console.log('Removed',d);}catch(e){if(e.code!=='ENOENT')throw e;}});\"",
     "db:generate": "prisma generate",
@@ -31,6 +36,14 @@
     "db:migrate-extended": "tsx scripts/migrate-old-db-to-eu.ts --extended-only"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.3",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@prisma/client": "^5.22.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.0",
@@ -52,6 +65,7 @@
     "three": "^0.170.0"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@next/bundle-analyzer": "^15.5.14",
     "@playwright/test": "^1.52.0",
     "@types/node": "^22.9.0",

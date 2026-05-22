@@ -50,6 +50,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`PERFORMANCE_E_GOOGLE_LOGIN.md`](PERFORMANCE_E_GOOGLE_LOGIN.md) | Performance e login Google |
 | [`PWA.md`](PWA.md) | PWA (manifest, ícones, service worker, homepage + sidebar); Capacitor como fase opcional no roadmap |
 | [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md) | Decisão de produto: site + PWA primeiro (sem lojas); Capacitor + lojas depois |
+| [`CAPACITOR.md`](CAPACITOR.md) | App nativa Android/iOS (WebView → URL Next); comandos, dev local, pendências |
 
 ---
 

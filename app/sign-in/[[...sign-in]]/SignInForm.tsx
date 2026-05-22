@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { persistRememberDeviceChoice } from "@/lib/auth/remember-device";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { buildAuthCallbackUrl } from "@/lib/auth/oauth-callback-url";
+import { openOAuthAuthorizeUrl } from "@/lib/capacitor-open-oauth";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -66,9 +68,7 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
     persistRememberDeviceChoice(rememberDevice);
     const supabase = createClient();
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const redirectTo = nextUrl && nextUrl.startsWith("/")
-      ? `${origin}/auth/callback?next=${encodeURIComponent(nextUrl)}`
-      : `${origin}/auth/callback`;
+    const redirectTo = buildAuthCallbackUrl(origin, nextUrl);
     const { data, error: err } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },
@@ -79,7 +79,7 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
       return;
     }
     if (data?.url) {
-      window.location.href = data.url;
+      await openOAuthAuthorizeUrl(data.url);
       return;
     }
     setGoogleLoading(false);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { isPwaInstalledWindow } from "@/lib/pwa-installed-window";
+import { isNativeAppShell } from "@/lib/capacitor-native";
 
 /**
  * Expõe `data-pwa-standalone` no `<html>` para estilos quando a app corre como PWA instalada
@@ -12,7 +12,7 @@ export function PwaDisplayMode() {
     const mqStand = window.matchMedia("(display-mode: standalone)");
     const mqFull = window.matchMedia("(display-mode: fullscreen)");
     const apply = () => {
-      document.documentElement.dataset.pwaStandalone = isPwaInstalledWindow() ? "true" : "false";
+      document.documentElement.dataset.pwaStandalone = isNativeAppShell() ? "true" : "false";
     };
     apply();
     mqStand.addEventListener("change", apply);

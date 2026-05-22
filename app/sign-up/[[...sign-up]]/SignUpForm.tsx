@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { persistRememberDeviceChoice } from "@/lib/auth/remember-device";
+import { buildAuthCallbackUrl } from "@/lib/auth/oauth-callback-url";
+import { openOAuthAuthorizeUrl } from "@/lib/capacitor-open-oauth";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -29,14 +31,19 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
     const nextPath = initialNext && initialNext.startsWith("/") ? initialNext : "/dashboard";
     const { data, error: err } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}` },
+      options: { redirectTo: buildAuthCallbackUrl(origin, nextPath) },
     });
-    setGoogleLoading(false);
     if (err) {
+      setGoogleLoading(false);
       setError(err.message);
       return;
     }
-    if (data?.url) window.location.href = data.url;
+    if (data?.url) {
+      await openOAuthAuthorizeUrl(data.url);
+      setGoogleLoading(false);
+      return;
+    }
+    setGoogleLoading(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {

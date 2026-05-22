@@ -5,7 +5,7 @@ import { getTranslations } from "@/lib/i18n";
 import type { HomeLocale } from "@/lib/home-content";
 import { getPwaInstallHelpVariant } from "@/lib/pwa-install-ui";
 import { usePwaInstall } from "@/components/PwaInstallProvider";
-import { isPwaInstalledWindow } from "@/lib/pwa-installed-window";
+import { isNativeAppShell } from "@/lib/capacitor-native";
 
 type Props = {
   locale: HomeLocale;
@@ -30,7 +30,7 @@ export function HomePwaInstallBand({ locale, title, subtitle }: Props) {
 
   useEffect(() => {
     if (!pwa?.storageReady) return;
-    setVisible(!isPwaInstalledWindow());
+    setVisible(!isNativeAppShell());
   }, [pwa?.storageReady]);
 
   useEffect(() => {

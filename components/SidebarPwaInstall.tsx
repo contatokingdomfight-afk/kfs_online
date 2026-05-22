@@ -5,7 +5,7 @@ import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/theme-locale";
 import { getPwaInstallHelpVariant } from "@/lib/pwa-install-ui";
 import { usePwaInstall } from "@/components/PwaInstallProvider";
-import { isPwaInstalledWindow } from "@/lib/pwa-installed-window";
+import { isNativeAppShell } from "@/lib/capacitor-native";
 
 type Props = {
   locale: Locale;
@@ -34,7 +34,7 @@ export function SidebarPwaInstall({ locale }: Props) {
     if (!pwa?.storageReady) return;
 
     const sync = () => {
-      if (isPwaInstalledWindow()) {
+      if (isNativeAppShell()) {
         setShowBlock(false);
         return;
       }
