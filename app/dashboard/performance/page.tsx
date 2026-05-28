@@ -459,6 +459,7 @@ export default async function DashboardPerformancePage() {
         label: t("perfLinkFullPhysicalFicha"),
       }}
       physicalRadarOnlyHint={checkInWellness ? t("perfCarouselRadarOnlyHint") : undefined}
+      locale={locale as "pt" | "en"}
     />
   );
 }

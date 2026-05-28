@@ -315,6 +315,7 @@ export async function PerformanceContent({ studentId }: Props) {
       lastEvaluation={lastEvaluation ?? undefined}
       evaluationsHistoryHref={`/coach/alunos/${studentId}/avaliacoes`}
       physicalAvatarCarousel={physicalAvatarCarousel}
+      locale={locale as "pt" | "en"}
     />
   );
 }

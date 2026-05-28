@@ -112,6 +112,7 @@ type Props = {
   physicalFichaReadOnlyLink?: { href: string; label: string } | null;
   /** Dica sob o radar em modo só-radar (mapa na secção de dados biométricos). */
   physicalRadarOnlyHint?: string | null;
+  locale?: "pt" | "en";
 };
 
 export function PerformanceFighterDashboard({
@@ -144,6 +145,7 @@ export function PerformanceFighterDashboard({
   physicalAvatarCarousel = null,
   physicalFichaReadOnlyLink = null,
   physicalRadarOnlyHint = null,
+  locale = "pt",
 }: Props) {
   const systemMissions: Mission[] = buildMissionsFromScores(scores, axes, maxScore);
   const customAsMissions: Mission[] = customMissions.map((c) => ({
@@ -307,7 +309,7 @@ export function PerformanceFighterDashboard({
       )}
 
       {/* Objetivos / Quests */}
-      <MissionCard missions={missions} />
+      <MissionCard missions={missions} locale={locale} />
 
       {checkInWellness && (
         <CheckInWellnessSection
