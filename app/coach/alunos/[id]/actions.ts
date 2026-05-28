@@ -177,7 +177,7 @@ export async function getEvaluationById(evalId: string): Promise<EvaluationHisto
     if (!canTeach) return { error: "Acesso negado." };
   }
 
-  const coachName = await evaluationHistoryCoachDisplayName(supabase, evalRow.coachId as string | null);
+  const coachName = await evaluationHistoryCoachDisplayName(evalRow.coachId as string | null);
 
   const dateStr = evalRow.created_at
     ? new Date(evalRow.created_at).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })

@@ -28,7 +28,7 @@ export async function getMyEvaluationById(evalId: string): Promise<EvaluationHis
 
   if (evalErr || !evalRow) return { error: "Avaliação não encontrada." };
 
-  const coachName = await evaluationHistoryCoachDisplayName(supabase, evalRow.coachId as string | null);
+  const coachName = await evaluationHistoryCoachDisplayName(evalRow.coachId as string | null);
 
   const dateStr = evalRow.created_at
     ? new Date(evalRow.created_at as string).toLocaleDateString("pt-PT", {

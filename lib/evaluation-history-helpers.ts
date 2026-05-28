@@ -1,16 +1,55 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EvaluationHistoryModalDetail } from "@/lib/evaluation-history-modal-types";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
-export async function evaluationHistoryCoachDisplayName(supabase: SupabaseClient, coachId: string | null): Promise<string> {
-  if (!coachId) return "Treinador";
-  const { data: coach } = await supabase.from("Coach").select("userId").eq("id", coachId).maybeSingle();
-  if (!coach?.userId) return "Treinador";
-  const { data: user } = await supabase.from("User").select("name, email").eq("id", coach.userId).maybeSingle();
-  const name = user?.name?.trim();
-  if (name) return name;
-  const email = user?.email?.trim();
-  if (email) return email.split("@")[0] ?? "Treinador";
-  return "Treinador";
+const FALLBACK_COACH_LABEL = "Treinador";
+
+function formatCoachUserDisplay(user: { name?: string | null; email?: string | null } | undefined): string {
+  const nm = user?.name?.trim();
+  if (nm) return nm;
+  const em = user?.email?.trim();
+  if (em) return em.split("@")[0] ?? FALLBACK_COACH_LABEL;
+  return FALLBACK_COACH_LABEL;
+}
+
+/**
+ * Nomes de treinadores para histórico de avaliações (aluno/coach).
+ * Usa service role no servidor: RLS em `User` só permite SELECT da própria linha.
+ */
+export async function resolveCoachDisplayNamesByCoachIds(coachIds: string[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const unique = [...new Set(coachIds.filter(Boolean))];
+  if (unique.length === 0) return map;
+
+  const admin = getAdminClientOrNull().client;
+  if (!admin) {
+    unique.forEach((id) => map.set(id, FALLBACK_COACH_LABEL));
+    return map;
+  }
+
+  const { data: coaches } = await admin.from("Coach").select("id, userId").in("id", unique);
+  const userIds = [...new Set((coaches ?? []).map((c) => c.userId).filter(Boolean))];
+  if (userIds.length === 0) {
+    unique.forEach((id) => map.set(id, FALLBACK_COACH_LABEL));
+    return map;
+  }
+
+  const { data: users } = await admin.from("User").select("id, name, email").in("id", userIds);
+  const byUserId = new Map((users ?? []).map((u) => [u.id, u]));
+
+  (coaches ?? []).forEach((c) => {
+    map.set(c.id, formatCoachUserDisplay(byUserId.get(c.userId)));
+  });
+  unique.forEach((id) => {
+    if (!map.has(id)) map.set(id, FALLBACK_COACH_LABEL);
+  });
+  return map;
+}
+
+export async function evaluationHistoryCoachDisplayName(coachId: string | null): Promise<string> {
+  if (!coachId) return FALLBACK_COACH_LABEL;
+  const map = await resolveCoachDisplayNamesByCoachIds([coachId]);
+  return map.get(coachId) ?? FALLBACK_COACH_LABEL;
 }
 
 export async function evaluationHistoryFetchPreviousSnapshot(

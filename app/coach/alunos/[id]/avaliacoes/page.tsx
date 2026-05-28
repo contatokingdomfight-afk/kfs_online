@@ -5,6 +5,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { getEvaluationById } from "../actions";
 import { EvaluationHistoryClient } from "@/components/evaluation/EvaluationHistoryClient";
+import { resolveCoachDisplayNamesByCoachIds } from "@/lib/evaluation-history-helpers";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -56,23 +57,8 @@ export default async function CoachAlunoAvaliacoesPage({ params }: Props) {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  const coachIds = [...new Set((evals ?? []).map((e) => e.coachId).filter(Boolean))];
-  const { data: coaches } = await supabase
-    .from("Coach")
-    .select("id, userId")
-    .in("id", coachIds);
-  const userIds = [...new Set((coaches ?? []).map((c) => c.userId))];
-  const { data: users } = await supabase
-    .from("User")
-    .select("id, name, email")
-    .in("id", userIds);
-  const nameByCoachId = new Map<string, string>();
-  (coaches ?? []).forEach((c) => {
-    const u = (users ?? []).find((u) => u.id === c.userId);
-    const nm = (u as { name?: string | null })?.name?.trim();
-    const em = (u as { email?: string | null })?.email?.trim();
-    nameByCoachId.set(c.id, nm || (em ? em.split("@")[0]! : "") || "Treinador");
-  });
+  const coachIds = [...new Set((evals ?? []).map((e) => e.coachId).filter(Boolean))] as string[];
+  const nameByCoachId = await resolveCoachDisplayNamesByCoachIds(coachIds);
 
   const list = (evals ?? []).map((e) => ({
     id: e.id,
