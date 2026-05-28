@@ -10,6 +10,11 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **PWA / distribuição mobile (fase 1):** instalação pelo **site** (atalho no ecrã), sem lojas — faixa na homepage `components/home/HomePwaInstallBand.tsx`, mais `SidebarPwaInstall` e `PwaInstallHint`; ver [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md) e roadmap.
 - **Capacitor (fase 2):** WebView → URL de produção; `CapacitorNativeBridge` (status bar, voltar Android, OAuth); `openOAuthAuthorizeUrl` + deep links; `npm run generate:capacitor-assets`. Ver [`CAPACITOR.md`](CAPACITOR.md).
 
+## Performance / avaliações (aluno)
+
+- **Objetivos (missões):** `components/fighter/MissionCard.tsx` — lista colapsável: 3 iniciais, «Ver mais» (+3), «Ver menos» quando tudo visível; i18n `missionsShowMore` / `missionsShowLess`.
+- **Histórico de avaliações:** `/dashboard/performance/historico` — nome do treinador via `resolveCoachDisplayNamesByCoachIds` em `lib/evaluation-history-helpers.ts` (admin no servidor; RLS em `User` só permite a própria linha ao aluno).
+
 ## Supabase EU — histórico de migrações
 
 - **Lista canónica** de nomes já registados no projecto EU (`supabase_migrations.schema_migrations`): `scripts/lib/supabase-eu-remote-migration-names.mjs`. Actualizar quando o MCP `list_migrations` (servidor `user-supabase_kfs_eu`) mostrar entradas novas.

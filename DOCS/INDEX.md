@@ -1,6 +1,7 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 19 maio 2026 — **Mobile / PWA (site, sem lojas):** [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md), faixa na homepage, roadmap e [`PWA.md`](PWA.md); [`memory.md`](memory.md).  
+> **Última revisão deste índice:** 28 maio 2026 — performance aluno: objetivos colapsáveis (`MissionCard`); histórico de avaliações com nome do treinador (RLS); merge `dev`→`main` com PWA/Capacitor. [`memory.md`](memory.md).  
+> **Anterior:** 19 maio 2026 — **Mobile / PWA (site, sem lojas):** [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md), faixa na homepage, roadmap e [`PWA.md`](PWA.md); [`memory.md`](memory.md).  
 > **Anterior:** 19 maio 2026 — **Tribo (comunidade):** MVP planeado — [`TRIBO_MVP.md`](TRIBO_MVP.md), secção 7 em [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md), [`memory.md`](memory.md).  
 > **Anterior:** 15 maio 2026 — **timer de rounds (coach):** sons, últimos segundos, UI dos botões — [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md), [`memory.md`](memory.md).  
 > **Anterior:** 13 maio 2026 (eventos no dashboard; centrais de notificações — [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md)).  
@@ -14,7 +15,8 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confund
 
 Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual: Supabase (sem Clerk); ver **`DEPLOY_VERCEL.md`**.
 
-**Changelog (maio 2026):** mobile — distribuição inicial PWA só pelo **site** (CTA na homepage); doc [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md); resumo executivo mobile em [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md).  
+**Changelog (maio 2026):** performance — secção Objetivos com Ver mais/menos; fix nome do treinador no histórico de avaliações (`lib/evaluation-history-helpers.ts`).  
+**Changelog (maio 2026):** mobile — distribuição inicial PWA só pelo **site** (CTA na homepage); doc [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md); Capacitor — [`CAPACITOR.md`](CAPACITOR.md); resumo executivo mobile em [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md).  
 **Changelog (maio 2026):** Tribo (comunidade) — [`TRIBO_MVP.md`](TRIBO_MVP.md) (feed por escola, media, comentários, curtidas, partilha por link, moderação, RLS/Storage); secção 7 em [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md).  
 **Changelog (maio 2026):** timer de rounds — documentação [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md) (rotas `/coach/round-timer` e embutido em `/coach/aula`, sons WAV, digital-beep em preparo / round / descanso, UI `.round-timer-actions` e botões por fase).  
 **Changelog (maio 2026):** eventos no dashboard (filtro *Inscritos e ativos*, strip *próximos eventos* na home antes de *Explorar*); centrais `/admin/notificacoes` e `/coach/notificacoes`; notificações in-app para inscrições em eventos — [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md).
