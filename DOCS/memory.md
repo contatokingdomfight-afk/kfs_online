@@ -10,6 +10,13 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **PWA / distribuição mobile (fase 1):** instalação pelo **site** (atalho no ecrã), sem lojas — faixa na homepage `components/home/HomePwaInstallBand.tsx`, mais `SidebarPwaInstall` e `PwaInstallHint`; ver [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md) e roadmap.
 - **Capacitor (fase 2):** WebView → URL de produção; `CapacitorNativeBridge` (status bar, voltar Android, OAuth); `openOAuthAuthorizeUrl` + deep links; `npm run generate:capacitor-assets`. Ver [`CAPACITOR.md`](CAPACITOR.md).
 
+## Identidade visual / marca (2026)
+
+- **Tokens:** `lib/brand.ts` — fundo `#121416`, primário `#9B111E`; assets em `public/brand/` (`kfs-logotipo-transparent.png`, `kfs-logotipo-emblem.png` só símbolo).
+- **Processamento:** `npm run process:brand-logo` (remove fundo escuro do PNG fonte) + `npm run generate:pwa-icons` (PWA + `app/icon.png`, `app/apple-icon.png`).
+- **UI:** `BrandLogo` no header (`ResponsiveShell` com `headerLogoHref`); splash PWA `PwaLaunchSplash` + `DashboardSplash` com `BrandSplashLogo`.
+- **Manifest PWA:** `background_color` grafite; ícones com emblema transparente. Reinstalar a PWA após mudanças de ícone.
+
 ## Performance / avaliações (aluno)
 
 - **Objetivos (missões):** `components/fighter/MissionCard.tsx` — lista colapsável: 3 iniciais, «Ver mais» (+3), «Ver menos» quando tudo visível; i18n `missionsShowMore` / `missionsShowLess`.
