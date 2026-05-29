@@ -12,7 +12,11 @@ export function PwaDisplayMode() {
     const mqStand = window.matchMedia("(display-mode: standalone)");
     const mqFull = window.matchMedia("(display-mode: fullscreen)");
     const apply = () => {
-      document.documentElement.dataset.pwaStandalone = isNativeAppShell() ? "true" : "false";
+      const isInstalled =
+        isNativeAppShell() || mqStand.matches || mqFull.matches;
+      document.documentElement.dataset.pwaStandalone = isInstalled
+        ? "true"
+        : "false";
     };
     apply();
     mqStand.addEventListener("change", apply);

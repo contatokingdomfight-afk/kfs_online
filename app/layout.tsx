@@ -10,6 +10,8 @@ import { PwaInstallProvider } from "@/components/PwaInstallProvider";
 import { PwaInstallHint } from "@/components/PwaInstallHint";
 import { AuthSessionKeepAlive } from "@/components/AuthSessionKeepAlive";
 import { CapacitorNativeBridge } from "@/components/CapacitorNativeBridge";
+import { PwaLaunchSplash } from "@/components/PwaLaunchSplash";
+import { BRAND_BG } from "@/lib/brand";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,7 +44,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0b0b0b" },
+    { media: "(prefers-color-scheme: dark)", color: BRAND_BG },
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
   ],
 };
@@ -59,6 +61,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} data-theme={theme} suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
+        <PwaLaunchSplash />
         <PwaInstallProvider locale={appLocale}>
           <AuthSessionKeepAlive />
           <CapacitorNativeBridge />

@@ -1,16 +1,16 @@
 /**
- * Gera ícones PWA a partir de `KFS Logo.png` na raiz do repo.
+ * Gera ícones PWA a partir do logotipo sem fundo em `public/brand/`.
  * Executar: npm run generate:pwa-icons
  */
 import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
 
-const BRAND_RED = "#ED1C24";
+const BRAND_BG = "#121416";
 
 async function main() {
   const root = process.cwd();
-  const src = path.join(root, "KFS Logo.png");
+  const src = path.join(root, "public", "brand", "kfs-logotipo-sem-fundo.png");
   await fs.access(src).catch(() => {
     throw new Error(`Ficheiro não encontrado: ${src}`);
   });
@@ -26,13 +26,13 @@ async function main() {
         width: size,
         height: size,
         channels: 4,
-        background: BRAND_RED,
+        background: BRAND_BG,
       },
     });
 
-    const inner = Math.round(maskable ? size * 0.78 : size * 0.92);
+    const inner = Math.round(maskable ? size * 0.72 : size * 0.88);
     const logo = await sharp(buf)
-      .resize(inner, inner, { fit: "contain", background: BRAND_RED })
+      .resize(inner, inner, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
       .toBuffer();
 
     const top = Math.round((size - inner) / 2);
@@ -58,7 +58,7 @@ async function main() {
     fs.writeFile(path.join(outDir, "apple-touch-icon.png"), apple180),
   ]);
 
-  console.log("Ícones PWA gerados em public/icons/");
+  console.log("Ícones PWA gerados em public/icons/ (fundo #121416)");
 }
 
 main().catch((e) => {

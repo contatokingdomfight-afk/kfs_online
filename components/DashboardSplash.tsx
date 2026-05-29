@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
+import { BRAND_BG, BRAND_LOGO_NO_BG } from "@/lib/brand";
 
 const SESSION_KEY = "kfs-dashboard-splash-shown";
 
@@ -50,32 +52,25 @@ export function DashboardSplash({ locale, displayName }: Props) {
         alignItems: "center",
         justifyContent: "center",
         gap: 20,
-        backgroundColor: "var(--bg)",
+        backgroundColor: BRAND_BG,
         cursor: "default",
         animation: "kfs-splash-in 0.2s ease",
       }}
     >
-      {/* Logo / ícone de marca */}
-      <div
+      <Image
+        src={BRAND_LOGO_NO_BG}
+        alt=""
+        width={120}
+        height={120}
+        priority
         style={{
-          width: 64,
-          height: 64,
-          borderRadius: "50%",
-          background: "var(--primary)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 28,
-          color: "#fff",
-          fontWeight: 700,
-          letterSpacing: "-1px",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
+          width: "min(40vw, 120px)",
+          height: "auto",
+          objectFit: "contain",
           flexShrink: 0,
         }}
         aria-hidden
-      >
-        KF
-      </div>
+      />
 
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 6 }}>
         <p

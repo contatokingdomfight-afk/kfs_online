@@ -21,7 +21,7 @@ export function CapacitorNativeBridge() {
       const { StatusBar, Style } = await import("@capacitor/status-bar");
       if (cancelled) return;
       try {
-        await StatusBar.setBackgroundColor({ color: "#ED1C24" });
+        await StatusBar.setBackgroundColor({ color: "#121416" });
         await StatusBar.setStyle({ style: Style.Dark });
       } catch {
         /* iOS pode ignorar backgroundColor */

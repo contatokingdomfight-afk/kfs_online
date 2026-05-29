@@ -27,15 +27,26 @@ Definir **antes** de `npm run cap:sync` em builds que apontam a produção.
 
 ## Comandos (quando fores testar ou publicar)
 
+**Primeiro teste Android:** guia passo a passo em [`ANDROID_PRIMEIRO_TESTE.md`](ANDROID_PRIMEIRO_TESTE.md).
+
+```bash
+# Sync com URL de produção (https://kingdomfight.com por defeito)
+npm run cap:sync:prod
+
+# Abrir Android Studio
+npm run cap:open:android
+
+# Atalho: sync prod + abrir Android Studio
+npm run cap:android:test
+```
+
 ```bash
 # Regenerar ícones/splash KFS (opcional, após mudar logo)
 npm run generate:capacitor-assets
 
-# Sincronizar web + plugins com projetos nativos
+# Sincronizar (usa CAPACITOR_SERVER_URL / .env se definido)
 npm run cap:sync
 
-# Abrir IDE nativa (não obrigatório no dia-a-dia web)
-npm run cap:open:android
 npm run cap:open:ios   # requer macOS
 ```
 

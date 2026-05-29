@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const THEME = "#ED1C24";
+import { BRAND_BG, BRAND_PRIMARY } from "@/lib/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -13,8 +12,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "fullscreen",
     orientation: "portrait-primary",
-    background_color: THEME,
-    theme_color: THEME,
+    background_color: BRAND_BG,
+    theme_color: BRAND_PRIMARY,
     categories: ["education", "sports", "fitness"],
     icons: [
       {
