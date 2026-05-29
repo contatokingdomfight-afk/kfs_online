@@ -14,7 +14,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Tokens:** `lib/brand.ts` — fundo `#121416`, primário `#9B111E`; assets em `public/brand/` (`kfs-logotipo-transparent.png`, `kfs-logotipo-emblem.png` só símbolo).
 - **Processamento:** `npm run process:brand-logo` (remove fundo escuro do PNG fonte) + `npm run generate:pwa-icons` (PWA + `app/icon.png`, `app/apple-icon.png`).
-- **UI:** `BrandLogo` no header (`ResponsiveShell` com `headerLogoHref`); splash PWA `PwaLaunchSplash` + `DashboardSplash` com `BrandSplashLogo`.
+- **UI:** header com texto «Kingdom Fight School»; emblema só em splash (`PwaLaunchSplash`, `DashboardSplash` via `BrandSplashLogo`) e ícones da app.
 - **Manifest PWA:** `background_color` grafite; ícones com emblema transparente. Reinstalar a PWA após mudanças de ícone.
 
 ## Performance / avaliações (aluno)

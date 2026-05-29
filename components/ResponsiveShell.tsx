@@ -10,7 +10,6 @@ import { MobileAppBottomNav, type MobileAppBottomNavConfig } from "./MobileAppBo
 import { ThemeLocaleSwitcher } from "./ThemeLocaleSwitcher";
 import { LogoutButton } from "./LogoutButton";
 import { SidebarPwaInstall } from "./SidebarPwaInstall";
-import { BrandLogo } from "./BrandLogo";
 
 const SCROLL_DELTA = 8;
 
@@ -27,8 +26,6 @@ type Props = {
   initialTheme: Theme;
   initialLocale: Locale;
   headerTitle: string;
-  /** Se definido, mostra logotipo no header em vez do texto (ex.: `/dashboard`). */
-  headerLogoHref?: string;
   headerExtra?: React.ReactNode;
   /** Só no header quando não há barra inferior mobile (ex.: «Ver como» no desktop). */
   headerExtrasDesktopOnly?: React.ReactNode;
@@ -55,7 +52,6 @@ export function ResponsiveShell({
   initialTheme,
   initialLocale,
   headerTitle,
-  headerLogoHref,
   headerExtra,
   headerExtrasDesktopOnly,
   headerAvatar,
@@ -285,26 +281,20 @@ export function ResponsiveShell({
                 </svg>
               </button>
             ) : null}
-            {headerLogoHref ? (
-              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center" }}>
-                <BrandLogo variant="header" href={headerLogoHref} ariaLabel={headerTitle} priority />
-              </div>
-            ) : (
-              <h1
-                style={{
-                  margin: 0,
-                  fontSize: "clamp(17px, 4.2vw, 20px)",
-                  fontWeight: 600,
-                  flex: 1,
-                  minWidth: 0,
-                  textAlign: "left",
-                  lineHeight: 1.2,
-                  alignSelf: "center",
-                }}
-              >
-                {headerTitle}
-              </h1>
-            )}
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "clamp(17px, 4.2vw, 20px)",
+                fontWeight: 600,
+                flex: 1,
+                minWidth: 0,
+                textAlign: "left",
+                lineHeight: 1.2,
+                alignSelf: "center",
+              }}
+            >
+              {headerTitle}
+            </h1>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
               {headerAvatar && (
                 <Link

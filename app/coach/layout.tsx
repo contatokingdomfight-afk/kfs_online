@@ -78,7 +78,6 @@ export default async function CoachLayout({
         initialTheme={theme}
         initialLocale={locale}
         headerTitle="Kingdom Fight School"
-        headerLogoHref="/coach"
         headerAvatar={{
           href: "/coach/configuracoes",
           imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,

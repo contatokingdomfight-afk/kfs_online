@@ -96,7 +96,6 @@ export default async function DashboardLayout({
         initialTheme={theme}
         initialLocale={locale}
         headerTitle="Kingdom Fight School"
-        headerLogoHref="/dashboard"
         headerAvatar={{
           href: "/dashboard/perfil",
           imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,

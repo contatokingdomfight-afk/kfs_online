@@ -23,7 +23,7 @@ async function main() {
   await fs.mkdir(outDir, { recursive: true });
 
   async function squareIcon(size: number, maskable: boolean) {
-    const inner = Math.round(maskable ? size * 0.62 : size * 0.8);
+    const inner = Math.round(maskable ? size * 0.58 : size * 0.86);
     const logo = await sharp(buf)
       .resize(inner, inner, {
         fit: "contain",
@@ -44,8 +44,8 @@ async function main() {
       .toBuffer();
   }
 
-  const [png32, png192, png512, mask512, apple180] = await Promise.all([
-    squareIcon(32, false),
+  const [png48, png192, png512, mask512, apple180] = await Promise.all([
+    squareIcon(48, false),
     squareIcon(192, false),
     squareIcon(512, false),
     squareIcon(512, true),
@@ -57,7 +57,7 @@ async function main() {
     fs.writeFile(path.join(outDir, "icon-512.png"), png512),
     fs.writeFile(path.join(outDir, "icon-512-maskable.png"), mask512),
     fs.writeFile(path.join(outDir, "apple-touch-icon.png"), apple180),
-    fs.writeFile(path.join(appDir, "icon.png"), png32),
+    fs.writeFile(path.join(appDir, "icon.png"), png48),
     fs.writeFile(path.join(appDir, "apple-icon.png"), apple180),
   ]);
 
