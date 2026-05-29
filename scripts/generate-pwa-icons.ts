@@ -1,5 +1,5 @@
 /**
- * Ícones PWA: emblema transparente (sem caixa de fundo no PNG).
+ * Ícones PWA + favicon da app (emblema transparente).
  * Executar: npm run generate:pwa-icons
  */
 import fs from "fs/promises";
@@ -13,10 +13,14 @@ async function main() {
     throw new Error(`Ficheiro não encontrado: ${src} — corre npm run process:brand-logo`);
   });
 
-  const outDir = path.join(root, "public", "icons");
-  await fs.mkdir(outDir, { recursive: true });
+  const buf = await sharp(await fs.readFile(src))
+    .trim({ threshold: 15 })
+    .png()
+    .toBuffer();
 
-  const buf = await fs.readFile(src);
+  const outDir = path.join(root, "public", "icons");
+  const appDir = path.join(root, "app");
+  await fs.mkdir(outDir, { recursive: true });
 
   async function squareIcon(size: number, maskable: boolean) {
     const inner = Math.round(maskable ? size * 0.62 : size * 0.8);
@@ -40,7 +44,8 @@ async function main() {
       .toBuffer();
   }
 
-  const [png192, png512, mask512, apple180] = await Promise.all([
+  const [png32, png192, png512, mask512, apple180] = await Promise.all([
+    squareIcon(32, false),
     squareIcon(192, false),
     squareIcon(512, false),
     squareIcon(512, true),
@@ -52,9 +57,11 @@ async function main() {
     fs.writeFile(path.join(outDir, "icon-512.png"), png512),
     fs.writeFile(path.join(outDir, "icon-512-maskable.png"), mask512),
     fs.writeFile(path.join(outDir, "apple-touch-icon.png"), apple180),
+    fs.writeFile(path.join(appDir, "icon.png"), png32),
+    fs.writeFile(path.join(appDir, "apple-icon.png"), apple180),
   ]);
 
-  console.log("Ícones PWA gerados (emblema transparente) em public/icons/");
+  console.log("Ícones em public/icons/ + app/icon.png + app/apple-icon.png");
 }
 
 main().catch((e) => {

@@ -12,10 +12,10 @@ import {
 type Variant = "header" | "launch" | "compact";
 
 /** Header: emblema compacto (proporção ~1024×365). */
-const HEADER_HEIGHT_PX = 38;
+const HEADER_HEIGHT_PX = 32;
 
 const MAX_WIDTH: Record<Variant, string> = {
-  header: "min(28vw, 108px)",
+  header: "min(24vw, 92px)",
   launch: "min(92vw, 380px)",
   compact: "min(42vw, 140px)",
 };
@@ -48,7 +48,7 @@ export function BrandLogo({
       height={height}
       priority={priority}
       unoptimized={isHeader}
-      sizes={isHeader ? "108px" : variant === "launch" ? "92vw" : "42vw"}
+      sizes={isHeader ? "96px" : variant === "launch" ? "92vw" : "42vw"}
       className={className}
       style={
         isHeader
