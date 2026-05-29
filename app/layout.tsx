@@ -31,10 +31,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/kfs-emblem-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/kfs-emblem-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/icons/kfs-emblem-180.png", sizes: "180x180", type: "image/png" }],
   },
 };
 
@@ -61,8 +61,16 @@ export default async function RootLayout({
   return (
     <html lang={locale} data-theme={theme} suppressHydrationWarning>
       <head>
+        <meta name="theme-color" content={BRAND_BG} />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="apple-touch-icon" href="/icons/kfs-emblem-180.png" />
         <link rel="preload" href={BRAND_LOGO_EMBLEM} as="image" type="image/png" />
         <link rel="preload" href={BRAND_LOGO} as="image" type="image/png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=window.matchMedia('(display-mode: standalone)').matches||window.matchMedia('(display-mode: fullscreen)').matches||window.navigator.standalone; if(s)document.documentElement.style.backgroundColor='${BRAND_BG}';}catch(e){}})();`,
+          }}
+        />
       </head>
       <body className={`${inter.variable} font-sans`}>
         <PwaLaunchSplash />

@@ -53,6 +53,11 @@ async function main() {
   ]);
 
   await Promise.all([
+    fs.writeFile(path.join(outDir, "kfs-emblem-192.png"), png192),
+    fs.writeFile(path.join(outDir, "kfs-emblem-512.png"), png512),
+    fs.writeFile(path.join(outDir, "kfs-emblem-512-maskable.png"), mask512),
+    fs.writeFile(path.join(outDir, "kfs-emblem-180.png"), apple180),
+    // Aliases legados (alguns browsers em cache)
     fs.writeFile(path.join(outDir, "icon-192.png"), png192),
     fs.writeFile(path.join(outDir, "icon-512.png"), png512),
     fs.writeFile(path.join(outDir, "icon-512-maskable.png"), mask512),
@@ -61,7 +66,7 @@ async function main() {
     fs.writeFile(path.join(appDir, "apple-icon.png"), apple180),
   ]);
 
-  console.log("Ícones em public/icons/ + app/icon.png + app/apple-icon.png");
+  console.log("Ícones PWA (kfs-emblem-*) + app/icon.png");
 }
 
 main().catch((e) => {
