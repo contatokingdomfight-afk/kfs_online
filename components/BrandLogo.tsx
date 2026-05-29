@@ -11,11 +11,11 @@ import {
 
 type Variant = "header" | "launch" | "compact";
 
-/** Header: emblema maior; splash mantém logotipo completo. */
-const HEADER_HEIGHT_PX = 52;
+/** Header: emblema compacto (proporção ~1024×365). */
+const HEADER_HEIGHT_PX = 38;
 
 const MAX_WIDTH: Record<Variant, string> = {
-  header: "min(36vw, 148px)",
+  header: "min(28vw, 108px)",
   launch: "min(92vw, 380px)",
   compact: "min(42vw, 140px)",
 };
@@ -48,7 +48,7 @@ export function BrandLogo({
       height={height}
       priority={priority}
       unoptimized={isHeader}
-      sizes={isHeader ? "144px" : variant === "launch" ? "92vw" : "42vw"}
+      sizes={isHeader ? "108px" : variant === "launch" ? "92vw" : "42vw"}
       className={className}
       style={
         isHeader
