@@ -1,60 +1,71 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
-import { BRAND_BG, BRAND_LOGO_NO_BG } from "@/lib/brand";
+import { BrandSplashLogo } from "@/components/BrandSplashLogo";
+import { BRAND_BG } from "@/lib/brand";
 import { isNativeAppShell } from "@/lib/capacitor-native";
 
+const MIN_VISIBLE_MS = 1000;
+const FADE_MS = 500;
+const MAX_VISIBLE_MS = 3200;
+
+function isInstalledWebApp(): boolean {
+  if (typeof window === "undefined") return false;
+  if (isNativeAppShell()) return true;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    // Safari iOS «Adicionar ao ecrã principal»
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
 /**
- * Splash de arranque em PWA instalada / shell nativo: logotipo em fundo grafite.
- * Complementa o splash do manifest (ícone) até a app estar pronta.
+ * Splash de arranque em PWA / app nativa: logotipo sem fundo em grafite (#121416).
  */
 export function PwaLaunchSplash() {
-  const [mounted, setMounted] = useState(false);
-  const [opacity, setOpacity] = useState(1);
+  const [visible, setVisible] = useState(false);
+  const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
-    const mqStand = window.matchMedia("(display-mode: standalone)");
-    const mqFull = window.matchMedia("(display-mode: fullscreen)");
-    const isInstalled =
-      isNativeAppShell() || mqStand.matches || mqFull.matches;
-    if (!isInstalled) return;
+    if (!isInstalledWebApp()) return;
 
-    setMounted(true);
-
+    setVisible(true);
+    const shownAt = Date.now();
     let fadeTimer: number | undefined;
     let removeTimer: number | undefined;
 
-    const startFade = () => {
-      setOpacity(0);
-      removeTimer = window.setTimeout(() => setMounted(false), 400);
+    const startExit = () => {
+      const elapsed = Date.now() - shownAt;
+      const delay = Math.max(0, MIN_VISIBLE_MS - elapsed);
+      fadeTimer = window.setTimeout(() => {
+        setExiting(true);
+        removeTimer = window.setTimeout(() => setVisible(false), FADE_MS);
+      }, delay);
     };
 
-    const onReady = () => {
-      fadeTimer = window.setTimeout(startFade, 400);
-    };
-
-    const maxTimer = window.setTimeout(startFade, 2400);
+    const maxTimer = window.setTimeout(startExit, MAX_VISIBLE_MS);
 
     if (document.readyState === "complete") {
-      onReady();
+      startExit();
     } else {
-      window.addEventListener("load", onReady, { once: true });
+      window.addEventListener("load", startExit, { once: true });
     }
 
     return () => {
       window.clearTimeout(maxTimer);
       if (fadeTimer) window.clearTimeout(fadeTimer);
       if (removeTimer) window.clearTimeout(removeTimer);
-      window.removeEventListener("load", onReady);
+      window.removeEventListener("load", startExit);
     };
   }, []);
 
-  if (!mounted) return null;
+  if (!visible) return null;
 
   return (
     <div
       aria-hidden
+      className="kfs-pwa-launch-splash"
       style={{
         position: "fixed",
         inset: 0,
@@ -62,23 +73,16 @@ export function PwaLaunchSplash() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        padding: "max(16px, env(safe-area-inset-top)) 20px max(16px, env(safe-area-inset-bottom))",
         backgroundColor: BRAND_BG,
         pointerEvents: "none",
-        opacity,
-        transition: "opacity 0.4s ease",
+        opacity: exiting ? 0 : 1,
+        transition: `opacity ${FADE_MS}ms ease`,
       }}
     >
-      <Image
-        src={BRAND_LOGO_NO_BG}
-        alt=""
-        width={280}
-        height={280}
-        priority
-        style={{
-          width: "min(72vw, 280px)",
-          height: "auto",
-          objectFit: "contain",
-        }}
+      <BrandSplashLogo
+        variant="launch"
+        className={exiting ? undefined : "kfs-brand-splash-logo-enter"}
       />
     </div>
   );

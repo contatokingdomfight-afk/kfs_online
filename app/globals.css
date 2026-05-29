@@ -1373,3 +1373,26 @@ html[data-pwa-standalone="true"] body,
 html[data-kfs-native="capacitor"] body {
   min-height: 100dvh;
 }
+
+/* Splash de arranque PWA — fundo grafite antes da hidratação React */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  html,
+  body {
+    background-color: #121416;
+  }
+}
+
+@keyframes kfs-brand-splash-logo-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.kfs-brand-splash-logo-enter {
+  animation: kfs-brand-splash-logo-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

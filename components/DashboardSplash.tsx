@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
-import { BRAND_BG, BRAND_LOGO_NO_BG } from "@/lib/brand";
+import { BrandSplashLogo } from "@/components/BrandSplashLogo";
+import { BRAND_BG } from "@/lib/brand";
 
 const SESSION_KEY = "kfs-dashboard-splash-shown";
 
@@ -57,20 +57,7 @@ export function DashboardSplash({ locale, displayName }: Props) {
         animation: "kfs-splash-in 0.2s ease",
       }}
     >
-      <Image
-        src={BRAND_LOGO_NO_BG}
-        alt=""
-        width={120}
-        height={120}
-        priority
-        style={{
-          width: "min(40vw, 120px)",
-          height: "auto",
-          objectFit: "contain",
-          flexShrink: 0,
-        }}
-        aria-hidden
-      />
+      <BrandSplashLogo variant="compact" className="kfs-brand-splash-logo-enter" />
 
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 6 }}>
         <p

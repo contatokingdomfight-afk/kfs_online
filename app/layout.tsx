@@ -11,7 +11,7 @@ import { PwaInstallHint } from "@/components/PwaInstallHint";
 import { AuthSessionKeepAlive } from "@/components/AuthSessionKeepAlive";
 import { CapacitorNativeBridge } from "@/components/CapacitorNativeBridge";
 import { PwaLaunchSplash } from "@/components/PwaLaunchSplash";
-import { BRAND_BG } from "@/lib/brand";
+import { BRAND_BG, BRAND_LOGO_NO_BG } from "@/lib/brand";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -60,6 +60,9 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} data-theme={theme} suppressHydrationWarning>
+      <head>
+        <link rel="preload" href={BRAND_LOGO_NO_BG} as="image" type="image/png" />
+      </head>
       <body className={`${inter.variable} font-sans`}>
         <PwaLaunchSplash />
         <PwaInstallProvider locale={appLocale}>
