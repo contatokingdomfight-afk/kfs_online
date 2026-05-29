@@ -9,13 +9,13 @@ import {
 type Variant = "header" | "launch" | "compact";
 
 const HEIGHT_PX: Record<Variant, number> = {
-  header: 34,
+  header: 42,
   launch: 0,
   compact: 0,
 };
 
 const MAX_WIDTH: Record<Variant, string> = {
-  header: "min(52vw, 168px)",
+  header: "min(62vw, 208px)",
   launch: "min(92vw, 380px)",
   compact: "min(42vw, 140px)",
 };
@@ -46,7 +46,7 @@ export function BrandLogo({
       width={BRAND_LOGO_WIDTH}
       height={BRAND_LOGO_HEIGHT}
       priority={priority}
-      sizes={isHeader ? "168px" : variant === "launch" ? "92vw" : "42vw"}
+      sizes={isHeader ? "208px" : variant === "launch" ? "92vw" : "42vw"}
       className={className}
       style={
         isHeader
