@@ -10,7 +10,7 @@ const BRAND_BG = "#121416";
 
 async function main() {
   const root = process.cwd();
-  const src = path.join(root, "public", "brand", "kfs-logotipo-sem-fundo.png");
+  const src = path.join(root, "public", "brand", "kfs-logotipo-transparent.png");
   await fs.access(src).catch(() => {
     throw new Error(`Ficheiro não encontrado: ${src}`);
   });

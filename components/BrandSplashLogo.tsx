@@ -1,9 +1,9 @@
 import Image from "next/image";
-import { BRAND_LOGO_NO_BG } from "@/lib/brand";
-
-/** Proporção real do ficheiro em `public/brand/kfs-logotipo-sem-fundo.png`. */
-const LOGO_WIDTH = 1024;
-const LOGO_HEIGHT = 630;
+import {
+  BRAND_LOGO,
+  BRAND_LOGO_HEIGHT,
+  BRAND_LOGO_WIDTH,
+} from "@/lib/brand";
 
 type Variant = "launch" | "compact";
 
@@ -14,46 +14,30 @@ const MAX_WIDTH: Record<Variant, string> = {
 
 type Props = {
   variant?: Variant;
-  /** Classe extra no contentor (ex.: animação CSS). */
   className?: string;
 };
 
-/**
- * Logotipo sem fundo sobre grafite — evita “duplo fundo” da versão oficial com textura.
- */
+/** Logotipo transparente centrado no splash (sem retângulo de fundo). */
 export function BrandSplashLogo({ variant = "launch", className }: Props) {
   return (
     <div
       className={className}
       style={{
-        position: "relative",
         width: MAX_WIDTH[variant],
         maxWidth: "100%",
-        aspectRatio: `${LOGO_WIDTH} / ${LOGO_HEIGHT}`,
+        lineHeight: 0,
       }}
     >
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: "-8% -4%",
-          background:
-            "radial-gradient(ellipse 75% 65% at 50% 42%, rgba(209, 213, 219, 0.14), transparent 72%)",
-          pointerEvents: "none",
-        }}
-      />
       <Image
-        src={BRAND_LOGO_NO_BG}
+        src={BRAND_LOGO}
         alt=""
-        width={LOGO_WIDTH}
-        height={LOGO_HEIGHT}
+        width={BRAND_LOGO_WIDTH}
+        height={BRAND_LOGO_HEIGHT}
         priority
         sizes={variant === "launch" ? "92vw" : "42vw"}
         style={{
-          position: "relative",
-          zIndex: 1,
           width: "100%",
-          height: "100%",
+          height: "auto",
           objectFit: "contain",
         }}
       />

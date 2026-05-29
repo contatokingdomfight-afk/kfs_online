@@ -48,6 +48,7 @@ export default async function AdminLayout({
         initialTheme={theme}
         initialLocale={locale}
         headerTitle="Kingdom Fight School"
+        headerLogoHref="/admin"
         headerAvatar={{
           href: "/admin/configuracoes",
           imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,

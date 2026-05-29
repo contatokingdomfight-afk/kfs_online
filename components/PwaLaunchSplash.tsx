@@ -5,9 +5,10 @@ import { BrandSplashLogo } from "@/components/BrandSplashLogo";
 import { BRAND_BG } from "@/lib/brand";
 import { isNativeAppShell } from "@/lib/capacitor-native";
 
-const MIN_VISIBLE_MS = 1000;
-const FADE_MS = 500;
-const MAX_VISIBLE_MS = 3200;
+const SESSION_KEY = "kfs-pwa-launch-splash-seen";
+const MIN_VISIBLE_MS = 750;
+const FADE_MS = 400;
+const MAX_VISIBLE_MS = 2600;
 
 function isInstalledWebApp(): boolean {
   if (typeof window === "undefined") return false;
@@ -29,6 +30,8 @@ export function PwaLaunchSplash() {
 
   useEffect(() => {
     if (!isInstalledWebApp()) return;
+    if (sessionStorage.getItem(SESSION_KEY)) return;
+    sessionStorage.setItem(SESSION_KEY, "1");
 
     setVisible(true);
     const shownAt = Date.now();
