@@ -11,7 +11,7 @@ import { PwaInstallHint } from "@/components/PwaInstallHint";
 import { AuthSessionKeepAlive } from "@/components/AuthSessionKeepAlive";
 import { CapacitorNativeBridge } from "@/components/CapacitorNativeBridge";
 import { PwaLaunchSplash } from "@/components/PwaLaunchSplash";
-import { BRAND_BG, BRAND_LOGO } from "@/lib/brand";
+import { BRAND_BG, BRAND_LOGO, BRAND_LOGO_EMBLEM } from "@/lib/brand";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -61,6 +61,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} data-theme={theme} suppressHydrationWarning>
       <head>
+        <link rel="preload" href={BRAND_LOGO_EMBLEM} as="image" type="image/png" />
         <link rel="preload" href={BRAND_LOGO} as="image" type="image/png" />
       </head>
       <body className={`${inter.variable} font-sans`}>

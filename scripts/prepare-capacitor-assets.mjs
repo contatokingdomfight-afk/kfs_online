@@ -8,7 +8,7 @@ import sharp from "sharp";
 
 const BRAND_BG = "#121416";
 const root = process.cwd();
-const logoPath = path.join(root, "public", "brand", "kfs-logotipo-transparent.png");
+const logoPath = path.join(root, "public", "brand", "kfs-logotipo-emblem.png");
 const fallbackIcon = path.join(root, "public", "icons", "icon-512.png");
 const assetsDir = path.join(root, "assets");
 

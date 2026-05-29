@@ -1,32 +1,30 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  BRAND_EMBLEM_HEIGHT,
+  BRAND_EMBLEM_WIDTH,
   BRAND_LOGO,
+  BRAND_LOGO_EMBLEM,
   BRAND_LOGO_HEIGHT,
   BRAND_LOGO_WIDTH,
 } from "@/lib/brand";
 
 type Variant = "header" | "launch" | "compact";
 
-const HEIGHT_PX: Record<Variant, number> = {
-  header: 42,
-  launch: 0,
-  compact: 0,
-};
+/** Header: emblema maior; splash mantém logotipo completo. */
+const HEADER_HEIGHT_PX = 52;
 
 const MAX_WIDTH: Record<Variant, string> = {
-  header: "min(62vw, 208px)",
+  header: "min(36vw, 148px)",
   launch: "min(92vw, 380px)",
   compact: "min(42vw, 140px)",
 };
 
 type Props = {
   variant?: Variant;
-  /** Só em `header`: link para a home da área. */
   href?: string;
   className?: string;
   priority?: boolean;
-  /** Acessibilidade quando substitui título textual. */
   ariaLabel?: string;
 };
 
@@ -38,24 +36,29 @@ export function BrandLogo({
   ariaLabel = "Kingdom Fight School",
 }: Props) {
   const isHeader = variant === "header";
+  const src = isHeader ? BRAND_LOGO_EMBLEM : BRAND_LOGO;
+  const width = isHeader ? BRAND_EMBLEM_WIDTH : BRAND_LOGO_WIDTH;
+  const height = isHeader ? BRAND_EMBLEM_HEIGHT : BRAND_LOGO_HEIGHT;
 
   const image = (
     <Image
-      src={BRAND_LOGO}
+      src={src}
       alt={ariaLabel}
-      width={BRAND_LOGO_WIDTH}
-      height={BRAND_LOGO_HEIGHT}
+      width={width}
+      height={height}
       priority={priority}
-      sizes={isHeader ? "208px" : variant === "launch" ? "92vw" : "42vw"}
+      unoptimized={isHeader}
+      sizes={isHeader ? "144px" : variant === "launch" ? "92vw" : "42vw"}
       className={className}
       style={
         isHeader
           ? {
-              height: HEIGHT_PX.header,
+              height: HEADER_HEIGHT_PX,
               width: "auto",
               maxWidth: MAX_WIDTH.header,
               objectFit: "contain",
               display: "block",
+              imageRendering: "auto",
             }
           : {
               width: MAX_WIDTH[variant],

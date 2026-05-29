@@ -1,18 +1,16 @@
 /**
- * Gera ícones PWA a partir do logotipo sem fundo em `public/brand/`.
+ * Ícones PWA: emblema transparente (sem caixa de fundo no PNG).
  * Executar: npm run generate:pwa-icons
  */
 import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
 
-const BRAND_BG = "#121416";
-
 async function main() {
   const root = process.cwd();
-  const src = path.join(root, "public", "brand", "kfs-logotipo-transparent.png");
+  const src = path.join(root, "public", "brand", "kfs-logotipo-emblem.png");
   await fs.access(src).catch(() => {
-    throw new Error(`Ficheiro não encontrado: ${src}`);
+    throw new Error(`Ficheiro não encontrado: ${src} — corre npm run process:brand-logo`);
   });
 
   const outDir = path.join(root, "public", "icons");
@@ -21,25 +19,23 @@ async function main() {
   const buf = await fs.readFile(src);
 
   async function squareIcon(size: number, maskable: boolean) {
-    const bg = sharp({
+    const inner = Math.round(maskable ? size * 0.62 : size * 0.8);
+    const logo = await sharp(buf)
+      .resize(inner, inner, {
+        fit: "contain",
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .toBuffer();
+
+    return sharp({
       create: {
         width: size,
         height: size,
         channels: 4,
-        background: BRAND_BG,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
       },
-    });
-
-    const inner = Math.round(maskable ? size * 0.72 : size * 0.88);
-    const logo = await sharp(buf)
-      .resize(inner, inner, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-      .toBuffer();
-
-    const top = Math.round((size - inner) / 2);
-    const left = top;
-
-    return bg
-      .composite([{ input: logo, top, left }])
+    })
+      .composite([{ input: logo, gravity: "centre" }])
       .png()
       .toBuffer();
   }
@@ -58,7 +54,7 @@ async function main() {
     fs.writeFile(path.join(outDir, "apple-touch-icon.png"), apple180),
   ]);
 
-  console.log("Ícones PWA gerados em public/icons/ (fundo #121416)");
+  console.log("Ícones PWA gerados (emblema transparente) em public/icons/");
 }
 
 main().catch((e) => {
