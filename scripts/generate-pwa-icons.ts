@@ -70,7 +70,9 @@ async function main() {
     fs.writeFile(path.join(appDir, "apple-icon.png"), apple180),
   ]);
 
-  console.log(`Ícones PWA gerados (${path.basename(srcPath)}, emblema sem texto, fundo #121416)`);
+  console.log(
+    `Ícones PWA gerados (${path.basename(srcPath)}${isReadySource ? ", fonte pronta" : ", emblema recortado"}, fundo #121416)`,
+  );
 }
 
 main().catch((e) => {
