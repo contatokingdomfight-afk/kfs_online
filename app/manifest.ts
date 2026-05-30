@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { BRAND_BG } from "@/lib/brand";
+import { BRAND_ICON_BG } from "@/lib/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -12,9 +12,9 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "fullscreen",
     orientation: "portrait-primary",
-    background_color: BRAND_BG,
-    /** Grafite no arranque da PWA; vermelho só em botões/UI (`--primary`). */
-    theme_color: BRAND_BG,
+    /** Preto puro = fundo dos ícones; evita «caixa» cinza no splash nativo Android/iOS. */
+    background_color: BRAND_ICON_BG,
+    theme_color: BRAND_ICON_BG,
     categories: ["education", "sports", "fitness"],
     icons: [
       {

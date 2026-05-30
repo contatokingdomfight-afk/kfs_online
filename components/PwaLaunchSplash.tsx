@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BrandSplashLogo } from "@/components/BrandSplashLogo";
 import { BRAND_ICON_BG } from "@/lib/brand";
-import { isNativeAppShell } from "@/lib/capacitor-native";
+import { isCapacitorNative, isNativeAppShell } from "@/lib/capacitor-native";
 
 const SESSION_KEY = "kfs-pwa-launch-splash-seen";
 const MIN_VISIBLE_MS = 750;
@@ -22,7 +22,7 @@ function isInstalledWebApp(): boolean {
 }
 
 /**
- * Splash de arranque em PWA / app nativa: kfs-app-icon.png (transparente) sobre preto.
+ * Splash React só no Capacitor. PWA instalada usa o splash nativo do manifest (preto + ícone).
  */
 export function PwaLaunchSplash() {
   const [visible, setVisible] = useState(false);
@@ -30,6 +30,7 @@ export function PwaLaunchSplash() {
 
   useEffect(() => {
     if (!isInstalledWebApp()) return;
+    if (!isCapacitorNative()) return;
     if (sessionStorage.getItem(SESSION_KEY)) return;
     sessionStorage.setItem(SESSION_KEY, "1");
 
