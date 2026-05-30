@@ -132,6 +132,10 @@ export async function loadBrandIconPngBuffer(root = process.cwd(), opts = {}) {
   let buf;
 
   if (isReady) {
+    const meta = await sharp(src).metadata();
+    if (meta.hasAlpha) {
+      return sharp(src).ensureAlpha().flatten({ background: ICON_BG_RGBA }).png().toBuffer();
+    }
     const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     removeNearWhiteRgba(data);
     flattenDarkBackgroundRgba(data, info.width, info.height, ICON_BG_RGBA);

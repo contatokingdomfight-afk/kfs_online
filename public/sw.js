@@ -1,7 +1,7 @@
 /**
  * Service worker PWA — pass-through de rede; bump `SW_VERSION` para forçar atualização.
  */
-const SW_VERSION = "kfs-brand-v9";
+const SW_VERSION = "kfs-brand-v10";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
