@@ -21,13 +21,12 @@ async function main() {
   const appDir = path.join(root, "app");
   await fs.mkdir(outDir, { recursive: true });
 
-  /** iOS/Android cortam cantos (~squircle); conteúdo na zona central ~76–80%. */
   async function squareIcon(size: number, maskable: boolean) {
-    const scale = isReadySource
-      ? maskable ? 0.72 : 0.96
-      : maskable
-        ? 0.68
-        : 0.78;
+    if (isReadySource && !maskable) {
+      return sharp(buf).resize(size, size, { fit: "cover", position: "centre" }).png().toBuffer();
+    }
+
+    const scale = isReadySource ? 0.72 : maskable ? 0.68 : 0.78;
     const inner = Math.round(size * scale);
     const logo = await sharp(buf)
       .resize(inner, inner, {
@@ -71,7 +70,7 @@ async function main() {
   ]);
 
   console.log(
-    `Ícones PWA gerados (${path.basename(srcPath)}${isReadySource ? ", fonte pronta" : ", emblema recortado"}, fundo #121416)`,
+    `Ícones PWA gerados (${path.basename(srcPath)}${isReadySource ? ", fundo preto unificado" : ", emblema recortado"})`,
   );
 }
 
