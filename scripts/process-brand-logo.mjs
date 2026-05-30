@@ -1,7 +1,7 @@
 /**
  * Remove o fundo escuro do PNG «sem fundo» e gera variantes:
  * - kfs-logotipo-transparent.png (completo)
- * - kfs-logotipo-emblem.png (emblema: coroa + octógono, sem texto)
+ * - kfs-logotipo-emblem.png (símbolo quadrado: coroa + octógono + lutador)
  * npm run process:brand-logo
  */
 import fs from "fs/promises";
@@ -9,8 +9,8 @@ import path from "path";
 import sharp from "sharp";
 
 const BRAND_BG = { r: 18, g: 20, b: 22 }; // #121416
-/** Parte superior do master (só o símbolo, sem «KINGDOM FIGHT SCHOOL»). */
-const EMBLEM_HEIGHT_RATIO = 0.58;
+/** Cortar antes do texto «KINGDOM» (gap ~y=470 no master 1024×630). */
+const EMBLEM_MAX_BOTTOM_Y = 475;
 
 function colorDistance(r, g, b) {
   const dr = r - BRAND_BG.r;
@@ -51,19 +51,33 @@ async function removeDarkBackground(srcPath, outPath) {
   return { width: info.width, height: info.height };
 }
 
+/**
+ * Recorta só o símbolo (sem texto) e encaixa num quadrado transparente
+ * para ícones PWA legíveis (evita faixa larga onde só a coroa se vê).
+ */
 async function extractEmblem(fullPath, outPath) {
   const meta = await sharp(fullPath).metadata();
   const width = meta.width ?? 0;
   const height = meta.height ?? 0;
-  const cropH = Math.min(height, Math.round(height * EMBLEM_HEIGHT_RATIO));
+  const cropH = Math.min(height, EMBLEM_MAX_BOTTOM_Y);
   if (width < 1 || cropH < 1) {
     throw new Error(`Dimensões inválidas para emblema: ${width}×${height}`);
   }
 
-  // `extract` falha em alguns PNG gerados via raw; crop pelo topo com resize.
-  await sharp(fullPath)
+  const trimmed = await sharp(fullPath)
     .resize(width, cropH, { fit: "cover", position: "north" })
     .trim({ threshold: 12 })
+    .png()
+    .toBuffer();
+
+  const tmeta = await sharp(trimmed).metadata();
+  const side = Math.max(tmeta.width ?? 0, tmeta.height ?? 0);
+
+  await sharp(trimmed)
+    .resize(side, side, {
+      fit: "contain",
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
     .png({ compressionLevel: 9 })
     .toFile(outPath);
 }
@@ -80,7 +94,7 @@ async function main() {
 
   const emblemMeta = await sharp(emblemOut).metadata();
   console.log(`Gerado ${fullOut} (${full.width}×${full.height})`);
-  console.log(`Gerado ${emblemOut} (${emblemMeta.width}×${emblemMeta.height})`);
+  console.log(`Gerado ${emblemOut} (${emblemMeta.width}×${emblemMeta.height}, quadrado)`);
 }
 
 main().catch((e) => {

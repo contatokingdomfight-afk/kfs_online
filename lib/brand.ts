@@ -6,7 +6,7 @@ export const BRAND_PRIMARY_SHADOW = "#4A060A";
 /** PNG com alpha real (gerado por `npm run process:brand-logo`). */
 export const BRAND_LOGO = "/brand/kfs-logotipo-transparent.png";
 
-/** Emblema (coroa + octógono) — ideal para header e ícone da app. */
+/** Emblema quadrado (coroa + octógono + lutador) — ícone PWA e favicon. */
 export const BRAND_LOGO_EMBLEM = "/brand/kfs-logotipo-emblem.png";
 
 export const BRAND_LOGO_OFFICIAL = "/brand/kfs-logotipo-oficial.png";
@@ -17,4 +17,4 @@ export const BRAND_LOGO_WIDTH = 1024;
 export const BRAND_LOGO_HEIGHT = 630;
 
 export const BRAND_EMBLEM_WIDTH = 1024;
-export const BRAND_EMBLEM_HEIGHT = 365;
+export const BRAND_EMBLEM_HEIGHT = 1024;
