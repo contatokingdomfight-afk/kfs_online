@@ -1,15 +1,11 @@
 import Image from "next/image";
-import {
-  BRAND_LOGO,
-  BRAND_LOGO_HEIGHT,
-  BRAND_LOGO_WIDTH,
-} from "@/lib/brand";
+import { BRAND_APP_ICON, BRAND_APP_ICON_SIZE } from "@/lib/brand";
 
 type Variant = "launch" | "compact";
 
 const MAX_WIDTH: Record<Variant, string> = {
-  launch: "min(92vw, 380px)",
-  compact: "min(42vw, 140px)",
+  launch: "min(78vw, 300px)",
+  compact: "min(42vw, 120px)",
 };
 
 type Props = {
@@ -17,7 +13,7 @@ type Props = {
   className?: string;
 };
 
-/** Logotipo transparente centrado no splash (sem retângulo de fundo). */
+/** Logotipo transparente centrado no splash (mesmo asset que o ícone da PWA). */
 export function BrandSplashLogo({ variant = "launch", className }: Props) {
   return (
     <div
@@ -29,12 +25,12 @@ export function BrandSplashLogo({ variant = "launch", className }: Props) {
       }}
     >
       <Image
-        src={BRAND_LOGO}
+        src={BRAND_APP_ICON}
         alt=""
-        width={BRAND_LOGO_WIDTH}
-        height={BRAND_LOGO_HEIGHT}
+        width={BRAND_APP_ICON_SIZE}
+        height={BRAND_APP_ICON_SIZE}
         priority
-        sizes={variant === "launch" ? "92vw" : "42vw"}
+        sizes={variant === "launch" ? "78vw" : "42vw"}
         style={{
           width: "100%",
           height: "auto",

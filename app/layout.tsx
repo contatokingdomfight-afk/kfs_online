@@ -11,7 +11,7 @@ import { PwaInstallHint } from "@/components/PwaInstallHint";
 import { AuthSessionKeepAlive } from "@/components/AuthSessionKeepAlive";
 import { CapacitorNativeBridge } from "@/components/CapacitorNativeBridge";
 import { PwaLaunchSplash } from "@/components/PwaLaunchSplash";
-import { BRAND_BG, BRAND_LOGO, BRAND_LOGO_EMBLEM } from "@/lib/brand";
+import { BRAND_APP_ICON, BRAND_BG, BRAND_LOGO_EMBLEM } from "@/lib/brand";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -64,8 +64,8 @@ export default async function RootLayout({
         <meta name="theme-color" content={BRAND_BG} />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icons/kfs-emblem-180.png" />
+        <link rel="preload" href={BRAND_APP_ICON} as="image" type="image/png" />
         <link rel="preload" href={BRAND_LOGO_EMBLEM} as="image" type="image/png" />
-        <link rel="preload" href={BRAND_LOGO} as="image" type="image/png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var s=window.matchMedia('(display-mode: standalone)').matches||window.matchMedia('(display-mode: fullscreen)').matches||window.navigator.standalone; if(s)document.documentElement.style.backgroundColor='${BRAND_BG}';}catch(e){}})();`,

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BrandSplashLogo } from "@/components/BrandSplashLogo";
-import { BRAND_BG } from "@/lib/brand";
+import { BRAND_ICON_BG } from "@/lib/brand";
 import { isNativeAppShell } from "@/lib/capacitor-native";
 
 const SESSION_KEY = "kfs-pwa-launch-splash-seen";
@@ -22,7 +22,7 @@ function isInstalledWebApp(): boolean {
 }
 
 /**
- * Splash de arranque em PWA / app nativa: logotipo sem fundo em grafite (#121416).
+ * Splash de arranque em PWA / app nativa: kfs-app-icon.png (transparente) sobre preto.
  */
 export function PwaLaunchSplash() {
   const [visible, setVisible] = useState(false);
@@ -77,7 +77,7 @@ export function PwaLaunchSplash() {
         alignItems: "center",
         justifyContent: "center",
         padding: "max(16px, env(safe-area-inset-top)) 20px max(16px, env(safe-area-inset-bottom))",
-        backgroundColor: BRAND_BG,
+        backgroundColor: BRAND_ICON_BG,
         pointerEvents: "none",
         opacity: exiting ? 0 : 1,
         transition: `opacity ${FADE_MS}ms ease`,

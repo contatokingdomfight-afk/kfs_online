@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BrandSplashLogo } from "@/components/BrandSplashLogo";
-import { BRAND_BG } from "@/lib/brand";
+import { BRAND_ICON_BG } from "@/lib/brand";
 
 const SESSION_KEY = "kfs-dashboard-splash-shown";
 
@@ -52,7 +52,7 @@ export function DashboardSplash({ locale, displayName }: Props) {
         alignItems: "center",
         justifyContent: "center",
         gap: 20,
-        backgroundColor: BRAND_BG,
+        backgroundColor: BRAND_ICON_BG,
         cursor: "default",
         animation: "kfs-splash-in 0.2s ease",
       }}
