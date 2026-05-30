@@ -8,6 +8,9 @@ import sharp from "sharp";
 
 const OFFICIAL_ICON = "kfs-emblem-icon.png";
 
+/** Fundo dos ícones PWA (grafite KFS — alinhado ao manifest). */
+export const ICON_BG_RGBA = { r: 18, g: 20, b: 22, alpha: 255 };
+
 function removeNearWhiteRgba(data) {
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i];

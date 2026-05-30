@@ -5,7 +5,11 @@
 import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
-import { loadBrandIconPngBuffer, resolveBrandIconSourcePath } from "./prepare-brand-icon-source.mjs";
+import {
+  ICON_BG_RGBA,
+  loadBrandIconPngBuffer,
+  resolveBrandIconSourcePath,
+} from "./prepare-brand-icon-source.mjs";
 
 async function main() {
   const root = process.cwd();
@@ -17,7 +21,8 @@ async function main() {
   await fs.mkdir(outDir, { recursive: true });
 
   async function squareIcon(size: number, maskable: boolean) {
-    const inner = Math.round(maskable ? size * 0.58 : size * 0.88);
+    const scale = maskable ? 0.72 : 0.96;
+    const inner = Math.round(size * scale);
     const logo = await sharp(buf)
       .resize(inner, inner, {
         fit: "contain",
@@ -30,7 +35,7 @@ async function main() {
         width: size,
         height: size,
         channels: 4,
-        background: { r: 0, g: 0, b: 0, alpha: 0 },
+        background: ICON_BG_RGBA,
       },
     })
       .composite([{ input: logo, gravity: "centre" }])
@@ -59,7 +64,7 @@ async function main() {
     fs.writeFile(path.join(appDir, "apple-icon.png"), apple180),
   ]);
 
-  console.log(`Ícones PWA gerados a partir de ${path.basename(srcPath)}`);
+  console.log(`Ícones PWA gerados (${path.basename(srcPath)}, fundo #121416, logo ~96%)`);
 }
 
 main().catch((e) => {
