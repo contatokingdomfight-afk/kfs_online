@@ -38,22 +38,57 @@ export async function resolveBrandIconSourcePath(root = process.cwd()) {
   }
 }
 
-export async function loadBrandIconPngBuffer(root = process.cwd()) {
+/** Recorte vertical (só emblema, sem «KINGDOM») no PNG oficial após trim. */
+/** Inclui coroa + octógono + lutador; corta antes do texto «KINGDOM». */
+const OFFICIAL_SYMBOL_HEIGHT_RATIO = 0.66;
+
+async function trimLogoBuffer(buf) {
+  return sharp(buf).trim({ threshold: 10 }).png().toBuffer();
+}
+
+/**
+ * @param {string} [root]
+ * @param {{ variant?: 'symbol' | 'full' }} [opts] — `symbol` (predef.) legível no telemóvel; `full` com texto.
+ */
+export async function loadBrandIconPngBuffer(root = process.cwd(), opts = {}) {
+  const variant = opts.variant ?? "symbol";
   const src = await resolveBrandIconSourcePath(root);
   const isOfficial = src.endsWith(OFFICIAL_ICON);
+
+  let buf;
 
   if (isOfficial) {
     const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     removeNearWhiteRgba(data);
-    return sharp(data, {
+    buf = await sharp(data, {
       raw: { width: info.width, height: info.height, channels: 4 },
     })
       .png()
       .toBuffer();
+    buf = await trimLogoBuffer(buf);
+
+    if (variant === "symbol") {
+      const meta = await sharp(buf).metadata();
+      const cropH = Math.min(meta.height ?? 0, Math.round((meta.height ?? 0) * OFFICIAL_SYMBOL_HEIGHT_RATIO));
+      if (cropH > 0 && (meta.width ?? 0) > 0) {
+        buf = await sharp(buf)
+          .extract({ left: 0, top: 0, width: meta.width, height: cropH })
+          .png()
+          .toBuffer();
+        buf = await trimLogoBuffer(buf);
+      }
+    }
+    return buf;
   }
 
-  return sharp(await fs.readFile(src))
+  buf = await sharp(await fs.readFile(src))
     .trim({ threshold: 15 })
     .png()
     .toBuffer();
+
+  if (variant === "symbol" && src.includes("emblem")) {
+    return buf;
+  }
+
+  return buf;
 }

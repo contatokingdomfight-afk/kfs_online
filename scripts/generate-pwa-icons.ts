@@ -21,7 +21,7 @@ async function main() {
   await fs.mkdir(outDir, { recursive: true });
 
   async function squareIcon(size: number, maskable: boolean) {
-    const scale = maskable ? 0.72 : 0.96;
+    const scale = maskable ? 0.78 : 0.92;
     const inner = Math.round(size * scale);
     const logo = await sharp(buf)
       .resize(inner, inner, {
@@ -64,7 +64,7 @@ async function main() {
     fs.writeFile(path.join(appDir, "apple-icon.png"), apple180),
   ]);
 
-  console.log(`Ícones PWA gerados (${path.basename(srcPath)}, fundo #121416, logo ~96%)`);
+  console.log(`Ícones PWA gerados (${path.basename(srcPath)}, emblema sem texto, fundo #121416)`);
 }
 
 main().catch((e) => {
