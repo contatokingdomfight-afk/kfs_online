@@ -6,6 +6,8 @@ import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
 
+/** PNG 1024×1024 pronto (emblema centrado, ~15% margem, fundo #121416) — prioridade máxima. */
+const APP_ICON_READY = "kfs-app-icon.png";
 const OFFICIAL_ICON = "kfs-emblem-icon.png";
 
 /** Fundo dos ícones PWA (grafite KFS — alinhado ao manifest). */
@@ -29,16 +31,23 @@ function removeNearWhiteRgba(data) {
 }
 
 export async function resolveBrandIconSourcePath(root = process.cwd()) {
-  const official = path.join(root, "public", "brand", OFFICIAL_ICON);
+  const brandDir = path.join(root, "public", "brand");
+  const ready = path.join(brandDir, APP_ICON_READY);
+  try {
+    await fs.access(ready);
+    return ready;
+  } catch {
+    /* continua */
+  }
+  const official = path.join(brandDir, OFFICIAL_ICON);
   try {
     await fs.access(official);
     return official;
   } catch {
-    return path.join(root, "public", "brand", "kfs-logotipo-emblem.png");
+    return path.join(brandDir, "kfs-logotipo-emblem.png");
   }
 }
 
-/** Recorte vertical (só emblema, sem «KINGDOM») no PNG oficial após trim. */
 /** Inclui coroa + octógono + lutador; corta antes do texto «KINGDOM». */
 const OFFICIAL_SYMBOL_HEIGHT_RATIO = 0.66;
 
@@ -53,9 +62,22 @@ async function trimLogoBuffer(buf) {
 export async function loadBrandIconPngBuffer(root = process.cwd(), opts = {}) {
   const variant = opts.variant ?? "symbol";
   const src = await resolveBrandIconSourcePath(root);
+  const isReady = src.endsWith(APP_ICON_READY);
   const isOfficial = src.endsWith(OFFICIAL_ICON);
 
   let buf;
+
+  if (isReady) {
+    const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    removeNearWhiteRgba(data);
+    return trimLogoBuffer(
+      await sharp(data, {
+        raw: { width: info.width, height: info.height, channels: 4 },
+      })
+        .png()
+        .toBuffer(),
+    );
+  }
 
   if (isOfficial) {
     const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });

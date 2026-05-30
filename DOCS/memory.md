@@ -13,7 +13,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 ## Identidade visual / marca (2026)
 
 - **Tokens:** `lib/brand.ts` — fundo `#121416`, primário `#9B111E`; assets em `public/brand/` (`kfs-logotipo-transparent.png`, `kfs-logotipo-emblem.png` só símbolo).
-- **Ícone PWA:** `public/brand/kfs-emblem-icon.png` (512×512, fonte manual). `prepare-brand-icon-source.mjs` remove branco, faz trim das margens e exporta **só o emblema** (sem texto «KINGDOM») para legibilidade no telemóvel; fundo opaco `#121416` nos PNG finais. `npm run generate:pwa-icons` → `public/icons/kfs-emblem-*` e `app/icon.png`. Após alterar: bump `SW_VERSION` em `public/sw.js` e pedir reinstalação da PWA. Fallback de fonte: `kfs-logotipo-emblem.png` via `npm run process:brand-logo`.
+- **Ícone PWA:** fonte preferida `public/brand/kfs-app-icon.png` (1024×1024, emblema centrado com ~15% margem, fundo `#121416`); senão `kfs-emblem-icon.png` (build recorta margem branca e só o emblema, sem texto). `npm run generate:pwa-icons` aplica safe zone (~78% do quadrado) para não cortar nos cantos iOS. Após alterar: bump `SW_VERSION` em `public/sw.js` e **reinstalar** a PWA no telemóvel.
 - **UI:** header com texto «Kingdom Fight School»; emblema só em splash (`PwaLaunchSplash`, `DashboardSplash` via `BrandSplashLogo`) e ícones da app.
 - **Manifest PWA:** `background_color` e `theme_color` grafite (`#121416`); ícones `public/icons/kfs-emblem-*.png`. Após mudar ícone/splash: **remover a PWA do ecrã e instalar de novo** (iOS/Android não actualizam o ícone só com deploy).
 

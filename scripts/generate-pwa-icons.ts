@@ -14,14 +14,20 @@ import {
 async function main() {
   const root = process.cwd();
   const srcPath = await resolveBrandIconSourcePath(root);
+  const isReadySource = path.basename(srcPath) === "kfs-app-icon.png";
   const buf = await loadBrandIconPngBuffer(root);
 
   const outDir = path.join(root, "public", "icons");
   const appDir = path.join(root, "app");
   await fs.mkdir(outDir, { recursive: true });
 
+  /** iOS/Android cortam cantos (~squircle); conteúdo na zona central ~76–80%. */
   async function squareIcon(size: number, maskable: boolean) {
-    const scale = maskable ? 0.78 : 0.92;
+    const scale = isReadySource
+      ? maskable ? 0.72 : 0.96
+      : maskable
+        ? 0.68
+        : 0.78;
     const inner = Math.round(size * scale);
     const logo = await sharp(buf)
       .resize(inner, inner, {
