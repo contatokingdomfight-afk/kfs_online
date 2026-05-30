@@ -1,5 +1,5 @@
 /**
- * Ícones PWA + favicon a partir de `public/brand/kfs-emblem-icon.png` (se existir).
+ * Ícones PWA + favicon a partir de `public/brand/kfs-app-icon.png` (se existir).
  * Executar: npm run generate:pwa-icons
  */
 import fs from "fs/promises";
@@ -11,27 +11,52 @@ import {
   resolveBrandIconSourcePath,
 } from "./prepare-brand-icon-source.mjs";
 
+const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
+
 async function main() {
   const root = process.cwd();
   const srcPath = await resolveBrandIconSourcePath(root);
   const isReadySource = path.basename(srcPath) === "kfs-app-icon.png";
-  const buf = await loadBrandIconPngBuffer(root);
+  const bufOpaque = await loadBrandIconPngBuffer(root);
+  const bufAlpha = isReadySource
+    ? await loadBrandIconPngBuffer(root, { keepAlpha: true })
+    : bufOpaque;
 
   const outDir = path.join(root, "public", "icons");
   const appDir = path.join(root, "app");
   await fs.mkdir(outDir, { recursive: true });
 
-  async function squareIcon(size: number, maskable: boolean) {
-    if (isReadySource && !maskable) {
-      return sharp(buf).resize(size, size, { fit: "cover", position: "centre" }).png().toBuffer();
-    }
-
-    const scale = isReadySource ? 0.72 : maskable ? 0.68 : 0.78;
+  /** Logo com alpha — o SO pinta `background_color` por baixo (sem «caixa» preta no splash). */
+  async function iconWithTransparentBg(size: number, scale: number) {
     const inner = Math.round(size * scale);
-    const logo = await sharp(buf)
+    const logo = await sharp(bufAlpha)
       .resize(inner, inner, {
         fit: "contain",
-        background: { r: 0, g: 0, b: 0, alpha: 0 },
+        background: TRANSPARENT,
+      })
+      .toBuffer();
+
+    return sharp({
+      create: {
+        width: size,
+        height: size,
+        channels: 4,
+        background: TRANSPARENT,
+      },
+    })
+      .composite([{ input: logo, gravity: "centre" }])
+      .png()
+      .toBuffer();
+  }
+
+  /** Ícone opaco (maskable / favicon pequeno). */
+  async function iconOpaque(size: number, maskable: boolean) {
+    const scale = isReadySource ? 0.72 : maskable ? 0.68 : 0.78;
+    const inner = Math.round(size * scale);
+    const logo = await sharp(bufAlpha)
+      .resize(inner, inner, {
+        fit: "contain",
+        background: TRANSPARENT,
       })
       .toBuffer();
 
@@ -48,12 +73,14 @@ async function main() {
       .toBuffer();
   }
 
+  const useTransparentForManifest = isReadySource;
+
   const [png48, png192, png512, mask512, apple180] = await Promise.all([
-    squareIcon(48, false),
-    squareIcon(192, false),
-    squareIcon(512, false),
-    squareIcon(512, true),
-    squareIcon(180, false),
+    iconOpaque(48, false),
+    useTransparentForManifest ? iconWithTransparentBg(192, 0.82) : iconOpaque(192, false),
+    useTransparentForManifest ? iconWithTransparentBg(512, 0.82) : iconOpaque(512, false),
+    iconOpaque(512, true),
+    useTransparentForManifest ? iconWithTransparentBg(180, 0.82) : iconOpaque(180, false),
   ]);
 
   await Promise.all([
@@ -70,7 +97,9 @@ async function main() {
   ]);
 
   console.log(
-    `Ícones PWA gerados (${path.basename(srcPath)}${isReadySource ? ", fundo preto unificado" : ", emblema recortado"})`,
+    `Ícones PWA gerados (${path.basename(srcPath)}${
+      useTransparentForManifest ? ", manifest com alpha" : ""
+    })`,
   );
 }
 

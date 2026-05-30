@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BrandSplashLogo } from "@/components/BrandSplashLogo";
 import { BRAND_ICON_BG } from "@/lib/brand";
-import { isCapacitorNative, isNativeAppShell } from "@/lib/capacitor-native";
+import { isNativeAppShell } from "@/lib/capacitor-native";
 
 const SESSION_KEY = "kfs-pwa-launch-splash-seen";
 const MIN_VISIBLE_MS = 750;
@@ -22,19 +22,26 @@ function isInstalledWebApp(): boolean {
 }
 
 /**
- * Splash React só no Capacitor. PWA instalada usa o splash nativo do manifest (preto + ícone).
+ * Ecrã preto + logo transparente até a app carregar (cobre splash nativo com tonalidades diferentes).
  */
+function shouldShowLaunchSplash(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (!isInstalledWebApp()) return false;
+    if (sessionStorage.getItem(SESSION_KEY)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function PwaLaunchSplash() {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(shouldShowLaunchSplash);
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
-    if (!isInstalledWebApp()) return;
-    if (!isCapacitorNative()) return;
-    if (sessionStorage.getItem(SESSION_KEY)) return;
+    if (!visible) return;
     sessionStorage.setItem(SESSION_KEY, "1");
-
-    setVisible(true);
     const shownAt = Date.now();
     let fadeTimer: number | undefined;
     let removeTimer: number | undefined;
@@ -62,7 +69,7 @@ export function PwaLaunchSplash() {
       if (removeTimer) window.clearTimeout(removeTimer);
       window.removeEventListener("load", startExit);
     };
-  }, []);
+  }, [visible]);
 
   if (!visible) return null;
 

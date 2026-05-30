@@ -15,7 +15,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Tokens:** `lib/brand.ts` — fundo `#121416`, primário `#9B111E`; assets em `public/brand/` (`kfs-logotipo-transparent.png`, `kfs-logotipo-emblem.png` só símbolo).
 - **Ícone PWA:** fonte preferida `public/brand/kfs-app-icon.png` (1024×1024; fundo **preto puro** `#000000` ou transparente — evita contraste chumbo/margem). O build uniformiza fundos escuros e preenche o quadrado (sem margem extra). Senão `kfs-emblem-icon.png`. `npm run generate:pwa-icons`; bump `SW_VERSION` em `public/sw.js`; **reinstalar** a PWA no telemóvel.
 - **UI:** header com texto «Kingdom Fight School»; splash de arranque (`PwaLaunchSplash`, `DashboardSplash`) usa `kfs-app-icon.png` (transparente) sobre `BRAND_ICON_BG` (`#000000`), igual ao ícone da PWA.
-- **Manifest PWA:** `background_color` e `theme_color` = `BRAND_ICON_BG` (`#000000`), alinhado ao ícone; ícones `public/icons/kfs-emblem-*.png`. Splash React (`PwaLaunchSplash`) só no Capacitor — PWA usa splash nativo do SO. Após mudar manifest/ícone: **reinstalar** a PWA.
+- **Manifest PWA:** `background_color` / `theme_color` / `theme-color` = `#000000`; ícones `kfs-emblem-*.png` com **fundo transparente** (logo só) para o splash nativo não desenhar uma «caixa» preta. `PwaLaunchSplash` cobre o arranque com o mesmo preto + `kfs-app-icon.png`. Após mudar ícones/manifest: **reinstalar** a PWA.
 
 ## Performance / avaliações (aluno)
 

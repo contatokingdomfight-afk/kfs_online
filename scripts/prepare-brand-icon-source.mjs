@@ -125,6 +125,7 @@ async function trimLogoBuffer(buf) {
  */
 export async function loadBrandIconPngBuffer(root = process.cwd(), opts = {}) {
   const variant = opts.variant ?? "symbol";
+  const keepAlpha = opts.keepAlpha === true;
   const src = await resolveBrandIconSourcePath(root);
   const isReady = src.endsWith(APP_ICON_READY);
   const isOfficial = src.endsWith(OFFICIAL_ICON);
@@ -133,6 +134,9 @@ export async function loadBrandIconPngBuffer(root = process.cwd(), opts = {}) {
 
   if (isReady) {
     const meta = await sharp(src).metadata();
+    if (meta.hasAlpha && keepAlpha) {
+      return sharp(src).ensureAlpha().png().toBuffer();
+    }
     if (meta.hasAlpha) {
       return sharp(src).ensureAlpha().flatten({ background: ICON_BG_RGBA }).png().toBuffer();
     }

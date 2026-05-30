@@ -44,7 +44,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: BRAND_BG },
+    { media: "(prefers-color-scheme: dark)", color: BRAND_ICON_BG },
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
   ],
 };
@@ -61,7 +61,8 @@ export default async function RootLayout({
   return (
     <html lang={locale} data-theme={theme} suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content={BRAND_BG} />
+        <meta name="theme-color" content={BRAND_ICON_BG} media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icons/kfs-emblem-180.png" />
         <link rel="preload" href={BRAND_APP_ICON} as="image" type="image/png" />

@@ -91,6 +91,14 @@
     overscroll-behavior-x: none;
   }
 
+  /* PWA: um só preto no arranque (evita chumbo do tema + caixa do ícone opaco). */
+  @media (display-mode: standalone), (display-mode: fullscreen) {
+    html,
+    body {
+      background-color: #000000;
+    }
+  }
+
   /* Mobile viewport fix */
   * {
     -webkit-tap-highlight-color: transparent;
