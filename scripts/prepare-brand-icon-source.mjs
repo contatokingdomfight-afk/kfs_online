@@ -1,0 +1,56 @@
+/**
+ * Prepara buffer PNG com alpha a partir do ícone oficial ou do emblema gerado.
+ * Usado por generate-pwa-icons e prepare-capacitor-assets.
+ */
+import fs from "fs/promises";
+import path from "path";
+import sharp from "sharp";
+
+const OFFICIAL_ICON = "kfs-emblem-icon.png";
+
+function removeNearWhiteRgba(data) {
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const min = Math.min(r, g, b);
+    const max = Math.max(r, g, b);
+
+    if (min >= 248) {
+      data[i + 3] = 0;
+    } else if (min >= 230 && max >= 240) {
+      const t = (min - 230) / 18;
+      data[i + 3] = Math.round(Math.max(0, 255 * (1 - t)));
+    }
+  }
+}
+
+export async function resolveBrandIconSourcePath(root = process.cwd()) {
+  const official = path.join(root, "public", "brand", OFFICIAL_ICON);
+  try {
+    await fs.access(official);
+    return official;
+  } catch {
+    return path.join(root, "public", "brand", "kfs-logotipo-emblem.png");
+  }
+}
+
+export async function loadBrandIconPngBuffer(root = process.cwd()) {
+  const src = await resolveBrandIconSourcePath(root);
+  const isOfficial = src.endsWith(OFFICIAL_ICON);
+
+  if (isOfficial) {
+    const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    removeNearWhiteRgba(data);
+    return sharp(data, {
+      raw: { width: info.width, height: info.height, channels: 4 },
+    })
+      .png()
+      .toBuffer();
+  }
+
+  return sharp(await fs.readFile(src))
+    .trim({ threshold: 15 })
+    .png()
+    .toBuffer();
+}

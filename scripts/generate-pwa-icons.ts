@@ -1,29 +1,23 @@
 /**
- * Ícones PWA + favicon da app (emblema transparente).
+ * Ícones PWA + favicon a partir de `public/brand/kfs-emblem-icon.png` (se existir).
  * Executar: npm run generate:pwa-icons
  */
 import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
+import { loadBrandIconPngBuffer, resolveBrandIconSourcePath } from "./prepare-brand-icon-source.mjs";
 
 async function main() {
   const root = process.cwd();
-  const src = path.join(root, "public", "brand", "kfs-logotipo-emblem.png");
-  await fs.access(src).catch(() => {
-    throw new Error(`Ficheiro não encontrado: ${src} — corre npm run process:brand-logo`);
-  });
-
-  const buf = await sharp(await fs.readFile(src))
-    .trim({ threshold: 15 })
-    .png()
-    .toBuffer();
+  const srcPath = await resolveBrandIconSourcePath(root);
+  const buf = await loadBrandIconPngBuffer(root);
 
   const outDir = path.join(root, "public", "icons");
   const appDir = path.join(root, "app");
   await fs.mkdir(outDir, { recursive: true });
 
   async function squareIcon(size: number, maskable: boolean) {
-    const inner = Math.round(maskable ? size * 0.58 : size * 0.86);
+    const inner = Math.round(maskable ? size * 0.58 : size * 0.88);
     const logo = await sharp(buf)
       .resize(inner, inner, {
         fit: "contain",
@@ -57,7 +51,6 @@ async function main() {
     fs.writeFile(path.join(outDir, "kfs-emblem-512.png"), png512),
     fs.writeFile(path.join(outDir, "kfs-emblem-512-maskable.png"), mask512),
     fs.writeFile(path.join(outDir, "kfs-emblem-180.png"), apple180),
-    // Aliases legados (alguns browsers em cache)
     fs.writeFile(path.join(outDir, "icon-192.png"), png192),
     fs.writeFile(path.join(outDir, "icon-512.png"), png512),
     fs.writeFile(path.join(outDir, "icon-512-maskable.png"), mask512),
@@ -66,7 +59,7 @@ async function main() {
     fs.writeFile(path.join(appDir, "apple-icon.png"), apple180),
   ]);
 
-  console.log("Ícones PWA (kfs-emblem-*) + app/icon.png");
+  console.log(`Ícones PWA gerados a partir de ${path.basename(srcPath)}`);
 }
 
 main().catch((e) => {

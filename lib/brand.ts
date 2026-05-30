@@ -6,7 +6,10 @@ export const BRAND_PRIMARY_SHADOW = "#4A060A";
 /** PNG com alpha real (gerado por `npm run process:brand-logo`). */
 export const BRAND_LOGO = "/brand/kfs-logotipo-transparent.png";
 
-/** Emblema quadrado (coroa + octógono + lutador) — ícone PWA e favicon. */
+/** Ícone oficial 512×512 (Canva/export); prioridade em `generate:pwa-icons`. */
+export const BRAND_EMBLEM_ICON = "/brand/kfs-emblem-icon.png";
+
+/** Emblema quadrado gerado automaticamente (fallback). */
 export const BRAND_LOGO_EMBLEM = "/brand/kfs-logotipo-emblem.png";
 
 export const BRAND_LOGO_OFFICIAL = "/brand/kfs-logotipo-oficial.png";
