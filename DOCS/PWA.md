@@ -1,55 +1,72 @@
 # Progressive Web App (PWA) — KFS Online
 
-> **Última revisão:** 19 maio 2026 — faixa **HomePwaInstallBand** na homepage (`app/page.tsx`); doc `MOBILE_APP_DISTRIBUICAO.md`. *Anterior:* 20 maio 2026 (`sw.js`: listener `fetch` sem `respondWith` — evita erros de rede no DevTools em prefetch/RSC).  
-> **Capacitor (Android/iOS):** scaffold em **`DOCS/CAPACITOR.md`** (WebView → mesmo site). O PWA continua a base no browser. Ver também **`DOCS/MOBILE_APP_DISTRIBUICAO.md`** e o roadmap mobile.
+> **Última revisão:** 22 maio 2026 — identidade visual 2026: ícones com alpha, splash preto único, `kfs-app-icon.png`.  
+> **Distribuição mobile:** [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md). **Capacitor:** [`CAPACITOR.md`](CAPACITOR.md).
 
 ## O que está implementado
 
 | Área | Detalhe |
 |------|---------|
-| **Manifest** | `app/manifest.ts` → rota `/manifest.webmanifest` (`display: fullscreen`, `theme_color` / `background_color` **#ED1C24**, ícones). |
-| **Ícones** | `public/icons/` — `icon-192.png`, `icon-512.png`, `icon-512-maskable.png`, `apple-touch-icon.png` gerados a partir de **`KFS Logo.png`** na raiz. |
-| **Regenerar ícones** | `npm run generate:pwa-icons` (script: `scripts/generate-pwa-icons.ts`, usa **sharp**). |
-| **Metadados** | `app/layout.tsx` — `applicationName`, `appleWebApp`, `icons` (favicon dinâmico continua em `app/icon.tsx`, alinhado à cor de marca). |
-| **Service worker** | `public/sw.js` — `install` / `activate` + listener `fetch` **vazio** (não chama `respondWith`): pass-through nativo do browser, sem interceptar GET nem devolver `Response.error()` em falhas (evita avisos «FetchEvent … network error» em `/admin` ou prefetch). Registo só em **produção** via `components/PwaServiceWorkerRegister.tsx`. |
-| **Dica de instalação** | `PwaInstallProvider` + `PwaInstallHint.tsx`: primeiro aviso em ecrãs ≤768px (estilo destacado); «Agora não» ou × grava `kfs-pwa-sidebar-mode` e o aviso some. Depois, `SidebarPwaInstall` no menu lateral: com `beforeinstallprompt` (Chromium) mostra «Instalar app»; no **Safari** e outros sem API nativa, o mesmo estilo de botão abre um **modal** com passos (`lib/pwa-install-ui.ts`). **Homepage pública:** `HomePwaInstallBand` (`components/home/HomePwaInstallBand.tsx`) — mesma lógica de instalação / modal, sem o gate de ecrã estreito do sidebar. Migração: quem tinha o dismiss antigo passa para modo menu (`lib/pwa-install-storage.ts`). |
-| **Modo app (standalone / fullscreen)** | `lib/pwa-installed-window.ts` + `components/PwaDisplayMode.tsx` definem `data-pwa-standalone` no `<html>` quando `display-mode` é `standalone` ou `fullscreen` (ou iOS `navigator.standalone`); `app/globals.css` ajusta `min-height` do `body` em modo app. |
-| **Middleware** | `middleware.ts` — matcher exclui `sw.js` e `manifest.webmanifest` para não redirecionar para login. |
-| **Sessão (app instalada)** | O mesmo fluxo Supabase que no browser: `components/AuthSessionKeepAlive.tsx` no layout raiz chama `refreshSession()` **só quando o access JWT está expirado ou perto de expirar** (ao voltar à app / `pageshow` / foco / online, e no intervalo com o ecrã visível); `lib/supabase/client.ts` força `persistSession` + `autoRefreshToken`. |
+| **Manifest** | `app/manifest.ts` → `/manifest.webmanifest` — `display: fullscreen`, `background_color` e `theme_color` = **`#000000`** (`BRAND_ICON_BG` em `lib/brand.ts`). Ícones: `/icons/kfs-emblem-*.png`. |
+| **Ícones (fonte)** | Preferência: **`public/brand/kfs-app-icon.png`** (1024×1024, fundo transparente). Fallback: `kfs-emblem-icon.png`. Pipeline em `scripts/prepare-brand-icon-source.mjs` + `scripts/generate-pwa-icons.ts`. |
+| **Ícones (gerados)** | `public/icons/kfs-emblem-{192,512,512-maskable,180}.png` — manifest usa PNG com **fundo transparente** (só o logo) para o splash nativo não desenhar uma «caixa» preta sobre fundo cinza. Aliases legados: `icon-192.png`, etc. Favicon: `app/icon.png` (48px, opaco). |
+| **Regenerar** | `npm run generate:pwa-icons` (corre também `npm run process:brand-logo`). Após mudar ícones: bump `SW_VERSION` em `public/sw.js` e **reinstalar** a PWA no telemóvel. |
+| **Splash de arranque** | **Nativo (SO):** `background_color` + ícone do manifest. **React:** `components/PwaLaunchSplash.tsx` — ecrã `#000000` + `BrandSplashLogo` → `kfs-app-icon.png` transparente (cobre transição até a app carregar). **Dashboard:** `DashboardSplash` na primeira visita à sessão. |
+| **UI geral** | Header com texto «Kingdom Fight School» (sem logotipo grande). Tema da app após login: tokens `--bg` em `globals.css` (grafite `#0b0b0b` / `#121416` na UI — distinto do preto do splash PWA). |
+| **Metadados** | `app/layout.tsx` — `applicationName`, `appleWebApp`, preload de `kfs-app-icon.png`, `theme-color` preto em dark mode, script inline que pinta `html`/`body` de preto em standalone. **Favicon:** `app/icon.png` / `app/apple-icon.png` (gerados, não `app/icon.tsx`). |
+| **Service worker** | `public/sw.js` — `install` / `activate`; listener `fetch` vazio (pass-through). Registo em produção: `components/PwaServiceWorkerRegister.tsx`. Versão actual: ver constante `SW_VERSION` no ficheiro. |
+| **Instalação** | `PwaInstallProvider`, `PwaInstallHint`, `SidebarPwaInstall`, `HomePwaInstallBand` — ver `lib/pwa-install-storage.ts`, `lib/pwa-install-ui.ts`. |
+| **Modo app** | `PwaDisplayMode` → `data-pwa-standalone` no `<html>`; `app/globals.css` ajusta `min-height` e fundo **preto** em `display-mode: standalone`. |
+| **Middleware** | `middleware.ts` exclui `sw.js` e `manifest.webmanifest` do redirect para login. |
+| **Sessão** | `AuthSessionKeepAlive`, cookies `kfs_auth_long` («Manter-me ligado»), `lib/supabase/cookie-options.ts`. Complemento: [`LoginInfinitoBoasPraticas.md`](LoginInfinitoBoasPraticas.md). |
 
-### Sessão longa no telemóvel (evitar “deslogar” sozinho)
+## Cores — PWA vs UI vs Capacitor
 
-**No código** já renovamos tokens ao reabrir a PWA e periodicamente com a app aberta. Ainda assim podes ver logout se:
+| Contexto | Cor | Notas |
+|----------|-----|--------|
+| Splash / ícone PWA / manifest | `#000000` | `BRAND_ICON_BG` |
+| UI autenticada (dark) | `#0b0b0b` / `#121416` | `BRAND_BG`, tokens CSS |
+| Status bar Capacitor | `#121416` | `CapacitorNativeBridge` — grafite da marca |
 
-1. **Supabase Auth (projeto)** — Dashboard → **Authentication** → **Sessões** / **Sessions**:
-   - **Plano Livre:** as opções de **tempo limite de inatividade** e **sessões com tempo limitado** (time-box) que o dashboard indica como *“disponível apenas no Pro”* **não estão a impor** política extra nesse plano; valores **0 = nunca** (onde aplicável) mantêm-se alinhados a não forçar re-login por tempo.
-   - **Plano Pro:** aí podes **activar** time-box ou inactivity — se o fizeres com valores curtos, **encurta** a sessão; Pro não “alonga” automaticamente a sessão.
-   - **Intervalo de reutilização do token de atualização** (ex.: 10 s): recomendação normal da Supabase; **não** é a causa típica de logout após dias.
-   - **Sessão única por utilizador:** com isto **activo**, um novo login (outro telemóvel ou browser) pode invalidar a sessão anterior — parece “logout misterioso”. Manter **desactivado** se quiseres vários dispositivos logados.
-2. **Browser / SO**: pouco espaço, “limpar dados do site”, modo privado ou políticas agressivas (ex.: alguns modos de poupança de dados) podem apagar cookies — não há controlo total pela app.
+## Pipeline de marca (ícones)
 
-**Expectativa realista:** “Sempre logado para sempre” sem reautenticar **não** é garantido por segurança e por limites da Web; o objectivo é **manter a sessão o mais longo possível** enquanto o refresh token for válido e os cookies existirem. **Upgrade Supabase Pro** é opcional (quota, equipa, outras features); para **só** evitar deslogin, o que importa é configuração + app (já documentados acima), não o tier por si só.
+1. Colocar ou actualizar `public/brand/kfs-app-icon.png` (transparente ou preto liso).
+2. `npm run generate:pwa-icons`
+3. Alterar `SW_VERSION` em `public/sw.js`
+4. Deploy → utilizador **remove e reinstala** a PWA (cache do splash/ícone no SO).
 
-## Desinstalar e voltar a instalar (limitações da plataforma)
+Scripts auxiliares: `process-brand-logo.mjs` (logotipo largo + emblema quadrado), `prepare-capacitor-assets.mjs` (lojas nativas).
 
-- **Não existe evento nem API fiável** na Web para saber que o utilizador **removeu** a PWA do ecrã principal ou da gaveta de apps. O site só pode reagir ao que corre **dentro do browser** (ex.: `beforeinstallprompt`, `appinstalled`).
-- O Chrome **pode demorar** a voltar a emitir `beforeinstallprompt` depois de uma desinstalação (critérios internos de engajamento). Nesse intervalo o nosso botão «Instalar app» pode não aparecer; o utilizador pode usar **menu ⋮ → Instalar app** (Android) ou **Partilhar → Ecrã principal** (iOS).
-- **`appinstalled`**: o cliente regista um timestamp em `localStorage` (`kfs-pwa-appinstalled-at`, ver `lib/pwa-install-storage.ts`) quando a instalação é concluída — serve para suporte/diagnóstico, **não** indica desinstalação.
+## Sessão longa no telemóvel
+
+Ver secção **Sessão web** em [`memory.md`](memory.md) e [`LoginInfinitoBoasPraticas.md`](LoginInfinitoBoasPraticas.md).
+
+Pontos Supabase Dashboard: time-box / inactivity (plano Pro), sessão única por utilizador, intervalo de reutilização do refresh token.
+
+## Desinstalar e voltar a instalar
+
+- Não há API fiável de «desinstalou a PWA».
+- `beforeinstallprompt` pode demorar a voltar após desinstalar (Chrome).
+- `appinstalled` grava `kfs-pwa-appinstalled-at` em `localStorage` (diagnóstico).
 
 ## Testes rápidos
 
-1. **Produção local:** `npm run build` → `npm start` → Chrome DevTools → **Application** → Manifest / Service Workers.  
-2. **Instalar:** menu do browser “Instalar app” / iOS Safari “Adicionar ao ecrã principal”.  
-3. **Lighthouse:** categoria PWA (HTTPS em produção).
+1. `npm run build` → `npm start` → DevTools → Application → Manifest / Service Workers.
+2. Instalar no dispositivo; validar **um só preto** no splash (reinstalar após mudar manifest/ícones).
+3. Lighthouse → PWA (HTTPS em produção).
 
 ## Ficheiros principais
 
-- `app/manifest.ts`
-- `public/sw.js`
-- `public/icons/*.png`
-- `components/PwaServiceWorkerRegister.tsx`, `components/PwaDisplayMode.tsx`
-- `scripts/generate-pwa-icons.ts`
+| Tipo | Caminhos |
+|------|----------|
+| Tokens | `lib/brand.ts` |
+| Manifest | `app/manifest.ts` |
+| Layout / preload | `app/layout.tsx` |
+| Splash | `components/PwaLaunchSplash.tsx`, `BrandSplashLogo.tsx`, `DashboardSplash.tsx` |
+| SW | `public/sw.js` |
+| Ícones | `public/icons/`, `public/brand/kfs-app-icon.png` |
+| Scripts | `scripts/generate-pwa-icons.ts`, `scripts/prepare-brand-icon-source.mjs` |
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) (§3.2 e §3.18).*
+*Índice: [`INDEX.md`](INDEX.md) · Contexto vivo: [`memory.md`](memory.md) (secções Identidade visual, Sessão web).*

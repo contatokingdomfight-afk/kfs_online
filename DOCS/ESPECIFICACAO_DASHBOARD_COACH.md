@@ -1,5 +1,7 @@
 # Especificação Funcional: O Novo Centro de Comando do Coach
 
+> **Implementado adicionalmente (maio 2026):** **Treinador assistente (escola)** — aluno com registo `SchoolAssistantCoach` acede a área coach reduzida (presenças, eventos da escola, sem avaliar na aula). Ver [`memory.md`](memory.md) (secção Treinador assistente). **Timer de rounds:** [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md).
+
 ## 1. Visão Geral e Princípios
 
 **Objetivo:** Redesenhar a página inicial do professor (`/coach`) para que funcione como um "centro de comando" eficiente, organizado em torno do seu fluxo de trabalho diário: preparar, executar e acompanhar as aulas.
@@ -31,7 +33,7 @@ A página `/coach` será reestruturada nas seguintes secções, por ordem de pri
 *   **Ação Principal:**
     *   Um único botão, grande e destacado: **`[ 🚀 GERIR AULA AGORA ]`**.
     *   Este botão é um link que aponta sempre para a página de gestão da aula em foco: `/coach/aula?lessonId=[ID_DA_AULA]`.
-*   **Presenças rápidas (abril 2026):** na página de gestão da aula (`/coach/aula`), o coach pode marcar presenças em lote com **data de ocorrência em hora de Lisboa** (`Europe/Lisbon`); o âmbito de alunos elegíveis segue `lib/coach-schedule-scope.ts` (ex.: alunos com aulas na mesma escola e janela temporal). Ver `memory.md` §3.6 (área Coach / agenda) e §3.15 (pré-treino e RPE na aula).
+*   **Presenças rápidas (abril 2026):** na página de gestão da aula (`/coach/aula`), o coach pode marcar presenças em lote com **data de ocorrência em hora de Lisboa** (`Europe/Lisbon`); o âmbito de alunos elegíveis segue `lib/coach-schedule-scope.ts`. Ver [`memory.md`](memory.md) e código em `app/coach/aula/`.
 
 ---
 

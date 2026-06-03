@@ -3,7 +3,8 @@
 **Kingdom Fight School – MVP**
 
 > Tokens = decisões visuais centralizadas  
-> Componentes só **consomem tokens**, nunca cores soltas.
+> Componentes só **consomem tokens**, nunca cores soltas.  
+> **Marca 2026 (logotipo, ícone PWA, splash):** cores e paths em [`lib/brand.ts`](../lib/brand.ts) e [`PWA.md`](PWA.md) — `BRAND_BG` `#121416`, `BRAND_ICON_BG` `#000000`, primário `#9B111E`.
 
 ---
 

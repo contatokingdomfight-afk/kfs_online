@@ -1,6 +1,16 @@
 # Índice da documentação – KFS Online
 
-> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão do índice: **15 maio 2026** (timer de rounds coach: `DOCS/ROUND_TIMER_COACH.md`, `memory.md`).
+> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão: **22 maio 2026** — docs alinhadas ao código (`DOCS/INDEX.md`, `DOCS/memory.md`, `DOCS/PWA.md`).
+
+### Actualização maio 2026 (marca / PWA)
+
+- Ícone e splash: `public/brand/kfs-app-icon.png`, manifest `#000000`, pipeline `npm run generate:pwa-icons`. Ver **`DOCS/PWA.md`** e **`DOCS/memory.md`** (Identidade visual).
+- Após mudar ícones: reinstalar a PWA no telemóvel.
+
+### Actualização maio 2026 (treinador assistente + Tribo)
+
+- **Assistente (escola):** `SchoolAssistantCoach` — `DOCS/memory.md`.
+- **Tribo:** MVP em curso — `DOCS/TRIBO_MVP.md`, `/dashboard/tribo`.
 
 ### Actualização maio 2026 (timer de rounds)
 
@@ -19,9 +29,8 @@
 
 - **Permissões admin (RBAC):** plano de ação `DOCS/PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`; tarefa no `DOCS/ROADMAP_Plataforma_KFS.md` (prioridade 11).
 
-- **Sessão mobile / PWA / Supabase:** `DOCS/memory.md` §3.2 e **§3.18**; `DOCS/PWA.md` (sessão longa + Livre vs Pro). Pasta `docs/memory.md` na raiz: **apontador** para `DOCS/memory.md`.
-- **Sessão mobile / idle (histórico):** `DOCS/memory.md` §3.2; roadmap §1.
-- **Stripe (env vars, checkout, test/live):** `DOCS/STRIPE_KINGDOM_ONLINE.md`, `DOCS/memory.md` §3.4; `VARIAVEIS_AMBIENTE_VERCEL.txt`; `DEPLOY_VERCEL.md` / `Deploy_Vercel_kingdomfight.md`.
+- **Sessão / PWA:** `DOCS/memory.md` (Sessão web), `DOCS/PWA.md`, `DOCS/LoginInfinitoBoasPraticas.md`.
+- **Stripe:** `DOCS/STRIPE_KINGDOM_ONLINE.md`, `VARIAVEIS_AMBIENTE_VERCEL.txt`, `DOCS/DEPLOY_VERCEL.md`.
 - **Índice canónico:** `DOCS/INDEX.md` (changelog no topo).
 
 ### Documentação canónica em `DOCS/`

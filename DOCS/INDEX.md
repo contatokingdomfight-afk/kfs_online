@@ -1,6 +1,7 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 28 maio 2026 — performance aluno: objetivos colapsáveis (`MissionCard`); histórico de avaliações com nome do treinador (RLS); merge `dev`→`main` com PWA/Capacitor. [`memory.md`](memory.md).  
+> **Última revisão deste índice:** 22 maio 2026 — documentação alinhada ao código: marca/PWA 2026 (`kfs-app-icon.png`, splash preto único), treinador assistente, Tribo em curso, `PWA.md` reescrito. [`memory.md`](memory.md).  
+> **Anterior:** 28 maio 2026 — performance aluno (`MissionCard`); histórico avaliações; merge PWA/Capacitor.  
 > **Anterior:** 19 maio 2026 — **Mobile / PWA (site, sem lojas):** [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md), faixa na homepage, roadmap e [`PWA.md`](PWA.md); [`memory.md`](memory.md).  
 > **Anterior:** 19 maio 2026 — **Tribo (comunidade):** MVP planeado — [`TRIBO_MVP.md`](TRIBO_MVP.md), secção 7 em [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md), [`memory.md`](memory.md).  
 > **Anterior:** 15 maio 2026 — **timer de rounds (coach):** sons, últimos segundos, UI dos botões — [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md), [`memory.md`](memory.md).  
@@ -11,10 +12,12 @@
 > **Índice de contexto técnico (prioridade para IA / equipa):** [`memory.md`](memory.md)  
 > **Roadmap feito / por fazer:** [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)
 
-Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). Não confundir com `docs/` na raiz, se existir.
+Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). **Não editar** cópias em `docs/` na raiz em paralelo — só **`DOCS/`** (regra em `.cursor/rules/documentacao-projeto.mdc`).
 
 Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual: Supabase (sem Clerk); ver **`DEPLOY_VERCEL.md`**.
 
+**Changelog (maio 2026 — identidade / PWA):** `kfs-app-icon.png`, ícones manifest com transparência, splash `#000000`, `PwaLaunchSplash`, [`PWA.md`](PWA.md), [`lib/brand.ts`](../lib/brand.ts). Reinstalar PWA após mudar ícones.  
+**Changelog (maio 2026):** treinador assistente (escola) — `SchoolAssistantCoach`, rotas `/coach/eventos`, ver `memory.md`.  
 **Changelog (maio 2026):** performance — secção Objetivos com Ver mais/menos; fix nome do treinador no histórico de avaliações (`lib/evaluation-history-helpers.ts`).  
 **Changelog (maio 2026):** mobile — distribuição inicial PWA só pelo **site** (CTA na homepage); doc [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md); Capacitor — [`CAPACITOR.md`](CAPACITOR.md); resumo executivo mobile em [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md).  
 **Changelog (maio 2026):** Tribo (comunidade) — [`TRIBO_MVP.md`](TRIBO_MVP.md) (feed por escola, media, comentários, curtidas, partilha por link, moderação, RLS/Storage); secção 7 em [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md).  
@@ -23,7 +26,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 
 **Changelog (fevereiro 2026):** dashboard aluno — `getThisWeekRangeLisbon`, filtro de modalidade com plano Presencial I + aulas abertas, testes `dashboard-lesson-filter`, re-export `getCachedLocations` em `plan-access` (ver `DOCS/memory.md`).
 
-**Changelog (abril 2026):** revisão cruzada de deploy (`DEPLOY_VERCEL.md`, `Deploy_Vercel_kingdomfight.md`), Stripe (`STRIPE_KINGDOM_ONLINE.md`), troubleshooting Vercel, PWA (sessão instalada + Supabase Livre/Pro), fluxo de onboarding, `VARIAVEIS_AMBIENTE_VERCEL.txt` e **`INDICE_DOCUMENTACAO.md`** na raiz — alinhados a `memory.md` §3.2 (sessão), §3.4 (Stripe), §3.17 e **§3.18** (auth abril 2026).
+**Changelog (abril 2026):** revisão cruzada de deploy, Stripe, troubleshooting Vercel, PWA/sessão, onboarding — alinhados a `memory.md` (secções Sessão web, financeiro no roadmap).
 
 ---
 
@@ -35,7 +38,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`memory.md`](memory.md) | Índice de contexto: arquitetura, entregas recentes, comandos, pendências |
 | [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) | Roadmap por área (aluno, admin, coach, BD, deploy) |
 | [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md) | Especificação geral da plataforma (inclui secção Tribo / comunidade) |
-| [`TRIBO_MVP.md`](TRIBO_MVP.md) | Tribo (comunidade): MVP — feed por escola, dados, Storage, RLS, moderação, critérios de aceite |
+| [`TRIBO_MVP.md`](TRIBO_MVP.md) | Tribo (comunidade): MVP **em curso** — feed, media, RLS, moderação |
 | [`Fluxo Lógico Completo – Plataforma Kingdom Fight School.md`](Fluxo%20Lógico%20Completo%20–%20Plataforma%20Kingdom%20Fight%20School.md) | Fluxos de negócio |
 | [`FLUXO_DE_CADASTRO_E_ONBOARDING.md`](FLUXO_DE_CADASTRO_E_ONBOARDING.md) | Cadastro e onboarding |
 
@@ -50,7 +53,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`VERCEL_DEPLOY_TROUBLESHOOTING.md`](VERCEL_DEPLOY_TROUBLESHOOTING.md) | Resolução de problemas |
 | [`OTIMIZACOES_SPEED_INSIGHTS.md`](OTIMIZACOES_SPEED_INSIGHTS.md) | LCP, skeletons, Speed Insights (`NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS`) |
 | [`PERFORMANCE_E_GOOGLE_LOGIN.md`](PERFORMANCE_E_GOOGLE_LOGIN.md) | Performance e login Google |
-| [`PWA.md`](PWA.md) | PWA (manifest, ícones, service worker, homepage + sidebar); Capacitor como fase opcional no roadmap |
+| [`PWA.md`](PWA.md) | PWA: manifest preto, `kfs-app-icon.png`, pipeline ícones, splash, SW, sessão |
 | [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md) | Decisão de produto: site + PWA primeiro (sem lojas); Capacitor + lojas depois |
 | [`CAPACITOR.md`](CAPACITOR.md) | App nativa Android/iOS (WebView → URL Next); comandos, dev local, pendências |
 | [`ANDROID_PRIMEIRO_TESTE.md`](ANDROID_PRIMEIRO_TESTE.md) | Primeiro teste no Android Studio (sync prod, Run, checklist) |
@@ -100,7 +103,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | Documento | Conteúdo |
 |-----------|----------|
 | [`ESPECIFICACAO_DASHBOARD_ADMIN.md`](ESPECIFICACAO_DASHBOARD_ADMIN.md) | Especificação painel admin (incl. navegação para eventos e central de notificações) |
-| [`ESPECIFICACAO_DASHBOARD_COACH.md`](ESPECIFICACAO_DASHBOARD_COACH.md) | Especificação painel coach (incl. timer de rounds) |
+| [`ESPECIFICACAO_DASHBOARD_COACH.md`](ESPECIFICACAO_DASHBOARD_COACH.md) | Especificação painel coach (timer, presenças; ver também treinador assistente em `memory.md`) |
 | [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md) | Timer de rounds: rotas, sons, CSS, motor, persistência |
 | [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md) | Plano de ação: ecrã e modelo de **permissões (RBAC)** no admin; fases, RLS, checklist; ver também [ROADMAP_Plataforma_KFS.md](./ROADMAP_Plataforma_KFS.md) |
 
@@ -125,6 +128,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`GOOGLE_OAUTH_USAR_EXISTENTE.md`](GOOGLE_OAUTH_USAR_EXISTENTE.md) | Reutilizar cliente existente |
 | [`Login_Google_Supabase.md`](Login_Google_Supabase.md) | Google + Supabase |
 | [`Login_Google_Producao_Hostinger.md`](Login_Google_Producao_Hostinger.md) | Produção / Hostinger |
+| [`LoginInfinitoBoasPraticas.md`](LoginInfinitoBoasPraticas.md) | Boas práticas sessão Supabase persistente (complemento a `PWA.md`) |
 
 ---
 
@@ -133,7 +137,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | Documento | Conteúdo |
 |-----------|----------|
 | [`DESIGN SYSTEM — KINGDOM FIGHT SCHOOL (MVP).md`](DESIGN%20SYSTEM%20—%20KINGDOM%20FIGHT%20SCHOOL%20(MVP).md) | Design system |
-| [`DESIGN SYSTEM - TOKENS OFICIAIS.md`](DESIGN%20SYSTEM%20-%20TOKENS%20OFICIAIS.md) | Tokens |
+| [`DESIGN SYSTEM - TOKENS OFICIAIS.md`](DESIGN%20SYSTEM%20-%20TOKENS%20OFICIAIS.md) | Tokens CSS UI; cores de marca também em [`lib/brand.ts`](../lib/brand.ts) |
 | [`Telas do Sistema – Mobile First.md`](Telas%20do%20Sistema%20–%20Mobile%20First.md) | Telas mobile first |
 | [`Wireframes Mobile First – Kingdom Fight School.md`](Wireframes%20Mobile%20First%20–%20Kingdom%20Fight%20School.md) | Wireframes |
 | [`Internacionalização (PT EN)   Dark Light Mode.md`](Internacionalização%20(PT%20EN)%20%20%20Dark%20Light%20Mode.md) | i18n e tema |

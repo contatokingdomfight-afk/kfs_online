@@ -1,6 +1,6 @@
 # Capacitor — app nativa (Android / iOS)
 
-> **Última revisão:** 19 maio 2026 — OAuth no browser do sistema, deep links `/auth/callback`, ícones/splash KFS, bridge nativa.
+> **Última revisão:** 22 maio 2026 — OAuth, deep links, ícones/splash KFS. **Cores:** splash/ícones nativos usam grafite `#121416` na status bar; a PWA web usa preto `#000000` no manifest — ver [`PWA.md`](PWA.md).
 
 ## Arquitectura
 

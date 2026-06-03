@@ -1,7 +1,7 @@
 # Tribo (comunidade) — MVP e alinhamento técnico
 
 > **Estado:** em desenvolvimento / MVP (código + migrações).  
-> **Última revisão (documentação):** 19 maio 2026 — alinhado a decisões de produto (media, curtir, partilha, âmbito, UX).
+> **Última revisão (documentação):** 22 maio 2026 — estado «em curso»; rotas `/dashboard/tribo`, `/t/p/[postId]`. *Anterior:* 19 maio 2026 — decisões de produto (media, curtir, partilha, âmbito).
 
 Este documento fecha a lacuna entre o roadmap e a **implementação**. A [Especificação Kingdom Digital](Especificacao_Plataforma_Kingdom_Digital.md) resume o produto; aqui ficam critérios de aceite, dados e UX.
 

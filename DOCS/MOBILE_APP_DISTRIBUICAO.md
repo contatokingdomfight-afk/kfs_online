@@ -1,6 +1,6 @@
 # Distribuição mobile: site + PWA (sem lojas)
 
-> **Última revisão:** 19 maio 2026 — fase 1 PWA pelo site; fase 2 Capacitor com scaffold Android/iOS — [`CAPACITOR.md`](CAPACITOR.md).
+> **Última revisão:** 22 maio 2026 — PWA com marca 2026 ([`PWA.md`](PWA.md)); fase 2 Capacitor — [`CAPACITOR.md`](CAPACITOR.md).
 
 ## Objetivo
 

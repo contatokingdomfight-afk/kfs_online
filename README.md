@@ -58,8 +58,11 @@ Repositório GitHub típico: `contatokingdomfight-afk/kfs_online` (ajusta se o t
 - **Perfil do atleta (gamificado)** – Faixas por cor, XP, radar (Técnico, Tático, Físico, Mental, Teórico), missões (sistema + configuráveis no Admin).
 - **Avaliação física** – Ficha no perfil do aluno; renovação a cada 6 meses; missão até estar em dia.
 - **Admin** – Turmas, planos, alunos, coaches, financeiro, missões, multi-escola, eventos, etc.
-- **Eventos e notificações** – Inscrições em eventos (`/dashboard/eventos`), próximos eventos na home; notificações in-app para pedidos e confirmações — **DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md**.
-- **Mensalidades e suspensão** – Atraso após o **5.º dia útil** do mês em Lisboa; prazo de regularização até ao **dia 10**; bloqueio automático via cron. Detalhe: **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**.
+- **Coach** – Aulas, presenças, timer de rounds, eventos (check-in). **Treinador assistente (escola):** aluno promovido com âmbito limitado à escola — ver **DOCS/memory.md**.
+- **Tribo (comunidade)** – Feed por escola em desenvolvimento (`/dashboard/tribo`) — **DOCS/TRIBO_MVP.md**.
+- **PWA / mobile** – Instalação pelo site (atalho no ecrã); ícone e splash com marca 2026 — **DOCS/PWA.md**, **DOCS/MOBILE_APP_DISTRIBUICAO.md**. Capacitor (fase 2): **DOCS/CAPACITOR.md**.
+- **Eventos e notificações** – Inscrições em eventos (`/dashboard/eventos`), próximos eventos na home; notificações in-app — **DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md**.
+- **Mensalidades e suspensão** – Atraso após o **5.º dia útil** do mês em Lisboa; prazo até ao **dia 10**; cron — **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**.
 
 ## Contas de teste
 
@@ -99,12 +102,15 @@ Guias na raiz / `DOCS/`: `INICIO_RAPIDO.md`, `VERCEL_DEPLOY.md`, `VERCEL_CHECKLI
 
 | Documento | Conteúdo |
 |-----------|----------|
+| **DOCS/INDEX.md** | Índice mestre de toda a documentação |
+| **DOCS/memory.md** | Contexto técnico vivo (prioridade para IA/equipa) |
 | **DOCS/ROADMAP_Plataforma_KFS.md** | O que está feito / por fazer |
+| **DOCS/PWA.md** | PWA, ícones, splash, sessão |
 | **DOCS/CONTAS_TESTE.md** | Seed de utilizadores de teste + `npm test` |
-| **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md** | Mensalidades, Lisboa, crons, campos `Student` |
-| **DOCS/FINANCEIRO_STRIPE_E_PRESENCIAL.md** | Stripe, faturação PT, fluxos |
-| **DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md** | Centrais de notificações e gatilhos (eventos) |
-| **INDICE_DOCUMENTACAO.md** | Índice de ficheiros na raiz |
+| **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md** | Mensalidades, Lisboa, crons |
+| **DOCS/FINANCEIRO_STRIPE_E_PRESENCIAL.md** | Stripe, faturação PT |
+| **DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md** | Notificações e eventos |
+| **INDICE_DOCUMENTACAO.md** | Índice de ficheiros na raiz do repo |
 
 ## Scripts
 
@@ -114,6 +120,8 @@ Guias na raiz / `DOCS/`: `INICIO_RAPIDO.md`, `VERCEL_DEPLOY.md`, `VERCEL_CHECKLI
 | `npm run build` | Build de produção |
 | `npm run lint` | ESLint (Next) |
 | `npm test` | Testes unitários (Vitest) |
+| `npm run generate:pwa-icons` | Regenera ícones PWA a partir de `public/brand/kfs-app-icon.png` |
+| `npm run process:brand-logo` | Gera logotipo transparente + emblema quadrado |
 | `npm run seed:test-users` | Cria/atualiza contas Admin, Coach e Aluno (ver **DOCS/CONTAS_TESTE.md**) |
 | `npm run db:studio` | Prisma Studio |
 | `npm run db:migrate` | Migrações Prisma |
