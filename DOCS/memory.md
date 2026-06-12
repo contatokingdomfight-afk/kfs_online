@@ -50,11 +50,11 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Tokens:** `lib/brand.ts` — `BRAND_BG` `#121416` (UI), `BRAND_ICON_BG` `#000000` (ícone/splash PWA), primário `#9B111E`.
 
-- **Assets:** `public/brand/` — `kfs-app-icon.png` (fonte PWA 1024²), `kfs-logotipo-transparent.png`, `kfs-logotipo-emblem.png`, `kfs-emblem-icon.png`.
+- **Assets:** `public/brand/` — `kfs-app-icon.png` (fonte PWA 1024²), `kfs-logotipo-transparent.png` (marca completa), `kfs-logotipo-emblem.png` (recorte só coroa / ícone), `kfs-emblem-icon.png`.
 
 - **Header:** texto «Kingdom Fight School» (sem logotipo grande no menu).
 
-- **Landing (`/`):** após a secção de vídeos «em ação», bloco interactivo do significado do emblema — `components/home/LogoSymbolismSection.tsx`; textos `symbolism*` em `lib/home-content.ts`; imagem por defeito `public/brand/kfs-logotipo-emblem.png` (posições dos hotspots em `HOTSPOTS` / `LOGO_SRC` no componente).
+- **Landing (`/`):** após a secção de vídeos «em ação», bloco interactivo do significado do emblema — `components/home/LogoSymbolismSection.tsx`; textos `symbolism*` em `lib/home-content.ts`; imagem por defeito `public/brand/kfs-logotipo-transparent.png` (logótipo completo; `kfs-logotipo-emblem.png` é só a coroa). Hotspots: `HOTSPOTS` / `LOGO_SRC` no componente.
 
 - **Pipeline ícones PWA:** `npm run generate:pwa-icons` → `public/icons/kfs-emblem-*`, `app/icon.png`, `app/apple-icon.png`. Fonte: `kfs-app-icon.png` (transparente); ícones **manifest** com alpha; maskable/favicon 48px opacos. Bump `SW_VERSION` em `public/sw.js`; **reinstalar** PWA após mudanças.
 

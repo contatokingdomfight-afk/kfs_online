@@ -18,17 +18,21 @@ const FIELD: Record<ItemId, { title: keyof HomeContent; body: keyof HomeContent 
   prophecy: { title: "symbolismProphecyTitle", body: "symbolismProphecyBody" },
 };
 
-/** Áreas aproximadas sobre o emblema (percentagem do contentor) — ajustável se trocar a imagem. */
+/**
+ * Áreas sobre o logótipo completo (transparent.png: coroa + octógono + lutador + texto).
+ * Percentagens do contentor quadrado — afinar se trocar o PNG.
+ */
 const HOTSPOTS: Record<ItemId, { top: string; left: string; width: string; height: string }> = {
-  octagon: { top: "4%", left: "8%", width: "84%", height: "26%" },
-  crown: { top: "0%", left: "22%", width: "56%", height: "20%" },
-  fighter: { top: "28%", left: "24%", width: "52%", height: "48%" },
-  colors: { top: "32%", left: "0%", width: "26%", height: "38%" },
-  blood: { top: "72%", left: "6%", width: "38%", height: "26%" },
-  prophecy: { top: "72%", left: "56%", width: "38%", height: "26%" },
+  crown: { top: "2%", left: "20%", width: "60%", height: "12%" },
+  octagon: { top: "12%", left: "14%", width: "72%", height: "22%" },
+  fighter: { top: "22%", left: "18%", width: "64%", height: "34%" },
+  colors: { top: "18%", left: "4%", width: "24%", height: "40%" },
+  blood: { top: "48%", left: "12%", width: "76%", height: "22%" },
+  prophecy: { top: "62%", left: "48%", width: "48%", height: "32%" },
 };
 
-const LOGO_SRC = "/brand/kfs-logotipo-emblem.png";
+/** Logótipo completo (emblem.png é só a coroa — não usar nesta secção). */
+const LOGO_SRC = "/brand/kfs-logotipo-transparent.png";
 
 export function LogoSymbolismSection({ content }: { content: HomeContent }) {
   const uid = useId();
@@ -117,7 +121,7 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
                 alt={content.symbolismLogoAlt}
                 fill
                 sizes="(max-width: 1024px) 90vw, 320px"
-                className="object-contain p-4"
+                className="object-contain p-3 sm:p-4"
                 priority={false}
               />
               {(Object.keys(HOTSPOTS) as ItemId[]).map((id) => {
@@ -127,10 +131,10 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
                     key={id}
                     type="button"
                     className={[
-                      "absolute rounded-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
+                      "absolute z-10 rounded-lg border-0 bg-transparent transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
                       active === id
                         ? "bg-red-500/15 ring-2 ring-red-400/50"
-                        : "bg-transparent hover:bg-white/5",
+                        : "hover:bg-white/5",
                     ].join(" ")}
                     style={{ top: z.top, left: z.left, width: z.width, height: z.height }}
                     onClick={() => select(active === id ? null : id)}
