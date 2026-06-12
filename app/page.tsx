@@ -11,6 +11,7 @@ import { Plans } from "@/components/home/Plans";
 import { Founders } from "@/components/home/Founders";
 import { LearningPathsSection } from "@/components/home/LearningPathsSection";
 import { YouTubeShortsSection } from "@/components/home/YouTubeShortsSection";
+import { LogoSymbolismSection } from "@/components/home/LogoSymbolismSection";
 import { WhyChoose } from "@/components/home/WhyChoose";
 import { Testimonials } from "@/components/home/Testimonials";
 import { CTASection } from "@/components/home/CTASection";
@@ -67,6 +68,7 @@ export default async function HomePage({ searchParams }: Props) {
       <Stats content={content} />
       <About content={content} />
       <YouTubeShortsSection content={content} />
+      <LogoSymbolismSection content={content} />
       <Founders content={content} />
       <HowItWorks content={content} />
       <LearningPathsSection content={content} />

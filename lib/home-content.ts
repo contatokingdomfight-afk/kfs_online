@@ -78,6 +78,30 @@ export const homeContent = {
     youtubeShortsTitle: "KFS em ação",
     youtubeShortsSubtitle: "Alguns momentos do nosso dia a dia no tatame.",
 
+    symbolismTitle: "O significado do símbolo",
+    symbolismSubtitle:
+      "Explora cada elemento do nosso logótipo — passa o rato, foca com o teclado ou toca para ler o significado.",
+    symbolismHint: "Escolhe um elemento à esquerda ou à direita (ou sobre o logótipo) para ver a explicação.",
+    symbolismLogoAlt: "Emblema Kingdom Fight School com octógono, coroa e lutador — áreas interactivas",
+    symbolismOctagonTitle: "O octógono",
+    symbolismOctagonBody:
+      "Representa a arena da realidade: o ambiente de provação, proteção e foco onde o guerreiro se forja.",
+    symbolismFighterTitle: "O lutador",
+    symbolismFighterBody:
+      "O lutador com o punho levantado significa vitória, mas também aprimoramento técnico, disciplina e auto-desenvolvimento.",
+    symbolismColorsTitle: "Cores cromáticas",
+    symbolismColorsBody:
+      "Prata e vermelho transmitem solidez, disciplina, resiliência e durabilidade, com um ar moderno e sofisticado — corpo e mente forjados nos treinos, como metais.",
+    symbolismCrownTitle: "A coroa",
+    symbolismCrownBody:
+      "Representa soberania e nobreza, e a mentalidade de campeão — o «Reino» em Kingdom Fight.",
+    symbolismBloodTitle: "Vermelho sangue",
+    symbolismBloodBody:
+      "Nas pontas da coroa e no nome «Kingdom», representa energia, paixão e agressividade controlada, e a vitalidade para o combate.",
+    symbolismProphecyTitle: "Profecia",
+    symbolismProphecyBody:
+      "«E quando olharem, mesmo que não entendam, vão receber no espírito a profecia de que é pelo sangue do Cordeiro que podemos reinar com o Senhor — e nEle somos mais do que vencedores.»",
+
     // Why choose
     whyTitle: "Por que a Kingdom Fight",
     why1: "Treinadores experientes",
@@ -198,6 +222,30 @@ export const homeContent = {
     youtubeShortsTitle: "KFS in action",
     youtubeShortsSubtitle: "Some moments from our day on the mat.",
 
+    symbolismTitle: "What the symbol means",
+    symbolismSubtitle:
+      "Explore each part of our logo — hover, focus with the keyboard, or tap to read the meaning.",
+    symbolismHint: "Pick an element on the left or right (or on the logo) to see the explanation.",
+    symbolismLogoAlt: "Kingdom Fight School emblem with octagon, crown and fighter — interactive areas",
+    symbolismOctagonTitle: "The octagon",
+    symbolismOctagonBody:
+      "It represents the arena of reality: the place of trial, protection and focus where the warrior is forged.",
+    symbolismFighterTitle: "The fighter",
+    symbolismFighterBody:
+      "The fighter with a raised fist means victory — and also technical growth, discipline and self-development.",
+    symbolismColorsTitle: "Chromatic colours",
+    symbolismColorsBody:
+      "Silver and red convey solidity, discipline, resilience and durability, with a modern, sophisticated feel — body and mind forged in training like metal.",
+    symbolismCrownTitle: "The crown",
+    symbolismCrownBody:
+      "It stands for sovereignty and nobility, and the champion mindset — the «Kingdom» in Kingdom Fight.",
+    symbolismBloodTitle: "Blood red",
+    symbolismBloodBody:
+      "On the crown tips and in the word «Kingdom», it represents energy, passion and controlled aggression — vitality for combat.",
+    symbolismProphecyTitle: "Prophecy",
+    symbolismProphecyBody:
+      "«When they look, even if they do not understand, they will receive in spirit the prophecy that it is by the Lamb’s blood that we can reign with the Lord — and in Him we are more than conquerors.»",
+
     whyTitle: "Why Kingdom Fight",
     why1: "Experienced trainers",
     why1Desc: "Certified masters, years on the mat.",
@@ -252,3 +300,6 @@ export const homeContent = {
 export function getHomeContent(locale: HomeLocale) {
   return homeContent[locale] ?? homeContent.pt;
 }
+
+/** Conteúdo da homepage para um locale (PT ou EN) — mesmas chaves em ambos. */
+export type HomeContent = (typeof homeContent)[HomeLocale];
