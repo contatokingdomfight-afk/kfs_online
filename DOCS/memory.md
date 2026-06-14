@@ -54,7 +54,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Header:** texto «Kingdom Fight School» (sem logotipo grande no menu).
 
-- **Landing (`/`):** após a secção de vídeos «em ação», bloco interactivo do significado do emblema — `components/home/LogoSymbolismSection.tsx`; textos `symbolism*` em `lib/home-content.ts`; **`public/brand/symbolism/foto-completa.svg`** (sempre visível) + **recortes** `coroa.svg`, `octogono.svg`, etc. (sobrepostos ao **hover** nas opções ou no logótipo; painel segue hover ou clique). Fontes em `KFS simbolo significados/`. `HOTSPOTS` espelham `clipPath`; `HOTSPOT_HIT_ORDER`.
+- **Landing (`/`):** após a secção de vídeos «em ação», bloco interactivo do significado do emblema — `components/home/LogoSymbolismSection.tsx`; textos `symbolism*` em `lib/home-content.ts`; **`public/brand/symbolism/foto-completa.svg`** visível por defeito; no **hover** a foto completa **esconde-se** (`opacity-0`) e mostra-se só o **recorte** (`coroa.svg`, `octogono.svg`, …) sobre fundo preto do contentor. Painel: hover ou clique. Fontes em `KFS simbolo significados/`. `HOTSPOTS` / `HOTSPOT_HIT_ORDER`.
 
 - **Pipeline ícones PWA:** `npm run generate:pwa-icons` → `public/icons/kfs-emblem-*`, `app/icon.png`, `app/apple-icon.png`. Fonte: `kfs-app-icon.png` (transparente); ícones **manifest** com alpha; maskable/favicon 48px opacos. Bump `SW_VERSION` em `public/sw.js`; **reinstalar** PWA após mudanças.
 

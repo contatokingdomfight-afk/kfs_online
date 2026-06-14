@@ -170,22 +170,23 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
                 className="relative w-full overflow-hidden rounded-xl bg-black"
                 style={{ aspectRatio: `${VIEWBOX_W} / ${VIEWBOX_H}` }}
               >
-                {/* Camada 1: foto completa (sempre). */}
+                {/* Camada 1: foto completa — some no hover para só o recorte se ler no fundo escuro. */}
                 <img
                   src={LOGO_FULL}
                   alt={content.symbolismLogoAlt}
-                  className={`absolute inset-0 z-0 h-full w-full object-contain object-center transition-[opacity,filter] duration-300 ease-out ${hovered != null ? "opacity-[0.55] brightness-[0.85]" : "opacity-100 brightness-100"}`}
+                  className={`absolute inset-0 z-0 h-full w-full object-contain object-center transition-opacity duration-300 ease-out ${hovered != null ? "pointer-events-none opacity-0" : "opacity-100"}`}
                   loading="lazy"
                   decoding="async"
+                  aria-hidden={hovered != null}
                 />
 
-                {/* Camada 2: recorte do tema ao passar o rato (ou sobre o logótipo). */}
+                {/* Camada 2: só o recorte do tema (resto transparente → bg-black do contentor). */}
                 {hovered != null ? (
                   <img
                     key={hovered}
                     src={HOVER_SLICE[hovered]}
                     alt=""
-                    className="pointer-events-none absolute inset-0 z-[4] h-full w-full object-contain object-center opacity-100 transition-opacity duration-200 ease-out"
+                    className="pointer-events-none absolute inset-0 z-[4] h-full w-full object-contain object-center opacity-100 transition-opacity duration-300 ease-out"
                     loading="eager"
                     decoding="async"
                     aria-hidden
