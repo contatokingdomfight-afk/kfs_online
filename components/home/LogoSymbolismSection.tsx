@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useId, useState } from "react";
 import type { HomeContent } from "@/lib/home-content";
 
@@ -18,25 +17,43 @@ const FIELD: Record<ItemId, { title: keyof HomeContent; body: keyof HomeContent 
   prophecy: { title: "symbolismProphecyTitle", body: "symbolismProphecyBody" },
 };
 
-/** Dimensões do PNG — o contentor usa a mesma proporção para os % coincidirem com a arte. */
-const LOGO_NATURAL_W = 1024;
-const LOGO_NATURAL_H = 630;
-
 /**
- * Regiões em coordenadas normalizadas (0–1) relativas ao bitmap `kfs-logotipo-transparent.png`.
- * Afinadas para coroa / octógono / lutador / texto.
+ * viewBox dos SVG exportados (`KFS simbolo significados/*.svg` — mesmo viewBox em todos).
+ * A arte servida é `public/brand/symbolism/foto-completa.svg` (mesma composição).
  */
+const VIEWBOX_W = 1235.25;
+const VIEWBOX_H = 716.249982;
+
+/** Rectângulos normalizados (0–1) a partir dos clipPath dos ficheiros por tema. */
+function clipNorm(x1: number, y1: number, x2: number, y2: number) {
+  const xl = Math.min(x1, x2);
+  const xr = Math.max(x1, x2);
+  const yt = Math.min(y1, y2);
+  const yb = Math.max(y1, y2);
+  return {
+    top: yt / VIEWBOX_H,
+    left: xl / VIEWBOX_W,
+    width: (xr - xl) / VIEWBOX_W,
+    height: (yb - yt) / VIEWBOX_H,
+  };
+}
+
 const HOTSPOTS: Record<ItemId, { top: number; left: number; width: number; height: number }> = {
-  crown: { top: 0, left: 0.2, width: 0.6, height: 0.12 },
-  octagon: { top: 0.07, left: 0.1, width: 0.8, height: 0.28 },
-  fighter: { top: 0.14, left: 0.22, width: 0.56, height: 0.32 },
-  colors: { top: 0.05, left: 0.02, width: 0.26, height: 0.42 },
-  blood: { top: 0.4, left: 0.05, width: 0.9, height: 0.22 },
-  prophecy: { top: 0.68, left: 0.06, width: 0.88, height: 0.3 },
+  octagon: clipNorm(125.292969, 0, 1109.015625, 715.5),
+  crown: clipNorm(188.972656, 71.550781, 1045.328125, 643.949219),
+  fighter: clipNorm(340.761719, 71.550781, 893.683594, 643.949219),
+  colors: clipNorm(316.957031, 71.550781, 892.355469, 650.695312),
+  blood: clipNorm(107.832031, 180.238281, 1148.492188, 535.367188),
+  prophecy: clipNorm(71.820312, 180.238281, 1162.679688, 535.367188),
 };
 
-/** Logótipo completo (emblem.png é só a coroa — não usar nesta secção). */
-const LOGO_SRC = "/brand/kfs-logotipo-transparent.png";
+/**
+ * Ordem dos botões invisíveis: regiões maiores primeiro, mais específicas por cima
+ * (sobreposição dos clips do export).
+ */
+const HOTSPOT_HIT_ORDER: ItemId[] = ["octagon", "crown", "colors", "blood", "prophecy", "fighter"];
+
+const LOGO_SRC = "/brand/symbolism/foto-completa.svg";
 
 function pct(n: number) {
   return `${n * 100}%`;
@@ -132,21 +149,19 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
 
           <div className="order-1 mx-auto w-full max-w-[min(100%,380px)] lg:order-2">
             <div className="rounded-2xl border border-zinc-700/80 bg-gradient-to-br from-zinc-900 to-black p-2 shadow-[0_20px_60px_rgba(0,0,0,0.65)] ring-1 ring-red-900/20 sm:p-3">
-              {/* Mesma proporção que o PNG: os % dos hotspots alinham com a imagem visível. */}
               <div
                 className="relative w-full overflow-hidden rounded-xl"
-                style={{ aspectRatio: `${LOGO_NATURAL_W} / ${LOGO_NATURAL_H}` }}
+                style={{ aspectRatio: `${VIEWBOX_W} / ${VIEWBOX_H}` }}
               >
-                <Image
+                {/* SVG com JPEG embutido — <img> evita duplicar o asset no JS do Next/Image. */}
+                <img
                   src={LOGO_SRC}
                   alt={content.symbolismLogoAlt}
-                  fill
-                  sizes="(max-width: 1024px) 95vw, 380px"
-                  className={`object-contain object-center transition-opacity duration-200 ${active ? "opacity-[0.88]" : "opacity-100"}`}
-                  priority={false}
+                  className={`absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-200 ${active ? "opacity-[0.88]" : "opacity-100"}`}
+                  loading="lazy"
+                  decoding="async"
                 />
 
-                {/* Destaque visível na zona seleccionada (por cima da imagem, sem capturar cliques). */}
                 {active != null ? (
                   <div
                     className="pointer-events-none absolute z-[5] rounded-lg border-[3px] border-red-400 bg-red-500/25 shadow-[inset_0_0_32px_rgba(220,38,38,0.45),0_0_28px_rgba(248,113,113,0.35)]"
@@ -155,7 +170,7 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
                   />
                 ) : null}
 
-                {(Object.keys(HOTSPOTS) as ItemId[]).map((id) => {
+                {HOTSPOT_HIT_ORDER.map((id) => {
                   const on = active === id;
                   return (
                     <button
