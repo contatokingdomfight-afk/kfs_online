@@ -19,12 +19,10 @@ const FIELD: Record<ItemId, { title: keyof HomeContent; body: keyof HomeContent 
 
 /**
  * viewBox dos SVG exportados (`KFS simbolo significados/*.svg` — mesmo viewBox em todos).
- * A arte servida é `public/brand/symbolism/foto-completa.svg` (mesma composição).
  */
 const VIEWBOX_W = 1235.25;
 const VIEWBOX_H = 716.249982;
 
-/** Rectângulos normalizados (0–1) a partir dos clipPath dos ficheiros por tema. */
 function clipNorm(x1: number, y1: number, x2: number, y2: number) {
   const xl = Math.min(x1, x2);
   const xr = Math.max(x1, x2);
@@ -47,13 +45,19 @@ const HOTSPOTS: Record<ItemId, { top: number; left: number; width: number; heigh
   prophecy: clipNorm(71.820312, 180.238281, 1162.679688, 535.367188),
 };
 
-/**
- * Ordem dos botões invisíveis: regiões maiores primeiro, mais específicas por cima
- * (sobreposição dos clips do export).
- */
 const HOTSPOT_HIT_ORDER: ItemId[] = ["octagon", "crown", "colors", "blood", "prophecy", "fighter"];
 
-const LOGO_SRC = "/brand/symbolism/foto-completa.svg";
+const LOGO_FULL = "/brand/symbolism/foto-completa.svg";
+
+/** Recorte por tema (mesmo viewBox que a foto completa) — aparece por cima ao hover. */
+const HOVER_SLICE: Record<ItemId, string> = {
+  crown: "/brand/symbolism/coroa.svg",
+  octagon: "/brand/symbolism/octogono.svg",
+  fighter: "/brand/symbolism/lutador.svg",
+  colors: "/brand/symbolism/cores-cromadas.svg",
+  blood: "/brand/symbolism/vermelho-sangue.svg",
+  prophecy: "/brand/symbolism/profecia.svg",
+};
 
 function pct(n: number) {
   return `${n * 100}%`;
@@ -62,6 +66,12 @@ function pct(n: number) {
 export function LogoSymbolismSection({ content }: { content: HomeContent }) {
   const uid = useId();
   const [active, setActive] = useState<ItemId | null>(null);
+  const [hovered, setHovered] = useState<ItemId | null>(null);
+
+  /** Realce na imagem: hover tem prioridade; senão, selecção por clique. */
+  const highlightId = hovered ?? active;
+  /** Texto do painel: mostra o que está em hover ou, sem hover, a selecção. */
+  const panelId = hovered ?? active;
 
   const select = useCallback((id: ItemId | null) => {
     setActive(id);
@@ -78,7 +88,7 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
   };
 
   const panel =
-    active != null ? (
+    panelId != null ? (
       <div
         className="rounded-xl border border-red-500/35 bg-black/55 p-5 shadow-[0_0_40px_rgba(220,38,38,0.12)] backdrop-blur-sm sm:p-6"
         role="region"
@@ -86,9 +96,9 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
         id={`${uid}-panel`}
       >
         <h3 className="text-base font-bold uppercase tracking-wide text-red-400 sm:text-lg">
-          {content[FIELD[active].title]}
+          {content[FIELD[panelId].title]}
         </h3>
-        <p className="mt-3 text-sm leading-relaxed text-zinc-200 sm:text-[15px]">{content[FIELD[active].body]}</p>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-200 sm:text-[15px]">{content[FIELD[panelId].body]}</p>
       </div>
     ) : (
       <div
@@ -101,18 +111,22 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
 
   const chip = (id: ItemId) => {
     const on = active === id;
+    const lit = highlightId === id;
     return (
       <button
         key={id}
         type="button"
-        onClick={() => select(on ? null : id)}
-        onMouseEnter={() => select(id)}
-        onFocus={() => select(id)}
+        onClick={() => {
+          setActive(on ? null : id);
+          setHovered(null);
+        }}
+        onMouseEnter={() => setHovered(id)}
+        onFocus={() => setHovered(id)}
         aria-pressed={on}
         className={[
           "w-full rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-all sm:py-3",
-          on
-            ? "border-red-500/70 bg-red-950/40 text-red-100 shadow-[inset_0_0_0_1px_rgba(248,113,113,0.25)]"
+          lit
+            ? "border-red-500/80 bg-red-950/45 text-red-100 shadow-[inset_0_0_0_1px_rgba(248,113,113,0.3)]"
             : "border-zinc-700/80 bg-zinc-900/40 text-zinc-200 hover:border-red-500/40 hover:bg-zinc-800/50",
         ].join(" ")}
       >
@@ -144,46 +158,66 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-zinc-400 sm:text-base">{content.symbolismSubtitle}</p>
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(240px,380px)_minmax(0,1fr)] lg:items-start">
+        <div
+          className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(240px,380px)_minmax(0,1fr)] lg:items-start"
+          onMouseLeave={() => setHovered(null)}
+        >
           <div className="order-2 flex flex-col gap-2.5 lg:order-1 lg:pt-4">{LEFT_COL.map(chip)}</div>
 
           <div className="order-1 mx-auto w-full max-w-[min(100%,380px)] lg:order-2">
             <div className="rounded-2xl border border-zinc-700/80 bg-gradient-to-br from-zinc-900 to-black p-2 shadow-[0_20px_60px_rgba(0,0,0,0.65)] ring-1 ring-red-900/20 sm:p-3">
               <div
-                className="relative w-full overflow-hidden rounded-xl"
+                className="relative w-full overflow-hidden rounded-xl bg-black"
                 style={{ aspectRatio: `${VIEWBOX_W} / ${VIEWBOX_H}` }}
               >
-                {/* SVG com JPEG embutido — <img> evita duplicar o asset no JS do Next/Image. */}
+                {/* Camada 1: foto completa (sempre). */}
                 <img
-                  src={LOGO_SRC}
+                  src={LOGO_FULL}
                   alt={content.symbolismLogoAlt}
-                  className={`absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-200 ${active ? "opacity-[0.88]" : "opacity-100"}`}
+                  className={`absolute inset-0 z-0 h-full w-full object-contain object-center transition-[opacity,filter] duration-300 ease-out ${hovered != null ? "opacity-[0.55] brightness-[0.85]" : "opacity-100 brightness-100"}`}
                   loading="lazy"
                   decoding="async"
                 />
 
-                {active != null ? (
+                {/* Camada 2: recorte do tema ao passar o rato (ou sobre o logótipo). */}
+                {hovered != null ? (
+                  <img
+                    key={hovered}
+                    src={HOVER_SLICE[hovered]}
+                    alt=""
+                    className="pointer-events-none absolute inset-0 z-[4] h-full w-full object-contain object-center opacity-100 transition-opacity duration-200 ease-out"
+                    loading="eager"
+                    decoding="async"
+                    aria-hidden
+                  />
+                ) : null}
+
+                {highlightId != null ? (
                   <div
-                    className="pointer-events-none absolute z-[5] rounded-lg border-[3px] border-red-400 bg-red-500/25 shadow-[inset_0_0_32px_rgba(220,38,38,0.45),0_0_28px_rgba(248,113,113,0.35)]"
-                    style={boxStyle(active)}
+                    className="pointer-events-none absolute z-[5] rounded-lg border-[3px] border-red-400/90 bg-red-500/20 shadow-[inset_0_0_28px_rgba(220,38,38,0.4),0_0_24px_rgba(248,113,113,0.35)] transition-all duration-200"
+                    style={boxStyle(highlightId)}
                     aria-hidden
                   />
                 ) : null}
 
                 {HOTSPOT_HIT_ORDER.map((id) => {
                   const on = active === id;
+                  const over = hovered === id;
                   return (
                     <button
                       key={id}
                       type="button"
                       className={[
                         "absolute z-10 rounded-lg border-0 bg-transparent transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
-                        on ? "bg-red-500/10" : "hover:bg-white/10",
+                        over || on ? "bg-red-500/10" : "hover:bg-white/10",
                       ].join(" ")}
                       style={boxStyle(id)}
-                      onClick={() => select(on ? null : id)}
-                      onMouseEnter={() => select(id)}
-                      onFocus={() => select(id)}
+                      onClick={() => {
+                        setActive(on ? null : id);
+                        setHovered(null);
+                      }}
+                      onMouseEnter={() => setHovered(id)}
+                      onFocus={() => setHovered(id)}
                       aria-label={content[FIELD[id].title]}
                       aria-pressed={on}
                     />
