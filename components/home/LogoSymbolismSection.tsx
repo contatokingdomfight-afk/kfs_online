@@ -18,21 +18,29 @@ const FIELD: Record<ItemId, { title: keyof HomeContent; body: keyof HomeContent 
   prophecy: { title: "symbolismProphecyTitle", body: "symbolismProphecyBody" },
 };
 
+/** Dimensões do PNG — o contentor usa a mesma proporção para os % coincidirem com a arte. */
+const LOGO_NATURAL_W = 1024;
+const LOGO_NATURAL_H = 630;
+
 /**
- * Áreas sobre o logótipo completo (transparent.png: coroa + octógono + lutador + texto).
- * Percentagens do contentor quadrado — afinar se trocar o PNG.
+ * Regiões em coordenadas normalizadas (0–1) relativas ao bitmap `kfs-logotipo-transparent.png`.
+ * Afinadas para coroa / octógono / lutador / texto.
  */
-const HOTSPOTS: Record<ItemId, { top: string; left: string; width: string; height: string }> = {
-  crown: { top: "2%", left: "20%", width: "60%", height: "12%" },
-  octagon: { top: "12%", left: "14%", width: "72%", height: "22%" },
-  fighter: { top: "22%", left: "18%", width: "64%", height: "34%" },
-  colors: { top: "18%", left: "4%", width: "24%", height: "40%" },
-  blood: { top: "48%", left: "12%", width: "76%", height: "22%" },
-  prophecy: { top: "62%", left: "48%", width: "48%", height: "32%" },
+const HOTSPOTS: Record<ItemId, { top: number; left: number; width: number; height: number }> = {
+  crown: { top: 0, left: 0.2, width: 0.6, height: 0.12 },
+  octagon: { top: 0.07, left: 0.1, width: 0.8, height: 0.28 },
+  fighter: { top: 0.14, left: 0.22, width: 0.56, height: 0.32 },
+  colors: { top: 0.05, left: 0.02, width: 0.26, height: 0.42 },
+  blood: { top: 0.4, left: 0.05, width: 0.9, height: 0.22 },
+  prophecy: { top: 0.68, left: 0.06, width: 0.88, height: 0.3 },
 };
 
 /** Logótipo completo (emblem.png é só a coroa — não usar nesta secção). */
 const LOGO_SRC = "/brand/kfs-logotipo-transparent.png";
+
+function pct(n: number) {
+  return `${n * 100}%`;
+}
 
 export function LogoSymbolismSection({ content }: { content: HomeContent }) {
   const uid = useId();
@@ -41,6 +49,16 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
   const select = useCallback((id: ItemId | null) => {
     setActive(id);
   }, []);
+
+  const boxStyle = (id: ItemId) => {
+    const z = HOTSPOTS[id];
+    return {
+      top: pct(z.top),
+      left: pct(z.left),
+      width: pct(z.width),
+      height: pct(z.height),
+    } as const;
+  };
 
   const panel =
     active != null ? (
@@ -109,42 +127,54 @@ export function LogoSymbolismSection({ content }: { content: HomeContent }) {
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-zinc-400 sm:text-base">{content.symbolismSubtitle}</p>
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)_minmax(0,1fr)] lg:items-start">
+        <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(240px,380px)_minmax(0,1fr)] lg:items-start">
           <div className="order-2 flex flex-col gap-2.5 lg:order-1 lg:pt-4">{LEFT_COL.map(chip)}</div>
 
-          <div className="order-1 mx-auto w-full max-w-[280px] sm:max-w-sm lg:order-2">
-            <div
-              className="relative aspect-square w-full overflow-hidden rounded-2xl border border-zinc-700/80 bg-gradient-to-br from-zinc-900 to-black shadow-[0_20px_60px_rgba(0,0,0,0.65)] ring-1 ring-red-900/20"
-            >
-              <Image
-                src={LOGO_SRC}
-                alt={content.symbolismLogoAlt}
-                fill
-                sizes="(max-width: 1024px) 90vw, 320px"
-                className="object-contain p-3 sm:p-4"
-                priority={false}
-              />
-              {(Object.keys(HOTSPOTS) as ItemId[]).map((id) => {
-                const z = HOTSPOTS[id];
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    className={[
-                      "absolute z-10 rounded-lg border-0 bg-transparent transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
-                      active === id
-                        ? "bg-red-500/15 ring-2 ring-red-400/50"
-                        : "hover:bg-white/5",
-                    ].join(" ")}
-                    style={{ top: z.top, left: z.left, width: z.width, height: z.height }}
-                    onClick={() => select(active === id ? null : id)}
-                    onMouseEnter={() => select(id)}
-                    onFocus={() => select(id)}
-                    aria-label={content[FIELD[id].title]}
-                    aria-pressed={active === id}
+          <div className="order-1 mx-auto w-full max-w-[min(100%,380px)] lg:order-2">
+            <div className="rounded-2xl border border-zinc-700/80 bg-gradient-to-br from-zinc-900 to-black p-2 shadow-[0_20px_60px_rgba(0,0,0,0.65)] ring-1 ring-red-900/20 sm:p-3">
+              {/* Mesma proporção que o PNG: os % dos hotspots alinham com a imagem visível. */}
+              <div
+                className="relative w-full overflow-hidden rounded-xl"
+                style={{ aspectRatio: `${LOGO_NATURAL_W} / ${LOGO_NATURAL_H}` }}
+              >
+                <Image
+                  src={LOGO_SRC}
+                  alt={content.symbolismLogoAlt}
+                  fill
+                  sizes="(max-width: 1024px) 95vw, 380px"
+                  className={`object-contain object-center transition-opacity duration-200 ${active ? "opacity-[0.88]" : "opacity-100"}`}
+                  priority={false}
+                />
+
+                {/* Destaque visível na zona seleccionada (por cima da imagem, sem capturar cliques). */}
+                {active != null ? (
+                  <div
+                    className="pointer-events-none absolute z-[5] rounded-lg border-[3px] border-red-400 bg-red-500/25 shadow-[inset_0_0_32px_rgba(220,38,38,0.45),0_0_28px_rgba(248,113,113,0.35)]"
+                    style={boxStyle(active)}
+                    aria-hidden
                   />
-                );
-              })}
+                ) : null}
+
+                {(Object.keys(HOTSPOTS) as ItemId[]).map((id) => {
+                  const on = active === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className={[
+                        "absolute z-10 rounded-lg border-0 bg-transparent transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
+                        on ? "bg-red-500/10" : "hover:bg-white/10",
+                      ].join(" ")}
+                      style={boxStyle(id)}
+                      onClick={() => select(on ? null : id)}
+                      onMouseEnter={() => select(id)}
+                      onFocus={() => select(id)}
+                      aria-label={content[FIELD[id].title]}
+                      aria-pressed={on}
+                    />
+                  );
+                })}
+              </div>
             </div>
             <p className="mt-3 text-center text-xs text-zinc-500">{content.symbolismHint}</p>
           </div>
