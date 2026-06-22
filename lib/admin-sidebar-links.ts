@@ -28,7 +28,10 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
     {
       label: t("navEvaluationCriteria"),
       href: "/admin/avaliacao",
-      children: [{ label: t("navGeneralDimensions"), href: "/admin/componentes-gerais" }],
+      children: [
+        { label: t("navGeneralDimensions"), href: "/admin/componentes-gerais" },
+        { label: t("navModalityInsights"), href: "/admin/desempenho-modalidades" },
+      ],
     },
     { label: t("navMissions"), href: "/admin/missoes" },
     { label: t("navFinance"), href: "/admin/financeiro" },

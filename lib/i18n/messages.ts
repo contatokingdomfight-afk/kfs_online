@@ -541,6 +541,7 @@ export const messages = {
     navSettings: "Configurações",
     navPresence: "Presença",
     navEvaluationCriteria: "Critérios de avaliação",
+    navModalityInsights: "Desempenho por modalidade",
     navGeneralDimensions: "Componentes gerais",
     navMissions: "Missões",
     navFinance: "Financeiro",
@@ -549,6 +550,19 @@ export const messages = {
     navLeads: "Leads",
     navPermissions: "Permissões",
     navEvaluationDocs: "Avaliação e pontuação",
+    modalityInsightsSubtitleAdmin:
+      "Médias da escola por modalidade com base na última avaliação de cada atleta. Pontos fortes e áreas a melhorar reflectem critérios com melhor e pior desempenho médio.",
+    modalityInsightsSubtitleCoach:
+      "Médias da tua escola nas modalidades em que dás aulas. Com base na última avaliação de cada atleta na modalidade seleccionada.",
+    modalityInsightsAthletes: "Atletas com avaliação",
+    modalityInsightsEvaluations: "Avaliações registadas",
+    modalityInsightsNoData:
+      "Ainda não há avaliações nesta modalidade para alunos activos da escola. As médias aparecem quando os treinadores registarem desempenho nas aulas.",
+    modalityInsightsNoModalityCoach:
+      "Não tens modalidades associadas (nenhuma aula atribuída). Quando tiveres turmas, as modalidades respectivas aparecem aqui.",
+    modalityInsightsNoSchool: "Nenhuma escola activa encontrada.",
+    modalityInsightsSchool: "Escola",
+    modalityInsightsNoSchoolCoach: "Nenhuma escola associada ao teu perfil de treinador.",
     evalDocsTabHow: "Como sou avaliado",
     evalDocsTabScoring: "Sistema de pontuação",
     evalDocsTabsAria: "Secções de avaliação e pontuação",
@@ -1582,6 +1596,7 @@ export const messages = {
     navSettings: "Settings",
     navPresence: "Presence",
     navEvaluationCriteria: "Evaluation criteria",
+    navModalityInsights: "Performance by modality",
     navGeneralDimensions: "General components",
     navMissions: "Missions",
     navFinance: "Finance",
@@ -1590,6 +1605,19 @@ export const messages = {
     navLeads: "Leads",
     navPermissions: "Permissions",
     navEvaluationDocs: "Evaluation & scoring",
+    modalityInsightsSubtitleAdmin:
+      "School-wide averages per modality based on each athlete's latest evaluation. Strengths and areas to improve reflect criteria with the highest and lowest average scores.",
+    modalityInsightsSubtitleCoach:
+      "Your school's averages in the modalities you teach. Based on each athlete's latest evaluation in the selected modality.",
+    modalityInsightsAthletes: "Athletes with evaluations",
+    modalityInsightsEvaluations: "Evaluations recorded",
+    modalityInsightsNoData:
+      "There are no evaluations in this modality for active students at the school yet. Averages appear once coaches record performance in class.",
+    modalityInsightsNoModalityCoach:
+      "You have no associated modalities (no classes assigned). When you have classes, their modalities will appear here.",
+    modalityInsightsNoSchool: "No active school found.",
+    modalityInsightsSchool: "School",
+    modalityInsightsNoSchoolCoach: "No school linked to your coach profile.",
     evalDocsTabHow: "How I'm evaluated",
     evalDocsTabScoring: "Scoring system",
     evalDocsTabsAria: "Evaluation and scoring sections",

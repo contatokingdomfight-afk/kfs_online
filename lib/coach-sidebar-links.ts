@@ -37,6 +37,7 @@ export function getCoachShellSidebarLinks(
       href: "/como-sou-avaliado",
       groupActiveHrefs: ["/como-sou-avaliado", "/sistema-pontuacao"],
     },
+    { label: t("navModalityInsights"), href: "/coach/desempenho-modalidades" },
     { label: "Meus Cursos", href: "/coach/cursos" as string },
     { label: t("libraryTitle"), href: "/coach/biblioteca" as string },
     { label: "Financeiro", href: "/coach/financeiro" as string },

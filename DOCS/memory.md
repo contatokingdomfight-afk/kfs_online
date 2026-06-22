@@ -64,6 +64,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 ## Performance / avaliações (aluno)
 
+- **Desempenho por modalidade (escola):** `/admin/desempenho-modalidades` (admin — todas as modalidades; filtro escola) e `/coach/desempenho-modalidades` (coach — só modalidades com aulas atribuídas). Agregação em `lib/school-modality-insights.ts` (última avaliação por atleta, médias de critérios e radar); UI `components/school-insights/SchoolModalityInsightsView.tsx`. Coach: `lib/coach-modalities-scope.ts`.
+
 
 
 - **Objetivos (missões):** `MissionCard.tsx` — lista colapsável (3 + Ver mais/menos); i18n `missionsShowMore` / `missionsShowLess`.
