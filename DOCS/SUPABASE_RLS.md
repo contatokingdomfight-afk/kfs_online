@@ -13,9 +13,21 @@ A migração **`supabase/migrations/20260223000000_enable_rls_public_tables.sql`
    - **User:** utilizador autenticado pode SELECT, INSERT e UPDATE apenas na sua linha (`authUserId = auth.uid()`).
    - **Student:** pode SELECT e INSERT onde `userId` pertence ao próprio utilizador.
    - **School:** SELECT para utilizadores autenticados (para escolher escola padrão no sync).
-3. **Demais tabelas:** políticas separadas para evitar o warning **RLS Policy Always True** (lint 0024):
+3. **Demais tabelas (até jun. 2026):** políticas separadas para evitar o warning **RLS Policy Always True** (lint 0024):
    - **SELECT:** `allow_authenticated_select` com `USING (true)` (leitura para autenticados).
    - **INSERT / UPDATE / DELETE:** `allow_authenticated_insert/update/delete` com condição `auth.uid() IS NOT NULL` (qualquer utilizador autenticado pode escrever; o controlo por papel ADMIN/COACH/ALUNO continua na aplicação). O cliente **service_role** (admin) ignora RLS.
+
+## Endurecimento RLS por papel (jun. 2026)
+
+A migração **`supabase/migrations/20260616120000_production_security_hardening.sql`** (aplicada no projeto EU) substitui as políticas `allow_authenticated` permissivas nas tabelas sensíveis:
+
+1. **Funções helper** `kfs_*` com `SECURITY DEFINER` (evitam recursão ao ler `User`/`Student`): `kfs_current_student_id()`, `kfs_is_staff()`, `kfs_owns_athlete()`, etc.
+2. **Dados do aluno** (`Payment`, `Attendance`, avaliações, notificações, wellness, perfil, compras de curso, etc.): SELECT/INSERT/UPDATE limitados ao próprio `studentId` (ou atleta); coach/admin via `kfs_is_staff()`.
+3. **Catálogo operacional** (`Lesson`, `Plan`, `ModalityRef`, critérios de avaliação, …): SELECT para todos os autenticados; escrita só staff.
+4. **Financeiro admin** (`FinancialExpense`, `FinancialRevenue`): só staff.
+5. **Stripe:** tabela `StripeWebhookEvent` + coluna `Payment.stripeInvoiceId` (único) para idempotência do webhook.
+
+Tribo (`TribePost`, …) continua a usar **service role** nas server actions (`lib/tribe/student-context.ts`), não o JWT do aluno.
 
 ## Warning: Leaked Password Protection
 
@@ -23,8 +35,10 @@ O Security Advisor pode avisar que a **proteção contra palavras-passe comprome
 
 ## Como aplicar
 
-1. **Supabase Dashboard:** Abre o projeto > **SQL Editor** > New query, cola o conteúdo de `supabase/migrations/20260223000000_enable_rls_public_tables.sql` e executa.
-2. **Supabase CLI:** Com o CLI configurado, `supabase db push` ou `supabase migration up` (conforme o teu fluxo de migrações).
+1. **Script local (recomendado se `DATABASE_URL` ligar):** `node scripts/list-pending-supabase-migrations.mjs` → `node scripts/apply-pending-migrations-pg.mjs`. Usar connection string do **pooler** (`:6543`) se a directa `:5432` der timeout.
+2. **MCP Supabase EU:** `apply_migration` ou `execute_sql` no servidor `user-supabase_kfs_eu` (ver `DOCS/memory.md`).
+3. **Supabase Dashboard:** SQL Editor — colar o conteúdo do ficheiro em `supabase/migrations/`.
+4. **Supabase CLI:** `supabase db push` ou `supabase migration up` (conforme o fluxo do projeto).
 
 ## Se os nomes das colunas forem snake_case
 
@@ -43,4 +57,4 @@ e, na política de Student, a subquery: `SELECT id FROM "User" WHERE auth_user_i
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — junho 2026.*

@@ -26,8 +26,8 @@ Resumo da revisão feita no projeto em termos de segurança. **Não substitui um
 - Página de curso `/dashboard/biblioteca/[id]` verifica **hasAccess** (plano digital ou compra) antes de mostrar conteúdo; sem acesso mostra “courseNoAccess”.
 
 ### 4. APIs e webhooks
-- **Stripe webhook**: assinatura verificada com `STRIPE_WEBHOOK_SECRET`; sem assinatura válida devolve 400.
-- **Rotas de cron** (mensalidades, lembretes): exigem `Authorization: Bearer <CRON_SECRET>` ou cabeçalho de cron da Vercel.
+- **Stripe webhook**: assinatura verificada com `STRIPE_WEBHOOK_SECRET`; sem assinatura válida devolve 400. **Idempotência** (jun. 2026): tabela `StripeWebhookEvent` + `Payment.stripeInvoiceId` único evitam pagamentos duplicados em `invoice.paid`.
+- **Rotas de cron** (mensalidades, lembretes): `lib/cron/authorize-cron.ts` — em produção exige `CRON_SECRET` definido; aceita `Authorization: Bearer <CRON_SECRET>` ou cabeçalho `x-vercel-cron: 1` da Vercel.
 
 ### 5. XSS
 - Não foi encontrado uso de `dangerouslySetInnerHTML`, `innerHTML` ou `eval()` no código.
@@ -35,7 +35,8 @@ Resumo da revisão feita no projeto em termos de segurança. **Não substitui um
 ### 6. RLS no Supabase
 - RLS está **ativado** nas tabelas públicas.
 - **User** e **Student**: políticas restritas (cada utilizador só acede à própria linha).
-- Demais tabelas: política genérica `USING (true)` para `authenticated`; o controlo fino (quem pode fazer o quê) é feito na **aplicação** (Server Actions + layouts). O cliente do frontend usa o Supabase **apenas no servidor** (Server Components e Server Actions), não expondo chamadas arbitrárias ao Supabase a partir do browser.
+- **Jun. 2026 — endurecimento:** migração `20260616120000_production_security_hardening` aplicada no projeto EU. Tabelas sensíveis (`Payment`, `Attendance`, avaliações, notificações, etc.) usam funções `kfs_*` e políticas por papel (aluno = próprios dados; coach/admin = `kfs_is_staff()`). Catálogo: leitura aberta, escrita só staff. Ver [`SUPABASE_RLS.md`](SUPABASE_RLS.md).
+- A app não expõe o cliente Supabase no browser para operações arbitrárias; Server Actions e Server Components validam role/studentId. RLS actua como **defesa em profundidade** contra chamadas directas à API Supabase com JWT de aluno.
 
 ---
 
@@ -46,10 +47,8 @@ Resumo da revisão feita no projeto em termos de segurança. **Não substitui um
 - Se em algum momento o `.env` tiver sido commitado no passado, rodar no histórico:  
   `git log -p -- .env` e, se necessário, rodar `git filter-branch` ou BFG para remover e **rodar as chaves** (Stripe, Supabase, Resend, CRON).
 
-### 2. RLS permissivo em várias tabelas
-- Hoje, com a chave **anon** + JWT de um utilizador autenticado, as políticas `USING (true)` permitem, em teoria, leitura/escrita em muitas tabelas.
-- **Mitigação atual**: a app não expõe o cliente Supabase no browser para essas operações; tudo passa por Server Actions e Server Components, que validam role/studentId.
-- **Melhoria futura**: definir políticas RLS mais restritas por tabela (ex.: Attendance só onde `studentId` = aluno da sessão; Payment só leitura para o próprio; etc.) para “defesa em profundidade” caso alguém chame a API Supabase diretamente.
+### 2. RLS — tabelas sem política explícita
+- A maioria das tabelas críticas foi endurecida em jun. 2026. Rever periodicamente novas tabelas (`TribePost`, `waitlist`, etc.) e garantir políticas ou uso exclusivo de service role. Tribo usa admin client nas server actions.
 
 ### 3. CRON_SECRET
 - Garantir que em produção está definido **CRON_SECRET** forte e que as rotas de cron (**/api/cron/***) não são acessíveis sem esse header/segredo.
@@ -71,13 +70,9 @@ Resumo da revisão feita no projeto em termos de segurança. **Não substitui um
 - **Segredos**: não estão no repositório; `.env` está ignorado.
 - **Autenticação e autorização**: bem aplicadas nos layouts e nas Server Actions (admin, coach, aluno).
 - **Acesso a dados**: verificação de acesso ao curso na biblioteca; ações do aluno limitadas ao próprio `studentId`.
-- **Webhooks e cron**: protegidos por segredo/assinatura.
-- **RLS**: ativo; User/Student restritos; restante dependente da app, com margem para endurecer RLS no futuro.
-
-Se quiseres, no próximo passo podemos:
-- desenhar políticas RLS mais restritivas por tabela, ou
-- rever uma lista concreta de Server Actions (admin/coach) para garantir que todas checam role/identidade.
+- **Webhooks e cron**: protegidos por segredo/assinatura; webhook Stripe com idempotência.
+- **RLS**: ativo; políticas por papel nas tabelas sensíveis (jun. 2026); User/Student restritos desde o início.
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — junho 2026.*

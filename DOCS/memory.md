@@ -82,17 +82,24 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Pendentes:** `node scripts/list-pending-supabase-migrations.mjs`
 
-- **Aplicar SQL:** `node scripts/apply-pending-migrations-pg.mjs` (`DATABASE_URL`); `--resume=nome_base`
+- **Aplicar SQL:** `node scripts/apply-pending-migrations-pg.mjs` (`DATABASE_URL`); `--resume=nome_base`. Se der **timeout** na ligação directa `:5432` (comum no Windows/IPv6), usar connection string do **pooler** (`:6543`) ou MCP `apply_migration` / `execute_sql` no servidor `user-supabase_kfs_eu`.
 
 - **Backfill histórico:** `node scripts/backfill-supabase-migration-history.mjs` → SQL com MCP `execute_sql`
 
 ## Segurança (produção)
 
-- **RLS:** migração `20260616120000_production_security_hardening.sql` — funções `kfs_*` (`SECURITY DEFINER`) e políticas por papel: aluno só acede aos próprios dados (`Payment`, `Attendance`, avaliações, notificações, etc.); coach/admin (`kfs_is_staff`) mantêm acesso operacional via JWT; catálogo com leitura aberta e escrita só staff.
+- **Estado (jun. 2026):** migração `20260616120000_production_security_hardening` **aplicada** no projeto Supabase EU (`production_security_hardening` no histórico remoto). Índice local actualizado em `scripts/lib/supabase-eu-remote-migration-names.mjs` — `list-pending` = 0.
+
+- **RLS:** funções `kfs_*` (`SECURITY DEFINER`) e políticas por papel: aluno só acede aos próprios dados (`Payment`, `Attendance`, avaliações, notificações, etc.); coach/admin (`kfs_is_staff`) mantêm acesso operacional via JWT; catálogo com leitura aberta e escrita só staff. Detalhe: [`SUPABASE_RLS.md`](SUPABASE_RLS.md).
+
 - **Stripe webhook:** idempotência com tabela `StripeWebhookEvent` + `Payment.stripeInvoiceId` (único); `customer.subscription.deleted` preserva plano em `suspendedPlanId` quando aplicável.
+
 - **Cron:** `lib/cron/authorize-cron.ts` — em produção exige `CRON_SECRET` definido; aceita `Authorization: Bearer` ou `x-vercel-cron: 1`.
+
 - **Diagnóstico:** removido `/api/debug-auth`.
+
 - **Seeds:** bloqueados em produção salvo `ALLOW_PRODUCTION_SEED=true` (`lib/auth/guard-production-seed.ts`, scripts `seed:*`).
+
 - **Operacional:** backups Supabase e rotação de segredos fora do repo — configurar no painel Supabase/Vercel.
 
 

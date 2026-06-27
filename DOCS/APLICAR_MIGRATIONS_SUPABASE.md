@@ -28,6 +28,21 @@ supabase db push
 
 Isto aplica todas as migrations pendentes da pasta `supabase/migrations/`.
 
+## Opção 3: Script local + `DATABASE_URL`
+
+Fluxo usado no projeto EU (ver também [`memory.md`](memory.md)):
+
+```bash
+node scripts/list-pending-supabase-migrations.mjs
+node scripts/apply-pending-migrations-pg.mjs
+```
+
+- **`DATABASE_URL`:** usar a connection string do **pooler** (porta `6543`) se a ligação directa `:5432` der `ETIMEDOUT` (comum no Windows).
+- **Alternativa:** MCP `user-supabase_kfs_eu` — `apply_migration` ou `execute_sql`.
+- Após aplicar via script (sem MCP), actualizar `scripts/lib/supabase-eu-remote-migration-names.mjs` para o índice local coincidir com o histórico remoto (`list_migrations`).
+
+**Última migração de segurança (jun. 2026):** `20260616120000_production_security_hardening` — aplicada no projeto EU; `list-pending` = 0.
+
 ## Depois de aplicar os SQLs: ver as alterações na app
 
 A app guarda em cache as configurações de avaliação durante 5 minutos. Para **ver de imediato** os novos critérios (técnicas, táticas, estilos):
@@ -63,4 +78,4 @@ Foi adicionado `comp_id::text` nos blocos DO das migrations para compatibilidade
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — junho 2026.*

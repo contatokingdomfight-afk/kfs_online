@@ -72,4 +72,6 @@ export const SUPABASE_EU_REMOTE_MIGRATION_NAMES = new Set([
   "school_assistant_coach",
   "tribe_mvp",
   "20260224000000_event_start_end_date",
+  "production_security_hardening",
+  "20260616120000_production_security_hardening",
 ]);
