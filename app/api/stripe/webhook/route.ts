@@ -32,6 +32,15 @@ export async function POST(request: NextRequest) {
   }
   const supabase = result.client;
 
+  const { data: alreadyProcessed } = await supabase
+    .from("StripeWebhookEvent")
+    .select("eventId")
+    .eq("eventId", event.id)
+    .maybeSingle();
+  if (alreadyProcessed) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
   try {
     switch (event.type) {
       case "customer.subscription.updated":
@@ -97,10 +106,23 @@ export async function POST(request: NextRequest) {
             .eq("id", studentId);
           break;
         }
-        await supabase
+        const { data: studentRow } = await supabase
           .from("Student")
-          .update({ stripeSubscriptionId: null, planId: null, adminGrantedFullAccess: false })
-          .eq("id", studentId);
+          .select("planId, paymentSuspendedAt")
+          .eq("id", studentId)
+          .maybeSingle();
+        const updates: Record<string, unknown> = {
+          stripeSubscriptionId: null,
+          adminGrantedFullAccess: false,
+        };
+        if (studentRow?.planId && !studentRow.paymentSuspendedAt) {
+          updates.suspendedPlanId = studentRow.planId;
+          updates.planId = null;
+          updates.paymentSuspendedAt = new Date().toISOString();
+        } else {
+          updates.planId = null;
+        }
+        await supabase.from("Student").update(updates).eq("id", studentId);
         break;
       }
       case "invoice.paid": {
@@ -122,13 +144,25 @@ export async function POST(request: NextRequest) {
         const referenceMonth = periodStart
           ? new Date(periodStart * 1000).toISOString().slice(0, 7)
           : new Date().toISOString().slice(0, 7);
-        await supabase.from("Payment").insert({
-          id: crypto.randomUUID(),
-          studentId,
-          amount,
-          status: "PAID",
-          referenceMonth,
-        });
+        const stripeInvoiceId = invoice.id;
+        const { data: existingPayment } = await supabase
+          .from("Payment")
+          .select("id")
+          .eq("stripeInvoiceId", stripeInvoiceId)
+          .maybeSingle();
+        if (!existingPayment) {
+          const { error: payErr } = await supabase.from("Payment").insert({
+            id: crypto.randomUUID(),
+            studentId,
+            amount,
+            status: "PAID",
+            referenceMonth,
+            stripeInvoiceId,
+          });
+          if (payErr && payErr.code !== "23505") {
+            throw payErr;
+          }
+        }
         await clearGraceOnPaidPayment(supabase, studentId);
         break;
       }
@@ -139,6 +173,11 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error("Stripe webhook handler error:", err);
     return NextResponse.json({ error: "Handler failed" }, { status: 500 });
+  }
+
+  const { error: markError } = await supabase.from("StripeWebhookEvent").insert({ eventId: event.id });
+  if (markError && markError.code !== "23505") {
+    console.error("Stripe webhook idempotency mark failed:", markError);
   }
 
   return NextResponse.json({ received: true });

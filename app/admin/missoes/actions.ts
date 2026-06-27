@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { blockProductionSeed } from "@/lib/auth/guard-production-seed";
 import { revalidatePath } from "next/cache";
 import { SEED_MISSIONS } from "./seed-missions-data";
 
@@ -13,6 +14,9 @@ export type SeedMissionsResult = { error?: string; inserted?: number; skipped?: 
 
 /** Importa as missões padrão do DOCS/MISSOES.md. Só insere se o nome ainda não existir. */
 export async function seedMissionsFromDoc(): Promise<SeedMissionsResult> {
+  const blocked = blockProductionSeed();
+  if (blocked) return { error: blocked };
+
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Sem permissão." };
 

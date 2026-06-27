@@ -12,6 +12,14 @@ import { resolve } from "node:path";
 config({ path: resolve(process.cwd(), ".env") });
 config({ path: resolve(process.cwd(), ".env.local"), override: true });
 
+if (
+  (process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production") &&
+  process.env.ALLOW_PRODUCTION_SEED !== "true"
+) {
+  console.error("Seed bloqueado em produção. Define ALLOW_PRODUCTION_SEED=true para forçar.");
+  process.exit(1);
+}
+
 const DEMO2_EMAIL = "demo2@gmail.com";
 const DEFAULT_DEMO2_PASSWORD = "123456789";
 

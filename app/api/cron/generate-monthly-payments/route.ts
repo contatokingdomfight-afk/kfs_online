@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authorizeCronRequest } from "@/lib/cron/authorize-cron";
 import {
   currentReferenceMonthLisbon,
   previousReferenceMonthLisbon,
@@ -14,11 +15,7 @@ import { generateMonthlyPayments } from "@/lib/renewals";
  * GET /api/cron/generate-monthly-payments?month=2025-03
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  const isVercelCron = request.headers.get("x-vercel-cron") === "1";
-  const secret = process.env.CRON_SECRET;
-  const authorized = isVercelCron || (secret && authHeader === `Bearer ${secret}`);
-  if (!authorized) {
+  if (!authorizeCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

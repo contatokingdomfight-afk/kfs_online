@@ -350,6 +350,7 @@ model Payment {
   amount         Decimal       @db.Decimal(10, 2)
   status         PaymentStatus
   referenceMonth String        // "YYYY-MM"
+  stripeInvoiceId String?      @unique
   createdAt      DateTime      @default(now())
 }
 

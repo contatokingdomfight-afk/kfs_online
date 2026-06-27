@@ -1,4 +1,7 @@
 import Stripe from "stripe";
+import { assertStripeEnvInProduction } from "@/lib/stripe/validate-env";
+
+assertStripeEnvInProduction();
 
 // Sanitiza a chave: remove espaços, newlines e aspas que causam ERR_INVALID_CHAR no header Authorization
 const rawSecret = process.env.STRIPE_SECRET_KEY;
