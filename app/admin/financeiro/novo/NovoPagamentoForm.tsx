@@ -244,6 +244,11 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 "sem registo neste mês."
               )}
             </div>
+            {selected.isPaymentSuspended && (
+              <p style={{ margin: "10px 0 0 0", fontSize: 13, color: "var(--danger)", fontWeight: 500 }}>
+                Acesso suspenso por falta de pagamento. Marca este mês como «Pago» para repor o plano do aluno.
+              </p>
+            )}
           </div>
 
           <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>

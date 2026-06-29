@@ -76,27 +76,37 @@ export async function clearGraceOnPaidPayment(supabase: SupabaseClient, studentI
   const row = st as StudentGraceRow | null;
   if (!row) return;
 
-  const hadGrace = Boolean(row.paymentGraceEndsAt || row.paymentGraceReferenceMonth);
-  const wasSuspended = Boolean(row.paymentSuspendedAt && row.suspendedPlanId);
-  if (!hadGrace && !wasSuspended) return;
-
   const suspendedPlanId = row.suspendedPlanId;
+  const hadGrace = Boolean(row.paymentGraceEndsAt || row.paymentGraceReferenceMonth);
+  const wasSuspended = Boolean(row.paymentSuspendedAt && suspendedPlanId);
+  const needsPlanRestore = !row.planId && Boolean(suspendedPlanId);
+  if (!hadGrace && !wasSuspended && !needsPlanRestore) return;
+
   const updates: Record<string, unknown> = {
     paymentGraceEndsAt: null,
     paymentGraceReferenceMonth: null,
   };
 
-  if (wasSuspended) {
-    updates.paymentSuspendedAt = null;
-    updates.suspendedPlanId = null;
+  if (wasSuspended || needsPlanRestore) {
+    if (wasSuspended) {
+      updates.paymentSuspendedAt = null;
+      updates.suspendedPlanId = null;
+    }
     if (!row.planId && suspendedPlanId) {
       updates.planId = suspendedPlanId;
+      if (!wasSuspended) {
+        updates.suspendedPlanId = null;
+      }
     }
   }
 
-  await supabase.from("Student").update(updates).eq("id", studentId);
+  const { error } = await supabase.from("Student").update(updates).eq("id", studentId);
+  if (error) {
+    console.error(`clearGraceOnPaidPayment: failed for ${studentId}:`, error.message);
+    return;
+  }
 
-  if (wasSuspended) {
+  if (wasSuspended || needsPlanRestore) {
     await createInAppNotification(supabase, {
       studentId,
       type: "PAYMENT_RESTORED",

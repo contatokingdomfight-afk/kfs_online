@@ -133,6 +133,8 @@ export async function createPayment(
 
   revalidatePath("/admin/financeiro");
   revalidatePath("/admin/financeiro/novo");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/financeiro");
   redirect("/admin/financeiro");
 }
 

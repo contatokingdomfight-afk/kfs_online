@@ -9,6 +9,8 @@ export type StudentPaymentRow = {
   priceMonthly: number;
   referenceMonth: string;
   existingPayment: { status: string; amount: number } | null;
+  /** Aluno suspenso por falta de pagamento — marcar «Pago» repõe o plano. */
+  isPaymentSuspended: boolean;
 };
 
 /**
@@ -23,13 +25,26 @@ export async function loadStudentPaymentRows(
 
   const { data: students } = await supabase
     .from("Student")
-    .select("id, userId, planId")
+    .select("id, userId, planId, suspendedPlanId, paymentSuspendedAt")
     .in("id", studentIds);
 
   if (!students?.length) return [];
 
   const userIds = [...new Set(students.map((s) => s.userId))];
-  const planIds = [...new Set(students.map((s) => s.planId).filter(Boolean))] as string[];
+  const planIds = [
+    ...new Set(
+      students
+        .map((s) => {
+          const row = s as {
+            planId: string | null;
+            suspendedPlanId?: string | null;
+            paymentSuspendedAt?: string | null;
+          };
+          return row.planId ?? (row.paymentSuspendedAt ? row.suspendedPlanId : null) ?? row.suspendedPlanId;
+        })
+        .filter(Boolean)
+    ),
+  ] as string[];
 
   const [{ data: users }, { data: profiles }, { data: plans }, { data: payments }] = await Promise.all([
     supabase.from("User").select("id, name, email").in("id", userIds),
@@ -48,7 +63,14 @@ export async function loadStudentPaymentRows(
   return students.map((s) => {
     const u = userById.get(s.userId);
     const prof = profileByStudent.get(s.id);
-    const plan = s.planId ? planById.get(s.planId) : undefined;
+    const row = s as {
+      planId: string | null;
+      suspendedPlanId?: string | null;
+      paymentSuspendedAt?: string | null;
+    };
+    const effectivePlanId =
+      row.planId ?? (row.paymentSuspendedAt ? row.suspendedPlanId : null) ?? row.suspendedPlanId ?? null;
+    const plan = effectivePlanId ? planById.get(effectivePlanId) : undefined;
     const pay = paymentByStudent.get(s.id);
     return {
       studentId: s.id,
@@ -61,6 +83,7 @@ export async function loadStudentPaymentRows(
       existingPayment: pay
         ? { status: String((pay as { status: string }).status), amount: Number((pay as { amount: number }).amount) }
         : null,
+      isPaymentSuspended: Boolean(row.paymentSuspendedAt && !row.planId && row.suspendedPlanId),
     };
   });
 }
