@@ -265,7 +265,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
             minHeight: 44,
           }}
         >
-          Ficha de anamnese e avaliação física
+          Avaliação Física
         </Link>
       </div>
 
