@@ -158,6 +158,19 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 
+## Conformidade e pré-lançamento (jun 2026)
+
+
+
+- **404:** `app/not-found.tsx`
+- **Email:** `app/auth/verify-email`, redirect pós-signup, erros no sign-in; activar «Confirm email» no Supabase Dashboard
+- **RGPD:** `/termos`, `/privacidade`, `components/CookieBanner.tsx`, checkbox no registo, «Eliminar conta» em `/dashboard/perfil`
+- **Password:** `ChangePasswordSection` no perfil (oculto para Google OAuth)
+- **Sentry:** `@sentry/nextjs`, `instrumentation.ts`, `app/global-error.tsx` — env `SENTRY_DSN`
+- **CSV admin:** `lib/export-csv.ts`, botões em alunos/financeiro/presença
+
+
+
 ## Status do aluno e pagamentos (`Student.status`)
 
 

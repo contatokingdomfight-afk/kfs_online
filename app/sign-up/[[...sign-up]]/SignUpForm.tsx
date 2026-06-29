@@ -16,10 +16,10 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const router = useRouter();
 
   async function handleGoogleSignIn() {
@@ -49,30 +49,35 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setMessage(null);
+    if (!acceptedTerms) {
+      setError(t("signUpTermsRequired"));
+      return;
+    }
     setLoading(true);
     persistRememberDeviceChoice(rememberDevice);
     const supabase = createClient();
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const nextPath = initialNext && initialNext.startsWith("/") ? initialNext : "/onboarding";
     const { data, error: err } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name.trim() || undefined } },
+      options: {
+        data: { full_name: name.trim() || undefined },
+        emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+      },
     });
     setLoading(false);
     if (err) {
       setError(err.message);
       return;
     }
-    // Se há sessão (email confirmation desativado), redirecionar para dashboard.
-    // O sync User/Student/StudentProfile acontece no carregamento da página via getCurrentDbUser.
     if (data?.session) {
       const target = initialNext && initialNext.startsWith("/") ? initialNext : "/dashboard";
       router.push(target);
       router.refresh();
       return;
     }
-    // Email confirmation ativado: mostrar mensagem para verificar email
-    setMessage(t("accountCreatedMessage"));
+    router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
   }
 
   return (
@@ -126,12 +131,27 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
               {error}
             </p>
           )}
-          {message && (
-            <p className="text-mobile-sm" style={{ color: "var(--success)", margin: 0 }}>
-              {message}
-            </p>
-          )}
-          <button type="submit" disabled={loading} className="btn btn-primary w-full">
+          <label className="flex items-start gap-3 text-left cursor-pointer">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="h-4 w-4 shrink-0 accent-[var(--primary)] mt-0.5"
+              disabled={loading || googleLoading}
+            />
+            <span className="text-mobile-sm" style={{ color: "var(--text-secondary)", lineHeight: 1.45 }}>
+              {initialLocale === "en" ? "I have read and accept the " : "Li e aceito os "}
+              <Link href="/termos" className="font-semibold" style={{ color: "var(--primary)" }} target="_blank">
+                {initialLocale === "en" ? "Terms of Service" : "Termos de Serviço"}
+              </Link>
+              {initialLocale === "en" ? " and the " : " e a "}
+              <Link href="/privacidade" className="font-semibold" style={{ color: "var(--primary)" }} target="_blank">
+                {initialLocale === "en" ? "Privacy Policy" : "Política de Privacidade"}
+              </Link>
+              .
+            </span>
+          </label>
+          <button type="submit" disabled={loading || !acceptedTerms} className="btn btn-primary w-full">
             {loading ? t("creatingAccount") : t("signUp")}
           </button>
         </form>

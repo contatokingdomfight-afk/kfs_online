@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 
 type Props = {
   error: Error & { digest?: string };
@@ -11,6 +12,7 @@ type Props = {
 export default function Error({ error, reset }: Props) {
   useEffect(() => {
     console.error("[app/error]", error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (

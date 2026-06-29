@@ -12,6 +12,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { FinanceiroModals, type PaymentListRow } from "./_components/FinanceiroModals";
+import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 
 type SearchParams = Promise<{
   deduped?: string;
@@ -101,6 +102,16 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       amount: Number(p.amount),
     };
   });
+
+  const paymentCsvRows = paymentRows.map((p) => ({
+    aluno: p.displayName,
+    mes: p.referenceMonth,
+    valor: p.amount.toFixed(2),
+    status: p.status === "PAID" ? "Pago" : "Em atraso",
+    data: list.find((x) => x.id === p.id)?.createdAt
+      ? String(list.find((x) => x.id === p.id)!.createdAt).slice(0, 10)
+      : "",
+  }));
 
   const refMonthForLabel = overview.referenceMonth;
   const periodLabel = new Date(refMonthForLabel + "-15T12:00:00Z").toLocaleDateString(
@@ -296,6 +307,10 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
             : " — run migrations add_financial_expense.sql and add_financial_expense_kind.sql (Supabase) if the table or «kind» column is missing."}
         </p>
       )}
+
+      <div style={{ marginBottom: 16 }}>
+        <ExportCsvButton rows={paymentCsvRows} filename="pagamentos-kfs.csv" />
+      </div>
 
       <FinanceiroModals
         referenceMonth={currentMonth}

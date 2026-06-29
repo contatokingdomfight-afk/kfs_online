@@ -8,6 +8,7 @@ import { persistRememberDeviceChoice } from "@/lib/auth/remember-device";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { buildAuthCallbackUrl } from "@/lib/auth/oauth-callback-url";
 import { openOAuthAuthorizeUrl } from "@/lib/capacitor-open-oauth";
+import { isEmailNotConfirmedError } from "@/lib/auth/email-confirmation";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -23,6 +24,9 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
   const searchParams = useSearchParams();
   const nextUrl = searchParams.get("next");
   const urlError = searchParams.get("error");
+  const accountDeleted = searchParams.get("deleted") === "1";
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const overlayOpen = savePhase !== "idle" || googleLoading;
@@ -51,7 +55,13 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
     });
     if (err) {
       setSavePhase("idle");
-      setError(err.message);
+      if (isEmailNotConfirmedError(err.message)) {
+        setShowResendVerification(true);
+        setError(t("emailNotVerified"));
+      } else {
+        setShowResendVerification(false);
+        setError(err.message);
+      }
       return;
     }
     setSavePhase("success");
@@ -85,6 +95,18 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
     setGoogleLoading(false);
   }
 
+  async function handleResendVerification() {
+    if (!email.trim()) return;
+    setResendMessage(null);
+    const supabase = createClient();
+    const { error: err } = await supabase.auth.resend({ type: "signup", email: email.trim() });
+    if (err) {
+      setResendMessage(err.message);
+      return;
+    }
+    setResendMessage(t("verifyEmailResent"));
+  }
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-bg">
       <LoadingOverlay open={overlayOpen} message={overlayMessage} showSpinner={overlayShowSpinner} />
@@ -93,6 +115,11 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
         <h1 className="text-mobile-lg font-semibold text-center mb-6" style={{ color: "var(--text-primary)" }}>
           {t("signIn")}
         </h1>
+        {accountDeleted && (
+          <p className="text-mobile-sm text-center mb-4" style={{ color: "var(--success)", margin: 0 }}>
+            {t("accountDeletedMessage")}
+          </p>
+        )}
         <button
           type="button"
           onClick={handleGoogleSignIn}
@@ -133,6 +160,22 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
           {(error || urlError) && (
             <p className="text-mobile-sm" style={{ color: "var(--danger)", margin: 0 }}>
               {error || (urlError === "exchange_failed" && (initialLocale === "en" ? "Login failed. Please try again." : "Falha ao iniciar sessão. Tenta novamente.")) || (urlError === "missing_code" && (initialLocale === "en" ? "Invalid callback." : "Callback inválido.")) || (urlError === "no_user" && (initialLocale === "en" ? "No user returned." : "Sessão não encontrada."))}
+            </p>
+          )}
+          {showResendVerification && (
+            <p className="text-mobile-sm" style={{ margin: 0 }}>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                style={{ background: "none", border: "none", padding: 0, color: "var(--primary)", fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}
+              >
+                {t("resendVerificationEmail")}
+              </button>
+            </p>
+          )}
+          {resendMessage && (
+            <p className="text-mobile-sm" style={{ color: "var(--success)", margin: 0 }}>
+              {resendMessage}
             </p>
           )}
           <button type="submit" disabled={overlayOpen} className="btn btn-primary w-full">

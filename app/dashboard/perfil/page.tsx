@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { PerfilForm } from "./PerfilForm";
+import { ChangePasswordSection } from "./ChangePasswordSection";
+import { DeleteAccountSection } from "./DeleteAccountSection";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 /** Valor para `input type="date"` (YYYY-MM-DD). */
@@ -79,6 +81,8 @@ export default async function DashboardPerfilPage() {
         {t("profileIntro")}
       </p>
       <PerfilForm initial={initial} locale={locale as "pt" | "en"} />
+      <ChangePasswordSection email={initial.email} locale={locale as "pt" | "en"} />
+      <DeleteAccountSection locale={locale as "pt" | "en"} />
     </div>
   );
 }

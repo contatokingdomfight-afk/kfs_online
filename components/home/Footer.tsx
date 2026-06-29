@@ -5,6 +5,8 @@ type Content = {
   footerAulaExp: string;
   footerSignIn: string;
   footerSignUp: string;
+  footerTerms: string;
+  footerPrivacy: string;
   footerContact: string;
   footerRights: string;
   youtubeUrl: string;
@@ -72,6 +74,16 @@ export function Footer({ content }: { content: Content }) {
                   className="text-sm text-[var(--text-primary)] hover:text-[var(--primary)]"
                 >
                   {content.footerSignUp}
+                </Link>
+              </li>
+              <li>
+                <Link href="/termos" className="text-sm text-[var(--text-primary)] hover:text-[var(--primary)]">
+                  {content.footerTerms}
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacidade" className="text-sm text-[var(--text-primary)] hover:text-[var(--primary)]">
+                  {content.footerPrivacy}
                 </Link>
               </li>
             </ul>

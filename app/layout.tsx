@@ -11,6 +11,7 @@ import { PwaInstallHint } from "@/components/PwaInstallHint";
 import { AuthSessionKeepAlive } from "@/components/AuthSessionKeepAlive";
 import { CapacitorNativeBridge } from "@/components/CapacitorNativeBridge";
 import { PwaLaunchSplash } from "@/components/PwaLaunchSplash";
+import { CookieBanner } from "@/components/CookieBanner";
 import { BRAND_APP_ICON, BRAND_BG, BRAND_ICON_BG, BRAND_LOGO_EMBLEM } from "@/lib/brand";
 
 const inter = Inter({
@@ -83,6 +84,7 @@ export default async function RootLayout({
           <PwaInstallHint />
           <ThemeLocaleSwitcherFixedOnlyOnPublic initialTheme={theme} initialLocale={locale} />
           {children}
+          <CookieBanner />
           <VercelMetrics />
         </PwaInstallProvider>
       </body>

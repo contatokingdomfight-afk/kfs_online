@@ -4,6 +4,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
+import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Pendente",
@@ -63,6 +64,20 @@ export default async function AdminPresencaPage() {
 
   const studentToUser = new Map(usersData.map((s) => [s.id, s]));
 
+  const attendanceCsvRows = list.flatMap((lesson) => {
+    const lessonAtts = attList.filter((a) => a.lessonId === lesson.id);
+    return lessonAtts.map((a) => {
+      const u = studentToUser.get(a.studentId);
+      return {
+        aluno: u?.name || u?.email || "",
+        aula: MODALITY_LABELS[lesson.modality] ?? lesson.modality,
+        data: formatLessonDate(lesson.date),
+        horario: `${lesson.startTime}–${lesson.endTime}`,
+        estado: STATUS_LABEL[a.status] ?? a.status,
+      };
+    });
+  });
+
   return (
     <div style={{ maxWidth: "min(700px, 100%)" }}>
       <div
@@ -93,6 +108,10 @@ export default async function AdminPresencaPage() {
       <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
         Próximas 2 semanas. Para confirmar presenças, usa a área do professor em Check-in de aula.
       </p>
+
+      <div style={{ marginBottom: 16 }}>
+        <ExportCsvButton rows={attendanceCsvRows} filename="presencas-kfs.csv" />
+      </div>
 
       {list.length === 0 ? (
         <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>

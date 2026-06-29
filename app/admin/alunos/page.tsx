@@ -6,6 +6,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { AlunosFiltersPanel } from "@/components/AlunosFiltersPanel";
+import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
@@ -86,6 +87,23 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
 
   const baseFilters = { status: filterStatus, modality: filterModality, school: filterSchool, plan: filterPlan, q: params.q ?? "" };
 
+  const schoolById = new Map((schools ?? []).map((s) => [s.id, s.name]));
+  const planById = new Map((plansData ?? []).map((p) => [p.id, p.name]));
+  const csvRows = filtered.map((s) => {
+    const u = userById.get(s.userId);
+    const prof = profileByStudentId.get(s.id);
+    const planId = (s as { planId?: string | null }).planId;
+    return {
+      nome: u?.name ?? "",
+      email: u?.email ?? "",
+      telefone: (prof as { phone?: string | null } | undefined)?.phone ?? "",
+      escola: schoolById.get(s.schoolId) ?? "",
+      plano: planId ? (planById.get(planId) ?? planId) : "",
+      status: STATUS_LABEL[s.status] ?? s.status,
+      criadoEm: String((s as { createdAt?: string }).createdAt ?? "").slice(0, 10),
+    };
+  });
+
   return (
     <div style={{ maxWidth: "min(700px, 100%)", paddingTop: 8 }}>
       <div
@@ -140,6 +158,10 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
         schools={schools ?? []}
         plans={plansData ?? []}
       />
+
+      <div style={{ marginBottom: 16 }}>
+        <ExportCsvButton rows={csvRows} filename="alunos-kfs.csv" />
+      </div>
 
       {filtered.length === 0 ? (
         <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>
