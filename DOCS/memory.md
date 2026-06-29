@@ -144,15 +144,29 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 
-## Eventos — aluno e admin
+## Eventos — aluno, coach e admin
 
 
 
 - `/dashboard/eventos` — `EventosBoard`, filtro Todos / Inscritos e ativos.
 
-- Home: `DashboardUpcomingEventsStrip` (com/sem plano).
+- Home aluno: `DashboardUpcomingEventsStrip` (com/sem plano).
+
+- **Coach:** `/coach/eventos` — calendário + lista (`CoachEventosBoard`, `lib/coach-upcoming-events.ts`); card «Próximos eventos» na home (`CoachUpcomingEventsCard`). Menu lateral «Eventos» para todos os coaches; check-in escola só para treinador assistente.
 
 - Admin: `/admin/eventos`, confirmação `setRegistrationStatus`.
+
+
+
+## Status do aluno e pagamentos (`Student.status`)
+
+
+
+- Enum: `ATIVO`, `INADIMPLENTE`, `INATIVO`, `EXPERIMENTAL` (migração `20260628120000_student_status_inadimplente.sql`).
+
+- Sincronização automática em `lib/student-payment-status.ts`: **ATIVO** = em dia; **INADIMPLENTE** = 1 mês `Payment` LATE ou suspenso; **INATIVO** = 2+ meses LATE. `EXPERIMENTAL` não é alterado pelo cron.
+
+- Chamado em: cron `payment-suspension`, `createPayment`, webhook Stripe, `lib/payment-grace.ts`, `lib/renewals.ts`.
 
 
 
