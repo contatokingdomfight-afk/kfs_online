@@ -167,7 +167,7 @@ export function AlunosFiltersPanel({
               >
                 Todos
               </a>
-              {(["ATIVO", "INATIVO", "EXPERIMENTAL"] as const).map((s) => (
+              {(["ATIVO", "INADIMPLENTE", "INATIVO", "EXPERIMENTAL"] as const).map((s) => (
                 <a
                   key={s}
                   href={`${basePath}${buildQueryString({ ...baseFilters, status: s })}`}

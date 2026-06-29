@@ -23,6 +23,7 @@ import { SchoolAssistantBadge } from "@/components/SchoolAssistantBadge";
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
+  INADIMPLENTE: "Inadimplente",
   INATIVO: "Inativo",
   EXPERIMENTAL: "Experimental",
 };

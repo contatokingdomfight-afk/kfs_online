@@ -60,7 +60,9 @@ export async function promoteSchoolAssistantCoach(studentId: string): Promise<{ 
   const { data: targetUser } = await adminRead.from("User").select("id, role").eq("id", gate.student.userId).maybeSingle();
   if (!targetUser) return { error: "Utilizador do aluno não encontrado." };
   if (targetUser.role !== "ALUNO") return { error: "Só alunos podem ser assistentes." };
-  if (gate.student.status === "INATIVO") return { error: "Aluno inativo não pode ser assistente." };
+  if (gate.student.status === "INATIVO" || gate.student.status === "INADIMPLENTE") {
+    return { error: "Aluno inativo ou inadimplente não pode ser assistente." };
+  }
 
   const admin = getAdminClientOrNull();
   const db = admin.client ?? supabase;

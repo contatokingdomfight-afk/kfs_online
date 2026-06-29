@@ -8,6 +8,7 @@ import { loadStudentPaymentRows, type StudentPaymentRow } from "@/lib/admin-stud
 import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
 import { getRenewalsPending, generateMonthlyPayments, type GenerateMonthlyPaymentsResult } from "@/lib/renewals";
 import { clearGraceOnPaidPayment, startGracePeriodOnLatePayment } from "@/lib/payment-grace";
+import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 
 export type { StudentPaymentRow };
 
@@ -130,6 +131,8 @@ export async function createPayment(
   } else {
     await clearGraceOnPaidPayment(supabase, studentId);
   }
+
+  await syncStudentPaymentStatus(supabase, studentId);
 
   revalidatePath("/admin/financeiro");
   revalidatePath("/admin/financeiro/novo");

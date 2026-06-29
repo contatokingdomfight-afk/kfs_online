@@ -9,6 +9,7 @@ import {
   shouldGenerateLatePayments,
 } from "@/lib/lisbon-payment-dates";
 import { startGracePeriodOnLatePayment } from "@/lib/payment-grace";
+import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 
 export type RenewalPending = {
   studentId: string;
@@ -137,6 +138,7 @@ export async function generateMonthlyPayments(
       return { created, skipped: pending.length - created, error: error.message };
     }
     await startGracePeriodOnLatePayment(supabase, p.studentId, referenceMonth);
+    await syncStudentPaymentStatus(supabase, p.studentId);
     created++;
   }
 

@@ -22,7 +22,7 @@ export function SchoolAssistantCoachControls({
   const [pending, startTransition] = useTransition();
 
   if (targetUserRole !== "ALUNO") return null;
-  if (studentStatus === "INATIVO") return null;
+  if (studentStatus === "INATIVO" || studentStatus === "INADIMPLENTE") return null;
 
   const onPromote = () => {
     startTransition(async () => {

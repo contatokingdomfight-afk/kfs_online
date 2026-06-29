@@ -9,6 +9,7 @@ import { AlunosFiltersPanel } from "@/components/AlunosFiltersPanel";
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
+  INADIMPLENTE: "Inadimplente",
   INATIVO: "Inativo",
   EXPERIMENTAL: "Experimental",
 };

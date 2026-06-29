@@ -28,6 +28,7 @@ export function getCoachShellSidebarLinks(
     { label: t("navHome"), href: "/coach" },
     { label: t("navManageClasses"), href: "/coach/aula" },
     { label: t("navAgenda"), href: "/coach/agenda" },
+    { label: t("navEvents"), href: "/coach/eventos" },
     { label: t("navWeekTheme"), href: "/coach/tema-semana" },
     { label: t("navStudents"), href: "/coach/alunos" },
     { label: t("navAthletesCoach"), href: "/coach/atletas" },

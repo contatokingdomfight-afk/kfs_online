@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { clearGraceOnPaidPayment } from "@/lib/payment-grace";
+import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { stripe, STRIPE_WEBHOOK_SECRET } from "@/lib/stripe/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
             .eq("id", studentId);
           if (isActive) {
             await clearGraceOnPaidPayment(supabase, studentId);
+            await syncStudentPaymentStatus(supabase, studentId);
           }
           break;
         }
@@ -88,6 +90,7 @@ export async function POST(request: NextRequest) {
         if (isActive && planId) {
           await clearGraceOnPaidPayment(supabase, studentId);
         }
+        await syncStudentPaymentStatus(supabase, studentId);
         break;
       }
       case "customer.subscription.deleted": {
@@ -123,6 +126,7 @@ export async function POST(request: NextRequest) {
           updates.planId = null;
         }
         await supabase.from("Student").update(updates).eq("id", studentId);
+        await syncStudentPaymentStatus(supabase, studentId);
         break;
       }
       case "invoice.paid": {
@@ -164,6 +168,7 @@ export async function POST(request: NextRequest) {
           }
         }
         await clearGraceOnPaidPayment(supabase, studentId);
+        await syncStudentPaymentStatus(supabase, studentId);
         break;
       }
       default:

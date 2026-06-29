@@ -6,6 +6,7 @@ import {
 } from "@/lib/lisbon-payment-dates";
 import { suspendStudentsPastGrace } from "@/lib/payment-grace";
 import { generateMonthlyPayments } from "@/lib/renewals";
+import { syncAllStudentPaymentStatuses } from "@/lib/student-payment-status";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -46,13 +47,14 @@ export async function GET(request: NextRequest) {
   }
 
   const { suspended, errors } = await suspendStudentsPastGrace(supabase);
+  const statusSync = await syncAllStudentPaymentStatuses(supabase);
 
   if (errors.length > 0) {
     return NextResponse.json(
-      { ok: true, generated, suspended, warnings: errors },
+      { ok: true, generated, suspended, statusSync, warnings: errors },
       { status: 207 }
     );
   }
 
-  return NextResponse.json({ ok: true, generated, suspended });
+  return NextResponse.json({ ok: true, generated, suspended, statusSync });
 }

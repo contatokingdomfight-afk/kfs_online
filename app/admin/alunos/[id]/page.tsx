@@ -25,6 +25,7 @@ const GENERAL_LAST_N = 10;
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
+  INADIMPLENTE: "Inadimplente",
   INATIVO: "Inativo",
   EXPERIMENTAL: "Experimental",
 };

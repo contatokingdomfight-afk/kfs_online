@@ -88,7 +88,7 @@ export async function updateStudent(
   const schoolId = (formData.get("schoolId") as string)?.trim() || null;
   const planId = (formData.get("planId") as string)?.trim() || null;
   const primaryModality = (formData.get("primaryModality") as string)?.trim() || null;
-  const validStatuses = ["ATIVO", "INATIVO", "EXPERIMENTAL"];
+  const validStatuses = ["ATIVO", "INADIMPLENTE", "INATIVO", "EXPERIMENTAL"];
   const newStatus = status && validStatuses.includes(status) ? status : undefined;
   let newPrimaryModality = !primaryModality || primaryModality === "" ? null : primaryModality;
 

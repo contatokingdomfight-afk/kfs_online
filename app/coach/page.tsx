@@ -18,6 +18,7 @@ import { WeekThemeCard } from "./_components/WeekThemeCard";
 import { TrialClassesCard } from "./_components/TrialClassesCard";
 import { MonitoredAthletesList } from "./_components/MonitoredAthletesList";
 import { PhysicalAssessmentRequestsCoachCard } from "./_components/PhysicalAssessmentRequestsCoachCard";
+import { CoachUpcomingEventsCard } from "./_components/CoachUpcomingEventsCard";
 
 const LEVEL_LABEL: Record<string, string> = {
   INICIANTE: "Iniciante",
@@ -438,6 +439,7 @@ export default async function CoachHomePage() {
             viewAgendaLabel={t("coachViewFullAgenda")}
             noLessonsLabel={t("coachNoLessonsRestToday")}
           />
+          <CoachUpcomingEventsCard locale={locale as "pt" | "en"} />
         </div>
       ) : (
         <>
@@ -481,6 +483,8 @@ export default async function CoachHomePage() {
             unnamedStudentLabel={t("coachAthleteUnnamed")}
             locale={locale as "pt" | "en"}
           />
+
+          <CoachUpcomingEventsCard locale={locale as "pt" | "en"} />
 
           {/* Secção 3: ACOMPANHAMENTO DE ATLETAS */}
           <MonitoredAthletesList

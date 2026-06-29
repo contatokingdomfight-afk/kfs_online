@@ -344,7 +344,7 @@ export function EditarAlunoForm({
           Status
         </span>
         <select name="status" className="input" defaultValue={initialStatus}>
-          {(["ATIVO", "INATIVO", "EXPERIMENTAL"] as const).map((s) => (
+          {(["ATIVO", "INADIMPLENTE", "INATIVO", "EXPERIMENTAL"] as const).map((s) => (
             <option key={s} value={s}>
               {statusLabels[s] ?? s}
             </option>

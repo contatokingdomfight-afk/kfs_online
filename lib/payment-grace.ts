@@ -8,6 +8,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { endOfCalendarDay10Lisbon, LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { stripe } from "@/lib/stripe/server";
+import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 
 type StudentGraceRow = {
   planId: string | null;
@@ -64,6 +65,8 @@ export async function startGracePeriodOnLatePayment(
     body: `A mensalidade (${referenceMonth}) está em atraso (após o 5.º dia útil). Regulariza até ao dia 10 (inclusive), ${deadlineLabel}, para evitar bloqueio de acesso.`,
     href: "/dashboard/financeiro",
   });
+
+  await syncStudentPaymentStatus(supabase, studentId);
 }
 
 export async function clearGraceOnPaidPayment(supabase: SupabaseClient, studentId: string): Promise<void> {
@@ -115,6 +118,8 @@ export async function clearGraceOnPaidPayment(supabase: SupabaseClient, studentI
       href: "/dashboard",
     });
   }
+
+  await syncStudentPaymentStatus(supabase, studentId);
 }
 
 /** Suspende alunos com plano cujo prazo (fim do dia 10 em Lisboa para o mês em causa) já passou. */
@@ -179,6 +184,7 @@ export async function suspendStudentsPastGrace(
           body: "O prazo de regularização terminou. Escolhe um plano ou regulariza o pagamento para voltar a ter acesso completo.",
           href: "/escolher-plano",
         });
+        await syncStudentPaymentStatus(supabase, row.id);
       })
     );
   }
