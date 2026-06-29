@@ -20,11 +20,15 @@ export async function POST(request: NextRequest) {
   }
   const supabase = result.client;
 
-  const { data: student } = await supabase
+  const { data: student, error: studentError } = await supabase
     .from("Student")
     .select("id, stripeCustomerId")
     .eq("id", studentId)
-    .single();
+    .maybeSingle();
+  if (studentError) {
+    console.error("[create-portal-session] Student lookup:", studentError);
+    return NextResponse.json({ error: "Não foi possível carregar o teu perfil." }, { status: 500 });
+  }
   if (!student?.stripeCustomerId) {
     return NextResponse.json(
       { error: "Ainda não tens pagamentos por cartão. Subscreve um plano primeiro." },

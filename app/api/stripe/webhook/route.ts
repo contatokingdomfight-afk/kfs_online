@@ -7,12 +7,12 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 export async function POST(request: NextRequest) {
   if (!stripe || !STRIPE_WEBHOOK_SECRET) {
     console.error("Stripe or STRIPE_WEBHOOK_SECRET is not set");
-    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const signature = request.headers.get("stripe-signature");
   if (!signature) {
-    return NextResponse.json({ error: "Missing stripe-signature" }, { status: 400 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   let event: Stripe.Event;
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Stripe webhook signature verification failed:", message);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
   const result = getAdminClientOrNull();

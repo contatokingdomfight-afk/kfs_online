@@ -36,6 +36,7 @@ Resumo da revisão feita no projeto em termos de segurança. **Não substitui um
 - RLS está **ativado** nas tabelas públicas.
 - **User** e **Student**: políticas restritas (cada utilizador só acede à própria linha).
 - **Jun. 2026 — endurecimento:** migração `20260616120000_production_security_hardening` aplicada no projeto EU. Tabelas sensíveis (`Payment`, `Attendance`, avaliações, notificações, etc.) usam funções `kfs_*` e políticas por papel (aluno = próprios dados; coach/admin = `kfs_is_staff()`). Catálogo: leitura aberta, escrita só staff. Ver [`SUPABASE_RLS.md`](SUPABASE_RLS.md).
+- **Webhook Stripe:** assinatura inválida ou pedido sem credenciais → **401** (não expor 500 em cenários de auth).
 - A app não expõe o cliente Supabase no browser para operações arbitrárias; Server Actions e Server Components validam role/studentId. RLS actua como **defesa em profundidade** contra chamadas directas à API Supabase com JWT de aluno.
 
 ---

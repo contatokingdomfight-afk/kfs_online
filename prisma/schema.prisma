@@ -354,6 +354,14 @@ model Payment {
   createdAt      DateTime      @default(now())
 }
 
+/// Eventos Stripe já processados (idempotência do webhook).
+model StripeWebhookEvent {
+  eventId     String   @id
+  processedAt DateTime @default(now())
+
+  @@map("StripeWebhookEvent")
+}
+
 /// Despesa geral (custos) registada no painel financeiro admin. `kind` distingue despesas fixas (aluguer, assinaturas) de variáveis.
 model FinancialExpense {
   id          String               @id @default(cuid())

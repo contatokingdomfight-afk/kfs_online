@@ -123,48 +123,54 @@ export async function suspendStudentsPastGrace(
   const errors: string[] = [];
   let suspended = 0;
 
-  for (const raw of rows ?? []) {
-    const row = raw as {
-      id: string;
-      planId: string;
-      stripeSubscriptionId: string | null;
-      paymentGraceEndsAt: string;
-    };
+  const list = (rows ?? []) as {
+    id: string;
+    planId: string;
+    stripeSubscriptionId: string | null;
+    paymentGraceEndsAt: string;
+  }[];
 
-    const subId = row.stripeSubscriptionId;
-    if (subId && stripe) {
-      try {
-        await stripe.subscriptions.cancel(subId);
-      } catch (e) {
-        errors.push(`${row.id}: Stripe cancel: ${e instanceof Error ? e.message : String(e)}`);
-      }
-    }
+  const BATCH = 15;
+  for (let i = 0; i < list.length; i += BATCH) {
+    const chunk = list.slice(i, i + BATCH);
+    await Promise.all(
+      chunk.map(async (row) => {
+        const subId = row.stripeSubscriptionId;
+        if (subId && stripe) {
+          try {
+            await stripe.subscriptions.cancel(subId);
+          } catch (e) {
+            errors.push(`${row.id}: Stripe cancel: ${e instanceof Error ? e.message : String(e)}`);
+          }
+        }
 
-    const { error } = await supabase
-      .from("Student")
-      .update({
-        suspendedPlanId: row.planId,
-        planId: null,
-        stripeSubscriptionId: null,
-        paymentSuspendedAt: new Date().toISOString(),
-        paymentGraceEndsAt: null,
-        paymentGraceReferenceMonth: null,
+        const { error } = await supabase
+          .from("Student")
+          .update({
+            suspendedPlanId: row.planId,
+            planId: null,
+            stripeSubscriptionId: null,
+            paymentSuspendedAt: new Date().toISOString(),
+            paymentGraceEndsAt: null,
+            paymentGraceReferenceMonth: null,
+          })
+          .eq("id", row.id);
+
+        if (error) {
+          errors.push(`${row.id}: ${error.message}`);
+          return;
+        }
+
+        suspended++;
+        await createInAppNotification(supabase, {
+          studentId: row.id,
+          type: "PAYMENT_SUSPENDED",
+          title: "Acesso suspenso por falta de pagamento",
+          body: "O prazo de regularização terminou. Escolhe um plano ou regulariza o pagamento para voltar a ter acesso completo.",
+          href: "/escolher-plano",
+        });
       })
-      .eq("id", row.id);
-
-    if (error) {
-      errors.push(`${row.id}: ${error.message}`);
-      continue;
-    }
-
-    suspended++;
-    await createInAppNotification(supabase, {
-      studentId: row.id,
-      type: "PAYMENT_SUSPENDED",
-      title: "Acesso suspenso por falta de pagamento",
-      body: "O prazo de regularização terminou. Escolhe um plano ou regulariza o pagamento para voltar a ter acesso completo.",
-      href: "/escolher-plano",
-    });
+    );
   }
 
   return { suspended, errors };

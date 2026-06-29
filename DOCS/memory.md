@@ -102,6 +102,14 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Operacional:** backups Supabase e rotação de segredos fora do repo — configurar no painel Supabase/Vercel.
 
+### Qualidade (não bloqueadores, jun. 2026)
+
+- **`app/error.tsx`:** boundary global com mensagem KFS e «Tentar novamente».
+- **Webhook Stripe:** pedidos não autorizados (sem segredo/config/assinatura inválida) respondem **401**.
+- **Portal Stripe:** `create-portal-session` usa `.maybeSingle()` no `Student`.
+- **Prisma:** modelo `StripeWebhookEvent` alinhado à migração de idempotência.
+- **Crons:** lembretes de aula e suspensão por pagamento processam alunos em lotes paralelos (25 / 15).
+
 
 
 ## Performance (área do aluno)

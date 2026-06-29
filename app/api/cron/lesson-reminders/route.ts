@@ -61,11 +61,18 @@ export async function GET(request: NextRequest) {
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
 
   let sent = 0;
-  for (const student of studentsWithPlan) {
-    const user = userById.get(student.userId);
-    if (!user?.email) continue;
-    const err = await sendLessonReminder(user.email, user.name ?? null, lessonInfos);
-    if (!err.error) sent++;
+  const BATCH = 25;
+  for (let i = 0; i < studentsWithPlan.length; i += BATCH) {
+    const chunk = studentsWithPlan.slice(i, i + BATCH);
+    const results = await Promise.all(
+      chunk.map(async (student) => {
+        const user = userById.get(student.userId);
+        if (!user?.email) return false;
+        const err = await sendLessonReminder(user.email, user.name ?? null, lessonInfos);
+        return !err.error;
+      })
+    );
+    sent += results.filter(Boolean).length;
   }
 
   return NextResponse.json({ ok: true, sent, lessons: lessons.length });
