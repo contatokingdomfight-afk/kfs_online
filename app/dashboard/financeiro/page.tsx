@@ -4,6 +4,8 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { StripeSubscribeButtons } from "./StripeSubscribeButtons";
+import { StudentOnboardingFeesNotice } from "@/components/StudentOnboardingFeesNotice";
+import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +23,17 @@ export default async function DashboardFinanceiroPage() {
   const t = getTranslations(locale as "pt" | "en");
 
   let plan: { name: string; price_monthly: number } | null = null;
-  let payments: { id: string; referenceMonth: string; amount: number; status: string; createdAt: string }[] = [];
+  let payments: {
+    id: string;
+    referenceMonth: string | null;
+    referenceYear: string | null;
+    paymentType: string;
+    amount: number;
+    status: string;
+    createdAt: string;
+  }[] = [];
   let hasStripeCustomer = false;
+  let onboardingFees = null;
   let plansWithStripe: { id: string; name: string; price_monthly: number; stripePriceId?: string; planPrices?: { stripePriceId: string; intervalLabel: string; amountCents: number }[] }[] = [];
 
   if (studentId) {
@@ -77,17 +88,21 @@ export default async function DashboardFinanceiroPage() {
 
     const { data: paymentRows } = await supabase
       .from("Payment")
-      .select("id, amount, status, referenceMonth, createdAt")
+      .select("id, amount, status, referenceMonth, referenceYear, paymentType, createdAt")
       .eq("studentId", studentId)
       .order("createdAt", { ascending: false })
       .limit(24);
     payments = (paymentRows ?? []).map((p) => ({
       id: p.id,
-      referenceMonth: p.referenceMonth,
+      referenceMonth: (p.referenceMonth as string | null) ?? null,
+      referenceYear: ((p as { referenceYear?: string | null }).referenceYear as string | null) ?? null,
+      paymentType: String((p as { paymentType?: string }).paymentType ?? "TUITION"),
       amount: Number(p.amount),
       status: p.status,
       createdAt: String(p.createdAt),
     }));
+
+    onboardingFees = await getStudentOnboardingFeesState(supabase, studentId);
   }
 
   return (
@@ -98,6 +113,16 @@ export default async function DashboardFinanceiroPage() {
           Plano, pagamentos e comprovantes. Para alterar dados de pagamento, contacta a secretaria.
         </p>
       </header>
+
+      {onboardingFees && (onboardingFees.showEnrollment || onboardingFees.showInsurance) && (
+        <StudentOnboardingFeesNotice
+          enrollmentAmount={onboardingFees.enrollmentAmount}
+          insuranceAmount={onboardingFees.insuranceAmount}
+          showEnrollment={onboardingFees.showEnrollment}
+          showInsurance={onboardingFees.showInsurance}
+          locale={locale === "en" ? "en" : "pt"}
+        />
+      )}
 
       {/* Plano atual */}
       <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
@@ -145,14 +170,23 @@ export default async function DashboardFinanceiroPage() {
           <p className="text-sm text-text-secondary">{t("noPaymentsYet")}</p>
         ) : (
           <ul className="space-y-3">
-            {payments.map((p) => (
+            {payments.map((p) => {
+              const label =
+                p.paymentType === "ENROLLMENT"
+                  ? locale === "en"
+                    ? "Enrollment fee"
+                    : "Matrícula"
+                  : p.paymentType === "INSURANCE"
+                    ? `${locale === "en" ? "Insurance" : "Seguro"} ${p.referenceYear ?? ""}`
+                    : p.referenceMonth
+                      ? formatRefMonth(p.referenceMonth, locale)
+                      : "—";
+              return (
               <li
                 key={p.id}
                 className="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-border last:border-0"
               >
-                <span className="text-text-primary font-medium capitalize">
-                  {formatRefMonth(p.referenceMonth, locale)}
-                </span>
+                <span className="text-text-primary font-medium capitalize">{label}</span>
                 <span className="text-text-primary">€{p.amount.toFixed(2)}</span>
                 <span
                   className={`text-xs font-medium px-2 py-0.5 rounded ${
@@ -164,7 +198,8 @@ export default async function DashboardFinanceiroPage() {
                   {p.status === "PAID" ? t("paymentPaid") : t("paymentLate")}
                 </span>
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
       </section>

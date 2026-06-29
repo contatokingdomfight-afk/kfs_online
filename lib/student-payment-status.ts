@@ -41,7 +41,8 @@ async function loadLateMonthCount(supabase: SupabaseClient, studentId: string): 
     .from("Payment")
     .select("referenceMonth")
     .eq("studentId", studentId)
-    .eq("status", "LATE");
+    .eq("status", "LATE")
+    .eq("paymentType", "TUITION");
   return new Set((latePayments ?? []).map((p) => String((p as { referenceMonth: string }).referenceMonth))).size;
 }
 
@@ -49,7 +50,8 @@ async function studentInPaymentProgram(supabase: SupabaseClient, studentId: stri
   const { count } = await supabase
     .from("Payment")
     .select("id", { count: "exact", head: true })
-    .eq("studentId", studentId);
+    .eq("studentId", studentId)
+    .eq("paymentType", "TUITION");
   return (count ?? 0) > 0;
 }
 

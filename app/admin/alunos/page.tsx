@@ -7,6 +7,15 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { AlunosFiltersPanel } from "@/components/AlunosFiltersPanel";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { computeInsuranceStatus, INSURANCE_STATUS_LABEL } from "@/lib/insurance-settings";
+import { formatInTimeZone } from "date-fns-tz";
+import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
+
+const INSURANCE_FILTER_LABEL: Record<string, string> = {
+  expired: "Seguro expirado",
+  expiring: "A expirar",
+  none: "Sem cobertura",
+};
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
@@ -15,7 +24,7 @@ const STATUS_LABEL: Record<string, string> = {
   EXPERIMENTAL: "Experimental",
 };
 
-type SearchParams = Promise<{ status?: string; modality?: string; school?: string; plan?: string; q?: string }>;
+type SearchParams = Promise<{ status?: string; modality?: string; school?: string; plan?: string; q?: string; insurance?: string }>;
 
 export default async function AdminAlunosPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
@@ -26,7 +35,9 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   const filterModality = params.modality ?? "all";
   const filterSchool = params.school ?? "all";
   const filterPlan = params.plan ?? "all";
+  const filterInsurance = params.insurance ?? "all";
   const searchQuery = (params.q ?? "").trim().toLowerCase();
+  const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -63,15 +74,44 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   const userIds = [...new Set(filtered.map((s) => s.userId))];
   const studentIds = filtered.map((s) => s.id);
 
-  const [{ data: usersData }, { data: profilesData }] = await Promise.all([
+  const [{ data: usersData }, { data: profilesData }, { data: insuranceData }] = await Promise.all([
     supabase.from("User").select("id, name, email").in("id", userIds),
     studentIds.length > 0
       ? supabase.from("StudentProfile").select("studentId, phone").in("studentId", studentIds)
+      : Promise.resolve({ data: [] }),
+    studentIds.length > 0
+      ? supabase
+          .from("StudentInsuranceCoverage")
+          .select("studentId, covered, coverageStartDate, coverageEndDate")
+          .in("studentId", studentIds)
       : Promise.resolve({ data: [] }),
   ]);
 
   const userById = new Map((usersData ?? []).map((u) => [u.id, u]));
   const profileByStudentId = new Map((profilesData ?? []).map((p) => [p.studentId, p]));
+  const insuranceByStudentId = new Map((insuranceData ?? []).map((r) => [r.studentId, r]));
+
+  if (filterInsurance !== "all") {
+    filtered = filtered.filter((s) => {
+      const row = insuranceByStudentId.get(s.id);
+      const st = computeInsuranceStatus(
+        row
+          ? {
+              covered: Boolean(row.covered),
+              coverageStartDate: (row.coverageStartDate as string | null) ?? null,
+              coverageEndDate: (row.coverageEndDate as string | null) ?? null,
+              policyReference: null,
+              notes: null,
+            }
+          : null,
+        todayYmd
+      );
+      if (filterInsurance === "expired") return st === "expired";
+      if (filterInsurance === "expiring") return st === "expiring";
+      if (filterInsurance === "none") return st === "none";
+      return true;
+    });
+  }
 
   if (searchQuery) {
     const qNorm = searchQuery.replace(/\s/g, "");
@@ -100,6 +140,20 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
       escola: schoolById.get(s.schoolId) ?? "",
       plano: planId ? (planById.get(planId) ?? planId) : "",
       status: STATUS_LABEL[s.status] ?? s.status,
+      seguro: INSURANCE_STATUS_LABEL[
+        computeInsuranceStatus(
+          insuranceByStudentId.get(s.id)
+            ? {
+                covered: Boolean(insuranceByStudentId.get(s.id)!.covered),
+                coverageStartDate: (insuranceByStudentId.get(s.id)!.coverageStartDate as string | null) ?? null,
+                coverageEndDate: (insuranceByStudentId.get(s.id)!.coverageEndDate as string | null) ?? null,
+                policyReference: null,
+                notes: null,
+              }
+            : null,
+          todayYmd
+        )
+      ],
       criadoEm: String((s as { createdAt?: string }).createdAt ?? "").slice(0, 10),
     };
   });
@@ -159,6 +213,39 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
         plans={plansData ?? []}
       />
 
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+        <span style={{ fontSize: 13, color: "var(--text-secondary)", alignSelf: "center" }}>Seguro:</span>
+        {(["all", "expired", "expiring", "none"] as const).map((key) => {
+          const active = filterInsurance === key;
+          const q = new URLSearchParams();
+          if (filterStatus !== "all") q.set("status", filterStatus);
+          if (filterModality !== "all") q.set("modality", filterModality);
+          if (filterSchool !== "all") q.set("school", filterSchool);
+          if (filterPlan !== "all") q.set("plan", filterPlan);
+          if (params.q) q.set("q", params.q);
+          if (key !== "all") q.set("insurance", key);
+          const href = `/admin/alunos${q.toString() ? `?${q}` : ""}`;
+          const label = key === "all" ? "Todos" : INSURANCE_FILTER_LABEL[key] ?? key;
+          return (
+            <Link
+              key={key}
+              href={href}
+              style={{
+                fontSize: 13,
+                padding: "4px 10px",
+                borderRadius: "var(--radius-md)",
+                textDecoration: "none",
+                border: "1px solid var(--border)",
+                backgroundColor: active ? "var(--primary)" : "var(--bg-secondary)",
+                color: active ? "#fff" : "var(--text-primary)",
+              }}
+            >
+              {label}
+            </Link>
+          );
+        })}
+      </div>
+
       <div style={{ marginBottom: 16 }}>
         <ExportCsvButton rows={csvRows} filename="alunos-kfs.csv" />
       </div>
@@ -174,6 +261,27 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
           {filtered.map((s) => {
             const u = userById.get(s.userId);
             const primMod = (s as { primaryModality?: string | null }).primaryModality;
+            const insRow = insuranceByStudentId.get(s.id);
+            const insStatus = computeInsuranceStatus(
+              insRow
+                ? {
+                    covered: Boolean(insRow.covered),
+                    coverageStartDate: (insRow.coverageStartDate as string | null) ?? null,
+                    coverageEndDate: (insRow.coverageEndDate as string | null) ?? null,
+                    policyReference: null,
+                    notes: null,
+                  }
+                : null,
+              todayYmd
+            );
+            const insColor =
+              insStatus === "covered"
+                ? "#16a34a"
+                : insStatus === "expiring"
+                  ? "#ca8a04"
+                  : insStatus === "expired"
+                    ? "var(--danger)"
+                    : "var(--text-secondary)";
             return (
               <li key={s.id}>
                 <AlunoProfileLink
@@ -214,6 +322,18 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
                         {modalitiesForFilter.find((x) => x.code === primMod)?.name ?? primMod}
                       </span>
                     )}
+                    <span
+                      style={{
+                        fontSize: "clamp(12px, 3vw, 14px)",
+                        padding: "2px 8px",
+                        borderRadius: "var(--radius-md)",
+                        backgroundColor: "var(--bg)",
+                        color: insColor,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {INSURANCE_STATUS_LABEL[insStatus]}
+                    </span>
                   </div>
                   <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                     {u?.email ?? "—"}

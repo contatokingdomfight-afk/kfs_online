@@ -1,4 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  getStudentOnboardingFeesState,
+  isStudentEligibleForFirstPayment,
+  type StudentOnboardingFeesState,
+} from "@/lib/student-onboarding-fees";
 
 export type StudentPaymentRow = {
   studentId: string;
@@ -11,6 +16,9 @@ export type StudentPaymentRow = {
   existingPayment: { status: string; amount: number } | null;
   /** Aluno suspenso por falta de pagamento — marcar «Pago» repõe o plano. */
   isPaymentSuspended: boolean;
+  /** Sem pagamentos PAID — usar fluxo de primeiro pagamento. */
+  isFirstPaymentEligible: boolean;
+  onboardingFees: StudentOnboardingFeesState;
 };
 
 /**
@@ -52,13 +60,26 @@ export async function loadStudentPaymentRows(
     planIds.length
       ? supabase.from("Plan").select("id, name, priceMonthly").in("id", planIds)
       : Promise.resolve({ data: [] as { id: string; name: string | null; priceMonthly: number | null }[] }),
-    supabase.from("Payment").select("studentId, status, amount").eq("referenceMonth", referenceMonth).in("studentId", studentIds),
+    supabase
+      .from("Payment")
+      .select("studentId, status, amount")
+      .eq("referenceMonth", referenceMonth)
+      .eq("paymentType", "TUITION")
+      .in("studentId", studentIds),
   ]);
 
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
   const profileByStudent = new Map((profiles ?? []).map((p) => [p.studentId, p]));
   const planById = new Map((plans ?? []).map((p) => [p.id, p]));
   const paymentByStudent = new Map((payments ?? []).map((p) => [p.studentId, p]));
+
+  const referenceYear = referenceMonth.slice(0, 4);
+  const [firstPaymentFlags, onboardingFeesList] = await Promise.all([
+    Promise.all(studentIds.map((id) => isStudentEligibleForFirstPayment(supabase, id))),
+    Promise.all(studentIds.map((id) => getStudentOnboardingFeesState(supabase, id, referenceYear))),
+  ]);
+  const firstPaymentByStudent = new Map(studentIds.map((id, i) => [id, firstPaymentFlags[i]]));
+  const feesByStudent = new Map(studentIds.map((id, i) => [id, onboardingFeesList[i]]));
 
   return students.map((s) => {
     const u = userById.get(s.userId);
@@ -84,6 +105,16 @@ export async function loadStudentPaymentRows(
         ? { status: String((pay as { status: string }).status), amount: Number((pay as { amount: number }).amount) }
         : null,
       isPaymentSuspended: Boolean(row.paymentSuspendedAt && !row.planId && row.suspendedPlanId),
+      isFirstPaymentEligible: firstPaymentByStudent.get(s.id) ?? false,
+      onboardingFees: feesByStudent.get(s.id) ?? {
+        enrollmentAmount: 0,
+        insuranceAmount: 0,
+        enrollmentWaived: false,
+        enrollmentPaid: false,
+        insurancePaidForYear: false,
+        showEnrollment: false,
+        showInsurance: false,
+      },
     };
   });
 }

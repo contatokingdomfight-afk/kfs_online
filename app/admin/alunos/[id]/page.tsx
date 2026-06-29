@@ -20,6 +20,10 @@ import { DeleteStudentButton } from "./DeleteStudentButton";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
 import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
 import { SchoolAssistantBadge } from "@/components/SchoolAssistantBadge";
+import { StudentInsuranceSection } from "./StudentInsuranceSection";
+import { getInsuranceSettings } from "@/lib/insurance-settings";
+import { formatInTimeZone } from "date-fns-tz";
+import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
 const GENERAL_LAST_N = 10;
 
@@ -69,6 +73,22 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     .select("id, name, email, role, avatarUrl")
     .eq("id", student.userId)
     .single();
+  const [{ data: waiverRow }, { data: coverageRow }, insuranceSettings] = await Promise.all([
+    supabase
+      .from("StudentWaiver")
+      .select("waiverSigned, waiverSignedAt, signatureName")
+      .eq("studentId", studentId)
+      .maybeSingle(),
+    supabase
+      .from("StudentInsuranceCoverage")
+      .select("covered, coverageStartDate, coverageEndDate, policyReference, notes")
+      .eq("studentId", studentId)
+      .maybeSingle(),
+    getInsuranceSettings(supabase),
+  ]);
+
+  const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
+
   const { data: studentProfile } = await supabase
     .from("StudentProfile")
     .select("weightKg, heightCm, medicalNotes, emergencyContact, phone")
@@ -348,6 +368,33 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
         initialPlanId={student.planId ?? ""}
         initialAdminGrantedFullAccess={Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess)}
         editedUserRole={user?.role}
+      />
+
+      <StudentInsuranceSection
+        studentId={studentId}
+        waiver={
+          waiverRow
+            ? {
+                waiverSigned: Boolean(waiverRow.waiverSigned),
+                waiverSignedAt: (waiverRow.waiverSignedAt as string | null) ?? null,
+                signatureName: (waiverRow.signatureName as string | null) ?? null,
+              }
+            : null
+        }
+        coverage={
+          coverageRow
+            ? {
+                covered: Boolean(coverageRow.covered),
+                coverageStartDate: (coverageRow.coverageStartDate as string | null) ?? null,
+                coverageEndDate: (coverageRow.coverageEndDate as string | null) ?? null,
+                policyReference: (coverageRow.policyReference as string | null) ?? null,
+                notes: (coverageRow.notes as string | null) ?? null,
+              }
+            : null
+        }
+        annualAmount={insuranceSettings.annualAmount}
+        defaultPolicyReference={insuranceSettings.policyReference ?? ""}
+        todayYmd={todayYmd}
       />
 
       <details

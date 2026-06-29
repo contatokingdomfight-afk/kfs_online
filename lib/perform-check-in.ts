@@ -19,6 +19,7 @@ import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { computeWellnessZone, type WellnessCheckInInput } from "@/lib/wellness-score";
 import { resolveOccurrenceYmd } from "@/lib/resolve-check-in-occurrence";
 import { normalizeModalityCode } from "@/lib/modality-normalize";
+import { blocksCheckInForInsurance } from "@/lib/insurance-settings";
 
 /**
  * Check-in (QR / link). `occurrenceDate` opcional: obrigatório para aulas recorrentes (`Lesson.date` null).
@@ -47,6 +48,32 @@ export async function performCheckIn(
   const isOpenClass = Boolean((lessonData as { isOpenClass?: boolean }).isOpenClass);
   if (!planAccess.hasCheckIn && !isOpenClass) {
     return { error: "O teu plano não inclui check-in de aulas presenciais." };
+  }
+
+  const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
+  const { data: insuranceRow } = await supabase
+    .from("StudentInsuranceCoverage")
+    .select("covered, coverageEndDate")
+    .eq("studentId", studentId)
+    .maybeSingle();
+
+  if (
+    blocksCheckInForInsurance(
+      insuranceRow
+        ? {
+            covered: Boolean(insuranceRow.covered),
+            coverageStartDate: null,
+            coverageEndDate: (insuranceRow.coverageEndDate as string | null) ?? null,
+            policyReference: null,
+            notes: null,
+          }
+        : null,
+      todayYmd
+    )
+  ) {
+    return {
+      error: "O teu seguro está pendente de renovação. Contacta a recção.",
+    };
   }
 
   const occ = resolveOccurrenceYmd(

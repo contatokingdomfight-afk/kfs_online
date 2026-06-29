@@ -57,7 +57,8 @@ export async function getRenewalsPending(
   const { data: payments } = await supabase
     .from("Payment")
     .select("studentId, status")
-    .eq("referenceMonth", referenceMonth);
+    .eq("referenceMonth", referenceMonth)
+    .eq("paymentType", "TUITION");
 
   const paidStudentIds = new Set(
     (payments ?? []).filter((p) => (p as { status: string }).status === "PAID").map((p) => p.studentId)
@@ -133,6 +134,7 @@ export async function generateMonthlyPayments(
       amount: p.priceMonthly,
       status: "LATE",
       referenceMonth,
+      paymentType: "TUITION",
     });
     if (error) {
       return { created, skipped: pending.length - created, error: error.message };

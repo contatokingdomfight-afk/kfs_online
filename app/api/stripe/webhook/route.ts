@@ -162,6 +162,7 @@ export async function POST(request: NextRequest) {
             status: "PAID",
             referenceMonth,
             stripeInvoiceId,
+            paymentType: "TUITION",
           });
           if (payErr && payErr.code !== "23505") {
             throw payErr;

@@ -65,6 +65,12 @@ enum PaymentStatus {
   LATE
 }
 
+enum PaymentType {
+  TUITION
+  INSURANCE
+  ENROLLMENT
+}
+
 enum FinancialExpenseKind {
   FIXED
   VARIABLE
@@ -144,11 +150,14 @@ model Student {
   schoolId  String
   school    School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   status    StudentStatus @default(ATIVO)
+  enrollmentFeeWaived Boolean @default(false)
   createdAt DateTime      @default(now())
 
   athlete     Athlete?
   attendances Attendance[]
   payments    Payment[]
+  waiver      StudentWaiver?
+  insuranceCoverage StudentInsuranceCoverage?
   physicalAssessments          StudentPhysicalAssessment[]
   physicalAssessmentRequests  PhysicalAssessmentRequest[]
   schoolAssistantCoach        SchoolAssistantCoach?
@@ -345,14 +354,61 @@ model Comment {
 }
 
 model Payment {
-  id             String        @id @default(cuid())
-  studentId      String
-  student        Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  amount         Decimal       @db.Decimal(10, 2)
-  status         PaymentStatus
-  referenceMonth String        // "YYYY-MM"
-  stripeInvoiceId String?      @unique
-  createdAt      DateTime      @default(now())
+  id              String        @id @default(cuid())
+  studentId       String
+  student         Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount          Decimal       @db.Decimal(10, 2)
+  status          PaymentStatus
+  paymentType     PaymentType   @default(TUITION)
+  referenceMonth  String?       // "YYYY-MM" (TUITION)
+  referenceYear   String?       // "YYYY" (INSURANCE)
+  stripeInvoiceId String?       @unique
+  createdAt       DateTime      @default(now())
+}
+
+model InsuranceSettings {
+  id              String   @id @default("global")
+  annualAmount    Decimal  @db.Decimal(10, 2)
+  enrollmentAmount Decimal @default(0) @db.Decimal(10, 2)
+  policyReference String?
+  waiverVersion   String   @default("1")
+  updatedAt       DateTime @default(now())
+
+  @@map("InsuranceSettings")
+}
+
+model StudentWaiver {
+  id             String    @id @default(cuid())
+  studentId      String    @unique
+  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  waiverSigned   Boolean   @default(false)
+  waiverSignedAt DateTime?
+  waiverVersion  String?
+  signatureName  String?
+  signatureIp    String?
+  guardianName   String?
+  isMinor        Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now())
+
+  @@map("StudentWaiver")
+}
+
+model StudentInsuranceCoverage {
+  id                  String    @id @default(cuid())
+  studentId           String    @unique
+  student             Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  covered             Boolean   @default(false)
+  coverageStartDate   DateTime? @db.Date
+  coverageEndDate     DateTime? @db.Date
+  policyReference     String?
+  notes               String?
+  lastRenewedAt       DateTime?
+  lastRenewedByUserId String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @default(now())
+
+  @@map("StudentInsuranceCoverage")
 }
 
 /// Eventos Stripe já processados (idempotência do webhook).

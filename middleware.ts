@@ -16,10 +16,18 @@ const publicPaths = [
   "/auth/callback",
   "/auth/forgot-password",
   "/auth/update-password",
+  "/termos",
+  "/privacidade",
 ];
 
-/** Aluno sem plano: onboarding, escolher plano, callback OAuth e free tier (dashboard + biblioteca + perfil). */
-const studentAllowedWithoutPlanPrefixes = ["/onboarding", "/escolher-plano", "/auth/callback", "/auth/update-password"];
+/** Aluno sem plano: onboarding, waiver, escolher plano, callback OAuth e free tier. */
+const studentAllowedWithoutPlanPrefixes = [
+  "/onboarding",
+  "/waiver-signing",
+  "/escolher-plano",
+  "/auth/callback",
+  "/auth/update-password",
+];
 
 function isPublicBrowserPath(pathname: string) {
   if (pathname === "/t" || pathname.startsWith("/t/")) return true;
@@ -32,6 +40,14 @@ function isPublicApiPath(pathname: string) {
 
 function isStudentAllowedWithoutPlan(pathname: string) {
   return studentAllowedWithoutPlanPrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+function isOnboardingPath(pathname: string) {
+  return pathname === "/onboarding" || pathname.startsWith("/onboarding/");
+}
+
+function isWaiverPath(pathname: string) {
+  return pathname === "/waiver-signing" || pathname.startsWith("/waiver-signing/");
 }
 
 /** Free tier: explora agenda (só leitura), biblioteca em pré-visualização e perfil; check-in mostra mensagem se sem plano. */
@@ -169,11 +185,41 @@ export async function middleware(request: NextRequest) {
 
     const { data: student } = await supabase
       .from("Student")
-      .select("planId")
+      .select("id, planId")
       .eq("userId", dbUser.id)
       .maybeSingle();
 
-    if (student?.planId) {
+    if (!student?.id) {
+      return response;
+    }
+
+    const [{ data: profile }, { data: waiver }] = await Promise.all([
+      supabase
+        .from("StudentProfile")
+        .select("hasCompletedOnboarding")
+        .eq("studentId", student.id)
+        .maybeSingle(),
+      supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", student.id).maybeSingle(),
+    ]);
+
+    const onboardingDone = Boolean((profile as { hasCompletedOnboarding?: boolean } | null)?.hasCompletedOnboarding);
+    const waiverSigned = Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned);
+
+    if (!onboardingDone && !isOnboardingPath(pathname) && !isPublicBrowserPath(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    if (onboardingDone && !waiverSigned && !isWaiverPath(pathname) && !isOnboardingPath(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/waiver-signing";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    if (student.planId) {
       return response;
     }
 

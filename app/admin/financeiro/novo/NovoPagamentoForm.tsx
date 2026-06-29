@@ -251,6 +251,23 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
             )}
           </div>
 
+            {selected.isFirstPaymentEligible && (
+              <div
+                style={{
+                  padding: "12px 14px",
+                  background: "rgba(var(--primary-rgb, 59, 130, 246), 0.08)",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--border)",
+                  fontSize: 13,
+                }}
+              >
+                <strong>Primeiro pagamento</strong> — este aluno ainda não tem pagamentos registados.{" "}
+                <Link href={`/admin/financeiro/primeiro-pagamento`} style={{ color: "var(--primary)", fontWeight: 600 }}>
+                  Usar fluxo de inscrição (matrícula + seguro)
+                </Link>
+              </div>
+            )}
+
           <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
             <input type="hidden" name="studentId" value={selected.studentId} />
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>

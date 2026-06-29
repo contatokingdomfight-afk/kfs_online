@@ -9,6 +9,9 @@ import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
 import { getRenewalsPending, generateMonthlyPayments, type GenerateMonthlyPaymentsResult } from "@/lib/renewals";
 import { clearGraceOnPaidPayment, startGracePeriodOnLatePayment } from "@/lib/payment-grace";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
+import { upsertTuitionPayment } from "@/lib/payment-tuition-upsert";
+import { listConsecutiveReferenceMonths } from "@/lib/reference-month";
+import { createFirstPaymentBundle } from "@/lib/first-payment-bundle";
 
 export type { StudentPaymentRow };
 
@@ -62,69 +65,13 @@ export async function createPayment(
 
   const supabase = createAdminClient();
 
-  const { data: existingRows, error: existingErr } = await supabase
-    .from("Payment")
-    .select("id, status")
-    .eq("studentId", studentId)
-    .eq("referenceMonth", referenceMonth);
-
-  if (existingErr) return { error: existingErr.message };
-
-  const rows = existingRows ?? [];
-
-  if (status === "PAID") {
-    const keepId =
-      rows.find((r) => (r as { status: string }).status === "PAID")?.id ??
-      rows.find((r) => (r as { status: string }).status === "LATE")?.id;
-
-    if (rows.length === 0) {
-      const id = crypto.randomUUID();
-      const { error } = await supabase.from("Payment").insert({
-        id,
-        studentId,
-        amount,
-        status: "PAID",
-        referenceMonth,
-      });
-      if (error) return { error: error.message };
-    } else if (keepId) {
-      const toDelete = rows.map((r) => (r as { id: string }).id).filter((id) => id !== keepId);
-      if (toDelete.length > 0) {
-        const { error: delErr } = await supabase.from("Payment").delete().in("id", toDelete);
-        if (delErr) return { error: delErr.message };
-      }
-      const { error: upErr } = await supabase
-        .from("Payment")
-        .update({ amount, status: "PAID" })
-        .eq("id", keepId);
-      if (upErr) return { error: upErr.message };
-    }
-  } else {
-    // LATE
-    if (rows.some((r) => (r as { status: string }).status === "PAID")) {
-      return { error: "Já existe pagamento pago para este mês. Remove ou altera o registo existente." };
-    }
-    if (rows.length === 0) {
-      const id = crypto.randomUUID();
-      const { error } = await supabase.from("Payment").insert({
-        id,
-        studentId,
-        amount,
-        status: "LATE",
-        referenceMonth,
-      });
-      if (error) return { error: error.message };
-    } else {
-      const keepId = rows[0].id as string;
-      const toDelete = rows.slice(1).map((r) => (r as { id: string }).id);
-      if (toDelete.length > 0) {
-        const { error: delErr } = await supabase.from("Payment").delete().in("id", toDelete);
-        if (delErr) return { error: delErr.message };
-      }
-      const { error: upErr } = await supabase.from("Payment").update({ amount, status: "LATE" }).eq("id", keepId);
-      if (upErr) return { error: upErr.message };
-    }
-  }
+  const upsertResult = await upsertTuitionPayment(supabase, {
+    studentId,
+    referenceMonth,
+    amount,
+    status: status as "PAID" | "LATE",
+  });
+  if (upsertResult.error) return { error: upsertResult.error };
 
   if (status === "LATE") {
     await startGracePeriodOnLatePayment(supabase, studentId, referenceMonth);
@@ -181,7 +128,8 @@ export async function dedupeDuplicatePaymentsAction(): Promise<void> {
   const supabase = createAdminClient();
   const { data: rows, error } = await supabase
     .from("Payment")
-    .select("id, studentId, status, referenceMonth, createdAt");
+    .select("id, studentId, status, referenceMonth, createdAt")
+    .eq("paymentType", "TUITION");
 
   if (error) redirect(`/admin/financeiro?dedupedError=${encodeURIComponent(error.message)}`);
 
@@ -329,4 +277,97 @@ export async function deleteManualRevenue(formData: FormData) {
     redirect(`/admin/financeiro?revenueError=${encodeURIComponent(error.message)}`);
   }
   revalidatePath("/admin/financeiro");
+}
+
+export type AdvanceTuitionPaymentsResult = { error?: string; success?: boolean; monthsPaid?: number };
+
+/** Regista N meses consecutivos de mensalidade como PAID (pagamento antecipado). */
+export async function createAdvanceTuitionPayments(
+  _prev: AdvanceTuitionPaymentsResult | null,
+  formData: FormData
+): Promise<AdvanceTuitionPaymentsResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const studentId = (formData.get("studentId") as string)?.trim();
+  const startMonth = (formData.get("startMonth") as string)?.trim();
+  const monthsStr = (formData.get("months") as string)?.trim();
+  const amountStr = (formData.get("amountPerMonth") as string)?.trim();
+
+  if (!studentId) return { error: "Aluno é obrigatório." };
+  if (!startMonth || !/^\d{4}-\d{2}$/.test(startMonth)) return { error: "Mês inicial inválido (AAAA-MM)." };
+  const months = parseInt(monthsStr ?? "", 10);
+  if (Number.isNaN(months) || months < 1 || months > 12) return { error: "Número de meses deve ser entre 1 e 12." };
+  const amountPerMonth = parseFloat(amountStr ?? "");
+  if (Number.isNaN(amountPerMonth) || amountPerMonth < 0) return { error: "Valor por mês inválido." };
+
+  const supabase = createAdminClient();
+  const monthList = listConsecutiveReferenceMonths(startMonth, months);
+
+  for (const referenceMonth of monthList) {
+    const result = await upsertTuitionPayment(supabase, {
+      studentId,
+      referenceMonth,
+      amount: amountPerMonth,
+      status: "PAID",
+    });
+    if (result.error) {
+      return { error: `${referenceMonth}: ${result.error}` };
+    }
+  }
+
+  await clearGraceOnPaidPayment(supabase, studentId);
+  await syncStudentPaymentStatus(supabase, studentId);
+
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro/antecipado");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/financeiro");
+  return { success: true, monthsPaid: months };
+}
+
+export type CreateFirstPaymentResult = { error?: string };
+
+/** Primeiro pagamento do aluno: mensalidade + matrícula (opcional) + seguro (obrigatório). */
+export async function createFirstPayment(
+  _prev: CreateFirstPaymentResult | null,
+  formData: FormData
+): Promise<CreateFirstPaymentResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const studentId = (formData.get("studentId") as string)?.trim();
+  const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
+  const tuitionStr = (formData.get("tuitionAmount") as string)?.trim();
+  const referenceYear = (formData.get("referenceYear") as string)?.trim() || new Date().getFullYear().toString();
+  const includeEnrollment = formData.get("includeEnrollment") === "on";
+  const includeInsurance = formData.get("includeInsurance") === "on";
+
+  if (!studentId) return { error: "Aluno é obrigatório." };
+  const tuitionAmount = parseFloat(tuitionStr ?? "");
+  if (Number.isNaN(tuitionAmount) || tuitionAmount < 0) return { error: "Valor da mensalidade inválido." };
+
+  const supabase = createAdminClient();
+  const result = await createFirstPaymentBundle(supabase, {
+    studentId,
+    referenceMonth,
+    tuitionAmount,
+    includeEnrollment,
+    includeInsurance,
+    referenceYear,
+    adminUserId: dbUser.id,
+  });
+  if (result.error) return { error: result.error };
+
+  await clearGraceOnPaidPayment(supabase, studentId);
+  await syncStudentPaymentStatus(supabase, studentId);
+
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro/primeiro-pagamento");
+  revalidatePath("/admin/financeiro/novo");
+  revalidatePath(`/admin/alunos/${studentId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/financeiro");
+  revalidatePath("/escolher-plano");
+  redirect("/admin/financeiro");
 }

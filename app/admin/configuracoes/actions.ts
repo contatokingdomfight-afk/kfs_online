@@ -44,3 +44,36 @@ export async function updateAttendanceGoal(
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+export type UpdateInsuranceSettingsResult = { error?: string; success?: boolean };
+
+export async function updateInsuranceSettings(
+  _prev: UpdateInsuranceSettingsResult | null,
+  formData: FormData
+): Promise<UpdateInsuranceSettingsResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const amountStr = (formData.get("annualAmount") as string)?.trim();
+  const enrollmentStr = (formData.get("enrollmentAmount") as string)?.trim();
+  const policyReference = (formData.get("policyReference") as string)?.trim() || null;
+  const amount = parseFloat(amountStr ?? "");
+  const enrollmentAmount = parseFloat(enrollmentStr ?? "0");
+  if (Number.isNaN(amount) || amount < 0) return { error: "Valor do seguro inválido." };
+  if (Number.isNaN(enrollmentAmount) || enrollmentAmount < 0) return { error: "Valor da matrícula inválido." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("InsuranceSettings").upsert({
+    id: "global",
+    annualAmount: amount.toFixed(2),
+    enrollmentAmount: enrollmentAmount.toFixed(2),
+    policyReference,
+    updatedAt: new Date().toISOString(),
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/configuracoes");
+  revalidatePath("/admin/alunos");
+  revalidatePath("/admin/financeiro");
+  return { success: true };
+}

@@ -6,6 +6,8 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { PlanCard } from "./PlanCard";
 import { EscolherPlanoToolbar } from "./EscolherPlanoToolbar";
+import { StudentOnboardingFeesNotice } from "@/components/StudentOnboardingFeesNotice";
+import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,7 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
   const supabase = await createClient();
 
   let schoolId: string | null = null;
+  let onboardingFees = null;
   if (studentId) {
     const { data: student } = await supabase
       .from("Student")
@@ -33,6 +36,7 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
     if (student?.planId) {
       redirect("/dashboard");
     }
+    onboardingFees = await getStudentOnboardingFeesState(supabase, studentId);
   }
 
   // Catálogo partilhado: planos da escola do aluno + planos em default-school-001 (seed / rede).
@@ -106,6 +110,15 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
         >
           {t("choosePlanSubtitle")}
         </p>
+        {onboardingFees && (onboardingFees.showEnrollment || onboardingFees.showInsurance) && (
+          <StudentOnboardingFeesNotice
+            enrollmentAmount={onboardingFees.enrollmentAmount}
+            insuranceAmount={onboardingFees.insuranceAmount}
+            showEnrollment={onboardingFees.showEnrollment}
+            showInsurance={onboardingFees.showInsurance}
+            locale={(locale as "pt" | "en") ?? "pt"}
+          />
+        )}
         <div
           style={{
             display: "grid",

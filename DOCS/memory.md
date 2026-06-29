@@ -240,3 +240,33 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Resumo por área: [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md).
 
 
+
+## Seguro colectivo anual e termo de responsabilidade
+
+
+
+- **Migração:** `20260630120000_insurance_waiver_advance_payments.sql` — `InsuranceSettings`, `StudentWaiver`, `StudentInsuranceCoverage`, `Payment.paymentType` (`TUITION` | `INSURANCE`).
+
+- **Matrícula (inscrição):** migrações `20260630140000_enrollment_fee.sql` (+ enum `ENROLLMENT` em transacção separada no Supabase) — `InsuranceSettings.enrollmentAmount`, `Student.enrollmentFeeWaived`, `Payment.paymentType` `ENROLLMENT` (único por aluno).
+
+- **Valor anual / matrícula:** Admin → Configurações (`lib/insurance-settings.ts`).
+
+- **Primeiro pagamento:** `/admin/financeiro/primeiro-pagamento` — mensalidade + matrícula (checkbox, admin pode desmarcar) + seguro obrigatório (`lib/first-payment-bundle.ts`, `lib/student-onboarding-fees.ts`). Aluno vê taxas em `/escolher-plano` e `/dashboard/financeiro` (`StudentOnboardingFeesNotice`).
+
+- **Por aluno:** Admin → Aluno → secção Seguro (`StudentInsuranceSection.tsx`, `insurance-actions.ts`).
+
+- **Waiver:** `/waiver-signing`; middleware após onboarding. Migração marca contas existentes com waiver `legacy`.
+
+- **Check-in:** bloqueio se cobertura registada e expirada/inactiva (`lib/perform-check-in.ts`).
+
+- **Cron:** `/api/cron/insurance-expiry-check` (segundas 08:00 UTC); email admin (`INSURANCE_ALERT_ADMIN_EMAIL`).
+
+
+
+## Pagamento antecipado (mensalidades)
+
+
+
+- `/admin/financeiro/antecipado` — N meses `TUITION` + `PAID` (`createAdvanceTuitionPayments`, `lib/payment-tuition-upsert.ts`). Cron só gera `LATE` para `paymentType = TUITION`.
+
+

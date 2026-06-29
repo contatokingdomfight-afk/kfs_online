@@ -28,7 +28,9 @@ export type PaymentListRow = {
   studentId: string;
   displayName: string;
   status: string;
-  referenceMonth: string;
+  referenceMonth: string | null;
+  referenceYear: string | null;
+  paymentType: string;
   amount: number;
 };
 
@@ -291,10 +293,20 @@ export function FinanceiroModals({
                   {filteredPayments.map((p) => {
                     const registerParams = new URLSearchParams({
                       studentId: p.studentId,
-                      referenceMonth: p.referenceMonth,
                       amount: p.amount.toFixed(2),
                     });
+                    if (p.paymentType === "INSURANCE" && p.referenceYear) {
+                      registerParams.set("referenceYear", p.referenceYear);
+                    } else if (p.referenceMonth) {
+                      registerParams.set("referenceMonth", p.referenceMonth);
+                    }
                     const registerHref = `/admin/financeiro/novo?${registerParams.toString()}`;
+                    const periodLabel =
+                      p.paymentType === "INSURANCE"
+                        ? `Seguro ${p.referenceYear ?? "—"}`
+                        : p.paymentType === "ENROLLMENT"
+                          ? "Matrícula"
+                          : (p.referenceMonth ?? "—");
                     return (
                     <li key={p.id} className="card" style={{ padding: 12 }}>
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -312,7 +324,7 @@ export function FinanceiroModals({
                         </span>
                       </div>
                       <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
-                        {p.referenceMonth} · {p.amount.toFixed(2)} €
+                        {periodLabel} · {p.amount.toFixed(2)} €
                       </p>
                       {p.status === "LATE" && (
                         <div style={{ marginTop: 10 }}>

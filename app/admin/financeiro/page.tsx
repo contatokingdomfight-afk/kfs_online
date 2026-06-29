@@ -72,7 +72,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
 
   const { data: payments } = await supabase
     .from("Payment")
-    .select("id, studentId, amount, status, referenceMonth, createdAt")
+    .select("id, studentId, amount, status, referenceMonth, referenceYear, paymentType, createdAt")
     .order("referenceMonth", { ascending: false })
     .order("createdAt", { ascending: false })
     .limit(200);
@@ -93,19 +93,33 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
 
   const paymentRows: PaymentListRow[] = list.map((p) => {
     const u = studentToUser.get(p.studentId);
+    const paymentType = String((p as { paymentType?: string }).paymentType ?? "TUITION");
     return {
       id: p.id,
       studentId: p.studentId,
       displayName: u?.name || u?.email || "—",
       status: p.status,
-      referenceMonth: p.referenceMonth,
+      referenceMonth: (p.referenceMonth as string | null) ?? null,
+      referenceYear: ((p as { referenceYear?: string | null }).referenceYear as string | null) ?? null,
+      paymentType,
       amount: Number(p.amount),
     };
   });
 
   const paymentCsvRows = paymentRows.map((p) => ({
     aluno: p.displayName,
-    mes: p.referenceMonth,
+    tipo:
+      p.paymentType === "INSURANCE"
+        ? "Seguro"
+        : p.paymentType === "ENROLLMENT"
+          ? "Matrícula"
+          : "Mensalidade",
+    periodo:
+      p.paymentType === "INSURANCE"
+        ? (p.referenceYear ?? "")
+        : p.paymentType === "ENROLLMENT"
+          ? "—"
+          : (p.referenceMonth ?? ""),
     valor: p.amount.toFixed(2),
     status: p.status === "PAID" ? "Pago" : "Em atraso",
     data: list.find((x) => x.id === p.id)?.createdAt
@@ -183,6 +197,28 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
             }}
           >
             Pagamentos a coaches
+          </Link>
+          <Link
+            href="/admin/financeiro/antecipado"
+            className="btn btn-secondary"
+            style={{
+              textDecoration: "none",
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            Pagamento antecipado
+          </Link>
+          <Link
+            href="/admin/financeiro/primeiro-pagamento"
+            className="btn btn-secondary"
+            style={{
+              textDecoration: "none",
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            Primeiro pagamento
           </Link>
           <Link
             href="/admin/financeiro/novo"

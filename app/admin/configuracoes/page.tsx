@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MetaAssiduidadeForm } from "./MetaAssiduidadeForm";
+import { InsuranceSettingsForm } from "./InsuranceSettingsForm";
+import { getInsuranceSettings } from "@/lib/insurance-settings";
 
 export default async function AdminConfiguracoesPage() {
   const dbUser = await getCurrentDbUser();
@@ -22,6 +24,8 @@ export default async function AdminConfiguracoesPage() {
     .eq("is_global", true)
     .limit(1)
     .single();
+
+  const insuranceSettings = await getInsuranceSettings(supabase);
 
   return (
     <div style={{ maxWidth: "min(480px, 100%)" }}>
@@ -53,6 +57,20 @@ export default async function AdminConfiguracoesPage() {
           {t("attendanceGoalHint")}
         </p>
         <MetaAssiduidadeForm initialTargetValue={goal?.target_value ?? 10} initialLocale={locale as "pt" | "en"} />
+      </section>
+
+      <section className="card" style={{ padding: "clamp(20px, 5vw, 24px)", marginTop: 24 }}>
+        <h2 style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          Seguro colectivo (anual)
+        </h2>
+        <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+          Valores globais de seguro anual e matrícula (inscrição). Usados no primeiro pagamento e renovações de seguro.
+        </p>
+        <InsuranceSettingsForm
+          initialAnnualAmount={insuranceSettings.annualAmount}
+          initialEnrollmentAmount={insuranceSettings.enrollmentAmount}
+          initialPolicyReference={insuranceSettings.policyReference ?? ""}
+        />
       </section>
     </div>
   );
