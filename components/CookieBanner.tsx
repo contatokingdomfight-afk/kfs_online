@@ -1,12 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const STORAGE_KEY = "kfs_cookie_consent";
+/** Acima da barra inferior mobile (BAR_Z=20_000) e do sheet «Mais» (SHEET_Z=20_500). */
+const COOKIE_BANNER_Z = 25_000;
+/** Altura aproximada da MobileAppBottomNav + safe-area. */
+const MOBILE_BOTTOM_NAV_OFFSET = "calc(64px + max(10px, env(safe-area-inset-bottom, 0px)))";
+
+function routeHasMobileBottomNav(pathname: string): boolean {
+  return (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/coach") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/como-sou-avaliado") ||
+    pathname.startsWith("/sistema-pontuacao")
+  );
+}
 
 export function CookieBanner() {
+  const pathname = usePathname() ?? "";
   const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     try {
@@ -14,6 +33,15 @@ export function CookieBanner() {
     } catch {
       setVisible(true);
     }
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    const mql = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobile(mql.matches);
+    sync();
+    mql.addEventListener("change", sync);
+    return () => mql.removeEventListener("change", sync);
   }, []);
 
   function save(value: "all" | "essential") {
@@ -25,19 +53,24 @@ export function CookieBanner() {
     setVisible(false);
   }
 
-  if (!visible) return null;
+  if (!visible || !mounted) return null;
 
-  return (
+  const aboveMobileNav = isMobile && routeHasMobileBottomNav(pathname);
+
+  const banner = (
     <div
       role="dialog"
       aria-label="Consentimento de cookies"
       style={{
         position: "fixed",
-        bottom: 0,
+        bottom: aboveMobileNav ? MOBILE_BOTTOM_NAV_OFFSET : 0,
         left: 0,
         right: 0,
-        zIndex: 9999,
+        zIndex: COOKIE_BANNER_Z,
         padding: "clamp(12px, 3vw, 16px)",
+        paddingBottom: aboveMobileNav
+          ? "clamp(12px, 3vw, 16px)"
+          : "max(clamp(12px, 3vw, 16px), env(safe-area-inset-bottom, 0px))",
         background: "var(--surface)",
         borderTop: "1px solid var(--border)",
         boxShadow: "0 -4px 24px rgba(0,0,0,0.12)",
@@ -72,4 +105,6 @@ export function CookieBanner() {
       </div>
     </div>
   );
+
+  return createPortal(banner, document.body);
 }
