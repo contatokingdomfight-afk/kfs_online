@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
-import { getDefaultOnboardingSchoolId } from "@/lib/onboarding-default-school";
+import { getDefaultOnboardingSchoolId, sortSchoolsForOnboarding } from "@/lib/onboarding-default-school";
 import { OnboardingWizard } from "./OnboardingWizard";
 
 export default async function OnboardingPage() {
@@ -17,7 +17,8 @@ export default async function OnboardingPage() {
     .eq("isActive", true)
     .order("createdAt", { ascending: true });
 
-  const defaultSchoolId = getDefaultOnboardingSchoolId(schools ?? []);
+  const schoolsSorted = sortSchoolsForOnboarding(schools ?? []);
+  const defaultSchoolId = getDefaultOnboardingSchoolId(schoolsSorted);
 
   return (
     <main
@@ -26,7 +27,7 @@ export default async function OnboardingPage() {
     >
       <OnboardingWizard
         userName={dbUser.name}
-        schools={schools ?? []}
+        schools={schoolsSorted}
         defaultSchoolId={defaultSchoolId}
         locale={(locale as "pt" | "en") ?? "pt"}
       />

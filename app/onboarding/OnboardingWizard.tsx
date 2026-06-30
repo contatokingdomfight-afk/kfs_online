@@ -15,7 +15,7 @@ const GOALS = [
 type Props = {
   userName: string | null;
   schools: { id: string; name: string }[];
-  /** Pré-seleção (ex.: escola online). */
+  /** Pré-seleção (ex.: sede presencial). */
   defaultSchoolId?: string;
   locale: "pt" | "en";
 };
