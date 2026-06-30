@@ -65,6 +65,11 @@ function isStripeCheckoutApi(pathname: string) {
   return pathname === "/api/stripe/create-checkout-session";
 }
 
+/** Primeiro pagamento na escola ainda não confirmado — só área financeira. */
+function isStudentAwaitingSchoolPaymentPath(pathname: string) {
+  return pathname === "/dashboard/financeiro" || pathname.startsWith("/dashboard/financeiro/");
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -185,7 +190,7 @@ export async function middleware(request: NextRequest) {
 
     const { data: student } = await supabase
       .from("Student")
-      .select("id, planId")
+      .select("id, planId, adminGrantedFullAccess")
       .eq("userId", dbUser.id)
       .maybeSingle();
 
@@ -220,6 +225,32 @@ export async function middleware(request: NextRequest) {
     }
 
     if (student.planId) {
+      const adminFree = Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess);
+      if (!adminFree) {
+        const { count: paidCount } = await supabase
+          .from("Payment")
+          .select("id", { count: "exact", head: true })
+          .eq("studentId", student.id)
+          .eq("status", "PAID");
+
+        if ((paidCount ?? 0) === 0) {
+          if (isStudentAwaitingSchoolPaymentPath(pathname)) {
+            return response;
+          }
+          if (pathname.startsWith("/api/")) {
+            return NextResponse.json(
+              { error: "Efectua o pagamento na secretaria para desbloquear o acesso." },
+              { status: 403 }
+            );
+          }
+          const url = request.nextUrl.clone();
+          url.pathname = "/dashboard/financeiro";
+          url.search = "";
+          url.searchParams.set("pagamento_escola", "1");
+          return NextResponse.redirect(url);
+        }
+      }
+
       return response;
     }
 

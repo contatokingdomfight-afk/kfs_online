@@ -35,7 +35,7 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
       .single();
     schoolId = student?.schoolId ?? null;
     if (student?.planId) {
-      redirect("/dashboard");
+      redirect("/dashboard/financeiro?pagamento_escola=1");
     }
     onboardingFees = await getStudentOnboardingFeesState(supabase, studentId);
   }
@@ -105,28 +105,42 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
           }}
         >
           {(plans ?? []).map((plan) => (
-              <PlanCard
-                key={plan.id}
-                plan={{
-                  id: plan.id,
-                  name: plan.name,
-                  description: plan.description,
-                  price_monthly: Number(plan.priceMonthly),
-                  includes_digital_access: plan.includesDigitalAccess === true,
-                  includes_performance_tracking: plan.includes_performance_tracking !== false,
-                  includes_check_in: plan.includes_check_in !== false,
-                  modality_scope: plan.modalityScope,
-                  includes_exclusive_benefits: plan.includes_exclusive_benefits === true,
-                }}
-                studentId={studentId}
-                locale={(locale as "pt" | "en") ?? "pt"}
-                perMonth={t("perMonth")}
-                choosePlanSelect={t("choosePlanSelect")}
-                choosePlanPayAtSchoolHint={t("choosePlanPayAtSchoolHint")}
-                choosePlanModalityLabel={t("choosePlanModalityLabel")}
-                modalityOptions={modalityRefs}
-              />
-            ))}
+            <PlanCard
+              key={plan.id}
+              plan={{
+                id: plan.id,
+                name: plan.name,
+                description: plan.description,
+                price_monthly: Number(plan.priceMonthly),
+                includes_digital_access: plan.includesDigitalAccess === true,
+                includes_performance_tracking: plan.includes_performance_tracking !== false,
+                includes_check_in: plan.includes_check_in !== false,
+                modality_scope: plan.modalityScope,
+                includes_exclusive_benefits: plan.includes_exclusive_benefits === true,
+              }}
+              studentId={studentId}
+              locale={(locale as "pt" | "en") ?? "pt"}
+              perMonth={t("perMonth")}
+              choosePlanSelect={t("choosePlanSelect")}
+              choosePlanModalityLabel={t("choosePlanModalityLabel")}
+              modalityOptions={modalityRefs}
+              fees={{
+                tuition: Number(plan.priceMonthly),
+                enrollment: onboardingFees?.enrollmentAmount ?? 0,
+                insurance: onboardingFees?.insuranceAmount ?? 0,
+                showEnrollment: onboardingFees?.showEnrollment ?? false,
+                showInsurance: onboardingFees?.showInsurance ?? false,
+              }}
+              modalTitle={t("choosePlanModalTitle")}
+              modalBody={t("choosePlanModalBody")}
+              modalConfirm={t("choosePlanModalConfirm")}
+              modalCancel={t("choosePlanModalCancel")}
+              modalTotal={t("choosePlanModalTotal")}
+              modalTuition={t("choosePlanModalTuition")}
+              modalEnrollment={t("choosePlanModalEnrollment")}
+              modalInsurance={t("choosePlanModalInsurance")}
+            />
+          ))}
         </div>
         {(!plans || plans.length === 0) && (
           <p style={{ fontSize: 16, color: "var(--text-secondary)" }}>

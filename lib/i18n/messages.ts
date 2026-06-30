@@ -377,6 +377,21 @@ export const messages = {
     choosePlanModalityLabel: "Modalidade do plano",
     choosePlanInscricaoSuccess:
       "Plano escolhido. Os valores em dívida aparecem abaixo — efectua o pagamento na secretaria da escola.",
+    choosePlanModalTitle: "Pagamento na secretaria",
+    choosePlanModalBody:
+      "Para teres acesso à plataforma, dirige-te à secretaria da escola e efectua o pagamento dos valores abaixo. O acesso será desbloqueado assim que a secretaria confirmar o recebimento.",
+    choosePlanModalConfirm: "Confirmar plano",
+    choosePlanModalCancel: "Voltar",
+    choosePlanModalTotal: "Total estimado",
+    choosePlanModalTuition: "Mensalidade",
+    choosePlanModalEnrollment: "Matrícula",
+    choosePlanModalInsurance: "Seguro anual",
+    schoolPaymentGateTitle: "Pagamento pendente na escola",
+    schoolPaymentGateBody:
+      "O teu plano está reservado, mas o acesso à plataforma só fica activo depois de pagares na secretaria. Apresenta-te na recepção com estes valores.",
+    schoolPaymentGateDismiss: "Entendi, vou à secretaria",
+    schoolPaymentGateBanner:
+      "Acesso limitado até confirmares o pagamento na secretaria. Os valores em dívida estão listados abaixo.",
     freeTierCtaMessage:
       "O teu perfil está pronto. Escolhe um plano para desbloquear check-in nas aulas, vídeos na biblioteca e toda a experiência Kingdom. Enquanto isso, podes ver a agenda e a estrutura dos cursos.",
     freeTierCtaButton: "✨ Ver planos e preços",
@@ -1473,6 +1488,21 @@ export const messages = {
     choosePlanModalityLabel: "Plan modality",
     choosePlanInscricaoSuccess:
       "Plan selected. Amounts due are listed below — pay at the school office.",
+    choosePlanModalTitle: "Payment at the school office",
+    choosePlanModalBody:
+      "To access the platform, visit the school office and pay the amounts below. Access will be unlocked once the office confirms receipt.",
+    choosePlanModalConfirm: "Confirm plan",
+    choosePlanModalCancel: "Go back",
+    choosePlanModalTotal: "Estimated total",
+    choosePlanModalTuition: "Monthly fee",
+    choosePlanModalEnrollment: "Enrollment fee",
+    choosePlanModalInsurance: "Annual insurance",
+    schoolPaymentGateTitle: "Payment pending at school",
+    schoolPaymentGateBody:
+      "Your plan is reserved, but platform access is only activated after you pay at the school office. Bring these amounts to reception.",
+    schoolPaymentGateDismiss: "Got it, I'll go to the office",
+    schoolPaymentGateBanner:
+      "Limited access until payment is confirmed at the school office. Amounts due are listed below.",
     freeTierCtaMessage:
       "Your profile is ready. Choose a plan to unlock class check-in, library videos and the full Kingdom experience. Meanwhile you can browse the schedule and course structure.",
     freeTierCtaButton: "✨ View plans and pricing",

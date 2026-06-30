@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useRef, useState, useEffect } from "react";
+import { useFormState } from "react-dom";
+import { PlanSchoolPaymentModal, type PlanSchoolPaymentFees } from "@/components/PlanSchoolPaymentModal";
 import { selectPlanPayAtSchool, type SelectPlanPayAtSchoolResult } from "./actions";
 
 type ModalityOption = { code: string; name: string };
@@ -24,19 +25,18 @@ type Props = {
   locale: "pt" | "en";
   perMonth: string;
   choosePlanSelect: string;
-  choosePlanPayAtSchoolHint: string;
   choosePlanModalityLabel: string;
   modalityOptions: ModalityOption[];
+  fees: PlanSchoolPaymentFees;
+  modalTitle: string;
+  modalBody: string;
+  modalConfirm: string;
+  modalCancel: string;
+  modalTotal: string;
+  modalTuition: string;
+  modalEnrollment: string;
+  modalInsurance: string;
 };
-
-function SubmitButton({ label, locale }: { label: string; locale: "pt" | "en" }) {
-  const { pending } = useFormStatus();
-  return (
-    <button type="submit" className="btn btn-primary" style={{ marginTop: "auto" }} disabled={pending}>
-      {pending ? (locale === "pt" ? "A registar…" : "Saving…") : label}
-    </button>
-  );
-}
 
 export function PlanCard({
   plan,
@@ -44,14 +44,33 @@ export function PlanCard({
   locale,
   perMonth,
   choosePlanSelect,
-  choosePlanPayAtSchoolHint,
   choosePlanModalityLabel,
   modalityOptions,
+  fees,
+  modalTitle,
+  modalBody,
+  modalConfirm,
+  modalCancel,
+  modalTotal,
+  modalTuition,
+  modalEnrollment,
+  modalInsurance,
 }: Props) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction] = useFormState(selectPlanPayAtSchool, null as SelectPlanPayAtSchoolResult | null);
   const [primaryModality, setPrimaryModality] = useState(modalityOptions[0]?.code ?? "");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const isEn = locale === "en";
   const needsModality = plan.modality_scope === "SINGLE";
+
+  const cardFees: PlanSchoolPaymentFees = {
+    tuition: plan.price_monthly,
+    enrollment: fees.enrollment,
+    insurance: fees.insurance,
+    showEnrollment: fees.showEnrollment,
+    showInsurance: fees.showInsurance,
+  };
 
   const benefits: string[] = [];
   if (plan.includes_check_in) benefits.push(isEn ? "Class check-in" : "Check-in nas aulas");
@@ -61,66 +80,105 @@ export function PlanCard({
   else if (plan.modality_scope === "SINGLE") benefits.push(isEn ? "One modality" : "Uma modalidade");
   if (plan.includes_exclusive_benefits) benefits.push(isEn ? "Exclusive benefits" : "Benefícios exclusivos");
 
-  return (
-    <div
-      style={{
-        border: "1px solid var(--border)",
-        borderRadius: 12,
-        padding: "clamp(20px, 5vw, 24px)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 16,
-        backgroundColor: "var(--bg-secondary, var(--bg))",
-      }}
-    >
-      <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>{plan.name}</h3>
-      {plan.description && (
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>{plan.description}</p>
-      )}
-      <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-        €{plan.price_monthly.toFixed(0)}
-        <span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-secondary)" }}>{perMonth}</span>
-      </p>
-      <ul style={{ paddingLeft: 20, margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
-        {benefits.map((b, i) => (
-          <li key={i}>{b}</li>
-        ))}
-      </ul>
+  function confirmPlan() {
+    setSubmitting(true);
+    formRef.current?.requestSubmit();
+  }
 
-      {studentId ? (
-        <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: "auto" }}>
-          <input type="hidden" name="planId" value={plan.id} />
-          {needsModality && modalityOptions.length > 0 && (
-            <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 14 }}>
-              <span style={{ fontWeight: 500 }}>{choosePlanModalityLabel}</span>
-              <select
-                name="primaryModality"
-                value={primaryModality}
-                onChange={(e) => setPrimaryModality(e.target.value)}
-                className="input"
-                required
-              >
-                {modalityOptions.map((m) => (
-                  <option key={m.code} value={m.code}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>{choosePlanPayAtSchoolHint}</p>
-          {state?.error && (
-            <p style={{ fontSize: 13, color: "var(--danger, #dc2626)", margin: 0 }} role="alert">
-              {state.error}
-            </p>
-          )}
-          <SubmitButton label={choosePlanSelect} locale={locale} />
-        </form>
-      ) : (
-        <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
-          {isEn ? "Sign in to choose a plan." : "Inicia sessão para escolher um plano."}
+  useEffect(() => {
+    if (state?.error) setSubmitting(false);
+  }, [state?.error]);
+
+  return (
+    <>
+      <PlanSchoolPaymentModal
+        open={modalOpen}
+        mode="confirm"
+        onClose={() => !submitting && setModalOpen(false)}
+        onConfirm={confirmPlan}
+        planName={plan.name}
+        fees={cardFees}
+        locale={locale}
+        confirming={submitting}
+        title={modalTitle}
+        body={modalBody}
+        confirmLabel={modalConfirm}
+        cancelLabel={modalCancel}
+        totalLabel={modalTotal}
+        tuitionLabel={modalTuition}
+        enrollmentLabel={modalEnrollment}
+        insuranceLabel={modalInsurance}
+      />
+      <div
+        style={{
+          border: "1px solid var(--border)",
+          borderRadius: 12,
+          padding: "clamp(20px, 5vw, 24px)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+          backgroundColor: "var(--bg-secondary, var(--bg))",
+        }}
+      >
+        <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>{plan.name}</h3>
+        {plan.description && (
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>{plan.description}</p>
+        )}
+        <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+          €{plan.price_monthly.toFixed(0)}
+          <span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-secondary)" }}>{perMonth}</span>
         </p>
-      )}
-    </div>
+        <ul style={{ paddingLeft: 20, margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
+          {benefits.map((b, i) => (
+            <li key={i}>{b}</li>
+          ))}
+        </ul>
+
+        {studentId ? (
+          <form
+            ref={formRef}
+            action={formAction}
+            style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: "auto" }}
+          >
+            <input type="hidden" name="planId" value={plan.id} />
+            {needsModality && modalityOptions.length > 0 && (
+              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 14 }}>
+                <span style={{ fontWeight: 500 }}>{choosePlanModalityLabel}</span>
+                <select
+                  name="primaryModality"
+                  value={primaryModality}
+                  onChange={(e) => setPrimaryModality(e.target.value)}
+                  className="input"
+                  required
+                >
+                  {modalityOptions.map((m) => (
+                    <option key={m.code} value={m.code}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {state?.error && (
+              <p style={{ fontSize: 13, color: "var(--danger, #dc2626)", margin: 0 }} role="alert">
+                {state.error}
+              </p>
+            )}
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={submitting}
+              onClick={() => setModalOpen(true)}
+            >
+              {submitting ? (isEn ? "Saving…" : "A registar…") : choosePlanSelect}
+            </button>
+          </form>
+        ) : (
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
+            {isEn ? "Sign in to choose a plan." : "Inicia sessão para escolher um plano."}
+          </p>
+        )}
+      </div>
+    </>
   );
 }

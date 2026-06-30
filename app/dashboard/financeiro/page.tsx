@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -6,6 +7,7 @@ import { getTranslations } from "@/lib/i18n";
 import { StripeSubscribeButtons } from "./StripeSubscribeButtons";
 import { StudentOnboardingFeesNotice } from "@/components/StudentOnboardingFeesNotice";
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
+import { SchoolPaymentPendingModal } from "./SchoolPaymentPendingModal";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +21,9 @@ function formatRefMonth(ref: string, locale: string): string {
 export default async function DashboardFinanceiroPage({
   searchParams,
 }: {
-  searchParams: Promise<{ inscricao?: string }>;
+  searchParams: Promise<{ pagamento_escola?: string; inscricao?: string }>;
 }) {
-  const { inscricao } = await searchParams;
+  await searchParams;
   const supabase = await createClient();
   const studentId = await getCurrentStudentId();
   const locale = await getLocaleFromCookies();
@@ -40,6 +42,8 @@ export default async function DashboardFinanceiroPage({
   let hasStripeCustomer = false;
   let onboardingFees = null;
   let plansWithStripe: { id: string; name: string; price_monthly: number; stripePriceId?: string; planPrices?: { stripePriceId: string; intervalLabel: string; amountCents: number }[] }[] = [];
+
+  let awaitingSchoolPayment = false;
 
   if (studentId) {
     const { data: student } = await supabase
@@ -108,10 +112,35 @@ export default async function DashboardFinanceiroPage({
     }));
 
     onboardingFees = await getStudentOnboardingFeesState(supabase, studentId);
+    awaitingSchoolPayment = payments.length > 0 && !payments.some((p) => p.status === "PAID");
   }
+
+  const loc = locale === "en" ? "en" : "pt";
+  const modalFees = {
+    tuition: plan?.price_monthly ?? 0,
+    enrollment: onboardingFees?.enrollmentAmount ?? 0,
+    insurance: onboardingFees?.insuranceAmount ?? 0,
+    showEnrollment: onboardingFees?.showEnrollment ?? false,
+    showInsurance: onboardingFees?.showInsurance ?? false,
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <Suspense fallback={null}>
+        <SchoolPaymentPendingModal
+          showGate={awaitingSchoolPayment}
+          planName={plan?.name ?? "—"}
+          fees={modalFees}
+          locale={loc}
+          title={t("schoolPaymentGateTitle")}
+          body={t("schoolPaymentGateBody")}
+          dismissLabel={t("schoolPaymentGateDismiss")}
+          totalLabel={t("choosePlanModalTotal")}
+          tuitionLabel={t("choosePlanModalTuition")}
+          enrollmentLabel={t("choosePlanModalEnrollment")}
+          insuranceLabel={t("choosePlanModalInsurance")}
+        />
+      </Suspense>
       <header>
         <h1 className="text-xl font-bold text-text-primary">{t("financeTitle")}</h1>
         <p className="text-sm text-text-secondary mt-1">
@@ -119,12 +148,12 @@ export default async function DashboardFinanceiroPage({
         </p>
       </header>
 
-      {inscricao === "1" && (
+      {awaitingSchoolPayment && (
         <div
           role="status"
-          className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm text-text-primary"
+          className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-text-primary"
         >
-          {t("choosePlanInscricaoSuccess")}
+          {t("schoolPaymentGateBanner")}
         </div>
       )}
 
@@ -219,9 +248,11 @@ export default async function DashboardFinanceiroPage({
       </section>
 
       <p className="text-xs text-text-secondary">
-        <Link href="/dashboard" className="underline hover:no-underline">
-          ← {locale === "en" ? "Back to home" : "Voltar ao início"}
-        </Link>
+        {!awaitingSchoolPayment && (
+          <Link href="/dashboard" className="underline hover:no-underline">
+            ← {locale === "en" ? "Back to home" : "Voltar ao início"}
+          </Link>
+        )}
       </p>
     </div>
   );
