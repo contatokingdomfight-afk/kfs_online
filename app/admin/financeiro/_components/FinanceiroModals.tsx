@@ -297,6 +297,7 @@ export function FinanceiroModals({
                   {filteredPayments.map((p) => {
                     if (isOnboardingBundleRow(p)) {
                       const registerHref = `/admin/financeiro/primeiro-pagamento?studentId=${encodeURIComponent(p.studentId)}${p.referenceMonth ? `&referenceMonth=${encodeURIComponent(p.referenceMonth)}` : ""}`;
+                      const isLate = p.status === "LATE";
                       return (
                         <li key={p.id} className="card" style={{ padding: 12 }}>
                           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -306,32 +307,34 @@ export function FinanceiroModals({
                                 fontSize: 12,
                                 padding: "2px 8px",
                                 borderRadius: "var(--radius-md)",
-                                backgroundColor: "var(--danger)",
+                                backgroundColor: isLate ? "var(--danger)" : "var(--success)",
                                 color: "#fff",
                               }}
                             >
-                              {labels.statusLate}
+                              {isLate ? labels.statusLate : labels.statusPaid}
                             </span>
                           </div>
                           <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
                             {labels.onboardingBundleLabel} · {p.amount.toFixed(2)} €
                           </p>
-                          <div style={{ marginTop: 10 }}>
-                            <Link
-                              href={registerHref}
-                              className="btn btn-primary"
-                              style={{
-                                display: "inline-flex",
-                                width: "100%",
-                                justifyContent: "center",
-                                textDecoration: "none",
-                                fontSize: 14,
-                              }}
-                              onClick={closeModal}
-                            >
-                              {labels.registerPaymentCta}
-                            </Link>
-                          </div>
+                          {isLate && (
+                            <div style={{ marginTop: 10 }}>
+                              <Link
+                                href={registerHref}
+                                className="btn btn-primary"
+                                style={{
+                                  display: "inline-flex",
+                                  width: "100%",
+                                  justifyContent: "center",
+                                  textDecoration: "none",
+                                  fontSize: 14,
+                                }}
+                                onClick={closeModal}
+                              >
+                                {labels.registerPaymentCta}
+                              </Link>
+                            </div>
+                          )}
                         </li>
                       );
                     }

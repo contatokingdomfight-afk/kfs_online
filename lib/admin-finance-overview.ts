@@ -14,13 +14,13 @@ export type FinancialExpenseRow = {
   kind: FinancialExpenseKind;
 };
 
-function monthDateBounds(yyyyMm: string): { start: string; end: string } {
+function monthDateBounds(yyyyMm: string): { start: string; end: string; endExclusiveIso: string } {
   const [y, m] = yyyyMm.split("-").map(Number);
   const lastDay = new Date(y, m, 0).getDate();
-  return {
-    start: `${yyyyMm}-01`,
-    end: `${yyyyMm}-${String(lastDay).padStart(2, "0")}`,
-  };
+  const start = `${yyyyMm}-01`;
+  const end = `${yyyyMm}-${String(lastDay).padStart(2, "0")}`;
+  const endNext = new Date(y, m, 1);
+  return { start, end, endExclusiveIso: endNext.toISOString() };
 }
 
 /**
@@ -39,6 +39,11 @@ function countActiveStudents(
 export type FinanceiroOverview = {
   referenceMonth: string;
   activeStudents: number;
+  /** Mensalidades PAID com referenceMonth = mês corrente. */
+  revenueTuitionMonth: number;
+  /** Matrícula + seguro PAID registados no mês (createdAt). */
+  revenueOnboardingMonth: number;
+  /** Soma das duas (caixa total de pagamentos de alunos no mês). */
   revenueCurrentMonth: number;
   expensesCurrentMonth: number;
   /** Soma das despesas com data no mês e kind FIXED. */
@@ -53,10 +58,12 @@ export type FinanceiroOverview = {
 
 export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<FinanceiroOverview> {
   const referenceMonth = currentReferenceMonthLisbon(new Date());
-  const { start, end } = monthDateBounds(referenceMonth);
+  const { start, end, endExclusiveIso } = monthDateBounds(referenceMonth);
   const base: FinanceiroOverview = {
     referenceMonth,
     activeStudents: 0,
+    revenueTuitionMonth: 0,
+    revenueOnboardingMonth: 0,
     revenueCurrentMonth: 0,
     expensesCurrentMonth: 0,
     expensesFixedMonth: 0,
@@ -148,14 +155,29 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
   const activeStudents = countActiveStudents(students ?? []);
   const studentIds = (students ?? []).map((s) => (s as { id: string }).id);
 
-  let revenueCurrentMonth = 0;
+  let revenueTuitionMonth = 0;
+  let revenueOnboardingMonth = 0;
   if (studentIds.length > 0) {
-    const { data: payments, error: payErr } = await supabase
-      .from("Payment")
-      .select("amount")
-      .eq("status", "PAID")
-      .in("studentId", studentIds)
-      .eq("referenceMonth", referenceMonth);
+    const [{ data: tuitionPayments, error: tuitionErr }, { data: onboardingPayments, error: onboardingErr }] =
+      await Promise.all([
+        supabase
+          .from("Payment")
+          .select("amount")
+          .eq("status", "PAID")
+          .eq("paymentType", "TUITION")
+          .in("studentId", studentIds)
+          .eq("referenceMonth", referenceMonth),
+        supabase
+          .from("Payment")
+          .select("amount")
+          .eq("status", "PAID")
+          .in("paymentType", ["ENROLLMENT", "INSURANCE"])
+          .in("studentId", studentIds)
+          .gte("createdAt", `${start}T00:00:00.000Z`)
+          .lt("createdAt", endExclusiveIso),
+      ]);
+
+    const payErr = tuitionErr ?? onboardingErr;
     if (payErr) {
       return {
         ...base,
@@ -164,19 +186,27 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
         expensesCurrentMonth,
         expensesFixedMonth,
         expensesVariableMonth,
-        balanceCurrentMonth: revenueCurrentMonth - expensesCurrentMonth,
+        balanceCurrentMonth: 0 - expensesCurrentMonth,
         expensesError,
         overviewError: payErr.message,
       };
     }
-    for (const p of payments ?? []) {
-      revenueCurrentMonth += Number((p as { amount: string | number }).amount);
+
+    for (const p of tuitionPayments ?? []) {
+      revenueTuitionMonth += Number((p as { amount: string | number }).amount);
+    }
+    for (const p of onboardingPayments ?? []) {
+      revenueOnboardingMonth += Number((p as { amount: string | number }).amount);
     }
   }
+
+  const revenueCurrentMonth = revenueTuitionMonth + revenueOnboardingMonth;
 
   return {
     referenceMonth,
     activeStudents,
+    revenueTuitionMonth,
+    revenueOnboardingMonth,
     revenueCurrentMonth,
     expensesCurrentMonth,
     expensesFixedMonth,

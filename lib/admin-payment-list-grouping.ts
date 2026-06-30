@@ -16,7 +16,7 @@ export type OnboardingBundleRow = {
   id: string;
   studentId: string;
   displayName: string;
-  status: "LATE";
+  status: "LATE" | "PAID";
   amount: number;
   paymentIds: string[];
   referenceMonth: string | null;
@@ -28,9 +28,46 @@ function isOnboardingType(paymentType: string): boolean {
   return paymentType === "TUITION" || paymentType === "ENROLLMENT" || paymentType === "INSURANCE";
 }
 
+function hasPaidTuition(rows: PaymentListRow[]): boolean {
+  return rows.some((r) => r.status === "PAID" && r.paymentType === "TUITION");
+}
+
+/** Primeiro pagamento: só uma mensalidade PAID no histórico visível. */
+function isSinglePaidTuitionFirstPayment(rows: PaymentListRow[]): boolean {
+  const paidTuition = rows.filter((r) => r.status === "PAID" && r.paymentType === "TUITION");
+  return paidTuition.length === 1;
+}
+
+function buildOnboardingBundle(
+  studentId: string,
+  studentRows: PaymentListRow[],
+  items: PaymentListRow[],
+  status: "LATE" | "PAID"
+): OnboardingBundleRow | null {
+  if (items.length < 2) return null;
+  const hasTuition = items.some((r) => r.paymentType === "TUITION");
+  const hasExtra = items.some(
+    (r) => r.paymentType === "ENROLLMENT" || r.paymentType === "INSURANCE"
+  );
+  if (!hasTuition || !hasExtra) return null;
+
+  const tuitionMonth =
+    items.find((r) => r.paymentType === "TUITION")?.referenceMonth ?? null;
+
+  return {
+    kind: "onboarding_bundle",
+    id: `onboarding:${studentId}:${status}`,
+    studentId,
+    displayName: studentRows[0]?.displayName ?? "—",
+    status,
+    amount: items.reduce((sum, r) => sum + r.amount, 0),
+    paymentIds: items.map((r) => r.id),
+    referenceMonth: tuitionMonth,
+  };
+}
+
 /**
- * Aluno com inscrição pendente: agrupa LATE de matrícula + seguro + mensalidade numa única linha.
- * Mantém pagamentos PAID e mensalidades avulsas separados.
+ * Agrupa 1.º pagamento (matrícula + seguro + mensalidade) numa linha — pendente ou já pago.
  */
 export function groupPaymentListRows(rows: PaymentListRow[]): PaymentListDisplayRow[] {
   const byStudent = new Map<string, PaymentListRow[]>();
@@ -40,50 +77,87 @@ export function groupPaymentListRows(rows: PaymentListRow[]): PaymentListDisplay
     byStudent.set(row.studentId, list);
   }
 
-  const bundledStudentIds = new Set<string>();
+  const consumedIds = new Set<string>();
   const bundles: OnboardingBundleRow[] = [];
 
   for (const [studentId, studentRows] of byStudent) {
-    const hasPaid = studentRows.some((r) => r.status === "PAID");
-    if (hasPaid) continue;
+    let bundle: OnboardingBundleRow | null = null;
 
-    const lateOnboarding = studentRows.filter(
-      (r) => r.status === "LATE" && isOnboardingType(r.paymentType)
-    );
-    if (lateOnboarding.length < 2) continue;
+    if (!hasPaidTuition(studentRows)) {
+      const lateOnboarding = studentRows.filter(
+        (r) => r.status === "LATE" && isOnboardingType(r.paymentType)
+      );
+      bundle = buildOnboardingBundle(studentId, studentRows, lateOnboarding, "LATE");
+    } else if (isSinglePaidTuitionFirstPayment(studentRows)) {
+      const lateOnboarding = studentRows.filter(
+        (r) => r.status === "LATE" && isOnboardingType(r.paymentType)
+      );
+      if (lateOnboarding.length === 0) {
+        const paidOnboarding = studentRows.filter(
+          (r) => r.status === "PAID" && isOnboardingType(r.paymentType)
+        );
+        bundle = buildOnboardingBundle(studentId, studentRows, paidOnboarding, "PAID");
+      }
+    }
 
-    const tuitionLate = lateOnboarding.some((r) => r.paymentType === "TUITION");
-    const extraLate = lateOnboarding.some(
-      (r) => r.paymentType === "ENROLLMENT" || r.paymentType === "INSURANCE"
-    );
-    if (!tuitionLate || !extraLate) continue;
-
-    bundledStudentIds.add(studentId);
-    const displayName = studentRows[0]?.displayName ?? "—";
-    const tuitionMonth =
-      lateOnboarding.find((r) => r.paymentType === "TUITION")?.referenceMonth ?? null;
-
-    bundles.push({
-      kind: "onboarding_bundle",
-      id: `onboarding:${studentId}`,
-      studentId,
-      displayName,
-      status: "LATE",
-      amount: lateOnboarding.reduce((sum, r) => sum + r.amount, 0),
-      paymentIds: lateOnboarding.map((r) => r.id),
-      referenceMonth: tuitionMonth,
-    });
+    if (bundle) {
+      bundles.push(bundle);
+      for (const id of bundle.paymentIds) consumedIds.add(id);
+    }
   }
 
-  const rest = rows.filter((r) => {
-    if (!bundledStudentIds.has(r.studentId)) return true;
-    if (r.status !== "LATE" || !isOnboardingType(r.paymentType)) return true;
-    return false;
-  });
-
+  const rest = rows.filter((r) => !consumedIds.has(r.id));
   return [...bundles, ...rest];
 }
 
 export function isOnboardingBundleRow(row: PaymentListDisplayRow): row is OnboardingBundleRow {
   return "kind" in row && row.kind === "onboarding_bundle";
+}
+
+/** Agrupa pagamentos LATE para o painel «Pagamentos pendentes» do admin. */
+export function groupPendingPaymentRows(
+  rows: PaymentListRow[]
+): Array<{
+  id: string;
+  studentId: string;
+  displayName: string;
+  amount: number;
+  referenceMonth: string;
+  isOnboardingBundle: boolean;
+}> {
+  const grouped = groupPaymentListRows(rows);
+  const out: Array<{
+    id: string;
+    studentId: string;
+    displayName: string;
+    amount: number;
+    referenceMonth: string;
+    isOnboardingBundle: boolean;
+  }> = [];
+
+  for (const row of grouped) {
+    if (isOnboardingBundleRow(row)) {
+      if (row.status !== "LATE") continue;
+      out.push({
+        id: row.id,
+        studentId: row.studentId,
+        displayName: row.displayName,
+        amount: row.amount,
+        referenceMonth: row.referenceMonth ?? "",
+        isOnboardingBundle: true,
+      });
+      continue;
+    }
+    if (row.status !== "LATE") continue;
+    out.push({
+      id: row.id,
+      studentId: row.studentId,
+      displayName: row.displayName,
+      amount: row.amount,
+      referenceMonth: row.referenceMonth ?? "",
+      isOnboardingBundle: false,
+    });
+  }
+
+  return out;
 }

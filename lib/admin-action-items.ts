@@ -3,6 +3,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { groupPendingPaymentRows, type PaymentListRow } from "@/lib/admin-payment-list-grouping";
 
 const LOW_ATTENDANCE_THRESHOLD = 3;
 
@@ -12,6 +13,7 @@ export type PendingPayment = {
   studentName: string;
   amount: number;
   referenceMonth: string;
+  isOnboardingBundle: boolean;
 };
 
 export type PendingTrial = {
@@ -48,7 +50,6 @@ export async function getActionItemsData(
   nextWeek.setDate(nextWeek.getDate() + 7);
   const nextWeekStr = nextWeek.toISOString().slice(0, 10);
 
-  // Pagamentos pendentes (LATE) - filtrar por escola via Student
   let studentsQuery = supabase.from("Student").select("id, userId");
   if (schoolId) studentsQuery = studentsQuery.eq("schoolId", schoolId);
   const { data: allStudents } = await studentsQuery;
@@ -56,14 +57,14 @@ export async function getActionItemsData(
 
   let paymentsQuery = supabase
     .from("Payment")
-    .select("id, studentId, amount, referenceMonth")
+    .select("id, studentId, amount, referenceMonth, referenceYear, paymentType")
     .eq("status", "LATE")
     .order("referenceMonth", { ascending: false });
 
   if (studentIds.length > 0) {
     paymentsQuery = paymentsQuery.in("studentId", studentIds);
   } else {
-    paymentsQuery = paymentsQuery.eq("studentId", "__none__"); // no students = no payments
+    paymentsQuery = paymentsQuery.eq("studentId", "__none__");
   }
 
   const { data: payments } = await paymentsQuery;
@@ -78,12 +79,25 @@ export async function getActionItemsData(
     const studentToUser = new Map((students ?? []).map((s) => [s.id, userById.get(s.userId)]));
     studentMap = new Map((students ?? []).map((s) => [s.id, studentToUser.get(s.id) ?? "—"]));
   }
-  const filteredPayments: PendingPayment[] = paymentList.map((p) => ({
+
+  const paymentRows: PaymentListRow[] = paymentList.map((p) => ({
     id: p.id,
     studentId: p.studentId,
-    studentName: studentMap.get(p.studentId) ?? "—",
+    displayName: studentMap.get(p.studentId) ?? "—",
+    status: "LATE",
+    referenceMonth: (p.referenceMonth as string | null) ?? null,
+    referenceYear: ((p as { referenceYear?: string | null }).referenceYear as string | null) ?? null,
+    paymentType: String((p as { paymentType?: string }).paymentType ?? "TUITION"),
     amount: Number(p.amount),
+  }));
+
+  const filteredPayments: PendingPayment[] = groupPendingPaymentRows(paymentRows).map((p) => ({
+    id: p.id,
+    studentId: p.studentId,
+    studentName: p.displayName,
+    amount: p.amount,
     referenceMonth: p.referenceMonth,
+    isOnboardingBundle: p.isOnboardingBundle,
   }));
 
   // Aulas experimentais pendentes (não convertidas, não aceites)

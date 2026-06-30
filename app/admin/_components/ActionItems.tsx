@@ -110,11 +110,16 @@ export function ActionItems({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{p.studentName}</span>
                   <span style={{ marginLeft: 8, color: "var(--text-secondary)", fontSize: "clamp(13px, 3.2vw, 15px)" }}>
-                    {Number(p.amount).toFixed(0)} € · {p.referenceMonth}
+                    {Number(p.amount).toFixed(2)} €
+                    {p.isOnboardingBundle ? " · 1.º pagamento" : p.referenceMonth ? ` · ${p.referenceMonth}` : ""}
                   </span>
                 </div>
                 <Link
-                  href={`/admin/financeiro/novo?studentId=${p.studentId}&referenceMonth=${p.referenceMonth}&amount=${p.amount}`}
+                  href={
+                    p.isOnboardingBundle
+                      ? `/admin/financeiro/primeiro-pagamento?studentId=${encodeURIComponent(p.studentId)}${p.referenceMonth ? `&referenceMonth=${encodeURIComponent(p.referenceMonth)}` : ""}`
+                      : `/admin/financeiro/novo?studentId=${p.studentId}&referenceMonth=${p.referenceMonth}&amount=${p.amount}`
+                  }
                   className="btn btn-primary"
                   style={{ fontSize: "clamp(13px, 3.2vw, 15px)", textDecoration: "none", padding: "8px 14px" }}
                 >

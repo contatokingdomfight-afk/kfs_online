@@ -292,7 +292,23 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
             </div>
           </div>
           <div className="card" style={{ padding: 14, background: "var(--bg)" }}>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>{t("adminFinanceRevenueMonth")}</div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 6,
+                fontSize: 12,
+                color: "var(--text-secondary)",
+                marginBottom: 4,
+              }}
+            >
+              <span>{t("adminFinanceRevenueMonth")}</span>
+              <InlineInfoTip
+                detail={`${t("adminFinanceRevenueTuitionPart")}: ${formatMoneyN(overview.revenueTuitionMonth, locale)} · ${t("adminFinanceRevenueOnboardingPart")}: ${formatMoneyN(overview.revenueOnboardingMonth, locale)}`}
+                ariaLabel={t("adminFinanceRevenueInfoAria")}
+              />
+            </div>
             <div style={{ fontSize: "clamp(20px, 4vw, 24px)", fontWeight: 700, color: "var(--text-primary)" }}>
               {formatMoneyN(overview.revenueCurrentMonth, locale)}
             </div>
