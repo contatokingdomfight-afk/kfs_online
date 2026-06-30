@@ -251,7 +251,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Valor anual / matrícula:** Admin → Configurações (`lib/insurance-settings.ts`).
 
-- **Escolha de plano (aluno):** `/escolher-plano` — o aluno escolhe o plano (`selectPlanPayAtSchool`); pagamento na secretaria (não Stripe nesta página). Gera `LATE` via `ensureOnboardingPendingPayments`.
+- **Escolha de plano (aluno):** `/escolher-plano` — o aluno escolhe o plano (`selectPlanPayAtSchool`); pagamento na secretaria (não Stripe nesta página). Gera `LATE` via `ensureOnboardingPendingPayments`. Antes de confirmar, modal `PlanSchoolPaymentModal` com valores estimados; após escolha, redirect para `/dashboard/financeiro?pagamento_escola=1` com aviso `SchoolPaymentPendingModal`.
+- **Gate pós-plano (middleware):** aluno com `planId` e zero pagamentos `PAID` só acede a `/dashboard/financeiro` (excepto `adminGrantedFullAccess`) até a secretaria registar o primeiro pagamento.
 - **Primeiro pagamento:** `/admin/financeiro/primeiro-pagamento` — confirma pagamentos LATE gerados na atribuição do plano (matrícula opcional, seguro obrigatório). Geração automática: `lib/ensure-onboarding-pending-payments.ts` (escolha de plano pelo aluno, admin atribui plano, ou Stripe sem plano anterior).
 
 - **Por aluno:** Admin → Aluno → secção Seguro (`StudentInsuranceSection.tsx`, `insurance-actions.ts`).
