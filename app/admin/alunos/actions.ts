@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
+import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
 import { stripe } from "@/lib/stripe/server";
 
 export type CreateStudentResult = { error?: string };
@@ -108,8 +109,9 @@ export async function updateStudent(
       .select("name, schoolId, modalityScope")
       .eq("id", planId)
       .single();
-    const scope = (plan as { modalityScope?: string } | null)?.modalityScope;
-    if (scope && scope !== "SINGLE") {
+    const scope = (plan as { modalityScope?: string; name?: string } | null)?.modalityScope;
+    const planName = (plan as { name?: string } | null)?.name;
+    if (!planRequiresPrimaryModality(scope, planId, planName)) {
       newPrimaryModality = null;
     }
     // O mesmo catálogo de planos pode ser reutilizado entre escolas (registo Plan liga-se a uma escola

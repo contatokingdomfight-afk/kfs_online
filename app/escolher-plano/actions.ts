@@ -6,6 +6,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
+import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
 
 export type SelectPlanPayAtSchoolResult = { error?: string };
 
@@ -38,7 +39,7 @@ export async function selectPlanPayAtSchool(
 
   const { data: plan } = await supabase
     .from("Plan")
-    .select("id, schoolId, modalityScope")
+    .select("id, name, schoolId, modalityScope")
     .eq("id", planId)
     .eq("isActive", true)
     .maybeSingle();
@@ -51,8 +52,9 @@ export async function selectPlanPayAtSchool(
   }
 
   const scope = (plan as { modalityScope?: string | null }).modalityScope;
+  const planName = (plan as { name?: string | null }).name;
   let effectiveModality: string | null = primaryModality;
-  if (scope === "SINGLE") {
+  if (planRequiresPrimaryModality(scope, planId, planName)) {
     if (!effectiveModality) return { error: "Escolhe a modalidade incluída no plano." };
   } else {
     effectiveModality = null;

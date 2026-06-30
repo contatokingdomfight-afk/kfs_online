@@ -243,7 +243,11 @@ export async function assignFamilyPlanToStudent(
 ): Promise<{ error?: string }> {
   const { error: planErr } = await supabase
     .from("Student")
-    .update({ planId: KINGDOM_PLAN_FAMILIA_ID, adminGrantedFullAccess: false })
+    .update({
+      planId: KINGDOM_PLAN_FAMILIA_ID,
+      primaryModality: null,
+      adminGrantedFullAccess: false,
+    })
     .eq("id", studentId);
 
   if (planErr) return { error: planErr.message };

@@ -272,9 +272,9 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 **Documentação:** [`PLANO_FAMILIA.md`](PLANO_FAMILIA.md).
 
-- Plano `plan-familia` (acesso = Presencial MMA); **não** em `/escolher-plano`.
+- Plano `plan-familia` (acesso = **todas as modalidades**, equivalente Presencial MMA); **não** em `/escolher-plano`; sem escolha de `primaryModality`.
 - Admin: `/admin/familias` — grupo com titular + membros (`maxMembers` configurável).
 - Mensalidade única no titular; membros herdam acesso via `lib/family-payment-gate.ts` e sync em `lib/family-group.ts`.
-- Migração: `20260701120000_family_plan.sql`.
+- Migrações: `20260701120000_family_plan.sql`, `20260702120000_family_plan_modality_all.sql`.
 
 

@@ -4,6 +4,10 @@ import { useRef, useState, useEffect } from "react";
 import { useFormState } from "react-dom";
 import { PlanSchoolPaymentModal, type PlanSchoolPaymentFees } from "@/components/PlanSchoolPaymentModal";
 import { selectPlanPayAtSchool, type SelectPlanPayAtSchoolResult } from "./actions";
+import {
+  effectiveModalityScope,
+  planRequiresPrimaryModality,
+} from "@/lib/plan-primary-modality";
 
 type ModalityOption = { code: string; name: string };
 
@@ -62,7 +66,8 @@ export function PlanCard({
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const isEn = locale === "en";
-  const needsModality = plan.modality_scope === "SINGLE";
+  const modalityScope = effectiveModalityScope(plan.modality_scope, plan.id, plan.name);
+  const needsModality = planRequiresPrimaryModality(plan.modality_scope, plan.id, plan.name);
 
   const cardFees: PlanSchoolPaymentFees = {
     tuition: plan.price_monthly,
@@ -76,8 +81,8 @@ export function PlanCard({
   if (plan.includes_check_in) benefits.push(isEn ? "Class check-in" : "Check-in nas aulas");
   if (plan.includes_digital_access) benefits.push(isEn ? "Digital library access" : "Acesso à biblioteca digital");
   if (plan.includes_performance_tracking) benefits.push(isEn ? "Performance tracking" : "Acompanhamento de performance");
-  if (plan.modality_scope === "ALL") benefits.push(isEn ? "All modalities" : "Todas as modalidades");
-  else if (plan.modality_scope === "SINGLE") benefits.push(isEn ? "One modality" : "Uma modalidade");
+  if (modalityScope === "ALL") benefits.push(isEn ? "All modalities" : "Todas as modalidades");
+  else if (modalityScope === "SINGLE") benefits.push(isEn ? "One modality" : "Uma modalidade");
   if (plan.includes_exclusive_benefits) benefits.push(isEn ? "Exclusive benefits" : "Benefícios exclusivos");
 
   function confirmPlan() {

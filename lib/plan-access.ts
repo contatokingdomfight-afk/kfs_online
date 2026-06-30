@@ -8,7 +8,7 @@ import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
-import { KINGDOM_PLAN_PRESENCIAL_I_ID } from "./kingdom-plans-constants";
+import { KINGDOM_PLAN_PRESENCIAL_I_ID, isFamilyPlan } from "./kingdom-plans-constants";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
@@ -67,7 +67,9 @@ export async function getPlanAccess(
 
   if (!plan) return defaultAccess;
 
-  const modalityScope = (plan.modalityScope as string) ?? "NONE";
+  const modalityScope = isFamilyPlan((plan as { id: string }).id)
+    ? "ALL"
+    : ((plan.modalityScope as string) ?? "NONE");
   const primaryModality = (student.primaryModality as string | null) ?? null;
 
   let allowedModalities: string[] = [];
