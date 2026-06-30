@@ -228,13 +228,10 @@ export async function middleware(request: NextRequest) {
     if (student.planId) {
       const adminFree = Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess);
       if (!adminFree) {
-        const { count: paidCount } = await supabase
-          .from("Payment")
-          .select("id", { count: "exact", head: true })
-          .eq("studentId", student.id)
-          .eq("status", "PAID");
+        const { studentHasPaymentUnlock } = await import("@/lib/family-payment-gate");
+        const hasAccess = await studentHasPaymentUnlock(supabase, student.id, adminFree);
 
-        if ((paidCount ?? 0) === 0) {
+        if (!hasAccess) {
           if (isStudentAwaitingSchoolPaymentPath(pathname)) {
             return response;
           }

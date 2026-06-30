@@ -8,9 +8,10 @@ export async function upsertTuitionPayment(
     referenceMonth: string;
     amount: number;
     status: "PAID" | "LATE";
+    familyGroupId?: string | null;
   }
 ): Promise<{ error?: string }> {
-  const { studentId, referenceMonth, amount, status } = params;
+  const { studentId, referenceMonth, amount, status, familyGroupId } = params;
 
   const { data: existingRows, error: existingErr } = await supabase
     .from("Payment")
@@ -36,6 +37,7 @@ export async function upsertTuitionPayment(
         status: "PAID",
         referenceMonth,
         paymentType: "TUITION",
+        familyGroupId: familyGroupId ?? null,
       });
       if (error) return { error: error.message };
     } else if (keepId) {
@@ -46,7 +48,7 @@ export async function upsertTuitionPayment(
       }
       const { error: upErr } = await supabase
         .from("Payment")
-        .update({ amount, status: "PAID", paymentType: "TUITION" })
+        .update({ amount, status: "PAID", paymentType: "TUITION", familyGroupId: familyGroupId ?? null })
         .eq("id", keepId);
       if (upErr) return { error: upErr.message };
     }
@@ -62,6 +64,7 @@ export async function upsertTuitionPayment(
         status: "LATE",
         referenceMonth,
         paymentType: "TUITION",
+        familyGroupId: familyGroupId ?? null,
       });
       if (error) return { error: error.message };
     } else {

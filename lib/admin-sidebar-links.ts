@@ -9,6 +9,7 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
   return [
     { label: t("navHome"), href: "/admin" },
     { label: t("navStudents"), href: "/admin/alunos" },
+    { label: t("navFamilies"), href: "/admin/familias" },
     { label: t("navAthletes"), href: "/admin/atletas" },
     { label: t("navCoaches"), href: "/admin/coaches" },
     { label: t("navTrials"), href: "/admin/experimentais" },

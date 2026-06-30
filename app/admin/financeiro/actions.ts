@@ -12,6 +12,7 @@ import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { upsertTuitionPayment } from "@/lib/payment-tuition-upsert";
 import { listConsecutiveReferenceMonths } from "@/lib/reference-month";
 import { createFirstPaymentBundle } from "@/lib/first-payment-bundle";
+import { getFamilyContext } from "@/lib/family-group";
 
 export type { StudentPaymentRow };
 
@@ -70,6 +71,12 @@ export async function createPayment(
 
   const supabase = createAdminClient();
 
+  const familyCtx = await getFamilyContext(supabase, studentId);
+  if (familyCtx && !familyCtx.isTitular) {
+    return { error: "A mensalidade deste aluno é cobrada no titular do grupo familiar." };
+  }
+  const familyGroupId = familyCtx?.isTitular ? familyCtx.group.id : null;
+
   const monthList =
     status === "PAID" && tuitionMonths > 1
       ? listConsecutiveReferenceMonths(referenceMonth, tuitionMonths)
@@ -81,6 +88,7 @@ export async function createPayment(
       referenceMonth: month,
       amount,
       status: status as "PAID" | "LATE",
+      familyGroupId,
     });
     if (upsertResult.error) return { error: upsertResult.error };
   }

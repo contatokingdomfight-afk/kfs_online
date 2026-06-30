@@ -99,6 +99,7 @@ type Labels = {
   /** Botão por linha «Em atraso» → registo de pagamento (admin). */
   registerPaymentCta: string;
   onboardingBundleLabel: string;
+  familyTuitionLabel: string;
 };
 
 type Props = {
@@ -351,7 +352,9 @@ export function FinanceiroModals({
                         ? `Seguro ${row.referenceYear ?? "—"}`
                         : row.paymentType === "ENROLLMENT"
                           ? "Matrícula"
-                          : (row.referenceMonth ?? "—");
+                          : row.familyGroupId
+                            ? `${labels.familyTuitionLabel}${row.familyMemberCount ? ` (${row.familyMemberCount} membros)` : ""}`
+                            : (row.referenceMonth ?? "—");
                     return (
                     <li key={row.id} className="card" style={{ padding: 12 }}>
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>

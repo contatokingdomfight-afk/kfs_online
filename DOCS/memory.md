@@ -267,3 +267,13 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Registo manual de mensalidade (`/admin/financeiro/novo`) também aceita **quantidade de meses** (padrão 1).
 
 
+## Plano Família
+
+**Documentação:** [`PLANO_FAMILIA.md`](PLANO_FAMILIA.md).
+
+- Plano `plan-familia` (acesso = Presencial MMA); **não** em `/escolher-plano`.
+- Admin: `/admin/familias` — grupo com titular + membros (`maxMembers` configurável).
+- Mensalidade única no titular; membros herdam acesso via `lib/family-payment-gate.ts` e sync em `lib/family-group.ts`.
+- Migração: `20260701120000_family_plan.sql`.
+
+

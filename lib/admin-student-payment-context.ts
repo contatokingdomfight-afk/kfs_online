@@ -5,6 +5,7 @@ import {
   type StudentOnboardingFeesState,
 } from "@/lib/student-onboarding-fees";
 import { hasPendingOnboardingPayments } from "@/lib/ensure-onboarding-pending-payments";
+import { getFamilyContext } from "@/lib/family-group";
 
 export type StudentPaymentRow = {
   studentId: string;
@@ -21,6 +22,10 @@ export type StudentPaymentRow = {
   isFirstPaymentEligible: boolean;
   hasPendingOnboarding: boolean;
   onboardingFees: StudentOnboardingFeesState;
+  /** Membro não-titular: mensalidade cobrada no titular. */
+  isFamilyNonTitular?: boolean;
+  /** Titular familiar: número de membros no grupo. */
+  familyMemberCount?: number | null;
 };
 
 /**
@@ -76,14 +81,16 @@ export async function loadStudentPaymentRows(
   const paymentByStudent = new Map((payments ?? []).map((p) => [p.studentId, p]));
 
   const referenceYear = referenceMonth.slice(0, 4);
-  const [firstPaymentFlags, pendingFlags, onboardingFeesList] = await Promise.all([
+  const [firstPaymentFlags, pendingFlags, onboardingFeesList, familyContexts] = await Promise.all([
     Promise.all(studentIds.map((id) => isStudentEligibleForFirstPayment(supabase, id))),
     Promise.all(studentIds.map((id) => hasPendingOnboardingPayments(supabase, id))),
     Promise.all(studentIds.map((id) => getStudentOnboardingFeesState(supabase, id, referenceYear))),
+    Promise.all(studentIds.map((id) => getFamilyContext(supabase, id))),
   ]);
   const firstPaymentByStudent = new Map(studentIds.map((id, i) => [id, firstPaymentFlags[i]]));
   const pendingByStudent = new Map(studentIds.map((id, i) => [id, pendingFlags[i]]));
   const feesByStudent = new Map(studentIds.map((id, i) => [id, onboardingFeesList[i]]));
+  const familyByStudent = new Map(studentIds.map((id, i) => [id, familyContexts[i]]));
 
   return students.map((s) => {
     const u = userById.get(s.userId);
@@ -97,6 +104,7 @@ export async function loadStudentPaymentRows(
       row.planId ?? (row.paymentSuspendedAt ? row.suspendedPlanId : null) ?? row.suspendedPlanId ?? null;
     const plan = effectivePlanId ? planById.get(effectivePlanId) : undefined;
     const pay = paymentByStudent.get(s.id);
+    const familyCtx = familyByStudent.get(s.id);
     return {
       studentId: s.id,
       name: u?.name ?? null,
@@ -120,6 +128,8 @@ export async function loadStudentPaymentRows(
         showEnrollment: false,
         showInsurance: false,
       },
+      isFamilyNonTitular: Boolean(familyCtx && !familyCtx.isTitular),
+      familyMemberCount: familyCtx?.isTitular ? familyCtx.memberCount : null,
     };
   });
 }

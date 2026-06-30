@@ -7,6 +7,8 @@ export type PaymentListRow = {
   referenceYear: string | null;
   paymentType: string;
   amount: number;
+  familyGroupId?: string | null;
+  familyMemberCount?: number | null;
 };
 
 export type OnboardingBundleRow = {

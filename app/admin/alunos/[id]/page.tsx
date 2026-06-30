@@ -24,6 +24,7 @@ import { StudentInsuranceSection } from "./StudentInsuranceSection";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
+import { getFamilyContext } from "@/lib/family-group";
 
 const GENERAL_LAST_N = 10;
 
@@ -88,6 +89,8 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   ]);
 
   const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
+
+  const familyCtx = await getFamilyContext(supabase, studentId);
 
   const { data: studentProfile } = await supabase
     .from("StudentProfile")
@@ -250,6 +253,30 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
       {assistantActive ? (
         <div style={{ marginTop: 4, marginBottom: 4, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
           <SchoolAssistantBadge active />
+        </div>
+      ) : null}
+      {familyCtx ? (
+        <div style={{ marginTop: 8, marginBottom: 4 }}>
+          <Link
+            href={`/admin/familias/${familyCtx.group.id}`}
+            className="card"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 12px",
+              textDecoration: "none",
+              color: "inherit",
+              fontSize: 14,
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>
+              Plano família — {familyCtx.isTitular ? "titular" : "membro"}
+            </span>
+            <span style={{ color: "var(--text-secondary)" }}>
+              {familyCtx.group.name || "Grupo familiar"} · {familyCtx.memberCount}/{familyCtx.group.maxMembers}
+            </span>
+          </Link>
         </div>
       ) : null}
       <div

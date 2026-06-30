@@ -72,12 +72,21 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
 
   const { data: payments } = await supabase
     .from("Payment")
-    .select("id, studentId, amount, status, referenceMonth, referenceYear, paymentType, createdAt")
+    .select("id, studentId, amount, status, referenceMonth, referenceYear, paymentType, familyGroupId, createdAt")
     .order("referenceMonth", { ascending: false })
     .order("createdAt", { ascending: false })
     .limit(200);
 
   const list = payments ?? [];
+  const familyGroupIds = [...new Set(list.map((p) => (p as { familyGroupId?: string | null }).familyGroupId).filter(Boolean))] as string[];
+  const familyMemberCountByGroup = new Map<string, number>();
+  for (const gid of familyGroupIds) {
+    const { count } = await supabase
+      .from("FamilyGroupMember")
+      .select("id", { count: "exact", head: true })
+      .eq("familyGroupId", gid);
+    familyMemberCountByGroup.set(gid, count ?? 0);
+  }
   const allPaymentStudentIds = [...new Set(list.map((p) => p.studentId))];
   const { data: students } =
     allPaymentStudentIds.length > 0
@@ -94,6 +103,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   const paymentRows: PaymentListRow[] = list.map((p) => {
     const u = studentToUser.get(p.studentId);
     const paymentType = String((p as { paymentType?: string }).paymentType ?? "TUITION");
+    const familyGroupId = (p as { familyGroupId?: string | null }).familyGroupId ?? null;
     return {
       id: p.id,
       studentId: p.studentId,
@@ -103,6 +113,8 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       referenceYear: ((p as { referenceYear?: string | null }).referenceYear as string | null) ?? null,
       paymentType,
       amount: Number(p.amount),
+      familyGroupId,
+      familyMemberCount: familyGroupId ? familyMemberCountByGroup.get(familyGroupId) ?? null : null,
     };
   });
 
@@ -418,6 +430,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           openRevenue: t("adminFinanceOpenRevenue"),
           registerPaymentCta: t("adminFinancePaymentsRegisterCta"),
           onboardingBundleLabel: t("adminFinanceOnboardingBundleLabel"),
+          familyTuitionLabel: t("adminFinanceFamilyTuitionLabel"),
         }}
         locale={locale}
       />

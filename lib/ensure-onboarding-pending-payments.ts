@@ -3,6 +3,7 @@ import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { upsertTuitionPayment } from "@/lib/payment-tuition-upsert";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
+import { getFamilyContext } from "@/lib/family-group";
 
 export type EnsureOnboardingPendingOptions = {
   referenceMonth?: string;
@@ -98,6 +99,7 @@ export async function ensureOnboardingPendingPayments(
 
   if (!options?.skipTuition) {
     const tuitionAmount = Number(plan.priceMonthly ?? 0);
+    const familyCtx = await getFamilyContext(supabase, studentId);
     const { data: existingTuition } = await supabase
       .from("Payment")
       .select("id")
@@ -112,6 +114,7 @@ export async function ensureOnboardingPendingPayments(
         referenceMonth,
         amount: tuitionAmount,
         status: "LATE",
+        familyGroupId: familyCtx?.isTitular ? familyCtx.group.id : null,
       });
       if (result.error) return { error: result.error, created: false };
       created = true;

@@ -10,6 +10,7 @@ import {
 } from "@/lib/lisbon-payment-dates";
 import { startGracePeriodOnLatePayment } from "@/lib/payment-grace";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
+import { loadNonBillingFamilyMemberIds, getFamilyContext } from "@/lib/family-group";
 
 export type RenewalPending = {
   studentId: string;
@@ -65,8 +66,11 @@ export async function getRenewalsPending(
   );
   const anyPaymentStudentIds = new Set((payments ?? []).map((p) => p.studentId));
 
+  const skipFamilyMembers = await loadNonBillingFamilyMemberIds(supabase);
+
   const withPlan = students.filter((s) => {
     if (!s.planId || !planById.has(s.planId)) return false;
+    if (skipFamilyMembers.has(s.id)) return false;
     if (paidStudentIds.has(s.id)) return false;
     if (options?.forLateGeneration && anyPaymentStudentIds.has(s.id)) return false;
     return true;
@@ -128,6 +132,9 @@ export async function generateMonthlyPayments(
   let created = 0;
 
   for (const p of pending) {
+    const familyCtx = await getFamilyContext(supabase, p.studentId);
+    const familyGroupId = familyCtx?.isTitular ? familyCtx.group.id : null;
+
     const { error } = await supabase.from("Payment").insert({
       id: crypto.randomUUID(),
       studentId: p.studentId,
@@ -135,6 +142,7 @@ export async function generateMonthlyPayments(
       status: "LATE",
       referenceMonth,
       paymentType: "TUITION",
+      familyGroupId,
     });
     if (error) {
       return { created, skipped: pending.length - created, error: error.message };
