@@ -13,9 +13,14 @@ import {
 type Props = {
   defaultReferenceMonth: string;
   defaultReferenceYear: string;
+  initialStudent?: StudentPaymentRow | null;
 };
 
-export function PrimeiroPagamentoForm({ defaultReferenceMonth, defaultReferenceYear }: Props) {
+export function PrimeiroPagamentoForm({
+  defaultReferenceMonth,
+  defaultReferenceYear,
+  initialStudent = null,
+}: Props) {
   const [state, formAction] = useFormState(createFirstPayment, null as CreateFirstPaymentResult | null);
   const [referenceMonth, setReferenceMonth] = useState(defaultReferenceMonth);
   const [referenceYear, setReferenceYear] = useState(defaultReferenceYear);
@@ -23,9 +28,18 @@ export function PrimeiroPagamentoForm({ defaultReferenceMonth, defaultReferenceY
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [results, setResults] = useState<StudentPaymentRow[]>([]);
-  const [selected, setSelected] = useState<StudentPaymentRow | null>(null);
-  const [includeEnrollment, setIncludeEnrollment] = useState(true);
-  const [tuitionAmount, setTuitionAmount] = useState("");
+  const [selected, setSelected] = useState<StudentPaymentRow | null>(initialStudent);
+  const [includeEnrollment, setIncludeEnrollment] = useState(
+    initialStudent?.onboardingFees.showEnrollment ?? true
+  );
+  const [tuitionAmount, setTuitionAmount] = useState(() => {
+    if (!initialStudent) return "";
+    if (initialStudent.existingPayment && initialStudent.existingPayment.amount > 0) {
+      return String(initialStudent.existingPayment.amount);
+    }
+    return initialStudent.priceMonthly > 0 ? String(initialStudent.priceMonthly) : "";
+  });
+  const [tuitionMonths, setTuitionMonths] = useState(1);
 
   const fees = selected?.onboardingFees;
   const showEnrollment = fees?.showEnrollment ?? false;
@@ -33,11 +47,12 @@ export function PrimeiroPagamentoForm({ defaultReferenceMonth, defaultReferenceY
   const insuranceRequired = showInsurance;
 
   const tuition = parseFloat(tuitionAmount || (selected?.priceMonthly ? String(selected.priceMonthly) : "0"));
+  const tuitionTotal = Number.isNaN(tuition) ? 0 : tuition * tuitionMonths;
   const enrollmentPart = includeEnrollment && showEnrollment ? (fees?.enrollmentAmount ?? 0) : 0;
   const insurancePart = showInsurance ? (fees?.insuranceAmount ?? 0) : 0;
   const total = useMemo(
-    () => (Number.isNaN(tuition) ? 0 : tuition) + enrollmentPart + insurancePart,
-    [tuition, enrollmentPart, insurancePart]
+    () => tuitionTotal + enrollmentPart + insurancePart,
+    [tuitionTotal, enrollmentPart, insurancePart]
   );
 
   const handleSearch = useCallback(
@@ -158,7 +173,7 @@ export function PrimeiroPagamentoForm({ defaultReferenceMonth, defaultReferenceY
             ) : null}
 
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontSize: 14, fontWeight: 500 }}>Mensalidade (€)</span>
+              <span style={{ fontSize: 14, fontWeight: 500 }}>Mensalidade (€) / mês</span>
               <input
                 type="number"
                 name="tuitionAmount"
@@ -169,6 +184,23 @@ export function PrimeiroPagamentoForm({ defaultReferenceMonth, defaultReferenceY
                 value={tuitionAmount}
                 onChange={(e) => setTuitionAmount(e.target.value)}
               />
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontSize: 14, fontWeight: 500 }}>Meses de mensalidade</span>
+              <input
+                type="number"
+                name="tuitionMonths"
+                min={1}
+                max={12}
+                value={tuitionMonths}
+                onChange={(e) => setTuitionMonths(parseInt(e.target.value, 10) || 1)}
+                className="input"
+                style={{ maxWidth: 120 }}
+              />
+              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                Padrão: 1. Inclui o mês de referência e meses seguintes (só mensalidade).
+              </span>
             </label>
 
             <fieldset style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 14, margin: 0 }}>

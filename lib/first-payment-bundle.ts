@@ -3,6 +3,7 @@ import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { upsertTuitionPayment } from "@/lib/payment-tuition-upsert";
 import { renewStudentInsuranceCoverage } from "@/lib/renew-student-insurance-coverage";
 import { hasPendingOnboardingPayments } from "@/lib/ensure-onboarding-pending-payments";
+import { listConsecutiveReferenceMonths } from "@/lib/reference-month";
 import {
   getStudentOnboardingFeesState,
   isStudentEligibleForFirstPayment,
@@ -12,6 +13,7 @@ export type CreateFirstPaymentBundleInput = {
   studentId: string;
   referenceMonth: string;
   tuitionAmount: number;
+  tuitionMonths?: number;
   includeEnrollment: boolean;
   includeInsurance: boolean;
   referenceYear: string;
@@ -117,6 +119,7 @@ export async function createFirstPaymentBundle(
     studentId,
     referenceMonth,
     tuitionAmount,
+    tuitionMonths = 1,
     includeEnrollment,
     includeInsurance,
     referenceYear,
@@ -126,6 +129,10 @@ export async function createFirstPaymentBundle(
   if (!/^\d{4}-\d{2}$/.test(referenceMonth)) return { error: "Mês de referência inválido." };
   if (!/^\d{4}$/.test(referenceYear)) return { error: "Ano de seguro inválido." };
   if (Number.isNaN(tuitionAmount) || tuitionAmount < 0) return { error: "Valor da mensalidade inválido." };
+  const months = tuitionMonths ?? 1;
+  if (!Number.isInteger(months) || months < 1 || months > 12) {
+    return { error: "Número de meses deve ser entre 1 e 12." };
+  }
 
   const [eligible, pending, fees] = await Promise.all([
     isStudentEligibleForFirstPayment(supabase, studentId),
@@ -156,6 +163,19 @@ export async function createFirstPaymentBundle(
     status: "PAID",
   });
   if (tuitionResult.error) return { error: tuitionResult.error };
+
+  if (months > 1) {
+    const extraMonths = listConsecutiveReferenceMonths(referenceMonth, months).slice(1);
+    for (const rm of extraMonths) {
+      const extra = await upsertTuitionPayment(supabase, {
+        studentId,
+        referenceMonth: rm,
+        amount: tuitionAmount,
+        status: "PAID",
+      });
+      if (extra.error) return { error: `${rm}: ${extra.error}` };
+    }
+  }
 
   if (fees.showEnrollment || fees.enrollmentWaived === false) {
     if (includeEnrollment && settings.enrollmentAmount > 0 && fees.showEnrollment) {

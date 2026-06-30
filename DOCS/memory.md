@@ -253,7 +253,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Migrações (jun. 2026):** `20260630120000_*` (seguro/waiver), `20260630140000_*` + `20260630140100_*` (matrícula), `20260630150000_payment_reference_month_nullable.sql` (fix NOT NULL no 1.º pagamento).
 - **Config:** Admin → Configurações — `annualAmount`, `enrollmentAmount` (`lib/insurance-settings.ts`).
 - **Aluno presencial:** `/escolher-plano` → modal `PlanSchoolPaymentModal` → `LATE` via `ensureOnboardingPendingPayments` → gate middleware até 1.º `PAID` → `/dashboard/financeiro` + `SchoolPaymentPendingModal`.
-- **Admin:** `/admin/financeiro/primeiro-pagamento` (`createFirstPaymentBundle`); matrícula opcional, seguro obrigatório; renova `StudentInsuranceCoverage`.
+- **Admin:** `/admin/financeiro/primeiro-pagamento` (`createFirstPaymentBundle`); matrícula opcional, seguro obrigatório; renova `StudentInsuranceCoverage`. Campo **meses de mensalidade** (1–12, padrão 1). Na lista «Registos de pagamento», aluno recém-matriculado sem `PAID` vê **uma linha** «Primeiro pagamento» (soma matrícula + seguro + mensalidade) — agrupamento em `lib/admin-payment-list-grouping.ts`.
+- **Prazos mensalidade:** pagamento até **dia 8** do mês; regularização até **5 dias úteis** após o dia 8 (`lib/lisbon-payment-dates.ts`, `paymentGraceEndsAt`). Ver [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md).
 - **Waiver:** `/waiver-signing` (antes do plano); check-in bloqueado sem cobertura válida; cron `insurance-expiry-check` (segundas 08:00 UTC).
 
 
@@ -263,5 +264,6 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 - `/admin/financeiro/antecipado` — N meses `TUITION` + `PAID` (`createAdvanceTuitionPayments`, `lib/payment-tuition-upsert.ts`). Cron só gera `LATE` para `paymentType = TUITION`.
+- Registo manual de mensalidade (`/admin/financeiro/novo`) também aceita **quantidade de meses** (padrão 1).
 
 

@@ -10,6 +10,12 @@ import { dedupeDuplicatePaymentsAction, deleteFinancialExpense, deleteManualReve
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import type { RenewalPending } from "@/lib/renewals";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
+import {
+  groupPaymentListRows,
+  isOnboardingBundleRow,
+  type PaymentListDisplayRow,
+  type PaymentListRow,
+} from "@/lib/admin-payment-list-grouping";
 
 const overlayStyle: React.CSSProperties = {
   position: "fixed",
@@ -23,16 +29,7 @@ const overlayStyle: React.CSSProperties = {
   overflow: "auto",
 };
 
-export type PaymentListRow = {
-  id: string;
-  studentId: string;
-  displayName: string;
-  status: string;
-  referenceMonth: string | null;
-  referenceYear: string | null;
-  paymentType: string;
-  amount: number;
-};
+export type { PaymentListRow } from "@/lib/admin-payment-list-grouping";
 
 type ModalId = "renewals" | "payments" | "expenses" | "revenue";
 
@@ -101,6 +98,7 @@ type Labels = {
   openRevenue: string;
   /** Botão por linha «Em atraso» → registo de pagamento (admin). */
   registerPaymentCta: string;
+  onboardingBundleLabel: string;
 };
 
 type Props = {
@@ -183,10 +181,15 @@ export function FinanceiroModals({
     };
   }, [open, closeModal]);
 
+  const displayPaymentRows = useMemo(
+    () => groupPaymentListRows(allPaymentRows),
+    [allPaymentRows]
+  );
+
   const filteredPayments = useMemo(() => {
-    if (filterStatus === "all") return allPaymentRows;
-    return allPaymentRows.filter((p) => p.status === filterStatus);
-  }, [allPaymentRows, filterStatus]);
+    if (filterStatus === "all") return displayPaymentRows;
+    return displayPaymentRows.filter((p) => p.status === filterStatus);
+  }, [displayPaymentRows, filterStatus]);
 
   const modals = (
     <>
@@ -277,7 +280,7 @@ export function FinanceiroModals({
             <div style={{ overflow: "auto", minHeight: 0, flex: 1 }}>
               {filteredPayments.length === 0 ? (
                 <p style={{ color: "var(--text-secondary)" }}>
-                  {allPaymentRows.length === 0 ? labels.noPayments : labels.noPaymentsFilter}
+                  {displayPaymentRows.length === 0 ? labels.noPayments : labels.noPaymentsFilter}
                 </p>
               ) : (
                 <ul
@@ -291,42 +294,84 @@ export function FinanceiroModals({
                   }}
                 >
                   {filteredPayments.map((p) => {
+                    if (isOnboardingBundleRow(p)) {
+                      const registerHref = `/admin/financeiro/primeiro-pagamento?studentId=${encodeURIComponent(p.studentId)}${p.referenceMonth ? `&referenceMonth=${encodeURIComponent(p.referenceMonth)}` : ""}`;
+                      return (
+                        <li key={p.id} className="card" style={{ padding: 12 }}>
+                          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{p.displayName}</span>
+                            <span
+                              style={{
+                                fontSize: 12,
+                                padding: "2px 8px",
+                                borderRadius: "var(--radius-md)",
+                                backgroundColor: "var(--danger)",
+                                color: "#fff",
+                              }}
+                            >
+                              {labels.statusLate}
+                            </span>
+                          </div>
+                          <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
+                            {labels.onboardingBundleLabel} · {p.amount.toFixed(2)} €
+                          </p>
+                          <div style={{ marginTop: 10 }}>
+                            <Link
+                              href={registerHref}
+                              className="btn btn-primary"
+                              style={{
+                                display: "inline-flex",
+                                width: "100%",
+                                justifyContent: "center",
+                                textDecoration: "none",
+                                fontSize: 14,
+                              }}
+                              onClick={closeModal}
+                            >
+                              {labels.registerPaymentCta}
+                            </Link>
+                          </div>
+                        </li>
+                      );
+                    }
+
+                    const row = p;
                     const registerParams = new URLSearchParams({
-                      studentId: p.studentId,
-                      amount: p.amount.toFixed(2),
+                      studentId: row.studentId,
+                      amount: row.amount.toFixed(2),
                     });
-                    if (p.paymentType === "INSURANCE" && p.referenceYear) {
-                      registerParams.set("referenceYear", p.referenceYear);
-                    } else if (p.referenceMonth) {
-                      registerParams.set("referenceMonth", p.referenceMonth);
+                    if (row.paymentType === "INSURANCE" && row.referenceYear) {
+                      registerParams.set("referenceYear", row.referenceYear);
+                    } else if (row.referenceMonth) {
+                      registerParams.set("referenceMonth", row.referenceMonth);
                     }
                     const registerHref = `/admin/financeiro/novo?${registerParams.toString()}`;
                     const periodLabel =
-                      p.paymentType === "INSURANCE"
-                        ? `Seguro ${p.referenceYear ?? "—"}`
-                        : p.paymentType === "ENROLLMENT"
+                      row.paymentType === "INSURANCE"
+                        ? `Seguro ${row.referenceYear ?? "—"}`
+                        : row.paymentType === "ENROLLMENT"
                           ? "Matrícula"
-                          : (p.referenceMonth ?? "—");
+                          : (row.referenceMonth ?? "—");
                     return (
-                    <li key={p.id} className="card" style={{ padding: 12 }}>
+                    <li key={row.id} className="card" style={{ padding: 12 }}>
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{p.displayName}</span>
+                        <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{row.displayName}</span>
                         <span
                           style={{
                             fontSize: 12,
                             padding: "2px 8px",
                             borderRadius: "var(--radius-md)",
-                            backgroundColor: p.status === "PAID" ? "var(--success)" : "var(--danger)",
+                            backgroundColor: row.status === "PAID" ? "var(--success)" : "var(--danger)",
                             color: "#fff",
                           }}
                         >
-                          {p.status === "PAID" ? labels.statusPaid : labels.statusLate}
+                          {row.status === "PAID" ? labels.statusPaid : labels.statusLate}
                         </span>
                       </div>
                       <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
-                        {periodLabel} · {p.amount.toFixed(2)} €
+                        {periodLabel} · {row.amount.toFixed(2)} €
                       </p>
-                      {p.status === "LATE" && (
+                      {row.status === "LATE" && (
                         <div style={{ marginTop: 10 }}>
                           <Link
                             href={registerHref}
@@ -611,7 +656,7 @@ export function FinanceiroModals({
           style={{ width: "100%" }}
           onClick={() => setOpen("payments")}
         >
-          {labels.openPayments} ({allPaymentRows.length})
+          {labels.openPayments} ({displayPaymentRows.length})
         </button>
         <button
           type="button"

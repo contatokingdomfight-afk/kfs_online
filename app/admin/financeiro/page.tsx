@@ -417,6 +417,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           openExpenses: t("adminFinanceOpenExpenses"),
           openRevenue: t("adminFinanceOpenRevenue"),
           registerPaymentCta: t("adminFinancePaymentsRegisterCta"),
+          onboardingBundleLabel: t("adminFinanceOnboardingBundleLabel"),
         }}
         locale={locale}
       />

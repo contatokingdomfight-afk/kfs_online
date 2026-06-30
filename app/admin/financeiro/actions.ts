@@ -56,22 +56,34 @@ export async function createPayment(
   const amountStr = (formData.get("amount") as string)?.trim();
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
   const status = formData.get("status") as string;
+  const tuitionMonthsStr = (formData.get("tuitionMonths") as string)?.trim() || "1";
 
   if (!studentId) return { error: "Aluno é obrigatório." };
   const amount = parseFloat(amountStr ?? "");
   if (Number.isNaN(amount) || amount < 0) return { error: "Valor inválido." };
   if (!referenceMonth || !/^\d{4}-\d{2}$/.test(referenceMonth)) return { error: "Mês de referência deve ser AAAA-MM." };
   if (status !== "PAID" && status !== "LATE") return { error: "Status inválido." };
+  const tuitionMonths = parseInt(tuitionMonthsStr, 10);
+  if (Number.isNaN(tuitionMonths) || tuitionMonths < 1 || tuitionMonths > 12) {
+    return { error: "Número de meses deve ser entre 1 e 12." };
+  }
 
   const supabase = createAdminClient();
 
-  const upsertResult = await upsertTuitionPayment(supabase, {
-    studentId,
-    referenceMonth,
-    amount,
-    status: status as "PAID" | "LATE",
-  });
-  if (upsertResult.error) return { error: upsertResult.error };
+  const monthList =
+    status === "PAID" && tuitionMonths > 1
+      ? listConsecutiveReferenceMonths(referenceMonth, tuitionMonths)
+      : [referenceMonth];
+
+  for (const month of monthList) {
+    const upsertResult = await upsertTuitionPayment(supabase, {
+      studentId,
+      referenceMonth: month,
+      amount,
+      status: status as "PAID" | "LATE",
+    });
+    if (upsertResult.error) return { error: upsertResult.error };
+  }
 
   if (status === "LATE") {
     await startGracePeriodOnLatePayment(supabase, studentId, referenceMonth);
@@ -339,6 +351,7 @@ export async function createFirstPayment(
   const studentId = (formData.get("studentId") as string)?.trim();
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
   const tuitionStr = (formData.get("tuitionAmount") as string)?.trim();
+  const tuitionMonthsStr = (formData.get("tuitionMonths") as string)?.trim() || "1";
   const referenceYear = (formData.get("referenceYear") as string)?.trim() || new Date().getFullYear().toString();
   const includeEnrollment = formData.get("includeEnrollment") === "on";
   const includeInsurance = formData.get("includeInsurance") === "on";
@@ -346,12 +359,17 @@ export async function createFirstPayment(
   if (!studentId) return { error: "Aluno é obrigatório." };
   const tuitionAmount = parseFloat(tuitionStr ?? "");
   if (Number.isNaN(tuitionAmount) || tuitionAmount < 0) return { error: "Valor da mensalidade inválido." };
+  const tuitionMonths = parseInt(tuitionMonthsStr, 10);
+  if (Number.isNaN(tuitionMonths) || tuitionMonths < 1 || tuitionMonths > 12) {
+    return { error: "Número de meses deve ser entre 1 e 12." };
+  }
 
   const supabase = createAdminClient();
   const result = await createFirstPaymentBundle(supabase, {
     studentId,
     referenceMonth,
     tuitionAmount,
+    tuitionMonths,
     includeEnrollment,
     includeInsurance,
     referenceYear,

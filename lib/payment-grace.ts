@@ -1,11 +1,10 @@
 /**
- * Atraso: após o fim do 5.º dia útil do mês em Lisboa sem PAID (registo LATE).
- * Prazo para regularizar até ao fim do dia civil 10 em Lisboa; depois suspende como “sem plano”
- * (planId null, suspendedPlanId, histórico na BD mantém-se).
+ * Atraso: após o fim do dia 8 do mês em Lisboa sem PAID (registo LATE).
+ * Prazo para regularizar: 5 dias úteis após o dia 8; depois suspende o plano.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { endOfCalendarDay10Lisbon, LISBON_TZ } from "@/lib/lisbon-payment-dates";
+import { endOfGracePeriodLisbon, LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { stripe } from "@/lib/stripe/server";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
@@ -42,7 +41,7 @@ export async function startGracePeriodOnLatePayment(
     return;
   }
 
-  const endsAt = endOfCalendarDay10Lisbon(referenceMonth);
+  const endsAt = endOfGracePeriodLisbon(referenceMonth);
   await supabase
     .from("Student")
     .update({
@@ -62,7 +61,7 @@ export async function startGracePeriodOnLatePayment(
     studentId,
     type: "PAYMENT_OVERDUE",
     title: "Pagamento em atraso",
-    body: `A mensalidade (${referenceMonth}) está em atraso (após o 5.º dia útil). Regulariza até ao dia 10 (inclusive), ${deadlineLabel}, para evitar bloqueio de acesso.`,
+    body: `A mensalidade (${referenceMonth}) está em atraso (após o dia 8). Regulariza até ao 5.º dia útil seguinte, ${deadlineLabel}, para evitar bloqueio de acesso.`,
     href: "/dashboard/financeiro",
   });
 
@@ -122,7 +121,7 @@ export async function clearGraceOnPaidPayment(supabase: SupabaseClient, studentI
   await syncStudentPaymentStatus(supabase, studentId);
 }
 
-/** Suspende alunos com plano cujo prazo (fim do dia 10 em Lisboa para o mês em causa) já passou. */
+/** Suspende alunos com plano cujo prazo (5 dias úteis após o dia 8) já passou. */
 export async function suspendStudentsPastGrace(
   supabase: SupabaseClient
 ): Promise<{ suspended: number; errors: string[] }> {

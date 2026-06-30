@@ -4,10 +4,11 @@ Documentação operacional e técnica alinhada ao código (`lib/lisbon-payment-d
 
 ## Regras de negócio (Portugal / Lisboa)
 
-- **Fuso:** `Europe/Lisbon` para dias úteis, dia civil 10 e “mês corrente”.
-- **Em atraso:** o aluno passa a ter mensalidade em atraso quando **não existe `Payment` com status `PAID`** para o `referenceMonth` (formato `YYYY-MM`) e já passou o **fim do 5.º dia útil** desse mês em Lisboa. Nessa altura o sistema pode criar o registo `Payment` com status **`LATE`** (automático ou via admin).
-- **Prazo para regularizar:** até ao **fim do dia civil 10** desse mesmo mês em Lisboa (23:59:59.999). O campo `Student.paymentGraceEndsAt` guarda esse instante em UTC (derivado do fim do dia 10 em Lisboa).
-- **Bloqueio sistémico:** após esse prazo, se o aluno continuar com plano ativo e sem regularização adequada, o cron de suspensão remove o `planId`, guarda o plano em `suspendedPlanId`, pode cancelar subscrição Stripe e notifica o aluno. Aplica-se a **alunos online e presenciais** (quem tem `planId`).
+- **Fuso:** `Europe/Lisbon` para dias úteis e prazos de mensalidade.
+- **Prazo de pagamento:** até ao **fim do dia civil 8** do mês de referência em Lisboa.
+- **Em atraso:** após o dia 8 sem `Payment` `PAID` para o `referenceMonth`, o sistema cria ou mantém registo **`LATE`** (automático ou via admin).
+- **Regularização:** **5 dias úteis** após o dia 8 para pagar antes do bloqueio. O campo `Student.paymentGraceEndsAt` guarda o fim desse prazo (fim do 5.º dia útil após o dia 8).
+- **Bloqueio sistémico:** após o prazo de regularização, o cron de suspensão remove o `planId`, guarda o plano em `suspendedPlanId`, pode cancelar subscrição Stripe e notifica o aluno.
 
 ## O que conta como “pago no mês”
 
@@ -46,7 +47,7 @@ Definidos em `vercel.json`:
 
 | Coluna | Significado |
 |--------|-------------|
-| `paymentGraceEndsAt` | Fim do prazo (fim do **dia 10** em Lisboa para o mês em causa), em timestamptz. |
+| `paymentGraceEndsAt` | Fim do prazo de regularização (5.º dia útil após o dia 8 do mês em causa), em timestamptz. |
 | `paymentGraceReferenceMonth` | `YYYY-MM` da mensalidade associada ao aviso. |
 | `paymentSuspendedAt` | Quando o acesso foi suspenso por falta de pagamento. |
 | `suspendedPlanId` | Plano antes da suspensão; reposto após `PAID` / `clearGraceOnPaidPayment`. |

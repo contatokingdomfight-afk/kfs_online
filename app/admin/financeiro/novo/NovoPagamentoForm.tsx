@@ -296,7 +296,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
             </label>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-                Valor (€) *
+                Mensalidade (€) *
               </span>
               <input
                 type="number"
@@ -309,6 +309,23 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 key={`amt-${selected.studentId}-${defaultAmountStr}`}
                 defaultValue={defaultAmountStr}
               />
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+                Meses de mensalidade
+              </span>
+              <input
+                type="number"
+                name="tuitionMonths"
+                min={1}
+                max={12}
+                defaultValue={1}
+                className="input"
+                style={{ maxWidth: 120 }}
+              />
+              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                Padrão: 1 (mês de referência). Com status «Pago», regista meses consecutivos.
+              </span>
             </label>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
