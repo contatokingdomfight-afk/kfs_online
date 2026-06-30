@@ -1,6 +1,10 @@
 # Índice da documentação – KFS Online
 
-> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão: **22 maio 2026** — docs alinhadas ao código (`DOCS/INDEX.md`, `DOCS/memory.md`, `DOCS/PWA.md`).
+> Projeto actual: **`kfs_online`** (GitHub). Stack: **Next.js 15**, Node **20**, Supabase. Última revisão: **junho 2026** — financeiro inscrição/seguro — `DOCS/FINANCEIRO_INSCRICAO_SEGURO.md`, `DOCS/INDEX.md`, `DOCS/memory.md`.
+
+### Actualização junho 2026 (financeiro inscrição)
+
+- Seguro anual, matrícula, waiver, 1.º pagamento admin, aluno paga na escola — **`DOCS/FINANCEIRO_INSCRICAO_SEGURO.md`**.
 
 ### Actualização maio 2026 (marca / PWA)
 
@@ -121,6 +125,9 @@
 - **`DOCS/GUIA_TESTE_VALIDACAO_PERFIS.md`**
   - Checklist manual por perfil (Admin, Coach, Aluno), incl. aula livre
 
+- **`DOCS/FINANCEIRO_INSCRICAO_SEGURO.md`**
+  - Matrícula, seguro anual, waiver, 1.º pagamento, gate presencial (jun. 2026)
+
 - **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**
   - Mensalidades, **Europe/Lisbon** (5.º dia útil / dia 10)
   - Crons `payment-suspension`, `generate-monthly-payments`
@@ -202,6 +209,7 @@ kfs_online/
 │   ├── ROADMAP_Plataforma_KFS.md
 │   ├── CONTAS_TESTE.md
 │   ├── GUIA_TESTE_VALIDACAO_PERFIS.md
+│   ├── FINANCEIRO_INSCRICAO_SEGURO.md    # Inscrição, seguro, matrícula, 1.º pagamento
 │   ├── PAGAMENTOS_MENSALIDADES_CRON.md
 │   ├── FINANCEIRO_STRIPE_E_PRESENCIAL.md
 │   └── Plano_de_Negócios_Kingdom_Fight_School.md

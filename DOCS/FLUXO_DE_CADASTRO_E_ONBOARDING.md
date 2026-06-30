@@ -4,6 +4,8 @@
 
 **Objetivo:** Implementar um novo fluxo de cadastro e onboarding "self-service" para novos alunos. A meta é reduzir o atrito inicial, permitindo que o utilizador crie uma conta e explore a plataforma num estado "Free Tier" (amostra grátis) antes de se comprometer com um plano. Esta abordagem visa aumentar a taxa de conversão ao demonstrar o valor do produto primeiro.
 
+> **Implementação (junho 2026):** Ordem de gates no middleware: onboarding → waiver (`/waiver-signing`) → plano (`/escolher-plano`) → **pagamento na escola** (até 1.º `PAID`) → dashboard completo. Presencial: aluno escolhe plano **sem Stripe**; modal com taxas; admin regista 1.º pagamento. Ver [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md).
+
 > **Implementação (abril 2026):** Após cadastro (email ou Google), o utilizador é levado à **área do aluno** (`/dashboard`). O wizard em `/onboarding` é **opcional**. O `StudentProfile` de novos alunos marca `hasCompletedOnboarding` como concluído na criação; **tour guiado** no dashboard (`StudentOnboardingGate`, `?replayOnboarding=1`). **Sessão mobile / PWA:** [`memory.md`](memory.md) (Sessão web), [`PWA.md`](PWA.md), [`LoginInfinitoBoasPraticas.md`](LoginInfinitoBoasPraticas.md).
 
 ---
@@ -72,23 +74,28 @@ Este é o percurso que um novo utilizador fará desde o registo até à ativaç�
 
 ### **Passo 4: A Página de Escolha de Planos (`/escolher-plano`)**
 
-*   **Objetivo:** Apresentar os planos de forma clara e convincente para facilitar a conversão.
-*   **Estrutura:** Uma grelha de preços que compara os diferentes planos (`Plan`) lado a lado.
-*   **Conteúdo por Plano:**
-    *   Nome do Plano (ex: "Kingdom Presencial MMA").
-    *   Preço por mês.
-    *   Uma lista clara de benefícios e funcionalidades incluídas.
-*   **Ação:** Um botão `[ Selecionar Plano ]` em cada opção, que inicia o fluxo de subscrição.
+*   **Objetivo:** Apresentar os planos e permitir adesão (Stripe **ou** pagamento na secretaria, conforme fluxo).
+*   **Presencial (pagamento na escola):**
+    *   Botão `[ Escolher este plano ]` abre modal `PlanSchoolPaymentModal` com mensalidade + matrícula + seguro estimados.
+    *   Ao confirmar: `selectPlanPayAtSchool` atribui `planId`, cria pagamentos `LATE` (`ensureOnboardingPendingPayments`) e redirecciona para `/dashboard/financeiro?pagamento_escola=1`.
+    *   **Sem Stripe** nesta página para este fluxo.
+*   **Online (Stripe):** checkout Stripe quando configurado no plano (ver [`STRIPE_KINGDOM_ONLINE.md`](STRIPE_KINGDOM_ONLINE.md)).
+*   **Estrutura:** Grelha de planos (`PlanCard`) com preço e benefícios.
 
 ---
 
-### **Passo 5: Ativação Completa**
+### **Passo 5: Pagamento na escola (presencial)**
 
-*   **Lógica:** Após a seleção e pagamento (se aplicável) bem-sucedidos através do Stripe, o webhook do Stripe ou a sua lógica de subscrição atualiza o campo `student.planId`.
-*   **Experiência do Utilizador:**
-    *   O utilizador é redirecionado para o `/dashboard`.
-    *   O `ChoosePlanCTA` banner desaparece.
-    *   Todos os componentes (agenda, biblioteca, etc.) tornam-se totalmente funcionais. A jornada de onboarding está completa.
+*   **Gate (middleware):** Com `planId` mas **zero** pagamentos `PAID`, o aluno só acede a `/dashboard/financeiro` até a secretaria registar o pagamento (excepto `adminGrantedFullAccess`).
+*   **UI aluno:** `SchoolPaymentPendingModal` — aviso de pagamento pendente na secretaria.
+*   **Admin:** `/admin/financeiro/primeiro-pagamento` — bundle mensalidade + matrícula (opcional) + seguro (obrigatório) → `PAID` + renovação de cobertura.
+
+---
+
+### **Passo 6: Ativação completa**
+
+*   **Lógica:** Após pelo menos um `Payment` `PAID` (presencial) ou confirmação Stripe (online), o middleware desbloqueia o dashboard.
+*   **Experiência:** Banner free tier desaparece; agenda, biblioteca, check-in, etc. ficam disponíveis conforme o plano.
 
 ---
 
@@ -96,7 +103,7 @@ Este é o percurso que um novo utilizador fará desde o registo até à ativaç�
 
 #### **Requisitos:**
 
-1.  **Middleware (`middleware.ts`):** Alunos com `student.planId === null` acedem a `/dashboard`, `/dashboard/biblioteca`, `/dashboard/perfil`, `/onboarding`, `/escolher-plano` e `/auth/callback`; as restantes rotas (ex.: `/check-in`, loja, performance) redirecionam para `/escolher-plano`. APIs REST (exceto checkout Stripe, webhook, cron e `POST /api/profile/avatar`) respondem 403 até haver plano.
+1.  **Middleware (`middleware.ts`):** Ordem: onboarding → `/waiver-signing` → sem `planId` → free tier + `/escolher-plano` → com `planId` e zero `PAID` → só `/dashboard/financeiro` → dashboard completo. APIs REST bloqueadas conforme a fase (ver `middleware.ts`).
 2.  **Base de Dados (`schema.prisma`):** Adicionar o campo `hasCompletedOnboarding: Boolean @default(false)` ao modelo `StudentProfile`.
 3.  **Rotas:** Criar as novas rotas `/onboarding` e `/escolher-plano`.
 4.  **Componentes Condicionais:** Refatorar a página `/dashboard` e os componentes filhos para renderizar de forma diferente com base na existência de `student.planId`.
@@ -114,4 +121,4 @@ Este é o percurso que um novo utilizador fará desde o registo até à ativaç�
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md), [FINANCEIRO_INSCRICAO_SEGURO.md](FINANCEIRO_INSCRICAO_SEGURO.md) — junho 2026.*

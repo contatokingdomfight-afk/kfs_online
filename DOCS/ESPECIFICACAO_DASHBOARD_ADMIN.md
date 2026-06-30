@@ -101,14 +101,14 @@ A página `/admin` será reestruturada nas seguintes secções, por ordem de pri
     *   **Grupo "Conteúdo e Finanças":**
         *   `[ 📚 Cursos ]` → `/admin/cursos`
         *   `[ 💰 Planos ]` → `/admin/planos`
-        *   `[ 💶 Financeiro ]` → `/admin/financeiro`
+        *   `[ 💶 Financeiro ]` → `/admin/financeiro` (incl. **Primeiro pagamento**, **Antecipado**, renovações)
         *   `[ ✨ Eventos ]` → `/admin/eventos`
     *   **Grupo "Plataforma":**
-        *   `[ ⚙️ Configurações ]` → `/admin/configuracoes`
+        *   `[ ⚙️ Configurações ]` → `/admin/configuracoes` (seguro, matrícula, waiver)
         *   `[ 🎯 Missões ]` → `/admin/missoes`
         *   `[ 📊 Critérios de Avaliação ]` → `/admin/avaliacao`
         *   **Central de notificações** (menu lateral) → `/admin/notificacoes` — sino no header com contador de não lidas (`CoachNotificationBell`); notificações de **novas inscrições em eventos** para todos os `User` com papel ADMIN (ver [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md)).
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026; notificações / eventos — maio 2026 em `NOTIFICACOES_IN_APP_E_EVENTOS.md`.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md), [FINANCEIRO_INSCRICAO_SEGURO.md](FINANCEIRO_INSCRICAO_SEGURO.md) — junho 2026.*

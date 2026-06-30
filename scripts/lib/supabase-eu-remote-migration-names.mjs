@@ -3,8 +3,7 @@
  * supabase_migrations.schema_migrations). Manter alinhado com o output de
  * list_migrations (MCP user-supabase_kfs_eu).
  *
- * Última sincronização: 2026-05-19 (inclui backfill das migrações aplicadas via
- * DATABASE_URL antes de constarem no histórico do dashboard).
+ * Última sincronização: 2026-06-30 (seguro, matrícula, referenceMonth nullable).
  */
 export const SUPABASE_EU_REMOTE_MIGRATION_NAMES = new Set([
   "20260223000000_enable_rls_public_tables",
@@ -74,4 +73,9 @@ export const SUPABASE_EU_REMOTE_MIGRATION_NAMES = new Set([
   "20260224000000_event_start_end_date",
   "production_security_hardening",
   "20260616120000_production_security_hardening",
+  "student_status_inadimplente",
+  "insurance_waiver_advance_payments",
+  "enrollment_fee_payment_type",
+  "enrollment_fee_columns",
+  "payment_reference_month_nullable",
 ]);

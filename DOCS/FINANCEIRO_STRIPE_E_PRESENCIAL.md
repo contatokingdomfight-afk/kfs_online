@@ -85,20 +85,22 @@ Pagas: comissões Stripe + assinatura do software de faturação. A KFS regista 
 
 ## Estado atual na KFS
 
-- **Gerar mensalidades (automático)**: Cron **`GET /api/cron/payment-suspension`** (agendado na Vercel) cria `Payment` **LATE** para alunos com **plano** e **sem `PAID`** no mês de referência, para o **mês civil anterior** e o **corrente** em **Europe/Lisboa**, **após** o fim do **5.º dia útil** desse mês (ou se o mês já passou). Documentação: **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
+- **Tipos de pagamento (`Payment.paymentType`):** `TUITION` (mensalidade, `referenceMonth`), `INSURANCE` (seguro anual, `referenceYear`), `ENROLLMENT` (matrícula única). Seguro e matrícula usam `referenceMonth = NULL` — ver migração `20260630150000_payment_reference_month_nullable.sql`. Documentação completa: [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md).
+
+- **Inscrição presencial:** aluno escolhe plano em `/escolher-plano` (sem Stripe); pagamentos `LATE` gerados automaticamente; admin confirma em `/admin/financeiro/primeiro-pagamento`; aluno bloqueado até existir pelo menos um `PAID`.
+
+- **Configuração:** Admin → Configurações — valor anual do seguro e taxa de matrícula (`InsuranceSettings`).
+
+- **Gerar mensalidades (automático)**: Cron **`GET /api/cron/payment-suspension`** (agendado na Vercel) cria `Payment` **LATE** (`paymentType = TUITION`) para alunos com **plano** e **sem `PAID`** no mês de referência, para o **mês civil anterior** e o **corrente** em **Europe/Lisboa**, **após** o fim do **5.º dia útil** desse mês (ou se o mês já passou). Documentação: **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
 - **Gerar mensalidades (admin)**: Botão em **Admin → Financeiro** com **force** — cria LATE sem esperar pelo 5.º dia útil (backfill / operação manual). Só para quem **não tem nenhum** `Payment` naquele `referenceMonth` (evita duplicar).
 - **“Pago” no mês**: Conta apenas **`Payment.status === "PAID"`** para aquele `YYYY-MM`.
 - **Prazo e bloqueio**: Após LATE, o aluno tem até ao **fim do dia civil 10** (Lisboa) para regularizar; depois o mesmo cron pode **suspender** (`planId` null, `suspendedPlanId`, cancelar subscrição Stripe se existir). Aplica-se a **online e presencial**.
 - **Registar pagamento**: Formulário manual para marcar **PAID** (presencial) ou **LATE**; PAID limpa grace / repõe plano suspenso (`clearGraceOnPaidPayment`).
 - **Webhook Stripe**: Cria `Payment` **PAID** quando a Stripe confirma (ex.: `invoice.paid`); limpa grace. Configuração de chaves, preços e cliente test/live: [`STRIPE_KINGDOM_ONLINE.md`](STRIPE_KINGDOM_ONLINE.md) e `memory.md` §3.4.
+- **Pagamento antecipado:** `/admin/financeiro/antecipado` — N meses `TUITION` + `PAID`.
+- **Seguro:** cron `insurance-expiry-check` (segundas 08:00 UTC); renovação em perfil do aluno (admin).
 - **Faturação legal**: Ainda não integrada; deve ser feita via **software certificado pela AT** (integrar quando houver fornecedor escolhido).
 
 ---
 
-## Nota técnica
-
-Os inserts em `Payment` (Supabase) devem incluir sempre o campo `id` (UUID). Corrigido em: `lib/renewals.ts` e `app/api/stripe/webhook/route.ts`.
-
----
-
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md), [FINANCEIRO_INSCRICAO_SEGURO.md](FINANCEIRO_INSCRICAO_SEGURO.md) — junho 2026.*

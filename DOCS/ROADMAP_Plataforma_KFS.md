@@ -1,8 +1,7 @@
 # Roadmap – Plataforma Kingdom Fight School
 
 > O que **já está feito** vs **por fazer**, alinhado ao [Plano de Negócios](./Plano_de_Negócios_Kingdom_Fight_School.md) e à [Especificação Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md).  
-> **Última revisão (documentação):** 22 maio 2026 — docs alinhadas: marca/PWA 2026, treinador assistente, Tribo em curso. *Anterior:* 28 maio 2026 — merge PWA/Capacitor, performance aluno. *Anterior:* 19 maio 2026 — **Capacitor:** scaffold Android/iOS — [`CAPACITOR.md`](CAPACITOR.md); PWA — [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md). *Histórico:* 19 maio 2026 — Tribo (comunidade): doc MVP [`TRIBO_MVP.md`](TRIBO_MVP.md); eventos no dashboard aluno (filtro inscritos, strip próximos eventos); centrais `/admin/notificacoes` e `/coach/notificacoes`; notificações in-app para inscrições em eventos — `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md` e `DOCS/memory.md`.  
-> *Histórico:* 19 maio 2026 — Tribo: `TRIBO_MVP.md` + secção 7 na Especificação Kingdom Digital; 10 fevereiro 2026 — dashboard aluno Lisboa + Presencial I; 27 abr. 2026 (RBAC + `PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`); 22 abr. 2026 (anamnese, avatar); 18 abr. 2026 (ranking); alinhamento admin/Resend/RLS, sessão mobile, Stripe, índice `DOCS/`.
+> **Última revisão (documentação):** junho 2026 — seguro, matrícula, 1.º pagamento, gate presencial — [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md). *Anterior:* 22 maio 2026 — marca/PWA, treinador assistente, Tribo.
 
 **Legenda:** **Feito** = em produção. **Por fazer** = não implementado ou só operacional (dados em falta).
 
@@ -105,18 +104,21 @@ Objetivo: enriquecer a ficha com **circunferências e medidas** que permitam um 
 | CRUD, camelCase PostgREST (`priceMonthly`, `isActive`, …) | Feito | `memory.md` §3.16 |
 | Lista com sessão; `escolher-plano` + `default-school-001` | Feito | |
 | Mensalidades / crons | Feito | `DOCS/PAGAMENTOS_MENSALIDADES_CRON.md` |
+| Seguro anual + waiver + matrícula | Feito | `DOCS/FINANCEIRO_INSCRICAO_SEGURO.md` |
+| 1.º pagamento admin + pagamento na escola | Feito | `/admin/financeiro/primeiro-pagamento`, gate middleware |
+| Pagamento antecipado (N meses) | Feito | `/admin/financeiro/antecipado` |
 
 ---
 
 ## 6–12. Outros módulos admin / coach / público
 
-**Feito:** atletas, missões, turmas (incl. `isOpenClass`), experimentais, coaches (N:N escolas), financeiro (Stripe + presencial + crons), área coach (agenda, aula, alunos, avaliação física, tema da semana, round timer), landing + aula experimental.
+**Feito:** atletas, missões, turmas (incl. `isOpenClass`), experimentais, coaches (N:N escolas), financeiro (Stripe + presencial + crons + seguro/matrícula/1.º pagamento), área coach (agenda, aula, alunos, avaliação física, tema da semana, round timer), landing + aula experimental.
 
 ---
 
 ## 13. Modelo de dados (BD)
 
-Principais entidades **em uso:** `User`, `Student`, `StudentProfile`, `Coach`, `CoachSchool`, `Athlete`, `Lesson`, `LessonCoach`, `LessonCancellation`, `Attendance`, `Plan`, `Payment`, `MissionTemplate`, cursos/biblioteca, loja/eventos, `PreLessonWellness`, etc. — alinhado a `prisma/schema.prisma` e migrações em `supabase/migrations/`.
+Principais entidades **em uso:** `User`, `Student`, `StudentProfile`, `Coach`, `CoachSchool`, `Athlete`, `Lesson`, `LessonCoach`, `LessonCancellation`, `Attendance`, `Plan`, `Payment`, `InsuranceSettings`, `StudentWaiver`, `StudentInsuranceCoverage`, `MissionTemplate`, cursos/biblioteca, loja/eventos, `PreLessonWellness`, etc. — alinhado a `prisma/schema.prisma` e migrações em `supabase/migrations/`.
 
 **Plan (API):** usar **camelCase** nas queries Supabase (`priceMonthly`, `includesDigitalAccess`, `modalityScope`, `isActive`).
 
@@ -140,7 +142,7 @@ Principais entidades **em uso:** `User`, `Student`, `StudentProfile`, `Coach`, `
 | Item | Estado |
 |------|--------|
 | Next.js 15, Node 20, Vercel | Feito |
-| Crons (`lesson-reminders`, `payment-suspension`) + `CRON_SECRET` | Feito |
+| Crons (`lesson-reminders`, `payment-suspension`, `insurance-expiry-check`) + `CRON_SECRET` | Feito |
 | Vitest (`npm test`), seed testes | Feito |
 | Emails Resend + doc | Feito — `DOCS/CONFIGURAR_RESEND.md` |
 | PWA | Feito — `DOCS/PWA.md` |

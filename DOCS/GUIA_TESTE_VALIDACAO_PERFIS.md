@@ -44,18 +44,22 @@ Validar que o Admin vê e acede a:
 | Dimensões gerais | `/admin/componentes-gerais` | Configuração de dimensões (avaliação) |
 | Critérios de avaliação | `/admin/avaliacao` | Configuração de critérios por modalidade |
 | Missões | `/admin/missoes` | Listar missões; criar missão; **Importar missões padrão** (seed) |
-| Financeiro | `/admin/financeiro` | Listar pagamentos; filtros; **Renovações do mês**; Gerar mensalidades; links Compras/Coaches |
+| Financeiro | `/admin/financeiro` | Pagamentos; **Primeiro pagamento**; **Antecipado**; Renovações; Gerar mensalidades |
+| Configurações | `/admin/configuracoes` | Valor seguro anual e taxa de matrícula |
 | Experimentais | `/admin/experimentais` | Listar pedidos aula experimental; registar novo; converter em aluno |
 | Coaches | `/admin/coaches` | Listar coaches; convidar; editar (nome, valor/hora, autorização cursos) |
 
 ### 1.3 Fluxos principais a testar
 
-#### A) Ciclo aluno: convite → plano → presença
+#### A) Ciclo aluno: convite → waiver → plano → 1.º pagamento → presença
 
 1. **Convidar aluno:** Admin → Alunos → Convidar (email). Verificar que o convite é enviado e que, após o aluno se registar, aparece na lista com status Ativo/Experimental.
-2. **Atribuir plano:** Editar aluno → escolher Plano → Guardar. No dashboard do aluno (ver como Aluno) deve aparecer "O teu plano" com o nome e preço.
-3. **Atalho acesso total:** Editar aluno → bloco "Acesso rápido" → "Atribuir acesso total (plataforma + ginásio)". Só funciona se existir um plano com acesso digital e todas as modalidades; o plano do aluno deve ser atualizado.
-4. **Presença:** Admin → Presença. Ver aulas próximas e link "Aula" que leva à gestão da aula (como coach).
+2. **Waiver:** Aluno assina termo em `/waiver-signing` (se pendente).
+3. **Escolher plano (presencial):** `/escolher-plano` → modal com taxas → confirmação → redirect `/dashboard/financeiro` (acesso bloqueado ao resto da app).
+4. **Primeiro pagamento:** Admin → Financeiro → **Primeiro pagamento** — registar mensalidade + matrícula (opcional) + seguro (obrigatório). Aluno desbloqueado após `PAID`. Ver [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md).
+5. **Atribuir plano (alternativa admin):** Editar aluno → Plano → gera LATE automaticamente; depois 1.º pagamento.
+6. **Atalho acesso total:** Editar aluno → bloco "Acesso rápido" → ignora gate de pagamento escola.
+7. **Presença:** Admin → Presença. Ver aulas próximas e link "Aula" que leva à gestão da aula (como coach).
 
 #### B) Financeiro e renovação automática
 
@@ -194,7 +198,7 @@ Validar que o Admin vê e acede a:
 | Loja | `/dashboard/loja` | Cursos à venda; eventos; comprar / inscrever-me |
 | Biblioteca | `/dashboard/biblioteca` | Cursos a que tem acesso (plano ou compra); entrar no curso |
 | Eventos | `/dashboard/eventos` | Eventos futuros; inscrições; filtro **Inscritos e ativos** |
-| Financeiro | `/dashboard/financeiro` | Plano atual; link Stripe (se config); últimos pagamentos |
+| Financeiro | `/dashboard/financeiro` | Plano; pagamentos pendentes (LATE); aviso pagamento na escola até 1.º PAID |
 | Meus dados | `/dashboard/perfil` | Editar nome, peso, altura, contacto, notas médicas, etc. |
 | Performance | `/dashboard/performance` | (Se atleta) Faixa, XP, radar, missões, detalhe por dimensão |
 

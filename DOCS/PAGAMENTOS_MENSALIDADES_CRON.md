@@ -11,7 +11,8 @@ Documentação operacional e técnica alinhada ao código (`lib/lisbon-payment-d
 
 ## O que conta como “pago no mês”
 
-- Só **`Payment.status === "PAID"`** para aquele `referenceMonth` considera o mês liquidado.
+- Só **`Payment.status === "PAID"`** com **`paymentType = 'TUITION'`** e aquele `referenceMonth` considera a mensalidade liquidada.
+- Pagamentos **`INSURANCE`** e **`ENROLLMENT`** não usam `referenceMonth` (ver [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md)).
 - Um **`LATE`** no mês **não** “paga” o mês; impede duplicar geração automática de novo `LATE` para o mesmo aluno/mês.
 
 ## Crons (Vercel)
@@ -21,7 +22,8 @@ Definidos em `vercel.json`:
 | Caminho | Horário (UTC) | Função |
 |--------|----------------|--------|
 | `/api/cron/lesson-reminders` | `0 6 * * *` | Lembretes de aulas (email Resend). |
-| `/api/cron/payment-suspension` | `30 7 * * *` | (1) Gera `LATE` para **mês anterior** e **mês corrente** (Lisboa), respeitando o 5.º dia útil; (2) suspende quem ultrapassou `paymentGraceEndsAt`. |
+| `/api/cron/payment-suspension` | `30 7 * * *` | (1) Gera `LATE` **TUITION** para **mês anterior** e **mês corrente** (Lisboa), respeitando o 5.º dia útil; (2) suspende quem ultrapassou `paymentGraceEndsAt`. |
+| `/api/cron/insurance-expiry-check` | `0 8 * * 1` | Aviso admin de seguros a expirar (`INSURANCE_ALERT_ADMIN_EMAIL`). |
 
 **Autenticação:** `Authorization: Bearer <CRON_SECRET>` ou cabeçalho `x-vercel-cron: 1`. A variável **`CRON_SECRET`** deve estar definida na Vercel e no `.env` local para testes manuais.
 
@@ -55,18 +57,22 @@ Definidos em `vercel.json`:
 
 - **`date-fns`** e **`date-fns-tz`** — cálculo de dias úteis e instantes no fuso `Europe/Lisbon`.
 
+## Status do aluno (`Student.status`)
+
+Enum `ATIVO`, `INADIMPLENTE`, `INATIVO`, `EXPERIMENTAL` (migração `20260628120000_student_status_inadimplente.sql`). Sincronizado em `lib/student-payment-status.ts` com base em mensalidades `TUITION` em `LATE` — ver [`memory.md`](memory.md).
+
 ## Ficheiros principais
 
 - `lib/lisbon-payment-dates.ts` — 5.º dia útil, fim do dia 10, mês corrente/anterior em Lisboa.
-- `lib/renewals.ts` — `getRenewalsPending`, `generateMonthlyPayments` (opções `force`, `now`).
+- `lib/renewals.ts` — `getRenewalsPending`, `generateMonthlyPayments` (só `paymentType = TUITION`; opções `force`, `now`).
 - `lib/payment-grace.ts` — `startGracePeriodOnLatePayment`, `clearGraceOnPaidPayment`, `suspendStudentsPastGrace`.
 - `app/admin/financeiro/actions.ts` — `createPayment` (consolida `Payment` por aluno/mês).
 - `app/api/stripe/webhook/route.ts` — `PAID` via Stripe chama `clearGraceOnPaidPayment`.
 
 ---
 
-*Última atualização: março de 2026.*
+*Última atualização: junho de 2026.*
 
 ---
 
-*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*
+*Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md), [FINANCEIRO_INSCRICAO_SEGURO.md](FINANCEIRO_INSCRICAO_SEGURO.md).*

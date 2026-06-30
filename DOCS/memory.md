@@ -16,6 +16,10 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 | Tribo (comunidade) — **em curso** | [`TRIBO_MVP.md`](TRIBO_MVP.md) |
 
+| Inscrição, matrícula, seguro, 1.º pagamento | [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md) |
+
+| Mensalidades, crons, suspensão | [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md) |
+
 | Mobile — PWA pelo site | [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md) · [`PWA.md`](PWA.md) |
 
 | Capacitor (fase 2) | [`CAPACITOR.md`](CAPACITOR.md) |
@@ -241,27 +245,16 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 
-## Seguro colectivo anual e termo de responsabilidade
+## Seguro colectivo anual, matrícula e primeiro pagamento
 
+**Documentação completa:** [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md).
 
-
-- **Migração:** `20260630120000_insurance_waiver_advance_payments.sql` — `InsuranceSettings`, `StudentWaiver`, `StudentInsuranceCoverage`, `Payment.paymentType` (`TUITION` | `INSURANCE`). `20260630150000_payment_reference_month_nullable.sql` — `referenceMonth` nullable para `INSURANCE`/`ENROLLMENT` (antes NOT NULL quebrava primeiro pagamento).
-
-- **Matrícula (inscrição):** migrações `20260630140000_enrollment_fee.sql` (+ enum `ENROLLMENT` em transacção separada no Supabase) — `InsuranceSettings.enrollmentAmount`, `Student.enrollmentFeeWaived`, `Payment.paymentType` `ENROLLMENT` (único por aluno).
-
-- **Valor anual / matrícula:** Admin → Configurações (`lib/insurance-settings.ts`).
-
-- **Escolha de plano (aluno):** `/escolher-plano` — o aluno escolhe o plano (`selectPlanPayAtSchool`); pagamento na secretaria (não Stripe nesta página). Gera `LATE` via `ensureOnboardingPendingPayments`. Antes de confirmar, modal `PlanSchoolPaymentModal` com valores estimados; após escolha, redirect para `/dashboard/financeiro?pagamento_escola=1` com aviso `SchoolPaymentPendingModal`.
-- **Gate pós-plano (middleware):** aluno com `planId` e zero pagamentos `PAID` só acede a `/dashboard/financeiro` (excepto `adminGrantedFullAccess`) até a secretaria registar o primeiro pagamento.
-- **Primeiro pagamento:** `/admin/financeiro/primeiro-pagamento` — confirma pagamentos LATE gerados na atribuição do plano (matrícula opcional, seguro obrigatório). Geração automática: `lib/ensure-onboarding-pending-payments.ts` (escolha de plano pelo aluno, admin atribui plano, ou Stripe sem plano anterior).
-
-- **Por aluno:** Admin → Aluno → secção Seguro (`StudentInsuranceSection.tsx`, `insurance-actions.ts`).
-
-- **Waiver:** `/waiver-signing`; middleware após onboarding. Migração marca contas existentes com waiver `legacy`.
-
-- **Check-in:** bloqueio se cobertura registada e expirada/inactiva (`lib/perform-check-in.ts`).
-
-- **Cron:** `/api/cron/insurance-expiry-check` (segundas 08:00 UTC); email admin (`INSURANCE_ALERT_ADMIN_EMAIL`).
+- **Tipos `Payment`:** `TUITION` (`referenceMonth`), `INSURANCE` (`referenceYear`), `ENROLLMENT` (taxa única, sem mês).
+- **Migrações (jun. 2026):** `20260630120000_*` (seguro/waiver), `20260630140000_*` + `20260630140100_*` (matrícula), `20260630150000_payment_reference_month_nullable.sql` (fix NOT NULL no 1.º pagamento).
+- **Config:** Admin → Configurações — `annualAmount`, `enrollmentAmount` (`lib/insurance-settings.ts`).
+- **Aluno presencial:** `/escolher-plano` → modal `PlanSchoolPaymentModal` → `LATE` via `ensureOnboardingPendingPayments` → gate middleware até 1.º `PAID` → `/dashboard/financeiro` + `SchoolPaymentPendingModal`.
+- **Admin:** `/admin/financeiro/primeiro-pagamento` (`createFirstPaymentBundle`); matrícula opcional, seguro obrigatório; renova `StudentInsuranceCoverage`.
+- **Waiver:** `/waiver-signing` (antes do plano); check-in bloqueado sem cobertura válida; cron `insurance-expiry-check` (segundas 08:00 UTC).
 
 
 

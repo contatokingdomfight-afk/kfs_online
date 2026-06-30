@@ -212,24 +212,41 @@ Sistema central de acompanhamento.
 
 ---
 
-## 💰 Payment (MVP simples)
+## 💰 Payment
 
-Controle básico de mensalidade (alunos).
+Controlo de mensalidades, seguro anual e matrícula.
 
 **Campos**
 
 - id
-    
 - studentId
-    
 - amount
-    
 - status → `PAID | LATE`
-    
-- referenceMonth
-    
+- paymentType → `TUITION | INSURANCE | ENROLLMENT` (default `TUITION`)
+- referenceMonth → `YYYY-MM` (**obrigatório** para `TUITION`; **NULL** para `INSURANCE` / `ENROLLMENT`)
+- referenceYear → `YYYY` (quando `paymentType = INSURANCE`)
+- stripeInvoiceId (opcional, único)
 - createdAt
-    
+
+**Índices parciais (único por tipo)**
+
+- `TUITION`: (`studentId`, `referenceMonth`) onde `referenceMonth IS NOT NULL`
+- `INSURANCE`: (`studentId`, `referenceYear`) onde `referenceYear IS NOT NULL`
+- `ENROLLMENT`: (`studentId`) onde `paymentType = ENROLLMENT`
+
+Ver [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md).
+
+---
+
+## 🛡️ InsuranceSettings, StudentWaiver, StudentInsuranceCoverage
+
+| Entidade | Uso |
+|----------|-----|
+| `InsuranceSettings` | Valores globais: `annualAmount`, `enrollmentAmount`, `policyReference`, `waiverVersion` |
+| `StudentWaiver` | Termo de responsabilidade assinado (`waiverSigned`, `signatureName`, …) |
+| `StudentInsuranceCoverage` | Cobertura anual do seguro colectivo (`covered`, `coverageStartDate`, `coverageEndDate`) |
+
+`Student.enrollmentFeeWaived` — matrícula isenta no 1.º pagamento.
 
 ---
 

@@ -41,7 +41,18 @@ node scripts/apply-pending-migrations-pg.mjs
 - **Alternativa:** MCP `user-supabase_kfs_eu` — `apply_migration` ou `execute_sql`.
 - Após aplicar via script (sem MCP), actualizar `scripts/lib/supabase-eu-remote-migration-names.mjs` para o índice local coincidir com o histórico remoto (`list_migrations`).
 
-**Última migração de segurança (jun. 2026):** `20260616120000_production_security_hardening` — aplicada no projeto EU; `list-pending` = 0.
+**Última migração de segurança (jun. 2026):** `20260616120000_production_security_hardening` — aplicada no projeto EU.
+
+**Migrações financeiro inscrição (jun. 2026)** — aplicadas no EU; ficheiros locais em `supabase/migrations/`:
+
+| Ficheiro | Nome remoto (MCP) |
+|----------|-------------------|
+| `20260630120000_insurance_waiver_advance_payments.sql` | `insurance_waiver_advance_payments` |
+| `20260630140000_enrollment_fee_payment_type.sql` | `enrollment_fee_payment_type` |
+| `20260630140100_enrollment_fee_columns.sql` | `enrollment_fee_columns` |
+| `20260630150000_payment_reference_month_nullable.sql` | `payment_reference_month_nullable` |
+
+Documentação do fluxo: [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md). Actualizar `scripts/lib/supabase-eu-remote-migration-names.mjs` após aplicar noutro ambiente.
 
 ## Depois de aplicar os SQLs: ver as alterações na app
 

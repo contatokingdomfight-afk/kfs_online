@@ -166,13 +166,17 @@ Existem **3 portas principais** de entrada:
 
 ---
 
-## 5b. Fluxo de Entrada do Aluno (Cadastro → Plano → Avaliação Física)
+## 5b. Fluxo de Entrada do Aluno (Cadastro → Plano → Pagamento → Avaliação Física)
 
 1. **Cadastro** – Aluno regista-se na plataforma.
-2. **Plano** – Seleciona/atribuição de plano (Admin ou no fluxo de matrícula).
-3. **Avaliação física** – Aluno deve **solicitar avaliação física**; é uma missão obrigatória para todos.
-4. **Instrutor** – Qualquer professor (coach) acede ao **perfil do aluno** e preenche a **Ficha de Anamnese e Avaliação Física Inicial** (identificação, objetivo, histórico saúde, PAR-Q, atividade, avaliação física, testes, avaliação 1–10, termo, liberação).
-5. **Renovação** – A avaliação física é **obrigatória a cada 6 meses**; quando a data de renovação vence, a missão “Renovar avaliação física” volta a aparecer no dashboard do aluno até estar em dia.
+2. **Termo de responsabilidade** – `/waiver-signing` (obrigatório após onboarding).
+3. **Plano** – Escolha em `/escolher-plano` (Stripe ou **pagamento na secretaria**).
+4. **Primeiro pagamento (presencial)** – Secretaria regista em Admin → Financeiro → Primeiro pagamento; aluno bloqueado até existir `PAID`.
+5. **Avaliação física** – Aluno solicita avaliação; missão obrigatória.
+6. **Instrutor** – Coach preenche ficha de anamnese no perfil do aluno.
+7. **Renovação** – Avaliação física a cada 6 meses.
+
+Detalhe financeiro: [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md).
 
 ---
 
@@ -249,20 +253,30 @@ Além do fluxo normal:
 ## 9. Fluxo Financeiro (Sempre Rodando em Background)
 
 - Aluno tem plano ativo
-    
+
+- **Tipos de cobrança:** mensalidade (`TUITION`), seguro anual (`INSURANCE`), matrícula (`ENROLLMENT`)
+
 - Sistema verifica status:
-    
-    - Pago
-        
-    - Atrasado
-        
+
+    - Pago (`PAID`)
+
+    - Atrasado (`LATE`) — mensalidades após 5.º dia útil; inscrição gera LATE ao atribuir plano
+
+- **Primeiro pagamento:** admin confirma bundle na secretaria (presencial) ou Stripe (online)
+
+- **Gate de acesso:** sem `PAID`, aluno presencial fica em `/dashboard/financeiro`
+
 - Administração acompanha:
-    
+
     - Receita
-        
-    - Inadimplência
-        
-- **Remuneração de coaches (futuro):** regras e valores configuráveis pela plataforma; ver doc *Remuneração de Coaches — Configurável (Futuro)*
+
+    - Inadimplência (`Student.status`: ATIVO / INADIMPLENTE / INATIVO)
+
+    - Seguros a expirar (cron semanal)
+
+- **Remuneração de coaches (futuro):** ver doc *Remuneração de Coaches — Configurável (Futuro)*
+
+Documentação: [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md), [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md).
         
 
 ---

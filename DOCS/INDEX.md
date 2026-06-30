@@ -1,7 +1,7 @@
 # Índice da documentação (`DOCS/`)
 
-> **Última revisão deste índice:** 22 maio 2026 — documentação alinhada ao código: marca/PWA 2026 (`kfs-app-icon.png`, splash preto único), treinador assistente, Tribo em curso, `PWA.md` reescrito. [`memory.md`](memory.md).  
-> **Anterior:** 28 maio 2026 — performance aluno (`MissionCard`); histórico avaliações; merge PWA/Capacitor.  
+> **Última revisão deste índice:** junho 2026 — inscrição/matrícula/seguro, 1.º pagamento presencial, gate middleware, migração `referenceMonth` nullable — [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md), [`memory.md`](memory.md).  
+> **Anterior:** 22 maio 2026 — marca/PWA 2026, treinador assistente, Tribo em curso.  
 > **Anterior:** 19 maio 2026 — **Mobile / PWA (site, sem lojas):** [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md), faixa na homepage, roadmap e [`PWA.md`](PWA.md); [`memory.md`](memory.md).  
 > **Anterior:** 19 maio 2026 — **Tribo (comunidade):** MVP planeado — [`TRIBO_MVP.md`](TRIBO_MVP.md), secção 7 em [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md), [`memory.md`](memory.md).  
 > **Anterior:** 15 maio 2026 — **timer de rounds (coach):** sons, últimos segundos, UI dos botões — [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md), [`memory.md`](memory.md).  
@@ -16,6 +16,7 @@ Este ficheiro lista os documentos na pasta **`DOCS/`** (canónica). **Não edita
 
 Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual: Supabase (sem Clerk); ver **`DEPLOY_VERCEL.md`**.
 
+**Changelog (junho 2026):** financeiro inscrição — seguro anual, matrícula, waiver, 1.º pagamento admin, aluno paga na escola (`/escolher-plano` + gate até `PAID`), pagamento antecipado — [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md); migração `20260630150000_payment_reference_month_nullable.sql`.  
 **Changelog (maio 2026 — identidade / PWA):** `kfs-app-icon.png`, ícones manifest com transparência, splash `#000000`, `PwaLaunchSplash`, [`PWA.md`](PWA.md), [`lib/brand.ts`](../lib/brand.ts). Reinstalar PWA após mudar ícones.  
 **Changelog (maio 2026):** treinador assistente (escola) — `SchoolAssistantCoach`, rotas `/coach/eventos`, ver `memory.md`.  
 **Changelog (maio 2026):** performance — secção Objetivos com Ver mais/menos; fix nome do treinador no histórico de avaliações (`lib/evaluation-history-helpers.ts`).  
@@ -40,7 +41,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md) | Especificação geral da plataforma (inclui secção Tribo / comunidade) |
 | [`TRIBO_MVP.md`](TRIBO_MVP.md) | Tribo (comunidade): MVP **em curso** — feed, media, RLS, moderação |
 | [`Fluxo Lógico Completo – Plataforma Kingdom Fight School.md`](Fluxo%20Lógico%20Completo%20–%20Plataforma%20Kingdom%20Fight%20School.md) | Fluxos de negócio |
-| [`FLUXO_DE_CADASTRO_E_ONBOARDING.md`](FLUXO_DE_CADASTRO_E_ONBOARDING.md) | Cadastro e onboarding |
+| [`FLUXO_DE_CADASTRO_E_ONBOARDING.md`](FLUXO_DE_CADASTRO_E_ONBOARDING.md) | Cadastro, onboarding, escolha de plano e pagamento na escola |
 
 ---
 
@@ -113,8 +114,9 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md) | Mensalidades, crons, Lisboa |
-| [`FINANCEIRO_STRIPE_E_PRESENCIAL.md`](FINANCEIRO_STRIPE_E_PRESENCIAL.md) | Stripe e presencial |
+| [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md) | Matrícula, seguro anual, waiver, 1.º pagamento, gate presencial, migrações jun. 2026 |
+| [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md) | Mensalidades, crons, Lisboa, `paymentType` |
+| [`FINANCEIRO_STRIPE_E_PRESENCIAL.md`](FINANCEIRO_STRIPE_E_PRESENCIAL.md) | Stripe vs presencial; faturação AT |
 | [`STRIPE_KINGDOM_ONLINE.md`](STRIPE_KINGDOM_ONLINE.md) | Stripe no projeto |
 
 ---
