@@ -114,6 +114,7 @@ export function OpenClassesCarouselShell({
           tabIndex={0}
           style={{
             display: "flex",
+            alignItems: "flex-start",
             gap: "clamp(12px, 3vw, 16px)",
             overflowX: "auto",
             scrollSnapType: "x mandatory",

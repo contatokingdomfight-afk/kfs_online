@@ -93,7 +93,6 @@ export function LessonPromoBlock({
         backgroundColor: "var(--primary)",
         color: "#fff",
         padding: "clamp(20px, 5vw, 24px)",
-        height: "100%",
         boxSizing: "border-box",
       }}
     >
