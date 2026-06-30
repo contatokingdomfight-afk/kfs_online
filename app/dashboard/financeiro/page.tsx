@@ -16,7 +16,12 @@ function formatRefMonth(ref: string, locale: string): string {
   return date.toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", { month: "long", year: "numeric" });
 }
 
-export default async function DashboardFinanceiroPage() {
+export default async function DashboardFinanceiroPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ inscricao?: string }>;
+}) {
+  const { inscricao } = await searchParams;
   const supabase = await createClient();
   const studentId = await getCurrentStudentId();
   const locale = await getLocaleFromCookies();
@@ -113,6 +118,15 @@ export default async function DashboardFinanceiroPage() {
           Plano, pagamentos e comprovantes. Para alterar dados de pagamento, contacta a secretaria.
         </p>
       </header>
+
+      {inscricao === "1" && (
+        <div
+          role="status"
+          className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm text-text-primary"
+        >
+          {t("choosePlanInscricaoSuccess")}
+        </div>
+      )}
 
       {onboardingFees && (onboardingFees.showEnrollment || onboardingFees.showInsurance) && (
         <StudentOnboardingFeesNotice

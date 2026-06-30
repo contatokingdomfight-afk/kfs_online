@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { stripe } from "@/lib/stripe/server";
 
 export type CreateStudentResult = { error?: string };
@@ -142,6 +143,11 @@ export async function updateStudent(
   const { error: studentError } = await supabase.from("Student").update(updates).eq("id", studentId);
   if (studentError) return { error: studentError.message };
 
+  if (effectivePlanId && !previousPlanId) {
+    const pending = await ensureOnboardingPendingPayments(supabase, studentId, effectivePlanId);
+    if (pending.error) return { error: pending.error };
+  }
+
   if (name !== undefined) {
     const { error: userError } = await supabase.from("User").update({ name }).eq("id", student.userId);
     if (userError) return { error: userError.message };
@@ -149,6 +155,8 @@ export async function updateStudent(
 
   revalidatePath("/admin/alunos");
   revalidatePath(`/admin/alunos/${student.id}`);
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/dashboard/financeiro");
   return { success: true };
 }
 

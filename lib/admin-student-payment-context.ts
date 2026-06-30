@@ -4,6 +4,7 @@ import {
   isStudentEligibleForFirstPayment,
   type StudentOnboardingFeesState,
 } from "@/lib/student-onboarding-fees";
+import { hasPendingOnboardingPayments } from "@/lib/ensure-onboarding-pending-payments";
 
 export type StudentPaymentRow = {
   studentId: string;
@@ -16,8 +17,9 @@ export type StudentPaymentRow = {
   existingPayment: { status: string; amount: number } | null;
   /** Aluno suspenso por falta de pagamento — marcar «Pago» repõe o plano. */
   isPaymentSuspended: boolean;
-  /** Sem pagamentos PAID — usar fluxo de primeiro pagamento. */
+  /** Sem pagamentos PAID — ou com pacote de inscrição LATE pendente. */
   isFirstPaymentEligible: boolean;
+  hasPendingOnboarding: boolean;
   onboardingFees: StudentOnboardingFeesState;
 };
 
@@ -74,11 +76,13 @@ export async function loadStudentPaymentRows(
   const paymentByStudent = new Map((payments ?? []).map((p) => [p.studentId, p]));
 
   const referenceYear = referenceMonth.slice(0, 4);
-  const [firstPaymentFlags, onboardingFeesList] = await Promise.all([
+  const [firstPaymentFlags, pendingFlags, onboardingFeesList] = await Promise.all([
     Promise.all(studentIds.map((id) => isStudentEligibleForFirstPayment(supabase, id))),
+    Promise.all(studentIds.map((id) => hasPendingOnboardingPayments(supabase, id))),
     Promise.all(studentIds.map((id) => getStudentOnboardingFeesState(supabase, id, referenceYear))),
   ]);
   const firstPaymentByStudent = new Map(studentIds.map((id, i) => [id, firstPaymentFlags[i]]));
+  const pendingByStudent = new Map(studentIds.map((id, i) => [id, pendingFlags[i]]));
   const feesByStudent = new Map(studentIds.map((id, i) => [id, onboardingFeesList[i]]));
 
   return students.map((s) => {
@@ -106,6 +110,7 @@ export async function loadStudentPaymentRows(
         : null,
       isPaymentSuspended: Boolean(row.paymentSuspendedAt && !row.planId && row.suspendedPlanId),
       isFirstPaymentEligible: firstPaymentByStudent.get(s.id) ?? false,
+      hasPendingOnboarding: pendingByStudent.get(s.id) ?? false,
       onboardingFees: feesByStudent.get(s.id) ?? {
         enrollmentAmount: 0,
         insuranceAmount: 0,

@@ -51,7 +51,7 @@ export function PrimeiroPagamentoForm({ defaultReferenceMonth, defaultReferenceY
         if ("error" in res) {
           setSearchError(res.error);
         } else {
-          const eligible = res.results.filter((r) => r.isFirstPaymentEligible);
+          const eligible = res.results.filter((r) => r.isFirstPaymentEligible || r.hasPendingOnboarding);
           setResults(eligible);
           if (eligible.length === 0) {
             setSearchError(
@@ -71,7 +71,13 @@ export function PrimeiroPagamentoForm({ defaultReferenceMonth, defaultReferenceY
   const selectStudent = (row: StudentPaymentRow) => {
     setSelected(row);
     setIncludeEnrollment(row.onboardingFees.showEnrollment);
-    setTuitionAmount(row.priceMonthly > 0 ? String(row.priceMonthly) : "");
+    const tuitionDefault =
+      row.existingPayment && row.existingPayment.amount > 0
+        ? String(row.existingPayment.amount)
+        : row.priceMonthly > 0
+          ? String(row.priceMonthly)
+          : "";
+    setTuitionAmount(tuitionDefault);
     setSearchError(null);
   };
 
@@ -116,6 +122,11 @@ export function PrimeiroPagamentoForm({ defaultReferenceMonth, defaultReferenceY
                 <div style={{ fontSize: 13, marginTop: 6, color: "var(--text-secondary)" }}>
                   Plano: {r.planName ?? "—"}
                   {r.priceMonthly > 0 && <> · {r.priceMonthly.toFixed(2)} €/mês</>}
+                  {r.hasPendingOnboarding && (
+                    <span style={{ display: "block", color: "var(--primary)", fontWeight: 500, marginTop: 4 }}>
+                      Pagamentos de inscrição pendentes
+                    </span>
+                  )}
                 </div>
                 <button type="button" className="btn btn-primary" style={{ marginTop: 10, fontSize: 14 }} onClick={() => selectStudent(r)}>
                   Selecionar

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { clearGraceOnPaidPayment } from "@/lib/payment-grace";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
+import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { stripe, STRIPE_WEBHOOK_SECRET } from "@/lib/stripe/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
@@ -79,6 +80,13 @@ export async function POST(request: NextRequest) {
             if (planPrice) planId = planPrice.planId;
           }
         }
+        const { data: studentBefore } = await supabase
+          .from("Student")
+          .select("planId")
+          .eq("id", studentId)
+          .maybeSingle();
+        const hadNoPlan = !(studentBefore as { planId?: string | null } | null)?.planId;
+
         await supabase
           .from("Student")
           .update({
@@ -87,6 +95,9 @@ export async function POST(request: NextRequest) {
             adminGrantedFullAccess: false,
           })
           .eq("id", studentId);
+        if (isActive && planId && hadNoPlan) {
+          await ensureOnboardingPendingPayments(supabase, studentId, planId, { skipTuition: true });
+        }
         if (isActive && planId) {
           await clearGraceOnPaidPayment(supabase, studentId);
         }

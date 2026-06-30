@@ -8,13 +8,14 @@ import { PlanCard } from "./PlanCard";
 import { EscolherPlanoToolbar } from "./EscolherPlanoToolbar";
 import { StudentOnboardingFeesNotice } from "@/components/StudentOnboardingFeesNotice";
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Promise<{ stripe?: string }> };
+type Props = { searchParams: Promise<{ inscricao?: string }> };
 
 export default async function EscolherPlanoPage({ searchParams }: Props) {
-  const { stripe: stripeQuery } = await searchParams;
+  await searchParams;
   const [dbUser, studentId, locale] = await Promise.all([
     getCurrentDbUser(),
     getCurrentStudentId(),
@@ -50,21 +51,13 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
     plansQuery = plansQuery.in("schoolId", schoolIds);
   }
 
-  const [plansRes, planPricesRes] = await Promise.all([
+  const [plansRes, modalityRefs] = await Promise.all([
     plansQuery.order("priceMonthly", { ascending: true }),
-    supabase.from("PlanPrice").select("planId, stripePriceId, intervalLabel, amountCents, sortOrder").eq("isActive", true).order("sortOrder", { ascending: true }),
+    getCachedModalityRefs(supabase),
   ]);
   const plans = plansRes.data;
-  const planPrices = planPricesRes.data;
 
   const t = getTranslations((locale as "pt" | "en") ?? "pt");
-
-  const stripeBanner =
-    stripeQuery === "success"
-      ? t("choosePlanStripeSuccess")
-      : stripeQuery === "cancel"
-        ? t("choosePlanStripeCancel")
-        : null;
 
   return (
     <main
@@ -77,21 +70,6 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
           dashboardLabel={t("choosePlanBackToDashboard")}
           signOutLabel={t("signOut")}
         />
-        {stripeBanner && (
-          <div
-            role="status"
-            className="card"
-            style={{
-              marginBottom: 24,
-              padding: "clamp(14px, 3.5vw, 18px)",
-              borderLeft: "4px solid var(--primary)",
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              color: "var(--text-primary)",
-            }}
-          >
-            {stripeBanner}
-          </div>
-        )}
         <h1
           style={{
             fontSize: "clamp(24px, 5vw, 28px)",
@@ -126,15 +104,7 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
             gap: 20,
           }}
         >
-          {(plans ?? []).map((plan) => {
-            const prices = (planPrices ?? []).filter((pp) => pp.planId === plan.id);
-            const hasStripe = plan.name.toLowerCase().includes("kingdom online") && (!!plan.stripePriceId || prices.length > 0);
-            const planPricesForCard = prices.length > 0
-              ? prices.map((pp) => ({ stripePriceId: pp.stripePriceId, intervalLabel: pp.intervalLabel, amountCents: pp.amountCents }))
-              : plan.stripePriceId
-                ? [{ stripePriceId: plan.stripePriceId, intervalLabel: t("perMonth"), amountCents: Math.round(Number(plan.priceMonthly) * 100) }]
-                : undefined;
-            return (
+          {(plans ?? []).map((plan) => (
               <PlanCard
                 key={plan.id}
                 plan={{
@@ -147,18 +117,16 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
                   includes_check_in: plan.includes_check_in !== false,
                   modality_scope: plan.modalityScope,
                   includes_exclusive_benefits: plan.includes_exclusive_benefits === true,
-                  hasStripe,
-                  planPrices: planPricesForCard,
                 }}
                 studentId={studentId}
                 locale={(locale as "pt" | "en") ?? "pt"}
                 perMonth={t("perMonth")}
-                loading={t("loading")}
                 choosePlanSelect={t("choosePlanSelect")}
-                stripePriceInvalidMessage={t("choosePlanStripePriceInvalid")}
+                choosePlanPayAtSchoolHint={t("choosePlanPayAtSchoolHint")}
+                choosePlanModalityLabel={t("choosePlanModalityLabel")}
+                modalityOptions={modalityRefs}
               />
-            );
-          })}
+            ))}
         </div>
         {(!plans || plans.length === 0) && (
           <p style={{ fontSize: 16, color: "var(--text-secondary)" }}>

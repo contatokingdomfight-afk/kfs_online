@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  formatStripePriceInvalidUserMessage,
-  type StripePriceInvalidPayload,
-} from "@/lib/stripe/checkout-price-invalid-message";
+import { useState } from "react";
+import { useFormState, useFormStatus } from "react-dom";
+import { selectPlanPayAtSchool, type SelectPlanPayAtSchoolResult } from "./actions";
 
-type PlanPriceOption = { stripePriceId: string; intervalLabel: string; amountCents: number };
+type ModalityOption = { code: string; name: string };
+
 type Plan = {
   id: string;
   name: string;
@@ -17,8 +16,6 @@ type Plan = {
   includes_check_in: boolean;
   modality_scope: string | null;
   includes_exclusive_benefits: boolean;
-  hasStripe: boolean;
-  planPrices?: PlanPriceOption[];
 };
 
 type Props = {
@@ -26,81 +23,43 @@ type Props = {
   studentId: string | null;
   locale: "pt" | "en";
   perMonth: string;
-  loading: string;
   choosePlanSelect: string;
-  /** Quando Stripe devolve «No such price» (ID na BD ≠ conta Stripe). */
-  stripePriceInvalidMessage: string;
+  choosePlanPayAtSchoolHint: string;
+  choosePlanModalityLabel: string;
+  modalityOptions: ModalityOption[];
 };
+
+function SubmitButton({ label, locale }: { label: string; locale: "pt" | "en" }) {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="btn btn-primary" style={{ marginTop: "auto" }} disabled={pending}>
+      {pending ? (locale === "pt" ? "A registar…" : "Saving…") : label}
+    </button>
+  );
+}
 
 export function PlanCard({
   plan,
   studentId,
   locale,
   perMonth,
-  loading: loadingLabel,
   choosePlanSelect,
-  stripePriceInvalidMessage,
+  choosePlanPayAtSchoolHint,
+  choosePlanModalityLabel,
+  modalityOptions,
 }: Props) {
-  const [isLoading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const priceOptions = plan.planPrices ?? [];
-  const [selectedPriceId, setSelectedPriceId] = useState(priceOptions[0]?.stripePriceId ?? "");
-  useEffect(() => {
-    if (priceOptions.length > 0 && !selectedPriceId) {
-      setSelectedPriceId(priceOptions[0].stripePriceId);
-    }
-  }, [priceOptions]);
+  const [state, formAction] = useFormState(selectPlanPayAtSchool, null as SelectPlanPayAtSchoolResult | null);
+  const [primaryModality, setPrimaryModality] = useState(modalityOptions[0]?.code ?? "");
+  const isEn = locale === "en";
+  const needsModality = plan.modality_scope === "SINGLE";
 
   const benefits: string[] = [];
-  if (plan.includes_check_in) benefits.push(locale === "pt" ? "Check-in nas aulas" : "Class check-in");
-  if (plan.includes_digital_access) benefits.push(locale === "pt" ? "Acesso à biblioteca digital" : "Digital library access");
-  if (plan.includes_performance_tracking) benefits.push(locale === "pt" ? "Acompanhamento de performance" : "Performance tracking");
-  if (plan.modality_scope === "ALL") benefits.push(locale === "pt" ? "Todas as modalidades" : "All modalities");
-  else if (plan.modality_scope === "SINGLE") benefits.push(locale === "pt" ? "Uma modalidade" : "One modality");
-  if (plan.includes_exclusive_benefits) benefits.push(locale === "pt" ? "Benefícios exclusivos" : "Exclusive benefits");
-
-  async function handleSelect() {
-    if (!studentId || !plan.hasStripe) return;
-    const stripePriceIdToUse = priceOptions.length > 0 ? (selectedPriceId || priceOptions[0]?.stripePriceId) : undefined;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/stripe/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId: plan.id, stripePriceId: stripePriceIdToUse }),
-      });
-      const text = await res.text();
-      let data: {
-        url?: string;
-        error?: string;
-        errorCode?: string;
-      } & StripePriceInvalidPayload = {};
-      try {
-        data = text ? JSON.parse(text) : {};
-      } catch {
-        setLoading(false);
-        setError(res.ok ? "Resposta inválida do servidor." : `Erro ${res.status}. Verifica a consola do servidor.`);
-        return;
-      }
-      if (res.ok && data.url) {
-        window.location.href = data.url;
-      } else {
-        setLoading(false);
-        if (data?.errorCode === "STRIPE_PRICE_INVALID") {
-          setError(formatStripePriceInvalidUserMessage(stripePriceInvalidMessage, locale, data));
-        } else {
-          setError(
-            data?.error ??
-              (res.status === 401 ? "Sessão expirada. Por favor, entra novamente." : "Erro ao iniciar pagamento. Tenta novamente.")
-          );
-        }
-      }
-    } catch (err) {
-      setLoading(false);
-      setError(err instanceof Error ? err.message : "Erro de rede. Verifica a ligação e tenta novamente.");
-    }
-  }
+  if (plan.includes_check_in) benefits.push(isEn ? "Class check-in" : "Check-in nas aulas");
+  if (plan.includes_digital_access) benefits.push(isEn ? "Digital library access" : "Acesso à biblioteca digital");
+  if (plan.includes_performance_tracking) benefits.push(isEn ? "Performance tracking" : "Acompanhamento de performance");
+  if (plan.modality_scope === "ALL") benefits.push(isEn ? "All modalities" : "Todas as modalidades");
+  else if (plan.modality_scope === "SINGLE") benefits.push(isEn ? "One modality" : "Uma modalidade");
+  if (plan.includes_exclusive_benefits) benefits.push(isEn ? "Exclusive benefits" : "Benefícios exclusivos");
 
   return (
     <div
@@ -116,66 +75,50 @@ export function PlanCard({
     >
       <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>{plan.name}</h3>
       {plan.description && (
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>
-          {plan.description}
-        </p>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0 }}>{plan.description}</p>
       )}
-      {priceOptions.length > 1 ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <select
-            value={selectedPriceId}
-            onChange={(e) => setSelectedPriceId(e.target.value)}
-            style={{
-              padding: "8px 12px",
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              backgroundColor: "var(--bg)",
-              color: "var(--text-primary)",
-              fontSize: 14,
-            }}
-            aria-label={locale === "pt" ? "Periodicidade" : "Billing interval"}
-          >
-            {priceOptions.map((po) => (
-              <option key={po.stripePriceId} value={po.stripePriceId}>
-                {po.intervalLabel} · €{(po.amountCents / 100).toFixed(0)}
-              </option>
-            ))}
-          </select>
-          <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>
-            {locale === "pt" ? "Cobrança automática recorrente. Sem preocupações." : "Automatic recurring billing. No hassle."}
-          </p>
-        </div>
-      ) : (
-        <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-          €{plan.price_monthly.toFixed(0)}
-          <span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-secondary)" }}>
-            {perMonth}
-          </span>
-        </p>
-      )}
+      <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+        €{plan.price_monthly.toFixed(0)}
+        <span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-secondary)" }}>{perMonth}</span>
+      </p>
       <ul style={{ paddingLeft: 20, margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
         {benefits.map((b, i) => (
           <li key={i}>{b}</li>
         ))}
       </ul>
-      {error && (
-        <p style={{ fontSize: 13, color: "var(--text-error, #dc2626)", margin: 0 }} role="alert">
-          {error}
-        </p>
-      )}
-      {plan.hasStripe && studentId ? (
-        <button
-          type="button"
-          onClick={handleSelect}
-          disabled={isLoading}
-          className="btn btn-primary"
-          style={{ marginTop: "auto" }}
-        >
-          {isLoading ? loadingLabel : choosePlanSelect}
-        </button>
+
+      {studentId ? (
+        <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: "auto" }}>
+          <input type="hidden" name="planId" value={plan.id} />
+          {needsModality && modalityOptions.length > 0 && (
+            <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 14 }}>
+              <span style={{ fontWeight: 500 }}>{choosePlanModalityLabel}</span>
+              <select
+                name="primaryModality"
+                value={primaryModality}
+                onChange={(e) => setPrimaryModality(e.target.value)}
+                className="input"
+                required
+              >
+                {modalityOptions.map((m) => (
+                  <option key={m.code} value={m.code}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>{choosePlanPayAtSchoolHint}</p>
+          {state?.error && (
+            <p style={{ fontSize: 13, color: "var(--danger, #dc2626)", margin: 0 }} role="alert">
+              {state.error}
+            </p>
+          )}
+          <SubmitButton label={choosePlanSelect} locale={locale} />
+        </form>
       ) : (
         <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
-          {locale === "pt" ? "Contacta a secretaria para subscrever." : "Contact the office to subscribe."}
+          {isEn ? "Sign in to choose a plan." : "Inicia sessão para escolher um plano."}
         </p>
       )}
     </div>

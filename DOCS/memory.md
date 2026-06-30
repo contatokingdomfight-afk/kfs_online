@@ -251,7 +251,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Valor anual / matrícula:** Admin → Configurações (`lib/insurance-settings.ts`).
 
-- **Primeiro pagamento:** `/admin/financeiro/primeiro-pagamento` — mensalidade + matrícula (checkbox, admin pode desmarcar) + seguro obrigatório (`lib/first-payment-bundle.ts`, `lib/student-onboarding-fees.ts`). Aluno vê taxas em `/escolher-plano` e `/dashboard/financeiro` (`StudentOnboardingFeesNotice`).
+- **Escolha de plano (aluno):** `/escolher-plano` — o aluno escolhe o plano (`selectPlanPayAtSchool`); pagamento na secretaria (não Stripe nesta página). Gera `LATE` via `ensureOnboardingPendingPayments`.
+- **Primeiro pagamento:** `/admin/financeiro/primeiro-pagamento` — confirma pagamentos LATE gerados na atribuição do plano (matrícula opcional, seguro obrigatório). Geração automática: `lib/ensure-onboarding-pending-payments.ts` (escolha de plano pelo aluno, admin atribui plano, ou Stripe sem plano anterior).
 
 - **Por aluno:** Admin → Aluno → secção Seguro (`StudentInsuranceSection.tsx`, `insurance-actions.ts`).
 

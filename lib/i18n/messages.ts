@@ -370,8 +370,13 @@ export const messages = {
     onboardingWizardFinish: "Finalizar configuração",
     choosePlanTitle: "Escolher plano",
     choosePlanSubtitle:
-      "Compara os planos e subscreve online, ou fala com a secretaria. Explora o dashboard em modo de demonstração enquanto decides.",
-    choosePlanSelect: "Selecionar plano",
+      "Escolhe o plano que queres. O pagamento (mensalidade, matrícula e seguro) é feito na secretaria da escola.",
+    choosePlanSelect: "Escolher este plano",
+    choosePlanPayAtSchoolHint:
+      "Ao confirmar, o plano fica reservado. Dirige-te à secretaria para pagar mensalidade, matrícula e seguro.",
+    choosePlanModalityLabel: "Modalidade do plano",
+    choosePlanInscricaoSuccess:
+      "Plano escolhido. Os valores em dívida aparecem abaixo — efectua o pagamento na secretaria da escola.",
     freeTierCtaMessage:
       "O teu perfil está pronto. Escolhe um plano para desbloquear check-in nas aulas, vídeos na biblioteca e toda a experiência Kingdom. Enquanto isso, podes ver a agenda e a estrutura dos cursos.",
     freeTierCtaButton: "✨ Ver planos e preços",
@@ -1461,8 +1466,13 @@ export const messages = {
     onboardingWizardFinish: "Finish setup",
     choosePlanTitle: "Choose plan",
     choosePlanSubtitle:
-      "Compare plans and subscribe online, or talk to staff. Explore the dashboard in demo mode while you decide.",
-    choosePlanSelect: "Select plan",
+      "Choose the plan you want. Payment (tuition, enrollment fee and insurance) is made at the school office.",
+    choosePlanSelect: "Choose this plan",
+    choosePlanPayAtSchoolHint:
+      "When you confirm, your plan is reserved. Visit the school office to pay tuition, enrollment and insurance.",
+    choosePlanModalityLabel: "Plan modality",
+    choosePlanInscricaoSuccess:
+      "Plan selected. Amounts due are listed below — pay at the school office.",
     freeTierCtaMessage:
       "Your profile is ready. Choose a plan to unlock class check-in, library videos and the full Kingdom experience. Meanwhile you can browse the schedule and course structure.",
     freeTierCtaButton: "✨ View plans and pricing",

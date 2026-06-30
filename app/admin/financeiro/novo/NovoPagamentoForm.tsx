@@ -251,7 +251,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
             )}
           </div>
 
-            {selected.isFirstPaymentEligible && (
+            {(selected.isFirstPaymentEligible || selected.hasPendingOnboarding) && (
               <div
                 style={{
                   padding: "12px 14px",
@@ -261,10 +261,28 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                   fontSize: 13,
                 }}
               >
-                <strong>Primeiro pagamento</strong> — este aluno ainda não tem pagamentos registados.{" "}
-                <Link href={`/admin/financeiro/primeiro-pagamento`} style={{ color: "var(--primary)", fontWeight: 600 }}>
-                  Usar fluxo de inscrição (matrícula + seguro)
-                </Link>
+                {selected.hasPendingOnboarding ? (
+                  <>
+                    <strong>Pagamentos de inscrição pendentes</strong> — matrícula, seguro e/ou mensalidade já
+                    gerados.{" "}
+                    <Link
+                      href="/admin/financeiro/primeiro-pagamento"
+                      style={{ color: "var(--primary)", fontWeight: 600 }}
+                    >
+                      Confirmar em «Primeiro pagamento»
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <strong>Primeiro pagamento</strong> — este aluno ainda não tem pagamentos registados.{" "}
+                    <Link
+                      href="/admin/financeiro/primeiro-pagamento"
+                      style={{ color: "var(--primary)", fontWeight: 600 }}
+                    >
+                      Usar fluxo de inscrição (matrícula + seguro)
+                    </Link>
+                  </>
+                )}
               </div>
             )}
 
