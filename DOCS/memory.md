@@ -245,7 +245,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 
-- **Migração:** `20260630120000_insurance_waiver_advance_payments.sql` — `InsuranceSettings`, `StudentWaiver`, `StudentInsuranceCoverage`, `Payment.paymentType` (`TUITION` | `INSURANCE`).
+- **Migração:** `20260630120000_insurance_waiver_advance_payments.sql` — `InsuranceSettings`, `StudentWaiver`, `StudentInsuranceCoverage`, `Payment.paymentType` (`TUITION` | `INSURANCE`). `20260630150000_payment_reference_month_nullable.sql` — `referenceMonth` nullable para `INSURANCE`/`ENROLLMENT` (antes NOT NULL quebrava primeiro pagamento).
 
 - **Matrícula (inscrição):** migrações `20260630140000_enrollment_fee.sql` (+ enum `ENROLLMENT` em transacção separada no Supabase) — `InsuranceSettings.enrollmentAmount`, `Student.enrollmentFeeWaived`, `Payment.paymentType` `ENROLLMENT` (único por aluno).
 
