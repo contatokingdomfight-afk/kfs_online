@@ -65,8 +65,9 @@ function isStripeCheckoutApi(pathname: string) {
   return pathname === "/api/stripe/create-checkout-session";
 }
 
-/** Primeiro pagamento na escola ainda não confirmado — só área financeira. */
+/** Pagamento na escola pendente — início e área financeira até 1.º PAID. */
 function isStudentAwaitingSchoolPaymentPath(pathname: string) {
+  if (pathname === "/dashboard") return true;
   return pathname === "/dashboard/financeiro" || pathname.startsWith("/dashboard/financeiro/");
 }
 

@@ -1,8 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PlanSchoolPaymentModal, type PlanSchoolPaymentFees } from "@/components/PlanSchoolPaymentModal";
+
+const SCHOOL_PAYMENT_ACK_KEY = "kfs_school_payment_ack";
+
+function hasAcknowledgedSchoolPayment(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return sessionStorage.getItem(SCHOOL_PAYMENT_ACK_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 type Props = {
   showGate: boolean;
@@ -32,20 +43,32 @@ export function SchoolPaymentPendingModal({
   enrollmentLabel,
   insuranceLabel,
 }: Props) {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const forceOpen =
+  const showFromQuery =
     searchParams.get("pagamento_escola") === "1" || searchParams.get("inscricao") === "1";
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(hasAcknowledgedSchoolPayment);
+
+  const handleDismiss = useCallback(() => {
+    setDismissed(true);
+    try {
+      sessionStorage.setItem(SCHOOL_PAYMENT_ACK_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    router.replace("/dashboard");
+  }, [router]);
 
   if (!showGate) return null;
-  if (dismissed && !forceOpen) return null;
+  if (dismissed || hasAcknowledgedSchoolPayment()) return null;
+  if (!showFromQuery) return null;
 
   return (
     <PlanSchoolPaymentModal
       open
       mode="info"
-      onClose={() => setDismissed(true)}
-      onConfirm={() => setDismissed(true)}
+      onClose={handleDismiss}
+      onConfirm={handleDismiss}
       planName={planName}
       fees={fees}
       locale={locale}
