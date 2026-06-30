@@ -12,6 +12,7 @@ import {
 } from "@/lib/lesson-check-in-window";
 import { getCachedPlanAccess, getCachedLocations } from "@/lib/plan-access";
 import { ChoosePlanCTA } from "@/components/ChoosePlanCTA";
+import { FamilyPlanBanner } from "./FamilyPlanBanner";
 import { DashboardUpcomingEventsStrip } from "./DashboardUpcomingEventsStrip";
 import { LessonPromoBlock } from "./LessonPromoBlock";
 import { NextLessonCard } from "./NextLessonCard";
@@ -29,6 +30,7 @@ import {
 } from "@/lib/lesson-occurrences";
 
 import { normalizeModalityCode } from "@/lib/modality-normalize";
+import { getFamilyStudentBanner } from "@/lib/family-group";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
@@ -66,6 +68,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const studentId = await getCurrentStudentId();
   const planAccess = await getCachedPlanAccess(studentId);
   const { hasCheckIn, allowedModalities } = planAccess;
+
+  const familyBanner =
+    studentId != null ? await getFamilyStudentBanner(supabase, studentId) : null;
 
   const { today, endOfWeek } = getThisWeekRangeLisbon();
   const todayStr = calendarDateLisbon(new Date());
@@ -248,6 +253,17 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       )}
       {!hasPlan && (
         <ChoosePlanCTA message={t("freeTierCtaMessage")} ctaLabel={t("freeTierCtaButton")} />
+      )}
+      {familyBanner && (
+        <FamilyPlanBanner
+          banner={familyBanner}
+          locale={locale as "pt" | "en"}
+          titularMessage={t("dashboardFamilyPlanTitular")}
+          memberMessage={t("dashboardFamilyPlanMember")}
+          membersCountLabel={t("dashboardFamilyPlanMembersCount")}
+          adminHint={t("dashboardFamilyPlanAdminHint")}
+          financeiroLabel={t("dashboardFamilyPlanFinanceiroLink")}
+        />
       )}
       {showNextLessonSection && hasPrimaryNextCarousel && (
         <OpenClassesCarouselShell

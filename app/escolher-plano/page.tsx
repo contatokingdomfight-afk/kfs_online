@@ -9,7 +9,7 @@ import { EscolherPlanoToolbar } from "./EscolherPlanoToolbar";
 import { StudentOnboardingFeesNotice } from "@/components/StudentOnboardingFeesNotice";
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
-import { PLANS_EXCLUDED_FROM_SELF_SERVICE } from "@/lib/kingdom-plans-constants";
+import { isPlanExcludedFromSelfService } from "@/lib/kingdom-plans-constants";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +56,8 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
     plansQuery.order("priceMonthly", { ascending: true }),
     getCachedModalityRefs(supabase),
   ]);
-  const plans = plansRes.data?.filter((p) => !PLANS_EXCLUDED_FROM_SELF_SERVICE.includes(p.id)) ?? null;
+  const plans =
+    plansRes.data?.filter((p) => !isPlanExcludedFromSelfService(p.id, p.name)) ?? null;
 
   const t = getTranslations((locale as "pt" | "en") ?? "pt");
 

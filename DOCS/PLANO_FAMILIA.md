@@ -10,7 +10,8 @@ Gestão **exclusiva na secretaria** (`/admin/familias`). Não aparece em `/escol
 | **Cobrança** | **Uma mensalidade** no **titular** (`FamilyGroup.billingStudentId`) |
 | **Membros** | Limite configurável por grupo (`maxMembers`, mínimo 2) |
 | **Matrícula / seguro** | **Individuais** por aluno (como qualquer inscrição) |
-| **Self-service** | Não — admin cria grupo, adiciona membros, regista pagamentos |
+| **Self-service** | Não — **só a secretaria (admin)** cria o grupo, define `maxMembers` e adiciona cada membro em `/admin/familias` |
+| **Titular na app** | Vê o grupo no dashboard e paga a mensalidade; **não** adiciona pessoas (fora do MVP) |
 
 ## Modelo de dados
 
@@ -21,10 +22,16 @@ Gestão **exclusiva na secretaria** (`/admin/familias`). Não aparece em `/escol
 
 ## Fluxo admin
 
-1. **Criar grupo** — `/admin/familias/novo`: titular, escola, `maxMembers`
-2. **Adicionar membros** — detalhe do grupo; cada membro recebe `plan-familia` sem linha de mensalidade
+1. **Criar grupo** — `/admin/familias/novo`: titular, escola, `maxMembers` (ex. 4 pessoas)
+2. **Adicionar membros** — detalhe do grupo; cada membro recebe `plan-familia` sem linha de mensalidade (**só admin**, não o titular)
 3. **Registar pagamento** — no **titular**: mensalidade familiar; nos membros: só matrícula/seguro via «Primeiro pagamento»
 4. **Desactivar grupo** — `isActive = false`; não remove histórico
+
+### Experiência do aluno
+
+- **Dashboard:** banner «Plano família» (titular ou membro, contagem `{n}/{max}`, aviso de gestão na secretaria)
+- **Titular:** link para financeiro (mensalidade do grupo)
+- **Membro:** acesso normal quando o titular está em dia; sem mensalidade própria
 
 ## Cascata de pagamento
 

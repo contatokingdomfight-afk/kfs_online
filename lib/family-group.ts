@@ -308,6 +308,47 @@ export async function listFamilyGroups(supabase: SupabaseClient): Promise<Family
   return items;
 }
 
+export type FamilyStudentBanner = {
+  isTitular: boolean;
+  titularName: string;
+  groupName: string | null;
+  memberCount: number;
+  maxMembers: number;
+};
+
+/** Contexto para o banner do dashboard do aluno (titular ou membro). */
+export async function getFamilyStudentBanner(
+  supabase: SupabaseClient,
+  studentId: string
+): Promise<FamilyStudentBanner | null> {
+  const ctx = await getFamilyContext(supabase, studentId);
+  if (!ctx) return null;
+
+  const { data: titularStudent } = await supabase
+    .from("Student")
+    .select("userId")
+    .eq("id", ctx.billingStudentId)
+    .maybeSingle();
+
+  let titularName = "—";
+  if (titularStudent?.userId) {
+    const { data: user } = await supabase
+      .from("User")
+      .select("name, email")
+      .eq("id", titularStudent.userId)
+      .maybeSingle();
+    titularName = user?.name ?? user?.email ?? "—";
+  }
+
+  return {
+    isTitular: ctx.isTitular,
+    titularName,
+    groupName: ctx.group.name,
+    memberCount: ctx.memberCount,
+    maxMembers: ctx.group.maxMembers,
+  };
+}
+
 export type FamilyGroupDetail = {
   group: FamilyGroupRow;
   members: Array<{

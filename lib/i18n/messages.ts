@@ -457,6 +457,13 @@ export const messages = {
     dashboardOpenClassOtherSchoolHint: "Aula noutra sede Kingdom Fight — confirma o local acima.",
     dashboardNoClassesThisWeek: "Nenhuma aula agendada esta semana. Que tal explorar a Biblioteca de Cursos?",
     dashboardExploreLibrary: "Explorar Biblioteca",
+    dashboardFamilyPlanTitular:
+      "És o titular do plano família — a mensalidade do grupo é registada na tua conta.",
+    dashboardFamilyPlanMember: "És membro do plano família de {titular}. A mensalidade é paga pelo titular.",
+    dashboardFamilyPlanMembersCount: "{count}/{max} pessoas",
+    dashboardFamilyPlanAdminHint:
+      "Novos membros são adicionados pela secretaria Kingdom Fight (não pelo titular na app).",
+    dashboardFamilyPlanFinanceiroLink: "Ver financeiro",
     dashboardExploreLibraryCard: "Biblioteca de Cursos",
     dashboardCheckInButton: "Fazer Check-in",
     dashboardCheckInAvailableFrom: "Check-in disponível a partir das {time} (no dia da aula).",
@@ -1574,6 +1581,13 @@ export const messages = {
     dashboardOpenClassOtherSchoolHint: "Class at another Kingdom Fight location — check the venue above.",
     dashboardNoClassesThisWeek: "No classes scheduled this week. Why not explore the Course Library?",
     dashboardExploreLibrary: "Explore Library",
+    dashboardFamilyPlanTitular:
+      "You are the family plan holder — the group tuition is billed on your account.",
+    dashboardFamilyPlanMember: "You are on {titular}'s family plan. Tuition is paid by the account holder.",
+    dashboardFamilyPlanMembersCount: "{count}/{max} people",
+    dashboardFamilyPlanAdminHint:
+      "New members are added by Kingdom Fight staff (not by the account holder in the app).",
+    dashboardFamilyPlanFinanceiroLink: "View billing",
     dashboardCheckInButton: "Check-in",
     dashboardCheckInAvailableFrom: "Check-in opens at {time} on the day of the class.",
     dashboardWarriorPanelTitle: "Warrior Panel",
