@@ -22,7 +22,7 @@ Gestão **exclusiva na secretaria** (`/admin/familias`). Não aparece em `/escol
 
 ## Fluxo admin
 
-1. **Criar grupo** — `/admin/familias/novo`: titular, escola, `maxMembers` (ex. 4 pessoas)
+1. **Criar grupo** — `/admin/familias/novo` **ou** atribuir `plan-familia` ao aluno em `/admin/alunos`: o grupo é criado automaticamente com ele como titular (`ensureFamilyGroupAsTitular`)
 2. **Adicionar membros** — detalhe do grupo; cada membro recebe `plan-familia` sem linha de mensalidade (**só admin**, não o titular)
 3. **Registar pagamento** — no **titular**: mensalidade familiar; nos membros: só matrícula/seguro via «Primeiro pagamento»
 4. **Desactivar grupo** — `isActive = false`; não remove histórico

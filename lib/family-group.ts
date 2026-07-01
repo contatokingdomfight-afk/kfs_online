@@ -3,7 +3,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { KINGDOM_PLAN_FAMILIA_ID } from "@/lib/kingdom-plans-constants";
+import { KINGDOM_PLAN_FAMILIA_ID, KINGDOM_PLAN_FAMILIA_DEFAULT_MAX_MEMBERS } from "@/lib/kingdom-plans-constants";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 
@@ -235,12 +235,88 @@ export async function syncFamilyMembersOnTitularSuspension(
   }
 }
 
+export type EnsureFamilyTitularGroupOptions = {
+  schoolId?: string;
+  maxMembers?: number;
+  name?: string | null;
+};
+
+/**
+ * Garante que o aluno é titular de um grupo familiar activo.
+ * Idempotente: se já é titular, devolve o grupo existente.
+ */
+export async function ensureFamilyGroupAsTitular(
+  supabase: SupabaseClient,
+  titularStudentId: string,
+  options?: EnsureFamilyTitularGroupOptions
+): Promise<{ error?: string; groupId?: string; created?: boolean }> {
+  const existing = await getFamilyContext(supabase, titularStudentId);
+  if (existing) {
+    if (existing.isTitular) {
+      return { groupId: existing.group.id, created: false };
+    }
+    return { error: "Este aluno já é membro de outro grupo familiar." };
+  }
+
+  const { data: student } = await supabase
+    .from("Student")
+    .select("id, schoolId, stripeSubscriptionId")
+    .eq("id", titularStudentId)
+    .maybeSingle();
+
+  if (!student) return { error: "Aluno não encontrado." };
+  if ((student as { stripeSubscriptionId?: string | null }).stripeSubscriptionId) {
+    return { error: "O titular tem subscrição Stripe activa. Cancela antes de adicionar ao plano família." };
+  }
+
+  const schoolId = options?.schoolId ?? (student as { schoolId?: string | null }).schoolId;
+  if (!schoolId) return { error: "Escola é obrigatória para criar o grupo familiar." };
+
+  const maxMembers = options?.maxMembers ?? KINGDOM_PLAN_FAMILIA_DEFAULT_MAX_MEMBERS;
+  if (maxMembers < 2) return { error: "O limite de membros deve ser pelo menos 2." };
+
+  const groupId = crypto.randomUUID();
+  const { error: groupErr } = await supabase.from("FamilyGroup").insert({
+    id: groupId,
+    name: options?.name?.trim() || null,
+    billingStudentId: titularStudentId,
+    planId: KINGDOM_PLAN_FAMILIA_ID,
+    maxMembers,
+    schoolId,
+    isActive: true,
+  });
+  if (groupErr) return { error: groupErr.message };
+
+  const { error: memberErr } = await supabase.from("FamilyGroupMember").insert({
+    id: crypto.randomUUID(),
+    familyGroupId: groupId,
+    studentId: titularStudentId,
+    role: "TITULAR",
+  });
+  if (memberErr) {
+    await supabase.from("FamilyGroup").delete().eq("id", groupId);
+    return { error: memberErr.message };
+  }
+
+  return { groupId, created: true };
+}
+
 /** Atribui plan-familia e cria pagamentos pendentes adequados ao papel. */
 export async function assignFamilyPlanToStudent(
   supabase: SupabaseClient,
   studentId: string,
   role: FamilyGroupRole
 ): Promise<{ error?: string }> {
+  if (role === "TITULAR") {
+    const ctx = await getFamilyContext(supabase, studentId);
+    if (!ctx) {
+      const ensured = await ensureFamilyGroupAsTitular(supabase, studentId);
+      if (ensured.error) return { error: ensured.error };
+    } else if (!ctx.isTitular) {
+      return { error: "Este aluno é membro de outro grupo familiar." };
+    }
+  }
+
   const { error: planErr } = await supabase
     .from("Student")
     .update({

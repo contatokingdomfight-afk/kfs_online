@@ -6,6 +6,12 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
+import { KINGDOM_PLAN_FAMILIA_ID } from "@/lib/kingdom-plans-constants";
+import {
+  assignFamilyPlanToStudent,
+  ensureFamilyGroupAsTitular,
+  getFamilyContext,
+} from "@/lib/family-group";
 import { stripe } from "@/lib/stripe/server";
 
 export type CreateStudentResult = { error?: string };
@@ -120,7 +126,7 @@ export async function updateStudent(
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, planId")
+    .select("id, userId, planId, schoolId")
     .eq("id", studentId)
     .single();
 
@@ -128,6 +134,21 @@ export async function updateStudent(
 
   const previousPlanId = (student as { planId?: string | null }).planId ?? null;
   const planChanged = previousPlanId !== effectivePlanId;
+  const assigningFamilyPlan = effectivePlanId === KINGDOM_PLAN_FAMILIA_ID;
+
+  if (assigningFamilyPlan) {
+    const familyCtx = await getFamilyContext(supabase, studentId);
+    if (familyCtx && !familyCtx.isTitular) {
+      return { error: "Este aluno é membro de outro grupo familiar. Remove-o do grupo antes de atribuir como titular." };
+    }
+    if (!familyCtx) {
+      const effectiveSchoolId = schoolId || (student as { schoolId?: string | null }).schoolId;
+      const ensured = await ensureFamilyGroupAsTitular(supabase, studentId, {
+        schoolId: effectiveSchoolId ?? undefined,
+      });
+      if (ensured.error) return { error: ensured.error };
+    }
+  }
 
   const updates: {
     status?: string;
@@ -145,7 +166,10 @@ export async function updateStudent(
   const { error: studentError } = await supabase.from("Student").update(updates).eq("id", studentId);
   if (studentError) return { error: studentError.message };
 
-  if (effectivePlanId && !previousPlanId) {
+  if (assigningFamilyPlan) {
+    const planResult = await assignFamilyPlanToStudent(supabase, studentId, "TITULAR");
+    if (planResult.error) return { error: planResult.error };
+  } else if (effectivePlanId && !previousPlanId) {
     const pending = await ensureOnboardingPendingPayments(supabase, studentId, effectivePlanId);
     if (pending.error) return { error: pending.error };
   }
@@ -158,6 +182,8 @@ export async function updateStudent(
   revalidatePath("/admin/alunos");
   revalidatePath(`/admin/alunos/${student.id}`);
   revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/familias");
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/financeiro");
   return { success: true };
 }

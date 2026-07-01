@@ -8,8 +8,8 @@ import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
 import {
   assignFamilyPlanToStudent,
   getFamilyContext,
+  ensureFamilyGroupAsTitular,
 } from "@/lib/family-group";
-import { KINGDOM_PLAN_FAMILIA_ID } from "@/lib/kingdom-plans-constants";
 
 export type FamilyActionResult = { error?: string };
 
@@ -68,45 +68,13 @@ export async function createFamilyGroup(
 
   const supabase = createAdminClient();
 
-  const { data: existingMember } = await supabase
-    .from("FamilyGroupMember")
-    .select("id")
-    .eq("studentId", titularStudentId)
-    .maybeSingle();
-  if (existingMember?.id) return { error: "Este aluno já pertence a um grupo familiar." };
-
-  const { data: titular } = await supabase
-    .from("Student")
-    .select("id, stripeSubscriptionId")
-    .eq("id", titularStudentId)
-    .maybeSingle();
-  if (!titular) return { error: "Aluno titular não encontrado." };
-  if ((titular as { stripeSubscriptionId?: string | null }).stripeSubscriptionId) {
-    return { error: "O titular tem subscrição Stripe activa. Cancela antes de adicionar ao plano família." };
-  }
-
-  const groupId = crypto.randomUUID();
-  const { error: groupErr } = await supabase.from("FamilyGroup").insert({
-    id: groupId,
+  const ensured = await ensureFamilyGroupAsTitular(supabase, titularStudentId, {
     name,
-    billingStudentId: titularStudentId,
-    planId: KINGDOM_PLAN_FAMILIA_ID,
-    maxMembers,
     schoolId,
-    isActive: true,
+    maxMembers,
   });
-  if (groupErr) return { error: groupErr.message };
-
-  const { error: memberErr } = await supabase.from("FamilyGroupMember").insert({
-    id: crypto.randomUUID(),
-    familyGroupId: groupId,
-    studentId: titularStudentId,
-    role: "TITULAR",
-  });
-  if (memberErr) {
-    await supabase.from("FamilyGroup").delete().eq("id", groupId);
-    return { error: memberErr.message };
-  }
+  if (ensured.error) return { error: ensured.error };
+  const groupId = ensured.groupId!;
 
   const planResult = await assignFamilyPlanToStudent(supabase, titularStudentId, "TITULAR");
   if (planResult.error) return { error: planResult.error };
