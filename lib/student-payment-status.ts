@@ -7,7 +7,6 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resolveBillingStudentId } from "@/lib/family-group";
 
 export type AutoStudentStatus = "ATIVO" | "INADIMPLENTE" | "INATIVO";
 
@@ -79,30 +78,11 @@ export async function syncStudentPaymentStatus(
   const inProgram = hadPlan || (await studentInPaymentProgram(supabase, studentId));
   if (!inProgram) return { updated: false, status: row.status };
 
-  const billingStudentId = await resolveBillingStudentId(supabase, studentId);
-  const statusStudentId = billingStudentId !== studentId ? billingStudentId : studentId;
-
-  let paymentSuspendedAt = row.paymentSuspendedAt ?? null;
-  let planId = row.planId;
-  if (statusStudentId !== studentId) {
-    const { data: billingRow } = await supabase
-      .from("Student")
-      .select("planId, paymentSuspendedAt")
-      .eq("id", statusStudentId)
-      .maybeSingle();
-    if (billingRow) {
-      paymentSuspendedAt = (billingRow as { paymentSuspendedAt: string | null }).paymentSuspendedAt;
-      if (!(billingRow as { planId: string | null }).planId && row.planId) {
-        planId = row.planId;
-      }
-    }
-  }
-
-  const lateMonthCount = await loadLateMonthCount(supabase, statusStudentId);
+  const lateMonthCount = await loadLateMonthCount(supabase, studentId);
   const next = deriveStudentStatusFromPayments({
     lateMonthCount,
-    paymentSuspendedAt,
-    planId,
+    paymentSuspendedAt: row.paymentSuspendedAt ?? null,
+    planId: row.planId,
     adminGrantedFullAccess: row.adminGrantedFullAccess === true,
     inPaymentProgram: true,
   });

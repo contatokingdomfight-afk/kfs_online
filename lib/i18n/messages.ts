@@ -458,8 +458,9 @@ export const messages = {
     dashboardNoClassesThisWeek: "Nenhuma aula agendada esta semana. Que tal explorar a Biblioteca de Cursos?",
     dashboardExploreLibrary: "Explorar Biblioteca",
     dashboardFamilyPlanTitular:
-      "És o titular do plano família — a mensalidade do grupo é registada na tua conta.",
-    dashboardFamilyPlanMember: "És membro do plano família de {titular}. A mensalidade é paga pelo titular.",
+      "És o titular do plano família — a tua mensalidade é de 80 €/mês (desconto familiar).",
+    dashboardFamilyPlanMember:
+      "És membro do plano família de {titular}. A tua mensalidade é de 80 €/mês (desconto familiar).",
     dashboardFamilyPlanMembersCount: "{count}/{max} pessoas",
     dashboardFamilyPlanAdminHint:
       "Novos membros são adicionados pela secretaria Kingdom Fight (não pelo titular na app).",
@@ -903,7 +904,7 @@ export const messages = {
     adminFinancePaymentsModalTitle: "Registos de pagamento",
     adminFinancePaymentsRegisterCta: "Registar pagamento",
     adminFinanceOnboardingBundleLabel: "Primeiro pagamento (matrícula + seguro + mensalidade)",
-    adminFinanceFamilyTuitionLabel: "Mensalidade família",
+    adminFinanceFamilyTuitionLabel: "Mensalidade família (80 €)",
     adminFinanceFilterAll: "Todos",
     adminFinanceFilterPaid: "Pago",
     adminFinanceFilterLate: "Em atraso",
@@ -1582,8 +1583,9 @@ export const messages = {
     dashboardNoClassesThisWeek: "No classes scheduled this week. Why not explore the Course Library?",
     dashboardExploreLibrary: "Explore Library",
     dashboardFamilyPlanTitular:
-      "You are the family plan holder — the group tuition is billed on your account.",
-    dashboardFamilyPlanMember: "You are on {titular}'s family plan. Tuition is paid by the account holder.",
+      "You are the family plan holder — your tuition is €80/month (family discount).",
+    dashboardFamilyPlanMember:
+      "You are on {titular}'s family plan. Your tuition is €80/month (family discount).",
     dashboardFamilyPlanMembersCount: "{count}/{max} people",
     dashboardFamilyPlanAdminHint:
       "New members are added by Kingdom Fight staff (not by the account holder in the app).",
@@ -2019,7 +2021,7 @@ export const messages = {
     adminFinancePaymentsModalTitle: "Payment records",
     adminFinancePaymentsRegisterCta: "Record payment",
     adminFinanceOnboardingBundleLabel: "First payment (enrollment + insurance + tuition)",
-    adminFinanceFamilyTuitionLabel: "Family tuition",
+    adminFinanceFamilyTuitionLabel: "Family tuition (€80)",
     adminFinanceFilterAll: "All",
     adminFinanceFilterPaid: "Paid",
     adminFinanceFilterLate: "Overdue",

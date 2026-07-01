@@ -1,5 +1,5 @@
 /**
- * Grupos familiares: um titular paga a mensalidade; membros herdam acesso e estado de pagamento.
+ * Grupos familiares: titular + membros; mensalidade individual de 80 €/pessoa.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -69,69 +69,36 @@ export async function getFamilyContext(
   };
 }
 
-/** ID do aluno que paga a mensalidade (titular ou próprio). */
+/** ID do aluno (cada membro tem cobrança própria; mantido para compatibilidade). */
 export async function resolveBillingStudentId(
   supabase: SupabaseClient,
   studentId: string
 ): Promise<string> {
-  const ctx = await getFamilyContext(supabase, studentId);
-  if (!ctx) return studentId;
-  return ctx.billingStudentId;
+  return studentId;
 }
 
-export async function isFamilyNonTitularMember(
-  supabase: SupabaseClient,
-  studentId: string
-): Promise<boolean> {
-  const ctx = await getFamilyContext(supabase, studentId);
-  return Boolean(ctx && !ctx.isTitular);
-}
+/** Cria mensalidades LATE em falta para todos os membros de grupos activos. */
+export async function backfillFamilyGroupTuitions(supabase: SupabaseClient): Promise<number> {
+  const { data: groups } = await supabase.from("FamilyGroup").select("id").eq("isActive", true);
+  if (!groups?.length) return 0;
 
-/** Membro não-titular com titular que já tem pelo menos um pagamento PAID. */
-export async function familyMemberInheritsTitularAccess(
-  supabase: SupabaseClient,
-  studentId: string
-): Promise<boolean> {
-  const ctx = await getFamilyContext(supabase, studentId);
-  if (!ctx || ctx.isTitular) return false;
-
-  const { count } = await supabase
-    .from("Payment")
-    .select("id", { count: "exact", head: true })
-    .eq("studentId", ctx.billingStudentId)
-    .eq("status", "PAID");
-
-  return (count ?? 0) > 0;
-}
-
-/** IDs de alunos que não devem receber mensalidade TUITION automática (membros não-titular). */
-export async function loadNonBillingFamilyMemberIds(
-  supabase: SupabaseClient
-): Promise<Set<string>> {
-  const { data: groups } = await supabase
-    .from("FamilyGroup")
-    .select("id, billingStudentId")
-    .eq("isActive", true);
-
-  if (!groups?.length) return new Set();
-
-  const groupIds = groups.map((g) => g.id);
-  const billingIds = new Set(groups.map((g) => g.billingStudentId));
-
+  const groupIds = groups.map((g) => (g as { id: string }).id);
   const { data: members } = await supabase
     .from("FamilyGroupMember")
-    .select("studentId, familyGroupId")
+    .select("studentId")
     .in("familyGroupId", groupIds);
 
-  const skip = new Set<string>();
+  let created = 0;
   for (const m of members ?? []) {
-    const sid = (m as { studentId: string }).studentId;
-    if (!billingIds.has(sid)) skip.add(sid);
+    const studentId = (m as { studentId: string }).studentId;
+    const result = await ensureOnboardingPendingPayments(supabase, studentId, KINGDOM_PLAN_FAMILIA_ID);
+    if (result.error) continue;
+    if (result.created) created += 1;
   }
-  return skip;
+  return created;
 }
 
-/** Ao titular pagar, repõe grace/plano dos membros do grupo. */
+/** Ao titular pagar, repõe grace/plano dos membros do grupo. @deprecated Cobrança individual — não usado. */
 export async function syncFamilyMembersOnTitularPayment(
   supabase: SupabaseClient,
   titularStudentId: string
@@ -187,7 +154,7 @@ export async function syncFamilyMembersOnTitularPayment(
   }
 }
 
-/** Suspende plano de todos os membros quando o titular é suspenso. */
+/** Suspende plano de todos os membros quando o titular é suspenso. @deprecated Cobrança individual — não usado. */
 export async function syncFamilyMembersOnTitularSuspension(
   supabase: SupabaseClient,
   titularStudentId: string,
@@ -366,9 +333,7 @@ export async function assignFamilyPlanToStudent(
 
   if (planErr) return { error: planErr.message };
 
-  const pending = await ensureOnboardingPendingPayments(supabase, studentId, KINGDOM_PLAN_FAMILIA_ID, {
-    skipTuition: role === "MEMBER",
-  });
+  const pending = await ensureOnboardingPendingPayments(supabase, studentId, KINGDOM_PLAN_FAMILIA_ID);
 
   if (pending.error) return { error: pending.error };
   return {};

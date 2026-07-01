@@ -10,7 +10,9 @@ import {
 } from "@/lib/lisbon-payment-dates";
 import { startGracePeriodOnLatePayment } from "@/lib/payment-grace";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
-import { loadNonBillingFamilyMemberIds, getFamilyContext } from "@/lib/family-group";
+import { getFamilyContext } from "@/lib/family-group";
+import { familyGroupIdForTuition, resolvePlanMonthlyTuition } from "@/lib/family-tuition";
+import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
 
 export type RenewalPending = {
   studentId: string;
@@ -66,11 +68,8 @@ export async function getRenewalsPending(
   );
   const anyPaymentStudentIds = new Set((payments ?? []).map((p) => p.studentId));
 
-  const skipFamilyMembers = await loadNonBillingFamilyMemberIds(supabase);
-
   const withPlan = students.filter((s) => {
     if (!s.planId || !planById.has(s.planId)) return false;
-    if (skipFamilyMembers.has(s.id)) return false;
     if (paidStudentIds.has(s.id)) return false;
     if (options?.forLateGeneration && anyPaymentStudentIds.has(s.id)) return false;
     return true;
@@ -90,7 +89,7 @@ export async function getRenewalsPending(
       studentEmail: user?.email ?? "",
       planId: plan.id,
       planName: plan.name,
-      priceMonthly: Number(plan.priceMonthly ?? 0),
+      priceMonthly: resolvePlanMonthlyTuition(plan.id, Number(plan.priceMonthly ?? 0), isFamilyPlan(plan.id)),
     };
   });
 }
@@ -133,12 +132,13 @@ export async function generateMonthlyPayments(
 
   for (const p of pending) {
     const familyCtx = await getFamilyContext(supabase, p.studentId);
-    const familyGroupId = familyCtx?.isTitular ? familyCtx.group.id : null;
+    const familyGroupId = familyGroupIdForTuition(familyCtx);
+    const amount = resolvePlanMonthlyTuition(p.planId, p.priceMonthly, Boolean(familyCtx));
 
     const { error } = await supabase.from("Payment").insert({
       id: crypto.randomUUID(),
       studentId: p.studentId,
-      amount: p.priceMonthly,
+      amount,
       status: "LATE",
       referenceMonth,
       paymentType: "TUITION",

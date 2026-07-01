@@ -356,7 +356,7 @@ export function FinanceiroModals({
                         : row.paymentType === "ENROLLMENT"
                           ? "Matrícula"
                           : row.familyGroupId
-                            ? `${labels.familyTuitionLabel}${row.familyMemberCount ? ` (${row.familyMemberCount} membros)` : ""}`
+                            ? labels.familyTuitionLabel
                             : (row.referenceMonth ?? "—");
                     return (
                     <li key={row.id} className="card" style={{ padding: 12 }}>

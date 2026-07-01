@@ -4,6 +4,7 @@ import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { upsertTuitionPayment } from "@/lib/payment-tuition-upsert";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { getFamilyContext } from "@/lib/family-group";
+import { familyGroupIdForTuition, resolvePlanMonthlyTuition } from "@/lib/family-tuition";
 
 export type EnsureOnboardingPendingOptions = {
   referenceMonth?: string;
@@ -98,8 +99,8 @@ export async function ensureOnboardingPendingPayments(
   let created = false;
 
   if (!options?.skipTuition) {
-    const tuitionAmount = Number(plan.priceMonthly ?? 0);
     const familyCtx = await getFamilyContext(supabase, studentId);
+    const tuitionAmount = resolvePlanMonthlyTuition(planId, Number(plan.priceMonthly ?? 0), Boolean(familyCtx));
     const { data: existingTuition } = await supabase
       .from("Payment")
       .select("id")
@@ -114,7 +115,7 @@ export async function ensureOnboardingPendingPayments(
         referenceMonth,
         amount: tuitionAmount,
         status: "LATE",
-        familyGroupId: familyCtx?.isTitular ? familyCtx.group.id : null,
+        familyGroupId: familyGroupIdForTuition(familyCtx),
       });
       if (result.error) return { error: result.error, created: false };
       created = true;

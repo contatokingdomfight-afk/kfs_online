@@ -6,6 +6,7 @@ import {
 } from "@/lib/student-onboarding-fees";
 import { hasPendingOnboardingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { getFamilyContext } from "@/lib/family-group";
+import { resolvePlanMonthlyTuition } from "@/lib/family-tuition";
 
 export type StudentPaymentRow = {
   studentId: string;
@@ -22,8 +23,8 @@ export type StudentPaymentRow = {
   isFirstPaymentEligible: boolean;
   hasPendingOnboarding: boolean;
   onboardingFees: StudentOnboardingFeesState;
-  /** Membro não-titular: mensalidade cobrada no titular. */
-  isFamilyNonTitular?: boolean;
+  /** Aluno no plano família (80 €/pessoa). */
+  isInFamilyGroup?: boolean;
   /** Titular familiar: número de membros no grupo. */
   familyMemberCount?: number | null;
 };
@@ -111,7 +112,11 @@ export async function loadStudentPaymentRows(
       email: u?.email ?? null,
       phone: (prof as { phone?: string | null } | undefined)?.phone ?? null,
       planName: plan?.name ?? null,
-      priceMonthly: Number(plan?.priceMonthly ?? 0),
+      priceMonthly: resolvePlanMonthlyTuition(
+        effectivePlanId,
+        Number(plan?.priceMonthly ?? 0),
+        Boolean(familyCtx)
+      ),
       referenceMonth,
       existingPayment: pay
         ? { status: String((pay as { status: string }).status), amount: Number((pay as { amount: number }).amount) }
@@ -128,8 +133,8 @@ export async function loadStudentPaymentRows(
         showEnrollment: false,
         showInsurance: false,
       },
-      isFamilyNonTitular: Boolean(familyCtx && !familyCtx.isTitular),
-      familyMemberCount: familyCtx?.isTitular ? familyCtx.memberCount : null,
+      isInFamilyGroup: Boolean(familyCtx),
+      familyMemberCount: familyCtx?.memberCount ?? null,
     };
   });
 }

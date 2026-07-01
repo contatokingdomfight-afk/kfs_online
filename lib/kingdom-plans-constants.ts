@@ -7,6 +7,9 @@ export const KINGDOM_PLAN_FAMILIA_ID = "plan-familia";
 /** Capacidade comercial por defeito (texto do catálogo; o grupo admin define `maxMembers`). */
 export const KINGDOM_PLAN_FAMILIA_DEFAULT_MAX_MEMBERS = 4;
 
+/** Mensalidade por pessoa no grupo familiar (desconto face ao FULL ~100 €). */
+export const KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON = 80;
+
 export const PLANS_EXCLUDED_FROM_SELF_SERVICE: readonly string[] = [KINGDOM_PLAN_FAMILIA_ID];
 
 /** Plano família: acesso a todas as modalidades (equivalente ao Presencial MMA). */

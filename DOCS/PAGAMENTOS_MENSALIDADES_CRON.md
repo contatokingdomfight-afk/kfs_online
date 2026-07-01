@@ -14,7 +14,7 @@ Documentação operacional e técnica alinhada ao código (`lib/lisbon-payment-d
 
 - Só **`Payment.status === "PAID"`** com **`paymentType = 'TUITION'`** e aquele `referenceMonth` considera a mensalidade liquidada.
 - Pagamentos **`INSURANCE`** e **`ENROLLMENT`** não usam `referenceMonth` (ver [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md)).
-- **Plano família:** o cron e `getRenewalsPending` **ignoram membros não-titular**; só o titular recebe `LATE`/`TUITION` do pacote (`plan-familia`). Ver [`PLANO_FAMILIA.md`](PLANO_FAMILIA.md).
+- **Plano família:** o cron e `getRenewalsPending` geram `LATE`/`TUITION` de **80 €** para **cada** membro do grupo (titular incluído). Ver [`PLANO_FAMILIA.md`](PLANO_FAMILIA.md).
 - Um **`LATE`** no mês **não** “paga” o mês; impede duplicar geração automática de novo `LATE` para o mesmo aluno/mês.
 
 ## Crons (Vercel)

@@ -275,8 +275,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Plano `plan-familia` (acesso = **todas as modalidades**, equivalente Presencial MMA); **não** em `/escolher-plano` (nem cópias com nome «famil*»); descrição catálogo «até 4 pessoas».
 - Admin: `/admin/familias` — **só a secretaria** cria grupo ou atribui `plan-familia` (grupo + titular automáticos); adiciona membros manualmente.
 - Dashboard aluno: banner plano família (`FamilyPlanBanner`, `getFamilyStudentBanner`).
-- Mensalidade única no titular; membros herdam acesso via `lib/family-payment-gate.ts` e sync em `lib/family-group.ts`.
-- Migrações: `20260701120000_family_plan.sql`, `20260702120000_family_plan_modality_all.sql`, `20260703120000_family_plan_catalog.sql`, `20260704120000_family_group_backfill_titular.sql`, `20260705120000_family_group_backfill_any_family_plan.sql`.
-- Reparo automático: `repairOrphanFamilyTitulars` ao abrir `/admin/familias` (planos com nome «famil*» incluídos).
+- Mensalidade **80 €/pessoa** (`KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON`, `lib/family-tuition.ts`); cada membro tem `TUITION` própria; acesso com PAID individual (`lib/family-payment-gate.ts`).
+- Migrações: `20260701120000_family_plan.sql`, … `20260705120000_family_group_backfill_any_family_plan.sql`, **`20260706120000_family_plan_per_person_tuition.sql`**.
+- Reparo automático: `repairOrphanFamilyTitulars` + `backfillFamilyGroupTuitions` ao abrir `/admin/familias`.
 
 

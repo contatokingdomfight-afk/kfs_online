@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { listFamilyGroups, repairOrphanFamilyTitulars } from "@/lib/family-group";
+import { listFamilyGroups, repairOrphanFamilyTitulars, backfillFamilyGroupTuitions } from "@/lib/family-group";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,7 @@ export default async function AdminFamiliasPage() {
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   await repairOrphanFamilyTitulars(result.client);
+  await backfillFamilyGroupTuitions(result.client);
   const groups = await listFamilyGroups(result.client);
 
   return (
@@ -37,7 +38,7 @@ export default async function AdminFamiliasPage() {
       </div>
 
       <p style={{ color: "var(--text-secondary)", marginBottom: 20, fontSize: 15, lineHeight: 1.5 }}>
-        Grupos familiares com mensalidade única no titular. Cada membro mantém matrícula e seguro individuais.
+        Grupos familiares com mensalidade de 80 € por pessoa. Cada membro mantém matrícula e seguro individuais.
       </p>
 
       {groups.length === 0 ? (

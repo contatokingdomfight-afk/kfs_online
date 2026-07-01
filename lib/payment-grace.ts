@@ -8,10 +8,6 @@ import { endOfGracePeriodLisbon, LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { stripe } from "@/lib/stripe/server";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
-import {
-  syncFamilyMembersOnTitularPayment,
-  syncFamilyMembersOnTitularSuspension,
-} from "@/lib/family-group";
 
 type StudentGraceRow = {
   planId: string | null;
@@ -123,7 +119,6 @@ export async function clearGraceOnPaidPayment(supabase: SupabaseClient, studentI
   }
 
   await syncStudentPaymentStatus(supabase, studentId);
-  await syncFamilyMembersOnTitularPayment(supabase, studentId);
 }
 
 /** Suspende alunos com plano cujo prazo (5 dias úteis após o dia 8) já passou. */
@@ -181,7 +176,6 @@ export async function suspendStudentsPastGrace(
         }
 
         suspended++;
-        await syncFamilyMembersOnTitularSuspension(supabase, row.id, row.planId);
         await createInAppNotification(supabase, {
           studentId: row.id,
           type: "PAYMENT_SUSPENDED",

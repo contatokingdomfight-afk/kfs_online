@@ -249,14 +249,13 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 Acesso suspenso por falta de pagamento. Marca este mês como «Pago» para repor o plano do aluno.
               </p>
             )}
-            {selected.isFamilyNonTitular && (
-              <p style={{ margin: "10px 0 0 0", fontSize: 13, color: "var(--text-secondary)", fontWeight: 500 }}>
-                Mensalidade coberta pelo titular do grupo familiar — regista pagamentos de matrícula/seguro em «Primeiro pagamento» se necessário.
-              </p>
-            )}
-            {selected.familyMemberCount != null && selected.familyMemberCount > 0 && (
+            {selected.isInFamilyGroup && (
               <p style={{ margin: "10px 0 0 0", fontSize: 13, color: "var(--primary)" }}>
-                Titular do plano família ({selected.familyMemberCount} membros) — valor sugerido é o pacote familiar.
+                Plano família — mensalidade individual de {selected.priceMonthly.toFixed(2)} €/mês
+                {selected.familyMemberCount != null && selected.familyMemberCount > 0
+                  ? ` (grupo com ${selected.familyMemberCount} pessoas)`
+                  : ""}
+                .
               </p>
             )}
           </div>
@@ -298,12 +297,6 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
 
           <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
             <input type="hidden" name="studentId" value={selected.studentId} />
-            {selected.isFamilyNonTitular ? (
-              <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
-                Seleciona o titular do grupo para registar a mensalidade familiar.
-              </p>
-            ) : (
-              <>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
                 Mês de referência (AAAA-MM) *
@@ -363,8 +356,6 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 Cancelar
               </Link>
             </div>
-              </>
-            )}
           </form>
         </div>
       )}
