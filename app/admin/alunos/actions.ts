@@ -6,7 +6,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
-import { KINGDOM_PLAN_FAMILIA_ID } from "@/lib/kingdom-plans-constants";
+import { KINGDOM_PLAN_FAMILIA_ID, isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import {
   assignFamilyPlanToStudent,
   ensureFamilyGroupAsTitular,
@@ -109,15 +109,19 @@ export async function updateStudent(
 
   // Só `modalityScope === "SINGLE"` (Presencial I) mantém modalidade principal; ALL/NONE limpam.
   let effectivePlanId: string | null = planId === "" ? null : planId;
+  let planNameForFamily: string | null = null;
   if (planId) {
     const { data: plan } = await supabase
       .from("Plan")
       .select("name, schoolId, modalityScope")
       .eq("id", planId)
       .single();
+    planNameForFamily = (plan as { name?: string } | null)?.name ?? null;
+    if (isFamilyPlan(planId, planNameForFamily)) {
+      effectivePlanId = KINGDOM_PLAN_FAMILIA_ID;
+    }
     const scope = (plan as { modalityScope?: string; name?: string } | null)?.modalityScope;
-    const planName = (plan as { name?: string } | null)?.name;
-    if (!planRequiresPrimaryModality(scope, planId, planName)) {
+    if (!planRequiresPrimaryModality(scope, planId, planNameForFamily)) {
       newPrimaryModality = null;
     }
     // O mesmo catálogo de planos pode ser reutilizado entre escolas (registo Plan liga-se a uma escola
@@ -134,9 +138,21 @@ export async function updateStudent(
 
   const previousPlanId = (student as { planId?: string | null }).planId ?? null;
   const planChanged = previousPlanId !== effectivePlanId;
-  const assigningFamilyPlan = effectivePlanId === KINGDOM_PLAN_FAMILIA_ID;
 
-  if (assigningFamilyPlan) {
+  let onFamilyPlan = effectivePlanId === KINGDOM_PLAN_FAMILIA_ID;
+  if (!onFamilyPlan && previousPlanId) {
+    const { data: prevPlan } = await supabase
+      .from("Plan")
+      .select("id, name")
+      .eq("id", previousPlanId)
+      .maybeSingle();
+    onFamilyPlan = isFamilyPlan(prevPlan?.id ?? previousPlanId, prevPlan?.name);
+    if (onFamilyPlan && !planId) {
+      effectivePlanId = KINGDOM_PLAN_FAMILIA_ID;
+    }
+  }
+
+  if (onFamilyPlan) {
     const familyCtx = await getFamilyContext(supabase, studentId);
     if (familyCtx && !familyCtx.isTitular) {
       return { error: "Este aluno é membro de outro grupo familiar. Remove-o do grupo antes de atribuir como titular." };
@@ -166,7 +182,7 @@ export async function updateStudent(
   const { error: studentError } = await supabase.from("Student").update(updates).eq("id", studentId);
   if (studentError) return { error: studentError.message };
 
-  if (assigningFamilyPlan) {
+  if (onFamilyPlan) {
     const planResult = await assignFamilyPlanToStudent(supabase, studentId, "TITULAR");
     if (planResult.error) return { error: planResult.error };
   } else if (effectivePlanId && !previousPlanId) {

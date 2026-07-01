@@ -3,7 +3,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { KINGDOM_PLAN_FAMILIA_ID, KINGDOM_PLAN_FAMILIA_DEFAULT_MAX_MEMBERS } from "@/lib/kingdom-plans-constants";
+import { KINGDOM_PLAN_FAMILIA_ID, KINGDOM_PLAN_FAMILIA_DEFAULT_MAX_MEMBERS, isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 
@@ -299,6 +299,44 @@ export async function ensureFamilyGroupAsTitular(
   }
 
   return { groupId, created: true };
+}
+
+/**
+ * Titulares com plano família (incl. cópias «Familly») mas sem FamilyGroupMember.
+ * Idempotente; usado ao abrir /admin/familias e após migrações.
+ */
+export async function repairOrphanFamilyTitulars(supabase: SupabaseClient): Promise<number> {
+  const { data: plans } = await supabase.from("Plan").select("id, name");
+  const familyPlanIds = (plans ?? [])
+    .filter((p) => isFamilyPlan((p as { id: string }).id, (p as { name?: string }).name))
+    .map((p) => (p as { id: string }).id);
+
+  if (familyPlanIds.length === 0) return 0;
+
+  const { data: students } = await supabase
+    .from("Student")
+    .select("id, schoolId")
+    .in("planId", familyPlanIds);
+
+  let repaired = 0;
+  for (const row of students ?? []) {
+    const studentId = (row as { id: string }).id;
+    const ctx = await getFamilyContext(supabase, studentId);
+    if (ctx) continue;
+
+    const schoolId = (row as { schoolId?: string | null }).schoolId;
+    const ensured = await ensureFamilyGroupAsTitular(supabase, studentId, {
+      schoolId: schoolId ?? undefined,
+    });
+    if (ensured.error) continue;
+
+    const assign = await assignFamilyPlanToStudent(supabase, studentId, "TITULAR");
+    if (assign.error) continue;
+
+    if (ensured.created) repaired += 1;
+  }
+
+  return repaired;
 }
 
 /** Atribui plan-familia e cria pagamentos pendentes adequados ao papel. */

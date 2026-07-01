@@ -276,6 +276,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Admin: `/admin/familias` — **só a secretaria** cria grupo ou atribui `plan-familia` (grupo + titular automáticos); adiciona membros manualmente.
 - Dashboard aluno: banner plano família (`FamilyPlanBanner`, `getFamilyStudentBanner`).
 - Mensalidade única no titular; membros herdam acesso via `lib/family-payment-gate.ts` e sync em `lib/family-group.ts`.
-- Migrações: `20260701120000_family_plan.sql`, `20260702120000_family_plan_modality_all.sql`, `20260703120000_family_plan_catalog.sql`, `20260704120000_family_group_backfill_titular.sql`.
+- Migrações: `20260701120000_family_plan.sql`, `20260702120000_family_plan_modality_all.sql`, `20260703120000_family_plan_catalog.sql`, `20260704120000_family_group_backfill_titular.sql`, `20260705120000_family_group_backfill_any_family_plan.sql`.
+- Reparo automático: `repairOrphanFamilyTitulars` ao abrir `/admin/familias` (planos com nome «famil*» incluídos).
 
 
