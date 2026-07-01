@@ -823,6 +823,27 @@
   .app-shell-main > main.shell-main--bottom-tabs {
     padding-bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 72px));
   }
+
+  /* Formulários longos (ex. financeiro): campos não ficam sob header/teclado; botões colados ao fundo do scroll. */
+  .mobile-form-field-scroll {
+    scroll-margin-top: max(72px, calc(env(safe-area-inset-top, 0px) + 56px));
+    scroll-margin-bottom: max(120px, calc(env(safe-area-inset-bottom, 0px) + 96px));
+  }
+
+  .mobile-form-sticky-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    margin-top: 12px;
+    padding: 12px 0 calc(4px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(
+      to top,
+      var(--bg) 0%,
+      var(--bg) 72%,
+      color-mix(in srgb, var(--bg) 88%, transparent) 100%
+    );
+    border-top: 1px solid var(--border);
+  }
 }
 
 /* Desktop: >= 768px – sidebar fixo (sticky) e área principal com scroll */

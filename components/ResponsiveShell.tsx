@@ -345,7 +345,7 @@ export function ResponsiveShell({
               minWidth: 0,
               ...(isMobile
                 ? {
-                    paddingTop: headerHidden ? undefined : mobileHeaderHeight,
+                    paddingTop: mobileHeaderHeight,
                   }
                 : {}),
             }}

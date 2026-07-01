@@ -9,6 +9,7 @@ import {
   type CreatePaymentResult,
   type StudentPaymentRow,
 } from "../actions";
+import { blurActiveElementBeforeSubmit } from "@/lib/blur-before-form-submit";
 
 type Props = {
   defaultReferenceMonth: string;
@@ -295,13 +296,28 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
               </div>
             )}
 
-          <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
+          <form
+            action={formAction}
+            onSubmit={blurActiveElementBeforeSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}
+          >
             <input type="hidden" name="studentId" value={selected.studentId} />
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
                 Mês de referência (AAAA-MM) *
               </span>
-              <input type="month" name="referenceMonth" required className="input" defaultValue={referenceMonth} />
+              <input
+                type="text"
+                name="referenceMonth"
+                required
+                className="input mobile-form-field-scroll"
+                defaultValue={referenceMonth}
+                pattern="\\d{4}-\\d{2}"
+                placeholder="2026-06"
+                inputMode="numeric"
+                autoComplete="off"
+                maxLength={7}
+              />
             </label>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
@@ -313,9 +329,9 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 required
                 min="0"
                 step="0.01"
-                className="input"
+                className="input mobile-form-field-scroll"
                 placeholder="0.00"
-                key={`amt-${selected.studentId}-${defaultAmountStr}`}
+                key={`amt-${selected.studentId}`}
                 defaultValue={defaultAmountStr}
               />
             </label>
@@ -329,7 +345,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 min={1}
                 max={12}
                 defaultValue={1}
-                className="input"
+                className="input mobile-form-field-scroll"
                 style={{ maxWidth: 120 }}
               />
               <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
@@ -340,7 +356,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
               <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
                 Status *
               </span>
-              <select name="status" required className="input" defaultValue="PAID">
+              <select name="status" required className="input mobile-form-field-scroll" defaultValue="PAID">
                 <option value="PAID">Pago</option>
                 <option value="LATE">Em atraso</option>
               </select>
@@ -348,7 +364,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
             {state?.error && (
               <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>{state.error}</p>
             )}
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div className="mobile-form-sticky-actions" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <button type="submit" className="btn btn-primary">
                 Guardar
               </button>

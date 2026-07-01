@@ -9,6 +9,7 @@ import {
   type CreateFirstPaymentResult,
   type StudentPaymentRow,
 } from "../actions";
+import { blurActiveElementBeforeSubmit } from "@/lib/blur-before-form-submit";
 
 type Props = {
   defaultReferenceMonth: string;
@@ -162,7 +163,11 @@ export function PrimeiroPagamentoForm({
             </button>
           </div>
 
-          <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <form
+            action={formAction}
+            onSubmit={blurActiveElementBeforeSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: 16 }}
+          >
             <input type="hidden" name="studentId" value={selected.studentId} />
             <input type="hidden" name="referenceMonth" value={referenceMonth} />
             {insuranceRequired ? (
@@ -180,7 +185,7 @@ export function PrimeiroPagamentoForm({
                 min="0"
                 step="0.01"
                 required
-                className="input"
+                className="input mobile-form-field-scroll"
                 value={tuitionAmount}
                 onChange={(e) => setTuitionAmount(e.target.value)}
               />
@@ -195,7 +200,7 @@ export function PrimeiroPagamentoForm({
                 max={12}
                 value={tuitionMonths}
                 onChange={(e) => setTuitionMonths(parseInt(e.target.value, 10) || 1)}
-                className="input"
+                className="input mobile-form-field-scroll"
                 style={{ maxWidth: 120 }}
               />
               <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
@@ -272,7 +277,7 @@ export function PrimeiroPagamentoForm({
 
             {state?.error && <p style={{ margin: 0, color: "var(--danger)", fontSize: 14 }}>{state.error}</p>}
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div className="mobile-form-sticky-actions" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button type="submit" className="btn btn-primary">
                 Registar primeiro pagamento
               </button>
