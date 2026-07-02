@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { FinancePaymentMethod } from "@/lib/finance-payment-method";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { upsertTuitionPayment } from "@/lib/payment-tuition-upsert";
 import { renewStudentInsuranceCoverage } from "@/lib/renew-student-insurance-coverage";
@@ -18,6 +19,7 @@ export type CreateFirstPaymentBundleInput = {
   includeInsurance: boolean;
   referenceYear: string;
   adminUserId: string;
+  paymentMethod: FinancePaymentMethod;
 };
 
 export type CreateFirstPaymentBundleResult = { error?: string };
@@ -25,7 +27,8 @@ export type CreateFirstPaymentBundleResult = { error?: string };
 async function markEnrollmentPaid(
   supabase: SupabaseClient,
   studentId: string,
-  amount: number
+  amount: number,
+  paymentMethod: FinancePaymentMethod
 ): Promise<{ error?: string }> {
   const { data: existing } = await supabase
     .from("Payment")
@@ -37,7 +40,7 @@ async function markEnrollmentPaid(
   if (existing?.id) {
     const { error } = await supabase
       .from("Payment")
-      .update({ amount: amount.toFixed(2), status: "PAID" })
+      .update({ amount: amount.toFixed(2), status: "PAID", paymentMethod })
       .eq("id", existing.id);
     if (error) return { error: error.message };
   } else {
@@ -49,6 +52,7 @@ async function markEnrollmentPaid(
       paymentType: "ENROLLMENT",
       referenceMonth: null,
       referenceYear: null,
+      paymentMethod,
     });
     if (error) return { error: error.message };
   }
@@ -79,7 +83,8 @@ async function markInsurancePaid(
   supabase: SupabaseClient,
   studentId: string,
   referenceYear: string,
-  amount: number
+  amount: number,
+  paymentMethod: FinancePaymentMethod
 ): Promise<{ error?: string }> {
   const { data: existing } = await supabase
     .from("Payment")
@@ -92,7 +97,7 @@ async function markInsurancePaid(
   if (existing?.id) {
     const { error } = await supabase
       .from("Payment")
-      .update({ amount: amount.toFixed(2), status: "PAID" })
+      .update({ amount: amount.toFixed(2), status: "PAID", paymentMethod })
       .eq("id", existing.id);
     if (error) return { error: error.message };
   } else {
@@ -104,6 +109,7 @@ async function markInsurancePaid(
       paymentType: "INSURANCE",
       referenceYear,
       referenceMonth: null,
+      paymentMethod,
     });
     if (error) return { error: error.message };
   }
@@ -125,6 +131,7 @@ export async function createFirstPaymentBundle(
     referenceYear,
     adminUserId,
   } = input;
+  const paymentMethod = input.paymentMethod;
 
   if (!/^\d{4}-\d{2}$/.test(referenceMonth)) return { error: "Mês de referência inválido." };
   if (!/^\d{4}$/.test(referenceYear)) return { error: "Ano de seguro inválido." };
@@ -161,6 +168,7 @@ export async function createFirstPaymentBundle(
     referenceMonth,
     amount: tuitionAmount,
     status: "PAID",
+    paymentMethod,
   });
   if (tuitionResult.error) return { error: tuitionResult.error };
 
@@ -172,6 +180,7 @@ export async function createFirstPaymentBundle(
         referenceMonth: rm,
         amount: tuitionAmount,
         status: "PAID",
+        paymentMethod,
       });
       if (extra.error) return { error: `${rm}: ${extra.error}` };
     }
@@ -179,7 +188,7 @@ export async function createFirstPaymentBundle(
 
   if (fees.showEnrollment || fees.enrollmentWaived === false) {
     if (includeEnrollment && settings.enrollmentAmount > 0 && fees.showEnrollment) {
-      const enrollResult = await markEnrollmentPaid(supabase, studentId, settings.enrollmentAmount);
+      const enrollResult = await markEnrollmentPaid(supabase, studentId, settings.enrollmentAmount, paymentMethod);
       if (enrollResult.error) return { error: `Matrícula: ${enrollResult.error}` };
       await supabase.from("Student").update({ enrollmentFeeWaived: false }).eq("id", studentId);
     } else if (fees.showEnrollment) {
@@ -193,7 +202,8 @@ export async function createFirstPaymentBundle(
       supabase,
       studentId,
       referenceYear,
-      settings.annualAmount
+      settings.annualAmount,
+      paymentMethod
     );
     if (insResult.error) return { error: `Seguro: ${insResult.error}` };
 

@@ -10,6 +10,7 @@ import {
   type StudentPaymentRow,
 } from "../actions";
 import { blurActiveElementBeforeSubmit } from "@/lib/blur-before-form-submit";
+import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
 type Props = {
   defaultReferenceMonth: string;
@@ -34,6 +35,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
   const [searchError, setSearchError] = useState<string | null>(null);
   const [results, setResults] = useState<StudentPaymentRow[]>([]);
   const [selected, setSelected] = useState<StudentPaymentRow | null>(initialRow ?? null);
+  const [paymentStatus, setPaymentStatus] = useState("PAID");
 
   const openForm = useCallback((row: StudentPaymentRow) => {
     setSelected(row);
@@ -356,11 +358,20 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
               <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
                 Status *
               </span>
-              <select name="status" required className="input mobile-form-field-scroll" defaultValue="PAID">
+              <select
+                name="status"
+                required
+                className="input mobile-form-field-scroll"
+                defaultValue="PAID"
+                onChange={(e) => setPaymentStatus(e.target.value)}
+              >
                 <option value="PAID">Pago</option>
                 <option value="LATE">Em atraso</option>
               </select>
             </label>
+            {paymentStatus === "PAID" && (
+              <PaymentMethodSelect label="Forma de pagamento" />
+            )}
             {state?.error && (
               <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>{state.error}</p>
             )}

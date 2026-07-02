@@ -15,6 +15,7 @@ import { createFirstPaymentBundle } from "@/lib/first-payment-bundle";
 import { getFamilyContext } from "@/lib/family-group";
 import { familyGroupIdForTuition } from "@/lib/family-tuition";
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/retail/constants";
+import { parseFinancePaymentMethodRequired } from "@/lib/finance-payment-method";
 
 export type { StudentPaymentRow };
 
@@ -71,6 +72,13 @@ export async function createPayment(
     return { error: "Número de meses deve ser entre 1 e 12." };
   }
 
+  let paymentMethod: import("@/lib/finance-payment-method").FinancePaymentMethod | null = null;
+  if (status === "PAID") {
+    const parsed = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
+    if ("error" in parsed) return { error: parsed.error };
+    paymentMethod = parsed.method;
+  }
+
   const supabase = createAdminClient();
 
   const familyCtx = await getFamilyContext(supabase, studentId);
@@ -88,6 +96,7 @@ export async function createPayment(
       amount,
       status: status as "PAID" | "LATE",
       familyGroupId,
+      paymentMethod: status === "PAID" ? paymentMethod : null,
     });
     if (upsertResult.error) return { error: upsertResult.error };
   }
@@ -231,6 +240,8 @@ export async function createFinancialExpense(
   const category: ExpenseCategory = EXPENSE_CATEGORIES.includes(categoryRaw as ExpenseCategory)
     ? (categoryRaw as ExpenseCategory)
     : "OTHER";
+  const parsedMethod = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
+  if ("error" in parsedMethod) return { error: parsedMethod.error };
 
   const supabase = createAdminClient();
   const id = crypto.randomUUID();
@@ -241,6 +252,7 @@ export async function createFinancialExpense(
     occurredOn,
     kind,
     category,
+    paymentMethod: parsedMethod.method,
   });
   if (error) return { error: error.message };
   revalidatePath("/admin/financeiro");
@@ -269,11 +281,20 @@ export async function updateFinancialExpense(
   const category: ExpenseCategory = EXPENSE_CATEGORIES.includes(categoryRaw as ExpenseCategory)
     ? (categoryRaw as ExpenseCategory)
     : "OTHER";
+  const parsedMethod = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
+  if ("error" in parsedMethod) return { error: parsedMethod.error };
 
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("FinancialExpense")
-    .update({ amount: amount.toFixed(2), description, occurredOn, kind, category })
+    .update({
+      amount: amount.toFixed(2),
+      description,
+      occurredOn,
+      kind,
+      category,
+      paymentMethod: parsedMethod.method,
+    })
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/financeiro");
@@ -310,6 +331,8 @@ export async function createManualRevenue(
   const amount = parseFloat(amountStr ?? "");
   if (Number.isNaN(amount) || amount <= 0) return { error: "Indica um valor positivo." };
   if (!occurredOn) return { error: "Data inválida (AAAA-MM-DD)." };
+  const parsedMethod = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
+  if ("error" in parsedMethod) return { error: parsedMethod.error };
 
   const supabase = createAdminClient();
   const id = crypto.randomUUID();
@@ -318,6 +341,7 @@ export async function createManualRevenue(
     amount: amount.toFixed(2),
     description,
     occurredOn,
+    paymentMethod: parsedMethod.method,
   });
   if (error) return { error: error.message };
   revalidatePath("/admin/financeiro");
@@ -358,6 +382,8 @@ export async function createAdvanceTuitionPayments(
   if (Number.isNaN(months) || months < 1 || months > 12) return { error: "Número de meses deve ser entre 1 e 12." };
   const amountPerMonth = parseFloat(amountStr ?? "");
   if (Number.isNaN(amountPerMonth) || amountPerMonth < 0) return { error: "Valor por mês inválido." };
+  const parsedMethod = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
+  if ("error" in parsedMethod) return { error: parsedMethod.error };
 
   const supabase = createAdminClient();
   const monthList = listConsecutiveReferenceMonths(startMonth, months);
@@ -368,6 +394,7 @@ export async function createAdvanceTuitionPayments(
       referenceMonth,
       amount: amountPerMonth,
       status: "PAID",
+      paymentMethod: parsedMethod.method,
     });
     if (result.error) {
       return { error: `${referenceMonth}: ${result.error}` };
@@ -409,6 +436,8 @@ export async function createFirstPayment(
   if (Number.isNaN(tuitionMonths) || tuitionMonths < 1 || tuitionMonths > 12) {
     return { error: "Número de meses deve ser entre 1 e 12." };
   }
+  const parsedMethod = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
+  if ("error" in parsedMethod) return { error: parsedMethod.error };
 
   const supabase = createAdminClient();
   const result = await createFirstPaymentBundle(supabase, {
@@ -420,6 +449,7 @@ export async function createFirstPayment(
     includeInsurance,
     referenceYear,
     adminUserId: dbUser.id,
+    paymentMethod: parsedMethod.method,
   });
   if (result.error) return { error: result.error };
 

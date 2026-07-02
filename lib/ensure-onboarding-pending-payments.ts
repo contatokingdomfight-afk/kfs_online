@@ -169,16 +169,34 @@ export async function ensureOnboardingPendingPayments(
   return { created };
 }
 
-/** Aluno com pagamentos de inscrição ainda em LATE. */
+/** Aluno com pagamentos de inscrição ainda em LATE (matrícula/seguro, ou pacote inicial sem qualquer PAID). */
 export async function hasPendingOnboardingPayments(
   supabase: SupabaseClient,
   studentId: string
 ): Promise<boolean> {
-  const { count } = await supabase
+  const [{ count: onboardingLate }, { count: paidCount }] = await Promise.all([
+    supabase
+      .from("Payment")
+      .select("id", { count: "exact", head: true })
+      .eq("studentId", studentId)
+      .eq("status", "LATE")
+      .in("paymentType", ["ENROLLMENT", "INSURANCE"]),
+    supabase
+      .from("Payment")
+      .select("id", { count: "exact", head: true })
+      .eq("studentId", studentId)
+      .eq("status", "PAID"),
+  ]);
+
+  if ((onboardingLate ?? 0) > 0) return true;
+  if ((paidCount ?? 0) > 0) return false;
+
+  const { count: tuitionLate } = await supabase
     .from("Payment")
     .select("id", { count: "exact", head: true })
     .eq("studentId", studentId)
     .eq("status", "LATE")
-    .in("paymentType", ["TUITION", "ENROLLMENT", "INSURANCE"]);
-  return (count ?? 0) > 0;
+    .eq("paymentType", "TUITION");
+
+  return (tuitionLate ?? 0) > 0;
 }

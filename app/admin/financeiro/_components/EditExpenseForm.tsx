@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { updateFinancialExpense, type ExpenseActionResult } from "../actions";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
+import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
 function SubmitBtn() {
   const { pending } = useFormStatus();
@@ -23,6 +24,7 @@ type Labels = {
   kindFixed: string;
   kindVariable: string;
   categoryField: string;
+  paymentMethod: string;
 };
 
 export function EditExpenseForm({ expense, labels, onDone }: { expense: FinancialExpenseRow; labels: Labels; onDone?: () => void }) {
@@ -70,6 +72,10 @@ export function EditExpenseForm({ expense, labels, onDone }: { expense: Financia
           {labels.kindVariable}
         </label>
       </div>
+      <PaymentMethodSelect
+        label={labels.paymentMethod}
+        defaultValue={expense.paymentMethod ?? "CASH"}
+      />
       <SubmitBtn />
     </form>
   );

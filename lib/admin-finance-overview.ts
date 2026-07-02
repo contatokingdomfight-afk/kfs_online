@@ -4,6 +4,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { getRevenueBreakdown } from "@/lib/admin-revenue-breakdown";
 import type { ExpenseCategory } from "@/lib/retail/constants";
+import type { FinancePaymentMethod } from "@/lib/finance-payment-method";
+import { getCashBalance } from "@/lib/cash-balance";
 
 export type FinancialExpenseKind = "FIXED" | "VARIABLE";
 
@@ -15,6 +17,7 @@ export type FinancialExpenseRow = {
   createdAt: string;
   kind: FinancialExpenseKind;
   category: ExpenseCategory;
+  paymentMethod: FinancePaymentMethod | null;
 };
 
 function monthDateBounds(yyyyMm: string): { start: string; end: string; endExclusiveIso: string } {
@@ -54,6 +57,9 @@ export type FinanceiroOverview = {
   /** Soma das despesas com data no mês e kind VARIABLE. */
   expensesVariableMonth: number;
   balanceCurrentMonth: number;
+  /** Espécie em caixa (acumulado registado na plataforma). */
+  cashOnHandTotal: number;
+  cashNetMonth: number;
   allExpenses: FinancialExpenseRow[];
   expensesError: string | null;
   overviewError: string | null;
@@ -78,6 +84,8 @@ export async function getFinanceiroOverview(
     expensesFixedMonth: 0,
     expensesVariableMonth: 0,
     balanceCurrentMonth: 0,
+    cashOnHandTotal: 0,
+    cashNetMonth: 0,
     allExpenses: [],
     expensesError: null,
     overviewError: null,
@@ -88,14 +96,14 @@ export async function getFinanceiroOverview(
 
   const withKind = await supabase
     .from("FinancialExpense")
-    .select("id, amount, description, occurredOn, createdAt, kind, category")
+    .select("id, amount, description, occurredOn, createdAt, kind, category, paymentMethod")
     .order("occurredOn", { ascending: false })
     .order("createdAt", { ascending: false });
 
   if (withKind.error) {
     const msg = withKind.error.message ?? "";
     const colMissing =
-      (/kind|category/i.test(msg) && (/does not exist|column/i.test(msg) || /42703/.test(msg)));
+      (/kind|category|paymentMethod/i.test(msg) && (/does not exist|column/i.test(msg) || /42703/.test(msg)));
     if (colMissing) {
       const fallback = await supabase
         .from("FinancialExpense")
@@ -126,9 +134,14 @@ export async function getFinanceiroOverview(
       createdAt: string;
       kind?: string;
       category?: string;
+      paymentMethod?: string;
     };
     const kind: FinancialExpenseKind = x.kind === "FIXED" ? "FIXED" : "VARIABLE";
     const category = (x.category ?? "OTHER") as ExpenseCategory;
+    const paymentMethod =
+      x.paymentMethod && ["CASH", "TRANSFER", "MBWAY", "DEPOSIT"].includes(x.paymentMethod)
+        ? (x.paymentMethod as FinancePaymentMethod)
+        : null;
     return {
       id: x.id,
       amount: Number(x.amount),
@@ -137,6 +150,7 @@ export async function getFinanceiroOverview(
       createdAt: x.createdAt,
       kind,
       category,
+      paymentMethod,
     };
   });
 
@@ -216,6 +230,7 @@ export async function getFinanceiroOverview(
   const revenueFromSources = revenueBreakdown.error ? 0 : revenueBreakdown.total;
   const revenueCurrentMonth = revenueFromSources + revenueOnboardingMonth;
   const overviewError = revenueBreakdown.error ?? null;
+  const cash = await getCashBalance(supabase, referenceMonth);
 
   return {
     referenceMonth,
@@ -227,6 +242,8 @@ export async function getFinanceiroOverview(
     expensesFixedMonth,
     expensesVariableMonth,
     balanceCurrentMonth: revenueCurrentMonth - expensesCurrentMonth,
+    cashOnHandTotal: cash.cashOnHandTotal,
+    cashNetMonth: cash.cashNetMonth,
     allExpenses: all,
     expensesError: expensesError,
     overviewError,

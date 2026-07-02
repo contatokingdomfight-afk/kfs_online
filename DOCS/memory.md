@@ -256,6 +256,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Config:** Admin → Configurações — `annualAmount`, `enrollmentAmount` (`lib/insurance-settings.ts`).
 - **Aluno presencial:** `/escolher-plano` → modal `PlanSchoolPaymentModal` → `LATE` via `ensureOnboardingPendingPayments` → gate middleware até 1.º `PAID` → `/dashboard/financeiro` + `SchoolPaymentPendingModal`.
 - **Admin:** `/admin/financeiro/primeiro-pagamento` (`createFirstPaymentBundle`); matrícula opcional, seguro obrigatório; renova `StudentInsuranceCoverage`. Campo **meses de mensalidade** (1–12, padrão 1). Na lista «Registos de pagamento» e «Pagamentos pendentes», 1.º pagamento aparece **numa linha** (matrícula + seguro + mensalidade), pendente ou já `PAID` — `lib/admin-payment-list-grouping.ts`.
+- **Aviso «inscrição pendente»** (`hasPendingOnboardingPayments`): só quando há matrícula/seguro `LATE`, ou ainda **sem nenhum** `PAID` com mensalidade `LATE` — mensalidades `LATE` após o 1.º pagamento não disparam o aviso.
 - **KPI receita (mês):** mensalidades `PAID` do `referenceMonth` + matrícula/seguro `PAID` com `createdAt` no mês (`lib/admin-finance-overview.ts`); tooltip com breakdown na visão geral.
 - **Prazos mensalidade:** pagamento até **dia 8** do mês; regularização até **5 dias úteis** após o dia 8 (`lib/lisbon-payment-dates.ts`, `paymentGraceEndsAt`). Ver [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md).
 - **Waiver:** `/waiver-signing` (antes do plano); check-in bloqueado sem cobertura válida; cron `insurance-expiry-check` (segundas 08:00 UTC).
@@ -292,5 +293,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Receitas loja: categoria **`MERCHANDISE`** em `lib/admin-revenue-breakdown.ts`.
 - Relatório consolidado: `/admin/financeiro/relatorio` (`lib/admin-financial-report.ts`); CSV + gráfico 6 meses.
 - Overview `/admin/financeiro`: seletor de mês (`?month=AAAA-MM`); saldo = todas as receitas (breakdown + matrícula/seguro) − despesas; despesas com categoria e edição no modal.
+- **Forma de pagamento** (`CASH` | `TRANSFER` | `MBWAY` | `DEPOSIT`) em pagamentos `PAID`, receitas manuais, despesas e loja — migração `20260708120000_finance_payment_method.sql`.
+- **KPI Caixa (espécie):** entradas `CASH` − saídas `CASH` (`lib/cash-balance.ts`); registos sem forma de pagamento não entram.
 
 

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { FinancePaymentMethod } from "@/lib/finance-payment-method";
 
 /** Upsert pagamento de mensalidade (TUITION) para um mês. */
 export async function upsertTuitionPayment(
@@ -9,9 +10,10 @@ export async function upsertTuitionPayment(
     amount: number;
     status: "PAID" | "LATE";
     familyGroupId?: string | null;
+    paymentMethod?: FinancePaymentMethod | null;
   }
 ): Promise<{ error?: string }> {
-  const { studentId, referenceMonth, amount, status, familyGroupId } = params;
+  const { studentId, referenceMonth, amount, status, familyGroupId, paymentMethod } = params;
 
   const { data: existingRows, error: existingErr } = await supabase
     .from("Payment")
@@ -38,6 +40,7 @@ export async function upsertTuitionPayment(
         referenceMonth,
         paymentType: "TUITION",
         familyGroupId: familyGroupId ?? null,
+        paymentMethod: paymentMethod ?? null,
       });
       if (error) return { error: error.message };
     } else if (keepId) {
@@ -48,7 +51,13 @@ export async function upsertTuitionPayment(
       }
       const { error: upErr } = await supabase
         .from("Payment")
-        .update({ amount, status: "PAID", paymentType: "TUITION", familyGroupId: familyGroupId ?? null })
+        .update({
+          amount,
+          status: "PAID",
+          paymentType: "TUITION",
+          familyGroupId: familyGroupId ?? null,
+          paymentMethod: paymentMethod ?? null,
+        })
         .eq("id", keepId);
       if (upErr) return { error: upErr.message };
     }

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createFinancialExpense, type ExpenseActionResult } from "../actions";
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
+import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -19,6 +20,7 @@ type Labels = {
   kindFixed: string;
   kindVariable: string;
   categoryField: string;
+  paymentMethod: string;
   amount: string;
   description: string;
   date: string;
@@ -97,6 +99,7 @@ export function AddExpenseForm({ defaultDate, labels }: { defaultDate: string; l
             ))}
           </select>
         </label>
+        <PaymentMethodSelect label={labels.paymentMethod} />
         <div
           style={{
             display: "grid",

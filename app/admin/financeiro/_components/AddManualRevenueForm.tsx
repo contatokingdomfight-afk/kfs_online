@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createManualRevenue, type ManualRevenueActionResult } from "../actions";
+import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -17,6 +18,7 @@ type Labels = {
   amount: string;
   description: string;
   date: string;
+  paymentMethod: string;
   submit: string;
   success: string;
 };
@@ -69,6 +71,7 @@ export function AddManualRevenueForm({ defaultDate, labels }: { defaultDate: str
             placeholder=""
           />
         </label>
+        <PaymentMethodSelect label={labels.paymentMethod} />
         <div
           style={{
             display: "grid",

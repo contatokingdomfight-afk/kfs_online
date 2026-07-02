@@ -382,6 +382,28 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
               {formatMoneyN(overview.balanceCurrentMonth, locale)}
             </div>
           </div>
+          <div className="card" style={{ padding: 14, background: "var(--bg)" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 6,
+                fontSize: 12,
+                color: "var(--text-secondary)",
+                marginBottom: 4,
+              }}
+            >
+              <span>{t("adminFinanceCashOnHand")}</span>
+              <InlineInfoTip
+                detail={`${t("adminFinanceCashOnHandHint")} ${locale === "pt" ? "Movimento no mês:" : "Month movement:"} ${formatMoneyN(overview.cashNetMonth, locale)}`}
+                ariaLabel={t("adminFinanceCashOnHandInfoAria")}
+              />
+            </div>
+            <div style={{ fontSize: "clamp(20px, 4vw, 24px)", fontWeight: 700, color: "var(--text-primary)" }}>
+              {formatMoneyN(overview.cashOnHandTotal, locale)}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -432,6 +454,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           formAmount: t("adminFinanceRevenueFormAmount"),
           formDescription: t("adminFinanceRevenueFormDescription"),
           formDate: t("adminFinanceRevenueFormDate"),
+          formPaymentMethod: t("paymentMethodLabel"),
           formSubmit: t("adminFinanceRevenueFormSubmit"),
           formSuccess: t("adminFinanceRevenueSaved"),
           rows: revenueDisplayRows,
@@ -458,12 +481,14 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           colDescription: t("adminFinanceColDescription"),
           colKind: t("adminFinanceColKind"),
           colCategory: t("adminFinanceColCategory"),
+          colPaymentMethod: t("adminFinanceColPaymentMethod"),
           colAmount: t("adminFinanceColAmount"),
           colActions: t("adminFinanceColActions"),
           noExpenses: t("adminFinanceNoExpenses"),
           formAmount: t("adminFinanceFormAmount"),
           formDescription: t("adminFinanceFormDescription"),
           formDate: t("adminFinanceFormDate"),
+          formPaymentMethod: t("paymentMethodLabel"),
           formKindField: t("adminFinanceFormKind"),
           formKindFixed: t("adminFinanceKindFixed"),
           formKindVariable: t("adminFinanceKindVariable"),

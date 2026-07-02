@@ -9,6 +9,7 @@ import { AddManualRevenueForm } from "./AddManualRevenueForm";
 import { dedupeDuplicatePaymentsAction, deleteFinancialExpense, deleteManualRevenue } from "../actions";
 import { EditExpenseForm } from "./EditExpenseForm";
 import { EXPENSE_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
+import { paymentMethodLabelPt } from "@/lib/finance-payment-method";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import type { RenewalPending } from "@/lib/renewals";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
@@ -57,6 +58,7 @@ export type RevenueModalData = {
   formAmount: string;
   formDescription: string;
   formDate: string;
+  formPaymentMethod: string;
   formSubmit: string;
   formSuccess: string;
   rows: RevenueModalRow[];
@@ -82,6 +84,7 @@ type Labels = {
   colDescription: string;
   colKind: string;
   colCategory: string;
+  colPaymentMethod: string;
   colAmount: string;
   colActions: string;
   noExpenses: string;
@@ -92,6 +95,7 @@ type Labels = {
   formKindFixed: string;
   formKindVariable: string;
   formCategory: string;
+  formPaymentMethod: string;
   formSubmit: string;
   expenseSaved: string;
   deleteLabel: string;
@@ -448,6 +452,7 @@ export function FinanceiroModals({
                   kindFixed: labels.formKindFixed,
                   kindVariable: labels.formKindVariable,
                   categoryField: labels.formCategory,
+                  paymentMethod: labels.formPaymentMethod,
                   amount: labels.formAmount,
                   description: labels.formDescription,
                   date: labels.formDate,
@@ -479,6 +484,7 @@ export function FinanceiroModals({
                         <th style={{ padding: "8px 10px" }}>{labels.colDescription}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colKind}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colCategory}</th>
+                        <th style={{ padding: "8px 10px" }}>{labels.colPaymentMethod}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colAmount}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colActions}</th>
                       </tr>
@@ -487,7 +493,7 @@ export function FinanceiroModals({
                       {expenses.map((e) => (
                         <tr key={e.id} style={{ borderTop: "1px solid var(--card-border, rgba(0,0,0,.06))" }}>
                           {editingExpenseId === e.id ? (
-                            <td colSpan={6} style={{ padding: "8px 10px" }}>
+                            <td colSpan={7} style={{ padding: "8px 10px" }}>
                               <EditExpenseForm
                                 expense={e}
                                 onDone={() => setEditingExpenseId(null)}
@@ -499,6 +505,7 @@ export function FinanceiroModals({
                                   kindFixed: labels.formKindFixed,
                                   kindVariable: labels.formKindVariable,
                                   categoryField: labels.formCategory,
+                                  paymentMethod: labels.formPaymentMethod,
                                 }}
                               />
                             </td>
@@ -511,6 +518,9 @@ export function FinanceiroModals({
                               </td>
                               <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
                                 {EXPENSE_CATEGORY_LABELS_PT[e.category] ?? e.category}
+                              </td>
+                              <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
+                                {paymentMethodLabelPt(e.paymentMethod)}
                               </td>
                               <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(e.amount, locale)}</td>
                               <td style={{ padding: "8px 10px" }}>
@@ -654,6 +664,7 @@ export function FinanceiroModals({
                     amount: revenue.formAmount,
                     description: revenue.formDescription,
                     date: revenue.formDate,
+                    paymentMethod: revenue.formPaymentMethod,
                     submit: revenue.formSubmit,
                     success: revenue.formSuccess,
                   }}

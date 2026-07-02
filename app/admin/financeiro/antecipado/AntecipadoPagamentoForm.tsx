@@ -9,6 +9,7 @@ import {
   type AdvanceTuitionPaymentsResult,
   type StudentPaymentRow,
 } from "../actions";
+import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
 type Props = {
   defaultStartMonth: string;
@@ -152,6 +153,7 @@ export function AntecipadoPagamentoForm({ defaultStartMonth }: Props) {
           <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
             Total: <strong>{total.toFixed(2)} €</strong> ({months} mês{months > 1 ? "es" : ""})
           </p>
+          <PaymentMethodSelect label="Forma de pagamento" />
           {state?.error ? <p style={{ color: "var(--danger)", fontSize: 14 }}>{state.error}</p> : null}
           {state?.success ? (
             <p style={{ color: "var(--success, #16a34a)", fontSize: 14 }}>

@@ -10,6 +10,7 @@ import {
   type StudentPaymentRow,
 } from "../actions";
 import { blurActiveElementBeforeSubmit } from "@/lib/blur-before-form-submit";
+import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
 type Props = {
   defaultReferenceMonth: string;
@@ -274,6 +275,8 @@ export function PrimeiroPagamentoForm({
             >
               Total: {total.toFixed(2)} €
             </div>
+
+            <PaymentMethodSelect label="Forma de pagamento" />
 
             {state?.error && <p style={{ margin: 0, color: "var(--danger)", fontSize: 14 }}>{state.error}</p>}
 

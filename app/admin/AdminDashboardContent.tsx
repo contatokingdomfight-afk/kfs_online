@@ -10,7 +10,6 @@ import { getTranslations } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { hasAllV1AdminPermissions, type ResolvedAdminAccess, adminAccessAllows } from "@/lib/permissions/resolve";
 import { isGranularRestrictedDashboard } from "@/lib/permissions/paths";
-import { AdminQuickActions } from "./_components/AdminQuickActions";
 
 function canAccessFinanceiro(access: ResolvedAdminAccess): boolean {
   if (access.kind === "all") return true;
@@ -55,7 +54,19 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
 
   const schoolName = schoolId ? stats.schools.find((s) => s.id === schoolId)?.name ?? "Todas" : "Todas";
 
+  const financeShortcuts = canAccessFinanceiro(access)
+    ? [
+        { href: "/admin/loja/vendas/novo", icon: "🧾", label: t("adminQuickRegisterSale") },
+        { href: "/admin/loja", icon: "🛍️", label: t("navLoja") },
+        { href: "/admin/financeiro", icon: "💶", label: t("navFinance") },
+        { href: "/admin/financeiro/relatorio", icon: "📈", label: t("adminQuickFinanceReport") },
+      ]
+    : [];
+
   const managementGroups = [
+    ...(financeShortcuts.length
+      ? [{ title: t("adminGroupShortcuts"), items: financeShortcuts }]
+      : []),
     {
       title: t("adminGroupPeople"),
       items: [
@@ -81,8 +92,6 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
         { href: "/admin/planos", icon: "💳", label: t("navPlans") },
         { href: "/admin/cursos", icon: "📚", label: t("navCourses") },
         { href: "/admin/eventos", icon: "✨", label: t("navEventsAdmin") },
-        { href: "/admin/financeiro", icon: "💶", label: t("navFinance") },
-        { href: "/admin/loja", icon: "🛍️", label: t("navLoja") },
       ],
     },
     {
@@ -102,15 +111,10 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
         <AdminSchoolFilter schools={stats.schools} currentSchoolId={schoolId} />
       </div>
 
-      {canAccessFinanceiro(access) && (
-        <AdminQuickActions
-          registerSaleLabel={t("adminQuickRegisterSale")}
-          shopLabel={t("navLoja")}
-          financeReportLabel={t("adminQuickFinanceReport")}
-        />
-      )}
+      {/* Gestão da plataforma (atalhos no mesmo modelo dos tiles) */}
+      <ManagementGrid groups={managementGroups} title={t("adminManagementTitle")} />
 
-      {/* Secção 1: SAÚDE DO NEGÓCIO */}
+      {/* Secção: SAÚDE DO NEGÓCIO */}
       <BusinessHealthStats
         revenueCurrentMonth={stats.revenueCurrentMonth}
         activeStudents={stats.activeStudents}
@@ -159,8 +163,6 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
         }}
       />
 
-      {/* Secção 4: GESTÃO DA PLATAFORMA */}
-      <ManagementGrid groups={managementGroups} title={t("adminManagementTitle")} />
     </>
   );
 }

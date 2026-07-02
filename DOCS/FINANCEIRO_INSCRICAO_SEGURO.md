@@ -80,7 +80,7 @@ O admin regista **um único acto** que:
 2. **Matrícula** — checkbox opcional: se marcado, `ENROLLMENT` → PAID; se desmarcado e ainda pendente, isenta (`enrollmentFeeWaived = true`) e remove `LATE` de matrícula.
 3. **Seguro** — obrigatório se configurado e pendente: `INSURANCE` → PAID + `renewStudentInsuranceCoverage` (datas em `StudentInsuranceCoverage`).
 
-Pré-requisito: aluno com plano e pagamentos de inscrição em `LATE` (ou elegível via `isStudentEligibleForFirstPayment`).
+Pré-requisito: aluno com plano e pagamentos de inscrição em `LATE` (ou elegível via `isStudentEligibleForFirstPayment`). O aviso «inscrição pendente» no registo de pagamento **não** aparece só por mensalidades `LATE` depois de já existir algum `PAID` — ver `hasPendingOnboardingPayments`.
 
 **Após PAID:** o middleware desbloqueia o resto da plataforma para o aluno.
 
