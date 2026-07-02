@@ -7,6 +7,8 @@ import { RenewalsSection } from "../RenewalsSection";
 import { AddExpenseForm } from "./AddExpenseForm";
 import { AddManualRevenueForm } from "./AddManualRevenueForm";
 import { dedupeDuplicatePaymentsAction, deleteFinancialExpense, deleteManualRevenue } from "../actions";
+import { EditExpenseForm } from "./EditExpenseForm";
+import { EXPENSE_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import type { RenewalPending } from "@/lib/renewals";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
@@ -79,6 +81,7 @@ type Labels = {
   colDate: string;
   colDescription: string;
   colKind: string;
+  colCategory: string;
   colAmount: string;
   colActions: string;
   noExpenses: string;
@@ -88,6 +91,7 @@ type Labels = {
   formKindField: string;
   formKindFixed: string;
   formKindVariable: string;
+  formCategory: string;
   formSubmit: string;
   expenseSaved: string;
   deleteLabel: string;
@@ -163,6 +167,7 @@ export function FinanceiroModals({
   const [open, setOpen] = useState<ModalId | null>(null);
   const [mounted, setMounted] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"all" | "PAID" | "LATE">("all");
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const titleId = useId();
   const monthLabelShort = `${referenceMonth.slice(5)}/${referenceMonth.slice(0, 4)}`;
 
@@ -442,6 +447,7 @@ export function FinanceiroModals({
                   kindField: labels.formKindField,
                   kindFixed: labels.formKindFixed,
                   kindVariable: labels.formKindVariable,
+                  categoryField: labels.formCategory,
                   amount: labels.formAmount,
                   description: labels.formDescription,
                   date: labels.formDate,
@@ -472,6 +478,7 @@ export function FinanceiroModals({
                         <th style={{ padding: "8px 10px" }}>{labels.colDate}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colDescription}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colKind}</th>
+                        <th style={{ padding: "8px 10px" }}>{labels.colCategory}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colAmount}</th>
                         <th style={{ padding: "8px 10px" }}>{labels.colActions}</th>
                       </tr>
@@ -479,20 +486,53 @@ export function FinanceiroModals({
                     <tbody>
                       {expenses.map((e) => (
                         <tr key={e.id} style={{ borderTop: "1px solid var(--card-border, rgba(0,0,0,.06))" }}>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatTableDate(e.occurredOn, locale)}</td>
-                          <td style={{ padding: "8px 10px" }}>{e.description}</td>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
-                            {e.kind === "FIXED" ? labels.formKindFixed : labels.formKindVariable}
-                          </td>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(e.amount, locale)}</td>
-                          <td style={{ padding: "8px 10px" }}>
-                            <form action={deleteFinancialExpense} style={{ margin: 0 }}>
-                              <input type="hidden" name="id" value={e.id} />
-                              <button type="submit" className="btn" style={{ fontSize: 12, padding: "4px 8px" }}>
-                                {labels.deleteLabel}
-                              </button>
-                            </form>
-                          </td>
+                          {editingExpenseId === e.id ? (
+                            <td colSpan={6} style={{ padding: "8px 10px" }}>
+                              <EditExpenseForm
+                                expense={e}
+                                onDone={() => setEditingExpenseId(null)}
+                                labels={{
+                                  amount: labels.formAmount,
+                                  description: labels.formDescription,
+                                  date: labels.formDate,
+                                  kindField: labels.formKindField,
+                                  kindFixed: labels.formKindFixed,
+                                  kindVariable: labels.formKindVariable,
+                                  categoryField: labels.formCategory,
+                                }}
+                              />
+                            </td>
+                          ) : (
+                            <>
+                              <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatTableDate(e.occurredOn, locale)}</td>
+                              <td style={{ padding: "8px 10px" }}>{e.description}</td>
+                              <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
+                                {e.kind === "FIXED" ? labels.formKindFixed : labels.formKindVariable}
+                              </td>
+                              <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
+                                {EXPENSE_CATEGORY_LABELS_PT[e.category] ?? e.category}
+                              </td>
+                              <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(e.amount, locale)}</td>
+                              <td style={{ padding: "8px 10px" }}>
+                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                  <button
+                                    type="button"
+                                    className="btn"
+                                    style={{ fontSize: 12, padding: "4px 8px" }}
+                                    onClick={() => setEditingExpenseId(e.id)}
+                                  >
+                                    Editar
+                                  </button>
+                                  <form action={deleteFinancialExpense} style={{ margin: 0 }}>
+                                    <input type="hidden" name="id" value={e.id} />
+                                    <button type="submit" className="btn" style={{ fontSize: 12, padding: "4px 8px" }}>
+                                      {labels.deleteLabel}
+                                    </button>
+                                  </form>
+                                </div>
+                              </td>
+                            </>
+                          )}
                         </tr>
                       ))}
                     </tbody>

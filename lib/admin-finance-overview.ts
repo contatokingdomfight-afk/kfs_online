@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
+import { getRevenueBreakdown } from "@/lib/admin-revenue-breakdown";
+import type { ExpenseCategory } from "@/lib/retail/constants";
 
 export type FinancialExpenseKind = "FIXED" | "VARIABLE";
 
@@ -12,6 +14,7 @@ export type FinancialExpenseRow = {
   occurredOn: string;
   createdAt: string;
   kind: FinancialExpenseKind;
+  category: ExpenseCategory;
 };
 
 function monthDateBounds(yyyyMm: string): { start: string; end: string; endExclusiveIso: string } {
@@ -56,8 +59,14 @@ export type FinanceiroOverview = {
   overviewError: string | null;
 };
 
-export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<FinanceiroOverview> {
-  const referenceMonth = currentReferenceMonthLisbon(new Date());
+export async function getFinanceiroOverview(
+  supabase: SupabaseClient,
+  referenceMonthOverride?: string
+): Promise<FinanceiroOverview> {
+  const referenceMonth =
+    referenceMonthOverride && /^\d{4}-\d{2}$/.test(referenceMonthOverride)
+      ? referenceMonthOverride
+      : currentReferenceMonthLisbon(new Date());
   const { start, end, endExclusiveIso } = monthDateBounds(referenceMonth);
   const base: FinanceiroOverview = {
     referenceMonth,
@@ -79,25 +88,25 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
 
   const withKind = await supabase
     .from("FinancialExpense")
-    .select("id, amount, description, occurredOn, createdAt, kind")
+    .select("id, amount, description, occurredOn, createdAt, kind, category")
     .order("occurredOn", { ascending: false })
     .order("createdAt", { ascending: false });
 
   if (withKind.error) {
     const msg = withKind.error.message ?? "";
-    const kindMissing =
-      /kind/i.test(msg) && (/does not exist|column/i.test(msg) || /42703/.test(msg));
-    if (kindMissing) {
-      const noKind = await supabase
+    const colMissing =
+      (/kind|category/i.test(msg) && (/does not exist|column/i.test(msg) || /42703/.test(msg)));
+    if (colMissing) {
+      const fallback = await supabase
         .from("FinancialExpense")
         .select("id, amount, description, occurredOn, createdAt")
         .order("occurredOn", { ascending: false })
         .order("createdAt", { ascending: false });
-      if (noKind.error) {
-        expensesError = noKind.error.message;
+      if (fallback.error) {
+        expensesError = fallback.error.message;
         expenseRows = [];
       } else {
-        expenseRows = noKind.data as unknown[];
+        expenseRows = fallback.data as unknown[];
         expensesError = null;
       }
     } else {
@@ -116,8 +125,10 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
       occurredOn: string;
       createdAt: string;
       kind?: string;
+      category?: string;
     };
     const kind: FinancialExpenseKind = x.kind === "FIXED" ? "FIXED" : "VARIABLE";
+    const category = (x.category ?? "OTHER") as ExpenseCategory;
     return {
       id: x.id,
       amount: Number(x.amount),
@@ -125,6 +136,7 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
       occurredOn: typeof x.occurredOn === "string" ? x.occurredOn.slice(0, 10) : String(x.occurredOn).slice(0, 10),
       createdAt: x.createdAt,
       kind,
+      category,
     };
   });
 
@@ -200,7 +212,10 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
     }
   }
 
-  const revenueCurrentMonth = revenueTuitionMonth + revenueOnboardingMonth;
+  const revenueBreakdown = await getRevenueBreakdown(supabase, referenceMonth);
+  const revenueFromSources = revenueBreakdown.error ? 0 : revenueBreakdown.total;
+  const revenueCurrentMonth = revenueFromSources + revenueOnboardingMonth;
+  const overviewError = revenueBreakdown.error ?? null;
 
   return {
     referenceMonth,
@@ -214,6 +229,6 @@ export async function getFinanceiroOverview(supabase: SupabaseClient): Promise<F
     balanceCurrentMonth: revenueCurrentMonth - expensesCurrentMonth,
     allExpenses: all,
     expensesError: expensesError,
-    overviewError: null,
+    overviewError,
   };
 }

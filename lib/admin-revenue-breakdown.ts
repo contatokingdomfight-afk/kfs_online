@@ -2,7 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type RevenueRowCategory = "PLAN" | "PLAN_NONE" | "COURSE" | "EVENT" | "MANUAL";
+export type RevenueRowCategory = "PLAN" | "PLAN_NONE" | "COURSE" | "EVENT" | "MANUAL" | "MERCHANDISE";
 
 export type RevenueBreakdownRow = {
   key: string;
@@ -157,6 +157,24 @@ export async function getRevenueBreakdown(
     byEvent.set(row.eventId, (byEvent.get(row.eventId) ?? 0) + price);
   }
 
+  const { data: retailSales, error: retailErr } = await supabase
+    .from("RetailSale")
+    .select("id, totalAmount, soldAt")
+    .eq("status", "COMPLETED")
+    .gte("soldAt", startIso)
+    .lt("soldAt", endExclusiveIso);
+
+  if (retailErr) {
+    if (!/relation|does not exist|RetailSale/i.test(retailErr.message)) {
+      return { ...empty, error: retailErr.message };
+    }
+  }
+
+  let merchandiseTotal = 0;
+  for (const s of retailSales ?? []) {
+    merchandiseTotal += Number((s as { totalAmount: string | number }).totalAmount);
+  }
+
   const { data: manualRows, error: manErr } = await supabase
     .from("FinancialRevenue")
     .select("id, amount, description, occurredOn")
@@ -207,6 +225,9 @@ export async function getRevenueBreakdown(
   }
   for (const m of manualLines) {
     rows.push({ key: `manual:${m.id}`, label: m.description, amount: m.amount, category: "MANUAL" });
+  }
+  if (merchandiseTotal > 0) {
+    rows.push({ key: "merchandise:total", label: "Loja presencial", amount: merchandiseTotal, category: "MERCHANDISE" });
   }
 
   let total = 0;

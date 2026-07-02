@@ -14,6 +14,7 @@ import { listConsecutiveReferenceMonths } from "@/lib/reference-month";
 import { createFirstPaymentBundle } from "@/lib/first-payment-bundle";
 import { getFamilyContext } from "@/lib/family-group";
 import { familyGroupIdForTuition } from "@/lib/family-tuition";
+import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/retail/constants";
 
 export type { StudentPaymentRow };
 
@@ -226,6 +227,10 @@ export async function createFinancialExpense(
   if (!occurredOn) return { error: "Data inválida (AAAA-MM-DD)." };
   const kindRaw = (formData.get("kind") as string)?.trim();
   const kind = kindRaw === "FIXED" || kindRaw === "VARIABLE" ? kindRaw : "VARIABLE";
+  const categoryRaw = (formData.get("category") as string)?.trim();
+  const category: ExpenseCategory = EXPENSE_CATEGORIES.includes(categoryRaw as ExpenseCategory)
+    ? (categoryRaw as ExpenseCategory)
+    : "OTHER";
 
   const supabase = createAdminClient();
   const id = crypto.randomUUID();
@@ -235,9 +240,44 @@ export async function createFinancialExpense(
     description,
     occurredOn,
     kind,
+    category,
   });
   if (error) return { error: error.message };
   revalidatePath("/admin/financeiro");
+  return { success: true };
+}
+
+export async function updateFinancialExpense(
+  _prev: ExpenseActionResult | null,
+  formData: FormData
+): Promise<ExpenseActionResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const id = (formData.get("id") as string)?.trim();
+  const amountStr = (formData.get("amount") as string)?.trim();
+  const description = (formData.get("description") as string)?.trim() ?? "";
+  const occurredOn = parseDateOnly((formData.get("occurredOn") as string) ?? "");
+  if (!id) return { error: "ID em falta." };
+  if (!description) return { error: "Descrição é obrigatória." };
+  const amount = parseFloat(amountStr ?? "");
+  if (Number.isNaN(amount) || amount <= 0) return { error: "Indica um valor positivo." };
+  if (!occurredOn) return { error: "Data inválida (AAAA-MM-DD)." };
+  const kindRaw = (formData.get("kind") as string)?.trim();
+  const kind = kindRaw === "FIXED" || kindRaw === "VARIABLE" ? kindRaw : "VARIABLE";
+  const categoryRaw = (formData.get("category") as string)?.trim();
+  const category: ExpenseCategory = EXPENSE_CATEGORIES.includes(categoryRaw as ExpenseCategory)
+    ? (categoryRaw as ExpenseCategory)
+    : "OTHER";
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("FinancialExpense")
+    .update({ amount: amount.toFixed(2), description, occurredOn, kind, category })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro/relatorio");
   return { success: true };
 }
 

@@ -20,6 +20,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 | Mensalidades, crons, suspensão | [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md) |
 
+| Loja presencial + relatório financeiro | [`LOJA_PRESENCIAL.md`](LOJA_PRESENCIAL.md) |
+
 | Mobile — PWA pelo site | [`MOBILE_APP_DISTRIBUICAO.md`](MOBILE_APP_DISTRIBUICAO.md) · [`PWA.md`](PWA.md) |
 
 | Capacitor (fase 2) | [`CAPACITOR.md`](CAPACITOR.md) |
@@ -278,5 +280,17 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Mensalidade **80 €/pessoa** (`KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON`, `lib/family-tuition.ts`); cada membro tem `TUITION` própria; acesso com PAID individual (`lib/family-payment-gate.ts`).
 - Migrações: `20260701120000_family_plan.sql`, … `20260705120000_family_group_backfill_any_family_plan.sql`, **`20260706120000_family_plan_per_person_tuition.sql`**.
 - Reparo automático: `repairOrphanFamilyTitulars` + `backfillFamilyGroupTuitions` ao abrir `/admin/familias`.
+
+
+## Loja presencial e relatório financeiro (jun. 2026)
+
+**Documentação:** [`LOJA_PRESENCIAL.md`](LOJA_PRESENCIAL.md).
+
+- Migração **`20260707120000_retail_inventory.sql`**: `ProductSupplier`, `Product`, `ProductVariant`, `InventoryBalance`, `StockMovement`, `RetailSale`, `RetailSaleLine`; coluna `category` em `FinancialExpense`.
+- Admin: `/admin/loja` (hub, POS, produtos, stock, vendas). Permissões = financeiro (`admin:financeiro:*`).
+- `lib/retail/` — catálogo, movimentos, `createRetailSale` (sale + OUT + balance).
+- Receitas loja: categoria **`MERCHANDISE`** em `lib/admin-revenue-breakdown.ts`.
+- Relatório consolidado: `/admin/financeiro/relatorio` (`lib/admin-financial-report.ts`); CSV + gráfico 6 meses.
+- Overview `/admin/financeiro`: seletor de mês (`?month=AAAA-MM`); saldo = todas as receitas (breakdown + matrícula/seguro) − despesas; despesas com categoria e edição no modal.
 
 

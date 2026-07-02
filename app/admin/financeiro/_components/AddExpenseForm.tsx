@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createFinancialExpense, type ExpenseActionResult } from "../actions";
+import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -17,6 +18,7 @@ type Labels = {
   kindField: string;
   kindFixed: string;
   kindVariable: string;
+  categoryField: string;
   amount: string;
   description: string;
   date: string;
@@ -87,6 +89,14 @@ export function AddExpenseForm({ defaultDate, labels }: { defaultDate: string; l
             </label>
           </div>
         </div>
+        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.categoryField}</span>
+          <select name="category" className="input" defaultValue="OTHER">
+            {EXPENSE_CATEGORIES.map((c) => (
+              <option key={c} value={c}>{EXPENSE_CATEGORY_LABELS_PT[c]}</option>
+            ))}
+          </select>
+        </label>
         <div
           style={{
             display: "grid",

@@ -117,6 +117,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md) | Matrícula, seguro anual, waiver, 1.º pagamento, gate presencial, migrações jun. 2026 |
 | [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md) | Mensalidades, crons, Lisboa, `paymentType` |
 | [`FINANCEIRO_STRIPE_E_PRESENCIAL.md`](FINANCEIRO_STRIPE_E_PRESENCIAL.md) | Stripe vs presencial; faturação AT |
+| [`LOJA_PRESENCIAL.md`](LOJA_PRESENCIAL.md) | Loja admin, stock, vendas, relatório consolidado, migração `20260707120000_retail_inventory.sql` |
 | [`STRIPE_KINGDOM_ONLINE.md`](STRIPE_KINGDOM_ONLINE.md) | Stripe no projeto |
 
 ---

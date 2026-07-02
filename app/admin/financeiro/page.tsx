@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -13,12 +14,14 @@ import { getTranslations } from "@/lib/i18n";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { FinanceiroModals, type PaymentListRow } from "./_components/FinanceiroModals";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { MonthSelector } from "./_components/MonthSelector";
 
 type SearchParams = Promise<{
   deduped?: string;
   dedupedError?: string;
   expenseError?: string;
   revenueError?: string;
+  month?: string;
 }>;
 
 function formatRevenueRowLabel(t: (key: import("@/lib/i18n").MessageKey) => string, row: RevenueBreakdownRow): string {
@@ -33,6 +36,8 @@ function formatRevenueRowLabel(t: (key: import("@/lib/i18n").MessageKey) => stri
       return `${t("adminFinanceRevenueTagEvent")}: ${row.label}`;
     case "MANUAL":
       return `${t("adminFinanceRevenueTagManual")}: ${row.label}`;
+    case "MERCHANDISE":
+      return `${t("adminFinanceRevenueTagMerchandise")}: ${row.label}`;
     default:
       return row.label;
   }
@@ -59,16 +64,19 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
+  const currentMonth = currentReferenceMonthLisbon(new Date());
+  const referenceMonth =
+    params.month && /^\d{4}-\d{2}$/.test(params.month) ? params.month : currentMonth;
+
   const [locale, overview] = await Promise.all([
     getLocaleFromCookies() as Promise<"pt" | "en">,
-    getFinanceiroOverview(supabase),
+    getFinanceiroOverview(supabase, referenceMonth),
   ]);
-  const revenue = await getRevenueBreakdown(supabase, overview.referenceMonth);
+  const revenue = await getRevenueBreakdown(supabase, referenceMonth);
   const t = getTranslations(locale);
   const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
 
-  const currentMonth = currentReferenceMonthLisbon(new Date());
-  const renewalsPending = await getRenewalsPending(supabase, currentMonth);
+  const renewalsPending = await getRenewalsPending(supabase, referenceMonth);
 
   const { data: payments } = await supabase
     .from("Payment")
@@ -139,7 +147,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       : "",
   }));
 
-  const refMonthForLabel = overview.referenceMonth;
+  const refMonthForLabel = referenceMonth;
   const periodLabel = new Date(refMonthForLabel + "-15T12:00:00Z").toLocaleDateString(
     locale === "en" ? "en-GB" : "pt-PT",
     { month: "long", year: "numeric" }
@@ -233,6 +241,28 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
             Primeiro pagamento
           </Link>
           <Link
+            href="/admin/financeiro/relatorio"
+            className="btn btn-secondary"
+            style={{
+              textDecoration: "none",
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            Relatório consolidado
+          </Link>
+          <Link
+            href="/admin/loja"
+            className="btn btn-secondary"
+            style={{
+              textDecoration: "none",
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            Loja presencial
+          </Link>
+          <Link
             href="/admin/financeiro/novo"
             className="btn btn-primary"
             style={{
@@ -267,6 +297,9 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           >
             {t("adminFinanceOverviewTitle")} — {periodLabel}
           </h2>
+          <Suspense fallback={null}>
+            <MonthSelector currentMonth={referenceMonth} label={t("adminFinanceMonthSelector")} />
+          </Suspense>
           <InlineInfoTip
             detail={t("adminFinancePeriodHint")}
             ariaLabel={t("adminFinancePeriodInfoAria")}
@@ -377,7 +410,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       </div>
 
       <FinanceiroModals
-        referenceMonth={currentMonth}
+        referenceMonth={referenceMonth}
         renewalsPending={renewalsPending}
         paymentRows={paymentRows}
         expenses={overview.allExpenses}
@@ -424,6 +457,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           colDate: t("adminFinanceColDate"),
           colDescription: t("adminFinanceColDescription"),
           colKind: t("adminFinanceColKind"),
+          colCategory: t("adminFinanceColCategory"),
           colAmount: t("adminFinanceColAmount"),
           colActions: t("adminFinanceColActions"),
           noExpenses: t("adminFinanceNoExpenses"),
@@ -433,6 +467,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           formKindField: t("adminFinanceFormKind"),
           formKindFixed: t("adminFinanceKindFixed"),
           formKindVariable: t("adminFinanceKindVariable"),
+          formCategory: t("adminFinanceColCategory"),
           formSubmit: t("adminFinanceFormSubmit"),
           expenseSaved: t("adminFinanceExpenseSaved"),
           deleteLabel: t("adminFinanceDelete"),

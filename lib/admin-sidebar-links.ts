@@ -36,6 +36,7 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
     },
     { label: t("navMissions"), href: "/admin/missoes" },
     { label: t("navFinance"), href: "/admin/financeiro" },
+    { label: t("navLoja"), href: "/admin/loja" },
     { label: t("navSettings"), href: "/admin/configuracoes" },
     { label: t("navPermissions"), href: "/admin/permissoes" },
   ];
