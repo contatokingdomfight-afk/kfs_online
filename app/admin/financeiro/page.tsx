@@ -13,8 +13,10 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { FinanceiroModals, type PaymentListRow } from "./_components/FinanceiroModals";
+import { CashDepositForm } from "./_components/CashDepositForm";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { MonthSelector } from "./_components/MonthSelector";
+import { FINANCE_PAYMENT_METHODS, FINANCE_PAYMENT_METHOD_LABELS_PT } from "@/lib/finance-payment-method";
 
 type SearchParams = Promise<{
   deduped?: string;
@@ -394,16 +396,123 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
                 marginBottom: 4,
               }}
             >
-              <span>{t("adminFinanceCashOnHand")}</span>
+              <span>{t("adminFinanceCaixa")}</span>
               <InlineInfoTip
-                detail={`${t("adminFinanceCashOnHandHint")} ${locale === "pt" ? "Movimento no mês:" : "Month movement:"} ${formatMoneyN(overview.cashNetMonth, locale)}`}
-                ariaLabel={t("adminFinanceCashOnHandInfoAria")}
+                detail={`${t("adminFinanceCaixaHint")}${overview.cashDepositsInMonth > 0 ? ` ${locale === "pt" ? "Depósitos de espécie no mês:" : "Cash deposits this month:"} ${formatMoneyN(overview.cashDepositsInMonth, locale)}` : ""}`}
+                ariaLabel={t("adminFinanceCaixaInfoAria")}
               />
             </div>
             <div style={{ fontSize: "clamp(20px, 4vw, 24px)", fontWeight: 700, color: "var(--text-primary)" }}>
-              {formatMoneyN(overview.cashOnHandTotal, locale)}
+              {formatMoneyN(overview.caixaBankTotal, locale)}
             </div>
           </div>
+          <div className="card" style={{ padding: 14, background: "var(--bg)" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 6,
+                fontSize: 12,
+                color: "var(--text-secondary)",
+                marginBottom: 4,
+              }}
+            >
+              <span>{t("adminFinancePhysicalCash")}</span>
+              <InlineInfoTip
+                detail={t("adminFinancePhysicalCashHint")}
+                ariaLabel={t("adminFinancePhysicalCashInfoAria")}
+              />
+            </div>
+            <div style={{ fontSize: "clamp(20px, 4vw, 24px)", fontWeight: 700, color: "var(--text-primary)" }}>
+              {formatMoneyN(overview.physicalCashOnHand, locale)}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 16, marginBottom: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 8,
+              marginBottom: 10,
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
+              {t("adminFinanceRevenueByMethodTitle")}
+            </h3>
+            <InlineInfoTip detail={t("adminFinanceRevenueByMethodHint")} ariaLabel={t("adminFinanceRevenueByMethodTitle")} />
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
+              gap: 10,
+            }}
+          >
+            {FINANCE_PAYMENT_METHODS.map((method) => (
+              <div key={method} className="card" style={{ padding: 12, background: "var(--bg)" }}>
+                <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>
+                  {FINANCE_PAYMENT_METHOD_LABELS_PT[method]}
+                </div>
+                <div style={{ fontSize: "clamp(16px, 3.5vw, 20px)", fontWeight: 700, color: "var(--text-primary)" }}>
+                  {formatMoneyN(overview.revenueInMonthByMethod[method], locale)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card" style={{ marginTop: 16, padding: "clamp(16px, 4vw, 20px)", background: "var(--surface)" }}>
+          <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
+            {t("adminFinanceCashDepositTitle")}
+          </h3>
+          {overview.treasuryError && (
+            <p role="alert" style={{ color: "var(--error)", fontSize: 13, margin: "0 0 12px 0" }}>
+              {overview.treasuryError}
+            </p>
+          )}
+          <CashDepositForm
+            defaultDate={todayYmd}
+            physicalCashOnHand={overview.physicalCashOnHand}
+            labels={{
+              amount: t("adminFinanceCashDepositAmount"),
+              date: t("adminFinanceCashDepositDate"),
+              description: t("adminFinanceCashDepositDescription"),
+              submit: t("adminFinanceCashDepositSubmit"),
+              success: t("adminFinanceCashDepositSaved"),
+              physicalCashHint: t("adminFinanceCashDepositHint"),
+            }}
+          />
+          {overview.recentCashDeposits.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <h4 style={{ margin: "0 0 8px 0", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
+                {t("adminFinanceCashDepositRecent")}
+              </h4>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+                {overview.recentCashDeposits.slice(0, 8).map((d) => (
+                  <li
+                    key={d.id}
+                    style={{
+                      fontSize: 13,
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "6px 12px",
+                      justifyContent: "space-between",
+                      borderTop: "1px solid var(--border)",
+                      paddingTop: 6,
+                    }}
+                  >
+                    <span style={{ color: "var(--text-secondary)" }}>{d.occurredOn}</span>
+                    <span style={{ flex: 1, minWidth: 120 }}>{d.description ?? "—"}</span>
+                    <strong>{formatMoneyN(d.amount, locale)}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </section>
 

@@ -42,3 +42,8 @@ export function paymentMethodLabelPt(method: string | null | undefined): string 
 export function isCashPaymentMethod(method: string | null | undefined): boolean {
   return method === "CASH";
 }
+
+/** Entradas/saídas via conta (não físico). */
+export function isBankPaymentMethod(method: string | null | undefined): boolean {
+  return method === "TRANSFER" || method === "MBWAY" || method === "DEPOSIT";
+}

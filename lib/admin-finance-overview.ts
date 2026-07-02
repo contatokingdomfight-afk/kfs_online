@@ -5,7 +5,8 @@ import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { getRevenueBreakdown } from "@/lib/admin-revenue-breakdown";
 import type { ExpenseCategory } from "@/lib/retail/constants";
 import type { FinancePaymentMethod } from "@/lib/finance-payment-method";
-import { getCashBalance } from "@/lib/cash-balance";
+import type { CashDepositRow } from "@/lib/cash-balance";
+import { getTreasuryBalances } from "@/lib/cash-balance";
 
 export type FinancialExpenseKind = "FIXED" | "VARIABLE";
 
@@ -57,9 +58,12 @@ export type FinanceiroOverview = {
   /** Soma das despesas com data no mês e kind VARIABLE. */
   expensesVariableMonth: number;
   balanceCurrentMonth: number;
-  /** Espécie em caixa (acumulado registado na plataforma). */
-  cashOnHandTotal: number;
-  cashNetMonth: number;
+  caixaBankTotal: number;
+  physicalCashOnHand: number;
+  revenueInMonthByMethod: Record<FinancePaymentMethod, number>;
+  cashDepositsInMonth: number;
+  recentCashDeposits: CashDepositRow[];
+  treasuryError: string | null;
   allExpenses: FinancialExpenseRow[];
   expensesError: string | null;
   overviewError: string | null;
@@ -84,8 +88,12 @@ export async function getFinanceiroOverview(
     expensesFixedMonth: 0,
     expensesVariableMonth: 0,
     balanceCurrentMonth: 0,
-    cashOnHandTotal: 0,
-    cashNetMonth: 0,
+    caixaBankTotal: 0,
+    physicalCashOnHand: 0,
+    revenueInMonthByMethod: { CASH: 0, TRANSFER: 0, MBWAY: 0, DEPOSIT: 0 },
+    cashDepositsInMonth: 0,
+    recentCashDeposits: [],
+    treasuryError: null,
     allExpenses: [],
     expensesError: null,
     overviewError: null,
@@ -230,7 +238,7 @@ export async function getFinanceiroOverview(
   const revenueFromSources = revenueBreakdown.error ? 0 : revenueBreakdown.total;
   const revenueCurrentMonth = revenueFromSources + revenueOnboardingMonth;
   const overviewError = revenueBreakdown.error ?? null;
-  const cash = await getCashBalance(supabase, referenceMonth);
+  const treasury = await getTreasuryBalances(supabase, referenceMonth);
 
   return {
     referenceMonth,
@@ -242,8 +250,12 @@ export async function getFinanceiroOverview(
     expensesFixedMonth,
     expensesVariableMonth,
     balanceCurrentMonth: revenueCurrentMonth - expensesCurrentMonth,
-    cashOnHandTotal: cash.cashOnHandTotal,
-    cashNetMonth: cash.cashNetMonth,
+    caixaBankTotal: treasury.caixaBankTotal,
+    physicalCashOnHand: treasury.physicalCashOnHand,
+    revenueInMonthByMethod: treasury.revenueInMonthByMethod,
+    cashDepositsInMonth: treasury.cashDepositsInMonth,
+    recentCashDeposits: treasury.recentCashDeposits,
+    treasuryError: treasury.treasuryError,
     allExpenses: all,
     expensesError: expensesError,
     overviewError,

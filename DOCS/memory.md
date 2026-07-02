@@ -294,6 +294,6 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Relatório consolidado: `/admin/financeiro/relatorio` (`lib/admin-financial-report.ts`); CSV + gráfico 6 meses.
 - Overview `/admin/financeiro`: seletor de mês (`?month=AAAA-MM`); saldo = todas as receitas (breakdown + matrícula/seguro) − despesas; despesas com categoria e edição no modal.
 - **Forma de pagamento** (`CASH` | `TRANSFER` | `MBWAY` | `DEPOSIT`) em pagamentos `PAID`, receitas manuais, despesas e loja — migração `20260708120000_finance_payment_method.sql`.
-- **KPI Caixa (espécie):** entradas `CASH` − saídas `CASH` (`lib/cash-balance.ts`); registos sem forma de pagamento não entram.
+- **KPIs tesouraria** (`lib/cash-balance.ts`): **Caixa** = saldo bancário acumulado; **Espécie em mão** = físico não depositado; **Entradas do mês** por forma (`CASH`/`TRANSFER`/`MBWAY`/`DEPOSIT`). **Depósito de espécie** → tabela `TreasuryMovement` (`20260709120000_treasury_cash_deposit.sql`): move valor da espécie em mão para a Caixa sem contar como receita nova.
 
 

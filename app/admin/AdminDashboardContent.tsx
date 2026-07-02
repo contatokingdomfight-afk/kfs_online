@@ -111,9 +111,6 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
         <AdminSchoolFilter schools={stats.schools} currentSchoolId={schoolId} />
       </div>
 
-      {/* Gestão da plataforma (atalhos no mesmo modelo dos tiles) */}
-      <ManagementGrid groups={managementGroups} title={t("adminManagementTitle")} />
-
       {/* Secção: SAÚDE DO NEGÓCIO */}
       <BusinessHealthStats
         revenueCurrentMonth={stats.revenueCurrentMonth}
@@ -127,6 +124,9 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
           avgAttendanceDaily: t("adminAvgAttendanceDaily"),
         }}
       />
+
+      {/* Gestão da plataforma (atalhos no mesmo modelo dos tiles) */}
+      <ManagementGrid groups={managementGroups} title={t("adminManagementTitle")} />
 
       {/* Secção 2: AÇÕES IMEDIATAS */}
       <ActionItems

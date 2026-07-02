@@ -1,7 +1,13 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isCashPaymentMethod } from "@/lib/finance-payment-method";
+import {
+  FINANCE_PAYMENT_METHODS,
+  type FinancePaymentMethod,
+  isBankPaymentMethod,
+  isCashPaymentMethod,
+  isFinancePaymentMethod,
+} from "@/lib/finance-payment-method";
 
 function monthDateBounds(yyyyMm: string): { start: string; end: string; endExclusiveIso: string } {
   const [y, m] = yyyyMm.split("-").map(Number);
@@ -17,47 +23,75 @@ function inMonthDate(occurredOn: string, start: string, end: string): boolean {
   return d >= start && d <= end;
 }
 
-export type CashBalanceSummary = {
-  /** Entradas em espécie − saídas em espécie (todos os registos). */
-  cashOnHandTotal: number;
-  /** Movimento líquido em espécie no mês de referência. */
-  cashNetMonth: number;
-  cashInMonth: number;
-  cashOutMonth: number;
+function emptyRevenueByMethod(): Record<FinancePaymentMethod, number> {
+  return { CASH: 0, TRANSFER: 0, MBWAY: 0, DEPOSIT: 0 };
+}
+
+export type CashDepositRow = {
+  id: string;
+  amount: number;
+  occurredOn: string;
+  description: string | null;
+  createdAt: string;
 };
 
-function sumCashAmounts(rows: { amount: number; paymentMethod?: string | null }[]): number {
-  let t = 0;
-  for (const r of rows) {
-    if (isCashPaymentMethod(r.paymentMethod)) t += r.amount;
-  }
-  return t;
+export type TreasuryBalanceSummary = {
+  /** Saldo bancário acumulado (entradas bancárias + depósitos de espécie − despesas bancárias). */
+  caixaBankTotal: number;
+  /** Dinheiro físico ainda não depositado na conta. */
+  physicalCashOnHand: number;
+  /** Entradas do mês de referência por forma de pagamento (só receitas, não despesas). */
+  revenueInMonthByMethod: Record<FinancePaymentMethod, number>;
+  /** Depósitos de espécie na conta no mês de referência. */
+  cashDepositsInMonth: number;
+  recentCashDeposits: CashDepositRow[];
+  treasuryError: string | null;
+};
+
+function addRevenueMonth(
+  byMethod: Record<FinancePaymentMethod, number>,
+  method: string | null | undefined,
+  amount: number
+) {
+  const amt = Number(amount);
+  if (!Number.isFinite(amt) || !isFinancePaymentMethod(method ?? "")) return;
+  byMethod[method as FinancePaymentMethod] += amt;
 }
 
 /**
- * Caixa em espécie: soma entradas CASH (pagamentos PAID, receitas manuais, loja) menos despesas CASH.
- * Registos sem forma de pagamento não entram no cálculo.
+ * Tesouraria registada na plataforma. Não substitui extrato bancário real.
+ * - Caixa = conta acumulada
+ * - Espécie em mão = físico − depósitos já registados
+ * - Entradas do mês = receitas classificadas por forma de pagamento
  */
-export async function getCashBalance(
+export async function getTreasuryBalances(
   supabase: SupabaseClient,
   referenceMonth: string
-): Promise<CashBalanceSummary> {
-  const empty: CashBalanceSummary = {
-    cashOnHandTotal: 0,
-    cashNetMonth: 0,
-    cashInMonth: 0,
-    cashOutMonth: 0,
+): Promise<TreasuryBalanceSummary> {
+  const empty: TreasuryBalanceSummary = {
+    caixaBankTotal: 0,
+    physicalCashOnHand: 0,
+    revenueInMonthByMethod: emptyRevenueByMethod(),
+    cashDepositsInMonth: 0,
+    recentCashDeposits: [],
+    treasuryError: null,
   };
   const { start, end, endExclusiveIso } = monthDateBounds(referenceMonth);
+  const revenueInMonthByMethod = emptyRevenueByMethod();
 
-  const [
-    tuitionRes,
-    onboardingRes,
-    manualRes,
-    retailRes,
-    expenseRes,
-  ] = await Promise.all([
-    supabase.from("Payment").select("amount, paymentMethod, referenceMonth, status, paymentType").eq("status", "PAID").eq("paymentType", "TUITION"),
+  let bankInTotal = 0;
+  let bankOutTotal = 0;
+  let cashInTotal = 0;
+  let cashOutTotal = 0;
+  let cashDepositsTotal = 0;
+  let cashDepositsInMonth = 0;
+
+  const [tuitionRes, onboardingRes, manualRes, retailRes, expenseRes, depositRes] = await Promise.all([
+    supabase
+      .from("Payment")
+      .select("amount, paymentMethod, referenceMonth, status, paymentType")
+      .eq("status", "PAID")
+      .eq("paymentType", "TUITION"),
     supabase
       .from("Payment")
       .select("amount, paymentMethod, createdAt, status, paymentType")
@@ -66,67 +100,115 @@ export async function getCashBalance(
     supabase.from("FinancialRevenue").select("amount, paymentMethod, occurredOn"),
     supabase.from("RetailSale").select("totalAmount, paymentMethod, soldAt, status").eq("status", "COMPLETED"),
     supabase.from("FinancialExpense").select("amount, paymentMethod, occurredOn"),
+    supabase
+      .from("TreasuryMovement")
+      .select("id, amount, occurredOn, description, createdAt, kind")
+      .eq("kind", "CASH_DEPOSIT")
+      .order("occurredOn", { ascending: false })
+      .order("createdAt", { ascending: false })
+      .limit(20),
   ]);
 
   if (tuitionRes.error?.message && !/paymentMethod|column/i.test(tuitionRes.error.message)) {
-    return empty;
+    return { ...empty, treasuryError: tuitionRes.error.message };
   }
+
+  const depositTableMissing =
+    depositRes.error?.message &&
+    (/TreasuryMovement|relation|does not exist|42P01/i.test(depositRes.error.message) ||
+      /42703/.test(depositRes.error.message));
 
   type Pay = { amount: number; paymentMethod?: string | null; referenceMonth?: string; createdAt?: string };
-  const tuition = (tuitionRes.data ?? []) as Pay[];
-  const onboarding = (onboardingRes.data ?? []) as Pay[];
 
-  let cashInTotal = 0;
-  let cashInMonth = 0;
+  const addInflow = (method: string | null | undefined, amount: number, inMonth: boolean) => {
+    const amt = Number(amount);
+    if (!Number.isFinite(amt)) return;
+    if (isCashPaymentMethod(method)) {
+      cashInTotal += amt;
+      if (inMonth) addRevenueMonth(revenueInMonthByMethod, method, amt);
+    } else if (isBankPaymentMethod(method)) {
+      bankInTotal += amt;
+      if (inMonth) addRevenueMonth(revenueInMonthByMethod, method, amt);
+    }
+  };
 
-  for (const p of tuition) {
-    const amt = Number(p.amount);
-    if (!isCashPaymentMethod(p.paymentMethod)) continue;
-    cashInTotal += amt;
-    if (p.referenceMonth === referenceMonth) cashInMonth += amt;
+  const addOutflow = (method: string | null | undefined, amount: number) => {
+    const amt = Number(amount);
+    if (!Number.isFinite(amt)) return;
+    if (isCashPaymentMethod(method)) cashOutTotal += amt;
+    else if (isBankPaymentMethod(method)) bankOutTotal += amt;
+  };
+
+  for (const p of (tuitionRes.data ?? []) as Pay[]) {
+    addInflow(p.paymentMethod, p.amount, p.referenceMonth === referenceMonth);
   }
 
-  for (const p of onboarding) {
-    const amt = Number(p.amount);
-    if (!isCashPaymentMethod(p.paymentMethod)) continue;
+  for (const p of (onboardingRes.data ?? []) as Pay[]) {
     const created = p.createdAt ? String(p.createdAt) : "";
-    cashInTotal += amt;
-    if (created >= `${start}T00:00:00.000Z` && created < endExclusiveIso) cashInMonth += amt;
+    addInflow(
+      p.paymentMethod,
+      p.amount,
+      created >= `${start}T00:00:00.000Z` && created < endExclusiveIso
+    );
   }
 
   for (const r of manualRes.data ?? []) {
     const row = r as { amount: number; paymentMethod?: string | null; occurredOn: string };
-    const amt = Number(row.amount);
-    if (!isCashPaymentMethod(row.paymentMethod)) continue;
-    const d = typeof row.occurredOn === "string" ? row.occurredOn.slice(0, 10) : String(row.occurredOn).slice(0, 10);
-    cashInTotal += amt;
-    if (inMonthDate(d, start, end)) cashInMonth += amt;
+    const d =
+      typeof row.occurredOn === "string" ? row.occurredOn.slice(0, 10) : String(row.occurredOn).slice(0, 10);
+    addInflow(row.paymentMethod, row.amount, inMonthDate(d, start, end));
   }
 
   for (const s of retailRes.data ?? []) {
     const row = s as { totalAmount: number; paymentMethod?: string | null; soldAt: string };
-    const amt = Number(row.totalAmount);
-    if (!isCashPaymentMethod(row.paymentMethod)) continue;
     const sold = String(row.soldAt);
-    cashInTotal += amt;
-    if (sold >= `${start}T00:00:00.000Z` && sold < endExclusiveIso) cashInMonth += amt;
+    addInflow(
+      row.paymentMethod,
+      row.totalAmount,
+      sold >= `${start}T00:00:00.000Z` && sold < endExclusiveIso
+    );
   }
 
-  let cashOutTotal = 0;
-  let cashOutMonth = 0;
   for (const e of expenseRes.data ?? []) {
-    const row = e as { amount: number; paymentMethod?: string | null; occurredOn: string };
-    const amt = Number(row.amount);
-    if (!isCashPaymentMethod(row.paymentMethod)) continue;
-    const d = typeof row.occurredOn === "string" ? row.occurredOn.slice(0, 10) : String(row.occurredOn).slice(0, 10);
-    cashOutTotal += amt;
-    if (inMonthDate(d, start, end)) cashOutMonth += amt;
+    const row = e as { amount: number; paymentMethod?: string | null };
+    addOutflow(row.paymentMethod, row.amount);
+  }
+
+  const recentCashDeposits: CashDepositRow[] = [];
+  if (!depositRes.error && depositRes.data) {
+    for (const d of depositRes.data) {
+      const row = d as {
+        id: string;
+        amount: number;
+        occurredOn: string;
+        description?: string | null;
+        createdAt: string;
+      };
+      const amt = Number(row.amount);
+      cashDepositsTotal += amt;
+      const on =
+        typeof row.occurredOn === "string" ? row.occurredOn.slice(0, 10) : String(row.occurredOn).slice(0, 10);
+      if (inMonthDate(on, start, end)) cashDepositsInMonth += amt;
+      recentCashDeposits.push({
+        id: row.id,
+        amount: amt,
+        occurredOn: on,
+        description: row.description ?? null,
+        createdAt: String(row.createdAt),
+      });
+    }
   }
 
   return {
-    cashOnHandTotal: cashInTotal - cashOutTotal,
-    cashNetMonth: cashInMonth - cashOutMonth,
-    cashInMonth,
-    cashOutMonth,
+    caixaBankTotal: bankInTotal - bankOutTotal + cashDepositsTotal,
+    physicalCashOnHand: cashInTotal - cashOutTotal - cashDepositsTotal,
+    revenueInMonthByMethod,
+    cashDepositsInMonth,
+    recentCashDeposits,
+    treasuryError: depositTableMissing
+      ? "Aplica a migração treasury_cash_deposit.sql para registar depósitos de espécie."
+      : depositRes.error?.message ?? null,
   };
 }
+
+export { FINANCE_PAYMENT_METHODS };

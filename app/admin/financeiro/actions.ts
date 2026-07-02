@@ -465,3 +465,40 @@ export async function createFirstPayment(
   revalidatePath("/escolher-plano");
   redirect("/admin/financeiro");
 }
+
+export type CashDepositActionResult = { error?: string; success?: boolean };
+
+/** Regista depósito de espécie na conta bancária (movimento interno, não é receita). */
+export async function createCashDeposit(
+  _prev: CashDepositActionResult | null,
+  formData: FormData
+): Promise<CashDepositActionResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const amountStr = (formData.get("amount") as string)?.trim();
+  const description = (formData.get("description") as string)?.trim() || "Depósito de espécie na conta";
+  const occurredOn = parseDateOnly((formData.get("occurredOn") as string) ?? "");
+  const amount = parseFloat(amountStr ?? "");
+  if (Number.isNaN(amount) || amount <= 0) return { error: "Indica um valor positivo." };
+  if (!occurredOn) return { error: "Data inválida (AAAA-MM-DD)." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("TreasuryMovement").insert({
+    id: crypto.randomUUID(),
+    kind: "CASH_DEPOSIT",
+    amount: amount.toFixed(2),
+    occurredOn,
+    description,
+    createdByUserId: dbUser.id,
+  });
+  if (error) {
+    if (/TreasuryMovement|relation|does not exist/i.test(error.message)) {
+      return { error: "Tabela TreasuryMovement em falta — aplica a migração treasury_cash_deposit.sql no Supabase." };
+    }
+    return { error: error.message };
+  }
+
+  revalidatePath("/admin/financeiro");
+  return { success: true };
+}
