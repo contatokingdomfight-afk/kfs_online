@@ -6,7 +6,7 @@ import {
   type FinancePaymentMethod,
   isBankPaymentMethod,
   isCashPaymentMethod,
-  isFinancePaymentMethod,
+  treasuryPaymentMethod,
 } from "@/lib/finance-payment-method";
 
 function monthDateBounds(yyyyMm: string): { start: string; end: string; endExclusiveIso: string } {
@@ -54,8 +54,10 @@ function addRevenueMonth(
   amount: number
 ) {
   const amt = Number(amount);
-  if (!Number.isFinite(amt) || !isFinancePaymentMethod(method ?? "")) return;
-  byMethod[method as FinancePaymentMethod] += amt;
+  if (!Number.isFinite(amt)) return;
+  const resolved = treasuryPaymentMethod(method);
+  if (!resolved) return;
+  byMethod[resolved] += amt;
 }
 
 /**
@@ -123,20 +125,24 @@ export async function getTreasuryBalances(
   const addInflow = (method: string | null | undefined, amount: number, inMonth: boolean) => {
     const amt = Number(amount);
     if (!Number.isFinite(amt)) return;
-    if (isCashPaymentMethod(method)) {
+    const resolved = treasuryPaymentMethod(method);
+    if (!resolved) return;
+    if (isCashPaymentMethod(resolved)) {
       cashInTotal += amt;
-      if (inMonth) addRevenueMonth(revenueInMonthByMethod, method, amt);
-    } else if (isBankPaymentMethod(method)) {
+      if (inMonth) addRevenueMonth(revenueInMonthByMethod, resolved, amt);
+    } else if (isBankPaymentMethod(resolved)) {
       bankInTotal += amt;
-      if (inMonth) addRevenueMonth(revenueInMonthByMethod, method, amt);
+      if (inMonth) addRevenueMonth(revenueInMonthByMethod, resolved, amt);
     }
   };
 
   const addOutflow = (method: string | null | undefined, amount: number) => {
     const amt = Number(amount);
     if (!Number.isFinite(amt)) return;
-    if (isCashPaymentMethod(method)) cashOutTotal += amt;
-    else if (isBankPaymentMethod(method)) bankOutTotal += amt;
+    const resolved = treasuryPaymentMethod(method);
+    if (!resolved) return;
+    if (isCashPaymentMethod(resolved)) cashOutTotal += amt;
+    else if (isBankPaymentMethod(resolved)) bankOutTotal += amt;
   };
 
   for (const p of (tuitionRes.data ?? []) as Pay[]) {

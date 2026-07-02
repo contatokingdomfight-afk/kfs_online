@@ -858,7 +858,7 @@ export const messages = {
     adminFinanceCaixa: "Caixa",
     adminFinanceCaixaInfoAria: "Saldo bancário acumulado",
     adminFinanceCaixaHint:
-      "Saldo na conta: entradas por transferência, MBWay e depósito (cliente) menos despesas bancárias, mais depósitos de espécie que registares. Baseado na plataforma, não no extrato do banco.",
+      "Saldo na conta: entradas por transferência, MBWay e depósito (cliente) menos despesas bancárias, mais depósitos de espécie que registares. Movimentos antigos sem forma de pagamento contam como transferência. Baseado na plataforma, não no extrato do banco.",
     adminFinancePhysicalCash: "Espécie em mão",
     adminFinancePhysicalCashInfoAria: "Dinheiro físico ainda não depositado",
     adminFinancePhysicalCashHint:

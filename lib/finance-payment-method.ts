@@ -47,3 +47,10 @@ export function isCashPaymentMethod(method: string | null | undefined): boolean 
 export function isBankPaymentMethod(method: string | null | undefined): boolean {
   return method === "TRANSFER" || method === "MBWAY" || method === "DEPOSIT";
 }
+
+/** Para tesouraria: legado sem forma de pagamento conta como transferência (conta). */
+export function treasuryPaymentMethod(method: string | null | undefined): FinancePaymentMethod | null {
+  if (method && isFinancePaymentMethod(method)) return method;
+  if (!method?.trim()) return "TRANSFER";
+  return null;
+}
