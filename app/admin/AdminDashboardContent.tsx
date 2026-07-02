@@ -8,8 +8,15 @@ import { ManagementGrid } from "./_components/ManagementGrid";
 import { OverviewChartsDynamic } from "./_components/OverviewChartsDynamic";
 import { getTranslations } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
-import { hasAllV1AdminPermissions, type ResolvedAdminAccess } from "@/lib/permissions/resolve";
+import { hasAllV1AdminPermissions, type ResolvedAdminAccess, adminAccessAllows } from "@/lib/permissions/resolve";
 import { isGranularRestrictedDashboard } from "@/lib/permissions/paths";
+import { AdminQuickActions } from "./_components/AdminQuickActions";
+
+function canAccessFinanceiro(access: ResolvedAdminAccess): boolean {
+  if (access.kind === "all") return true;
+  if (access.kind === "none") return false;
+  return adminAccessAllows(access, "admin:financeiro:read") || adminAccessAllows(access, "admin:financeiro:write");
+}
 
 type Props = {
   client: SupabaseClient;
@@ -75,6 +82,7 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
         { href: "/admin/cursos", icon: "📚", label: t("navCourses") },
         { href: "/admin/eventos", icon: "✨", label: t("navEventsAdmin") },
         { href: "/admin/financeiro", icon: "💶", label: t("navFinance") },
+        { href: "/admin/loja", icon: "🛍️", label: t("navLoja") },
       ],
     },
     {
@@ -93,6 +101,14 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
         <AdminSchoolFilter schools={stats.schools} currentSchoolId={schoolId} />
       </div>
+
+      {canAccessFinanceiro(access) && (
+        <AdminQuickActions
+          registerSaleLabel={t("adminQuickRegisterSale")}
+          shopLabel={t("navLoja")}
+          financeReportLabel={t("adminQuickFinanceReport")}
+        />
+      )}
 
       {/* Secção 1: SAÚDE DO NEGÓCIO */}
       <BusinessHealthStats
