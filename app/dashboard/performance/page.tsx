@@ -399,10 +399,27 @@ export default async function DashboardPerformancePage() {
         ) : null}
         <div className="rounded-2xl bg-bg-secondary border border-border p-6 shadow-md">
           <h1 className="text-xl font-bold text-text-primary mb-2">{t("navAthleteProfile")}</h1>
-          <p className="text-base text-text-secondary mb-4">{t("evaluationPlaceholder")}</p>
-          <Link href="/dashboard" className="btn btn-primary inline-block no-underline">
-            {t("perfEmptyBackLink")}
-          </Link>
+          <p className="text-base text-text-secondary mb-3 leading-relaxed">{t("perfEmptyWhy")}</p>
+          <p className="text-base text-text-secondary mb-3 leading-relaxed">{t("perfEmptyWhatNext")}</p>
+          <p className="text-sm text-text-secondary mb-5 leading-relaxed">{t("perfEmptyHintAttendance")}</p>
+          <div className="flex flex-wrap gap-3 items-center">
+            <Link href="/como-sou-avaliado" className="btn btn-primary inline-block no-underline">
+              {t("perfEmptyCtaHowEvaluated")}
+            </Link>
+            {planAccess.hasCheckIn ? (
+              <Link
+                href="/dashboard/historico"
+                className="btn btn-secondary inline-block no-underline"
+              >
+                {t("perfEmptyCtaAttendance")}
+              </Link>
+            ) : null}
+          </div>
+          <p className="mt-4 mb-0 text-sm">
+            <Link href="/dashboard" className="text-[var(--text-secondary)] no-underline hover:underline">
+              {t("perfEmptyBackLink")}
+            </Link>
+          </p>
         </div>
       </div>
     );

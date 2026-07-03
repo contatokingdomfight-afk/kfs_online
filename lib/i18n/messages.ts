@@ -133,7 +133,7 @@ export const messages = {
       "Em «Ver como aluno», a Tribo usa o teu perfil de aluno (ou o de professor com registo de aluno ligado). Se só tens conta de administrador, volta ao Admin ou testa com uma conta de aluno.",
     tribeBlockedGeneric: "Não foi possível abrir a Tribo. Tenta novamente ou contacta o suporte.",
     tribeBlockedBack: "Ir para o início",
-    navStore: "Loja",
+    navStore: "Loja (em breve)",
     navExclusiveBenefits: "Benefícios exclusivos",
     navProfile: "Perfil",
     navPhysicalFicha: "Ficha física",
@@ -225,6 +225,14 @@ export const messages = {
     perfWellnessBodyMapEmptyScoresHint:
       "Ainda não há médias de avaliação. O radar acima fica a zero como referência. O mapa corporal ilustrativo (ficha ou silhueta genérica) está nesta secção; quando existirem avaliações, o resumo completo aparece na página de performance.",
     perfEmptyBackLink: "Voltar ao início",
+    perfEmptyWhy:
+      "Ainda não tens avaliações de performance registadas. O teu professor regista-as durante ou após as aulas.",
+    perfEmptyWhatNext:
+      "Quando existirem, vês aqui o radar, faixas, XP, missões e feedback do coach.",
+    perfEmptyHintAttendance:
+      "Se já treinaste mas continua vazio, confirma com a escola que a tua presença foi registada na aula.",
+    perfEmptyCtaHowEvaluated: "Como sou avaliado",
+    perfEmptyCtaAttendance: "Ver presenças",
     perfCarouselSectionTitle: "Perfil de competências",
     perfCarouselSlideRadarCaption: "Radar por dimensão (escala 1–10)",
     perfCarouselRadarOnlyHint:
@@ -811,6 +819,14 @@ export const messages = {
     storeComingSoon: "Em breve teremos produtos como camisetas, chaveiros e mais. Fica atento!",
     storeMeanwhile: "Enquanto isso: material de treino na",
 
+    rpeEmptyTitle: "Nada por registar agora",
+    rpeEmptyWhy:
+      "Não há aulas à espera de RPE nos últimos 14 dias. Isto é normal se ainda não foste a treinar neste período, se já classificaste o esforço após a aula, ou se a presença ainda não foi confirmada.",
+    rpeEmptyWhatNext:
+      "Depois do treino, quando a presença estiver confirmada, a aula aparece aqui para classificares o esforço de 1 a 10.",
+    rpeEmptyCtaAttendance: "Ver presenças",
+    rpeEmptyCtaHome: "Ir ao início",
+
     // Admin — lista de eventos
     adminEventsIntro:
       "Camps e workshops com data e preço. Os alunos inscrevem-se na área «Cursos e Eventos». Para validar QR, abre cada evento e usa «Validar ingressos».",
@@ -1290,7 +1306,7 @@ export const messages = {
       "In “View as student”, the Tribe uses your linked student profile (or a coach profile with a linked student record). If you only have an administrator account, return to Admin or test with a student account.",
     tribeBlockedGeneric: "We could not open the Tribe. Try again or contact support.",
     tribeBlockedBack: "Go to home",
-    navStore: "Store",
+    navStore: "Store (soon)",
     navExclusiveBenefits: "Exclusive benefits",
     navProfile: "Profile",
     navPhysicalFicha: "Physical assessment",
@@ -1359,6 +1375,14 @@ export const messages = {
     perfWellnessBodyMapEmptyScoresHint:
       "There are no evaluation averages yet. The radar above stays at zero as a placeholder. The illustrative body map (your form or a generic silhouette) is in this section; once evaluations exist, the full summary appears on the performance page.",
     perfEmptyBackLink: "Back to home",
+    perfEmptyWhy:
+      "You don't have any performance evaluations yet. Your coach records them during or after class.",
+    perfEmptyWhatNext:
+      "Once recorded, you'll see your radar, belts, XP, missions and coach feedback here.",
+    perfEmptyHintAttendance:
+      "If you've already trained but this is still empty, check with the school that your attendance was recorded.",
+    perfEmptyCtaHowEvaluated: "How I'm evaluated",
+    perfEmptyCtaAttendance: "View attendance",
     perfCarouselSectionTitle: "Competency profile",
     perfCarouselSlideRadarCaption: "Radar by dimension (scale 1–10)",
     perfCarouselRadarOnlyHint:
@@ -1959,6 +1983,14 @@ export const messages = {
     storeDescription: "KFS products: t-shirts, keychains and merchandise. Buy at the school.",
     storeComingSoon: "Coming soon: t-shirts, keychains and more. Stay tuned!",
     storeMeanwhile: "Meanwhile: training material in the",
+
+    rpeEmptyTitle: "Nothing to log right now",
+    rpeEmptyWhy:
+      "No classes are waiting for RPE in the last 14 days. That's normal if you haven't trained recently, you already logged effort after class, or attendance hasn't been confirmed yet.",
+    rpeEmptyWhatNext:
+      "After training, once attendance is confirmed, the class will show up here so you can rate effort from 1 to 10.",
+    rpeEmptyCtaAttendance: "View attendance",
+    rpeEmptyCtaHome: "Go to home",
 
     adminEventsIntro:
       "Camps and workshops with dates and prices. Students register under «Courses & Events». To validate QR codes, open each event and use «Validate tickets».",

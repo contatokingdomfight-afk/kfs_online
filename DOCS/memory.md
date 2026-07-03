@@ -148,7 +148,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - `getCachedLocations` reexportado em `plan-access.ts`. Ver [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md).
 
-- **Bem-estar:** `/dashboard/bem-estar` com **`layout.tsx` + tabs** (`BemEstarTabs.tsx`, pt/en): RPE, Dores, Testes físicos, Peso e metas — rotas `/rpe`, `/dores`, `/benchmarks`, `/peso`. Raiz redireciona para `/rpe`. Cabeçalho e texto explicativo no layout; conteúdo de cada secção nas `page.tsx` existentes. `actions.ts` mantém `revalidatePath` nas mesmas rotas.
+- **Bem-estar:** `/dashboard/bem-estar` com **`layout.tsx` + tabs** (`BemEstarTabs.tsx`, pt/en): RPE, Dores, Testes físicos, Peso e metas — rotas `/rpe`, `/dores`, `/benchmarks`, `/peso`. Raiz redireciona para `/rpe`. Cabeçalho e texto explicativo no layout; conteúdo de cada secção nas `page.tsx` existentes. **Empty states orientados:** Performance sem avaliações (`perfEmpty*` em i18n + CTAs); RPE sem aulas pendentes (`rpeEmpty*` + CTAs). Menu lateral: **Loja (em breve)** (`navStore`). `actions.ts` mantém `revalidatePath` nas mesmas rotas.
 
 
 
