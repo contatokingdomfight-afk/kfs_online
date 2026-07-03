@@ -10,6 +10,7 @@ import { PerformanceStatsSkeleton } from "./_components/PerformanceStatsSkeleton
 import { PhysicalAssessmentSkeleton } from "./_components/PhysicalAssessmentSkeleton";
 import { CoachNotesSkeleton } from "./_components/CoachNotesSkeleton";
 import { CoachStudentWellbeingSection } from "./_components/CoachStudentWellbeingSection";
+import { CoachAlunoOverviewActions } from "./_components/CoachAlunoOverviewActions";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -23,6 +24,8 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
+      <CoachAlunoOverviewActions studentId={studentId} />
+
       <Suspense fallback={null}>
         <CoachStudentWellbeingSection studentId={studentId} />
       </Suspense>

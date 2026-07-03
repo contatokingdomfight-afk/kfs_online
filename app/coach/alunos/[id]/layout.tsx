@@ -3,14 +3,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
-import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
-import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
-import { AdminAlunoQuickActions } from "@/app/admin/alunos/[id]/EditarAlunoForm";
-import { AvaliarAlunoButton } from "./AvaliarAlunoButton";
-import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
-import { coachTeachesAtSchool } from "@/lib/coach-schools";
-import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
 import { SchoolAssistantBadge } from "@/components/SchoolAssistantBadge";
 import { AlunoTabs } from "./AlunoTabs";
 
@@ -37,7 +30,7 @@ export default async function CoachAlunoLayout({ children, params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality, schoolId, adminGrantedFullAccess")
+    .select("id, userId, status, planId, primaryModality")
     .eq("id", studentId)
     .single();
 
@@ -52,51 +45,15 @@ export default async function CoachAlunoLayout({ children, params }: Props) {
     );
   }
 
-  const [{ data: user }, { data: studentProfile }, planRes, allConfigs, { data: modalityRefs }] = await Promise.all([
-    supabase.from("User").select("id, name, email, avatarUrl, role").eq("id", student.userId).single(),
-    supabase.from("StudentProfile").select("weightKg, heightCm, medicalNotes, emergencyContact, phone").eq("studentId", studentId).maybeSingle(),
+  const [{ data: user }, planRes, { data: assistRow }] = await Promise.all([
+    supabase.from("User").select("email").eq("id", student.userId).single(),
     student.planId ? supabase.from("Plan").select("name").eq("id", student.planId).single() : Promise.resolve({ data: null }),
-    loadAllEvaluationConfigs(supabase),
-    supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true }),
+    supabase.from("SchoolAssistantCoach").select("id, revokedAt").eq("studentId", studentId).maybeSingle(),
   ]);
 
   const planName = planRes.data?.name ?? null;
-  const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {};
-  for (const m of modalityRefs ?? []) {
-    evaluationConfigByModality[m.code] = allConfigs.get(m.code) ?? null;
-  }
-  const modalitiesForEvaluate = (modalityRefs ?? [])
-    .map((m) => ({
-      value: m.code,
-      label: (m.name?.trim() || MODALITY_LABELS[m.code] || m.code) as string,
-    }))
-    .filter((opt) => evaluationConfigByModality[opt.value] != null);
-
   const primaryModality = (student as { primaryModality?: string | null }).primaryModality;
-
-  const { data: assistRow } = await supabase
-    .from("SchoolAssistantCoach")
-    .select("id, revokedAt")
-    .eq("studentId", studentId)
-    .maybeSingle();
   const assistantActive = Boolean(assistRow?.id && assistRow.revokedAt == null);
-
-  let canManageAssistant = dbUser.role === "ADMIN";
-  if (dbUser.role === "COACH") {
-    const coachId = await getCurrentCoachId();
-    canManageAssistant = coachId ? await coachTeachesAtSchool(supabase, coachId, student.schoolId) : false;
-  }
-
-  const profileForModal = {
-    name: user?.name ?? "",
-    email: user?.email ?? "",
-    avatarUrl: (user as { avatarUrl?: string | null } | undefined)?.avatarUrl ?? null,
-    phone: studentProfile?.phone ?? null,
-    weightKg: studentProfile?.weightKg != null ? Number(studentProfile.weightKg) : null,
-    heightCm: studentProfile?.heightCm != null ? Number(studentProfile.heightCm) : null,
-    medicalNotes: studentProfile?.medicalNotes ?? null,
-    emergencyContact: studentProfile?.emergencyContact ?? null,
-  };
 
   return (
     <div>
@@ -160,43 +117,6 @@ export default async function CoachAlunoLayout({ children, params }: Props) {
           )}
           <SchoolAssistantBadge active={assistantActive} />
         </div>
-        <div style={{ marginTop: 12 }}>
-          <AvaliarAlunoButton
-            studentId={studentId}
-            profile={profileForModal}
-            primaryModality={primaryModality ?? null}
-            modalities={modalitiesForEvaluate}
-            evaluationConfigByModality={evaluationConfigByModality}
-          />
-        </div>
-
-        {canManageAssistant ? (
-          <SchoolAssistantCoachControls
-            studentId={studentId}
-            assistantActive={assistantActive}
-            targetUserRole={user?.role}
-            studentStatus={student.status}
-          />
-        ) : null}
-
-        {dbUser.role === "ADMIN" && (
-          <>
-            <AdminAlunoQuickActions
-              studentId={studentId}
-              initialPlanId={student.planId ?? ""}
-              initialAdminGrantedFullAccess={Boolean(
-                (student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess
-              )}
-              editedUserRole={user?.role}
-            />
-            <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "var(--text-secondary)" }}>
-              <Link href={`/admin/alunos/${studentId}`} style={{ color: "var(--primary)", fontWeight: 600 }}>
-                Abrir ficha completa na administração
-              </Link>
-              {" — "}plano, escola, estatísticas e mais opções.
-            </p>
-          </>
-        )}
 
         <AlunoTabs studentId={studentId} />
       </div>
