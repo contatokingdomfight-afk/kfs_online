@@ -12,6 +12,13 @@ function parseYmd(s: string): string | null {
   return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : null;
 }
 
+function revalidateStudentCoachPaths(studentId: string) {
+  revalidatePath(`/admin/alunos/${studentId}`);
+  revalidatePath("/admin/alunos");
+  revalidatePath(`/coach/alunos/${studentId}`);
+  revalidatePath(`/coach/alunos/${studentId}/inscricao`);
+}
+
 /** Renova cobertura anual (+1 ano a partir de hoje ou após fim anterior). */
 export async function renewStudentInsurance(
   _prev: InsuranceActionResult | null,
@@ -27,8 +34,7 @@ export async function renewStudentInsurance(
   const renew = await renewStudentInsuranceCoverage(supabase, studentId, dbUser.id);
   if (renew.error) return { error: renew.error };
 
-  revalidatePath(`/admin/alunos/${studentId}`);
-  revalidatePath("/admin/alunos");
+  revalidateStudentCoachPaths(studentId);
   return { success: true };
 }
 
@@ -78,7 +84,7 @@ export async function registerInsurancePayment(
     if (error) return { error: error.message };
   }
 
-  revalidatePath(`/admin/alunos/${studentId}`);
+  revalidateStudentCoachPaths(studentId);
   revalidatePath("/admin/financeiro");
   return { success: true };
 }
@@ -127,8 +133,7 @@ export async function updateStudentInsuranceCoverage(
     if (error) return { error: error.message };
   }
 
-  revalidatePath(`/admin/alunos/${studentId}`);
-  revalidatePath("/admin/alunos");
+  revalidateStudentCoachPaths(studentId);
   return { success: true };
 }
 
@@ -164,7 +169,6 @@ export async function clearStudentInsuranceCoverage(
     if (error) return { error: error.message };
   }
 
-  revalidatePath(`/admin/alunos/${studentId}`);
-  revalidatePath("/admin/alunos");
+  revalidateStudentCoachPaths(studentId);
   return { success: true };
 }

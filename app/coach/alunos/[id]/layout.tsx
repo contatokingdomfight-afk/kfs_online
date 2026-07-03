@@ -118,7 +118,7 @@ export default async function CoachAlunoLayout({ children, params }: Props) {
           <SchoolAssistantBadge active={assistantActive} />
         </div>
 
-        <AlunoTabs studentId={studentId} />
+        <AlunoTabs studentId={studentId} showInscricaoTab={dbUser.role === "ADMIN"} />
       </div>
       {children}
     </div>

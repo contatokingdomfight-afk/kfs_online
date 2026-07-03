@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
@@ -7,7 +6,6 @@ import {
   filterModalitiesForStudentEvaluation,
 } from "@/lib/coach-student-evaluation-modalities";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
-import { AdminAlunoQuickActions } from "@/app/admin/alunos/[id]/EditarAlunoForm";
 import { AvaliarAlunoButton } from "../AvaliarAlunoButton";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
@@ -97,24 +95,6 @@ export async function CoachAlunoOverviewActions({ studentId }: Props) {
         />
       ) : null}
 
-      {dbUser.role === "ADMIN" && (
-        <>
-          <AdminAlunoQuickActions
-            studentId={studentId}
-            initialPlanId={student.planId ?? ""}
-            initialAdminGrantedFullAccess={Boolean(
-              (student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess
-            )}
-            editedUserRole={user?.role}
-          />
-          <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "var(--text-secondary)" }}>
-            <Link href={`/admin/alunos/${studentId}`} style={{ color: "var(--primary)", fontWeight: 600 }}>
-              Abrir ficha completa na administração
-            </Link>
-            {" — "}plano, escola, estatísticas e mais opções.
-          </p>
-        </>
-      )}
     </>
   );
 }

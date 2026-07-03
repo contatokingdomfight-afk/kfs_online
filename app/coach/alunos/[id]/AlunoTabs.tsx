@@ -6,6 +6,7 @@ import styles from "./AlunoTabs.module.css";
 
 type Props = {
   studentId: string;
+  showInscricaoTab?: boolean;
 };
 
 function isTabActive(pathname: string, href: string, exact?: boolean) {
@@ -13,12 +14,15 @@ function isTabActive(pathname: string, href: string, exact?: boolean) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AlunoTabs({ studentId }: Props) {
+export function AlunoTabs({ studentId, showInscricaoTab = false }: Props) {
   const pathname = usePathname();
   const base = `/coach/alunos/${studentId}`;
 
   const tabs = [
     { href: base, label: "Visão geral", exact: true as const },
+    ...(showInscricaoTab
+      ? [{ href: `${base}/inscricao`, label: "Plano e seguro" as const }]
+      : []),
     { href: `${base}/avaliacao-fisica`, label: "Avaliação física" },
     { href: `${base}/avaliacoes`, label: "Avaliações" },
     { href: `${base}/performance`, label: "Performance" },

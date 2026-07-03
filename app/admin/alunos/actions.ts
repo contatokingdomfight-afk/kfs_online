@@ -197,6 +197,8 @@ export async function updateStudent(
 
   revalidatePath("/admin/alunos");
   revalidatePath(`/admin/alunos/${student.id}`);
+  revalidatePath(`/coach/alunos/${student.id}`);
+  revalidatePath(`/coach/alunos/${student.id}/inscricao`);
   revalidatePath("/admin/financeiro");
   revalidatePath("/admin/familias");
   revalidatePath("/dashboard");
@@ -282,6 +284,8 @@ export async function setStudentFullAccess(
 
   revalidatePath("/admin/alunos");
   revalidatePath(`/admin/alunos/${studentId}`);
+  revalidatePath(`/coach/alunos/${studentId}`);
+  revalidatePath(`/coach/alunos/${studentId}/inscricao`);
   return { success: true };
 }
 
@@ -342,6 +346,8 @@ export async function clearStudentPlanAccess(
 
   revalidatePath("/admin/alunos");
   revalidatePath(`/admin/alunos/${studentId}`);
+  revalidatePath(`/coach/alunos/${studentId}`);
+  revalidatePath(`/coach/alunos/${studentId}/inscricao`);
   return { success: true };
 }
 
@@ -389,6 +395,7 @@ export async function promoteStudentToRole(
     revalidatePath("/admin/alunos");
     revalidatePath(`/admin/alunos/${studentId}`);
     revalidatePath(`/coach/alunos/${studentId}`);
+    revalidatePath(`/coach/alunos/${studentId}/inscricao`);
     revalidatePath("/admin/coaches");
     return { success: true };
   }
@@ -433,6 +440,7 @@ export async function promoteStudentToRole(
   revalidatePath("/admin/alunos");
   revalidatePath(`/admin/alunos/${studentId}`);
   revalidatePath(`/coach/alunos/${studentId}`);
+  revalidatePath(`/coach/alunos/${studentId}/inscricao`);
   revalidatePath("/admin/coaches");
   return { success: true };
 }
