@@ -292,7 +292,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - `lib/retail/` — catálogo, movimentos, `createRetailSale` (sale + OUT + balance).
 - Receitas loja: categoria **`MERCHANDISE`** em `lib/admin-revenue-breakdown.ts`.
 - Relatório consolidado: `/admin/financeiro/relatorio` (`lib/admin-financial-report.ts`); CSV + gráfico 6 meses.
-- Overview `/admin/financeiro`: seletor de mês (`?month=AAAA-MM`); saldo = todas as receitas (breakdown + matrícula/seguro) − despesas; despesas com categoria e edição no modal.
+- Overview `/admin/financeiro`: seletor de mês (`?month=AAAA-MM`); saldo = todas as receitas (breakdown + matrícula/seguro) − despesas; despesas com categoria; **edição em modal dedicado** (não inline na tabela).
 - **Forma de pagamento** (`CASH` | `TRANSFER` | `MBWAY` | `DEPOSIT`) em pagamentos `PAID`, receitas manuais, despesas e loja — migração `20260708120000_finance_payment_method.sql`.
 - **KPIs tesouraria** (`lib/cash-balance.ts`): **Caixa** = saldo bancário acumulado; **Espécie em mão** = físico não depositado; **Entradas do mês** por forma. Legado sem `paymentMethod` → `TRANSFER` (migração `20260710120000_backfill_payment_method_transfer.sql`).
 
