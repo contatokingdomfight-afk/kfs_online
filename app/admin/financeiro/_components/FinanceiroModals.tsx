@@ -6,10 +6,9 @@ import { createPortal } from "react-dom";
 import { RenewalsSection } from "../RenewalsSection";
 import { AddExpenseForm } from "./AddExpenseForm";
 import { AddManualRevenueForm } from "./AddManualRevenueForm";
-import { dedupeDuplicatePaymentsAction, deleteFinancialExpense, deleteManualRevenue } from "../actions";
+import { dedupeDuplicatePaymentsAction, deleteManualRevenue } from "../actions";
 import { EditExpenseForm } from "./EditExpenseForm";
-import { EXPENSE_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
-import { paymentMethodLabelPt } from "@/lib/finance-payment-method";
+import { ExpenseList } from "./ExpenseList";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import type { RenewalPending } from "@/lib/renewals";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
@@ -133,15 +132,6 @@ function formatMoneyN(n: number, locale: "pt" | "en") {
   return n.toLocaleString(locale === "en" ? "en-GB" : "pt-PT", {
     style: "currency",
     currency: "EUR",
-  });
-}
-
-function formatTableDate(yyyyMmDd: string, locale: "pt" | "en") {
-  const d = new Date(yyyyMmDd + "T12:00:00Z");
-  return d.toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
   });
 }
 
@@ -481,69 +471,17 @@ export function FinanceiroModals({
               {expenses.length === 0 && !expensesError ? (
                 <p style={{ color: "var(--text-secondary)", fontSize: 15 }}>{labels.noExpenses}</p>
               ) : expensesError && !expenses.length ? null : (
-                <div
-                  style={{
-                    overflowX: "auto",
-                    border: "1px solid var(--card-border, rgba(0,0,0,.1))",
-                    borderRadius: "var(--radius-sm)",
+                <ExpenseList
+                  expenses={expenses}
+                  locale={locale}
+                  labels={{
+                    formKindFixed: labels.formKindFixed,
+                    formKindVariable: labels.formKindVariable,
+                    editExpenseAction: labels.editExpenseAction,
+                    deleteLabel: labels.deleteLabel,
                   }}
-                >
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      fontSize: 14,
-                    }}
-                  >
-                    <thead>
-                      <tr style={{ background: "var(--bg-secondary)", textAlign: "left" }}>
-                        <th style={{ padding: "8px 10px" }}>{labels.colDate}</th>
-                        <th style={{ padding: "8px 10px" }}>{labels.colDescription}</th>
-                        <th style={{ padding: "8px 10px" }}>{labels.colKind}</th>
-                        <th style={{ padding: "8px 10px" }}>{labels.colCategory}</th>
-                        <th style={{ padding: "8px 10px" }}>{labels.colPaymentMethod}</th>
-                        <th style={{ padding: "8px 10px" }}>{labels.colAmount}</th>
-                        <th style={{ padding: "8px 10px" }}>{labels.colActions}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {expenses.map((e) => (
-                        <tr key={e.id} style={{ borderTop: "1px solid var(--card-border, rgba(0,0,0,.06))" }}>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatTableDate(e.occurredOn, locale)}</td>
-                          <td style={{ padding: "8px 10px" }}>{e.description}</td>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
-                            {e.kind === "FIXED" ? labels.formKindFixed : labels.formKindVariable}
-                          </td>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
-                            {EXPENSE_CATEGORY_LABELS_PT[e.category] ?? e.category}
-                          </td>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
-                            {paymentMethodLabelPt(e.paymentMethod)}
-                          </td>
-                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(e.amount, locale)}</td>
-                          <td style={{ padding: "8px 10px" }}>
-                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                              <button
-                                type="button"
-                                className="btn btn-secondary"
-                                style={{ fontSize: 12, padding: "4px 10px" }}
-                                onClick={() => setEditingExpenseId(e.id)}
-                              >
-                                {labels.editExpenseAction}
-                              </button>
-                              <form action={deleteFinancialExpense} style={{ margin: 0 }}>
-                                <input type="hidden" name="id" value={e.id} />
-                                <button type="submit" className="btn" style={{ fontSize: 12, padding: "4px 8px" }}>
-                                  {labels.deleteLabel}
-                                </button>
-                              </form>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                  onEdit={setEditingExpenseId}
+                />
               )}
             </div>
           </div>

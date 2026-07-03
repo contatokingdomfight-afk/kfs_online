@@ -91,7 +91,7 @@ export function EditExpenseForm({ expense, labels, onDone, onCancel }: Props) {
         </select>
       </label>
 
-      <PaymentMethodSelect label={labels.paymentMethod} defaultValue={expense.paymentMethod ?? "CASH"} />
+      <PaymentMethodSelect label={labels.paymentMethod} defaultValue={expense.paymentMethod ?? "TRANSFER"} />
 
       <div
         style={{

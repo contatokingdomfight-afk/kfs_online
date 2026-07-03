@@ -39,6 +39,8 @@ export function AddExpenseForm({ defaultDate, labels }: { defaultDate: string; l
       if (dateInput) dateInput.value = defaultDate;
       const v = formRef.current?.querySelector<HTMLInputElement>('input[name="kind"][value="VARIABLE"]');
       if (v) v.checked = true;
+      const pm = formRef.current?.querySelector<HTMLSelectElement>('select[name="paymentMethod"]');
+      if (pm) pm.value = "TRANSFER";
     }
   }, [state, defaultDate]);
 
@@ -99,7 +101,7 @@ export function AddExpenseForm({ defaultDate, labels }: { defaultDate: string; l
             ))}
           </select>
         </label>
-        <PaymentMethodSelect label={labels.paymentMethod} />
+        <PaymentMethodSelect label={labels.paymentMethod} defaultValue="TRANSFER" />
         <div
           style={{
             display: "grid",
