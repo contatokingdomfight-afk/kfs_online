@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
@@ -245,14 +244,8 @@ export async function PerformanceContent({ studentId }: Props) {
         <div className="rounded-2xl bg-bg-secondary border border-border p-6 shadow-md">
           <h1 className="text-xl font-bold text-text-primary mb-2">Perfil do Atleta</h1>
           <p className="text-base text-text-secondary mb-4">
-            Ainda não há avaliações registadas para este aluno. As avaliações feitas nas aulas aparecem aqui com o mesmo perfil gamificado (faixas, XP, radar, missões) que o aluno vê.
+            Ainda não há avaliações registadas para este aluno. Usa «Avaliar performance» acima ou regista avaliações nas aulas — o perfil gamificado (faixas, XP, radar, missões) aparece aqui como o aluno vê.
           </p>
-          <Link
-            href={`/coach/alunos/${studentId}`}
-            className="btn btn-primary inline-block no-underline"
-          >
-            ← Voltar ao perfil do aluno
-          </Link>
         </div>
       </div>
     );

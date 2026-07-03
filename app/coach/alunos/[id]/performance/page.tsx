@@ -3,6 +3,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
+import { CoachAlunoEvaluateButton } from "../_components/CoachAlunoEvaluateButton";
 import { PerformanceContent } from "./_components/PerformanceContent";
 import { PerformanceContentSkeleton } from "./_components/PerformanceContentSkeleton";
 
@@ -26,8 +27,11 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
   if (!student) return null;
 
   return (
-    <Suspense fallback={<PerformanceContentSkeleton />}>
-      <PerformanceContent studentId={studentId} />
-    </Suspense>
+    <div style={{ maxWidth: "min(720px, 100%)" }}>
+      <CoachAlunoEvaluateButton studentId={studentId} />
+      <Suspense fallback={<PerformanceContentSkeleton />}>
+        <PerformanceContent studentId={studentId} />
+      </Suspense>
+    </div>
   );
 }
