@@ -24,16 +24,7 @@ export default async function CoachAlunoAvaliacoesPage({ params }: Props) {
     .eq("id", studentId)
     .single();
 
-  if (!student) {
-    return (
-      <div>
-        <p style={{ color: "var(--text-secondary)", marginBottom: 16 }}>Aluno não encontrado.</p>
-        <Link href="/coach/alunos" className="btn btn-secondary" style={{ textDecoration: "none" }}>
-          ← Voltar
-        </Link>
-      </div>
-    );
-  }
+  if (!student) return null;
 
   const { data: athlete } = await supabase.from("Athlete").select("id").eq("studentId", studentId).single();
   if (!athlete) {
@@ -70,16 +61,7 @@ export default async function CoachAlunoAvaliacoesPage({ params }: Props) {
 
   return (
     <div className="max-w-[min(640px,100%)] mx-auto">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-xl font-bold text-text-primary">Histórico de avaliações</h1>
-        <Link
-          href={`/coach/alunos/${studentId}`}
-          className="btn btn-secondary"
-          style={{ textDecoration: "none" }}
-        >
-          ← Perfil do aluno
-        </Link>
-      </div>
+      <h1 className="text-xl font-bold text-text-primary mb-6">Histórico de avaliações</h1>
       <EvaluationHistoryClient
         list={list}
         getEvaluationById={getEvaluationById}

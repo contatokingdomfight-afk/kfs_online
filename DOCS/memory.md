@@ -159,6 +159,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Home aluno: `DashboardUpcomingEventsStrip` (com/sem plano).
 
 - **Coach:** `/coach/eventos` — calendário + lista (`CoachEventosBoard`, `lib/coach-upcoming-events.ts`); card «Próximos eventos» na home (`CoachUpcomingEventsCard`). Menu lateral «Eventos» para todos os coaches; check-in escola só para treinador assistente.
+- **Ficha do aluno (coach):** `/coach/alunos/[id]` com **`layout.tsx` + tabs** (`AlunoTabs.tsx`): Visão geral, Avaliação física, Avaliações, Performance — rotas reais e deep-linkáveis (`?next=` na avaliação física inalterado).
 
 - Admin: `/admin/eventos`, confirmação `setRegistrationStatus`.
 

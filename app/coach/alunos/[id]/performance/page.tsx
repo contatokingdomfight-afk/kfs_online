@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
@@ -24,16 +23,7 @@ export default async function CoachAlunoPerformancePage({ params }: Props) {
     .eq("id", studentId)
     .single();
 
-  if (!student) {
-    return (
-      <div>
-        <p style={{ color: "var(--text-secondary)", marginBottom: 16 }}>Aluno não encontrado.</p>
-        <Link href="/coach/alunos" className="btn btn-secondary" style={{ textDecoration: "none" }}>
-          ← Voltar à lista
-        </Link>
-      </div>
-    );
-  }
+  if (!student) return null;
 
   return (
     <Suspense fallback={<PerformanceContentSkeleton />}>
