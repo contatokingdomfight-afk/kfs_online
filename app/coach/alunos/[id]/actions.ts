@@ -7,6 +7,7 @@ import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
 import { notifyStudentOfNewCoachEvaluation } from "@/lib/notifications/in-app";
+import { getPlanAccess } from "@/lib/plan-access";
 import type { EvaluationHistoryModalDetail } from "@/lib/evaluation-history-modal-types";
 import { evaluationHistoryCoachDisplayName, evaluationHistoryFetchPreviousSnapshot } from "@/lib/evaluation-history-helpers";
 
@@ -40,6 +41,13 @@ export async function saveStandaloneEvaluation(
 
   if (!studentId || !modality) return { error: "Aluno ou modalidade em falta." };
 
+  const supabase = await createClient();
+
+  const planAccess = await getPlanAccess(supabase, studentId);
+  if (planAccess.allowedModalities.length > 0 && !planAccess.allowedModalities.includes(modality)) {
+    return { error: "Esta modalidade não está incluída no plano do aluno." };
+  }
+
   let scores: Record<string, number> | null = null;
   let gas: number | null = null;
   let technique: number | null = null;
@@ -70,8 +78,6 @@ export async function saveStandaloneEvaluation(
       return { error: "Cada dimensão deve ser entre 1 e 5." };
     }
   }
-
-  const supabase = await createClient();
 
   let { data: athlete } = await supabase.from("Athlete").select("id, mainCoachId").eq("studentId", studentId).maybeSingle();
   let effectiveCoachId = currentCoachId ?? (dbUser.role === "ADMIN" && athlete?.mainCoachId ? athlete.mainCoachId : null);
@@ -142,6 +148,7 @@ export async function saveStandaloneEvaluation(
   await notifyStudentOfNewCoachEvaluation(supabase, { studentId, coachId: effectiveCoachId });
 
   revalidatePath(`/coach/alunos/${studentId}`);
+  revalidatePath(`/coach/alunos/${studentId}/performance`);
   revalidatePath("/admin/alunos");
   revalidatePath(`/admin/alunos/${studentId}`);
   revalidatePath("/coach/atletas");

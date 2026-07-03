@@ -16,6 +16,8 @@ import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AvaliarAlunoButton } from "@/app/coach/alunos/[id]/AvaliarAlunoButton";
+import { getPlanAccess } from "@/lib/plan-access";
+import { filterModalitiesForStudentEvaluation } from "@/lib/coach-student-evaluation-modalities";
 import { DeleteStudentButton } from "./DeleteStudentButton";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
 import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
@@ -153,12 +155,12 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   for (const m of modalityRows ?? []) {
     evaluationConfigByModality[m.code] = allConfigs.get(m.code) ?? null;
   }
-  const modalitiesForEvaluate = (modalityRows ?? [])
-    .map((m) => ({
-      value: m.code,
-      label: (m.name?.trim() || MODALITY_LABELS[m.code] || m.code) as string,
-    }))
-    .filter((opt) => evaluationConfigByModality[opt.value] != null);
+  const planAccess = await getPlanAccess(supabase, studentId);
+  const modalitiesForEvaluate = filterModalitiesForStudentEvaluation(
+    modalityRows ?? [],
+    evaluationConfigByModality,
+    planAccess.allowedModalities
+  );
 
   // Performance: athlete + evaluations → radar e última avaliação (para pré-preencher modal)
   let generalPerformanceScores: Record<string, number> | null = null;
@@ -297,6 +299,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
           modalities={modalitiesForEvaluate}
           evaluationConfigByModality={evaluationConfigByModality}
           lastEvalScoresByModality={Object.keys(lastEvalScoresByModality).length > 0 ? lastEvalScoresByModality : undefined}
+          successRedirectHref={`/coach/alunos/${studentId}/performance`}
         />
         <Link
           href={`/coach/alunos/${studentId}/avaliacao-fisica?next=${encodeURIComponent(`/admin/alunos/${studentId}`)}`}

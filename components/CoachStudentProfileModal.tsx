@@ -448,7 +448,7 @@ export function CoachStudentProfileModal(props: Props) {
                 <input type="hidden" name="studentId" value={studentId} />
                 <input type="hidden" name="modality" value={selectedModality} />
                 <input type="hidden" name="scoresJson" value={submittedScoresJson} />
-                {isStandalone && modalities.length > 0 && (
+                {isStandalone && modalities.length > 1 && (
                   <label className="flex flex-col gap-1">
                     <span className="text-sm text-[var(--text-secondary)]">Modalidade</span>
                     <select
@@ -461,6 +461,11 @@ export function CoachStudentProfileModal(props: Props) {
                       ))}
                     </select>
                   </label>
+                )}
+                {isStandalone && modalities.length === 1 && (
+                  <p className="m-0 text-sm text-[var(--text-secondary)]">
+                    Modalidade: <span className="font-semibold text-[var(--text-primary)]">{modalities[0].label}</span>
+                  </p>
                 )}
 
                 {useDynamicForm && evaluationConfig && (

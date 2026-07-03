@@ -3,20 +3,22 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
-import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
+import { resolveEvaluationInitialModality } from "@/lib/coach-student-evaluation-modalities";
 
 type Props = {
   studentId: string;
   profile: StudentProfileForModal;
   primaryModality: string | null;
-  /** Modalidades com critérios configurados (vem de ModalityRef + configs). */
+  /** Modalidades com critérios configuradas e permitidas pelo plano do aluno. */
   modalities: { value: string; label: string }[];
   evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null>;
   /** Última avaliação por modalidade (scores) para pré-preencher o formulário */
   lastEvalScoresByModality?: Record<string, Record<string, number>>;
   /** Quando true, o botão ocupa metade de uma linha flex (ex.: ao lado de «Avaliação Física»). */
   stretchInRow?: boolean;
+  /** Após guardar com sucesso (ex.: perfil de performance do atleta). */
+  successRedirectHref?: string;
 };
 
 export function AvaliarAlunoButton({
@@ -27,23 +29,24 @@ export function AvaliarAlunoButton({
   evaluationConfigByModality,
   lastEvalScoresByModality,
   stretchInRow = false,
+  successRedirectHref,
 }: Props) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
 
-  const initialModality =
-    primaryModality && evaluationConfigByModality[primaryModality] != null
-      ? primaryModality
-      : modalities[0]?.value ?? "";
+  const initialModality = resolveEvaluationInitialModality(
+    primaryModality,
+    modalities,
+    evaluationConfigByModality
+  );
+
+  const afterSaveHref = successRedirectHref ?? `/coach/alunos/${studentId}/performance`;
 
   const handleSuccess = useCallback(() => {
     setModalOpen(false);
-    setShowSuccess(true);
-    window.setTimeout(() => {
-      router.refresh();
-    }, 0);
-  }, [router]);
+    router.push(afterSaveHref);
+    router.refresh();
+  }, [router, afterSaveHref]);
 
   const performanceButton = (
     <button
@@ -88,13 +91,6 @@ export function AvaliarAlunoButton({
           initialScoresByModality={lastEvalScoresByModality}
         />
       )}
-      <SuccessConfirmModal
-        open={showSuccess}
-        onClose={() => setShowSuccess(false)}
-        title="Avaliação guardada"
-        message="A avaliação foi registada com sucesso."
-        closeLabel="Fechar"
-      />
     </>
   );
 }

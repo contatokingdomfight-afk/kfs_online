@@ -2,7 +2,10 @@ import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
-import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { getPlanAccess } from "@/lib/plan-access";
+import {
+  filterModalitiesForStudentEvaluation,
+} from "@/lib/coach-student-evaluation-modalities";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AdminAlunoQuickActions } from "@/app/admin/alunos/[id]/EditarAlunoForm";
 import { AvaliarAlunoButton } from "../AvaliarAlunoButton";
@@ -39,14 +42,15 @@ export async function CoachAlunoOverviewActions({ studentId }: Props) {
   for (const m of modalityRefs ?? []) {
     evaluationConfigByModality[m.code] = allConfigs.get(m.code) ?? null;
   }
-  const modalitiesForEvaluate = (modalityRefs ?? [])
-    .map((m) => ({
-      value: m.code,
-      label: (m.name?.trim() || MODALITY_LABELS[m.code] || m.code) as string,
-    }))
-    .filter((opt) => evaluationConfigByModality[opt.value] != null);
 
-  const primaryModality = (student as { primaryModality?: string | null }).primaryModality;
+  const planAccess = await getPlanAccess(supabase, studentId);
+  const modalitiesForEvaluate = filterModalitiesForStudentEvaluation(
+    modalityRefs ?? [],
+    evaluationConfigByModality,
+    planAccess.allowedModalities
+  );
+
+  const primaryModality = planAccess.primaryModality ?? (student as { primaryModality?: string | null }).primaryModality;
 
   const { data: assistRow } = await supabase
     .from("SchoolAssistantCoach")
