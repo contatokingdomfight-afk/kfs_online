@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { WeightEntryForm, WeightGoalsForm } from "./WeightForms";
 
@@ -42,12 +41,7 @@ export default async function PesoPage() {
   } | null;
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "clamp(16px, 4vw, 24px)" }}>
-      <p style={{ marginBottom: 8 }}>
-        <Link href="/dashboard/bem-estar" style={{ color: "var(--text-secondary)", fontSize: "clamp(13px, 3.2vw, 15px)" }}>
-          ← {loc === "pt" ? "Bem-estar" : "Wellness"}
-        </Link>
-      </p>
+    <>
       <h1 style={{ fontSize: "clamp(22px, 5.5vw, 28px)", marginBottom: 8, color: "var(--text-primary)" }}>
         {loc === "pt" ? "Peso e metas" : "Weight & goals"}
       </h1>
@@ -120,6 +114,6 @@ export default async function PesoPage() {
           ))}
         </ul>
       )}
-    </div>
+    </>
   );
 }

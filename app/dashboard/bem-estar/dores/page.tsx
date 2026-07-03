@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { PainForm } from "./PainForm";
 import { PAIN_REGIONS } from "@/lib/pain-regions";
@@ -43,12 +42,7 @@ export default async function DoresPage() {
   const maxI = Math.max(10, ...chart.map((c) => c.intensity));
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "clamp(16px, 4vw, 24px)" }}>
-      <p style={{ marginBottom: 8 }}>
-        <Link href="/dashboard/bem-estar" style={{ color: "var(--text-secondary)", fontSize: "clamp(13px, 3.2vw, 15px)" }}>
-          ← {loc === "pt" ? "Bem-estar" : "Wellness"}
-        </Link>
-      </p>
+    <>
       <h1 style={{ fontSize: "clamp(22px, 5.5vw, 28px)", marginBottom: 8, color: "var(--text-primary)" }}>
         {loc === "pt" ? "Dores e desconfortos" : "Pain & discomfort"}
       </h1>
@@ -112,6 +106,6 @@ export default async function DoresPage() {
           ))}
         </ul>
       )}
-    </div>
+    </>
   );
 }
