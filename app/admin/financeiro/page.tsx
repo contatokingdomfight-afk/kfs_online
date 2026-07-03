@@ -604,6 +604,9 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           formCategory: t("adminFinanceColCategory"),
           formSubmit: t("adminFinanceFormSubmit"),
           expenseSaved: t("adminFinanceExpenseSaved"),
+          editExpenseTitle: t("adminFinanceEditExpenseTitle"),
+          editExpenseAction: t("adminFinanceEditExpenseAction"),
+          editExpenseSubmit: t("adminFinanceEditExpenseSubmit"),
           deleteLabel: t("adminFinanceDelete"),
           expenseErrorSuffix:
             locale === "pt"

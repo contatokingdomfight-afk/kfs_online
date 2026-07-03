@@ -98,6 +98,9 @@ type Labels = {
   formPaymentMethod: string;
   formSubmit: string;
   expenseSaved: string;
+  editExpenseTitle: string;
+  editExpenseAction: string;
+  editExpenseSubmit: string;
   deleteLabel: string;
   expenseErrorSuffix: string;
   openRenewals: string;
@@ -177,11 +180,25 @@ export function FinanceiroModals({
 
   useEffect(() => setMounted(true), []);
 
-  const closeModal = useCallback(() => setOpen(null), []);
+  const closeModal = useCallback(() => {
+    setOpen(null);
+    setEditingExpenseId(null);
+  }, []);
+
+  const closeEditExpense = useCallback(() => setEditingExpenseId(null), []);
+
+  const editingExpense = useMemo(
+    () => (editingExpenseId ? expenses.find((e) => e.id === editingExpenseId) ?? null : null),
+    [editingExpenseId, expenses]
+  );
 
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeModal();
+    if (!open && !editingExpenseId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (editingExpenseId) closeEditExpense();
+      else closeModal();
+    };
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
@@ -189,7 +206,7 @@ export function FinanceiroModals({
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, closeModal]);
+  }, [open, editingExpenseId, closeModal, closeEditExpense]);
 
   const displayPaymentRows = useMemo(
     () => groupPaymentListRows(allPaymentRows),
@@ -492,57 +509,36 @@ export function FinanceiroModals({
                     <tbody>
                       {expenses.map((e) => (
                         <tr key={e.id} style={{ borderTop: "1px solid var(--card-border, rgba(0,0,0,.06))" }}>
-                          {editingExpenseId === e.id ? (
-                            <td colSpan={7} style={{ padding: "8px 10px" }}>
-                              <EditExpenseForm
-                                expense={e}
-                                onDone={() => setEditingExpenseId(null)}
-                                labels={{
-                                  amount: labels.formAmount,
-                                  description: labels.formDescription,
-                                  date: labels.formDate,
-                                  kindField: labels.formKindField,
-                                  kindFixed: labels.formKindFixed,
-                                  kindVariable: labels.formKindVariable,
-                                  categoryField: labels.formCategory,
-                                  paymentMethod: labels.formPaymentMethod,
-                                }}
-                              />
-                            </td>
-                          ) : (
-                            <>
-                              <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatTableDate(e.occurredOn, locale)}</td>
-                              <td style={{ padding: "8px 10px" }}>{e.description}</td>
-                              <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
-                                {e.kind === "FIXED" ? labels.formKindFixed : labels.formKindVariable}
-                              </td>
-                              <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
-                                {EXPENSE_CATEGORY_LABELS_PT[e.category] ?? e.category}
-                              </td>
-                              <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
-                                {paymentMethodLabelPt(e.paymentMethod)}
-                              </td>
-                              <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(e.amount, locale)}</td>
-                              <td style={{ padding: "8px 10px" }}>
-                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                                  <button
-                                    type="button"
-                                    className="btn"
-                                    style={{ fontSize: 12, padding: "4px 8px" }}
-                                    onClick={() => setEditingExpenseId(e.id)}
-                                  >
-                                    Editar
-                                  </button>
-                                  <form action={deleteFinancialExpense} style={{ margin: 0 }}>
-                                    <input type="hidden" name="id" value={e.id} />
-                                    <button type="submit" className="btn" style={{ fontSize: 12, padding: "4px 8px" }}>
-                                      {labels.deleteLabel}
-                                    </button>
-                                  </form>
-                                </div>
-                              </td>
-                            </>
-                          )}
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatTableDate(e.occurredOn, locale)}</td>
+                          <td style={{ padding: "8px 10px" }}>{e.description}</td>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
+                            {e.kind === "FIXED" ? labels.formKindFixed : labels.formKindVariable}
+                          </td>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
+                            {EXPENSE_CATEGORY_LABELS_PT[e.category] ?? e.category}
+                          </td>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
+                            {paymentMethodLabelPt(e.paymentMethod)}
+                          </td>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(e.amount, locale)}</td>
+                          <td style={{ padding: "8px 10px" }}>
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                style={{ fontSize: 12, padding: "4px 10px" }}
+                                onClick={() => setEditingExpenseId(e.id)}
+                              >
+                                {labels.editExpenseAction}
+                              </button>
+                              <form action={deleteFinancialExpense} style={{ margin: 0 }}>
+                                <input type="hidden" name="id" value={e.id} />
+                                <button type="submit" className="btn" style={{ fontSize: 12, padding: "4px 8px" }}>
+                                  {labels.deleteLabel}
+                                </button>
+                              </form>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -550,6 +546,58 @@ export function FinanceiroModals({
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {editingExpense && (
+        <div
+          style={{ ...overlayStyle, zIndex: 10001 }}
+          role="presentation"
+          onClick={(e) => e.target === e.currentTarget && closeEditExpense()}
+        >
+          <div
+            className="card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId + "-edit-expense"}
+            onClick={(e) => e.stopPropagation()}
+            style={modalCardStyle(520)}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: 12,
+                marginBottom: 16,
+              }}
+            >
+              <h2 id={titleId + "-edit-expense"} style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
+                {labels.editExpenseTitle}
+              </h2>
+              <button type="button" className="button" onClick={closeEditExpense} style={{ flexShrink: 0 }}>
+                {labels.close}
+              </button>
+            </div>
+            <EditExpenseForm
+              key={editingExpense.id}
+              expense={editingExpense}
+              onDone={closeEditExpense}
+              onCancel={closeEditExpense}
+              labels={{
+                amount: labels.formAmount,
+                description: labels.formDescription,
+                date: labels.formDate,
+                kindField: labels.formKindField,
+                kindFixed: labels.formKindFixed,
+                kindVariable: labels.formKindVariable,
+                categoryField: labels.formCategory,
+                paymentMethod: labels.formPaymentMethod,
+                submit: labels.editExpenseSubmit,
+                cancel: labels.close,
+              }}
+            />
           </div>
         </div>
       )}

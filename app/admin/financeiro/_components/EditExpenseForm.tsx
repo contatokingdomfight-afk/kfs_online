@@ -7,16 +7,16 @@ import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
 import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
-function SubmitBtn() {
+function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn btn-primary" disabled={pending} style={{ fontSize: 12, padding: "4px 10px" }}>
-      {pending ? "…" : "Guardar"}
+    <button type="submit" className="btn btn-primary" disabled={pending}>
+      {pending ? "…" : label}
     </button>
   );
 }
 
-type Labels = {
+export type EditExpenseFormLabels = {
   amount: string;
   description: string;
   date: string;
@@ -25,9 +25,18 @@ type Labels = {
   kindVariable: string;
   categoryField: string;
   paymentMethod: string;
+  submit: string;
+  cancel: string;
 };
 
-export function EditExpenseForm({ expense, labels, onDone }: { expense: FinancialExpenseRow; labels: Labels; onDone?: () => void }) {
+type Props = {
+  expense: FinancialExpenseRow;
+  labels: EditExpenseFormLabels;
+  onDone?: () => void;
+  onCancel?: () => void;
+};
+
+export function EditExpenseForm({ expense, labels, onDone, onCancel }: Props) {
   const [state, action] = useFormState(updateFinancialExpense, null as ExpenseActionResult | null);
   const ref = useRef<HTMLFormElement>(null);
 
@@ -36,47 +45,93 @@ export function EditExpenseForm({ expense, labels, onDone }: { expense: Financia
   }, [state, onDone]);
 
   return (
-    <form ref={ref} action={action} style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "var(--bg)", borderRadius: 8 }}>
+    <form
+      ref={ref}
+      action={action}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+      }}
+    >
       <input type="hidden" name="id" value={expense.id} />
-      {state?.error && <p role="alert" style={{ color: "var(--error)", margin: 0, fontSize: 13 }}>{state.error}</p>}
+      {state?.error && (
+        <p role="alert" style={{ color: "var(--error)", margin: 0, fontSize: 14 }}>
+          {state.error}
+        </p>
+      )}
+
       <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{labels.description}</span>
-        <input name="description" defaultValue={expense.description} required className="input" />
+        <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.description}</span>
+        <input name="description" defaultValue={expense.description} required className="input mobile-form-field-scroll" />
       </label>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{labels.amount}</span>
-          <input name="amount" type="number" min="0" step="0.01" defaultValue={expense.amount} required className="input" />
-        </label>
-        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{labels.date}</span>
-          <input name="occurredOn" type="date" defaultValue={expense.occurredOn} required className="input" />
-        </label>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.kindField}</span>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "12px 20px" }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            <input type="radio" name="kind" value="FIXED" defaultChecked={expense.kind === "FIXED"} />
+            <span>{labels.kindFixed}</span>
+          </label>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            <input type="radio" name="kind" value="VARIABLE" defaultChecked={expense.kind !== "FIXED"} />
+            <span>{labels.kindVariable}</span>
+          </label>
+        </div>
       </div>
+
       <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{labels.categoryField}</span>
-        <select name="category" className="input" defaultValue={expense.category}>
+        <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.categoryField}</span>
+        <select name="category" className="input mobile-form-field-scroll" defaultValue={expense.category}>
           {EXPENSE_CATEGORIES.map((c) => (
-            <option key={c} value={c}>{EXPENSE_CATEGORY_LABELS_PT[c]}</option>
+            <option key={c} value={c}>
+              {EXPENSE_CATEGORY_LABELS_PT[c]}
+            </option>
           ))}
         </select>
       </label>
-      <div style={{ display: "flex", gap: 12, fontSize: 13 }}>
-        <span style={{ color: "var(--text-secondary)" }}>{labels.kindField}</span>
-        <label style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
-          <input type="radio" name="kind" value="FIXED" defaultChecked={expense.kind === "FIXED"} />
-          {labels.kindFixed}
+
+      <PaymentMethodSelect label={labels.paymentMethod} defaultValue={expense.paymentMethod ?? "CASH"} />
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+          gap: 12,
+        }}
+      >
+        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.amount}</span>
+          <input
+            name="amount"
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={expense.amount}
+            required
+            className="input mobile-form-field-scroll"
+          />
         </label>
-        <label style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
-          <input type="radio" name="kind" value="VARIABLE" defaultChecked={expense.kind !== "FIXED"} />
-          {labels.kindVariable}
+        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.date}</span>
+          <input
+            name="occurredOn"
+            type="date"
+            defaultValue={expense.occurredOn}
+            required
+            className="input mobile-form-field-scroll"
+          />
         </label>
       </div>
-      <PaymentMethodSelect
-        label={labels.paymentMethod}
-        defaultValue={expense.paymentMethod ?? "CASH"}
-      />
-      <SubmitBtn />
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
+        <SubmitButton label={labels.submit} />
+        {onCancel ? (
+          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            {labels.cancel}
+          </button>
+        ) : null}
+      </div>
     </form>
   );
 }
