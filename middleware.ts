@@ -71,8 +71,43 @@ function isStudentAwaitingSchoolPaymentPath(pathname: string) {
   return pathname === "/dashboard/financeiro" || pathname.startsWith("/dashboard/financeiro/");
 }
 
+/**
+ * Bots enviam POST multipart/form-data malformado; o Next.js tenta parsear como Server Action → 500.
+ * Ver https://github.com/vercel/next.js/issues/81760
+ */
+function rejectMalformedMultipartPost(request: NextRequest): NextResponse | null {
+  if (request.method !== "POST") return null;
+
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!contentType.startsWith("multipart/form-data")) return null;
+
+  const contentLength = request.headers.get("content-length");
+  if (!contentLength || contentLength === "0") {
+    return new NextResponse(null, { status: 400 });
+  }
+  if (!contentType.includes("boundary=")) {
+    return new NextResponse(null, { status: 400 });
+  }
+  return null;
+}
+
+/** Páginas públicas só-leitura sem Server Actions — POST é scanner/bot. */
+const STATIC_PUBLIC_POST_BLOCKED = new Set(["/", "/termos", "/privacidade"]);
+
+function rejectPostToStaticPublicPage(request: NextRequest, pathname: string): NextResponse | null {
+  if (request.method !== "POST" || !STATIC_PUBLIC_POST_BLOCKED.has(pathname)) return null;
+  if (request.headers.get("next-action")) return null;
+  return new NextResponse(null, { status: 405 });
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  const malformedMultipart = rejectMalformedMultipartPost(request);
+  if (malformedMultipart) return malformedMultipart;
+
+  const staticPostBlocked = rejectPostToStaticPublicPage(request, pathname);
+  if (staticPostBlocked) return staticPostBlocked;
 
   function withKfsPathname(r: NextRequest) {
     const h = new Headers(r.headers);
