@@ -29,15 +29,6 @@ enum AthleteLevel {
   AVANCADO
 }
 
-enum Modality {
-  MUAY_THAI
-  BOXING
-  KICKBOXING
-  MMA
-  BJJ
-  KRT
-}
-
 enum PhysicalAssessmentRequestStatus {
   PENDING
   CANCELLED
@@ -286,7 +277,7 @@ model Coach {
 
 model Lesson {
   id             String    @id @default(cuid())
-  modality       Modality
+  modality       String
   /// Null = horário recorrente (usa weekday); preenchido = aula única ou ocorrência base.
   date           DateTime? @db.Date
   weekday        Int?
@@ -332,7 +323,7 @@ model TrialClass {
   id                String    @id @default(cuid())
   name              String
   contact           String
-  modality          Modality
+  modality          String
   lessonDate        DateTime  @db.Date
   lessonId          String?
   lesson            Lesson?   @relation(fields: [lessonId], references: [id])

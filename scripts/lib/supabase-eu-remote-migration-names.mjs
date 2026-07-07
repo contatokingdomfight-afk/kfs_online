@@ -3,7 +3,7 @@
  * supabase_migrations.schema_migrations). Manter alinhado com o output de
  * list_migrations (MCP user-supabase_kfs_eu).
  *
- * Última sincronização: 2026-06-30 (seguro, matrícula, referenceMonth nullable).
+ * Última sincronização: 2026-07-11 (lesson_modality_text).
  */
 export const SUPABASE_EU_REMOTE_MIGRATION_NAMES = new Set([
   "20260223000000_enable_rls_public_tables",
@@ -78,4 +78,5 @@ export const SUPABASE_EU_REMOTE_MIGRATION_NAMES = new Set([
   "enrollment_fee_payment_type",
   "enrollment_fee_columns",
   "payment_reference_month_nullable",
+  "lesson_modality_text",
 ]);

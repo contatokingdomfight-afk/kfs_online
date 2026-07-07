@@ -92,6 +92,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Aplicar SQL:** `node scripts/apply-pending-migrations-pg.mjs` (`DATABASE_URL`); `--resume=nome_base`. Se der **timeout** na ligação directa `:5432` (comum no Windows/IPv6), usar connection string do **pooler** (`:6543`) ou MCP `apply_migration` / `execute_sql` no servidor `user-supabase_kfs_eu`.
 
+- **Modalidades novas (`ModalityRef`):** migração `20260711200000_lesson_modality_text` — `Lesson.modality` e `TrialClass.modality` passam de enum PostgreSQL `Modality` para `TEXT` com FK a `ModalityRef(code)`. Sem isto, criar modalidade no admin (ex. `MTKIDS`) falha na agenda com `invalid input value for enum "Modality"`. Catálogo dinâmico: `/admin/modalidades` (`createModality`).
+
 - **Backfill histórico:** `node scripts/backfill-supabase-migration-history.mjs` → SQL com MCP `execute_sql`
 
 ## Segurança (produção)
