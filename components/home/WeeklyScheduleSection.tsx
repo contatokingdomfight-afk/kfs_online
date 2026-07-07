@@ -1,8 +1,10 @@
 import Link from "next/link";
 import {
   PUBLIC_SCHEDULE_WEEKDAYS,
+  type PublicScheduleLesson,
   type PublicSchoolSchedule,
   weekdayLabelForPublicSchedule,
+  weekdayShortLabelForPublicSchedule,
 } from "@/lib/public-weekly-schedule";
 
 type ScheduleContent = {
@@ -22,6 +24,76 @@ function schoolHasLessons(schedule: PublicSchoolSchedule): boolean {
   return PUBLIC_SCHEDULE_WEEKDAYS.some((wd) => (schedule.lessonsByWeekday[wd]?.length ?? 0) > 0);
 }
 
+function LessonBlock({ lesson }: { lesson: PublicScheduleLesson }) {
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-2.5 shadow-sm transition-all hover:border-[var(--primary)]/45 hover:shadow-md">
+      <div className="flex items-baseline gap-1.5">
+        <span className="font-mono text-[11px] font-bold tabular-nums text-[var(--primary)] sm:text-xs">
+          {formatClock(lesson.startTime)}
+        </span>
+        <span className="text-[10px] text-[var(--text-secondary)]">–</span>
+        <span className="font-mono text-[11px] tabular-nums text-[var(--text-secondary)] sm:text-xs">
+          {formatClock(lesson.endTime)}
+        </span>
+      </div>
+      <p className="mt-1.5 text-sm font-semibold leading-snug text-[var(--text-primary)]">{lesson.modalityLabel}</p>
+      {lesson.locationName && (
+        <p className="mt-1 truncate text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">
+          {lesson.locationName}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function WeekTimetable({
+  school,
+  locale,
+  emptyDayLabel,
+}: {
+  school: PublicSchoolSchedule;
+  locale: "pt" | "en";
+  emptyDayLabel: string;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
+      <div className="overflow-x-auto">
+        <div className="grid min-w-[640px] grid-cols-7 divide-x divide-[var(--border)]">
+          {PUBLIC_SCHEDULE_WEEKDAYS.map((weekday) => {
+            const lessons = school.lessonsByWeekday[weekday] ?? [];
+            const hasLessons = lessons.length > 0;
+            return (
+              <div key={weekday} className="flex min-h-[11rem] flex-col sm:min-h-[13rem]">
+                <div
+                  className={`border-b border-[var(--border)] px-2 py-3 text-center ${
+                    hasLessons ? "bg-[var(--primary)]/10" : "bg-[var(--bg)]/60"
+                  }`}
+                >
+                  <span className="block text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--primary)]">
+                    {weekdayShortLabelForPublicSchedule(weekday, locale)}
+                  </span>
+                  <span className="mt-0.5 hidden text-[11px] font-medium text-[var(--text-secondary)] sm:block">
+                    {weekdayLabelForPublicSchedule(weekday, locale)}
+                  </span>
+                </div>
+                <div className="flex flex-1 flex-col gap-2 p-2 sm:p-2.5">
+                  {hasLessons ? (
+                    lessons.map((lesson) => <LessonBlock key={lesson.id} lesson={lesson} />)
+                  ) : (
+                    <div className="flex flex-1 items-center justify-center px-1">
+                      <p className="text-center text-[11px] italic text-[var(--text-secondary)]/70">{emptyDayLabel}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function WeeklyScheduleSection({
   content,
   schedule,
@@ -37,53 +109,23 @@ export function WeeklyScheduleSection({
     <section id="horarios" className="border-t border-[var(--border)] py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">{content.scheduleTitle}</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--primary)]">Kingdom Fight</p>
+          <h2 className="mt-2 text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">{content.scheduleTitle}</h2>
           <p className="mt-3 text-[var(--text-secondary)]">{content.scheduleSubtitle}</p>
         </div>
 
         {activeSchedules.length === 0 ? (
           <p className="mx-auto mt-12 max-w-xl text-center text-[var(--text-secondary)]">{content.scheduleNoClasses}</p>
         ) : (
-          <div className="mt-12 space-y-14">
+          <div className="mt-12 space-y-10">
             {activeSchedules.map((school) => (
               <div key={school.schoolId}>
                 {activeSchedules.length > 1 && (
-                  <h3 className="mb-6 text-center text-lg font-semibold text-[var(--primary)] sm:text-left">
+                  <h3 className="mb-4 text-center text-base font-semibold text-[var(--text-primary)] sm:text-left">
                     {school.schoolName}
                   </h3>
                 )}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {PUBLIC_SCHEDULE_WEEKDAYS.map((weekday) => {
-                    const lessons = school.lessonsByWeekday[weekday] ?? [];
-                    return (
-                      <div
-                        key={`${school.schoolId}-${weekday}`}
-                        className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 sm:p-5"
-                      >
-                        <h4 className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
-                          {weekdayLabelForPublicSchedule(weekday, locale)}
-                        </h4>
-                        {lessons.length === 0 ? (
-                          <p className="mt-3 text-sm text-[var(--text-secondary)]">{content.scheduleEmptyDay}</p>
-                        ) : (
-                          <ul className="mt-3 space-y-3">
-                            {lessons.map((lesson) => (
-                              <li key={lesson.id} className="border-t border-[var(--border)] pt-3 first:border-0 first:pt-0">
-                                <p className="font-medium text-[var(--text-primary)]">{lesson.modalityLabel}</p>
-                                <p className="text-sm text-[var(--text-secondary)]">
-                                  {formatClock(lesson.startTime)} – {formatClock(lesson.endTime)}
-                                </p>
-                                {lesson.locationName && (
-                                  <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{lesson.locationName}</p>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <WeekTimetable school={school} locale={locale} emptyDayLabel={content.scheduleEmptyDay} />
               </div>
             ))}
           </div>

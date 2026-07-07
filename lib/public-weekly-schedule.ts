@@ -28,6 +28,13 @@ export function weekdayLabelForPublicSchedule(weekday: number, locale: "pt" | "e
   return labels[weekday] ?? "";
 }
 
+export function weekdayShortLabelForPublicSchedule(weekday: number, locale: "pt" | "en"): string {
+  const pt = ["", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  const en = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const labels = locale === "en" ? en : pt;
+  return labels[weekday] ?? "";
+}
+
 async function fetchPublicWeeklySchedule(): Promise<PublicSchoolSchedule[]> {
   const result = getAdminClientOrNull();
   if (!result.client) return [];
