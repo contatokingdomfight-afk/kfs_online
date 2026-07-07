@@ -46,6 +46,16 @@ export const homeContent = {
     step4: "Evolua constantemente",
     step4Desc: "Métricas, feedback do coach e progresso visível.",
 
+    scheduleTitle: "Horários das aulas",
+    scheduleSubtitle:
+      "Grade semanal nas nossas escolas. Actualizada automaticamente quando alteramos o calendário.",
+    scheduleEmptyDay: "Sem aulas",
+    scheduleCta: "Marcar aula experimental",
+    scheduleFootnote:
+      "Horários de referência (aulas semanais). Alterações pontuais ou cancelamentos podem variar — confirma connosco.",
+    scheduleNoClasses:
+      "Brevemente publicamos os horários. Entre em contacto ou marque uma aula experimental.",
+
     // Trilhas + Plano digital (landing)
     learningPathsTitle: "Trilhas de aprendizagem",
     learningPathsSubtitle: "Do Iniciante ao Elite",
@@ -194,6 +204,15 @@ export const homeContent = {
     step3Desc: "Structured classes by level and modality.",
     step4: "Evolve constantly",
     step4Desc: "Metrics, coach feedback and visible progress.",
+
+    scheduleTitle: "Class schedule",
+    scheduleSubtitle:
+      "Weekly timetable at our schools. Updated automatically whenever we change the calendar.",
+    scheduleEmptyDay: "No classes",
+    scheduleCta: "Book a trial class",
+    scheduleFootnote:
+      "Reference times (weekly classes). One-off changes or cancellations may vary — please confirm with us.",
+    scheduleNoClasses: "We will publish schedules soon. Get in touch or book a trial class.",
 
     learningPathsTitle: "Learning paths",
     learningPathsSubtitle: "From Beginner to Elite",

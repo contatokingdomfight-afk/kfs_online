@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { revalidatePublicWeeklySchedule } from "@/lib/public-weekly-schedule";
 import { turmasPathAfterDelete } from "@/lib/turmas-list-query";
 
 function getSupabaseForAdminWrite() {
@@ -14,6 +15,7 @@ function revalidatePathsAfterLessonDelete() {
   revalidatePath("/coach");
   revalidatePath("/coach/agenda");
   revalidatePath("/aula-experimental");
+  revalidatePublicWeeklySchedule();
 }
 
 export type DeleteLessonResult = {

@@ -12,11 +12,13 @@ import { Founders } from "@/components/home/Founders";
 import { LearningPathsSection } from "@/components/home/LearningPathsSection";
 import { YouTubeShortsSection } from "@/components/home/YouTubeShortsSection";
 import { LogoSymbolismSection } from "@/components/home/LogoSymbolismSection";
+import { WeeklyScheduleSection } from "@/components/home/WeeklyScheduleSection";
 import { WhyChoose } from "@/components/home/WhyChoose";
 import { Testimonials } from "@/components/home/Testimonials";
 import { CTASection } from "@/components/home/CTASection";
 import { Footer } from "@/components/home/Footer";
 import { HomeHeader } from "@/components/home/HomeHeader";
+import { loadPublicWeeklySchedule } from "@/lib/public-weekly-schedule";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -58,6 +60,7 @@ export default async function HomePage({ searchParams }: Props) {
 
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
   const content = getHomeContent(locale);
+  const weeklySchedule = await loadPublicWeeklySchedule();
 
   return (
     <main className="min-h-screen bg-[var(--bg)]">
@@ -71,6 +74,7 @@ export default async function HomePage({ searchParams }: Props) {
       <LogoSymbolismSection content={content} />
       <Founders content={content} />
       <HowItWorks content={content} />
+      <WeeklyScheduleSection content={content} schedule={weeklySchedule} locale={locale} />
       <LearningPathsSection content={content} />
       <Plans content={content} />
       <WhyChoose content={content} />

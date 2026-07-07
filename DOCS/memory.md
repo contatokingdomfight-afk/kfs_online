@@ -62,6 +62,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Landing (`/`):** após a secção de vídeos «em ação», bloco interactivo do significado do emblema — `components/home/LogoSymbolismSection.tsx`; textos `symbolism*` em `lib/home-content.ts`; **`public/brand/symbolism/foto-completa.svg`** visível por defeito; no **hover** a foto completa **esconde-se** (`opacity-0`) e mostra-se só o **recorte** (`coroa.svg`, `octogono.svg`, …) sobre fundo preto do contentor. Painel: hover ou clique. Fontes em `KFS simbolo significados/`. `HOTSPOTS` / `HOTSPOT_HIT_ORDER`.
 
+- **Horários públicos (`/`):** secção «Horários das aulas» após «Como funciona» — `components/home/WeeklyScheduleSection.tsx`; dados em `lib/public-weekly-schedule.ts` (aulas **recorrentes** `Lesson.isOneOff=false` + `weekday`, escolas activas; mesma fonte que Admin → Turmas). Visitantes anónimos: leitura via `getAdminClientOrNull()`. Cache `unstable_cache` tag `public-weekly-schedule` (5 min); invalidação em `revalidatePublicWeeklySchedule()` ao criar/editar/apagar aulas (`app/admin/turmas/actions.ts`, `lib/admin/update-lesson.ts`, `lib/admin/delete-lesson.ts`). Textos `schedule*` em `lib/home-content.ts`; âncora `#horarios`.
+
 - **Pipeline ícones PWA:** `npm run generate:pwa-icons` → `public/icons/kfs-emblem-*`, `app/icon.png`, `app/apple-icon.png`. Fonte: `kfs-app-icon.png` (transparente); ícones **manifest** com alpha; maskable/favicon 48px opacos. Bump `SW_VERSION` em `public/sw.js`; **reinstalar** PWA após mudanças.
 
 - **Splash:** `PwaLaunchSplash` + `BrandSplashLogo` (`kfs-app-icon.png` sobre preto); `DashboardSplash` no dashboard. Manifest: `background_color` / `theme_color` = `#000000`. Detalhe: [`PWA.md`](PWA.md).

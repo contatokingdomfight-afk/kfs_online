@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { revalidatePublicWeeklySchedule } from "@/lib/public-weekly-schedule";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 
 function getSupabaseForAdminWrite() {
@@ -136,5 +137,6 @@ export async function performUpdateLesson(payload: UpdateLessonPayload): Promise
   revalidatePath("/coach/agenda");
   revalidatePath("/dashboard");
   revalidatePath("/aula-experimental");
+  revalidatePublicWeeklySchedule();
   return { success: true };
 }

@@ -5,6 +5,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
+import { revalidatePublicWeeklySchedule } from "@/lib/public-weekly-schedule";
 import { performDeleteLesson, type DeleteLessonResult } from "@/lib/admin/delete-lesson";
 import { performUpdateLesson, type UpdateLessonResult } from "@/lib/admin/update-lesson";
 
@@ -127,6 +128,7 @@ export async function createLesson(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/dashboard");
   revalidatePath("/aula-experimental");
+  revalidatePublicWeeklySchedule();
   return {
     success: true,
     created: 1,
