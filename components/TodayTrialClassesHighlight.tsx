@@ -124,7 +124,6 @@ export function TodayTrialClassesHighlight({
         {trials.map((trial) => {
           const modLabel = modalityLabels[trial.modality] ?? trial.modality;
           const timeRange = formatTimeRange(trial.startTime, trial.endTime);
-          const inCoachScope = trial.lessonId && coachScope?.lessonIds.has(trial.lessonId);
           const isPending = !trial.acceptedAt;
 
           return (
@@ -192,13 +191,13 @@ export function TodayTrialClassesHighlight({
                   gap: 8,
                 }}
               >
-                {coachScope && inCoachScope && isPending ? <AcceptTrialButton trialId={trial.id} /> : null}
-                {coachScope && inCoachScope && trial.contact.includes("@") ? (
+                {coachScope && isPending ? <AcceptTrialButton trialId={trial.id} /> : null}
+                {coachScope && trial.contact.includes("@") ? (
                   <ConvertTrialButton trialId={trial.id} />
                 ) : null}
                 {!coachScope && isPending ? <AcceptTrialButton trialId={trial.id} /> : null}
                 {!coachScope && trial.contact.includes("@") ? <ConvertTrialButton trialId={trial.id} /> : null}
-                {coachScope && trial.lessonId && inCoachScope ? (
+                {coachScope && trial.lessonId ? (
                   <Link
                     href={`/coach/aula?lesson=${trial.lessonId}&date=${encodeURIComponent(trial.lessonDate)}`}
                     style={{

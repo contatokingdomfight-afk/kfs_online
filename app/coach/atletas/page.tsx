@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -11,6 +12,7 @@ const LEVEL_LABEL: Record<string, string> = {
 export default async function CoachAtletasPage() {
   const coachId = await getCurrentCoachId();
   const supabase = await createClient();
+  const userReadClient = getAdminClientOrNull().client ?? supabase;
 
   let query = supabase
     .from("Athlete")
@@ -27,11 +29,13 @@ export default async function CoachAtletasPage() {
   const studentIds = list.map((a) => a.studentId);
   const { data: students } =
     studentIds.length > 0
-      ? await supabase.from("Student").select("id, userId").in("id", studentIds)
+      ? await userReadClient.from("Student").select("id, userId").in("id", studentIds)
       : { data: [] };
   const userIds = [...new Set((students ?? []).map((s) => s.userId))];
   const { data: users } =
-    userIds.length > 0 ? await supabase.from("User").select("id, name, email").in("id", userIds) : { data: [] };
+    userIds.length > 0
+      ? await userReadClient.from("User").select("id, name, email").in("id", userIds)
+      : { data: [] };
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
   const studentToUser = new Map((students ?? []).map((s) => [s.id, userById.get(s.userId)]));
 

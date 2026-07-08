@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
+import { getCoachSchoolIds } from "@/lib/coach-schools";
 
 export type TodayTrialClass = {
   id: string;
@@ -67,12 +68,16 @@ async function enrichWithLessonTimes(
   });
 }
 
-/** Experimentais agendados para hoje (Lisboa), não convertidos. */
+/** Experimentais de hoje no âmbito do professor (escolas em CoachSchool + aulas atribuídas). */
 export async function getTodayTrialClassesForCoach(
   supabase: SupabaseClient,
+  coachId: string | null,
   coachLessonIds: Set<string>
 ): Promise<TodayTrialClass[]> {
+  if (!coachId) return [];
+
   const today = calendarDateLisbon(new Date());
+  const schoolIds = await getCoachSchoolIds(supabase, coachId);
 
   const { data: trialsRaw } = await supabase
     .from("TrialClass")
@@ -81,10 +86,24 @@ export async function getTodayTrialClassesForCoach(
     .eq("lessonDate", today)
     .order("createdAt", { ascending: true });
 
-  const filtered = (trialsRaw ?? []).filter((t) => {
-    if (!t.lessonId) return true;
-    return coachLessonIds.has(t.lessonId);
-  }) as TrialRow[];
+  const rows = (trialsRaw ?? []) as TrialRow[];
+  const lessonIds = [...new Set(rows.map((t) => t.lessonId).filter(Boolean))] as string[];
+  const lessonSchoolById = new Map<string, string>();
+
+  if (lessonIds.length > 0) {
+    const { data: lessons } = await supabase.from("Lesson").select("id, schoolId").in("id", lessonIds);
+    for (const l of lessons ?? []) {
+      lessonSchoolById.set(l.id, l.schoolId);
+    }
+  }
+
+  const schoolIdSet = new Set(schoolIds);
+  const filtered = rows.filter((t) => {
+    if (!t.lessonId) return schoolIdSet.size > 0 || coachLessonIds.size > 0;
+    if (coachLessonIds.has(t.lessonId)) return true;
+    const sid = lessonSchoolById.get(t.lessonId);
+    return sid != null && schoolIdSet.has(sid);
+  });
 
   return (await enrichWithLessonTimes(supabase, filtered)).sort(sortTrials);
 }

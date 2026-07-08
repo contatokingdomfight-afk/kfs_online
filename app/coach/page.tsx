@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { getCurrentSchoolId } from "@/lib/auth/get-current-school";
@@ -7,6 +8,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { coachPresenceUrl, pickLastAndNextOccurrence } from "@/lib/coach-presence-shortcuts";
 import { MODALITY_LABELS, formatLessonDate, formatNextLessonDate } from "@/lib/lesson-utils";
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { getWeekStartMondayLisbon } from "@/lib/lisbon-week";
 import { ymdAddDays } from "@/lib/lesson-occurrences";
 import { loadCoachScheduleBundle } from "@/lib/coach-schedule-scope";
@@ -67,15 +69,22 @@ function getCurrentOrNextScenario(
 export default async function CoachHomePage() {
   const dbUser = await getCurrentDbUser();
   const supabase = await createClient();
+  /** Student/User têm RLS restritivo; admin client para nomes dos atletas (como em coach/aula). */
+  const userReadClient = getAdminClientOrNull().client ?? supabase;
   const schoolAssistant =
     dbUser?.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabase, dbUser.id) : null;
   const isSchoolAssistantHome = Boolean(schoolAssistant);
 
-  const [coachId, schoolId, locale] = await Promise.all([
+  const [coachId, schoolId, locale, modalitiesList] = await Promise.all([
     getCurrentCoachId(),
     getCurrentSchoolId(),
     getLocaleFromCookies(),
+    getCachedModalityRefs(supabase),
   ]);
+  const modalityLabels: Record<string, string> = {
+    ...MODALITY_LABELS,
+    ...Object.fromEntries(modalitiesList.map((m) => [m.code, m.name ?? m.code])),
+  };
   const t = getTranslations(locale as "pt" | "en");
 
   const now = new Date();
@@ -188,7 +197,7 @@ export default async function CoachHomePage() {
   const coachLessonIds = coachId ? await getLessonIdsForCoach(supabase, coachId) : new Set<string>();
   const todayTrials =
     !isSchoolAssistantHome && coachId
-      ? await getTodayTrialClassesForCoach(supabase, coachLessonIds)
+      ? await getTodayTrialClassesForCoach(supabase, coachId, coachLessonIds)
       : [];
 
   /** Só na home: inscrições ainda sem aula associada. Com `lessonId`, aparecem na sessão (Presenças na aula). */
@@ -237,12 +246,12 @@ export default async function CoachHomePage() {
   const studentIds = athleteList.map((a) => a.studentId);
   const { data: students } =
     studentIds.length > 0
-      ? await supabase.from("Student").select("id, userId").in("id", studentIds)
+      ? await userReadClient.from("Student").select("id, userId").in("id", studentIds)
       : { data: [] };
   const userIds = [...new Set((students ?? []).map((s) => s.userId))];
   const { data: users } =
     userIds.length > 0
-      ? await supabase.from("User").select("id, name, email").in("id", userIds)
+      ? await userReadClient.from("User").select("id, name, email").in("id", userIds)
       : { data: [] };
   const userById = new Map(
     (users ?? []).map((u) => [u.id, u as { id: string; name: string | null; email: string }])
@@ -280,14 +289,14 @@ export default async function CoachHomePage() {
       const pendingStudentIds = [...new Set((physReqRows ?? []).map((r) => r.studentId))];
       const nameByStudentId = new Map<string, string | null>();
       if (pendingStudentIds.length > 0) {
-        const { data: pendingStudents } = await supabase
+        const { data: pendingStudents } = await userReadClient
           .from("Student")
           .select("id, userId")
           .in("id", pendingStudentIds);
         const pendingUserIds = [...new Set((pendingStudents ?? []).map((s) => s.userId))];
         const { data: pendingUsers } =
           pendingUserIds.length > 0
-            ? await supabase.from("User").select("id, name").in("id", pendingUserIds)
+            ? await userReadClient.from("User").select("id, name").in("id", pendingUserIds)
             : { data: [] };
         const nameByUserId = new Map((pendingUsers ?? []).map((u) => [u.id, u.name as string | null]));
         for (const s of pendingStudents ?? []) {
@@ -326,7 +335,7 @@ export default async function CoachHomePage() {
       {!isSchoolAssistantHome && (
         <TodayTrialClassesHighlight
           trials={todayTrials}
-          modalityLabels={MODALITY_LABELS}
+          modalityLabels={modalityLabels}
           labels={{
             title: t("todayTrialsTitle"),
             subtitle: t("todayTrialsSubtitle"),
@@ -344,14 +353,14 @@ export default async function CoachHomePage() {
       <CurrentOrNextClassCard
         scenario={scenario}
         lesson={focusLesson}
-        modalityLabel={focusLesson ? MODALITY_LABELS[focusLesson.modality] ?? focusLesson.modality : ""}
+        modalityLabel={focusLesson ? modalityLabels[focusLesson.modality] ?? focusLesson.modality : ""}
         summary={attendanceSummary}
         manageLabel={t("coachManageClassNow")}
         restMessage={t("coachRestMessage")}
       />
 
       <Link
-        href="/coach/aula"
+        href="/coach/round-timer"
         className="card"
         style={{
           display: "block",
@@ -460,7 +469,7 @@ export default async function CoachHomePage() {
         >
           <TodayScheduleCard
             lessons={restOfDayLessons}
-            modalityLabels={MODALITY_LABELS}
+            modalityLabels={modalityLabels}
             title={t("coachRestOfDay")}
             viewAgendaLabel={t("coachViewFullAgenda")}
             noLessonsLabel={t("coachNoLessonsRestToday")}
@@ -479,7 +488,7 @@ export default async function CoachHomePage() {
           >
             <TodayScheduleCard
               lessons={restOfDayLessons}
-              modalityLabels={MODALITY_LABELS}
+              modalityLabels={modalityLabels}
               title={t("coachRestOfDay")}
               viewAgendaLabel={t("coachViewFullAgenda")}
               noLessonsLabel={t("coachNoLessonsRestToday")}
@@ -487,13 +496,13 @@ export default async function CoachHomePage() {
             <WeekThemeCard
               title={t("navWeekTheme")}
               themeTitle={theme?.title ?? null}
-              modalityLabel={MODALITY_LABELS[mainModality] ?? mainModality}
+              modalityLabel={modalityLabels[mainModality] ?? mainModality}
               defineLabel={t("coachDefineTheme")}
               noThemeHint={t("coachNoThemeHint")}
             />
             <TrialClassesCard
               trials={trialsForHomeCard}
-              modalityLabels={MODALITY_LABELS}
+              modalityLabels={modalityLabels}
               title={t("coachTrialClasses")}
               manageAllLabel={t("coachManageAllTrials")}
               emptyMessage={t("coachTrialClassesEmpty")}

@@ -16,6 +16,7 @@ import { getFamilyContext } from "@/lib/family-group";
 import { familyGroupIdForTuition } from "@/lib/family-tuition";
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/retail/constants";
 import { parseFinancePaymentMethodRequired } from "@/lib/finance-payment-method";
+import { parseDecimalAmount } from "@/lib/parse-decimal-amount";
 
 export type { StudentPaymentRow };
 
@@ -63,8 +64,8 @@ export async function createPayment(
   const tuitionMonthsStr = (formData.get("tuitionMonths") as string)?.trim() || "1";
 
   if (!studentId) return { error: "Aluno é obrigatório." };
-  const amount = parseFloat(amountStr ?? "");
-  if (Number.isNaN(amount) || amount < 0) return { error: "Valor inválido." };
+  const amount = parseDecimalAmount(amountStr);
+  if (amount === null || amount < 0) return { error: "Valor inválido." };
   if (!referenceMonth || !/^\d{4}-\d{2}$/.test(referenceMonth)) return { error: "Mês de referência deve ser AAAA-MM." };
   if (status !== "PAID" && status !== "LATE") return { error: "Status inválido." };
   const tuitionMonths = parseInt(tuitionMonthsStr, 10);

@@ -10,6 +10,7 @@ import {
   type StudentPaymentRow,
 } from "../actions";
 import { blurActiveElementBeforeSubmit } from "@/lib/blur-before-form-submit";
+import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
 import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
 type Props = {
@@ -69,12 +70,18 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
     }
   }
 
-  const defaultAmountStr =
-    urlAmount.trim() !== ""
-      ? urlAmount.trim()
-      : selected && selected.priceMonthly > 0
-        ? String(selected.priceMonthly)
-        : "";
+  const defaultAmountStr = (() => {
+    const fromUrl = urlAmount.trim();
+    if (fromUrl) return fromUrl.replace(".", ",");
+    if (!selected) return "";
+    if (selected.existingPayment) {
+      return formatDecimalAmountInput(Number(selected.existingPayment.amount));
+    }
+    if (selected.priceMonthly > 0) {
+      return formatDecimalAmountInput(selected.priceMonthly);
+    }
+    return "";
+  })();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
@@ -326,14 +333,14 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 Mensalidade (€) *
               </span>
               <input
-                type="number"
+                type="text"
                 name="amount"
                 required
-                min="0"
-                step="0.01"
                 className="input mobile-form-field-scroll"
-                placeholder="0.00"
-                key={`amt-${selected.studentId}`}
+                placeholder="55,00"
+                inputMode="decimal"
+                autoComplete="off"
+                key={`amt-${selected.studentId}-${referenceMonth}`}
                 defaultValue={defaultAmountStr}
               />
             </label>
