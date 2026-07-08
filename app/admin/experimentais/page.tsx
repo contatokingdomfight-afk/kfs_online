@@ -3,7 +3,13 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
-import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
+import {
+  formatTrialScheduleLine,
+  isActiveTrial,
+  isCompletedTrial,
+} from "@/lib/trial-class-utils";
 import { ConvertTrialButton } from "./ConvertTrialButton";
 import { AcceptTrialButton } from "./AcceptTrialButton";
 
@@ -14,11 +20,12 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const params = await searchParams;
-  const filter = params.filter ?? "all"; // all | pending | accepted | converted
+  const filter = params.filter ?? "all"; // all | pending | accepted | converted | completed
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
+  const today = calendarDateLisbon(new Date());
 
   const { data: trials } = await supabase
     .from("TrialClass")
@@ -27,9 +34,12 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
 
   const list = trials ?? [];
   let filtered = list;
+  if (filter === "all") filtered = list.filter((t) => isActiveTrial(t, today));
   if (filter === "pending") filtered = list.filter((t) => !t.convertedToStudent && !t.acceptedAt);
-  if (filter === "accepted") filtered = list.filter((t) => !t.convertedToStudent && !!t.acceptedAt);
+  if (filter === "accepted")
+    filtered = list.filter((t) => !t.convertedToStudent && !!t.acceptedAt && !isCompletedTrial(t, today));
   if (filter === "converted") filtered = list.filter((t) => t.convertedToStudent);
+  if (filter === "completed") filtered = list.filter((t) => isCompletedTrial(t, today));
 
   const lessonIds = [...new Set(list.map((t) => t.lessonId).filter(Boolean))] as string[];
   let lessonMap = new Map<string, { modality: string; date: string; startTime: string; endTime: string }>();
@@ -127,6 +137,17 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
         >
           Convertidos
         </Link>
+        <Link
+          href="/admin/experimentais?filter=completed"
+          className="btn"
+          style={{
+            textDecoration: "none",
+            backgroundColor: filter === "completed" ? "var(--primary)" : "var(--bg-secondary)",
+            color: filter === "completed" ? "#fff" : "var(--text-primary)",
+          }}
+        >
+          Realizados
+        </Link>
       </div>
 
       {filtered.length === 0 ? (
@@ -167,19 +188,26 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
                       color: t.convertedToStudent || t.acceptedAt ? "#fff" : "var(--text-primary)",
                     }}
                   >
-                    {t.convertedToStudent ? "Convertido" : t.acceptedAt ? "Aceite" : "Pendente"}
+                    {t.convertedToStudent
+                      ? "Convertido"
+                      : isCompletedTrial(t, today)
+                        ? "Realizado"
+                        : t.acceptedAt
+                          ? "Aceite"
+                          : "Pendente"}
                   </span>
                 </div>
                 <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                   {t.contact}
                 </p>
                 <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                  {MODALITY_LABELS[t.modality] ?? t.modality}
-                  {lesson
-                    ? ` · ${formatLessonDate(lesson.date)} ${lesson.startTime}–${lesson.endTime}`
-                    : ` · ${formatLessonDate(String(t.lessonDate))}`}
+                  {formatTrialScheduleLine(
+                    { lessonDate: String(t.lessonDate), modality: t.modality },
+                    lesson ? { startTime: lesson.startTime, endTime: lesson.endTime } : null,
+                    MODALITY_LABELS
+                  )}
                 </p>
-                {!t.convertedToStudent && (
+                {!t.convertedToStudent && isActiveTrial(t, today) && (
                   <div style={{ marginTop: "clamp(8px, 2vw, 12px)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
                     {!t.acceptedAt && <AcceptTrialButton trialId={t.id} />}
                     {t.contact.includes("@") && <ConvertTrialButton trialId={t.id} />}

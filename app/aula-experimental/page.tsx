@@ -10,6 +10,7 @@ import {
   rowsToLessonDefinitions,
 } from "@/lib/lesson-occurrences";
 import { FormularioExperimental } from "./FormularioExperimental";
+import { getDefaultOnboardingSchoolId, sortSchoolsForOnboarding } from "@/lib/onboarding-default-school";
 
 type SearchParams = Promise<{ sucesso?: string }>;
 
@@ -43,7 +44,8 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
       .order("startTime", { ascending: true }),
   ]);
 
-  const schools = schoolsRes.data ?? [];
+  const schools = sortSchoolsForOnboarding(schoolsRes.data ?? []);
+  const defaultSchoolId = getDefaultOnboardingSchoolId(schools);
   const lessonsRaw = lessonsRes.data ?? [];
   const schoolIds = new Set(schools.map((s) => s.id));
   const lessonsForActiveSchools = lessonsRaw.filter((row) => {
@@ -124,7 +126,8 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
           Escolhe o <strong>local</strong>, depois a modalidade e a data. Entraremos em contacto para confirmar a tua vaga.
         </p>
         <FormularioExperimental
-          schools={schools.map((s) => ({ id: s.id, name: s.name }))}
+          schools={schools.map((s) => ({ id: s.id, name: s.name ?? "" }))}
+          defaultSchoolId={defaultSchoolId}
           modalityOptions={modalityOptions}
           lessonsBySchoolId={lessonsBySchoolId}
         />

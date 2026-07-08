@@ -210,6 +210,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Email Resend (transacional):** `lib/notifications/email.ts` — presença confirmada, lembretes de aula, **aceite de aula experimental** (`sendTrialAcceptanceConfirmation` em `acceptTrialRequest`, `app/admin/experimentais/actions.ts`). Requer `RESEND_API_KEY` e `RESEND_FROM_EMAIL` (Vercel); o contacto do pedido tem de incluir email. Ver [`CONFIGURAR_RESEND.md`](CONFIGURAR_RESEND.md).
 
+- **Aulas experimentais (UX):** destaque «Experimentais hoje» na home coach (`/coach`) e admin (`/admin`) — `components/TodayTrialClassesHighlight.tsx`, `lib/today-trial-classes.ts`. Lista admin `/admin/experimentais`: data da inscrição (`lessonDate`, não `Lesson.date`); filtro **Realizados** para aceites passados não convertidos (`lib/trial-class-utils.ts`). Form público `/aula-experimental`: escola presencial pré-selecionada (`getDefaultOnboardingSchoolId`).
+
 
 
 ## Treinador assistente (escola)

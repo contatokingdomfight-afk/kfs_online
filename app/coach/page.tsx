@@ -12,6 +12,9 @@ import { ymdAddDays } from "@/lib/lesson-occurrences";
 import { loadCoachScheduleBundle } from "@/lib/coach-schedule-scope";
 import { calendarDateLisbon, minutesSinceMidnightLisbon } from "@/lib/lesson-check-in-window";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
+import { getLessonIdsForCoach } from "@/lib/coach-lesson-ids";
+import { getTodayTrialClassesForCoach } from "@/lib/today-trial-classes";
+import { TodayTrialClassesHighlight } from "@/components/TodayTrialClassesHighlight";
 import { CurrentOrNextClassCard } from "./_components/CurrentOrNextClassCard";
 import { TodayScheduleCard } from "./_components/TodayScheduleCard";
 import { WeekThemeCard } from "./_components/WeekThemeCard";
@@ -182,6 +185,12 @@ export default async function CoachHomePage() {
     .gte("lessonDate", today)
     .order("lessonDate", { ascending: true });
 
+  const coachLessonIds = coachId ? await getLessonIdsForCoach(supabase, coachId) : new Set<string>();
+  const todayTrials =
+    !isSchoolAssistantHome && coachId
+      ? await getTodayTrialClassesForCoach(supabase, coachLessonIds)
+      : [];
+
   /** Só na home: inscrições ainda sem aula associada. Com `lessonId`, aparecem na sessão (Presenças na aula). */
   const trialsForHomeCard = (trials ?? [])
     .filter((t) => {
@@ -313,6 +322,23 @@ export default async function CoachHomePage() {
       >
         {t("helloCoach")} {dbUser?.name || t("coach")} 👋
       </p>
+
+      {!isSchoolAssistantHome && (
+        <TodayTrialClassesHighlight
+          trials={todayTrials}
+          modalityLabels={MODALITY_LABELS}
+          labels={{
+            title: t("todayTrialsTitle"),
+            subtitle: t("todayTrialsSubtitle"),
+            pendingBadge: t("todayTrialsPending"),
+            acceptedBadge: t("todayTrialsAccepted"),
+            viewAll: t("todayTrialsViewAll"),
+            goToLesson: t("coachGoToLesson"),
+          }}
+          manageHref="/coach/experimentais"
+          coachScope={{ lessonIds: coachLessonIds }}
+        />
+      )}
 
       {/* Secção 1: FOCO ATUAL */}
       <CurrentOrNextClassCard

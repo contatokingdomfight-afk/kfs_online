@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminDashboardStats } from "@/lib/admin-dashboard-stats";
 import { getActionItemsData } from "@/lib/admin-action-items";
+import { getTodayTrialClassesForAdmin } from "@/lib/today-trial-classes";
+import { TodayTrialClassesHighlight } from "@/components/TodayTrialClassesHighlight";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { AdminSchoolFilter } from "./AdminSchoolFilter";
 import { BusinessHealthStats } from "./_components/BusinessHealthStats";
 import { ActionItems } from "./_components/ActionItems";
@@ -24,10 +27,11 @@ type Props = {
 };
 
 export async function AdminDashboardContent({ client, schoolId, access }: Props) {
-  const [locale, stats, actionItems] = await Promise.all([
+  const [locale, stats, actionItems, todayTrials] = await Promise.all([
     getLocaleFromCookies(),
     getAdminDashboardStats(client, schoolId),
     getActionItemsData(client, schoolId),
+    getTodayTrialClassesForAdmin(client, schoolId),
   ]);
   const t = getTranslations(locale as "pt" | "en");
 
@@ -110,6 +114,20 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
         <AdminSchoolFilter schools={stats.schools} currentSchoolId={schoolId} />
       </div>
+
+      <TodayTrialClassesHighlight
+        trials={todayTrials}
+        modalityLabels={MODALITY_LABELS}
+        labels={{
+          title: t("todayTrialsTitle"),
+          subtitle: t("todayTrialsSubtitle"),
+          pendingBadge: t("todayTrialsPending"),
+          acceptedBadge: t("todayTrialsAccepted"),
+          viewAll: t("todayTrialsViewAll"),
+          goToLesson: t("adminViewLesson"),
+        }}
+        manageHref="/admin/experimentais"
+      />
 
       {/* Secção: SAÚDE DO NEGÓCIO */}
       <BusinessHealthStats

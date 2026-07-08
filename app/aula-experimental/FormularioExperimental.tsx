@@ -9,15 +9,17 @@ type LessonSlot = { id: string; occurrenceDate: string; label: string };
 
 export function FormularioExperimental({
   schools,
+  defaultSchoolId,
   modalityOptions,
   lessonsBySchoolId,
 }: {
   schools: { id: string; name: string }[];
+  defaultSchoolId?: string;
   modalityOptions: ModalityOption[];
   lessonsBySchoolId: Record<string, Record<string, LessonSlot[]>>;
 }) {
   const [state, formAction] = useFormState(submitTrialRequest, null as SubmitTrialResult | null);
-  const [schoolId, setSchoolId] = useState(schools[0]?.id ?? "");
+  const [schoolId, setSchoolId] = useState(defaultSchoolId || schools[0]?.id || "");
   const [selectedModality, setSelectedModality] = useState<string>("");
 
   const modalitiesForSchool = useMemo(() => {
