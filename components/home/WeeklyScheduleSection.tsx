@@ -16,6 +16,24 @@ type ScheduleContent = {
   scheduleNoClasses: string;
 };
 
+/** Paleta de acentos por modalidade (estável por código). */
+const MODALITY_ACCENTS = [
+  "#ef4444",
+  "#f59e0b",
+  "#22c55e",
+  "#3b82f6",
+  "#a855f7",
+  "#ec4899",
+  "#14b8a6",
+  "#f97316",
+];
+
+function modalityAccent(code: string): string {
+  let hash = 0;
+  for (let i = 0; i < code.length; i++) hash = (hash * 31 + code.charCodeAt(i)) >>> 0;
+  return MODALITY_ACCENTS[hash % MODALITY_ACCENTS.length];
+}
+
 function formatClock(time: string): string {
   return time.length >= 5 ? time.slice(0, 5) : time;
 }
@@ -24,11 +42,21 @@ function schoolHasLessons(schedule: PublicSchoolSchedule): boolean {
   return PUBLIC_SCHEDULE_WEEKDAYS.some((wd) => (schedule.lessonsByWeekday[wd]?.length ?? 0) > 0);
 }
 
+function lessonCountLabel(count: number, locale: "pt" | "en"): string {
+  if (locale === "en") return count === 1 ? "1 class" : `${count} classes`;
+  return count === 1 ? "1 aula" : `${count} aulas`;
+}
+
+/** Cartão de aula (desktop, dentro da coluna do dia). */
 function LessonBlock({ lesson }: { lesson: PublicScheduleLesson }) {
+  const accent = modalityAccent(lesson.modality);
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-2.5 shadow-sm transition-all hover:border-[var(--primary)]/45 hover:shadow-md">
+    <div
+      className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-2.5 shadow-sm transition-all hover:shadow-md"
+      style={{ borderLeft: `3px solid ${accent}` }}
+    >
       <div className="flex items-baseline gap-1.5">
-        <span className="font-mono text-xs font-bold tabular-nums text-[var(--primary)]">
+        <span className="font-mono text-xs font-bold tabular-nums" style={{ color: accent }}>
           {formatClock(lesson.startTime)}
         </span>
         <span className="text-[10px] text-[var(--text-secondary)]">–</span>
@@ -46,20 +74,24 @@ function LessonBlock({ lesson }: { lesson: PublicScheduleLesson }) {
   );
 }
 
-function lessonCountLabel(count: number, locale: "pt" | "en"): string {
-  if (locale === "en") return count === 1 ? "1 class" : `${count} classes`;
-  return count === 1 ? "1 aula" : `${count} aulas`;
-}
-
-function MobileCompactLesson({ lesson }: { lesson: PublicScheduleLesson }) {
+/** Cartão de aula (mobile). */
+function MobileLessonCard({ lesson }: { lesson: PublicScheduleLesson }) {
+  const accent = modalityAccent(lesson.modality);
   return (
-    <li className="flex items-start gap-3 border-t border-[var(--border)]/50 py-2.5 first:border-t-0 first:pt-0">
-      <span className="w-[4.75rem] shrink-0 pt-0.5 font-mono text-[11px] font-semibold leading-tight tabular-nums text-[var(--primary)]">
-        {formatClock(lesson.startTime)}
-        <span className="block text-[10px] font-normal text-[var(--text-secondary)]">{formatClock(lesson.endTime)}</span>
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold leading-snug text-[var(--text-primary)]">{lesson.modalityLabel}</p>
+    <li
+      className="flex items-stretch gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3 shadow-sm"
+      style={{ borderLeft: `4px solid ${accent}` }}
+    >
+      <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-[var(--bg-secondary)] py-2">
+        <span className="font-mono text-sm font-bold leading-none tabular-nums" style={{ color: accent }}>
+          {formatClock(lesson.startTime)}
+        </span>
+        <span className="mt-1 font-mono text-[11px] leading-none tabular-nums text-[var(--text-secondary)]">
+          {formatClock(lesson.endTime)}
+        </span>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col justify-center">
+        <p className="text-[15px] font-semibold leading-snug text-[var(--text-primary)]">{lesson.modalityLabel}</p>
         {lesson.locationName && (
           <p className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">{lesson.locationName}</p>
         )}
@@ -68,7 +100,7 @@ function MobileCompactLesson({ lesson }: { lesson: PublicScheduleLesson }) {
   );
 }
 
-/** Agenda compacta por dia — telemóvel. */
+/** Agenda por dia — telemóvel. */
 function MobileWeekList({
   school,
   locale,
@@ -81,27 +113,25 @@ function MobileWeekList({
   );
 
   return (
-    <div className="divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] lg:hidden">
+    <div className="space-y-6 lg:hidden">
       {daysWithLessons.map((weekday) => {
         const lessons = school.lessonsByWeekday[weekday] ?? [];
         return (
-          <div key={weekday} className="px-3 py-3 sm:px-4">
-            <div className="mb-1 flex items-baseline justify-between gap-2">
-              <div className="flex min-w-0 items-baseline gap-2">
-                <span className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-[var(--primary)]">
-                  {weekdayShortLabelForPublicSchedule(weekday, locale)}
-                </span>
-                <span className="truncate text-sm font-semibold text-[var(--text-primary)]">
-                  {weekdayLabelForPublicSchedule(weekday, locale)}
-                </span>
-              </div>
-              <span className="shrink-0 text-[11px] text-[var(--text-secondary)]">
+          <div key={weekday}>
+            <div className="mb-2.5 flex items-center gap-2.5">
+              <span className="inline-flex h-8 items-center rounded-full bg-[var(--primary)] px-3 text-xs font-bold uppercase tracking-wide text-white">
+                {weekdayShortLabelForPublicSchedule(weekday, locale)}
+              </span>
+              <span className="text-sm font-semibold text-[var(--text-primary)]">
+                {weekdayLabelForPublicSchedule(weekday, locale)}
+              </span>
+              <span className="ml-auto text-[11px] text-[var(--text-secondary)]">
                 {lessonCountLabel(lessons.length, locale)}
               </span>
             </div>
-            <ul className="list-none p-0 m-0">
+            <ul className="m-0 list-none space-y-2 p-0">
               {lessons.map((lesson) => (
-                <MobileCompactLesson key={lesson.id} lesson={lesson} />
+                <MobileLessonCard key={lesson.id} lesson={lesson} />
               ))}
             </ul>
           </div>
