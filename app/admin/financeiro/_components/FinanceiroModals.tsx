@@ -10,6 +10,7 @@ import { dedupeDuplicatePaymentsAction, deleteManualRevenue } from "../actions";
 import { EditExpenseForm } from "./EditExpenseForm";
 import { ExpenseList } from "./ExpenseList";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
+import { VoidLateTuitionForm } from "@/components/admin/VoidLateTuitionForm";
 import type { RenewalPending } from "@/lib/renewals";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
 import {
@@ -108,6 +109,8 @@ type Labels = {
   openRevenue: string;
   /** Botão por linha «Em atraso» → registo de pagamento (admin). */
   registerPaymentCta: string;
+  voidLateTuitionCta: string;
+  voidLateTuitionHint: string;
   onboardingBundleLabel: string;
   familyTuitionLabel: string;
 };
@@ -394,7 +397,7 @@ export function FinanceiroModals({
                         {periodLabel} · {row.amount.toFixed(2)} €
                       </p>
                       {row.status === "LATE" && (
-                        <div style={{ marginTop: 10 }}>
+                        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                           <Link
                             href={registerHref}
                             className="btn btn-primary"
@@ -409,6 +412,14 @@ export function FinanceiroModals({
                           >
                             {labels.registerPaymentCta}
                           </Link>
+                          {row.paymentType === "TUITION" && row.referenceMonth ? (
+                            <VoidLateTuitionForm
+                              studentId={row.studentId}
+                              referenceMonth={row.referenceMonth}
+                              buttonLabel={labels.voidLateTuitionCta}
+                              hint={labels.voidLateTuitionHint}
+                            />
+                          ) : null}
                         </div>
                       )}
                     </li>

@@ -137,8 +137,8 @@ export async function createPayment(
   redirect("/admin/financeiro");
 }
 
-/** Remove mensalidade LATE gerada antes do mês de inscrição do aluno. */
-export async function voidErroneousLateTuition(
+/** Remove mensalidade TUITION em atraso (ex.: bolsista, cobrança indevida). */
+export async function voidLateTuition(
   _prev: CreatePaymentResult | null,
   formData: FormData
 ): Promise<CreatePaymentResult> {
@@ -155,23 +155,14 @@ export async function voidErroneousLateTuition(
   const supabase = createAdminClient();
   const { data: studentRow } = await supabase
     .from("Student")
-    .select("createdAt, paymentGraceReferenceMonth")
+    .select("paymentGraceReferenceMonth")
     .eq("id", studentId)
     .maybeSingle();
   if (!studentRow) return { error: "Aluno não encontrado." };
 
-  const tuitionStartMonth = tuitionStartMonthFromCreatedAt(
-    (studentRow as { createdAt: string }).createdAt
-  );
-  if (!isTuitionMonthBeforeEnrollment(referenceMonth, tuitionStartMonth)) {
-    return {
-      error: `Esta mensalidade não é anterior à inscrição (${tuitionStartMonth}). Regista o pagamento normalmente.`,
-    };
-  }
-
   const { data: lateRows, error: fetchErr } = await supabase
     .from("Payment")
-    .select("id")
+    .select("id, status")
     .eq("studentId", studentId)
     .eq("referenceMonth", referenceMonth)
     .eq("paymentType", "TUITION")
@@ -198,6 +189,9 @@ export async function voidErroneousLateTuition(
   revalidatePath("/dashboard/financeiro");
   redirect("/admin/financeiro");
 }
+
+/** @deprecated Use voidLateTuition */
+export const voidErroneousLateTuition = voidLateTuition;
 
 /** Lista de renovações pendentes (alunos com plano sem pagamento no mês). */
 export async function getRenewalsPendingAction(referenceMonth: string) {

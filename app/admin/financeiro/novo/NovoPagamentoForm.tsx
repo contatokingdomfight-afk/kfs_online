@@ -6,13 +6,13 @@ import { useFormState } from "react-dom";
 import {
   createPayment,
   searchStudentsForPayment,
-  voidErroneousLateTuition,
   type CreatePaymentResult,
   type StudentPaymentRow,
 } from "../actions";
 import { blurActiveElementBeforeSubmit } from "@/lib/blur-before-form-submit";
 import { formatDecimalAmountInput, parseDecimalAmount } from "@/lib/parse-decimal-amount";
 import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
+import { VoidLateTuitionForm } from "@/components/admin/VoidLateTuitionForm";
 
 type Props = {
   defaultReferenceMonth: string;
@@ -51,7 +51,6 @@ function formatTuitionMonthLabel(ym: string) {
 
 export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount = "" }: Props) {
   const [state, formAction] = useFormState(createPayment, null as CreatePaymentResult | null);
-  const [voidState, voidFormAction] = useFormState(voidErroneousLateTuition, null as CreatePaymentResult | null);
 
   const [referenceMonth, setReferenceMonth] = useState(defaultReferenceMonth);
   const [query, setQuery] = useState("");
@@ -97,6 +96,8 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
       setSearching(false);
     }
   }
+
+  const canVoidLate = selected?.existingPayment?.status === "LATE";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
@@ -320,7 +321,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
               </div>
             )}
 
-            {selected.isErroneousLate && (
+            {canVoidLate && selected.isErroneousLate && (
               <div
                 style={{
                   padding: "12px 14px",
@@ -331,27 +332,12 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 }}
               >
                 <strong>Cobrança indevida.</strong> Este aluno entrou em{" "}
-                <strong>{formatTuitionMonthLabel(selected.tuitionStartMonth)}</strong>. O registo de{" "}
-                <strong>{formatTuitionMonthLabel(referenceMonth)}</strong> foi criado pelo cron antes da inscrição —{" "}
-                <strong>não</strong> voltes a cobrar; anula a cobrança abaixo.
-                <form
-                  action={voidFormAction}
-                  onSubmit={blurActiveElementBeforeSubmit}
-                  style={{ marginTop: 12 }}
-                >
-                  <input type="hidden" name="studentId" value={selected.studentId} />
-                  <input type="hidden" name="referenceMonth" value={referenceMonth} />
-                  <button type="submit" className="btn btn-primary" style={{ fontSize: 14 }}>
-                    Anular cobrança de {formatTuitionMonthLabel(referenceMonth)}
-                  </button>
-                  {voidState?.error && (
-                    <p style={{ margin: "10px 0 0 0", fontSize: 14, color: "var(--danger)" }}>{voidState.error}</p>
-                  )}
-                </form>
+                <strong>{formatTuitionMonthLabel(selected.tuitionStartMonth)}</strong> — o mês{" "}
+                <strong>{formatTuitionMonthLabel(referenceMonth)}</strong> foi gerado por engano. Usa «Anular
+                cobrança» em vez de registar pagamento.
               </div>
             )}
 
-          {!selected.isErroneousLate && (
           <form
             action={formAction}
             onSubmit={blurActiveElementBeforeSubmit}
@@ -429,16 +415,23 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
             {state?.error && (
               <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>{state.error}</p>
             )}
-            <div className="mobile-form-sticky-actions" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div className="mobile-form-sticky-actions" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
               <button type="submit" className="btn btn-primary">
                 Guardar
               </button>
               <Link href="/admin/financeiro" className="btn btn-secondary" style={{ textDecoration: "none" }}>
                 Cancelar
               </Link>
+              {canVoidLate ? (
+                <VoidLateTuitionForm
+                  studentId={selected.studentId}
+                  referenceMonth={referenceMonth}
+                  buttonLabel={`Anular cobrança (${formatTuitionMonthLabel(referenceMonth)})`}
+                  hint="Bolsista ou isenção de mensalidade — remove o registo «Em atraso» sem cobrar."
+                />
+              ) : null}
             </div>
           </form>
-          )}
         </div>
       )}
     </div>

@@ -501,6 +501,8 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           openExpenses: t("adminFinanceOpenExpenses"),
           openRevenue: t("adminFinanceOpenRevenue"),
           registerPaymentCta: t("adminFinancePaymentsRegisterCta"),
+          voidLateTuitionCta: t("adminFinanceVoidLateTuitionCta"),
+          voidLateTuitionHint: t("adminFinanceVoidLateTuitionHint"),
           onboardingBundleLabel: t("adminFinanceOnboardingBundleLabel"),
           familyTuitionLabel: t("adminFinanceFamilyTuitionLabel"),
         }}

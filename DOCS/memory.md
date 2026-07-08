@@ -283,7 +283,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 - `/admin/financeiro/antecipado` — N meses `TUITION` + `PAID` (`createAdvanceTuitionPayments`, `lib/payment-tuition-upsert.ts`). Cron só gera `LATE` para `paymentType = TUITION`.
-- Registo manual de mensalidade (`/admin/financeiro/novo`) também aceita **quantidade de meses** (padrão 1). Campo **valor** em texto com vírgula decimal (PT); pré-preenche montante do pagamento `LATE` existente no mês ou mensalidade do plano — `lib/parse-decimal-amount.ts`. **Cron** não gera `LATE` em meses anteriores à inscrição (`Student.createdAt`, Lisboa — `lib/student-tuition-start.ts`); cobranças indevidas podem ser **anuladas** no formulário (`voidErroneousLateTuition`). Contagem de atrasos ignora meses pré-inscrição (`lib/student-payment-status.ts`).
+- Registo manual de mensalidade (`/admin/financeiro/novo`) também aceita **quantidade de meses** (padrão 1). Campo **valor** em texto com vírgula decimal (PT); pré-preenche montante do pagamento `LATE` existente no mês ou mensalidade do plano — `lib/parse-decimal-amount.ts`. **Cron** não gera `LATE` em meses anteriores à inscrição (`Student.createdAt`, Lisboa — `lib/student-tuition-start.ts`). Mensalidades `TUITION` em atraso podem ser **anuladas** (bolsista, isenção ou cobrança indevida) via `voidLateTuition` — botão «Anular cobrança» no registo de pagamento e na lista de pendentes (`VoidLateTuitionForm`). Contagem de atrasos ignora meses pré-inscrição (`lib/student-payment-status.ts`).
 
 
 ## Plano Família
