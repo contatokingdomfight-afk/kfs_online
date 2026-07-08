@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
+import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getCoachSchoolIds } from "@/lib/coach-schools";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
@@ -10,7 +12,8 @@ import { AcceptTrialButton } from "@/app/admin/experimentais/AcceptTrialButton";
 import { ConvertTrialButton } from "@/app/admin/experimentais/ConvertTrialButton";
 
 export default async function CoachExperimentaisPage() {
-  const coachId = await getCurrentCoachId();
+  const [coachId, dbUser] = await Promise.all([getCurrentCoachId(), getCurrentDbUser()]);
+  const isAdminWithoutCoach = !coachId && dbUser?.role === "ADMIN";
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
@@ -18,6 +21,8 @@ export default async function CoachExperimentaisPage() {
   const today = calendarDateLisbon(new Date());
 
   const coachLessonIds = await getLessonIdsForCoach(supabase, coachId);
+  const coachSchoolIds = coachId ? await getCoachSchoolIds(supabase, coachId) : [];
+  const coachSchoolIdSet = new Set(coachSchoolIds);
   const idsForLessonMeta = [...coachLessonIds];
   const { data: lessonRows } =
     idsForLessonMeta.length > 0
@@ -42,11 +47,22 @@ export default async function CoachExperimentaisPage() {
     .order("lessonDate", { ascending: true })
     .order("createdAt", { ascending: false });
 
-  const filtered = (trials ?? []).filter((t) => {
+  const trialRows = trials ?? [];
+  const trialLessonIds = [...new Set(trialRows.map((t) => t.lessonId).filter(Boolean))] as string[];
+  const { data: trialLessonRows } =
+    trialLessonIds.length > 0
+      ? await supabase.from("Lesson").select("id, schoolId").in("id", trialLessonIds)
+      : { data: [] as { id: string; schoolId: string }[] };
+  const lessonSchoolById = new Map((trialLessonRows ?? []).map((l) => [l.id, l.schoolId]));
+
+  const filtered = trialRows.filter((t) => {
     const ld = String(t.lessonDate).slice(0, 10);
     if (ld < today) return false;
     if (!t.lessonId) return true;
-    return coachLessonIds.has(t.lessonId);
+    if (isAdminWithoutCoach) return true;
+    if (coachLessonIds.has(t.lessonId)) return true;
+    const sid = lessonSchoolById.get(t.lessonId);
+    return sid != null && coachSchoolIdSet.has(sid);
   });
 
   return (
@@ -113,7 +129,7 @@ export default async function CoachExperimentaisPage() {
                   >
                     {trial.name}
                   </span>
-                  {trial.lessonId && coachLessonIds.has(trial.lessonId) ? (
+                  {trial.lessonId && (isAdminWithoutCoach || coachLessonIds.has(trial.lessonId) || coachSchoolIdSet.has(lessonSchoolById.get(trial.lessonId) ?? "")) ? (
                     <span
                       style={{
                         fontSize: "clamp(12px, 3vw, 14px)",
@@ -136,7 +152,7 @@ export default async function CoachExperimentaisPage() {
                     ? ` · ${formatLessonDate(String(trial.lessonDate))} ${lesson.startTime}–${lesson.endTime}`
                     : ` · ${formatLessonDate(String(trial.lessonDate))}`}
                 </p>
-                {trial.lessonId && coachLessonIds.has(trial.lessonId) && (
+                {trial.lessonId && (isAdminWithoutCoach || coachLessonIds.has(trial.lessonId) || coachSchoolIdSet.has(lessonSchoolById.get(trial.lessonId) ?? "")) && (
                   <div
                     style={{
                       marginTop: "clamp(8px, 2vw, 12px)",

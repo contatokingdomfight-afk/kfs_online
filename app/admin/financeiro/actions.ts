@@ -17,6 +17,10 @@ import { familyGroupIdForTuition } from "@/lib/family-tuition";
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/retail/constants";
 import { parseFinancePaymentMethodRequired } from "@/lib/finance-payment-method";
 import { parseDecimalAmount } from "@/lib/parse-decimal-amount";
+import {
+  tuitionStartMonthFromCreatedAt,
+  isTuitionMonthBeforeEnrollment,
+} from "@/lib/student-tuition-start";
 
 export type { StudentPaymentRow };
 
@@ -48,7 +52,7 @@ export async function searchStudentsForPayment(
 }
 
 export type { GenerateMonthlyPaymentsResult };
-export type CreatePaymentResult = { error?: string };
+export type CreatePaymentResult = { error?: string; voided?: boolean };
 
 export async function createPayment(
   _prev: CreatePaymentResult | null,
@@ -66,6 +70,7 @@ export async function createPayment(
   if (!studentId) return { error: "Aluno é obrigatório." };
   const amount = parseDecimalAmount(amountStr);
   if (amount === null || amount < 0) return { error: "Valor inválido." };
+  if (status === "PAID" && amount === 0) return { error: "Indica o valor pago (ex.: 55,00)." };
   if (!referenceMonth || !/^\d{4}-\d{2}$/.test(referenceMonth)) return { error: "Mês de referência deve ser AAAA-MM." };
   if (status !== "PAID" && status !== "LATE") return { error: "Status inválido." };
   const tuitionMonths = parseInt(tuitionMonthsStr, 10);
@@ -81,6 +86,21 @@ export async function createPayment(
   }
 
   const supabase = createAdminClient();
+
+  const { data: studentRow } = await supabase
+    .from("Student")
+    .select("createdAt")
+    .eq("id", studentId)
+    .maybeSingle();
+  if (!studentRow) return { error: "Aluno não encontrado." };
+  const tuitionStartMonth = tuitionStartMonthFromCreatedAt(
+    (studentRow as { createdAt: string }).createdAt
+  );
+  if (isTuitionMonthBeforeEnrollment(referenceMonth, tuitionStartMonth)) {
+    return {
+      error: `O aluno só entrou em ${tuitionStartMonth}. A mensalidade de ${referenceMonth} foi gerada por engano — usa «Anular cobrança indevida» em vez de registar pagamento.`,
+    };
+  }
 
   const familyCtx = await getFamilyContext(supabase, studentId);
   const familyGroupId = familyGroupIdForTuition(familyCtx);
@@ -106,6 +126,68 @@ export async function createPayment(
     await startGracePeriodOnLatePayment(supabase, studentId, referenceMonth);
   } else {
     await clearGraceOnPaidPayment(supabase, studentId);
+  }
+
+  await syncStudentPaymentStatus(supabase, studentId);
+
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro/novo");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/financeiro");
+  redirect("/admin/financeiro");
+}
+
+/** Remove mensalidade LATE gerada antes do mês de inscrição do aluno. */
+export async function voidErroneousLateTuition(
+  _prev: CreatePaymentResult | null,
+  formData: FormData
+): Promise<CreatePaymentResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const studentId = (formData.get("studentId") as string)?.trim();
+  const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
+  if (!studentId) return { error: "Aluno é obrigatório." };
+  if (!referenceMonth || !/^\d{4}-\d{2}$/.test(referenceMonth)) {
+    return { error: "Mês de referência inválido." };
+  }
+
+  const supabase = createAdminClient();
+  const { data: studentRow } = await supabase
+    .from("Student")
+    .select("createdAt, paymentGraceReferenceMonth")
+    .eq("id", studentId)
+    .maybeSingle();
+  if (!studentRow) return { error: "Aluno não encontrado." };
+
+  const tuitionStartMonth = tuitionStartMonthFromCreatedAt(
+    (studentRow as { createdAt: string }).createdAt
+  );
+  if (!isTuitionMonthBeforeEnrollment(referenceMonth, tuitionStartMonth)) {
+    return {
+      error: `Esta mensalidade não é anterior à inscrição (${tuitionStartMonth}). Regista o pagamento normalmente.`,
+    };
+  }
+
+  const { data: lateRows, error: fetchErr } = await supabase
+    .from("Payment")
+    .select("id")
+    .eq("studentId", studentId)
+    .eq("referenceMonth", referenceMonth)
+    .eq("paymentType", "TUITION")
+    .eq("status", "LATE");
+  if (fetchErr) return { error: fetchErr.message };
+  if (!lateRows?.length) return { error: "Não há mensalidade em atraso para anular neste mês." };
+
+  const ids = lateRows.map((r) => (r as { id: string }).id);
+  const { error: delErr } = await supabase.from("Payment").delete().in("id", ids);
+  if (delErr) return { error: delErr.message };
+
+  if ((studentRow as { paymentGraceReferenceMonth?: string | null }).paymentGraceReferenceMonth === referenceMonth) {
+    await supabase
+      .from("Student")
+      .update({ paymentGraceReferenceMonth: null, paymentGraceEndsAt: null })
+      .eq("id", studentId);
   }
 
   await syncStudentPaymentStatus(supabase, studentId);

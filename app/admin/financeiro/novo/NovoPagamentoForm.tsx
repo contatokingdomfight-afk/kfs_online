@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 import {
   createPayment,
   searchStudentsForPayment,
+  voidErroneousLateTuition,
   type CreatePaymentResult,
   type StudentPaymentRow,
 } from "../actions";
 import { blurActiveElementBeforeSubmit } from "@/lib/blur-before-form-submit";
-import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
+import { formatDecimalAmountInput, parseDecimalAmount } from "@/lib/parse-decimal-amount";
 import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
 type Props = {
@@ -27,8 +28,30 @@ function statusLabelPt(status: string) {
   return status;
 }
 
+function resolveDefaultAmount(urlAmount: string, selected: StudentPaymentRow | null): string {
+  if (!selected) return "";
+  const fromUrl = urlAmount.trim();
+  const parsedUrl = fromUrl ? parseDecimalAmount(fromUrl) : null;
+  if (parsedUrl != null && parsedUrl > 0) {
+    return formatDecimalAmountInput(parsedUrl);
+  }
+  if (selected.existingPayment && selected.existingPayment.amount > 0) {
+    return formatDecimalAmountInput(selected.existingPayment.amount);
+  }
+  if (selected.priceMonthly > 0) {
+    return formatDecimalAmountInput(selected.priceMonthly);
+  }
+  return "";
+}
+
+function formatTuitionMonthLabel(ym: string) {
+  const [y, m] = ym.split("-");
+  return `${m}/${y}`;
+}
+
 export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount = "" }: Props) {
   const [state, formAction] = useFormState(createPayment, null as CreatePaymentResult | null);
+  const [voidState, voidFormAction] = useFormState(voidErroneousLateTuition, null as CreatePaymentResult | null);
 
   const [referenceMonth, setReferenceMonth] = useState(defaultReferenceMonth);
   const [query, setQuery] = useState("");
@@ -37,6 +60,11 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
   const [results, setResults] = useState<StudentPaymentRow[]>([]);
   const [selected, setSelected] = useState<StudentPaymentRow | null>(initialRow ?? null);
   const [paymentStatus, setPaymentStatus] = useState("PAID");
+  const [amountInput, setAmountInput] = useState(() => resolveDefaultAmount(urlAmount, initialRow ?? null));
+
+  useEffect(() => {
+    setAmountInput(resolveDefaultAmount(urlAmount, selected));
+  }, [selected, referenceMonth, urlAmount]);
 
   const openForm = useCallback((row: StudentPaymentRow) => {
     setSelected(row);
@@ -69,19 +97,6 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
       setSearching(false);
     }
   }
-
-  const defaultAmountStr = (() => {
-    const fromUrl = urlAmount.trim();
-    if (fromUrl) return fromUrl.replace(".", ",");
-    if (!selected) return "";
-    if (selected.existingPayment) {
-      return formatDecimalAmountInput(Number(selected.existingPayment.amount));
-    }
-    if (selected.priceMonthly > 0) {
-      return formatDecimalAmountInput(selected.priceMonthly);
-    }
-    return "";
-  })();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
@@ -305,6 +320,38 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
               </div>
             )}
 
+            {selected.isErroneousLate && (
+              <div
+                style={{
+                  padding: "12px 14px",
+                  background: "rgba(239, 68, 68, 0.1)",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--danger)",
+                  fontSize: 13,
+                }}
+              >
+                <strong>Cobrança indevida.</strong> Este aluno entrou em{" "}
+                <strong>{formatTuitionMonthLabel(selected.tuitionStartMonth)}</strong>. O registo de{" "}
+                <strong>{formatTuitionMonthLabel(referenceMonth)}</strong> foi criado pelo cron antes da inscrição —{" "}
+                <strong>não</strong> voltes a cobrar; anula a cobrança abaixo.
+                <form
+                  action={voidFormAction}
+                  onSubmit={blurActiveElementBeforeSubmit}
+                  style={{ marginTop: 12 }}
+                >
+                  <input type="hidden" name="studentId" value={selected.studentId} />
+                  <input type="hidden" name="referenceMonth" value={referenceMonth} />
+                  <button type="submit" className="btn btn-primary" style={{ fontSize: 14 }}>
+                    Anular cobrança de {formatTuitionMonthLabel(referenceMonth)}
+                  </button>
+                  {voidState?.error && (
+                    <p style={{ margin: "10px 0 0 0", fontSize: 14, color: "var(--danger)" }}>{voidState.error}</p>
+                  )}
+                </form>
+              </div>
+            )}
+
+          {!selected.isErroneousLate && (
           <form
             action={formAction}
             onSubmit={blurActiveElementBeforeSubmit}
@@ -340,8 +387,8 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 placeholder="55,00"
                 inputMode="decimal"
                 autoComplete="off"
-                key={`amt-${selected.studentId}-${referenceMonth}`}
-                defaultValue={defaultAmountStr}
+                value={amountInput}
+                onChange={(e) => setAmountInput(e.target.value)}
               />
             </label>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -391,6 +438,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
               </Link>
             </div>
           </form>
+          )}
         </div>
       )}
     </div>

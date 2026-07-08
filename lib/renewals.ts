@@ -13,6 +13,7 @@ import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { getFamilyContext } from "@/lib/family-group";
 import { familyGroupIdForTuition, resolvePlanMonthlyTuition } from "@/lib/family-tuition";
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
+import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
 
 export type RenewalPending = {
   studentId: string;
@@ -43,7 +44,7 @@ export async function getRenewalsPending(
 
   const { data: students } = await supabase
     .from("Student")
-    .select("id, userId, planId")
+    .select("id, userId, planId, createdAt")
     .not("planId", "is", null);
 
   if (!students?.length) return [];
@@ -70,6 +71,8 @@ export async function getRenewalsPending(
 
   const withPlan = students.filter((s) => {
     if (!s.planId || !planById.has(s.planId)) return false;
+    const startMonth = tuitionStartMonthFromCreatedAt((s as { createdAt: string }).createdAt);
+    if (isTuitionMonthBeforeEnrollment(referenceMonth, startMonth)) return false;
     if (paidStudentIds.has(s.id)) return false;
     if (options?.forLateGeneration && anyPaymentStudentIds.has(s.id)) return false;
     return true;

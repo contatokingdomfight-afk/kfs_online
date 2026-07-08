@@ -15,7 +15,7 @@ import { loadCoachScheduleBundle } from "@/lib/coach-schedule-scope";
 import { calendarDateLisbon, minutesSinceMidnightLisbon } from "@/lib/lesson-check-in-window";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 import { getLessonIdsForCoach } from "@/lib/coach-lesson-ids";
-import { getTodayTrialClassesForCoach } from "@/lib/today-trial-classes";
+import { getTodayTrialClassesForCoach, getTodayTrialClassesForAdmin } from "@/lib/today-trial-classes";
 import { TodayTrialClassesHighlight } from "@/components/TodayTrialClassesHighlight";
 import { CurrentOrNextClassCard } from "./_components/CurrentOrNextClassCard";
 import { TodayScheduleCard } from "./_components/TodayScheduleCard";
@@ -120,15 +120,26 @@ export default async function CoachHomePage() {
   // Sumário de presenças para a aula em foco
   let attendanceSummary = "";
   if (focusLesson && focusLesson.occurrenceDate) {
-    const { data: attendances } = await supabase
-      .from("Attendance")
-      .select("status, isExperimental")
-      .eq("lessonId", focusLesson.id)
-      .eq("occurrenceDate", focusLesson.occurrenceDate);
+    const [{ data: attendances }, { count: trialsInLesson }] = await Promise.all([
+      supabase
+        .from("Attendance")
+        .select("status, isExperimental")
+        .eq("lessonId", focusLesson.id)
+        .eq("occurrenceDate", focusLesson.occurrenceDate),
+      supabase
+        .from("TrialClass")
+        .select("id", { count: "exact", head: true })
+        .eq("lessonId", focusLesson.id)
+        .eq("lessonDate", focusLesson.occurrenceDate)
+        .eq("convertedToStudent", false),
+    ]);
 
     const confirmed = (attendances ?? []).filter((a) => a.status === "CONFIRMED").length;
     const pending = (attendances ?? []).filter((a) => a.status === "PENDING").length;
-    const experimental = (attendances ?? []).filter((a) => (a as { isExperimental?: boolean }).isExperimental).length;
+    const experimentalFromAttendance = (attendances ?? []).filter(
+      (a) => (a as { isExperimental?: boolean }).isExperimental
+    ).length;
+    const experimental = Math.max(experimentalFromAttendance, trialsInLesson ?? 0);
     const withIntent = confirmed + pending;
     const parts: string[] = [];
     if (withIntent > 0) {
@@ -195,10 +206,13 @@ export default async function CoachHomePage() {
     .order("lessonDate", { ascending: true });
 
   const coachLessonIds = coachId ? await getLessonIdsForCoach(supabase, coachId) : new Set<string>();
-  const todayTrials =
-    !isSchoolAssistantHome && coachId
+  const todayTrials = !isSchoolAssistantHome
+    ? coachId
       ? await getTodayTrialClassesForCoach(supabase, coachId, coachLessonIds)
-      : [];
+      : dbUser?.role === "ADMIN"
+        ? await getTodayTrialClassesForAdmin(supabase, schoolId)
+        : []
+    : [];
 
   /** Só na home: inscrições ainda sem aula associada. Com `lessonId`, aparecem na sessão (Presenças na aula). */
   const trialsForHomeCard = (trials ?? [])
@@ -345,7 +359,7 @@ export default async function CoachHomePage() {
             goToLesson: t("coachGoToLesson"),
           }}
           manageHref="/coach/experimentais"
-          coachScope={{ lessonIds: coachLessonIds }}
+          coachScope={coachId ? { lessonIds: coachLessonIds } : undefined}
         />
       )}
 

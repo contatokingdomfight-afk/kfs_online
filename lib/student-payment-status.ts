@@ -7,6 +7,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
 
 export type AutoStudentStatus = "ATIVO" | "INADIMPLENTE" | "INATIVO";
 
@@ -37,13 +38,25 @@ export function deriveStudentStatusFromPayments(input: {
 }
 
 async function loadLateMonthCount(supabase: SupabaseClient, studentId: string): Promise<number> {
+  const { data: student } = await supabase
+    .from("Student")
+    .select("createdAt")
+    .eq("id", studentId)
+    .maybeSingle();
+  const tuitionStartMonth = student
+    ? tuitionStartMonthFromCreatedAt((student as { createdAt: string }).createdAt)
+    : null;
+
   const { data: latePayments } = await supabase
     .from("Payment")
     .select("referenceMonth")
     .eq("studentId", studentId)
     .eq("status", "LATE")
     .eq("paymentType", "TUITION");
-  return new Set((latePayments ?? []).map((p) => String((p as { referenceMonth: string }).referenceMonth))).size;
+  const months = (latePayments ?? [])
+    .map((p) => String((p as { referenceMonth: string }).referenceMonth))
+    .filter((m) => !tuitionStartMonth || !isTuitionMonthBeforeEnrollment(m, tuitionStartMonth));
+  return new Set(months).size;
 }
 
 async function studentInPaymentProgram(supabase: SupabaseClient, studentId: string): Promise<boolean> {

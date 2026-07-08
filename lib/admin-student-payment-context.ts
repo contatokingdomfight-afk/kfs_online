@@ -7,6 +7,7 @@ import {
 import { hasPendingOnboardingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { getFamilyContext } from "@/lib/family-group";
 import { resolvePlanMonthlyTuition } from "@/lib/family-tuition";
+import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
 
 export type StudentPaymentRow = {
   studentId: string;
@@ -27,6 +28,10 @@ export type StudentPaymentRow = {
   isInFamilyGroup?: boolean;
   /** Titular familiar: número de membros no grupo. */
   familyMemberCount?: number | null;
+  /** Primeiro mês com mensalidade (mês de inscrição em Lisboa). */
+  tuitionStartMonth: string;
+  /** LATE gerado antes da inscrição — anular, não registar pagamento. */
+  isErroneousLate: boolean;
 };
 
 /**
@@ -41,7 +46,7 @@ export async function loadStudentPaymentRows(
 
   const { data: students } = await supabase
     .from("Student")
-    .select("id, userId, planId, suspendedPlanId, paymentSuspendedAt")
+    .select("id, userId, planId, suspendedPlanId, paymentSuspendedAt, createdAt")
     .in("id", studentIds);
 
   if (!students?.length) return [];
@@ -106,6 +111,15 @@ export async function loadStudentPaymentRows(
     const plan = effectivePlanId ? planById.get(effectivePlanId) : undefined;
     const pay = paymentByStudent.get(s.id);
     const familyCtx = familyByStudent.get(s.id);
+    const tuitionStartMonth = tuitionStartMonthFromCreatedAt(
+      (s as { createdAt: string }).createdAt
+    );
+    const existingPayment = pay
+      ? { status: String((pay as { status: string }).status), amount: Number((pay as { amount: number }).amount) }
+      : null;
+    const isErroneousLate =
+      existingPayment?.status === "LATE" &&
+      isTuitionMonthBeforeEnrollment(referenceMonth, tuitionStartMonth);
     return {
       studentId: s.id,
       name: u?.name ?? null,
@@ -118,9 +132,9 @@ export async function loadStudentPaymentRows(
         Boolean(familyCtx)
       ),
       referenceMonth,
-      existingPayment: pay
-        ? { status: String((pay as { status: string }).status), amount: Number((pay as { amount: number }).amount) }
-        : null,
+      existingPayment,
+      tuitionStartMonth,
+      isErroneousLate,
       isPaymentSuspended: Boolean(row.paymentSuspendedAt && !row.planId && row.suspendedPlanId),
       isFirstPaymentEligible: firstPaymentByStudent.get(s.id) ?? false,
       hasPendingOnboarding: pendingByStudent.get(s.id) ?? false,
