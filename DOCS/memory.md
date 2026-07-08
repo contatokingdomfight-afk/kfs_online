@@ -232,7 +232,10 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 
-- `/coach/round-timer`, embutido em `/coach/aula`. Ver [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md).
+- `/coach/round-timer`, embutido em `/coach/aula`, e **página pública gratuita `/timer`** (SEO EN, sem login; adicionada a `publicPaths` no `middleware.ts`). Componente `RoundTimerClient` com `variant` `page` | `embedded` | `public`. Ver [`ROUND_TIMER_COACH.md`](ROUND_TIMER_COACH.md).
+- **Som:** controlo global de mute (`setAudioMuted` em `lib/round-timer/audio.ts`, persistência `loadSoundPref`/`saveSoundPref`, chave `kfs-round-timer-sound-v1`); botão 🔊/🔇 no cabeçalho do timer. Fim de treino usa **sino triplo** (`playWorkoutEndBell`) distinto do fim de round.
+- **Acesso:** link no sidebar coach (`navRoundTimer` → `/coach/round-timer`), no `HomeHeader` e no `Footer` da home (`/timer`, `headerTimer`/`footerTimer` em `lib/home-content.ts`).
+- **Tema/idioma público:** `ThemeLocaleSwitcher` (variant `fixed`) recolhe para engrenagem por defeito em **todos** os tamanhos; expande só ao clicar.
 
 
 

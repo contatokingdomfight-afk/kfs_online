@@ -17,6 +17,7 @@ export function getCoachShellSidebarLinks(
     return [
       { label: t("navHome"), href: "/coach" },
       { label: t("navManageClasses"), href: "/coach/aula" },
+      { label: t("navRoundTimer"), href: "/coach/round-timer" },
       { label: t("navAgenda"), href: "/coach/agenda" },
       { label: t("navEventsSchoolCheckIn"), href: "/coach/eventos" },
       { label: t("navSettings"), href: "/coach/configuracoes" as string },
@@ -27,6 +28,7 @@ export function getCoachShellSidebarLinks(
     ...(showAdminEntry ? [{ label: "Admin", href: "/admin" as string }] : []),
     { label: t("navHome"), href: "/coach" },
     { label: t("navManageClasses"), href: "/coach/aula" },
+    { label: t("navRoundTimer"), href: "/coach/round-timer" },
     { label: t("navAgenda"), href: "/coach/agenda" },
     { label: t("navEvents"), href: "/coach/eventos" },
     { label: t("navWeekTheme"), href: "/coach/tema-semana" },

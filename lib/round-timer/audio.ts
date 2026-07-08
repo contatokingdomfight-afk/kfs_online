@@ -4,6 +4,12 @@ const SOUND_DIGITAL_BEEP = "/sounds/round-timer/digital-beep.wav";
 
 let audioCtx: AudioContext | null = null;
 let htmlAudioPrimed = false;
+let muted = false;
+
+/** Liga/desliga todos os avisos sonoros (persistência é responsabilidade do chamador). */
+export function setAudioMuted(next: boolean): void {
+  muted = next;
+}
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -35,7 +41,7 @@ export async function unlockAudio(): Promise<void> {
 }
 
 function playSample(url: string, volume = 0.95): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || muted) return;
   try {
     const a = new Audio(url);
     a.volume = volume;
@@ -55,9 +61,11 @@ export function playRoundEndBell(): void {
   playSample(SOUND_ROUND_BOXING_BELL);
 }
 
-/** Alias: mesmo som que `playRoundEndBell` (último round → finished). */
+/** Fim do treino: três badaladas para distinguir do fim de um round normal. */
 export function playWorkoutEndBell(): void {
-  playRoundEndBell();
+  playSample(SOUND_ROUND_BOXING_BELL);
+  window.setTimeout(() => playSample(SOUND_ROUND_BOXING_BELL), 650);
+  window.setTimeout(() => playSample(SOUND_ROUND_BOXING_BELL), 1300);
 }
 
 /** Aviso digital (10 s antes do fim do round; últimos 5 s do round em sequência). */
@@ -66,6 +74,7 @@ export function playDigitalBeep(volume = 0.9): void {
 }
 
 function beep(freq: number, durationSec: number, volume = 0.12): void {
+  if (muted) return;
   const ctx = getCtx();
   if (!ctx) return;
   const o = ctx.createOscillator();

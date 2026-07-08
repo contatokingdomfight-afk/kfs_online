@@ -1,19 +1,28 @@
 import Link from "next/link";
 
-type Props = { ctaLabel: string };
+type Props = { ctaLabel: string; timerLabel: string };
 
-export function HomeHeader({ ctaLabel }: Props) {
+export function HomeHeader({ ctaLabel, timerLabel }: Props) {
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--bg)]/95 px-4 py-3 backdrop-blur-md sm:px-6 sm:pr-[max(72px,env(safe-area-inset-right))]">
       <span className="truncate text-lg font-bold text-[var(--text-primary)]">
         Kingdom Fight School
       </span>
-      <Link
-        href="/aula-experimental"
-        className="btn btn-primary hidden shrink-0 px-4 py-2.5 text-sm font-semibold sm:inline-flex"
-      >
-        {ctaLabel}
-      </Link>
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <Link
+          href="/timer"
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--primary)]"
+        >
+          <span aria-hidden>⏱️</span>
+          <span>{timerLabel}</span>
+        </Link>
+        <Link
+          href="/aula-experimental"
+          className="btn btn-primary hidden px-4 py-2.5 text-sm font-semibold sm:inline-flex"
+        >
+          {ctaLabel}
+        </Link>
+      </div>
     </header>
   );
 }

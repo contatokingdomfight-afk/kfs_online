@@ -693,6 +693,8 @@ export const messages = {
     coachRoundTimerProgressAria: "Progresso do tempo na fase actual",
     coachRoundTimerProgressRemainingAria: "Tempo restante na fase (barra que esvazia)",
     coachRoundTimerProgressElapsedAria: "Tempo já decorrido na fase",
+    coachRoundTimerSoundOn: "Som ligado — tocar para silenciar",
+    coachRoundTimerSoundOff: "Som desligado — tocar para ativar",
 
     // Biblioteca (aluno)
     libraryTitle: "Biblioteca",
@@ -1866,6 +1868,8 @@ export const messages = {
     coachRoundTimerProgressAria: "Progress in the current phase",
     coachRoundTimerProgressRemainingAria: "Time remaining in this phase (emptying bar)",
     coachRoundTimerProgressElapsedAria: "Elapsed time in this phase",
+    coachRoundTimerSoundOn: "Sound on — tap to mute",
+    coachRoundTimerSoundOff: "Sound off — tap to unmute",
 
     libraryTitle: "Library",
     libraryDescription: "Courses and videos to study technique, mindset and performance. Access comes from your digital plan.",

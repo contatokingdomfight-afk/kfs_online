@@ -5,6 +5,7 @@ import { clampConfig } from "./engine";
 const KEY_CONFIG = "kfs-round-timer-config-v1";
 const KEY_PRESETS = "kfs-round-timer-presets-v1";
 const KEY_SESSION = "kfs-round-timer-session-v1";
+const KEY_SOUND = "kfs-round-timer-sound-v1";
 
 export interface SavedPreset {
   id: string;
@@ -77,5 +78,24 @@ export function loadSessionSnapshot(): string | null {
     return sessionStorage.getItem(KEY_SESSION);
   } catch {
     return null;
+  }
+}
+
+/** Preferência de som ligado/desligado (default: ligado). */
+export function loadSoundPref(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return localStorage.getItem(KEY_SOUND) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+export function saveSoundPref(on: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(KEY_SOUND, on ? "on" : "off");
+  } catch {
+    /* */
   }
 }

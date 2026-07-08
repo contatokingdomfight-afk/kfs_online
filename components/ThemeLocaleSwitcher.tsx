@@ -1,6 +1,5 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -29,23 +28,6 @@ const label: Record<Locale, { theme: string; light: string; dark: string; lang: 
   },
 };
 
-const MOBILE_BREAKPOINT = 768;
-
-function subscribeMinWidth768(onStoreChange: () => void) {
-  const mq = window.matchMedia(`(min-width: ${MOBILE_BREAKPOINT}px)`);
-  mq.addEventListener("change", onStoreChange);
-  return () => mq.removeEventListener("change", onStoreChange);
-}
-
-function getMinWidth768Snapshot() {
-  return window.matchMedia(`(min-width: ${MOBILE_BREAKPOINT}px)`).matches;
-}
-
-/** Mesmo valor no SSR e no 1.º paint de hidratação (evita React #418 em mobile). */
-function getMinWidth768ServerSnapshot() {
-  return true;
-}
-
 export function ThemeLocaleSwitcher({
   initialTheme,
   initialLocale,
@@ -57,11 +39,6 @@ export function ThemeLocaleSwitcher({
 }) {
   const router = useRouter();
   const t = label[initialLocale];
-  const isDesktop = useSyncExternalStore(
-    subscribeMinWidth768,
-    getMinWidth768Snapshot,
-    getMinWidth768ServerSnapshot
-  );
   const [isExpanded, setIsExpanded] = useState(false);
 
   function setTheme(theme: Theme) {
@@ -130,7 +107,7 @@ export function ThemeLocaleSwitcher({
     <div style={{ width: 1, height: 20, backgroundColor: "var(--border)" }} />
   );
 
-  const showMinimized = variant === "fixed" && !isDesktop && !isExpanded;
+  const showMinimized = variant === "fixed" && !isExpanded;
 
   if (variant === "fixed" && showMinimized) {
     return (
@@ -158,7 +135,7 @@ export function ThemeLocaleSwitcher({
       role="group"
       aria-label="Tema e idioma"
     >
-      {variant === "fixed" && !isDesktop && (
+      {variant === "fixed" && (
         <button
           type="button"
           onClick={() => setIsExpanded(false)}

@@ -27,9 +27,11 @@ import {
   BUILT_IN_PRESETS,
   loadCustomPresets,
   loadSessionSnapshot,
+  loadSoundPref,
   loadStoredConfig,
   saveCustomPresets,
   saveSessionSnapshot,
+  saveSoundPref,
   saveStoredConfig,
   type SavedPreset,
 } from "@/lib/round-timer/persistence";
@@ -38,6 +40,8 @@ import {
   playDigitalBeep,
   playRoundEndBell,
   playRoundStartBell,
+  playWorkoutEndBell,
+  setAudioMuted,
   unlockAudio,
 } from "@/lib/round-timer/audio";
 import { DurationRollPicker } from "@/components/coach/round-timer/DurationRollPicker";
@@ -51,10 +55,19 @@ function vibrateMs(pattern: number | number[]) {
   }
 }
 
-type Props = { locale: Locale; /** Na página de presenças: sem «voltar» nem título H1 duplicado. */ variant?: "page" | "embedded" };
+type Props = {
+  locale: Locale;
+  /**
+   * - `page`: página coach com voltar ao painel e título.
+   * - `embedded`: dentro de Presenças na aula (sem voltar/título).
+   * - `public`: página pública gratuita (voltar à home).
+   */
+  variant?: "page" | "embedded" | "public";
+};
 
 export function RoundTimerClient({ locale, variant = "page" }: Props) {
   const isEmbedded = variant === "embedded";
+  const isPublic = variant === "public";
   const t = getTranslations(locale);
   const tk = useMemo(
     () => ({
@@ -91,6 +104,9 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       progressRemainingAria: t("coachRoundTimerProgressRemainingAria"),
       progressElapsedAria: t("coachRoundTimerProgressElapsedAria"),
       tapToPause: t("coachRoundTimerTapToPause"),
+      soundOn: t("coachRoundTimerSoundOn"),
+      soundOff: t("coachRoundTimerSoundOff"),
+      backHome: t("navHome"),
     }),
     [t]
   );
@@ -103,6 +119,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
   const [customPresets, setCustomPresets] = useState<SavedPreset[]>([]);
   const [fullscreen, setFullscreen] = useState(false);
   const [configPanelExpanded, setConfigPanelExpanded] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
   const timerPhaseRef = useRef<TimerPhase>("idle");
   timerPhaseRef.current = timer.phase;
   const prevPhase = useRef(timer.phase);
@@ -118,7 +135,20 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
 
   useEffect(() => {
     setCustomPresets(loadCustomPresets());
+    const pref = loadSoundPref();
+    setSoundOn(pref);
+    setAudioMuted(!pref);
   }, []);
+
+  const toggleSound = () => {
+    setSoundOn((prev) => {
+      const next = !prev;
+      setAudioMuted(!next);
+      saveSoundPref(next);
+      if (next) void unlockAudio();
+      return next;
+    });
+  };
 
   useEffect(() => {
     const onFs = () => setFullscreen(typeof document !== "undefined" && !!document.fullscreenElement);
@@ -292,8 +322,8 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       playRoundEndBell();
       vibrateMs(80);
     } else if (is === "finished" && was === "round") {
-      playRoundEndBell();
-      vibrateMs([100, 80, 100]);
+      playWorkoutEndBell();
+      vibrateMs([100, 80, 100, 80, 100]);
     }
   }, [timer.phase]);
 
@@ -609,7 +639,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
   return (
     <div
       ref={rootRef}
-      className={`round-timer-root px-3 ${isEmbedded ? "max-w-none pb-4" : "mx-auto max-w-[min(520px,100%)] pb-10"}`}
+      className={`round-timer-root px-3 ${isEmbedded ? "max-w-none pb-4" : "mx-auto max-w-[min(640px,100%)] pb-10"}`}
       data-ui={uk}
       data-rt-urgent={isRoundUrgentVisual ? true : undefined}
       style={{
@@ -620,7 +650,17 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       }}
     >
       {isEmbedded ? (
-        <div className="mb-3 flex justify-end">
+        <div className="mb-3 flex justify-end gap-2">
+          <button
+            type="button"
+            className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0"
+            onClick={toggleSound}
+            aria-pressed={!soundOn}
+            aria-label={soundOn ? tk.soundOn : tk.soundOff}
+            title={soundOn ? tk.soundOn : tk.soundOff}
+          >
+            {soundOn ? "🔊" : "🔇"}
+          </button>
           <button type="button" className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0" onClick={toggleFullscreen}>
             {fullscreen ? tk.exitFs : tk.fullscreen}
           </button>
@@ -628,15 +668,27 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       ) : (
         <div className="mb-4 flex items-center justify-between gap-2">
           <Link
-            href="/coach"
+            href={isPublic ? "/" : "/coach"}
             className="text-sm font-medium no-underline hover:opacity-90"
             style={{ color: "var(--text-secondary)" }}
           >
-            ← {tk.back}
+            ← {isPublic ? tk.backHome : tk.back}
           </Link>
-          <button type="button" className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0" onClick={toggleFullscreen}>
-            {fullscreen ? tk.exitFs : tk.fullscreen}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0"
+              onClick={toggleSound}
+              aria-pressed={!soundOn}
+              aria-label={soundOn ? tk.soundOn : tk.soundOff}
+              title={soundOn ? tk.soundOn : tk.soundOff}
+            >
+              {soundOn ? "🔊" : "🔇"}
+            </button>
+            <button type="button" className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0" onClick={toggleFullscreen}>
+              {fullscreen ? tk.exitFs : tk.fullscreen}
+            </button>
+          </div>
         </div>
       )}
 
@@ -708,7 +760,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
           </select>
         </label>
 
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <DurationRollPicker
             label={
               <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>

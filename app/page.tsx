@@ -64,7 +64,7 @@ export default async function HomePage({ searchParams }: Props) {
 
   return (
     <main className="min-h-screen bg-[var(--bg)]">
-      <HomeHeader ctaLabel={content.headerCta} />
+      <HomeHeader ctaLabel={content.headerCta} timerLabel={content.headerTimer} />
 
       <Hero content={content} />
       <HomePwaInstallBand locale={locale} title={content.pwaBandTitle} subtitle={content.pwaBandSub} />

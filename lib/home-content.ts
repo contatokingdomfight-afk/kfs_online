@@ -9,6 +9,7 @@ export const homeContent = {
   pt: {
     // Header
     headerCta: "Aula Experimental",
+    headerTimer: "Timer",
 
     // Hero
     heroHeadline1: "Treine com Propósito.",
@@ -163,6 +164,7 @@ export const homeContent = {
     // Footer
     footerLinks: "Links rápidos",
     footerAulaExp: "Aula Experimental",
+    footerTimer: "Timer de rounds",
     footerSignIn: "Entrar",
     footerSignUp: "Criar conta",
     footerTerms: "Termos",
@@ -172,6 +174,7 @@ export const homeContent = {
   },
   en: {
     headerCta: "Trial Class",
+    headerTimer: "Timer",
 
     heroHeadline1: "Train with Purpose.",
     heroHeadline2: "Fight with Discipline.",
@@ -311,6 +314,7 @@ export const homeContent = {
 
     footerLinks: "Quick links",
     footerAulaExp: "Trial Class",
+    footerTimer: "Round timer",
     footerSignIn: "Sign in",
     footerSignUp: "Create account",
     footerTerms: "Terms",
