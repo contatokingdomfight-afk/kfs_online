@@ -268,7 +268,10 @@ export async function middleware(request: NextRequest) {
         const hasAccess = await studentHasPaymentUnlock(supabase, student.id, adminFree);
 
         if (!hasAccess) {
-          if (isStudentAwaitingSchoolPaymentPath(pathname)) {
+          // Rotas de onboarding/waiver/escolher-plano e a área de pagamento não podem
+          // ser bloqueadas pelo gate; caso contrário o check do waiver (acima) e o gate
+          // entram em ciclo infinito (/waiver-signing ↔ /dashboard/financeiro).
+          if (isStudentAwaitingSchoolPaymentPath(pathname) || isStudentAllowedWithoutPlan(pathname)) {
             return response;
           }
           if (pathname.startsWith("/api/")) {

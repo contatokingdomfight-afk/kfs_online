@@ -354,7 +354,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 required
                 className="input mobile-form-field-scroll"
                 defaultValue={referenceMonth}
-                pattern="\\d{4}-\\d{2}"
+                pattern="\d{4}-\d{2}"
                 placeholder="2026-06"
                 inputMode="numeric"
                 autoComplete="off"
@@ -422,16 +422,18 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
               <Link href="/admin/financeiro" className="btn btn-secondary" style={{ textDecoration: "none" }}>
                 Cancelar
               </Link>
-              {canVoidLate ? (
-                <VoidLateTuitionForm
-                  studentId={selected.studentId}
-                  referenceMonth={referenceMonth}
-                  buttonLabel={`Anular cobrança (${formatTuitionMonthLabel(referenceMonth)})`}
-                  hint="Bolsista ou isenção de mensalidade — remove o registo «Em atraso» sem cobrar."
-                />
-              ) : null}
             </div>
           </form>
+          {canVoidLate ? (
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+              <VoidLateTuitionForm
+                studentId={selected.studentId}
+                referenceMonth={referenceMonth}
+                buttonLabel={`Anular cobrança (${formatTuitionMonthLabel(referenceMonth)})`}
+                hint="Bolsista ou isenção de mensalidade — remove o registo «Em atraso» sem cobrar."
+              />
+            </div>
+          ) : null}
         </div>
       )}
     </div>

@@ -97,7 +97,7 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
           {googleLoading ? (initialLocale === "en" ? "Redirecting…" : "A redirecionar…") : t("signInWithGoogle")}
         </button>
         <span className="block text-center text-mobile-sm mb-4" style={{ color: "var(--text-secondary)" }}>
-          {initialLocale === "en" ? "or" : "or"}
+          {initialLocale === "en" ? "or" : "ou"}
         </span>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
