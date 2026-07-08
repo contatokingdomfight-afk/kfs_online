@@ -210,7 +210,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Email Resend (transacional):** `lib/notifications/email.ts` — presença confirmada, lembretes de aula, **aceite de aula experimental** (`sendTrialAcceptanceConfirmation` em `acceptTrialRequest`, `app/admin/experimentais/actions.ts`). Requer `RESEND_API_KEY` e `RESEND_FROM_EMAIL` (Vercel); o contacto do pedido tem de incluir email. Ver [`CONFIGURAR_RESEND.md`](CONFIGURAR_RESEND.md).
 
-- **Aulas experimentais (UX):** destaque «Experimentais hoje» na home coach (`/coach`) e admin (`/admin`) — `components/TodayTrialClassesHighlight.tsx`, `lib/today-trial-classes.ts`. Lista admin `/admin/experimentais`: data da inscrição (`lessonDate`, não `Lesson.date`); filtro **Realizados** para aceites passados não convertidos (`lib/trial-class-utils.ts`). Form público `/aula-experimental`: escola presencial pré-selecionada (`getDefaultOnboardingSchoolId`).
+- **Aulas experimentais (UX):** destaque «Experimentais hoje» na home coach (`/coach`) e admin (`/admin`) — `components/TodayTrialClassesHighlight.tsx`, `lib/today-trial-classes.ts`. **Coach:** vê experimentais das **escolas** em `CoachSchool` (e aulas atribuídas), não só aulas com `lessonId` próprio; aceitar/converter/ir para aula disponível para todos os trials visíveis. Lista admin `/admin/experimentais`: data da inscrição (`lessonDate`, não `Lesson.date`); filtro **Realizados** para aceites passados não convertidos (`lib/trial-class-utils.ts`). Form público `/aula-experimental`: escola presencial pré-selecionada (`getDefaultOnboardingSchoolId`).
+- **Home coach (`/coach`):** lista «Seus Atletas» resolve nomes via **admin client** (`User`/`Student` — RLS `user_select_own`); labels de modalidade de `getCachedModalityRefs` (não só código); cartão rápido aponta para `/coach/round-timer`.
 
 
 
@@ -282,7 +283,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 - `/admin/financeiro/antecipado` — N meses `TUITION` + `PAID` (`createAdvanceTuitionPayments`, `lib/payment-tuition-upsert.ts`). Cron só gera `LATE` para `paymentType = TUITION`.
-- Registo manual de mensalidade (`/admin/financeiro/novo`) também aceita **quantidade de meses** (padrão 1).
+- Registo manual de mensalidade (`/admin/financeiro/novo`) também aceita **quantidade de meses** (padrão 1). Campo **valor** em texto com vírgula decimal (PT); pré-preenche montante do pagamento `LATE` existente no mês ou mensalidade do plano — `lib/parse-decimal-amount.ts`.
 
 
 ## Plano Família
