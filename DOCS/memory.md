@@ -208,6 +208,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - RBAC parcial: `lib/permissions/paths.ts` (ex. `/admin/notificacoes`).
 
+- **Email Resend (transacional):** `lib/notifications/email.ts` — presença confirmada, lembretes de aula, **aceite de aula experimental** (`sendTrialAcceptanceConfirmation` em `acceptTrialRequest`, `app/admin/experimentais/actions.ts`). Requer `RESEND_API_KEY` e `RESEND_FROM_EMAIL` (Vercel); o contacto do pedido tem de incluir email. Ver [`CONFIGURAR_RESEND.md`](CONFIGURAR_RESEND.md).
+
 
 
 ## Treinador assistente (escola)

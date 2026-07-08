@@ -7,6 +7,10 @@ import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getLessonIdsForCoach } from "@/lib/coach-lesson-ids";
+import {
+  extractEmailFromContact,
+  sendTrialAcceptanceConfirmation,
+} from "@/lib/notifications/email";
 
 export type CreateTrialResult = { error?: string };
 
@@ -65,7 +69,7 @@ export async function acceptTrialRequest(
 
   const { data: trial } = await supabase
     .from("TrialClass")
-    .select("id, acceptedAt, convertedToStudent, lessonId, lessonDate")
+    .select("id, name, contact, modality, acceptedAt, convertedToStudent, lessonId, lessonDate")
     .eq("id", trialId)
     .single();
   if (!trial) return { error: "Inscrição não encontrada." };
@@ -88,6 +92,50 @@ export async function acceptTrialRequest(
     .eq("id", trialId);
 
   if (updateError) return { error: updateError.message };
+
+  const recipientEmail = extractEmailFromContact(String(trial.contact ?? ""));
+  if (recipientEmail) {
+    const lessonDate = String(trial.lessonDate).slice(0, 10);
+    let startTime: string | null = null;
+    let endTime: string | null = null;
+    let schoolName: string | null = null;
+    let locationName: string | null = null;
+
+    const lessonId = trial.lessonId as string | null;
+    if (lessonId) {
+      const { data: lesson } = await supabase
+        .from("Lesson")
+        .select("startTime, endTime, schoolId, locationId")
+        .eq("id", lessonId)
+        .maybeSingle();
+      if (lesson) {
+        startTime = (lesson as { startTime?: string }).startTime ?? null;
+        endTime = (lesson as { endTime?: string }).endTime ?? null;
+        const schoolId = (lesson as { schoolId?: string }).schoolId;
+        const locationId = (lesson as { locationId?: string | null }).locationId;
+        if (schoolId) {
+          const { data: school } = await supabase.from("School").select("name").eq("id", schoolId).maybeSingle();
+          schoolName = (school as { name?: string } | null)?.name ?? null;
+        }
+        if (locationId) {
+          const { data: location } = await supabase.from("Location").select("name").eq("id", locationId).maybeSingle();
+          locationName = (location as { name?: string } | null)?.name ?? null;
+        }
+      }
+    }
+
+    const emailResult = await sendTrialAcceptanceConfirmation(recipientEmail, (trial.name as string) ?? null, {
+      modality: String(trial.modality ?? ""),
+      date: lessonDate,
+      startTime,
+      endTime,
+      schoolName,
+      locationName,
+    });
+    if (emailResult.error) {
+      console.error("acceptTrialRequest: email não enviado:", emailResult.error);
+    }
+  }
 
   revalidatePath("/admin/experimentais");
   revalidatePath("/coach/aula");

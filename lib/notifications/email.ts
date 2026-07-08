@@ -1,14 +1,13 @@
 /**
  * Envio de emails transacionais (Resend).
- * Usado para: confirmação de presença, lembrete de aulas.
+ * Usado para: confirmação de presença, lembretes de aulas, aceite de aula experimental.
  */
 
-const MODALITY_LABELS: Record<string, string> = {
-  MUAY_THAI: "Muay Thai",
-  BOXING: "Boxing",
-  KICKBOXING: "Kickboxing",
-  MMA: "MMA",
-};
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
+
+function modalityLabel(code: string): string {
+  return MODALITY_LABELS[code] ?? code;
+}
 
 /** Cor primária da marca (alinhada com app/globals.css) — usar inline nos emails. */
 const BRAND_PRIMARY = "#c1121f";
@@ -85,19 +84,19 @@ export async function sendCheckInConfirmation(
   try {
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
-    const modalityLabel = MODALITY_LABELS[lesson.modality] ?? lesson.modality;
+    const modLabel = modalityLabel(lesson.modality);
     const dateFormatted = formatDateForEmail(lesson.date);
     const greeting = studentName ? `Olá ${studentName}` : "Olá";
     const inner = `
         <p style="margin:0 0 16px;">${greeting},</p>
-        <p style="margin:0 0 16px;">A tua presença na aula de <strong style="color:${BRAND_PRIMARY};">${modalityLabel}</strong> foi confirmada.</p>
+        <p style="margin:0 0 16px;">A tua presença na aula de <strong style="color:${BRAND_PRIMARY};">${modLabel}</strong> foi confirmada.</p>
         <p style="margin:0 0 8px;padding:14px 16px;background-color:#fafafa;border-radius:8px;border-left:4px solid ${BRAND_PRIMARY};">
           <strong>${dateFormatted}</strong><br>
           <span style="color:#52525b;">${lesson.startTime} – ${lesson.endTime}</span>
         </p>
         <p style="margin:20px 0 0;">Até lá!</p>
     `.trim();
-    const text = `${greeting},\n\nA tua presença na aula de ${modalityLabel} foi confirmada.\n${dateFormatted}, ${lesson.startTime} – ${lesson.endTime}.\n\nAté lá!\n\n— Kingdom Fight School`;
+    const text = `${greeting},\n\nA tua presença na aula de ${modLabel} foi confirmada.\n${dateFormatted}, ${lesson.startTime} – ${lesson.endTime}.\n\nAté lá!\n\n— Kingdom Fight School`;
 
     const { error } = await resend.emails.send({
       from: getFrom(),
@@ -140,7 +139,7 @@ export async function sendLessonReminder(
 
     const listItems = lessons
       .map((l) => {
-        const label = MODALITY_LABELS[l.modality] ?? l.modality;
+        const label = modalityLabel(l.modality);
         const d = formatDateForEmail(l.date);
         return `<li style="margin:0 0 10px;padding:12px 14px;background-color:#fafafa;border-radius:8px;border-left:3px solid ${BRAND_PRIMARY};list-style:none;">
           <strong style="color:${BRAND_PRIMARY};">${label}</strong><br>
@@ -159,7 +158,7 @@ export async function sendLessonReminder(
 
     const textLines = lessons
       .map((l) => {
-        const label = MODALITY_LABELS[l.modality] ?? l.modality;
+        const label = modalityLabel(l.modality);
         return `• ${label} – ${formatDateForEmail(l.date)}, ${l.startTime} – ${l.endTime}`;
       })
       .join("\n");
@@ -194,6 +193,95 @@ function formatDateForEmail(dateStr: string): string {
     });
   } catch {
     return dateStr;
+  }
+}
+
+export type TrialAcceptanceInfo = {
+  modality: string;
+  date: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  schoolName?: string | null;
+  locationName?: string | null;
+};
+
+/** Extrai o primeiro email de um campo contacto (email ou telefone). */
+export function extractEmailFromContact(contact: string): string | null {
+  const match = contact.trim().match(/[^\s,;]+@[^\s,;]+\.[^\s,;]+/i);
+  return match?.[0]?.toLowerCase() ?? null;
+}
+
+/**
+ * Envia email quando admin/coach aceita um pedido de aula experimental.
+ */
+export async function sendTrialAcceptanceConfirmation(
+  to: string,
+  studentName: string | null,
+  trial: TrialAcceptanceInfo
+): Promise<{ error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("RESEND_API_KEY não definida; email de aceite experimental não enviado.");
+    return {};
+  }
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+    const modLabel = modalityLabel(trial.modality);
+    const dateFormatted = formatDateForEmail(trial.date);
+    const greeting = studentName ? `Olá ${studentName}` : "Olá";
+    const hasTime = trial.startTime && trial.endTime;
+    const timeLine = hasTime
+      ? `<span style="color:#52525b;">${trial.startTime} – ${trial.endTime}</span>`
+      : "";
+    const placeLines = [trial.schoolName, trial.locationName].filter(Boolean).join(" · ");
+    const placeHtml = placeLines
+      ? `<br><span style="color:#52525b;font-size:14px;">${placeLines}</span>`
+      : "";
+
+    const inner = `
+        <p style="margin:0 0 16px;">${greeting},</p>
+        <p style="margin:0 0 16px;">O teu pedido de <strong>aula experimental</strong> de <strong style="color:${BRAND_PRIMARY};">${modLabel}</strong> foi <strong>confirmado</strong>.</p>
+        <p style="margin:0 0 8px;padding:14px 16px;background-color:#fafafa;border-radius:8px;border-left:4px solid ${BRAND_PRIMARY};">
+          <strong>${dateFormatted}</strong>${timeLine ? `<br>${timeLine}` : ""}${placeHtml}
+        </p>
+        <p style="margin:20px 0 0;">Aparece alguns minutos antes. Qualquer dúvida, responde a este email ou contacta-nos.</p>
+        <p style="margin:12px 0 0;">Até já no tatame!</p>
+    `.trim();
+
+    const textParts = [
+      `${greeting},`,
+      "",
+      `O teu pedido de aula experimental de ${modLabel} foi confirmado.`,
+      dateFormatted + (hasTime ? `, ${trial.startTime} – ${trial.endTime}` : ""),
+      placeLines || null,
+      "",
+      "Aparece alguns minutos antes. Qualquer dúvida, contacta-nos.",
+      "",
+      "Até já no tatame!",
+      "",
+      "— Kingdom Fight School",
+    ]
+      .filter((line) => line !== null)
+      .join("\n");
+
+    const { error } = await resend.emails.send({
+      from: getFrom(),
+      to: [to],
+      subject: "Aula experimental confirmada – Kingdom Fight School",
+      text: textParts,
+      html: wrapTransactionalEmail(inner),
+    });
+
+    if (error) {
+      console.error("sendTrialAcceptanceConfirmation error:", error);
+      return { error: String(error.message ?? error) };
+    }
+    return {};
+  } catch (e) {
+    console.error("sendTrialAcceptanceConfirmation exception:", e);
+    return { error: e instanceof Error ? e.message : "Erro ao enviar email." };
   }
 }
 

@@ -51,41 +51,24 @@ function lessonCountLabel(count: number, locale: "pt" | "en"): string {
   return count === 1 ? "1 aula" : `${count} aulas`;
 }
 
-function MobileTimelineLesson({
-  lesson,
-  isLast,
-}: {
-  lesson: PublicScheduleLesson;
-  isLast: boolean;
-}) {
+function MobileCompactLesson({ lesson }: { lesson: PublicScheduleLesson }) {
   return (
-    <div className="relative flex gap-3.5">
-      {!isLast && (
-        <div
-          className="absolute left-[1.4rem] top-14 bottom-0 w-px bg-gradient-to-b from-[var(--primary)]/35 to-transparent"
-          aria-hidden
-        />
-      )}
-      <div className="flex w-[4.25rem] shrink-0 flex-col items-center justify-center rounded-xl border border-[var(--primary)]/30 bg-[var(--primary)]/10 px-2 py-2.5 shadow-inner">
-        <span className="font-mono text-xs font-bold leading-none tabular-nums text-[var(--primary)]">
-          {formatClock(lesson.startTime)}
-        </span>
-        <span className="my-1.5 h-px w-5 bg-[var(--primary)]/25" aria-hidden />
-        <span className="font-mono text-[10px] leading-none tabular-nums text-[var(--text-secondary)]">
-          {formatClock(lesson.endTime)}
-        </span>
-      </div>
-      <div className={`min-w-0 flex-1 ${isLast ? "pb-0" : "pb-5"} pt-1.5`}>
-        <p className="text-[15px] font-semibold leading-snug text-[var(--text-primary)]">{lesson.modalityLabel}</p>
+    <li className="flex items-start gap-3 border-t border-[var(--border)]/50 py-2.5 first:border-t-0 first:pt-0">
+      <span className="w-[4.75rem] shrink-0 pt-0.5 font-mono text-[11px] font-semibold leading-tight tabular-nums text-[var(--primary)]">
+        {formatClock(lesson.startTime)}
+        <span className="block text-[10px] font-normal text-[var(--text-secondary)]">{formatClock(lesson.endTime)}</span>
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold leading-snug text-[var(--text-primary)]">{lesson.modalityLabel}</p>
         {lesson.locationName && (
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">{lesson.locationName}</p>
+          <p className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">{lesson.locationName}</p>
         )}
       </div>
-    </div>
+    </li>
   );
 }
 
-/** Lista vertical por dia — legível em telemóvel. */
+/** Agenda compacta por dia — telemóvel. */
 function MobileWeekList({
   school,
   locale,
@@ -98,42 +81,29 @@ function MobileWeekList({
   );
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] shadow-[0_10px_40px_rgba(0,0,0,0.35)] lg:hidden">
-      <div className="border-b border-[var(--border)] bg-gradient-to-r from-[var(--primary)]/20 via-[var(--primary)]/5 to-transparent px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">
-          {locale === "en" ? "Weekly timetable" : "Grade da semana"}
-        </p>
-      </div>
-      {daysWithLessons.map((weekday, dayIndex) => {
+    <div className="divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] lg:hidden">
+      {daysWithLessons.map((weekday) => {
         const lessons = school.lessonsByWeekday[weekday] ?? [];
-        const isLastDay = dayIndex === daysWithLessons.length - 1;
         return (
-          <div
-            key={weekday}
-            className={`px-4 py-4 ${!isLastDay ? "border-b border-[var(--border)]" : ""}`}
-          >
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--primary)]/35 bg-[var(--primary)]/12 shadow-sm">
-                <span className="text-xs font-bold uppercase tracking-wide text-[var(--primary)]">
+          <div key={weekday} className="px-3 py-3 sm:px-4">
+            <div className="mb-1 flex items-baseline justify-between gap-2">
+              <div className="flex min-w-0 items-baseline gap-2">
+                <span className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-[var(--primary)]">
                   {weekdayShortLabelForPublicSchedule(weekday, locale)}
                 </span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-base font-semibold text-[var(--text-primary)]">
+                <span className="truncate text-sm font-semibold text-[var(--text-primary)]">
                   {weekdayLabelForPublicSchedule(weekday, locale)}
-                </p>
-                <p className="text-xs text-[var(--text-secondary)]">{lessonCountLabel(lessons.length, locale)}</p>
+                </span>
               </div>
+              <span className="shrink-0 text-[11px] text-[var(--text-secondary)]">
+                {lessonCountLabel(lessons.length, locale)}
+              </span>
             </div>
-            <div className="space-y-0 pl-0.5">
-              {lessons.map((lesson, lessonIndex) => (
-                <MobileTimelineLesson
-                  key={lesson.id}
-                  lesson={lesson}
-                  isLast={lessonIndex === lessons.length - 1}
-                />
+            <ul className="list-none p-0 m-0">
+              {lessons.map((lesson) => (
+                <MobileCompactLesson key={lesson.id} lesson={lesson} />
               ))}
-            </div>
+            </ul>
           </div>
         );
       })}
