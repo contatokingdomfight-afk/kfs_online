@@ -201,6 +201,26 @@ export async function convertTrialToStudent(
     return { error: "Convite enviado, mas não foi possível criar o registo. O aluno pode fazer login e ficará como aluno." };
   }
 
+  const lessonId = trial.lessonId as string | null;
+  let schoolId: string | null = null;
+  if (lessonId) {
+    const { data: lesson } = await supabase.from("Lesson").select("schoolId").eq("id", lessonId).maybeSingle();
+    schoolId = (lesson as { schoolId?: string } | null)?.schoolId ?? null;
+  }
+  if (!schoolId) {
+    const { data: defaultSchool, error: schoolErr } = await supabase
+      .from("School")
+      .select("id")
+      .eq("isActive", true)
+      .order("createdAt", { ascending: true })
+      .limit(1)
+      .single();
+    if (schoolErr || !defaultSchool) {
+      return { error: "Nenhuma escola ativa encontrada. Configure uma escola primeiro." };
+    }
+    schoolId = defaultSchool.id;
+  }
+
   const userId = crypto.randomUUID();
   const studentId = crypto.randomUUID();
 
@@ -216,6 +236,7 @@ export async function convertTrialToStudent(
   const { error: studentError } = await supabase.from("Student").insert({
     id: studentId,
     userId,
+    schoolId,
     status: "ATIVO",
   });
   if (studentError) return { error: studentError.message };
