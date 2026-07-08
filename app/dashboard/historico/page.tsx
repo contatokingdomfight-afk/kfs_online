@@ -75,45 +75,71 @@ export default async function DashboardHistoricoPage({
 
   const { data: allAttData } = await supabase
     .from("Attendance")
-    .select("lessonId, status")
+    .select("id, lessonId, status, occurrenceDate")
     .eq("studentId", studentId)
     .range(0, 999);
 
-  const attByLesson = new Map((allAttData ?? []).map((a) => [a.lessonId, a.status]));
-  const pastLessonIds = [...new Set((allAttData ?? []).map((a) => a.lessonId))];
+  type AttRow = { id: string; lessonId: string; status: string; occurrenceDate: string | null };
+  const attRows = (allAttData ?? []) as AttRow[];
 
-  let allPastLessons: { id: string; modality: string; date: string; startTime: string; endTime: string; locationId?: string }[] = [];
+  const pastAttRows = attRows.filter((a) => {
+    const occ = a.occurrenceDate ? String(a.occurrenceDate).slice(0, 10) : null;
+    return occ !== null && occ <= todayStr;
+  });
+
+  const pastLessonIds = [...new Set(pastAttRows.map((a) => a.lessonId))];
+
+  type LessonRow = {
+    id: string;
+    modality: string;
+    startTime: string;
+    endTime: string;
+    locationId?: string;
+    schoolId?: string;
+  };
+  const lessonById = new Map<string, LessonRow>();
   if (pastLessonIds.length > 0) {
     let lessonsQuery = supabase
       .from("Lesson")
-      .select("id, modality, date, startTime, endTime, locationId")
-      .in("id", pastLessonIds)
-      .lt("date", todayStr);
+      .select("id, modality, startTime, endTime, locationId, schoolId")
+      .in("id", pastLessonIds);
     if (studentSchoolId) lessonsQuery = lessonsQuery.eq("schoolId", studentSchoolId);
-    const { data } = await lessonsQuery.order("date", { ascending: false }).order("startTime", { ascending: false });
-    allPastLessons = data ?? [];
+    const { data: lessons } = await lessonsQuery;
+    for (const l of lessons ?? []) {
+      lessonById.set(l.id, l as LessonRow);
+    }
   }
 
-  const sortedLessons = (allPastLessons ?? []).sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime));
-  const paginatedLessons = sortedLessons.slice(offset, offset + PAGE_SIZE);
+  const allPastAttendances = pastAttRows
+    .map((a) => {
+      const lesson = lessonById.get(a.lessonId);
+      if (!lesson) return null;
+      const date = String(a.occurrenceDate).slice(0, 10);
+      const locId = lesson.locationId;
+      return {
+        key: `${a.lessonId}_${date}`,
+        lessonId: a.lessonId,
+        modality: lesson.modality,
+        date,
+        startTime: lesson.startTime,
+        endTime: lesson.endTime,
+        status: a.status,
+        locationName: locId ? locationById.get(locId) : undefined,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null)
+    .sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime));
 
-  const { data: confirmedAtt } = await supabase
-    .from("Attendance")
-    .select("lessonId")
-    .eq("studentId", studentId)
-    .eq("status", "CONFIRMED");
-
-  const confirmedLessonIds = [...new Set((confirmedAtt ?? []).map((a) => a.lessonId))];
-  const { data: confirmedLessons } =
-    confirmedLessonIds.length > 0
-      ? await supabase.from("Lesson").select("id, date").in("id", confirmedLessonIds).gte("date", SIX_WEEKS_AGO)
-      : { data: [] };
+  const paginatedAttendances = allPastAttendances.slice(offset, offset + PAGE_SIZE);
 
   const weekCounts = new Map<string, number>();
-  (confirmedLessons ?? []).forEach((lesson) => {
-    const weekKey = getWeekKey(lesson.date);
+  for (const a of attRows) {
+    if (a.status !== "CONFIRMED" || !a.occurrenceDate) continue;
+    const occ = String(a.occurrenceDate).slice(0, 10);
+    if (occ < SIX_WEEKS_AGO) continue;
+    const weekKey = getWeekKey(occ);
     weekCounts.set(weekKey, (weekCounts.get(weekKey) || 0) + 1);
-  });
+  }
 
   const weeklyProgress: Array<{ weekStart: string; count: number }> = [];
   for (let i = 5; i >= 0; i--) {
@@ -126,22 +152,10 @@ export default async function DashboardHistoricoPage({
     weeklyProgress.push({ weekStart: weekKey, count: weekCounts.get(weekKey) || 0 });
   }
 
-  const pastAttendances = paginatedLessons.map((l) => {
-    const locId = (l as { locationId?: string }).locationId;
-    const status = attByLesson.get(l.id) ?? "PENDING";
-    return {
-      lessonId: l.id,
-      modality: l.modality,
-      date: l.date,
-      startTime: l.startTime,
-      endTime: l.endTime,
-      status,
-      locationName: locId ? locationById.get(locId) : undefined,
-    };
-  });
+  const pastAttendances = paginatedAttendances;
 
   const maxCount = Math.max(...weeklyProgress.map((w) => w.count), 1);
-  const hasMore = offset + PAGE_SIZE < sortedLessons.length;
+  const hasMore = offset + PAGE_SIZE < allPastAttendances.length;
 
   function formatLessonDate(dateStr: string): string {
     try {
@@ -226,7 +240,7 @@ export default async function DashboardHistoricoPage({
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 10px)" }}>
               {pastAttendances.map((a) => (
                 <li
-                  key={a.lessonId}
+                  key={a.key}
                   className="card"
                   style={{ padding: "clamp(12px, 3vw, 14px)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}
                 >
