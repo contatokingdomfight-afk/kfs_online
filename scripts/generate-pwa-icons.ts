@@ -11,6 +11,10 @@ import {
   resolveBrandIconSourcePath,
 } from "./prepare-brand-icon-source.mjs";
 
+/** Escala do logo no quadrado — ~90% equilibra legibilidade vs. zona segura maskable. */
+const MANIFEST_ICON_SCALE = 0.9;
+const OPAQUE_ICON_SCALE_READY = 0.82;
+
 const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 
 async function main() {
@@ -51,7 +55,7 @@ async function main() {
 
   /** Ícone opaco (maskable / favicon pequeno). */
   async function iconOpaque(size: number, maskable: boolean) {
-    const scale = isReadySource ? 0.72 : maskable ? 0.68 : 0.78;
+    const scale = isReadySource ? OPAQUE_ICON_SCALE_READY : maskable ? 0.68 : 0.78;
     const inner = Math.round(size * scale);
     const logo = await sharp(bufAlpha)
       .resize(inner, inner, {
@@ -77,10 +81,10 @@ async function main() {
 
   const [png48, png192, png512, mask512, apple180] = await Promise.all([
     iconOpaque(48, false),
-    useTransparentForManifest ? iconWithTransparentBg(192, 0.82) : iconOpaque(192, false),
-    useTransparentForManifest ? iconWithTransparentBg(512, 0.82) : iconOpaque(512, false),
+    useTransparentForManifest ? iconWithTransparentBg(192, MANIFEST_ICON_SCALE) : iconOpaque(192, false),
+    useTransparentForManifest ? iconWithTransparentBg(512, MANIFEST_ICON_SCALE) : iconOpaque(512, false),
     iconOpaque(512, true),
-    useTransparentForManifest ? iconWithTransparentBg(180, 0.82) : iconOpaque(180, false),
+    useTransparentForManifest ? iconWithTransparentBg(180, MANIFEST_ICON_SCALE) : iconOpaque(180, false),
   ]);
 
   await Promise.all([

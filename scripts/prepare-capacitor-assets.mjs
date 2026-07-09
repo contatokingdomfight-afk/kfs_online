@@ -8,6 +8,8 @@ import sharp from "sharp";
 import { loadBrandIconPngBuffer } from "./prepare-brand-icon-source.mjs";
 
 const BRAND_BG = "#121416";
+/** Alinhado com `MANIFEST_ICON_SCALE` em generate-pwa-icons.ts */
+const ICON_SCALE = 0.9;
 const root = process.cwd();
 const assetsDir = path.join(root, "assets");
 
@@ -16,32 +18,38 @@ async function main() {
 
   await fs.mkdir(assetsDir, { recursive: true });
 
-  await sharp(buf)
-    .resize(1024, 1024, {
+  const iconSize = 1024;
+  const iconInner = Math.round(iconSize * ICON_SCALE);
+  const iconLogo = await sharp(buf)
+    .resize(iconInner, iconInner, {
       fit: "contain",
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
-    .extend({
-      top: 48,
-      bottom: 48,
-      left: 48,
-      right: 48,
+    .toBuffer();
+
+  await sharp({
+    create: {
+      width: iconSize,
+      height: iconSize,
+      channels: 4,
       background: BRAND_BG,
-    })
+    },
+  })
+    .composite([{ input: iconLogo, gravity: "centre" }])
     .flatten({ background: BRAND_BG })
     .png()
     .toFile(path.join(assetsDir, "icon-only.png"));
 
   const splashSize = 2732;
-  const inner = Math.round(splashSize * 0.38);
-  const logo = await sharp(buf)
-    .resize(inner, inner, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+  const splashInner = Math.round(splashSize * 0.38);
+  const splashLogo = await sharp(buf)
+    .resize(splashInner, splashInner, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .toBuffer();
 
   await sharp({
     create: { width: splashSize, height: splashSize, channels: 4, background: BRAND_BG },
   })
-    .composite([{ input: logo, gravity: "centre" }])
+    .composite([{ input: splashLogo, gravity: "centre" }])
     .png()
     .toFile(path.join(assetsDir, "splash.png"));
 
