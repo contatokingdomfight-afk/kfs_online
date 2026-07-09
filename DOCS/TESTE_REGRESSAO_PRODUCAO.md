@@ -168,9 +168,9 @@ Estes 5 pontos validam o commit `e6c40fc` (+ fix titular família se aplicável)
 | 2 | Receita 470 € | **OK** | Home e `/admin/financeiro` ambos 470,00 € (jul/2026) |
 | 3 | Gráfico sem `/null` | **OK** | Eixo: 09/2025 … 07/2026 |
 | 4 | Presença KPIs | **OK** | Média 0,1; donut Muay Thai |
-| 5 | Banner titular | **FALHOU** (1.º deploy) | Ainda «—»; fix adicional: ler `Student` titular também via service role |
+| 5 | Banner titular | **OK** (2.º deploy `8b00f55`) | «És membro do plano família de **demo**» em `kfs.test.aluno@local.test` |
 
-> Após novo deploy do fix do ponto 5, repetir só a secção 5.5 e atualizar esta tabela.
+> Ciclo jul/2026 fechado: **5/5 checkpoints OK** após commits `e6c40fc` + `8b00f55`.
 
 ---
 
