@@ -11,9 +11,9 @@ import {
   resolveBrandIconSourcePath,
 } from "./prepare-brand-icon-source.mjs";
 
-/** Escala do logo no quadrado — ~90% equilibra legibilidade vs. zona segura maskable. */
-const MANIFEST_ICON_SCALE = 0.9;
-const OPAQUE_ICON_SCALE_READY = 0.82;
+/** Escala do logo no quadrado — ~93% equilibra legibilidade vs. zona segura maskable. */
+const MANIFEST_ICON_SCALE = 0.93;
+const OPAQUE_ICON_SCALE_READY = 0.85;
 
 const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 

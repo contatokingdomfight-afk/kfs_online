@@ -9,7 +9,7 @@ import { loadBrandIconPngBuffer } from "./prepare-brand-icon-source.mjs";
 
 const BRAND_BG = "#121416";
 /** Alinhado com `MANIFEST_ICON_SCALE` em generate-pwa-icons.ts */
-const ICON_SCALE = 0.9;
+const ICON_SCALE = 0.93;
 const root = process.cwd();
 const assetsDir = path.join(root, "assets");
 
