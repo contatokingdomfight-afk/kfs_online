@@ -3,6 +3,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { KINGDOM_PLAN_FAMILIA_ID, KINGDOM_PLAN_FAMILIA_DEFAULT_MAX_MEMBERS, isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
@@ -411,7 +412,9 @@ export async function getFamilyStudentBanner(
 
   let titularName = "—";
   if (titularStudent?.userId) {
-    const { data: user } = await supabase
+    // Membros não conseguem ler o perfil do titular via RLS; usar service role só para o nome.
+    const reader = getAdminClientOrNull().client ?? supabase;
+    const { data: user } = await reader
       .from("User")
       .select("name, email")
       .eq("id", titularStudent.userId)
