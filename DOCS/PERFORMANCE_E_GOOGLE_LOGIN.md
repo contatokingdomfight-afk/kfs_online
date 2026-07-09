@@ -15,8 +15,9 @@ Na primeira tentativa de login com Google, o utilizador era redirecionado mas n�
 
 ### Solução implementada (2026-07)
 - **Middleware:** bypass total em `/auth/callback` (sem `getUser()`).
-- **Callback:** página client (`app/auth/callback/page.tsx`) faz `exchangeCodeForSession` no browser (mesmo contexto que iniciou o OAuth), depois `POST /api/auth/complete-oauth` para `syncUser` no servidor.
-- **Sign-in:** ao voltar a tentar Google, limpa `?error=exchange_failed` da URL.
+- **Callback:** `app/auth/callback/route.ts` no **servidor** — `exchangeCodeForSession` lê o PKCE verifier dos **cookies** (não no browser; troca client-side quebra com «verifier not found»).
+- **Cookies na resposta:** `setAll` escreve na `NextResponse` de redirect (padrão Supabase SSR).
+- **Sign-in:** `flowType: "pkce"` + limpar `?error=exchange_failed` ao repetir Google.
 
 ### Solução anterior (ainda válida como contexto)
 - **Callback (`/auth/callback`):** Depois de `exchangeCodeForSession(code)`, passávamos a chamar `syncUser(session.user)` no próprio callback. Assim, o `User` e o `Student` são criados/atualizados na mesma requisição do callback, antes do redirect para o dashboard.
