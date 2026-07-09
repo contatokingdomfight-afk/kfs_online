@@ -404,7 +404,10 @@ export async function getFamilyStudentBanner(
   const ctx = await getFamilyContext(supabase, studentId);
   if (!ctx) return null;
 
-  const { data: titularStudent } = await supabase
+  // Membros não conseguem ler titular (Student/User) via RLS; service role só para nome/email.
+  const reader = getAdminClientOrNull().client ?? supabase;
+
+  const { data: titularStudent } = await reader
     .from("Student")
     .select("userId")
     .eq("id", ctx.billingStudentId)
@@ -412,8 +415,6 @@ export async function getFamilyStudentBanner(
 
   let titularName = "—";
   if (titularStudent?.userId) {
-    // Membros não conseguem ler o perfil do titular via RLS; usar service role só para o nome.
-    const reader = getAdminClientOrNull().client ?? supabase;
     const { data: user } = await reader
       .from("User")
       .select("name, email")

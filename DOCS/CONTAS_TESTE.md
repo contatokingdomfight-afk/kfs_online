@@ -1,6 +1,6 @@
 # Contas de teste (local / staging)
 
-Relacionado: **`DOCS/ROADMAP_Plataforma_KFS.md`** (secção 18 – testes e seed), **`DOCS/GUIA_TESTE_VALIDACAO_PERFIS.md`** (validação manual por perfil).
+Relacionado: **`DOCS/ROADMAP_Plataforma_KFS.md`** (secção 18 – testes e seed), **`DOCS/GUIA_TESTE_VALIDACAO_PERFIS.md`** (validação manual por perfil), **`DOCS/TESTE_REGRESSAO_PRODUCAO.md`** (regressão em produção).
 
 ## Criar ou atualizar utilizadores
 

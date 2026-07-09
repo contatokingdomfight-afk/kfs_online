@@ -94,6 +94,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`](SILHUETA_CORPORAL_2D_ILUSTRATIVA.md) | Silhueta 2D ilustrativa: campo ↔ corpo, pipeline, 2D/3D, critérios de aceite, checklist de regressão |
 | [`CONTAS_TESTE.md`](CONTAS_TESTE.md) | Contas de teste e `seed:test-users` |
 | [`GUIA_TESTE_VALIDACAO_PERFIS.md`](GUIA_TESTE_VALIDACAO_PERFIS.md) | Checklist por perfil |
+| [`TESTE_REGRESSAO_PRODUCAO.md`](TESTE_REGRESSAO_PRODUCAO.md) | Regressão manual em kingdomfight.com (rotas, KPIs, dados de teste) |
 | [`GUIA_TESTE_LOJA.md`](GUIA_TESTE_LOJA.md) | Testes da loja |
 | [`TESTE_COM_ALUNO_REAL.md`](TESTE_COM_ALUNO_REAL.md) | Testes com aluno real |
 
