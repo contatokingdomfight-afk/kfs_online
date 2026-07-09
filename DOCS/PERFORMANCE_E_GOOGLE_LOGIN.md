@@ -10,11 +10,16 @@
 Na primeira tentativa de login com Google, o utilizador era redirecionado mas não entrava; na segunda tentativa funcionava.
 
 ### Causa provável
-Após o redirect do Google para `/auth/callback`, o código trocava o `code` por sessão e redirecionava para `/dashboard`. No primeiro carregamento do dashboard, a página chamava `syncUser()` para criar/atualizar o registo em `User` e `Student`. Se isso fosse lento ou falhasse (ex.: escola padrão não encontrada), o utilizador podia ver erro ou ser enviado de volta ao login. Na segunda vez o `User`/`Student` já existiam, por isso o fluxo era rápido.
+1. O **middleware** chamava `getUser()` também em `/auth/callback`, interferindo com o fluxo PKCE (verifier/código) — sobretudo em **PWA/mobile**.
+2. A troca do código no **servidor** (`route.ts`) dependia dos cookies PKCE escritos no browser; em alguns retornos do Google esses cookies não chegavam de forma fiável à 1.ª request.
 
-### Solução implementada
-- **Callback (`/auth/callback`):** Depois de `exchangeCodeForSession(code)`, passamos a chamar `syncUser(session.user)` no próprio callback. Assim, o `User` e o `Student` são criados/atualizados na mesma requisição do callback, antes do redirect para o dashboard.
-- O redirect para `/dashboard` acontece só após o sync (em `try/catch`; se o sync falhar, registamos o erro mas continuamos a redirecionar para o utilizador não ficar preso).
+### Solução implementada (2026-07)
+- **Middleware:** bypass total em `/auth/callback` (sem `getUser()`).
+- **Callback:** página client (`app/auth/callback/page.tsx`) faz `exchangeCodeForSession` no browser (mesmo contexto que iniciou o OAuth), depois `POST /api/auth/complete-oauth` para `syncUser` no servidor.
+- **Sign-in:** ao voltar a tentar Google, limpa `?error=exchange_failed` da URL.
+
+### Solução anterior (ainda válida como contexto)
+- **Callback (`/auth/callback`):** Depois de `exchangeCodeForSession(code)`, passávamos a chamar `syncUser(session.user)` no próprio callback. Assim, o `User` e o `Student` são criados/atualizados na mesma requisição do callback, antes do redirect para o dashboard.
 
 ---
 

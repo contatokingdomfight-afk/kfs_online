@@ -132,6 +132,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(dest);
   }
 
+  /**
+   * OAuth callback: não refrescar sessão no middleware — o PKCE code-verifier tem de
+   * chegar intacto ao handler de troca; getUser() aqui causava exchange_failed intermitente
+   * (sobretudo PWA/mobile: 1.ª tentativa falha, 2.ª funciona).
+   */
+  if (pathname === "/auth/callback" || pathname.startsWith("/auth/callback/")) {
+    return NextResponse.next({ request: withKfsPathname(request) });
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {

@@ -15,7 +15,7 @@
 | Password contas teste | `KfsTeste2026!` (ou `TEST_SEED_PASSWORD` no seed) |
 | **Não tocar** | `boretok913@epaynine.com`, `kewes96529@epaynine.com` (experimentais reais) |
 | Cookies | Aceitar banner antes de interagir |
-| Dados de teste | **Manter** registos criados durante testes (pagamentos, presenças, inscrições) |
+| Dados de teste | **Apagar após regressão** — ver secção 3 e `scripts/sql/cleanup-regression-test-data.sql` |
 | Branch de código | Desenvolvimento em `dev`; produção via `main` |
 
 ---
@@ -43,20 +43,23 @@ Ver [`CONTAS_TESTE.md`](CONTAS_TESTE.md). Resumo usado na regressão:
 
 ---
 
-## 3. Dados de teste criados (não apagar)
+## 3. Dados de teste criados na regressão (apagar depois)
 
-| Tipo | Referência |
-|------|------------|
-| Pagamento demo set/2026 | 80€ espécie (mensalidade) |
-| Attendance demo | `713219a3-9bfa-4262-b6eb-20685e654e41` |
-| Pagamento antecipado demo ago/2026 | `81d9487d-10f4-47ed-a818-c565eff293b9` |
-| Trial convertido | `a1b2c3d4-test-exp-0001-000000000001` |
-| Venda loja | `78673cbd-95f7-4a83-b799-41bade282b1b` (25€) |
-| Inscrição evento demo | Workshop confirmado + check-in |
-| Primeiro pagamento experimental | 120€ jul/2026 |
-| RPE demo | 7 — Muay Thai |
-| Progresso biblioteca demo | 1/4 curso Muay Thai |
-| Presença kfs.test.aluno | Muay Thai ~22:05, aula `307671a9-...` |
+> **Limpeza em produção:** 2026-07-09 — executado via Supabase; receita jul/2026 voltou a refletir só alunos reais (~100 €: Gustavo 55+45). Script: [`scripts/sql/cleanup-regression-test-data.sql`](../scripts/sql/cleanup-regression-test-data.sql).
+
+| Tipo | Referência (jul/2026) |
+|------|------------------------|
+| Pagamento demo set/2026 | 80€ espécie — removido |
+| Attendance demo | `713219a3-9bfa-4262-b6eb-20685e654e41` — removido |
+| Pagamento antecipado demo ago/2026 | `81d9487d-10f4-47ed-a818-c565eff293b9` — removido |
+| Trial convertido | `a1b2c3d4-test-exp-0001-000000000001` (mantém registo; aluno teste sem pagamentos) |
+| Venda loja | `78673cbd-95f7-4a83-b799-41bade282b1b` (25€) — removido |
+| Inscrição evento demo | Workshop — removido |
+| Primeiro pagamento experimental | bundle 120€ jul/2026 — removido |
+| RPE / presenças jul/08 | removidos |
+| Progresso biblioteca demo | 1 unidade — removido |
+
+**Mantido de propósito:** `demo@teste.com` com matrícula/seguro **LATE** (cenário «pendentes» na secção 7).
 
 ---
 
@@ -202,7 +205,7 @@ Estes 5 pontos validam o commit `e6c40fc` (+ fix titular família se aplicável)
 3. Percorrer inventário secção 4 (smoke: carrega sem erro).
 4. Executar checkpoints secção 5.
 5. Registar resultados numa nova linha na secção 6 (data + commit deploy).
-6. Reportar apenas **bugs novos** ou regressões; não apagar dados da secção 3.
+6. Reportar apenas **bugs novos** ou regressões; **limpar dados da secção 3** após validar (script SQL).
 
 **Testes automáticos (local):** `npm test` — lógica de filtro de aulas no dashboard; não substitui este guia em produção.
 

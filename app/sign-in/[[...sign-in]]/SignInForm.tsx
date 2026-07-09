@@ -76,6 +76,10 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
     setError(null);
     setGoogleLoading(true);
     persistRememberDeviceChoice(rememberDevice);
+    if (urlError) {
+      const qs = nextUrl && nextUrl.startsWith("/") ? `?next=${encodeURIComponent(nextUrl)}` : "";
+      router.replace(`/sign-in${qs}`);
+    }
     const supabase = createClient();
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const redirectTo = buildAuthCallbackUrl(origin, nextUrl);

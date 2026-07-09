@@ -20,16 +20,30 @@ export function createClient() {
     );
   }
   const rememberLong = readRememberLongSessionFromDocumentCookie();
-  return createBrowserClient(
-    url,
-    key,
-    {
-      cookieOptions: resolveSupabaseCookieOptions(rememberLong),
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    }
-  );
+  return createBrowserClient(url, key, {
+    cookieOptions: resolveSupabaseCookieOptions(rememberLong),
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
+}
+
+/** Callback OAuth: troca manual do código (evita corrida com detectSessionInUrl). */
+export function createOAuthCallbackClient() {
+  const { url, key } = readPublicSupabaseEnv();
+  if (!url || !key) {
+    throw new Error("[KFS] Supabase URL ou anon key em falta no browser.");
+  }
+  const rememberLong = readRememberLongSessionFromDocumentCookie();
+  return createBrowserClient(url, key, {
+    cookieOptions: resolveSupabaseCookieOptions(rememberLong),
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+      flowType: "pkce",
+    },
+  });
 }
