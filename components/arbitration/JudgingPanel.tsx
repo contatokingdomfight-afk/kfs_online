@@ -241,7 +241,7 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
         const message =
           e instanceof Error && e.message && !e.message.includes("Server Components render")
             ? e.message
-            : "NÃ£o foi possÃ­vel guardar o round. Recarregue a pÃ¡gina e verifique o resumo.";
+            : "Não foi possível guardar o round. Recarregue a página e verifique o resumo.";
         setError(message);
       }
     });
@@ -254,10 +254,10 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
     return (
       <div className="arb-page">
         <Link href="/coach/arbitragem" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
-          â† Voltar
+          ← Voltar
         </Link>
         <div className="arb-card" style={{ marginTop: 16, textAlign: "center" }}>
-          <p style={{ marginBottom: 16 }}>Combate agendado â€” {judgeLabel}</p>
+          <p style={{ marginBottom: 16 }}>Combate agendado — {judgeLabel}</p>
           <button type="button" className="btn btn-primary arb-btn-save" onClick={handleStart} disabled={pending}>
             Iniciar Julgamento
           </button>
@@ -271,18 +271,18 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
     <div className="arb-page arb-judging-page">
       <div className="arb-judging-meta">
         <Link href="/coach/arbitragem" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
-          â† Combates
+          ← Combates
         </Link>
         <div style={{ marginTop: 8 }}>
           <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{initial.fight.eventName}</div>
           <div style={{ fontSize: 14, fontWeight: 600 }}>
-            {modalityLabel(initial.fight.modality)} Â· {initial.fight.category}
-            {initial.fight.weightClass ? ` Â· ${initial.fight.weightClass}` : ""}
+            {modalityLabel(initial.fight.modality)} · {initial.fight.category}
+            {initial.fight.weightClass ? ` · ${initial.fight.weightClass}` : ""}
           </div>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>
             {judgeLabel}
             {initial.fight.roundDurationSeconds
-              ? ` Â· ${Math.floor(initial.fight.roundDurationSeconds / 60)}:${String(initial.fight.roundDurationSeconds % 60).padStart(2, "0")}`
+              ? ` · ${Math.floor(initial.fight.roundDurationSeconds / 60)}:${String(initial.fight.roundDurationSeconds % 60).padStart(2, "0")}`
               : ""}
           </div>
         </div>
@@ -295,7 +295,7 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
               <div className="arb-corner-blue" style={{ fontSize: 14, marginBottom: 4 }}>
                 {initial.fight.athleteBlueName}
               </div>
-              <div className="arb-score-total arb-corner-blue">{blueTotal ?? "â€”"}</div>
+              <div className="arb-score-total arb-corner-blue">{blueTotal ?? "—"}</div>
             </div>
             <div className="arb-score-center">
               <div className="arb-round-label">Round {activeRound}</div>
@@ -304,7 +304,7 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
               </div>
               {displayOfficialBlue != null && displayOfficialRed != null ? (
                 <div style={{ marginTop: 8, fontWeight: 800, fontSize: 18 }}>
-                  {displayOfficialBlue} Ã— {displayOfficialRed}
+                  {displayOfficialBlue} × {displayOfficialRed}
                 </div>
               ) : null}
             </div>
@@ -312,7 +312,7 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
               <div className="arb-corner-red" style={{ fontSize: 14, marginBottom: 4 }}>
                 {initial.fight.athleteRedName}
               </div>
-              <div className="arb-score-total arb-corner-red">{redTotal ?? "â€”"}</div>
+              <div className="arb-score-total arb-corner-red">{redTotal ?? "—"}</div>
             </div>
           </div>
         </div>
@@ -342,8 +342,8 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
 
           {suggested ? (
             <div className="arb-card" style={{ fontSize: 14 }}>
-              <strong>SugestÃ£o 10-Point Must:</strong> {suggested.blue} Ã— {suggested.red}
-              <span style={{ color: "var(--text-secondary)", marginLeft: 8 }}>(editÃ¡vel abaixo)</span>
+              <strong>Sugestão 10-Point Must:</strong> {suggested.blue} × {suggested.red}
+              <span style={{ color: "var(--text-secondary)", marginLeft: 8 }}>(editável abaixo)</span>
             </div>
           ) : null}
 
@@ -357,14 +357,14 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
                   disabled={isLocked || pending}
                   onChange={(e) => setOfficialBlue(Number(e.target.value))}
                 >
-                  <option value="" disabled>â€”</option>
+                  <option value="" disabled>—</option>
                   {OFFICIAL_OPTIONS.map((n) => (
                     <option key={n} value={n}>{n}</option>
                   ))}
                 </select>
                 {syncedOccurrences.blueOfficialPointDeduction > 0 && baseOfficialBlue != null ? (
                   <span style={{ fontSize: 12, color: "var(--warning)" }}>
-                    âˆ’{syncedOccurrences.blueOfficialPointDeduction} â†’ {displayOfficialBlue}
+                    −{syncedOccurrences.blueOfficialPointDeduction} → {displayOfficialBlue}
                   </span>
                 ) : null}
               </div>
@@ -375,14 +375,14 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
                   disabled={isLocked || pending}
                   onChange={(e) => setOfficialRed(Number(e.target.value))}
                 >
-                  <option value="" disabled>â€”</option>
+                  <option value="" disabled>—</option>
                   {OFFICIAL_OPTIONS.map((n) => (
                     <option key={n} value={n}>{n}</option>
                   ))}
                 </select>
                 {syncedOccurrences.redOfficialPointDeduction > 0 && baseOfficialRed != null ? (
                   <span style={{ fontSize: 12, color: "var(--warning)" }}>
-                    âˆ’{syncedOccurrences.redOfficialPointDeduction} â†’ {displayOfficialRed}
+                    −{syncedOccurrences.redOfficialPointDeduction} → {displayOfficialRed}
                   </span>
                 ) : null}
               </div>
@@ -408,7 +408,7 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
                 disabled={pending || blueTotal == null || redTotal == null}
                 onClick={handleSave}
               >
-                {pending ? "A guardarâ€¦" : "Salvar Round"}
+                {pending ? "A guardar…" : "Salvar Round"}
               </button>
             </div>
           ) : (
@@ -484,13 +484,13 @@ function FightSummaryPanel({
             ROUND {r.roundNumber}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 15 }}>
-            <span className="arb-corner-blue">Azul: {r.blueTotal ?? "â€”"}</span>
-            <span className="arb-corner-red">Vermelho: {r.redTotal ?? "â€”"}</span>
+            <span className="arb-corner-blue">Azul: {r.blueTotal ?? "—"}</span>
+            <span className="arb-corner-red">Vermelho: {r.redTotal ?? "—"}</span>
           </div>
           {r.officialBlueScore != null && r.officialRedScore != null ? (
             <>
               <div style={{ marginTop: 6, fontWeight: 800, fontSize: 20, textAlign: "center" }}>
-                {r.officialBlueScore} Ã— {r.officialRedScore}
+                {r.officialBlueScore} × {r.officialRedScore}
               </div>
               <div style={{ marginTop: 4, fontSize: 13, textAlign: "center", color: "var(--text-secondary)" }}>
                 Vencedor do round:{" "}
@@ -511,14 +511,14 @@ function FightSummaryPanel({
             textAlign: "center",
           }}
         >
-          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>O teu cartÃ£o</div>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>O teu cartão</div>
           <div style={{ fontSize: 28, fontWeight: 800, margin: "8px 0" }}>
-            {totalBlue} Ã— {totalRed}
+            {totalBlue} × {totalRed}
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700 }}>Vencedor no teu cartÃ£o: {myCardWinnerName}</div>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>Vencedor no teu cartão: {myCardWinnerName}</div>
           {pendingJudges > 0 ? (
             <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8 }}>
-              Ã€ espera de {pendingJudges} {pendingJudges === 1 ? "juiz" : "juÃ­zes"} para o resultado oficial.
+              À espera de {pendingJudges} {pendingJudges === 1 ? "juiz" : "juízes"} para o resultado oficial.
             </div>
           ) : null}
         </div>
@@ -526,7 +526,7 @@ function FightSummaryPanel({
 
       {judgeResults.length > 0 ? (
         <div className="arb-judge-results">
-          <h3 style={{ margin: "16px 0 8px", fontSize: 15 }}>CartÃµes dos juÃ­zes</h3>
+          <h3 style={{ margin: "16px 0 8px", fontSize: 15 }}>Cartões dos juízes</h3>
           {judgeResults.map((jr) => {
             const jrWinner =
               jr.winner === "BLUE"
@@ -536,9 +536,9 @@ function FightSummaryPanel({
                   : "Empate";
             return (
               <div key={jr.judgeNumber} className="arb-summary-round">
-                <div style={{ fontWeight: 700 }}>Juiz {jr.judgeNumber} â€” {jr.judgeName}</div>
+                <div style={{ fontWeight: 700 }}>Juiz {jr.judgeNumber} — {jr.judgeName}</div>
                 <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4 }}>
-                  {jr.totalBlueOfficial} Ã— {jr.totalRedOfficial}
+                  {jr.totalBlueOfficial} × {jr.totalRedOfficial}
                 </div>
                 <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
                   Vencedor: {jrWinner}
