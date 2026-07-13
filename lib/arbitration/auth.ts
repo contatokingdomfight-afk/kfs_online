@@ -31,6 +31,15 @@ export async function requireArbitrationAccess(): Promise<ArbitrationAccess> {
   };
 }
 
+/** Apenas ADMIN (gestão sensível: apagar combates, etc.). */
+export async function requireArbitrationAdmin(): Promise<ArbitrationAccess> {
+  const access = await requireArbitrationAccess();
+  if (access.role !== "ADMIN") {
+    throw new Error("Apenas administradores podem realizar esta ação.");
+  }
+  return access;
+}
+
 export function isArbitrationPathAllowed(pathname: string): boolean {
   const path = (pathname.split("?")[0] ?? "").replace(/\/$/, "") || "/";
   return path === "/coach/arbitragem" || path.startsWith("/coach/arbitragem/");

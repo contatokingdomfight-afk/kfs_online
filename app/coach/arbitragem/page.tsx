@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default async function ArbitragemPage() {
-  await requireArbitrationAccess();
+  const access = await requireArbitrationAccess();
   const locale = (await getLocaleFromCookies()) === "en" ? "en" : "pt";
   const fights = await listArbitrationFights();
 
@@ -19,7 +19,7 @@ export default async function ArbitragemPage() {
         <h1 className="arb-title">Arbitragem</h1>
       </header>
       <ArbitrationSubNav />
-      <FightListBoard fights={fights} locale={locale} />
+      <FightListBoard fights={fights} locale={locale} canDeleteFights={access.role === "ADMIN"} />
     </div>
   );
 }

@@ -18,7 +18,7 @@ type Props = {
 };
 
 export default async function ArbitragemHistoricoPage({ searchParams }: Props) {
-  await requireArbitrationAccess();
+  const access = await requireArbitrationAccess();
   const params = await searchParams;
 
   let fights = await listArbitrationFights({ completedOnly: true, eventId: params.evento });
@@ -51,7 +51,7 @@ export default async function ArbitragemHistoricoPage({ searchParams }: Props) {
       </header>
       <ArbitrationSubNav />
       <Suspense fallback={<p style={{ color: "var(--text-secondary)" }}>A carregar…</p>}>
-        <HistoryPanel fights={fights} events={events} judges={judges} />
+        <HistoryPanel fights={fights} events={events} judges={judges} canDeleteFights={access.role === "ADMIN"} />
       </Suspense>
     </div>
   );

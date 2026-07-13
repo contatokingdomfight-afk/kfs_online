@@ -5,14 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { modalityLabel } from "@/lib/arbitration/scoring";
 import type { ArbitrationFightListRow } from "@/lib/arbitration/types";
 import type { ArbitrationEventRow, ArbitrationJudgeRow } from "@/lib/arbitration/types";
+import { DeleteArbitrationFightButton } from "@/components/arbitration/DeleteArbitrationFightButton";
 
 type Props = {
   fights: ArbitrationFightListRow[];
   events: ArbitrationEventRow[];
   judges: ArbitrationJudgeRow[];
+  canDeleteFights?: boolean;
 };
 
-export function HistoryPanel({ fights, events, judges }: Props) {
+export function HistoryPanel({ fights, events, judges, canDeleteFights = false }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -62,24 +64,32 @@ export function HistoryPanel({ fights, events, judges }: Props) {
       ) : (
         <div style={{ display: "grid", gap: 10 }}>
           {filtered.map((f) => (
-            <Link
-              key={f.id}
-              href={`/coach/arbitragem/${f.id}`}
-              className="arb-card"
-              style={{ textDecoration: "none", color: "inherit", display: "block" }}
-            >
-              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                {f.eventName} · {modalityLabel(f.modality)}
-              </div>
-              <div style={{ fontWeight: 700, marginTop: 6 }}>
-                <span className="arb-corner-blue">{f.athleteBlueName}</span>
-                {" vs "}
-                <span className="arb-corner-red">{f.athleteRedName}</span>
-              </div>
-              <div style={{ fontSize: 13, marginTop: 4, color: "var(--text-secondary)" }}>
-                {f.category}{f.weightClass ? ` · ${f.weightClass}` : ""}
-              </div>
-            </Link>
+            <article key={f.id} className="arb-card arb-history-fight-card">
+              <Link
+                href={`/coach/arbitragem/${f.id}`}
+                style={{ textDecoration: "none", color: "inherit", display: "block" }}
+              >
+                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                  {f.eventName} · {modalityLabel(f.modality)}
+                </div>
+                <div style={{ fontWeight: 700, marginTop: 6 }}>
+                  <span className="arb-corner-blue">{f.athleteBlueName}</span>
+                  {" vs "}
+                  <span className="arb-corner-red">{f.athleteRedName}</span>
+                </div>
+                <div style={{ fontSize: 13, marginTop: 4, color: "var(--text-secondary)" }}>
+                  {f.category}{f.weightClass ? ` · ${f.weightClass}` : ""}
+                </div>
+              </Link>
+              {canDeleteFights ? (
+                <div className="arb-fight-card-actions">
+                  <DeleteArbitrationFightButton
+                    fightId={f.id}
+                    label={`${f.athleteBlueName} vs ${f.athleteRedName}`}
+                  />
+                </div>
+              ) : null}
+            </article>
           ))}
         </div>
       )}

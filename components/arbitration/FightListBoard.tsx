@@ -3,10 +3,12 @@
 import type { ArbitrationFightListRow } from "@/lib/arbitration/types";
 import { modalityLabel, statusLabel } from "@/lib/arbitration/scoring";
 import Link from "next/link";
+import { DeleteArbitrationFightButton } from "@/components/arbitration/DeleteArbitrationFightButton";
 
 type Props = {
   fights: ArbitrationFightListRow[];
   locale: "pt" | "en";
+  canDeleteFights?: boolean;
 };
 
 function statusBadgeClass(status: string) {
@@ -15,7 +17,7 @@ function statusBadgeClass(status: string) {
   return "arb-badge arb-badge-scheduled";
 }
 
-export function FightListBoard({ fights, locale }: Props) {
+export function FightListBoard({ fights, locale, canDeleteFights = false }: Props) {
   const upcoming = fights.filter((f) => f.status === "SCHEDULED");
   const inProgress = fights.filter((f) => f.status === "IN_PROGRESS");
   const completed = fights.filter((f) => f.status === "COMPLETED");
@@ -33,9 +35,9 @@ export function FightListBoard({ fights, locale }: Props) {
 
   return (
     <div>
-      <FightSection title="Em andamento" fights={inProgress} locale={locale} />
-      <FightSection title="Próximos combates" fights={upcoming} locale={locale} />
-      <FightSection title="Encerrados" fights={completed} locale={locale} />
+      <FightSection title="Em andamento" fights={inProgress} locale={locale} canDeleteFights={canDeleteFights} />
+      <FightSection title="Próximos combates" fights={upcoming} locale={locale} canDeleteFights={canDeleteFights} />
+      <FightSection title="Encerrados" fights={completed} locale={locale} canDeleteFights={canDeleteFights} />
     </div>
   );
 }
@@ -44,10 +46,12 @@ function FightSection({
   title,
   fights,
   locale,
+  canDeleteFights,
 }: {
   title: string;
   fights: ArbitrationFightListRow[];
   locale: "pt" | "en";
+  canDeleteFights: boolean;
 }) {
   if (fights.length === 0) return null;
 
@@ -56,14 +60,22 @@ function FightSection({
       <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: "var(--text-secondary)" }}>{title}</h2>
       <div style={{ display: "grid", gap: 10 }}>
         {fights.map((fight) => (
-          <FightCard key={fight.id} fight={fight} locale={locale} />
+          <FightCard key={fight.id} fight={fight} locale={locale} canDeleteFights={canDeleteFights} />
         ))}
       </div>
     </section>
   );
 }
 
-function FightCard({ fight, locale }: { fight: ArbitrationFightListRow; locale: "pt" | "en" }) {
+function FightCard({
+  fight,
+  locale,
+  canDeleteFights,
+}: {
+  fight: ArbitrationFightListRow;
+  locale: "pt" | "en";
+  canDeleteFights: boolean;
+}) {
   const canJudge = fight.status === "SCHEDULED" || fight.status === "IN_PROGRESS";
 
   return (
@@ -99,6 +111,15 @@ function FightCard({ fight, locale }: { fight: ArbitrationFightListRow; locale: 
           Ver resultado
         </Link>
       )}
+
+      {canDeleteFights ? (
+        <div className="arb-fight-card-actions">
+          <DeleteArbitrationFightButton
+            fightId={fight.id}
+            label={`${fight.athleteBlueName} vs ${fight.athleteRedName}`}
+          />
+        </div>
+      ) : null}
     </article>
   );
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { requireArbitrationAccess } from "@/lib/arbitration/auth";
+import { requireArbitrationAccess, requireArbitrationAdmin } from "@/lib/arbitration/auth";
 import {
   aggregateJudgeTotals,
   computeDecisionType,
@@ -556,4 +556,26 @@ export async function resolveFightJudgeForUser(fightId: string, userId: string) 
     }),
     suggestedFightJudgeId: (matched?.id as string) ?? null,
   };
+}
+
+export async function deleteArbitrationFight(fightId: string) {
+  await requireArbitrationAdmin();
+  const supabase = supabaseOrThrow();
+
+  const { data: fight, error: fetchError } = await supabase
+    .from("ArbitrationFight")
+    .select("id")
+    .eq("id", fightId)
+    .maybeSingle();
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!fight) throw new Error("Combate não encontrado.");
+
+  const { error } = await supabase.from("ArbitrationFight").delete().eq("id", fightId);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/coach/arbitragem");
+  revalidatePath("/coach/arbitragem/gestao");
+  revalidatePath("/coach/arbitragem/historico");
+  revalidatePath(`/coach/arbitragem/${fightId}`);
 }
