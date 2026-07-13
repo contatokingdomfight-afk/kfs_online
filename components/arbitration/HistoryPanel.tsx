@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cornerWinnerLabel } from "@/lib/arbitration/corner-labels";
+import { KNOCKDOWN_OFFICIAL_DEDUCTION } from "@/lib/arbitration/occurrences";
 import { decisionTypeLabel, modalityLabel } from "@/lib/arbitration/scoring";
-import type { ArbitrationCorner, ArbitrationFightHistoryRow } from "@/lib/arbitration/types";
+import type { ArbitrationCorner, ArbitrationFightHistoryRow, JudgeHistoryCard } from "@/lib/arbitration/types";
 import type { ArbitrationEventRow, ArbitrationJudgeRow } from "@/lib/arbitration/types";
 import { DeleteArbitrationFightButton } from "@/components/arbitration/DeleteArbitrationFightButton";
 
@@ -32,6 +33,87 @@ function judgeWinnerLabel(
   athleteRedName: string
 ): string {
   return fightWinnerLabel(winner, athleteBlueName, athleteRedName);
+}
+
+type FightKnockdownLine = {
+  roundNumber: number;
+  corner: "BLUE" | "RED";
+  athleteName: string;
+  judgeNumbers: number[];
+};
+
+function collectFightKnockdowns(
+  judgeCards: JudgeHistoryCard[],
+  athleteBlueName: string,
+  athleteRedName: string
+): FightKnockdownLine[] {
+  const byKey = new Map<string, FightKnockdownLine>();
+
+  for (const card of judgeCards) {
+    for (const round of card.rounds) {
+      if (round.blueKnockdown) {
+        const key = `${round.roundNumber}:BLUE`;
+        const existing = byKey.get(key);
+        if (existing) existing.judgeNumbers.push(card.judgeNumber);
+        else {
+          byKey.set(key, {
+            roundNumber: round.roundNumber,
+            corner: "BLUE",
+            athleteName: athleteBlueName,
+            judgeNumbers: [card.judgeNumber],
+          });
+        }
+      }
+      if (round.redKnockdown) {
+        const key = `${round.roundNumber}:RED`;
+        const existing = byKey.get(key);
+        if (existing) existing.judgeNumbers.push(card.judgeNumber);
+        else {
+          byKey.set(key, {
+            roundNumber: round.roundNumber,
+            corner: "RED",
+            athleteName: athleteRedName,
+            judgeNumbers: [card.judgeNumber],
+          });
+        }
+      }
+    }
+  }
+
+  return [...byKey.values()].sort((a, b) => a.roundNumber - b.roundNumber || a.corner.localeCompare(b.corner));
+}
+
+function formatJudgeNumbers(numbers: number[]): string {
+  const sorted = [...numbers].sort((a, b) => a - b);
+  if (sorted.length === 1) return `juiz ${sorted[0]}`;
+  return `juízes ${sorted.join(", ")}`;
+}
+
+function RoundKnockdownNote({
+  round,
+  athleteBlueName,
+  athleteRedName,
+}: {
+  round: { blueKnockdown: boolean; redKnockdown: boolean };
+  athleteBlueName: string;
+  athleteRedName: string;
+}) {
+  if (!round.blueKnockdown && !round.redKnockdown) return null;
+
+  return (
+    <div className="arb-history-knockdowns">
+      {round.blueKnockdown ? (
+        <span className="arb-history-knockdown arb-history-knockdown-blue">
+          <span className="arb-corner-blue">{athleteBlueName}</span> sofreu knockdown (−{KNOCKDOWN_OFFICIAL_DEDUCTION})
+        </span>
+      ) : null}
+      {round.redKnockdown ? (
+        <span className="arb-history-knockdown arb-history-knockdown-red">
+          <span className="arb-corner-red">{athleteRedName}</span> sofreu knockdown (−{KNOCKDOWN_OFFICIAL_DEDUCTION})
+        </span>
+      ) : null}
+    </div>
+  );
 }
 
 export function HistoryPanel({ fights, events, judges, canDeleteFights = false }: Props) {
@@ -81,7 +163,10 @@ export function HistoryPanel({ fights, events, judges, canDeleteFights = false }
         <div className="arb-empty">Nenhum combate encontrado.</div>
       ) : (
         <div style={{ display: "grid", gap: 10 }}>
-          {fights.map((f) => (
+          {fights.map((f) => {
+            const knockdownLines = collectFightKnockdowns(f.judgeCards, f.athleteBlueName, f.athleteRedName);
+
+            return (
             <article key={f.id} className="arb-card arb-history-fight-card">
               <Link
                 href={`/coach/arbitragem/${f.id}`}
@@ -113,6 +198,25 @@ export function HistoryPanel({ fights, events, judges, canDeleteFights = false }
                       {decisionTypeLabel(f.decisionType)}
                     </div>
                   ) : null}
+                </div>
+              ) : null}
+
+              {knockdownLines.length > 0 ? (
+                <div className="arb-history-knockdown-summary">
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    Knockdowns
+                  </div>
+                  <ul className="arb-history-knockdown-list">
+                    {knockdownLines.map((line) => (
+                      <li key={`${line.roundNumber}-${line.corner}`}>
+                        <span style={{ fontWeight: 600 }}>Round {line.roundNumber}:</span>{" "}
+                        <span className={line.corner === "BLUE" ? "arb-corner-blue" : "arb-corner-red"}>
+                          {line.athleteName}
+                        </span>{" "}
+                        (−{KNOCKDOWN_OFFICIAL_DEDUCTION}) · {formatJudgeNumbers(line.judgeNumbers)}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ) : null}
 
@@ -158,6 +262,11 @@ export function HistoryPanel({ fights, events, judges, canDeleteFights = false }
                                         f.athleteRedName
                                       )}
                                     </div>
+                                    <RoundKnockdownNote
+                                      round={r}
+                                      athleteBlueName={f.athleteBlueName}
+                                      athleteRedName={f.athleteRedName}
+                                    />
                                   </>
                                 ) : null}
                               </div>
@@ -179,7 +288,8 @@ export function HistoryPanel({ fights, events, judges, canDeleteFights = false }
                 </div>
               ) : null}
             </article>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

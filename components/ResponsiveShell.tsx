@@ -338,6 +338,7 @@ export function ResponsiveShell({
           <main
             ref={mainRef}
             className={[mainClassName, mobileBottomNav ? "shell-main--bottom-tabs" : ""].filter(Boolean).join(" ")}
+            data-shell-header-hidden={isMobile && headerHidden ? "true" : undefined}
             style={{
               flex: 1,
               overflow: "auto",
@@ -345,7 +346,7 @@ export function ResponsiveShell({
               minWidth: 0,
               ...(isMobile
                 ? {
-                    paddingTop: mobileHeaderHeight,
+                    paddingTop: headerHidden ? 0 : mobileHeaderHeight,
                   }
                 : {}),
             }}

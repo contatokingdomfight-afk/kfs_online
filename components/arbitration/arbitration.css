@@ -114,6 +114,48 @@
   border: 1px solid var(--border);
 }
 
+.arb-history-knockdown-summary {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.arb-history-knockdown-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--text-primary);
+  display: grid;
+  gap: 4px;
+}
+
+.arb-history-knockdowns {
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.arb-history-knockdown {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.arb-history-knockdown-blue {
+  background: rgba(96, 165, 250, 0.12);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+}
+
+.arb-history-knockdown-red {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
 .arb-fight-card-actions {
   display: flex;
   justify-content: flex-end;
@@ -251,6 +293,7 @@
   border-bottom: 1px solid var(--border);
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+  isolation: isolate;
 }
 
 .arb-judging-sticky-bar .arb-scoreboard {
@@ -264,10 +307,27 @@
 
 @media (max-width: 767.98px) {
   .arb-judging-sticky-bar {
-    margin-left: 0;
-    margin-right: 0;
-    padding: 0 0 8px;
+    margin-left: calc(-1 * max(var(--space-4), env(safe-area-inset-left)));
+    margin-right: calc(-1 * max(var(--space-4), env(safe-area-inset-right)));
+    padding: 0 max(var(--space-4), env(safe-area-inset-right)) 8px max(var(--space-4), env(safe-area-inset-left));
     box-shadow: none;
+    transform: translateZ(0);
+  }
+
+  /* Cobre o «fantasma» de conteúdo acima do sticky no WebKit quando o header do shell esconde. */
+  .arb-judging-sticky-bar::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 12px;
+    background: var(--bg);
+    pointer-events: none;
+  }
+
+  main[data-shell-header-hidden="true"] .arb-judging-sticky-bar {
+    top: 0;
   }
 
   .arb-judging-sticky-bar .arb-scoreboard {

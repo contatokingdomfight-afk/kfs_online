@@ -173,19 +173,36 @@ export async function loadFightJudgeHistory(fightIds: string[]): Promise<Map<str
     }
 
     if (roundIds.length > 0) {
-      const { data: evals } = await supabase
-        .from("ArbitrationRoundEvaluation")
-        .select(
-          "fightJudgeId, roundId, blueTotal, redTotal, officialBlueScore, officialRedScore, isLocked"
-        )
-        .in("roundId", roundIds)
-        .in("fightJudgeId", [...fightJudgeIds])
-        .eq("isLocked", true);
+      const fightJudgeIdList = [...fightJudgeIds];
+      const [{ data: evals }, { data: occRows }] = await Promise.all([
+        supabase
+          .from("ArbitrationRoundEvaluation")
+          .select(
+            "fightJudgeId, roundId, blueTotal, redTotal, officialBlueScore, officialRedScore, isLocked"
+          )
+          .in("roundId", roundIds)
+          .in("fightJudgeId", fightJudgeIdList)
+          .eq("isLocked", true),
+        supabase
+          .from("ArbitrationRoundOccurrence")
+          .select("fightJudgeId, roundId, blueKnockdown, redKnockdown")
+          .in("roundId", roundIds)
+          .in("fightJudgeId", fightJudgeIdList),
+      ]);
+
+      const knockdownByJudgeRound = new Map<string, { blueKnockdown: boolean; redKnockdown: boolean }>();
+      for (const occ of occRows ?? []) {
+        knockdownByJudgeRound.set(`${occ.fightJudgeId as string}:${occ.roundId as string}`, {
+          blueKnockdown: Boolean(occ.blueKnockdown),
+          redKnockdown: Boolean(occ.redKnockdown),
+        });
+      }
 
       for (const ev of evals ?? []) {
         const meta = roundMeta.get(ev.roundId as string);
         if (!meta) continue;
         const fjId = ev.fightJudgeId as string;
+        const kd = knockdownByJudgeRound.get(`${fjId}:${ev.roundId as string}`);
         const list = roundsByFightJudge.get(fjId) ?? [];
         list.push({
           roundNumber: meta.roundNumber,
@@ -193,6 +210,8 @@ export async function loadFightJudgeHistory(fightIds: string[]): Promise<Map<str
           redTotal: ev.redTotal as number | null,
           officialBlueScore: ev.officialBlueScore as number | null,
           officialRedScore: ev.officialRedScore as number | null,
+          blueKnockdown: kd?.blueKnockdown ?? false,
+          redKnockdown: kd?.redKnockdown ?? false,
         });
         roundsByFightJudge.set(fjId, list);
       }

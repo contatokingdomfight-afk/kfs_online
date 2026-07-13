@@ -137,6 +137,8 @@ export type JudgeHistoryRoundRow = {
   redTotal: number | null;
   officialBlueScore: number | null;
   officialRedScore: number | null;
+  blueKnockdown: boolean;
+  redKnockdown: boolean;
 };
 
 export type JudgeHistoryCard = JudgeFightResultRow & {
