@@ -3,24 +3,36 @@ import { CRITERIA_KEYS } from "./types";
 
 const MAX_CRITERIA_TOTAL = 30;
 
-export function sumCornerScores(scores: CornerScores): number | null {
-  const values = CRITERIA_KEYS.map((k) => scores[k]);
+export function maxCriteriaTotal(criteriaCount: number): number {
+  return Math.max(5, criteriaCount * 5);
+}
+
+export function sumCornerScores(
+  scores: Record<string, number | null>,
+  criteriaIds: string[] = CRITERIA_KEYS
+): number | null {
+  const values = criteriaIds.map((k) => scores[k]);
   if (values.some((v) => v == null || v < 1 || v > 5)) return null;
   return values.reduce<number>((acc, v) => acc + (v as number), 0);
 }
 
-/** Sugere placar 10-Point Must com base na diferença de totais (máx. 30). */
+/** Sugere placar 10-Point Must com base na diferença de totais relativamente ao máximo possível. */
 export function suggestTenPointMust(
   blueTotal: number,
-  redTotal: number
+  redTotal: number,
+  maxTotal = MAX_CRITERIA_TOTAL
 ): { blue: number; red: number } {
   const diff = Math.abs(blueTotal - redTotal);
   if (diff === 0) return { blue: 10, red: 10 };
 
+  const t1 = Math.max(1, Math.round(maxTotal * 0.07));
+  const t2 = Math.max(2, Math.round(maxTotal * 0.2));
+  const t3 = Math.max(3, Math.round(maxTotal * 0.33));
+
   let loserScore: number;
-  if (diff <= 2) loserScore = 10;
-  else if (diff <= 6) loserScore = 9;
-  else if (diff <= 10) loserScore = 8;
+  if (diff <= t1) loserScore = 10;
+  else if (diff <= t2) loserScore = 9;
+  else if (diff <= t3) loserScore = 8;
   else loserScore = 7;
 
   if (blueTotal > redTotal) return { blue: 10, red: loserScore };

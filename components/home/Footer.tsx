@@ -4,6 +4,7 @@ type Content = {
   footerLinks: string;
   footerAulaExp: string;
   footerTimer: string;
+  footerJudging: string;
   footerSignIn: string;
   footerSignUp: string;
   footerTerms: string;
@@ -67,6 +68,14 @@ export function Footer({ content }: { content: Content }) {
                   className="text-sm text-[var(--text-primary)] hover:text-[var(--primary)]"
                 >
                   {content.footerTimer}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/julgamento"
+                  className="text-sm text-[var(--text-primary)] hover:text-[var(--primary)]"
+                >
+                  {content.footerJudging}
                 </Link>
               </li>
               <li>

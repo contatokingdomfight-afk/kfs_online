@@ -31,9 +31,12 @@ export const CRITERIA_LABELS_PT: Record<CriteriaKey, string> = {
 
 export type CornerScores = Record<CriteriaKey, number | null>;
 
+/** Pontuação por critério (ids dinâmicos conforme perfil do evento). */
+export type DynamicCornerScores = Record<string, number | null>;
+
 export type RoundScoresInput = {
-  blue: CornerScores;
-  red: CornerScores;
+  blue: DynamicCornerScores;
+  red: DynamicCornerScores;
   officialBlueScore: number | null;
   officialRedScore: number | null;
 };
@@ -58,6 +61,18 @@ export type OccurrenceInput = {
   notes: string;
 };
 
+export type ArbitrationCriterionDef = {
+  id: string;
+  label: string;
+};
+
+export type ArbitrationCriteriaSetRow = {
+  id: string;
+  name: string;
+  criteria: ArbitrationCriterionDef[];
+  isBuiltin: boolean;
+};
+
 export type ArbitrationEventRow = {
   id: string;
   name: string;
@@ -65,6 +80,8 @@ export type ArbitrationEventRow = {
   location: string | null;
   totalRoundsDefault: number;
   isActive: boolean;
+  criteriaSetId?: string | null;
+  criteriaSnapshot?: ArbitrationCriterionDef[] | null;
 };
 
 export type ArbitrationFightListRow = {

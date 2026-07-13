@@ -2,6 +2,7 @@ import "server-only";
 
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import type {
+  ArbitrationCriteriaSetRow,
   ArbitrationEventRow,
   ArbitrationFightHistoryRow,
   ArbitrationFightListRow,
@@ -9,6 +10,11 @@ import type {
   JudgeHistoryCard,
   JudgeHistoryRoundRow,
 } from "./types";
+import {
+  BUILTIN_KINGDOM_CRITERIA_SET_ID,
+  DEFAULT_CRITERIA_SET,
+  parseCriteriaSnapshot,
+} from "./criteria-sets";
 import { unwrapSupabaseJoin } from "./supabase-join";
 import { listSyncedArbitrationJudges } from "./staff-judges";
 
@@ -22,7 +28,7 @@ export async function listArbitrationEvents(): Promise<ArbitrationEventRow[]> {
 
   const { data } = await supabase
     .from("ArbitrationEvent")
-    .select("id, name, eventDate, location, totalRoundsDefault, isActive")
+    .select("id, name, eventDate, location, totalRoundsDefault, isActive, criteriaSetId, criteriaSnapshot")
     .eq("isActive", true)
     .order("eventDate", { ascending: false, nullsFirst: false });
 
@@ -33,7 +39,28 @@ export async function listArbitrationEvents(): Promise<ArbitrationEventRow[]> {
     location: e.location,
     totalRoundsDefault: e.totalRoundsDefault,
     isActive: e.isActive,
+    criteriaSetId: e.criteriaSetId ?? null,
+    criteriaSnapshot: parseCriteriaSnapshot(e.criteriaSnapshot),
   }));
+}
+
+export async function listArbitrationCriteriaSets(): Promise<ArbitrationCriteriaSetRow[]> {
+  const supabase = clientOrNull();
+  if (!supabase) return [DEFAULT_CRITERIA_SET];
+
+  const { data } = await supabase
+    .from("ArbitrationCriteriaSet")
+    .select("id, name, criteria, isBuiltin")
+    .order("name");
+
+  const custom = (data ?? []).map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    criteria: parseCriteriaSnapshot(row.criteria),
+    isBuiltin: Boolean(row.isBuiltin),
+  }));
+
+  return [DEFAULT_CRITERIA_SET, ...custom.filter((s) => s.id !== BUILTIN_KINGDOM_CRITERIA_SET_ID)];
 }
 
 export async function listArbitrationJudges(): Promise<ArbitrationJudgeRow[]> {

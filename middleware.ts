@@ -14,6 +14,7 @@ const publicPaths = [
   "/aula-experimental",
   "/lista_espera",
   "/timer",
+  "/julgamento",
   "/auth/callback",
   "/auth/forgot-password",
   "/auth/update-password",

@@ -6,11 +6,19 @@ import { requireArbitrationAccess, requireArbitrationAdmin } from "@/lib/arbitra
 import {
   aggregateJudgeTotals,
   computeDecisionType,
-  cornerScoresFromEvaluationRow,
+  maxCriteriaTotal,
   suggestTenPointMust,
   sumCornerScores,
   winnerFromTotals,
 } from "@/lib/arbitration/scoring";
+import {
+  dynamicScoresFromEvaluationRow,
+  legacyCriteriaColumnsFromScores,
+  normalizeCriteriaInput,
+  parseCriteriaSnapshot,
+  scoresJsonForDb,
+} from "@/lib/arbitration/criteria-sets";
+import type { ArbitrationCriterionDef } from "@/lib/arbitration/types";
 import { unwrapSupabaseJoin } from "@/lib/arbitration/supabase-join";
 import {
   applyOfficialPointDeduction,
@@ -31,15 +39,34 @@ function supabaseOrThrow() {
   return result.client;
 }
 
-function criteriaToDb(prefix: "blue" | "red", scores: RoundScoresInput[typeof prefix]) {
+function criteriaToDb(
+  scores: { blue: Record<string, number | null>; red: Record<string, number | null> },
+  criteria: ArbitrationCriterionDef[]
+) {
   return {
-    [`${prefix}OffensiveVolume`]: scores.offensiveVolume,
-    [`${prefix}StrikePrecision`]: scores.strikePrecision,
-    [`${prefix}RingControl`]: scores.ringControl,
-    [`${prefix}Movement`]: scores.movement,
-    [`${prefix}Defense`]: scores.defense,
-    [`${prefix}Technique`]: scores.technique,
+    ...legacyCriteriaColumnsFromScores("blue", scores.blue),
+    ...legacyCriteriaColumnsFromScores("red", scores.red),
+    criteriaScoresJson: {
+      blue: scoresJsonForDb(scores.blue, criteria),
+      red: scoresJsonForDb(scores.red, criteria),
+    },
   };
+}
+
+async function loadEventCriteria(
+  supabase: ReturnType<typeof supabaseOrThrow>,
+  fightId: string
+): Promise<ArbitrationCriterionDef[]> {
+  const { data: fight } = await supabase
+    .from("ArbitrationFight")
+    .select("event:ArbitrationEvent(criteriaSnapshot)")
+    .eq("id", fightId)
+    .single();
+
+  const event = unwrapSupabaseJoin(
+    fight?.event as { criteriaSnapshot: unknown } | { criteriaSnapshot: unknown }[] | null
+  );
+  return parseCriteriaSnapshot(event?.criteriaSnapshot);
 }
 
 function isUniqueViolation(error: { code?: string } | null): boolean {
@@ -212,9 +239,24 @@ export async function createArbitrationEvent(input: {
   eventDate: string | null;
   location: string | null;
   totalRoundsDefault: number;
+  criteriaSetId?: string | null;
 }) {
   const access = await requireArbitrationAccess();
   const supabase = supabaseOrThrow();
+
+  let criteriaSnapshot: ArbitrationCriterionDef[] = parseCriteriaSnapshot(null);
+  const setId = input.criteriaSetId?.trim() || null;
+
+  if (setId && setId !== "builtin-kingdom-6") {
+    const { data: setRow } = await supabase
+      .from("ArbitrationCriteriaSet")
+      .select("criteria")
+      .eq("id", setId)
+      .maybeSingle();
+    if (setRow?.criteria) {
+      criteriaSnapshot = parseCriteriaSnapshot(setRow.criteria);
+    }
+  }
 
   const { data, error } = await supabase
     .from("ArbitrationEvent")
@@ -223,6 +265,8 @@ export async function createArbitrationEvent(input: {
       eventDate: input.eventDate || null,
       location: input.location?.trim() || null,
       totalRoundsDefault: input.totalRoundsDefault,
+      criteriaSetId: setId && setId !== "builtin-kingdom-6" ? setId : null,
+      criteriaSnapshot,
       createdByUserId: access.userId,
     })
     .select("id")
@@ -232,6 +276,48 @@ export async function createArbitrationEvent(input: {
   revalidatePath("/coach/arbitragem");
   revalidatePath("/coach/arbitragem/gestao");
   return { id: data.id as string };
+}
+
+export async function createArbitrationCriteriaSet(input: { name: string; labels: string[] }) {
+  await requireArbitrationAccess();
+  const supabase = supabaseOrThrow();
+
+  const name = input.name.trim();
+  if (!name) throw new Error("Indique um nome para o perfil.");
+
+  const criteria = normalizeCriteriaInput(input.labels);
+  if (criteria.length < 3) {
+    throw new Error("O perfil precisa de pelo menos 3 critérios.");
+  }
+
+  const { data, error } = await supabase
+    .from("ArbitrationCriteriaSet")
+    .insert({ name, criteria, isBuiltin: false })
+    .select("id")
+    .single();
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/coach/arbitragem/gestao");
+  return { id: data.id as string };
+}
+
+export async function deleteArbitrationCriteriaSet(id: string) {
+  await requireArbitrationAccess();
+  if (id === "builtin-kingdom-6") throw new Error("O perfil padrão não pode ser apagado.");
+
+  const supabase = supabaseOrThrow();
+  const { count } = await supabase
+    .from("ArbitrationEvent")
+    .select("id", { count: "exact", head: true })
+    .eq("criteriaSetId", id);
+
+  if ((count ?? 0) > 0) {
+    throw new Error("Este perfil está associado a eventos e não pode ser apagado.");
+  }
+
+  const { error } = await supabase.from("ArbitrationCriteriaSet").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/coach/arbitragem/gestao");
 }
 
 export async function createArbitrationJudge(input: { displayName: string; userId?: string | null }) {
@@ -365,13 +451,16 @@ export async function saveArbitrationRound(input: {
     };
   }
 
-  const blueTotal = sumCornerScores(input.scores.blue);
-  const redTotal = sumCornerScores(input.scores.red);
+  const criteria = await loadEventCriteria(supabase, input.fightId);
+  const criteriaIds = criteria.map((c) => c.id);
+
+  const blueTotal = sumCornerScores(input.scores.blue, criteriaIds);
+  const redTotal = sumCornerScores(input.scores.red, criteriaIds);
   if (blueTotal == null || redTotal == null) {
     throw new Error("Preencha todos os critérios (1–5) para ambos os atletas.");
   }
 
-  const suggested = suggestTenPointMust(blueTotal, redTotal);
+  const suggested = suggestTenPointMust(blueTotal, redTotal, maxCriteriaTotal(criteria.length));
   const syncedOccurrences = syncDeductionsFromOccurrences(input.occurrences);
   const blueDeduction = Math.max(0, Math.min(3, Math.round(syncedOccurrences.blueOfficialPointDeduction)));
   const redDeduction = Math.max(0, Math.min(3, Math.round(syncedOccurrences.redOfficialPointDeduction)));
@@ -383,8 +472,7 @@ export async function saveArbitrationRound(input: {
   const evalPayload = {
     roundId,
     fightJudgeId: input.fightJudgeId,
-    ...criteriaToDb("blue", input.scores.blue),
-    ...criteriaToDb("red", input.scores.red),
+    ...criteriaToDb({ blue: input.scores.blue, red: input.scores.red }, criteria),
     blueTotal,
     redTotal,
     suggestedBlueOfficial: suggested.blue,
@@ -447,7 +535,7 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
     .from("ArbitrationFight")
     .select(
       `id, modality, category, weightClass, athleteBlueName, athleteRedName, status, totalRounds, currentRound, winner, decisionType,
-       event:ArbitrationEvent(id, name, roundDurationSeconds)`
+       event:ArbitrationEvent(id, name, roundDurationSeconds, criteriaSnapshot)`
     )
     .eq("id", fightId)
     .single();
@@ -455,8 +543,13 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
   if (!fight) return null;
 
   const event = unwrapSupabaseJoin(
-    fight.event as { id: string; name: string; roundDurationSeconds: number | null } | { id: string; name: string; roundDurationSeconds: number | null }[] | null
+    fight.event as
+      | { id: string; name: string; roundDurationSeconds: number | null; criteriaSnapshot: unknown }
+      | { id: string; name: string; roundDurationSeconds: number | null; criteriaSnapshot: unknown }[]
+      | null
   );
+
+  const criteria = parseCriteriaSnapshot(event?.criteriaSnapshot);
 
   const { data: rounds } = await supabase
     .from("ArbitrationFightRound")
@@ -506,8 +599,8 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
       occurrences: occInput,
       scores: ev
         ? {
-            blue: cornerScoresFromEvaluationRow(ev, "blue"),
-            red: cornerScoresFromEvaluationRow(ev, "red"),
+            blue: dynamicScoresFromEvaluationRow(ev, criteria, "blue"),
+            red: dynamicScoresFromEvaluationRow(ev, criteria, "red"),
           }
         : null,
     };
@@ -548,6 +641,7 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
   });
 
   return {
+    criteria,
     fight: {
       id: fight.id,
       modality: fight.modality,

@@ -6,14 +6,21 @@ import {
   createArbitrationEvent,
   createArbitrationFight,
 } from "@/app/coach/arbitragem/actions";
-import type { ArbitrationEventRow, ArbitrationJudgeRow, ArbitrationModality } from "@/lib/arbitration/types";
+import { CriteriaSetsPanel } from "@/components/arbitration/CriteriaSetsPanel";
+import type {
+  ArbitrationCriteriaSetRow,
+  ArbitrationEventRow,
+  ArbitrationJudgeRow,
+  ArbitrationModality,
+} from "@/lib/arbitration/types";
 
 type Props = {
   events: ArbitrationEventRow[];
   judges: ArbitrationJudgeRow[];
+  criteriaSets: ArbitrationCriteriaSetRow[];
 };
 
-export function GestaoPanel({ events, judges }: Props) {
+export function GestaoPanel({ events, judges, criteriaSets }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -22,6 +29,9 @@ export function GestaoPanel({ events, judges }: Props) {
   const [eventName, setEventName] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [eventLocation, setEventLocation] = useState("");
+  const [eventCriteriaSetId, setEventCriteriaSetId] = useState(
+    criteriaSets[0]?.id ?? "builtin-kingdom-6"
+  );
 
   const [fightEventId, setFightEventId] = useState(events[0]?.id ?? "");
   const [modality, setModality] = useState<ArbitrationModality>("BOXING");
@@ -61,6 +71,7 @@ export function GestaoPanel({ events, judges }: Props) {
           eventDate: eventDate || null,
           location: eventLocation || null,
           totalRoundsDefault: 3,
+          criteriaSetId: eventCriteriaSetId,
         });
         setMessage("Evento criado.");
         setFightEventId(id);
@@ -110,12 +121,21 @@ export function GestaoPanel({ events, judges }: Props) {
       {message ? <p style={{ color: "var(--success)" }}>{message}</p> : null}
       {error ? <p style={{ color: "var(--danger)" }}>{error}</p> : null}
 
+      <CriteriaSetsPanel sets={criteriaSets} />
+
       <section className="arb-card">
         <h2 style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700 }}>Novo evento</h2>
         <div style={{ display: "grid", gap: 10 }}>
           <input className="input" placeholder="Nome do evento" value={eventName} onChange={(e) => setEventName(e.target.value)} />
           <input className="input" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
           <input className="input" placeholder="Local" value={eventLocation} onChange={(e) => setEventLocation(e.target.value)} />
+          <select className="input" value={eventCriteriaSetId} onChange={(e) => setEventCriteriaSetId(e.target.value)}>
+            {criteriaSets.map((set) => (
+              <option key={set.id} value={set.id}>
+                {set.name} ({set.criteria.length} critérios)
+              </option>
+            ))}
+          </select>
           <button type="button" className="btn btn-primary" disabled={pending || !eventName.trim()} onClick={createEvent}>
             Criar evento
           </button>
@@ -151,7 +171,12 @@ export function GestaoPanel({ events, judges }: Props) {
           <div style={{ display: "grid", gap: 10 }}>
             <select className="input" value={fightEventId} onChange={(e) => setFightEventId(e.target.value)}>
               {events.map((ev) => (
-                <option key={ev.id} value={ev.id}>{ev.name}</option>
+                <option key={ev.id} value={ev.id}>
+                  {ev.name}
+                  {ev.criteriaSnapshot?.length
+                    ? ` · ${ev.criteriaSnapshot.length} critérios`
+                    : ""}
+                </option>
               ))}
             </select>
             <select className="input" value={modality} onChange={(e) => setModality(e.target.value as ArbitrationModality)}>

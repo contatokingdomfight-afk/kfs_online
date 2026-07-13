@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { decisionTypeLabel, modalityLabel, winnerFromTotals } from "@/lib/arbitration/scoring";
+import { cornerWinnerLabel } from "@/lib/arbitration/corner-labels";
+import { decisionTypeLabel, modalityLabel } from "@/lib/arbitration/scoring";
 import type { ArbitrationCorner, ArbitrationFightHistoryRow } from "@/lib/arbitration/types";
 import type { ArbitrationEventRow, ArbitrationJudgeRow } from "@/lib/arbitration/types";
 import { DeleteArbitrationFightButton } from "@/components/arbitration/DeleteArbitrationFightButton";
@@ -13,18 +14,6 @@ type Props = {
   judges: ArbitrationJudgeRow[];
   canDeleteFights?: boolean;
 };
-
-function cornerWinnerLabel(
-  blueScore: number,
-  redScore: number,
-  athleteBlueName: string,
-  athleteRedName: string
-): string {
-  const corner = winnerFromTotals(blueScore, redScore);
-  if (corner === "BLUE") return athleteBlueName;
-  if (corner === "RED") return athleteRedName;
-  return "Empate";
-}
 
 function fightWinnerLabel(
   winner: ArbitrationCorner | null,
