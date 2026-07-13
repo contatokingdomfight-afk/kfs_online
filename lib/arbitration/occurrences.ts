@@ -13,6 +13,9 @@ export const OCCURRENCE_FIELD_KEYS: OccurrenceFieldKey[] = [
   "other",
 ];
 
+/** Ocorrências no painel colapsável (knockdown tem painel próprio sempre visível). */
+export const OCCURRENCE_PANEL_FIELD_KEYS = OCCURRENCE_FIELD_KEYS.filter((k) => k !== "knockdown");
+
 export const OCCURRENCE_LABELS_PT: Record<OccurrenceFieldKey, string> = {
   illegalStrike: "Golpe ilegal",
   verbalWarning: "Advertência verbal",
@@ -93,14 +96,57 @@ export function occurrencesToDbPayload(input: OccurrenceInput) {
   return payload;
 }
 
-/** Conta células marcadas na matriz Azul/Vermelho. */
+/** Conta células marcadas na matriz Azul/Vermelho (exclui knockdown — painel dedicado). */
 export function countOccurrenceMarks(input: OccurrenceInput): number {
   let count = 0;
-  for (const key of OCCURRENCE_FIELD_KEYS) {
+  for (const key of OCCURRENCE_PANEL_FIELD_KEYS) {
     if (input.blue[key]) count++;
     if (input.red[key]) count++;
   }
   return count;
+}
+
+export function setOccurrenceField(
+  value: OccurrenceInput,
+  corner: "blue" | "red",
+  field: OccurrenceFieldKey,
+  checked: boolean
+): OccurrenceInput {
+  const next: OccurrenceInput = {
+    ...value,
+    [corner]: { ...value[corner], [field]: checked },
+  };
+  if (field === "pointDeduction") {
+    if (corner === "blue") {
+      next.blueOfficialPointDeduction = checked
+        ? Math.max(POINT_DEDUCTION_OFFICIAL_MIN, value.blueOfficialPointDeduction)
+        : value.blue.knockdown
+          ? KNOCKDOWN_OFFICIAL_DEDUCTION
+          : 0;
+    } else {
+      next.redOfficialPointDeduction = checked
+        ? Math.max(POINT_DEDUCTION_OFFICIAL_MIN, value.redOfficialPointDeduction)
+        : value.red.knockdown
+          ? KNOCKDOWN_OFFICIAL_DEDUCTION
+          : 0;
+    }
+  }
+  if (field === "knockdown") {
+    if (corner === "blue") {
+      next.blueOfficialPointDeduction = checked
+        ? Math.max(KNOCKDOWN_OFFICIAL_DEDUCTION, value.blueOfficialPointDeduction)
+        : value.blue.pointDeduction
+          ? Math.max(POINT_DEDUCTION_OFFICIAL_MIN, value.blueOfficialPointDeduction)
+          : 0;
+    } else {
+      next.redOfficialPointDeduction = checked
+        ? Math.max(KNOCKDOWN_OFFICIAL_DEDUCTION, value.redOfficialPointDeduction)
+        : value.red.pointDeduction
+          ? Math.max(POINT_DEDUCTION_OFFICIAL_MIN, value.redOfficialPointDeduction)
+          : 0;
+    }
+  }
+  return syncDeductionsFromOccurrences(next);
 }
 
 export function occurrencesCollapsedHint(input: OccurrenceInput): string {

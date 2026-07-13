@@ -24,6 +24,7 @@ import type {
   OccurrenceInput,
 } from "@/lib/arbitration/types";
 import { CriteriaRow } from "@/components/arbitration/CriteriaRow";
+import { KnockdownPanel } from "@/components/arbitration/KnockdownPanel";
 import { OccurrencesPanel } from "@/components/arbitration/OccurrencesPanel";
 
 const OFFICIAL_OPTIONS = [10, 9, 8, 7];
@@ -394,6 +395,14 @@ export function PublicJudgingClient({ locale }: Props) {
                 />
               ))}
             </div>
+
+            <KnockdownPanel
+              value={occurrences}
+              athleteBlueName={athleteBlueName}
+              athleteRedName={athleteRedName}
+              disabled={isLocked}
+              onChange={setOccurrences}
+            />
 
             {suggested ? (
               <div className="arb-card" style={{ fontSize: 14 }}>

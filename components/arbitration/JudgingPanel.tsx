@@ -27,6 +27,7 @@ import {
   winnerFromTotals,
 } from "@/lib/arbitration/scoring";
 import { CriteriaRow } from "@/components/arbitration/CriteriaRow";
+import { KnockdownPanel } from "@/components/arbitration/KnockdownPanel";
 import { OccurrencesPanel } from "@/components/arbitration/OccurrencesPanel";
 
 type RoundState = {
@@ -339,6 +340,14 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
               />
             ))}
           </div>
+
+          <KnockdownPanel
+            value={occurrences}
+            athleteBlueName={initial.fight.athleteBlueName}
+            athleteRedName={initial.fight.athleteRedName}
+            disabled={isLocked || pending}
+            onChange={setOccurrences}
+          />
 
           {suggested ? (
             <div className="arb-card" style={{ fontSize: 14 }}>

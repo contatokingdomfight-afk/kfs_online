@@ -4,14 +4,15 @@ import {
   countOccurrenceMarks,
   KNOCKDOWN_OFFICIAL_DEDUCTION,
   occurrencesCollapsedHint,
-  OCCURRENCE_FIELD_KEYS,
   OCCURRENCE_LABELS_PT,
+  OCCURRENCE_PANEL_FIELD_KEYS,
+  setOccurrenceField,
   syncDeductionsFromOccurrences,
   type OccurrenceFieldKey,
 } from "@/lib/arbitration/occurrences";
 import type { OccurrenceInput } from "@/lib/arbitration/types";
 
-const OCCURRENCE_FIELDS = OCCURRENCE_FIELD_KEYS.map((key) => ({
+const OCCURRENCE_FIELDS = OCCURRENCE_PANEL_FIELD_KEYS.map((key) => ({
   key,
   label: OCCURRENCE_LABELS_PT[key],
 }));
@@ -22,41 +23,7 @@ function toggleCornerOccurrence(
   field: OccurrenceFieldKey,
   checked: boolean
 ): OccurrenceInput {
-  const next: OccurrenceInput = {
-    ...value,
-    [corner]: { ...value[corner], [field]: checked },
-  };
-  if (field === "pointDeduction") {
-    if (corner === "blue") {
-      next.blueOfficialPointDeduction = checked
-        ? Math.max(1, value.blueOfficialPointDeduction)
-        : value.blue.knockdown
-          ? KNOCKDOWN_OFFICIAL_DEDUCTION
-          : 0;
-    } else {
-      next.redOfficialPointDeduction = checked
-        ? Math.max(1, value.redOfficialPointDeduction)
-        : value.red.knockdown
-          ? KNOCKDOWN_OFFICIAL_DEDUCTION
-          : 0;
-    }
-  }
-  if (field === "knockdown") {
-    if (corner === "blue") {
-      next.blueOfficialPointDeduction = checked
-        ? Math.max(KNOCKDOWN_OFFICIAL_DEDUCTION, value.blueOfficialPointDeduction)
-        : value.blue.pointDeduction
-          ? Math.max(1, value.blueOfficialPointDeduction)
-          : 0;
-    } else {
-      next.redOfficialPointDeduction = checked
-        ? Math.max(KNOCKDOWN_OFFICIAL_DEDUCTION, value.redOfficialPointDeduction)
-        : value.red.pointDeduction
-          ? Math.max(1, value.redOfficialPointDeduction)
-          : 0;
-    }
-  }
-  return syncDeductionsFromOccurrences(next);
+  return setOccurrenceField(value, corner, field, checked);
 }
 
 function OccurrencesForm({
@@ -150,7 +117,7 @@ function OccurrencesForm({
         </div>
         {(value.blue.knockdown || value.red.knockdown) && (
           <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
-            Knockdown: desconto automático de {KNOCKDOWN_OFFICIAL_DEDUCTION} pontos no placar oficial.
+            Perda de ponto extra além do knockdown (−{KNOCKDOWN_OFFICIAL_DEDUCTION} já aplicado).
           </p>
         )}
       </div>
@@ -196,8 +163,8 @@ export function OccurrencesPanel({ value, athleteBlueName, athleteRedName, disab
       </summary>
       <div className="arb-occurrences-body">
         <p className="arb-occurrences-intro">
-          Marque o atleta a quem se aplica cada ocorrência. Knockdown sofrido desconta automaticamente{" "}
-          {KNOCKDOWN_OFFICIAL_DEDUCTION} pontos no placar oficial do round (ex.: 9 → 6).
+          Outras ocorrências do round (golpes ilegais, advertências, etc.). O knockdown regista-se na secção
+          acima.
         </p>
         <OccurrencesForm
           value={value}
