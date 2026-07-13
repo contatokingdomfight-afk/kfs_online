@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { requireArbitrationAccess } from "@/lib/arbitration/auth";
+import { reconcileArbitrationFightsInProgress } from "@/app/coach/arbitragem/actions";
 import {
   enrichFightsWithJudgeHistory,
   filterFightsByJudge,
@@ -20,6 +21,7 @@ type Props = {
 
 export default async function ArbitragemHistoricoPage({ searchParams }: Props) {
   const access = await requireArbitrationAccess();
+  await reconcileArbitrationFightsInProgress();
   const params = await searchParams;
 
   let fights = await listArbitrationFights({ completedOnly: true, eventId: params.evento });

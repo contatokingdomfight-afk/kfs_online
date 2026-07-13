@@ -88,6 +88,12 @@ async function finalizeFightIfComplete(
     .single();
   if (!fight || fight.status === "COMPLETED") return;
 
+  const totalRounds = fight.totalRounds as number;
+
+  for (let roundNumber = 1; roundNumber <= totalRounds; roundNumber++) {
+    await ensureFightRound(supabase, fightId, roundNumber);
+  }
+
   const { data: fightRounds } = await supabase
     .from("ArbitrationFightRound")
     .select("id, roundNumber")
@@ -95,7 +101,7 @@ async function finalizeFightIfComplete(
     .order("roundNumber");
 
   const fightRoundIds = (fightRounds ?? []).map((r) => r.id as string);
-  if (fightRoundIds.length < fight.totalRounds) return;
+  if (fightRoundIds.length < totalRounds) return;
 
   const { data: fightJudges } = await supabase
     .from("ArbitrationFightJudge")
@@ -103,6 +109,8 @@ async function finalizeFightIfComplete(
     .eq("fightId", fightId);
 
   if (!fightJudges?.length) return;
+
+  let allJudgesComplete = true;
 
   for (const fj of fightJudges) {
     const { data: evals, error: evalsError } = await supabase
@@ -113,7 +121,6 @@ async function finalizeFightIfComplete(
       .in("roundId", fightRoundIds);
 
     if (evalsError) throw new Error(evalsError.message);
-    if ((evals ?? []).length < fight.totalRounds) continue;
 
     const evalByRound = new Map<string, { officialBlueScore: number | null; officialRedScore: number | null }>();
     for (const e of evals ?? []) {
@@ -124,10 +131,16 @@ async function finalizeFightIfComplete(
       .map((r) => evalByRound.get(r.id as string))
       .filter(Boolean) as { officialBlueScore: number | null; officialRedScore: number | null }[];
 
-    if (ordered.length < fight.totalRounds) continue;
+    if (ordered.length < totalRounds) {
+      allJudgesComplete = false;
+      continue;
+    }
 
     const totals = aggregateJudgeTotals(ordered);
-    if (!totals) continue;
+    if (!totals) {
+      allJudgesComplete = false;
+      continue;
+    }
 
     const winner = winnerFromTotals(totals.blue, totals.red);
     const { error: resultError } = await supabase.from("ArbitrationFightResult").upsert(
@@ -143,6 +156,8 @@ async function finalizeFightIfComplete(
     if (resultError) throw new Error(resultError.message);
   }
 
+  if (!allJudgesComplete) return;
+
   const { data: results, error: resultsError } = await supabase
     .from("ArbitrationFightResult")
     .select("winner")
@@ -150,8 +165,7 @@ async function finalizeFightIfComplete(
 
   if (resultsError) throw new Error(resultsError.message);
 
-  const allJudgesDone = (results?.length ?? 0) >= (fightJudges?.length ?? 0);
-  if (!allJudgesDone) return;
+  if ((results?.length ?? 0) < (fightJudges?.length ?? 0)) return;
 
   const winners = (results ?? []).map((r) => r.winner as "BLUE" | "RED" | "DRAW");
   const decisionType = computeDecisionType(winners);
@@ -171,9 +185,26 @@ async function finalizeFightIfComplete(
       updatedAt: new Date().toISOString(),
     })
     .eq("id", fightId)
-    .eq("status", "IN_PROGRESS");
+    .in("status", ["IN_PROGRESS", "SCHEDULED"]);
 
   if (fightError) throw new Error(fightError.message);
+}
+
+/** Fecha combates em que todos os juízes já terminaram (recupera estados presos). */
+export async function reconcileArbitrationFightsInProgress() {
+  await requireArbitrationAccess();
+  const supabase = supabaseOrThrow();
+
+  const { data: openFights, error } = await supabase
+    .from("ArbitrationFight")
+    .select("id")
+    .in("status", ["IN_PROGRESS", "SCHEDULED"]);
+
+  if (error) throw new Error(error.message);
+
+  for (const fight of openFights ?? []) {
+    await finalizeFightIfComplete(supabase, fight.id as string);
+  }
 }
 
 export async function createArbitrationEvent(input: {

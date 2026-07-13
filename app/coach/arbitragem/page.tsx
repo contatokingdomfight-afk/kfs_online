@@ -1,4 +1,5 @@
 import { requireArbitrationAccess } from "@/lib/arbitration/auth";
+import { reconcileArbitrationFightsInProgress } from "@/app/coach/arbitragem/actions";
 import { listArbitrationFights } from "@/lib/arbitration/queries";
 import { ArbitrationSubNav } from "@/components/arbitration/ArbitrationSubNav";
 import { FightListBoard } from "@/components/arbitration/FightListBoard";
@@ -11,6 +12,7 @@ export const metadata = {
 export default async function ArbitragemPage() {
   const access = await requireArbitrationAccess();
   const locale = (await getLocaleFromCookies()) === "en" ? "en" : "pt";
+  await reconcileArbitrationFightsInProgress();
   const fights = await listArbitrationFights();
 
   return (
