@@ -20,7 +20,7 @@ export function getCoachShellSidebarLinks(
       { label: t("navRoundTimer"), href: "/coach/round-timer" },
       { label: t("navAgenda"), href: "/coach/agenda" },
       { label: t("navEventsSchoolCheckIn"), href: "/coach/eventos" },
-      { label: "🏆 Arbitragem", href: "/coach/arbitragem" as string },
+      { label: "Arbitragem", href: "/coach/arbitragem" as string },
       { label: t("navSettings"), href: "/coach/configuracoes" as string },
       { label: t("myStudentArea"), href: "/dashboard" as string },
     ];
@@ -32,7 +32,7 @@ export function getCoachShellSidebarLinks(
     { label: t("navRoundTimer"), href: "/coach/round-timer" },
     { label: t("navAgenda"), href: "/coach/agenda" },
     { label: t("navEvents"), href: "/coach/eventos" },
-    { label: "🏆 Arbitragem", href: "/coach/arbitragem" as string },
+    { label: "Arbitragem", href: "/coach/arbitragem" as string },
     { label: t("navWeekTheme"), href: "/coach/tema-semana" },
     { label: t("navStudents"), href: "/coach/alunos" },
     { label: t("navAthletesCoach"), href: "/coach/atletas" },

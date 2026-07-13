@@ -43,6 +43,8 @@ const ORDERED_PATH_RULES: readonly Rule[] = [
   { prefix: "/coach/agenda", read: "admin:turmas:read", write: "admin:turmas:write" },
   { prefix: "/coach/presenca", read: "admin:turmas:read", write: "admin:turmas:write" },
   { prefix: "/coach/round-timer", read: "admin:turmas:read", write: "admin:turmas:write" },
+  { prefix: "/coach/arbitragem", read: "admin:sistema:read", write: "admin:sistema:write" },
+  { prefix: "/coach/eventos", read: "admin:sistema:read", write: "admin:sistema:write" },
   { prefix: "/coach/alunos", read: "admin:alunos:read", write: "admin:alunos:write" },
   { prefix: "/coach/desempenho-modalidades", read: "admin:alunos:read", write: "admin:alunos:write" },
   { prefix: "/coach/atletas", read: "admin:alunos:read", write: "admin:alunos:write" },
@@ -77,6 +79,11 @@ export function canAccessAdminPathname(
 
   const p = normalize(pathname);
   if (p === "/dashboard" || p.startsWith("/dashboard/")) return true;
+
+  /* Arbitragem: qualquer staff com permissões granulares activas */
+  if (p === "/coach/arbitragem" || p.startsWith("/coach/arbitragem/")) {
+    return access.codes.size > 0;
+  }
 
   if (p === "/admin" || p === "/admin/") {
     return access.codes.size > 0;

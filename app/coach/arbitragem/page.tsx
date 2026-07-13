@@ -16,7 +16,7 @@ export default async function ArbitragemPage() {
   return (
     <div className="arb-page">
       <header className="arb-header">
-        <h1 className="arb-title">🏆 Arbitragem</h1>
+        <h1 className="arb-title">Arbitragem</h1>
       </header>
       <ArbitrationSubNav />
       <FightListBoard fights={fights} locale={locale} />

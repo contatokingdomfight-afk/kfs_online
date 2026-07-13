@@ -1,7 +1,7 @@
 "use client";
 
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import {
   createArbitrationEvent,
   createArbitrationFight,
@@ -35,6 +35,17 @@ export function GestaoPanel({ events, judges }: Props) {
   const [totalRounds, setTotalRounds] = useState(3);
   const [selectedJudges, setSelectedJudges] = useState<string[]>([]);
 
+  useEffect(() => {
+    if (events.length === 0) {
+      setFightEventId("");
+      return;
+    }
+    setFightEventId((current) => {
+      if (current && events.some((e) => e.id === current)) return current;
+      return events[0]!.id;
+    });
+  }, [events]);
+
   const toggleJudge = (id: string) => {
     setSelectedJudges((prev) => {
       if (prev.includes(id)) return prev.filter((j) => j !== id);
@@ -48,13 +59,14 @@ export function GestaoPanel({ events, judges }: Props) {
       setError(null);
       setMessage(null);
       try {
-        await createArbitrationEvent({
+        const { id } = await createArbitrationEvent({
           name: eventName,
           eventDate: eventDate || null,
           location: eventLocation || null,
           totalRoundsDefault: 3,
         });
         setMessage("Evento criado.");
+        setFightEventId(id);
         setEventName("");
         setEventDate("");
         setEventLocation("");
@@ -85,18 +97,20 @@ export function GestaoPanel({ events, judges }: Props) {
       setError(null);
       setMessage(null);
       try {
-        if (!fightEventId) throw new Error("Seleccione um evento.");
+        const eventId = fightEventId || events[0]?.id;
+        if (!eventId) throw new Error("Crie ou seleccione um evento primeiro.");
+        const rounds = Number.isFinite(totalRounds) ? Math.min(12, Math.max(1, Math.round(totalRounds))) : 3;
         await createArbitrationFight({
-          eventId: fightEventId,
+          eventId,
           modality,
           category,
           weightClass: weightClass || null,
           athleteBlueName: athleteBlue,
           athleteRedName: athleteRed,
-          totalRounds,
+          totalRounds: rounds,
           judgeIds: selectedJudges,
         });
-        setMessage("Combate criado.");
+        setMessage("Combate criado. Vê a lista em Combates.");
         setCategory("");
         setWeightClass("");
         setAthleteBlue("");
@@ -181,7 +195,7 @@ export function GestaoPanel({ events, judges }: Props) {
             <button
               type="button"
               className="btn btn-primary"
-              disabled={pending || !category.trim() || !athleteBlue.trim() || !athleteRed.trim()}
+              disabled={pending || events.length === 0 || !category.trim() || !athleteBlue.trim() || !athleteRed.trim()}
               onClick={createFight}
             >
               Criar combate
