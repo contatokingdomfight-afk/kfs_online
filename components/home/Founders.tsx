@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { YouTubeIframe } from "@/components/YouTubeIframe";
 
 type Content = {
   foundersTitle: string;
@@ -80,13 +81,7 @@ export function Founders({ content }: { content: Content }) {
         {/* Vídeo - História da KFS */}
         <div className="mt-12">
           <div className="aspect-video w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
-            <iframe
-              src={content.foundersVideoUrl}
-              title={content.foundersVideoTitle}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="h-full w-full"
-            />
+            <YouTubeIframe lazy src={content.foundersVideoUrl} title={content.foundersVideoTitle} />
           </div>
           <p className="mt-2 text-center text-sm text-[var(--text-secondary)]">
             {content.foundersVideoTitle}

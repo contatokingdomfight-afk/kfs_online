@@ -72,7 +72,7 @@ export function Footer({ content }: { content: Content }) {
               </li>
               <li>
                 <Link
-                  href="/julgamento"
+                  href="/arbitragem"
                   className="text-sm text-[var(--text-primary)] hover:text-[var(--primary)]"
                 >
                   {content.footerJudging}

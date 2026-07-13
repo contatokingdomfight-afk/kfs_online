@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
-import { toEmbedVideoUrl } from "@/lib/youtube-embed";
+import { toEmbedVideoUrl, YOUTUBE_IFRAME_ALLOW } from "@/lib/youtube-embed";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -118,7 +118,7 @@ export default async function CoachBibliotecaCursoPage({ params }: Props) {
                           <iframe
                             src={toEmbedVideoUrl(u.video_url)}
                             title={u.name}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allow={YOUTUBE_IFRAME_ALLOW}
                             allowFullScreen
                             style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
                           />
@@ -161,7 +161,7 @@ export default async function CoachBibliotecaCursoPage({ params }: Props) {
                     <iframe
                       src={toEmbedVideoUrl(mod.video_url!)}
                       title={mod.name}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allow={YOUTUBE_IFRAME_ALLOW}
                       allowFullScreen
                       style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
                     />
@@ -191,7 +191,7 @@ export default async function CoachBibliotecaCursoPage({ params }: Props) {
                 <iframe
                   src={toEmbedVideoUrl(course.video_url)}
                   title={course.name}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allow={YOUTUBE_IFRAME_ALLOW}
                   allowFullScreen
                   style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
                 />

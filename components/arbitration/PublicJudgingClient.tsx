@@ -99,11 +99,11 @@ export function PublicJudgingClient({ locale }: Props) {
   const t = getTranslations(locale);
   const copy = useMemo(
     () => ({
-      title: locale === "pt" ? "Placar de combate" : "Fight scorecard",
+      title: locale === "pt" ? "Arbitragem de combate" : "Fight arbitration",
       subtitle:
         locale === "pt"
-          ? "Julgamento 10-Point Must para treinos e eventos informais. Sem registo — um juiz."
-          : "10-Point Must scoring for informal bouts. No sign-up — single judge.",
+          ? "Arbitragem 10-Point Must para treinos e eventos informais. Sem registo — um juiz."
+          : "10-Point Must arbitration for informal bouts. No sign-up — single judge.",
       backHome: t("navHome"),
       modality: locale === "pt" ? "Modalidade" : "Discipline",
       rounds: locale === "pt" ? "Rounds" : "Rounds",

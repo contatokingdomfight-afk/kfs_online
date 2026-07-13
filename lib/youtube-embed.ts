@@ -47,3 +47,12 @@ export function extractYouTubeVideoId(url: string): string | null {
   }
   return null;
 }
+
+/** Permissões do iframe YouTube (inclui compute-pressure para evitar violações no consola). */
+export const YOUTUBE_IFRAME_ALLOW =
+  "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; compute-pressure";
+
+export function youtubeEmbedSrc(videoId: string, params?: Record<string, string>): string {
+  const search = params ? `?${new URLSearchParams(params)}` : "";
+  return `https://www.youtube.com/embed/${videoId}${search}`;
+}

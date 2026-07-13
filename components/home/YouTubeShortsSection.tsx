@@ -1,3 +1,6 @@
+import { YouTubeIframe } from "@/components/YouTubeIframe";
+import { youtubeEmbedSrc } from "@/lib/youtube-embed";
+
 type Content = {
   youtubeShortsTitle: string;
   youtubeShortsSubtitle?: string;
@@ -29,11 +32,10 @@ export function YouTubeShortsSection({ content }: { content: Content }) {
               className="relative w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]"
               style={{ aspectRatio: "9/16" }}
             >
-              <iframe
-                src={`https://www.youtube.com/embed/${id}`}
+              <YouTubeIframe
+                lazy
+                src={youtubeEmbedSrc(id)}
                 title="YouTube Short"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
                 className="absolute inset-0 h-full w-full border-0"
               />
             </div>

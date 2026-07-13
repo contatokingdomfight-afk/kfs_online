@@ -3,6 +3,8 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { FormularioListaEspera } from "./FormularioListaEspera";
 import { MetaPixelScript } from "./MetaPixelScript";
+import { YouTubeIframe } from "@/components/YouTubeIframe";
+import { youtubeEmbedSrc } from "@/lib/youtube-embed";
 
 export const metadata: Metadata = {
   title: "Lista de Espera | Kingdom Fight School",
@@ -86,12 +88,10 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
           <section className="lista-espera-videos">
             <h2 className="lista-espera-videos-title">{t("waitlistVideosTitle")}</h2>
             <div className="lista-espera-video-wrap lista-espera-video-main">
-              <iframe
+              <YouTubeIframe
+                lazy
                 src="https://www.youtube.com/embed/eQWUG9Q61c4?start=3"
                 title={t("waitlistVideosTitle")}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                loading="lazy"
                 className="lista-espera-iframe"
               />
             </div>
@@ -100,12 +100,10 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
             <div className="lista-espera-shorts-grid">
               {["ni1-Oo45zGo", "qotPbvcE2Zw", "4TIfiWJm3L8", "jZ1KZLz_Mk0", "zigTvTl_HEs", "AsbWWfKZlkY"].map((id) => (
                 <div key={id} className="lista-espera-video-wrap lista-espera-video-short">
-                  <iframe
-                    src={`https://www.youtube.com/embed/${id}`}
+                  <YouTubeIframe
+                    lazy
+                    src={youtubeEmbedSrc(id)}
                     title="YouTube Short"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    loading="lazy"
                     className="lista-espera-iframe"
                   />
                 </div>

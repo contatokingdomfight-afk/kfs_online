@@ -3,10 +3,10 @@ import type { OccurrenceInput, CornerOccurrences } from "./types";
 export type OccurrenceFieldKey = keyof CornerOccurrences;
 
 export const OCCURRENCE_FIELD_KEYS: OccurrenceFieldKey[] = [
+  "knockdown",
   "illegalStrike",
   "verbalWarning",
   "pointDeduction",
-  "knockdown",
   "count",
   "excessiveHolding",
   "lackOfAggressiveness",
@@ -17,7 +17,7 @@ export const OCCURRENCE_LABELS_PT: Record<OccurrenceFieldKey, string> = {
   illegalStrike: "Golpe ilegal",
   verbalWarning: "Advertência verbal",
   pointDeduction: "Perda de ponto",
-  knockdown: "Knockdown",
+  knockdown: "Knockdown sofrido (−3 no placar)",
   count: "Contagem",
   excessiveHolding: "Segurar excessivamente",
   lackOfAggressiveness: "Falta de combatividade",
@@ -34,6 +34,11 @@ const DB_KEY_MAP: Record<OccurrenceFieldKey, { blue: string; red: string }> = {
   lackOfAggressiveness: { blue: "blueLackOfAggressiveness", red: "redLackOfAggressiveness" },
   other: { blue: "blueOther", red: "redOther" },
 };
+
+export const KNOCKDOWN_OFFICIAL_DEDUCTION = 3;
+export const POINT_DEDUCTION_OFFICIAL_MIN = 1;
+/** Placar oficial mínimo após descontos (ex.: 9 − 3 knockdown = 6). */
+export const OFFICIAL_SCORE_MIN = 6;
 
 export function emptyCornerOccurrences(): CornerOccurrences {
   return {
@@ -108,17 +113,28 @@ export function occurrencesCollapsedHint(input: OccurrenceInput): string {
   return parts.join(", ");
 }
 
-/** Aplica desconto no placar 10-Point Must (mínimo 7). */
-export function applyOfficialPointDeduction(score: number, deduction: number): number {
-  const d = Math.max(0, Math.min(3, Math.round(deduction)));
-  return Math.max(7, score - d);
+/** Desconto automático no placar 10-Point Must com base nas ocorrências marcadas. */
+export function officialDeductionForCorner(
+  corner: CornerOccurrences,
+  manualDeduction: number
+): number {
+  let d = Math.max(0, Math.round(manualDeduction));
+  if (corner.pointDeduction) d = Math.max(d, POINT_DEDUCTION_OFFICIAL_MIN);
+  if (corner.knockdown) d = Math.max(d, KNOCKDOWN_OFFICIAL_DEDUCTION);
+  return d;
 }
 
-/** Se marcou «Perda de ponto» na ocorrência, sugere desconto de 1 no placar. */
+/** Aplica desconto no placar 10-Point Must (mínimo {@link OFFICIAL_SCORE_MIN}). */
+export function applyOfficialPointDeduction(score: number, deduction: number): number {
+  const d = Math.max(0, Math.min(9, Math.round(deduction)));
+  return Math.max(OFFICIAL_SCORE_MIN, score - d);
+}
+
+/** Sincroniza descontos oficiais a partir das ocorrências (perda de ponto, knockdown, etc.). */
 export function syncDeductionsFromOccurrences(input: OccurrenceInput): OccurrenceInput {
   return {
     ...input,
-    blueOfficialPointDeduction: input.blue.pointDeduction ? Math.max(1, input.blueOfficialPointDeduction) : input.blueOfficialPointDeduction,
-    redOfficialPointDeduction: input.red.pointDeduction ? Math.max(1, input.redOfficialPointDeduction) : input.redOfficialPointDeduction,
+    blueOfficialPointDeduction: officialDeductionForCorner(input.blue, input.blueOfficialPointDeduction),
+    redOfficialPointDeduction: officialDeductionForCorner(input.red, input.redOfficialPointDeduction),
   };
 }

@@ -2,6 +2,7 @@
 
 import {
   countOccurrenceMarks,
+  KNOCKDOWN_OFFICIAL_DEDUCTION,
   occurrencesCollapsedHint,
   OCCURRENCE_FIELD_KEYS,
   OCCURRENCE_LABELS_PT,
@@ -27,12 +28,35 @@ function toggleCornerOccurrence(
   };
   if (field === "pointDeduction") {
     if (corner === "blue") {
-      next.blueOfficialPointDeduction = checked ? Math.max(1, value.blueOfficialPointDeduction) : 0;
+      next.blueOfficialPointDeduction = checked
+        ? Math.max(1, value.blueOfficialPointDeduction)
+        : value.blue.knockdown
+          ? KNOCKDOWN_OFFICIAL_DEDUCTION
+          : 0;
     } else {
-      next.redOfficialPointDeduction = checked ? Math.max(1, value.redOfficialPointDeduction) : 0;
+      next.redOfficialPointDeduction = checked
+        ? Math.max(1, value.redOfficialPointDeduction)
+        : value.red.knockdown
+          ? KNOCKDOWN_OFFICIAL_DEDUCTION
+          : 0;
     }
   }
-  return next;
+  if (field === "knockdown") {
+    if (corner === "blue") {
+      next.blueOfficialPointDeduction = checked
+        ? Math.max(KNOCKDOWN_OFFICIAL_DEDUCTION, value.blueOfficialPointDeduction)
+        : value.blue.pointDeduction
+          ? Math.max(1, value.blueOfficialPointDeduction)
+          : 0;
+    } else {
+      next.redOfficialPointDeduction = checked
+        ? Math.max(KNOCKDOWN_OFFICIAL_DEDUCTION, value.redOfficialPointDeduction)
+        : value.red.pointDeduction
+          ? Math.max(1, value.redOfficialPointDeduction)
+          : 0;
+    }
+  }
+  return syncDeductionsFromOccurrences(next);
 }
 
 function OccurrencesForm({
@@ -88,13 +112,18 @@ function OccurrencesForm({
           <button
             type="button"
             className={`arb-deduction-btn arb-deduction-btn-blue${synced.blueOfficialPointDeduction > 0 ? " arb-deduction-btn-active" : ""}`}
-            disabled={disabled}
+            disabled={disabled || value.blue.knockdown}
             onClick={() =>
-              onChange({
-                ...value,
-                blueOfficialPointDeduction: value.blueOfficialPointDeduction > 0 ? 0 : 1,
-                blue: { ...value.blue, pointDeduction: value.blueOfficialPointDeduction > 0 ? false : true },
-              })
+              onChange(
+                syncDeductionsFromOccurrences({
+                  ...value,
+                  blueOfficialPointDeduction: value.blueOfficialPointDeduction > 0 && !value.blue.knockdown ? 0 : 1,
+                  blue: {
+                    ...value.blue,
+                    pointDeduction: value.blueOfficialPointDeduction > 0 && !value.blue.knockdown ? false : true,
+                  },
+                })
+              )
             }
           >
             −1 {athleteBlueName}
@@ -102,18 +131,28 @@ function OccurrencesForm({
           <button
             type="button"
             className={`arb-deduction-btn arb-deduction-btn-red${synced.redOfficialPointDeduction > 0 ? " arb-deduction-btn-active" : ""}`}
-            disabled={disabled}
+            disabled={disabled || value.red.knockdown}
             onClick={() =>
-              onChange({
-                ...value,
-                redOfficialPointDeduction: value.redOfficialPointDeduction > 0 ? 0 : 1,
-                red: { ...value.red, pointDeduction: value.redOfficialPointDeduction > 0 ? false : true },
-              })
+              onChange(
+                syncDeductionsFromOccurrences({
+                  ...value,
+                  redOfficialPointDeduction: value.redOfficialPointDeduction > 0 && !value.red.knockdown ? 0 : 1,
+                  red: {
+                    ...value.red,
+                    pointDeduction: value.redOfficialPointDeduction > 0 && !value.red.knockdown ? false : true,
+                  },
+                })
+              )
             }
           >
             −1 {athleteRedName}
           </button>
         </div>
+        {(value.blue.knockdown || value.red.knockdown) && (
+          <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+            Knockdown: desconto automático de {KNOCKDOWN_OFFICIAL_DEDUCTION} pontos no placar oficial.
+          </p>
+        )}
       </div>
 
       <textarea
@@ -156,7 +195,10 @@ export function OccurrencesPanel({ value, athleteBlueName, athleteRedName, disab
         </span>
       </summary>
       <div className="arb-occurrences-body">
-        <p className="arb-occurrences-intro">Marque o atleta a quem se aplica cada ocorrência.</p>
+        <p className="arb-occurrences-intro">
+          Marque o atleta a quem se aplica cada ocorrência. Knockdown sofrido desconta automaticamente{" "}
+          {KNOCKDOWN_OFFICIAL_DEDUCTION} pontos no placar oficial do round (ex.: 9 → 6).
+        </p>
         <OccurrencesForm
           value={value}
           athleteBlueName={athleteBlueName}

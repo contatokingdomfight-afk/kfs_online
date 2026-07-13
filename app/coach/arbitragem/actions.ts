@@ -24,6 +24,7 @@ import {
   applyOfficialPointDeduction,
   occurrencesFromDbRow,
   occurrencesToDbPayload,
+  officialDeductionForCorner,
   syncDeductionsFromOccurrences,
 } from "@/lib/arbitration/occurrences";
 import { syncStaffArbitrationJudges } from "@/lib/arbitration/staff-judges";
@@ -462,8 +463,14 @@ export async function saveArbitrationRound(input: {
 
   const suggested = suggestTenPointMust(blueTotal, redTotal, maxCriteriaTotal(criteria.length));
   const syncedOccurrences = syncDeductionsFromOccurrences(input.occurrences);
-  const blueDeduction = Math.max(0, Math.min(3, Math.round(syncedOccurrences.blueOfficialPointDeduction)));
-  const redDeduction = Math.max(0, Math.min(3, Math.round(syncedOccurrences.redOfficialPointDeduction)));
+  const blueDeduction = officialDeductionForCorner(
+    syncedOccurrences.blue,
+    syncedOccurrences.blueOfficialPointDeduction
+  );
+  const redDeduction = officialDeductionForCorner(
+    syncedOccurrences.red,
+    syncedOccurrences.redOfficialPointDeduction
+  );
   const baseOfficialBlue = input.scores.officialBlueScore ?? suggested.blue;
   const baseOfficialRed = input.scores.officialRedScore ?? suggested.red;
   const officialBlue = applyOfficialPointDeduction(baseOfficialBlue, blueDeduction);

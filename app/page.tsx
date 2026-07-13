@@ -7,6 +7,7 @@ import { HomePwaInstallBand } from "@/components/home/HomePwaInstallBand";
 import { Stats } from "@/components/home/Stats";
 import { About } from "@/components/home/About";
 import { HowItWorks } from "@/components/home/HowItWorks";
+import { ArbitrationSection } from "@/components/home/ArbitrationSection";
 import { Plans } from "@/components/home/Plans";
 import { Founders } from "@/components/home/Founders";
 import { LearningPathsSection } from "@/components/home/LearningPathsSection";
@@ -78,6 +79,7 @@ export default async function HomePage({ searchParams }: Props) {
       <LogoSymbolismSection content={content} />
       <Founders content={content} />
       <HowItWorks content={content} />
+      <ArbitrationSection content={content} />
       <WeeklyScheduleSection content={content} schedule={weeklySchedule} locale={locale} />
       <LearningPathsSection content={content} />
       <Plans content={content} />

@@ -17,10 +17,10 @@ export function HomeHeader({ ctaLabel, timerLabel, judgingLabel }: Props) {
           <span>{timerLabel}</span>
         </Link>
         <Link
-          href="/julgamento"
+          href="/arbitragem"
           className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--primary)]"
         >
-          <span aria-hidden>🥊</span>
+          <span aria-hidden>🏆</span>
           <span>{judgingLabel}</span>
         </Link>
         <Link

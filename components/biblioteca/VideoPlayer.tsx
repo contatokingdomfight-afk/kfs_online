@@ -1,6 +1,6 @@
 "use client";
 
-import { toEmbedVideoUrl, extractYouTubeVideoId } from "@/lib/youtube-embed";
+import { toEmbedVideoUrl, extractYouTubeVideoId, YOUTUBE_IFRAME_ALLOW } from "@/lib/youtube-embed";
 
 type Props = {
   url: string;
@@ -39,7 +39,7 @@ export function VideoPlayer({ url, title, fallbackMessage = "Este vídeo não es
       <iframe
         src={embedUrl}
         title={title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allow={YOUTUBE_IFRAME_ALLOW}
         allowFullScreen
         style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
       />

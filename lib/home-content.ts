@@ -10,7 +10,7 @@ export const homeContent = {
     // Header
     headerCta: "Aula Experimental",
     headerTimer: "Timer",
-    headerJudging: "Placar",
+    headerJudging: "Arbitragem",
 
     // Hero
     heroHeadline1: "Treine com Propósito.",
@@ -166,18 +166,32 @@ export const homeContent = {
     footerLinks: "Links rápidos",
     footerAulaExp: "Aula Experimental",
     footerTimer: "Timer de rounds",
-    footerJudging: "Placar de combate",
+    footerJudging: "Arbitragem",
     footerSignIn: "Entrar",
     footerSignUp: "Criar conta",
     footerTerms: "Termos",
     footerPrivacy: "Privacidade",
     footerContact: "Contacto",
     footerRights: "© Kingdom Fight School. Todos os direitos reservados.",
+
+    // Arbitragem (homepage)
+    arbitrationTitle: "Arbitragem na Kingdom",
+    arbitrationSubtitle: "Do treino ao evento",
+    arbitrationDesc:
+      "Julgamento 10-Point Must para boxe e Muay Thai — critérios por round, sugestão automática de placar e ocorrências por atleta. Grátis no telemóvel, sem registo. Na plataforma da escola: vários juízes, histórico de combates e perfis de critérios personalizáveis por evento.",
+    arbitrationFeature1: "Grátis e sem conta",
+    arbitrationFeature1Desc: "Use em treinos, sparrings ou eventos informais — como o timer de rounds.",
+    arbitrationFeature2: "Critérios por round",
+    arbitrationFeature2Desc: "Avaliação 1–5 por canto, placar oficial 10-9 e registo de ocorrências.",
+    arbitrationFeature3: "Eventos na plataforma",
+    arbitrationFeature3Desc: "Múltiplos juízes, resultado oficial, histórico e critérios à medida do evento.",
+    arbitrationCtaFree: "Experimentar arbitragem",
+    arbitrationCtaPlatform: "Entrar na plataforma",
   },
   en: {
     headerCta: "Trial Class",
     headerTimer: "Timer",
-    headerJudging: "Scorecard",
+    headerJudging: "Arbitration",
 
     heroHeadline1: "Train with Purpose.",
     heroHeadline2: "Fight with Discipline.",
@@ -318,13 +332,26 @@ export const homeContent = {
     footerLinks: "Quick links",
     footerAulaExp: "Trial Class",
     footerTimer: "Round timer",
-    footerJudging: "Fight scorecard",
+    footerJudging: "Arbitration",
     footerSignIn: "Sign in",
     footerSignUp: "Create account",
     footerTerms: "Terms",
     footerPrivacy: "Privacy",
     footerContact: "Contact",
     footerRights: "© Kingdom Fight School. All rights reserved.",
+
+    arbitrationTitle: "Arbitration at Kingdom",
+    arbitrationSubtitle: "From training to event day",
+    arbitrationDesc:
+      "10-Point Must scoring for boxing and Muay Thai — criteria per round, automatic score suggestions and per-athlete incidents. Free on your phone, no sign-up. On the school platform: multiple judges, fight history and custom criteria profiles per event.",
+    arbitrationFeature1: "Free, no account",
+    arbitrationFeature1Desc: "Use in training, sparring or informal events — like the round timer.",
+    arbitrationFeature2: "Criteria per round",
+    arbitrationFeature2Desc: "1–5 per corner, official 10-9 scorecard and incident tracking.",
+    arbitrationFeature3: "Full events on platform",
+    arbitrationFeature3Desc: "Multiple judges, official results, history and tailored criteria sets.",
+    arbitrationCtaFree: "Try arbitration",
+    arbitrationCtaPlatform: "Sign in to platform",
   },
 } as const;
 

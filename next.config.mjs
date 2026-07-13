@@ -13,6 +13,9 @@ const nextConfig = {
       bodySizeLimit: "15mb",
     },
   },
+  async redirects() {
+    return [{ source: "/julgamento", destination: "/arbitragem", permanent: true }];
+  },
   /** Pedidos legados a /favicon.ico passam a servir o ícone gerado em app/icon.tsx */
   async rewrites() {
     return [{ source: "/favicon.ico", destination: "/icon" }];
