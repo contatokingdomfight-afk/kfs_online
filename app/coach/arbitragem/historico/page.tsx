@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { requireArbitrationAccess } from "@/lib/arbitration/auth";
 import {
+  enrichFightsWithJudgeHistory,
   filterFightsByJudge,
   listArbitrationEvents,
   listArbitrationFights,
@@ -43,6 +44,7 @@ export default async function ArbitragemHistoricoPage({ searchParams }: Props) {
   }
 
   const [events, judges] = await Promise.all([listArbitrationEvents(), listArbitrationJudges()]);
+  const fightsWithJudges = await enrichFightsWithJudgeHistory(fights);
 
   return (
     <div className="arb-page">
@@ -51,7 +53,7 @@ export default async function ArbitragemHistoricoPage({ searchParams }: Props) {
       </header>
       <ArbitrationSubNav />
       <Suspense fallback={<p style={{ color: "var(--text-secondary)" }}>A carregar…</p>}>
-        <HistoryPanel fights={fights} events={events} judges={judges} canDeleteFights={access.role === "ADMIN"} />
+        <HistoryPanel fights={fightsWithJudges} events={events} judges={judges} canDeleteFights={access.role === "ADMIN"} />
       </Suspense>
     </div>
   );

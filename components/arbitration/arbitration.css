@@ -59,6 +59,61 @@
   gap: 10px;
 }
 
+.arb-history-official {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.arb-history-judges {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.arb-history-judges-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 700;
+  user-select: none;
+}
+
+.arb-history-judges-summary::-webkit-details-marker {
+  display: none;
+}
+
+.arb-history-judges[open] .arb-occurrences-chevron {
+  transform: rotate(180deg);
+}
+
+.arb-history-judges .arb-judge-results {
+  padding: 0 12px 12px;
+}
+
+.arb-history-judge-rounds {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.arb-history-judge-round {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+}
+
 .arb-fight-card-actions {
   display: flex;
   justify-content: flex-end;

@@ -113,3 +113,19 @@ export type JudgeFightResultRow = {
   totalRedOfficial: number;
   winner: ArbitrationCorner;
 };
+
+export type JudgeHistoryRoundRow = {
+  roundNumber: number;
+  blueTotal: number | null;
+  redTotal: number | null;
+  officialBlueScore: number | null;
+  officialRedScore: number | null;
+};
+
+export type JudgeHistoryCard = JudgeFightResultRow & {
+  rounds: JudgeHistoryRoundRow[];
+};
+
+export type ArbitrationFightHistoryRow = ArbitrationFightListRow & {
+  judgeCards: JudgeHistoryCard[];
+};
