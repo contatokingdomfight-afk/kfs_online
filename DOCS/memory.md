@@ -324,4 +324,5 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Ocorrências (jul. 2026):** por atleta (azul/vermelho) em `ArbitrationRoundOccurrence`; desconto no placar oficial (`bluePointDeduction` / `redPointDeduction` em `ArbitrationRoundEvaluation`). Migração `20260713140000_arbitration_occurrences_per_corner.sql`.
 - **Apagar combate:** apenas `ADMIN` — `deleteArbitrationFight` + botão nas listas Combates e Histórico; cascade apaga rounds, avaliações e resultados.
 - **Juízes:** sincronização automática em `lib/arbitration/staff-judges.ts` — todos os `ADMIN`, professores (`Coach.is_active`) e assistentes activos (`SchoolAssistantCoach`) ficam disponíveis como juízes; `userId` liga a conta ao posto no julgamento.
+- **Resultado oficial:** só quando **todos** os juízes atribuídos fecham os rounds (`ArbitrationFight.status = COMPLETED`); até lá o juiz vê «O teu cartão» e contagem de juízes em falta; vencedor do combate = maioria dos cartões (`finalizeFightIfComplete` em `actions.ts`).
 

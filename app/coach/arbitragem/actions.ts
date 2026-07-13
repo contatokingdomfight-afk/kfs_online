@@ -487,10 +487,34 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
     (fight.currentRound as number) ??
     1;
 
-  const { data: judgeResults } = await supabase
-    .from("ArbitrationFightResult")
-    .select(`totalBlueOfficial, totalRedOfficial, winner, fightJudge:ArbitrationFightJudge(judgeNumber, judge:ArbitrationJudge(displayName))`)
-    .eq("fightId", fightId);
+  const [{ data: judgeResults }, { count: assignedJudgeCount }] = await Promise.all([
+    supabase
+      .from("ArbitrationFightResult")
+      .select(
+        `totalBlueOfficial, totalRedOfficial, winner, fightJudge:ArbitrationFightJudge(judgeNumber, judge:ArbitrationJudge(displayName))`
+      )
+      .eq("fightId", fightId),
+    supabase
+      .from("ArbitrationFightJudge")
+      .select("id", { count: "exact", head: true })
+      .eq("fightId", fightId),
+  ]);
+
+  const mappedJudgeResults = (judgeResults ?? []).map((jr) => {
+    const fj = unwrapSupabaseJoin(
+      jr.fightJudge as
+        | { judgeNumber: number; judge: { displayName: string } | { displayName: string }[] }
+        | { judgeNumber: number; judge: { displayName: string } | { displayName: string }[] }[]
+    );
+    const judge = unwrapSupabaseJoin(fj?.judge ?? null);
+    return {
+      judgeNumber: fj?.judgeNumber ?? 0,
+      judgeName: judge?.displayName ?? "—",
+      totalBlueOfficial: jr.totalBlueOfficial,
+      totalRedOfficial: jr.totalRedOfficial,
+      winner: jr.winner,
+    };
+  });
 
   return {
     fight: {
@@ -507,24 +531,12 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
       decisionType: fight.decisionType,
       eventName: event?.name ?? "",
       roundDurationSeconds: event?.roundDurationSeconds ?? null,
+      assignedJudgeCount: assignedJudgeCount ?? 0,
+      completedJudgeCount: mappedJudgeResults.length,
     },
     activeRound,
     rounds: roundStates,
-    judgeResults: (judgeResults ?? []).map((jr) => {
-      const fj = unwrapSupabaseJoin(
-        jr.fightJudge as
-          | { judgeNumber: number; judge: { displayName: string } | { displayName: string }[] }
-          | { judgeNumber: number; judge: { displayName: string } | { displayName: string }[] }[]
-      );
-      const judge = unwrapSupabaseJoin(fj?.judge ?? null);
-      return {
-        judgeNumber: fj?.judgeNumber ?? 0,
-        judgeName: judge?.displayName ?? "—",
-        totalBlueOfficial: jr.totalBlueOfficial,
-        totalRedOfficial: jr.totalRedOfficial,
-        winner: jr.winner,
-      };
-    }),
+    judgeResults: mappedJudgeResults,
   };
 }
 

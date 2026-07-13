@@ -26,6 +26,7 @@ import {
   modalityLabel,
   suggestTenPointMust,
   sumCornerScores,
+  winnerFromTotals,
 } from "@/lib/arbitration/scoring";
 
 type RoundState = {
@@ -66,6 +67,8 @@ type Props = {
       decisionType: string | null;
       eventName: string;
       roundDurationSeconds: number | null;
+      assignedJudgeCount: number;
+      completedJudgeCount: number;
     };
     activeRound: number;
     rounds: RoundState[];
@@ -96,6 +99,8 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
   const [judgeResults, setJudgeResults] = useState(initial.judgeResults);
   const [winner, setWinner] = useState(initial.fight.winner);
   const [decisionType, setDecisionType] = useState(initial.fight.decisionType);
+  const [assignedJudgeCount, setAssignedJudgeCount] = useState(initial.fight.assignedJudgeCount);
+  const [completedJudgeCount, setCompletedJudgeCount] = useState(initial.fight.completedJudgeCount);
 
   const currentRoundState = rounds.find((r) => r.roundNumber === activeRound);
   const isLocked = currentRoundState?.isLocked ?? false;
@@ -223,6 +228,8 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
             setJudgeResults(fresh.judgeResults);
             setWinner(fresh.fight.winner);
             setDecisionType(fresh.fight.decisionType);
+            setAssignedJudgeCount(fresh.fight.assignedJudgeCount);
+            setCompletedJudgeCount(fresh.fight.completedJudgeCount);
             setActiveRound(fresh.activeRound);
           } else {
             setFightStatus("COMPLETED");
@@ -418,6 +425,9 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
           judgeResults={judgeResults}
           winner={winner}
           decisionType={decisionType}
+          fightStatus={fightStatus}
+          assignedJudgeCount={assignedJudgeCount}
+          completedJudgeCount={completedJudgeCount}
         />
       )}
     </div>
@@ -673,6 +683,18 @@ function OccurrencesForm({
   );
 }
 
+function cornerWinnerLabel(
+  blueScore: number,
+  redScore: number,
+  athleteBlueName: string,
+  athleteRedName: string
+): string {
+  const corner = winnerFromTotals(blueScore, redScore);
+  if (corner === "BLUE") return athleteBlueName;
+  if (corner === "RED") return athleteRedName;
+  return "Empate";
+}
+
 function FightSummaryPanel({
   rounds,
   totalRounds,
@@ -681,6 +703,9 @@ function FightSummaryPanel({
   judgeResults,
   winner,
   decisionType,
+  fightStatus,
+  assignedJudgeCount,
+  completedJudgeCount,
 }: {
   rounds: RoundState[];
   totalRounds: number;
@@ -689,8 +714,14 @@ function FightSummaryPanel({
   judgeResults: JudgeResult[];
   winner: string | null;
   decisionType: string | null;
+  fightStatus: string;
+  assignedJudgeCount: number;
+  completedJudgeCount: number;
 }) {
   const lockedRounds = rounds.filter((r) => r.isLocked).sort((a, b) => a.roundNumber - b.roundNumber);
+  const myCardComplete = lockedRounds.length >= totalRounds;
+  const fightCompleted = fightStatus === "COMPLETED";
+  const pendingJudges = Math.max(0, assignedJudgeCount - completedJudgeCount);
 
   let totalBlue = 0;
   let totalRed = 0;
@@ -699,8 +730,9 @@ function FightSummaryPanel({
     if (r.officialRedScore != null) totalRed += r.officialRedScore;
   }
 
-  const winnerName =
+  const officialWinnerName =
     winner === "BLUE" ? athleteBlueName : winner === "RED" ? athleteRedName : "Empate";
+  const myCardWinnerName = cornerWinnerLabel(totalBlue, totalRed, athleteBlueName, athleteRedName);
 
   return (
     <div className="arb-card" style={{ marginTop: 20 }}>
@@ -716,42 +748,85 @@ function FightSummaryPanel({
             <span className="arb-corner-red">Vermelho: {r.redTotal ?? "—"}</span>
           </div>
           {r.officialBlueScore != null && r.officialRedScore != null ? (
-            <div style={{ marginTop: 6, fontWeight: 800, fontSize: 20, textAlign: "center" }}>
-              {r.officialBlueScore} × {r.officialRedScore}
-            </div>
+            <>
+              <div style={{ marginTop: 6, fontWeight: 800, fontSize: 20, textAlign: "center" }}>
+                {r.officialBlueScore} × {r.officialRedScore}
+              </div>
+              <div style={{ marginTop: 4, fontSize: 13, textAlign: "center", color: "var(--text-secondary)" }}>
+                Vencedor do round:{" "}
+                {cornerWinnerLabel(r.officialBlueScore, r.officialRedScore, athleteBlueName, athleteRedName)}
+              </div>
+            </>
           ) : null}
         </div>
       ))}
 
-      {lockedRounds.length >= totalRounds ? (
-        <>
-          <div style={{ marginTop: 16, padding: 16, borderRadius: 12, border: "2px solid var(--primary)", textAlign: "center" }}>
-            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Resultado Oficial</div>
-            <div style={{ fontSize: 32, fontWeight: 800, margin: "8px 0" }}>
-              {totalBlue} × {totalRed}
-            </div>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>Vencedor: {winnerName}</div>
-            {decisionType ? (
-              <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
-                {decisionTypeLabel(decisionType as "UNANIMOUS" | "SPLIT" | "MAJORITY" | "DRAW")}
-              </div>
-            ) : null}
+      {myCardComplete && !fightCompleted ? (
+        <div
+          style={{
+            marginTop: 16,
+            padding: 16,
+            borderRadius: 12,
+            border: "1px solid var(--border)",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>O teu cartão</div>
+          <div style={{ fontSize: 28, fontWeight: 800, margin: "8px 0" }}>
+            {totalBlue} × {totalRed}
           </div>
-
-          {judgeResults.length > 0 ? (
-            <div className="arb-judge-results">
-              <h3 style={{ margin: "16px 0 8px", fontSize: 15 }}>Cartões dos juízes</h3>
-              {judgeResults.map((jr) => (
-                <div key={jr.judgeNumber} className="arb-summary-round">
-                  <div style={{ fontWeight: 700 }}>Juiz {jr.judgeNumber} — {jr.judgeName}</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4 }}>
-                    {jr.totalBlueOfficial} × {jr.totalRedOfficial}
-                  </div>
-                </div>
-              ))}
+          <div style={{ fontSize: 15, fontWeight: 700 }}>Vencedor no teu cartão: {myCardWinnerName}</div>
+          {pendingJudges > 0 ? (
+            <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8 }}>
+              À espera de {pendingJudges} {pendingJudges === 1 ? "juiz" : "juízes"} para o resultado oficial.
             </div>
           ) : null}
-        </>
+        </div>
+      ) : null}
+
+      {judgeResults.length > 0 ? (
+        <div className="arb-judge-results">
+          <h3 style={{ margin: "16px 0 8px", fontSize: 15 }}>Cartões dos juízes</h3>
+          {judgeResults.map((jr) => {
+            const jrWinner =
+              jr.winner === "BLUE"
+                ? athleteBlueName
+                : jr.winner === "RED"
+                  ? athleteRedName
+                  : "Empate";
+            return (
+              <div key={jr.judgeNumber} className="arb-summary-round">
+                <div style={{ fontWeight: 700 }}>Juiz {jr.judgeNumber} — {jr.judgeName}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4 }}>
+                  {jr.totalBlueOfficial} × {jr.totalRedOfficial}
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
+                  Vencedor: {jrWinner}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {fightCompleted ? (
+        <div
+          style={{
+            marginTop: 16,
+            padding: 16,
+            borderRadius: 12,
+            border: "2px solid var(--primary)",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Resultado oficial</div>
+          <div style={{ fontSize: 24, fontWeight: 800, margin: "8px 0" }}>Vencedor: {officialWinnerName}</div>
+          {decisionType ? (
+            <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+              {decisionTypeLabel(decisionType as "UNANIMOUS" | "SPLIT" | "MAJORITY" | "DRAW")}
+            </div>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
