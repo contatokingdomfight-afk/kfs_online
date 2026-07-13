@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { saveArbitrationRound, startFightJudging } from "@/app/coach/arbitragem/actions";
+import { useRouter } from "next/navigation";
+import { getFightJudgingState, saveArbitrationRound, startFightJudging } from "@/app/coach/arbitragem/actions";
 import {
   CRITERIA_KEYS,
   CRITERIA_LABELS_PT,
@@ -12,7 +13,9 @@ import {
 } from "@/lib/arbitration/types";
 import {
   applyOfficialPointDeduction,
+  countOccurrenceMarks,
   emptyOccurrences,
+  occurrencesCollapsedHint,
   OCCURRENCE_FIELD_KEYS,
   OCCURRENCE_LABELS_PT,
   syncDeductionsFromOccurrences,
@@ -84,6 +87,7 @@ function emptyScores(): CornerScores {
 const OFFICIAL_OPTIONS = [10, 9, 8, 7];
 
 export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Props) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [activeRound, setActiveRound] = useState(initial.activeRound);
@@ -214,10 +218,25 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
             ]);
           }
         } else {
-          window.location.reload();
+          const fresh = await getFightJudgingState(fightId, fightJudgeId);
+          if (fresh) {
+            setFightStatus(fresh.fight.status);
+            setRounds(fresh.rounds);
+            setJudgeResults(fresh.judgeResults);
+            setWinner(fresh.fight.winner);
+            setDecisionType(fresh.fight.decisionType);
+            setActiveRound(fresh.activeRound);
+          } else {
+            setFightStatus("COMPLETED");
+          }
+          router.refresh();
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Erro ao guardar");
+        const message =
+          e instanceof Error && e.message && !e.message.includes("Server Components render")
+            ? e.message
+            : "Não foi possível guardar o round. Recarregue a página e verifique o resumo.";
+        setError(message);
       }
     });
   };
@@ -413,19 +432,14 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
             </div>
           </div>
 
-          <div className="arb-card">
-            <h3 style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 700 }}>Ocorrências</h3>
-            <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--text-secondary)" }}>
-              Marque o atleta a quem se aplica cada ocorrência.
-            </p>
-            <OccurrencesForm
-              value={occurrences}
-              athleteBlueName={initial.fight.athleteBlueName}
-              athleteRedName={initial.fight.athleteRedName}
-              disabled={isLocked || pending}
-              onChange={setOccurrences}
-            />
-          </div>
+          <OccurrencesPanel
+            key={activeRound}
+            value={occurrences}
+            athleteBlueName={initial.fight.athleteBlueName}
+            athleteRedName={initial.fight.athleteRedName}
+            disabled={isLocked || pending}
+            onChange={setOccurrences}
+          />
 
           {error ? <p style={{ color: "var(--danger)" }}>{error}</p> : null}
 
@@ -568,6 +582,52 @@ function toggleCornerOccurrence(
     }
   }
   return next;
+}
+
+function OccurrencesPanel({
+  value,
+  athleteBlueName,
+  athleteRedName,
+  disabled,
+  onChange,
+}: {
+  value: OccurrenceInput;
+  athleteBlueName: string;
+  athleteRedName: string;
+  disabled: boolean;
+  onChange: (v: OccurrenceInput) => void;
+}) {
+  const markCount = countOccurrenceMarks(value);
+  const hint = occurrencesCollapsedHint(value);
+  const hasMarks = markCount > 0 || value.notes.trim().length > 0;
+
+  return (
+    <details className="arb-card arb-occurrences-panel">
+      <summary className="arb-occurrences-summary">
+        <div className="arb-occurrences-summary-text">
+          <span className="arb-occurrences-summary-title">Ocorrências</span>
+          <span className={`arb-occurrences-summary-hint${hasMarks ? " arb-occurrences-summary-hint-active" : ""}`}>
+            {hint}
+          </span>
+        </div>
+        <span className="arb-occurrences-chevron" aria-hidden>
+          ▼
+        </span>
+      </summary>
+      <div className="arb-occurrences-body">
+        <p className="arb-occurrences-intro">
+          Marque o atleta a quem se aplica cada ocorrência.
+        </p>
+        <OccurrencesForm
+          value={value}
+          athleteBlueName={athleteBlueName}
+          athleteRedName={athleteRedName}
+          disabled={disabled}
+          onChange={onChange}
+        />
+      </div>
+    </details>
+  );
 }
 
 function OccurrencesForm({

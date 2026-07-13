@@ -88,6 +88,26 @@ export function occurrencesToDbPayload(input: OccurrenceInput) {
   return payload;
 }
 
+/** Conta células marcadas na matriz Azul/Vermelho. */
+export function countOccurrenceMarks(input: OccurrenceInput): number {
+  let count = 0;
+  for (const key of OCCURRENCE_FIELD_KEYS) {
+    if (input.blue[key]) count++;
+    if (input.red[key]) count++;
+  }
+  return count;
+}
+
+export function occurrencesCollapsedHint(input: OccurrenceInput): string {
+  const marks = countOccurrenceMarks(input);
+  const hasNotes = input.notes.trim().length > 0;
+  if (marks === 0 && !hasNotes) return "Opcional — toque para abrir";
+  const parts: string[] = [];
+  if (marks > 0) parts.push(`${marks} marcação${marks === 1 ? "" : "ões"}`);
+  if (hasNotes) parts.push("com notas");
+  return parts.join(", ");
+}
+
 /** Aplica desconto no placar 10-Point Must (mínimo 7). */
 export function applyOfficialPointDeduction(score: number, deduction: number): number {
   const d = Math.max(0, Math.min(3, Math.round(deduction)));

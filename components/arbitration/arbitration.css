@@ -366,6 +366,72 @@
   letter-spacing: 0.04em;
 }
 
+.arb-occurrences-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.arb-occurrences-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.arb-occurrences-summary::-webkit-details-marker {
+  display: none;
+}
+
+.arb-occurrences-summary-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.arb-occurrences-summary-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.arb-occurrences-summary-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.arb-occurrences-summary-hint-active {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.arb-occurrences-chevron {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.arb-occurrences-panel[open] .arb-occurrences-chevron {
+  transform: rotate(180deg);
+}
+
+.arb-occurrences-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.arb-occurrences-intro {
+  margin: 12px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
 .arb-occ-matrix-corner {
   text-align: center;
   padding: 6px;
