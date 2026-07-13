@@ -268,27 +268,27 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
 
   return (
     <div className="arb-page arb-judging-page">
-      <div className="arb-judging-sticky-bar">
-        <div className="arb-judging-header">
-          <Link href="/coach/arbitragem" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
-            ← Combates
-          </Link>
-          <div style={{ marginTop: 8 }}>
-            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{initial.fight.eventName}</div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>
-              {modalityLabel(initial.fight.modality)} · {initial.fight.category}
-              {initial.fight.weightClass ? ` · ${initial.fight.weightClass}` : ""}
-            </div>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>
-              {judgeLabel}
-              {initial.fight.roundDurationSeconds
-                ? ` · ${Math.floor(initial.fight.roundDurationSeconds / 60)}:${String(initial.fight.roundDurationSeconds % 60).padStart(2, "0")}`
-                : ""}
-            </div>
+      <div className="arb-judging-meta">
+        <Link href="/coach/arbitragem" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
+          ← Combates
+        </Link>
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{initial.fight.eventName}</div>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>
+            {modalityLabel(initial.fight.modality)} · {initial.fight.category}
+            {initial.fight.weightClass ? ` · ${initial.fight.weightClass}` : ""}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>
+            {judgeLabel}
+            {initial.fight.roundDurationSeconds
+              ? ` · ${Math.floor(initial.fight.roundDurationSeconds / 60)}:${String(initial.fight.roundDurationSeconds % 60).padStart(2, "0")}`
+              : ""}
           </div>
         </div>
+      </div>
 
-        {!showSummary ? (
+      {!showSummary ? (
+        <div className="arb-judging-sticky-bar">
           <div className="arb-scoreboard">
             <div style={{ textAlign: "center" }}>
               <div className="arb-corner-blue" style={{ fontSize: 14, marginBottom: 4 }}>
@@ -314,8 +314,8 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
               <div className="arb-score-total arb-corner-red">{redTotal ?? "—"}</div>
             </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {!showSummary ? (
         <div className="arb-judging-content">

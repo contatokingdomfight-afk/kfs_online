@@ -178,19 +178,28 @@
   border-bottom: none;
 }
 
+.arb-judging-meta {
+  margin-bottom: 12px;
+}
+
 .arb-judging-page {
   position: relative;
 }
 
 .arb-judging-sticky-bar {
-  z-index: 30;
+  z-index: 20;
   background: var(--bg);
   position: sticky;
   top: 0;
   margin-bottom: 12px;
   padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.arb-judging-sticky-bar .arb-scoreboard {
+  margin-bottom: 0;
 }
 
 .arb-judging-content {
@@ -200,14 +209,13 @@
 
 @media (max-width: 767.98px) {
   .arb-judging-sticky-bar {
-    margin-left: calc(-1 * max(var(--space-4), env(safe-area-inset-left)));
-    margin-right: calc(-1 * max(var(--space-4), env(safe-area-inset-right)));
-    padding: 10px max(16px, env(safe-area-inset-left)) 12px max(16px, env(safe-area-inset-right));
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0 0 8px;
+    box-shadow: none;
   }
 
   .arb-judging-sticky-bar .arb-scoreboard {
-    margin-bottom: 0;
     padding: 12px;
     gap: 8px;
   }
@@ -221,7 +229,7 @@
   }
 
   .arb-judging-content .arb-card:first-child {
-    scroll-margin-top: 8px;
+    scroll-margin-top: 12px;
   }
 
   .arb-actions {
@@ -233,6 +241,18 @@
 
   .arb-btn-save {
     width: 100%;
+  }
+
+  .arb-desktop-only {
+    display: none !important;
+  }
+
+  .arb-mobile-only {
+    display: block !important;
+  }
+
+  .arb-criteria-header-row {
+    display: none !important;
   }
 }
 
@@ -565,7 +585,7 @@
   color: #fca5a5;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767.98px) {
   .arb-occ-matrix-header {
     display: none;
   }
@@ -618,17 +638,13 @@
     display: flex;
     gap: 6px;
   }
-
-  .arb-criteria-header-row {
-    display: none;
-  }
-
-  .arb-desktop-only {
-    display: none;
-  }
 }
 
-@media (min-width: 641px) {
+@media (min-width: 768px) {
+  .arb-judging-sticky-bar {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  }
+
   .arb-mobile-only {
     display: none;
   }
