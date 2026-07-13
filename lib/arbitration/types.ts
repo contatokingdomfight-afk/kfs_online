@@ -88,6 +88,7 @@ export type ArbitrationJudgeRow = {
   id: string;
   displayName: string;
   userId: string | null;
+  roleLabel?: string | null;
 };
 
 export type FightJudgeAssignment = {

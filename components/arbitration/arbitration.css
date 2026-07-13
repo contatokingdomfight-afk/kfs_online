@@ -85,6 +85,35 @@
   text-align: right;
 }
 
+.arb-staff-judges-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.arb-staff-judges-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.arb-staff-judge-role {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(161, 161, 170, 0.12);
+}
+
 .arb-fight-meta {
   display: flex;
   flex-wrap: wrap;
@@ -156,46 +185,55 @@
 .arb-judging-sticky-bar {
   z-index: 30;
   background: var(--bg);
-}
-
-.arb-judging-sticky-spacer {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .arb-judging-sticky-bar {
-    position: sticky;
-    top: 0;
-    margin-bottom: 16px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-  }
-}
-
-@media (max-width: 767.98px) {
-  .arb-judging-sticky-bar {
-    position: fixed;
-    top: var(--arb-judging-sticky-top, 0px);
-    left: 0;
-    right: 0;
-    padding: 10px max(16px, env(safe-area-inset-left)) 12px max(16px, env(safe-area-inset-right));
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-  }
-
-  .arb-judging-sticky-spacer {
-    display: block;
-  }
-
-  .arb-judging-sticky-bar .arb-scoreboard {
-    margin-bottom: 0;
-  }
+  position: sticky;
+  top: 0;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
 .arb-judging-content {
   position: relative;
   z-index: 1;
+}
+
+@media (max-width: 767.98px) {
+  .arb-judging-sticky-bar {
+    margin-left: calc(-1 * max(var(--space-4), env(safe-area-inset-left)));
+    margin-right: calc(-1 * max(var(--space-4), env(safe-area-inset-right)));
+    padding: 10px max(16px, env(safe-area-inset-left)) 12px max(16px, env(safe-area-inset-right));
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .arb-judging-sticky-bar .arb-scoreboard {
+    margin-bottom: 0;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .arb-judging-sticky-bar .arb-score-total {
+    font-size: clamp(22px, 6vw, 32px);
+  }
+
+  .arb-judging-content {
+    padding-bottom: 8px;
+  }
+
+  .arb-judging-content .arb-card:first-child {
+    scroll-margin-top: 8px;
+  }
+
+  .arb-actions {
+    position: static;
+    margin-top: 16px;
+    padding: 0;
+    background: none;
+  }
+
+  .arb-btn-save {
+    width: 100%;
+  }
 }
 
 .arb-scoreboard {
@@ -353,10 +391,15 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 20px;
-  position: sticky;
-  bottom: 12px;
-  padding: 12px 0;
-  background: linear-gradient(transparent, var(--bg) 20%);
+}
+
+@media (min-width: 768px) {
+  .arb-actions {
+    position: sticky;
+    bottom: 12px;
+    padding: 12px 0;
+    background: linear-gradient(transparent, var(--bg) 20%);
+  }
 }
 
 .arb-btn-save {

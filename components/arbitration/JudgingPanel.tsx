@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getFightJudgingState, saveArbitrationRound, startFightJudging } from "@/app/coach/arbitragem/actions";
@@ -96,8 +96,6 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
   const [judgeResults, setJudgeResults] = useState(initial.judgeResults);
   const [winner, setWinner] = useState(initial.fight.winner);
   const [decisionType, setDecisionType] = useState(initial.fight.decisionType);
-  const stickyBarRef = useRef<HTMLDivElement>(null);
-  const [stickyBarHeight, setStickyBarHeight] = useState(0);
 
   const currentRoundState = rounds.find((r) => r.roundNumber === activeRound);
   const isLocked = currentRoundState?.isLocked ?? false;
@@ -244,53 +242,6 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
   const allRoundsDone = rounds.filter((r) => r.isLocked).length >= initial.fight.totalRounds;
   const showSummary = fightStatus === "COMPLETED" || allRoundsDone;
 
-  useLayoutEffect(() => {
-    const mq = window.matchMedia("(max-width: 767.98px)");
-
-    const updateStickyTop = () => {
-      if (!mq.matches) {
-        document.documentElement.style.removeProperty("--arb-judging-sticky-top");
-        return;
-      }
-      const banner = document.querySelector(".view-as-banner-root");
-      const header = document.querySelector(".app-shell-header");
-      let top = 0;
-      if (banner) {
-        top = banner.getBoundingClientRect().bottom;
-      } else if (header) {
-        top = header.getBoundingClientRect().bottom;
-      }
-      document.documentElement.style.setProperty("--arb-judging-sticky-top", `${Math.max(0, Math.round(top))}px`);
-    };
-
-    const updateBarHeight = () => {
-      setStickyBarHeight(stickyBarRef.current?.offsetHeight ?? 0);
-    };
-
-    updateStickyTop();
-    updateBarHeight();
-
-    const main = document.querySelector("main.coach-main, main.admin-main");
-    main?.addEventListener("scroll", updateStickyTop, { passive: true });
-    window.addEventListener("resize", updateStickyTop);
-    window.addEventListener("scroll", updateStickyTop, { passive: true });
-
-    const ro = new ResizeObserver(() => {
-      updateBarHeight();
-      updateStickyTop();
-    });
-    const bar = stickyBarRef.current;
-    if (bar) ro.observe(bar);
-
-    return () => {
-      main?.removeEventListener("scroll", updateStickyTop);
-      window.removeEventListener("resize", updateStickyTop);
-      window.removeEventListener("scroll", updateStickyTop);
-      ro.disconnect();
-      document.documentElement.style.removeProperty("--arb-judging-sticky-top");
-    };
-  }, [showSummary, activeRound, blueTotal, redTotal, displayOfficialBlue, displayOfficialRed]);
-
   if (fightStatus === "SCHEDULED") {
     return (
       <div className="arb-page">
@@ -310,7 +261,7 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
 
   return (
     <div className="arb-page arb-judging-page">
-      <div className="arb-judging-sticky-bar" ref={stickyBarRef}>
+      <div className="arb-judging-sticky-bar">
         <div className="arb-judging-header">
           <Link href="/coach/arbitragem" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
             ← Combates
@@ -358,8 +309,6 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
           </div>
         ) : null}
       </div>
-
-      <div className="arb-judging-sticky-spacer" style={{ height: stickyBarHeight }} aria-hidden />
 
       {!showSummary ? (
         <div className="arb-judging-content">

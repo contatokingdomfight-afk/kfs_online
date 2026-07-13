@@ -323,4 +323,5 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Lógica:** 6 critérios × 1–5 por canto; sugestão 10-Point Must em `lib/arbitration/scoring.ts`; múltiplos juízes com ficha independente; decisão unânime / maioria / dividida ao fechar o combate.
 - **Ocorrências (jul. 2026):** por atleta (azul/vermelho) em `ArbitrationRoundOccurrence`; desconto no placar oficial (`bluePointDeduction` / `redPointDeduction` em `ArbitrationRoundEvaluation`). Migração `20260713140000_arbitration_occurrences_per_corner.sql`.
 - **Apagar combate:** apenas `ADMIN` — `deleteArbitrationFight` + botão nas listas Combates e Histórico; cascade apaga rounds, avaliações e resultados.
+- **Juízes:** sincronização automática em `lib/arbitration/staff-judges.ts` — todos os `ADMIN`, professores (`Coach.is_active`) e assistentes activos (`SchoolAssistantCoach`) ficam disponíveis como juízes; `userId` liga a conta ao posto no julgamento.
 

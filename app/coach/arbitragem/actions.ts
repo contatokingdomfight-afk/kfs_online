@@ -18,6 +18,7 @@ import {
   occurrencesToDbPayload,
   syncDeductionsFromOccurrences,
 } from "@/lib/arbitration/occurrences";
+import { syncStaffArbitrationJudges } from "@/lib/arbitration/staff-judges";
 import type {
   ArbitrationModality,
   OccurrenceInput,
@@ -232,6 +233,7 @@ export async function createArbitrationFight(input: {
 }) {
   await requireArbitrationAccess();
   const supabase = supabaseOrThrow();
+  await syncStaffArbitrationJudges(supabase);
 
   const { data: fight, error } = await supabase
     .from("ArbitrationFight")
@@ -529,6 +531,7 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
 export async function resolveFightJudgeForUser(fightId: string, userId: string) {
   await requireArbitrationAccess();
   const supabase = supabaseOrThrow();
+  await syncStaffArbitrationJudges(supabase);
 
   const { data: assignments } = await supabase
     .from("ArbitrationFightJudge")

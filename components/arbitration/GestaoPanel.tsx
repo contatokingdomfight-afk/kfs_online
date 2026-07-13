@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   createArbitrationEvent,
   createArbitrationFight,
-  createArbitrationJudge,
 } from "@/app/coach/arbitragem/actions";
 import type { ArbitrationEventRow, ArbitrationJudgeRow, ArbitrationModality } from "@/lib/arbitration/types";
 
@@ -23,8 +22,6 @@ export function GestaoPanel({ events, judges }: Props) {
   const [eventName, setEventName] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [eventLocation, setEventLocation] = useState("");
-
-  const [judgeName, setJudgeName] = useState("");
 
   const [fightEventId, setFightEventId] = useState(events[0]?.id ?? "");
   const [modality, setModality] = useState<ArbitrationModality>("BOXING");
@@ -70,21 +67,6 @@ export function GestaoPanel({ events, judges }: Props) {
         setEventName("");
         setEventDate("");
         setEventLocation("");
-        router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erro");
-      }
-    });
-  };
-
-  const createJudge = () => {
-    startTransition(async () => {
-      setError(null);
-      setMessage(null);
-      try {
-        await createArbitrationJudge({ displayName: judgeName });
-        setMessage("Juiz registado.");
-        setJudgeName("");
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erro");
@@ -141,20 +123,24 @@ export function GestaoPanel({ events, judges }: Props) {
       </section>
 
       <section className="arb-card">
-        <h2 style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700 }}>Registar juiz</h2>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <input className="input" style={{ flex: 1, minWidth: 180 }} placeholder="Nome do juiz" value={judgeName} onChange={(e) => setJudgeName(e.target.value)} />
-          <button type="button" className="btn btn-secondary" disabled={pending || !judgeName.trim()} onClick={createJudge}>
-            Adicionar
-          </button>
-        </div>
+        <h2 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700 }}>Juízes disponíveis</h2>
+        <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--text-secondary)" }}>
+          Todos os administradores, professores activos e assistentes de professor são juízes automaticamente.
+        </p>
         {judges.length > 0 ? (
-          <ul style={{ margin: "12px 0 0", paddingLeft: 18, fontSize: 14, color: "var(--text-secondary)" }}>
+          <ul className="arb-staff-judges-list">
             {judges.map((j) => (
-              <li key={j.id}>{j.displayName}</li>
+              <li key={j.id}>
+                <span>{j.displayName}</span>
+                {j.roleLabel ? <span className="arb-staff-judge-role">{j.roleLabel}</span> : null}
+              </li>
             ))}
           </ul>
-        ) : null}
+        ) : (
+          <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: 0 }}>
+            Nenhum membro do staff encontrado. Verifique utilizadores com papel Admin, Professor ou Assistente.
+          </p>
+        )}
       </section>
 
       <section className="arb-card">
@@ -187,7 +173,14 @@ export function GestaoPanel({ events, judges }: Props) {
                       checked={selectedJudges.includes(j.id)}
                       onChange={() => toggleJudge(j.id)}
                     />
-                    {j.displayName}
+                    <span>
+                      {j.displayName}
+                      {j.roleLabel ? (
+                        <span style={{ marginLeft: 6, fontSize: 12, color: "var(--text-secondary)" }}>
+                          ({j.roleLabel})
+                        </span>
+                      ) : null}
+                    </span>
                   </label>
                 ))}
               </div>

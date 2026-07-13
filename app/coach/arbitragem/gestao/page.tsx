@@ -19,7 +19,7 @@ export default async function ArbitragemGestaoPage() {
       </header>
       <ArbitrationSubNav />
       <p style={{ color: "var(--text-secondary)", marginBottom: 16, fontSize: 14 }}>
-        Crie eventos internos, registe juízes e configure combates antes do julgamento.
+        Crie eventos internos e configure combates. Os juízes são os administradores, professores e assistentes da escola.
       </p>
       <GestaoPanel events={events} judges={judges} />
     </div>

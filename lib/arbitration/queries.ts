@@ -3,6 +3,7 @@ import "server-only";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import type { ArbitrationEventRow, ArbitrationFightListRow, ArbitrationJudgeRow } from "./types";
 import { unwrapSupabaseJoin } from "./supabase-join";
+import { listSyncedArbitrationJudges } from "./staff-judges";
 
 function clientOrNull() {
   return getAdminClientOrNull().client;
@@ -31,18 +32,7 @@ export async function listArbitrationEvents(): Promise<ArbitrationEventRow[]> {
 export async function listArbitrationJudges(): Promise<ArbitrationJudgeRow[]> {
   const supabase = clientOrNull();
   if (!supabase) return [];
-
-  const { data } = await supabase
-    .from("ArbitrationJudge")
-    .select("id, displayName, userId")
-    .eq("isActive", true)
-    .order("displayName");
-
-  return (data ?? []).map((j) => ({
-    id: j.id,
-    displayName: j.displayName,
-    userId: j.userId,
-  }));
+  return listSyncedArbitrationJudges(supabase);
 }
 
 export async function listArbitrationFights(options?: {
