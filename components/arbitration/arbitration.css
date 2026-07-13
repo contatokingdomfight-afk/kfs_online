@@ -113,13 +113,58 @@
 }
 
 .arb-judging-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  padding: 0 0 12px;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.arb-judging-page {
+  position: relative;
+}
+
+.arb-judging-sticky-bar {
+  z-index: 30;
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 0 16px;
-  margin-bottom: 16px;
+}
+
+.arb-judging-sticky-spacer {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .arb-judging-sticky-bar {
+    position: sticky;
+    top: 0;
+    margin-bottom: 16px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+
+@media (max-width: 767.98px) {
+  .arb-judging-sticky-bar {
+    position: fixed;
+    top: var(--arb-judging-sticky-top, 0px);
+    left: 0;
+    right: 0;
+    padding: 10px max(16px, env(safe-area-inset-left)) 12px max(16px, env(safe-area-inset-right));
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .arb-judging-sticky-spacer {
+    display: block;
+  }
+
+  .arb-judging-sticky-bar .arb-scoreboard {
+    margin-bottom: 0;
+  }
+}
+
+.arb-judging-content {
+  position: relative;
+  z-index: 1;
 }
 
 .arb-scoreboard {
@@ -310,7 +355,102 @@
   color: var(--text-secondary);
 }
 
+.arb-occ-matrix-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.arb-occ-matrix-corner {
+  text-align: center;
+  padding: 6px;
+}
+
+.arb-occ-matrix-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.arb-occ-matrix-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding-right: 6px;
+}
+
+.arb-occ-matrix-cell {
+  justify-content: center;
+  min-height: 44px;
+  margin: 0;
+}
+
+.arb-occ-matrix-cell .arb-mobile-only {
+  display: none;
+}
+
+.arb-deduction-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.arb-deduction-btn {
+  min-height: 48px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.arb-deduction-btn-blue.arb-deduction-btn-active {
+  border-color: #60a5fa;
+  background: rgba(96, 165, 250, 0.15);
+  color: #93c5fd;
+}
+
+.arb-deduction-btn-red.arb-deduction-btn-active {
+  border-color: #f87171;
+  background: rgba(248, 113, 113, 0.15);
+  color: #fca5a5;
+}
+
 @media (max-width: 640px) {
+  .arb-occ-matrix-header {
+    display: none;
+  }
+
+  .arb-occ-matrix-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .arb-occ-matrix-label {
+    margin-bottom: 4px;
+  }
+
+  .arb-occ-matrix-cell {
+    justify-content: flex-start;
+  }
+
+  .arb-occ-matrix-cell .arb-mobile-only {
+    display: inline;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
   .arb-criteria-row {
     grid-template-columns: 1fr;
     gap: 8px;
@@ -342,16 +482,14 @@
   .arb-criteria-header-row {
     display: none;
   }
-}
 
-@media (min-width: 641px) {
-  .arb-mobile-only {
+  .arb-desktop-only {
     display: none;
   }
 }
 
-@media (max-width: 640px) {
-  .arb-desktop-only {
+@media (min-width: 641px) {
+  .arb-mobile-only {
     display: none;
   }
 }

@@ -12,6 +12,12 @@ import {
   winnerFromTotals,
 } from "@/lib/arbitration/scoring";
 import { unwrapSupabaseJoin } from "@/lib/arbitration/supabase-join";
+import {
+  applyOfficialPointDeduction,
+  occurrencesFromDbRow,
+  occurrencesToDbPayload,
+  syncDeductionsFromOccurrences,
+} from "@/lib/arbitration/occurrences";
 import type {
   ArbitrationModality,
   OccurrenceInput,
@@ -282,8 +288,13 @@ export async function saveArbitrationRound(input: {
   }
 
   const suggested = suggestTenPointMust(blueTotal, redTotal);
-  const officialBlue = input.scores.officialBlueScore ?? suggested.blue;
-  const officialRed = input.scores.officialRedScore ?? suggested.red;
+  const syncedOccurrences = syncDeductionsFromOccurrences(input.occurrences);
+  const blueDeduction = Math.max(0, Math.min(3, Math.round(syncedOccurrences.blueOfficialPointDeduction)));
+  const redDeduction = Math.max(0, Math.min(3, Math.round(syncedOccurrences.redOfficialPointDeduction)));
+  const baseOfficialBlue = input.scores.officialBlueScore ?? suggested.blue;
+  const baseOfficialRed = input.scores.officialRedScore ?? suggested.red;
+  const officialBlue = applyOfficialPointDeduction(baseOfficialBlue, blueDeduction);
+  const officialRed = applyOfficialPointDeduction(baseOfficialRed, redDeduction);
 
   const evalPayload = {
     roundId,
@@ -296,28 +307,29 @@ export async function saveArbitrationRound(input: {
     suggestedRedOfficial: suggested.red,
     officialBlueScore: officialBlue,
     officialRedScore: officialRed,
+    bluePointDeduction: blueDeduction,
+    redPointDeduction: redDeduction,
     isLocked: true,
     lockedAt: new Date().toISOString(),
     scoredByUserId: access.userId,
     updatedAt: new Date().toISOString(),
   };
 
-  const { error: evalError } = await supabase.from("ArbitrationRoundEvaluation").upsert(evalPayload, {
-    onConflict: "roundId,fightJudgeId",
-  });
-  if (evalError) throw new Error(evalError.message);
-
   const { error: occError } = await supabase.from("ArbitrationRoundOccurrence").upsert(
     {
       roundId,
       fightJudgeId: input.fightJudgeId,
-      ...input.occurrences,
-      notes: input.occurrences.notes?.trim() || null,
+      ...occurrencesToDbPayload(syncedOccurrences),
       updatedAt: new Date().toISOString(),
     },
     { onConflict: "roundId,fightJudgeId" }
   );
   if (occError) throw new Error(occError.message);
+
+  const { error: evalError } = await supabase.from("ArbitrationRoundEvaluation").upsert(evalPayload, {
+    onConflict: "roundId,fightJudgeId",
+  });
+  if (evalError) throw new Error(evalError.message);
 
   const { data: fight } = await supabase
     .from("ArbitrationFight")
@@ -387,10 +399,22 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
     evaluations = data ?? [];
   }
 
+  const { data: occurrences } = await supabase
+    .from("ArbitrationRoundOccurrence")
+    .select("*")
+    .eq("fightJudgeId", fightJudgeId);
+
   const evalByRoundId = new Map(evaluations.map((e) => [e.roundId as string, e]));
+  const occByRoundId = new Map((occurrences ?? []).map((o) => [o.roundId as string, o]));
 
   const roundStates = (rounds ?? []).map((r) => {
     const ev = evalByRoundId.get(r.id);
+    const occ = occByRoundId.get(r.id);
+    const occInput = occurrencesFromDbRow(occ as Record<string, unknown> | undefined);
+    if (ev) {
+      occInput.blueOfficialPointDeduction = (ev.bluePointDeduction as number) ?? 0;
+      occInput.redOfficialPointDeduction = (ev.redPointDeduction as number) ?? 0;
+    }
     return {
       roundNumber: r.roundNumber,
       isLocked: Boolean(ev?.isLocked),
@@ -398,6 +422,7 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
       redTotal: (ev?.redTotal as number) ?? null,
       officialBlueScore: (ev?.officialBlueScore as number) ?? null,
       officialRedScore: (ev?.officialRedScore as number) ?? null,
+      occurrences: occInput,
       scores: ev
         ? {
             blue: cornerScoresFromEvaluationRow(ev, "blue"),
@@ -411,11 +436,6 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
     roundStates.find((r) => !r.isLocked)?.roundNumber ??
     (fight.currentRound as number) ??
     1;
-
-  const { data: occurrences } = await supabase
-    .from("ArbitrationRoundOccurrence")
-    .select("*")
-    .eq("fightJudgeId", fightJudgeId);
 
   const { data: judgeResults } = await supabase
     .from("ArbitrationFightResult")
@@ -440,7 +460,6 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
     },
     activeRound,
     rounds: roundStates,
-    occurrences: occurrences ?? [],
     judgeResults: (judgeResults ?? []).map((jr) => {
       const fj = unwrapSupabaseJoin(
         jr.fightJudge as

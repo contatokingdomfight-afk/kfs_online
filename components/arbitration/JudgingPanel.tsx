@@ -1,16 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { saveArbitrationRound, startFightJudging } from "@/app/coach/arbitragem/actions";
 import {
   CRITERIA_KEYS,
   CRITERIA_LABELS_PT,
-  EMPTY_OCCURRENCES,
   type CornerScores,
   type CriteriaKey,
   type OccurrenceInput,
 } from "@/lib/arbitration/types";
+import {
+  applyOfficialPointDeduction,
+  emptyOccurrences,
+  OCCURRENCE_FIELD_KEYS,
+  OCCURRENCE_LABELS_PT,
+  syncDeductionsFromOccurrences,
+  type OccurrenceFieldKey,
+} from "@/lib/arbitration/occurrences";
 import {
   decisionTypeLabel,
   modalityLabel,
@@ -25,6 +32,7 @@ type RoundState = {
   redTotal: number | null;
   officialBlueScore: number | null;
   officialRedScore: number | null;
+  occurrences?: OccurrenceInput | null;
   scores: { blue: CornerScores; red: CornerScores } | null;
 };
 
@@ -84,6 +92,8 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
   const [judgeResults, setJudgeResults] = useState(initial.judgeResults);
   const [winner, setWinner] = useState(initial.fight.winner);
   const [decisionType, setDecisionType] = useState(initial.fight.decisionType);
+  const stickyBarRef = useRef<HTMLDivElement>(null);
+  const [stickyBarHeight, setStickyBarHeight] = useState(0);
 
   const currentRoundState = rounds.find((r) => r.roundNumber === activeRound);
   const isLocked = currentRoundState?.isLocked ?? false;
@@ -96,7 +106,9 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
   const [officialRed, setOfficialRed] = useState<number | null>(
     currentRoundState?.officialRedScore ?? null
   );
-  const [occurrences, setOccurrences] = useState<OccurrenceInput>(EMPTY_OCCURRENCES);
+  const [occurrences, setOccurrences] = useState<OccurrenceInput>(
+    currentRoundState?.occurrences ?? emptyOccurrences()
+  );
 
   useEffect(() => {
     const rs = rounds.find((r) => r.roundNumber === activeRound);
@@ -104,8 +116,10 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
     setRed(rs?.scores?.red ?? emptyScores());
     setOfficialBlue(rs?.officialBlueScore ?? null);
     setOfficialRed(rs?.officialRedScore ?? null);
-    setOccurrences(EMPTY_OCCURRENCES);
+    setOccurrences(rs?.occurrences ?? emptyOccurrences());
   }, [activeRound, rounds]);
+
+  const syncedOccurrences = useMemo(() => syncDeductionsFromOccurrences(occurrences), [occurrences]);
 
   const blueTotal = useMemo(() => sumCornerScores(blue), [blue]);
   const redTotal = useMemo(() => sumCornerScores(red), [red]);
@@ -115,8 +129,17 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
     return suggestTenPointMust(blueTotal, redTotal);
   }, [blueTotal, redTotal]);
 
-  const displayOfficialBlue = officialBlue ?? suggested?.blue ?? null;
-  const displayOfficialRed = officialRed ?? suggested?.red ?? null;
+  const baseOfficialBlue = officialBlue ?? suggested?.blue ?? null;
+  const baseOfficialRed = officialRed ?? suggested?.red ?? null;
+
+  const displayOfficialBlue =
+    baseOfficialBlue != null
+      ? applyOfficialPointDeduction(baseOfficialBlue, syncedOccurrences.blueOfficialPointDeduction)
+      : null;
+  const displayOfficialRed =
+    baseOfficialRed != null
+      ? applyOfficialPointDeduction(baseOfficialRed, syncedOccurrences.redOfficialPointDeduction)
+      : null;
 
   const setScore = useCallback(
     (corner: "blue" | "red", key: CriteriaKey, value: number) => {
@@ -150,10 +173,10 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
           scores: {
             blue,
             red,
-            officialBlueScore: displayOfficialBlue,
-            officialRedScore: displayOfficialRed,
+            officialBlueScore: baseOfficialBlue,
+            officialRedScore: baseOfficialRed,
           },
-          occurrences,
+          occurrences: syncedOccurrences,
         });
 
         setRounds((prev) =>
@@ -166,6 +189,7 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
                   redTotal: result.redTotal,
                   officialBlueScore: result.officialBlue,
                   officialRedScore: result.officialRed,
+                  occurrences: syncedOccurrences,
                   scores: { blue, red },
                 }
               : r
@@ -201,6 +225,53 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
   const allRoundsDone = rounds.filter((r) => r.isLocked).length >= initial.fight.totalRounds;
   const showSummary = fightStatus === "COMPLETED" || allRoundsDone;
 
+  useLayoutEffect(() => {
+    const mq = window.matchMedia("(max-width: 767.98px)");
+
+    const updateStickyTop = () => {
+      if (!mq.matches) {
+        document.documentElement.style.removeProperty("--arb-judging-sticky-top");
+        return;
+      }
+      const banner = document.querySelector(".view-as-banner-root");
+      const header = document.querySelector(".app-shell-header");
+      let top = 0;
+      if (banner) {
+        top = banner.getBoundingClientRect().bottom;
+      } else if (header) {
+        top = header.getBoundingClientRect().bottom;
+      }
+      document.documentElement.style.setProperty("--arb-judging-sticky-top", `${Math.max(0, Math.round(top))}px`);
+    };
+
+    const updateBarHeight = () => {
+      setStickyBarHeight(stickyBarRef.current?.offsetHeight ?? 0);
+    };
+
+    updateStickyTop();
+    updateBarHeight();
+
+    const main = document.querySelector("main.coach-main, main.admin-main");
+    main?.addEventListener("scroll", updateStickyTop, { passive: true });
+    window.addEventListener("resize", updateStickyTop);
+    window.addEventListener("scroll", updateStickyTop, { passive: true });
+
+    const ro = new ResizeObserver(() => {
+      updateBarHeight();
+      updateStickyTop();
+    });
+    const bar = stickyBarRef.current;
+    if (bar) ro.observe(bar);
+
+    return () => {
+      main?.removeEventListener("scroll", updateStickyTop);
+      window.removeEventListener("resize", updateStickyTop);
+      window.removeEventListener("scroll", updateStickyTop);
+      ro.disconnect();
+      document.documentElement.style.removeProperty("--arb-judging-sticky-top");
+    };
+  }, [showSummary, activeRound, blueTotal, redTotal, displayOfficialBlue, displayOfficialRed]);
+
   if (fightStatus === "SCHEDULED") {
     return (
       <div className="arb-page">
@@ -219,28 +290,28 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
   }
 
   return (
-    <div className="arb-page">
-      <div className="arb-judging-header">
-        <Link href="/coach/arbitragem" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
-          ← Combates
-        </Link>
-        <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{initial.fight.eventName}</div>
-          <div style={{ fontSize: 14, fontWeight: 600 }}>
-            {modalityLabel(initial.fight.modality)} · {initial.fight.category}
-            {initial.fight.weightClass ? ` · ${initial.fight.weightClass}` : ""}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>
-            {judgeLabel}
-            {initial.fight.roundDurationSeconds
-              ? ` · ${Math.floor(initial.fight.roundDurationSeconds / 60)}:${String(initial.fight.roundDurationSeconds % 60).padStart(2, "0")}`
-              : ""}
+    <div className="arb-page arb-judging-page">
+      <div className="arb-judging-sticky-bar" ref={stickyBarRef}>
+        <div className="arb-judging-header">
+          <Link href="/coach/arbitragem" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
+            ← Combates
+          </Link>
+          <div style={{ marginTop: 8 }}>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{initial.fight.eventName}</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>
+              {modalityLabel(initial.fight.modality)} · {initial.fight.category}
+              {initial.fight.weightClass ? ` · ${initial.fight.weightClass}` : ""}
+            </div>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>
+              {judgeLabel}
+              {initial.fight.roundDurationSeconds
+                ? ` · ${Math.floor(initial.fight.roundDurationSeconds / 60)}:${String(initial.fight.roundDurationSeconds % 60).padStart(2, "0")}`
+                : ""}
+            </div>
           </div>
         </div>
-      </div>
 
-      {!showSummary ? (
-        <>
+        {!showSummary ? (
           <div className="arb-scoreboard">
             <div style={{ textAlign: "center" }}>
               <div className="arb-corner-blue" style={{ fontSize: 14, marginBottom: 4 }}>
@@ -266,7 +337,13 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
               <div className="arb-score-total arb-corner-red">{redTotal ?? "—"}</div>
             </div>
           </div>
+        ) : null}
+      </div>
 
+      <div className="arb-judging-sticky-spacer" style={{ height: stickyBarHeight }} aria-hidden />
+
+      {!showSummary ? (
+        <div className="arb-judging-content">
           <div className="arb-card">
             <div className="arb-desktop-only arb-criteria-header-row" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) repeat(5,1fr) repeat(5,1fr)", gap: 6, marginBottom: 8 }}>
               <div />
@@ -300,7 +377,7 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
               <div className="arb-official-input">
                 <label className="arb-corner-blue">Azul</label>
                 <select
-                  value={displayOfficialBlue ?? ""}
+                  value={baseOfficialBlue ?? ""}
                   disabled={isLocked || pending}
                   onChange={(e) => setOfficialBlue(Number(e.target.value))}
                 >
@@ -309,11 +386,16 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
                     <option key={n} value={n}>{n}</option>
                   ))}
                 </select>
+                {syncedOccurrences.blueOfficialPointDeduction > 0 && baseOfficialBlue != null ? (
+                  <span style={{ fontSize: 12, color: "var(--warning)" }}>
+                    −{syncedOccurrences.blueOfficialPointDeduction} → {displayOfficialBlue}
+                  </span>
+                ) : null}
               </div>
               <div className="arb-official-input">
                 <label className="arb-corner-red">Vermelho</label>
                 <select
-                  value={displayOfficialRed ?? ""}
+                  value={baseOfficialRed ?? ""}
                   disabled={isLocked || pending}
                   onChange={(e) => setOfficialRed(Number(e.target.value))}
                 >
@@ -322,14 +404,24 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
                     <option key={n} value={n}>{n}</option>
                   ))}
                 </select>
+                {syncedOccurrences.redOfficialPointDeduction > 0 && baseOfficialRed != null ? (
+                  <span style={{ fontSize: 12, color: "var(--warning)" }}>
+                    −{syncedOccurrences.redOfficialPointDeduction} → {displayOfficialRed}
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>
 
           <div className="arb-card">
             <h3 style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 700 }}>Ocorrências</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--text-secondary)" }}>
+              Marque o atleta a quem se aplica cada ocorrência.
+            </p>
             <OccurrencesForm
               value={occurrences}
+              athleteBlueName={initial.fight.athleteBlueName}
+              athleteRedName={initial.fight.athleteRedName}
               disabled={isLocked || pending}
               onChange={setOccurrences}
             />
@@ -351,7 +443,7 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
           ) : (
             <p style={{ color: "var(--text-secondary)", textAlign: "center" }}>Round {activeRound} finalizado.</p>
           )}
-        </>
+        </div>
       ) : null}
 
       {(showSummary || rounds.some((r) => r.isLocked)) && (
@@ -453,41 +545,112 @@ function CriteriaRow({
   );
 }
 
-const OCCURRENCE_FIELDS: { key: keyof OccurrenceInput; label: string }[] = [
-  { key: "illegalStrike", label: "Golpe ilegal" },
-  { key: "verbalWarning", label: "Advertência verbal" },
-  { key: "pointDeduction", label: "Perda de ponto" },
-  { key: "knockdown", label: "Knockdown" },
-  { key: "count", label: "Contagem" },
-  { key: "excessiveHolding", label: "Segurar excessivamente" },
-  { key: "lackOfAggressiveness", label: "Falta de combatividade" },
-  { key: "other", label: "Outro" },
-];
+const OCCURRENCE_FIELDS = OCCURRENCE_FIELD_KEYS.map((key) => ({
+  key,
+  label: OCCURRENCE_LABELS_PT[key],
+}));
+
+function toggleCornerOccurrence(
+  value: OccurrenceInput,
+  corner: "blue" | "red",
+  field: OccurrenceFieldKey,
+  checked: boolean
+): OccurrenceInput {
+  const next: OccurrenceInput = {
+    ...value,
+    [corner]: { ...value[corner], [field]: checked },
+  };
+  if (field === "pointDeduction") {
+    if (corner === "blue") {
+      next.blueOfficialPointDeduction = checked ? Math.max(1, value.blueOfficialPointDeduction) : 0;
+    } else {
+      next.redOfficialPointDeduction = checked ? Math.max(1, value.redOfficialPointDeduction) : 0;
+    }
+  }
+  return next;
+}
 
 function OccurrencesForm({
   value,
+  athleteBlueName,
+  athleteRedName,
   disabled,
   onChange,
 }: {
   value: OccurrenceInput;
+  athleteBlueName: string;
+  athleteRedName: string;
   disabled: boolean;
   onChange: (v: OccurrenceInput) => void;
 }) {
+  const synced = syncDeductionsFromOccurrences(value);
+
   return (
     <>
-      <div className="arb-occurrences">
-        {OCCURRENCE_FIELDS.map(({ key, label }) => (
-          <label key={key} className="arb-occurrence-check">
+      <div className="arb-occ-matrix-header arb-desktop-only">
+        <div />
+        <div className="arb-occ-matrix-corner arb-corner-blue">{athleteBlueName}</div>
+        <div className="arb-occ-matrix-corner arb-corner-red">{athleteRedName}</div>
+      </div>
+
+      {OCCURRENCE_FIELDS.map(({ key, label }) => (
+        <div key={key} className="arb-occ-matrix-row">
+          <div className="arb-occ-matrix-label">{label}</div>
+          <label className="arb-occurrence-check arb-occ-matrix-cell">
             <input
               type="checkbox"
-              checked={Boolean(value[key])}
+              checked={value.blue[key]}
               disabled={disabled}
-              onChange={(e) => onChange({ ...value, [key]: e.target.checked })}
+              onChange={(e) => onChange(toggleCornerOccurrence(value, "blue", key, e.target.checked))}
             />
-            {label}
+            <span className="arb-mobile-only">Azul</span>
           </label>
-        ))}
+          <label className="arb-occurrence-check arb-occ-matrix-cell">
+            <input
+              type="checkbox"
+              checked={value.red[key]}
+              disabled={disabled}
+              onChange={(e) => onChange(toggleCornerOccurrence(value, "red", key, e.target.checked))}
+            />
+            <span className="arb-mobile-only">Verm.</span>
+          </label>
+        </div>
+      ))}
+
+      <div style={{ marginTop: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Desconto no placar oficial</div>
+        <div className="arb-deduction-btns">
+          <button
+            type="button"
+            className={`arb-deduction-btn arb-deduction-btn-blue${synced.blueOfficialPointDeduction > 0 ? " arb-deduction-btn-active" : ""}`}
+            disabled={disabled}
+            onClick={() =>
+              onChange({
+                ...value,
+                blueOfficialPointDeduction: value.blueOfficialPointDeduction > 0 ? 0 : 1,
+                blue: { ...value.blue, pointDeduction: value.blueOfficialPointDeduction > 0 ? false : true },
+              })
+            }
+          >
+            −1 {athleteBlueName}
+          </button>
+          <button
+            type="button"
+            className={`arb-deduction-btn arb-deduction-btn-red${synced.redOfficialPointDeduction > 0 ? " arb-deduction-btn-active" : ""}`}
+            disabled={disabled}
+            onClick={() =>
+              onChange({
+                ...value,
+                redOfficialPointDeduction: value.redOfficialPointDeduction > 0 ? 0 : 1,
+                red: { ...value.red, pointDeduction: value.redOfficialPointDeduction > 0 ? false : true },
+              })
+            }
+          >
+            −1 {athleteRedName}
+          </button>
+        </div>
       </div>
+
       <textarea
         className="input"
         placeholder="Observações…"
@@ -495,7 +658,7 @@ function OccurrencesForm({
         disabled={disabled}
         value={value.notes}
         onChange={(e) => onChange({ ...value, notes: e.target.value })}
-        style={{ width: "100%", marginTop: 8, minHeight: 64 }}
+        style={{ width: "100%", marginTop: 12, minHeight: 64 }}
       />
     </>
   );

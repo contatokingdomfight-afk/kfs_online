@@ -38,7 +38,7 @@ export type RoundScoresInput = {
   officialRedScore: number | null;
 };
 
-export type OccurrenceInput = {
+export type CornerOccurrences = {
   illegalStrike: boolean;
   verbalWarning: boolean;
   pointDeduction: boolean;
@@ -47,19 +47,15 @@ export type OccurrenceInput = {
   excessiveHolding: boolean;
   lackOfAggressiveness: boolean;
   other: boolean;
-  notes: string;
 };
 
-export const EMPTY_OCCURRENCES: OccurrenceInput = {
-  illegalStrike: false,
-  verbalWarning: false,
-  pointDeduction: false,
-  knockdown: false,
-  count: false,
-  excessiveHolding: false,
-  lackOfAggressiveness: false,
-  other: false,
-  notes: "",
+export type OccurrenceInput = {
+  blue: CornerOccurrences;
+  red: CornerOccurrences;
+  /** Pontos descontados do placar oficial 10-Point Must (0–3) */
+  blueOfficialPointDeduction: number;
+  redOfficialPointDeduction: number;
+  notes: string;
 };
 
 export type ArbitrationEventRow = {

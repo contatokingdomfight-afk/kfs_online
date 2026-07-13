@@ -321,4 +321,5 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Acesso:** `ADMIN`, `COACH` e assistente de professor (`SchoolAssistantCoach` activo); `requireArbitrationAccess()` nas server actions; menu «🏆 Arbitragem» em coach e admin.
 - **BD:** migração `20260713120000_arbitration_module.sql` — `ArbitrationEvent`, `ArbitrationFight`, `ArbitrationJudge`, `ArbitrationFightJudge`, `ArbitrationFightRound`, `ArbitrationRoundEvaluation`, `ArbitrationRoundOccurrence`, `ArbitrationFightResult`.
 - **Lógica:** 6 critérios × 1–5 por canto; sugestão 10-Point Must em `lib/arbitration/scoring.ts`; múltiplos juízes com ficha independente; decisão unânime / maioria / dividida ao fechar o combate.
+- **Ocorrências (jul. 2026):** por atleta (azul/vermelho) em `ArbitrationRoundOccurrence`; desconto no placar oficial (`bluePointDeduction` / `redPointDeduction` em `ArbitrationRoundEvaluation`). Migração `20260713140000_arbitration_occurrences_per_corner.sql`.
 
