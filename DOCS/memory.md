@@ -317,7 +317,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 ## Arbitragem (eventos internos — jul. 2026)
 
-- **Rotas:** `/coach/arbitragem` (lista de combates), `/coach/arbitragem/[fightId]` (julgamento), `/coach/arbitragem/gestao` (eventos, juízes, combates), `/coach/arbitragem/historico` (filtros e fichas).
+- **Rotas:** `/coach/arbitragem` (lista de combates), `/coach/arbitragem/[fightId]` (julgamento), `/coach/arbitragem/gestao` (abas Eventos / Combates / Critérios / Juízes, `?secao=`), `/coach/arbitragem/historico` (filtros e fichas).
 - **Acesso:** `ADMIN`, `COACH` e assistente de professor (`SchoolAssistantCoach` activo); `requireArbitrationAccess()` nas server actions; menu «🏆 Arbitragem» em coach e admin.
 - **BD:** migração `20260713120000_arbitration_module.sql` — `ArbitrationEvent`, `ArbitrationFight`, `ArbitrationJudge`, `ArbitrationFightJudge`, `ArbitrationFightRound`, `ArbitrationRoundEvaluation`, `ArbitrationRoundOccurrence`, `ArbitrationFightResult`.
 - **Lógica:** critérios × 1–5 por canto; sugestão 10-Point Must em `lib/arbitration/scoring.ts`; múltiplos juízes com ficha independente; decisão unânime / maioria / dividida ao fechar o combate. Perfil **Kingdom (padrão)** = 6 critérios fixos; perfis personalizados em Gestão (`ArbitrationCriteriaSet`, migração `20260713180000_arbitration_criteria_sets.sql`) com snapshot em `ArbitrationEvent.criteriaSnapshot` ao criar o evento; pontuações dinâmicas em `criteriaScoresJson` (`lib/arbitration/criteria-sets.ts`).

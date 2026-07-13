@@ -2,6 +2,7 @@ import { requireArbitrationAccess } from "@/lib/arbitration/auth";
 import { listArbitrationEvents, listArbitrationCriteriaSets, listArbitrationJudges } from "@/lib/arbitration/queries";
 import { ArbitrationSubNav } from "@/components/arbitration/ArbitrationSubNav";
 import { GestaoPanel } from "@/components/arbitration/GestaoPanel";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Gestão | Arbitragem",
@@ -23,9 +24,11 @@ export default async function ArbitragemGestaoPage() {
       </header>
       <ArbitrationSubNav />
       <p style={{ color: "var(--text-secondary)", marginBottom: 16, fontSize: 14 }}>
-        Crie eventos internos e configure combates. Os juízes são os administradores, professores e assistentes da escola.
+        Configure eventos, combates, critérios e consulte os juízes do staff.
       </p>
-      <GestaoPanel events={events} judges={judges} criteriaSets={criteriaSets} />
+      <Suspense fallback={<p style={{ color: "var(--text-secondary)" }}>A carregar…</p>}>
+        <GestaoPanel events={events} judges={judges} criteriaSets={criteriaSets} />
+      </Suspense>
     </div>
   );
 }

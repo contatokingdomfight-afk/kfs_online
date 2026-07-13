@@ -41,6 +41,55 @@
   color: #fff;
 }
 
+.arb-gestao-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.arb-gestao-tab {
+  font-family: inherit;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 11px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  top: 1px;
+  border-bottom: 2px solid transparent;
+  flex-shrink: 0;
+}
+
+.arb-gestao-tab:hover {
+  color: var(--text-primary);
+}
+
+.arb-gestao-tab-active {
+  color: var(--text-primary);
+  border-bottom-color: var(--primary);
+}
+
+.arb-gestao-inline-link {
+  font: inherit;
+  font-weight: 600;
+  color: var(--primary);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .arb-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
