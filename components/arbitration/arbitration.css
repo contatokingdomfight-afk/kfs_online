@@ -1,0 +1,357 @@
+.arb-page {
+  max-width: min(960px, 100%);
+}
+
+.arb-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(12px, 3vw, 16px);
+  margin-bottom: clamp(16px, 4vw, 24px);
+}
+
+.arb-title {
+  margin: 0;
+  font-size: clamp(20px, 5vw, 26px);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.arb-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.arb-subnav a {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+}
+
+.arb-subnav a.arb-subnav-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.arb-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: clamp(14px, 3.5vw, 18px);
+  margin-bottom: 12px;
+}
+
+.arb-fight-card {
+  display: grid;
+  gap: 10px;
+}
+
+.arb-fight-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.arb-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.arb-badge-scheduled {
+  background: rgba(161, 161, 170, 0.15);
+  color: var(--text-secondary);
+}
+
+.arb-badge-progress {
+  background: rgba(193, 18, 31, 0.2);
+  color: #f87171;
+}
+
+.arb-badge-done {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success);
+}
+
+.arb-athletes {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+
+.arb-corner-blue {
+  color: #60a5fa;
+  font-weight: 700;
+  font-size: clamp(15px, 4vw, 18px);
+}
+
+.arb-corner-red {
+  color: #f87171;
+  font-weight: 700;
+  font-size: clamp(15px, 4vw, 18px);
+}
+
+.arb-vs {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+
+.arb-judging-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0 16px;
+  margin-bottom: 16px;
+}
+
+.arb-scoreboard {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #0b0b0b 0%, #1a0a0c 50%, #0b0b0b 100%);
+  border: 2px solid var(--primary);
+  margin-bottom: 16px;
+}
+
+.arb-score-total {
+  font-size: clamp(28px, 8vw, 42px);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.arb-score-center {
+  text-align: center;
+}
+
+.arb-round-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.arb-criteria-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(5, minmax(40px, 1fr)) repeat(5, minmax(40px, 1fr));
+  gap: 6px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.arb-criteria-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding-right: 8px;
+}
+
+.arb-criteria-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.arb-criteria-header-blue {
+  color: #60a5fa;
+  grid-column: span 5;
+}
+
+.arb-criteria-header-red {
+  color: #f87171;
+  grid-column: span 5;
+}
+
+.arb-score-btn {
+  min-height: 44px;
+  min-width: 44px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.15s, background 0.15s;
+}
+
+.arb-score-btn:active {
+  transform: scale(0.96);
+}
+
+.arb-score-btn-blue.arb-score-btn-selected {
+  border-color: #60a5fa;
+  background: rgba(96, 165, 250, 0.2);
+  color: #93c5fd;
+}
+
+.arb-score-btn-red.arb-score-btn-selected {
+  border-color: #f87171;
+  background: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+
+.arb-official-scores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.arb-official-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.arb-official-input label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.arb-official-input select {
+  min-height: 48px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+.arb-occurrences {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.arb-occurrence-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.arb-occurrence-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+}
+
+.arb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+  position: sticky;
+  bottom: 12px;
+  padding: 12px 0;
+  background: linear-gradient(transparent, var(--bg) 20%);
+}
+
+.arb-btn-save {
+  flex: 1;
+  min-height: 52px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.arb-summary-round {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  background: var(--bg);
+}
+
+.arb-judge-results {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.arb-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .arb-criteria-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px 0;
+  }
+
+  .arb-criteria-label {
+    margin-bottom: 4px;
+  }
+
+  .arb-corner-scores {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .arb-corner-scores-label {
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 52px;
+  }
+
+  .arb-corner-scores-btns {
+    display: flex;
+    gap: 6px;
+  }
+
+  .arb-criteria-header-row {
+    display: none;
+  }
+}
+
+@media (min-width: 641px) {
+  .arb-mobile-only {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .arb-desktop-only {
+    display: none;
+  }
+}

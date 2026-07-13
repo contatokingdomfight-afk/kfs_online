@@ -21,6 +21,7 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
     { label: t("navPlans"), href: "/admin/planos" },
     { label: t("navCourses"), href: "/admin/cursos" },
     { label: t("navEventsAdmin"), href: "/admin/eventos" },
+    { label: "🏆 Arbitragem", href: "/coach/arbitragem" },
     {
       label: t("navEvaluationDocs"),
       href: "/como-sou-avaliado",

@@ -1,0 +1,194 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import {
+  createArbitrationEvent,
+  createArbitrationFight,
+  createArbitrationJudge,
+} from "@/app/coach/arbitragem/actions";
+import type { ArbitrationEventRow, ArbitrationJudgeRow, ArbitrationModality } from "@/lib/arbitration/types";
+
+type Props = {
+  events: ArbitrationEventRow[];
+  judges: ArbitrationJudgeRow[];
+};
+
+export function GestaoPanel({ events, judges }: Props) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const [eventName, setEventName] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+
+  const [judgeName, setJudgeName] = useState("");
+
+  const [fightEventId, setFightEventId] = useState(events[0]?.id ?? "");
+  const [modality, setModality] = useState<ArbitrationModality>("BOXING");
+  const [category, setCategory] = useState("");
+  const [weightClass, setWeightClass] = useState("");
+  const [athleteBlue, setAthleteBlue] = useState("");
+  const [athleteRed, setAthleteRed] = useState("");
+  const [totalRounds, setTotalRounds] = useState(3);
+  const [selectedJudges, setSelectedJudges] = useState<string[]>([]);
+
+  const toggleJudge = (id: string) => {
+    setSelectedJudges((prev) => {
+      if (prev.includes(id)) return prev.filter((j) => j !== id);
+      if (prev.length >= 3) return prev;
+      return [...prev, id];
+    });
+  };
+
+  const createEvent = () => {
+    startTransition(async () => {
+      setError(null);
+      setMessage(null);
+      try {
+        await createArbitrationEvent({
+          name: eventName,
+          eventDate: eventDate || null,
+          location: eventLocation || null,
+          totalRoundsDefault: 3,
+        });
+        setMessage("Evento criado.");
+        setEventName("");
+        setEventDate("");
+        setEventLocation("");
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Erro");
+      }
+    });
+  };
+
+  const createJudge = () => {
+    startTransition(async () => {
+      setError(null);
+      setMessage(null);
+      try {
+        await createArbitrationJudge({ displayName: judgeName });
+        setMessage("Juiz registado.");
+        setJudgeName("");
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Erro");
+      }
+    });
+  };
+
+  const createFight = () => {
+    startTransition(async () => {
+      setError(null);
+      setMessage(null);
+      try {
+        if (!fightEventId) throw new Error("Seleccione um evento.");
+        await createArbitrationFight({
+          eventId: fightEventId,
+          modality,
+          category,
+          weightClass: weightClass || null,
+          athleteBlueName: athleteBlue,
+          athleteRedName: athleteRed,
+          totalRounds,
+          judgeIds: selectedJudges,
+        });
+        setMessage("Combate criado.");
+        setCategory("");
+        setWeightClass("");
+        setAthleteBlue("");
+        setAthleteRed("");
+        setSelectedJudges([]);
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Erro");
+      }
+    });
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 20 }}>
+      {message ? <p style={{ color: "var(--success)" }}>{message}</p> : null}
+      {error ? <p style={{ color: "var(--danger)" }}>{error}</p> : null}
+
+      <section className="arb-card">
+        <h2 style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700 }}>Novo evento</h2>
+        <div style={{ display: "grid", gap: 10 }}>
+          <input className="input" placeholder="Nome do evento" value={eventName} onChange={(e) => setEventName(e.target.value)} />
+          <input className="input" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
+          <input className="input" placeholder="Local" value={eventLocation} onChange={(e) => setEventLocation(e.target.value)} />
+          <button type="button" className="btn btn-primary" disabled={pending || !eventName.trim()} onClick={createEvent}>
+            Criar evento
+          </button>
+        </div>
+      </section>
+
+      <section className="arb-card">
+        <h2 style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700 }}>Registar juiz</h2>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <input className="input" style={{ flex: 1, minWidth: 180 }} placeholder="Nome do juiz" value={judgeName} onChange={(e) => setJudgeName(e.target.value)} />
+          <button type="button" className="btn btn-secondary" disabled={pending || !judgeName.trim()} onClick={createJudge}>
+            Adicionar
+          </button>
+        </div>
+        {judges.length > 0 ? (
+          <ul style={{ margin: "12px 0 0", paddingLeft: 18, fontSize: 14, color: "var(--text-secondary)" }}>
+            {judges.map((j) => (
+              <li key={j.id}>{j.displayName}</li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
+      <section className="arb-card">
+        <h2 style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700 }}>Novo combate</h2>
+        {events.length === 0 ? (
+          <p style={{ color: "var(--text-secondary)" }}>Crie um evento primeiro.</p>
+        ) : (
+          <div style={{ display: "grid", gap: 10 }}>
+            <select className="input" value={fightEventId} onChange={(e) => setFightEventId(e.target.value)}>
+              {events.map((ev) => (
+                <option key={ev.id} value={ev.id}>{ev.name}</option>
+              ))}
+            </select>
+            <select className="input" value={modality} onChange={(e) => setModality(e.target.value as ArbitrationModality)}>
+              <option value="BOXING">Boxe</option>
+              <option value="MUAY_THAI">Muay Thai</option>
+            </select>
+            <input className="input" placeholder="Categoria (ex.: Sénior)" value={category} onChange={(e) => setCategory(e.target.value)} />
+            <input className="input" placeholder="Peso (ex.: -70 kg)" value={weightClass} onChange={(e) => setWeightClass(e.target.value)} />
+            <input className="input" placeholder="Atleta Azul" value={athleteBlue} onChange={(e) => setAthleteBlue(e.target.value)} />
+            <input className="input" placeholder="Atleta Vermelho" value={athleteRed} onChange={(e) => setAthleteRed(e.target.value)} />
+            <input className="input" type="number" min={1} max={12} value={totalRounds} onChange={(e) => setTotalRounds(Number(e.target.value))} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Juízes (máx. 3)</div>
+              <div className="arb-occurrences">
+                {judges.map((j) => (
+                  <label key={j.id} className="arb-occurrence-check">
+                    <input
+                      type="checkbox"
+                      checked={selectedJudges.includes(j.id)}
+                      onChange={() => toggleJudge(j.id)}
+                    />
+                    {j.displayName}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={pending || !category.trim() || !athleteBlue.trim() || !athleteRed.trim()}
+              onClick={createFight}
+            >
+              Criar combate
+            </button>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}

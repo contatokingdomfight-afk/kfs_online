@@ -315,3 +315,10 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **KPIs tesouraria** (`lib/cash-balance.ts`): **Caixa** = saldo bancário acumulado; **Espécie em mão** = físico não depositado; **Entradas do mês** por forma. Legado sem `paymentMethod` → `TRANSFER` (migração `20260710120000_backfill_payment_method_transfer.sql`).
 
 
+## Arbitragem (eventos internos — jul. 2026)
+
+- **Rotas:** `/coach/arbitragem` (lista de combates), `/coach/arbitragem/[fightId]` (julgamento), `/coach/arbitragem/gestao` (eventos, juízes, combates), `/coach/arbitragem/historico` (filtros e fichas).
+- **Acesso:** `ADMIN`, `COACH` e assistente de professor (`SchoolAssistantCoach` activo); `requireArbitrationAccess()` nas server actions; menu «🏆 Arbitragem» em coach e admin.
+- **BD:** migração `20260713120000_arbitration_module.sql` — `ArbitrationEvent`, `ArbitrationFight`, `ArbitrationJudge`, `ArbitrationFightJudge`, `ArbitrationFightRound`, `ArbitrationRoundEvaluation`, `ArbitrationRoundOccurrence`, `ArbitrationFightResult`.
+- **Lógica:** 6 critérios × 1–5 por canto; sugestão 10-Point Must em `lib/arbitration/scoring.ts`; múltiplos juízes com ficha independente; decisão unânime / maioria / dividida ao fechar o combate.
+

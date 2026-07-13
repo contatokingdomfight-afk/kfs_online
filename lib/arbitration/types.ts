@@ -1,0 +1,118 @@
+export type ArbitrationModality = "BOXING" | "MUAY_THAI";
+export type ArbitrationFightStatus = "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+export type ArbitrationCorner = "BLUE" | "RED" | "DRAW";
+export type ArbitrationDecisionType = "UNANIMOUS" | "SPLIT" | "MAJORITY" | "DRAW";
+
+export type CriteriaKey =
+  | "offensiveVolume"
+  | "strikePrecision"
+  | "ringControl"
+  | "movement"
+  | "defense"
+  | "technique";
+
+export const CRITERIA_KEYS: CriteriaKey[] = [
+  "offensiveVolume",
+  "strikePrecision",
+  "ringControl",
+  "movement",
+  "defense",
+  "technique",
+];
+
+export const CRITERIA_LABELS_PT: Record<CriteriaKey, string> = {
+  offensiveVolume: "Volume ofensivo",
+  strikePrecision: "Precisão dos golpes",
+  ringControl: "Controle do ringue",
+  movement: "Movimentação",
+  defense: "Defesa",
+  technique: "Técnica",
+};
+
+export type CornerScores = Record<CriteriaKey, number | null>;
+
+export type RoundScoresInput = {
+  blue: CornerScores;
+  red: CornerScores;
+  officialBlueScore: number | null;
+  officialRedScore: number | null;
+};
+
+export type OccurrenceInput = {
+  illegalStrike: boolean;
+  verbalWarning: boolean;
+  pointDeduction: boolean;
+  knockdown: boolean;
+  count: boolean;
+  excessiveHolding: boolean;
+  lackOfAggressiveness: boolean;
+  other: boolean;
+  notes: string;
+};
+
+export const EMPTY_OCCURRENCES: OccurrenceInput = {
+  illegalStrike: false,
+  verbalWarning: false,
+  pointDeduction: false,
+  knockdown: false,
+  count: false,
+  excessiveHolding: false,
+  lackOfAggressiveness: false,
+  other: false,
+  notes: "",
+};
+
+export type ArbitrationEventRow = {
+  id: string;
+  name: string;
+  eventDate: string | null;
+  location: string | null;
+  totalRoundsDefault: number;
+  isActive: boolean;
+};
+
+export type ArbitrationFightListRow = {
+  id: string;
+  eventId: string;
+  eventName: string;
+  modality: ArbitrationModality;
+  category: string;
+  weightClass: string | null;
+  athleteBlueName: string;
+  athleteRedName: string;
+  status: ArbitrationFightStatus;
+  totalRounds: number;
+  currentRound: number;
+  sortOrder: number;
+  winner: ArbitrationCorner | null;
+  decisionType: ArbitrationDecisionType | null;
+};
+
+export type ArbitrationJudgeRow = {
+  id: string;
+  displayName: string;
+  userId: string | null;
+};
+
+export type FightJudgeAssignment = {
+  id: string;
+  judgeNumber: number;
+  judge: ArbitrationJudgeRow;
+};
+
+export type RoundEvaluationRow = {
+  roundNumber: number;
+  blueTotal: number | null;
+  redTotal: number | null;
+  officialBlueScore: number | null;
+  officialRedScore: number | null;
+  isLocked: boolean;
+};
+
+export type JudgeFightResultRow = {
+  judgeNumber: number;
+  judgeName: string;
+  totalBlueOfficial: number;
+  totalRedOfficial: number;
+  winner: ArbitrationCorner;
+};

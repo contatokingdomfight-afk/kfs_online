@@ -79,4 +79,5 @@ export const SUPABASE_EU_REMOTE_MIGRATION_NAMES = new Set([
   "enrollment_fee_columns",
   "payment_reference_month_nullable",
   "lesson_modality_text",
+  "arbitration_module",
 ]);
