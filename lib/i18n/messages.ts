@@ -919,6 +919,7 @@ export const messages = {
     adminFinanceLabelFixed: "Despesas fixas",
     adminFinanceLabelVariable: "Despesas variáveis",
     adminFinanceDelete: "Remover",
+    adminFinanceDeletingExpense: "A remover despesa…",
     adminFinanceRevenueBySourceTitle: "Receitas por origem",
     adminFinanceRevenueSectionHint:
       "Mensalidades: soma dos pagamentos «Pago» do mês por plano (aluno actual). Cursos: compras «Pago» integradas nesse mês. Eventos: inscrições confirmadas, ao preço do evento. Ajuste manual: entradas extra.",
@@ -2091,6 +2092,7 @@ export const messages = {
     adminFinanceLabelFixed: "Fixed expenses",
     adminFinanceLabelVariable: "Variable expenses",
     adminFinanceDelete: "Remove",
+    adminFinanceDeletingExpense: "Removing expense…",
     adminFinanceRevenueBySourceTitle: "Revenue by source",
     adminFinanceRevenueSectionHint:
       "Monthly fees: sum of «Paid» payments for the month per plan (current student plan). Courses: «Paid» purchases dated in that month. Events: confirmed registrations at event price. Manual adjustments: extra income entries.",

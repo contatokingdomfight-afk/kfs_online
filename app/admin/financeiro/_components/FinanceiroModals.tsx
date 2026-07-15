@@ -102,6 +102,7 @@ type Labels = {
   editExpenseAction: string;
   editExpenseSubmit: string;
   deleteLabel: string;
+  deletingExpenseLabel: string;
   expenseErrorSuffix: string;
   openRenewals: string;
   openPayments: string;
@@ -490,6 +491,7 @@ export function FinanceiroModals({
                     formKindVariable: labels.formKindVariable,
                     editExpenseAction: labels.editExpenseAction,
                     deleteLabel: labels.deleteLabel,
+                    deletingExpenseLabel: labels.deletingExpenseLabel,
                   }}
                   onEdit={setEditingExpenseId}
                 />

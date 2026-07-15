@@ -1,6 +1,7 @@
 "use client";
 
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { paymentMethodLabelPt } from "@/lib/finance-payment-method";
 import { EXPENSE_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
 import { deleteFinancialExpense } from "../actions";
@@ -10,6 +11,7 @@ type Labels = {
   formKindVariable: string;
   editExpenseAction: string;
   deleteLabel: string;
+  deletingExpenseLabel: string;
 };
 
 type Props = {
@@ -117,6 +119,7 @@ export function ExpenseList({ expenses, locale, labels, onEdit }: Props) {
               {labels.editExpenseAction}
             </button>
             <form action={deleteFinancialExpense} style={{ margin: 0, flex: "1 1 auto", minWidth: 0 }}>
+              <FormLoadingModal message={labels.deletingExpenseLabel} />
               <input type="hidden" name="id" value={e.id} />
               <button
                 type="submit"

@@ -492,6 +492,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           editExpenseAction: t("adminFinanceEditExpenseAction"),
           editExpenseSubmit: t("adminFinanceEditExpenseSubmit"),
           deleteLabel: t("adminFinanceDelete"),
+          deletingExpenseLabel: t("adminFinanceDeletingExpense"),
           expenseErrorSuffix:
             locale === "pt"
               ? "— aplica as migrações add_financial_expense.sql e add_financial_expense_kind.sql (Supabase) se faltar tabela ou coluna «kind»."
