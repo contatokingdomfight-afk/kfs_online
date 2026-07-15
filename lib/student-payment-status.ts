@@ -1,13 +1,14 @@
 /**
  * Sincroniza Student.status com a situação de pagamento:
  * - ATIVO: em dia (sem LATE, com plano ou acesso concedido)
- * - INADIMPLENTE: 1 mês em atraso ou acesso suspenso por falta de pagamento
+ * - INADIMPLENTE: 1 mês em atraso ou acesso suspenso por falta de pagamento (sem plano ativo)
  * - INATIVO: 2+ meses com Payment LATE
  * EXPERIMENTAL não é alterado automaticamente.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
+import { shouldGenerateLatePayments } from "@/lib/lisbon-payment-dates";
 
 export type AutoStudentStatus = "ATIVO" | "INADIMPLENTE" | "INATIVO";
 
@@ -32,7 +33,9 @@ export function deriveStudentStatusFromPayments(input: {
   if (!inPaymentProgram) return null;
 
   if (lateMonthCount >= 2) return "INATIVO";
-  if (lateMonthCount >= 1 || paymentSuspendedAt) return "INADIMPLENTE";
+  // paymentSuspendedAt só bloqueia se a suspensão ainda estiver em vigor (sem plano);
+  // se o plano foi reatribuído depois, a suspensão já foi revertida na prática.
+  if (lateMonthCount >= 1 || (paymentSuspendedAt && !planId)) return "INADIMPLENTE";
   if (planId || adminGrantedFullAccess) return "ATIVO";
   return "INADIMPLENTE";
 }
@@ -53,9 +56,11 @@ async function loadLateMonthCount(supabase: SupabaseClient, studentId: string): 
     .eq("studentId", studentId)
     .eq("status", "LATE")
     .eq("paymentType", "TUITION");
+  const now = new Date();
   const months = (latePayments ?? [])
     .map((p) => String((p as { referenceMonth: string }).referenceMonth))
-    .filter((m) => !tuitionStartMonth || !isTuitionMonthBeforeEnrollment(m, tuitionStartMonth));
+    .filter((m) => !tuitionStartMonth || !isTuitionMonthBeforeEnrollment(m, tuitionStartMonth))
+    .filter((m) => shouldGenerateLatePayments(now, m));
   return new Set(months).size;
 }
 

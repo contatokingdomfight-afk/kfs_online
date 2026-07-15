@@ -68,6 +68,17 @@ describe("deriveStudentStatusFromPayments", () => {
     expect(out).toBe("INADIMPLENTE");
   });
 
+  it("paymentSuspendedAt residual mas plano já reatribuído -> ATIVO", () => {
+    const out = deriveStudentStatusFromPayments({
+      lateMonthCount: 0,
+      paymentSuspendedAt: "2026-07-03T08:29:10.045Z",
+      planId: "plan_123",
+      adminGrantedFullAccess: false,
+      inPaymentProgram: true,
+    });
+    expect(out).toBe("ATIVO");
+  });
+
   it("2+ meses em atraso -> INATIVO", () => {
     const out = deriveStudentStatusFromPayments({
       lateMonthCount: 2,
