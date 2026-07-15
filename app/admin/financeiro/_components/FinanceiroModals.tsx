@@ -91,6 +91,13 @@ type Labels = {
   colAmount: string;
   colActions: string;
   noExpenses: string;
+  noExpensesFilter: string;
+  expenseFilterSearch: string;
+  expenseFilterDateFrom: string;
+  expenseFilterDateTo: string;
+  expenseFilterAmountMin: string;
+  expenseFilterAmountMax: string;
+  expenseFilterClear: string;
   formAmount: string;
   formDescription: string;
   formDate: string;
@@ -584,6 +591,13 @@ export function FinanceiroModals({
                     editExpenseAction: labels.editExpenseAction,
                     deleteLabel: labels.deleteLabel,
                     deletingExpenseLabel: labels.deletingExpenseLabel,
+                    filterSearch: labels.expenseFilterSearch,
+                    filterDateFrom: labels.expenseFilterDateFrom,
+                    filterDateTo: labels.expenseFilterDateTo,
+                    filterAmountMin: labels.expenseFilterAmountMin,
+                    filterAmountMax: labels.expenseFilterAmountMax,
+                    filterClear: labels.expenseFilterClear,
+                    noExpensesFilter: labels.noExpensesFilter,
                   }}
                   onEdit={setEditingExpenseId}
                 />

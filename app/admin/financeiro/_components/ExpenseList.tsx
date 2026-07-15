@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { paymentMethodLabelPt } from "@/lib/finance-payment-method";
@@ -12,6 +13,13 @@ type Labels = {
   editExpenseAction: string;
   deleteLabel: string;
   deletingExpenseLabel: string;
+  filterSearch: string;
+  filterDateFrom: string;
+  filterDateTo: string;
+  filterAmountMin: string;
+  filterAmountMax: string;
+  filterClear: string;
+  noExpensesFilter: string;
 };
 
 type Props = {
@@ -46,9 +54,154 @@ const chipStyle: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
+function parseAmountInput(value: string): number | null {
+  const normalized = value.trim().replace(",", ".");
+  if (!normalized) return null;
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : null;
+}
+
+function hasActiveFilters(
+  search: string,
+  dateFrom: string,
+  dateTo: string,
+  amountMin: string,
+  amountMax: string
+) {
+  return Boolean(search.trim() || dateFrom || dateTo || amountMin.trim() || amountMax.trim());
+}
+
 export function ExpenseList({ expenses, locale, labels, onEdit }: Props) {
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [amountMin, setAmountMin] = useState("");
+  const [amountMax, setAmountMax] = useState("");
+
+  const filteredExpenses = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const min = parseAmountInput(amountMin);
+    const max = parseAmountInput(amountMax);
+
+    return expenses.filter((e) => {
+      if (q && !e.description.toLowerCase().includes(q)) return false;
+      if (dateFrom && e.occurredOn < dateFrom) return false;
+      if (dateTo && e.occurredOn > dateTo) return false;
+      if (min !== null && e.amount < min) return false;
+      if (max !== null && e.amount > max) return false;
+      return true;
+    });
+  }, [expenses, search, dateFrom, dateTo, amountMin, amountMax]);
+
+  const filtersActive = hasActiveFilters(search, dateFrom, dateTo, amountMin, amountMax);
+
+  const clearFilters = () => {
+    setSearch("");
+    setDateFrom("");
+    setDateTo("");
+    setAmountMin("");
+    setAmountMax("");
+  };
+
   return (
-    <ul
+    <>
+      <div
+        style={{
+          display: "grid",
+          gap: 10,
+          gridTemplateColumns: "minmax(0, 1fr)",
+          marginBottom: 12,
+        }}
+      >
+        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.filterSearch}</span>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input"
+            autoComplete="off"
+            style={{ maxWidth: "100%" }}
+          />
+        </label>
+        <div
+          style={{
+            display: "grid",
+            gap: 10,
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(140px, 100%), 1fr))",
+          }}
+        >
+          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.filterDateFrom}</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="input"
+              style={{ maxWidth: "100%" }}
+            />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.filterDateTo}</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="input"
+              style={{ maxWidth: "100%" }}
+            />
+          </label>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gap: 10,
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(120px, 100%), 1fr))",
+            alignItems: "end",
+          }}
+        >
+          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.filterAmountMin}</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={amountMin}
+              onChange={(e) => setAmountMin(e.target.value)}
+              className="input"
+              autoComplete="off"
+              style={{ maxWidth: "100%" }}
+            />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{labels.filterAmountMax}</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={amountMax}
+              onChange={(e) => setAmountMax(e.target.value)}
+              className="input"
+              autoComplete="off"
+              style={{ maxWidth: "100%" }}
+            />
+          </label>
+          {filtersActive ? (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={clearFilters}
+              style={{ width: "100%", minHeight: 44 }}
+            >
+              {labels.filterClear}
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {filteredExpenses.length === 0 ? (
+        <p style={{ color: "var(--text-secondary)", fontSize: 15, margin: 0 }}>{labels.noExpensesFilter}</p>
+      ) : null}
+
+      <ul
       style={{
         listStyle: "none",
         padding: 0,
@@ -58,7 +211,7 @@ export function ExpenseList({ expenses, locale, labels, onEdit }: Props) {
         gap: 10,
       }}
     >
-      {expenses.map((e) => (
+      {filteredExpenses.map((e) => (
         <li
           key={e.id}
           className="card"
@@ -133,5 +286,6 @@ export function ExpenseList({ expenses, locale, labels, onEdit }: Props) {
         </li>
       ))}
     </ul>
+    </>
   );
 }
