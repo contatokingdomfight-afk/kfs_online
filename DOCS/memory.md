@@ -306,7 +306,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 **Documentação:** [`LOJA_PRESENCIAL.md`](LOJA_PRESENCIAL.md).
 
 - Migração **`20260707120000_retail_inventory.sql`**: `ProductSupplier`, `Product`, `ProductVariant`, `InventoryBalance`, `StockMovement`, `RetailSale`, `RetailSaleLine`; coluna `category` em `FinancialExpense`.
-- Admin: `/admin/loja` (hub, POS, produtos, stock, vendas). Permissões = financeiro (`admin:financeiro:*`).
+- Admin: `/admin/loja` (hub, POS, produtos, stock, vendas). Permissões = financeiro (`admin:financeiro:*`). Página **produtos** com abas **Cadastro** (produto/fornecedor) e **Catálogo**; editar/remover produtos (soft) e fornecedores.
 - `lib/retail/` — catálogo, movimentos, `createRetailSale` (sale + OUT + balance).
 - Receitas loja: categoria **`MERCHANDISE`** em `lib/admin-revenue-breakdown.ts`.
 - Relatório consolidado: `/admin/financeiro/relatorio` (`lib/admin-financial-report.ts`); CSV + gráfico 6 meses.

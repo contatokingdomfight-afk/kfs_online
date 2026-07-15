@@ -138,6 +138,97 @@ export async function toggleProductActive(formData: FormData) {
   revalidatePath("/admin/loja/produtos");
 }
 
+export async function updateProduct(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const dbUser = await requireAdmin();
+  if (!dbUser) return { error: "Não autorizado." };
+
+  const id = (formData.get("id") as string)?.trim();
+  const name = (formData.get("name") as string)?.trim();
+  const sku = (formData.get("sku") as string)?.trim();
+  const category = (formData.get("category") as string)?.trim() as ProductCategory;
+  const salePriceStr = (formData.get("salePrice") as string)?.trim();
+  const supplierId = (formData.get("supplierId") as string)?.trim() || null;
+  const schoolId = (formData.get("schoolId") as string)?.trim() || null;
+  const description = (formData.get("description") as string)?.trim() || null;
+
+  if (!id || !name || !sku) return { error: "Nome e SKU são obrigatórios." };
+  if (!PRODUCT_CATEGORIES.includes(category)) return { error: "Categoria inválida." };
+  const salePrice = parseFloat(salePriceStr ?? "");
+  if (Number.isNaN(salePrice) || salePrice < 0) return { error: "Preço inválido." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("Product")
+    .update({
+      name,
+      sku,
+      category,
+      salePrice: salePrice.toFixed(2),
+      supplierId,
+      schoolId,
+      description,
+      updatedAt: new Date().toISOString(),
+    })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/loja/produtos");
+  return { success: true, id };
+}
+
+export async function updateSupplier(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const dbUser = await requireAdmin();
+  if (!dbUser) return { error: "Não autorizado." };
+
+  const id = (formData.get("id") as string)?.trim();
+  const name = (formData.get("name") as string)?.trim();
+  const contact = (formData.get("contact") as string)?.trim() || null;
+  const taxId = (formData.get("taxId") as string)?.trim() || null;
+  if (!id || !name) return { error: "Nome do fornecedor é obrigatório." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("ProductSupplier")
+    .update({
+      name,
+      contact,
+      tax_id: taxId,
+      updatedAt: new Date().toISOString(),
+    })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/loja/produtos");
+  return { success: true, id };
+}
+
+export async function deleteProduct(formData: FormData) {
+  const dbUser = await requireAdmin();
+  if (!dbUser) redirect("/dashboard");
+  const id = (formData.get("id") as string)?.trim();
+  if (!id) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("Product")
+    .update({ isActive: false, updatedAt: new Date().toISOString() })
+    .eq("id", id);
+  if (error) {
+    redirect(`/admin/loja/produtos?aba=catalogo&productError=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath("/admin/loja/produtos");
+}
+
+export async function deleteSupplier(formData: FormData) {
+  const dbUser = await requireAdmin();
+  if (!dbUser) redirect("/dashboard");
+  const id = (formData.get("id") as string)?.trim();
+  if (!id) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("ProductSupplier").delete().eq("id", id);
+  if (error) {
+    redirect(`/admin/loja/produtos?aba=cadastro&tipo=fornecedor&supplierError=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath("/admin/loja/produtos");
+}
+
 export async function recordStockIn(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const dbUser = await requireAdmin();
   if (!dbUser) return { error: "Não autorizado." };

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -10,13 +11,26 @@ import type { ProductVariantRow } from "@/lib/retail/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminLojaProdutosPage() {
+type SearchParams = {
+  aba?: string;
+  tipo?: string;
+  productError?: string;
+  supplierError?: string;
+};
+
+export default async function AdminLojaProdutosPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
+
+  const params = await searchParams;
 
   const [products, suppliers, { data: schools }, { data: allVariants }] = await Promise.all([
     listProducts(supabase),
@@ -48,12 +62,16 @@ export default async function AdminLojaProdutosPage() {
         ← Loja
       </Link>
       <h1 style={{ margin: "8px 0 20px", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600 }}>Produtos</h1>
-      <ProdutosManager
-        products={products}
-        suppliers={suppliers}
-        schools={schools ?? []}
-        variantsByProduct={variantsByProduct}
-      />
+      <Suspense fallback={<p style={{ color: "var(--text-secondary)" }}>A carregar…</p>}>
+        <ProdutosManager
+          products={products}
+          suppliers={suppliers}
+          schools={schools ?? []}
+          variantsByProduct={variantsByProduct}
+          productErrorFromUrl={params.productError ?? null}
+          supplierErrorFromUrl={params.supplierError ?? null}
+        />
+      </Suspense>
     </div>
   );
 }
