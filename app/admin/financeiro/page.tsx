@@ -12,7 +12,6 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { FinanceiroModals, type PaymentListRow } from "./_components/FinanceiroModals";
-import { CashDepositForm } from "./_components/CashDepositForm";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { MonthSelector } from "./_components/MonthSelector";
 import { FINANCE_PAYMENT_METHODS, FINANCE_PAYMENT_METHOD_LABELS_PT } from "@/lib/finance-payment-method";
@@ -22,6 +21,7 @@ type SearchParams = Promise<{
   dedupedError?: string;
   expenseError?: string;
   revenueError?: string;
+  depositError?: string;
   month?: string;
 }>;
 
@@ -60,6 +60,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   const dedupedError = params.dedupedError;
   const expenseError = params.expenseError;
   const revenueError = params.revenueError;
+  const depositError = params.depositError;
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -348,56 +349,6 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
             ))}
           </div>
         </div>
-
-        <div className="card" style={{ marginTop: 16, padding: "clamp(16px, 4vw, 20px)", background: "var(--surface)" }}>
-          <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
-            {t("adminFinanceCashDepositTitle")}
-          </h3>
-          {overview.treasuryError && (
-            <p role="alert" style={{ color: "var(--error)", fontSize: 13, margin: "0 0 12px 0" }}>
-              {overview.treasuryError}
-            </p>
-          )}
-          <CashDepositForm
-            defaultDate={todayYmd}
-            physicalCashOnHand={overview.physicalCashOnHand}
-            labels={{
-              amount: t("adminFinanceCashDepositAmount"),
-              date: t("adminFinanceCashDepositDate"),
-              description: t("adminFinanceCashDepositDescription"),
-              submit: t("adminFinanceCashDepositSubmit"),
-              success: t("adminFinanceCashDepositSaved"),
-              physicalCashHint: t("adminFinanceCashDepositHint"),
-            }}
-          />
-          {overview.recentCashDeposits.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <h4 style={{ margin: "0 0 8px 0", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
-                {t("adminFinanceCashDepositRecent")}
-              </h4>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
-                {overview.recentCashDeposits.slice(0, 8).map((d) => (
-                  <li
-                    key={d.id}
-                    style={{
-                      fontSize: 13,
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "6px 12px",
-                      justifyContent: "space-between",
-                      borderTop: "1px solid var(--border)",
-                      paddingTop: 6,
-                    }}
-                  >
-                    <span style={{ color: "var(--text-secondary)" }}>{d.occurredOn}</span>
-                    <span style={{ flex: 1, minWidth: 120 }}>{d.description ?? "—"}</span>
-                    <strong>{formatMoneyN(d.amount, locale)}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
       </section>
 
       {revenueError && (
@@ -455,6 +406,11 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
         }}
         revenueErrorFromUrl={revenueError ?? null}
         defaultManualRevenueDate={todayYmd}
+        physicalCashOnHand={overview.physicalCashOnHand}
+        treasuryError={overview.treasuryError}
+        recentCashDeposits={overview.recentCashDeposits}
+        depositErrorFromUrl={depositError ?? null}
+        defaultCashDepositDate={todayYmd}
         labels={{
           modalsHint: t("adminFinanceModalsHint"),
           close: t("adminActionItemsCloseModal"),
@@ -501,6 +457,16 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           openPayments: t("adminFinanceOpenPayments"),
           openExpenses: t("adminFinanceOpenExpenses"),
           openRevenue: t("adminFinanceOpenRevenue"),
+          openCashDeposits: t("adminFinanceOpenCashDeposits"),
+          cashDepositTitle: t("adminFinanceCashDepositTitle"),
+          cashDepositRecentTitle: t("adminFinanceCashDepositRecent"),
+          cashDepositAmount: t("adminFinanceCashDepositAmount"),
+          cashDepositDate: t("adminFinanceCashDepositDate"),
+          cashDepositDescription: t("adminFinanceCashDepositDescription"),
+          cashDepositSubmit: t("adminFinanceCashDepositSubmit"),
+          cashDepositSaved: t("adminFinanceCashDepositSaved"),
+          cashDepositPhysicalHint: t("adminFinanceCashDepositHint"),
+          deletingDepositLabel: t("adminFinanceDeletingDeposit"),
           registerPaymentCta: t("adminFinancePaymentsRegisterCta"),
           voidLateTuitionCta: t("adminFinanceVoidLateTuitionCta"),
           voidLateTuitionHint: t("adminFinanceVoidLateTuitionHint"),

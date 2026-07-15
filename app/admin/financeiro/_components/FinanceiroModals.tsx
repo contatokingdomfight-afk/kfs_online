@@ -6,6 +6,8 @@ import { createPortal } from "react-dom";
 import { RenewalsSection } from "../RenewalsSection";
 import { AddExpenseForm } from "./AddExpenseForm";
 import { AddManualRevenueForm } from "./AddManualRevenueForm";
+import { CashDepositForm } from "./CashDepositForm";
+import { CashDepositRecentList } from "./CashDepositRecentList";
 import { dedupeDuplicatePaymentsAction, deleteManualRevenue } from "../actions";
 import { EditExpenseForm } from "./EditExpenseForm";
 import { ExpenseList } from "./ExpenseList";
@@ -13,6 +15,7 @@ import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { VoidLateTuitionForm } from "@/components/admin/VoidLateTuitionForm";
 import type { RenewalPending } from "@/lib/renewals";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
+import type { CashDepositRow } from "@/lib/cash-balance";
 import {
   groupPaymentListRows,
   isOnboardingBundleRow,
@@ -34,7 +37,7 @@ const overlayStyle: React.CSSProperties = {
 
 export type { PaymentListRow } from "@/lib/admin-payment-list-grouping";
 
-type ModalId = "renewals" | "payments" | "expenses" | "revenue";
+type ModalId = "renewals" | "payments" | "expenses" | "revenue" | "cashDeposit";
 
 export type RevenueModalRow = {
   key: string;
@@ -108,6 +111,16 @@ type Labels = {
   openPayments: string;
   openExpenses: string;
   openRevenue: string;
+  openCashDeposits: string;
+  cashDepositTitle: string;
+  cashDepositRecentTitle: string;
+  cashDepositAmount: string;
+  cashDepositDate: string;
+  cashDepositDescription: string;
+  cashDepositSubmit: string;
+  cashDepositSaved: string;
+  cashDepositPhysicalHint: string;
+  deletingDepositLabel: string;
   /** Botão por linha «Em atraso» → registo de pagamento (admin). */
   registerPaymentCta: string;
   voidLateTuitionCta: string;
@@ -130,6 +143,11 @@ type Props = {
   revenue: RevenueModalData;
   revenueErrorFromUrl: string | null;
   defaultManualRevenueDate: string;
+  physicalCashOnHand: number;
+  treasuryError: string | null;
+  recentCashDeposits: CashDepositRow[];
+  depositErrorFromUrl: string | null;
+  defaultCashDepositDate: string;
 };
 
 function formatMoneyN(n: number, locale: "pt" | "en") {
@@ -151,6 +169,76 @@ function modalCardStyle(maxWidth: number): React.CSSProperties {
   };
 }
 
+function ModalCloseButton({ onClick, ariaLabel }: { onClick: () => void; ariaLabel: string }) {
+  return (
+    <button
+      type="button"
+      className="btn btn-secondary"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      style={{
+        flexShrink: 0,
+        width: 40,
+        height: 40,
+        minWidth: 40,
+        padding: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 22,
+        lineHeight: 1,
+        borderRadius: 8,
+      }}
+    >
+      ×
+    </button>
+  );
+}
+
+function ModalHeader({
+  titleId,
+  title,
+  onClose,
+  closeLabel,
+  tip,
+  marginBottom = 12,
+}: {
+  titleId: string;
+  title: string;
+  onClose: () => void;
+  closeLabel: string;
+  tip?: { detail: string; ariaLabel: string };
+  marginBottom?: number;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 8,
+        marginBottom,
+        flexShrink: 0,
+      }}
+    >
+      <h2
+        id={titleId}
+        style={{
+          margin: 0,
+          fontSize: 18,
+          fontWeight: 600,
+          flex: 1,
+          minWidth: 0,
+          lineHeight: 1.35,
+        }}
+      >
+        {title}
+      </h2>
+      {tip ? <InlineInfoTip detail={tip.detail} ariaLabel={tip.ariaLabel} className="mt-0.5" /> : null}
+      <ModalCloseButton onClick={onClose} ariaLabel={closeLabel} />
+    </div>
+  );
+}
+
 export function FinanceiroModals({
   referenceMonth,
   renewalsPending,
@@ -162,6 +250,11 @@ export function FinanceiroModals({
   revenue,
   revenueErrorFromUrl,
   defaultManualRevenueDate,
+  physicalCashOnHand,
+  treasuryError,
+  recentCashDeposits,
+  depositErrorFromUrl,
+  defaultCashDepositDate,
   labels,
   locale,
 }: Props) {
@@ -173,6 +266,10 @@ export function FinanceiroModals({
   const monthLabelShort = `${referenceMonth.slice(5)}/${referenceMonth.slice(0, 4)}`;
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (depositErrorFromUrl) setOpen("cashDeposit");
+  }, [depositErrorFromUrl]);
 
   const closeModal = useCallback(() => {
     setOpen(null);
@@ -224,14 +321,13 @@ export function FinanceiroModals({
             onClick={(e) => e.stopPropagation()}
             style={modalCardStyle(560)}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 8 }}>
-              <h2 id={titleId + "-r"} style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
-                {labels.openRenewals} ({monthLabelShort})
-              </h2>
-              <button type="button" className="button" onClick={closeModal} style={{ flexShrink: 0 }}>
-                {labels.close}
-              </button>
-            </div>
+            <ModalHeader
+              titleId={titleId + "-r"}
+              title={`${labels.openRenewals} (${monthLabelShort})`}
+              onClose={closeModal}
+              closeLabel={labels.close}
+              marginBottom={8}
+            />
             <div style={{ overflow: "auto", minHeight: 0 }}>
               <RenewalsSection referenceMonth={referenceMonth} pending={renewalsPending} noOuterCard suppressTitle />
             </div>
@@ -249,14 +345,12 @@ export function FinanceiroModals({
             onClick={(e) => e.stopPropagation()}
             style={modalCardStyle(640)}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-              <h2 id={titleId + "-p"} style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
-                {labels.paymentsModalTitle}
-              </h2>
-              <button type="button" className="button" onClick={closeModal} style={{ flexShrink: 0 }}>
-                {labels.close}
-              </button>
-            </div>
+            <ModalHeader
+              titleId={titleId + "-p"}
+              title={labels.paymentsModalTitle}
+              onClose={closeModal}
+              closeLabel={labels.close}
+            />
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
               <button
                 type="button"
@@ -443,14 +537,12 @@ export function FinanceiroModals({
             onClick={(e) => e.stopPropagation()}
             style={modalCardStyle(700)}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-              <h2 id={titleId + "-e"} style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
-                {labels.expensesTitle}
-              </h2>
-              <button type="button" className="button" onClick={closeModal} style={{ flexShrink: 0 }}>
-                {labels.close}
-              </button>
-            </div>
+            <ModalHeader
+              titleId={titleId + "-e"}
+              title={labels.expensesTitle}
+              onClose={closeModal}
+              closeLabel={labels.close}
+            />
             {expenseErrorFromUrl && (
               <p role="alert" className="card" style={{ padding: 10, color: "var(--error)", marginBottom: 10, fontSize: 13 }}>
                 {decodeURIComponent(expenseErrorFromUrl.replace(/\+/g, " "))}
@@ -515,22 +607,13 @@ export function FinanceiroModals({
             onClick={(e) => e.stopPropagation()}
             style={modalCardStyle(520)}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                gap: 12,
-                marginBottom: 16,
-              }}
-            >
-              <h2 id={titleId + "-edit-expense"} style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
-                {labels.editExpenseTitle}
-              </h2>
-              <button type="button" className="button" onClick={closeEditExpense} style={{ flexShrink: 0 }}>
-                {labels.close}
-              </button>
-            </div>
+            <ModalHeader
+              titleId={titleId + "-edit-expense"}
+              title={labels.editExpenseTitle}
+              onClose={closeEditExpense}
+              closeLabel={labels.close}
+              marginBottom={16}
+            />
             <EditExpenseForm
               key={editingExpense.id}
               expense={editingExpense}
@@ -553,6 +636,63 @@ export function FinanceiroModals({
         </div>
       )}
 
+      {open === "cashDeposit" && (
+        <div style={overlayStyle} role="presentation" onClick={(e) => e.target === e.currentTarget && closeModal()}>
+          <div
+            className="card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId + "-cd"}
+            onClick={(e) => e.stopPropagation()}
+            style={modalCardStyle(560)}
+          >
+            <ModalHeader
+              titleId={titleId + "-cd"}
+              title={labels.cashDepositTitle}
+              onClose={closeModal}
+              closeLabel={labels.close}
+            />
+            {depositErrorFromUrl && (
+              <p role="alert" className="card" style={{ padding: 10, color: "var(--error)", marginBottom: 10, fontSize: 13 }}>
+                {decodeURIComponent(depositErrorFromUrl.replace(/\+/g, " "))}
+              </p>
+            )}
+            {treasuryError && (
+              <p role="alert" style={{ color: "var(--error)", fontSize: 13, margin: "0 0 12px 0" }}>
+                {treasuryError}
+              </p>
+            )}
+            <div style={{ overflow: "auto", minHeight: 0, flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
+              <CashDepositForm
+                defaultDate={defaultCashDepositDate}
+                physicalCashOnHand={physicalCashOnHand}
+                labels={{
+                  amount: labels.cashDepositAmount,
+                  date: labels.cashDepositDate,
+                  description: labels.cashDepositDescription,
+                  submit: labels.cashDepositSubmit,
+                  success: labels.cashDepositSaved,
+                  physicalCashHint: labels.cashDepositPhysicalHint,
+                }}
+              />
+              {recentCashDeposits.length > 0 ? (
+                <div>
+                  <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
+                    {labels.cashDepositRecentTitle}
+                  </h3>
+                  <CashDepositRecentList
+                    deposits={recentCashDeposits.slice(0, 8)}
+                    locale={locale}
+                    deleteLabel={labels.deleteLabel}
+                    deletingLabel={labels.deletingDepositLabel}
+                  />
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+
       {open === "revenue" && (
         <div style={overlayStyle} role="presentation" onClick={(e) => e.target === e.currentTarget && closeModal()}>
           <div
@@ -563,17 +703,13 @@ export function FinanceiroModals({
             onClick={(e) => e.stopPropagation()}
             style={modalCardStyle(900)}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "6px 10px", minWidth: 0 }}>
-                <h2 id={titleId + "-v"} style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
-                  {revenue.modalTitle}
-                </h2>
-                <InlineInfoTip detail={revenue.sectionHint} ariaLabel={revenue.sectionHintAria} />
-              </div>
-              <button type="button" className="button" onClick={closeModal} style={{ flexShrink: 0 }}>
-                {labels.close}
-              </button>
-            </div>
+            <ModalHeader
+              titleId={titleId + "-v"}
+              title={revenue.modalTitle}
+              onClose={closeModal}
+              closeLabel={labels.close}
+              tip={{ detail: revenue.sectionHint, ariaLabel: revenue.sectionHintAria }}
+            />
             {revenueErrorFromUrl && (
               <p role="alert" className="card" style={{ padding: 10, color: "var(--error)", marginBottom: 10, fontSize: 13 }}>
                 {decodeURIComponent(revenueErrorFromUrl.replace(/\+/g, " "))}
@@ -678,6 +814,11 @@ export function FinanceiroModals({
 
   return (
     <>
+      {treasuryError ? (
+        <p role="alert" style={{ color: "var(--error)", fontSize: 13, marginBottom: 12 }}>
+          {treasuryError}
+        </p>
+      ) : null}
       <p
         style={{
           margin: "0 0 14px 0",
@@ -729,6 +870,14 @@ export function FinanceiroModals({
           onClick={() => setOpen("revenue")}
         >
           {labels.openRevenue} ({revenue.rows.length})
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          style={{ width: "100%", gridColumn: "1 / -1" }}
+          onClick={() => setOpen("cashDeposit")}
+        >
+          {labels.openCashDeposits} ({recentCashDeposits.length})
         </button>
       </div>
       {mounted && createPortal(modals, document.body)}

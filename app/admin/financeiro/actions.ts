@@ -579,3 +579,16 @@ export async function createCashDeposit(
   revalidatePath("/admin/financeiro");
   return { success: true };
 }
+
+export async function deleteCashDeposit(formData: FormData) {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  const id = (formData.get("id") as string)?.trim();
+  if (!id) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("TreasuryMovement").delete().eq("id", id).eq("kind", "CASH_DEPOSIT");
+  if (error) {
+    redirect(`/admin/financeiro?depositError=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath("/admin/financeiro");
+}
