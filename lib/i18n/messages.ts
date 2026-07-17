@@ -466,9 +466,9 @@ export const messages = {
     dashboardNoClassesThisWeek: "Nenhuma aula agendada esta semana. Que tal explorar a Biblioteca de Cursos?",
     dashboardExploreLibrary: "Explorar Biblioteca",
     dashboardFamilyPlanTitular:
-      "És o titular do plano família — a tua mensalidade é de 80 €/mês (desconto familiar).",
+      "És o titular do plano família — a mensalidade única do grupo é paga por ti.",
     dashboardFamilyPlanMember:
-      "És membro do plano família de {titular}. A tua mensalidade é de 80 €/mês (desconto familiar).",
+      "És membro do plano família de {titular}. A mensalidade é paga pelo titular — não tens mensalidade própria.",
     dashboardFamilyPlanMembersCount: "{count}/{max} pessoas",
     dashboardFamilyPlanAdminHint:
       "Novos membros são adicionados pela secretaria Kingdom Fight (não pelo titular na app).",
@@ -1656,9 +1656,9 @@ export const messages = {
     dashboardNoClassesThisWeek: "No classes scheduled this week. Why not explore the Course Library?",
     dashboardExploreLibrary: "Explore Library",
     dashboardFamilyPlanTitular:
-      "You are the family plan holder — your tuition is €80/month (family discount).",
+      "You are the family plan holder — the group's single monthly payment is billed to you.",
     dashboardFamilyPlanMember:
-      "You are on {titular}'s family plan. Your tuition is €80/month (family discount).",
+      "You are on {titular}'s family plan. The tuition is paid by the plan holder — you have no tuition of your own.",
     dashboardFamilyPlanMembersCount: "{count}/{max} people",
     dashboardFamilyPlanAdminHint:
       "New members are added by Kingdom Fight staff (not by the account holder in the app).",

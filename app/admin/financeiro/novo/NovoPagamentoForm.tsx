@@ -275,13 +275,18 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
                 Acesso suspenso por falta de pagamento. Marca este mês como «Pago» para repor o plano do aluno.
               </p>
             )}
-            {selected.isInFamilyGroup && (
+            {selected.isInFamilyGroup && selected.familyRole === "TITULAR" && (
               <p style={{ margin: "10px 0 0 0", fontSize: 13, color: "var(--primary)" }}>
-                Plano família — mensalidade individual de {selected.priceMonthly.toFixed(2)} €/mês
+                Titular do plano família — mensalidade única sugerida de {selected.priceMonthly.toFixed(2)} €/mês
                 {selected.familyMemberCount != null && selected.familyMemberCount > 0
                   ? ` (grupo com ${selected.familyMemberCount} pessoas)`
                   : ""}
                 .
+              </p>
+            )}
+            {selected.familyRole === "MEMBER" && (
+              <p style={{ margin: "10px 0 0 0", fontSize: 13, color: "var(--primary)" }}>
+                Membro de um grupo familiar — não tem mensalidade própria.
               </p>
             )}
           </div>
@@ -338,6 +343,28 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
               </div>
             )}
 
+          {selected.familyRole === "MEMBER" ? (
+            <div
+              style={{
+                padding: "14px 16px",
+                background: "rgba(239, 68, 68, 0.1)",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--danger)",
+                fontSize: 14,
+              }}
+            >
+              Este aluno é membro de um grupo familiar e não tem mensalidade própria — o pagamento é sempre
+              registado no perfil do titular.{" "}
+              {selected.familyBillingStudentId && (
+                <Link
+                  href={`/admin/financeiro/novo?studentId=${encodeURIComponent(selected.familyBillingStudentId)}&referenceMonth=${encodeURIComponent(referenceMonth)}`}
+                  style={{ color: "var(--primary)", fontWeight: 600 }}
+                >
+                  Ir para o perfil do titular
+                </Link>
+              )}
+            </div>
+          ) : (
           <form
             action={formAction}
             onSubmit={blurActiveElementBeforeSubmit}
@@ -424,6 +451,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
               </Link>
             </div>
           </form>
+          )}
           {canVoidLate ? (
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
               <VoidLateTuitionForm

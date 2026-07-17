@@ -8,6 +8,8 @@ import { endOfGracePeriodLisbon, LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { stripe } from "@/lib/stripe/server";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
+import { getFamilyContext } from "@/lib/family-context";
+import { syncFamilyMembersOnTitularPayment, syncFamilyMembersOnTitularSuspension } from "@/lib/family-group";
 
 type StudentGraceRow = {
   planId: string | null;
@@ -119,6 +121,11 @@ export async function clearGraceOnPaidPayment(supabase: SupabaseClient, studentI
   }
 
   await syncStudentPaymentStatus(supabase, studentId);
+
+  const familyCtx = await getFamilyContext(supabase, studentId);
+  if (familyCtx?.isTitular) {
+    await syncFamilyMembersOnTitularPayment(supabase, studentId);
+  }
 }
 
 /** Suspende alunos com plano cujo prazo (5 dias úteis após o dia 8) já passou. */
@@ -184,6 +191,11 @@ export async function suspendStudentsPastGrace(
           href: "/escolher-plano",
         });
         await syncStudentPaymentStatus(supabase, row.id);
+
+        const familyCtx = await getFamilyContext(supabase, row.id);
+        if (familyCtx?.isTitular) {
+          await syncFamilyMembersOnTitularSuspension(supabase, row.id, row.planId);
+        }
       })
     );
   }

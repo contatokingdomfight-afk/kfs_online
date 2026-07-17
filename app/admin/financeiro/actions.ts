@@ -87,6 +87,11 @@ export async function createPayment(
 
   const supabase = createAdminClient();
 
+  const familyCtx = await getFamilyContext(supabase, studentId);
+  if (familyCtx && !familyCtx.isTitular) {
+    return { error: "Aluno é membro de um grupo familiar; regista o pagamento no perfil do titular." };
+  }
+
   const { data: studentRow } = await supabase
     .from("Student")
     .select("createdAt")
@@ -102,7 +107,6 @@ export async function createPayment(
     };
   }
 
-  const familyCtx = await getFamilyContext(supabase, studentId);
   const familyGroupId = familyGroupIdForTuition(familyCtx);
 
   const monthList =
@@ -155,7 +159,7 @@ export async function voidLateTuition(
   const supabase = createAdminClient();
   const { data: studentRow } = await supabase
     .from("Student")
-    .select("paymentGraceReferenceMonth")
+    .select("id")
     .eq("id", studentId)
     .maybeSingle();
   if (!studentRow) return { error: "Aluno não encontrado." };
@@ -174,14 +178,9 @@ export async function voidLateTuition(
   const { error: delErr } = await supabase.from("Payment").delete().in("id", ids);
   if (delErr) return { error: delErr.message };
 
-  if ((studentRow as { paymentGraceReferenceMonth?: string | null }).paymentGraceReferenceMonth === referenceMonth) {
-    await supabase
-      .from("Student")
-      .update({ paymentGraceReferenceMonth: null, paymentGraceEndsAt: null })
-      .eq("id", studentId);
-  }
-
-  await syncStudentPaymentStatus(supabase, studentId);
+  // Perdoar a mensalidade equivale a "pagar": limpa carência/suspensão e, se for
+  // titular de família, restaura os membros em cascata (mesmo caminho do pagamento real).
+  await clearGraceOnPaidPayment(supabase, studentId);
 
   revalidatePath("/admin/financeiro");
   revalidatePath("/admin/financeiro/novo");

@@ -38,7 +38,8 @@ export default async function AdminFamiliasPage() {
       </div>
 
       <p style={{ color: "var(--text-secondary)", marginBottom: 20, fontSize: 15, lineHeight: 1.5 }}>
-        Grupos familiares com mensalidade de 80 € por pessoa. Cada membro mantém matrícula e seguro individuais.
+        Grupos familiares com mensalidade única no titular (soma dos planos de referência dos membros, com
+        desconto %). Matrícula e seguro continuam individuais por membro.
       </p>
 
       {groups.length === 0 ? (

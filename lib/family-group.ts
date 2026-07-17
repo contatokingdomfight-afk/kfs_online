@@ -1,5 +1,6 @@
 /**
- * Grupos familiares: titular + membros; mensalidade individual de 80 €/pessoa.
+ * Grupos familiares: titular + membros; cobrança única no titular
+ * (soma dos planos de referência dos membros, com desconto % do grupo).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -7,68 +8,10 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { KINGDOM_PLAN_FAMILIA_ID, KINGDOM_PLAN_FAMILIA_DEFAULT_MAX_MEMBERS, isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
+import { getFamilyContext, type FamilyGroupRole, type FamilyGroupRow, type FamilyContext } from "@/lib/family-context";
 
-export type FamilyGroupRole = "TITULAR" | "MEMBER";
-
-export type FamilyGroupRow = {
-  id: string;
-  name: string | null;
-  billingStudentId: string;
-  planId: string;
-  maxMembers: number;
-  schoolId: string;
-  isActive: boolean;
-};
-
-export type FamilyContext = {
-  group: FamilyGroupRow;
-  role: FamilyGroupRole;
-  isTitular: boolean;
-  billingStudentId: string;
-  memberCount: number;
-};
-
-type MemberJoinRow = {
-  role: FamilyGroupRole;
-  familyGroupId: string;
-};
-
-/** Contexto familiar activo do aluno (grupo activo). */
-export async function getFamilyContext(
-  supabase: SupabaseClient,
-  studentId: string
-): Promise<FamilyContext | null> {
-  const { data: member } = await supabase
-    .from("FamilyGroupMember")
-    .select("role, familyGroupId")
-    .eq("studentId", studentId)
-    .maybeSingle();
-
-  if (!member) return null;
-
-  const memberRow = member as MemberJoinRow;
-  const { data: group } = await supabase
-    .from("FamilyGroup")
-    .select("id, name, billingStudentId, planId, maxMembers, schoolId, isActive")
-    .eq("id", memberRow.familyGroupId)
-    .maybeSingle();
-
-  if (!group || !(group as FamilyGroupRow).isActive) return null;
-
-  const { count } = await supabase
-    .from("FamilyGroupMember")
-    .select("id", { count: "exact", head: true })
-    .eq("familyGroupId", memberRow.familyGroupId);
-
-  const role = memberRow.role;
-  return {
-    group: group as FamilyGroupRow,
-    role,
-    isTitular: role === "TITULAR",
-    billingStudentId: (group as FamilyGroupRow).billingStudentId,
-    memberCount: count ?? 0,
-  };
-}
+export { getFamilyContext };
+export type { FamilyGroupRole, FamilyGroupRow, FamilyContext };
 
 /** ID do aluno (cada membro tem cobrança própria; mantido para compatibilidade). */
 export async function resolveBillingStudentId(
@@ -78,28 +21,25 @@ export async function resolveBillingStudentId(
   return studentId;
 }
 
-/** Cria mensalidades LATE em falta para todos os membros de grupos activos. */
+/** Garante a mensalidade pendente do titular de cada grupo activo (cobrança única). */
 export async function backfillFamilyGroupTuitions(supabase: SupabaseClient): Promise<number> {
-  const { data: groups } = await supabase.from("FamilyGroup").select("id").eq("isActive", true);
+  const { data: groups } = await supabase
+    .from("FamilyGroup")
+    .select("id, billingStudentId")
+    .eq("isActive", true);
   if (!groups?.length) return 0;
 
-  const groupIds = groups.map((g) => (g as { id: string }).id);
-  const { data: members } = await supabase
-    .from("FamilyGroupMember")
-    .select("studentId")
-    .in("familyGroupId", groupIds);
-
   let created = 0;
-  for (const m of members ?? []) {
-    const studentId = (m as { studentId: string }).studentId;
-    const result = await ensureOnboardingPendingPayments(supabase, studentId, KINGDOM_PLAN_FAMILIA_ID);
+  for (const g of groups) {
+    const billingStudentId = (g as { billingStudentId: string }).billingStudentId;
+    const result = await ensureOnboardingPendingPayments(supabase, billingStudentId, KINGDOM_PLAN_FAMILIA_ID);
     if (result.error) continue;
     if (result.created) created += 1;
   }
   return created;
 }
 
-/** Ao titular pagar, repõe grace/plano dos membros do grupo. @deprecated Cobrança individual — não usado. */
+/** Ao titular pagar, repõe grace/plano dos membros do grupo. */
 export async function syncFamilyMembersOnTitularPayment(
   supabase: SupabaseClient,
   titularStudentId: string
@@ -155,7 +95,7 @@ export async function syncFamilyMembersOnTitularPayment(
   }
 }
 
-/** Suspende plano de todos os membros quando o titular é suspenso. @deprecated Cobrança individual — não usado. */
+/** Suspende plano de todos os membros quando o titular é suspenso. */
 export async function syncFamilyMembersOnTitularSuspension(
   supabase: SupabaseClient,
   titularStudentId: string,
@@ -207,6 +147,8 @@ export type EnsureFamilyTitularGroupOptions = {
   schoolId?: string;
   maxMembers?: number;
   name?: string | null;
+  discountPercent?: number;
+  titularReferencePlanId?: string | null;
 };
 
 /**
@@ -243,6 +185,11 @@ export async function ensureFamilyGroupAsTitular(
   const maxMembers = options?.maxMembers ?? KINGDOM_PLAN_FAMILIA_DEFAULT_MAX_MEMBERS;
   if (maxMembers < 2) return { error: "O limite de membros deve ser pelo menos 2." };
 
+  const discountPercent = options?.discountPercent ?? 0;
+  if (discountPercent < 0 || discountPercent > 100) {
+    return { error: "O desconto deve estar entre 0 e 100." };
+  }
+
   const groupId = crypto.randomUUID();
   const { error: groupErr } = await supabase.from("FamilyGroup").insert({
     id: groupId,
@@ -252,6 +199,7 @@ export async function ensureFamilyGroupAsTitular(
     maxMembers,
     schoolId,
     isActive: true,
+    discountPercent,
   });
   if (groupErr) return { error: groupErr.message };
 
@@ -260,6 +208,7 @@ export async function ensureFamilyGroupAsTitular(
     familyGroupId: groupId,
     studentId: titularStudentId,
     role: "TITULAR",
+    referencePlanId: options?.titularReferencePlanId ?? null,
   });
   if (memberErr) {
     await supabase.from("FamilyGroup").delete().eq("id", groupId);
@@ -349,7 +298,7 @@ export type FamilyGroupListItem = FamilyGroupRow & {
 export async function listFamilyGroups(supabase: SupabaseClient): Promise<FamilyGroupListItem[]> {
   const { data: groups } = await supabase
     .from("FamilyGroup")
-    .select("id, name, billingStudentId, planId, maxMembers, schoolId, isActive")
+    .select("id, name, billingStudentId, planId, maxMembers, schoolId, isActive, discountPercent")
     .order("createdAt", { ascending: false });
 
   if (!groups?.length) return [];
@@ -440,6 +389,7 @@ export type FamilyGroupDetail = {
     role: FamilyGroupRole;
     name: string;
     email: string;
+    referencePlanId: string | null;
   }>;
 };
 
@@ -449,7 +399,7 @@ export async function getFamilyGroupDetail(
 ): Promise<FamilyGroupDetail | null> {
   const { data: group } = await supabase
     .from("FamilyGroup")
-    .select("id, name, billingStudentId, planId, maxMembers, schoolId, isActive")
+    .select("id, name, billingStudentId, planId, maxMembers, schoolId, isActive, discountPercent")
     .eq("id", groupId)
     .maybeSingle();
 
@@ -457,7 +407,7 @@ export async function getFamilyGroupDetail(
 
   const { data: memberRows } = await supabase
     .from("FamilyGroupMember")
-    .select("id, studentId, role")
+    .select("id, studentId, role, referencePlanId")
     .eq("familyGroupId", groupId)
     .order("joinedAt", { ascending: true });
 
@@ -483,7 +433,7 @@ export async function getFamilyGroupDetail(
   return {
     group: group as FamilyGroupRow,
     members: (memberRows ?? []).map((m) => {
-      const row = m as { id: string; studentId: string; role: FamilyGroupRole };
+      const row = m as { id: string; studentId: string; role: FamilyGroupRole; referencePlanId: string | null };
       const u = userByStudent.get(row.studentId);
       return {
         id: row.id,
@@ -491,7 +441,68 @@ export async function getFamilyGroupDetail(
         role: row.role,
         name: u?.name ?? "—",
         email: u?.email ?? "",
+        referencePlanId: row.referencePlanId,
       };
     }),
+  };
+}
+
+export type FamilyHubMember = {
+  studentId: string;
+  name: string;
+  role: FamilyGroupRole;
+  isSelf: boolean;
+};
+
+export type FamilyHubData = {
+  groupName: string | null;
+  isTitular: boolean;
+  maxMembers: number;
+  members: FamilyHubMember[];
+};
+
+/** Central do aluno: nomes/papéis dos membros do grupo (sem valores financeiros). */
+export async function getFamilyHubForStudent(
+  supabase: SupabaseClient,
+  studentId: string
+): Promise<FamilyHubData | null> {
+  const ctx = await getFamilyContext(supabase, studentId);
+  if (!ctx) return null;
+
+  // RLS bloqueia um membro de ler Student/User de outro aluno; cliente admin só para nomes.
+  const reader = getAdminClientOrNull().client ?? supabase;
+
+  const { data: memberRows } = await reader
+    .from("FamilyGroupMember")
+    .select("studentId, role")
+    .eq("familyGroupId", ctx.group.id)
+    .order("joinedAt", { ascending: true });
+
+  const rows = (memberRows ?? []) as { studentId: string; role: FamilyGroupRole }[];
+  const studentIds = rows.map((r) => r.studentId);
+  const { data: students } = studentIds.length
+    ? await reader.from("Student").select("id, userId").in("id", studentIds)
+    : { data: [] as { id: string; userId: string }[] };
+  const userIds = [...new Set((students ?? []).map((s) => s.userId))];
+  const { data: users } = userIds.length
+    ? await reader.from("User").select("id, name, email").in("id", userIds)
+    : { data: [] as { id: string; name: string | null; email: string | null }[] };
+
+  const userByStudent = new Map<string, string>();
+  for (const s of students ?? []) {
+    const u = (users ?? []).find((x) => x.id === s.userId);
+    userByStudent.set(s.id, u?.name ?? u?.email ?? "—");
+  }
+
+  return {
+    groupName: ctx.group.name,
+    isTitular: ctx.isTitular,
+    maxMembers: ctx.group.maxMembers,
+    members: rows.map((r) => ({
+      studentId: r.studentId,
+      name: userByStudent.get(r.studentId) ?? "—",
+      role: r.role,
+      isSelf: r.studentId === studentId,
+    })),
   };
 }

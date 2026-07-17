@@ -6,7 +6,7 @@ import {
 } from "@/lib/student-onboarding-fees";
 import { hasPendingOnboardingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { getFamilyContext } from "@/lib/family-group";
-import { resolvePlanMonthlyTuition } from "@/lib/family-tuition";
+import { resolvePlanMonthlyTuition, resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
 import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
 
 export type StudentPaymentRow = {
@@ -24,10 +24,14 @@ export type StudentPaymentRow = {
   isFirstPaymentEligible: boolean;
   hasPendingOnboarding: boolean;
   onboardingFees: StudentOnboardingFeesState;
-  /** Aluno no plano família (80 €/pessoa). */
+  /** Aluno no plano família. */
   isInFamilyGroup?: boolean;
   /** Titular familiar: número de membros no grupo. */
   familyMemberCount?: number | null;
+  /** Papel no grupo familiar — membro não tem cobrança própria (regista-se no titular). */
+  familyRole?: "TITULAR" | "MEMBER" | null;
+  /** Para membro: id do titular onde o pagamento deve ser registado. */
+  familyBillingStudentId?: string | null;
   /** Primeiro mês com mensalidade (mês de inscrição em Lisboa). */
   tuitionStartMonth: string;
   /** LATE gerado antes da inscrição — anular, não registar pagamento. */
@@ -98,7 +102,8 @@ export async function loadStudentPaymentRows(
   const feesByStudent = new Map(studentIds.map((id, i) => [id, onboardingFeesList[i]]));
   const familyByStudent = new Map(studentIds.map((id, i) => [id, familyContexts[i]]));
 
-  return students.map((s) => {
+  const rows: StudentPaymentRow[] = [];
+  for (const s of students) {
     const u = userById.get(s.userId);
     const prof = profileByStudent.get(s.id);
     const row = s as {
@@ -120,17 +125,20 @@ export async function loadStudentPaymentRows(
     const isErroneousLate =
       existingPayment?.status === "LATE" &&
       isTuitionMonthBeforeEnrollment(referenceMonth, tuitionStartMonth);
-    return {
+
+    const priceMonthly = familyCtx?.isTitular
+      ? await resolveFamilyGroupTitularSuggestedAmount(supabase, familyCtx.group.id)
+      : familyCtx
+        ? 0
+        : resolvePlanMonthlyTuition(effectivePlanId, Number(plan?.priceMonthly ?? 0));
+
+    rows.push({
       studentId: s.id,
       name: u?.name ?? null,
       email: u?.email ?? null,
       phone: (prof as { phone?: string | null } | undefined)?.phone ?? null,
       planName: plan?.name ?? null,
-      priceMonthly: resolvePlanMonthlyTuition(
-        effectivePlanId,
-        Number(plan?.priceMonthly ?? 0),
-        Boolean(familyCtx)
-      ),
+      priceMonthly,
       referenceMonth,
       existingPayment,
       tuitionStartMonth,
@@ -149,6 +157,9 @@ export async function loadStudentPaymentRows(
       },
       isInFamilyGroup: Boolean(familyCtx),
       familyMemberCount: familyCtx?.memberCount ?? null,
-    };
-  });
+      familyRole: familyCtx?.role ?? null,
+      familyBillingStudentId: familyCtx && !familyCtx.isTitular ? familyCtx.billingStudentId : null,
+    });
+  }
+  return rows;
 }

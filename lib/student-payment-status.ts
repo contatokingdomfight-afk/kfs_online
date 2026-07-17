@@ -9,6 +9,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
 import { shouldGenerateLatePayments } from "@/lib/lisbon-payment-dates";
+import { getFamilyContext } from "@/lib/family-context";
 
 export type AutoStudentStatus = "ATIVO" | "INADIMPLENTE" | "INATIVO";
 
@@ -87,6 +88,21 @@ export async function syncStudentPaymentStatus(
   const row = st as StudentRow | null;
   if (!row) return { updated: false, status: null };
   if (row.status === "EXPERIMENTAL") return { updated: false, status: row.status };
+
+  // Membro de família não tem Payment próprio — o histórico de atraso é irrelevante
+  // para ele; o status só reflete o que a cascata do titular (payment-grace.ts) já
+  // escreveu em planId/adminGrantedFullAccess.
+  const familyCtx = await getFamilyContext(supabase, studentId);
+  if (familyCtx && !familyCtx.isTitular) {
+    const next: AutoStudentStatus = row.adminGrantedFullAccess || row.planId ? "ATIVO" : "INADIMPLENTE";
+    if (next === row.status) return { updated: false, status: row.status };
+    const { error } = await supabase.from("Student").update({ status: next }).eq("id", studentId);
+    if (error) {
+      console.error(`syncStudentPaymentStatus(${studentId}):`, error.message);
+      return { updated: false, status: row.status };
+    }
+    return { updated: true, status: next };
+  }
 
   const hadPlan =
     Boolean(row.planId) ||

@@ -3,8 +3,12 @@ import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { upsertTuitionPayment } from "@/lib/payment-tuition-upsert";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
-import { getFamilyContext } from "@/lib/family-group";
-import { familyGroupIdForTuition, resolvePlanMonthlyTuition } from "@/lib/family-tuition";
+import { getFamilyContext } from "@/lib/family-context";
+import {
+  familyGroupIdForTuition,
+  resolvePlanMonthlyTuition,
+  resolveFamilyGroupTitularSuggestedAmount,
+} from "@/lib/family-tuition";
 
 export type EnsureOnboardingPendingOptions = {
   referenceMonth?: string;
@@ -98,9 +102,13 @@ export async function ensureOnboardingPendingPayments(
   );
   let created = false;
 
-  if (!options?.skipTuition) {
-    const familyCtx = await getFamilyContext(supabase, studentId);
-    const tuitionAmount = resolvePlanMonthlyTuition(planId, Number(plan.priceMonthly ?? 0), Boolean(familyCtx));
+  const familyCtx = await getFamilyContext(supabase, studentId);
+  const isFamilyMember = Boolean(familyCtx && !familyCtx.isTitular);
+
+  if (!options?.skipTuition && !isFamilyMember) {
+    const tuitionAmount = familyCtx
+      ? await resolveFamilyGroupTitularSuggestedAmount(supabase, familyCtx.group.id)
+      : resolvePlanMonthlyTuition(planId, Number(plan.priceMonthly ?? 0));
     const { data: existingTuition } = await supabase
       .from("Payment")
       .select("id")

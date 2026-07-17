@@ -65,20 +65,32 @@ export function FamilyPlanBanner({
       <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.4 }}>
         {adminHint}
       </p>
-      {banner.isTitular && (
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         <Link
-          href="/dashboard/financeiro"
+          href="/dashboard/familia"
           style={{
-            alignSelf: "flex-start",
             fontSize: 14,
             fontWeight: 600,
             color: "var(--primary)",
             textDecoration: "none",
           }}
         >
-          {financeiroLabel} →
+          {locale === "en" ? "See members" : "Ver membros"} →
         </Link>
-      )}
+        {banner.isTitular && (
+          <Link
+            href="/dashboard/financeiro"
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "var(--primary)",
+              textDecoration: "none",
+            }}
+          >
+            {financeiroLabel} →
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getFamilyGroupDetail } from "@/lib/family-group";
+import { computeFamilyGroupMonthlyTuition, listFamilyReferencePlanOptions } from "@/lib/family-tuition";
 import { FamiliaDetailClient } from "./FamiliaDetailClient";
 
 type Props = { params: Promise<{ id: string }> };
@@ -19,6 +20,11 @@ export default async function AdminFamiliaDetailPage({ params }: Props) {
   const detail = await getFamilyGroupDetail(result.client, id);
   if (!detail) notFound();
 
+  const [breakdown, referencePlanOptions] = await Promise.all([
+    computeFamilyGroupMonthlyTuition(result.client, id),
+    listFamilyReferencePlanOptions(result.client, detail.group.schoolId),
+  ]);
+
   return (
     <div style={{ maxWidth: 560 }}>
       <Link href="/admin/familias" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 15 }}>
@@ -30,7 +36,11 @@ export default async function AdminFamiliaDetailPage({ params }: Props) {
       <p style={{ color: "var(--text-secondary)", marginBottom: 20, fontSize: 14 }}>
         Mensalidade única no titular · acesso equivalente ao Kingdom Presencial MMA
       </p>
-      <FamiliaDetailClient detail={detail} />
+      <FamiliaDetailClient
+        detail={detail}
+        breakdown={"error" in breakdown ? null : breakdown}
+        referencePlanOptions={referencePlanOptions}
+      />
     </div>
   );
 }

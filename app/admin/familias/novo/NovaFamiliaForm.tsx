@@ -5,18 +5,22 @@ import { useFormState } from "react-dom";
 import { createFamilyGroup, searchStudentsForFamily, type FamilyActionResult } from "../actions";
 
 type SchoolOption = { id: string; name: string };
+type PlanOption = { id: string; name: string; priceMonthly: number };
 
 type Props = {
   schools: SchoolOption[];
+  plansBySchool: Record<string, PlanOption[]>;
 };
 
-export function NovaFamiliaForm({ schools }: Props) {
+export function NovaFamiliaForm({ schools, plansBySchool }: Props) {
   const [state, formAction] = useFormState(createFamilyGroup, null as FamilyActionResult | null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Array<{ studentId: string; name: string; email: string }>>([]);
   const [titular, setTitular] = useState<{ studentId: string; name: string } | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [pendingSearch, startSearch] = useTransition();
+  const [schoolId, setSchoolId] = useState(schools[0]?.id ?? "");
+  const referencePlanOptions = plansBySchool[schoolId] ?? [];
 
   function runSearch() {
     startSearch(async () => {
@@ -44,7 +48,13 @@ export function NovaFamiliaForm({ schools }: Props) {
 
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: 14, fontWeight: 500 }}>Escola</span>
-        <select name="schoolId" className="input" required defaultValue={schools[0]?.id ?? ""}>
+        <select
+          name="schoolId"
+          className="input"
+          required
+          value={schoolId}
+          onChange={(e) => setSchoolId(e.target.value)}
+        >
           {schools.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
@@ -56,6 +66,23 @@ export function NovaFamiliaForm({ schools }: Props) {
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: 14, fontWeight: 500 }}>Limite de membros</span>
         <input type="number" name="maxMembers" className="input" min={2} max={20} defaultValue={3} required />
+      </label>
+
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: 14, fontWeight: 500 }}>Desconto % sobre a soma dos planos de referência</span>
+        <input type="number" name="discountPercent" className="input" min={0} max={100} step="0.01" defaultValue={0} required />
+      </label>
+
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: 14, fontWeight: 500 }}>Plano de referência do titular</span>
+        <select name="titularReferencePlanId" className="input">
+          <option value="">— Sem plano de referência (usa fallback) —</option>
+          {referencePlanOptions.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name} — {p.priceMonthly.toFixed(0)} €
+            </option>
+          ))}
+        </select>
       </label>
 
       <div>

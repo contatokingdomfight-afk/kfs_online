@@ -10,6 +10,7 @@ import {
   getFamilyContext,
   ensureFamilyGroupAsTitular,
 } from "@/lib/family-group";
+import { refreshFamilyTitularPendingTuition } from "@/lib/family-tuition";
 
 export type FamilyActionResult = { error?: string };
 
@@ -59,11 +60,16 @@ export async function createFamilyGroup(
   const titularStudentId = (formData.get("titularStudentId") as string)?.trim();
   const schoolId = (formData.get("schoolId") as string)?.trim();
   const maxMembers = parseInt((formData.get("maxMembers") as string)?.trim() || "0", 10);
+  const discountPercent = parseFloat((formData.get("discountPercent") as string)?.trim() || "0");
+  const titularReferencePlanId = (formData.get("titularReferencePlanId") as string)?.trim() || null;
 
   if (!titularStudentId) return { error: "Titular é obrigatório." };
   if (!schoolId) return { error: "Escola é obrigatória." };
   if (Number.isNaN(maxMembers) || maxMembers < 2) {
     return { error: "O limite de membros deve ser pelo menos 2." };
+  }
+  if (Number.isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+    return { error: "O desconto deve estar entre 0 e 100." };
   }
 
   const supabase = createAdminClient();
@@ -72,6 +78,8 @@ export async function createFamilyGroup(
     name,
     schoolId,
     maxMembers,
+    discountPercent,
+    titularReferencePlanId,
   });
   if (ensured.error) return { error: ensured.error };
   const groupId = ensured.groupId!;
@@ -92,6 +100,7 @@ export async function addFamilyMember(
 
   const groupId = (formData.get("groupId") as string)?.trim();
   const studentId = (formData.get("studentId") as string)?.trim();
+  const referencePlanId = (formData.get("referencePlanId") as string)?.trim() || null;
   if (!groupId || !studentId) return { error: "Grupo e aluno são obrigatórios." };
 
   const supabase = createAdminClient();
@@ -134,6 +143,7 @@ export async function addFamilyMember(
     familyGroupId: groupId,
     studentId,
     role: "MEMBER",
+    referencePlanId,
   });
   if (insertErr) return { error: insertErr.message };
 
@@ -142,6 +152,8 @@ export async function addFamilyMember(
     await supabase.from("FamilyGroupMember").delete().eq("studentId", studentId);
     return { error: planResult.error };
   }
+
+  await refreshFamilyTitularPendingTuition(supabase, groupId);
 
   revalidatePath("/admin/familias");
   revalidatePath(`/admin/familias/${groupId}`);
@@ -178,9 +190,64 @@ export async function removeFamilyMember(
     .update({ planId: null })
     .eq("id", studentId);
 
+  await refreshFamilyTitularPendingTuition(supabase, groupId);
+
   revalidatePath("/admin/familias");
   revalidatePath(`/admin/familias/${groupId}`);
   revalidatePath(`/admin/alunos/${studentId}`);
+  return {};
+}
+
+/** Actualiza o desconto % default do grupo (aplica-se ao recalcular a mensalidade pendente do titular). */
+export async function updateFamilyGroupDiscount(
+  _prev: FamilyActionResult | null,
+  formData: FormData
+): Promise<FamilyActionResult> {
+  if (!(await assertAdmin())) return { error: "Não autorizado." };
+
+  const groupId = (formData.get("groupId") as string)?.trim();
+  const discountPercent = parseFloat((formData.get("discountPercent") as string)?.trim() || "");
+  if (!groupId) return { error: "Grupo inválido." };
+  if (Number.isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+    return { error: "O desconto deve estar entre 0 e 100." };
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("FamilyGroup")
+    .update({ discountPercent, updatedAt: new Date().toISOString() })
+    .eq("id", groupId);
+  if (error) return { error: error.message };
+
+  await refreshFamilyTitularPendingTuition(supabase, groupId);
+
+  revalidatePath(`/admin/familias/${groupId}`);
+  return {};
+}
+
+/** Actualiza o plano de referência (só para cálculo do valor) de um membro. */
+export async function updateMemberReferencePlan(
+  _prev: FamilyActionResult | null,
+  formData: FormData
+): Promise<FamilyActionResult> {
+  if (!(await assertAdmin())) return { error: "Não autorizado." };
+
+  const groupId = (formData.get("groupId") as string)?.trim();
+  const studentId = (formData.get("studentId") as string)?.trim();
+  const referencePlanId = (formData.get("referencePlanId") as string)?.trim() || null;
+  if (!groupId || !studentId) return { error: "Dados inválidos." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("FamilyGroupMember")
+    .update({ referencePlanId })
+    .eq("familyGroupId", groupId)
+    .eq("studentId", studentId);
+  if (error) return { error: error.message };
+
+  await refreshFamilyTitularPendingTuition(supabase, groupId);
+
+  revalidatePath(`/admin/familias/${groupId}`);
   return {};
 }
 

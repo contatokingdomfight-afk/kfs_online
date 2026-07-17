@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { listFamilyReferencePlanOptions } from "@/lib/family-tuition";
 import { NovaFamiliaForm } from "./NovaFamiliaForm";
 
 export default async function AdminFamiliasNovoPage() {
@@ -18,13 +19,19 @@ export default async function AdminFamiliasNovoPage() {
     .eq("isActive", true)
     .order("name", { ascending: true });
 
+  const schoolList = (schools ?? []).map((s) => ({ id: s.id, name: s.name ?? s.id }));
+  const plansBySchool: Record<string, { id: string; name: string; priceMonthly: number }[]> = {};
+  for (const s of schoolList) {
+    plansBySchool[s.id] = await listFamilyReferencePlanOptions(result.client, s.id);
+  }
+
   return (
     <div style={{ maxWidth: 480 }}>
       <Link href="/admin/familias" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 15 }}>
         ← Planos família
       </Link>
       <h1 style={{ margin: "16px 0", fontSize: 22, fontWeight: 600 }}>Novo grupo familiar</h1>
-      <NovaFamiliaForm schools={(schools ?? []).map((s) => ({ id: s.id, name: s.name ?? s.id }))} />
+      <NovaFamiliaForm schools={schoolList} plansBySchool={plansBySchool} />
     </div>
   );
 }

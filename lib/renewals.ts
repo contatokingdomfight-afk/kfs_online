@@ -10,9 +10,7 @@ import {
 } from "@/lib/lisbon-payment-dates";
 import { startGracePeriodOnLatePayment } from "@/lib/payment-grace";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
-import { getFamilyContext } from "@/lib/family-group";
-import { familyGroupIdForTuition, resolvePlanMonthlyTuition } from "@/lib/family-tuition";
-import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
+import { resolvePlanMonthlyTuition, resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
 import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
 
 export type RenewalPending = {
@@ -22,6 +20,7 @@ export type RenewalPending = {
   planId: string;
   planName: string;
   priceMonthly: number;
+  familyGroupId: string | null;
 };
 
 export type GetRenewalsPendingOptions = {
@@ -69,12 +68,25 @@ export async function getRenewalsPending(
   );
   const anyPaymentStudentIds = new Set((payments ?? []).map((p) => p.studentId));
 
+  const candidateIds = students.filter((s) => s.planId && planById.has(s.planId)).map((s) => s.id);
+  const { data: familyRows } = candidateIds.length
+    ? await supabase
+        .from("FamilyGroupMember")
+        .select("studentId, role, familyGroupId")
+        .in("studentId", candidateIds)
+    : { data: [] as { studentId: string; role: string; familyGroupId: string }[] };
+  const familyByStudent = new Map(
+    (familyRows ?? []).map((f) => [f.studentId, f as { studentId: string; role: string; familyGroupId: string }])
+  );
+
   const withPlan = students.filter((s) => {
     if (!s.planId || !planById.has(s.planId)) return false;
     const startMonth = tuitionStartMonthFromCreatedAt((s as { createdAt: string }).createdAt);
     if (isTuitionMonthBeforeEnrollment(referenceMonth, startMonth)) return false;
     if (paidStudentIds.has(s.id)) return false;
     if (options?.forLateGeneration && anyPaymentStudentIds.has(s.id)) return false;
+    // Membros de família não têm cobrança individual — só o titular é cobrado.
+    if (familyByStudent.get(s.id)?.role === "MEMBER") return false;
     return true;
   });
   if (withPlan.length === 0) return [];
@@ -83,18 +95,25 @@ export async function getRenewalsPending(
   const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
 
-  return withPlan.map((s) => {
+  const result: RenewalPending[] = [];
+  for (const s of withPlan) {
     const plan = planById.get(s.planId)!;
     const user = userById.get(s.userId);
-    return {
+    const family = familyByStudent.get(s.id);
+    const priceMonthly = family
+      ? await resolveFamilyGroupTitularSuggestedAmount(supabase, family.familyGroupId)
+      : resolvePlanMonthlyTuition(plan.id, Number(plan.priceMonthly ?? 0));
+    result.push({
       studentId: s.id,
       studentName: user?.name ?? user?.email ?? "—",
       studentEmail: user?.email ?? "",
       planId: plan.id,
       planName: plan.name,
-      priceMonthly: resolvePlanMonthlyTuition(plan.id, Number(plan.priceMonthly ?? 0), isFamilyPlan(plan.id)),
-    };
-  });
+      priceMonthly,
+      familyGroupId: family?.familyGroupId ?? null,
+    });
+  }
+  return result;
 }
 
 export type GenerateMonthlyPaymentsResult = {
@@ -134,18 +153,14 @@ export async function generateMonthlyPayments(
   let created = 0;
 
   for (const p of pending) {
-    const familyCtx = await getFamilyContext(supabase, p.studentId);
-    const familyGroupId = familyGroupIdForTuition(familyCtx);
-    const amount = resolvePlanMonthlyTuition(p.planId, p.priceMonthly, Boolean(familyCtx));
-
     const { error } = await supabase.from("Payment").insert({
       id: crypto.randomUUID(),
       studentId: p.studentId,
-      amount,
+      amount: p.priceMonthly,
       status: "LATE",
       referenceMonth,
       paymentType: "TUITION",
-      familyGroupId,
+      familyGroupId: p.familyGroupId,
     });
     if (error) {
       return { created, skipped: pending.length - created, error: error.message };

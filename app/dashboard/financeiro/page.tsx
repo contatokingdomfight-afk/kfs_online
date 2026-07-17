@@ -8,6 +8,8 @@ import { StripeSubscribeButtons } from "./StripeSubscribeButtons";
 import { StudentOnboardingFeesNotice } from "@/components/StudentOnboardingFeesNotice";
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
 import { SchoolPaymentPendingModal } from "./SchoolPaymentPendingModal";
+import { getFamilyContext } from "@/lib/family-context";
+import { resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +46,7 @@ export default async function DashboardFinanceiroPage({
   let plansWithStripe: { id: string; name: string; price_monthly: number; stripePriceId?: string; planPrices?: { stripePriceId: string; intervalLabel: string; amountCents: number }[] }[] = [];
 
   let awaitingSchoolPayment = false;
+  let familyRole: "TITULAR" | "MEMBER" | null = null;
 
   if (studentId) {
     const { data: student } = await supabase
@@ -61,6 +64,15 @@ export default async function DashboardFinanceiroPage({
         .single();
       if (planRow) {
         plan = { name: planRow.name, price_monthly: Number(planRow.priceMonthly) };
+      }
+
+      const familyCtx = await getFamilyContext(supabase, studentId);
+      if (familyCtx) {
+        familyRole = familyCtx.role;
+        if (familyCtx.isTitular) {
+          const amount = await resolveFamilyGroupTitularSuggestedAmount(supabase, familyCtx.group.id);
+          plan = { name: planRow?.name ?? "Kingdom Família", price_monthly: amount };
+        }
       }
     }
 
@@ -170,7 +182,11 @@ export default async function DashboardFinanceiroPage({
       {/* Plano atual */}
       <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
         <h2 className="text-base font-bold text-text-primary mb-3">{t("financePlanSection")}</h2>
-        {plan ? (
+        {plan && familyRole === "MEMBER" ? (
+          <p className="text-text-primary font-semibold">
+            {plan.name} · {locale === "en" ? "no tuition of your own (paid by the plan holder)" : "sem mensalidade própria (paga pelo titular)"}
+          </p>
+        ) : plan ? (
           <p className="text-text-primary font-semibold">
             {plan.name} · €{plan.price_monthly.toFixed(0)}{t("perMonth")}
           </p>
