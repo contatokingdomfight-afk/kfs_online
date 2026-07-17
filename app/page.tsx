@@ -20,6 +20,7 @@ import { CTASection } from "@/components/home/CTASection";
 import { Footer } from "@/components/home/Footer";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { loadPublicWeeklySchedule } from "@/lib/public-weekly-schedule";
+import { loadPublicPlans } from "@/lib/public-plans";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -61,7 +62,7 @@ export default async function HomePage({ searchParams }: Props) {
 
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
   const content = getHomeContent(locale);
-  const weeklySchedule = await loadPublicWeeklySchedule();
+  const [weeklySchedule, publicPlans] = await Promise.all([loadPublicWeeklySchedule(), loadPublicPlans()]);
 
   return (
     <main className="min-h-screen bg-[var(--bg)]">
@@ -82,7 +83,15 @@ export default async function HomePage({ searchParams }: Props) {
       <ArbitrationSection content={content} />
       <WeeklyScheduleSection content={content} schedule={weeklySchedule} locale={locale} />
       <LearningPathsSection content={content} />
-      <Plans content={content} />
+      <Plans
+        plans={publicPlans}
+        plansTitle={content.plansTitle}
+        planPer={content.planPer}
+        planCta={content.planCta}
+        popular={content.popular}
+        noPlans={content.plansEmpty}
+        locale={locale}
+      />
       <WhyChoose content={content} />
       <Testimonials content={content} />
       <CTASection content={content} />

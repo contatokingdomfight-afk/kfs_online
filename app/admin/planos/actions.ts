@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { revalidatePublicPlans } from "@/lib/public-plans";
 
 const MODALITY_SCOPES = ["NONE", "SINGLE", "ALL"] as const;
 
@@ -66,6 +67,7 @@ export async function createPlan(
   }
 
   revalidatePath("/admin/planos");
+  revalidatePublicPlans();
   redirect("/admin/planos");
 }
 
@@ -122,6 +124,7 @@ export async function updatePlan(
 
   revalidatePath("/admin/planos");
   revalidatePath(`/admin/planos/${planId}`);
+  revalidatePublicPlans();
   return {};
 }
 
@@ -162,5 +165,6 @@ export async function updatePlanPrice(
   revalidatePath("/admin/planos");
   revalidatePath("/escolher-plano");
   revalidatePath("/dashboard/financeiro");
+  revalidatePublicPlans();
   return { success: true };
 }
