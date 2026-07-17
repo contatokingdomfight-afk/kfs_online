@@ -8,6 +8,7 @@ type Props = {
   enrollmentFormCompletedAt: string | null;
   agreementSigned: boolean;
   agreementSignedAt: string | null;
+  agreementSignatureName: string | null;
 };
 
 export function LegalDocumentsSection({
@@ -18,10 +19,11 @@ export function LegalDocumentsSection({
   enrollmentFormCompletedAt,
   agreementSigned,
   agreementSignedAt,
+  agreementSignatureName,
 }: Props) {
   const pt = locale === "pt";
   const fmt = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleDateString(pt ? "pt-PT" : "en-GB") : null;
+    iso ? new Date(iso).toLocaleDateString(pt ? "pt-PT" : "en-GB", { dateStyle: "long" }) : null;
 
   return (
     <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", marginTop: 20 }}>
@@ -33,8 +35,8 @@ export function LegalDocumentsSection({
           {pt ? "Comprovativo de adesão:" : "Enrollment form:"}{" "}
           {enrollmentFormCompleted
             ? pt
-              ? `Preenchido${fmt(enrollmentFormCompletedAt) ? ` em ${fmt(enrollmentFormCompletedAt)}` : ""}`
-              : `Completed${fmt(enrollmentFormCompletedAt) ? ` on ${fmt(enrollmentFormCompletedAt)}` : ""}`
+              ? `Aceite${fmt(enrollmentFormCompletedAt) ? ` em ${fmt(enrollmentFormCompletedAt)}` : ""}`
+              : `Accepted${fmt(enrollmentFormCompletedAt) ? ` on ${fmt(enrollmentFormCompletedAt)}` : ""}`
             : pt
               ? "Pendente"
               : "Pending"}
@@ -43,8 +45,12 @@ export function LegalDocumentsSection({
           {pt ? "Contrato de adesão:" : "Membership agreement:"}{" "}
           {agreementSigned
             ? pt
-              ? `Assinado${fmt(agreementSignedAt) ? ` em ${fmt(agreementSignedAt)}` : ""}`
-              : `Signed${fmt(agreementSignedAt) ? ` on ${fmt(agreementSignedAt)}` : ""}`
+              ? `Assinado${agreementSignatureName ? ` por ${agreementSignatureName}` : ""}${
+                  fmt(agreementSignedAt) ? ` em ${fmt(agreementSignedAt)}` : ""
+                }`
+              : `Signed${agreementSignatureName ? ` by ${agreementSignatureName}` : ""}${
+                  fmt(agreementSignedAt) ? ` on ${fmt(agreementSignedAt)}` : ""
+                }`
             : pt
               ? "Pendente"
               : "Pending"}
@@ -61,15 +67,18 @@ export function LegalDocumentsSection({
         </li>
       </ul>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 14 }}>
+        <Link href="/dashboard/documentos-adesao" style={{ color: "var(--accent)" }}>
+          {pt ? "Ver documentos de adesão" : "View membership documents"}
+        </Link>
         <Link href="/termos" style={{ color: "var(--accent)" }}>
           {pt ? "Termos da plataforma" : "Platform terms"}
         </Link>
         <Link href="/privacidade" style={{ color: "var(--accent)" }}>
           {pt ? "Privacidade" : "Privacy"}
         </Link>
-        {agreementSigned ? (
+        {!agreementSigned ? (
           <Link href="/adesao" style={{ color: "var(--accent)" }}>
-            {pt ? "Rever comprovativo e contrato" : "Review enrollment & contract"}
+            {pt ? "Completar adesão" : "Complete membership"}
           </Link>
         ) : null}
       </div>

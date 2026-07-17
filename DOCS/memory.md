@@ -273,12 +273,21 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Migrações (jun. 2026):** `20260630120000_*` (seguro/waiver), `20260630140000_*` + `20260630140100_*` (matrícula), `20260630150000_payment_reference_month_nullable.sql` (fix NOT NULL no 1.º pagamento).
 - **Config:** Admin → Configurações — `annualAmount`, `enrollmentAmount` (`lib/insurance-settings.ts`).
 - **Aluno presencial:** `/escolher-plano` → modal `PlanSchoolPaymentModal` → `LATE` via `ensureOnboardingPendingPayments` → gate middleware até 1.º `PAID` → `/dashboard/financeiro` + `SchoolPaymentPendingModal`.
-- **Gate de pagamento não bloqueia onboarding/waiver (jul. 2026):** o gate do `middleware.ts` isenta `isStudentAllowedWithoutPlan` (`/onboarding`, `/waiver-signing`, `/escolher-plano`) além de `isStudentAwaitingSchoolPaymentPath`. Sem esta isenção, um aluno com **plano atribuído + waiver por assinar + sem `PAID`** entrava em loop infinito `/waiver-signing` ↔ `/dashboard/financeiro` (`ERR_TOO_MANY_REDIRECTS`).
+- **Gate de pagamento não bloqueia onboarding/waiver (jul. 2026):** o gate do `middleware.ts` isenta `isStudentAllowedWithoutPlan` (`/onboarding`, `/waiver-signing`, `/escolher-plano`, `/adesao`) além de `isStudentAwaitingSchoolPaymentPath`. Sem esta isenção, um aluno com **plano atribuído + waiver por assinar + sem `PAID`** entrava em loop infinito `/waiver-signing` ↔ `/dashboard/financeiro` (`ERR_TOO_MANY_REDIRECTS`).
 - **Admin:** `/admin/financeiro/primeiro-pagamento` (`createFirstPaymentBundle`); matrícula opcional, seguro obrigatório; renova `StudentInsuranceCoverage`. Campo **meses de mensalidade** (1–12, padrão 1). Na lista «Registos de pagamento» e «Pagamentos pendentes», 1.º pagamento aparece **numa linha** (matrícula + seguro + mensalidade), pendente ou já `PAID` — `lib/admin-payment-list-grouping.ts`.
 - **Aviso «inscrição pendente»** (`hasPendingOnboardingPayments`): só quando há matrícula/seguro `LATE`, ou ainda **sem nenhum** `PAID` com mensalidade `LATE` — mensalidades `LATE` após o 1.º pagamento não disparam o aviso.
 - **KPI receita (mês):** mensalidades `PAID` do `referenceMonth` + matrícula/seguro `PAID` com `createdAt` no mês (`lib/admin-finance-overview.ts`); tooltip com breakdown na visão geral.
 - **Prazos mensalidade:** pagamento até **dia 8** do mês; regularização até **5 dias úteis** após o dia 8 (`lib/lisbon-payment-dates.ts`, `paymentGraceEndsAt`). Ver [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md).
 - **Waiver:** `/waiver-signing` (antes do plano); check-in bloqueado sem cobertura válida; cron `insurance-expiry-check` (segundas 08:00 UTC).
+
+## Adesão e contrato de sócio (jul. 2026)
+
+- **Fluxo aluno:** onboarding → waiver → escolher plano → **`/adesao`** (wizard 2 passos) → pagamento → dashboard.
+- **Passo 1 — Comprovativo:** ficha de inscrição (`StudentEnrollmentForm`, migração `20260717150000_student_enrollment_form.sql`): CC/NIF, morada, emergência, saúde, consentimentos RGPD, forma de pagamento; valores do plano pré-preenchidos.
+- **Passo 2 — Condições Gerais:** texto em `lib/membership-agreement-content.ts`; assinatura digital (`StudentMembershipAgreement`, migração `20260717140000_membership_agreement.sql`).
+- **Consulta (só leitura):** `/dashboard/documentos-adesao` — comprovativo + contrato com data de aceite/assinatura, nome e versão; link no perfil («Documentos legais»). `/adesao` fica só para preencher/assinar; quem já assinou é redireccionado para documentos.
+- **Gate middleware:** com `planId` e contrato por assinar → `/adesao` (antes do gate de pagamento). Contas com plano existente: migração marca `legacy` em ambas as tabelas.
+- **Versões:** `InsuranceSettings.membershipAgreementVersion`, `enrollmentFormVersion` (`lib/insurance-settings.ts`).
 
 
 
@@ -319,7 +328,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 ## Arbitragem (eventos internos — jul. 2026)
 
-- **Rotas:** `/coach/arbitragem` (lista de combates), `/coach/arbitragem/[fightId]` (julgamento), `/coach/arbitragem/gestao` (abas Eventos / Combates / Critérios / Juízes, `?secao=`), `/coach/arbitragem/historico` (filtros e fichas).
+- **Rotas:** `/coach/arbitragem` (lista de combates), `/coach/arbitragem/[fightId]` (julgamento), `/coach/arbitragem/criterios` (consulta de critérios e escala de pontuação), `/coach/arbitragem/gestao` (abas Eventos / Combates / Critérios / Juízes, `?secao=`), `/coach/arbitragem/historico` (filtros e fichas).
 - **Acesso:** `ADMIN`, `COACH` e assistente de professor (`SchoolAssistantCoach` activo); `requireArbitrationAccess()` nas server actions; menu «🏆 Arbitragem» em coach e admin.
 - **BD:** migração `20260713120000_arbitration_module.sql` — `ArbitrationEvent`, `ArbitrationFight`, `ArbitrationJudge`, `ArbitrationFightJudge`, `ArbitrationFightRound`, `ArbitrationRoundEvaluation`, `ArbitrationRoundOccurrence`, `ArbitrationFightResult`.
 - **Lógica:** critérios × 1–5 por canto; sugestão 10-Point Must em `lib/arbitration/scoring.ts`; múltiplos juízes com ficha independente; decisão unânime / maioria / dividida ao fechar o combate. Perfil **Kingdom (padrão)** = 6 critérios fixos; perfis personalizados em Gestão (`ArbitrationCriteriaSet`, migração `20260713180000_arbitration_criteria_sets.sql`) com snapshot em `ArbitrationEvent.criteriaSnapshot` ao criar o evento; pontuações dinâmicas em `criteriaScoresJson` (`lib/arbitration/criteria-sets.ts`).
@@ -330,4 +339,5 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Histórico:** combates `COMPLETED` com resultado oficial, resumo de **knockdowns** por round/atleta (com juízes que registaram), secção expansível «Cartões dos juízes» (total, vencedor, placar e knockdown por round); `loadFightJudgeHistory` em `lib/arbitration/queries.ts`.
 - **Julgamento mobile:** placar do round `sticky` no scroll do `main`; `ResponsiveShell` remove `padding-top` quando o header esconde; meta do combate faz scroll normal (`JudgingPanel.tsx`, `arbitration.css`).
 - **Julgamento público:** `/arbitragem` (redirect permanente de `/julgamento`) — ferramenta gratuita sem login (1 juiz, nomes editáveis, estado só no browser); link na homepage como o timer. Plataforma completa em `/coach/arbitragem`.
+- **Consulta de critérios (jul. 2026):** tab «Critérios» na subnav; combate `SCHEDULED` mostra lista de critérios + guia 1–5 / 10-Point Must antes de «Iniciar Julgamento» (`ArbitrationCriteriaReference.tsx`); Gestão → perfis listam labels completos.
 

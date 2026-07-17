@@ -63,6 +63,7 @@ function isStudentFreeTierPath(pathname: string) {
   if (pathname === "/dashboard") return true;
   if (pathname.startsWith("/dashboard/biblioteca")) return true;
   if (pathname.startsWith("/dashboard/perfil")) return true;
+  if (pathname.startsWith("/dashboard/documentos-adesao")) return true;
   if (pathname.startsWith("/dashboard/bem-estar")) return true;
   if (pathname.startsWith("/check-in/")) return true;
   return false;

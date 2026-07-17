@@ -99,6 +99,7 @@ export async function signMembershipAgreement(
 
   revalidatePath("/adesao");
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/documentos-adesao");
   revalidatePath("/dashboard/financeiro");
   redirect("/dashboard/financeiro?pagamento_escola=1");
 }

@@ -74,7 +74,7 @@ export function CriteriaSetsPanel({ sets }: Props) {
 
       <ul style={{ margin: "0 0 16px", paddingLeft: 18, fontSize: 14 }}>
         {sets.map((set) => (
-          <li key={set.id} style={{ marginBottom: 6 }}>
+          <li key={set.id} style={{ marginBottom: 12 }}>
             <strong>{set.name}</strong>
             <span style={{ color: "var(--text-secondary)", marginLeft: 8 }}>
               ({set.criteria.length} critérios)
@@ -90,6 +90,21 @@ export function CriteriaSetsPanel({ sets }: Props) {
                 Apagar
               </button>
             ) : null}
+            <ol
+              style={{
+                margin: "8px 0 0",
+                paddingLeft: 18,
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: "var(--text-secondary)",
+              }}
+            >
+              {set.criteria.map((c, index) => (
+                <li key={c.id}>
+                  {index + 1}. {c.label}
+                </li>
+              ))}
+            </ol>
           </li>
         ))}
       </ul>

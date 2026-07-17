@@ -49,7 +49,7 @@ export default async function DashboardPerfilPage() {
       .maybeSingle(),
     supabase
       .from("StudentMembershipAgreement")
-      .select("agreementSigned, agreementSignedAt")
+      .select("agreementSigned, agreementSignedAt, signatureName")
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase
@@ -108,6 +108,7 @@ export default async function DashboardPerfilPage() {
         enrollmentFormCompletedAt={(enrollmentForm as { formCompletedAt?: string | null } | null)?.formCompletedAt ?? null}
         agreementSigned={Boolean(agreement?.agreementSigned)}
         agreementSignedAt={(agreement as { agreementSignedAt?: string | null } | null)?.agreementSignedAt ?? null}
+        agreementSignatureName={(agreement as { signatureName?: string | null } | null)?.signatureName ?? null}
       />
       <ChangePasswordSection email={initial.email} locale={locale as "pt" | "en"} />
       <DeleteAccountSection locale={locale as "pt" | "en"} />

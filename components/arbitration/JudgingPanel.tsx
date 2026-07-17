@@ -29,6 +29,7 @@ import {
 import { CriteriaRow } from "@/components/arbitration/CriteriaRow";
 import { KnockdownPanel } from "@/components/arbitration/KnockdownPanel";
 import { OccurrencesPanel } from "@/components/arbitration/OccurrencesPanel";
+import { ArbitrationCriteriaReference } from "@/components/arbitration/ArbitrationCriteriaReference";
 
 type RoundState = {
   roundNumber: number;
@@ -257,12 +258,28 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
         <Link href="/coach/arbitragem" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
           ← Voltar
         </Link>
-        <div className="arb-card" style={{ marginTop: 16, textAlign: "center" }}>
-          <p style={{ marginBottom: 16 }}>Combate agendado — {judgeLabel}</p>
-          <button type="button" className="btn btn-primary arb-btn-save" onClick={handleStart} disabled={pending}>
-            Iniciar Julgamento
-          </button>
-          {error ? <p style={{ color: "var(--danger)", marginTop: 12 }}>{error}</p> : null}
+
+        <div className="arb-card" style={{ marginTop: 16 }}>
+          <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--text-secondary)" }}>{initial.fight.eventName}</p>
+          <h2 style={{ margin: "0 0 4px", fontSize: 17, fontWeight: 700 }}>
+            {initial.fight.athleteBlueName} vs {initial.fight.athleteRedName}
+          </h2>
+          <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--text-secondary)" }}>
+            {modalityLabel(initial.fight.modality)} · {initial.fight.category}
+            {initial.fight.weightClass ? ` · ${initial.fight.weightClass}` : ""} · {judgeLabel}
+          </p>
+
+          <ArbitrationCriteriaReference criteria={criteria} compact showScoringGuide />
+
+          <div style={{ marginTop: 20, display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+            <button type="button" className="btn btn-primary arb-btn-save" onClick={handleStart} disabled={pending}>
+              Iniciar Julgamento
+            </button>
+            <Link href="/coach/arbitragem/criterios" style={{ fontSize: 14, color: "var(--accent)" }}>
+              Ver referência completa
+            </Link>
+          </div>
+          {error ? <p style={{ color: "var(--danger)", marginTop: 12, marginBottom: 0 }}>{error}</p> : null}
         </div>
       </div>
     );

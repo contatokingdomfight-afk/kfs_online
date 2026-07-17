@@ -141,5 +141,6 @@ export async function saveEnrollmentForm(
   }
 
   revalidatePath("/adesao");
+  revalidatePath("/dashboard/documentos-adesao");
   redirect("/adesao?passo=2");
 }

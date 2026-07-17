@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const LINKS = [
   { href: "/coach/arbitragem", label: "Combates", exact: true },
+  { href: "/coach/arbitragem/criterios", label: "Critérios" },
   { href: "/coach/arbitragem/gestao", label: "Gestão" },
   { href: "/coach/arbitragem/historico", label: "Histórico" },
 ];
