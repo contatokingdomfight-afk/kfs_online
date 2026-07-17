@@ -7,6 +7,7 @@ import { getTranslations } from "@/lib/i18n";
 import { PerfilForm } from "./PerfilForm";
 import { ChangePasswordSection } from "./ChangePasswordSection";
 import { DeleteAccountSection } from "./DeleteAccountSection";
+import { LegalDocumentsSection } from "./LegalDocumentsSection";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 /** Valor para `input type="date"` (YYYY-MM-DD). */
@@ -39,6 +40,24 @@ export default async function DashboardPerfilPage() {
     .select("weightKg, heightCm, reachCm, dateOfBirth, medicalNotes, emergencyContact, phone")
     .eq("studentId", studentId)
     .maybeSingle();
+
+  const [{ data: waiver }, { data: agreement }, { data: enrollmentForm }] = await Promise.all([
+    supabase
+      .from("StudentWaiver")
+      .select("waiverSigned, waiverSignedAt")
+      .eq("studentId", studentId)
+      .maybeSingle(),
+    supabase
+      .from("StudentMembershipAgreement")
+      .select("agreementSigned, agreementSignedAt")
+      .eq("studentId", studentId)
+      .maybeSingle(),
+    supabase
+      .from("StudentEnrollmentForm")
+      .select("formCompleted, formCompletedAt")
+      .eq("studentId", studentId)
+      .maybeSingle(),
+  ]);
 
   const initial = {
     name: user?.name ?? "",
@@ -81,6 +100,15 @@ export default async function DashboardPerfilPage() {
         {t("profileIntro")}
       </p>
       <PerfilForm initial={initial} locale={locale as "pt" | "en"} />
+      <LegalDocumentsSection
+        locale={locale as "pt" | "en"}
+        waiverSigned={Boolean(waiver?.waiverSigned)}
+        waiverSignedAt={(waiver as { waiverSignedAt?: string | null } | null)?.waiverSignedAt ?? null}
+        enrollmentFormCompleted={Boolean(enrollmentForm?.formCompleted)}
+        enrollmentFormCompletedAt={(enrollmentForm as { formCompletedAt?: string | null } | null)?.formCompletedAt ?? null}
+        agreementSigned={Boolean(agreement?.agreementSigned)}
+        agreementSignedAt={(agreement as { agreementSignedAt?: string | null } | null)?.agreementSignedAt ?? null}
+      />
       <ChangePasswordSection email={initial.email} locale={locale as "pt" | "en"} />
       <DeleteAccountSection locale={locale as "pt" | "en"} />
     </div>

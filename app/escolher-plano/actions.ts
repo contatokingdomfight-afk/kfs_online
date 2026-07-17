@@ -79,5 +79,5 @@ export async function selectPlanPayAtSchool(
   revalidatePath("/dashboard/financeiro");
   revalidatePath("/admin/financeiro");
   revalidatePath("/admin/alunos");
-  redirect("/dashboard/financeiro?pagamento_escola=1");
+  redirect("/adesao");
 }

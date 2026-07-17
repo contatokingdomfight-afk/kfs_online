@@ -23,11 +23,12 @@ const publicPaths = [
   "/privacidade",
 ];
 
-/** Aluno sem plano: onboarding, waiver, escolher plano, callback OAuth e free tier. */
+/** Aluno sem plano: onboarding, waiver, escolher plano, adesão, callback OAuth e free tier. */
 const studentAllowedWithoutPlanPrefixes = [
   "/onboarding",
   "/waiver-signing",
   "/escolher-plano",
+  "/adesao",
   "/auth/callback",
   "/auth/update-password",
 ];
@@ -51,6 +52,10 @@ function isOnboardingPath(pathname: string) {
 
 function isWaiverPath(pathname: string) {
   return pathname === "/waiver-signing" || pathname.startsWith("/waiver-signing/");
+}
+
+function isAdesaoPath(pathname: string) {
+  return pathname === "/adesao" || pathname.startsWith("/adesao/");
 }
 
 /** Free tier: explora agenda (só leitura), biblioteca em pré-visualização e perfil; check-in mostra mensagem se sem plano. */
@@ -246,13 +251,18 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    const [{ data: profile }, { data: waiver }] = await Promise.all([
+    const [{ data: profile }, { data: waiver }, { data: agreement }] = await Promise.all([
       supabase
         .from("StudentProfile")
         .select("hasCompletedOnboarding")
         .eq("studentId", student.id)
         .maybeSingle(),
       supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", student.id).maybeSingle(),
+      supabase
+        .from("StudentMembershipAgreement")
+        .select("agreementSigned, agreementVersion")
+        .eq("studentId", student.id)
+        .maybeSingle(),
     ]);
 
     const onboardingDone = Boolean((profile as { hasCompletedOnboarding?: boolean } | null)?.hasCompletedOnboarding);
@@ -273,6 +283,23 @@ export async function middleware(request: NextRequest) {
     }
 
     if (student.planId) {
+      const { getInsuranceSettings, isMembershipAgreementCurrent } = await import("@/lib/insurance-settings");
+      const settings = await getInsuranceSettings(supabase);
+      const agreementCurrent = isMembershipAgreementCurrent(
+        agreement as { agreementSigned?: boolean; agreementVersion?: string | null } | null,
+        settings.membershipAgreementVersion
+      );
+
+      if (!agreementCurrent) {
+        if (isAdesaoPath(pathname)) {
+          return response;
+        }
+        const url = request.nextUrl.clone();
+        url.pathname = "/adesao";
+        url.search = "";
+        return NextResponse.redirect(url);
+      }
+
       const adminFree = Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess);
       if (!adminFree) {
         const { studentHasPaymentUnlock } = await import("@/lib/family-payment-gate");

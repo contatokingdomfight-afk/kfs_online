@@ -6,6 +6,8 @@ export type InsuranceSettingsRow = {
   enrollmentAmount: number;
   policyReference: string | null;
   waiverVersion: string;
+  membershipAgreementVersion: string;
+  enrollmentFormVersion: string;
   updatedAt: string;
 };
 
@@ -15,6 +17,8 @@ const DEFAULTS: InsuranceSettingsRow = {
   enrollmentAmount: 0,
   policyReference: null,
   waiverVersion: "1",
+  membershipAgreementVersion: "1",
+  enrollmentFormVersion: "1",
   updatedAt: new Date().toISOString(),
 };
 
@@ -23,7 +27,9 @@ export async function getInsuranceSettings(
 ): Promise<InsuranceSettingsRow> {
   const { data } = await supabase
     .from("InsuranceSettings")
-    .select("id, annualAmount, enrollmentAmount, policyReference, waiverVersion, updatedAt")
+    .select(
+      "id, annualAmount, enrollmentAmount, policyReference, waiverVersion, membershipAgreementVersion, enrollmentFormVersion, updatedAt"
+    )
     .eq("id", "global")
     .maybeSingle();
 
@@ -35,8 +41,23 @@ export async function getInsuranceSettings(
     enrollmentAmount: Number((data as { enrollmentAmount?: number }).enrollmentAmount ?? 0),
     policyReference: (data.policyReference as string | null) ?? null,
     waiverVersion: String(data.waiverVersion ?? "1"),
+    membershipAgreementVersion: String(
+      (data as { membershipAgreementVersion?: string }).membershipAgreementVersion ?? "1"
+    ),
+    enrollmentFormVersion: String((data as { enrollmentFormVersion?: string }).enrollmentFormVersion ?? "1"),
     updatedAt: String(data.updatedAt ?? new Date().toISOString()),
   };
+}
+
+/** Contrato de adesão assinado e em vigor para a versão actual. */
+export function isMembershipAgreementCurrent(
+  row: { agreementSigned?: boolean; agreementVersion?: string | null } | null | undefined,
+  currentVersion: string
+): boolean {
+  if (!row?.agreementSigned) return false;
+  const signedVersion = row.agreementVersion ?? "";
+  if (!signedVersion || signedVersion === "legacy") return true;
+  return signedVersion === currentVersion;
 }
 
 export type InsuranceCoverageStatus = "covered" | "expiring" | "expired" | "none";

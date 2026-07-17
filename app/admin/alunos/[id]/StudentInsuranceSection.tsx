@@ -22,9 +22,28 @@ type WaiverInfo = {
   signatureName: string | null;
 };
 
+type MembershipAgreementInfo = {
+  agreementSigned: boolean;
+  agreementSignedAt: string | null;
+  signatureName: string | null;
+};
+
+type EnrollmentFormInfo = {
+  formCompleted: boolean;
+  formCompletedAt: string | null;
+  taxId: string | null;
+  idDocument: string | null;
+  paymentMethod: string | null;
+  debitIban: string | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+};
+
 type Props = {
   studentId: string;
   waiver: WaiverInfo | null;
+  membershipAgreement: MembershipAgreementInfo | null;
+  enrollmentForm: EnrollmentFormInfo | null;
   coverage: InsuranceCoverageRow | null;
   annualAmount: number;
   defaultPolicyReference: string;
@@ -34,6 +53,8 @@ type Props = {
 export function StudentInsuranceSection({
   studentId,
   waiver,
+  membershipAgreement,
+  enrollmentForm,
   coverage,
   annualAmount,
   defaultPolicyReference,
@@ -65,9 +86,38 @@ export function StudentInsuranceSection({
 
   return (
     <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", marginTop: 20 }}>
-      <h2 style={{ margin: "0 0 12px", fontSize: 18, fontWeight: 600 }}>Seguro e termo de responsabilidade</h2>
+      <h2 style={{ margin: "0 0 12px", fontSize: 18, fontWeight: 600 }}>Seguro, adesão e termo de responsabilidade</h2>
 
       <div style={{ marginBottom: 16, fontSize: 14, color: "var(--text-secondary)" }}>
+        <p style={{ margin: "0 0 8px" }}>
+          <strong>Comprovativo de adesão:</strong>{" "}
+          {enrollmentForm?.formCompleted
+            ? `Preenchido${
+                enrollmentForm.formCompletedAt
+                  ? ` em ${new Date(enrollmentForm.formCompletedAt).toLocaleDateString("pt-PT")}`
+                  : ""
+              }`
+            : "Pendente"}
+        </p>
+        {enrollmentForm?.formCompleted ? (
+          <p style={{ margin: "0 0 8px", fontSize: 13 }}>
+            NIF {enrollmentForm.taxId ?? "—"} · CC {enrollmentForm.idDocument ?? "—"}
+            {enrollmentForm.paymentMethod ? ` · Pagamento: ${enrollmentForm.paymentMethod}` : ""}
+            {enrollmentForm.emergencyContactName
+              ? ` · Emergência: ${enrollmentForm.emergencyContactName} (${enrollmentForm.emergencyContactPhone ?? ""})`
+              : ""}
+          </p>
+        ) : null}
+        <p style={{ margin: "0 0 8px" }}>
+          <strong>Contrato de adesão:</strong>{" "}
+          {membershipAgreement?.agreementSigned
+            ? `Assinado${membershipAgreement.signatureName ? ` por ${membershipAgreement.signatureName}` : ""}${
+                membershipAgreement.agreementSignedAt
+                  ? ` em ${new Date(membershipAgreement.agreementSignedAt).toLocaleDateString("pt-PT")}`
+                  : ""
+              }`
+            : "Pendente"}
+        </p>
         <p style={{ margin: "0 0 8px" }}>
           <strong>Termo:</strong>{" "}
           {waiver?.waiverSigned

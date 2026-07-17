@@ -76,10 +76,23 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     .select("id, name, email, role, avatarUrl")
     .eq("id", student.userId)
     .single();
-  const [{ data: waiverRow }, { data: coverageRow }, insuranceSettings] = await Promise.all([
+  const [{ data: waiverRow }, { data: agreementRow }, { data: enrollmentRow }, { data: coverageRow }, insuranceSettings] =
+    await Promise.all([
     supabase
       .from("StudentWaiver")
       .select("waiverSigned, waiverSignedAt, signatureName")
+      .eq("studentId", studentId)
+      .maybeSingle(),
+    supabase
+      .from("StudentMembershipAgreement")
+      .select("agreementSigned, agreementSignedAt, signatureName")
+      .eq("studentId", studentId)
+      .maybeSingle(),
+    supabase
+      .from("StudentEnrollmentForm")
+      .select(
+        "formCompleted, formCompletedAt, taxId, idDocument, paymentMethod, debitIban, emergencyContactName, emergencyContactPhone"
+      )
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase
@@ -408,6 +421,29 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
                 waiverSigned: Boolean(waiverRow.waiverSigned),
                 waiverSignedAt: (waiverRow.waiverSignedAt as string | null) ?? null,
                 signatureName: (waiverRow.signatureName as string | null) ?? null,
+              }
+            : null
+        }
+        membershipAgreement={
+          agreementRow
+            ? {
+                agreementSigned: Boolean(agreementRow.agreementSigned),
+                agreementSignedAt: (agreementRow.agreementSignedAt as string | null) ?? null,
+                signatureName: (agreementRow.signatureName as string | null) ?? null,
+              }
+            : null
+        }
+        enrollmentForm={
+          enrollmentRow
+            ? {
+                formCompleted: Boolean(enrollmentRow.formCompleted),
+                formCompletedAt: (enrollmentRow.formCompletedAt as string | null) ?? null,
+                taxId: (enrollmentRow.taxId as string | null) ?? null,
+                idDocument: (enrollmentRow.idDocument as string | null) ?? null,
+                paymentMethod: (enrollmentRow.paymentMethod as string | null) ?? null,
+                debitIban: (enrollmentRow.debitIban as string | null) ?? null,
+                emergencyContactName: (enrollmentRow.emergencyContactName as string | null) ?? null,
+                emergencyContactPhone: (enrollmentRow.emergencyContactPhone as string | null) ?? null,
               }
             : null
         }
