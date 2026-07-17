@@ -4,6 +4,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { stripe } from "@/lib/stripe/server";
 import { isStripeCustomerInvalidForKey } from "@/lib/stripe/stripe-customer-errors";
+import { getFamilyContext } from "@/lib/family-context";
 
 function stripeSecretKeyMode(): "live" | "test" | "unknown" {
   const k = process.env.STRIPE_SECRET_KEY ?? "";
@@ -39,6 +40,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Configuração do servidor em falta." }, { status: 500 });
   }
   const supabase = result.client;
+
+  const familyCtx = await getFamilyContext(supabase, studentId);
+  if (familyCtx) {
+    return NextResponse.json(
+      { error: "Plano família é gerido pela secretaria. Fala connosco para simular ou pagar a mensalidade." },
+      { status: 400 }
+    );
+  }
 
   let priceToUse: string;
 

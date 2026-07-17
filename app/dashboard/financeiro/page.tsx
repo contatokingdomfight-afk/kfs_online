@@ -196,25 +196,38 @@ export default async function DashboardFinanceiroPage({
       </section>
 
       {/* Pagamento por cartão (Stripe) */}
-      <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
-        <h2 className="text-base font-bold text-text-primary">
-          {locale === "en" ? "Card payment (Stripe)" : "Pagamento por cartão"}
-        </h2>
-        <p className="text-sm text-text-secondary">
-          {locale === "en"
-            ? "Subscribe or manage your subscription with card. You can update your payment method and view invoices in the portal."
-            : "Subscreve ou gere a tua assinatura com cartão. No portal podes atualizar o método de pagamento e ver faturas."}
-        </p>
-        <StripeSubscribeButtons
-          hasStripeCustomer={hasStripeCustomer}
-          plansWithStripe={plansWithStripe}
-          locale={locale === "en" ? "en" : "pt"}
-          subscribeLabel={locale === "en" ? "Subscribe with card" : "Subscrever com cartão"}
-          manageLabel={locale === "en" ? "Manage subscription / card" : "Gerir assinatura / cartão"}
-          perMonthLabel={t("perMonth")}
-          stripePriceInvalidMessage={t("choosePlanStripePriceInvalid")}
-        />
-      </section>
+      {familyRole ? (
+        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+          <h2 className="text-base font-bold text-text-primary mb-2">
+            {locale === "en" ? "Card payment (Stripe)" : "Pagamento por cartão"}
+          </h2>
+          <p className="text-sm text-text-secondary">
+            {locale === "en"
+              ? "Family plan billing is handled by the school office, not self-service card checkout. Contact us to arrange payment."
+              : "A mensalidade do plano família é gerida pela secretaria, não por assinatura individual com cartão. Fala connosco para tratar do pagamento."}
+          </p>
+        </section>
+      ) : (
+        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
+          <h2 className="text-base font-bold text-text-primary">
+            {locale === "en" ? "Card payment (Stripe)" : "Pagamento por cartão"}
+          </h2>
+          <p className="text-sm text-text-secondary">
+            {locale === "en"
+              ? "Subscribe or manage your subscription with card. You can update your payment method and view invoices in the portal."
+              : "Subscreve ou gere a tua assinatura com cartão. No portal podes atualizar o método de pagamento e ver faturas."}
+          </p>
+          <StripeSubscribeButtons
+            hasStripeCustomer={hasStripeCustomer}
+            plansWithStripe={plansWithStripe}
+            locale={locale === "en" ? "en" : "pt"}
+            subscribeLabel={locale === "en" ? "Subscribe with card" : "Subscrever com cartão"}
+            manageLabel={locale === "en" ? "Manage subscription / card" : "Gerir assinatura / cartão"}
+            perMonthLabel={t("perMonth")}
+            stripePriceInvalidMessage={t("choosePlanStripePriceInvalid")}
+          />
+        </section>
+      )}
 
       {/* Forma de pagamento e comprovante (informação) */}
       <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
