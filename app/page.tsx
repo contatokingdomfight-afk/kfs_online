@@ -86,6 +86,7 @@ export default async function HomePage({ searchParams }: Props) {
         locale={locale}
         planPriceOnRequest={content.planPriceOnRequest}
         planCtaOnRequest={content.planCtaOnRequest}
+        familyPlanHighlight={content.familyPlanHighlight}
         familyPlanNote={content.familyPlanNote}
         plansDigitalNote={content.plansDigitalNote}
       />

@@ -11,6 +11,7 @@ type Props = {
   locale: "pt" | "en";
   planPriceOnRequest: string;
   planCtaOnRequest: string;
+  familyPlanHighlight: string;
   familyPlanNote: string;
   plansDigitalNote: string;
 };
@@ -33,6 +34,7 @@ export function Plans({
   locale,
   planPriceOnRequest,
   planCtaOnRequest,
+  familyPlanHighlight,
   familyPlanNote,
   plansDigitalNote,
 }: Props) {
@@ -52,7 +54,7 @@ export function Plans({
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className={`relative flex flex-col rounded-xl border p-6 transition-all hover:shadow-lg ${
+                className={`relative flex h-[21rem] flex-col rounded-xl border p-6 transition-all hover:shadow-lg ${
                   plan.popular
                     ? "border-[var(--primary)] bg-[var(--primary)]/5"
                     : "border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--primary)]/30"
@@ -77,12 +79,14 @@ export function Plans({
                   )}
                 </div>
                 {plan.description ? (
-                  <p className="mt-3 text-sm text-[var(--text-secondary)] whitespace-pre-line">{plan.description}</p>
+                  <p className="mt-3 line-clamp-3 text-sm text-[var(--text-secondary)]">{plan.description}</p>
                 ) : null}
                 {plan.priceOnRequest ? (
-                  <p className="mt-3 text-sm text-[var(--text-secondary)]">{familyPlanNote}</p>
+                  <div className="mt-3 rounded-lg bg-[var(--primary)]/10 px-3 py-2" title={familyPlanNote}>
+                    <p className="line-clamp-2 text-xs font-bold text-[var(--primary)]">{familyPlanHighlight}</p>
+                  </div>
                 ) : null}
-                <div className="mt-auto pt-6">
+                <div className="mt-auto pt-4">
                   <Link
                     href="/aula-experimental"
                     className={`block w-full rounded-lg py-3 text-center font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${
