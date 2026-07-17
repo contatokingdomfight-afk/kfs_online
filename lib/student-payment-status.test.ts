@@ -35,6 +35,17 @@ describe("deriveStudentStatusFromPayments", () => {
     expect(out).toBe("ATIVO");
   });
 
+  it("bolsista com paymentSuspendedAt residual e sem plano fica ATIVO", () => {
+    const out = deriveStudentStatusFromPayments({
+      lateMonthCount: 0,
+      paymentSuspendedAt: "2026-07-04T07:50:05.777Z",
+      planId: null,
+      adminGrantedFullAccess: true,
+      inPaymentProgram: true,
+    });
+    expect(out).toBe("ATIVO");
+  });
+
   it("após anular cobrança (0 atrasos) mas sem plano nem acesso -> INADIMPLENTE", () => {
     const out = deriveStudentStatusFromPayments({
       lateMonthCount: 0,

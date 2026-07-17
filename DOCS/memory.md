@@ -191,7 +191,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - Enum: `ATIVO`, `INADIMPLENTE`, `INATIVO`, `EXPERIMENTAL` (migração `20260628120000_student_status_inadimplente.sql`).
 
-- Sincronização automática em `lib/student-payment-status.ts`: **ATIVO** = em dia; **INADIMPLENTE** = 1 mês `Payment` LATE ou suspenso; **INATIVO** = 2+ meses LATE. `EXPERIMENTAL` não é alterado pelo cron.
+- Sincronização automática em `lib/student-payment-status.ts`: **ATIVO** = em dia; **INADIMPLENTE** = 1 mês `Payment` LATE ou suspenso; **INATIVO** = 2+ meses LATE. `EXPERIMENTAL` não é alterado pelo cron. Com `adminGrantedFullAccess` (acesso total na secretaria), suspensão residual não marca inadimplente — migração `20260717200000_fix_admin_granted_full_access_status.sql`.
 
 - Chamado em: cron `payment-suspension`, `createPayment`, webhook Stripe, `lib/payment-grace.ts`, `lib/renewals.ts`.
 

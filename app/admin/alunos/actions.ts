@@ -278,7 +278,14 @@ export async function setStudentFullAccess(
   // Atribui o melhor plano (acesso gratuito, sem cobranças)
   const { error } = await supabase
     .from("Student")
-    .update({ planId: fullPlan.id, stripeSubscriptionId: null, adminGrantedFullAccess: true })
+    .update({
+      planId: fullPlan.id,
+      stripeSubscriptionId: null,
+      adminGrantedFullAccess: true,
+      paymentSuspendedAt: null,
+      suspendedPlanId: null,
+      status: "ATIVO",
+    })
     .eq("id", studentId);
   if (error) return { error: error.message };
 

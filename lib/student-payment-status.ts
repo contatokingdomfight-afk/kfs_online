@@ -34,9 +34,10 @@ export function deriveStudentStatusFromPayments(input: {
   if (!inPaymentProgram) return null;
 
   if (lateMonthCount >= 2) return "INATIVO";
+  if (lateMonthCount >= 1) return "INADIMPLENTE";
   // paymentSuspendedAt só bloqueia se a suspensão ainda estiver em vigor (sem plano);
-  // se o plano foi reatribuído depois, a suspensão já foi revertida na prática.
-  if (lateMonthCount >= 1 || (paymentSuspendedAt && !planId)) return "INADIMPLENTE";
+  // bolsistas com acesso total (adminGrantedFullAccess) não entram nesta regra.
+  if (paymentSuspendedAt && !planId && !adminGrantedFullAccess) return "INADIMPLENTE";
   if (planId || adminGrantedFullAccess) return "ATIVO";
   return "INADIMPLENTE";
 }
@@ -121,9 +122,34 @@ export async function syncStudentPaymentStatus(
     inPaymentProgram: true,
   });
 
-  if (!next || next === row.status) return { updated: false, status: row.status };
+  if (!next || next === row.status) {
+    if (
+      next === "ATIVO" &&
+      row.adminGrantedFullAccess &&
+      (row.paymentSuspendedAt || row.suspendedPlanId)
+    ) {
+      const { error } = await supabase
+        .from("Student")
+        .update({
+          paymentSuspendedAt: null,
+          suspendedPlanId: null,
+        })
+        .eq("id", studentId);
+      if (error) {
+        console.error(`syncStudentPaymentStatus(${studentId}) clear suspension:`, error.message);
+      }
+      return { updated: !error, status: row.status };
+    }
+    return { updated: false, status: row.status };
+  }
 
-  const { error } = await supabase.from("Student").update({ status: next }).eq("id", studentId);
+  const statusPatch: Record<string, unknown> = { status: next };
+  if (next === "ATIVO" && row.adminGrantedFullAccess) {
+    statusPatch.paymentSuspendedAt = null;
+    statusPatch.suspendedPlanId = null;
+  }
+
+  const { error } = await supabase.from("Student").update(statusPatch).eq("id", studentId);
   if (error) {
     console.error(`syncStudentPaymentStatus(${studentId}):`, error.message);
     return { updated: false, status: row.status };
