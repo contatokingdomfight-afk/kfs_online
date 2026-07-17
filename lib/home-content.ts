@@ -66,7 +66,7 @@ export const homeContent = {
     plansEmpty: "Planos em actualização — contacte-nos ou marque uma aula experimental.",
     planPriceOnRequest: "Sob consulta",
     planCtaOnRequest: "Falar com a secretaria",
-    familyPlanNote: "Mensalidade única para toda a família, com desconto — fala connosco para simular o valor.",
+    familyPlanNote: "Até 20% de desconto para toda a família — cada pessoa com o plano de referência que fizer sentido, e o desconto ajustado à tua situação. Fala connosco para simular o valor.",
     plansDigitalNote: "Não consegues vir presencial? O plano digital dá acesso a todas as trilhas de cursos online.",
 
     // YouTube Shorts
@@ -257,7 +257,7 @@ export const homeContent = {
     plansEmpty: "Plans are being updated — contact us or book a trial class.",
     planPriceOnRequest: "Custom pricing",
     planCtaOnRequest: "Talk to our team",
-    familyPlanNote: "One single payment for the whole family, with a discount — talk to us to work out your price.",
+    familyPlanNote: "Up to 20% off for the whole family — each person matched to the plan that fits them, with the discount tailored to your situation. Talk to us to work out your price.",
     plansDigitalNote: "Can't make it in person? The digital plan gives you access to every course track online.",
 
     youtubeShortsTitle: "KFS in action",
