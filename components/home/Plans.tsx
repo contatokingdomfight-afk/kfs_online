@@ -9,6 +9,10 @@ type Props = {
   popular: string;
   noPlans: string;
   locale: "pt" | "en";
+  planPriceOnRequest: string;
+  planCtaOnRequest: string;
+  familyPlanNote: string;
+  plansDigitalNote: string;
 };
 
 function formatPlanPrice(amount: number, locale: "pt" | "en") {
@@ -19,7 +23,19 @@ function formatPlanPrice(amount: number, locale: "pt" | "en") {
   });
 }
 
-export function Plans({ plans, plansTitle, planPer, planCta, popular, noPlans, locale }: Props) {
+export function Plans({
+  plans,
+  plansTitle,
+  planPer,
+  planCta,
+  popular,
+  noPlans,
+  locale,
+  planPriceOnRequest,
+  planCtaOnRequest,
+  familyPlanNote,
+  plansDigitalNote,
+}: Props) {
   return (
     <section id="plans" className="border-t border-[var(--border)] py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -49,13 +65,22 @@ export function Plans({ plans, plansTitle, planPer, planCta, popular, noPlans, l
                 )}
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">{plan.name}</h3>
                 <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-[var(--primary)]">
-                    {formatPlanPrice(plan.priceMonthly, locale)}
-                  </span>
-                  <span className="text-sm text-[var(--text-secondary)]">{planPer}</span>
+                  {plan.priceOnRequest ? (
+                    <span className="text-2xl font-bold text-[var(--primary)]">{planPriceOnRequest}</span>
+                  ) : (
+                    <>
+                      <span className="text-2xl font-bold text-[var(--primary)]">
+                        {formatPlanPrice(plan.priceMonthly, locale)}
+                      </span>
+                      <span className="text-sm text-[var(--text-secondary)]">{planPer}</span>
+                    </>
+                  )}
                 </div>
                 {plan.description ? (
                   <p className="mt-3 text-sm text-[var(--text-secondary)] whitespace-pre-line">{plan.description}</p>
+                ) : null}
+                {plan.priceOnRequest ? (
+                  <p className="mt-3 text-sm text-[var(--text-secondary)]">{familyPlanNote}</p>
                 ) : null}
                 <div className="mt-auto pt-6">
                   <Link
@@ -64,13 +89,16 @@ export function Plans({ plans, plansTitle, planPer, planCta, popular, noPlans, l
                       plan.popular ? "btn btn-primary" : "btn btn-secondary"
                     }`}
                   >
-                    {planCta}
+                    {plan.priceOnRequest ? planCtaOnRequest : planCta}
                   </Link>
                 </div>
               </div>
             ))}
           </div>
         )}
+        <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-[var(--text-secondary)]">
+          {plansDigitalNote}
+        </p>
       </div>
     </section>
   );

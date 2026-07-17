@@ -5,10 +5,13 @@ import type { HomeContent } from "@/lib/home-content";
 
 type ItemId = "octagon" | "fighter" | "colors" | "crown" | "blood" | "prophecy";
 
+/** Só as chaves de texto do bloco de simbolismo (exclui campos não-string, ex.: faqItems). */
+type SymbolismTextKey = Extract<keyof HomeContent, `symbolism${string}Title` | `symbolism${string}Body`>;
+
 const LEFT_COL: ItemId[] = ["octagon", "colors", "blood"];
 const RIGHT_COL: ItemId[] = ["fighter", "crown", "prophecy"];
 
-const FIELD: Record<ItemId, { title: keyof HomeContent; body: keyof HomeContent }> = {
+const FIELD: Record<ItemId, { title: SymbolismTextKey; body: SymbolismTextKey }> = {
   octagon: { title: "symbolismOctagonTitle", body: "symbolismOctagonBody" },
   fighter: { title: "symbolismFighterTitle", body: "symbolismFighterBody" },
   colors: { title: "symbolismColorsTitle", body: "symbolismColorsBody" },

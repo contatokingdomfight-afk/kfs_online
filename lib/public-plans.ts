@@ -1,6 +1,10 @@
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { isPlanExcludedFromSelfService, KINGDOM_PLAN_PRESENCIAL_I_ID } from "@/lib/kingdom-plans-constants";
+import {
+  isFamilyPlan,
+  isPlanExcludedFromSelfService,
+  KINGDOM_PLAN_PRESENCIAL_I_ID,
+} from "@/lib/kingdom-plans-constants";
 
 export type PublicPlan = {
   id: string;
@@ -8,6 +12,8 @@ export type PublicPlan = {
   description: string | null;
   priceMonthly: number;
   popular: boolean;
+  /** Plano família: preço varia por composição do grupo — sem valor fixo, "sob consulta". */
+  priceOnRequest: boolean;
 };
 
 const CACHE_TAG = "public-plans";
@@ -28,13 +34,14 @@ async function fetchPublicPlans(): Promise<PublicPlan[]> {
   }
 
   return (data ?? [])
-    .filter((p) => !isPlanExcludedFromSelfService(p.id, p.name))
+    .filter((p) => isFamilyPlan(p.id, p.name) || !isPlanExcludedFromSelfService(p.id, p.name))
     .map((p) => ({
       id: p.id,
       name: p.name,
       description: (p as { description?: string | null }).description ?? null,
       priceMonthly: Number((p as { priceMonthly: number }).priceMonthly),
       popular: p.id === KINGDOM_PLAN_PRESENCIAL_I_ID,
+      priceOnRequest: isFamilyPlan(p.id, p.name),
     }));
 }
 

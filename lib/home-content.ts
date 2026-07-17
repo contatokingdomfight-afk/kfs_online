@@ -58,18 +58,16 @@ export const homeContent = {
     scheduleNoClasses:
       "Brevemente publicamos os horários. Entre em contacto ou marque uma aula experimental.",
 
-    // Trilhas + Plano digital (landing)
-    learningPathsTitle: "Trilhas de aprendizagem",
-    learningPathsSubtitle: "Do Iniciante ao Elite",
-    learningPathsDesc: "Técnica, mindset e performance — uma biblioteca de cursos para evoluir ao teu ritmo. Não podes fazer aulas presenciais? O plano digital dá-te acesso a todas as trilhas online.",
-    learningPathsCta: "Ver planos",
-
     // Plans (cards vêm da tabela Plan — ver lib/public-plans.ts)
     plansTitle: "Planos",
     planPer: "/mês",
     popular: "Mais Popular",
     planCta: "Começar",
     plansEmpty: "Planos em actualização — contacte-nos ou marque uma aula experimental.",
+    planPriceOnRequest: "Sob consulta",
+    planCtaOnRequest: "Falar com a secretaria",
+    familyPlanNote: "Mensalidade única para toda a família, com desconto — fala connosco para simular o valor.",
+    plansDigitalNote: "Não consegues vir presencial? O plano digital dá acesso a todas as trilhas de cursos online.",
 
     // YouTube Shorts
     youtubeShortsTitle: "KFS em ação",
@@ -118,6 +116,39 @@ export const homeContent = {
     testimonial2Name: "Aluno KFS",
     testimonial3: "Mais do que um ginásio — uma escola de vida.",
     testimonial3Name: "Aluno KFS",
+
+    // FAQ
+    faqTitle: "Perguntas frequentes",
+    faqItems: [
+      {
+        q: "Preciso de experiência para começar?",
+        a: "Não. Temos trilhas estruturadas do iniciante ao avançado — a metodologia Kingdom acompanha o teu ritmo desde o primeiro treino.",
+      },
+      {
+        q: "Quais modalidades vocês têm?",
+        a: "Muay Thai, Boxe, Kickboxing e mais — presencial ou combinado com o plano digital.",
+      },
+      {
+        q: "Não posso ir presencial — há alternativa?",
+        a: "Sim. O plano Kingdom Digital dá acesso a toda a biblioteca de cursos e trilhas online, sem precisares de vir à escola.",
+      },
+      {
+        q: "Como funciona o plano família?",
+        a: "Uma única mensalidade cobre todo o grupo, com desconto sobre a soma dos planos de cada pessoa. Fala com a secretaria para simular o valor para a tua família.",
+      },
+      {
+        q: "A aula experimental é grátis?",
+        a: "Sim — marca a tua aula experimental gratuita e conhece a metodologia sem compromisso.",
+      },
+      {
+        q: "Há fidelização ou posso cancelar quando quiser?",
+        a: "Não há fidelização fixa — fala com a secretaria sobre a tua situação e as condições de pagamento e cancelamento.",
+      },
+      {
+        q: "Tem aula para crianças?",
+        a: "Sim, o plano Kingdom Kids é dedicado às crianças, com metodologia própria para a idade.",
+      },
+    ],
 
     // CTA final
     ctaHeadline: "A sua transformação começa agora.",
@@ -219,16 +250,15 @@ export const homeContent = {
       "Reference times (weekly classes). One-off changes or cancellations may vary — please confirm with us.",
     scheduleNoClasses: "We will publish schedules soon. Get in touch or book a trial class.",
 
-    learningPathsTitle: "Learning paths",
-    learningPathsSubtitle: "From Beginner to Elite",
-    learningPathsDesc: "Technique, mindset and performance — a library of courses to evolve at your own pace. Can't make it to in-person classes? The digital plan gives you access to all online paths.",
-    learningPathsCta: "View plans",
-
     plansTitle: "Plans",
     planPer: "/month",
     popular: "Most Popular",
     planCta: "Start",
     plansEmpty: "Plans are being updated — contact us or book a trial class.",
+    planPriceOnRequest: "Custom pricing",
+    planCtaOnRequest: "Talk to our team",
+    familyPlanNote: "One single payment for the whole family, with a discount — talk to us to work out your price.",
+    plansDigitalNote: "Can't make it in person? The digital plan gives you access to every course track online.",
 
     youtubeShortsTitle: "KFS in action",
     youtubeShortsSubtitle: "Some moments from our day on the mat.",
@@ -274,6 +304,38 @@ export const homeContent = {
     testimonial2Name: "KFS Student",
     testimonial3: "More than a gym — a school of life.",
     testimonial3Name: "KFS Student",
+
+    faqTitle: "Frequently asked questions",
+    faqItems: [
+      {
+        q: "Do I need experience to start?",
+        a: "No. We have structured paths from beginner to advanced — the Kingdom methodology matches your pace from the very first class.",
+      },
+      {
+        q: "What modalities do you offer?",
+        a: "Muay Thai, Boxing, Kickboxing and more — in person or combined with the digital plan.",
+      },
+      {
+        q: "I can't train in person — is there an alternative?",
+        a: "Yes. The Kingdom Digital plan gives you access to the full course library and online tracks, no need to come to the school.",
+      },
+      {
+        q: "How does the family plan work?",
+        a: "One single monthly payment covers the whole group, with a discount over the sum of each person's plan. Talk to our team to work out your family's price.",
+      },
+      {
+        q: "Is the trial class free?",
+        a: "Yes — book your free trial class and experience the methodology with no commitment.",
+      },
+      {
+        q: "Is there a minimum commitment, or can I cancel anytime?",
+        a: "There's no fixed lock-in period — talk to our team about your situation and the payment/cancellation terms.",
+      },
+      {
+        q: "Do you have classes for kids?",
+        a: "Yes, the Kingdom Kids plan is dedicated to children, with an age-appropriate methodology.",
+      },
+    ],
 
     ctaHeadline: "Your transformation starts now.",
     ctaSub: "Take the first step. Free trial class.",

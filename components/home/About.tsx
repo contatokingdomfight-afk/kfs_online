@@ -21,18 +21,18 @@ export function About({ content }: { content: Content }) {
         <h2 className="text-center text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
           {content.aboutTitle}
         </h2>
-        <div className="mt-12 space-y-10 sm:mt-16">
+        <div className="mt-10 grid gap-6 sm:mt-12 sm:grid-cols-3">
           {blocks.map((fn, i) => {
             const { title, text } = fn(content);
             return (
               <div
                 key={i}
-                className="animate-fade-in rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-6 transition-all hover:border-[var(--primary)]/30 sm:p-8"
+                className="animate-fade-in rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5 transition-all hover:border-[var(--primary)]/30"
               >
-                <h3 className="text-lg font-semibold text-[var(--primary)]">
+                <h3 className="text-base font-semibold text-[var(--primary)]">
                   {title}
                 </h3>
-                <p className="mt-3 text-[var(--text-secondary)] leading-relaxed">
+                <p className="mt-2 text-sm text-[var(--text-secondary)] leading-relaxed">
                   {text}
                 </p>
               </div>

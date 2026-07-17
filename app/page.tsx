@@ -10,12 +10,12 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { ArbitrationSection } from "@/components/home/ArbitrationSection";
 import { Plans } from "@/components/home/Plans";
 import { Founders } from "@/components/home/Founders";
-import { LearningPathsSection } from "@/components/home/LearningPathsSection";
 import { YouTubeShortsSection } from "@/components/home/YouTubeShortsSection";
 import { LogoSymbolismSection } from "@/components/home/LogoSymbolismSection";
 import { WeeklyScheduleSection } from "@/components/home/WeeklyScheduleSection";
 import { WhyChoose } from "@/components/home/WhyChoose";
 import { Testimonials } from "@/components/home/Testimonials";
+import { FAQSection } from "@/components/home/FAQSection";
 import { CTASection } from "@/components/home/CTASection";
 import { Footer } from "@/components/home/Footer";
 import { HomeHeader } from "@/components/home/HomeHeader";
@@ -75,14 +75,7 @@ export default async function HomePage({ searchParams }: Props) {
       <Hero content={content} />
       <HomePwaInstallBand locale={locale} title={content.pwaBandTitle} subtitle={content.pwaBandSub} />
       <Stats content={content} />
-      <About content={content} />
-      <YouTubeShortsSection content={content} />
-      <LogoSymbolismSection content={content} />
-      <Founders content={content} />
       <HowItWorks content={content} />
-      <ArbitrationSection content={content} />
-      <WeeklyScheduleSection content={content} schedule={weeklySchedule} locale={locale} />
-      <LearningPathsSection content={content} />
       <Plans
         plans={publicPlans}
         plansTitle={content.plansTitle}
@@ -91,9 +84,20 @@ export default async function HomePage({ searchParams }: Props) {
         popular={content.popular}
         noPlans={content.plansEmpty}
         locale={locale}
+        planPriceOnRequest={content.planPriceOnRequest}
+        planCtaOnRequest={content.planCtaOnRequest}
+        familyPlanNote={content.familyPlanNote}
+        plansDigitalNote={content.plansDigitalNote}
       />
+      <WeeklyScheduleSection content={content} schedule={weeklySchedule} locale={locale} />
       <WhyChoose content={content} />
       <Testimonials content={content} />
+      <FAQSection content={content} />
+      <About content={content} />
+      <Founders content={content} />
+      <YouTubeShortsSection content={content} />
+      <LogoSymbolismSection content={content} />
+      <ArbitrationSection content={content} />
       <CTASection content={content} />
       <Footer content={content} />
     </main>
