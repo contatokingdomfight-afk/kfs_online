@@ -8,9 +8,9 @@ Gestão **exclusiva na secretaria** (`/admin/familias`). Não aparece em `/escol
 |--------|----------------|
 | **Acesso** | Equivalente ao **Kingdom Presencial MMA** (`plan-familia`: todas as modalidades, digital, performance, check-in ilimitado) |
 | **Cobrança** | **80 €/mês por pessoa** no grupo (desconto face ao FULL ~100 €); cada aluno tem a sua linha `TUITION` |
-| **Membros** | Limite configurável por grupo (`maxMembers`, mínimo 2) |
+| **Membros** | **A partir de 2 pessoas**, sem limite máximo por grupo |
 | **Matrícula / seguro** | **Individuais** por aluno (como qualquer inscrição) |
-| **Self-service** | Não — **só a secretaria (admin)** cria o grupo, define `maxMembers` e adiciona cada membro em `/admin/familias` |
+| **Self-service** | Não — **só a secretaria (admin)** cria o grupo e adiciona cada membro em `/admin/familias` |
 | **Titular na app** | Vê o grupo no dashboard e paga a sua mensalidade; **não** adiciona pessoas (fora do MVP) |
 
 ## Modelo de dados

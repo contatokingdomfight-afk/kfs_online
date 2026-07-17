@@ -303,11 +303,11 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 **Documentação:** [`PLANO_FAMILIA.md`](PLANO_FAMILIA.md).
 
-- Plano `plan-familia` (acesso = **todas as modalidades**, equivalente Presencial MMA); **não** em `/escolher-plano` (nem cópias com nome «famil*»); descrição catálogo «até 4 pessoas».
+- Plano `plan-familia` (acesso = **todas as modalidades**, equivalente Presencial MMA); **não** em `/escolher-plano` (nem cópias com nome «famil*»); descrição catálogo «a partir de 2 pessoas», sem tecto de membros.
 - Admin: `/admin/familias` — **só a secretaria** cria grupo ou atribui `plan-familia` (grupo + titular automáticos); adiciona membros manualmente.
 - Dashboard aluno: banner plano família (`FamilyPlanBanner`, `getFamilyStudentBanner`).
 - Mensalidade **80 €/pessoa** (`KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON`, `lib/family-tuition.ts`); cada membro tem `TUITION` própria; acesso com PAID individual (`lib/family-payment-gate.ts`).
-- Migrações: `20260701120000_family_plan.sql`, … `20260705120000_family_group_backfill_any_family_plan.sql`, **`20260706120000_family_plan_per_person_tuition.sql`**.
+- Migrações: `20260701120000_family_plan.sql`, … `20260706120000_family_plan_per_person_tuition.sql`, **`20260717193000_family_plan_no_member_cap.sql`** (remove `maxMembers`).
 - Reparo automático: `repairOrphanFamilyTitulars` + `backfillFamilyGroupTuitions` ao abrir `/admin/familias`.
 
 

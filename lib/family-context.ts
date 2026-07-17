@@ -12,7 +12,6 @@ export type FamilyGroupRow = {
   name: string | null;
   billingStudentId: string;
   planId: string;
-  maxMembers: number;
   schoolId: string;
   isActive: boolean;
   discountPercent: number;
@@ -47,7 +46,7 @@ export async function getFamilyContext(
   const memberRow = member as MemberJoinRow;
   const { data: group } = await supabase
     .from("FamilyGroup")
-    .select("id, name, billingStudentId, planId, maxMembers, schoolId, isActive, discountPercent")
+    .select("id, name, billingStudentId, planId, schoolId, isActive, discountPercent")
     .eq("id", memberRow.familyGroupId)
     .maybeSingle();
 

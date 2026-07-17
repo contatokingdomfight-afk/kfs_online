@@ -61,7 +61,7 @@ export default async function AdminFamiliasPage() {
                     </span>
                   )}
                   <span style={{ marginLeft: "auto", fontSize: 14, color: "var(--text-secondary)" }}>
-                    {g.memberCount}/{g.maxMembers} membros
+                    {g.memberCount} {g.memberCount === 1 ? "membro" : "membros"}
                   </span>
                 </div>
                 <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--text-secondary)" }}>

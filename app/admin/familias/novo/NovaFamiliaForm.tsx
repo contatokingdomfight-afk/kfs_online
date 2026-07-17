@@ -64,11 +64,6 @@ export function NovaFamiliaForm({ schools, plansBySchool }: Props) {
       </label>
 
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{ fontSize: 14, fontWeight: 500 }}>Limite de membros</span>
-        <input type="number" name="maxMembers" className="input" min={2} max={20} defaultValue={3} required />
-      </label>
-
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: 14, fontWeight: 500 }}>Desconto % sobre a soma dos planos de referência</span>
         <input type="number" name="discountPercent" className="input" min={0} max={100} step="0.01" defaultValue={0} required />
       </label>

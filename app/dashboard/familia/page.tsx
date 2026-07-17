@@ -21,7 +21,7 @@ export default async function FamiliaHubPage() {
         {hub.groupName?.trim() || "Grupo familiar"}
       </h1>
       <p style={{ margin: "0 0 20px", fontSize: 14, color: "var(--text-secondary)" }}>
-        {hub.members.length}/{hub.maxMembers} membros
+        {hub.members.length} {hub.members.length === 1 ? "membro" : "membros"}
       </p>
 
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>

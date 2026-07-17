@@ -20,9 +20,7 @@ export function FamilyPlanBanner({
   adminHint,
   financeiroLabel,
 }: Props) {
-  const countText = membersCountLabel
-    .replace("{count}", String(banner.memberCount))
-    .replace("{max}", String(banner.maxMembers));
+  const countText = membersCountLabel.replace("{count}", String(banner.memberCount));
 
   const roleMessage = banner.isTitular
     ? titularMessage

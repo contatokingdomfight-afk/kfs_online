@@ -469,7 +469,7 @@ export const messages = {
       "És o titular do plano família — a mensalidade única do grupo é paga por ti.",
     dashboardFamilyPlanMember:
       "És membro do plano família de {titular}. A mensalidade é paga pelo titular — não tens mensalidade própria.",
-    dashboardFamilyPlanMembersCount: "{count}/{max} pessoas",
+    dashboardFamilyPlanMembersCount: "{count} pessoas",
     dashboardFamilyPlanAdminHint:
       "Novos membros são adicionados pela secretaria Kingdom Fight (não pelo titular na app).",
     dashboardFamilyPlanFinanceiroLink: "Ver financeiro",
@@ -1659,7 +1659,7 @@ export const messages = {
       "You are the family plan holder — the group's single monthly payment is billed to you.",
     dashboardFamilyPlanMember:
       "You are on {titular}'s family plan. The tuition is paid by the plan holder — you have no tuition of your own.",
-    dashboardFamilyPlanMembersCount: "{count}/{max} people",
+    dashboardFamilyPlanMembersCount: "{count} people",
     dashboardFamilyPlanAdminHint:
       "New members are added by Kingdom Fight staff (not by the account holder in the app).",
     dashboardFamilyPlanFinanceiroLink: "View billing",

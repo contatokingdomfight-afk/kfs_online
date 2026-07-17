@@ -5,7 +5,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { KINGDOM_PLAN_FAMILIA_ID, KINGDOM_PLAN_FAMILIA_DEFAULT_MAX_MEMBERS, isFamilyPlan } from "@/lib/kingdom-plans-constants";
+import { KINGDOM_PLAN_FAMILIA_ID, isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { getFamilyContext, type FamilyGroupRole, type FamilyGroupRow, type FamilyContext } from "@/lib/family-context";
@@ -145,7 +145,6 @@ export async function syncFamilyMembersOnTitularSuspension(
 
 export type EnsureFamilyTitularGroupOptions = {
   schoolId?: string;
-  maxMembers?: number;
   name?: string | null;
   discountPercent?: number;
   titularReferencePlanId?: string | null;
@@ -182,9 +181,6 @@ export async function ensureFamilyGroupAsTitular(
   const schoolId = options?.schoolId ?? (student as { schoolId?: string | null }).schoolId;
   if (!schoolId) return { error: "Escola é obrigatória para criar o grupo familiar." };
 
-  const maxMembers = options?.maxMembers ?? KINGDOM_PLAN_FAMILIA_DEFAULT_MAX_MEMBERS;
-  if (maxMembers < 2) return { error: "O limite de membros deve ser pelo menos 2." };
-
   const discountPercent = options?.discountPercent ?? 0;
   if (discountPercent < 0 || discountPercent > 100) {
     return { error: "O desconto deve estar entre 0 e 100." };
@@ -196,7 +192,6 @@ export async function ensureFamilyGroupAsTitular(
     name: options?.name?.trim() || null,
     billingStudentId: titularStudentId,
     planId: KINGDOM_PLAN_FAMILIA_ID,
-    maxMembers,
     schoolId,
     isActive: true,
     discountPercent,
@@ -298,7 +293,7 @@ export type FamilyGroupListItem = FamilyGroupRow & {
 export async function listFamilyGroups(supabase: SupabaseClient): Promise<FamilyGroupListItem[]> {
   const { data: groups } = await supabase
     .from("FamilyGroup")
-    .select("id, name, billingStudentId, planId, maxMembers, schoolId, isActive, discountPercent")
+    .select("id, name, billingStudentId, planId, schoolId, isActive, discountPercent")
     .order("createdAt", { ascending: false });
 
   if (!groups?.length) return [];
@@ -342,7 +337,6 @@ export type FamilyStudentBanner = {
   titularName: string;
   groupName: string | null;
   memberCount: number;
-  maxMembers: number;
 };
 
 /** Contexto para o banner do dashboard do aluno (titular ou membro). */
@@ -377,7 +371,6 @@ export async function getFamilyStudentBanner(
     titularName,
     groupName: ctx.group.name,
     memberCount: ctx.memberCount,
-    maxMembers: ctx.group.maxMembers,
   };
 }
 
@@ -399,7 +392,7 @@ export async function getFamilyGroupDetail(
 ): Promise<FamilyGroupDetail | null> {
   const { data: group } = await supabase
     .from("FamilyGroup")
-    .select("id, name, billingStudentId, planId, maxMembers, schoolId, isActive, discountPercent")
+    .select("id, name, billingStudentId, planId, schoolId, isActive, discountPercent")
     .eq("id", groupId)
     .maybeSingle();
 
@@ -457,7 +450,6 @@ export type FamilyHubMember = {
 export type FamilyHubData = {
   groupName: string | null;
   isTitular: boolean;
-  maxMembers: number;
   members: FamilyHubMember[];
 };
 
@@ -497,7 +489,6 @@ export async function getFamilyHubForStudent(
   return {
     groupName: ctx.group.name,
     isTitular: ctx.isTitular,
-    maxMembers: ctx.group.maxMembers,
     members: rows.map((r) => ({
       studentId: r.studentId,
       name: userByStudent.get(r.studentId) ?? "—",

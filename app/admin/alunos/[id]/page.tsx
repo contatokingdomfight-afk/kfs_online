@@ -289,7 +289,8 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
               Plano família — {familyCtx.isTitular ? "titular" : "membro"}
             </span>
             <span style={{ color: "var(--text-secondary)" }}>
-              {familyCtx.group.name || "Grupo familiar"} · {familyCtx.memberCount}/{familyCtx.group.maxMembers}
+              {familyCtx.group.name || "Grupo familiar"} · {familyCtx.memberCount}{" "}
+              {familyCtx.memberCount === 1 ? "membro" : "membros"}
             </span>
           </Link>
         </div>

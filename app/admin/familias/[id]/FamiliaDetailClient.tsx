@@ -72,7 +72,7 @@ export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }:
   const [pendingSearch, startSearch] = useTransition();
 
   const { group, members } = detail;
-  const canAdd = group.isActive && members.length < group.maxMembers;
+  const canAdd = group.isActive;
 
   function runSearch() {
     startSearch(async () => {
@@ -96,7 +96,7 @@ export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }:
 
       <div className="card" style={{ padding: 14 }}>
         <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
-          {members.length}/{group.maxMembers} membros ·{" "}
+          {members.length} {members.length === 1 ? "membro" : "membros"} ·{" "}
           {group.isActive ? "Activo" : "Inactivo"}
         </p>
       </div>

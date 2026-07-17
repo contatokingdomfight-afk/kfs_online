@@ -59,15 +59,11 @@ export async function createFamilyGroup(
   const name = (formData.get("name") as string)?.trim() || null;
   const titularStudentId = (formData.get("titularStudentId") as string)?.trim();
   const schoolId = (formData.get("schoolId") as string)?.trim();
-  const maxMembers = parseInt((formData.get("maxMembers") as string)?.trim() || "0", 10);
   const discountPercent = parseFloat((formData.get("discountPercent") as string)?.trim() || "0");
   const titularReferencePlanId = (formData.get("titularReferencePlanId") as string)?.trim() || null;
 
   if (!titularStudentId) return { error: "Titular é obrigatório." };
   if (!schoolId) return { error: "Escola é obrigatória." };
-  if (Number.isNaN(maxMembers) || maxMembers < 2) {
-    return { error: "O limite de membros deve ser pelo menos 2." };
-  }
   if (Number.isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
     return { error: "O desconto deve estar entre 0 e 100." };
   }
@@ -77,7 +73,6 @@ export async function createFamilyGroup(
   const ensured = await ensureFamilyGroupAsTitular(supabase, titularStudentId, {
     name,
     schoolId,
-    maxMembers,
     discountPercent,
     titularReferencePlanId,
   });
@@ -107,19 +102,11 @@ export async function addFamilyMember(
 
   const { data: group } = await supabase
     .from("FamilyGroup")
-    .select("id, maxMembers, isActive, billingStudentId")
+    .select("id, isActive, billingStudentId")
     .eq("id", groupId)
     .maybeSingle();
   if (!group?.isActive) return { error: "Grupo não encontrado ou inactivo." };
   if (studentId === group.billingStudentId) return { error: "O titular já está no grupo." };
-
-  const { count } = await supabase
-    .from("FamilyGroupMember")
-    .select("id", { count: "exact", head: true })
-    .eq("familyGroupId", groupId);
-  if ((count ?? 0) >= group.maxMembers) {
-    return { error: `O grupo já atingiu o limite de ${group.maxMembers} membros.` };
-  }
 
   const { data: existingMember } = await supabase
     .from("FamilyGroupMember")
