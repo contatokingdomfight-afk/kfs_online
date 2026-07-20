@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, NextRequest } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import {
   REMEMBER_DEVICE_COOKIE_NAME,
   rememberLongSessionFromCookieValue,
@@ -211,6 +212,21 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!user) {
+      // Telemetria só quando havia cookie de sessão (logout à força) — visitas
+      // anónimas normais a rotas protegidas não têm este cookie e não interessam aqui.
+      const hadAuthCookie = request.cookies.getAll().some((c) => /^sb-.*-auth-token/.test(c.name));
+      if (hadAuthCookie) {
+        Sentry.captureMessage("middleware: sessão existente mas getUser() falhou (logout forçado)", {
+          level: "warning",
+          tags: { pathname },
+          extra: {
+            userErrorMessage: userError?.message ?? null,
+            userErrorName: (userError as { name?: string } | null)?.name ?? null,
+            userErrorStatus: (userError as { status?: number } | null)?.status ?? null,
+            userAgent: request.headers.get("user-agent") ?? "",
+          },
+        });
+      }
       if (isPublicBrowserPath(pathname)) {
         return response;
       }
