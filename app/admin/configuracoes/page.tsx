@@ -49,6 +49,18 @@ export default async function AdminConfiguracoesPage() {
         {t("settingsDescription")}
       </p>
 
+      <section className="card" style={{ padding: "clamp(20px, 5vw, 24px)", marginBottom: 24 }}>
+        <h2 style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          Metas da escola
+        </h2>
+        <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+          Objectivos quantitativos ou monetários com lançamentos manuais — global ou por unidade.
+        </p>
+        <Link href="/admin/metas" style={{ fontSize: 14, fontWeight: 600, color: "var(--primary)", textDecoration: "none" }}>
+          Ver metas →
+        </Link>
+      </section>
+
       <section className="card" style={{ padding: "clamp(20px, 5vw, 24px)" }}>
         <h2 style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           {t("attendanceGoalGlobal")}

@@ -311,6 +311,13 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Reparo automático: `repairOrphanFamilyTitulars` + `backfillFamilyGroupTuitions` ao abrir `/admin/familias`.
 
 
+## Metas do administrador (jul. 2026)
+
+- **Rotas:** `/admin/metas` (lista + filtros), `/admin/metas/novo`, `/admin/metas/[id]` (detalhe, lançamentos, edição). Link em Configurações e menu lateral «Metas».
+- **BD:** migração `20260720120000_admin_business_goals.sql` — `AdminBusinessGoal` (quantidade ou monetária, global ou `schoolId`), `AdminGoalEntry` (lançamentos manuais com `deltaValue`, `recordedAt`, nota).
+- **Lógica:** `lib/admin-business-goals.ts`, actions em `app/admin/metas/actions.ts`. Progresso = soma dos deltas; conclusão automática quando `currentValue >= targetValue`. Permissões `admin:sistema:*`.
+
+
 ## Loja presencial e relatório financeiro (jun. 2026)
 
 **Documentação:** [`LOJA_PRESENCIAL.md`](LOJA_PRESENCIAL.md).
