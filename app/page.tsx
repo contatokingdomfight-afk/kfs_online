@@ -70,6 +70,14 @@ export default async function HomePage({ searchParams }: Props) {
         ctaLabel={content.headerCta}
         timerLabel={content.headerTimer}
         judgingLabel={content.headerJudging}
+        navHowItWorksLabel={content.navHowItWorks}
+        navPlansLabel={content.navPlans}
+        navScheduleLabel={content.navSchedule}
+        navFaqLabel={content.navFaq}
+        navAboutLabel={content.navAbout}
+        navMenuLabel={content.navMenuLabel}
+        navMenuCloseLabel={content.navMenuClose}
+        navAriaLabel={content.navAriaLabel}
       />
 
       <Hero content={content} />

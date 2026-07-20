@@ -13,7 +13,7 @@ export function FAQSection({ content }: { content: Content }) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="border-t border-[var(--border)] py-16 sm:py-24">
+    <section id="faq" className="border-t border-[var(--border)] py-16 sm:py-24">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <h2 className="text-center text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
           {content.faqTitle}

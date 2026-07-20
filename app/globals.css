@@ -71,6 +71,8 @@
   html {
     font-size: 16px;
     scroll-behavior: smooth;
+    /** Compensa o header sticky da home para os links de âncora do menu não ficarem tapados. */
+    scroll-padding-top: 76px;
     -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
