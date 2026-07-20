@@ -196,7 +196,14 @@ export async function middleware(request: NextRequest) {
 
     // `getUser()` valida o JWT com o Auth e renova tokens em cookie quando expiram
     // (preferível a `getSession()`, que só lê cookies sem garantir refresh).
-    const { data: userData } = await supabase.auth.getUser();
+    let { data: userData, error: userError } = await supabase.auth.getUser();
+    if (!userData?.user && userError) {
+      // Falha transitória de rede até ao Supabase (comum em dados móveis) parece
+      // idêntica a "sem sessão" — sem retry, isto desloga utilizadores com sessão
+      // válida. Uma nova tentativa evita o falso logout sem enfraquecer o caso
+      // de sessão genuinamente inválida/expirada (que falha outra vez de forma determinística).
+      ({ data: userData, error: userError } = await supabase.auth.getUser());
+    }
     const user = userData?.user ?? null;
 
     if (isPublicApiPath(pathname)) {
