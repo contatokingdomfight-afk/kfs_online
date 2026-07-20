@@ -44,18 +44,19 @@ export async function getFamilyContext(
   if (!member) return null;
 
   const memberRow = member as MemberJoinRow;
-  const { data: group } = await supabase
-    .from("FamilyGroup")
-    .select("id, name, billingStudentId, planId, schoolId, isActive, discountPercent")
-    .eq("id", memberRow.familyGroupId)
-    .maybeSingle();
+  const [{ data: group }, { count }] = await Promise.all([
+    supabase
+      .from("FamilyGroup")
+      .select("id, name, billingStudentId, planId, schoolId, isActive, discountPercent")
+      .eq("id", memberRow.familyGroupId)
+      .maybeSingle(),
+    supabase
+      .from("FamilyGroupMember")
+      .select("id", { count: "exact", head: true })
+      .eq("familyGroupId", memberRow.familyGroupId),
+  ]);
 
   if (!group || !(group as FamilyGroupRow).isActive) return null;
-
-  const { count } = await supabase
-    .from("FamilyGroupMember")
-    .select("id", { count: "exact", head: true })
-    .eq("familyGroupId", memberRow.familyGroupId);
 
   const role = memberRow.role;
   return {

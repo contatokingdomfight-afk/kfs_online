@@ -220,9 +220,10 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
+    /** `Student` embutido na mesma query poupa uma ida-e-volta ao Supabase por navegação. */
     const { data: dbUser } = await supabase
       .from("User")
-      .select("id, role")
+      .select("id, role, Student(id, planId, adminGrantedFullAccess)")
       .eq("authUserId", user.id)
       .maybeSingle();
 
@@ -242,17 +243,25 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    const { data: student } = await supabase
-      .from("Student")
-      .select("id, planId, adminGrantedFullAccess")
-      .eq("userId", dbUser.id)
-      .maybeSingle();
+    const studentRows = (dbUser as { Student?: unknown }).Student;
+    const student = (Array.isArray(studentRows) ? studentRows[0] : studentRows) as
+      | { id: string; planId: string | null; adminGrantedFullAccess: boolean }
+      | null
+      | undefined;
 
     if (!student?.id) {
       return response;
     }
 
-    const [{ data: profile }, { data: waiver }, { data: agreement }] = await Promise.all([
+    /** Módulo de seguro só é preciso com plano atribuído; import dinâmico mantém o bundle Edge leve. */
+    const insuranceSettingsPromise = student.planId
+      ? import("@/lib/insurance-settings").then(async (mod) => ({
+          mod,
+          settings: await mod.getInsuranceSettings(supabase),
+        }))
+      : Promise.resolve(null);
+
+    const [{ data: profile }, { data: waiver }, { data: agreement }, insuranceResult] = await Promise.all([
       supabase
         .from("StudentProfile")
         .select("hasCompletedOnboarding")
@@ -264,6 +273,7 @@ export async function middleware(request: NextRequest) {
         .select("agreementSigned, agreementVersion")
         .eq("studentId", student.id)
         .maybeSingle(),
+      insuranceSettingsPromise,
     ]);
 
     const onboardingDone = Boolean((profile as { hasCompletedOnboarding?: boolean } | null)?.hasCompletedOnboarding);
@@ -284,9 +294,8 @@ export async function middleware(request: NextRequest) {
     }
 
     if (student.planId) {
-      const { getInsuranceSettings, isMembershipAgreementCurrent } = await import("@/lib/insurance-settings");
-      const settings = await getInsuranceSettings(supabase);
-      const agreementCurrent = isMembershipAgreementCurrent(
+      const { mod, settings } = insuranceResult!;
+      const agreementCurrent = mod.isMembershipAgreementCurrent(
         agreement as { agreementSigned?: boolean; agreementVersion?: string | null } | null,
         settings.membershipAgreementVersion
       );
