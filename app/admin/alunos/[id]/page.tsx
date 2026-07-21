@@ -493,6 +493,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
         </summary>
         <div style={{ padding: "0 clamp(14px, 3.5vw, 18px) clamp(14px, 3.5vw, 18px) clamp(14px, 3.5vw, 18px)", borderTop: "1px solid var(--border)" }}>
           <EditarAlunoForm
+            key={`${student.status}-${(student as { schoolId?: string }).schoolId ?? ""}-${student.planId ?? ""}-${initialPrimaryModality}-${user?.name ?? ""}`}
             studentId={studentId}
             initialName={user?.name ?? ""}
             initialStatus={student.status}

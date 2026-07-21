@@ -152,7 +152,12 @@ export async function updateStudent(
     }
   }
 
-  if (onFamilyPlan) {
+  /** Só (re)garante o grupo/membership quando o plano está mesmo a mudar para família —
+   * repetir isto em toda gravação de um titular já existente arrisca colidir com uma
+   * membership antiga (ex.: grupo desactivado). */
+  const becomingFamilyPlan = onFamilyPlan && planChanged;
+
+  if (becomingFamilyPlan) {
     const familyCtx = await getFamilyContext(supabase, studentId);
     if (familyCtx && !familyCtx.isTitular) {
       return { error: "Este aluno é membro de outro grupo familiar. Remove-o do grupo antes de atribuir como titular." };
@@ -182,7 +187,7 @@ export async function updateStudent(
   const { error: studentError } = await supabase.from("Student").update(updates).eq("id", studentId);
   if (studentError) return { error: studentError.message };
 
-  if (onFamilyPlan) {
+  if (becomingFamilyPlan) {
     const planResult = await assignFamilyPlanToStudent(supabase, studentId, "TITULAR");
     if (planResult.error) return { error: planResult.error };
   } else if (effectivePlanId && !previousPlanId) {

@@ -167,6 +167,27 @@ export async function ensureFamilyGroupAsTitular(
     return { error: "Este aluno já é membro de outro grupo familiar." };
   }
 
+  /** `getFamilyContext` ignora grupos inactivos — mas a linha de FamilyGroupMember (chave
+   * única por studentId) pode continuar de um grupo desactivado anteriormente. Reactiva-o
+   * em vez de tentar inserir uma membership nova, que colidiria com essa chave única. */
+  const { data: staleMember } = await supabase
+    .from("FamilyGroupMember")
+    .select("id, familyGroupId, role")
+    .eq("studentId", titularStudentId)
+    .maybeSingle();
+  if (staleMember) {
+    if ((staleMember as { role?: string }).role !== "TITULAR") {
+      return { error: "Este aluno já é membro de outro grupo familiar." };
+    }
+    const staleGroupId = (staleMember as { familyGroupId: string }).familyGroupId;
+    const { error: reactivateErr } = await supabase
+      .from("FamilyGroup")
+      .update({ isActive: true, billingStudentId: titularStudentId })
+      .eq("id", staleGroupId);
+    if (reactivateErr) return { error: reactivateErr.message };
+    return { groupId: staleGroupId, created: false };
+  }
+
   const { data: student } = await supabase
     .from("Student")
     .select("id, schoolId, stripeSubscriptionId")
