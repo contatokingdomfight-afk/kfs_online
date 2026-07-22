@@ -26,6 +26,7 @@ type Props = {
   tuitionLabel: string;
   enrollmentLabel: string;
   insuranceLabel: string;
+  modalityLabel?: string | null;
   /** info = só aviso (ex.: bloqueio até pagar na escola); confirm = escolha de plano */
   mode?: "confirm" | "info";
 };
@@ -46,6 +47,7 @@ export function PlanSchoolPaymentModal({
   tuitionLabel,
   enrollmentLabel,
   insuranceLabel,
+  modalityLabel = null,
   mode = "confirm",
 }: Props) {
   const total =
@@ -111,6 +113,11 @@ export function PlanSchoolPaymentModal({
           }}
         >
           <div style={{ fontWeight: 600, marginBottom: 10 }}>{planName}</div>
+          {modalityLabel ? (
+            <p style={{ margin: "0 0 10px", fontSize: 14, color: "var(--text-secondary)" }}>
+              {locale === "en" ? "Modality" : "Modalidade"}: <strong>{modalityLabel}</strong>
+            </p>
+          ) : null}
           <ul style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 6 }}>
             <li>
               {tuitionLabel}: <strong>€{fees.tuition.toFixed(2)}</strong>

@@ -6,18 +6,34 @@ import { resolvePlanMonthlyTuition } from "@/lib/family-tuition";
 
 export const GYM_ENROLLMENT_INFO = {
   name: "EPICENTRO DE HONRA - LDA",
+  tradeName: "Também chamada Kingdom Fight School",
   nipc: "519296850",
   address: "Praceta Laura Alves 8, 2725-206 Algueirão-Mem Martins",
-  phone: "+351 923 036 630",
+  phone: "+351936832300",
   email: "contatokingdomfight@gmail.com",
 } as const;
 
+/** IBAN da empresa para transferências bancárias. */
+export const SCHOOL_TRANSFER_IBAN = "LT383250045228499203";
+
 export const PAYMENT_METHOD_OPTIONS = [
-  { value: "DEBIT_DIRECT", label: "Débito direto" },
-  { value: "OTHER", label: "Outro" },
+  { value: "CASH", label: "Dinheiro em espécie" },
+  { value: "TRANSFER", label: "Transferência bancária" },
 ] as const;
 
 export type PaymentMethodValue = (typeof PAYMENT_METHOD_OPTIONS)[number]["value"];
+
+const LEGACY_ENROLLMENT_PAYMENT_LABELS: Record<string, string> = {
+  DEBIT_DIRECT: "Débito direto (legado)",
+  OTHER: "Outro (legado)",
+};
+
+export function enrollmentPaymentMethodLabel(method: string | null | undefined): string {
+  if (!method) return "—";
+  const current = PAYMENT_METHOD_OPTIONS.find((o) => o.value === method);
+  if (current) return current.label;
+  return LEGACY_ENROLLMENT_PAYMENT_LABELS[method] ?? method;
+}
 
 export type EnrollmentFormRow = {
   formCompleted: boolean;

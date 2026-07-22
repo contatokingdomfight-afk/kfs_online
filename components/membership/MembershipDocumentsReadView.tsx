@@ -117,6 +117,17 @@ export function MembershipDocumentsReadView({
           />
         </div>
         {enrollment.formCompleted ? (
+          <p style={{ margin: "0 0 12px" }}>
+            <Link
+              href="/dashboard/documentos-adesao/imprimir/comprovativo"
+              className="btn btn-secondary"
+              style={{ textDecoration: "none", fontSize: 13, display: "inline-block" }}
+            >
+              {pt ? "Imprimir / Guardar PDF" : "Print / Save PDF"}
+            </Link>
+          </p>
+        ) : null}
+        {enrollment.formCompleted ? (
           <dl style={{ margin: "0 0 16px", fontSize: 14, color: "var(--text-secondary)", display: "grid", gap: 6 }}>
             {enrollment.formCompletedAt ? (
               <div>
@@ -169,6 +180,17 @@ export function MembershipDocumentsReadView({
             pendingLabel={pt ? "Pendente" : "Pending"}
           />
         </div>
+        {agreement.agreementSigned ? (
+          <p style={{ margin: "0 0 12px" }}>
+            <Link
+              href="/dashboard/documentos-adesao/imprimir/contrato"
+              className="btn btn-secondary"
+              style={{ textDecoration: "none", fontSize: 13, display: "inline-block" }}
+            >
+              {pt ? "Imprimir / Guardar PDF" : "Print / Save PDF"}
+            </Link>
+          </p>
+        ) : null}
         {agreement.agreementSigned ? (
           <dl style={{ margin: "0 0 16px", fontSize: 14, color: "var(--text-secondary)", display: "grid", gap: 6 }}>
             {agreement.signatureName ? (

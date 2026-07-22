@@ -94,6 +94,9 @@ export function PlanCard({
     if (state?.error) setSubmitting(false);
   }, [state?.error]);
 
+  const selectedModalityLabel =
+    modalityOptions.find((m) => m.code === primaryModality)?.name ?? primaryModality;
+
   return (
     <>
       <PlanSchoolPaymentModal
@@ -102,6 +105,7 @@ export function PlanCard({
         onClose={() => !submitting && setModalOpen(false)}
         onConfirm={confirmPlan}
         planName={plan.name}
+        modalityLabel={needsModality ? selectedModalityLabel : null}
         fees={cardFees}
         locale={locale}
         confirming={submitting}

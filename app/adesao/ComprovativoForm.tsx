@@ -1,14 +1,20 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { useFormState } from "react-dom";
 import { saveEnrollmentForm, type SaveEnrollmentFormResult } from "./enrollment-actions";
+import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
+import { CopyTextButton } from "@/components/ui/CopyTextButton";
 import {
   GYM_ENROLLMENT_INFO,
   GDPR_CONSENT_INTRO,
   PAYMENT_METHOD_OPTIONS,
+  SCHOOL_TRANSFER_IBAN,
   type EnrollmentFormPrefill,
+  type PaymentMethodValue,
 } from "@/lib/enrollment-form";
+import { SPORTS_INSURANCE_ANNUAL_PREMIUM } from "@/lib/sports-insurance-coverage";
 
 type Props = {
   prefill: EnrollmentFormPrefill;
@@ -35,12 +41,20 @@ function Field({
 export function ComprovativoForm({ prefill }: Props) {
   const [state, formAction] = useFormState(saveEnrollmentForm, null as SaveEnrollmentFormResult | null);
   const e = prefill.existing;
+  const initialPayment =
+    e.paymentMethod === "CASH" || e.paymentMethod === "TRANSFER"
+      ? e.paymentMethod
+      : e.paymentMethod === "DEBIT_DIRECT"
+        ? "TRANSFER"
+        : "CASH";
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodValue>(initialPayment);
 
   return (
     <form action={formAction} style={{ maxWidth: 640, width: "100%", display: "flex", flexDirection: "column", gap: 20 }}>
       <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", fontSize: 14, lineHeight: 1.55 }}>
         <h2 style={{ margin: "0 0 10px", fontSize: 16, fontWeight: 600 }}>1 — Identificação do ginásio</h2>
         <p style={{ margin: "0 0 4px" }}><strong>{GYM_ENROLLMENT_INFO.name}</strong></p>
+        <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>{GYM_ENROLLMENT_INFO.tradeName}</p>
         <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>NIPC: {GYM_ENROLLMENT_INFO.nipc}</p>
         <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>{GYM_ENROLLMENT_INFO.address}</p>
         <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>{GYM_ENROLLMENT_INFO.phone}</p>
@@ -108,23 +122,52 @@ export function ComprovativoForm({ prefill }: Props) {
         <ul style={{ margin: 0, paddingLeft: 18, color: "var(--text-secondary)", lineHeight: 1.7 }}>
           {prefill.showEnrollment ? <li>Inscrição: {prefill.enrollmentAmount.toFixed(2)} €</li> : null}
           <li>Mensalidade: {prefill.monthlyAmount.toFixed(2)} €</li>
-          {prefill.showInsurance ? <li>Seguro: {prefill.insuranceAmount.toFixed(2)} €</li> : null}
+          {prefill.showInsurance ? (
+            <li>Seguro: {SPORTS_INSURANCE_ANNUAL_PREMIUM.toFixed(2).replace(".", ",")} €</li>
+          ) : null}
         </ul>
       </section>
 
       <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", display: "flex", flexDirection: "column", gap: 14 }}>
         <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>6 — Forma de pagamento</h2>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.55 }}>
+          Por enquanto aceitamos apenas dinheiro em espécie na secretaria ou transferência bancária.
+        </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {PAYMENT_METHOD_OPTIONS.map((opt) => (
             <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, cursor: "pointer" }}>
-              <input type="radio" name="paymentMethod" value={opt.value} defaultChecked={e.paymentMethod === opt.value || (!e.paymentMethod && opt.value === "OTHER")} required />
+              <input
+                type="radio"
+                name="paymentMethod"
+                value={opt.value}
+                checked={paymentMethod === opt.value}
+                onChange={() => setPaymentMethod(opt.value)}
+                required
+              />
               {opt.label}
             </label>
           ))}
         </div>
-        <Field label="IBAN (débito direto)" hint="Obrigatório se escolheres débito direto.">
-          <input id="debitIban" name="debitIban" type="text" className="input w-full" defaultValue={e.debitIban ?? ""} placeholder="PT50..." />
-        </Field>
+        {paymentMethod === "TRANSFER" ? (
+          <div
+            style={{
+              padding: "12px 14px",
+              borderRadius: "var(--radius-md)",
+              border: "1px solid var(--border)",
+              background: "var(--bg-secondary)",
+              fontSize: 14,
+            }}
+          >
+            <p style={{ margin: "0 0 8px", fontWeight: 600 }}>IBAN para transferência</p>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+              <code style={{ fontSize: 15, fontWeight: 600, wordBreak: "break-all" }}>{SCHOOL_TRANSFER_IBAN}</code>
+              <CopyTextButton text={SCHOOL_TRANSFER_IBAN} label="Copiar IBAN" />
+            </div>
+            <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+              Beneficiário: {GYM_ENROLLMENT_INFO.name}
+            </p>
+          </div>
+        ) : null}
       </section>
 
       {prefill.showInsurance ? (
@@ -133,9 +176,12 @@ export function ComprovativoForm({ prefill }: Props) {
           <p style={{ margin: "0 0 10px", fontSize: 14, color: "var(--text-secondary)" }}>
             Seguro obrigatório para federados.
           </p>
-          <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, cursor: "pointer" }}>
+          <InsuranceCoverageBlock compact />
+          <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, cursor: "pointer", marginTop: 12 }}>
             <input type="checkbox" name="insuranceAccepted" defaultChecked={e.insuranceAccepted} style={{ marginTop: 4 }} />
-            <span>Aceito o pagamento do seguro ({prefill.insuranceAmount.toFixed(2)} €).</span>
+            <span>
+              Aceito o pagamento do seguro ({SPORTS_INSURANCE_ANNUAL_PREMIUM.toFixed(2).replace(".", ",")} €).
+            </span>
           </label>
         </section>
       ) : null}

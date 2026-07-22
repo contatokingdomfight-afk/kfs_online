@@ -1,4 +1,4 @@
-import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
+import { isFamilyPlan, KINGDOM_PLAN_PRESENCIAL_I_ID } from "@/lib/kingdom-plans-constants";
 
 /**
  * `Plan.modalityScope === "SINGLE"` (ex.: Presencial I): o aluno escolhe uma modalidade.
@@ -19,5 +19,6 @@ export function planRequiresPrimaryModality(
   planId?: string | null,
   planName?: string | null
 ): boolean {
+  if (planId === KINGDOM_PLAN_PRESENCIAL_I_ID) return true;
   return effectiveModalityScope(modalityScope, planId, planName) === "SINGLE";
 }

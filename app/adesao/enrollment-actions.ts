@@ -44,7 +44,6 @@ export async function saveEnrollmentForm(
   const emergencyContactRelationship = (formData.get("emergencyContactRelationship") as string)?.trim();
   const emergencyContactPhone = (formData.get("emergencyContactPhone") as string)?.trim();
   const paymentMethod = (formData.get("paymentMethod") as string)?.trim() as PaymentMethodValue;
-  const debitIban = (formData.get("debitIban") as string)?.trim() || null;
   const allergies = (formData.get("allergies") as string)?.trim() || null;
   const knownHealthCondition = (formData.get("knownHealthCondition") as string)?.trim() || null;
   const emergencyMedication = (formData.get("emergencyMedication") as string)?.trim() || null;
@@ -62,11 +61,8 @@ export async function saveEnrollmentForm(
   if (!emergencyContactPhone || emergencyContactPhone.length < 9) {
     return { error: "Indica o telefone do contacto de emergência." };
   }
-  if (paymentMethod !== "DEBIT_DIRECT" && paymentMethod !== "OTHER") {
+  if (paymentMethod !== "CASH" && paymentMethod !== "TRANSFER") {
     return { error: "Escolhe a forma de pagamento." };
-  }
-  if (paymentMethod === "DEBIT_DIRECT" && (!debitIban || debitIban.replace(/\s/g, "").length < 15)) {
-    return { error: "Indica o IBAN para débito direto." };
   }
 
   const fees = await getStudentOnboardingFeesState(supabase, studentId);
@@ -89,7 +85,7 @@ export async function saveEnrollmentForm(
     emergencyContactRelationship,
     emergencyContactPhone,
     paymentMethod,
-    debitIban: paymentMethod === "DEBIT_DIRECT" ? debitIban : null,
+    debitIban: null,
     allergies,
     knownHealthCondition,
     emergencyMedication,

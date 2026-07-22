@@ -1,8 +1,11 @@
 import {
   GYM_ENROLLMENT_INFO,
-  PAYMENT_METHOD_OPTIONS,
+  SCHOOL_TRANSFER_IBAN,
+  enrollmentPaymentMethodLabel,
   type EnrollmentFormRow,
 } from "@/lib/enrollment-form";
+import { SPORTS_INSURANCE_ANNUAL_PREMIUM } from "@/lib/sports-insurance-coverage";
+import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
 
 type Props = {
   form: EnrollmentFormRow;
@@ -14,7 +17,7 @@ type Props = {
   modalityLabel: string | null;
   monthlyAmount: number;
   enrollmentAmount: number;
-  insuranceAmount: number;
+  insuranceAmount?: number;
   showEnrollment: boolean;
   showInsurance: boolean;
 };
@@ -38,17 +41,21 @@ export function EnrollmentFormSummary({
   modalityLabel,
   monthlyAmount,
   enrollmentAmount,
-  insuranceAmount,
   showEnrollment,
   showInsurance,
 }: Props) {
-  const paymentLabel =
-    PAYMENT_METHOD_OPTIONS.find((o) => o.value === form.paymentMethod)?.label ?? form.paymentMethod;
+  const paymentLabel = enrollmentPaymentMethodLabel(form.paymentMethod);
+  const showTransferIban =
+    form.paymentMethod === "TRANSFER" || form.paymentMethod === "DEBIT_DIRECT";
 
   return (
     <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", fontSize: 14, lineHeight: 1.55 }}>
       <h2 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600 }}>Comprovativo de Adesão</h2>
-      <p style={{ margin: "0 0 10px", color: "var(--text-secondary)" }}>{GYM_ENROLLMENT_INFO.name}</p>
+      <p style={{ margin: "0 0 10px", color: "var(--text-secondary)" }}>
+        {GYM_ENROLLMENT_INFO.name}
+        <br />
+        {GYM_ENROLLMENT_INFO.tradeName}
+      </p>
       <Row label="Nome" value={fullName} />
       <Row label="Data de nascimento" value={dateOfBirth ? new Date(`${dateOfBirth}T12:00:00`).toLocaleDateString("pt-PT") : null} />
       <Row label="CC/Passaporte" value={form.idDocument} />
@@ -62,9 +69,15 @@ export function EnrollmentFormSummary({
       <Row label="Início" value={form.membershipStartDate ? new Date(`${form.membershipStartDate}T12:00:00`).toLocaleDateString("pt-PT") : null} />
       <Row label="Mensalidade" value={`${monthlyAmount.toFixed(2)} €`} />
       {showEnrollment ? <Row label="Inscrição" value={`${enrollmentAmount.toFixed(2)} €`} /> : null}
-      {showInsurance ? <Row label="Seguro" value={`${insuranceAmount.toFixed(2)} €`} /> : null}
+      {showInsurance ? (
+        <Row label="Seguro" value={`${SPORTS_INSURANCE_ANNUAL_PREMIUM.toFixed(2).replace(".", ",")} €`} />
+      ) : null}
       <Row label="Pagamento" value={paymentLabel ?? undefined} />
-      {form.debitIban ? <Row label="IBAN" value={form.debitIban} /> : null}
+      {showTransferIban ? <Row label="IBAN" value={SCHOOL_TRANSFER_IBAN} /> : null}
+      {form.debitIban && form.paymentMethod === "DEBIT_DIRECT" ? (
+        <Row label="IBAN (legado)" value={form.debitIban} />
+      ) : null}
+      {showInsurance ? <InsuranceCoverageBlock compact /> : null}
       {form.allergies ? <Row label="Alergias" value={form.allergies} /> : null}
       {form.knownHealthCondition ? <Row label="Saúde" value={form.knownHealthCondition} /> : null}
       {form.emergencyMedication ? <Row label="Medicação" value={form.emergencyMedication} /> : null}

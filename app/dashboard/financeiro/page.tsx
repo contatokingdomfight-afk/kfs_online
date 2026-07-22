@@ -4,10 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { StripeSubscribeButtons } from "./StripeSubscribeButtons";
 import { StudentOnboardingFeesNotice } from "@/components/StudentOnboardingFeesNotice";
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
 import { SchoolPaymentPendingModal } from "./SchoolPaymentPendingModal";
+import { SchoolTransferPaymentCard } from "@/components/payments/SchoolTransferPaymentCard";
 import { getFamilyContext } from "@/lib/family-context";
 import { resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
 
@@ -41,20 +41,16 @@ export default async function DashboardFinanceiroPage({
     status: string;
     createdAt: string;
   }[] = [];
-  let hasStripeCustomer = false;
-  let onboardingFees = null;
-  let plansWithStripe: { id: string; name: string; price_monthly: number; stripePriceId?: string; planPrices?: { stripePriceId: string; intervalLabel: string; amountCents: number }[] }[] = [];
-
   let awaitingSchoolPayment = false;
   let familyRole: "TITULAR" | "MEMBER" | null = null;
+  let onboardingFees = null;
 
   if (studentId) {
     const { data: student } = await supabase
       .from("Student")
-      .select("planId, stripeCustomerId")
+      .select("planId")
       .eq("id", studentId)
       .single();
-    hasStripeCustomer = !!(student as { stripeCustomerId?: string | null } | null)?.stripeCustomerId;
     if (student?.planId) {
       const { data: planRow } = await supabase
         .from("Plan")
@@ -75,37 +71,6 @@ export default async function DashboardFinanceiroPage({
         }
       }
     }
-
-    const { data: plans } = await supabase
-      .from("Plan")
-      .select("id, name, priceMonthly, stripePriceId")
-      .eq("isActive", true);
-    const { data: planPrices } = await supabase
-      .from("PlanPrice")
-      .select("planId, stripePriceId, intervalLabel, amountCents")
-      .eq("isActive", true)
-      .order("sortOrder", { ascending: true });
-    const plansWithStripeData: { id: string; name: string; price_monthly: number; stripePriceId?: string; planPrices?: { stripePriceId: string; intervalLabel: string; amountCents: number }[] }[] = [];
-    for (const p of plans ?? []) {
-      const prices = (planPrices ?? []).filter((pp) => pp.planId === p.id);
-      if (prices.length > 0) {
-        plansWithStripeData.push({
-          id: p.id,
-          name: p.name,
-          price_monthly: prices[0].amountCents / 100,
-          stripePriceId: prices[0].stripePriceId,
-          planPrices: prices.map((x) => ({ stripePriceId: x.stripePriceId, intervalLabel: x.intervalLabel, amountCents: x.amountCents })),
-        });
-      } else if (p.stripePriceId) {
-        plansWithStripeData.push({
-          id: p.id,
-          name: p.name,
-          price_monthly: Number(p.priceMonthly),
-          stripePriceId: p.stripePriceId,
-        });
-      }
-    }
-    plansWithStripe = plansWithStripeData;
 
     const { data: paymentRows } = await supabase
       .from("Payment")
@@ -195,37 +160,41 @@ export default async function DashboardFinanceiroPage({
         )}
       </section>
 
-      {/* Pagamento por cartão (Stripe) */}
-      {familyRole ? (
+      {/* Pagamento por transferência / espécie */}
+      <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
+        <h2 className="text-base font-bold text-text-primary">
+          {locale === "en" ? "Pay by transfer or cash" : "Pagamento por transferência ou espécie"}
+        </h2>
+        <p className="text-sm text-text-secondary">
+          {locale === "en"
+            ? "Card subscriptions are not available yet. Pay at the school office or by bank transfer using the details below."
+            : "A subscrição por cartão ainda não está disponível. Paga na secretaria ou por transferência bancária com os dados abaixo."}
+        </p>
+        <SchoolTransferPaymentCard locale={locale === "en" ? "en" : "pt"} />
+      </section>
+
+      {/* Pagamento por cartão (em breve) */}
+      {!familyRole ? (
         <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
           <h2 className="text-base font-bold text-text-primary mb-2">
-            {locale === "en" ? "Card payment (Stripe)" : "Pagamento por cartão"}
+            {locale === "en" ? "Card payment" : "Pagamento por cartão"}
+          </h2>
+          <p className="text-sm text-text-secondary">
+            {locale === "en"
+              ? "Online card subscription will be available soon. For now, use transfer or cash."
+              : "A subscrição online com cartão estará disponível em breve. Por agora, utiliza transferência ou pagamento em espécie."}
+          </p>
+        </section>
+      ) : (
+        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+          <h2 className="text-base font-bold text-text-primary mb-2">
+            {locale === "en" ? "Card payment" : "Pagamento por cartão"}
           </h2>
           <p className="text-sm text-text-secondary">
             {locale === "en"
               ? "Family plan billing is handled by the school office, not self-service card checkout. Contact us to arrange payment."
               : "A mensalidade do plano família é gerida pela secretaria, não por assinatura individual com cartão. Fala connosco para tratar do pagamento."}
           </p>
-        </section>
-      ) : (
-        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
-          <h2 className="text-base font-bold text-text-primary">
-            {locale === "en" ? "Card payment (Stripe)" : "Pagamento por cartão"}
-          </h2>
-          <p className="text-sm text-text-secondary">
-            {locale === "en"
-              ? "Subscribe or manage your subscription with card. You can update your payment method and view invoices in the portal."
-              : "Subscreve ou gere a tua assinatura com cartão. No portal podes atualizar o método de pagamento e ver faturas."}
-          </p>
-          <StripeSubscribeButtons
-            hasStripeCustomer={hasStripeCustomer}
-            plansWithStripe={plansWithStripe}
-            locale={locale === "en" ? "en" : "pt"}
-            subscribeLabel={locale === "en" ? "Subscribe with card" : "Subscrever com cartão"}
-            manageLabel={locale === "en" ? "Manage subscription / card" : "Gerir assinatura / cartão"}
-            perMonthLabel={t("perMonth")}
-            stripePriceInvalidMessage={t("choosePlanStripePriceInvalid")}
-          />
         </section>
       )}
 

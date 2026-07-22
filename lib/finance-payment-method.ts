@@ -13,6 +13,7 @@ const LEGACY_LABELS_PT: Record<string, string> = {
   CARD: "Cartão (legado)",
   MB: "Multibanco (legado)",
   OTHER: "Outro (legado)",
+  DEBIT_DIRECT: "Débito direto (legado)",
 };
 
 export function isFinancePaymentMethod(v: string): v is FinancePaymentMethod {

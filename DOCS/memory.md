@@ -283,9 +283,10 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 ## Adesão e contrato de sócio (jul. 2026)
 
 - **Fluxo aluno:** onboarding → waiver → escolher plano → **`/adesao`** (wizard 2 passos) → pagamento → dashboard.
-- **Passo 1 — Comprovativo:** ficha de inscrição (`StudentEnrollmentForm`, migração `20260717150000_student_enrollment_form.sql`): CC/NIF, morada, emergência, saúde, consentimentos RGPD, forma de pagamento; valores do plano pré-preenchidos.
+- **Passo 1 — Comprovativo:** ficha de inscrição (`StudentEnrollmentForm`, migração `20260717150000_student_enrollment_form.sql`): CC/NIF, morada, emergência, saúde, consentimentos RGPD, forma de pagamento (**espécie** ou **transferência** para IBAN `LT383250045228499203` em `lib/enrollment-form.ts`; sem débito direto); cobertura PDCR do seguro (`lib/sports-insurance-coverage.ts`, prémio 25 € — migração `20260722120000_insurance_premium_25_enrollment_payment.sql`); identificação do ginásio com nome comercial «Também chamada Kingdom Fight School» e telefone `+351936832300`.
 - **Passo 2 — Condições Gerais:** texto em `lib/membership-agreement-content.ts`; assinatura digital (`StudentMembershipAgreement`, migração `20260717140000_membership_agreement.sql`).
-- **Consulta (só leitura):** `/dashboard/documentos-adesao` — comprovativo + contrato com data de aceite/assinatura, nome e versão; link no perfil («Documentos legais»). `/adesao` fica só para preencher/assinar; quem já assinou é redireccionado para documentos.
+- **Consulta (só leitura):** `/dashboard/documentos-adesao` — comprovativo + contrato com data de aceite/assinatura, nome e versão; botões **Imprimir / Guardar PDF** (`/dashboard/documentos-adesao/imprimir/comprovativo` e `/contrato`); link no perfil («Documentos legais»). `/adesao` fica só para preencher/assinar; quem já assinou é redireccionado para documentos.
+- **Financeiro aluno:** `/dashboard/financeiro` — dados para transferência copiáveis (`SchoolTransferPaymentCard`); subscrição Stripe desactivada («em breve»). Plano Presencial I (55 €): escolha de modalidade no `/escolher-plano` e confirmação no modal (`PlanSchoolPaymentModal`).
 - **Gate middleware:** com `planId` e contrato por assinar → `/adesao` (antes do gate de pagamento). Contas com plano existente: migração marca `legacy` em ambas as tabelas.
 - **Versões:** `InsuranceSettings.membershipAgreementVersion`, `enrollmentFormVersion` (`lib/insurance-settings.ts`).
 
