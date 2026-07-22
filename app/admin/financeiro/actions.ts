@@ -290,6 +290,123 @@ export async function dedupeDuplicatePaymentsAction(): Promise<void> {
 
 export type ExpenseActionResult = { error?: string; success?: boolean };
 
+export type PaymentActionResult = { error?: string; success?: boolean };
+
+function parsePaymentIds(formData: FormData): string[] {
+  const raw =
+    (formData.get("paymentIds") as string)?.trim() || (formData.get("id") as string)?.trim() || "";
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Remove um ou vários registos de pagamento (admin). */
+export async function deleteAdminPayment(formData: FormData) {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+
+  const ids = parsePaymentIds(formData);
+  if (ids.length === 0) return;
+
+  const supabase = createAdminClient();
+  const { data: rows, error: fetchErr } = await supabase
+    .from("Payment")
+    .select("id, studentId, stripeInvoiceId")
+    .in("id", ids);
+  if (fetchErr) {
+    redirect(`/admin/financeiro?paymentError=${encodeURIComponent(fetchErr.message)}`);
+  }
+  if (!rows?.length) return;
+
+  if (rows.some((r) => (r as { stripeInvoiceId?: string | null }).stripeInvoiceId)) {
+    redirect(
+      `/admin/financeiro?paymentError=${encodeURIComponent(
+        "Não é possível apagar pagamentos ligados ao Stripe."
+      )}`
+    );
+  }
+
+  const studentIds = [...new Set(rows.map((r) => (r as { studentId: string }).studentId))];
+  const { error: delErr } = await supabase.from("Payment").delete().in("id", ids);
+  if (delErr) {
+    redirect(`/admin/financeiro?paymentError=${encodeURIComponent(delErr.message)}`);
+  }
+
+  for (const studentId of studentIds) {
+    await syncStudentPaymentStatus(supabase, studentId);
+  }
+
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/financeiro");
+}
+
+/** Atualiza valor, estado e forma de pagamento de um registo existente. */
+export async function updateAdminPayment(
+  _prev: PaymentActionResult | null,
+  formData: FormData
+): Promise<PaymentActionResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const id = (formData.get("id") as string)?.trim();
+  const amountStr = (formData.get("amount") as string)?.trim();
+  const status = (formData.get("status") as string)?.trim();
+  if (!id) return { error: "ID em falta." };
+
+  const amount = parseDecimalAmount(amountStr);
+  if (amount === null || amount < 0) return { error: "Valor inválido." };
+  if (status !== "PAID" && status !== "LATE") return { error: "Estado inválido." };
+  if (status === "PAID" && amount === 0) return { error: "Indica o valor pago." };
+
+  let paymentMethod: import("@/lib/finance-payment-method").FinancePaymentMethod | null = null;
+  if (status === "PAID") {
+    const parsed = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
+    if ("error" in parsed) return { error: parsed.error };
+    paymentMethod = parsed.method;
+  }
+
+  const supabase = createAdminClient();
+  const { data: existing, error: fetchErr } = await supabase
+    .from("Payment")
+    .select("id, studentId, paymentType, referenceMonth, stripeInvoiceId")
+    .eq("id", id)
+    .maybeSingle();
+  if (fetchErr) return { error: fetchErr.message };
+  if (!existing) return { error: "Pagamento não encontrado." };
+  if ((existing as { stripeInvoiceId?: string | null }).stripeInvoiceId) {
+    return { error: "Não é possível editar pagamentos ligados ao Stripe." };
+  }
+
+  const studentId = (existing as { studentId: string }).studentId;
+  const referenceMonth = (existing as { referenceMonth?: string | null }).referenceMonth ?? null;
+
+  const { error: upErr } = await supabase
+    .from("Payment")
+    .update({
+      amount: amount.toFixed(2),
+      status,
+      paymentMethod: status === "PAID" ? paymentMethod : null,
+    })
+    .eq("id", id);
+  if (upErr) return { error: upErr.message };
+
+  if (status === "LATE" && referenceMonth) {
+    await startGracePeriodOnLatePayment(supabase, studentId, referenceMonth);
+  } else if (status === "PAID") {
+    await clearGraceOnPaidPayment(supabase, studentId);
+  }
+
+  await syncStudentPaymentStatus(supabase, studentId);
+
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/financeiro");
+  return { success: true };
+}
+
 function parseDateOnly(s: string): string | null {
   const t = s.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return null;

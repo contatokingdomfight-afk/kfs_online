@@ -8,9 +8,12 @@ import { AddExpenseForm } from "./AddExpenseForm";
 import { AddManualRevenueForm } from "./AddManualRevenueForm";
 import { CashDepositForm } from "./CashDepositForm";
 import { CashDepositRecentList } from "./CashDepositRecentList";
-import { dedupeDuplicatePaymentsAction, deleteManualRevenue } from "../actions";
+import { dedupeDuplicatePaymentsAction } from "../actions";
 import { EditExpenseForm } from "./EditExpenseForm";
+import { EditPaymentForm } from "./EditPaymentForm";
 import { ExpenseList } from "./ExpenseList";
+import { PaymentRecordActions } from "./PaymentRecordActions";
+import { RevenueBreakdownList, type RevenueBreakdownListRow } from "./RevenueBreakdownList";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { VoidLateTuitionForm } from "@/components/admin/VoidLateTuitionForm";
 import type { RenewalPending } from "@/lib/renewals";
@@ -39,12 +42,7 @@ export type { PaymentListRow } from "@/lib/admin-payment-list-grouping";
 
 type ModalId = "renewals" | "payments" | "expenses" | "revenue" | "cashDeposit";
 
-export type RevenueModalRow = {
-  key: string;
-  displayLabel: string;
-  amount: number;
-  isManual: boolean;
-};
+export type RevenueModalRow = RevenueBreakdownListRow;
 
 export type RevenueModalData = {
   error: string | null;
@@ -134,6 +132,14 @@ type Labels = {
   voidLateTuitionHint: string;
   onboardingBundleLabel: string;
   familyTuitionLabel: string;
+  editPaymentTitle: string;
+  editPaymentAction: string;
+  editPaymentSubmit: string;
+  editPaymentStatus: string;
+  deletePaymentConfirm: string;
+  deletePaymentBundleConfirm: string;
+  deletingPaymentLabel: string;
+  paymentErrorFromUrl?: string | null;
 };
 
 type Props = {
@@ -156,13 +162,6 @@ type Props = {
   depositErrorFromUrl: string | null;
   defaultCashDepositDate: string;
 };
-
-function formatMoneyN(n: number, locale: "pt" | "en") {
-  return n.toLocaleString(locale === "en" ? "en-GB" : "pt-PT", {
-    style: "currency",
-    currency: "EUR",
-  });
-}
 
 function modalCardStyle(maxWidth: number): React.CSSProperties {
   return {
@@ -269,6 +268,7 @@ export function FinanceiroModals({
   const [mounted, setMounted] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"all" | "PAID" | "LATE">("all");
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
   const titleId = useId();
   const monthLabelShort = `${referenceMonth.slice(5)}/${referenceMonth.slice(0, 4)}`;
 
@@ -278,23 +278,35 @@ export function FinanceiroModals({
     if (depositErrorFromUrl) setOpen("cashDeposit");
   }, [depositErrorFromUrl]);
 
+  useEffect(() => {
+    if (labels.paymentErrorFromUrl) setOpen("payments");
+  }, [labels.paymentErrorFromUrl]);
+
   const closeModal = useCallback(() => {
     setOpen(null);
     setEditingExpenseId(null);
+    setEditingPaymentId(null);
   }, []);
 
   const closeEditExpense = useCallback(() => setEditingExpenseId(null), []);
+  const closeEditPayment = useCallback(() => setEditingPaymentId(null), []);
 
   const editingExpense = useMemo(
     () => (editingExpenseId ? expenses.find((e) => e.id === editingExpenseId) ?? null : null),
     [editingExpenseId, expenses]
   );
 
+  const editingPayment = useMemo(
+    () => (editingPaymentId ? allPaymentRows.find((p) => p.id === editingPaymentId) ?? null : null),
+    [editingPaymentId, allPaymentRows]
+  );
+
   useEffect(() => {
-    if (!open && !editingExpenseId) return;
+    if (!open && !editingExpenseId && !editingPaymentId) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (editingExpenseId) closeEditExpense();
+      if (editingPaymentId) closeEditPayment();
+      else if (editingExpenseId) closeEditExpense();
       else closeModal();
     };
     const prev = document.body.style.overflow;
@@ -304,7 +316,7 @@ export function FinanceiroModals({
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, editingExpenseId, closeModal, closeEditExpense]);
+  }, [open, editingExpenseId, editingPaymentId, closeModal, closeEditExpense, closeEditPayment]);
 
   const displayPaymentRows = useMemo(
     () => groupPaymentListRows(allPaymentRows),
@@ -399,6 +411,11 @@ export function FinanceiroModals({
               </button>
               <p style={{ margin: "6px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>{labels.dedupeHelp}</p>
             </form>
+            {labels.paymentErrorFromUrl && (
+              <p role="alert" className="card" style={{ padding: 10, color: "var(--error)", marginBottom: 10, fontSize: 13 }}>
+                {decodeURIComponent(labels.paymentErrorFromUrl.replace(/\+/g, " "))}
+              </p>
+            )}
             <div style={{ overflow: "auto", minHeight: 0, flex: 1 }}>
               {filteredPayments.length === 0 ? (
                 <p style={{ color: "var(--text-secondary)" }}>
@@ -456,6 +473,12 @@ export function FinanceiroModals({
                               </Link>
                             </div>
                           )}
+                          <PaymentRecordActions
+                            paymentIds={p.paymentIds}
+                            deleteLabel={labels.deleteLabel}
+                            deletingLabel={labels.deletingPaymentLabel}
+                            deleteConfirm={labels.deletePaymentBundleConfirm}
+                          />
                         </li>
                       );
                     }
@@ -524,6 +547,14 @@ export function FinanceiroModals({
                           ) : null}
                         </div>
                       )}
+                      <PaymentRecordActions
+                        paymentIds={[row.id]}
+                        deleteLabel={labels.deleteLabel}
+                        deletingLabel={labels.deletingPaymentLabel}
+                        deleteConfirm={labels.deletePaymentConfirm}
+                        editLabel={labels.editPaymentAction}
+                        onEdit={() => setEditingPaymentId(row.id)}
+                      />
                     </li>
                     );
                   })}
@@ -603,6 +634,46 @@ export function FinanceiroModals({
                 />
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {editingPayment && (
+        <div
+          style={{ ...overlayStyle, zIndex: 10001 }}
+          role="presentation"
+          onClick={(e) => e.target === e.currentTarget && closeEditPayment()}
+        >
+          <div
+            className="card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId + "-edit-payment"}
+            onClick={(e) => e.stopPropagation()}
+            style={modalCardStyle(520)}
+          >
+            <ModalHeader
+              titleId={titleId + "-edit-payment"}
+              title={labels.editPaymentTitle}
+              onClose={closeEditPayment}
+              closeLabel={labels.close}
+              marginBottom={16}
+            />
+            <EditPaymentForm
+              key={editingPayment.id}
+              payment={editingPayment}
+              onDone={closeEditPayment}
+              onCancel={closeEditPayment}
+              labels={{
+                amount: labels.formAmount,
+                status: labels.editPaymentStatus,
+                statusPaid: labels.statusPaid,
+                statusLate: labels.statusLate,
+                paymentMethod: labels.formPaymentMethod,
+                submit: labels.editPaymentSubmit,
+                cancel: labels.close,
+              }}
+            />
           </div>
         </div>
       )}
@@ -740,68 +811,22 @@ export function FinanceiroModals({
                 overflow: "auto",
                 minHeight: 0,
                 flex: 1,
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+                display: "flex",
+                flexDirection: "column",
                 gap: 20,
-                alignItems: "start",
               }}
             >
               <div style={{ minWidth: 0 }}>
                 {!revenue.error && revenue.rows.length === 0 ? (
                   <p style={{ margin: 0, fontSize: 15, color: "var(--text-secondary)" }}>{revenue.noRows}</p>
                 ) : !revenue.error ? (
-                  <div
-                    style={{
-                      overflowX: "auto",
-                      border: "1px solid var(--card-border, rgba(0,0,0,.1))",
-                      borderRadius: "var(--radius-sm)",
-                    }}
-                  >
-                    <table
-                      style={{
-                        width: "100%",
-                        borderCollapse: "collapse",
-                        fontSize: 14,
-                      }}
-                    >
-                      <thead>
-                        <tr style={{ background: "var(--bg-secondary)", textAlign: "left" }}>
-                          <th style={{ padding: "8px 10px" }}>{revenue.tableFront}</th>
-                          <th style={{ padding: "8px 10px" }}>{revenue.tableAmount}</th>
-                          <th style={{ padding: "8px 10px" }}>{revenue.tableActions}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {revenue.rows.map((row) => (
-                          <tr key={row.key} style={{ borderTop: "1px solid var(--card-border, rgba(0,0,0,.06))" }}>
-                            <td style={{ padding: "8px 10px" }}>{row.displayLabel}</td>
-                            <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(row.amount, locale)}</td>
-                            <td style={{ padding: "8px 10px" }}>
-                              {row.isManual ? (
-                                <form action={deleteManualRevenue} style={{ margin: 0 }}>
-                                  <input type="hidden" name="id" value={row.key.replace(/^manual:/, "")} />
-                                  <button type="submit" className="btn" style={{ fontSize: 12, padding: "4px 8px" }}>
-                                    {labels.deleteLabel}
-                                  </button>
-                                </form>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      {revenue.rows.length > 0 && (
-                        <tfoot>
-                          <tr style={{ background: "var(--bg-secondary)", fontWeight: 600 }}>
-                            <td style={{ padding: "8px 10px" }}>{revenue.totalLabel}</td>
-                            <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{formatMoneyN(revenue.total, locale)}</td>
-                            <td style={{ padding: "8px 10px" }} />
-                          </tr>
-                        </tfoot>
-                      )}
-                    </table>
-                  </div>
+                  <RevenueBreakdownList
+                    rows={revenue.rows}
+                    total={revenue.total}
+                    totalLabel={revenue.totalLabel}
+                    deleteLabel={labels.deleteLabel}
+                    locale={locale}
+                  />
                 ) : null}
               </div>
 

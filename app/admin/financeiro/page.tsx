@@ -12,6 +12,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { FinanceiroModals, type PaymentListRow } from "./_components/FinanceiroModals";
+import { RevenueBreakdownListRow } from "./_components/RevenueBreakdownList";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { MonthSelector } from "./_components/MonthSelector";
 import { FINANCE_PAYMENT_METHODS, FINANCE_PAYMENT_METHOD_LABELS_PT } from "@/lib/finance-payment-method";
@@ -22,25 +23,29 @@ type SearchParams = Promise<{
   expenseError?: string;
   revenueError?: string;
   depositError?: string;
+  paymentError?: string;
   month?: string;
 }>;
 
-function formatRevenueRowLabel(t: (key: import("@/lib/i18n").MessageKey) => string, row: RevenueBreakdownRow): string {
+function formatRevenueRowParts(
+  t: (key: import("@/lib/i18n").MessageKey) => string,
+  row: RevenueBreakdownRow
+): { categoryTag: string; title: string } {
   switch (row.category) {
     case "PLAN":
-      return `${t("adminFinanceRevenueTagPlan")}: ${row.label}`;
+      return { categoryTag: t("adminFinanceRevenueTagPlan"), title: row.label };
     case "PLAN_NONE":
-      return t("adminFinanceRevenueTagPlanNone");
+      return { categoryTag: t("adminFinanceRevenueTagPlanNone"), title: "" };
     case "COURSE":
-      return `${t("adminFinanceRevenueTagCourse")}: ${row.label}`;
+      return { categoryTag: t("adminFinanceRevenueTagCourse"), title: row.label };
     case "EVENT":
-      return `${t("adminFinanceRevenueTagEvent")}: ${row.label}`;
+      return { categoryTag: t("adminFinanceRevenueTagEvent"), title: row.label };
     case "MANUAL":
-      return `${t("adminFinanceRevenueTagManual")}: ${row.label}`;
+      return { categoryTag: t("adminFinanceRevenueTagManual"), title: row.label };
     case "MERCHANDISE":
-      return `${t("adminFinanceRevenueTagMerchandise")}: ${row.label}`;
+      return { categoryTag: t("adminFinanceRevenueTagMerchandise"), title: row.label };
     default:
-      return row.label;
+      return { categoryTag: row.label, title: "" };
   }
 }
 
@@ -61,6 +66,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   const expenseError = params.expenseError;
   const revenueError = params.revenueError;
   const depositError = params.depositError;
+  const paymentError = params.paymentError;
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -82,7 +88,9 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
 
   const { data: payments } = await supabase
     .from("Payment")
-    .select("id, studentId, amount, status, referenceMonth, referenceYear, paymentType, familyGroupId, createdAt")
+    .select(
+      "id, studentId, amount, status, referenceMonth, referenceYear, paymentType, familyGroupId, paymentMethod, createdAt"
+    )
     .order("referenceMonth", { ascending: false })
     .order("createdAt", { ascending: false })
     .limit(200);
@@ -123,6 +131,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       referenceYear: ((p as { referenceYear?: string | null }).referenceYear as string | null) ?? null,
       paymentType,
       amount: Number(p.amount),
+      paymentMethod: ((p as { paymentMethod?: string | null }).paymentMethod as string | null) ?? null,
       familyGroupId,
       familyMemberCount: familyGroupId ? familyMemberCountByGroup.get(familyGroupId) ?? null : null,
     };
@@ -155,12 +164,16 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
     { month: "long", year: "numeric" }
   );
 
-  const revenueDisplayRows = revenue.rows.map((r) => ({
-    key: r.key,
-    displayLabel: formatRevenueRowLabel(t, r),
-    amount: r.amount,
-    isManual: r.category === "MANUAL",
-  }));
+  const revenueDisplayRows: RevenueBreakdownListRow[] = revenue.rows.map((r) => {
+    const parts = formatRevenueRowParts(t, r);
+    return {
+      key: r.key,
+      categoryTag: parts.categoryTag,
+      title: parts.title,
+      amount: r.amount,
+      isManual: r.category === "MANUAL",
+    };
+  });
 
   return (
     <div>
@@ -479,6 +492,14 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           voidLateTuitionHint: t("adminFinanceVoidLateTuitionHint"),
           onboardingBundleLabel: t("adminFinanceOnboardingBundleLabel"),
           familyTuitionLabel: t("adminFinanceFamilyTuitionLabel"),
+          editPaymentTitle: t("adminFinanceEditPaymentTitle"),
+          editPaymentAction: t("adminFinanceEditPaymentAction"),
+          editPaymentSubmit: t("adminFinanceEditPaymentSubmit"),
+          editPaymentStatus: t("adminFinanceEditPaymentStatus"),
+          deletePaymentConfirm: t("adminFinanceDeletePaymentConfirm"),
+          deletePaymentBundleConfirm: t("adminFinanceDeletePaymentBundleConfirm"),
+          deletingPaymentLabel: t("adminFinanceDeletingPayment"),
+          paymentErrorFromUrl: paymentError ?? null,
         }}
         locale={locale}
       />

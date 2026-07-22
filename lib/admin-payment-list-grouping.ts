@@ -7,6 +7,7 @@ export type PaymentListRow = {
   referenceYear: string | null;
   paymentType: string;
   amount: number;
+  paymentMethod?: string | null;
   familyGroupId?: string | null;
   familyMemberCount?: number | null;
 };
