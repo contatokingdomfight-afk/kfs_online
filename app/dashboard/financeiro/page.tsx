@@ -202,6 +202,20 @@ export default async function DashboardFinanceiroPage({
       <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
         <h2 className="text-base font-bold text-text-primary">{t("paymentProofLabel")}</h2>
         <p className="text-sm text-text-secondary">{t("contactSecretaryPaymentInfo")}</p>
+        <div>
+          <Link
+            href="/dashboard/documentos-adesao"
+            className="btn btn-secondary inline-flex"
+            style={{ textDecoration: "none", fontSize: 14 }}
+          >
+            {locale === "en" ? "Membership documents" : "Documentos de adesão"}
+          </Link>
+          <p className="text-xs text-text-secondary mt-2">
+            {locale === "en"
+              ? "View or download your enrollment form and membership contract."
+              : "Consulta ou descarrega o comprovativo e o contrato de sócio."}
+          </p>
+        </div>
       </section>
 
       {/* Últimos pagamentos */}

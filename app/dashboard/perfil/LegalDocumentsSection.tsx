@@ -66,9 +66,13 @@ export function LegalDocumentsSection({
               : "Pending"}
         </li>
       </ul>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 14 }}>
-        <Link href="/dashboard/documentos-adesao" style={{ color: "var(--accent)" }}>
-          {pt ? "Ver documentos de adesão" : "View membership documents"}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 14, alignItems: "center" }}>
+        <Link
+          href="/dashboard/documentos-adesao"
+          className="btn btn-secondary"
+          style={{ textDecoration: "none", fontSize: 14 }}
+        >
+          {pt ? "Documentos de adesão" : "Membership documents"}
         </Link>
         <Link href="/termos" style={{ color: "var(--accent)" }}>
           {pt ? "Termos da plataforma" : "Platform terms"}
