@@ -98,6 +98,7 @@ async function main() {
     fs.writeFile(path.join(outDir, "apple-touch-icon.png"), apple180),
     fs.writeFile(path.join(appDir, "icon.png"), png48),
     fs.writeFile(path.join(appDir, "apple-icon.png"), apple180),
+    fs.writeFile(path.join(root, "public", "favicon.ico"), png48),
   ]);
 
   console.log(
