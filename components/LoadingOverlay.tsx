@@ -11,13 +11,15 @@ type Props = {
 export function LoadingOverlay({ open, message, showSpinner = true }: Props) {
   if (!open) return null;
 
+  const titleId = "loading-overlay-title";
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-busy="true"
       aria-live="polite"
-      aria-label={message}
+      aria-labelledby={titleId}
       style={{
         position: "fixed",
         inset: 0,
@@ -56,6 +58,7 @@ export function LoadingOverlay({ open, message, showSpinner = true }: Props) {
           />
         ) : null}
         <p
+          id={titleId}
           style={{
             margin: 0,
             fontSize: "clamp(15px, 3.8vw, 17px)",

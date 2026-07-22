@@ -9,7 +9,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 import type { Locale } from "@/lib/theme-locale";
+import { shouldCapturePwaInstallPrompt } from "@/lib/pwa-install-ui";
 import {
   migrateLegacyPwaDismiss,
   readPreferSidebar,
@@ -43,6 +45,7 @@ export function usePwaInstall() {
 }
 
 export function PwaInstallProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState<InstallPromptEvent | null>(null);
   const [preferSidebar, setPreferSidebar] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
@@ -56,15 +59,17 @@ export function PwaInstallProvider({ locale, children }: { locale: Locale; child
   useEffect(() => {
     /**
      * Capturar o evento suprime o mini-infobar nativo; o install real faz-se com `prompt()` no menu
-     * (ex.: `SidebarPwaInstall`). O Chrome DevTools pode mostrar aviso informativo — é esperado.
+     * (ex.: `SidebarPwaInstall`). Só capturamos em mobile fora do backoffice — no admin/desktop
+     * deixamos o browser decidir (evita aviso «Banner not shown» no DevTools).
      */
     const onBip = (e: Event) => {
+      if (!shouldCapturePwaInstallPrompt(pathname)) return;
       e.preventDefault();
       setDeferredPrompt(e as InstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", onBip);
     return () => window.removeEventListener("beforeinstallprompt", onBip);
-  }, []);
+  }, [pathname]);
 
   /** Só existe evento de instalação concluída; não há API para «removeu do ecrã principal». */
   useEffect(() => {

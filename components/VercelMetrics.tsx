@@ -10,13 +10,19 @@ const SpeedInsights = dynamic(() => import("@vercel/speed-insights/next").then((
   ssr: false,
 });
 
-/** Carrega Analytics / Speed Insights no cliente para não competir com FCP/LCP. */
+/**
+ * Analytics (page views) fica activo. Speed Insights está **desactivado por defeito**:
+ * o script `instrument.js` injecta um Dialog Radix sem título e pode lançar
+ * `InvalidNodeTypeError: selectNode` no DevTools — não afecta a app, mas polui a consola.
+ * Para reactivar métricas Web Vitals: `NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS=true` no Vercel.
+ */
 export function VercelMetrics() {
-  const disableSpeed = process.env.NEXT_PUBLIC_DISABLE_SPEED_INSIGHTS === "true";
+  const enableSpeed = process.env.NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS === "true";
+
   return (
     <>
       <Analytics />
-      {!disableSpeed && <SpeedInsights />}
+      {enableSpeed ? <SpeedInsights /> : null}
     </>
   );
 }

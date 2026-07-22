@@ -181,6 +181,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **RGPD:** `/termos`, `/privacidade`, `components/CookieBanner.tsx`, checkbox no registo, «Eliminar conta» em `/dashboard/perfil`
 - **Password:** `ChangePasswordSection` no perfil (oculto para Google OAuth)
 - **Sentry:** `@sentry/nextjs`, `instrumentation.ts`, `app/global-error.tsx` — env `SENTRY_DSN`
+- **Vercel Analytics:** activo em `components/VercelMetrics.tsx`. **Speed Insights desactivado por defeito** (script `instrument.js` gerava avisos Radix/`selectNode` na consola); reactivar com `NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS=true` se necessário.
 - **CSV admin:** `lib/export-csv.ts`, botões em alunos/financeiro/presença
 
 
