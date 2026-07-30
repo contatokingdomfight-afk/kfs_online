@@ -142,6 +142,10 @@ model Student {
   school    School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   status    StudentStatus @default(ATIVO)
   enrollmentFeeWaived Boolean @default(false)
+  /// INVITE = convite por email; PRESENTIAL = secretaria criou conta com senha inicial.
+  registrationMode    String  @default("INVITE")
+  /// Login com email gerado (@alunos.kingdomfight.pt), sem caixa de correio real.
+  syntheticLoginEmail Boolean @default(false)
   createdAt DateTime      @default(now())
 
   athlete     Athlete?

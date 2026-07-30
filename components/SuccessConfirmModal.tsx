@@ -69,7 +69,7 @@ export function SuccessConfirmModal({ open, onClose, title, message, closeLabel 
           {title}
         </p>
         {message && (
-          <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+          <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5, whiteSpace: "pre-line" }}>
             {message}
           </p>
         )}

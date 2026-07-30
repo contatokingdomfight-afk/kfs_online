@@ -13,8 +13,85 @@ import {
   getFamilyContext,
 } from "@/lib/family-group";
 import { stripe } from "@/lib/stripe/server";
+import { createConfirmedAuthUser, generateInitialPassword } from "@/lib/admin-create-auth-user";
+import {
+  generateUniqueSyntheticEmail,
+  isSyntheticStudentEmail,
+} from "@/lib/student-synthetic-email";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type CreateStudentResult = { error?: string };
+
+export type CreateStudentPresencialResult = {
+  error?: string;
+  success?: boolean;
+  studentId?: string;
+  loginEmail?: string;
+  initialPassword?: string;
+  syntheticLoginEmail?: boolean;
+};
+
+async function insertStudentWithProfile(
+  supabase: SupabaseClient,
+  params: {
+    authUserId: string;
+    email: string;
+    name: string | null;
+    schoolId: string;
+    registrationMode: "INVITE" | "PRESENTIAL";
+    syntheticLoginEmail: boolean;
+    dateOfBirth?: string | null;
+    guardianPhone?: string | null;
+    guardianName?: string | null;
+  }
+): Promise<{ studentId: string } | { error: string }> {
+  const userId = crypto.randomUUID();
+  const studentId = crypto.randomUUID();
+
+  const { error: userError } = await supabase.from("User").insert({
+    id: userId,
+    authUserId: params.authUserId,
+    email: params.email,
+    name: params.name,
+    role: "ALUNO",
+  });
+
+  if (userError) {
+    return { error: userError.message };
+  }
+
+  const { error: studentError } = await supabase.from("Student").insert({
+    id: studentId,
+    userId,
+    schoolId: params.schoolId,
+    status: "ATIVO",
+    registrationMode: params.registrationMode,
+    syntheticLoginEmail: params.syntheticLoginEmail,
+  });
+
+  if (studentError) {
+    return { error: studentError.message };
+  }
+
+  const emergencyContact =
+    params.guardianName && params.guardianPhone
+      ? `${params.guardianName} — ${params.guardianPhone}`
+      : params.guardianPhone ?? params.guardianName ?? null;
+
+  const { error: profileError } = await supabase.from("StudentProfile").insert({
+    studentId,
+    hasCompletedOnboarding: true,
+    dateOfBirth: params.dateOfBirth ?? null,
+    phone: params.guardianPhone ?? null,
+    emergencyContact,
+  });
+
+  if (profileError) {
+    return { error: profileError.message };
+  }
+
+  return { studentId };
+}
 
 export async function createStudent(
   _prev: CreateStudentResult | null,
@@ -48,35 +125,110 @@ export async function createStudent(
     return { error: "Convite enviado, mas não foi possível criar o registo local. O aluno pode fazer login e o perfil será criado." };
   }
 
-  const userId = crypto.randomUUID();
-  const studentId = crypto.randomUUID();
-
-  const { error: userError } = await supabase.from("User").insert({
-    id: userId,
+  const inserted = await insertStudentWithProfile(supabase, {
     authUserId: authUser.id,
     email: authUser.email ?? email,
     name: name ?? authUser.user_metadata?.full_name ?? null,
-    role: "ALUNO",
-  });
-
-  if (userError) {
-    return { error: userError.message };
-  }
-
-  const { error: studentError } = await supabase.from("Student").insert({
-    id: studentId,
-    userId,
     schoolId,
-    status: "ATIVO",
+    registrationMode: "INVITE",
+    syntheticLoginEmail: false,
   });
 
-  if (studentError) {
-    return { error: studentError.message };
+  if ("error" in inserted) {
+    return { error: inserted.error };
   }
 
   revalidatePath("/admin/alunos");
   revalidatePath("/admin/alunos/novo");
   redirect("/admin/alunos");
+}
+
+/** Cadastro presencial: secretaria define senha inicial; sem enviar convite por email. */
+export async function createStudentPresencial(
+  _prev: CreateStudentPresencialResult | null,
+  formData: FormData
+): Promise<CreateStudentPresencialResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const name = (formData.get("name") as string)?.trim();
+  const schoolId = (formData.get("schoolId") as string)?.trim();
+  const isMinor = formData.get("isMinor") === "on" || formData.get("isMinor") === "true";
+  const emailInput = (formData.get("email") as string)?.trim().toLowerCase() || "";
+  const passwordInput = (formData.get("password") as string)?.trim() || "";
+  const autoGeneratePassword = formData.get("autoGeneratePassword") === "on" || formData.get("autoGeneratePassword") === "true";
+  const dateOfBirth = (formData.get("dateOfBirth") as string)?.trim() || null;
+  const guardianName = (formData.get("guardianName") as string)?.trim() || null;
+  const guardianPhone = (formData.get("guardianPhone") as string)?.trim() || null;
+
+  if (!name || name.length < 2) return { error: "Indica o nome completo do aluno." };
+  if (!schoolId) return { error: "Escola é obrigatória." };
+
+  if (isMinor) {
+    if (!dateOfBirth) return { error: "Indica a data de nascimento do menor." };
+    if (!guardianName || guardianName.length < 3) return { error: "Indica o nome do responsável legal." };
+    if (!guardianPhone || guardianPhone.length < 6) return { error: "Indica o telefone do responsável." };
+  } else if (!emailInput) {
+    return { error: "Email é obrigatório para adultos." };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: school } = await supabase.from("School").select("id").eq("id", schoolId).eq("isActive", true).single();
+  if (!school) return { error: "Escola inválida ou inativa." };
+
+  let loginEmail = emailInput;
+  let syntheticLoginEmail = false;
+
+  if (isMinor) {
+    try {
+      loginEmail = await generateUniqueSyntheticEmail(supabase, name);
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : "Erro ao gerar email interno." };
+    }
+    syntheticLoginEmail = true;
+  } else {
+    syntheticLoginEmail = isSyntheticStudentEmail(loginEmail);
+  }
+
+  const initialPassword = autoGeneratePassword || !passwordInput ? generateInitialPassword(10) : passwordInput;
+
+  const authResult = await createConfirmedAuthUser(supabase, {
+    email: loginEmail,
+    password: initialPassword,
+    name,
+  });
+
+  if ("error" in authResult) {
+    return { error: authResult.error };
+  }
+
+  const inserted = await insertStudentWithProfile(supabase, {
+    authUserId: authResult.authUserId,
+    email: authResult.email,
+    name,
+    schoolId,
+    registrationMode: "PRESENTIAL",
+    syntheticLoginEmail,
+    dateOfBirth: isMinor ? dateOfBirth : null,
+    guardianPhone: isMinor ? guardianPhone : null,
+    guardianName: isMinor ? guardianName : null,
+  });
+
+  if ("error" in inserted) {
+    return { error: inserted.error };
+  }
+
+  revalidatePath("/admin/alunos");
+  revalidatePath("/admin/alunos/novo");
+
+  return {
+    success: true,
+    studentId: inserted.studentId,
+    loginEmail: authResult.email,
+    initialPassword,
+    syntheticLoginEmail,
+  };
 }
 
 export type UpdateStudentResult = { error?: string; success?: boolean };

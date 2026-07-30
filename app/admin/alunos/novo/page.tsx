@@ -3,7 +3,7 @@ import { NovoAlunoForm } from "./NovoAlunoForm";
 
 export default function AdminAlunosNovoPage() {
   return (
-    <div style={{ maxWidth: "min(420px, 100%)" }}>
+    <div style={{ maxWidth: "min(480px, 100%)" }}>
       <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
         <Link
           href="/admin/alunos"
@@ -18,10 +18,12 @@ export default function AdminAlunosNovoPage() {
         </Link>
       </div>
       <h1 style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
-        Convidar aluno
+        Novo aluno
       </h1>
       <p style={{ margin: "0 0 clamp(20px, 5vw, 24px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-        Indica o email do futuro aluno. Será enviado um convite para definir a senha e aceder à plataforma; após registo, o aluno aparece na lista (Admin → Alunos) com status Ativo ou Experimental.
+        <strong>Enviar convite</strong> — o aluno recebe email para definir a senha.{" "}
+        <strong>Cadastro presencial</strong> — a secretaria cria a conta com senha inicial (adultos com email da ficha;
+        menores com email interno @alunos.kingdomfight.pt). Depois atribui o plano e regista pagamentos no financeiro.
       </p>
       <NovoAlunoForm />
     </div>

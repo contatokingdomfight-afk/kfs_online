@@ -18,6 +18,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 | Inscrição, matrícula, seguro, 1.º pagamento | [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md) |
 
+| Cadastro presencial / menores sem email | [`CADASTRO_PRESENCIAL.md`](CADASTRO_PRESENCIAL.md) |
+
 | Mensalidades, crons, suspensão | [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md) |
 
 | Loja presencial + relatório financeiro | [`LOJA_PRESENCIAL.md`](LOJA_PRESENCIAL.md) |

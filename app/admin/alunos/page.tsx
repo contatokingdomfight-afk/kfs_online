@@ -45,7 +45,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
 
   const [{ data: schools }, { data: studentsData }, { data: plansData }, modalitiesForFilter] = await Promise.all([
     supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
-    supabase.from("Student").select("id, userId, status, primaryModality, schoolId, planId, createdAt").order("createdAt", { ascending: false }),
+    supabase.from("Student").select("id, userId, status, primaryModality, schoolId, planId, createdAt, registrationMode, syntheticLoginEmail").order("createdAt", { ascending: false }),
     supabase.from("Plan").select("id, name").eq("isActive", true).order("name", { ascending: true }),
     getCachedModalityRefs(supabase),
   ]);
@@ -188,11 +188,11 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
           className="btn btn-primary"
           style={{ marginLeft: "auto", textDecoration: "none" }}
         >
-          Convidar aluno
+          Novo aluno
         </Link>
       </div>
       <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-        Convidar envia um email ao futuro aluno para se registar; depois aparece na lista com status Ativo ou Experimental.
+        Convite por email ou cadastro presencial (secretaria). Depois atribui plano e regista pagamentos no financeiro.
       </p>
 
       <AlunosFiltersPanel
@@ -282,6 +282,8 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
                   : insStatus === "expired"
                     ? "var(--danger)"
                     : "var(--text-secondary)";
+            const registrationMode = (s as { registrationMode?: string }).registrationMode;
+            const syntheticLoginEmail = (s as { syntheticLoginEmail?: boolean }).syntheticLoginEmail === true;
             return (
               <li key={s.id}>
                 <AlunoProfileLink
@@ -334,6 +336,34 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
                     >
                       {INSURANCE_STATUS_LABEL[insStatus]}
                     </span>
+                    {registrationMode === "PRESENTIAL" && (
+                      <span
+                        title="Conta criada pela secretaria com senha inicial"
+                        style={{
+                          fontSize: "clamp(12px, 3vw, 14px)",
+                          padding: "2px 8px",
+                          borderRadius: "var(--radius-md)",
+                          backgroundColor: "var(--surface)",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        Presencial
+                      </span>
+                    )}
+                    {syntheticLoginEmail && (
+                      <span
+                        title="Login com email gerado pela secretaria; contacto do responsável no perfil"
+                        style={{
+                          fontSize: "clamp(12px, 3vw, 14px)",
+                          padding: "2px 8px",
+                          borderRadius: "var(--radius-md)",
+                          backgroundColor: "var(--surface)",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        Email interno
+                      </span>
+                    )}
                   </div>
                   <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                     {u?.email ?? "—"}
