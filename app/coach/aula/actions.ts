@@ -9,6 +9,7 @@ import { createPresenceConfirmedNotification, notifyStudentOfNewCoachEvaluation 
 import { grantBadgesIfEligible } from "@/lib/gamification";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 import { assertStudentEligibleForCoachLesson } from "@/lib/coach-lesson-eligible-students";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function onAttendanceConfirmed(supabase: SupabaseClient, attendanceId: string): Promise<void> {
@@ -155,7 +156,11 @@ export async function coachCheckInStudent(
     .single();
   if (!lesson?.schoolId) return { error: "Aula não encontrada." };
 
-  const eligibility = await assertStudentEligibleForCoachLesson(supabase, studentId, {
+  // Student tem RLS restrita a "própria linha" (student_select_own); o coach precisa do
+  // cliente admin para verificar a elegibilidade de outro aluno (mesmo padrão da listagem
+  // em app/coach/aula/page.tsx, que já usa getAdminClientOrNull para o roster).
+  const adminSupabase = getAdminClientOrNull().client ?? supabase;
+  const eligibility = await assertStudentEligibleForCoachLesson(adminSupabase, studentId, {
     lessonId,
     schoolId: lesson.schoolId,
     modality: lesson.modality ?? "",
