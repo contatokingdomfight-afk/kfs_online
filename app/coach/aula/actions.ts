@@ -8,6 +8,70 @@ import { sendCheckInConfirmation } from "@/lib/notifications/email";
 import { createPresenceConfirmedNotification, notifyStudentOfNewCoachEvaluation } from "@/lib/notifications/in-app";
 import { grantBadgesIfEligible } from "@/lib/gamification";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
+import { assertStudentEligibleForCoachLesson } from "@/lib/coach-lesson-eligible-students";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+async function onAttendanceConfirmed(supabase: SupabaseClient, attendanceId: string): Promise<void> {
+  const { data: att } = await supabase
+    .from("Attendance")
+    .select("lessonId, studentId, occurrenceDate")
+    .eq("id", attendanceId)
+    .single();
+  if (!att) return;
+
+  await grantBadgesIfEligible(supabase, att.studentId);
+
+  const { data: lesson } = await supabase
+    .from("Lesson")
+    .select("modality, date, startTime, endTime")
+    .eq("id", att.lessonId)
+    .single();
+  const { data: student } = await supabase.from("Student").select("userId").eq("id", att.studentId).single();
+
+  if (!lesson || !student) return;
+
+  const occurrenceDate =
+    (att as { occurrenceDate?: string | null }).occurrenceDate?.slice(0, 10) ??
+    (lesson.date ? String(lesson.date).slice(0, 10) : new Date().toISOString().slice(0, 10));
+
+  await createPresenceConfirmedNotification(supabase, att.studentId, {
+    modality: lesson.modality,
+    date: occurrenceDate,
+    startTime: lesson.startTime,
+    endTime: lesson.endTime,
+  });
+
+  const { data: user } = await supabase.from("User").select("email, name").eq("id", student.userId).single();
+  if (user?.email) {
+    await sendCheckInConfirmation(user.email, user.name ?? null, {
+      modality: lesson.modality,
+      date: occurrenceDate,
+      startTime: lesson.startTime,
+      endTime: lesson.endTime,
+    });
+  }
+}
+
+async function assertCoachCanManageLesson(
+  supabase: SupabaseClient,
+  dbUser: { id: string; role: string },
+  lessonId: string
+): Promise<{ error?: string; schoolAssistant?: Awaited<ReturnType<typeof getActiveSchoolAssistantForUserId>> }> {
+  const schoolAssistant =
+    dbUser.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabase, dbUser.id) : null;
+  if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN" && !schoolAssistant) {
+    return { error: "Sem permissão." };
+  }
+
+  if (schoolAssistant) {
+    const { data: lesson } = await supabase.from("Lesson").select("schoolId").eq("id", lessonId).single();
+    if (!lesson?.schoolId || lesson.schoolId !== schoolAssistant.schoolId) {
+      return { error: "Esta aula não pertence à tua escola." };
+    }
+  }
+
+  return { schoolAssistant: schoolAssistant ?? undefined };
+}
 
 export async function setAttendanceStatusFromForm(
   _prev: { error?: string } | null,
@@ -41,10 +105,19 @@ export async function setAttendanceStatus(
     }
   }
 
-  const { error } = await supabase
-    .from("Attendance")
-    .update({ status })
-    .eq("id", attendanceId);
+  const updatePayload: { status: "CONFIRMED" | "ABSENT"; checkedInAt?: string | null } = { status };
+  if (status === "CONFIRMED") {
+    const { data: existing } = await supabase
+      .from("Attendance")
+      .select("checkedInAt")
+      .eq("id", attendanceId)
+      .maybeSingle();
+    if (!(existing as { checkedInAt?: string | null } | null)?.checkedInAt) {
+      updatePayload.checkedInAt = new Date().toISOString();
+    }
+  }
+
+  const { error } = await supabase.from("Attendance").update(updatePayload).eq("id", attendanceId);
 
   if (error) {
     console.error("setAttendanceStatus error:", error);
@@ -52,42 +125,99 @@ export async function setAttendanceStatus(
   }
 
   if (status === "CONFIRMED") {
-    const { data: att } = await supabase
-      .from("Attendance")
-      .select("lessonId, studentId")
-      .eq("id", attendanceId)
-      .single();
-    if (att) {
-      await grantBadgesIfEligible(supabase, att.studentId);
-      const { data: lesson } = await supabase
-        .from("Lesson")
-        .select("modality, date, startTime, endTime")
-        .eq("id", att.lessonId)
-        .single();
-      const { data: student } = await supabase.from("Student").select("userId").eq("id", att.studentId).single();
-      if (lesson && student) {
-        await createPresenceConfirmedNotification(supabase, att.studentId, {
-          modality: lesson.modality,
-          date: lesson.date,
-          startTime: lesson.startTime,
-          endTime: lesson.endTime,
-        });
-        const { data: user } = await supabase.from("User").select("email, name").eq("id", student.userId).single();
-        if (user?.email) {
-          await sendCheckInConfirmation(user.email, user.name ?? null, {
-            modality: lesson.modality,
-            date: lesson.date,
-            startTime: lesson.startTime,
-            endTime: lesson.endTime,
-          });
-        }
-      }
-    }
+    await onAttendanceConfirmed(supabase, attendanceId);
   }
 
   revalidatePath("/coach/aula");
   revalidatePath("/dashboard");
   return {};
+}
+
+export async function coachCheckInStudent(
+  lessonId: string,
+  occurrenceDate: string,
+  studentId: string
+): Promise<{ error?: string }> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser) return { error: "Sessão inválida." };
+
+  const occ = occurrenceDate.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occ)) return { error: "Data da aula inválida." };
+
+  const supabase = await createClient();
+  const access = await assertCoachCanManageLesson(supabase, dbUser, lessonId);
+  if (access.error) return { error: access.error };
+
+  const { data: lesson } = await supabase
+    .from("Lesson")
+    .select("id, schoolId, modality, isOpenClass")
+    .eq("id", lessonId)
+    .single();
+  if (!lesson?.schoolId) return { error: "Aula não encontrada." };
+
+  const eligibility = await assertStudentEligibleForCoachLesson(supabase, studentId, {
+    lessonId,
+    schoolId: lesson.schoolId,
+    modality: lesson.modality ?? "",
+    isOpenClass: Boolean((lesson as { isOpenClass?: boolean }).isOpenClass),
+  });
+  if (eligibility.error) return { error: eligibility.error };
+
+  const now = new Date().toISOString();
+  const { data: existing } = await supabase
+    .from("Attendance")
+    .select("id, status")
+    .eq("lessonId", lessonId)
+    .eq("studentId", studentId)
+    .eq("occurrenceDate", occ)
+    .maybeSingle();
+
+  let attendanceId: string;
+
+  if (existing) {
+    attendanceId = (existing as { id: string }).id;
+    const { error } = await supabase
+      .from("Attendance")
+      .update({ status: "CONFIRMED", checkedInAt: now })
+      .eq("id", attendanceId);
+    if (error) {
+      console.error("coachCheckInStudent update error:", error);
+      return { error: error.message };
+    }
+  } else {
+    attendanceId = crypto.randomUUID();
+    const { error } = await supabase.from("Attendance").insert({
+      id: attendanceId,
+      lessonId,
+      studentId,
+      status: "CONFIRMED",
+      checkedInAt: now,
+      isExperimental: false,
+      occurrenceDate: occ,
+    });
+    if (error) {
+      console.error("coachCheckInStudent insert error:", error);
+      return { error: error.message };
+    }
+  }
+
+  await onAttendanceConfirmed(supabase, attendanceId);
+
+  revalidatePath("/coach/aula");
+  revalidatePath("/coach/presenca");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export async function coachCheckInStudentFromForm(
+  _prev: { error?: string } | null,
+  formData: FormData
+): Promise<{ error?: string } | null> {
+  const lessonId = (formData.get("lessonId") as string)?.trim();
+  const studentId = (formData.get("studentId") as string)?.trim();
+  const occurrenceDate = (formData.get("occurrenceDate") as string)?.trim().slice(0, 10) ?? "";
+  if (!lessonId || !studentId) return { error: "Dados inválidos." };
+  return coachCheckInStudent(lessonId, occurrenceDate, studentId);
 }
 
 export type SaveEvaluationFromLessonResult = { error?: string; success?: boolean };

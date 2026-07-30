@@ -33,7 +33,7 @@ A página `/coach` será reestruturada nas seguintes secções, por ordem de pri
 *   **Ação Principal:**
     *   Um único botão, grande e destacado: **`[ 🚀 GERIR AULA AGORA ]`**.
     *   Este botão é um link que aponta sempre para a página de gestão da aula em foco: `/coach/aula?lessonId=[ID_DA_AULA]`.
-*   **Presenças rápidas (abril 2026):** na página de gestão da aula (`/coach/aula`), o coach pode marcar presenças em lote com **data de ocorrência em hora de Lisboa** (`Europe/Lisbon`); o âmbito de alunos elegíveis segue `lib/coach-schedule-scope.ts`. Ver [`memory.md`](memory.md) e código em `app/coach/aula/`.
+*   **Presenças na aula (`/coach/aula`, jul. 2026):** lista **todos os alunos ATIVOS elegíveis** para a ocorrência (mesma escola; filtro por plano/modalidade — Presencial I só na sua modalidade; FULL/MMA/família em todas). Pesquisa por nome/email; filtros «Sem pré-confirmação» / «Marcaram Vou». Check-in manual pelo coach **sem** RSVP prévio (`coachCheckInStudent` em `app/coach/aula/actions.ts`; roster em `lib/coach-lesson-eligible-students.ts`). Data de ocorrência em Lisboa (`Attendance.occurrenceDate`).
 
 ---
 

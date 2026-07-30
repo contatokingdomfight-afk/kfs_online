@@ -230,6 +230,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Badge `SchoolAssistantBadge` em perfis admin/coach.
 
 - Layout coach: `ALUNO` assistente → menu reduzido (`coach-sidebar-links`), `/coach/eventos`, presenças por escola, sem avaliar na aula.
+- **Presenças na aula sem RSVP (jul. 2026):** `/coach/aula` — roster de alunos elegíveis (`lib/coach-lesson-eligible-students.ts`), pesquisa e check-in manual (`coachCheckInStudent`). Ver [`ESPECIFICACAO_DASHBOARD_COACH.md`](ESPECIFICACAO_DASHBOARD_COACH.md).
 
 - Migração: `20260519120000_school_assistant_coach.sql`; `lib/school-assistant-coach.ts`.
 

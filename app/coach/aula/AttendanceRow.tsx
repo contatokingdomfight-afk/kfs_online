@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useFormState } from "react-dom";
 import { useRouter } from "next/navigation";
-import { setAttendanceStatusFromForm } from "./actions";
+import { setAttendanceStatusFromForm, coachCheckInStudentFromForm } from "./actions";
 import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
@@ -11,23 +11,22 @@ import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 type WellnessZone = "GREEN" | "YELLOW" | "RED";
 
 type Props = {
-  attendanceId: string;
+  attendanceId: string | null;
   studentId: string;
   studentName: string | null;
   studentEmail: string;
-  status: string;
+  status: string | null;
   checkedInAt: string | null;
   lessonId: string;
+  occurrenceDate: string;
   modality: string;
   evaluationConfig: ModalityEvaluationConfigPayload | null;
   evaluatedInThisLesson?: boolean;
   lastEvalScoresByModality?: Record<string, Record<string, number>>;
   profile: StudentProfileForModal;
-  /** Registo pré-treino desta ocorrência (check-in), se existir. */
   preLessonWellness: { zone: WellnessZone; tooltip: string } | null;
   rpe: number | null;
   rpeRecordedAt: string | null;
-  /** Se false, não mostra avaliação (ex.: treinador assistente). */
   canEvaluate?: boolean;
 };
 
@@ -39,6 +38,7 @@ export function AttendanceRow({
   status,
   checkedInAt,
   lessonId,
+  occurrenceDate,
   modality,
   evaluationConfig,
   evaluatedInThisLesson = false,
@@ -50,26 +50,32 @@ export function AttendanceRow({
   canEvaluate = true,
 }: Props) {
   const router = useRouter();
-  const [state, formAction] = useFormState(setAttendanceStatusFromForm, null as { error?: string } | null);
+  const [statusState, statusAction] = useFormState(setAttendanceStatusFromForm, null as { error?: string } | null);
+  const [checkInState, checkInAction] = useFormState(coachCheckInStudentFromForm, null as { error?: string } | null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showSuccessConfirm, setShowSuccessConfirm] = useState(false);
 
   const label = studentName || studentEmail;
   const initial = (studentName?.trim()?.[0] || studentEmail?.trim()?.[0] || "?").toUpperCase();
+  const effectiveStatus = status ?? "NONE";
   const statusClass =
-    status === "CONFIRMED"
+    effectiveStatus === "CONFIRMED"
       ? "coach-attendance-status--confirmed"
-      : status === "ABSENT"
+      : effectiveStatus === "ABSENT"
         ? "coach-attendance-status--absent"
-        : "coach-attendance-status--pending";
+        : effectiveStatus === "PENDING"
+          ? "coach-attendance-status--pending"
+          : "coach-attendance-status--pending";
   const statusLabel =
-    status === "CONFIRMED"
+    effectiveStatus === "CONFIRMED"
       ? checkedInAt
         ? `Presente (Check-in às ${new Date(checkedInAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })})`
         : "Presente (Manual)"
-      : status === "PENDING"
+      : effectiveStatus === "PENDING"
         ? "Marcou 'Vou'"
-        : "Falta";
+        : effectiveStatus === "ABSENT"
+          ? "Falta"
+          : "Sem pré-confirmação";
 
   const zoneClass =
     preLessonWellness?.zone === "GREEN"
@@ -95,6 +101,8 @@ export function AttendanceRow({
       router.refresh();
     }, 0);
   }, [router]);
+
+  const formError = statusState?.error ?? checkInState?.error;
 
   return (
     <>
@@ -146,8 +154,8 @@ export function AttendanceRow({
               Ver perfil e avaliar
             </button>
           ) : null}
-          {status === "PENDING" && (
-            <form action={formAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+          {effectiveStatus === "PENDING" && attendanceId ? (
+            <form action={statusAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
               <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
               <button type="submit" name="status" value="CONFIRMED" className="btn btn-success">
                 Marcar Presença Manual
@@ -156,18 +164,28 @@ export function AttendanceRow({
                 Marcar Ausente
               </button>
             </form>
+          ) : null}
+          {(effectiveStatus === "NONE" || effectiveStatus === "ABSENT") && (
+            <form action={checkInAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+              <input type="hidden" name="lessonId" value={lessonId} readOnly />
+              <input type="hidden" name="occurrenceDate" value={occurrenceDate} readOnly />
+              <input type="hidden" name="studentId" value={studentId} readOnly />
+              <button type="submit" className="btn btn-success">
+                Marcar presença
+              </button>
+            </form>
           )}
-          {status === "CONFIRMED" && (
-            <form action={formAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+          {effectiveStatus === "CONFIRMED" && attendanceId ? (
+            <form action={statusAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
               <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
               <button type="submit" name="status" value="ABSENT" className="btn btn-danger">
                 Reverter para Ausente
               </button>
             </form>
-          )}
+          ) : null}
         </div>
-        {state?.error && (
-          <span style={{ width: "100%", fontSize: "var(--text-sm)", color: "var(--danger)" }}>{state.error}</span>
+        {formError && (
+          <span style={{ width: "100%", fontSize: "var(--text-sm)", color: "var(--danger)" }}>{formError}</span>
         )}
       </li>
       {modalOpen && canEvaluate && (
