@@ -1,0 +1,49 @@
+-- Registo de limpeza: categorias de avaliação duplicadas + avaliações duplicadas de aluno.
+-- Executado diretamente via script (Node + @supabase/supabase-js, service role) em 2026-07-23,
+-- não via `supabase migration` — mantido aqui apenas como registo/auditoria, no padrão dos
+-- outros scripts de limpeza desta pasta.
+--
+-- CONTEXTO
+-- Existiam duas estruturas paralelas de categorias de avaliação técnica/tática para
+-- MUAY_THAI, BOXING e MMA:
+--   1) Estrutura antiga: sub-componentes (Postura, Socos, Deslocamento, etc.) ligados a uma
+--      única GeneralDimension genérica ("tecnico" / "tatico" / "fisico"). Nome exibido com
+--      prefixo, ex.: "Técnico - Postura (Stance)".
+--   2) Estrutura nova (migrações de março/2026): uma GeneralDimension dedicada por categoria
+--      (MUAY_POSTURA, BOX_SOCOS, MUAY_TATICO_DISTANCIA, ...). Nome exibido sem prefixo.
+-- As migrações de março criaram a estrutura (2) sem remover a (1); ambas coexistiam,
+-- duplicando toda a lista de técnicas no formulário/histórico de avaliação do coach e do aluno.
+-- O MMA tinha um agravante: várias categorias apareciam TRIPLICADAS (genérica + variante
+-- "clonada" do Muay Thai + variante "clonada" do Boxe), com algumas cópias vazias (0 técnicas),
+-- restos de um clone incompleto (ver 20260411120000_mma_evaluation_clone_muay_boxing.sql).
+--
+-- AÇÕES REALIZADAS (via script, comparando técnica por técnica, não só contagem)
+--   - 128 EvaluationCriterion reaproveitados (moved) para o componente "canónico"
+--     (dimensão específica) quando só existiam do lado duplicado/genérico.
+--   - 350 EvaluationCriterion apagados por serem duplicados exatos (mesmo texto já existia
+--     no lado canónico), incluindo 12 linhas de "Combinações" (Muay Thai + clone MMA) que
+--     continham texto de POSTURA colado por engano (bug de dados antigo, não relacionado à
+--     duplicação) — descartadas em vez de mescladas.
+--   - 80 EvaluationComponent duplicados apagados (cópias genéricas + cascas vazias do MMA).
+--   - MMA "Combinações" foi re-semeada com as 4 técnicas reais, clonadas do Muay Thai
+--     (Jab → Cross → Low kick; Jab → Cross → Hook → Middle kick; Teep → Cross → Hook;
+--     Clinch → Joelho → Cotovelo), já que a única cópia com conteúdo real do MMA continha
+--     o texto errado (Postura) que foi descartado.
+--   - Corrigido também: durante a própria seed acima, a chamada de insert duplicou-se
+--     (4 técnicas -> 8 linhas, provável retry de rede do cliente Supabase) — as 4 linhas
+--     extra foram detectadas e apagadas na sequência.
+--   - AthleteEvaluation: apagadas 3 avaliações duplicadas do aluno "gabi09"
+--     (athleteId f1b28169-2579-446c-9e79-71b2f8c65a86), submetidas em sequência rápida
+--     (22/07/2026 23:17–23:19) pelo mesmo coach na tela de avaliação "standalone"
+--     (app/coach/alunos/[id]/actions.ts). Mantida a última submissão completa
+--     (3e9745ba-7607-43cd-ab2f-9720279d400e).
+--
+-- RESULTADO FINAL VERIFICADO
+--   - 0 grupos de categoria duplicados restantes (modality+name) em EvaluationComponent.
+--   - EvaluationComponent: 191 -> 111 linhas. EvaluationCriterion: 1000 -> 786 linhas.
+--   - AthleteEvaluation: 5 -> 2 linhas (1 avaliação única por aluno).
+--
+-- PENDENTE (fora do escopo desta limpeza, não corrigido aqui):
+--   - Nenhuma trava impede reenvio duplicado de avaliação (botão "Ver perfil e avaliar" não
+--     desabilita quando já avaliado; 3 fluxos de insert independentes; sem UNIQUE constraint
+--     em AthleteEvaluation). Ver conversa para detalhes — ainda não implementado.
