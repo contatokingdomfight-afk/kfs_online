@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { RoundTimerClient } from "@/components/coach/round-timer/RoundTimerClient";
 import type { Locale } from "@/lib/i18n";
@@ -33,6 +34,7 @@ export default async function PublicTimerPage() {
       style={{ paddingTop: "clamp(24px, 6vw, 48px)" }}
     >
       <RoundTimerClient locale={locale} variant="public" />
+      <PublicSiteFooter />
     </main>
   );
 }

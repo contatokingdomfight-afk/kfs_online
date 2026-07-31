@@ -197,6 +197,9 @@ export const homeContent = {
     footerTerms: "Termos",
     footerPrivacy: "Privacidade",
     footerContact: "Contacto",
+    footerAddressLabel: "Morada",
+    footerPhoneLabel: "Telefone",
+    footerDirections: "Como chegar",
     footerRights: "© Kingdom Fight School. Todos os direitos reservados.",
 
     // Arbitragem (homepage)
@@ -388,6 +391,9 @@ export const homeContent = {
     footerTerms: "Terms",
     footerPrivacy: "Privacy",
     footerContact: "Contact",
+    footerAddressLabel: "Address",
+    footerPhoneLabel: "Phone",
+    footerDirections: "Get directions",
     footerRights: "© Kingdom Fight School. All rights reserved.",
 
     arbitrationTitle: "Arbitration at Kingdom",

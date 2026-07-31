@@ -1,4 +1,9 @@
 import Link from "next/link";
+import {
+  SCHOOL_PUBLIC_CONTACT,
+  formatSchoolPhoneForDisplay,
+  getSchoolMapsUrl,
+} from "@/lib/school-contact";
 
 type Content = {
   footerLinks: string;
@@ -10,6 +15,9 @@ type Content = {
   footerTerms: string;
   footerPrivacy: string;
   footerContact: string;
+  footerAddressLabel: string;
+  footerPhoneLabel: string;
+  footerDirections: string;
   footerRights: string;
   youtubeUrl: string;
   instagramUrl: string;
@@ -19,7 +27,7 @@ export function Footer({ content }: { content: Content }) {
   return (
     <footer className="border-t border-[var(--border)] bg-[var(--bg-secondary)] py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <span className="text-lg font-bold text-[var(--text-primary)]">
               Kingdom Fight School
@@ -105,6 +113,45 @@ export function Footer({ content }: { content: Content }) {
                 </Link>
               </li>
             </ul>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-secondary)]">
+              {content.footerContact}
+            </h3>
+            <address className="mt-3 space-y-3 not-italic">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  {content.footerAddressLabel}
+                </p>
+                <a
+                  href={getSchoolMapsUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block text-sm text-[var(--text-primary)] transition-colors hover:text-[var(--primary)]"
+                >
+                  {SCHOOL_PUBLIC_CONTACT.address}
+                </a>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
+                  {content.footerPhoneLabel}
+                </p>
+                <a
+                  href={`tel:${SCHOOL_PUBLIC_CONTACT.phone}`}
+                  className="mt-1 block text-sm text-[var(--text-primary)] transition-colors hover:text-[var(--primary)]"
+                >
+                  {formatSchoolPhoneForDisplay(SCHOOL_PUBLIC_CONTACT.phone)}
+                </a>
+              </div>
+              <a
+                href={getSchoolMapsUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block text-sm font-medium text-[var(--primary)] transition-opacity hover:opacity-80"
+              >
+                {content.footerDirections} →
+              </a>
+            </address>
           </div>
         </div>
         <div className="mt-8 border-t border-[var(--border)] pt-8 text-center text-sm text-[var(--text-secondary)]">

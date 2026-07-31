@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Política de privacidade e proteção de dados (RGPD) da Kingdom Fight School.",
 };
 
-export default function PrivacidadePage() {
+export default async function PrivacidadePage() {
   return (
     <LegalPageShell title="Política de Privacidade" updatedAt="28 de junho de 2026">
       <LegalSection title="Responsável pelo tratamento">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 
 type Props = {
   title: string;
@@ -7,7 +8,7 @@ type Props = {
   updatedAt?: string;
 };
 
-export function LegalPageShell({ title, children, updatedAt }: Props) {
+export async function LegalPageShell({ title, children, updatedAt }: Props) {
   return (
     <div style={{ minHeight: "100dvh", background: "var(--bg)", color: "var(--text-primary)" }}>
       <header
@@ -38,6 +39,7 @@ export function LegalPageShell({ title, children, updatedAt }: Props) {
         ) : null}
         <div style={{ display: "flex", flexDirection: "column", gap: 16, color: "var(--text-primary)" }}>{children}</div>
       </article>
+      <PublicSiteFooter />
     </div>
   );
 }

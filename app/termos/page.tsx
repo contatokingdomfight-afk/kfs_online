@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Termos de utilização da plataforma Kingdom Fight School.",
 };
 
-export default function TermosPage() {
+export default async function TermosPage() {
   return (
     <LegalPageShell title="Termos de Serviço" updatedAt="28 de junho de 2026">
       <LegalSection title="1. Descrição do serviço">
