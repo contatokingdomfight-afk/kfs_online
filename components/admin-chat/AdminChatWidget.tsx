@@ -364,7 +364,7 @@ export function AdminChatWidget() {
   );
 
   return (
-    <div style={{ position: "fixed", right: 20, bottom: 20, zIndex: 200 }}>
+    <div className="admin-chat-fab-wrap">
       {open && (
         <div
           style={{

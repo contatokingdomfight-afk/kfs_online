@@ -1427,3 +1427,19 @@ html[data-kfs-native="capacitor"] body {
 .kfs-brand-splash-logo-enter {
   animation: kfs-brand-splash-logo-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* Assistente do admin (AdminChatWidget): a barra inferior mobile (MobileAppBottomNav)
+   usa z-index 20000 num portal em document.body, por cima de qualquer z-index "normal" —
+   por isso o botão flutuante precisa de um z-index nessa mesma escala para não ficar tapado. */
+.admin-chat-fab-wrap {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 20050;
+}
+
+@media (max-width: 767.98px) {
+  .admin-chat-fab-wrap {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
+  }
+}
