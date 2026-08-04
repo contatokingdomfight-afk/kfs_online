@@ -9,6 +9,7 @@ export const homeContent = {
   pt: {
     // Header
     headerCta: "Aula Experimental",
+    headerModalidades: "Modalidades",
     headerTimer: "Timer",
     headerJudging: "Arbitragem",
     navHowItWorks: "Como Funciona",
@@ -190,6 +191,7 @@ export const homeContent = {
     // Footer
     footerLinks: "Links rápidos",
     footerAulaExp: "Aula Experimental",
+    footerModalidades: "Modalidades",
     footerTimer: "Timer de rounds",
     footerJudging: "Arbitragem",
     footerSignIn: "Entrar",
@@ -218,6 +220,7 @@ export const homeContent = {
   },
   en: {
     headerCta: "Trial Class",
+    headerModalidades: "Programs",
     headerTimer: "Timer",
     headerJudging: "Arbitration",
     navHowItWorks: "How It Works",
@@ -384,6 +387,7 @@ export const homeContent = {
 
     footerLinks: "Quick links",
     footerAulaExp: "Trial Class",
+    footerModalidades: "Programs",
     footerTimer: "Round timer",
     footerJudging: "Arbitration",
     footerSignIn: "Sign in",

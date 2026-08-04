@@ -4,5 +4,5 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 
 export async function PublicSiteFooter() {
   const locale = (await getLocaleFromCookies()) === "en" ? "en" : "pt";
-  return <Footer content={getHomeContent(locale)} />;
+  return <Footer content={getHomeContent(locale)} locale={locale} />;
 }

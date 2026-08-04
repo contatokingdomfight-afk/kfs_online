@@ -4,6 +4,7 @@ import {
   formatSchoolPhoneForDisplay,
   getSchoolMapsUrl,
 } from "@/lib/school-contact";
+import { getAllModalidades, type ModalidadesLocale } from "@/lib/modalidades-content";
 
 type Content = {
   footerLinks: string;
@@ -14,6 +15,7 @@ type Content = {
   footerSignUp: string;
   footerTerms: string;
   footerPrivacy: string;
+  footerModalidades: string;
   footerContact: string;
   footerAddressLabel: string;
   footerPhoneLabel: string;
@@ -23,7 +25,8 @@ type Content = {
   instagramUrl: string;
 };
 
-export function Footer({ content }: { content: Content }) {
+export function Footer({ content, locale = "pt" }: { content: Content; locale?: ModalidadesLocale }) {
+  const modalidades = getAllModalidades(locale);
   return (
     <footer className="border-t border-[var(--border)] bg-[var(--bg-secondary)] py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -70,6 +73,24 @@ export function Footer({ content }: { content: Content }) {
                   {content.footerAulaExp}
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/modalidades"
+                  className="text-sm text-[var(--text-primary)] hover:text-[var(--primary)]"
+                >
+                  {content.footerModalidades}
+                </Link>
+              </li>
+              {modalidades.map((m) => (
+                <li key={m.slug}>
+                  <Link
+                    href={`/modalidades/${m.slug}`}
+                    className="text-sm text-[var(--text-primary)] hover:text-[var(--primary)]"
+                  >
+                    {m.name}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <Link
                   href="/timer"

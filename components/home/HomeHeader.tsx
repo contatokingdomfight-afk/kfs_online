@@ -5,6 +5,7 @@ import { useState } from "react";
 
 type Props = {
   ctaLabel: string;
+  modalidadesLabel: string;
   timerLabel: string;
   judgingLabel: string;
   navHowItWorksLabel: string;
@@ -25,6 +26,7 @@ const mobileLinkClass =
 
 export function HomeHeader({
   ctaLabel,
+  modalidadesLabel,
   timerLabel,
   judgingLabel,
   navHowItWorksLabel,
@@ -62,6 +64,10 @@ export function HomeHeader({
         </nav>
 
         <div className="hidden shrink-0 items-center gap-1 lg:flex lg:gap-2">
+          <Link href="/modalidades" className={navLinkClass}>
+            <span aria-hidden>🥋</span>
+            <span>{modalidadesLabel}</span>
+          </Link>
           <Link href="/timer" className={navLinkClass}>
             <span aria-hidden>⏱️</span>
             <span>{timerLabel}</span>
@@ -105,6 +111,10 @@ export function HomeHeader({
             </a>
           ))}
           <div className="my-1 border-t border-[var(--border)]" />
+          <Link href="/modalidades" onClick={() => setMenuOpen(false)} className={mobileLinkClass}>
+            <span aria-hidden>🥋</span>
+            <span>{modalidadesLabel}</span>
+          </Link>
           <Link href="/timer" onClick={() => setMenuOpen(false)} className={mobileLinkClass}>
             <span aria-hidden>⏱️</span>
             <span>{timerLabel}</span>

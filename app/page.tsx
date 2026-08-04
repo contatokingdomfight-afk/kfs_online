@@ -68,6 +68,7 @@ export default async function HomePage({ searchParams }: Props) {
     <main className="min-h-screen bg-[var(--bg)]">
       <HomeHeader
         ctaLabel={content.headerCta}
+        modalidadesLabel={content.headerModalidades}
         timerLabel={content.headerTimer}
         judgingLabel={content.headerJudging}
         navHowItWorksLabel={content.navHowItWorks}
@@ -108,7 +109,7 @@ export default async function HomePage({ searchParams }: Props) {
       <LogoSymbolismSection content={content} />
       <ArbitrationSection content={content} />
       <CTASection content={content} />
-      <Footer content={content} />
+      <Footer content={content} locale={locale} />
     </main>
   );
 }
