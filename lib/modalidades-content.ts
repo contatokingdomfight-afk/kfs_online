@@ -4,7 +4,7 @@
  */
 
 export type ModalidadesLocale = "pt" | "en";
-export type ModalidadeSlug = "muay-thai" | "boxe" | "jiu-jitsu";
+export type ModalidadeSlug = "muay-thai" | "boxe" | "jiu-jitsu" | "kids";
 
 export type ModalidadeBenefit = { icon: string; title: string; desc: string };
 export type ModalidadeFaqItem = { q: string; a: string };
@@ -44,7 +44,7 @@ export type ModalidadesHubContent = {
   ctaButton: string;
 };
 
-const MODALIDADES_ORDER: readonly ModalidadeSlug[] = ["muay-thai", "boxe", "jiu-jitsu"];
+const MODALIDADES_ORDER: readonly ModalidadeSlug[] = ["muay-thai", "boxe", "jiu-jitsu", "kids"];
 
 const modalidadesContentData: Record<
   ModalidadesLocale,
@@ -52,13 +52,13 @@ const modalidadesContentData: Record<
 > = {
   pt: {
     hub: {
-      metaTitle: "Modalidades | Muay Thai, Boxe e Jiu-Jitsu | Kingdom Fight School",
+      metaTitle: "Modalidades | Muay Thai, Boxe, Jiu-Jitsu e Kids | Kingdom Fight School",
       metaDescription:
-        "Conheça as modalidades da Kingdom Fight School: Muay Thai, Boxe e Jiu-Jitsu. Aulas estruturadas por nível, treinadores experientes, em Oeiras e Cascais.",
-      metaKeywords: ["modalidades", "Muay Thai", "Boxe", "Jiu-Jitsu", "artes marciais", "Kingdom Fight", "Oeiras", "Cascais"],
+        "Conheça as modalidades da Kingdom Fight School: Muay Thai, Boxe, Jiu-Jitsu e Kids. Aulas estruturadas por nível, treinadores experientes, em Oeiras e Cascais.",
+      metaKeywords: ["modalidades", "Muay Thai", "Boxe", "Jiu-Jitsu", "Kids", "artes marciais", "Kingdom Fight", "Oeiras", "Cascais"],
       heroTitle: "As nossas modalidades",
       heroSubtitle:
-        "Três caminhos, uma só metodologia. Escolha a arte marcial que mais se identifica consigo — ou combine mais do que uma.",
+        "Quatro caminhos, uma só metodologia. Escolha a arte marcial que mais se identifica consigo — ou combine mais do que uma.",
       cardCta: "Conhecer",
       ctaHeadline: "Ainda não sabe qual escolher?",
       ctaSub: "Marque uma aula experimental gratuita e experimente na prática, sem compromisso.",
@@ -245,17 +245,85 @@ const modalidadesContentData: Record<
         ctaSub: "Marque já a sua aula experimental gratuita — sem compromisso.",
         ctaButton: "Aula Experimental",
       },
+      kids: {
+        slug: "kids",
+        icon: "🧒",
+        name: "Kids",
+        tagline: "Disciplina, confiança e diversão desde cedo",
+        metaTitle: "Kids — Artes Marciais para Crianças em Oeiras e Cascais | Kingdom Fight School",
+        metaDescription:
+          "Aulas de artes marciais para crianças em Oeiras e Cascais. Disciplina, confiança, coordenação motora e respeito, num ambiente seguro e divertido.",
+        metaKeywords: [
+          "Kids",
+          "artes marciais para crianças",
+          "Muay Thai crianças",
+          "desporto de combate infantil",
+          "Kingdom Fight School",
+          "Oeiras",
+          "Cascais",
+        ],
+        heroTitle: "Kids",
+        heroSubtitle:
+          "Um programa pensado para os mais novos aprenderem artes marciais de forma divertida e segura — disciplina, confiança e respeito que ficam para a vida toda.",
+        introTitle: "O que é o programa Kids",
+        introText:
+          "As aulas Kids adaptam o Muay Thai e outras artes marciais a crianças, com pedagogia própria: exercícios lúdicos, jogos de coordenação e progressão técnica sem contacto pesado. O foco não é competir ou magoar — é ensinar postura, disciplina e trabalho em equipa através do movimento. As turmas são pequenas, o ritmo é adaptado à idade e o treinador acompanha de perto a evolução de cada criança, sempre com muita energia e boa disposição.",
+        benefitsTitle: "Porque um desporto de combate faz bem à sua criança",
+        benefits: [
+          {
+            icon: "🧠",
+            title: "Disciplina e foco",
+            desc: "Rotina, regras claras e atenção sustentada que se refletem na escola e em casa, não só no tapete.",
+          },
+          {
+            icon: "💪",
+            title: "Desenvolvimento motor",
+            desc: "Coordenação, equilíbrio, força e agilidade trabalhados numa fase crucial do crescimento.",
+          },
+          {
+            icon: "🛡️",
+            title: "Confiança e autodefesa",
+            desc: "Aprender a proteger-se e a ganhar segurança em si próprio — uma ferramenta real contra o bullying.",
+          },
+          {
+            icon: "🤝",
+            title: "Respeito e socialização",
+            desc: "Valores como respeito pelo colega e pelo treinador, espírito de equipa e novas amizades a cada aula.",
+          },
+        ],
+        forWhomTitle: "Para quem é",
+        forWhomText:
+          "Para crianças a partir dos 5-6 anos, sem necessidade de qualquer experiência prévia. As turmas são organizadas por faixa etária e nível, com exercícios adaptados ao desenvolvimento físico e à capacidade de concentração de cada idade.",
+        faqTitle: "Perguntas frequentes",
+        faqItems: [
+          {
+            q: "A partir de que idade pode a criança começar?",
+            a: "Geralmente a partir dos 5-6 anos. Fale connosco para confirmarmos a turma mais adequada à idade e ao desenvolvimento do seu filho ou filha.",
+          },
+          {
+            q: "Há contacto físico nas aulas?",
+            a: "O contacto é sempre muito controlado e adaptado à idade — o foco está na técnica, na coordenação e na disciplina, não em sparring pesado.",
+          },
+          {
+            q: "O meu filho ou filha pode experimentar antes de se inscrever?",
+            a: "Sim. Pode marcar uma aula experimental gratuita para a criança conhecer o treinador, a turma e a metodologia antes de decidir continuar.",
+          },
+        ],
+        ctaHeadline: "Pronto para inscrever o seu filho ou filha?",
+        ctaSub: "Marque uma aula experimental gratuita e veja como as crianças se divertem a aprender.",
+        ctaButton: "Aula Experimental",
+      },
     },
   },
   en: {
     hub: {
-      metaTitle: "Martial Arts Programs | Muay Thai, Boxing & Jiu-Jitsu | Kingdom Fight School",
+      metaTitle: "Martial Arts Programs | Muay Thai, Boxing, Jiu-Jitsu & Kids | Kingdom Fight School",
       metaDescription:
-        "Discover Kingdom Fight School's programs: Muay Thai, Boxing and Jiu-Jitsu. Level-based classes, experienced coaches, in Oeiras and Cascais, Portugal.",
-      metaKeywords: ["martial arts", "Muay Thai", "Boxing", "Jiu-Jitsu", "Kingdom Fight", "Oeiras", "Cascais"],
+        "Discover Kingdom Fight School's programs: Muay Thai, Boxing, Jiu-Jitsu and Kids. Level-based classes, experienced coaches, in Oeiras and Cascais, Portugal.",
+      metaKeywords: ["martial arts", "Muay Thai", "Boxing", "Jiu-Jitsu", "Kids", "Kingdom Fight", "Oeiras", "Cascais"],
       heroTitle: "Our martial arts programs",
       heroSubtitle:
-        "Three paths, one methodology. Choose the martial art that fits you best — or combine more than one.",
+        "Four paths, one methodology. Choose the martial art that fits you best — or combine more than one.",
       cardCta: "Learn more",
       ctaHeadline: "Not sure which one to choose?",
       ctaSub: "Book a free trial class and try it in practice, no commitment.",
@@ -440,6 +508,74 @@ const modalidadesContentData: Record<
         ],
         ctaHeadline: "Ready to try Jiu-Jitsu?",
         ctaSub: "Book your free trial class now — no commitment.",
+        ctaButton: "Free Trial Class",
+      },
+      kids: {
+        slug: "kids",
+        icon: "🧒",
+        name: "Kids",
+        tagline: "Discipline, confidence and fun from an early age",
+        metaTitle: "Kids — Martial Arts for Children in Oeiras and Cascais | Kingdom Fight School",
+        metaDescription:
+          "Martial arts classes for children in Oeiras and Cascais. Discipline, confidence, motor coordination and respect, in a safe and fun environment.",
+        metaKeywords: [
+          "Kids",
+          "martial arts for kids",
+          "Muay Thai for children",
+          "kids combat sports",
+          "Kingdom Fight School",
+          "Oeiras",
+          "Cascais",
+        ],
+        heroTitle: "Kids",
+        heroSubtitle:
+          "A program designed for children to learn martial arts in a fun and safe way — discipline, confidence and respect that last a lifetime.",
+        introTitle: "What the Kids program is",
+        introText:
+          "Kids classes adapt Muay Thai and other martial arts to children, with their own teaching approach: playful exercises, coordination games and technical progression without heavy contact. The focus isn't competing or getting hurt — it's teaching posture, discipline and teamwork through movement. Classes are small, the pace is age-appropriate and the coach closely follows each child's progress, always with plenty of energy and fun.",
+        benefitsTitle: "Why a combat sport is good for your child",
+        benefits: [
+          {
+            icon: "🧠",
+            title: "Discipline and focus",
+            desc: "Routine, clear rules and sustained attention that carry over into school and home life, not just the mat.",
+          },
+          {
+            icon: "💪",
+            title: "Motor development",
+            desc: "Coordination, balance, strength and agility trained during a crucial stage of growth.",
+          },
+          {
+            icon: "🛡️",
+            title: "Confidence and self-defense",
+            desc: "Learning to protect themselves and gain self-assurance — a real tool against bullying.",
+          },
+          {
+            icon: "🤝",
+            title: "Respect and socializing",
+            desc: "Values like respect for teammates and coaches, team spirit and new friendships in every class.",
+          },
+        ],
+        forWhomTitle: "Who it's for",
+        forWhomText:
+          "For children from around 5-6 years old, no prior experience needed. Classes are organized by age group and level, with exercises adapted to each age's physical development and attention span.",
+        faqTitle: "Frequently asked questions",
+        faqItems: [
+          {
+            q: "What age can my child start?",
+            a: "Usually from around 5-6 years old. Get in touch and we'll confirm the right class for your child's age and development.",
+          },
+          {
+            q: "Is there physical contact in class?",
+            a: "Contact is always very controlled and age-appropriate — the focus is on technique, coordination and discipline, not heavy sparring.",
+          },
+          {
+            q: "Can my child try a class before enrolling?",
+            a: "Yes. You can book a free trial class for your child to meet the coach, the class and the methodology before deciding to continue.",
+          },
+        ],
+        ctaHeadline: "Ready to enroll your child?",
+        ctaSub: "Book a free trial class and see how much fun kids have while learning.",
         ctaButton: "Free Trial Class",
       },
     },
