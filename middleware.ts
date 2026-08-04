@@ -22,6 +22,9 @@ const publicPaths = [
   "/auth/update-password",
   "/termos",
   "/privacidade",
+  "/modalidades",
+  "/robots.txt",
+  "/sitemap.xml",
 ];
 
 /** Aluno sem plano: onboarding, waiver, escolher plano, adesão, callback OAuth e free tier. */
