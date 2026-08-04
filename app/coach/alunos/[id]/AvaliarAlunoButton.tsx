@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { resolveEvaluationInitialModality } from "@/lib/coach-student-evaluation-modalities";
@@ -32,7 +32,20 @@ export function AvaliarAlunoButton({
   successRedirectHref,
 }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Deep-link do assistente do admin: /admin/alunos/[id]?avaliar=1 abre já o modal.
+  useEffect(() => {
+    if (searchParams.get("avaliar") === "1") {
+      setModalOpen(true);
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("avaliar");
+      const query = params.toString();
+      router.replace(query ? `?${query}` : "?", { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const initialModality = resolveEvaluationInitialModality(
     primaryModality,

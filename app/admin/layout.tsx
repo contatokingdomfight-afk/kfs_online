@@ -9,6 +9,7 @@ import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
 import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
 import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
+import { AdminChatWidget } from "@/components/admin-chat/AdminChatWidget";
 import { CoachNotificationBell } from "@/components/CoachNotificationBell";
 import {
   buildShellMobileBottomNav,
@@ -68,6 +69,7 @@ export default async function AdminLayout({
       >
         {children}
       </ResponsiveShell>
+      <AdminChatWidget />
     </div>
   );
 }
