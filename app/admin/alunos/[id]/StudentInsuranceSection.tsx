@@ -37,6 +37,8 @@ type EnrollmentFormInfo = {
   debitIban: string | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
+  paymentProofFileName: string | null;
+  paymentProofUploadedAt: string | null;
 };
 
 type Props = {
@@ -44,6 +46,8 @@ type Props = {
   waiver: WaiverInfo | null;
   membershipAgreement: MembershipAgreementInfo | null;
   enrollmentForm: EnrollmentFormInfo | null;
+  /** Link temporário (5 min) para o comprovativo de pagamento, gerado no servidor a cada carregamento da página. */
+  paymentProofSignedUrl: string | null;
   coverage: InsuranceCoverageRow | null;
   annualAmount: number;
   defaultPolicyReference: string;
@@ -55,6 +59,7 @@ export function StudentInsuranceSection({
   waiver,
   membershipAgreement,
   enrollmentForm,
+  paymentProofSignedUrl,
   coverage,
   annualAmount,
   defaultPolicyReference,
@@ -108,6 +113,21 @@ export function StudentInsuranceSection({
               : ""}
           </p>
         ) : null}
+        <p style={{ margin: "0 0 8px" }}>
+          <strong>Comprovativo de pagamento:</strong>{" "}
+          {paymentProofSignedUrl && enrollmentForm?.paymentProofFileName ? (
+            <>
+              <a href={paymentProofSignedUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--primary)" }}>
+                Ver ficheiro ({enrollmentForm.paymentProofFileName})
+              </a>
+              {enrollmentForm.paymentProofUploadedAt
+                ? ` — enviado em ${new Date(enrollmentForm.paymentProofUploadedAt).toLocaleDateString("pt-PT")}`
+                : ""}
+            </>
+          ) : (
+            "Nenhum enviado"
+          )}
+        </p>
         <p style={{ margin: "0 0 8px" }}>
           <strong>Contrato de adesão:</strong>{" "}
           {membershipAgreement?.agreementSigned

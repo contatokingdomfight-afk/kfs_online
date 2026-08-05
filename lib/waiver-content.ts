@@ -1,7 +1,9 @@
-/** Texto do termo de responsabilidade (modelo — rever com advogado antes de produção). */
-export const WAIVER_LEGAL_NOTICE =
-  "Este texto é um modelo e deve ser revisto por um advogado antes de entrar em produção.";
-
+/**
+ * Termo de responsabilidade e isenção — texto exibido a alunos reais no fluxo de assinatura.
+ * Nota interna (não exibida ao utilizador): este texto segue o mesmo padrão informal das
+ * Condições Gerais de Adesão (lib/membership-agreement-content.ts); recomenda-se revisão
+ * jurídica periódica, mas o aviso de "modelo" não deve ficar visível para o aluno.
+ */
 export const WAIVER_BODY_PT = `
 <h2 style="font-size:1.125rem;font-weight:600;margin:0 0 12px;">Termo de responsabilidade e isenção</h2>
 <p>Reconheço que a prática de artes marciais e actividades físicas associadas envolve riscos inerentes, incluindo lesões e, em casos extremamente raros, consequências graves.</p>
@@ -9,7 +11,6 @@ export const WAIVER_BODY_PT = `
 <p>Isento a Kingdom Fight School, os seus representantes e colaboradores de responsabilidade por lesões ou danos resultantes da participação nas actividades, excepto nos casos de negligência grave ou dolo imputável à escola.</p>
 <p>Autorizo a prestação de primeiros socorros e tratamento de emergência em caso de necessidade durante a participação nas actividades.</p>
 <p>Comprometo-me a respeitar as regras de conduta e segurança da escola.</p>
-<p><strong>${WAIVER_LEGAL_NOTICE}</strong></p>
 `.trim();
 
 export function isMinorFromDateOfBirth(dateOfBirth: string | null | undefined, todayYmd: string): boolean {

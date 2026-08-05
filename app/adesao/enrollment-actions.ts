@@ -3,10 +3,16 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
-import { isEnrollmentFormCurrent, type PaymentMethodValue } from "@/lib/enrollment-form";
+import {
+  isEnrollmentFormCurrent,
+  ALLOWED_PAYMENT_PROOF_TYPES,
+  MAX_PAYMENT_PROOF_BYTES,
+  type PaymentMethodValue,
+} from "@/lib/enrollment-form";
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
 
 export type SaveEnrollmentFormResult = { error?: string };
@@ -71,6 +77,40 @@ export async function saveEnrollmentForm(
     return { error: "Deves aceitar o pagamento do seguro desportivo." };
   }
 
+  const { data: existing } = await supabase
+    .from("StudentEnrollmentForm")
+    .select("id, paymentProofPath, paymentProofFileName, paymentProofUploadedAt")
+    .eq("studentId", studentId)
+    .maybeSingle();
+
+  // Comprovativo de pagamento (opcional): mantém o ficheiro já enviado se não vier um novo neste submit.
+  let paymentProofPath = (existing as { paymentProofPath?: string | null } | null)?.paymentProofPath ?? null;
+  let paymentProofFileName = (existing as { paymentProofFileName?: string | null } | null)?.paymentProofFileName ?? null;
+  let paymentProofUploadedAt =
+    (existing as { paymentProofUploadedAt?: string | null } | null)?.paymentProofUploadedAt ?? null;
+
+  const proofFile = formData.get("paymentProof");
+  if (proofFile instanceof File && proofFile.size > 0) {
+    if (!ALLOWED_PAYMENT_PROOF_TYPES.has(proofFile.type)) {
+      return { error: "Comprovativo em formato não suportado. Usa JPEG, PNG, WebP ou PDF." };
+    }
+    if (proofFile.size > MAX_PAYMENT_PROOF_BYTES) {
+      return { error: "Comprovativo demasiado grande (máx. 8 MB)." };
+    }
+    const admin = createAdminClient();
+    const ext = proofFile.name.split(".").pop()?.toLowerCase() || "bin";
+    const path = `${studentId}/${Date.now()}.${ext}`;
+    const { error: upErr } = await admin.storage
+      .from("payment-proofs")
+      .upload(path, proofFile, { upsert: true, contentType: proofFile.type });
+    if (upErr) {
+      return { error: `Erro ao enviar o comprovativo: ${upErr.message}` };
+    }
+    paymentProofPath = path;
+    paymentProofFileName = proofFile.name;
+    paymentProofUploadedAt = new Date().toISOString();
+  }
+
   const row = {
     studentId,
     formCompleted: true,
@@ -86,6 +126,9 @@ export async function saveEnrollmentForm(
     emergencyContactPhone,
     paymentMethod,
     debitIban: null,
+    paymentProofPath,
+    paymentProofFileName,
+    paymentProofUploadedAt,
     allergies,
     knownHealthCondition,
     emergencyMedication,
@@ -97,12 +140,6 @@ export async function saveEnrollmentForm(
     membershipStartDate: membershipStartDate || new Date().toISOString().slice(0, 10),
     updatedAt: new Date().toISOString(),
   };
-
-  const { data: existing } = await supabase
-    .from("StudentEnrollmentForm")
-    .select("id")
-    .eq("studentId", studentId)
-    .maybeSingle();
 
   if (existing?.id) {
     const { error } = await supabase.from("StudentEnrollmentForm").update(row).eq("studentId", studentId);

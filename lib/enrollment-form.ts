@@ -16,6 +16,20 @@ export const GYM_ENROLLMENT_INFO = {
 /** IBAN da empresa para transferências bancárias. */
 export const SCHOOL_TRANSFER_IBAN = "LT383250045228499203";
 
+/** Dados adicionais de pagamento — transferência/Revolut, mostrados junto ao IBAN. */
+export const SCHOOL_PAYMENT_DETAILS = {
+  recipientName: "Epicentro de Honra",
+  recipientAddress: "Rua Viana da Mota, 18, 2765-562 São Pedro do Estoril, Portugal",
+  iban: SCHOOL_TRANSFER_IBAN,
+  bicSwift: "REVOLT21",
+  revolutTag: "@kingdom_01",
+  /** Dia útil limite para pagamento da mensalidade de cada mês. */
+  monthlyDueDayNote: "até ao terceiro dia útil de cada mês",
+} as const;
+
+export const MAX_PAYMENT_PROOF_BYTES = 8 * 1024 * 1024;
+export const ALLOWED_PAYMENT_PROOF_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+
 export const PAYMENT_METHOD_OPTIONS = [
   { value: "CASH", label: "Dinheiro em espécie" },
   { value: "TRANSFER", label: "Transferência bancária" },
@@ -49,6 +63,9 @@ export type EnrollmentFormRow = {
   emergencyContactPhone: string | null;
   paymentMethod: string | null;
   debitIban: string | null;
+  paymentProofPath: string | null;
+  paymentProofFileName: string | null;
+  paymentProofUploadedAt: string | null;
   allergies: string | null;
   knownHealthCondition: string | null;
   emergencyMedication: string | null;

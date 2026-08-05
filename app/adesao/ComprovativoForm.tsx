@@ -11,6 +11,7 @@ import {
   GDPR_CONSENT_INTRO,
   PAYMENT_METHOD_OPTIONS,
   SCHOOL_TRANSFER_IBAN,
+  SCHOOL_PAYMENT_DETAILS,
   type EnrollmentFormPrefill,
   type PaymentMethodValue,
 } from "@/lib/enrollment-form";
@@ -51,6 +52,10 @@ export function ComprovativoForm({ prefill }: Props) {
 
   return (
     <form action={formAction} style={{ maxWidth: 640, width: "100%", display: "flex", flexDirection: "column", gap: 20 }}>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+        Estes dados são exigidos para o contrato de adesão e o seguro desportivo obrigatório — leva cerca de 3
+        minutos. Alguns campos já vêm preenchidos com o que sabemos sobre ti.
+      </p>
       <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", fontSize: 14, lineHeight: 1.55 }}>
         <h2 style={{ margin: "0 0 10px", fontSize: 16, fontWeight: 600 }}>1 — Identificação do ginásio</h2>
         <p style={{ margin: "0 0 4px" }}><strong>{GYM_ENROLLMENT_INFO.name}</strong></p>
@@ -158,16 +163,47 @@ export function ComprovativoForm({ prefill }: Props) {
               fontSize: 14,
             }}
           >
-            <p style={{ margin: "0 0 8px", fontWeight: 600 }}>IBAN para transferência</p>
+            <p style={{ margin: "0 0 8px", fontWeight: 600 }}>🏦 Dados para transferência</p>
+            <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>
+              Destinatário: <strong style={{ color: "var(--text-primary)" }}>{SCHOOL_PAYMENT_DETAILS.recipientName}</strong>
+            </p>
+            <p style={{ margin: "0 0 10px", fontSize: 12, color: "var(--text-secondary)" }}>
+              {SCHOOL_PAYMENT_DETAILS.recipientAddress}
+            </p>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
               <code style={{ fontSize: 15, fontWeight: 600, wordBreak: "break-all" }}>{SCHOOL_TRANSFER_IBAN}</code>
               <CopyTextButton text={SCHOOL_TRANSFER_IBAN} label="Copiar IBAN" />
             </div>
-            <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
-              Beneficiário: {GYM_ENROLLMENT_INFO.name}
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+              BIC/SWIFT: <strong style={{ color: "var(--text-primary)" }}>{SCHOOL_PAYMENT_DETAILS.bicSwift}</strong>
+            </p>
+            <p style={{ margin: "10px 0 0", fontSize: 13 }}>
+              Revolut:{" "}
+              <strong style={{ color: "var(--text-primary)" }}>{SCHOOL_PAYMENT_DETAILS.revolutTag}</strong>
+            </p>
+            <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+              📅 As mensalidades seguintes devem ser pagas {SCHOOL_PAYMENT_DETAILS.monthlyDueDayNote}.
             </p>
           </div>
         ) : null}
+
+        <div>
+          <label htmlFor="paymentProof" style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
+            💳 Comprovativo de pagamento {paymentMethod === "TRANSFER" ? "" : "(opcional)"}
+          </label>
+          <input
+            id="paymentProof"
+            name="paymentProof"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            className="input w-full"
+          />
+          <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+            {e.paymentProofFileName
+              ? `Já enviaste "${e.paymentProofFileName}". Escolhe outro ficheiro só se quiseres substituir.`
+              : "Foto ou PDF do comprovativo (recibo, print da transferência ou do Revolut). Máx. 8 MB."}
+          </p>
+        </div>
       </section>
 
       {prefill.showInsurance ? (
@@ -176,7 +212,12 @@ export function ComprovativoForm({ prefill }: Props) {
           <p style={{ margin: "0 0 10px", fontSize: 14, color: "var(--text-secondary)" }}>
             Seguro obrigatório para federados.
           </p>
-          <InsuranceCoverageBlock compact />
+          <details>
+            <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--primary)", fontWeight: 500 }}>
+              Ver coberturas completas do seguro
+            </summary>
+            <InsuranceCoverageBlock compact />
+          </details>
           <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, cursor: "pointer", marginTop: 12 }}>
             <input type="checkbox" name="insuranceAccepted" defaultChecked={e.insuranceAccepted} style={{ marginTop: 4 }} />
             <span>

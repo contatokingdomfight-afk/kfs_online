@@ -91,7 +91,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     supabase
       .from("StudentEnrollmentForm")
       .select(
-        "formCompleted, formCompletedAt, taxId, idDocument, paymentMethod, debitIban, emergencyContactName, emergencyContactPhone"
+        "formCompleted, formCompletedAt, taxId, idDocument, paymentMethod, debitIban, emergencyContactName, emergencyContactPhone, paymentProofPath, paymentProofFileName, paymentProofUploadedAt"
       )
       .eq("studentId", studentId)
       .maybeSingle(),
@@ -102,6 +102,13 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
       .maybeSingle(),
     getInsuranceSettings(supabase),
   ]);
+
+  const paymentProofPath = (enrollmentRow as { paymentProofPath?: string | null } | null)?.paymentProofPath ?? null;
+  const paymentProofSignedUrl = paymentProofPath
+    ? (
+        await supabase.storage.from("payment-proofs").createSignedUrl(paymentProofPath, 300)
+      ).data?.signedUrl ?? null
+    : null;
 
   const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
 
@@ -445,9 +452,12 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
                 debitIban: (enrollmentRow.debitIban as string | null) ?? null,
                 emergencyContactName: (enrollmentRow.emergencyContactName as string | null) ?? null,
                 emergencyContactPhone: (enrollmentRow.emergencyContactPhone as string | null) ?? null,
+                paymentProofFileName: (enrollmentRow.paymentProofFileName as string | null) ?? null,
+                paymentProofUploadedAt: (enrollmentRow.paymentProofUploadedAt as string | null) ?? null,
               }
             : null
         }
+        paymentProofSignedUrl={paymentProofSignedUrl}
         coverage={
           coverageRow
             ? {

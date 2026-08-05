@@ -2,7 +2,7 @@
 
 import { useFormState } from "react-dom";
 import { signWaiver, type SignWaiverResult } from "./actions";
-import { WAIVER_BODY_PT, WAIVER_LEGAL_NOTICE } from "@/lib/waiver-content";
+import { WAIVER_BODY_PT } from "@/lib/waiver-content";
 
 type Props = {
   isMinor: boolean;
@@ -25,7 +25,6 @@ export function WaiverSigningForm({ isMinor }: Props) {
         }}
         dangerouslySetInnerHTML={{ __html: WAIVER_BODY_PT }}
       />
-      <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>{WAIVER_LEGAL_NOTICE}</p>
 
       {isMinor ? (
         <div>
