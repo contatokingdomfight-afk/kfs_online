@@ -52,6 +52,8 @@
     --space-4: 16px;
     --space-5: 24px;
     --space-6: 32px;
+    /* Shell autenticado: sidebar fixo só a partir de lg (tablets usam drawer). */
+    --app-shell-desktop-min: 1024px;
   }
 
   /* Tokens de Bordas & Forma */
@@ -710,7 +712,7 @@
   max-width: 100%;
 }
 
-/* Mobile: < 768px (default) */
+/* Mobile / tablet (< 1024px): drawer + barra inferior */
 .app-shell-drawer {
   position: fixed;
   left: 0;
@@ -786,7 +788,7 @@
  * Sem isto, o <main> cresce com o conteúdo e o scroll é no documento — o header
  * (ResponsiveShell) escuta scroll no main e nunca dispara.
  */
-@media (max-width: 767.98px) {
+@media (max-width: 1023.98px) {
   .app-shell {
     height: 100vh;
     height: 100dvh;
@@ -848,8 +850,8 @@
   }
 }
 
-/* Desktop: >= 768px – sidebar fixo (sticky) e área principal com scroll */
-@media (min-width: 768px) {
+/* Desktop (>= 1024px): sidebar fixo (sticky) e área principal com scroll */
+@media (min-width: 1024px) {
   .app-shell {
     height: 100vh;
     overflow: hidden;
@@ -1438,7 +1440,7 @@ html[data-kfs-native="capacitor"] body {
   z-index: 20050;
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 1023.98px) {
   .admin-chat-fab-wrap {
     bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
   }

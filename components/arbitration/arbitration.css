@@ -354,7 +354,7 @@
   z-index: 1;
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 1023.98px) {
   .arb-judging-sticky-bar {
     margin-left: calc(-1 * max(var(--space-4), env(safe-area-inset-left)));
     margin-right: calc(-1 * max(var(--space-4), env(safe-area-inset-right)));
@@ -577,7 +577,7 @@
   margin-top: 20px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .arb-actions {
     position: sticky;
     bottom: 12px;
@@ -790,7 +790,7 @@
   background: rgba(248, 113, 113, 0.12);
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 1023.98px) {
   .arb-occ-matrix-header {
     display: none;
   }
@@ -845,7 +845,7 @@
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .arb-judging-sticky-bar {
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
   }

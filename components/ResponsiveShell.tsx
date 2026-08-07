@@ -3,6 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { APP_SHELL_DESKTOP_MEDIA } from "@/lib/layout-breakpoints";
 import { Sidebar, type SidebarLink } from "./Sidebar";
 import type { Theme, Locale } from "@/lib/theme-locale";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
@@ -64,7 +65,7 @@ export function ResponsiveShell({
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true); // assume mobile até hidratar (evita sidebar clicável antes do JS)
-  /** Só mobile (<768px): esconde ao scroll para baixo no main; ao subir, mostra já (sem transição). */
+  /** Só viewport <1024px: esconde header ao scroll no main (tablets incluídos). */
   const [headerHidden, setHeaderHidden] = useState(false);
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(56);
   const pathname = usePathname();
@@ -77,7 +78,7 @@ export function ResponsiveShell({
   const lastScrollTopRef = useRef(0);
 
   useEffect(() => {
-    const mql = window.matchMedia("(min-width: 768px)");
+    const mql = window.matchMedia(APP_SHELL_DESKTOP_MEDIA);
     const onMatch = () => setIsMobile(!mql.matches);
     onMatch();
     mql.addEventListener("change", onMatch);
