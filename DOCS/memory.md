@@ -50,6 +50,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Capacitor (fase 2):** WebView → produção; `CapacitorNativeBridge`, OAuth + deep links; `npm run generate:capacitor-assets` ([`CAPACITOR.md`](CAPACITOR.md)).
 
+- **Layout tablet (ago. 2026):** `ResponsiveShell` + `app/globals.css` — drawer e barra inferior até **&lt;1024px** (`lib/layout-breakpoints.ts`); sidebar fixo só em desktop. Alinha com `lg:` da homepage (ex. Galaxy Tab em landscape ~960px).
+
 
 
 ## Identidade visual / marca (2026)
