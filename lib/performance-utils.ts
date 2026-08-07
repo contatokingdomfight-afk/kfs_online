@@ -117,7 +117,12 @@ export type ModalityConfig = {
   criterionToDimensionCode?: Map<string, string>;
 };
 
-/** Linha de base 1–10 dos critérios não explicitamente avaliados (igual ao formulário do treinador). */
+/**
+ * Linha de base 1–10 usada SÓ na agregação do radar para critérios não avaliados
+ * (JSON esparso). É um ponto neutro (meio) para não penalizar o aluno por critérios
+ * que o treinador não tocou. Nota: é independente do baseline de entrada do formulário
+ * (primeira avaliação começa no mínimo, 1); mudar este valor recalcula radares históricos.
+ */
 export const EVALUATION_CRITERION_AGGREGATION_BASELINE = 5;
 
 /**

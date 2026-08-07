@@ -32,7 +32,7 @@ export async function CoachAlunoEvaluateButton({
 
   if (!student) return null;
 
-  const [{ data: user }, { data: studentProfile }, allConfigs, { data: modalityRefs }] = await Promise.all([
+  const [{ data: user }, { data: studentProfile }, allConfigs, { data: modalityRefs }, { data: athlete }] = await Promise.all([
     supabase.from("User").select("id, name, email, avatarUrl").eq("id", student.userId).single(),
     supabase
       .from("StudentProfile")
@@ -41,6 +41,7 @@ export async function CoachAlunoEvaluateButton({
       .maybeSingle(),
     loadAllEvaluationConfigs(supabase),
     supabase.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true }),
+    supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle(),
   ]);
 
   const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {};
@@ -68,6 +69,26 @@ export async function CoachAlunoEvaluateButton({
     emergencyContact: studentProfile?.emergencyContact ?? null,
   };
 
+  // Última avaliação (scores) por modalidade para pré-preencher o modal em reavaliações.
+  // Sem isto, o formulário abria sempre no baseline em vez de trazer a avaliação anterior.
+  const lastEvalScoresByModality: Record<string, Record<string, number>> = {};
+  if (athlete) {
+    const { data: lastEvals } = await supabase
+      .from("AthleteEvaluation")
+      .select("scores, modality, created_at")
+      .eq("athleteId", athlete.id)
+      .not("scores", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    for (const e of lastEvals ?? []) {
+      const mod = (e as { modality: string | null }).modality ?? "";
+      const scores = (e as { scores: Record<string, number> | null }).scores;
+      if (mod && scores && typeof scores === "object" && Object.keys(scores).length > 0 && !lastEvalScoresByModality[mod]) {
+        lastEvalScoresByModality[mod] = scores;
+      }
+    }
+  }
+
   return (
     <div style={{ marginTop: 12, marginBottom: 12 }}>
       <AvaliarAlunoButton
@@ -76,6 +97,7 @@ export async function CoachAlunoEvaluateButton({
         primaryModality={primaryModality ?? null}
         modalities={modalitiesForEvaluate}
         evaluationConfigByModality={evaluationConfigByModality}
+        lastEvalScoresByModality={Object.keys(lastEvalScoresByModality).length > 0 ? lastEvalScoresByModality : undefined}
         stretchInRow={stretchInRow}
         successRedirectHref={successRedirectHref}
       />

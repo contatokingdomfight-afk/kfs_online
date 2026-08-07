@@ -18,7 +18,9 @@ const SCORES_1_5 = [1, 2, 3, 4, 5];
 const SCORES_1_10 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const MIN_SCORE = 1;
 const MAX_SCORE = 10;
-const DEFAULT_BASELINE = 5;
+// Primeira avaliação (sem última avaliação para pré-preencher) começa no mínimo:
+// o treinador sobe a partir de 1 os critérios que o aluno já domina.
+const DEFAULT_BASELINE = MIN_SCORE;
 
 /** Select nativo 1–10: evita teclado numérico caprichoso e zoom no iOS (vs. input number com texto pequeno). */
 function ScoreSelect1to10({
@@ -308,13 +310,21 @@ export function CoachStudentProfileModal(props: Props) {
   }, [evaluationConfig, scores, touchedIds.size]);
 
   const submittedScoresJson = useMemo(() => {
+    // Só gravamos se o treinador tocou em algo (evita reavaliação duplicada sem alterações).
+    // Quando grava, incluímos os critérios tocados nesta sessão E os já pré-preenchidos da
+    // última avaliação (mesma modalidade), para a reavaliação ser um retrato completo e não
+    // "comprometer" (perder) os valores anteriores que o treinador não voltou a tocar.
     const o: Record<string, number> = {};
-    touchedIds.forEach((id) => {
+    if (touchedIds.size === 0) return JSON.stringify(o);
+    const prior = initialScoresByModalityRef.current?.[selectedModality];
+    criterionIds.forEach((id) => {
+      const carriedForward = prior != null && typeof prior[id] === "number";
+      if (!touchedIds.has(id) && !carriedForward) return;
       const v = scores[id];
       if (typeof v === "number" && !Number.isNaN(v)) o[id] = v;
     });
     return JSON.stringify(o);
-  }, [scores, touchedIds]);
+  }, [scores, touchedIds, criterionIds, selectedModality]);
 
   return (
     <div
