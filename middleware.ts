@@ -200,12 +200,22 @@ export async function middleware(request: NextRequest) {
 
     // `getUser()` valida o JWT com o Auth e renova tokens em cookie quando expiram
     // (preferível a `getSession()`, que só lê cookies sem garantir refresh).
+    //
+    // Cold start de PWA (app fechado de verdade no telemóvel, não só em 2.º plano — o processo
+    // é morto e a rede/DNS/TLS ainda não estão "quentes" ao reabrir) faz `getUser()` falhar por
+    // erro de rede, indistinguível de "sem sessão". Uma única retentativa imediata falhava quase
+    // sempre pela mesma razão (rede ainda não pronta) e deslogava à força utilizadores com sessão
+    // válida — via Sentry "middleware: sessão existente mas getUser() falhou (logout forçado)".
+    // Só vale a pena esperar/repetir quando o erro não tem `status` HTTP (falha de rede/fetch);
+    // uma sessão genuinamente inválida/expirada vem com status (401/403) e falha sempre da mesma
+    // forma, pelo que aí não compensa atrasar a resposta.
     let { data: userData, error: userError } = await supabase.auth.getUser();
-    if (!userData?.user && userError) {
-      // Falha transitória de rede até ao Supabase (comum em dados móveis) parece
-      // idêntica a "sem sessão" — sem retry, isto desloga utilizadores com sessão
-      // válida. Uma nova tentativa evita o falso logout sem enfraquecer o caso
-      // de sessão genuinamente inválida/expirada (que falha outra vez de forma determinística).
+    const RETRY_DELAYS_MS = [300, 700];
+    for (const delayMs of RETRY_DELAYS_MS) {
+      if (userData?.user || !userError) break;
+      const status = (userError as { status?: number } | null)?.status;
+      if (status) break; // erro determinístico (sessão inválida/expirada) — repetir não ajuda.
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
       ({ data: userData, error: userError } = await supabase.auth.getUser());
     }
     const user = userData?.user ?? null;
