@@ -850,6 +850,26 @@
   }
 }
 
+/*
+ * Tablets (768–1023px): os wrappers de página usam `max-width: min(Xpx, 100%)`
+ * (ex. 420–900px) sem centrar, ficando colados à esquerda com muito vazio à direita
+ * (ex. «Registar pagamento» no Galaxy Tab). Aqui alargamos esses wrappers (níveis
+ * 1–2 do <main>, incluindo sub-páginas de layouts com abas como o financeiro) e
+ * centramo-los, para aproveitar a largura do tablet. A seleção por `style*="max-width:min("`
+ * (com e sem espaço após `:`, conforme SSR vs. CSSOM) toca só nos wrappers intencionais,
+ * não em cartões/blocos internos mais profundos. Telemóveis (<768px) e desktop ficam iguais.
+ */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .app-shell-main > main > [style*="max-width:min("],
+  .app-shell-main > main > [style*="max-width: min("],
+  .app-shell-main > main > div > [style*="max-width:min("],
+  .app-shell-main > main > div > [style*="max-width: min("] {
+    max-width: min(920px, 100%) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
 /* Desktop (>= 1024px): sidebar fixo (sticky) e área principal com scroll */
 @media (min-width: 1024px) {
   .app-shell {

@@ -50,7 +50,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 - **Capacitor (fase 2):** WebView → produção; `CapacitorNativeBridge`, OAuth + deep links; `npm run generate:capacitor-assets` ([`CAPACITOR.md`](CAPACITOR.md)).
 
-- **Layout tablet (ago. 2026):** `ResponsiveShell` + `app/globals.css` — drawer e barra inferior até **&lt;1024px** (`lib/layout-breakpoints.ts`); sidebar fixo só em desktop. Alinha com `lg:` da homepage (ex. Galaxy Tab em landscape ~960px).
+- **Layout tablet (ago. 2026):** `ResponsiveShell` + `app/globals.css` — drawer e barra inferior até **&lt;1024px** (`lib/layout-breakpoints.ts`); sidebar fixo só em desktop. Alinha com `lg:` da homepage (ex. Galaxy Tab em landscape ~960px). Nos tablets (768–1023px), os wrappers de página (`max-width: min(Xpx, 100%)`) crescem para `min(920px, 100%)` e centram-se via regra CSS em `globals.css` (seleção por `style*="max-width:min("`, níveis 1–2 do `main`), para o conteúdo não ficar colado à esquerda; blocos internos pequenos e telemóvel/desktop ficam inalterados.
 
 
 
