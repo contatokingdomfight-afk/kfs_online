@@ -16,8 +16,8 @@ export type PaymentListRow = {
    * Linha derivada (não é um Payment real): membro do plano família cuja mensalidade
    * está associada à combinada do titular. Renderiza a 0€. Se `status === "LATE"`,
    * mostra-se em «Em atraso» e pode ser registada individualmente (ex.: o titular
-   * pagou só a parte deste membro); se o titular já pagou (`status === "COVERED"`),
-   * fica apenas informativa («Coberto»), sem ações.
+   * pagou só a parte deste membro); se o titular já pagou (`status === "PAID"`),
+   * aparece «Pago» a 0€ (coberto pela família), sem ações.
    */
   familyMemberDerived?: boolean;
   /** Valor mensal sugerido (parte do membro já com desconto de família) para pré-preencher o registo. */

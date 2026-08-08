@@ -206,7 +206,8 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   // Linhas derivadas (não são registos reais): cada membro do plano família aparece a 0€
   // logo a seguir à mensalidade combinada do titular. Se o titular está «Em atraso», a
   // linha do membro fica também «Em atraso» a 0€ e pode ser registada individualmente
-  // (ex.: o titular paga só a parte deste membro); se o titular já pagou, fica «Coberto».
+  // (ex.: o titular paga só a parte deste membro); se o titular já pagou, o membro fica
+  // «Pago» a 0€ (coberto pela mensalidade da família).
   // Saltamos o membro que já tem uma mensalidade real nesse mês (o registo real aparece).
   const realTuitionKeys = new Set(
     paymentRows
@@ -234,7 +235,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
         id: `famember-${m.studentId}-${row.referenceMonth ?? "m"}`,
         studentId: m.studentId,
         displayName: u?.name || u?.email || "—",
-        status: row.status === "LATE" ? "LATE" : "COVERED",
+        status: row.status === "LATE" ? "LATE" : "PAID",
         referenceMonth: row.referenceMonth,
         referenceYear: null,
         paymentType: "TUITION",

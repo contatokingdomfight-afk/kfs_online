@@ -331,7 +331,7 @@ export function FinanceiroModals({
   const totalPaidByStudent = useMemo(() => {
     const map = new Map<string, number>();
     for (const row of allPaymentRows) {
-      if (row.status !== "PAID") continue;
+      if (row.status !== "PAID" || row.familyMemberDerived) continue;
       map.set(row.studentId, (map.get(row.studentId) ?? 0) + row.amount);
     }
     return map;
@@ -443,7 +443,7 @@ export function FinanceiroModals({
                 >
                   {filteredPayments.map((row) => {
                     const isDerived = row.familyMemberDerived === true;
-                    const isCoveredDerived = isDerived && row.status === "COVERED";
+                    const isPaidDerived = isDerived && row.status === "PAID";
                     const isPendingDerived = isDerived && row.status === "LATE";
                     const periodLabel =
                       row.paymentType === "INSURANCE"
@@ -464,25 +464,16 @@ export function FinanceiroModals({
                             fontSize: 12,
                             padding: "2px 8px",
                             borderRadius: "var(--radius-md)",
-                            backgroundColor: isCoveredDerived
-                              ? "var(--bg-secondary)"
-                              : row.status === "PAID"
-                                ? "var(--success)"
-                                : "var(--danger)",
-                            color: isCoveredDerived ? "var(--text-secondary)" : "#fff",
-                            border: isCoveredDerived ? "1px solid var(--border)" : undefined,
+                            backgroundColor: row.status === "PAID" ? "var(--success)" : "var(--danger)",
+                            color: "#fff",
                           }}
                         >
-                          {isCoveredDerived
-                            ? labels.coveredBadge
-                            : row.status === "PAID"
-                              ? labels.statusPaid
-                              : labels.statusLate}
+                          {row.status === "PAID" ? labels.statusPaid : labels.statusLate}
                         </span>
                       </div>
                       <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
                         {paymentTypeLabelPt(row.paymentType)} · {periodLabel} · {row.amount.toFixed(2)} €
-                        {isCoveredDerived ? ` · ${labels.coveredByFamilyNote}` : ""}
+                        {isPaidDerived ? ` · ${labels.coveredByFamilyNote}` : ""}
                         {isPendingDerived ? ` · ${labels.familyMemberPendingNote}` : ""}
                       </p>
                       {!isDerived && (
