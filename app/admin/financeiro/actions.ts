@@ -313,7 +313,7 @@ export async function deleteAdminPayment(formData: FormData) {
   const supabase = createAdminClient();
   const { data: rows, error: fetchErr } = await supabase
     .from("Payment")
-    .select("id, studentId, stripeInvoiceId")
+    .select("id, studentId, stripeInvoiceId, paymentType, referenceMonth")
     .in("id", ids);
   if (fetchErr) {
     redirect(`/admin/financeiro?paymentError=${encodeURIComponent(fetchErr.message)}`);
@@ -329,9 +329,24 @@ export async function deleteAdminPayment(formData: FormData) {
   }
 
   const studentIds = [...new Set(rows.map((r) => (r as { studentId: string }).studentId))];
+  // Meses de mensalidade afetados: recriamos logo a seguir (LATE) para o aluno não "sumir"
+  // da lista de pendentes até ao próximo cron.
+  const tuitionMonths = [
+    ...new Set(
+      rows
+        .filter((r) => (r as { paymentType: string }).paymentType === "TUITION")
+        .map((r) => (r as { referenceMonth: string | null }).referenceMonth)
+        .filter((m): m is string => Boolean(m))
+    ),
+  ];
+
   const { error: delErr } = await supabase.from("Payment").delete().in("id", ids);
   if (delErr) {
     redirect(`/admin/financeiro?paymentError=${encodeURIComponent(delErr.message)}`);
+  }
+
+  for (const referenceMonth of tuitionMonths) {
+    await generateMonthlyPayments(supabase, referenceMonth, { force: true });
   }
 
   for (const studentId of studentIds) {

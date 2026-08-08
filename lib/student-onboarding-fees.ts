@@ -6,6 +6,7 @@ export type StudentOnboardingFeesState = {
   insuranceAmount: number;
   enrollmentWaived: boolean;
   enrollmentPaid: boolean;
+  insuranceWaived: boolean;
   insurancePaidForYear: boolean;
   showEnrollment: boolean;
   showInsurance: boolean;
@@ -21,7 +22,7 @@ export async function getStudentOnboardingFeesState(
   const settings = await getInsuranceSettings(supabase);
 
   const [{ data: student }, { data: enrollmentPay }, { data: insurancePay }] = await Promise.all([
-    supabase.from("Student").select("enrollmentFeeWaived").eq("id", studentId).maybeSingle(),
+    supabase.from("Student").select("enrollmentFeeWaived, insuranceFeeWaived").eq("id", studentId).maybeSingle(),
     supabase
       .from("Payment")
       .select("id")
@@ -42,18 +43,22 @@ export async function getStudentOnboardingFeesState(
   const enrollmentWaived = Boolean(
     (student as { enrollmentFeeWaived?: boolean } | null)?.enrollmentFeeWaived
   );
+  const insuranceWaived = Boolean(
+    (student as { insuranceFeeWaived?: boolean } | null)?.insuranceFeeWaived
+  );
   const enrollmentPaid = Boolean(enrollmentPay?.id);
   const insurancePaidForYear = Boolean(insurancePay?.id);
 
   const showEnrollment =
     settings.enrollmentAmount > 0 && !enrollmentWaived && !enrollmentPaid;
-  const showInsurance = settings.annualAmount > 0 && !insurancePaidForYear;
+  const showInsurance = settings.annualAmount > 0 && !insuranceWaived && !insurancePaidForYear;
 
   return {
     enrollmentAmount: settings.enrollmentAmount,
     insuranceAmount: settings.annualAmount,
     enrollmentWaived,
     enrollmentPaid,
+    insuranceWaived,
     insurancePaidForYear,
     showEnrollment,
     showInsurance,

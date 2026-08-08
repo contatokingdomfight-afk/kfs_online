@@ -34,6 +34,9 @@ export function PrimeiroPagamentoForm({
   const [includeEnrollment, setIncludeEnrollment] = useState(
     initialStudent?.onboardingFees.showEnrollment ?? true
   );
+  const [includeInsurance, setIncludeInsurance] = useState(
+    initialStudent?.onboardingFees.showInsurance ?? true
+  );
   const [tuitionAmount, setTuitionAmount] = useState(() => {
     if (!initialStudent) return "";
     if (initialStudent.existingPayment && initialStudent.existingPayment.amount > 0) {
@@ -46,12 +49,11 @@ export function PrimeiroPagamentoForm({
   const fees = selected?.onboardingFees;
   const showEnrollment = fees?.showEnrollment ?? false;
   const showInsurance = fees?.showInsurance ?? false;
-  const insuranceRequired = showInsurance;
 
   const tuition = parseFloat(tuitionAmount || (selected?.priceMonthly ? String(selected.priceMonthly) : "0"));
   const tuitionTotal = Number.isNaN(tuition) ? 0 : tuition * tuitionMonths;
   const enrollmentPart = includeEnrollment && showEnrollment ? (fees?.enrollmentAmount ?? 0) : 0;
-  const insurancePart = showInsurance ? (fees?.insuranceAmount ?? 0) : 0;
+  const insurancePart = includeInsurance && showInsurance ? (fees?.insuranceAmount ?? 0) : 0;
   const total = useMemo(
     () => tuitionTotal + enrollmentPart + insurancePart,
     [tuitionTotal, enrollmentPart, insurancePart]
@@ -88,6 +90,7 @@ export function PrimeiroPagamentoForm({
   const selectStudent = (row: StudentPaymentRow) => {
     setSelected(row);
     setIncludeEnrollment(row.onboardingFees.showEnrollment);
+    setIncludeInsurance(row.onboardingFees.showInsurance);
     const tuitionDefault =
       row.existingPayment && row.existingPayment.amount > 0
         ? String(row.existingPayment.amount)
@@ -102,7 +105,7 @@ export function PrimeiroPagamentoForm({
     <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 560 }}>
       <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
         Regista o <strong>primeiro pagamento</strong> após a inscrição: mensalidade do mês, matrícula (podes isentar) e
-        seguro anual (obrigatório).
+        seguro anual (podes dispensar).
       </p>
 
       {!selected ? (
@@ -171,9 +174,9 @@ export function PrimeiroPagamentoForm({
           >
             <input type="hidden" name="studentId" value={selected.studentId} />
             <input type="hidden" name="referenceMonth" value={referenceMonth} />
-            {insuranceRequired ? (
+            {showInsurance ? (
               <>
-                <input type="hidden" name="includeInsurance" value="on" />
+                {includeInsurance && <input type="hidden" name="includeInsurance" value="on" />}
                 <input type="hidden" name="referenceYear" value={referenceYear} />
               </>
             ) : null}
@@ -235,12 +238,17 @@ export function PrimeiroPagamentoForm({
               )}
 
               {showInsurance ? (
-                <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "default", opacity: 1 }}>
-                  <input type="checkbox" checked readOnly disabled style={{ marginTop: 3 }} />
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={includeInsurance}
+                    onChange={(e) => setIncludeInsurance(e.target.checked)}
+                    style={{ marginTop: 3 }}
+                  />
                   <span style={{ fontSize: 14 }}>
                     <strong>Seguro anual</strong> — {(fees?.insuranceAmount ?? 0).toFixed(2)} € ({referenceYear})
                     <span style={{ display: "block", fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
-                      Obrigatório no primeiro pagamento.
+                      Desmarca para dispensar o seguro deste aluno (ex.: já tem seguro próprio).
                     </span>
                   </span>
                 </label>

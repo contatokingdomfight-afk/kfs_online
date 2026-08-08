@@ -79,6 +79,28 @@ async function waiveEnrollment(
   return {};
 }
 
+async function waiveInsurance(
+  supabase: SupabaseClient,
+  studentId: string,
+  referenceYear: string
+): Promise<{ error?: string }> {
+  const { error: waiveErr } = await supabase
+    .from("Student")
+    .update({ insuranceFeeWaived: true })
+    .eq("id", studentId);
+  if (waiveErr) return { error: waiveErr.message };
+
+  const { error: delErr } = await supabase
+    .from("Payment")
+    .delete()
+    .eq("studentId", studentId)
+    .eq("paymentType", "INSURANCE")
+    .eq("referenceYear", referenceYear)
+    .eq("status", "LATE");
+  if (delErr) return { error: delErr.message };
+  return {};
+}
+
 async function markInsurancePaid(
   supabase: SupabaseClient,
   studentId: string,
@@ -153,10 +175,8 @@ export async function createFirstPaymentBundle(
 
   const settings = await getInsuranceSettings(supabase);
 
-  if (includeInsurance && fees.showInsurance) {
-    if (settings.annualAmount <= 0) return { error: "Valor do seguro não configurado em Configurações." };
-  } else if (fees.showInsurance) {
-    return { error: "O seguro é obrigatório no primeiro pagamento." };
+  if (includeInsurance && fees.showInsurance && settings.annualAmount <= 0) {
+    return { error: "Valor do seguro não configurado em Configurações." };
   }
 
   if (includeEnrollment && fees.showEnrollment && settings.enrollmentAmount <= 0) {
@@ -197,18 +217,23 @@ export async function createFirstPaymentBundle(
     }
   }
 
-  if (includeInsurance && fees.showInsurance) {
-    const insResult = await markInsurancePaid(
-      supabase,
-      studentId,
-      referenceYear,
-      settings.annualAmount,
-      paymentMethod
-    );
-    if (insResult.error) return { error: `Seguro: ${insResult.error}` };
+  if (fees.showInsurance) {
+    if (includeInsurance) {
+      const insResult = await markInsurancePaid(
+        supabase,
+        studentId,
+        referenceYear,
+        settings.annualAmount,
+        paymentMethod
+      );
+      if (insResult.error) return { error: `Seguro: ${insResult.error}` };
 
-    const renew = await renewStudentInsuranceCoverage(supabase, studentId, adminUserId);
-    if (renew.error) return { error: renew.error };
+      const renew = await renewStudentInsuranceCoverage(supabase, studentId, adminUserId);
+      if (renew.error) return { error: renew.error };
+    } else {
+      const waiveResult = await waiveInsurance(supabase, studentId, referenceYear);
+      if (waiveResult.error) return { error: waiveResult.error };
+    }
   }
 
   return {};

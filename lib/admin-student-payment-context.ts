@@ -151,6 +151,7 @@ export async function loadStudentPaymentRows(
         insuranceAmount: 0,
         enrollmentWaived: false,
         enrollmentPaid: false,
+        insuranceWaived: false,
         insurancePaidForYear: false,
         showEnrollment: false,
         showInsurance: false,
