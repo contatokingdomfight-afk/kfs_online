@@ -21,7 +21,11 @@ export async function resolveBillingStudentId(
   return studentId;
 }
 
-/** Garante a mensalidade pendente do titular de cada grupo activo (cobrança única). */
+/**
+ * Garante a mensalidade pendente do titular de cada grupo activo (cobrança única)
+ * e a matrícula/seguro pendente de CADA membro (individuais por pessoa, como o
+ * seguro desportivo exige — só a mensalidade é combinada no titular).
+ */
 export async function backfillFamilyGroupTuitions(supabase: SupabaseClient): Promise<number> {
   const { data: groups } = await supabase
     .from("FamilyGroup")
@@ -31,10 +35,24 @@ export async function backfillFamilyGroupTuitions(supabase: SupabaseClient): Pro
 
   let created = 0;
   for (const g of groups) {
+    const groupId = (g as { id: string }).id;
     const billingStudentId = (g as { billingStudentId: string }).billingStudentId;
     const result = await ensureOnboardingPendingPayments(supabase, billingStudentId, KINGDOM_PLAN_FAMILIA_ID);
-    if (result.error) continue;
-    if (result.created) created += 1;
+    if (!result.error && result.created) created += 1;
+
+    const { data: memberRows } = await supabase
+      .from("FamilyGroupMember")
+      .select("studentId")
+      .eq("familyGroupId", groupId)
+      .neq("studentId", billingStudentId);
+
+    for (const m of memberRows ?? []) {
+      const memberId = (m as { studentId: string }).studentId;
+      const memberResult = await ensureOnboardingPendingPayments(supabase, memberId, KINGDOM_PLAN_FAMILIA_ID, {
+        skipTuition: true,
+      });
+      if (!memberResult.error && memberResult.created) created += 1;
+    }
   }
   return created;
 }
