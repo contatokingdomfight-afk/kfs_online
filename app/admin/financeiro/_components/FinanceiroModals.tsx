@@ -20,6 +20,7 @@ import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
 import type { CashDepositRow } from "@/lib/cash-balance";
 import { paymentTypeLabelPt, type PaymentListRow } from "@/lib/admin-payment-list-grouping";
 import { RegisterPendingPaymentModal } from "./RegisterPendingPaymentModal";
+import { RegisterFamilyMemberPaymentModal } from "./RegisterFamilyMemberPaymentModal";
 
 const overlayStyle: React.CSSProperties = {
   position: "fixed",
@@ -129,6 +130,8 @@ type Labels = {
   familyTuitionLabel: string;
   coveredBadge: string;
   coveredByFamilyNote: string;
+  familyMemberPendingNote: string;
+  familyMemberRegisterCta: string;
   editPaymentTitle: string;
   editPaymentAction: string;
   editPaymentSubmit: string;
@@ -439,12 +442,15 @@ export function FinanceiroModals({
                   }}
                 >
                   {filteredPayments.map((row) => {
+                    const isDerived = row.familyMemberDerived === true;
+                    const isCoveredDerived = isDerived && row.status === "COVERED";
+                    const isPendingDerived = isDerived && row.status === "LATE";
                     const periodLabel =
                       row.paymentType === "INSURANCE"
                         ? `Seguro ${row.referenceYear ?? "—"}`
                         : row.paymentType === "ENROLLMENT"
                           ? "Matrícula"
-                          : row.coveredByFamily
+                          : isDerived
                             ? (row.referenceMonth ?? "—")
                             : row.familyGroupId
                               ? labels.familyTuitionLabel
@@ -458,16 +464,16 @@ export function FinanceiroModals({
                             fontSize: 12,
                             padding: "2px 8px",
                             borderRadius: "var(--radius-md)",
-                            backgroundColor: row.coveredByFamily
+                            backgroundColor: isCoveredDerived
                               ? "var(--bg-secondary)"
                               : row.status === "PAID"
                                 ? "var(--success)"
                                 : "var(--danger)",
-                            color: row.coveredByFamily ? "var(--text-secondary)" : "#fff",
-                            border: row.coveredByFamily ? "1px solid var(--border)" : undefined,
+                            color: isCoveredDerived ? "var(--text-secondary)" : "#fff",
+                            border: isCoveredDerived ? "1px solid var(--border)" : undefined,
                           }}
                         >
-                          {row.coveredByFamily
+                          {isCoveredDerived
                             ? labels.coveredBadge
                             : row.status === "PAID"
                               ? labels.statusPaid
@@ -476,14 +482,28 @@ export function FinanceiroModals({
                       </div>
                       <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
                         {paymentTypeLabelPt(row.paymentType)} · {periodLabel} · {row.amount.toFixed(2)} €
-                        {row.coveredByFamily ? ` · ${labels.coveredByFamilyNote}` : ""}
+                        {isCoveredDerived ? ` · ${labels.coveredByFamilyNote}` : ""}
+                        {isPendingDerived ? ` · ${labels.familyMemberPendingNote}` : ""}
                       </p>
-                      {!row.coveredByFamily && (
+                      {!isDerived && (
                         <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
                           Total pago pelo aluno: {(totalPaidByStudent.get(row.studentId) ?? 0).toFixed(2)} €
                         </p>
                       )}
-                      {row.status === "LATE" && (
+                      {isPendingDerived && row.referenceMonth && (
+                        <div style={{ marginTop: 10 }}>
+                          <RegisterFamilyMemberPaymentModal
+                            memberStudentId={row.studentId}
+                            studentName={row.displayName}
+                            referenceMonth={row.referenceMonth}
+                            periodLabel={periodLabel}
+                            suggestedShare={row.suggestedShare ?? 0}
+                            buttonLabel={labels.familyMemberRegisterCta}
+                            buttonClassName="btn btn-primary"
+                          />
+                        </div>
+                      )}
+                      {!isDerived && row.status === "LATE" && (
                         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                           <RegisterPendingPaymentModal
                             paymentId={row.id}
@@ -505,7 +525,7 @@ export function FinanceiroModals({
                           ) : null}
                         </div>
                       )}
-                      {!row.coveredByFamily && (
+                      {!isDerived && (
                         <PaymentRecordActions
                           paymentIds={[row.id]}
                           deleteLabel={labels.deleteLabel}

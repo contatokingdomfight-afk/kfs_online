@@ -14,9 +14,14 @@ export type PaymentListRow = {
   familyDiscountPercent?: number | null;
   /**
    * Linha derivada (não é um Payment real): membro do plano família cuja mensalidade
-   * está coberta pela combinada do titular. Renderiza a 0€, «Coberto», sem ações.
+   * está associada à combinada do titular. Renderiza a 0€. Se `status === "LATE"`,
+   * mostra-se em «Em atraso» e pode ser registada individualmente (ex.: o titular
+   * pagou só a parte deste membro); se o titular já pagou (`status === "COVERED"`),
+   * fica apenas informativa («Coberto»), sem ações.
    */
-  coveredByFamily?: boolean;
+  familyMemberDerived?: boolean;
+  /** Valor mensal sugerido (parte do membro já com desconto de família) para pré-preencher o registo. */
+  suggestedShare?: number;
 };
 
 /** Rótulo em PT do tipo de pagamento, para listas de pendentes/registos. */

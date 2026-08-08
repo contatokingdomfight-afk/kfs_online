@@ -424,6 +424,79 @@ export async function markPendingPaymentPaid(
   return { success: true };
 }
 
+export type RegisterFamilyMemberTuitionResult = { error?: string; success?: boolean };
+
+/**
+ * Regista a mensalidade individual de UM MEMBRO (não-titular) de um plano família
+ * para um mês. Cria/actualiza o Payment PAID do membro com o valor indicado e, quando
+ * esse valor > 0, reduz a mensalidade combinada LATE do titular pelo mesmo valor —
+ * o total da família mantém-se (ex.: 99€ do titular → regista 49,50€ na filha →
+ * titular passa a 49,50€). Usado quando o titular escolhe pagar só a parte de um membro.
+ */
+export async function registerFamilyMemberTuition(
+  _prev: RegisterFamilyMemberTuitionResult | null,
+  formData: FormData
+): Promise<RegisterFamilyMemberTuitionResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const memberStudentId = (formData.get("memberStudentId") as string)?.trim();
+  const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
+  const amountStr = (formData.get("amount") as string)?.trim();
+  if (!memberStudentId) return { error: "Aluno inválido." };
+  if (!referenceMonth || !/^\d{4}-\d{2}$/.test(referenceMonth)) return { error: "Mês inválido." };
+  const amount = parseDecimalAmount(amountStr);
+  if (amount === null || amount < 0) return { error: "Indica o valor (pode ser 0 se coberto pelo titular)." };
+  const parsedMethod = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
+  if ("error" in parsedMethod) return { error: parsedMethod.error };
+
+  const supabase = createAdminClient();
+  const ctx = await getFamilyContext(supabase, memberStudentId);
+  if (!ctx) return { error: "Este aluno não pertence a um plano família." };
+  if (ctx.isTitular) {
+    return { error: "Este aluno é o titular — regista a mensalidade na linha combinada dele." };
+  }
+
+  // 1) Regista a mensalidade do membro como PAID (associada ao grupo).
+  const paid = await upsertTuitionPayment(supabase, {
+    studentId: memberStudentId,
+    referenceMonth,
+    amount,
+    status: "PAID",
+    familyGroupId: ctx.group.id,
+    paymentMethod: parsedMethod.method,
+  });
+  if (paid.error) return { error: paid.error };
+  await clearGraceOnPaidPayment(supabase, memberStudentId);
+  await syncStudentPaymentStatus(supabase, memberStudentId);
+
+  // 2) Reduz a mensalidade combinada LATE do titular pelo valor cobrado ao membro.
+  if (amount > 0) {
+    const { data: titularRows } = await supabase
+      .from("Payment")
+      .select("id, amount")
+      .eq("studentId", ctx.billingStudentId)
+      .eq("referenceMonth", referenceMonth)
+      .eq("paymentType", "TUITION")
+      .eq("status", "LATE")
+      .limit(1);
+    const titularRow = (titularRows ?? [])[0] as { id: string; amount: number } | undefined;
+    if (titularRow) {
+      const reduced = Math.max(0, Math.round((Number(titularRow.amount) - amount) * 100) / 100);
+      await supabase.from("Payment").update({ amount: reduced.toFixed(2) }).eq("id", titularRow.id);
+    }
+  }
+
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/financeiro");
+  revalidatePath(`/admin/alunos/${memberStudentId}`);
+  revalidatePath(`/coach/alunos/${memberStudentId}`);
+  revalidatePath(`/admin/alunos/${ctx.billingStudentId}`);
+  return { success: true };
+}
+
 /** Atualiza valor, estado e forma de pagamento de um registo existente. */
 export async function updateAdminPayment(
   _prev: PaymentActionResult | null,

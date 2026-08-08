@@ -16,6 +16,7 @@ import { RevenueBreakdownListRow } from "./_components/RevenueBreakdownList";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { MonthSelector } from "./_components/MonthSelector";
 import { FINANCE_PAYMENT_METHODS, FINANCE_PAYMENT_METHOD_LABELS_PT } from "@/lib/finance-payment-method";
+import { KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON } from "@/lib/kingdom-plans-constants";
 
 type SearchParams = Promise<{
   deduped?: string;
@@ -99,26 +100,48 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
 
   const [{ data: familyMemberRows }, { data: familyGroupsData }] = await Promise.all([
     familyGroupIds.length
-      ? supabase.from("FamilyGroupMember").select("familyGroupId, studentId, role").in("familyGroupId", familyGroupIds)
-      : Promise.resolve({ data: [] as { familyGroupId: string; studentId: string; role: string }[] }),
+      ? supabase
+          .from("FamilyGroupMember")
+          .select("familyGroupId, studentId, role, referencePlanId")
+          .in("familyGroupId", familyGroupIds)
+      : Promise.resolve({
+          data: [] as { familyGroupId: string; studentId: string; role: string; referencePlanId: string | null }[],
+        }),
     familyGroupIds.length
       ? supabase.from("FamilyGroup").select("id, discountPercent").in("id", familyGroupIds)
       : Promise.resolve({ data: [] as { id: string; discountPercent: number }[] }),
   ]);
 
-  // Membros por grupo: para gerar linhas «coberto pela família» e contar membros.
-  const membersByGroup = new Map<string, { studentId: string; role: string }[]>();
+  // Membros por grupo: para gerar linhas dos membros do plano família e contar membros.
+  const membersByGroup = new Map<string, { studentId: string; role: string; referencePlanId: string | null }[]>();
   for (const r of familyMemberRows ?? []) {
     const gid = (r as { familyGroupId: string }).familyGroupId;
     const arr = membersByGroup.get(gid) ?? [];
     arr.push({
       studentId: (r as { studentId: string }).studentId,
       role: String((r as { role?: string }).role ?? "MEMBER"),
+      referencePlanId: ((r as { referencePlanId?: string | null }).referencePlanId ?? null) as string | null,
     });
     membersByGroup.set(gid, arr);
   }
   const familyMemberCountByGroup = new Map<string, number>();
   for (const [gid, arr] of membersByGroup) familyMemberCountByGroup.set(gid, arr.length);
+
+  // Preço do plano de referência de cada membro (para sugerir a parte mensal ao registar).
+  const referencePlanIds = [
+    ...new Set(
+      (familyMemberRows ?? [])
+        .map((r) => (r as { referencePlanId?: string | null }).referencePlanId)
+        .filter(Boolean)
+    ),
+  ] as string[];
+  const { data: referencePlans } =
+    referencePlanIds.length > 0
+      ? await supabase.from("Plan").select("id, priceMonthly").in("id", referencePlanIds)
+      : { data: [] as { id: string; priceMonthly: number }[] };
+  const referencePlanPriceById = new Map(
+    (referencePlans ?? []).map((p) => [p.id, Number((p as { priceMonthly?: number }).priceMonthly ?? 0)])
+  );
 
   // Alunos: os dos pagamentos + os membros dos grupos (estes podem não ter Payment próprio).
   const memberStudentIds = (familyMemberRows ?? []).map((r) => (r as { studentId: string }).studentId);
@@ -181,20 +204,37 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   }));
 
   // Linhas derivadas (não são registos reais): cada membro do plano família aparece a 0€
-  // «coberto», logo a seguir à mensalidade combinada do titular, para dar visibilidade.
-  const paymentRowsWithCovered: PaymentListRow[] = [];
+  // logo a seguir à mensalidade combinada do titular. Se o titular está «Em atraso», a
+  // linha do membro fica também «Em atraso» a 0€ e pode ser registada individualmente
+  // (ex.: o titular paga só a parte deste membro); se o titular já pagou, fica «Coberto».
+  // Saltamos o membro que já tem uma mensalidade real nesse mês (o registo real aparece).
+  const realTuitionKeys = new Set(
+    paymentRows
+      .filter((r) => r.paymentType === "TUITION")
+      .map((r) => `${r.studentId}|${r.referenceMonth ?? ""}`)
+  );
+  const generatedDerived = new Set<string>();
+  const paymentRowsWithMembers: PaymentListRow[] = [];
   for (const row of paymentRows) {
-    paymentRowsWithCovered.push(row);
+    paymentRowsWithMembers.push(row);
     if (row.paymentType !== "TUITION" || !row.familyGroupId) continue;
     const members = membersByGroup.get(row.familyGroupId) ?? [];
+    const disc = discountByGroup.get(row.familyGroupId) ?? 0;
     for (const m of members) {
       if (m.role === "TITULAR" || m.studentId === row.studentId) continue;
+      const monthKey = `${m.studentId}|${row.referenceMonth ?? ""}`;
+      if (realTuitionKeys.has(monthKey) || generatedDerived.has(monthKey)) continue;
+      generatedDerived.add(monthKey);
       const u = studentToUser.get(m.studentId);
-      paymentRowsWithCovered.push({
-        id: `covered-${m.studentId}-${row.referenceMonth ?? "m"}`,
+      const refPrice = m.referencePlanId
+        ? referencePlanPriceById.get(m.referencePlanId) ?? KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON
+        : KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON;
+      const suggestedShare = Math.round(refPrice * (1 - disc / 100) * 100) / 100;
+      paymentRowsWithMembers.push({
+        id: `famember-${m.studentId}-${row.referenceMonth ?? "m"}`,
         studentId: m.studentId,
         displayName: u?.name || u?.email || "—",
-        status: "COVERED",
+        status: row.status === "LATE" ? "LATE" : "COVERED",
         referenceMonth: row.referenceMonth,
         referenceYear: null,
         paymentType: "TUITION",
@@ -202,8 +242,9 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
         paymentMethod: null,
         familyGroupId: row.familyGroupId,
         familyMemberCount: null,
-        familyDiscountPercent: null,
-        coveredByFamily: true,
+        familyDiscountPercent: disc || null,
+        familyMemberDerived: true,
+        suggestedShare,
       });
     }
   }
@@ -441,7 +482,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       <FinanceiroModals
         referenceMonth={referenceMonth}
         renewalsPending={renewalsPending}
-        paymentRows={paymentRowsWithCovered}
+        paymentRows={paymentRowsWithMembers}
         expenses={overview.allExpenses}
         expensesError={overview.expensesError}
         expenseErrorFromUrl={expenseError ?? null}
@@ -544,6 +585,8 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           familyTuitionLabel: t("adminFinanceFamilyTuitionLabel"),
           coveredBadge: t("adminFinanceCoveredBadge"),
           coveredByFamilyNote: t("adminFinanceCoveredByFamilyNote"),
+          familyMemberPendingNote: t("adminFinanceFamilyMemberPendingNote"),
+          familyMemberRegisterCta: t("adminFinanceFamilyMemberRegisterCta"),
           editPaymentTitle: t("adminFinanceEditPaymentTitle"),
           editPaymentAction: t("adminFinanceEditPaymentAction"),
           editPaymentSubmit: t("adminFinanceEditPaymentSubmit"),
