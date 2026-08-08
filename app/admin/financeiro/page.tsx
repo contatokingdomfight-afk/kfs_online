@@ -76,46 +76,47 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   const referenceMonth =
     params.month && /^\d{4}-\d{2}$/.test(params.month) ? params.month : currentMonth;
 
-  const [locale, overview] = await Promise.all([
+  const [locale, overview, revenue, renewalsPending, paymentsResult] = await Promise.all([
     getLocaleFromCookies() as Promise<"pt" | "en">,
     getFinanceiroOverview(supabase, referenceMonth),
+    getRevenueBreakdown(supabase, referenceMonth),
+    getRenewalsPending(supabase, referenceMonth),
+    supabase
+      .from("Payment")
+      .select(
+        "id, studentId, amount, status, referenceMonth, referenceYear, paymentType, familyGroupId, paymentMethod, createdAt"
+      )
+      .order("referenceMonth", { ascending: false })
+      .order("createdAt", { ascending: false })
+      .limit(200),
   ]);
-  const revenue = await getRevenueBreakdown(supabase, referenceMonth);
   const t = getTranslations(locale);
   const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
 
-  const renewalsPending = await getRenewalsPending(supabase, referenceMonth);
-
-  const { data: payments } = await supabase
-    .from("Payment")
-    .select(
-      "id, studentId, amount, status, referenceMonth, referenceYear, paymentType, familyGroupId, paymentMethod, createdAt"
-    )
-    .order("referenceMonth", { ascending: false })
-    .order("createdAt", { ascending: false })
-    .limit(200);
-
-  const list = payments ?? [];
+  const list = paymentsResult.data ?? [];
   const familyGroupIds = [...new Set(list.map((p) => (p as { familyGroupId?: string | null }).familyGroupId).filter(Boolean))] as string[];
+  const allPaymentStudentIds = [...new Set(list.map((p) => p.studentId))];
+
+  const [{ data: familyMemberRows }, { data: familyGroupsData }, { data: students }] = await Promise.all([
+    familyGroupIds.length
+      ? supabase.from("FamilyGroupMember").select("familyGroupId").in("familyGroupId", familyGroupIds)
+      : Promise.resolve({ data: [] as { familyGroupId: string }[] }),
+    familyGroupIds.length
+      ? supabase.from("FamilyGroup").select("id, discountPercent").in("id", familyGroupIds)
+      : Promise.resolve({ data: [] as { id: string; discountPercent: number }[] }),
+    allPaymentStudentIds.length > 0
+      ? supabase.from("Student").select("id, userId").in("id", allPaymentStudentIds)
+      : Promise.resolve({ data: [] as { id: string; userId: string }[] }),
+  ]);
+
   const familyMemberCountByGroup = new Map<string, number>();
-  for (const gid of familyGroupIds) {
-    const { count } = await supabase
-      .from("FamilyGroupMember")
-      .select("id", { count: "exact", head: true })
-      .eq("familyGroupId", gid);
-    familyMemberCountByGroup.set(gid, count ?? 0);
+  for (const r of familyMemberRows ?? []) {
+    const gid = (r as { familyGroupId: string }).familyGroupId;
+    familyMemberCountByGroup.set(gid, (familyMemberCountByGroup.get(gid) ?? 0) + 1);
   }
-  const { data: familyGroupsData } = familyGroupIds.length
-    ? await supabase.from("FamilyGroup").select("id, discountPercent").in("id", familyGroupIds)
-    : { data: [] as { id: string; discountPercent: number }[] };
   const discountByGroup = new Map(
     (familyGroupsData ?? []).map((g) => [g.id, Number((g as { discountPercent?: number }).discountPercent ?? 0)])
   );
-  const allPaymentStudentIds = [...new Set(list.map((p) => p.studentId))];
-  const { data: students } =
-    allPaymentStudentIds.length > 0
-      ? await supabase.from("Student").select("id, userId").in("id", allPaymentStudentIds)
-      : { data: [] as { id: string; userId: string }[] };
   const userIds = [...new Set((students ?? []).map((s) => s.userId))];
   const { data: users } =
     userIds.length > 0

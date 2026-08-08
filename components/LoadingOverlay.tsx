@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 type Props = {
   open: boolean;
   message: string;
@@ -7,9 +9,24 @@ type Props = {
   showSpinner?: boolean;
 };
 
+const SLOW_AFTER_MS = 8000;
+
 /** Overlay de carregamento (spinner + texto). Reutilizável em formulários client-side. */
 export function LoadingOverlay({ open, message, showSpinner = true }: Props) {
-  if (!open) return null;
+  const [dismissed, setDismissed] = useState(false);
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setDismissed(false);
+      setSlow(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlow(true), SLOW_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [open]);
+
+  if (!open || dismissed) return null;
 
   const titleId = "loading-overlay-title";
 
@@ -70,6 +87,26 @@ export function LoadingOverlay({ open, message, showSpinner = true }: Props) {
         >
           {message}
         </p>
+        {slow && (
+          <>
+            <p
+              role="status"
+              style={{
+                margin: 0,
+                fontSize: 13,
+                color: "var(--text-secondary)",
+                textAlign: "center",
+                lineHeight: 1.4,
+              }}
+            >
+              Isto está a demorar mais que o normal. É provável que já tenha sido concluído — podes fechar e
+              confirmar.
+            </p>
+            <button type="button" className="btn btn-secondary" onClick={() => setDismissed(true)}>
+              Fechar
+            </button>
+          </>
+        )}
         <style>{`
           @keyframes loading-overlay-spin {
             to { transform: rotate(360deg); }
