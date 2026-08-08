@@ -51,11 +51,35 @@ export function RegisterPendingPaymentModal({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState(markPendingPaymentPaid, null as MarkPendingPaymentPaidResult | null);
+  const [submittedAt, setSubmittedAt] = useState<number | null>(null);
+  const [slowSubmit, setSlowSubmit] = useState(false);
   const titleId = useId();
 
   useEffect(() => {
-    if (state?.success) setOpen(false);
+    if (state?.success) {
+      setOpen(false);
+      setSubmittedAt(null);
+      setSlowSubmit(false);
+    } else if (state?.error) {
+      setSubmittedAt(null);
+      setSlowSubmit(false);
+    }
   }, [state]);
+
+  useEffect(() => {
+    if (!submittedAt) {
+      setSlowSubmit(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlowSubmit(true), 6000);
+    return () => clearTimeout(timer);
+  }, [submittedAt]);
+
+  const closeAndReset = () => {
+    setOpen(false);
+    setSubmittedAt(null);
+    setSlowSubmit(false);
+  };
 
   return (
     <>
@@ -67,7 +91,7 @@ export function RegisterPendingPaymentModal({
           <div
             style={overlayStyle}
             role="presentation"
-            onClick={(e) => e.target === e.currentTarget && setOpen(false)}
+            onClick={(e) => e.target === e.currentTarget && closeAndReset()}
           >
             <div
               className="card"
@@ -88,7 +112,7 @@ export function RegisterPendingPaymentModal({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setOpen(false)}
+                  onClick={closeAndReset}
                   aria-label="Fechar"
                   className="btn btn-secondary"
                   style={{ padding: "4px 10px", fontSize: 14 }}
@@ -97,7 +121,28 @@ export function RegisterPendingPaymentModal({
                 </button>
               </div>
 
-              <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {slowSubmit && (
+                <p
+                  role="status"
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    padding: "10px 12px",
+                    background: "var(--surface)",
+                    borderRadius: "var(--radius-md)",
+                    borderLeft: "3px solid var(--primary)",
+                  }}
+                >
+                  Isto está a demorar mais que o normal. É provável que já tenha sido guardado — fecha e confere na
+                  lista antes de tentar outra vez.
+                </p>
+              )}
+
+              <form
+                action={formAction}
+                onSubmit={() => setSubmittedAt(Date.now())}
+                style={{ display: "flex", flexDirection: "column", gap: 14 }}
+              >
                 <input type="hidden" name="paymentId" value={paymentId} />
                 {state?.error && (
                   <p role="alert" style={{ color: "var(--error)", margin: 0, fontSize: 14 }}>
@@ -127,8 +172,8 @@ export function RegisterPendingPaymentModal({
                 <PaymentMethodSelect label="Forma de pagamento" />
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
                   <SubmitButton />
-                  <button type="button" className="btn btn-secondary" onClick={() => setOpen(false)}>
-                    Cancelar
+                  <button type="button" className="btn btn-secondary" onClick={closeAndReset}>
+                    {slowSubmit ? "Fechar" : "Cancelar"}
                   </button>
                 </div>
               </form>
