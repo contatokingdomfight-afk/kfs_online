@@ -328,6 +328,16 @@ export function FinanceiroModals({
     return displayPaymentRows.filter((p) => p.status === filterStatus);
   }, [displayPaymentRows, filterStatus]);
 
+  /** Soma dos pagamentos PAID por aluno, entre os registos visíveis nesta lista (últimos 200). */
+  const totalPaidByStudent = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of allPaymentRows) {
+      if (row.status !== "PAID") continue;
+      map.set(row.studentId, (map.get(row.studentId) ?? 0) + row.amount);
+    }
+    return map;
+  }, [allPaymentRows]);
+
   const modals = (
     <>
       {open === "renewals" && (
@@ -455,6 +465,9 @@ export function FinanceiroModals({
                           <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
                             {labels.onboardingBundleLabel} · {p.amount.toFixed(2)} €
                           </p>
+                          <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+                            Total pago pelo aluno: {(totalPaidByStudent.get(p.studentId) ?? 0).toFixed(2)} €
+                          </p>
                           {isLate && (
                             <div style={{ marginTop: 10 }}>
                               <Link
@@ -520,6 +533,9 @@ export function FinanceiroModals({
                       </div>
                       <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
                         {periodLabel} · {row.amount.toFixed(2)} €
+                      </p>
+                      <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+                        Total pago pelo aluno: {(totalPaidByStudent.get(row.studentId) ?? 0).toFixed(2)} €
                       </p>
                       {row.status === "LATE" && (
                         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
