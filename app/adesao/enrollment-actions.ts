@@ -72,10 +72,9 @@ export async function saveEnrollmentForm(
   }
 
   const fees = await getStudentOnboardingFeesState(supabase, studentId);
+  // Vem marcado por omissão (ver ComprovativoForm), mas não é obrigatório: o aluno pode
+  // desmarcar (ex.: já tem seguro próprio ou cobertura coletiva) e mesmo assim submeter.
   const insuranceAccepted = checkboxOn(formData, "insuranceAccepted");
-  if (fees.showInsurance && !insuranceAccepted) {
-    return { error: "Deves aceitar o pagamento do seguro desportivo." };
-  }
 
   const { data: existing } = await supabase
     .from("StudentEnrollmentForm")

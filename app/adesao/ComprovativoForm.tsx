@@ -219,11 +219,19 @@ export function ComprovativoForm({ prefill }: Props) {
             <InsuranceCoverageBlock compact />
           </details>
           <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, cursor: "pointer", marginTop: 12 }}>
-            <input type="checkbox" name="insuranceAccepted" defaultChecked={e.insuranceAccepted} style={{ marginTop: 4 }} />
+            <input
+              type="checkbox"
+              name="insuranceAccepted"
+              defaultChecked={e.insuranceAccepted ?? true}
+              style={{ marginTop: 4 }}
+            />
             <span>
               Aceito o pagamento do seguro ({SPORTS_INSURANCE_ANNUAL_PREMIUM.toFixed(2).replace(".", ",")} €).
             </span>
           </label>
+          <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+            Desmarca só se já tiveres seguro desportivo próprio ou cobertura coletiva combinada com a escola.
+          </p>
         </section>
       ) : null}
 
