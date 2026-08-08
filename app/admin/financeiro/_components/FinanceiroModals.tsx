@@ -69,6 +69,10 @@ type Labels = {
   filterAll: string;
   filterPaid: string;
   filterLate: string;
+  filterTypeAll: string;
+  filterTypeTuition: string;
+  filterTypeInsurance: string;
+  filterTypeEnrollment: string;
   statusPaid: string;
   statusLate: string;
   noPayments: string;
@@ -269,6 +273,7 @@ export function FinanceiroModals({
   const [open, setOpen] = useState<ModalId | null>(null);
   const [mounted, setMounted] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"all" | "PAID" | "LATE">("all");
+  const [filterPaymentType, setFilterPaymentType] = useState<"all" | "TUITION" | "INSURANCE" | "ENROLLMENT">("all");
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
   const titleId = useId();
@@ -323,9 +328,12 @@ export function FinanceiroModals({
   const displayPaymentRows = allPaymentRows;
 
   const filteredPayments = useMemo(() => {
-    if (filterStatus === "all") return displayPaymentRows;
-    return displayPaymentRows.filter((p) => p.status === filterStatus);
-  }, [displayPaymentRows, filterStatus]);
+    return displayPaymentRows.filter((p) => {
+      if (filterStatus !== "all" && p.status !== filterStatus) return false;
+      if (filterPaymentType !== "all" && p.paymentType !== filterPaymentType) return false;
+      return true;
+    });
+  }, [displayPaymentRows, filterStatus, filterPaymentType]);
 
   /** Soma dos pagamentos PAID por aluno, entre os registos visíveis nesta lista (últimos 200). */
   const totalPaidByStudent = useMemo(() => {
@@ -379,7 +387,7 @@ export function FinanceiroModals({
               onClose={closeModal}
               closeLabel={labels.close}
             />
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
               <button
                 type="button"
                 onClick={() => setFilterStatus("all")}
@@ -412,6 +420,60 @@ export function FinanceiroModals({
                 }}
               >
                 {labels.filterLate}
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+              <button
+                type="button"
+                onClick={() => setFilterPaymentType("all")}
+                className="btn"
+                style={{
+                  fontSize: 13,
+                  padding: "6px 12px",
+                  backgroundColor: filterPaymentType === "all" ? "var(--primary)" : "var(--bg-secondary)",
+                  color: filterPaymentType === "all" ? "#fff" : "var(--text-primary)",
+                }}
+              >
+                {labels.filterTypeAll}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterPaymentType("TUITION")}
+                className="btn"
+                style={{
+                  fontSize: 13,
+                  padding: "6px 12px",
+                  backgroundColor: filterPaymentType === "TUITION" ? "var(--primary)" : "var(--bg-secondary)",
+                  color: filterPaymentType === "TUITION" ? "#fff" : "var(--text-primary)",
+                }}
+              >
+                {labels.filterTypeTuition}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterPaymentType("INSURANCE")}
+                className="btn"
+                style={{
+                  fontSize: 13,
+                  padding: "6px 12px",
+                  backgroundColor: filterPaymentType === "INSURANCE" ? "var(--primary)" : "var(--bg-secondary)",
+                  color: filterPaymentType === "INSURANCE" ? "#fff" : "var(--text-primary)",
+                }}
+              >
+                {labels.filterTypeInsurance}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterPaymentType("ENROLLMENT")}
+                className="btn"
+                style={{
+                  fontSize: 13,
+                  padding: "6px 12px",
+                  backgroundColor: filterPaymentType === "ENROLLMENT" ? "var(--primary)" : "var(--bg-secondary)",
+                  color: filterPaymentType === "ENROLLMENT" ? "#fff" : "var(--text-primary)",
+                }}
+              >
+                {labels.filterTypeEnrollment}
               </button>
             </div>
             <form action={dedupeDuplicatePaymentsAction} style={{ marginBottom: 12 }}>
