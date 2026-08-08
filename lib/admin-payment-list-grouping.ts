@@ -12,6 +12,11 @@ export type PaymentListRow = {
   familyMemberCount?: number | null;
   /** % de desconto do grupo família, quando esta linha é a mensalidade combinada do titular. */
   familyDiscountPercent?: number | null;
+  /**
+   * Linha derivada (não é um Payment real): membro do plano família cuja mensalidade
+   * está coberta pela combinada do titular. Renderiza a 0€, «Coberto», sem ações.
+   */
+  coveredByFamily?: boolean;
 };
 
 /** Rótulo em PT do tipo de pagamento, para listas de pendentes/registos. */

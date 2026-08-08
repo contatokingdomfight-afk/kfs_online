@@ -1,6 +1,8 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
+import { ConfirmModal } from "@/components/ConfirmModalDynamic";
 import { deleteAdminPayment } from "../actions";
 
 type Props = {
@@ -8,6 +10,8 @@ type Props = {
   deleteLabel: string;
   deletingLabel: string;
   deleteConfirm: string;
+  confirmTitle: string;
+  cancelLabel: string;
   editLabel?: string;
   onEdit?: () => void;
 };
@@ -17,9 +21,14 @@ export function PaymentRecordActions({
   deleteLabel,
   deletingLabel,
   deleteConfirm,
+  confirmTitle,
+  cancelLabel,
   editLabel,
   onEdit,
 }: Props) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
   if (paymentIds.length === 0) return null;
 
   return (
@@ -34,19 +43,31 @@ export function PaymentRecordActions({
           {editLabel}
         </button>
       ) : null}
-      <form
-        action={deleteAdminPayment}
-        style={{ margin: 0, flex: "1 1 auto", minWidth: 0 }}
-        onSubmit={(e) => {
-          if (!window.confirm(deleteConfirm)) e.preventDefault();
-        }}
-      >
+      <form ref={formRef} action={deleteAdminPayment} style={{ margin: 0, flex: "1 1 auto", minWidth: 0 }}>
         <FormLoadingModal message={deletingLabel} />
         <input type="hidden" name="paymentIds" value={paymentIds.join(",")} />
-        <button type="submit" className="btn" style={{ fontSize: 13, padding: "6px 14px", width: "100%" }}>
+        <button
+          type="button"
+          className="btn"
+          style={{ fontSize: 13, padding: "6px 14px", width: "100%" }}
+          onClick={() => setConfirmOpen(true)}
+        >
           {deleteLabel}
         </button>
       </form>
+      <ConfirmModal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          formRef.current?.requestSubmit();
+        }}
+        title={confirmTitle}
+        message={deleteConfirm}
+        confirmLabel={deleteLabel}
+        cancelLabel={cancelLabel}
+        variant="danger"
+      />
     </div>
   );
 }

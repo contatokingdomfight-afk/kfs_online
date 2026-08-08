@@ -127,12 +127,16 @@ type Labels = {
   voidLateTuitionHint: string;
   onboardingBundleLabel: string;
   familyTuitionLabel: string;
+  coveredBadge: string;
+  coveredByFamilyNote: string;
   editPaymentTitle: string;
   editPaymentAction: string;
   editPaymentSubmit: string;
   editPaymentStatus: string;
   deletePaymentConfirm: string;
   deletePaymentBundleConfirm: string;
+  deletePaymentTitle: string;
+  cancelLabel: string;
   deletingPaymentLabel: string;
   paymentErrorFromUrl?: string | null;
 };
@@ -440,9 +444,11 @@ export function FinanceiroModals({
                         ? `Seguro ${row.referenceYear ?? "—"}`
                         : row.paymentType === "ENROLLMENT"
                           ? "Matrícula"
-                          : row.familyGroupId
-                            ? labels.familyTuitionLabel
-                            : (row.referenceMonth ?? "—");
+                          : row.coveredByFamily
+                            ? (row.referenceMonth ?? "—")
+                            : row.familyGroupId
+                              ? labels.familyTuitionLabel
+                              : (row.referenceMonth ?? "—");
                     return (
                     <li key={row.id} className="card" style={{ padding: 12 }}>
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -452,19 +458,31 @@ export function FinanceiroModals({
                             fontSize: 12,
                             padding: "2px 8px",
                             borderRadius: "var(--radius-md)",
-                            backgroundColor: row.status === "PAID" ? "var(--success)" : "var(--danger)",
-                            color: "#fff",
+                            backgroundColor: row.coveredByFamily
+                              ? "var(--bg-secondary)"
+                              : row.status === "PAID"
+                                ? "var(--success)"
+                                : "var(--danger)",
+                            color: row.coveredByFamily ? "var(--text-secondary)" : "#fff",
+                            border: row.coveredByFamily ? "1px solid var(--border)" : undefined,
                           }}
                         >
-                          {row.status === "PAID" ? labels.statusPaid : labels.statusLate}
+                          {row.coveredByFamily
+                            ? labels.coveredBadge
+                            : row.status === "PAID"
+                              ? labels.statusPaid
+                              : labels.statusLate}
                         </span>
                       </div>
                       <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
                         {paymentTypeLabelPt(row.paymentType)} · {periodLabel} · {row.amount.toFixed(2)} €
+                        {row.coveredByFamily ? ` · ${labels.coveredByFamilyNote}` : ""}
                       </p>
-                      <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
-                        Total pago pelo aluno: {(totalPaidByStudent.get(row.studentId) ?? 0).toFixed(2)} €
-                      </p>
+                      {!row.coveredByFamily && (
+                        <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+                          Total pago pelo aluno: {(totalPaidByStudent.get(row.studentId) ?? 0).toFixed(2)} €
+                        </p>
+                      )}
                       {row.status === "LATE" && (
                         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                           <RegisterPendingPaymentModal
@@ -487,14 +505,18 @@ export function FinanceiroModals({
                           ) : null}
                         </div>
                       )}
-                      <PaymentRecordActions
-                        paymentIds={[row.id]}
-                        deleteLabel={labels.deleteLabel}
-                        deletingLabel={labels.deletingPaymentLabel}
-                        deleteConfirm={labels.deletePaymentConfirm}
-                        editLabel={labels.editPaymentAction}
-                        onEdit={() => setEditingPaymentId(row.id)}
-                      />
+                      {!row.coveredByFamily && (
+                        <PaymentRecordActions
+                          paymentIds={[row.id]}
+                          deleteLabel={labels.deleteLabel}
+                          deletingLabel={labels.deletingPaymentLabel}
+                          deleteConfirm={labels.deletePaymentConfirm}
+                          confirmTitle={labels.deletePaymentTitle}
+                          cancelLabel={labels.cancelLabel}
+                          editLabel={labels.editPaymentAction}
+                          onEdit={() => setEditingPaymentId(row.id)}
+                        />
+                      )}
                     </li>
                     );
                   })}

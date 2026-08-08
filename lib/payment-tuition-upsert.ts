@@ -83,9 +83,14 @@ export async function upsertTuitionPayment(
         const { error: delErr } = await supabase.from("Payment").delete().in("id", toDelete);
         if (delErr) return { error: delErr.message };
       }
+      const updatePayload: Record<string, unknown> = { amount, status: "LATE", paymentType: "TUITION" };
+      // Propaga o grupo família quando fornecido. Sem isto, um backfill/reavaliação sobre uma
+      // mensalidade LATE já existente deixava a combinada do titular sem familyGroupId e a UI
+      // não a reconhecia como mensalidade de família. (undefined = não mexer no valor atual.)
+      if (familyGroupId !== undefined) updatePayload.familyGroupId = familyGroupId;
       const { error: upErr } = await supabase
         .from("Payment")
-        .update({ amount, status: "LATE", paymentType: "TUITION" })
+        .update(updatePayload)
         .eq("id", keepId);
       if (upErr) return { error: upErr.message };
     }

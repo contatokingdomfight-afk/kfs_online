@@ -97,23 +97,36 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
   const familyGroupIds = [...new Set(list.map((p) => (p as { familyGroupId?: string | null }).familyGroupId).filter(Boolean))] as string[];
   const allPaymentStudentIds = [...new Set(list.map((p) => p.studentId))];
 
-  const [{ data: familyMemberRows }, { data: familyGroupsData }, { data: students }] = await Promise.all([
+  const [{ data: familyMemberRows }, { data: familyGroupsData }] = await Promise.all([
     familyGroupIds.length
-      ? supabase.from("FamilyGroupMember").select("familyGroupId").in("familyGroupId", familyGroupIds)
-      : Promise.resolve({ data: [] as { familyGroupId: string }[] }),
+      ? supabase.from("FamilyGroupMember").select("familyGroupId, studentId, role").in("familyGroupId", familyGroupIds)
+      : Promise.resolve({ data: [] as { familyGroupId: string; studentId: string; role: string }[] }),
     familyGroupIds.length
       ? supabase.from("FamilyGroup").select("id, discountPercent").in("id", familyGroupIds)
       : Promise.resolve({ data: [] as { id: string; discountPercent: number }[] }),
-    allPaymentStudentIds.length > 0
-      ? supabase.from("Student").select("id, userId").in("id", allPaymentStudentIds)
-      : Promise.resolve({ data: [] as { id: string; userId: string }[] }),
   ]);
 
-  const familyMemberCountByGroup = new Map<string, number>();
+  // Membros por grupo: para gerar linhas «coberto pela família» e contar membros.
+  const membersByGroup = new Map<string, { studentId: string; role: string }[]>();
   for (const r of familyMemberRows ?? []) {
     const gid = (r as { familyGroupId: string }).familyGroupId;
-    familyMemberCountByGroup.set(gid, (familyMemberCountByGroup.get(gid) ?? 0) + 1);
+    const arr = membersByGroup.get(gid) ?? [];
+    arr.push({
+      studentId: (r as { studentId: string }).studentId,
+      role: String((r as { role?: string }).role ?? "MEMBER"),
+    });
+    membersByGroup.set(gid, arr);
   }
+  const familyMemberCountByGroup = new Map<string, number>();
+  for (const [gid, arr] of membersByGroup) familyMemberCountByGroup.set(gid, arr.length);
+
+  // Alunos: os dos pagamentos + os membros dos grupos (estes podem não ter Payment próprio).
+  const memberStudentIds = (familyMemberRows ?? []).map((r) => (r as { studentId: string }).studentId);
+  const allStudentIds = [...new Set([...allPaymentStudentIds, ...memberStudentIds])];
+  const { data: students } =
+    allStudentIds.length > 0
+      ? await supabase.from("Student").select("id, userId").in("id", allStudentIds)
+      : { data: [] as { id: string; userId: string }[] };
   const discountByGroup = new Map(
     (familyGroupsData ?? []).map((g) => [g.id, Number((g as { discountPercent?: number }).discountPercent ?? 0)])
   );
@@ -166,6 +179,34 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       ? String(list.find((x) => x.id === p.id)!.createdAt).slice(0, 10)
       : "",
   }));
+
+  // Linhas derivadas (não são registos reais): cada membro do plano família aparece a 0€
+  // «coberto», logo a seguir à mensalidade combinada do titular, para dar visibilidade.
+  const paymentRowsWithCovered: PaymentListRow[] = [];
+  for (const row of paymentRows) {
+    paymentRowsWithCovered.push(row);
+    if (row.paymentType !== "TUITION" || !row.familyGroupId) continue;
+    const members = membersByGroup.get(row.familyGroupId) ?? [];
+    for (const m of members) {
+      if (m.role === "TITULAR" || m.studentId === row.studentId) continue;
+      const u = studentToUser.get(m.studentId);
+      paymentRowsWithCovered.push({
+        id: `covered-${m.studentId}-${row.referenceMonth ?? "m"}`,
+        studentId: m.studentId,
+        displayName: u?.name || u?.email || "—",
+        status: "COVERED",
+        referenceMonth: row.referenceMonth,
+        referenceYear: null,
+        paymentType: "TUITION",
+        amount: 0,
+        paymentMethod: null,
+        familyGroupId: row.familyGroupId,
+        familyMemberCount: null,
+        familyDiscountPercent: null,
+        coveredByFamily: true,
+      });
+    }
+  }
 
   const refMonthForLabel = referenceMonth;
   const periodLabel = new Date(refMonthForLabel + "-15T12:00:00Z").toLocaleDateString(
@@ -400,7 +441,7 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       <FinanceiroModals
         referenceMonth={referenceMonth}
         renewalsPending={renewalsPending}
-        paymentRows={paymentRows}
+        paymentRows={paymentRowsWithCovered}
         expenses={overview.allExpenses}
         expensesError={overview.expensesError}
         expenseErrorFromUrl={expenseError ?? null}
@@ -501,12 +542,16 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
           voidLateTuitionHint: t("adminFinanceVoidLateTuitionHint"),
           onboardingBundleLabel: t("adminFinanceOnboardingBundleLabel"),
           familyTuitionLabel: t("adminFinanceFamilyTuitionLabel"),
+          coveredBadge: t("adminFinanceCoveredBadge"),
+          coveredByFamilyNote: t("adminFinanceCoveredByFamilyNote"),
           editPaymentTitle: t("adminFinanceEditPaymentTitle"),
           editPaymentAction: t("adminFinanceEditPaymentAction"),
           editPaymentSubmit: t("adminFinanceEditPaymentSubmit"),
           editPaymentStatus: t("adminFinanceEditPaymentStatus"),
           deletePaymentConfirm: t("adminFinanceDeletePaymentConfirm"),
           deletePaymentBundleConfirm: t("adminFinanceDeletePaymentBundleConfirm"),
+          deletePaymentTitle: t("adminFinanceDeletePaymentTitle"),
+          cancelLabel: t("cancel"),
           deletingPaymentLabel: t("adminFinanceDeletingPayment"),
           paymentErrorFromUrl: paymentError ?? null,
         }}
