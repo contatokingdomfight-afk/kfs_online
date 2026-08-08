@@ -55,7 +55,7 @@ export function InsuranceSettingsForm({
       </div>
       <div>
         <label htmlFor="policyReference" style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-          Referência da apólice colectiva (opcional)
+          Referência da apólice (opcional)
         </label>
         <input
           id="policyReference"

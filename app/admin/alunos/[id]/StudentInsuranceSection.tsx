@@ -203,7 +203,7 @@ export function StudentInsuranceSection({
         <input type="hidden" name="studentId" value={studentId} />
         <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
           <input type="checkbox" name="covered" defaultChecked={coverage?.covered ?? false} />
-          Coberto pelo seguro colectivo
+          Coberto pelo seguro (individual)
         </label>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
           <div>

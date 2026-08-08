@@ -230,7 +230,7 @@ export function ComprovativoForm({ prefill }: Props) {
             </span>
           </label>
           <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
-            Desmarca só se já tiveres seguro desportivo próprio ou cobertura coletiva combinada com a escola.
+            O seguro é individual. Desmarca só se já tiveres seguro desportivo próprio válido.
           </p>
         </section>
       ) : null}

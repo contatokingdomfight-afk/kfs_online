@@ -274,10 +274,11 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 
-## Seguro colectivo anual, matrícula e primeiro pagamento
+## Seguro individual anual, matrícula e primeiro pagamento
 
 **Documentação completa:** [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md).
 
+- **Seguro é individual (ago. 2026):** não existe seguro colectivo — cada pessoa tem o seu próprio seguro (`Payment INSURANCE` + `StudentInsuranceCoverage`), incluindo **cada membro** do plano família (e de qualquer outro plano). No plano família só a **mensalidade** é combinada no titular; **matrícula e seguro são individuais por membro** (`ensureOnboardingPendingPayments`, `createFirstPaymentBundle`, `renewStudentInsuranceCoverage` — todos por `studentId`).
 - **Tipos `Payment`:** `TUITION` (`referenceMonth`), `INSURANCE` (`referenceYear`), `ENROLLMENT` (taxa única, sem mês).
 - **Migrações (jun. 2026):** `20260630120000_*` (seguro/waiver), `20260630140000_*` + `20260630140100_*` (matrícula), `20260630150000_payment_reference_month_nullable.sql` (fix NOT NULL no 1.º pagamento).
 - **Config:** Admin → Configurações — `annualAmount`, `enrollmentAmount` (`lib/insurance-settings.ts`).
@@ -287,7 +288,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Aviso «inscrição pendente»** (`hasPendingOnboardingPayments`): só quando há matrícula/seguro `LATE`, ou ainda **sem nenhum** `PAID` com mensalidade `LATE` — mensalidades `LATE` após o 1.º pagamento não disparam o aviso.
 - **KPI receita (mês):** mensalidades `PAID` do `referenceMonth` + matrícula/seguro `PAID` com `createdAt` no mês (`lib/admin-finance-overview.ts`); tooltip com breakdown na visão geral.
 - **Prazos mensalidade:** pagamento até **dia 8** do mês; regularização até **5 dias úteis** após o dia 8 (`lib/lisbon-payment-dates.ts`, `paymentGraceEndsAt`). Ver [`PAGAMENTOS_MENSALIDADES_CRON.md`](PAGAMENTOS_MENSALIDADES_CRON.md).
-- **Waiver:** `/waiver-signing` (antes do plano); check-in bloqueado sem cobertura válida; cron `insurance-expiry-check` (segundas 08:00 UTC).
+- **Waiver:** `/waiver-signing` (antes do plano). **Seguro opcional (ago. 2026):** o acesso à plataforma e o **check-in** dependem só do plano/mensalidade em dia — a cobertura de seguro **não bloqueia** nada (foi removido `blocksCheckInForInsurance`); o cron `insurance-expiry-check` (segundas 08:00 UTC) apenas alerta o admin por email.
 
 ## Adesão e contrato de sócio (jul. 2026)
 
@@ -317,6 +318,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Admin: `/admin/familias` — **só a secretaria** cria grupo ou atribui `plan-familia` (grupo + titular automáticos); adiciona membros manualmente.
 - Dashboard aluno: banner plano família (`FamilyPlanBanner`, `getFamilyStudentBanner`).
 - Mensalidade **combinada no titular** = soma dos planos de referência de cada membro − desconto % do grupo (`computeFamilyGroupMonthlyTuition`, `lib/family-tuition.ts`; fallback **80 €/pessoa** = `KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON` quando o membro não tem plano de referência). Os membros **não** têm `TUITION` própria (só matrícula/seguro, individuais — `ensureOnboardingPendingPayments` salta a mensalidade para não-titulares); acesso com PAID individual (`lib/family-payment-gate.ts`).
+- **Perfil do aluno (`/admin/alunos/[id]`) — evitar «€80» enganador (ago. 2026):** no dropdown de plano, o plano família aparece como «Kingdom Família (gestão por grupo)» em vez de «€80/mês» (80€ é só o fallback de catálogo `KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON`, **não** a quota real). O card de família mostra a **quota individual real** (membro: plano de referência − desconto, ex.: Kingdom Fighter 55€ −10% = 49,50€, cobrada no titular) ou a **mensalidade combinada** (titular). Calculado com `computeFamilyGroupMonthlyTuition`; dados na BD estão corretos (`Student.planId = plan-familia` + `FamilyGroupMember.referencePlanId`), a correção foi só de apresentação.
 - **Visibilidade dos membros no Financeiro:** na lista «Registos de pagamento», cada membro aparece numa **linha derivada a 0€** logo a seguir à mensalidade combinada do titular — gerada em `app/admin/financeiro/page.tsx` a partir de `FamilyGroupMember`, **sem criar registos** e **herdando o estado do titular**: se o titular está **`LATE`**, a linha do membro fica **«Em atraso» a 0€** com botão **«Registar pagamento»** (`RegisterFamilyMemberPaymentModal` → `registerFamilyMemberTuition`); se o titular já pagou, aparece **«Pago» a 0€** (badge verde, nota «coberta pela mensalidade da família», também no filtro «Pago»), sem ações. Saltam-se membros que já têm mensalidade real nesse mês (o registo real aparece). A mensalidade do titular tem de ter `familyGroupId` para as linhas serem geradas; `upsertTuitionPayment` propaga o `familyGroupId` também no **update** de linhas `LATE` (antes só no insert, o que deixava a combinada do titular «solta»).
 - **Registar a parte de um membro (titular paga só a dele):** `registerFamilyMemberTuition` (`app/admin/financeiro/actions.ts`) cria a mensalidade **`PAID`** do membro com o valor indicado (sugestão pré-preenchida = preço de referência do membro **já com o desconto** do grupo) e **reduz a mensalidade `LATE` combinada do titular pelo mesmo valor** (subtração simples com _clamp_ a 0) — o total da família mantém-se (ex.: titular 99€ → registar 49,50€ na filha → titular passa a 49,50€). No mês seguinte a linha derivada não é gerada (o membro já tem `Payment`); a restante parte do titular regista-se na linha combinada dele.
 - Migrações: `20260701120000_family_plan.sql`, … `20260706120000_family_plan_per_person_tuition.sql`, **`20260717193000_family_plan_no_member_cap.sql`** (remove `maxMembers`).

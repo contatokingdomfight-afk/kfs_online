@@ -90,17 +90,6 @@ function addDaysYmd(ymd: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/**
- * Bloqueia check-in quando há registo de cobertura e está inactivo/expirado.
- * Sem registo: não bloqueia (admin ainda não configurou).
- */
-export function blocksCheckInForInsurance(row: InsuranceCoverageRow | null | undefined, todayYmd: string): boolean {
-  if (!row) return false;
-  if (!row.covered) return true;
-  if (!row.coverageEndDate) return true;
-  return row.coverageEndDate < todayYmd;
-}
-
 export const INSURANCE_STATUS_LABEL: Record<InsuranceCoverageStatus, string> = {
   covered: "Coberto",
   expiring: "A expirar",

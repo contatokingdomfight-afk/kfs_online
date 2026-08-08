@@ -244,7 +244,7 @@ Ver [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md).
 |----------|-----|
 | `InsuranceSettings` | Valores globais: `annualAmount`, `enrollmentAmount`, `policyReference`, `waiverVersion` |
 | `StudentWaiver` | Termo de responsabilidade assinado (`waiverSigned`, `signatureName`, …) |
-| `StudentInsuranceCoverage` | Cobertura anual do seguro colectivo (`covered`, `coverageStartDate`, `coverageEndDate`) |
+| `StudentInsuranceCoverage` | Cobertura anual do seguro individual, por aluno (`covered`, `coverageStartDate`, `coverageEndDate`) |
 
 `Student.enrollmentFeeWaived` — matrícula isenta no 1.º pagamento.
 

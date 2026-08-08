@@ -11,7 +11,7 @@ Documentação operacional e técnica (junho 2026), alinhada ao código em `lib/
 | Tipo | Referência | `referenceMonth` | `referenceYear` | Notas |
 |------|------------|------------------|-----------------|-------|
 | `TUITION` | Mensalidade | `YYYY-MM` (obrigatório) | — | Crons e Stripe; índice único por aluno+mês |
-| `INSURANCE` | Seguro anual colectivo | `NULL` | `YYYY` (obrigatório) | Um registo por aluno/ano civil |
+| `INSURANCE` | Seguro anual (individual) | `NULL` | `YYYY` (obrigatório) | Um registo por aluno/ano civil — o seguro é sempre individual, mesmo no plano família |
 | `ENROLLMENT` | Matrícula (taxa única) | `NULL` | — | Um registo por aluno (índice parcial) |
 
 **Migração crítica:** `20260630150000_payment_reference_month_nullable.sql` — `referenceMonth` deixa de ser `NOT NULL` na BD; sem isto, o primeiro pagamento falha ao gravar seguro/matrícula (`null value in column "referenceMonth"`).
@@ -26,9 +26,9 @@ Tabela `InsuranceSettings` (`id = 'global'`), editável em `/admin/configuracoes
 
 | Campo | Uso |
 |-------|-----|
-| `annualAmount` | Valor anual do seguro colectivo |
+| `annualAmount` | Valor anual do seguro (individual, cobrado por aluno) |
 | `enrollmentAmount` | Taxa de matrícula única na inscrição |
-| `policyReference` | Referência da apólice global |
+| `policyReference` | Referência da apólice (opcional) |
 | `waiverVersion` | Versão do texto do termo de responsabilidade |
 
 Código: `lib/insurance-settings.ts`.
@@ -112,7 +112,7 @@ Contas existentes na migração inicial recebem waiver `legacy` (não bloqueadas
 
 ### Check-in
 
-`lib/perform-check-in.ts` bloqueia se existir cobertura registada e estiver expirada/inactiva.
+**Seguro opcional (ago. 2026):** o check-in **não** depende do seguro — só do plano/mensalidade em dia. O bloqueio por cobertura expirada/inactiva foi **removido** (`lib/perform-check-in.ts`); o seguro fica informativo + alerta ao admin.
 
 ### Cron
 
@@ -167,7 +167,7 @@ Ver [`STRIPE_KINGDOM_ONLINE.md`](STRIPE_KINGDOM_ONLINE.md).
 2. Aluno novo: registo → waiver → `/escolher-plano` → confirmar modal → ver financeiro bloqueado.
 3. Admin → Primeiro pagamento: seleccionar aluno, confirmar total (mensalidade + matrícula + seguro).
 4. Aluno: refresh — acesso completo ao dashboard; seguro visível no perfil admin.
-5. Check-in com cobertura válida — permitido; expirada — bloqueado.
+5. Check-in — permitido desde que o plano/mensalidade esteja em dia (o estado do seguro **não** bloqueia).
 
 ---
 

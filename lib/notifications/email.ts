@@ -304,7 +304,7 @@ export async function sendInsuranceExpiryAlertToAdmin(lines: string[]): Promise<
     const resend = new Resend(apiKey);
     const listHtml = lines.map((l) => `<li style="margin:0 0 8px;">${l.replace(/</g, "&lt;")}</li>`).join("");
     const inner = `
-      <p style="margin:0 0 16px;">Seguros colectivos que precisam de renovação:</p>
+      <p style="margin:0 0 16px;">Seguros individuais que precisam de renovação:</p>
       <ul style="margin:0;padding-left:20px;">${listHtml}</ul>
       <p style="margin:16px 0 0;font-size:14px;color:#71717a;">Renova em Admin → Alunos → perfil do aluno → Seguro.</p>
     `.trim();

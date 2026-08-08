@@ -27,8 +27,12 @@ import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { getFamilyContext } from "@/lib/family-group";
+import { computeFamilyGroupMonthlyTuition, type FamilyPricingBreakdown } from "@/lib/family-tuition";
+import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
 
 const GENERAL_LAST_N = 10;
+
+const formatEur = (n: number) => `€${n.toFixed(2).replace(".", ",")}`;
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
@@ -113,6 +117,16 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
 
   const familyCtx = await getFamilyContext(supabase, studentId);
+  let familyPricing: FamilyPricingBreakdown | null = null;
+  if (familyCtx) {
+    const pricing = await computeFamilyGroupMonthlyTuition(supabase, familyCtx.group.id);
+    if (!("error" in pricing)) familyPricing = pricing;
+  }
+  const myFamilyShare = familyPricing?.members.find((m) => m.studentId === studentId) ?? null;
+  const familyDiscountPct = familyPricing?.discountPercent ?? 0;
+  const myShareBase = myFamilyShare?.referencePrice ?? null;
+  const myShareFinal =
+    myShareBase != null ? Math.round(myShareBase * (1 - familyDiscountPct / 100) * 100) / 100 : null;
 
   const { data: studentProfile } = await supabase
     .from("StudentProfile")
@@ -152,10 +166,15 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     return Number(a.priceMonthly) - Number(b.priceMonthly);
   });
 
-  const planOptions = planRows.map((p) => ({
-    id: p.id,
-    label: `${p.name} (€${Number(p.priceMonthly).toFixed(0)}/mês) — ${schoolNameById.get(p.schoolId ?? "") ?? "Escola?"}`,
-  }));
+  const planOptions = planRows.map((p) => {
+    const schoolLabel = schoolNameById.get(p.schoolId ?? "") ?? "Escola?";
+    // O plano família não tem mensalidade fixa por pessoa: o valor é a soma das quotas
+    // de referência dos membros (com desconto), cobrada no titular. Evitamos afirmar «€80/mês».
+    const label = isFamilyPlan(p.id, p.name)
+      ? `${p.name} (gestão por grupo) — ${schoolLabel}`
+      : `${p.name} (€${Number(p.priceMonthly).toFixed(0)}/mês) — ${schoolLabel}`;
+    return { id: p.id, label };
+  });
   const { data: modalityRows } = await supabase
     .from("ModalityRef")
     .select("code, name")
@@ -278,7 +297,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
         </div>
       ) : null}
       {familyCtx ? (
-        <div style={{ marginTop: 8, marginBottom: 4 }}>
+        <div style={{ marginTop: 8, marginBottom: 4, display: "flex", flexDirection: "column", gap: 6 }}>
           <Link
             href={`/admin/familias/${familyCtx.group.id}`}
             className="card"
@@ -300,6 +319,40 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
               {familyCtx.memberCount === 1 ? "membro" : "membros"}
             </span>
           </Link>
+          {familyPricing ? (
+            <p style={{ margin: 0, fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+              {familyCtx.isTitular ? (
+                <>
+                  Mensalidade combinada da família:{" "}
+                  <strong style={{ color: "var(--text-primary)" }}>
+                    {formatEur(familyPricing.finalMonthlyAmount)}/mês
+                  </strong>{" "}
+                  (base {formatEur(familyPricing.baseTotal)}
+                  {familyPricing.discountPercent > 0 ? ` −${familyPricing.discountPercent}%` : ""}). Cobrada
+                  apenas no titular; os membros não têm mensalidade própria.
+                </>
+              ) : myFamilyShare?.usedFallback || myShareBase == null ? (
+                <>
+                  Quota individual <strong style={{ color: "var(--text-primary)" }}>por definir</strong> —
+                  falta o plano de referência deste membro (a usar {formatEur(myShareBase ?? 80)} como
+                  fallback). A mensalidade é cobrada no titular.
+                </>
+              ) : (
+                <>
+                  Quota individual:{" "}
+                  <strong style={{ color: "var(--text-primary)" }}>
+                    {myFamilyShare?.referencePlanName ? `${myFamilyShare.referencePlanName} — ` : ""}
+                    {formatEur(myShareBase)}
+                  </strong>
+                  {familyDiscountPct > 0 && myShareFinal != null
+                    ? ` · −${familyDiscountPct}% = ${formatEur(myShareFinal)}/mês`
+                    : "/mês"}
+                  . A mensalidade é cobrada no titular; o preço do catálogo do plano família não se
+                  aplica por pessoa.
+                </>
+              )}
+            </p>
+          ) : null}
         </div>
       ) : null}
       <div

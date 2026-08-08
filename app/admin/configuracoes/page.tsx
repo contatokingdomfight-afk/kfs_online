@@ -73,10 +73,10 @@ export default async function AdminConfiguracoesPage() {
 
       <section className="card" style={{ padding: "clamp(20px, 5vw, 24px)", marginTop: 24 }}>
         <h2 style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Seguro colectivo (anual)
+          Seguro individual (anual)
         </h2>
         <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-          Valores globais de seguro anual e matrícula (inscrição). Usados no primeiro pagamento e renovações de seguro.
+          Valor anual do seguro (individual, por aluno) e da matrícula (inscrição). Aplicados a cada pessoa no primeiro pagamento e nas renovações de seguro.
         </p>
         <InsuranceSettingsForm
           initialAnnualAmount={insuranceSettings.annualAmount}
