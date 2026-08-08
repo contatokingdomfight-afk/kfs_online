@@ -71,7 +71,6 @@ export async function createPayment(
   if (!studentId) return { error: "Aluno é obrigatório." };
   const amount = parseDecimalAmount(amountStr);
   if (amount === null || amount < 0) return { error: "Valor inválido." };
-  if (status === "PAID" && amount === 0) return { error: "Indica o valor pago (ex.: 55,00)." };
   if (!referenceMonth || !/^\d{4}-\d{2}$/.test(referenceMonth)) return { error: "Mês de referência deve ser AAAA-MM." };
   if (status !== "PAID" && status !== "LATE") return { error: "Status inválido." };
   const tuitionMonths = parseInt(tuitionMonthsStr, 10);
@@ -378,7 +377,7 @@ export async function markPendingPaymentPaid(
   const amountStr = (formData.get("amount") as string)?.trim();
   if (!paymentId) return { error: "Pagamento inválido." };
   const amount = parseDecimalAmount(amountStr);
-  if (amount === null || amount <= 0) return { error: "Indica o valor pago." };
+  if (amount === null || amount < 0) return { error: "Indica o valor pago (pode ser 0 em promoções/isenções)." };
   const parsedMethod = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
   if ("error" in parsedMethod) return { error: parsedMethod.error };
 
@@ -441,7 +440,6 @@ export async function updateAdminPayment(
   const amount = parseDecimalAmount(amountStr);
   if (amount === null || amount < 0) return { error: "Valor inválido." };
   if (status !== "PAID" && status !== "LATE") return { error: "Estado inválido." };
-  if (status === "PAID" && amount === 0) return { error: "Indica o valor pago." };
 
   let paymentMethod: import("@/lib/finance-payment-method").FinancePaymentMethod | null = null;
   if (status === "PAID") {

@@ -109,12 +109,15 @@ export function RegisterPendingPaymentModal({
                   <input
                     name="amount"
                     type="number"
-                    min="0.01"
+                    min="0"
                     step="0.01"
                     defaultValue={amount.toFixed(2)}
                     required
                     className="input mobile-form-field-scroll"
                   />
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                    Podes colocar 0 em mensalidades promocionais ou isenções.
+                  </span>
                 </label>
                 {familyDiscountPercent != null && familyDiscountPercent > 0 && (
                   <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>
