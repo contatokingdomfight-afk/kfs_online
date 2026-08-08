@@ -3,7 +3,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { groupPendingPaymentRows, type PaymentListRow } from "@/lib/admin-payment-list-grouping";
+import { paymentTypeLabelPt } from "@/lib/admin-payment-list-grouping";
 
 const LOW_ATTENDANCE_THRESHOLD = 3;
 
@@ -13,7 +13,10 @@ export type PendingPayment = {
   studentName: string;
   amount: number;
   referenceMonth: string;
-  isOnboardingBundle: boolean;
+  referenceYear: string;
+  paymentType: string;
+  paymentTypeLabel: string;
+  familyDiscountPercent: number | null;
 };
 
 export type PendingTrial = {
@@ -80,25 +83,42 @@ export async function getActionItemsData(
     studentMap = new Map((students ?? []).map((s) => [s.id, studentToUser.get(s.id) ?? "—"]));
   }
 
-  const paymentRows: PaymentListRow[] = paymentList.map((p) => ({
-    id: p.id,
-    studentId: p.studentId,
-    displayName: studentMap.get(p.studentId) ?? "—",
-    status: "LATE",
-    referenceMonth: (p.referenceMonth as string | null) ?? null,
-    referenceYear: ((p as { referenceYear?: string | null }).referenceYear as string | null) ?? null,
-    paymentType: String((p as { paymentType?: string }).paymentType ?? "TUITION"),
-    amount: Number(p.amount),
-  }));
+  // Desconto de família: só relevante para a mensalidade combinada do titular.
+  const { data: titularRows } = payStudentIds.length
+    ? await supabase
+        .from("FamilyGroupMember")
+        .select("studentId, familyGroupId")
+        .eq("role", "TITULAR")
+        .in("studentId", payStudentIds)
+    : { data: [] as { studentId: string; familyGroupId: string }[] };
+  const familyGroupIdByStudent = new Map(
+    (titularRows ?? []).map((r) => [r.studentId, (r as { familyGroupId: string }).familyGroupId])
+  );
+  const familyGroupIds = [...new Set(familyGroupIdByStudent.values())];
+  const { data: familyGroups } = familyGroupIds.length
+    ? await supabase.from("FamilyGroup").select("id, discountPercent").in("id", familyGroupIds)
+    : { data: [] as { id: string; discountPercent: number }[] };
+  const discountByGroup = new Map(
+    (familyGroups ?? []).map((g) => [g.id, Number((g as { discountPercent?: number }).discountPercent ?? 0)])
+  );
 
-  const filteredPayments: PendingPayment[] = groupPendingPaymentRows(paymentRows).map((p) => ({
-    id: p.id,
-    studentId: p.studentId,
-    studentName: p.displayName,
-    amount: p.amount,
-    referenceMonth: p.referenceMonth,
-    isOnboardingBundle: p.isOnboardingBundle,
-  }));
+  const filteredPayments: PendingPayment[] = paymentList.map((p) => {
+    const paymentType = String((p as { paymentType?: string }).paymentType ?? "TUITION");
+    const groupId = familyGroupIdByStudent.get(p.studentId);
+    const familyDiscountPercent =
+      paymentType === "TUITION" && groupId ? discountByGroup.get(groupId) ?? null : null;
+    return {
+      id: p.id,
+      studentId: p.studentId,
+      studentName: studentMap.get(p.studentId) ?? "—",
+      amount: Number(p.amount),
+      referenceMonth: (p.referenceMonth as string | null) ?? "",
+      referenceYear: ((p as { referenceYear?: string | null }).referenceYear as string | null) ?? "",
+      paymentType,
+      paymentTypeLabel: paymentTypeLabelPt(paymentType),
+      familyDiscountPercent,
+    };
+  });
 
   // Aulas experimentais pendentes (não convertidas, não aceites)
   const { data: trialsRaw } = await supabase

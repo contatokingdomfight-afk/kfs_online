@@ -7,6 +7,13 @@ import type { PendingPayment, PendingTrial, LowAttendanceLesson } from "@/lib/ad
 import { AcceptTrialButton } from "../experimentais/AcceptTrialButton";
 import { ConvertTrialButton } from "../experimentais/ConvertTrialButton";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
+import { RegisterPendingPaymentModal } from "../financeiro/_components/RegisterPendingPaymentModal";
+
+function pendingPaymentPeriodLabel(p: PendingPayment): string {
+  if (p.paymentType === "ENROLLMENT") return "Matrícula";
+  if (p.paymentType === "INSURANCE") return p.referenceYear ? `Seguro ${p.referenceYear}` : "Seguro";
+  return p.referenceMonth || "—";
+}
 
 const overlayStyle: React.CSSProperties = {
   position: "fixed",
@@ -110,21 +117,19 @@ export function ActionItems({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{p.studentName}</span>
                   <span style={{ marginLeft: 8, color: "var(--text-secondary)", fontSize: "clamp(13px, 3.2vw, 15px)" }}>
-                    {Number(p.amount).toFixed(2)} €
-                    {p.isOnboardingBundle ? " · 1.º pagamento" : p.referenceMonth ? ` · ${p.referenceMonth}` : ""}
+                    {p.paymentTypeLabel} · {Number(p.amount).toFixed(2)} € · {pendingPaymentPeriodLabel(p)}
                   </span>
                 </div>
-                <Link
-                  href={
-                    p.isOnboardingBundle
-                      ? `/admin/financeiro/primeiro-pagamento?studentId=${encodeURIComponent(p.studentId)}${p.referenceMonth ? `&referenceMonth=${encodeURIComponent(p.referenceMonth)}` : ""}`
-                      : `/admin/financeiro/novo?studentId=${p.studentId}&referenceMonth=${p.referenceMonth}&amount=${p.amount}`
-                  }
-                  className="btn btn-primary"
-                  style={{ fontSize: "clamp(13px, 3.2vw, 15px)", textDecoration: "none", padding: "8px 14px" }}
-                >
-                  {labels.managePayment}
-                </Link>
+                <RegisterPendingPaymentModal
+                  paymentId={p.id}
+                  studentName={p.studentName}
+                  paymentTypeLabel={p.paymentTypeLabel}
+                  periodLabel={pendingPaymentPeriodLabel(p)}
+                  amount={p.amount}
+                  familyDiscountPercent={p.familyDiscountPercent}
+                  buttonLabel={labels.managePayment}
+                  buttonClassName="btn btn-primary"
+                />
               </div>
             ))
           )}

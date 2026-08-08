@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { RenewalsSection } from "../RenewalsSection";
@@ -19,12 +18,8 @@ import { VoidLateTuitionForm } from "@/components/admin/VoidLateTuitionForm";
 import type { RenewalPending } from "@/lib/renewals";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
 import type { CashDepositRow } from "@/lib/cash-balance";
-import {
-  groupPaymentListRows,
-  isOnboardingBundleRow,
-  type PaymentListDisplayRow,
-  type PaymentListRow,
-} from "@/lib/admin-payment-list-grouping";
+import { paymentTypeLabelPt, type PaymentListRow } from "@/lib/admin-payment-list-grouping";
+import { RegisterPendingPaymentModal } from "./RegisterPendingPaymentModal";
 
 const overlayStyle: React.CSSProperties = {
   position: "fixed",
@@ -318,10 +313,7 @@ export function FinanceiroModals({
     };
   }, [open, editingExpenseId, editingPaymentId, closeModal, closeEditExpense, closeEditPayment]);
 
-  const displayPaymentRows = useMemo(
-    () => groupPaymentListRows(allPaymentRows),
-    [allPaymentRows]
-  );
+  const displayPaymentRows = allPaymentRows;
 
   const filteredPayments = useMemo(() => {
     if (filterStatus === "all") return displayPaymentRows;
@@ -442,71 +434,7 @@ export function FinanceiroModals({
                     gap: 8,
                   }}
                 >
-                  {filteredPayments.map((p) => {
-                    if (isOnboardingBundleRow(p)) {
-                      const registerHref = `/admin/financeiro/primeiro-pagamento?studentId=${encodeURIComponent(p.studentId)}${p.referenceMonth ? `&referenceMonth=${encodeURIComponent(p.referenceMonth)}` : ""}`;
-                      const isLate = p.status === "LATE";
-                      return (
-                        <li key={p.id} className="card" style={{ padding: 12 }}>
-                          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{p.displayName}</span>
-                            <span
-                              style={{
-                                fontSize: 12,
-                                padding: "2px 8px",
-                                borderRadius: "var(--radius-md)",
-                                backgroundColor: isLate ? "var(--danger)" : "var(--success)",
-                                color: "#fff",
-                              }}
-                            >
-                              {isLate ? labels.statusLate : labels.statusPaid}
-                            </span>
-                          </div>
-                          <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
-                            {labels.onboardingBundleLabel} · {p.amount.toFixed(2)} €
-                          </p>
-                          <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
-                            Total pago pelo aluno: {(totalPaidByStudent.get(p.studentId) ?? 0).toFixed(2)} €
-                          </p>
-                          {isLate && (
-                            <div style={{ marginTop: 10 }}>
-                              <Link
-                                href={registerHref}
-                                className="btn btn-primary"
-                                style={{
-                                  display: "inline-flex",
-                                  width: "100%",
-                                  justifyContent: "center",
-                                  textDecoration: "none",
-                                  fontSize: 14,
-                                }}
-                                onClick={closeModal}
-                              >
-                                {labels.registerPaymentCta}
-                              </Link>
-                            </div>
-                          )}
-                          <PaymentRecordActions
-                            paymentIds={p.paymentIds}
-                            deleteLabel={labels.deleteLabel}
-                            deletingLabel={labels.deletingPaymentLabel}
-                            deleteConfirm={labels.deletePaymentBundleConfirm}
-                          />
-                        </li>
-                      );
-                    }
-
-                    const row = p;
-                    const registerParams = new URLSearchParams({
-                      studentId: row.studentId,
-                      amount: row.amount.toFixed(2),
-                    });
-                    if (row.paymentType === "INSURANCE" && row.referenceYear) {
-                      registerParams.set("referenceYear", row.referenceYear);
-                    } else if (row.referenceMonth) {
-                      registerParams.set("referenceMonth", row.referenceMonth);
-                    }
-                    const registerHref = `/admin/financeiro/novo?${registerParams.toString()}`;
+                  {filteredPayments.map((row) => {
                     const periodLabel =
                       row.paymentType === "INSURANCE"
                         ? `Seguro ${row.referenceYear ?? "—"}`
@@ -532,27 +460,23 @@ export function FinanceiroModals({
                         </span>
                       </div>
                       <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
-                        {periodLabel} · {row.amount.toFixed(2)} €
+                        {paymentTypeLabelPt(row.paymentType)} · {periodLabel} · {row.amount.toFixed(2)} €
                       </p>
                       <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
                         Total pago pelo aluno: {(totalPaidByStudent.get(row.studentId) ?? 0).toFixed(2)} €
                       </p>
                       {row.status === "LATE" && (
                         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                          <Link
-                            href={registerHref}
-                            className="btn btn-primary"
-                            style={{
-                              display: "inline-flex",
-                              width: "100%",
-                              justifyContent: "center",
-                              textDecoration: "none",
-                              fontSize: 14,
-                            }}
-                            onClick={closeModal}
-                          >
-                            {labels.registerPaymentCta}
-                          </Link>
+                          <RegisterPendingPaymentModal
+                            paymentId={row.id}
+                            studentName={row.displayName}
+                            paymentTypeLabel={paymentTypeLabelPt(row.paymentType)}
+                            periodLabel={periodLabel}
+                            amount={row.amount}
+                            familyDiscountPercent={row.familyDiscountPercent}
+                            buttonLabel={labels.registerPaymentCta}
+                            buttonClassName="btn btn-primary"
+                          />
                           {row.paymentType === "TUITION" && row.referenceMonth ? (
                             <VoidLateTuitionForm
                               studentId={row.studentId}

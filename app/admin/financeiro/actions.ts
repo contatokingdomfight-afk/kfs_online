@@ -12,6 +12,7 @@ import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { upsertTuitionPayment } from "@/lib/payment-tuition-upsert";
 import { listConsecutiveReferenceMonths } from "@/lib/reference-month";
 import { createFirstPaymentBundle } from "@/lib/first-payment-bundle";
+import { renewStudentInsuranceCoverage } from "@/lib/renew-student-insurance-coverage";
 import { getFamilyContext } from "@/lib/family-group";
 import { familyGroupIdForTuition } from "@/lib/family-tuition";
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/retail/constants";
@@ -356,6 +357,72 @@ export async function deleteAdminPayment(formData: FormData) {
   revalidatePath("/admin/financeiro");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/financeiro");
+}
+
+export type MarkPendingPaymentPaidResult = { error?: string; success?: boolean };
+
+/**
+ * Regista o pagamento de UM registo «Em atraso» já existente (mensalidade, matrícula
+ * ou seguro) — usado no modal rápido de «Registar pagamento» da lista de pendentes.
+ * Aplica o efeito correto por tipo: mensalidade repõe carência/estado; matrícula
+ * limpa a isenção; seguro renova a cobertura.
+ */
+export async function markPendingPaymentPaid(
+  _prev: MarkPendingPaymentPaidResult | null,
+  formData: FormData
+): Promise<MarkPendingPaymentPaidResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const paymentId = (formData.get("paymentId") as string)?.trim();
+  const amountStr = (formData.get("amount") as string)?.trim();
+  if (!paymentId) return { error: "Pagamento inválido." };
+  const amount = parseDecimalAmount(amountStr);
+  if (amount === null || amount <= 0) return { error: "Indica o valor pago." };
+  const parsedMethod = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
+  if ("error" in parsedMethod) return { error: parsedMethod.error };
+
+  const supabase = createAdminClient();
+  const { data: row, error: fetchErr } = await supabase
+    .from("Payment")
+    .select("id, studentId, paymentType, status, stripeInvoiceId")
+    .eq("id", paymentId)
+    .maybeSingle();
+  if (fetchErr) return { error: fetchErr.message };
+  if (!row) return { error: "Pagamento não encontrado." };
+  if ((row as { stripeInvoiceId?: string | null }).stripeInvoiceId) {
+    return { error: "Não é possível editar pagamentos ligados ao Stripe." };
+  }
+  if ((row as { status: string }).status !== "LATE") {
+    return { error: "Este pagamento já não está em atraso." };
+  }
+
+  const studentId = (row as { studentId: string }).studentId;
+  const paymentType = (row as { paymentType: string }).paymentType;
+
+  const { error: updErr } = await supabase
+    .from("Payment")
+    .update({ amount: amount.toFixed(2), status: "PAID", paymentMethod: parsedMethod.method })
+    .eq("id", paymentId);
+  if (updErr) return { error: updErr.message };
+
+  if (paymentType === "TUITION") {
+    await clearGraceOnPaidPayment(supabase, studentId);
+    await syncStudentPaymentStatus(supabase, studentId);
+  } else if (paymentType === "ENROLLMENT") {
+    await supabase.from("Student").update({ enrollmentFeeWaived: false }).eq("id", studentId);
+  } else if (paymentType === "INSURANCE") {
+    const renew = await renewStudentInsuranceCoverage(supabase, studentId, dbUser.id);
+    if (renew.error) return { error: renew.error };
+  }
+
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/financeiro");
+  revalidatePath(`/admin/alunos/${studentId}`);
+  revalidatePath(`/coach/alunos/${studentId}`);
+  return { success: true };
 }
 
 /** Atualiza valor, estado e forma de pagamento de um registo existente. */

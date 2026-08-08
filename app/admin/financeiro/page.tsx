@@ -105,6 +105,12 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       .eq("familyGroupId", gid);
     familyMemberCountByGroup.set(gid, count ?? 0);
   }
+  const { data: familyGroupsData } = familyGroupIds.length
+    ? await supabase.from("FamilyGroup").select("id, discountPercent").in("id", familyGroupIds)
+    : { data: [] as { id: string; discountPercent: number }[] };
+  const discountByGroup = new Map(
+    (familyGroupsData ?? []).map((g) => [g.id, Number((g as { discountPercent?: number }).discountPercent ?? 0)])
+  );
   const allPaymentStudentIds = [...new Set(list.map((p) => p.studentId))];
   const { data: students } =
     allPaymentStudentIds.length > 0
@@ -134,6 +140,8 @@ export default async function AdminFinanceiroPage({ searchParams }: { searchPara
       paymentMethod: ((p as { paymentMethod?: string | null }).paymentMethod as string | null) ?? null,
       familyGroupId,
       familyMemberCount: familyGroupId ? familyMemberCountByGroup.get(familyGroupId) ?? null : null,
+      familyDiscountPercent:
+        paymentType === "TUITION" && familyGroupId ? discountByGroup.get(familyGroupId) ?? null : null,
     };
   });
 
