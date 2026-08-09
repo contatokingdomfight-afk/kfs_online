@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isLessonParticipationAllowedByPlan } from "@/lib/dashboard-lesson-filter";
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
+import { loadFamilyReferencePlanIdByStudent } from "@/lib/family-effective-plan";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
@@ -71,9 +72,7 @@ function buildPlanAccessInput(
     };
   }
 
-  const modalityScope = isFamilyPlan(plan.id, plan.name)
-    ? "ALL"
-    : (plan.modalityScope ?? "NONE");
+  const modalityScope = plan.modalityScope ?? "NONE";
   const primaryModality = student.primaryModality ?? null;
 
   let allowedModalities: string[] = [];
@@ -158,18 +157,34 @@ export async function loadCoachLessonRoster(
   }
 
   const planIds = [...new Set(students.map((s) => s.planId).filter(Boolean))] as string[];
+  const familyStudentIds = students
+    .filter((s) => s.planId && isFamilyPlan(s.planId))
+    .map((s) => s.id);
+  const referencePlanIdByStudent = await loadFamilyReferencePlanIdByStudent(supabase, familyStudentIds);
+  const allPlanIds = [
+    ...new Set([...planIds, ...referencePlanIdByStudent.values()]),
+  ];
   const { data: plans } =
-    planIds.length > 0
+    allPlanIds.length > 0
       ? await supabase
           .from("Plan")
           .select("id, name, modalityScope, includes_check_in, isActive")
-          .in("id", planIds)
+          .in("id", allPlanIds)
       : { data: [] as PlanRow[] };
 
   const planById = new Map((plans ?? []).map((p) => [p.id, p as PlanRow]));
 
+  const planForStudent = (student: StudentRow): PlanRow | undefined => {
+    if (!student.planId) return undefined;
+    if (isFamilyPlan(student.planId)) {
+      const refId = referencePlanIdByStudent.get(student.id);
+      return refId ? planById.get(refId) : undefined;
+    }
+    return planById.get(student.planId);
+  };
+
   const eligibleIds = students
-    .filter((s) => isStudentEligibleForCoachLesson(s, s.planId ? planById.get(s.planId) : undefined, { modality, isOpenClass }))
+    .filter((s) => isStudentEligibleForCoachLesson(s, planForStudent(s), { modality, isOpenClass }))
     .map((s) => s.id);
 
   if (eligibleIds.length === 0) {
@@ -271,7 +286,7 @@ export async function loadCoachLessonRoster(
     const u = userById.get(s.userId);
     const prof = profileByStudentId.get(s.id);
     const att = attendanceByStudent.get(s.id);
-    const plan = s.planId ? planById.get(s.planId) : undefined;
+    const plan = planForStudent(s);
     const aid = athleteByStudentId.get(s.id);
     const evaluatedInThisLesson = aid ? evaluatedAthleteIds.has(aid) : false;
     const lastScores = aid ? lastScoresByAthleteId.get(aid) : undefined;
@@ -333,12 +348,17 @@ export async function assertStudentEligibleForCoachLesson(
 
   let plan: PlanRow | undefined;
   if (row.planId) {
-    const { data: planRow } = await supabase
-      .from("Plan")
-      .select("id, name, modalityScope, includes_check_in, isActive")
-      .eq("id", row.planId)
-      .maybeSingle();
-    plan = planRow as PlanRow | undefined;
+    const effectivePlanId = isFamilyPlan(row.planId)
+      ? (await loadFamilyReferencePlanIdByStudent(supabase, [studentId])).get(studentId)
+      : row.planId;
+    if (effectivePlanId) {
+      const { data: planRow } = await supabase
+        .from("Plan")
+        .select("id, name, modalityScope, includes_check_in, isActive")
+        .eq("id", effectivePlanId)
+        .maybeSingle();
+      plan = planRow as PlanRow | undefined;
+    }
   }
 
   if (!isStudentEligibleForCoachLesson(row, plan, params)) {

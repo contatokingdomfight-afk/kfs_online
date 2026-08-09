@@ -6,6 +6,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
+import { resolveEffectiveAccessPlan } from "@/lib/family-effective-plan";
 import { KINGDOM_PLAN_FAMILIA_ID, isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import {
   assignFamilyPlanToStudent,
@@ -259,7 +260,8 @@ export async function updateStudent(
     if (!school) return { error: "Escola inválida ou inativa." };
   }
 
-  // Só `modalityScope === "SINGLE"` (Presencial I) mantém modalidade principal; ALL/NONE limpam.
+  // Só `modalityScope === "SINGLE"` (Presencial I / Fighter) mantém modalidade principal; ALL/NONE limpam.
+  // No plano família, usa o plano de referência individual de cada membro.
   let effectivePlanId: string | null = planId === "" ? null : planId;
   let planNameForFamily: string | null = null;
   if (planId) {
@@ -272,12 +274,6 @@ export async function updateStudent(
     if (isFamilyPlan(planId, planNameForFamily)) {
       effectivePlanId = KINGDOM_PLAN_FAMILIA_ID;
     }
-    const scope = (plan as { modalityScope?: string; name?: string } | null)?.modalityScope;
-    if (!planRequiresPrimaryModality(scope, planId, planNameForFamily)) {
-      newPrimaryModality = null;
-    }
-    // O mesmo catálogo de planos pode ser reutilizado entre escolas (registo Plan liga-se a uma escola
-    // para organização admin; o aluno mantém a sua escola em Student.schoolId).
   }
 
   const { data: student } = await supabase
@@ -287,6 +283,16 @@ export async function updateStudent(
     .single();
 
   if (!student) return { error: "Aluno não encontrado." };
+
+  const subscriptionPlanId = effectivePlanId ?? (student as { planId?: string | null }).planId ?? null;
+  const accessPlan = subscriptionPlanId
+    ? await resolveEffectiveAccessPlan(supabase, studentId, subscriptionPlanId)
+    : null;
+  if (!planRequiresPrimaryModality(accessPlan?.modalityScope, accessPlan?.id, accessPlan?.name)) {
+    newPrimaryModality = null;
+  } else if (!newPrimaryModality) {
+    return { error: "Escolhe a modalidade principal deste aluno." };
+  }
 
   const previousPlanId = (student as { planId?: string | null }).planId ?? null;
   const planChanged = previousPlanId !== effectivePlanId;

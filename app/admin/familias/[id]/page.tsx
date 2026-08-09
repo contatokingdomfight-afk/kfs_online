@@ -33,8 +33,10 @@ export default async function AdminFamiliaDetailPage({ params }: Props) {
       <h1 style={{ margin: "16px 0 8px", fontSize: 22, fontWeight: 600 }}>
         {detail.group.name || "Grupo familiar"}
       </h1>
-      <p style={{ color: "var(--text-secondary)", marginBottom: 20, fontSize: 14 }}>
-        Mensalidade única no titular · acesso equivalente ao Kingdom Presencial MMA
+      <p style={{ color: "var(--text-secondary)", marginBottom: 20, fontSize: 14, lineHeight: 1.5 }}>
+        Grupo familiar com desconto na mensalidade. Cada membro mantém o seu plano individual (acesso e
+        quota de referência); a mensalidade combinada é paga pelo titular. Matrícula e seguro continuam
+        individuais.
       </p>
       <FamiliaDetailClient
         detail={detail}

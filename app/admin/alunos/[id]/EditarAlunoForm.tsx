@@ -260,6 +260,9 @@ type Props = {
   initialPrimaryModality: string;
   planOptions: PlanOption[];
   modalityOptions: ModalityOption[];
+  requiresPrimaryModality?: boolean;
+  isFamilyPlanMember?: boolean;
+  referencePlanName?: string | null;
   statusLabels: Record<string, string>;
   initialLocale?: "pt" | "en";
 };
@@ -274,6 +277,9 @@ export function EditarAlunoForm({
   initialPrimaryModality,
   planOptions,
   modalityOptions,
+  requiresPrimaryModality = false,
+  isFamilyPlanMember = false,
+  referencePlanName = null,
   statusLabels,
   initialLocale = "pt",
 }: Props) {
@@ -370,13 +376,28 @@ export function EditarAlunoForm({
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Modalidade principal
+          {requiresPrimaryModality ? " *" : ""}
         </span>
         <span style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 2 }}>
-          Para planos &quot;Uma modalidade&quot;: define qual aula o aluno vê na agenda.
+          {isFamilyPlanMember && referencePlanName
+            ? `No plano família, cada membro escolhe a modalidade do seu plano (${referencePlanName}) — ex.: uma faz Muay Thai, outra Jiu-Jitsu.`
+            : 'Para planos "Uma modalidade": define qual aula o aluno vê na agenda.'}
         </span>
-        <select name="primaryModality" className="input" defaultValue={initialPrimaryModality || ""}>
+        <select
+          name="primaryModality"
+          className="input"
+          defaultValue={initialPrimaryModality || ""}
+          required={requiresPrimaryModality}
+        >
+          {requiresPrimaryModality ? (
+            <option value="" disabled>
+              — Selecionar modalidade —
+            </option>
+          ) : null}
           {modalityOptions.map((m) => (
-            <option key={m.code || "all"} value={m.code}>{m.name}</option>
+            <option key={m.code || "all"} value={m.code}>
+              {m.name}
+            </option>
           ))}
         </select>
       </label>

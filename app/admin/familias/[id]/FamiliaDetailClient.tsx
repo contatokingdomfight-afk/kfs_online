@@ -147,6 +147,10 @@ export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }:
 
       <section>
         <h2 style={{ fontSize: 17, fontWeight: 600, margin: "0 0 10px" }}>Membros</h2>
+        <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+          O plano de referência de cada pessoa define a quota na mensalidade combinada e o acesso individual
+          (modalidades, digital, check-in).
+        </p>
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
           {members.map((m) => (
             <li key={m.id} className="card" style={{ padding: 12, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>

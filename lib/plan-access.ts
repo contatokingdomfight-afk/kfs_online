@@ -8,7 +8,8 @@ import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
-import { KINGDOM_PLAN_PRESENCIAL_I_ID, isFamilyPlan } from "./kingdom-plans-constants";
+import { KINGDOM_PLAN_PRESENCIAL_I_ID } from "./kingdom-plans-constants";
+import { resolveEffectiveAccessPlanId } from "./family-effective-plan";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
@@ -56,20 +57,21 @@ export async function getPlanAccess(
 
   if (!student?.planId) return defaultAccess;
 
+  const effectivePlanId = await resolveEffectiveAccessPlanId(supabase, studentId, student.planId);
+  if (!effectivePlanId) return defaultAccess;
+
   const { data: plan } = await supabase
     .from("Plan")
     .select(
       "id, modalityScope, includesDigitalAccess, includes_performance_tracking, includes_check_in, max_check_ins_per_day, includes_exclusive_benefits"
     )
-    .eq("id", student.planId)
+    .eq("id", effectivePlanId)
     .eq("isActive", true)
     .single();
 
   if (!plan) return defaultAccess;
 
-  const modalityScope = isFamilyPlan((plan as { id: string }).id)
-    ? "ALL"
-    : ((plan.modalityScope as string) ?? "NONE");
+  const modalityScope = (plan.modalityScope as string) ?? "NONE";
   const primaryModality = (student.primaryModality as string | null) ?? null;
 
   let allowedModalities: string[] = [];

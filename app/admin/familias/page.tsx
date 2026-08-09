@@ -38,8 +38,9 @@ export default async function AdminFamiliasPage() {
       </div>
 
       <p style={{ color: "var(--text-secondary)", marginBottom: 20, fontSize: 15, lineHeight: 1.5 }}>
-        Grupos familiares com mensalidade única no titular (soma dos planos de referência dos membros, com
-        desconto %). Matrícula e seguro continuam individuais por membro.
+        Grupos familiares para desconto na mensalidade: cada pessoa tem o seu plano individual (acesso e
+        quota de referência). A mensalidade combinada é cobrada no titular. Matrícula e seguro continuam
+        individuais por membro.
       </p>
 
       {groups.length === 0 ? (

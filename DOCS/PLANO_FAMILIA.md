@@ -6,8 +6,8 @@ Gestão **exclusiva na secretaria** (`/admin/familias`). Não aparece em `/escol
 
 | Aspeto | Comportamento |
 |--------|----------------|
-| **Acesso** | Equivalente ao **Kingdom Presencial MMA** (`plan-familia`: todas as modalidades, digital, performance, check-in ilimitado) |
-| **Cobrança** | **80 €/mês por pessoa** no grupo (desconto face ao FULL ~100 €); cada aluno tem a sua linha `TUITION` |
+| **Acesso** | **Individual** por membro, conforme o **plano de referência** (`FamilyGroupMember.referencePlanId`). O `plan-familia` no `Student.planId` é só agrupamento/desconto — **não** dá acesso MMA a todos |
+| **Cobrança** | Mensalidade **combinada no titular** = soma dos planos de referência − desconto % do grupo |
 | **Membros** | **A partir de 2 pessoas**, sem limite máximo por grupo |
 | **Matrícula / seguro** | **Individuais** por aluno (como qualquer inscrição) |
 | **Self-service** | Não — **só a secretaria (admin)** cria o grupo e adiciona cada membro em `/admin/familias` |

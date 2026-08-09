@@ -4,7 +4,8 @@
  * pessoa pagaria a título individual — ex.: um filho referencia o Kingdom Kids,
  * o adulto que pratica referencia o Kingdom Elite). Desconto % do grupo aplica-se
  * sobre essa soma. Membro sem plano de referência definido usa o fallback
- * KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON (80€) até o admin configurar o real.
+ * KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON (80€) só no cálculo da mensalidade
+ * (o acesso vem do plano de referência — ver `lib/family-effective-plan.ts`).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";

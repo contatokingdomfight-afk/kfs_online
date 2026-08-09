@@ -29,6 +29,7 @@ import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { getFamilyContext } from "@/lib/family-group";
 import { computeFamilyGroupMonthlyTuition, type FamilyPricingBreakdown } from "@/lib/family-tuition";
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
+import { resolveEffectiveAccessPlan } from "@/lib/family-effective-plan";
 
 const GENERAL_LAST_N = 10;
 
@@ -184,10 +185,23 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     ...(modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code })),
   ];
   const studentPlan = planRows.find((p) => p.id === student.planId);
-  const scope = (studentPlan as { modalityScope?: string } | undefined)?.modalityScope;
-  const isPlanWithoutModality = !planRequiresPrimaryModality(scope);
+  const accessPlan = student.planId
+    ? await resolveEffectiveAccessPlan(supabase, studentId, student.planId)
+    : null;
+  const scope = accessPlan?.modalityScope ?? null;
+  const requiresPrimaryModality = planRequiresPrimaryModality(
+    scope,
+    accessPlan?.id,
+    accessPlan?.name
+  );
   const rawPrimary = (student as { primaryModality?: string | null }).primaryModality ?? null;
-  const initialPrimaryModality = isPlanWithoutModality || rawPrimary == null || rawPrimary === "" ? "" : rawPrimary;
+  const initialPrimaryModality = requiresPrimaryModality ? rawPrimary ?? "" : "";
+  const modalityOptionsForForm = requiresPrimaryModality
+    ? (modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code }))
+    : [
+        { code: "", name: "Todas as modalidades" },
+        ...(modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code })),
+      ];
 
   const allConfigs = await loadAllEvaluationConfigs(supabase);
   const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {};
@@ -565,7 +579,10 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
             initialPlanId={student.planId ?? ""}
             initialPrimaryModality={initialPrimaryModality}
             planOptions={planOptions}
-            modalityOptions={modalityOptions}
+            modalityOptions={modalityOptionsForForm}
+            requiresPrimaryModality={requiresPrimaryModality}
+            isFamilyPlanMember={Boolean(familyCtx)}
+            referencePlanName={accessPlan?.name ?? myFamilyShare?.referencePlanName ?? null}
             statusLabels={STATUS_LABEL}
           />
         </div>

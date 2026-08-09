@@ -1,16 +1,14 @@
-import { isFamilyPlan, KINGDOM_PLAN_PRESENCIAL_I_ID } from "@/lib/kingdom-plans-constants";
+import { KINGDOM_PLAN_PRESENCIAL_I_ID } from "@/lib/kingdom-plans-constants";
 
 /**
  * `Plan.modalityScope === "SINGLE"` (ex.: Presencial I): o aluno escolhe uma modalidade.
  * `ALL` ou `NONE`: não se usa modalidade única (MMA, FULL, Básico).
- * Plano família é sempre tratado como `ALL`.
  */
 export function effectiveModalityScope(
   modalityScope: string | null | undefined,
-  planId?: string | null,
-  planName?: string | null
+  _planId?: string | null,
+  _planName?: string | null
 ): string {
-  if (isFamilyPlan(planId, planName)) return "ALL";
   return modalityScope ?? "NONE";
 }
 
