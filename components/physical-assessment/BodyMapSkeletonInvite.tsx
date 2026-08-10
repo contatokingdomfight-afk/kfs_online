@@ -8,52 +8,42 @@ type Props = {
   className?: string;
 };
 
-/** Ilustração simples de esqueleto (linha) + CTA para avaliação física quando ainda não há ficha na plataforma. */
+/** Aviso compacto (ícone + texto) + CTA para avaliação física quando ainda não há ficha na plataforma. */
 export function BodyMapSkeletonInvite({ locale, scheduleHref, className }: Props) {
   const L = locale === "pt";
   const copy = L
     ? {
         title: "Ainda sem mapa corporal",
-        body: "Quando a tua escola registar a tua avaliação física, verás aqui um mapa ilustrativo com as tuas medidas.",
-        cta: "Como renovar a avaliação física",
+        body: "A tua escola ainda não registou a tua avaliação física.",
+        cta: "Como agendar a avaliação física",
       }
     : {
         title: "No body map yet",
-        body: "Once your school records your physical assessment, you will see an illustrative map with your measures here.",
+        body: "Your school hasn't recorded your physical assessment yet.",
         cta: "How to schedule your physical assessment",
       };
 
   return (
     <div
       className={[
-        "rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 flex flex-col items-center text-center gap-4",
+        "rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 flex flex-col gap-3",
         className ?? "",
       ].join(" ")}
     >
-      <div>
-        <p className="m-0 text-base font-semibold text-[var(--text-primary)]">{copy.title}</p>
-        <p className="m-0 mt-1 max-w-sm text-xs leading-relaxed text-[var(--text-secondary)] sm:max-w-md lg:max-w-none lg:text-sm mx-auto">
-          {copy.body}
-        </p>
+      <div className="flex items-center gap-3">
+        <div
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--bg)] text-xl"
+          aria-hidden
+        >
+          📏
+        </div>
+        <div className="text-left">
+          <p className="m-0 text-sm font-semibold text-[var(--text-primary)]">{copy.title}</p>
+          <p className="m-0 mt-0.5 text-xs leading-relaxed text-[var(--text-secondary)]">{copy.body}</p>
+        </div>
       </div>
 
-      <div
-        className="mx-auto aspect-[200/369] w-full max-w-[200px] text-[var(--text-secondary)] sm:max-w-[220px] lg:max-w-[240px]"
-        aria-hidden
-      >
-        <svg viewBox="0 0 200 369" className="h-full w-full" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <ellipse cx="100" cy="28" rx="14" ry="18" />
-          <path d="M100 46 L100 72" />
-          <path d="M72 58 L128 58" />
-          <path d="M100 72 L100 168" />
-          <path d="M100 100 L58 142 M100 100 L142 142" />
-          <path d="M100 168 L82 260 L78 340 M100 168 L118 260 L122 340" />
-          <path d="M82 200 L58 248 M118 200 L142 248" />
-          <circle cx="100" cy="200" r="3" fill="currentColor" stroke="none" opacity="0.35" />
-        </svg>
-      </div>
-
-      <Link href={scheduleHref} className="btn btn-primary no-underline text-sm px-4 py-2">
+      <Link href={scheduleHref} className="btn btn-primary no-underline text-sm px-4 py-2 w-full text-center">
         {copy.cta}
       </Link>
     </div>
