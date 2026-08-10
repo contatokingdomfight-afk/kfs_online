@@ -62,10 +62,12 @@ export function isLessonParticipationAllowedByPlan<T extends DashboardLessonRow>
   if (!hasPlan) return false;
   if (!hasCheckIn) return false;
   if (allowedModalities.length === 0) return false;
+  const lessonModality = lesson.modality;
   const isFullPlan = allowedModalities.length >= modalitiesListLength;
-  if (isFullPlan) return true;
-  if (studentPrimaryModality) return lesson.modality === studentPrimaryModality;
-  return allowedModalities.includes(lesson.modality);
+  // Plano multi-modalidade cobre só as modalidades do plano — não aulas de códigos novos (ex. MTKIDS).
+  if (isFullPlan) return allowedModalities.includes(lessonModality);
+  if (studentPrimaryModality) return lessonModality === studentPrimaryModality;
+  return allowedModalities.includes(lessonModality);
 }
 
 /** @deprecated Preferir listar todas as aulas e usar `isLessonParticipationAllowedByPlan` por cartão. */

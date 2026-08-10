@@ -66,6 +66,19 @@ describe("filterLessonsForDashboard", () => {
     expect(out).toHaveLength(2);
   });
 
+  it("plano full: não inclui modalidades fora do plano (ex. MTKIDS)", () => {
+    const lessons = [
+      { modality: "MTKIDS", isOpenClass: false },
+      { modality: "MUAY_THAI", isOpenClass: false },
+    ];
+    const out = filterLessonsForDashboard(lessons, {
+      ...base(),
+      allowedModalities: ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"],
+      modalitiesListLength: 4,
+    });
+    expect(out.map((l) => l.modality)).toEqual(["MUAY_THAI"]);
+  });
+
   it("sem check-in no plano: só aulas livres entram", () => {
     const lessons = [
       { modality: "MUAY_THAI", isOpenClass: false },
