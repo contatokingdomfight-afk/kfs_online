@@ -345,7 +345,14 @@ export async function middleware(request: NextRequest) {
       return redirectPreservingCookies(response, url);
     }
 
-    if (student.planId) {
+    /**
+     * `onboardingDone`/`waiverSigned` são pré-requisitos mais altos na prioridade — só
+     * verificar o contrato/pagamento depois de ambos concluídos. Sem isto, um aluno com
+     * `planId` atribuído mas ainda sem onboarding/termo (ex.: membro de plano família
+     * criado directamente pelo admin) entra em ciclo: /onboarding → (tem plano, contrato
+     * por assinar) → /adesao → (onboarding por concluir) → /onboarding → ...
+     */
+    if (student.planId && onboardingDone && waiverSigned) {
       const { mod, settings } = insuranceResult!;
       const agreementCurrent = mod.isMembershipAgreementCurrent(
         agreement as { agreementSigned?: boolean; agreementVersion?: string | null } | null,
@@ -392,6 +399,14 @@ export async function middleware(request: NextRequest) {
     }
 
     if (isStudentAllowedWithoutPlan(pathname) || isStudentFreeTierPath(pathname)) {
+      return response;
+    }
+
+    // Tem planId mas ainda não concluiu onboarding/termo (bloco acima ficou de fora por
+    // isso) — não é o caso "sem plano nenhum" abaixo; a rota já foi validada pelos checks
+    // de onboarding/waiver mais acima, por isso deixa passar em vez de mandar para
+    // escolher-plano (que seria enganoso, ela já tem um plano).
+    if (student.planId) {
       return response;
     }
 
