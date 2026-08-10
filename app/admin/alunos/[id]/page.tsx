@@ -30,6 +30,7 @@ import { getFamilyContext } from "@/lib/family-group";
 import { computeFamilyGroupMonthlyTuition, type FamilyPricingBreakdown } from "@/lib/family-tuition";
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { resolveEffectiveAccessPlan } from "@/lib/family-effective-plan";
+import { StudentContactDataSection } from "@/components/students/StudentContactDataSection";
 
 const GENERAL_LAST_N = 10;
 
@@ -285,7 +286,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   const assistantActive = Boolean(assistRow?.id && assistRow.revokedAt == null);
 
   return (
-    <div style={{ maxWidth: "min(420px, 100%)" }}>
+    <div style={{ maxWidth: "min(720px, 100%)" }}>
       <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
         <Link
           href="/admin/alunos"
@@ -369,6 +370,9 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
           ) : null}
         </div>
       ) : null}
+
+      <StudentContactDataSection studentId={studentId} />
+
       <div
         style={{
           display: "flex",

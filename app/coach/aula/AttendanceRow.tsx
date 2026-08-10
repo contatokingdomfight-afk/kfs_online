@@ -151,7 +151,7 @@ export function AttendanceRow({
         <div className="coach-attendance-actions">
           {canEvaluate ? (
             <button type="button" onClick={() => setModalOpen(true)} className="btn btn-secondary">
-              Ver perfil e avaliar
+              Avaliar
             </button>
           ) : null}
           {effectiveStatus === "PENDING" && attendanceId ? (

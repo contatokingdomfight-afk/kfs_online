@@ -12,6 +12,7 @@ import { CoachNotesSkeleton } from "./_components/CoachNotesSkeleton";
 import { CoachStudentWellbeingSection } from "./_components/CoachStudentWellbeingSection";
 import { CoachAlunoOverviewActions } from "./_components/CoachAlunoOverviewActions";
 import { CoachAlunoAdminEnrollmentSection } from "./_components/CoachAlunoAdminEnrollmentSection";
+import { StudentContactDataSection } from "@/components/students/StudentContactDataSection";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -25,6 +26,8 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
+      <StudentContactDataSection studentId={studentId} />
+
       <CoachAlunoOverviewActions studentId={studentId} />
 
       <CoachAlunoAdminEnrollmentSection studentId={studentId} />
