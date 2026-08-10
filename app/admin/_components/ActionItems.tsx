@@ -15,6 +15,13 @@ function pendingPaymentPeriodLabel(p: PendingPayment): string {
   return p.referenceMonth || "—";
 }
 
+const PAYMENT_TYPE_FILTERS: { value: "all" | "TUITION" | "INSURANCE" | "ENROLLMENT"; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "TUITION", label: "Mensalidade" },
+  { value: "INSURANCE", label: "Seguro" },
+  { value: "ENROLLMENT", label: "Matrícula" },
+];
+
 const overlayStyle: React.CSSProperties = {
   position: "fixed",
   inset: 0,
@@ -57,7 +64,11 @@ export function ActionItems({
   const [modalOpen, setModalOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("payments");
   const [mounted, setMounted] = useState(false);
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState<(typeof PAYMENT_TYPE_FILTERS)[number]["value"]>("all");
   const titleId = useId();
+
+  const filteredPendingPayments =
+    paymentTypeFilter === "all" ? pendingPayments : pendingPayments.filter((p) => p.paymentType === paymentTypeFilter);
 
   useEffect(() => {
     setMounted(true);
@@ -96,12 +107,32 @@ export function ActionItems({
     <>
       {tab === "payments" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
-          {pendingPayments.length === 0 ? (
+          {pendingPayments.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {PAYMENT_TYPE_FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setPaymentTypeFilter(f.value)}
+                  className="btn"
+                  style={{
+                    backgroundColor: paymentTypeFilter === f.value ? "var(--primary)" : "var(--bg-secondary)",
+                    color: paymentTypeFilter === f.value ? "#fff" : "var(--text-primary)",
+                    fontSize: "clamp(12px, 3vw, 13px)",
+                    padding: "6px 12px",
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {filteredPendingPayments.length === 0 ? (
             <p style={{ color: "var(--text-secondary)", fontSize: "clamp(14px, 3.5vw, 16px)", margin: 0 }}>
-              {labels.emptyPayments}
+              {pendingPayments.length === 0 ? labels.emptyPayments : "Nenhum pagamento pendente deste tipo."}
             </p>
           ) : (
-            pendingPayments.map((p) => (
+            filteredPendingPayments.map((p) => (
               <div
                 key={p.id}
                 style={{
