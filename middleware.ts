@@ -104,6 +104,22 @@ function rejectMalformedMultipartPost(request: NextRequest): NextResponse | null
   return null;
 }
 
+/**
+ * Redireciona preservando cookies que `getUser()` possa ter renovado em `response`.
+ * `NextResponse.redirect()` cria uma resposta nova — sem isto, um token renovado fica
+ * só na resposta descartada; o browser guarda o antigo, que o Supabase já invalidou
+ * (rotação de refresh token) — próximo pedido falha e força logout. Alunos passam por
+ * vários redirects (onboarding/waiver/escolher-plano/gate de pagamento), por isso eram
+ * os mais afectados.
+ */
+function redirectPreservingCookies(response: NextResponse, url: URL | string): NextResponse {
+  const redirectResponse = NextResponse.redirect(url);
+  response.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie);
+  });
+  return redirectResponse;
+}
+
 /** Páginas públicas só-leitura sem Server Actions — POST é scanner/bot. */
 const STATIC_PUBLIC_POST_BLOCKED = new Set(["/", "/termos", "/privacidade"]);
 
@@ -249,7 +265,7 @@ export async function middleware(request: NextRequest) {
       if (pathname.startsWith("/check-in/")) {
         url.searchParams.set("next", pathname);
       }
-      return NextResponse.redirect(url);
+      return redirectPreservingCookies(response, url);
     }
 
     if (isStripeCheckoutApi(pathname)) {
@@ -319,14 +335,14 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/onboarding";
       url.search = "";
-      return NextResponse.redirect(url);
+      return redirectPreservingCookies(response, url);
     }
 
     if (onboardingDone && !waiverSigned && !isWaiverPath(pathname) && !isOnboardingPath(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = "/waiver-signing";
       url.search = "";
-      return NextResponse.redirect(url);
+      return redirectPreservingCookies(response, url);
     }
 
     if (student.planId) {
@@ -343,7 +359,7 @@ export async function middleware(request: NextRequest) {
         const url = request.nextUrl.clone();
         url.pathname = "/adesao";
         url.search = "";
-        return NextResponse.redirect(url);
+        return redirectPreservingCookies(response, url);
       }
 
       const adminFree = Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess);
@@ -368,7 +384,7 @@ export async function middleware(request: NextRequest) {
           url.pathname = "/dashboard/financeiro";
           url.search = "";
           url.searchParams.set("pagamento_escola", "1");
-          return NextResponse.redirect(url);
+          return redirectPreservingCookies(response, url);
         }
       }
 
@@ -390,7 +406,7 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/escolher-plano";
     url.search = "";
-    return NextResponse.redirect(url);
+    return redirectPreservingCookies(response, url);
   } catch (err) {
     console.error("[middleware] Erro não tratado (Edge):", err);
     if (isPublicBrowserPath(pathname) || isPublicApiPath(pathname)) {
