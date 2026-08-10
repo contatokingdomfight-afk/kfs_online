@@ -4,7 +4,6 @@ import {
   computeGeneralPerformanceScores,
   computePerformanceScoresByModality,
   mergePhysicalAssessmentIntoRadar,
-  EVALUATION_CRITERION_AGGREGATION_BASELINE,
   type ModalityConfig,
 } from "@/lib/performance-utils";
 import {
@@ -39,7 +38,7 @@ export type EvaluationResultsDataBundle = {
 
 /**
  * Agrega linhas `AthleteEvaluation` para radar geral, KPIs por modalidade e dados do
- * `EvaluationResultsDashboard` (critérios por categoria, baseline 5 para JSON esparsos).
+ * `EvaluationResultsDashboard` (critérios por categoria; só critérios avaliados no JSON).
  */
 export function buildEvaluationResultsFromAthleteEvaluations(
   evalsRows: AthleteEvaluationAggregateRow[],
@@ -91,7 +90,6 @@ export function buildEvaluationResultsFromAthleteEvaluations(
     configsForDetail,
     previousEval?.scores ?? null,
     {
-      implicitCriterionBaseline: EVALUATION_CRITERION_AGGREGATION_BASELINE,
       evaluationModality: latestEval?.modality ?? null,
     }
   );

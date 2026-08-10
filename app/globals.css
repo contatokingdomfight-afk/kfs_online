@@ -207,6 +207,19 @@
     cursor: not-allowed;
   }
 
+  /* Date/time inputs: largura intrínseca do picker nativo (sobretudo iOS) não pode ultrapassar o contentor */
+  .input[type="date"],
+  .input[type="datetime-local"],
+  .input[type="time"],
+  .input[type="month"],
+  .input[type="week"] {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    -webkit-min-logical-width: 0;
+  }
+
   /* Check-in / bem-estar: evita fundo branco dos controlos nativos (number, select) */
   .check-in-wellness-form {
     color-scheme: dark;

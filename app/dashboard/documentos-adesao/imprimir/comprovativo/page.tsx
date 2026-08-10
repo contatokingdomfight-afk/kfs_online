@@ -44,6 +44,7 @@ export default async function ImprimirComprovativoPage() {
         modalityLabel={prefill.modalityLabel}
         monthlyAmount={prefill.monthlyAmount}
         enrollmentAmount={prefill.enrollmentAmount}
+        insuranceAmount={prefill.insuranceAmount}
         showEnrollment={prefill.showEnrollment}
         showInsurance={prefill.showInsurance}
       />

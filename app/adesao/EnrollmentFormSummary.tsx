@@ -4,7 +4,7 @@ import {
   enrollmentPaymentMethodLabel,
   type EnrollmentFormRow,
 } from "@/lib/enrollment-form";
-import { SPORTS_INSURANCE_ANNUAL_PREMIUM } from "@/lib/sports-insurance-coverage";
+import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
 import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
 
 type Props = {
@@ -41,6 +41,7 @@ export function EnrollmentFormSummary({
   modalityLabel,
   monthlyAmount,
   enrollmentAmount,
+  insuranceAmount = 0,
   showEnrollment,
   showInsurance,
 }: Props) {
@@ -70,14 +71,14 @@ export function EnrollmentFormSummary({
       <Row label="Mensalidade" value={`${monthlyAmount.toFixed(2)} €`} />
       {showEnrollment ? <Row label="Inscrição" value={`${enrollmentAmount.toFixed(2)} €`} /> : null}
       {showInsurance ? (
-        <Row label="Seguro" value={`${SPORTS_INSURANCE_ANNUAL_PREMIUM.toFixed(2).replace(".", ",")} €`} />
+        <Row label="Seguro" value={`${formatDecimalAmountInput(insuranceAmount)} €`} />
       ) : null}
       <Row label="Pagamento" value={paymentLabel ?? undefined} />
       {showTransferIban ? <Row label="IBAN" value={SCHOOL_TRANSFER_IBAN} /> : null}
       {form.debitIban && form.paymentMethod === "DEBIT_DIRECT" ? (
         <Row label="IBAN (legado)" value={form.debitIban} />
       ) : null}
-      {showInsurance ? <InsuranceCoverageBlock compact /> : null}
+      {showInsurance ? <InsuranceCoverageBlock compact annualAmount={insuranceAmount} /> : null}
       {form.allergies ? <Row label="Alergias" value={form.allergies} /> : null}
       {form.knownHealthCondition ? <Row label="Saúde" value={form.knownHealthCondition} /> : null}
       {form.emergencyMedication ? <Row label="Medicação" value={form.emergencyMedication} /> : null}

@@ -118,33 +118,10 @@ export type ModalityConfig = {
 };
 
 /**
- * Linha de base 1–10 usada SÓ na agregação do radar para critérios não avaliados
- * (JSON esparso). É um ponto neutro (meio) para não penalizar o aluno por critérios
- * que o treinador não tocou. Nota: é independente do baseline de entrada do formulário
- * (primeira avaliação começa no mínimo, 1); mudar este valor recalcula radares históricos.
+ * Para médias do radar / por modalidade o JSON gravado é esparso (só critérios tocados
+ * ou herdados da avaliação anterior). A agregação usa **apenas** esses critérios — não
+ * inventa notas para critérios que o treinador nunca avaliou.
  */
-export const EVALUATION_CRITERION_AGGREGATION_BASELINE = 5;
-
-/**
- * Para médias do radar / por modalidade: o JSON gravado pode ser esparsos (só critérios tocados).
- * Preenche critérios em falta com a linha de base, para o agregado coincidir com o modelo antigo (template completo).
- */
-export function expandEvalScoresForAggregation(
-  scores: Record<string, number> | null | undefined,
-  modality: string,
-  configByModality: Map<string, ModalityConfig>
-): Record<string, number> | null {
-  if (scores == null || typeof scores !== "object") return null;
-  const cfg = modality && configByModality.get(modality);
-  if (!cfg || cfg.criterionToCategory.size === 0) return { ...scores };
-  const out: Record<string, number> = { ...scores };
-  for (const id of cfg.criterionToCategory.keys()) {
-    if (out[id] === undefined || out[id] === null || Number.isNaN(Number(out[id]))) {
-      out[id] = EVALUATION_CRITERION_AGGREGATION_BASELINE;
-    }
-  }
-  return out;
-}
 
 /**
  * Extrai um score Físico (1–10) do formData da avaliação física (ficha de anamnese).
@@ -216,11 +193,9 @@ export function computeGeneralPerformanceScores(
 
     if (hasScores && modality && configByModality.has(modality)) {
       const { criterionToCategory, criterionToDimensionCode } = configByModality.get(modality)!;
-      const expanded =
-        expandEvalScoresForAggregation(ev.scores, modality, configByModality) ?? ev.scores!;
       const byDim: Record<string, number[]> = {};
       GENERAL_DIMENSION_IDS.forEach((id) => (byDim[id] = []));
-      for (const [criterionId, value] of Object.entries(expanded)) {
+      for (const [criterionId, value] of Object.entries(ev.scores!)) {
         if (typeof value !== "number" || value < 1 || value > 10) continue;
         const rawDim =
           criterionToDimensionCode?.get(criterionId) ??

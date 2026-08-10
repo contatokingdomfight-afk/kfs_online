@@ -1,14 +1,21 @@
 import { SPORTS_INSURANCE_COVERAGE } from "@/lib/sports-insurance-coverage";
+import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
 
 type Props = {
   locale?: "pt" | "en";
   compact?: boolean;
+  /** Prémio anual configurado em Admin → Configurações (InsuranceSettings.annualAmount). */
+  annualAmount?: number;
 };
 
-export function InsuranceCoverageBlock({ locale = "pt", compact = false }: Props) {
+export function InsuranceCoverageBlock({ locale = "pt", compact = false, annualAmount }: Props) {
   const pt = locale === "pt";
   const c = SPORTS_INSURANCE_COVERAGE;
   const fontSize = compact ? 13 : 14;
+  const annualPremiumLabel =
+    annualAmount != null && Number.isFinite(annualAmount)
+      ? `${formatDecimalAmountInput(annualAmount)} €`
+      : c.annualPremium;
 
   return (
     <div
@@ -50,7 +57,7 @@ export function InsuranceCoverageBlock({ locale = "pt", compact = false }: Props
         </li>
         <li>
           {pt ? "Prémio comercial anual inestornável por aderente" : "Annual non-refundable premium per member"}:{" "}
-          <strong>{c.annualPremium}</strong>
+          <strong>{annualPremiumLabel}</strong>
         </li>
       </ul>
     </div>

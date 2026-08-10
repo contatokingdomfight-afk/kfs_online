@@ -13,7 +13,6 @@ import {
 } from "@/lib/evaluation-results-data";
 import {
   computeGeneralPerformanceScores,
-  EVALUATION_CRITERION_AGGREGATION_BASELINE,
   GENERAL_PERFORMANCE_AXES,
   type GeneralScoresInputEval,
   type ModalityConfig,
@@ -206,7 +205,6 @@ export async function buildSchoolModalityInsights(
     );
 
     const criteria = buildCriterionScores(ev.scores, configForDetail, null, {
-      implicitCriterionBaseline: EVALUATION_CRITERION_AGGREGATION_BASELINE,
       evaluationModality: modality,
     });
     perAthleteCriteria.push(...criteria);
