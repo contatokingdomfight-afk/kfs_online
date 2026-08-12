@@ -2,8 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
 
 /**
- * No plano família, o acesso (modalidades, digital, check-in) vem do plano de referência
- * individual de cada membro — `plan-familia` é só agrupamento/desconto na mensalidade.
+ * No plano família, a modalidade de cada membro vem do plano de referência individual
+ * escolhido pela secretaria — `plan-familia` é o agrupamento/desconto na mensalidade.
+ * Biblioteca, performance e check-in não usam isto: vêm sempre do próprio plano família
+ * (ver `getPlanAccess` em `lib/plan-access.ts`).
  */
 export async function resolveEffectiveAccessPlanId(
   supabase: SupabaseClient,

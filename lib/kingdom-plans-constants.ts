@@ -12,7 +12,11 @@ export const KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON = 80;
 
 export const PLANS_EXCLUDED_FROM_SELF_SERVICE: readonly string[] = [KINGDOM_PLAN_FAMILIA_ID];
 
-/** Plano família: agrupamento para desconto na mensalidade; acesso vem do plano de referência de cada membro. */
+/**
+ * Plano família: agrupamento para desconto na mensalidade. A modalidade de cada membro
+ * vem do plano de referência que a secretaria escolheu para essa pessoa; biblioteca,
+ * performance e check-in vêm sempre do próprio plano família (ver `getPlanAccess`).
+ */
 export function isFamilyPlan(planId?: string | null, name?: string | null): boolean {
   if (planId === KINGDOM_PLAN_FAMILIA_ID) return true;
   const n = (name ?? "").toLowerCase();
