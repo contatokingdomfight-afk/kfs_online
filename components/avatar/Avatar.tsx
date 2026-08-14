@@ -5,10 +5,8 @@ import { useId } from "react";
 import { type AvatarProps } from "./avatar-utils";
 import { buildAvatarPoseLayout } from "./build-avatar-layout";
 import { Body } from "./Body";
-import { Cosmetics } from "./Cosmetics";
 import { Equipment } from "./Equipment";
 import { getWorldHandPositions, Pose } from "./Pose";
-import { getCosmeticValue } from "@/lib/avatar-cosmetics";
 
 const ROOT_STYLE: CSSProperties = {
   ["--avatar-fill" as string]: "color-mix(in srgb, var(--text-secondary) 86%, transparent)",
@@ -21,19 +19,11 @@ const ROOT_STYLE: CSSProperties = {
 /**
  * Avatar SVG modular: corpo curvo, pose por modalidade, equipamento (luvas / wraps).
  */
-export function Avatar({
-  modality = "boxing",
-  measurements,
-  className,
-  poseTag = "star",
-  avatarConfig,
-  beltColor,
-}: AvatarProps) {
+export function Avatar({ modality = "boxing", measurements, className, poseTag = "star" }: AvatarProps) {
   const { scales, pose } = buildAvatarPoseLayout(measurements, modality, poseTag);
   const hands = getWorldHandPositions(pose);
   const rawId = useId().replace(/:/g, "");
   const pid = `av-${rawId}`;
-  const gearColorOverride = avatarConfig ? getCosmeticValue("gearColor", avatarConfig.gearColor) : undefined;
 
   return (
     <div className={className} style={ROOT_STYLE}>
@@ -63,8 +53,7 @@ export function Avatar({
         </defs>
         <Body scales={scales} pose={pose} paintIds={{ head: `${pid}-head`, torso: `${pid}-torso`, neck: `${pid}-neck`, limb: `${pid}-limb`, softShadow: `${pid}-soft` }} />
         <Pose type={modality} poseTag={poseTag} />
-        <Equipment type={modality} handL={hands.handL} handR={hands.handR} colorOverride={gearColorOverride} />
-        <Cosmetics scales={scales} pose={pose} avatarConfig={avatarConfig} beltColor={beltColor} />
+        <Equipment type={modality} handL={hands.handL} handR={hands.handR} />
       </svg>
     </div>
   );

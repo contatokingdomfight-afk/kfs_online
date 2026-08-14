@@ -10,8 +10,6 @@ import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback
 import { getWarriorBeltBarFromAthleteState } from "@/lib/athlete-warrior-stats";
 import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
 import { getWhatIsNewNextMission } from "@/lib/whatisnew-next-mission.server";
-import { normalizeAvatarConfig } from "@/lib/avatar-cosmetics";
-import { toAvatarModality } from "@/components/avatar/avatar-utils";
 import type { ReactNode } from "react";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
@@ -68,7 +66,7 @@ export async function DashboardBelowFold({
       ? supabase
           .from("Athlete")
           /** Sem currentBelt/currentXP na BD (só xp + displayBeltIndex); colunas inexistentes falham a query. */
-          .select("id, xp, displayBeltIndex, lastBeltPromotionAt, createdAt, avatarConfig")
+          .select("id, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
           .eq("studentId", studentId)
           /** Não usar maybeSingle: com 2+ linhas (dados legados) o PostgREST devolve erro e data=null. */
           .order("createdAt", { ascending: true })
@@ -87,7 +85,6 @@ export async function DashboardBelowFold({
     displayBeltIndex: number | null;
     lastBeltPromotionAt: string | null;
     createdAt: string;
-    avatarConfig: unknown;
   };
   const athleteList = athleteRes.data as AthleteRow[] | null;
   const athlete: AthleteRow | null = athleteList?.[0] ?? null;
@@ -286,9 +283,6 @@ export async function DashboardBelowFold({
     ? t("dashboardNoFeedbackNeedAthlete")
     : t("dashboardNoCoachFeedback");
 
-  const avatarConfig = athlete ? normalizeAvatarConfig(athlete.avatarConfig) : null;
-  const avatarModality = toAvatarModality(studentPrimaryModality);
-
   return (
     <>
       <WarriorPanel
@@ -303,8 +297,6 @@ export async function DashboardBelowFold({
         hasPerformanceTracking={hasPerformanceTracking}
         t={t as (key: string) => string}
         beltLabel={beltLabel}
-        avatarConfig={avatarConfig}
-        avatarModality={avatarModality}
       />
 
       {openClassesSlot}

@@ -5,13 +5,11 @@ type Props = {
   /** Coordenadas no viewBox (já com rotação do torso aplicada). */
   handL: { x: number; y: number };
   handR: { x: number; y: number };
-  /** Cor do cosmético "cor do equipamento" (ver lib/avatar-cosmetics.ts); sem isto usa a cor por omissão. */
-  colorOverride?: string;
 };
 
 /** Luvas (boxing), wraps (muay thai), vazio (bjj). */
-export function Equipment({ type, handL, handR, colorOverride }: Props) {
-  const gear = colorOverride ?? "var(--avatar-gear)";
+export function Equipment({ type, handL, handR }: Props) {
+  const gear = "var(--avatar-gear)";
 
   if (type === "bjj") {
     return null;

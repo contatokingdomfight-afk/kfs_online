@@ -4,16 +4,8 @@
  */
 
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
-import type { AvatarCosmeticConfig } from "@/lib/avatar-cosmetics";
 
 export type Modality = "boxing" | "muay_thai" | "bjj";
-
-/** Mapeia o código de modalidade da escola (ex.: `Student.primaryModality`) para o do avatar. */
-export function toAvatarModality(code: string | null | undefined): Modality {
-  if (code === "MUAY_THAI" || code === "MUAY_THAI_KIDS" || code === "KICKBOXING") return "muay_thai";
-  if (code === "BOXING" || code === "BOXING_KIDS") return "boxing";
-  return "bjj";
-}
 
 /** Pose do corpo (independente da modalidade, que define sobretudo equipamento). */
 export type PoseTag = "auto" | "star";
@@ -50,10 +42,6 @@ export type AvatarProps = {
   className?: string;
   /** `auto` = guarda típica da modalidade; `star` = braços e pernas bem abertos. */
   poseTag?: PoseTag;
-  /** Personalização de gamificação (cor do equipamento, bandana, faixa visível). */
-  avatarConfig?: AvatarCosmeticConfig;
-  /** Cor hex da faixa do aluno (ver lib/belt-colors.ts) — só usada se `avatarConfig.showBeltSash`. */
-  beltColor?: string;
 };
 
 /** Largura biaquatorial típica (cm) — para `breadthShoulderCm` na ficha. */

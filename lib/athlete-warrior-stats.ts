@@ -1,7 +1,7 @@
 import { getRankFromAthleteState } from "@/lib/xp-missions";
 
 /** Códigos de faixa alinhados a `belt_*` em i18n (12 níveis = índice `displayBeltIndex` típico). */
-export const BELT_CODES = [
+const BELT_CODES = [
   "WHITE",
   "YELLOW",
   "ORANGE",
