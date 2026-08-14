@@ -88,10 +88,9 @@ export async function getPlanAccess(
         .eq("id", referencePlanId)
         .eq("isActive", true)
         .single();
-      modalityScope = (referencePlan?.modalityScope as string) ?? "NONE";
-    } else {
-      modalityScope = "NONE";
+      modalityScope = (referencePlan?.modalityScope as string) ?? modalityScope;
     }
+    // Sem plano de referência: mantém o scope do plano família (ALL) — não bloquear acesso.
   }
   const primaryModality = (student.primaryModality as string | null) ?? null;
 

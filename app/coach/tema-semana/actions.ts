@@ -24,6 +24,8 @@ export async function saveWeekTheme(
 
   const modality = (formData.get("modality") as string)?.trim();
   const title = (formData.get("title") as string)?.trim();
+  const descriptionRaw = (formData.get("description") as string)?.trim() ?? "";
+  const description = descriptionRaw.length > 0 ? descriptionRaw.slice(0, 2000) : null;
   const courseId = (formData.get("course_id") as string)?.trim() || null;
   const videoUrl = (formData.get("video_url") as string)?.trim() || null;
   const weekParam = (formData.get("week_start") as string)?.trim();
@@ -47,6 +49,7 @@ export async function saveWeekTheme(
       modality,
       week_start: weekStart,
       title,
+      description,
       course_id: courseId || null,
       video_url: videoUrl,
     },

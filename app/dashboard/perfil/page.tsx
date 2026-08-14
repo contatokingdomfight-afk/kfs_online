@@ -8,7 +8,11 @@ import { PerfilForm } from "./PerfilForm";
 import { ChangePasswordSection } from "./ChangePasswordSection";
 import { DeleteAccountSection } from "./DeleteAccountSection";
 import { LegalDocumentsSection } from "./LegalDocumentsSection";
+import { AvatarCustomizer } from "./AvatarCustomizer";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { toAvatarModality } from "@/components/avatar/avatar-utils";
+import { getCosmeticOptionsWithStatus, normalizeAvatarConfig } from "@/lib/avatar-cosmetics";
+import { getBeltColorForXp } from "@/lib/belt-colors";
 
 /** Valor para `input type="date"` (YYYY-MM-DD). */
 function dateOfBirthForInput(value: unknown): string {
@@ -41,7 +45,7 @@ export default async function DashboardPerfilPage() {
     .eq("studentId", studentId)
     .maybeSingle();
 
-  const [{ data: waiver }, { data: agreement }, { data: enrollmentForm }] = await Promise.all([
+  const [{ data: waiver }, { data: agreement }, { data: enrollmentForm }, { data: athlete }] = await Promise.all([
     supabase
       .from("StudentWaiver")
       .select("waiverSigned, waiverSignedAt")
@@ -57,7 +61,16 @@ export default async function DashboardPerfilPage() {
       .select("formCompleted, formCompletedAt")
       .eq("studentId", studentId)
       .maybeSingle(),
+    supabase.from("Athlete").select("xp, avatarConfig").eq("studentId", studentId).maybeSingle(),
   ]);
+
+  const athleteXp = (athlete as { xp?: number | null } | null)?.xp ?? 0;
+  const avatarConfig = normalizeAvatarConfig((athlete as { avatarConfig?: unknown } | null)?.avatarConfig);
+  const cosmeticOptions = getCosmeticOptionsWithStatus({ athleteXp });
+  const beltColor = getBeltColorForXp(athleteXp);
+  const avatarModality = toAvatarModality(
+    (student as { primaryModality?: string | null } | null)?.primaryModality
+  );
 
   const initial = {
     name: user?.name ?? "",
@@ -100,6 +113,12 @@ export default async function DashboardPerfilPage() {
         {t("profileIntro")}
       </p>
       <PerfilForm initial={initial} locale={locale as "pt" | "en"} />
+      <AvatarCustomizer
+        options={cosmeticOptions}
+        initialConfig={avatarConfig}
+        beltColor={beltColor}
+        modality={avatarModality}
+      />
       <LegalDocumentsSection
         locale={locale as "pt" | "en"}
         waiverSigned={Boolean(waiver?.waiverSigned)}

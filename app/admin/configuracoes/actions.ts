@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncPendingInsuranceAmounts } from "@/lib/sync-pending-insurance-amount";
 
 export type UpdateAttendanceGoalResult = { error?: string; success?: boolean };
 
@@ -71,6 +72,8 @@ export async function updateInsuranceSettings(
     updatedAt: new Date().toISOString(),
   });
   if (error) return { error: error.message };
+
+  await syncPendingInsuranceAmounts(supabase);
 
   revalidatePath("/admin/configuracoes");
   revalidatePath("/admin/alunos");

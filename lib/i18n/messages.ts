@@ -400,6 +400,11 @@ export const messages = {
     schoolPaymentGateDismiss: "Entendi, vou à secretaria",
     schoolPaymentGateBanner:
       "Acesso limitado até confirmares o pagamento na secretaria. Os valores em dívida estão listados abaixo.",
+    schoolPaymentFamilyMemberFeesBanner:
+      "Tens taxas individuais por regularizar (matrícula ou seguro). O teu acesso à plataforma mantém-se activo — trata disto na secretaria quando puderes.",
+    financeFamilyMemberPlanLine: "acesso completo à plataforma",
+    financeFamilyMemberCardNote:
+      "A mensalidade do grupo é tratada pelo titular na secretaria. Aqui só vês as tuas taxas individuais, se existirem.",
     freeTierCtaMessage:
       "O teu perfil está pronto. Escolhe um plano para desbloquear check-in nas aulas, vídeos na biblioteca e toda a experiência Kingdom. Enquanto isso, podes ver a agenda e a estrutura dos cursos.",
     freeTierCtaButton: "✨ Ver planos e preços",
@@ -468,7 +473,7 @@ export const messages = {
     dashboardFamilyPlanTitular:
       "És o titular do plano família — a mensalidade única do grupo é paga por ti.",
     dashboardFamilyPlanMember:
-      "És membro do plano família de {titular}. A mensalidade é paga pelo titular — não tens mensalidade própria.",
+      "Fazes parte do plano família de {titular} — tens o mesmo acesso à app que um plano individual. A mensalidade é paga pelo titular.",
     dashboardFamilyPlanMembersCount: "{count} pessoas",
     dashboardFamilyPlanAdminHint:
       "Novos membros são adicionados pela secretaria Kingdom Fight (não pelo titular na app).",
@@ -1052,6 +1057,9 @@ export const messages = {
     athletesUnderCoaching: "Atletas em acompanhamento",
     themeTitleLabel: "Título do tema",
     themeTitlePlaceholder: "Ex.: Defesa de low kicks",
+    themeDescriptionLabel: "Descrição do plano (opcional)",
+    themeDescriptionPlaceholder: "Ex.: Segunda — técnica de cotovelo; Quarta — pads; Sexta — sparring leve…",
+    themeDescriptionHint: "Resume o que vais trabalhar ao longo da semana. Os alunos veem isto no dashboard.",
     libraryVideoOptional: "Vídeo da biblioteca (opcional)",
     noCourseOption: "— Nenhum / só título",
     themeSaveSaving: "A guardar o tema…",
@@ -1608,6 +1616,11 @@ export const messages = {
     schoolPaymentGateDismiss: "Got it, I'll go to the office",
     schoolPaymentGateBanner:
       "Limited access until payment is confirmed at the school office. Amounts due are listed below.",
+    schoolPaymentFamilyMemberFeesBanner:
+      "You have individual fees to settle (enrollment or insurance). Your platform access stays active — handle this at the school office when you can.",
+    financeFamilyMemberPlanLine: "full platform access",
+    financeFamilyMemberCardNote:
+      "Group tuition is handled by the plan holder at the school office. Here you only see your individual fees, if any.",
     freeTierCtaMessage:
       "Your profile is ready. Choose a plan to unlock class check-in, library videos and the full Kingdom experience. Meanwhile you can browse the schedule and course structure.",
     freeTierCtaButton: "✨ View plans and pricing",
@@ -1676,7 +1689,7 @@ export const messages = {
     dashboardFamilyPlanTitular:
       "You are the family plan holder — the group's single monthly payment is billed to you.",
     dashboardFamilyPlanMember:
-      "You are on {titular}'s family plan. The tuition is paid by the plan holder — you have no tuition of your own.",
+      "You are on {titular}'s family plan — you have the same app access as an individual plan. Tuition is paid by the plan holder.",
     dashboardFamilyPlanMembersCount: "{count} people",
     dashboardFamilyPlanAdminHint:
       "New members are added by Kingdom Fight staff (not by the account holder in the app).",
@@ -2250,6 +2263,9 @@ export const messages = {
     athletesUnderCoaching: "Athletes under coaching",
     themeTitleLabel: "Theme title",
     themeTitlePlaceholder: "E.g. Low kick defense",
+    themeDescriptionLabel: "Plan description (optional)",
+    themeDescriptionPlaceholder: "E.g. Monday — elbow technique; Wednesday — pads; Friday — light sparring…",
+    themeDescriptionHint: "Summarise what you will work on during the week. Students see this on the dashboard.",
     libraryVideoOptional: "Library video (optional)",
     noCourseOption: "— None / title only",
     themeSaveSaving: "Saving theme…",

@@ -9,6 +9,7 @@ import {
   resolvePlanMonthlyTuition,
   resolveFamilyGroupTitularSuggestedAmount,
 } from "@/lib/family-tuition";
+import { syncPendingInsuranceAmounts } from "@/lib/sync-pending-insurance-amount";
 
 export type EnsureOnboardingPendingOptions = {
   referenceMonth?: string;
@@ -89,7 +90,7 @@ export async function ensureOnboardingPendingPayments(
   const [{ data: plan }, settings, { data: student }] = await Promise.all([
     supabase.from("Plan").select("priceMonthly").eq("id", planId).eq("isActive", true).maybeSingle(),
     getInsuranceSettings(supabase),
-    supabase.from("Student").select("enrollmentFeeWaived, adminGrantedFullAccess").eq("id", studentId).maybeSingle(),
+    supabase.from("Student").select("enrollmentFeeWaived, insuranceFeeWaived, adminGrantedFullAccess").eq("id", studentId).maybeSingle(),
   ]);
 
   if (!plan) return { error: "Plano inválido ou inativo.", created: false };
@@ -99,6 +100,9 @@ export async function ensureOnboardingPendingPayments(
 
   const enrollmentWaived = Boolean(
     (student as { enrollmentFeeWaived?: boolean } | null)?.enrollmentFeeWaived
+  );
+  const insuranceWaived = Boolean(
+    (student as { insuranceFeeWaived?: boolean } | null)?.insuranceFeeWaived
   );
   let created = false;
 
@@ -149,26 +153,18 @@ export async function ensureOnboardingPendingPayments(
     }
   }
 
-  if (settings.annualAmount > 0) {
-    const { data: existingInsurance } = await supabase
-      .from("Payment")
-      .select("id")
-      .eq("studentId", studentId)
-      .eq("paymentType", "INSURANCE")
-      .eq("referenceYear", referenceYear)
-      .maybeSingle();
-
-    if (!existingInsurance?.id) {
-      const result = await upsertLatePayment(supabase, {
-        studentId,
-        paymentType: "INSURANCE",
-        amount: settings.annualAmount,
-        referenceYear,
-      });
-      if (result.error) return { error: result.error, created };
-      created = true;
-    }
+  if (settings.annualAmount > 0 && !insuranceWaived) {
+    const result = await upsertLatePayment(supabase, {
+      studentId,
+      paymentType: "INSURANCE",
+      amount: settings.annualAmount,
+      referenceYear,
+    });
+    if (result.error) return { error: result.error, created };
+    created = true;
   }
+
+  await syncPendingInsuranceAmounts(supabase, { studentId, referenceYear });
 
   if (created) {
     await syncStudentPaymentStatus(supabase, studentId);

@@ -323,6 +323,9 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Registar a parte de um membro (titular paga só a dele):** `registerFamilyMemberTuition` (`app/admin/financeiro/actions.ts`) cria a mensalidade **`PAID`** do membro com o valor indicado (sugestão pré-preenchida = preço de referência do membro **já com o desconto** do grupo) e **reduz a mensalidade `LATE` combinada do titular pelo mesmo valor** (subtração simples com _clamp_ a 0) — o total da família mantém-se (ex.: titular 99€ → registar 49,50€ na filha → titular passa a 49,50€). No mês seguinte a linha derivada não é gerada (o membro já tem `Payment`); a restante parte do titular regista-se na linha combinada dele.
 - Migrações: `20260701120000_family_plan.sql`, … `20260706120000_family_plan_per_person_tuition.sql`, **`20260717193000_family_plan_no_member_cap.sql`** (remove `maxMembers`).
 - Reparo automático: `repairOrphanFamilyTitulars` + `backfillFamilyGroupTuitions` ao abrir `/admin/familias`.
+- **UX aluno (ago. 2026):** removido banner «plano família» do dashboard; membros **não** veem «Acesso limitado» no financeiro quando só têm matrícula/seguro pendentes (`studentHasPaymentUnlock` + cópias em `lib/i18n/messages.ts`). `getPlanAccess`: sem `referencePlanId`, mantém `modalityScope` do `plan-familia` (não bloqueia modalidades).
+- **Seguro — valor actual (ago. 2026):** `lib/sync-pending-insurance-amount.ts` alinha pagamentos `INSURANCE`/`LATE` ao `InsuranceSettings.annualAmount` (ao abrir `/dashboard/financeiro`, ao guardar configurações admin, e em `ensureOnboardingPendingPayments`). Migração tema: `20260814130000_weektheme_add_description.sql`.
+- **PWA (ago. 2026):** `PwaInstallHint` com `z-index` acima da bottom nav e «Agora não» clicável no iPhone; oculto em modo standalone.
 
 
 ## Metas do administrador (jul. 2026)

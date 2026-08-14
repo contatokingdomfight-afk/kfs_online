@@ -11,6 +11,7 @@ type Props = {
   weekStart: string;
   modality: string;
   initialTitle: string;
+  initialDescription: string;
   initialCourseId: string | null;
   initialVideoUrl: string;
   courses: { id: string; name: string }[];
@@ -120,7 +121,7 @@ function ThemeSaveSuccessGate(props: SuccessModalProps) {
   return <ThemeSaveSuccessModal {...props} />;
 }
 
-export function TemaSemanaForm({ weekStart, modality, initialTitle, initialCourseId, initialVideoUrl, courses, initialLocale }: Props) {
+export function TemaSemanaForm({ weekStart, modality, initialTitle, initialDescription, initialCourseId, initialVideoUrl, courses, initialLocale }: Props) {
   const t = getTranslations(initialLocale);
   const [state, formAction] = useFormState(saveWeekTheme, null as SaveWeekThemeResult | null);
   const [successOpen, setSuccessOpen] = useState(false);
@@ -167,6 +168,19 @@ export function TemaSemanaForm({ weekStart, modality, initialTitle, initialCours
           autoComplete="off"
           style={{ minHeight: 44 }}
         />
+      </label>
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("themeDescriptionLabel")}</span>
+        <textarea
+          name="description"
+          defaultValue={initialDescription}
+          className="input"
+          placeholder={t("themeDescriptionPlaceholder")}
+          rows={5}
+          maxLength={2000}
+          style={{ minHeight: 120, resize: "vertical", lineHeight: 1.5 }}
+        />
+        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t("themeDescriptionHint")}</span>
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("libraryVideoOptional")}</span>

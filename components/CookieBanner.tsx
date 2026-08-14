@@ -61,40 +61,28 @@ export function CookieBanner() {
     <div
       role="dialog"
       aria-label="Consentimento de cookies"
+      className="cookie-consent-banner"
       style={{
         position: "fixed",
         bottom: aboveMobileNav ? MOBILE_BOTTOM_NAV_OFFSET : 0,
         left: 0,
         right: 0,
         zIndex: COOKIE_BANNER_Z,
-        padding: "clamp(12px, 3vw, 16px)",
+        padding: "clamp(14px, 3vw, 18px)",
         paddingBottom: aboveMobileNav
-          ? "clamp(12px, 3vw, 16px)"
-          : "max(clamp(12px, 3vw, 16px), env(safe-area-inset-bottom, 0px))",
-        background: "var(--surface)",
-        borderTop: "1px solid var(--border)",
-        boxShadow: "0 -4px 24px rgba(0,0,0,0.12)",
+          ? "clamp(14px, 3vw, 18px)"
+          : "max(clamp(14px, 3vw, 18px), env(safe-area-inset-bottom, 0px))",
       }}
     >
-      <div
-        style={{
-          maxWidth: 960,
-          margin: "0 auto",
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: "12px 16px",
-          justifyContent: "space-between",
-        }}
-      >
-        <p style={{ margin: 0, flex: "1 1 240px", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+      <div className="cookie-consent-banner__inner">
+        <p className="cookie-consent-banner__text">
           Usamos cookies para melhorar a experiência. Consulta a nossa{" "}
-          <Link href="/privacidade" style={{ color: "var(--primary)", fontWeight: 500 }}>
+          <Link href="/privacidade" className="cookie-consent-banner__link">
             política de privacidade
           </Link>
           .
         </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <div className="cookie-consent-banner__actions">
           <button type="button" className="btn btn-secondary" style={{ fontSize: 14 }} onClick={() => save("essential")}>
             Apenas essenciais
           </button>

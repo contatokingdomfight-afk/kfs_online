@@ -13,6 +13,7 @@
   :root[data-theme="dark"] {
     --bg: #0b0b0b;
     --bg-secondary: #141414;
+    --surface: #141414;
     --text-primary: #ffffff;
     --text-secondary: #a1a1aa;
     --primary: #c1121f;
@@ -26,6 +27,7 @@
   :root[data-theme="light"] {
     --bg: #ffffff;
     --bg-secondary: #f4f4f5;
+    --surface: #f4f4f5;
     --text-primary: #09090b;
     --text-secondary: #52525b;
     --primary: #c1121f;
@@ -166,6 +168,48 @@
   .btn-success {
     background-color: var(--success);
     color: #fff;
+  }
+
+  /* Banner RGPD — fundo sólido para não sobrepor texto da página */
+  .cookie-consent-banner {
+    background-color: var(--bg);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.42);
+  }
+
+  :root[data-theme="light"] .cookie-consent-banner {
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .cookie-consent-banner__inner {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    justify-content: space-between;
+  }
+
+  .cookie-consent-banner__text {
+    margin: 0;
+    flex: 1 1 240px;
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  .cookie-consent-banner__link {
+    color: var(--primary);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .cookie-consent-banner__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   /* Secção recolhida "Editar aluno" (admin) */

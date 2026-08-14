@@ -2,9 +2,34 @@
 
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
+import { usePathname } from "next/navigation";
 import { getTranslations } from "@/lib/i18n";
 import { usePwaInstall } from "@/components/PwaInstallProvider";
 import { isNativeAppShell } from "@/lib/capacitor-native";
+
+/** Acima da barra inferior mobile (z-index ~20_000). */
+const PWA_HINT_Z = 25_000;
+const MOBILE_BOTTOM_NAV_OFFSET = "calc(64px + max(10px, env(safe-area-inset-bottom, 0px)))";
+
+function routeHasMobileBottomNav(pathname: string): boolean {
+  return (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/coach") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/como-sou-avaliado") ||
+    pathname.startsWith("/sistema-pontuacao")
+  );
+}
+
+function isStandaloneDisplay(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    // @ts-expect-error legacy iOS
+    window.navigator.standalone === true
+  );
+}
 
 /**
  * Primeira visita (telemóvel): aviso em baixo mais visível.
@@ -12,15 +37,24 @@ import { isNativeAppShell } from "@/lib/capacitor-native";
  */
 export function PwaInstallHint() {
   const ctx = usePwaInstall();
+  const pathname = usePathname() ?? "";
   const [hintKind, setHintKind] = useState<null | "bip" | "ios" | "chrome">(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const locale = ctx?.locale ?? "pt";
   const t = getTranslations(locale);
 
   useEffect(() => {
-    if (!ctx?.storageReady || ctx.preferSidebar) return;
+    const mql = window.matchMedia("(max-width: 768px)");
+    const sync = () => setIsMobile(mql.matches);
+    sync();
+    mql.addEventListener("change", sync);
+    return () => mql.removeEventListener("change", sync);
+  }, []);
 
-    if (isNativeAppShell()) return;
+  useEffect(() => {
+    if (!ctx?.storageReady || ctx.preferSidebar) return;
+    if (isNativeAppShell() || isStandaloneDisplay()) return;
     if (!window.matchMedia("(max-width: 768px)").matches) return;
 
     const ua = navigator.userAgent;
@@ -44,12 +78,11 @@ export function PwaInstallHint() {
 
   if (!ctx?.storageReady || ctx.preferSidebar) return null;
   if (typeof window === "undefined") return null;
-
-  if (isNativeAppShell()) return null;
-  if (!window.matchMedia("(max-width: 768px)").matches) return null;
-
+  if (isNativeAppShell() || isStandaloneDisplay()) return null;
+  if (!isMobile) return null;
   if (!hintKind) return null;
 
+  const aboveMobileNav = routeHasMobileBottomNav(pathname);
   const moveToSidebar = () => ctx.moveInstallToSidebar();
 
   const onInstallClick = async () => {
@@ -78,13 +111,13 @@ export function PwaInstallHint() {
         position: "fixed",
         left: 0,
         right: 0,
-        bottom: 0,
-        zIndex: 60,
+        bottom: aboveMobileNav ? MOBILE_BOTTOM_NAV_OFFSET : 0,
+        zIndex: PWA_HINT_Z,
         padding:
           "16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))",
-        background: "var(--bg-secondary)",
+        background: "var(--bg)",
         borderTop: "1px solid var(--border)",
-        boxShadow: "var(--shadow-md)",
+        boxShadow: "0 -8px 32px rgba(0,0,0,0.35)",
         display: "flex",
         flexDirection: "column",
         gap: 12,
@@ -122,11 +155,13 @@ export function PwaInstallHint() {
           style={{
             background: "transparent",
             border: "none",
-            color: "var(--text-secondary)",
-            fontSize: 14,
+            color: "var(--text-primary)",
+            fontSize: 15,
+            fontWeight: 600,
             cursor: "pointer",
             textDecoration: "underline",
-            padding: 0,
+            padding: "8px 0",
+            minHeight: 44,
           }}
         >
           {t("pwaInstallDismiss")}
@@ -136,13 +171,13 @@ export function PwaInstallHint() {
           onClick={moveToSidebar}
           aria-label={t("pwaInstallDismiss")}
           style={{
-            minWidth: 40,
-            minHeight: 40,
+            minWidth: 44,
+            minHeight: 44,
             padding: 0,
-            border: "none",
+            border: "1px solid var(--border)",
             borderRadius: "var(--radius-sm)",
-            background: "transparent",
-            color: "var(--text-secondary)",
+            background: "var(--bg-secondary)",
+            color: "var(--text-primary)",
             fontSize: 22,
             lineHeight: 1,
             cursor: "pointer",

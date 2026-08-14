@@ -4,6 +4,8 @@ type Props = {
   showEnrollment: boolean;
   showInsurance: boolean;
   locale?: "pt" | "en";
+  /** Membro do plano família: a mensalidade é do titular — só matrícula/seguro individuais. */
+  isFamilyMember?: boolean;
 };
 
 /** Resumo das taxas de inscrição visível ao aluno (matrícula + seguro obrigatório). */
@@ -13,6 +15,7 @@ export function StudentOnboardingFeesNotice({
   showEnrollment,
   showInsurance,
   locale = "pt",
+  isFamilyMember = false,
 }: Props) {
   if (!showEnrollment && !showInsurance) return null;
 
@@ -31,9 +34,13 @@ export function StudentOnboardingFeesNotice({
         {isEn ? "Enrollment fees" : "Taxas de inscrição"}
       </h2>
       <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--text-secondary)" }}>
-        {isEn
-          ? "On your first payment at the school, the following apply in addition to your monthly plan:"
-          : "No primeiro pagamento na escola, além da mensalidade do plano, aplicam-se:"}
+        {isFamilyMember
+          ? isEn
+            ? "On the family plan, monthly tuition is paid by the plan holder. You only need to settle your individual fees:"
+            : "No plano família, a mensalidade é paga pelo titular. Só precisas de regularizar as tuas taxas individuais:"
+          : isEn
+            ? "On your first payment at the school, the following apply in addition to your monthly plan:"
+            : "No primeiro pagamento na escola, além da mensalidade do plano, aplicam-se:"}
       </p>
       <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, display: "flex", flexDirection: "column", gap: 6 }}>
         {showEnrollment && (

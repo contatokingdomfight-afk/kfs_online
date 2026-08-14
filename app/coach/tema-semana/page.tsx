@@ -53,7 +53,7 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
 
   const { data: themes } = await supabase
     .from("WeekTheme")
-    .select("modality, title, course_id, video_url")
+    .select("modality, title, description, course_id, video_url")
     .eq("week_start", weekStart);
 
   const { data: courses } = await supabase
@@ -182,6 +182,7 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
             weekStart={weekStart}
             modality={modality}
             initialTitle={theme?.title ?? ""}
+            initialDescription={theme?.description ?? ""}
             initialCourseId={theme?.course_id ?? null}
             initialVideoUrl={theme?.video_url ?? ""}
             courses={courseList}

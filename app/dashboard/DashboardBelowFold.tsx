@@ -10,6 +10,8 @@ import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback
 import { getWarriorBeltBarFromAthleteState } from "@/lib/athlete-warrior-stats";
 import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
 import { getWhatIsNewNextMission } from "@/lib/whatisnew-next-mission.server";
+import { normalizeAvatarConfig } from "@/lib/avatar-cosmetics";
+import { toAvatarModality } from "@/components/avatar/avatar-utils";
 import type { ReactNode } from "react";
 import { WarriorPanel } from "./WarriorPanel";
 import { WhatIsNew } from "./WhatIsNew";
@@ -66,7 +68,7 @@ export async function DashboardBelowFold({
       ? supabase
           .from("Athlete")
           /** Sem currentBelt/currentXP na BD (só xp + displayBeltIndex); colunas inexistentes falham a query. */
-          .select("id, xp, displayBeltIndex, lastBeltPromotionAt, createdAt")
+          .select("id, xp, displayBeltIndex, lastBeltPromotionAt, createdAt, avatarConfig")
           .eq("studentId", studentId)
           /** Não usar maybeSingle: com 2+ linhas (dados legados) o PostgREST devolve erro e data=null. */
           .order("createdAt", { ascending: true })
@@ -74,7 +76,7 @@ export async function DashboardBelowFold({
       : Promise.resolve({ data: [] }),
     supabase
       .from("WeekTheme")
-      .select("modality, title, course_id, video_url")
+      .select("modality, title, description, course_id, video_url")
       .eq("week_start", weekStart)
       .order("modality", { ascending: true }),
   ]);
@@ -85,6 +87,7 @@ export async function DashboardBelowFold({
     displayBeltIndex: number | null;
     lastBeltPromotionAt: string | null;
     createdAt: string;
+    avatarConfig: unknown;
   };
   const athleteList = athleteRes.data as AthleteRow[] | null;
   const athlete: AthleteRow | null = athleteList?.[0] ?? null;
@@ -102,6 +105,7 @@ export async function DashboardBelowFold({
   const pickWeekThemeForStudent = (): {
     modality: string;
     title: string;
+    description: string | null;
     course_id: string | null;
     video_url: string | null;
   } | null => {
@@ -114,6 +118,7 @@ export async function DashboardBelowFold({
         return {
           modality: theme.modality,
           title: theme.title,
+          description: (theme as { description?: string | null }).description ?? null,
           course_id: theme.course_id,
           video_url: (theme as { video_url?: string | null }).video_url ?? null,
         };
@@ -123,6 +128,7 @@ export async function DashboardBelowFold({
     return {
       modality: theme.modality,
       title: theme.title,
+      description: (theme as { description?: string | null }).description ?? null,
       course_id: theme.course_id,
       video_url: (theme as { video_url?: string | null }).video_url ?? null,
     };
@@ -131,6 +137,7 @@ export async function DashboardBelowFold({
   let weekThemeForPrimary: {
     modality: string;
     title: string;
+    description: string | null;
     course_id: string | null;
     video_url: string | null;
   } | null = pickWeekThemeForStudent();
@@ -279,6 +286,9 @@ export async function DashboardBelowFold({
     ? t("dashboardNoFeedbackNeedAthlete")
     : t("dashboardNoCoachFeedback");
 
+  const avatarConfig = athlete ? normalizeAvatarConfig(athlete.avatarConfig) : null;
+  const avatarModality = toAvatarModality(studentPrimaryModality);
+
   return (
     <>
       <WarriorPanel
@@ -293,6 +303,8 @@ export async function DashboardBelowFold({
         hasPerformanceTracking={hasPerformanceTracking}
         t={t as (key: string) => string}
         beltLabel={beltLabel}
+        avatarConfig={avatarConfig}
+        avatarModality={avatarModality}
       />
 
       {openClassesSlot}

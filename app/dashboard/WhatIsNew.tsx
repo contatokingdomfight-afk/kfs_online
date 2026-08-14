@@ -7,6 +7,7 @@ import { MODALITY_LABELS } from "@/lib/lesson-utils";
 type WeekTheme = {
   modality: string;
   title: string;
+  description: string | null;
   course_id: string | null;
   video_url: string | null;
 };
@@ -97,6 +98,19 @@ export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, label
                   <p style={{ margin: "8px 0 12px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
                     {weekTheme.title}
                   </p>
+                  {weekTheme.description ? (
+                    <p
+                      style={{
+                        margin: "0 0 12px 0",
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        color: "var(--text-secondary)",
+                        lineHeight: 1.55,
+                        whiteSpace: "pre-line",
+                      }}
+                    >
+                      {weekTheme.description}
+                    </p>
+                  ) : null}
                   {(weekTheme.course_id || weekTheme.video_url) && (
                     weekTheme.course_id ? (
                       <Link

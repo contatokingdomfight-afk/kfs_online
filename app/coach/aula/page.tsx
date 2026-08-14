@@ -83,12 +83,12 @@ export default async function CoachAulaPage({
 
   const occurrenceYmd = selectedLesson?.occurrenceDate ?? "";
 
-  let weekThemeThisLesson: { title: string; course_id: string | null; video_url: string | null } | null = null;
+  let weekThemeThisLesson: { title: string; description: string | null; course_id: string | null; video_url: string | null } | null = null;
   if (selectedLesson?.modality && occurrenceYmd) {
     const weekStart = getWeekStartMondayForDateInLisbon(occurrenceYmd);
     const { data: wt } = await supabase
       .from("WeekTheme")
-      .select("title, course_id, video_url")
+      .select("title, description, course_id, video_url")
       .eq("week_start", weekStart)
       .eq("modality", selectedLesson.modality)
       .maybeSingle();
@@ -213,6 +213,19 @@ export default async function CoachAulaPage({
                     {t("coachAulaWeekThemeTitle")}
                   </h2>
                   <p style={{ margin: "0 0 10px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>{weekThemeThisLesson.title}</p>
+                  {weekThemeThisLesson.description ? (
+                    <p
+                      style={{
+                        margin: "0 0 10px 0",
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        color: "var(--text-secondary)",
+                        lineHeight: 1.55,
+                        whiteSpace: "pre-line",
+                      }}
+                    >
+                      {weekThemeThisLesson.description}
+                    </p>
+                  ) : null}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {weekThemeThisLesson.course_id ? (
                       <Link href={`/coach/biblioteca/${weekThemeThisLesson.course_id}`} className="btn btn-secondary" style={{ textDecoration: "none", minHeight: 40 }}>

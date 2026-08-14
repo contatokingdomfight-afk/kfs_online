@@ -1,19 +1,8 @@
 import Link from "next/link";
-
-const BELT_COLORS: Record<string, string> = {
-  WHITE: "#e5e5e5",
-  YELLOW: "#facc15",
-  ORANGE: "#f97316",
-  GREEN: "#22c55e",
-  BLUE: "#3b82f6",
-  PURPLE: "#a855f7",
-  BROWN: "#92400e",
-  BLACK: "#1f2937",
-  BLACK_1: "#1f2937",
-  BLACK_2: "#1f2937",
-  BLACK_3: "#1f2937",
-  GOLDEN: "#f59e0b",
-};
+import { getBeltColorForCode } from "@/lib/belt-colors";
+import { Avatar } from "@/components/avatar/Avatar";
+import type { Modality } from "@/components/avatar/avatar-utils";
+import type { AvatarCosmeticConfig } from "@/lib/avatar-cosmetics";
 
 type Props = {
   studentName: string | null;
@@ -27,6 +16,9 @@ type Props = {
   hasPerformanceTracking: boolean;
   t: (key: string) => string;
   beltLabel: string;
+  /** Personalização do avatar de gamificação; `null` = ainda sem Athlete/personalização. */
+  avatarConfig?: AvatarCosmeticConfig | null;
+  avatarModality?: Modality;
 };
 
 export function WarriorPanel({
@@ -41,13 +33,15 @@ export function WarriorPanel({
   hasPerformanceTracking,
   t,
   beltLabel,
+  avatarConfig,
+  avatarModality = "boxing",
 }: Props) {
   if (!hasCheckIn && !hasPerformanceTracking) return null;
 
   const xpPct = nextLevelXP > 0 ? Math.min(100, (currentXP / nextLevelXP) * 100) : 0;
   const attendancePct = attendanceGoal > 0 ? Math.min(100, (currentMonthCount / attendanceGoal) * 100) : 0;
   const goalReached = currentMonthCount >= attendanceGoal;
-  const beltColor = currentBelt ? BELT_COLORS[currentBelt] ?? "var(--primary)" : "var(--primary)";
+  const beltColor = getBeltColorForCode(currentBelt);
 
   return (
     <section>
@@ -74,23 +68,33 @@ export function WarriorPanel({
           {hasPerformanceTracking && (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                <span
-                  style={{
-                    display: "inline-block",
-                    padding: "6px 14px",
-                    borderRadius: "var(--radius-full)",
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontWeight: 600,
-                    color: "#fff",
-                    backgroundColor: beltColor,
-                    textShadow: "0 1px 2px rgba(0,0,0,0.2)",
-                  }}
-                >
-                  {beltLabel}
-                </span>
-                <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-                  {currentXP.toLocaleString()} / {nextLevelXP.toLocaleString()} XP
-                </span>
+                {avatarConfig && (
+                  <Avatar
+                    modality={avatarModality}
+                    avatarConfig={avatarConfig}
+                    beltColor={beltColor}
+                    className="w-12 shrink-0"
+                  />
+                )}
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      padding: "6px 14px",
+                      borderRadius: "var(--radius-full)",
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontWeight: 600,
+                      color: "#fff",
+                      backgroundColor: beltColor,
+                      textShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    {beltLabel}
+                  </span>
+                  <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+                    {currentXP.toLocaleString()} / {nextLevelXP.toLocaleString()} XP
+                  </span>
+                </div>
               </div>
               <div style={{ marginBottom: 8 }}>
                 <p style={{ margin: "0 0 6px 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>

@@ -10,6 +10,8 @@ import { SchoolPaymentPendingModal } from "./SchoolPaymentPendingModal";
 import { SchoolTransferPaymentCard } from "@/components/payments/SchoolTransferPaymentCard";
 import { getFamilyContext } from "@/lib/family-context";
 import { resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
+import { studentHasPaymentUnlock } from "@/lib/family-payment-gate";
+import { syncPendingInsuranceAmounts } from "@/lib/sync-pending-insurance-amount";
 
 export const dynamic = "force-dynamic";
 
@@ -42,15 +44,19 @@ export default async function DashboardFinanceiroPage({
     createdAt: string;
   }[] = [];
   let awaitingSchoolPayment = false;
+  let pendingIndividualFees = false;
   let familyRole: "TITULAR" | "MEMBER" | null = null;
   let onboardingFees = null;
 
   if (studentId) {
     const { data: student } = await supabase
       .from("Student")
-      .select("planId")
+      .select("planId, adminGrantedFullAccess")
       .eq("id", studentId)
       .single();
+    const adminFree = Boolean((student as { adminGrantedFullAccess?: boolean } | null)?.adminGrantedFullAccess);
+    const hasPaymentUnlock = await studentHasPaymentUnlock(supabase, studentId, adminFree);
+
     if (student?.planId) {
       const { data: planRow } = await supabase
         .from("Plan")
@@ -72,13 +78,16 @@ export default async function DashboardFinanceiroPage({
       }
     }
 
-    const { data: paymentRows } = await supabase
+    onboardingFees = await getStudentOnboardingFeesState(supabase, studentId);
+    await syncPendingInsuranceAmounts(supabase, { studentId });
+
+    const { data: paymentRowsAfterSync } = await supabase
       .from("Payment")
       .select("id, amount, status, referenceMonth, referenceYear, paymentType, createdAt")
       .eq("studentId", studentId)
       .order("createdAt", { ascending: false })
       .limit(24);
-    payments = (paymentRows ?? []).map((p) => ({
+    payments = (paymentRowsAfterSync ?? []).map((p) => ({
       id: p.id,
       referenceMonth: (p.referenceMonth as string | null) ?? null,
       referenceYear: ((p as { referenceYear?: string | null }).referenceYear as string | null) ?? null,
@@ -88,8 +97,9 @@ export default async function DashboardFinanceiroPage({
       createdAt: String(p.createdAt),
     }));
 
-    onboardingFees = await getStudentOnboardingFeesState(supabase, studentId);
-    awaitingSchoolPayment = payments.length > 0 && !payments.some((p) => p.status === "PAID");
+    const hasPendingPayments = payments.length > 0 && !payments.some((p) => p.status === "PAID");
+    pendingIndividualFees = hasPendingPayments;
+    awaitingSchoolPayment = hasPendingPayments && !hasPaymentUnlock;
   }
 
   const loc = locale === "en" ? "en" : "pt";
@@ -134,6 +144,15 @@ export default async function DashboardFinanceiroPage({
         </div>
       )}
 
+      {!awaitingSchoolPayment && familyRole === "MEMBER" && pendingIndividualFees && (
+        <div
+          role="status"
+          className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 text-sm text-text-primary"
+        >
+          {t("schoolPaymentFamilyMemberFeesBanner")}
+        </div>
+      )}
+
       {onboardingFees && (onboardingFees.showEnrollment || onboardingFees.showInsurance) && (
         <StudentOnboardingFeesNotice
           enrollmentAmount={onboardingFees.enrollmentAmount}
@@ -141,6 +160,7 @@ export default async function DashboardFinanceiroPage({
           showEnrollment={onboardingFees.showEnrollment}
           showInsurance={onboardingFees.showInsurance}
           locale={locale === "en" ? "en" : "pt"}
+          isFamilyMember={familyRole === "MEMBER"}
         />
       )}
 
@@ -149,7 +169,7 @@ export default async function DashboardFinanceiroPage({
         <h2 className="text-base font-bold text-text-primary mb-3">{t("financePlanSection")}</h2>
         {plan && familyRole === "MEMBER" ? (
           <p className="text-text-primary font-semibold">
-            {plan.name} · {locale === "en" ? "no tuition of your own (paid by the plan holder)" : "sem mensalidade própria (paga pelo titular)"}
+            {plan.name} · {t("financeFamilyMemberPlanLine")}
           </p>
         ) : plan ? (
           <p className="text-text-primary font-semibold">
@@ -191,9 +211,11 @@ export default async function DashboardFinanceiroPage({
             {locale === "en" ? "Card payment" : "Pagamento por cartão"}
           </h2>
           <p className="text-sm text-text-secondary">
-            {locale === "en"
-              ? "Family plan billing is handled by the school office, not self-service card checkout. Contact us to arrange payment."
-              : "A mensalidade do plano família é gerida pela secretaria, não por assinatura individual com cartão. Fala connosco para tratar do pagamento."}
+            {familyRole === "MEMBER"
+              ? t("financeFamilyMemberCardNote")
+              : locale === "en"
+                ? "Family plan billing is handled by the school office, not self-service card checkout. Contact us to arrange payment."
+                : "A mensalidade do plano família é gerida pela secretaria, não por assinatura individual com cartão. Fala connosco para tratar do pagamento."}
           </p>
         </section>
       )}
