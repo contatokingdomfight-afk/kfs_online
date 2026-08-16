@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useFormState, useFormStatus } from "react-dom";
 import { saveCoachStudentEvaluation } from "@/app/coach/save-student-evaluation-action";
 import {
@@ -18,6 +19,8 @@ const SCORES_1_5 = [1, 2, 3, 4, 5];
 const SCORES_1_10 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const MIN_SCORE = 1;
 const MAX_SCORE = 10;
+/** Acima da MobileAppBottomNav (20_000), sheet «Mais» (20_500) e cookie/PWA (25_000). */
+const EVALUATION_MODAL_Z = 26_000;
 // Primeira avaliação (sem última avaliação para pré-preencher) começa no mínimo:
 // o treinador sobe a partir de 1 os critérios que o aluno já domina.
 const DEFAULT_BASELINE = MIN_SCORE;
@@ -64,10 +67,19 @@ function SubmitEvaluationButton({ onClose }: { onClose: () => void }) {
   const { pending } = useFormStatus();
   return (
     <>
-      <button type="submit" className="btn btn-primary min-h-11 px-5 rounded-lg font-medium disabled:opacity-60" disabled={pending}>
+      <button
+        type="submit"
+        className="btn btn-primary min-h-11 px-5 rounded-lg font-medium disabled:opacity-60 w-full sm:w-auto"
+        disabled={pending}
+      >
         {pending ? "A guardar…" : "Guardar avaliação"}
       </button>
-      <button type="button" onClick={onClose} className="btn min-h-11 px-5 rounded-lg" disabled={pending}>
+      <button
+        type="button"
+        onClick={onClose}
+        className="btn min-h-11 px-5 rounded-lg w-full sm:w-auto"
+        disabled={pending}
+      >
         Fechar
       </button>
     </>
@@ -161,6 +173,11 @@ export function CoachStudentProfileModal(props: Props) {
   initialScoresByModalityRef.current = initialScoresByModality;
 
   const [state, formAction] = useFormState(saveCoachStudentEvaluation, null);
+  const [portalReady, setPortalReady] = useState(false);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   const formRef = useRef<HTMLFormElement>(null);
   const categorySectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -326,17 +343,17 @@ export function CoachStudentProfileModal(props: Props) {
     return JSON.stringify(o);
   }, [scores, touchedIds, criterionIds, selectedModality]);
 
-  return (
+  const modal = (
     <div
       role="dialog"
       aria-modal={true}
       aria-labelledby="modal-title"
-      className="coach-profile-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      className="coach-profile-modal-overlay fixed inset-0 flex flex-col bg-black/50 sm:items-center sm:justify-center sm:p-4"
+      style={{ zIndex: EVALUATION_MODAL_Z }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className={`card coach-profile-modal-card relative bg-[var(--bg)] border border-[var(--border)] rounded-2xl shadow-xl flex flex-col max-h-[90vh] w-full overflow-hidden ${useDynamicForm ? "max-w-[100vw] md:max-w-[900px]" : ""}`}
-        style={!useDynamicForm ? { maxWidth: "min(480px, 100%)" } : undefined}
+        className={`card coach-profile-modal-card relative bg-[var(--bg)] border border-[var(--border)] shadow-xl flex flex-col min-h-0 w-full overflow-hidden flex-1 max-h-[100dvh] sm:flex-none sm:max-h-[90vh] sm:rounded-2xl rounded-none ${useDynamicForm ? "sm:max-w-[900px]" : "sm:max-w-[min(480px,100%)]"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`
@@ -649,13 +666,19 @@ export function CoachStudentProfileModal(props: Props) {
           </div>
         </div>
 
-        <div className="shrink-0 sticky bottom-0 border-t border-[var(--border)] bg-[var(--bg)] p-4 flex flex-wrap items-center justify-end gap-3">
+        <div
+          className="shrink-0 border-t border-[var(--border)] bg-[var(--bg)] px-4 pt-3 flex flex-col-reverse sm:flex-row sm:flex-wrap sm:items-center sm:justify-end gap-3"
+          style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))" }}
+        >
           <SubmitEvaluationButton onClose={onClose} />
         </div>
         </form>
       </div>
     </div>
   );
+
+  if (!portalReady) return null;
+  return createPortal(modal, document.body);
 }
 
 type CriterionRowProps = {

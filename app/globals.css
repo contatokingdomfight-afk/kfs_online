@@ -1053,13 +1053,16 @@
   }
 }
 
-/* Modal Perfil e avaliação (coach): mais largura no mobile */
-@media (max-width: 480px) {
+/* Modal Perfil e avaliação (coach): ecrã inteiro no telemóvel; z-index definido no componente (portal). */
+@media (max-width: 639px) {
   .coach-profile-modal-overlay {
-    padding: 10px !important;
+    padding: 0 !important;
   }
   .coach-profile-modal-card {
     max-width: 100% !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
   }
 }
 
