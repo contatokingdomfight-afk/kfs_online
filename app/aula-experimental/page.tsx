@@ -11,8 +11,22 @@ import {
 } from "@/lib/lesson-occurrences";
 import { FormularioExperimental } from "./FormularioExperimental";
 import { getDefaultOnboardingSchoolId, sortSchoolsForOnboarding } from "@/lib/onboarding-default-school";
+import { SCHOOL_PUBLIC_CONTACT } from "@/lib/school-contact";
 
-type SearchParams = Promise<{ sucesso?: string }>;
+type SearchParams = Promise<{ sucesso?: string; data?: string; hora?: string }>;
+
+function ymdToPtDate(ymd: string): string {
+  const [y, m, d] = ymd.split("-");
+  if (!y || !m || !d) return ymd;
+  return `${d}/${m}/${y}`;
+}
+
+function buildTrialWhatsAppUrl(phone: string, data?: string, hora?: string): string {
+  const digits = phone.replace(/\D/g, "");
+  const quando = data && hora ? `no dia ${ymdToPtDate(data)} às ${hora} horas` : "";
+  const message = `Olá! Gostaria de confirmar a minha aula experimental${quando ? " " + quando : ""}!`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
 
 function addDaysYmd(ymd: string, days: number): string {
   const [y, m, d] = ymd.split("-").map(Number);
@@ -26,6 +40,7 @@ export type LessonSlot = { id: string; occurrenceDate: string; label: string };
 export default async function AulaExperimentalPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const sucesso = params.sucesso === "1";
+  const whatsappUrl = buildTrialWhatsAppUrl(SCHOOL_PUBLIC_CONTACT.phone, params.data, params.hora);
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} backHref="/" backLabel="← Voltar à página inicial" />;
@@ -96,7 +111,16 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
           <p className="text-mobile-base text-center mb-6" style={{ color: "var(--text-secondary)", lineHeight: 1.5 }}>
             Obrigado! A tua inscrição para a aula experimental foi registada. Entraremos em contacto em breve para confirmar.
           </p>
-          <Link href="/" className="btn btn-primary w-full" style={{ textAlign: "center", textDecoration: "none" }}>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-primary w-full"
+            style={{ textAlign: "center", textDecoration: "none", display: "block", marginBottom: "12px" }}
+          >
+            Fale connosco no WhatsApp
+          </a>
+          <Link href="/" className="btn btn-secondary w-full" style={{ textAlign: "center", textDecoration: "none" }}>
             Voltar ao início
           </Link>
         </div>

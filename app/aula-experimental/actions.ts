@@ -38,7 +38,7 @@ export async function submitTrialRequest(
 
   const { data: lesson } = await supabase
     .from("Lesson")
-    .select("id, date, modality, weekday, schoolId, isOneOff, offerTrialBooking")
+    .select("id, date, modality, weekday, schoolId, isOneOff, offerTrialBooking, startTime")
     .eq("id", lessonId)
     .single();
 
@@ -85,5 +85,7 @@ export async function submitTrialRequest(
   if (error) return { error: error.message };
 
   revalidatePath("/aula-experimental");
-  redirect("/aula-experimental?sucesso=1");
+  const startTime = (lesson as { startTime?: string | null }).startTime ?? "";
+  const params = new URLSearchParams({ sucesso: "1", data: occurrenceYmd, hora: startTime });
+  redirect(`/aula-experimental?${params.toString()}`);
 }
