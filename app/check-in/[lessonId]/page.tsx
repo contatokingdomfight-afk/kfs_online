@@ -6,7 +6,9 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getPlanAccess } from "@/lib/plan-access";
+import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
 import { resolveOccurrenceYmd } from "@/lib/resolve-check-in-occurrence";
+import { SCHOOL_PUBLIC_CONTACT } from "@/lib/school-contact";
 import { CheckInFlow } from "./CheckInFlow";
 
 export const dynamic = "force-dynamic";
@@ -130,6 +132,49 @@ export default async function CheckInPage({ params, searchParams }: Props) {
     );
   }
 
+  let monthlyLimit: { used: number; limit: number; remaining: number } | null = null;
+  if (planAccess.maxCheckInsPerMonth !== null) {
+    const referenceMonth = occ.ymd.slice(0, 7);
+    const monthly = await getMonthlyCheckInLimit(
+      supabase,
+      studentId,
+      planAccess.maxCheckInsPerMonth,
+      referenceMonth,
+      lessonId
+    );
+    if (monthly.limit !== null) {
+      monthlyLimit = { used: monthly.used, limit: monthly.limit, remaining: monthly.remaining ?? 0 };
+    }
+    if ((monthly.remaining ?? 0) <= 0) {
+      const digits = SCHOOL_PUBLIC_CONTACT.phone.replace(/\D/g, "");
+      const waMessage =
+        locale === "pt"
+          ? "Olá! Já usei as aulas do meu plano este mês e gostaria de adicionar mais aulas."
+          : "Hi! I've used up my plan's classes for this month and would like to add more classes.";
+      const waUrl = `https://wa.me/${digits}?text=${encodeURIComponent(waMessage)}`;
+      return (
+        <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
+          <h1 className="text-mobile-lg" style={{ color: "var(--text-primary)", marginBottom: 12 }}>
+            {t("checkIn")}
+          </h1>
+          <p className="text-mobile-base" style={{ color: "var(--danger)", marginBottom: 24 }}>
+            {locale === "pt"
+              ? `Já usaste as ${monthly.limit} aulas do teu plano este mês.`
+              : `You've already used your plan's ${monthly.limit} classes this month.`}
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
+            <a href={waUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              {locale === "pt" ? "Fale connosco no WhatsApp" : "Message us on WhatsApp"}
+            </a>
+            <Link href="/dashboard" className="btn btn-secondary">
+              {t("goToDashboard")}
+            </Link>
+          </div>
+        </div>
+      );
+    }
+  }
+
   const labels =
     loc === "pt"
       ? {
@@ -177,5 +222,13 @@ export default async function CheckInPage({ params, searchParams }: Props) {
             "In the red zone, your class still counts for training, but not for attendance badges — to avoid rewarding overtraining.",
         };
 
-  return <CheckInFlow lessonId={lessonId} occurrenceDate={occ.ymd} labels={labels} locale={loc} />;
+  return (
+    <CheckInFlow
+      lessonId={lessonId}
+      occurrenceDate={occ.ymd}
+      labels={labels}
+      locale={loc}
+      monthlyLimit={monthlyLimit}
+    />
+  );
 }

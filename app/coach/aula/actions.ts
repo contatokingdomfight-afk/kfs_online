@@ -10,7 +10,31 @@ import { grantBadgesIfEligible } from "@/lib/gamification";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 import { assertStudentEligibleForCoachLesson } from "@/lib/coach-lesson-eligible-students";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { getPlanAccess } from "@/lib/plan-access";
+import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
+async function assertMonthlyCheckInLimitNotExceeded(
+  supabase: SupabaseClient,
+  studentId: string,
+  occurrenceYmd: string,
+  lessonId: string
+): Promise<{ error?: string }> {
+  const planAccess = await getPlanAccess(supabase, studentId);
+  if (planAccess.maxCheckInsPerMonth === null) return {};
+  const referenceMonth = occurrenceYmd.slice(0, 7);
+  const monthly = await getMonthlyCheckInLimit(
+    supabase,
+    studentId,
+    planAccess.maxCheckInsPerMonth,
+    referenceMonth,
+    lessonId
+  );
+  if ((monthly.remaining ?? 0) <= 0) {
+    return { error: `Este aluno já usou as ${monthly.limit} aulas do plano este mês.` };
+  }
+  return {};
+}
 
 async function onAttendanceConfirmed(supabase: SupabaseClient, attendanceId: string): Promise<void> {
   const { data: att } = await supabase
@@ -110,10 +134,24 @@ export async function setAttendanceStatus(
   if (status === "CONFIRMED") {
     const { data: existing } = await supabase
       .from("Attendance")
-      .select("checkedInAt")
+      .select("checkedInAt, status, studentId, lessonId, occurrenceDate")
       .eq("id", attendanceId)
       .maybeSingle();
-    if (!(existing as { checkedInAt?: string | null } | null)?.checkedInAt) {
+    const existingRow = existing as
+      | { checkedInAt?: string | null; status?: string; studentId: string; lessonId: string; occurrenceDate: string }
+      | null;
+    if (!existingRow) return { error: "Presença não encontrada." };
+    if (existingRow.status !== "CONFIRMED") {
+      const adminSupabase = getAdminClientOrNull().client ?? supabase;
+      const limitCheck = await assertMonthlyCheckInLimitNotExceeded(
+        adminSupabase,
+        existingRow.studentId,
+        existingRow.occurrenceDate.slice(0, 10),
+        existingRow.lessonId
+      );
+      if (limitCheck.error) return limitCheck;
+    }
+    if (!existingRow.checkedInAt) {
       updatePayload.checkedInAt = new Date().toISOString();
     }
   }
@@ -176,6 +214,11 @@ export async function coachCheckInStudent(
     .eq("studentId", studentId)
     .eq("occurrenceDate", occ)
     .maybeSingle();
+
+  if ((existing as { status?: string } | null)?.status !== "CONFIRMED") {
+    const limitCheck = await assertMonthlyCheckInLimitNotExceeded(adminSupabase, studentId, occ, lessonId);
+    if (limitCheck.error) return limitCheck;
+  }
 
   let attendanceId: string;
 

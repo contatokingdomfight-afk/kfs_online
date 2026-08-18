@@ -18,6 +18,8 @@ export type PlanAccess = {
   hasPerformanceTracking: boolean;
   hasCheckIn: boolean;
   maxCheckInsPerDay: 0 | 1 | null; // null = ilimitado
+  /** Limite de check-ins confirmados por mês civil (Europe/Lisbon). null = sem limite mensal. */
+  maxCheckInsPerMonth: number | null;
   hasExclusiveBenefits: boolean;
   allowedModalities: string[];
   primaryModality: string | null;
@@ -40,6 +42,7 @@ export async function getPlanAccess(
     hasPerformanceTracking: false,
     hasCheckIn: false,
     maxCheckInsPerDay: 0,
+    maxCheckInsPerMonth: null,
     hasExclusiveBenefits: false,
     allowedModalities: [],
     primaryModality: null,
@@ -63,7 +66,7 @@ export async function getPlanAccess(
   const { data: plan } = await supabase
     .from("Plan")
     .select(
-      "id, modalityScope, includesDigitalAccess, includes_performance_tracking, includes_check_in, max_check_ins_per_day, includes_exclusive_benefits"
+      "id, modalityScope, includesDigitalAccess, includes_performance_tracking, includes_check_in, max_check_ins_per_day, max_check_ins_per_month, includes_exclusive_benefits"
     )
     .eq("id", subscriptionPlanId)
     .eq("isActive", true)
@@ -122,6 +125,7 @@ export async function getPlanAccess(
     hasPerformanceTracking: (plan.includes_performance_tracking ?? true) === true,
     hasCheckIn: (plan.includes_check_in ?? true) === true,
     maxCheckInsPerDay,
+    maxCheckInsPerMonth: (plan as { max_check_ins_per_month?: number | null }).max_check_ins_per_month ?? null,
     hasExclusiveBenefits: plan.includes_exclusive_benefits === true,
     allowedModalities,
     primaryModality,

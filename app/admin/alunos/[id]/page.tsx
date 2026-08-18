@@ -23,9 +23,11 @@ import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
 import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
 import { SchoolAssistantBadge } from "@/components/SchoolAssistantBadge";
 import { StudentInsuranceSection } from "./StudentInsuranceSection";
+import { StudentExtraSessionsSection } from "./StudentExtraSessionsSection";
+import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { formatInTimeZone } from "date-fns-tz";
-import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
+import { LISBON_TZ, currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { getFamilyContext } from "@/lib/family-group";
 import { computeFamilyGroupMonthlyTuition, type FamilyPricingBreakdown } from "@/lib/family-tuition";
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
@@ -210,6 +212,37 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     evaluationConfigByModality[m.code] = allConfigs.get(m.code) ?? null;
   }
   const planAccess = await getPlanAccess(supabase, studentId);
+
+  let extraSessionsData: {
+    planName: string | null;
+    currentReferenceMonth: string;
+    used: number;
+    limit: number;
+    remaining: number;
+    extraGrants: Array<{ id: string; referenceMonth: string; quantity: number; note: string | null }>;
+  } | null = null;
+  if (planAccess.maxCheckInsPerMonth !== null) {
+    const currentReferenceMonth = currentReferenceMonthLisbon(new Date());
+    const [{ data: subscribedPlan }, monthly, { data: extraRows }] = await Promise.all([
+      supabase.from("Plan").select("name").eq("id", planAccess.currentPlanId ?? "").maybeSingle(),
+      getMonthlyCheckInLimit(supabase, studentId, planAccess.maxCheckInsPerMonth, currentReferenceMonth),
+      supabase
+        .from("StudentExtraSessions")
+        .select("id, referenceMonth, quantity, note")
+        .eq("studentId", studentId)
+        .eq("referenceMonth", currentReferenceMonth)
+        .order("createdAt", { ascending: false }),
+    ]);
+    extraSessionsData = {
+      planName: (subscribedPlan as { name?: string } | null)?.name ?? null,
+      currentReferenceMonth,
+      used: monthly.used,
+      limit: monthly.limit ?? planAccess.maxCheckInsPerMonth,
+      remaining: monthly.remaining ?? 0,
+      extraGrants: (extraRows ?? []) as Array<{ id: string; referenceMonth: string; quantity: number; note: string | null }>,
+    };
+  }
+
   const modalitiesForEvaluate = filterModalitiesForStudentEvaluation(
     modalityRows ?? [],
     evaluationConfigByModality,
@@ -544,6 +577,19 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
         defaultPolicyReference={insuranceSettings.policyReference ?? ""}
         todayYmd={todayYmd}
       />
+
+      {extraSessionsData && (
+        <StudentExtraSessionsSection
+          studentId={studentId}
+          planName={extraSessionsData.planName}
+          maxCheckInsPerMonth={planAccess.maxCheckInsPerMonth}
+          currentReferenceMonth={extraSessionsData.currentReferenceMonth}
+          used={extraSessionsData.used}
+          limit={extraSessionsData.limit}
+          remaining={extraSessionsData.remaining}
+          extraGrants={extraSessionsData.extraGrants}
+        />
+      )}
 
       <details
         open

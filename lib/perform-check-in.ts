@@ -6,6 +6,7 @@ import { grantBadgesIfEligible } from "@/lib/gamification";
 import { createPresenceConfirmedNotification } from "@/lib/notifications/in-app";
 import { sendCheckInConfirmation } from "@/lib/notifications/email";
 import { getPlanAccess } from "@/lib/plan-access";
+import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import {
   isWithinLessonCheckInWindow,
@@ -121,6 +122,22 @@ export async function performCheckIn(
       .neq("lessonId", lessonId);
     if ((otherConfirmed ?? 0) >= 1) {
       return { error: "Só podes fazer um check-in por dia no teu plano." };
+    }
+  }
+
+  if (planAccess.maxCheckInsPerMonth !== null) {
+    const referenceMonth = occurrenceYmd.slice(0, 7);
+    const monthly = await getMonthlyCheckInLimit(
+      supabase,
+      studentId,
+      planAccess.maxCheckInsPerMonth,
+      referenceMonth,
+      lessonId
+    );
+    if ((monthly.remaining ?? 0) <= 0) {
+      return {
+        error: `Já usaste as ${monthly.limit} aulas do teu plano este mês. Fala com a secretaria para adicionares mais aulas.`,
+      };
     }
   }
 

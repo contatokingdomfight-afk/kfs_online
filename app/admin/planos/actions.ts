@@ -29,6 +29,8 @@ export async function createPlan(
   const includesCheckIn = formData.get("includes_check_in") === "on" || formData.get("includes_check_in") === "true";
   const maxCheckInsStr = (formData.get("max_check_ins_per_day") as string)?.trim();
   const maxCheckInsPerDay = maxCheckInsStr === "" || maxCheckInsStr === "unlimited" ? null : parseInt(maxCheckInsStr, 10);
+  const maxCheckInsPerMonthStr = (formData.get("max_check_ins_per_month") as string)?.trim();
+  const maxCheckInsPerMonth = maxCheckInsPerMonthStr === "" ? null : parseInt(maxCheckInsPerMonthStr, 10);
   const includesExclusiveBenefits = formData.get("includes_exclusive_benefits") === "on" || formData.get("includes_exclusive_benefits") === "true";
 
   if (!name) return { error: "Nome do plano é obrigatório." };
@@ -37,6 +39,9 @@ export async function createPlan(
   if (isNaN(price) || price < 0) return { error: "Preço mensal deve ser um número ≥ 0." };
   if (!MODALITY_SCOPES.includes(modalityScope as (typeof MODALITY_SCOPES)[number])) {
     return { error: "Âmbito de modalidade inválido." };
+  }
+  if (maxCheckInsPerMonth !== null && (isNaN(maxCheckInsPerMonth) || maxCheckInsPerMonth < 1)) {
+    return { error: "Limite mensal de check-ins deve ser um número ≥ 1, ou vazio para sem limite." };
   }
 
   const supabase = createAdminClient();
@@ -56,6 +61,7 @@ export async function createPlan(
     includes_performance_tracking: includesPerformance,
     includes_check_in: includesCheckIn,
     max_check_ins_per_day: maxCheckInsPerDay,
+    max_check_ins_per_month: maxCheckInsPerMonth,
     includes_exclusive_benefits: includesExclusiveBenefits,
     createdAt: now,
     updatedAt: now,
@@ -92,6 +98,8 @@ export async function updatePlan(
   const includesCheckIn = formData.get("includes_check_in") === "on" || formData.get("includes_check_in") === "true";
   const maxCheckInsStr = (formData.get("max_check_ins_per_day") as string)?.trim();
   const maxCheckInsPerDay = maxCheckInsStr === "" || maxCheckInsStr === "unlimited" ? null : parseInt(maxCheckInsStr, 10);
+  const maxCheckInsPerMonthStr = (formData.get("max_check_ins_per_month") as string)?.trim();
+  const maxCheckInsPerMonth = maxCheckInsPerMonthStr === "" ? null : parseInt(maxCheckInsPerMonthStr, 10);
   const includesExclusiveBenefits = formData.get("includes_exclusive_benefits") === "on" || formData.get("includes_exclusive_benefits") === "true";
 
   if (!name) return { error: "Nome do plano é obrigatório." };
@@ -99,6 +107,9 @@ export async function updatePlan(
   if (isNaN(price) || price < 0) return { error: "Preço mensal deve ser um número ≥ 0." };
   if (!MODALITY_SCOPES.includes(modalityScope as (typeof MODALITY_SCOPES)[number])) {
     return { error: "Âmbito de modalidade inválido." };
+  }
+  if (maxCheckInsPerMonth !== null && (isNaN(maxCheckInsPerMonth) || maxCheckInsPerMonth < 1)) {
+    return { error: "Limite mensal de check-ins deve ser um número ≥ 1, ou vazio para sem limite." };
   }
 
   const supabase = createAdminClient();
@@ -116,6 +127,7 @@ export async function updatePlan(
       includes_performance_tracking: includesPerformance,
       includes_check_in: includesCheckIn,
       max_check_ins_per_day: maxCheckInsPerDay,
+      max_check_ins_per_month: maxCheckInsPerMonth,
       includes_exclusive_benefits: includesExclusiveBenefits,
     })
     .eq("id", planId);

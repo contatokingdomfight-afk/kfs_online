@@ -18,7 +18,7 @@ export default async function AdminPlanosEditarPage({ params }: Props) {
 
   const { data: plan, error: planError } = await supabase
     .from("Plan")
-    .select("id, name, description, priceMonthly, includesDigitalAccess, modalityScope, isActive, stripePriceId, schoolId, includes_performance_tracking, includes_check_in, max_check_ins_per_day, includes_exclusive_benefits")
+    .select("id, name, description, priceMonthly, includesDigitalAccess, modalityScope, isActive, stripePriceId, schoolId, includes_performance_tracking, includes_check_in, max_check_ins_per_day, max_check_ins_per_month, includes_exclusive_benefits")
     .eq("id", planId)
     .single();
 
@@ -86,6 +86,7 @@ export default async function AdminPlanosEditarPage({ params }: Props) {
         initialIncludesPerformanceTracking={plan.includes_performance_tracking ?? true}
         initialIncludesCheckIn={plan.includes_check_in ?? true}
         initialMaxCheckInsPerDay={plan.max_check_ins_per_day ?? null}
+        initialMaxCheckInsPerMonth={plan.max_check_ins_per_month ?? null}
         initialIncludesExclusiveBenefits={plan.includes_exclusive_benefits ?? false}
       />
       {planPrices && planPrices.length > 0 && (

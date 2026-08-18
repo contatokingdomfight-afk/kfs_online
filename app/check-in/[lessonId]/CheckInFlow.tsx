@@ -50,14 +50,17 @@ function SubmitRow({ labels }: { labels: Labels }) {
   );
 }
 
+type MonthlyLimit = { used: number; limit: number; remaining: number };
+
 type Props = {
   lessonId: string;
   occurrenceDate: string;
   labels: Labels;
   locale: "pt" | "en";
+  monthlyLimit?: MonthlyLimit | null;
 };
 
-export function CheckInFlow({ lessonId, occurrenceDate, labels, locale }: Props) {
+export function CheckInFlow({ lessonId, occurrenceDate, labels, locale, monthlyLimit }: Props) {
   const initial = useMemo(() => null as CheckInFormState, []);
   const [state, formAction] = useFormState(submitCheckInAction, initial);
 
@@ -82,6 +85,24 @@ export function CheckInFlow({ lessonId, occurrenceDate, labels, locale }: Props)
       <p className="text-mobile-base" style={{ color: "var(--text-secondary)", marginBottom: 16 }}>
         {labels.intro}
       </p>
+
+      {monthlyLimit && (
+        <p
+          className="text-mobile-sm"
+          style={{
+            color: "var(--text-secondary)",
+            marginBottom: 16,
+            padding: "8px 12px",
+            borderRadius: "var(--radius-md)",
+            background: "var(--bg-secondary)",
+            display: "inline-block",
+          }}
+        >
+          {locale === "pt"
+            ? `${monthlyLimit.used} de ${monthlyLimit.limit} aulas usadas este mês · faltam ${monthlyLimit.remaining}`
+            : `${monthlyLimit.used} of ${monthlyLimit.limit} classes used this month · ${monthlyLimit.remaining} left`}
+        </p>
+      )}
       <p className="text-mobile-sm" style={{ color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
         {labels.wellnessHint}
       </p>

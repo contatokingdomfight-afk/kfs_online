@@ -29,6 +29,7 @@ type Props = {
   initialIncludesPerformanceTracking?: boolean;
   initialIncludesCheckIn?: boolean;
   initialMaxCheckInsPerDay?: number | null;
+  initialMaxCheckInsPerMonth?: number | null;
   initialIncludesExclusiveBenefits?: boolean;
 };
 
@@ -45,6 +46,7 @@ export function PlanForm({
   initialIncludesPerformanceTracking = true,
   initialIncludesCheckIn = true,
   initialMaxCheckInsPerDay = null,
+  initialMaxCheckInsPerMonth = null,
   initialIncludesExclusiveBenefits = false,
 }: Props) {
   const action = planId ? updatePlan : createPlan;
@@ -213,6 +215,23 @@ export function PlanForm({
             </option>
           ))}
         </select>
+      </label>
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          Máximo de check-ins por mês
+        </span>
+        <input
+          type="number"
+          name="max_check_ins_per_month"
+          defaultValue={initialMaxCheckInsPerMonth ?? ""}
+          className="input"
+          placeholder="Deixa vazio para sem limite mensal"
+          min={1}
+          step={1}
+        />
+        <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
+          Ex.: Kingdom Week = 5. O check-in é bloqueado ao atingir o limite no mês; a secretaria pode conceder aulas extra na ficha do aluno.
+        </span>
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <input
