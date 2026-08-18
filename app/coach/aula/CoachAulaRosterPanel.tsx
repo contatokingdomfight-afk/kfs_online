@@ -130,6 +130,7 @@ export function CoachAulaRosterPanel({
               preLessonWellness={s.preLessonWellness}
               rpe={s.rpe}
               rpeRecordedAt={s.rpeRecordedAt}
+              monthlyLimit={s.monthlyLimit}
               profile={{
                 name: s.name,
                 email: s.email,

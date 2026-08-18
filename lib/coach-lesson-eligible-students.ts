@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isLessonParticipationAllowedByPlan } from "@/lib/dashboard-lesson-filter";
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { loadFamilyReferencePlanIdByStudent } from "@/lib/family-effective-plan";
+import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
@@ -26,6 +27,8 @@ export type CoachLessonStudentRow = {
   preLessonWellness: { zone: CoachLessonWellnessZone; tooltip: string } | null;
   rpe: number | null;
   rpeRecordedAt: string | null;
+  /** null quando o plano não tem limite mensal de check-ins. */
+  monthlyLimit: { used: number; limit: number; remaining: number } | null;
 };
 
 export type CoachLessonContext = {
@@ -42,6 +45,7 @@ type PlanRow = {
   modalityScope: string | null;
   includes_check_in: boolean | null;
   isActive: boolean | null;
+  max_check_ins_per_month?: number | null;
 };
 
 type StudentRow = {
@@ -168,7 +172,7 @@ export async function loadCoachLessonRoster(
     allPlanIds.length > 0
       ? await supabase
           .from("Plan")
-          .select("id, name, modalityScope, includes_check_in, isActive")
+          .select("id, name, modalityScope, includes_check_in, isActive, max_check_ins_per_month")
           .in("id", allPlanIds)
       : { data: [] as PlanRow[] };
 
@@ -207,6 +211,53 @@ export async function loadCoachLessonRoster(
 
   const eligibleStudents = students.filter((s) => eligibleIds.includes(s.id));
   const userIds = [...new Set(eligibleStudents.map((s) => s.userId))];
+
+  const referenceMonth = currentReferenceMonthLisbon(new Date());
+  const monthlyCapStudentIds = eligibleStudents
+    .filter((s) => (planForStudent(s)?.max_check_ins_per_month ?? null) !== null)
+    .map((s) => s.id);
+
+  const monthlyLimitByStudent = new Map<string, { used: number; limit: number; remaining: number }>();
+  if (monthlyCapStudentIds.length > 0) {
+    const [ry, rm] = referenceMonth.split("-").map(Number);
+    const lastDay = new Date(ry, rm, 0).getDate();
+    const monthStart = `${referenceMonth}-01`;
+    const monthEnd = `${referenceMonth}-${String(lastDay).padStart(2, "0")}`;
+
+    const [{ data: monthAtt }, { data: extraRows }] = await Promise.all([
+      supabase
+        .from("Attendance")
+        .select("studentId")
+        .in("studentId", monthlyCapStudentIds)
+        .eq("status", "CONFIRMED")
+        .gte("occurrenceDate", monthStart)
+        .lte("occurrenceDate", monthEnd),
+      supabase
+        .from("StudentExtraSessions")
+        .select("studentId, quantity")
+        .in("studentId", monthlyCapStudentIds)
+        .eq("referenceMonth", referenceMonth),
+    ]);
+
+    const usedByStudent = new Map<string, number>();
+    for (const row of monthAtt ?? []) {
+      const sid = (row as { studentId: string }).studentId;
+      usedByStudent.set(sid, (usedByStudent.get(sid) ?? 0) + 1);
+    }
+    const extraByStudent = new Map<string, number>();
+    for (const row of extraRows ?? []) {
+      const r = row as { studentId: string; quantity: number };
+      extraByStudent.set(r.studentId, (extraByStudent.get(r.studentId) ?? 0) + (r.quantity ?? 0));
+    }
+
+    for (const s of eligibleStudents) {
+      if (!monthlyCapStudentIds.includes(s.id)) continue;
+      const base = planForStudent(s)?.max_check_ins_per_month ?? 0;
+      const limit = base + (extraByStudent.get(s.id) ?? 0);
+      const used = usedByStudent.get(s.id) ?? 0;
+      monthlyLimitByStudent.set(s.id, { used, limit, remaining: Math.max(0, limit - used) });
+    }
+  }
 
   const [{ data: users }, { data: profiles }, { data: athletes }, { data: wellnessList }] = await Promise.all([
     supabase.from("User").select("id, name, email, avatarUrl").in("id", userIds),
@@ -319,6 +370,7 @@ export async function loadCoachLessonRoster(
       preLessonWellness,
       rpe: att?.rpe != null ? Number(att.rpe) : null,
       rpeRecordedAt: att?.rpeRecordedAt ?? null,
+      monthlyLimit: monthlyLimitByStudent.get(s.id) ?? null,
     };
   });
 

@@ -28,6 +28,7 @@ type Props = {
   rpe: number | null;
   rpeRecordedAt: string | null;
   canEvaluate?: boolean;
+  monthlyLimit?: { used: number; limit: number; remaining: number } | null;
 };
 
 export function AttendanceRow({
@@ -48,6 +49,7 @@ export function AttendanceRow({
   rpe,
   rpeRecordedAt,
   canEvaluate = true,
+  monthlyLimit,
 }: Props) {
   const router = useRouter();
   const [statusState, statusAction] = useFormState(setAttendanceStatusFromForm, null as { error?: string } | null);
@@ -119,6 +121,18 @@ export function AttendanceRow({
               </span>
             )}
             <span className={`coach-attendance-status ${statusClass}`}>{statusLabel}</span>
+            {monthlyLimit && (
+              <span
+                className="coach-attendance-tag"
+                title={`${monthlyLimit.used} de ${monthlyLimit.limit} aulas usadas este mês`}
+                style={{
+                  backgroundColor: monthlyLimit.remaining > 0 ? "var(--bg-secondary)" : "var(--danger)",
+                  color: monthlyLimit.remaining > 0 ? "var(--text-secondary)" : "#fff",
+                }}
+              >
+                {monthlyLimit.remaining > 0 ? `Restam ${monthlyLimit.remaining} este mês` : "Limite mensal atingido"}
+              </span>
+            )}
           </div>
           {studentName && <span className="coach-attendance-email">{studentEmail}</span>}
           {(zoneShort || rpe != null) && (
