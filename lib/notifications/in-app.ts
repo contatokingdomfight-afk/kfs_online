@@ -35,6 +35,14 @@ export async function createInAppNotification(supabase: SupabaseClient, payload:
   if (payload.href) row.href = payload.href;
   const { error } = await supabase.from("Notification").insert(row);
   if (error) console.error("[createInAppNotification]", error.message, payload.type, payload.studentId);
+  else {
+    try {
+      const { sendWebPushForStudentNotification } = await import("@/lib/push/notify-student");
+      void sendWebPushForStudentNotification(supabase, payload);
+    } catch {
+      /* push opcional */
+    }
+  }
 }
 
 type CoachInsertPayload = {

@@ -10,6 +10,8 @@ type Props = {
   confirmedAtTemplate: string;
   thankYou: string;
   backDashboard: string;
+  postTrainingHref?: string;
+  postTrainingLabel?: string;
 };
 
 export function CheckInSuccessModal({
@@ -19,6 +21,8 @@ export function CheckInSuccessModal({
   confirmedAtTemplate,
   thankYou,
   backDashboard,
+  postTrainingHref,
+  postTrainingLabel,
 }: Props) {
   const timeStr = new Date(checkedInAt).toLocaleTimeString(locale === "en" ? "en-GB" : "pt-PT", {
     hour: "2-digit",
@@ -73,6 +77,15 @@ export function CheckInSuccessModal({
         <p className="text-mobile-sm" style={{ color: "var(--text-secondary)", margin: "0 0 clamp(20px, 5vw, 24px) 0" }}>
           {thankYou}
         </p>
+        {postTrainingHref && postTrainingLabel ? (
+          <Link
+            href={postTrainingHref}
+            className="btn btn-secondary"
+            style={{ display: "inline-block", width: "100%", maxWidth: 280, marginBottom: 12 }}
+          >
+            {postTrainingLabel}
+          </Link>
+        ) : null}
         <Link
           href="/dashboard"
           className="btn btn-primary"

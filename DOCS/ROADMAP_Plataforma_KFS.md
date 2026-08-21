@@ -17,7 +17,7 @@
 | 4 | Avaliação (dados) | Completar **critérios dos 5 pilares** na BD por modalidade (foco **BJJ / MMA** onde faltar) — o Admin **Avaliação** já existe |
 | 5 | Bem-estar | **Biometria** além do autorrelato (dispositivos / métricas) — v1 check-in + agregados já feitos |
 | 6 | Mobile | **PWA** no site (feito — marca 2026, `kfs-app-icon.png`, splash preto — [`PWA.md`](PWA.md)). **Capacitor:** scaffold + OAuth (`CAPACITOR.md`); **por fazer:** builds assinados, App Links, **lojas** |
-| 7 | Notificações | **Push** no browser *(in-app na plataforma, incl. eventos — ver `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`)* |
+| 7 | Notificações | **Push Web (VAPID, gratuito)** — toggle perfil + mirror in-app; in-app na plataforma — ver `DOCS/memory.md` |
 | 8 | Qualidade | **E2E** (ex. Playwright); relatórios/alertas no financeiro admin; **Lighthouse** em produção |
 | 9 | Bem-estar / check-in | **Peso após o treino** no fluxo de recolha biométrica do check-in (além do pré-aula) — permitir estimar **variação de peso/líquido por sessão** e **médias por aluno** (com contexto: modalidade, duração, hidratação já recolhida) |
 | 10 | Avaliação física / aluno | **Antropometria alargada na ficha (anamnese)** + **avatar corporal** derivado dos dados (MVP 2D/SVG ilustrativo; futuro: ajuste de atributos / cenários de meta); ver §2c |
@@ -49,7 +49,7 @@
 | Performance, radar SVG, missões, conquistas, rank (v1) | Feito | `get_leaderboard_filtered` + `get_leaderboard_my_school` (migrações `20260402120000` / `20260412120000`); `lib/leaderboard.ts` (fallback se RPC ausente); filtros em `/dashboard/rank` |
 | Metas assiduidade, IMC, metas avaliação | Feito | Admin configurações + dashboard |
 | Bem-estar (hub, RPE, dores, peso, benchmarks) | Feito | `memory.md` §3.15 |
-| «Ver como melhorar» → biblioteca | **Por fazer** | Tabela «Resumo executivo», prioridade 3 |
+| «Ver como melhorar» → biblioteca | **Feito** | `lib/library-improve-suggestions.ts`; links dashboard + performance |
 
 ---
 
@@ -83,7 +83,7 @@ Objetivo: enriquecer a ficha com **circunferências e medidas** que permitam um 
 | Confirmação coach, RSVP aula livre | Feito | |
 | Email presença confirmada + lembrete amanhã | Feito | `lib/notifications/email.ts`, cron `lesson-reminders` |
 | Admin lista presenças | Feito | `/admin/presenca` |
-| **Peso pós-treino** (check-in biométrico) | **Por fazer** | Campo opcional após a aula (app ou janela temporal pós-check-in); BD (`PreLessonWellness` estende ou registo pós-aula ligado a `Attendance` + `occurrenceDate`); agregados no hub bem-estar / visão coach — média de **Δ peso** por sessão (proxy perda de líquido) e tendência por aluno |
+| **Peso pós-treino** (check-in biométrico) | **Feito** | Campo opcional no RPE pós-aula + `Attendance.postWeightKg`; migração `20260821160100_attendance_post_weight.sql` |
 
 ---
 
@@ -93,7 +93,7 @@ Objetivo: enriquecer a ficha com **circunferências e medidas** que permitam um 
 |------|--------|--------|
 | Lista, convite, edição, planos, acesso total | Feito | |
 | **Definir Professor / Administrador** | Feito | `promoteStudentToRole` — qualquer papel atual; no-op se igual; `AdminAlunoQuickActions` em `/admin/alunos/[id]` e `/coach/alunos/[id]` (admin) |
-| **Ecrã e modelo de permissões (RBAC)** | **Por fazer** | Ver [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](./PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md): permissões v1, guards no servidor, UI `/admin`, alinhamento RLS |
+| **Ecrã e modelo de permissões (RBAC)** | **Feito (v1)** | `/admin/permissoes`, migração `20260821160000_admin_rbac_permissions.sql`; guards layout + `lib/permissions/assert.ts` |
 
 ---
 

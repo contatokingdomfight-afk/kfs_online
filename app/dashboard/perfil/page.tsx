@@ -7,6 +7,7 @@ import { getTranslations } from "@/lib/i18n";
 import { PerfilForm } from "./PerfilForm";
 import { ChangePasswordSection } from "./ChangePasswordSection";
 import { DeleteAccountSection } from "./DeleteAccountSection";
+import { PushNotificationToggle } from "@/components/PushNotificationToggle";
 import { LegalDocumentsSection } from "./LegalDocumentsSection";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
@@ -111,6 +112,7 @@ export default async function DashboardPerfilPage() {
         agreementSignatureName={(agreement as { signatureName?: string | null } | null)?.signatureName ?? null}
       />
       <ChangePasswordSection email={initial.email} locale={locale as "pt" | "en"} />
+      <PushNotificationToggle locale={locale as "pt" | "en"} />
       <DeleteAccountSection locale={locale as "pt" | "en"} />
     </div>
   );

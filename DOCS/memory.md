@@ -268,7 +268,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 
-- RBAC admin: [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md) — planeado; matriz parcial em `lib/permissions/paths.ts`.
+- RBAC admin: [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md) — **v1 implementado** (ago. 2026): catálogo + UI `/admin/permissoes` + guards layout; expandir guards em todas as server actions conforme plano.
 
 - Resumo por área: [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md).
 
@@ -364,4 +364,15 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Julgamento mobile:** placar do round `sticky` no scroll do `main`; `ResponsiveShell` remove `padding-top` quando o header esconde; meta do combate faz scroll normal (`JudgingPanel.tsx`, `arbitration.css`).
 - **Julgamento público:** `/arbitragem` (redirect permanente de `/julgamento`) — ferramenta gratuita sem login (1 juiz, nomes editáveis, estado só no browser); link na homepage como o timer. Plataforma completa em `/coach/arbitragem`.
 - **Consulta de critérios (jul. 2026):** tab «Critérios» na subnav; combate `SCHEDULED` mostra lista de critérios + guia 1–5 / 10-Point Must antes de «Iniciar Julgamento» (`ArbitrationCriteriaReference.tsx`); Gestão → perfis listam labels completos.
+
+
+## Entregas produto (ago. 2026 — sprint qualidade)
+
+- **«Ver como melhorar» → biblioteca:** `lib/library-improve-suggestions.ts` mapeia eixos fracos do radar (`tecnico`…`teorico`) para categorias de curso (`TECHNIQUE`, `MINDSET`, `PERFORMANCE`); links no dashboard (`DashboardRestContent`), performance (`EvaluationResultsDashboard`, `PerformanceFighterDashboard`) e ranking de cursos sugeridos por eixo — não só modalidade.
+- **RBAC admin v1:** migração `20260821160000_admin_rbac_permissions.sql` (`AdminPermission`, `UserAdminPermission`, `User.adminUseGranularPermissions`); UI `/admin/permissoes`; guards de rota em `app/admin/layout.tsx` / `app/coach/layout.tsx` (`lib/permissions/paths.ts`); server actions piloto com `lib/permissions/assert.ts` (ex.: planos).
+- **Peso pós-treino:** colunas `Attendance.postWeightKg` / `postWeightRecordedAt` (`20260821160100_attendance_post_weight.sql`); registo opcional no formulário RPE (`/dashboard/bem-estar/rpe`) + atalho após check-in; espelha em `BodyWeightEntry` e `StudentProfile.weightKg`.
+- **Push Web (gratuito):** VAPID (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`); tabela `PushSubscription` (`20260821160200_push_subscriptions.sql`); `/api/push/subscribe`, toggle em `/dashboard/perfil`; handler `push`/`notificationclick` em `public/sw.js`; mirror opcional de notificações in-app (`lib/push/notify-student.ts`). Sem custo de serviço — self-hosted. RLS: `authUserId = (auth.uid())::text`.
+- **Migrações Supabase EU (ago. 2026):** `20260821160000_admin_rbac_permissions`, `20260821160100_attendance_post_weight`, `20260821160200_push_subscriptions` — **aplicadas** em produção.
+- **Qualidade:** Playwright `e2e/public-smoke.spec.ts`, `e2e/critical-flow.spec.ts` (credenciais `PLAYWRIGHT_TEST_*`); Lighthouse mobile `npm run lighthouse:mobile` (`lighthouserc.cjs`); checklist actualizado em [`TESTE_REGRESSAO_PRODUCAO.md`](TESTE_REGRESSAO_PRODUCAO.md).
+- **Fix deploy biblioteca:** `LandscapeVideoOverlay` — cast `ScreenOrientation.lock` para tipos DOM (`7adfd39`).
 

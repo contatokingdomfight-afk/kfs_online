@@ -19,8 +19,14 @@ export type RpeFormState = { error?: string } | null;
 export async function submitRpeAction(_prev: RpeFormState, formData: FormData): Promise<RpeFormState> {
   const attendanceId = String(formData.get("attendanceId") ?? "").trim();
   const rpe = Number(formData.get("rpe"));
+  const rawWeight = formData.get("postWeightKg");
+  const postWeightKg =
+    rawWeight === "" || rawWeight == null ? null : Number(rawWeight);
   if (!attendanceId || !Number.isFinite(rpe) || rpe < 1 || rpe > 10) {
     return { error: "RPE inválido (1–10)." };
+  }
+  if (postWeightKg != null && (!Number.isFinite(postWeightKg) || postWeightKg < 30 || postWeightKg > 250)) {
+    return { error: "Peso pós-treino inválido (30–250 kg)." };
   }
   const studentId = await getCurrentStudentId();
   if (!studentId) return { error: "Sessão inválida." };
@@ -38,14 +44,37 @@ export async function submitRpeAction(_prev: RpeFormState, formData: FormData): 
     return { error: "Só podes registar RPE após presença confirmada." };
   }
 
-  const { error } = await supabase
-    .from("Attendance")
-    .update({ rpe, rpeRecordedAt: new Date().toISOString() })
-    .eq("id", attendanceId);
+  const nowIso = new Date().toISOString();
+  const updatePayload: {
+    rpe: number;
+    rpeRecordedAt: string;
+    postWeightKg?: number;
+    postWeightRecordedAt?: string;
+  } = { rpe, rpeRecordedAt: nowIso };
+
+  if (postWeightKg != null) {
+    updatePayload.postWeightKg = postWeightKg;
+    updatePayload.postWeightRecordedAt = nowIso;
+    const { error: wErr } = await supabase.from("BodyWeightEntry").insert({
+      id: crypto.randomUUID(),
+      studentId,
+      weightKg: postWeightKg,
+      notes: "Pós-treino",
+      recordedAt: ymdDaysAgo(0),
+    });
+    if (wErr) return { error: wErr.message };
+    await supabase
+      .from("StudentProfile")
+      .update({ weightKg: postWeightKg, updatedAt: nowIso })
+      .eq("studentId", studentId);
+  }
+
+  const { error } = await supabase.from("Attendance").update(updatePayload).eq("id", attendanceId);
 
   if (error) return { error: error.message };
   revalidatePath("/dashboard/bem-estar");
   revalidatePath("/dashboard/bem-estar/rpe");
+  revalidatePath("/dashboard/bem-estar/peso");
   return {};
 }
 

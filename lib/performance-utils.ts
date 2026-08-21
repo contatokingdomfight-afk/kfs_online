@@ -9,6 +9,8 @@ export const GENERAL_PERFORMANCE_AXES = [
   { id: "teorico", label: "Teórico" },
 ] as const;
 
+export type GeneralPerformanceAxisId = (typeof GENERAL_PERFORMANCE_AXES)[number]["id"];
+
 const GENERAL_DIMENSION_IDS = ["tecnico", "tatico", "fisico", "mental", "teorico"] as const;
 
 function normalizeCategoryName(nome: string): string {

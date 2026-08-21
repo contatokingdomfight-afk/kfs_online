@@ -231,6 +231,10 @@ export function CheckInFlow({ lessonId, occurrenceDate, labels, locale, monthlyL
           confirmedAtTemplate={labels.confirmedAt}
           thankYou={labels.thankYou}
           backDashboard={labels.backDashboard}
+          postTrainingHref="/dashboard/bem-estar/rpe"
+          postTrainingLabel={
+            locale === "pt" ? "Registar RPE e peso pós-treino" : "Log post-training RPE and weight"
+          }
         />
       )}
     </div>

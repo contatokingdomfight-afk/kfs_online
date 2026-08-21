@@ -17,9 +17,11 @@ type Props = {
   modalityLabel: string;
   occurrenceDate: string;
   saveLabel: string;
+  weightLabel: string;
+  weightOptionalHint: string;
 };
 
-export function RpeQuickForm({ attendanceId, modalityLabel, occurrenceDate, saveLabel }: Props) {
+export function RpeQuickForm({ attendanceId, modalityLabel, occurrenceDate, saveLabel, weightLabel, weightOptionalHint }: Props) {
   const [state, action] = useFormState(submitRpeAction, null as RpeFormState);
 
   return (
@@ -62,7 +64,30 @@ export function RpeQuickForm({ attendanceId, modalityLabel, occurrenceDate, save
           ))}
         </select>
       </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 140px" }}>
+        <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{weightLabel}</span>
+        <input
+          type="number"
+          name="postWeightKg"
+          min={30}
+          max={250}
+          step={0.1}
+          placeholder="—"
+          aria-describedby={`weight-hint-${attendanceId}`}
+          style={{
+            width: 88,
+            padding: "8px 10px",
+            borderRadius: "var(--radius-md)",
+            border: "1px solid var(--border)",
+            background: "var(--bg-elevated)",
+            color: "var(--text-primary)",
+          }}
+        />
+      </label>
       <SaveButton label={saveLabel} />
+      <span id={`weight-hint-${attendanceId}`} style={{ width: "100%", fontSize: 12, color: "var(--text-secondary)" }}>
+        {weightOptionalHint}
+      </span>
       {state?.error && (
         <span style={{ width: "100%", color: "var(--danger)", fontSize: "clamp(13px, 3.2vw, 14px)" }}>{state.error}</span>
       )}

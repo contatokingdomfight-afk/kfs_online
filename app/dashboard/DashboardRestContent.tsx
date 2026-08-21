@@ -2,7 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getTranslations } from "@/lib/i18n";
 import { formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
-import { type ModalityConfig, getAttendanceByModality, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores } from "@/lib/performance-utils";
+import { type ModalityConfig, getAttendanceByModality, GENERAL_PERFORMANCE_AXES, computeGeneralPerformanceScores, type GeneralPerformanceAxisId } from "@/lib/performance-utils";
+import { getImproveSuggestionsForAxes } from "@/lib/library-improve-suggestions";
+import { ImproveLibraryLink } from "@/components/improve/ImproveLibraryLink";
 import { getEarnedBadges, getNextBadgeProgress } from "@/lib/gamification";
 import { getBMIGoalSuggestion, getBMICategoryLabel } from "@/lib/bmi";
 import { PerformanceRadar } from "@/components/PerformanceRadarDynamic";
@@ -156,6 +158,33 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
     })
     .slice(0, 3)
     .map((c) => ({ id: c.id, name: c.name, category: c.category, modality: c.modality }));
+
+  const maxPerfScore = 10;
+  const weakPerfAxes =
+    generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0
+      ? GENERAL_PERFORMANCE_AXES.map((a) => ({
+          id: a.id as GeneralPerformanceAxisId,
+          label: a.label,
+          score: generalPerformanceScores![a.id] ?? 0,
+        }))
+          .filter((e) => e.score < maxPerfScore)
+          .sort((a, b) => a.score - b.score)
+          .slice(0, 2)
+      : [];
+  const improveSuggestionsForGoals =
+    weakPerfAxes.length > 0 && accessible.length > 0
+      ? getImproveSuggestionsForAxes(
+          accessible.map((c) => ({
+            id: c.id,
+            name: c.name,
+            category: c.category,
+            modality: c.modality,
+          })),
+          weakPerfAxes.map(({ id, label }) => ({ id, label })),
+          studentPrimaryModality
+        )
+      : [];
+  const improveByAxisId = new Map(improveSuggestionsForGoals.map((s) => [s.axisId, s]));
 
   const notifications = (notifRes.data ?? []).map((n) => ({
     id: n.id,
@@ -495,11 +524,22 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
                   {toImprove.map((e) => {
                     const nextVal = Math.min(maxScore, Math.ceil(e.score) + 1);
                     const msg = t("improveAxisTo").replace("{axis}", e.label).replace("{value}", String(nextVal));
+                    const improve = improveByAxisId.get(e.id as GeneralPerformanceAxisId);
                     return (
                       <li key={e.id} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
                         <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>🎯 {msg}</p>
                         <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{e.label}: {e.score.toFixed(1)} / {maxScore}</p>
                         <div style={{ marginTop: 8, height: 6, borderRadius: 3, backgroundColor: "var(--border)", overflow: "hidden" }}><div style={{ height: "100%", width: `${Math.min(100, (e.score / maxScore) * 100)}%`, backgroundColor: "var(--primary)" }} /></div>
+                        {improve ? (
+                          <div style={{ marginTop: 10 }}>
+                            <ImproveLibraryLink
+                              courseId={improve.course.id}
+                              courseName={improve.course.name}
+                              axisLabel={improve.axisLabel}
+                              locale={locale}
+                            />
+                          </div>
+                        ) : null}
                       </li>
                     );
                   })}

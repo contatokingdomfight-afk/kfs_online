@@ -18,6 +18,7 @@ import { CriteriaMainCategoryChips } from "./CriteriaMainCategoryChips";
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import type { RadarAxis } from "@/components/fighter/RadarStatsDynamic";
 import { PerformanceRadarAvatarCarousel } from "@/components/fighter/PerformanceRadarAvatarCarousel";
+import { ImproveLibraryLink } from "@/components/improve/ImproveLibraryLink";
 
 /** Filtro principal pré-selecionado ao abrir (valor comparado com `mainCategoryOptions`, PT, case-insensitive). */
 const INITIAL_MAIN_CATEGORY = "técnico";
@@ -38,6 +39,12 @@ type Props = {
   /** Quando o mapa corporal está na secção de dados biométricos, o carrossel mostra só o radar. */
   physicalBodyMapOnlyInWellness?: boolean;
   physicalRadarOnlyHint?: string | null;
+  improveSuggestions?: Array<{
+    axisId: string;
+    axisLabel: string;
+    course: { id: string; name: string };
+  }>;
+  locale?: "pt" | "en";
 };
 
 export function EvaluationResultsDashboard({
@@ -53,6 +60,8 @@ export function EvaluationResultsDashboard({
   physicalFichaReadOnlyLink = null,
   physicalBodyMapOnlyInWellness = false,
   physicalRadarOnlyHint = null,
+  improveSuggestions = [],
+  locale = "pt",
 }: Props) {
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
   /** null = mostrar todas as subcategorias; valor = filtrar por prefixo principal (derivado dos dados). */
@@ -231,6 +240,25 @@ export function EvaluationResultsDashboard({
       </div>
 
       <StrengthsWeaknesses strengths={strengths} weaknesses={weaknesses} />
+      {improveSuggestions.length > 0 && (
+        <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 shadow-md">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)] mb-2">
+            {locale === "pt" ? "Ver como melhorar na biblioteca" : "See how to improve in the library"}
+          </h3>
+          <ul className="list-none p-0 m-0 space-y-2">
+            {improveSuggestions.map((s) => (
+              <li key={s.axisId}>
+                <ImproveLibraryLink
+                  courseId={s.course.id}
+                  courseName={s.course.name}
+                  axisLabel={s.axisLabel}
+                  locale={locale}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {criterionScores.length > 0 && (
         <>

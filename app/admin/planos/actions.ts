@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePublicPlans } from "@/lib/public-plans";
+import { adminPermissionError } from "@/lib/permissions/assert";
 
 const MODALITY_SCOPES = ["NONE", "SINGLE", "ALL"] as const;
 
@@ -14,6 +15,8 @@ export async function createPlan(
   _prev: PlanFormResult | null,
   formData: FormData
 ): Promise<PlanFormResult> {
+  const permErr = await adminPermissionError("admin:planos:write");
+  if (permErr) return { error: permErr };
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
 
@@ -81,6 +84,8 @@ export async function updatePlan(
   _prev: PlanFormResult | null,
   formData: FormData
 ): Promise<PlanFormResult> {
+  const permErr = await adminPermissionError("admin:planos:write");
+  if (permErr) return { error: permErr };
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
 

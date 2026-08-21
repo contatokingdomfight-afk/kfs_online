@@ -16,6 +16,7 @@ import { buildMissionsFromScores } from "@/lib/fighter-missions";
 import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
 import { beltIdFromRankName } from "@/components/belt-progression/belt-progression-data";
 import type { AchievementWithStatus } from "@/lib/achievements";
+import { ImproveLibraryLink } from "@/components/improve/ImproveLibraryLink";
 import { EvaluationResultsDashboard } from "@/components/evaluation-results";
 import type { DimensionScore, CriterionScoreItem } from "@/lib/evaluation-results-data";
 import type { BeltTimeGateInfo } from "@/lib/xp-missions";
@@ -93,8 +94,13 @@ type Props = {
   /** KPIs por modalidade (ex.: Muay Thai, Boxing) para secção "Performance por modalidade". */
   scoresByModality?: Record<string, Record<string, number>>;
   modalityLabels?: Record<string, string>;
-  /** Cursos da biblioteca sugeridos (por modalidade principal); mostrados junto ao feedback do coach. */
+  /** Cursos da biblioteca sugeridos (eixos fracos / «Ver como melhorar»). */
   suggestedCourses?: { id: string; name: string; category: string; modality: string | null }[];
+  improveSuggestions?: Array<{
+    axisId: string;
+    axisLabel: string;
+    course: { id: string; name: string; category: string; modality: string | null };
+  }>;
   /** Conquistas para a secção no perfil (badges desbloqueados e progresso). */
   profileAchievements?: AchievementWithStatus[];
   /** Dados para o dashboard de resultados de avaliação (resumo, pontos fortes/fracos, critérios por categoria). */
@@ -139,6 +145,7 @@ export function PerformanceFighterDashboard({
   scoresByModality,
   modalityLabels = {},
   suggestedCourses = [],
+  improveSuggestions = [],
   profileAchievements,
   evaluationResultsData,
   checkInWellness,
@@ -197,6 +204,8 @@ export function PerformanceFighterDashboard({
           physicalFichaReadOnlyLink={physicalFichaReadOnlyLink}
           physicalBodyMapOnlyInWellness={Boolean(checkInWellness)}
           physicalRadarOnlyHint={physicalRadarOnlyHint}
+          improveSuggestions={improveSuggestions}
+          locale={locale}
         />
       ) : (
         <>
@@ -408,10 +417,10 @@ export function PerformanceFighterDashboard({
         <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
           <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-2 flex items-center gap-2">
             <span aria-hidden>📚</span>
-            Conteúdos para evoluir
+            Ver como melhorar
           </h2>
           <p className="text-sm text-text-secondary mb-3">
-            Cursos da biblioteca para subir de nível. Combina com o feedback do treinador.
+            Cursos da biblioteca ligados aos teus eixos com maior margem de evolução.
           </p>
           <ul className="list-none p-0 m-0 flex flex-col gap-2">
             {suggestedCourses.map((c) => (

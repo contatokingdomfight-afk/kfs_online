@@ -125,6 +125,12 @@ export default async function RpePage() {
               modalityLabel={modalityLabel}
               occurrenceDate={occ}
               saveLabel={loc === "pt" ? "Guardar RPE" : "Save RPE"}
+              weightLabel={loc === "pt" ? "Peso (kg)" : "Weight (kg)"}
+              weightOptionalHint={
+                loc === "pt"
+                  ? "Opcional: peso após o treino (ajuda a estimar perda de líquido por sessão)."
+                  : "Optional: post-training weight (helps estimate fluid loss per session)."
+              }
             />
           );
         })

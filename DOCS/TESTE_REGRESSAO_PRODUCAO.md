@@ -207,7 +207,22 @@ Estes 5 pontos validam o commit `e6c40fc` (+ fix titular família se aplicável)
 5. Registar resultados numa nova linha na secção 6 (data + commit deploy).
 6. Reportar apenas **bugs novos** ou regressões; **limpar dados da secção 3** após validar (script SQL).
 
-**Testes automáticos (local):** `npm test` — lógica de filtro de aulas no dashboard; não substitui este guia em produção.
+**Testes automáticos (local):**
+
+| Comando | Uso |
+|---------|-----|
+| `npm test` | Unitários (Vitest), incl. `lib/library-improve-suggestions.test.ts` |
+| `npm run test:e2e` | Playwright — smoke público; fluxos autenticados com `PLAYWRIGHT_TEST_EMAIL` / `PLAYWRIGHT_TEST_PASSWORD` |
+| `npm run lighthouse:mobile` | Lighthouse CI mobile em `kingdomfight.com` (requer `@lhci/cli`) |
+
+**Após merge grande:** repetir secções 4–5 + validar manualmente:
+
+- **«Ver como melhorar»:** `/dashboard` (metas de avaliação com link biblioteca) e `/dashboard/performance` (secção «Ver como melhorar na biblioteca»).
+- **Peso pós-treino:** check-in → modal «Registar RPE e peso» → `/dashboard/bem-estar/rpe` com campo peso opcional.
+- **Push (gratuito):** `/dashboard/perfil` → activar push (requer VAPID na Vercel + migração `PushSubscription`).
+- **RBAC:** `/admin/permissoes` — atribuir permissões granulares a conta teste coach/admin.
+
+Não substitui smoke manual em produção (`https://kingdomfight.com`).
 
 ---
 

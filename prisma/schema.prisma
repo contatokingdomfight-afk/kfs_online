@@ -103,6 +103,7 @@ model User {
   student              Student?
   coach                Coach?
   userAdminPermissions UserAdminPermission[]
+  pushSubscriptions    PushSubscription[]
   tribePostsAuthored   TribePost[]         @relation("TribePostAuthor")
   tribePostsHidden     TribePost[]         @relation("TribePostHiddenBy")
   tribeComments        TribeComment[]      @relation("TribeCommentAuthor")
@@ -132,6 +133,19 @@ model UserAdminPermission {
   @@id([userId, permissionCode])
   @@index([userId])
   @@map("UserAdminPermission")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("PushSubscription")
 }
 
 model Student {
@@ -318,6 +332,8 @@ model Attendance {
   checkedInAt    DateTime?        @db.Timestamptz(6)
   rpe            Int?             @db.SmallInt
   rpeRecordedAt  DateTime?        @db.Timestamptz(6)
+  postWeightKg   Decimal?           @db.Decimal(5, 2)
+  postWeightRecordedAt DateTime?    @db.Timestamptz(6)
   countsForGamification Boolean   @default(true)
 
   @@unique([lessonId, studentId, occurrenceDate])

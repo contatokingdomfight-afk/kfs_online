@@ -2,7 +2,7 @@
 
 > **Objetivo:** permitir que **administradores** configurem, de forma **segura e auditável**, o que **cada utilizador com acesso de backoffice** pode **ver, editar ou executar** (além dos papéis fixos `ALUNO` / `COACH` / `ADMIN` atuais em `User.role`).
 
-**Estado:** planeamento (não implementado).  
+**Estado:** v1 implementado (ago. 2026) — catálogo BD, UI `/admin/permissoes`, guards de layout e helper `lib/permissions/assert.ts`. Pendente: expandir guards a todas as server actions + auditoria (fases 4–5 do plano).
 **Alinhado com:** [SUPABASE_RLS.md](./SUPABASE_RLS.md), [ESPECIFICACAO_DASHBOARD_ADMIN.md](./ESPECIFICACAO_DASHBOARD_ADMIN.md), [REVISAO_SEGURANCA.md](./REVISAO_SEGURANCA.md).  
 **Roadmap:** [ROADMAP_Plataforma_KFS.md](./ROADMAP_Plataforma_KFS.md) (secção Admin — permissões).  
 **Implementado antes do RBAC (maio 2026):** matriz de prefixos em `lib/permissions/paths.ts` (ex.: `/admin/notificacoes` → `admin:sistema:read/write`) e doc operacional [NOTIFICACOES_IN_APP_E_EVENTOS.md](./NOTIFICACOES_IN_APP_E_EVENTOS.md).

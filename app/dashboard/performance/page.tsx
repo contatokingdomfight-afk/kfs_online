@@ -41,6 +41,9 @@ import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getAchievementUnlockContext, getAchievementsWithStatus } from "@/lib/achievements";
 import type { AchievementWithStatus } from "@/lib/achievements";
 import type { DimensionScore, CriterionScoreItem } from "@/lib/evaluation-results-data";
+import { rankCoursesForImprovement, getImproveSuggestionsForAxes } from "@/lib/library-improve-suggestions";
+import { getAccessibleLibraryCoursesForStudent } from "@/lib/accessible-library-courses";
+import type { GeneralPerformanceAxisId } from "@/lib/performance-utils";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
 
 const GENERAL_LAST_N = 10;
@@ -136,6 +139,11 @@ export default async function DashboardPerformancePage() {
   let omitLastEvaluationNoteBody = false;
   let lastEvaluation: { coachName: string; date: string; note: string | null } | null = null;
   let suggestedCourses: { id: string; name: string; category: string; modality: string | null }[] = [];
+  let improveSuggestions: Array<{
+    axisId: string;
+    axisLabel: string;
+    course: { id: string; name: string; category: string; modality: string | null };
+  }> = [];
   let profileAchievements: AchievementWithStatus[] = [];
   let evaluationResultsData: {
     dimensionScores: DimensionScore[];
@@ -296,31 +304,31 @@ export default async function DashboardPerformancePage() {
       coachName = feedbackResolved.coachName;
       omitLastEvaluationNoteBody = feedbackResolved.hideNoteInLastEvaluationSection;
 
-      // Cursos sugeridos para ligar ao feedback (por modalidade principal; aluno vê junto ao feedback do coach)
-      const planId = (student?.planId as string | null) ?? null;
-      let hasDigitalAccess = false;
-      if (planId) {
-        const { data: plan } = await supabase.from("Plan").select("includesDigitalAccess").eq("id", planId).eq("isActive", true).single();
-        hasDigitalAccess = plan?.includesDigitalAccess === true;
-      }
-      const [{ data: purchasesData }, { data: coursesData }] = await Promise.all([
-        supabase.from("CoursePurchase").select("courseId").eq("studentId", studentId),
-        supabase.from("Course").select("id, name, category, modality, included_in_digital_plan").eq("is_active", true).order("sort_order", { ascending: true }).order("name", { ascending: true }),
-      ]);
-      const purchasedIds = new Set((purchasesData ?? []).map((p: { courseId: string }) => p.courseId));
-      const allCourses = coursesData ?? [];
-      const accessible = allCourses.filter(
-        (c: { id: string; included_in_digital_plan?: boolean }) => (c.included_in_digital_plan && hasDigitalAccess) || purchasedIds.has(c.id)
+      // «Ver como melhorar» — cursos da biblioteca alinhados aos eixos fracos do radar
+      const { courses: accessibleCourses, primaryModality: libPrimaryModality } =
+        await getAccessibleLibraryCoursesForStudent(supabase, studentId);
+      const weakAxisIds: GeneralPerformanceAxisId[] = generalPerformanceScores
+        ? GENERAL_PERFORMANCE_AXES.filter((a) => (generalPerformanceScores![a.id] ?? 0) < 10)
+            .sort((a, b) => (generalPerformanceScores![a.id] ?? 0) - (generalPerformanceScores![b.id] ?? 0))
+            .slice(0, 3)
+            .map((a) => a.id as GeneralPerformanceAxisId)
+        : [];
+      suggestedCourses = rankCoursesForImprovement(
+        accessibleCourses,
+        weakAxisIds,
+        primaryModality ?? libPrimaryModality,
+        3
       );
-      suggestedCourses = [...accessible]
-        .sort((a, b) => {
-          if (!primaryModality) return 0;
-          const aMatch = a.modality === primaryModality ? 1 : 0;
-          const bMatch = b.modality === primaryModality ? 1 : 0;
-          return bMatch - aMatch;
-        })
-        .slice(0, 3)
-        .map((c: { id: string; name: string; category: string; modality: string | null }) => ({ id: c.id, name: c.name, category: c.category, modality: c.modality }));
+      if (weakAxisIds.length > 0) {
+        improveSuggestions = getImproveSuggestionsForAxes(
+          accessibleCourses,
+          weakAxisIds.map((id) => {
+            const axis = GENERAL_PERFORMANCE_AXES.find((a) => a.id === id);
+            return { id, label: axis?.label ?? id };
+          }),
+          primaryModality ?? libPrimaryModality
+        );
+      }
     }
   }
 
@@ -457,6 +465,7 @@ export default async function DashboardPerformancePage() {
       lastEvaluation={lastEvaluation ?? undefined}
       evaluationsHistoryHref="/dashboard/performance/historico"
       suggestedCourses={suggestedCourses.length > 0 ? suggestedCourses : undefined}
+      improveSuggestions={improveSuggestions.length > 0 ? improveSuggestions : undefined}
       profileAchievements={profileAchievements}
       evaluationResultsData={evaluationResultsData}
       checkInWellness={
