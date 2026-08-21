@@ -199,7 +199,12 @@ export default async function CursoDetailPage({ params }: Props) {
                   </Link>
                 </div>
               ) : (
-                <VideoPlayer url={course.video_url} title={course.name} fallbackMessage={t("videoUnavailable")} />
+                <VideoPlayer
+                  url={course.video_url}
+                  title={course.name}
+                  fallbackMessage={t("videoUnavailable")}
+                  autoLandscapeOnMobile={false}
+                />
               )}
             </div>
           ) : (
