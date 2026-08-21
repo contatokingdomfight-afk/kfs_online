@@ -175,6 +175,7 @@ export async function processMissionAwards(
     for (let target = 1; target <= 10; target++) {
       if (score >= target && !awarded.has(`${dimId}-${target}`)) {
         const { error } = await supabase.from("AthleteMissionAward").insert({
+          id: crypto.randomUUID(),
           athleteId,
           dimensionCode: dimId,
           targetScore: target,

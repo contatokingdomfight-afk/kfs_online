@@ -91,6 +91,7 @@ export async function completeCustomMission(
   const xpReward = (template.xpReward as number) ?? 50;
 
   const { error: insertErr } = await supabase.from("AthleteMissionCompletion").insert({
+    id: crypto.randomUUID(),
     athleteId,
     missionTemplateId,
     xpAwarded: xpReward,
