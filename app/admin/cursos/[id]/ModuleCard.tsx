@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DeleteModuleButton } from "../modules/DeleteModuleButton";
 import { DeleteUnitButton } from "../modules/units/DeleteUnitButton";
+import { ModuleForm } from "../modules/ModuleForm";
 import { UnitForm } from "../modules/units/UnitForm";
 
 type Unit = {
@@ -30,7 +31,9 @@ type Props = {
 export function ModuleCard({ courseId, module, index, units }: Props) {
   const [open, setOpen] = useState(true);
   const [showAddUnit, setShowAddUnit] = useState(false);
+  const [showEditModule, setShowEditModule] = useState(false);
   const [unitFormKey, setUnitFormKey] = useState(0);
+  const [editFormKey, setEditFormKey] = useState(0);
 
   return (
     <div
@@ -64,18 +67,50 @@ export function ModuleCard({ courseId, module, index, units }: Props) {
             </span>
           )}
         </div>
-        <div onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }} onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ fontSize: 13, padding: "6px 12px", minHeight: 36 }}
+            onClick={() => {
+              setShowEditModule((v) => !v);
+              if (showAddUnit) setShowAddUnit(false);
+              setOpen(true);
+            }}
+          >
+            {showEditModule ? "Fechar edição" : "Editar módulo"}
+          </button>
           <DeleteModuleButton moduleId={module.id} courseId={courseId} moduleName={module.name} />
         </div>
       </div>
 
       {open && (
         <div style={{ padding: "clamp(12px, 3vw, 16px)", borderTop: "1px solid var(--border, #e5e7eb)" }}>
-          {module.description && (
-            <p style={{ margin: "0 0 12px 0", fontSize: 14, color: "var(--text-secondary)" }}>{module.description}</p>
+          {showEditModule ? (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
+                Editar módulo
+              </p>
+              <ModuleForm
+                key={editFormKey}
+                courseId={courseId}
+                moduleId={module.id}
+                initialName={module.name}
+                initialDescription={module.description ?? ""}
+                initialSortOrder={module.sort_order}
+                onSuccess={() => {
+                  setShowEditModule(false);
+                  setEditFormKey((k) => k + 1);
+                }}
+              />
+            </div>
+          ) : (
+            module.description && (
+              <p style={{ margin: "0 0 12px 0", fontSize: 14, color: "var(--text-secondary)" }}>{module.description}</p>
+            )
           )}
 
-          {units.length > 0 && (
+          {!showEditModule && units.length > 0 && (
             <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px 0", display: "flex", flexDirection: "column", gap: 6 }}>
               {units.map((u, uIdx) => (
                 <li
@@ -102,7 +137,8 @@ export function ModuleCard({ courseId, module, index, units }: Props) {
             </ul>
           )}
 
-          {!showAddUnit ? (
+          {!showEditModule &&
+            (!showAddUnit ? (
             <button
               type="button"
               onClick={() => setShowAddUnit(true)}
@@ -167,7 +203,7 @@ export function ModuleCard({ courseId, module, index, units }: Props) {
                 Cancelar
               </button>
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>
