@@ -7,6 +7,12 @@ import { isMobilePortraitViewport } from "@/lib/youtube-video-aspect";
 
 const OVERLAY_Z = 26_000;
 
+/** Screen Orientation API — `lock`/`unlock` existem em runtime mas não no tipo DOM padrão. */
+type ScreenOrientationWithLock = ScreenOrientation & {
+  lock?: (orientation: "any" | "natural" | "landscape" | "portrait" | "portrait-primary" | "portrait-secondary" | "landscape-primary" | "landscape-secondary") => Promise<void>;
+  unlock?: () => void;
+};
+
 type Props = {
   embedUrl: string;
   title: string;
@@ -31,7 +37,7 @@ export function LandscapeVideoOverlay({ embedUrl, title, closeLabel, onClose }: 
     mql.addEventListener("change", sync);
 
     let locked = false;
-    const orientation = screen.orientation;
+    const orientation = screen.orientation as ScreenOrientationWithLock | undefined;
     void orientation?.lock?.("landscape").then(
       () => {
         locked = true;
