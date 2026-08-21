@@ -85,6 +85,9 @@ export function LessonPromoBlock({
   const checkInHref = `/check-in/${lesson.id}?date=${encodeURIComponent(lesson.date)}`;
   const checkInAlreadyDone = Boolean(att?.checkedInAt);
   const showCheckInCta = canUseCheckInLink && !checkInAlreadyDone;
+  /** Área inferior com altura fixa para todos os cartões do carrossel ficarem alinhados. */
+  const reserveCheckInSlot =
+    participationAllowedByPlan && hasCheckIn && (!isFreeTier || openClassParticipation);
 
   return (
     <div
@@ -94,6 +97,9 @@ export function LessonPromoBlock({
         color: "#fff",
         padding: "clamp(20px, 5vw, 24px)",
         boxSizing: "border-box",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 8px 0", opacity: 0.9 }}>
@@ -176,41 +182,52 @@ export function LessonPromoBlock({
           />
         )}
       </div>
-      {participationAllowedByPlan && (!isFreeTier || openClassParticipation) && checkInStartTimeLabel && !checkInWindowOpen && (
-        <p style={{ marginTop: 14, marginBottom: 0, fontSize: "clamp(13px, 3.2vw, 15px)", opacity: 0.95 }}>
-          {t("dashboardCheckInAvailableFrom").replace("{time}", checkInStartTimeLabel)}
-        </p>
-      )}
-      {showCheckInCta && (
-        <Link
-          href={checkInHref}
-          className="btn"
+      {reserveCheckInSlot && (
+        <div
           style={{
-            marginTop: 16,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            minHeight: 48,
-            fontSize: "clamp(15px, 3.8vw, 17px)",
-            fontWeight: 600,
-            textDecoration: "none",
-            backgroundColor: isToday ? "#fff" : "rgba(255,255,255,0.2)",
-            color: isToday ? "var(--primary)" : "#fff",
-            border: isToday ? "none" : "2px solid rgba(255,255,255,0.6)",
+            marginTop: "auto",
+            paddingTop: 16,
+            minHeight: 112,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
           }}
         >
-          📲 {t("dashboardCheckInButton")}
-        </Link>
-      )}
-      {showCheckInCta && (
-        <p style={{ marginTop: 12, marginBottom: 0, fontSize: "clamp(12px, 3vw, 14px)", opacity: 0.9 }}>
-          {t("atGymScanQr")}{" "}
-          <Link href={checkInHref} style={{ color: "#fff", textDecoration: "underline" }}>
-            {t("openLinkOnPhone")}
-          </Link>
-          .
-        </p>
+          {showCheckInCta ? (
+            <>
+              <Link
+                href={checkInHref}
+                className="btn"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  minHeight: 48,
+                  fontSize: "clamp(15px, 3.8vw, 17px)",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  backgroundColor: isToday ? "#fff" : "rgba(255,255,255,0.2)",
+                  color: isToday ? "var(--primary)" : "#fff",
+                  border: isToday ? "none" : "2px solid rgba(255,255,255,0.6)",
+                }}
+              >
+                📲 {t("dashboardCheckInButton")}
+              </Link>
+              <p style={{ marginTop: 12, marginBottom: 0, fontSize: "clamp(12px, 3vw, 14px)", opacity: 0.9 }}>
+                {t("atGymScanQr")}{" "}
+                <Link href={checkInHref} style={{ color: "#fff", textDecoration: "underline" }}>
+                  {t("openLinkOnPhone")}
+                </Link>
+                .
+              </p>
+            </>
+          ) : checkInStartTimeLabel && !checkInWindowOpen ? (
+            <p style={{ margin: 0, fontSize: "clamp(13px, 3.2vw, 15px)", opacity: 0.95 }}>
+              {t("dashboardCheckInAvailableFrom").replace("{time}", checkInStartTimeLabel)}
+            </p>
+          ) : null}
+        </div>
       )}
     </div>
   );

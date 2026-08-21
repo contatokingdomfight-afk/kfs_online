@@ -205,7 +205,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               flex: `0 0 ${OPEN_CLASS_CARD_WIDTH}`,
               maxWidth: OPEN_CLASS_CARD_WIDTH,
               scrollSnapAlign: "start",
-              minHeight: 1,
+              display: "flex",
+              alignSelf: "stretch",
             }}
           >
             <LessonPromoBlock
@@ -264,7 +265,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 flex: `0 0 ${OPEN_CLASS_CARD_WIDTH}`,
                 maxWidth: OPEN_CLASS_CARD_WIDTH,
                 scrollSnapAlign: "start",
-                minHeight: 1,
+                display: "flex",
+                alignSelf: "stretch",
               }}
             >
               <LessonPromoBlock
@@ -307,7 +309,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 flex: `0 0 ${OPEN_CLASS_CARD_WIDTH}`,
                 maxWidth: OPEN_CLASS_CARD_WIDTH,
                 scrollSnapAlign: "start",
-                minHeight: 1,
+                display: "flex",
+                alignSelf: "stretch",
               }}
             >
               <LessonPromoBlock
