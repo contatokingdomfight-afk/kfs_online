@@ -1,6 +1,6 @@
 /**
  * Atraso: após o fim do dia 8 do mês em Lisboa sem PAID (registo LATE).
- * Prazo para regularizar: 5 dias úteis após o dia 8; depois suspende o plano.
+ * Prazo para regularizar: 15 dias corridos após o dia 8; depois suspende o plano.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -63,7 +63,7 @@ export async function startGracePeriodOnLatePayment(
     studentId,
     type: "PAYMENT_OVERDUE",
     title: "Pagamento em atraso",
-    body: `A mensalidade (${referenceMonth}) está em atraso (após o dia 8). Regulariza até ao 5.º dia útil seguinte, ${deadlineLabel}, para evitar bloqueio de acesso.`,
+    body: `A mensalidade (${referenceMonth}) está em atraso (após o dia 8). Regulariza até ${deadlineLabel}, para evitar bloqueio de acesso.`,
     href: "/dashboard/financeiro",
   });
 
@@ -128,7 +128,7 @@ export async function clearGraceOnPaidPayment(supabase: SupabaseClient, studentI
   }
 }
 
-/** Suspende alunos com plano cujo prazo (5 dias úteis após o dia 8) já passou. */
+/** Suspende alunos com plano cujo prazo (15 dias corridos após o dia 8) já passou. */
 export async function suspendStudentsPastGrace(
   supabase: SupabaseClient
 ): Promise<{ suspended: number; errors: string[] }> {

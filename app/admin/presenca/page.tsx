@@ -73,15 +73,23 @@ export default async function AdminPresencaPage() {
 
   const studentToUser = new Map(usersData.map((s) => [s.id, s]));
 
+  const byStudentName = (a: { studentId: string }, b: { studentId: string }) => {
+    const nameA = (studentToUser.get(a.studentId)?.name || studentToUser.get(a.studentId)?.email || "").toLowerCase();
+    const nameB = (studentToUser.get(b.studentId)?.name || studentToUser.get(b.studentId)?.email || "").toLowerCase();
+    return nameA.localeCompare(nameB, "pt");
+  };
+
   const attendanceCsvRows = list.flatMap((lesson) => {
-    const lessonAtts = attList.filter((a) => {
-      if (a.lessonId !== lesson.id) return false;
-      const occ =
-        typeof (a as { occurrenceDate?: string | null }).occurrenceDate === "string"
-          ? (a as { occurrenceDate: string }).occurrenceDate.slice(0, 10)
-          : "";
-      return occ === lesson.occurrenceDate;
-    });
+    const lessonAtts = attList
+      .filter((a) => {
+        if (a.lessonId !== lesson.id) return false;
+        const occ =
+          typeof (a as { occurrenceDate?: string | null }).occurrenceDate === "string"
+            ? (a as { occurrenceDate: string }).occurrenceDate.slice(0, 10)
+            : "";
+        return occ === lesson.occurrenceDate;
+      })
+      .sort(byStudentName);
     return lessonAtts.map((a) => {
       const u = studentToUser.get(a.studentId);
       return {
@@ -136,14 +144,16 @@ export default async function AdminPresencaPage() {
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
           {list.map((lesson) => {
-            const lessonAtts = attList.filter((a) => {
-              if (a.lessonId !== lesson.id) return false;
-              const occ =
-                typeof (a as { occurrenceDate?: string | null }).occurrenceDate === "string"
-                  ? (a as { occurrenceDate: string }).occurrenceDate.slice(0, 10)
-                  : "";
-              return occ === lesson.occurrenceDate;
-            });
+            const lessonAtts = attList
+              .filter((a) => {
+                if (a.lessonId !== lesson.id) return false;
+                const occ =
+                  typeof (a as { occurrenceDate?: string | null }).occurrenceDate === "string"
+                    ? (a as { occurrenceDate: string }).occurrenceDate.slice(0, 10)
+                    : "";
+                return occ === lesson.occurrenceDate;
+              })
+              .sort(byStudentName);
             return (
               <li key={lesson.occurrenceKey} className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: lessonAtts.length ? 12 : 0 }}>
