@@ -8,6 +8,7 @@ import { AcceptTrialButton } from "../experimentais/AcceptTrialButton";
 import { ConvertTrialButton } from "../experimentais/ConvertTrialButton";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
 import { RegisterPendingPaymentModal } from "../financeiro/_components/RegisterPendingPaymentModal";
+import { buildPaymentOverdueMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
 function pendingPaymentPeriodLabel(p: PendingPayment): string {
   if (p.paymentType === "ENROLLMENT") return "Matrícula";
@@ -151,16 +152,49 @@ export function ActionItems({
                     {p.paymentTypeLabel} · {Number(p.amount).toFixed(2)} € · {pendingPaymentPeriodLabel(p)}
                   </span>
                 </div>
-                <RegisterPendingPaymentModal
-                  paymentId={p.id}
-                  studentName={p.studentName}
-                  paymentTypeLabel={p.paymentTypeLabel}
-                  periodLabel={pendingPaymentPeriodLabel(p)}
-                  amount={p.amount}
-                  familyDiscountPercent={p.familyDiscountPercent}
-                  buttonLabel={labels.managePayment}
-                  buttonClassName="btn btn-primary"
-                />
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+                  {p.studentPhone
+                    ? (() => {
+                        const waUrl = buildWhatsAppUrl(
+                          p.studentPhone,
+                          buildPaymentOverdueMessage(p.studentName.split(" ")[0] ?? "")
+                        );
+                        return waUrl ? (
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary"
+                            title="Lembrar pagamento no WhatsApp"
+                            aria-label={`Lembrar pagamento de ${p.studentName} no WhatsApp`}
+                            style={{
+                              width: 40,
+                              height: 40,
+                              padding: 0,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 18,
+                              flexShrink: 0,
+                              textDecoration: "none",
+                            }}
+                          >
+                            <span aria-hidden>💬</span>
+                          </a>
+                        ) : null;
+                      })()
+                    : null}
+                  <RegisterPendingPaymentModal
+                    paymentId={p.id}
+                    studentName={p.studentName}
+                    paymentTypeLabel={p.paymentTypeLabel}
+                    periodLabel={pendingPaymentPeriodLabel(p)}
+                    amount={p.amount}
+                    familyDiscountPercent={p.familyDiscountPercent}
+                    buttonLabel={labels.managePayment}
+                    buttonClassName="btn btn-primary"
+                  />
+                </div>
               </div>
             ))
           )}

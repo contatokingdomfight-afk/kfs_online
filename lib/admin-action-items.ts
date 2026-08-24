@@ -11,6 +11,7 @@ export type PendingPayment = {
   id: string;
   studentId: string;
   studentName: string;
+  studentPhone: string | null;
   amount: number;
   referenceMonth: string;
   referenceYear: string;
@@ -74,13 +75,18 @@ export async function getActionItemsData(
   const paymentList = payments ?? [];
   const payStudentIds = [...new Set(paymentList.map((p) => p.studentId))];
   let studentMap = new Map<string, string>();
+  let phoneByStudentId = new Map<string, string | null>();
   if (payStudentIds.length > 0) {
     const { data: students } = await supabase.from("Student").select("id, userId").in("id", payStudentIds);
     const userIds = [...new Set((students ?? []).map((s) => s.userId))];
-    const { data: users } = await supabase.from("User").select("id, name").in("id", userIds);
+    const [{ data: users }, { data: profiles }] = await Promise.all([
+      supabase.from("User").select("id, name").in("id", userIds),
+      supabase.from("StudentProfile").select("studentId, phone").in("studentId", payStudentIds),
+    ]);
     const userById = new Map((users ?? []).map((u) => [u.id, u.name]));
     const studentToUser = new Map((students ?? []).map((s) => [s.id, userById.get(s.userId)]));
     studentMap = new Map((students ?? []).map((s) => [s.id, studentToUser.get(s.id) ?? "—"]));
+    phoneByStudentId = new Map((profiles ?? []).map((p) => [p.studentId, (p as { phone?: string | null }).phone ?? null]));
   }
 
   // Desconto de família: só relevante para a mensalidade combinada do titular.
@@ -111,6 +117,7 @@ export async function getActionItemsData(
       id: p.id,
       studentId: p.studentId,
       studentName: studentMap.get(p.studentId) ?? "—",
+      studentPhone: phoneByStudentId.get(p.studentId) ?? null,
       amount: Number(p.amount),
       referenceMonth: (p.referenceMonth as string | null) ?? "",
       referenceYear: ((p as { referenceYear?: string | null }).referenceYear as string | null) ?? "",
