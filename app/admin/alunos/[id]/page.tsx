@@ -33,6 +33,7 @@ import { computeFamilyGroupMonthlyTuition, type FamilyPricingBreakdown } from "@
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { resolveEffectiveAccessPlan } from "@/lib/family-effective-plan";
 import { StudentContactDataSection } from "@/components/students/StudentContactDataSection";
+import { buildPaymentOverdueMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const GENERAL_LAST_N = 10;
 
@@ -137,6 +138,11 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     .select("weightKg, heightCm, medicalNotes, emergencyContact, phone")
     .eq("studentId", studentId)
     .maybeSingle();
+
+  const overdueWhatsAppUrl =
+    student.status === "INADIMPLENTE" && studentProfile?.phone
+      ? buildWhatsAppUrl(studentProfile.phone, buildPaymentOverdueMessage((user?.name ?? "").split(" ")[0] ?? ""))
+      : null;
 
   const { data: plans } = await supabase
     .from("Plan")
@@ -339,6 +345,38 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
       <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
         {user?.email}
       </p>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <span
+          style={{
+            fontSize: "clamp(12px, 3vw, 14px)",
+            padding: "2px 8px",
+            borderRadius: "var(--radius-md)",
+            backgroundColor: student.status === "INADIMPLENTE" ? "var(--danger)" : "var(--bg)",
+            color: student.status === "INADIMPLENTE" ? "#fff" : "var(--text-secondary)",
+            fontWeight: 600,
+          }}
+        >
+          {STATUS_LABEL[student.status] ?? student.status}
+        </span>
+        {overdueWhatsAppUrl ? (
+          <a
+            href={overdueWhatsAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secondary"
+            style={{
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 12px",
+              fontSize: "clamp(13px, 3.2vw, 14px)",
+            }}
+          >
+            <span aria-hidden>💬</span> Lembrar pagamento (WhatsApp)
+          </a>
+        ) : null}
+      </div>
       {assistantActive ? (
         <div style={{ marginTop: 4, marginBottom: 4, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
           <SchoolAssistantBadge active />
