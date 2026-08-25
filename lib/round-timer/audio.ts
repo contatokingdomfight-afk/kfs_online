@@ -3,8 +3,16 @@ const SOUND_ROUND_BOXING_BELL = "/sounds/round-timer/end__boxing-bell.wav";
 const SOUND_DIGITAL_BEEP = "/sounds/round-timer/digital-beep.wav";
 
 let audioCtx: AudioContext | null = null;
-let htmlAudioPrimed = false;
 let muted = false;
+
+/**
+ * Buffers descodificados em cache por URL. Tocar via AudioBufferSourceNode
+ * (Web Audio API) em vez de `new Audio(url)` (HTMLMediaElement) evita que o
+ * browser/WebView peça foco de áudio exclusivo ao SO — o som toca em
+ * simultâneo com música de fundo (YouTube Music, Spotify, etc.) em vez de a
+ * pausar, tal como já acontecia com o beep de contagem (oscillator puro).
+ */
+const bufferCache = new Map<string, Promise<AudioBuffer | null>>();
 
 /** Liga/desliga todos os avisos sonoros (persistência é responsabilidade do chamador). */
 export function setAudioMuted(next: boolean): void {
@@ -21,56 +29,64 @@ function getCtx(): AudioContext | null {
   return audioCtx;
 }
 
-/** Chamado após gesto do utilizador (Start) para desbloquear áudio no iOS/Safari. */
-export async function unlockAudio(): Promise<void> {
-  const ctx = getCtx();
-  if (ctx?.state === "suspended") {
-    await ctx.resume().catch(() => {});
+function loadBuffer(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
+  let cached = bufferCache.get(url);
+  if (!cached) {
+    cached = fetch(url)
+      .then((r) => r.arrayBuffer())
+      .then((data) => ctx.decodeAudioData(data))
+      .catch(() => null);
+    bufferCache.set(url, cached);
   }
-  if (typeof window === "undefined" || htmlAudioPrimed) return;
-  try {
-    const a = new Audio(SOUND_DIGITAL_BEEP);
-    a.volume = 0.01;
-    await a.play();
-    a.pause();
-    a.currentTime = 0;
-    htmlAudioPrimed = true;
-  } catch {
-    /* sem ficheiro ou autoplay bloqueado — tentativas seguintes em playSample */
-  }
+  return cached;
 }
 
-function playSample(url: string, volume = 0.95): void {
-  if (typeof window === "undefined" || muted) return;
-  try {
-    const a = new Audio(url);
-    a.volume = volume;
-    void a.play().catch(() => {});
-  } catch {
-    /* */
+/** Chamado após gesto do utilizador (Start) para desbloquear e pré-carregar os sons. */
+export async function unlockAudio(): Promise<void> {
+  const ctx = getCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") {
+    await ctx.resume().catch(() => {});
   }
+  await Promise.all([loadBuffer(ctx, SOUND_ROUND_BOXING_BELL), loadBuffer(ctx, SOUND_DIGITAL_BEEP)]);
+}
+
+function playBuffer(url: string, volume: number): void {
+  if (muted) return;
+  const ctx = getCtx();
+  if (!ctx) return;
+  void loadBuffer(ctx, url).then((buffer) => {
+    if (!buffer || muted) return;
+    const source = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    gain.gain.value = volume;
+    source.buffer = buffer;
+    source.connect(gain);
+    gain.connect(ctx.destination);
+    source.start();
+  });
 }
 
 /** Início de um round (após preparação ou após descanso). */
 export function playRoundStartBell(): void {
-  playSample(SOUND_ROUND_BOXING_BELL);
+  playBuffer(SOUND_ROUND_BOXING_BELL, 0.95);
 }
 
 /** Fim de um round (antes do descanso ou treino concluído). */
 export function playRoundEndBell(): void {
-  playSample(SOUND_ROUND_BOXING_BELL);
+  playBuffer(SOUND_ROUND_BOXING_BELL, 0.95);
 }
 
 /** Fim do treino: três badaladas para distinguir do fim de um round normal. */
 export function playWorkoutEndBell(): void {
-  playSample(SOUND_ROUND_BOXING_BELL);
-  window.setTimeout(() => playSample(SOUND_ROUND_BOXING_BELL), 650);
-  window.setTimeout(() => playSample(SOUND_ROUND_BOXING_BELL), 1300);
+  playBuffer(SOUND_ROUND_BOXING_BELL, 0.95);
+  window.setTimeout(() => playBuffer(SOUND_ROUND_BOXING_BELL, 0.95), 650);
+  window.setTimeout(() => playBuffer(SOUND_ROUND_BOXING_BELL, 0.95), 1300);
 }
 
 /** Aviso digital (10 s antes do fim do round; últimos 5 s do round em sequência). */
 export function playDigitalBeep(volume = 0.9): void {
-  playSample(SOUND_DIGITAL_BEEP, volume);
+  playBuffer(SOUND_DIGITAL_BEEP, volume);
 }
 
 function beep(freq: number, durationSec: number, volume = 0.12): void {
