@@ -9,6 +9,8 @@ import { CollapsibleCourseDetails } from "./CollapsibleCourseDetails";
 import { ModuleCard } from "./ModuleCard";
 import { AddModuleSection } from "./AddModuleSection";
 import { CoCreatorForm } from "@/app/coach/cursos/[id]/CoCreatorForm";
+import { ViewersDrilldown } from "./ViewersDrilldown";
+import { getCourseCompleters } from "../stats-actions";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -45,6 +47,23 @@ export default async function AdminCursosEditarPage({ params }: Props) {
     });
     unitsByModule.forEach((list) => list.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
   }
+
+  // Estatísticas: quantos alunos concluíram cada unidade, e quantos concluíram o curso todo.
+  const allUnitIds = [...unitsByModule.values()].flatMap((list) => list.map((u) => u.id));
+  const viewCountByUnitId = new Map<string, number>();
+  if (allUnitIds.length > 0) {
+    const { data: unitProgressRows } = await supabase
+      .from("CourseUnitProgress")
+      .select("unit_id")
+      .in("unit_id", allUnitIds);
+    for (const row of unitProgressRows ?? []) {
+      viewCountByUnitId.set(row.unit_id, (viewCountByUnitId.get(row.unit_id) ?? 0) + 1);
+    }
+  }
+  const { count: courseCompletionCount } = await supabase
+    .from("CourseCompletion")
+    .select("id", { count: "exact", head: true })
+    .eq("course_id", courseId);
 
   // Resolver nomes dos co-criadores
   const coCreatorStudentIds = (coCreatorsRaw ?? []).map((cc) => cc.student_id);
@@ -101,9 +120,15 @@ export default async function AdminCursosEditarPage({ params }: Props) {
         <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Conteúdo do curso
         </h2>
-        <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+        <p style={{ margin: "0 0 12px 0", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>
           Um curso tem <strong>módulos</strong>. Cada módulo tem <strong>unidades</strong>. Cada unidade é um <strong>vídeo</strong> ou um <strong>texto</strong> para leitura.
         </p>
+        <div style={{ marginBottom: 20 }}>
+          <ViewersDrilldown
+            label={`${courseCompletionCount ?? 0} ${(courseCompletionCount ?? 0) === 1 ? "aluno completou" : "alunos completaram"} o curso todo`}
+            fetchViewers={getCourseCompleters.bind(null, course.id)}
+          />
+        </div>
 
         {/* 1) Adicionar módulo — recolhível (aberto se ainda não há módulos) */}
         <AddModuleSection
@@ -138,6 +163,7 @@ export default async function AdminCursosEditarPage({ params }: Props) {
                   sort_order: u.sort_order ?? 0,
                   status: u.status === "DRAFT" ? "DRAFT" : "PUBLISHED",
                 }))}
+                viewCountByUnitId={Object.fromEntries(viewCountByUnitId)}
               />
             ))}
           </div>

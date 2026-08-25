@@ -6,6 +6,8 @@ import { DeleteUnitButton } from "../modules/units/DeleteUnitButton";
 import { ModuleForm } from "../modules/ModuleForm";
 import { UnitForm } from "../modules/units/UnitForm";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
+import { ViewersDrilldown } from "./ViewersDrilldown";
+import { getUnitViewers } from "../stats-actions";
 
 type Unit = {
   id: string;
@@ -32,6 +34,7 @@ type Props = {
   module: Module;
   index: number;
   units: Unit[];
+  viewCountByUnitId: Record<string, number>;
 };
 
 function DraftBadge() {
@@ -83,7 +86,7 @@ function UnitPreview({ unit }: { unit: Unit }) {
   );
 }
 
-export function ModuleCard({ courseId, module, index, units }: Props) {
+export function ModuleCard({ courseId, module, index, units, viewCountByUnitId }: Props) {
   const [open, setOpen] = useState(true);
   const [showAddUnit, setShowAddUnit] = useState(false);
   const [showEditModule, setShowEditModule] = useState(false);
@@ -189,6 +192,10 @@ export function ModuleCard({ courseId, module, index, units }: Props) {
                     </span>
                     {u.status === "DRAFT" && <DraftBadge />}
                     <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
+                      <ViewersDrilldown
+                        label={`${viewCountByUnitId[u.id] ?? 0} ${(viewCountByUnitId[u.id] ?? 0) === 1 ? "concluiu" : "concluíram"}`}
+                        fetchViewers={getUnitViewers.bind(null, u.id)}
+                      />
                       <button
                         type="button"
                         className="btn btn-secondary"
