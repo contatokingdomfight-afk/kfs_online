@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
+import { awardLessonWatchedXp } from "@/lib/course-watch-xp";
 
 export async function purchaseCourse(courseId: string): Promise<{ error?: string }> {
   const studentId = await getCurrentStudentId();
@@ -68,6 +69,7 @@ export async function completeModule(moduleId: string, courseId: string): Promis
     console.error("completeModule error:", error);
     return { error: error.message };
   }
+  await awardLessonWatchedXp(studentId, courseId);
   revalidatePath(`/dashboard/biblioteca/${courseId}`);
   return {};
 }
@@ -96,6 +98,7 @@ export async function completeUnit(unitId: string, courseId: string): Promise<{ 
     console.error("completeUnit error:", error);
     return { error: error.message };
   }
+  await awardLessonWatchedXp(studentId, courseId);
   revalidatePath(`/dashboard/biblioteca/${courseId}`);
   return {};
 }
