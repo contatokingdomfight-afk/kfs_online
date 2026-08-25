@@ -16,6 +16,7 @@ type Props = {
   initialVideoUrl?: string;
   initialTextContent?: string;
   initialSortOrder?: number;
+  initialStatus?: "DRAFT" | "PUBLISHED";
   onSuccess?: () => void;
 };
 
@@ -29,6 +30,7 @@ export function UnitForm({
   initialVideoUrl = "",
   initialTextContent = "",
   initialSortOrder = 0,
+  initialStatus = "PUBLISHED",
   onSuccess,
 }: Props) {
   const router = useRouter();
@@ -93,6 +95,12 @@ export function UnitForm({
       <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Ordem</span>
         <input type="number" name="sortOrder" defaultValue={initialSortOrder} className="input" min={0} step={1} />
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <input type="checkbox" name="status" value="DRAFT" defaultChecked={initialStatus === "DRAFT"} />
+        <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
+          Guardar como rascunho (visível só para admins)
+        </span>
       </label>
       {state?.error && <p style={{ margin: 0, fontSize: 14, color: "var(--danger)" }}>{state.error}</p>}
       <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>

@@ -23,7 +23,7 @@ export default async function AdminCursosEditarPage({ params }: Props) {
 
   const [courseResult, modulesResult, coCreatorsResult, modalities] = await Promise.all([
     supabase.from("Course").select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase, creator_student_id, coach_revenue_pct").eq("id", courseId).single(),
-    supabase.from("CourseModule").select("id, name, description, video_url, sort_order").eq("course_id", courseId).order("sort_order", { ascending: true }),
+    supabase.from("CourseModule").select("id, name, description, video_url, sort_order, status").eq("course_id", courseId).order("sort_order", { ascending: true }),
     supabase.from("CourseCreator").select("id, student_id, revenue_pct").eq("course_id", courseId),
     getCachedModalityRefs(supabase),
   ]);
@@ -32,11 +32,11 @@ export default async function AdminCursosEditarPage({ params }: Props) {
   const { data: coCreatorsRaw } = coCreatorsResult;
 
   const moduleIds = (modules ?? []).map((m) => m.id);
-  let unitsByModule = new Map<string, { id: string; module_id: string; name: string; description: string | null; content_type: string; video_url: string | null; text_content: string | null; sort_order: number }[]>();
+  let unitsByModule = new Map<string, { id: string; module_id: string; name: string; description: string | null; content_type: string; video_url: string | null; text_content: string | null; sort_order: number; status: string }[]>();
   if (moduleIds.length > 0) {
     const { data: units } = await supabase
       .from("CourseUnit")
-      .select("id, module_id, name, description, content_type, video_url, text_content, sort_order")
+      .select("id, module_id, name, description, content_type, video_url, text_content, sort_order, status")
       .in("module_id", moduleIds);
     (units ?? []).forEach((u) => {
       const list = unitsByModule.get(u.module_id) ?? [];
@@ -119,9 +119,25 @@ export default async function AdminCursosEditarPage({ params }: Props) {
               <ModuleCard
                 key={m.id}
                 courseId={course.id}
-                module={{ id: m.id, name: m.name, description: m.description, sort_order: m.sort_order ?? 0 }}
+                module={{
+                  id: m.id,
+                  name: m.name,
+                  description: m.description,
+                  sort_order: m.sort_order ?? 0,
+                  status: (m as { status?: string }).status === "DRAFT" ? "DRAFT" : "PUBLISHED",
+                }}
                 index={idx}
-                units={(unitsByModule.get(m.id) ?? []).map((u) => ({ id: u.id, module_id: u.module_id, name: u.name, content_type: u.content_type, sort_order: u.sort_order ?? 0 }))}
+                units={(unitsByModule.get(m.id) ?? []).map((u) => ({
+                  id: u.id,
+                  module_id: u.module_id,
+                  name: u.name,
+                  description: u.description,
+                  content_type: u.content_type,
+                  video_url: u.video_url,
+                  text_content: u.text_content,
+                  sort_order: u.sort_order ?? 0,
+                  status: u.status === "DRAFT" ? "DRAFT" : "PUBLISHED",
+                }))}
               />
             ))}
           </div>

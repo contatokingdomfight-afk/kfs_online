@@ -25,7 +25,7 @@ export default async function CoachBibliotecaCursoPage({ params }: Props) {
 
   const [{ data: course }, { data: modules }] = await Promise.all([
     supabase.from("Course").select("id, name, description, category, modality, video_url, is_active").eq("id", courseId).single(),
-    supabase.from("CourseModule").select("id, name, description, video_url, sort_order").eq("course_id", courseId).order("sort_order", { ascending: true }),
+    supabase.from("CourseModule").select("id, name, description, video_url, sort_order").eq("course_id", courseId).eq("status", "PUBLISHED").order("sort_order", { ascending: true }),
   ]);
 
   const moduleList = modules ?? [];
@@ -35,7 +35,8 @@ export default async function CoachBibliotecaCursoPage({ params }: Props) {
     const { data: units } = await supabase
       .from("CourseUnit")
       .select("id, module_id, name, description, content_type, video_url, text_content, sort_order")
-      .in("module_id", moduleIds);
+      .in("module_id", moduleIds)
+      .eq("status", "PUBLISHED");
     (units ?? []).forEach((u) => {
       const list = unitsByModule.get(u.module_id) ?? [];
       list.push(u);

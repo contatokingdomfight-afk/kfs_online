@@ -18,6 +18,7 @@ export async function createModule(
   const description = (formData.get("description") as string)?.trim() || null;
   const videoUrl = null;
   const sortOrderStr = (formData.get("sortOrder") as string)?.trim();
+  const status = (formData.get("status") as string) === "DRAFT" ? "DRAFT" : "PUBLISHED";
 
   if (!courseId || !name) return { error: "Curso e nome do módulo são obrigatórios." };
   const sortOrder = sortOrderStr ? parseInt(sortOrderStr, 10) : 0;
@@ -33,6 +34,7 @@ export async function createModule(
     description,
     video_url: videoUrl,
     sort_order: sortOrder,
+    status,
   });
 
   if (error) {
@@ -57,6 +59,7 @@ export async function updateModule(
   const name = (formData.get("name") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
   const sortOrderStr = (formData.get("sortOrder") as string)?.trim();
+  const status = (formData.get("status") as string) === "DRAFT" ? "DRAFT" : "PUBLISHED";
 
   if (!moduleId || !courseId || !name) return { error: "Dados inválidos." };
   const sortOrder = sortOrderStr ? parseInt(sortOrderStr, 10) : 0;
@@ -66,7 +69,7 @@ export async function updateModule(
 
   const { error } = await supabase
     .from("CourseModule")
-    .update({ name, description, sort_order: sortOrder, updated_at: new Date().toISOString() })
+    .update({ name, description, sort_order: sortOrder, status, updated_at: new Date().toISOString() })
     .eq("id", moduleId);
 
   if (error) return { error: error.message };

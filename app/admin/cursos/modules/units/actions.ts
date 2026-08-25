@@ -21,6 +21,7 @@ export async function createUnit(
   const videoUrl = (formData.get("videoUrl") as string)?.trim() || null;
   const textContent = (formData.get("textContent") as string)?.trim() || null;
   const sortOrderStr = (formData.get("sortOrder") as string)?.trim();
+  const status = (formData.get("status") as string) === "DRAFT" ? "DRAFT" : "PUBLISHED";
 
   if (!moduleId || !courseId || !name) return { error: "Módulo, curso e nome são obrigatórios." };
   if (contentType === "VIDEO" && !videoUrl) return { error: "URL do vídeo é obrigatória para conteúdo em vídeo." };
@@ -40,6 +41,7 @@ export async function createUnit(
     video_url: contentType === "VIDEO" ? videoUrl : null,
     text_content: contentType === "TEXT" ? textContent : null,
     sort_order: sortOrder,
+    status,
   });
 
   if (error) {
@@ -68,6 +70,7 @@ export async function updateUnit(
   const videoUrl = (formData.get("videoUrl") as string)?.trim() || null;
   const textContent = (formData.get("textContent") as string)?.trim() || null;
   const sortOrderStr = (formData.get("sortOrder") as string)?.trim();
+  const status = (formData.get("status") as string) === "DRAFT" ? "DRAFT" : "PUBLISHED";
 
   if (!unitId || !moduleId || !courseId || !name) return { error: "Dados inválidos." };
   if (contentType === "VIDEO" && !videoUrl) return { error: "URL do vídeo é obrigatória para conteúdo em vídeo." };
@@ -86,6 +89,7 @@ export async function updateUnit(
       video_url: contentType === "VIDEO" ? videoUrl : null,
       text_content: contentType === "TEXT" ? textContent : null,
       sort_order: sortOrder,
+      status,
       updated_at: new Date().toISOString(),
     })
     .eq("id", unitId);
