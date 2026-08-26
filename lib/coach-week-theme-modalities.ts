@@ -1,23 +1,30 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-
-/** Modalidades válidas para `WeekTheme` (alinhado com tema-semana e Student). */
-export const WEEK_THEME_MODALITIES = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 
 /**
- * Admin: todas as modalidades. Coach: só modalidades em que tem pelo menos uma aula (`Lesson.coachId`).
+ * Modalidades válidas para `WeekTheme`: vem do catálogo dinâmico (`ModalityRef`,
+ * gerido em /admin/modalidades) — uma modalidade nova já aparece aqui sozinha,
+ * sem precisar de alteração de código.
+ *
+ * Admin: todas as modalidades do catálogo. Coach: só modalidades em que tem
+ * pelo menos uma aula (`Lesson.coachId`).
  */
 export async function getModalitiesForWeekThemeEditor(
   supabase: SupabaseClient,
   userRole: string,
   coachId: string | null
 ): Promise<string[]> {
-  if (userRole === "ADMIN") return [...WEEK_THEME_MODALITIES];
+  const modalityRefs = await getCachedModalityRefs(supabase);
+  const catalogCodes = modalityRefs.map((m) => m.code);
+
+  if (userRole === "ADMIN") return catalogCodes;
   if (!coachId) return [];
+
   const { data } = await supabase.from("Lesson").select("modality").eq("coachId", coachId);
   const allowed = new Set<string>();
   for (const row of data ?? []) {
     const m = (row as { modality?: string | null }).modality;
-    if (m && (WEEK_THEME_MODALITIES as readonly string[]).includes(m)) allowed.add(m);
+    if (m) allowed.add(m);
   }
-  return WEEK_THEME_MODALITIES.filter((m) => allowed.has(m));
+  return catalogCodes.filter((code) => allowed.has(code));
 }
