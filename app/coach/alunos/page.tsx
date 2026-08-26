@@ -84,6 +84,12 @@ export default async function CoachAlunosPage({ searchParams }: { searchParams: 
     });
   }
 
+  filtered = [...filtered].sort((a, b) => {
+    const nameA = userById.get(a.userId)?.name ?? "";
+    const nameB = userById.get(b.userId)?.name ?? "";
+    return nameA.localeCompare(nameB, "pt", { sensitivity: "base" });
+  });
+
   const baseFilters = { status: filterStatus, modality: filterModality, school: filterSchool, plan: filterPlan, q: params.q ?? "" };
 
   return (
