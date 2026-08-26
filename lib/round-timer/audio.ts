@@ -35,28 +35,60 @@ function loadBuffer(ctx: AudioContext, url: string): Promise<AudioBuffer | null>
     cached = fetch(url)
       .then((r) => r.arrayBuffer())
       .then((data) => ctx.decodeAudioData(data))
-      .catch(() => null);
+      .catch((e) => {
+        console.warn(`round-timer audio: falhou a descodificar ${url}`, e);
+        return null;
+      });
     bufferCache.set(url, cached);
   }
   return cached;
+}
+
+/**
+ * Alguns tablets/browsers suspendem o AudioContext sozinhos ao fim de um
+ * período sem som (poupança de energia, ecrã a apagar, etc.) — sem isto, o
+ * som fica "agendado" mas nunca se ouve porque o contexto continua parado.
+ * Chamar sempre antes de tocar, não só uma vez no arranque.
+ */
+function ensureResumed(ctx: AudioContext): void {
+  if (ctx.state === "suspended") {
+    void ctx.resume().catch(() => {});
+  }
 }
 
 /** Chamado após gesto do utilizador (Start) para desbloquear e pré-carregar os sons. */
 export async function unlockAudio(): Promise<void> {
   const ctx = getCtx();
   if (!ctx) return;
-  if (ctx.state === "suspended") {
-    await ctx.resume().catch(() => {});
-  }
+  ensureResumed(ctx);
   await Promise.all([loadBuffer(ctx, SOUND_ROUND_BOXING_BELL), loadBuffer(ctx, SOUND_DIGITAL_BEEP)]);
+}
+
+/** Reserva de segurança: se o Web Audio falhar (contexto indisponível ou som não descodifica), toca à moda antiga. */
+function playViaHtmlAudioFallback(url: string, volume: number): void {
+  try {
+    const a = new Audio(url);
+    a.volume = volume;
+    void a.play().catch(() => {});
+  } catch {
+    /* sem mais alternativas */
+  }
 }
 
 function playBuffer(url: string, volume: number): void {
   if (muted) return;
   const ctx = getCtx();
-  if (!ctx) return;
+  if (!ctx) {
+    playViaHtmlAudioFallback(url, volume);
+    return;
+  }
+  ensureResumed(ctx);
   void loadBuffer(ctx, url).then((buffer) => {
-    if (!buffer || muted) return;
+    if (muted) return;
+    if (!buffer) {
+      playViaHtmlAudioFallback(url, volume);
+      return;
+    }
     const source = ctx.createBufferSource();
     const gain = ctx.createGain();
     gain.gain.value = volume;
@@ -93,6 +125,7 @@ function beep(freq: number, durationSec: number, volume = 0.12): void {
   if (muted) return;
   const ctx = getCtx();
   if (!ctx) return;
+  ensureResumed(ctx);
   const o = ctx.createOscillator();
   const g = ctx.createGain();
   o.type = "sine";
