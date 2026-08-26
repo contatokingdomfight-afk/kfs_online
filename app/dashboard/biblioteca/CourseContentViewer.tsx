@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ConcluirUnidadeButton } from "./ConcluirUnidadeButton";
 import { ConcluirModuloButton } from "./ConcluirModuloButton";
@@ -31,6 +31,8 @@ type Props = {
   completedUnitIds: string[];
   completedModuleIds: string[];
   studentId: string | null;
+  /** Aula a abrir e focar automaticamente ao entrar na página (link "Ver Aula" do Tema da Semana). */
+  initialOpenUnitId?: string | null;
   videoComingSoon: string;
   completePreviousUnit: string;
   videoUnavailable: string;
@@ -77,6 +79,7 @@ export function CourseContentViewer({
   completedUnitIds,
   completedModuleIds,
   studentId,
+  initialOpenUnitId = null,
   videoComingSoon,
   completePreviousUnit,
   videoUnavailable,
@@ -85,7 +88,17 @@ export function CourseContentViewer({
   lockedOverlayBody = "",
   choosePlanLabel = "",
 }: Props) {
-  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(
+    () => new Set(initialOpenUnitId ? [initialOpenUnitId] : [])
+  );
+  const unitRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  useEffect(() => {
+    if (!initialOpenUnitId) return;
+    const el = unitRefs.current.get(initialOpenUnitId);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleUnit = (unitId: string) => {
     setExpandedUnits((prev) => {
@@ -124,11 +137,18 @@ export function CourseContentViewer({
                 return (
                   <div
                     key={u.id}
+                    ref={(el) => {
+                      if (el) unitRefs.current.set(u.id, el);
+                      else unitRefs.current.delete(u.id);
+                    }}
                     className="card"
                     style={{
                       padding: 0,
                       overflow: "hidden",
                       opacity: canExpand ? 1 : 0.7,
+                      outline: u.id === initialOpenUnitId ? "2px solid var(--primary)" : "none",
+                      outlineOffset: 2,
+                      scrollMarginTop: 16,
                     }}
                   >
                     <div

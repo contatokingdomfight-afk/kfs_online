@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
 
 type WeekTheme = {
   modality: string;
   title: string;
   description: string | null;
   course_id: string | null;
+  unit_id: string | null;
   video_url: string | null;
 };
 
@@ -31,7 +33,9 @@ type WhatIsNewLabels = {
   tabMission: string;
   tabFeedback: string;
   viewTheory: string;
+  viewLesson: string;
   viewVideo: string;
+  hideVideo: string;
   noWeekTheme: string;
   viewAllMissions: string;
   noMissions: string;
@@ -52,6 +56,7 @@ const TABS = ["theme", "mission", "feedback"] as const;
 
 export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, labels }: Props) {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("theme");
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const tabs = [
     { id: "theme" as const, label: labels.tabTheme },
@@ -111,41 +116,60 @@ export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, label
                       {weekTheme.description}
                     </p>
                   ) : null}
-                  {(weekTheme.course_id || weekTheme.video_url) && (
-                    weekTheme.course_id ? (
-                      <Link
-                        href={`/dashboard/biblioteca/${weekTheme.course_id}`}
-                        className="btn btn-primary"
-                        style={{
-                          textDecoration: "none",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
-                          minHeight: 44,
-                        }}
-                      >
-                        {labels.viewTheory}
-                      </Link>
-                    ) : (
-                      <a
-                        href={weekTheme.video_url ?? "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-primary"
-                        style={{
-                          textDecoration: "none",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
-                          minHeight: 44,
-                        }}
-                      >
-                        {labels.viewVideo}
-                      </a>
-                    )
+                  {(weekTheme.course_id || weekTheme.unit_id || weekTheme.video_url) && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {weekTheme.unit_id && weekTheme.course_id ? (
+                        <Link
+                          href={`/dashboard/biblioteca/${weekTheme.course_id}?unit=${weekTheme.unit_id}`}
+                          className="btn btn-primary"
+                          style={{
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            minHeight: 44,
+                          }}
+                        >
+                          {labels.viewLesson}
+                        </Link>
+                      ) : null}
+                      {weekTheme.course_id ? (
+                        <Link
+                          href={`/dashboard/biblioteca/${weekTheme.course_id}`}
+                          className={weekTheme.unit_id ? "btn btn-secondary" : "btn btn-primary"}
+                          style={{
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            minHeight: 44,
+                          }}
+                        >
+                          {labels.viewTheory}
+                        </Link>
+                      ) : null}
+                      {weekTheme.video_url ? (
+                        <button
+                          type="button"
+                          onClick={() => setVideoOpen((v) => !v)}
+                          className={weekTheme.course_id ? "btn btn-secondary" : "btn btn-primary"}
+                          style={{
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            minHeight: 44,
+                          }}
+                        >
+                          {videoOpen ? labels.hideVideo : labels.viewVideo}
+                        </button>
+                      ) : null}
+                    </div>
                   )}
+                  {weekTheme.video_url && videoOpen ? (
+                    <div style={{ marginTop: 12 }}>
+                      <VideoPlayer url={weekTheme.video_url} title={weekTheme.title} />
+                    </div>
+                  ) : null}
                 </>
               ) : (
                 <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>

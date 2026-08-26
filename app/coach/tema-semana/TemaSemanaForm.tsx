@@ -13,8 +13,10 @@ type Props = {
   initialTitle: string;
   initialDescription: string;
   initialCourseId: string | null;
+  initialUnitId: string | null;
   initialVideoUrl: string;
   courses: { id: string; name: string }[];
+  unitsByCourse: Record<string, { id: string; name: string }[]>;
   initialLocale: Locale;
 };
 
@@ -121,10 +123,24 @@ function ThemeSaveSuccessGate(props: SuccessModalProps) {
   return <ThemeSaveSuccessModal {...props} />;
 }
 
-export function TemaSemanaForm({ weekStart, modality, initialTitle, initialDescription, initialCourseId, initialVideoUrl, courses, initialLocale }: Props) {
+export function TemaSemanaForm({
+  weekStart,
+  modality,
+  initialTitle,
+  initialDescription,
+  initialCourseId,
+  initialUnitId,
+  initialVideoUrl,
+  courses,
+  unitsByCourse,
+  initialLocale,
+}: Props) {
   const t = getTranslations(initialLocale);
   const [state, formAction] = useFormState(saveWeekTheme, null as SaveWeekThemeResult | null);
   const [successOpen, setSuccessOpen] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState(initialCourseId ?? "");
+  const [selectedUnitId, setSelectedUnitId] = useState(initialUnitId ?? "");
+  const unitsForSelectedCourse = selectedCourseId ? unitsByCourse[selectedCourseId] ?? [] : [];
 
   useEffect(() => {
     if (state?.error) setSuccessOpen(false);
@@ -184,7 +200,16 @@ export function TemaSemanaForm({ weekStart, modality, initialTitle, initialDescr
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("libraryVideoOptional")}</span>
-        <select name="course_id" className="input" defaultValue={initialCourseId ?? ""} style={{ minHeight: 44 }}>
+        <select
+          name="course_id"
+          className="input"
+          value={selectedCourseId}
+          onChange={(e) => {
+            setSelectedCourseId(e.target.value);
+            setSelectedUnitId("");
+          }}
+          style={{ minHeight: 44 }}
+        >
           <option value="">{t("noCourseOption")}</option>
           {courses.map((c) => (
             <option key={c.id} value={c.id}>
@@ -193,6 +218,26 @@ export function TemaSemanaForm({ weekStart, modality, initialTitle, initialDescr
           ))}
         </select>
       </label>
+      {selectedCourseId && unitsForSelectedCourse.length > 0 && (
+        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("themeUnitLabel")}</span>
+          <select
+            name="unit_id"
+            className="input"
+            value={selectedUnitId}
+            onChange={(e) => setSelectedUnitId(e.target.value)}
+            style={{ minHeight: 44 }}
+          >
+            <option value="">{t("noUnitOption")}</option>
+            {unitsForSelectedCourse.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}
+              </option>
+            ))}
+          </select>
+          <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t("themeUnitHint")}</span>
+        </label>
+      )}
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("themeVideoUrlLabel")}</span>
         <input

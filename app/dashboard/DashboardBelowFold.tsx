@@ -74,7 +74,7 @@ export async function DashboardBelowFold({
       : Promise.resolve({ data: [] }),
     supabase
       .from("WeekTheme")
-      .select("modality, title, description, course_id, video_url")
+      .select("modality, title, description, course_id, unit_id, video_url")
       .eq("week_start", weekStart)
       .order("modality", { ascending: true }),
   ]);
@@ -104,6 +104,7 @@ export async function DashboardBelowFold({
     title: string;
     description: string | null;
     course_id: string | null;
+    unit_id: string | null;
     video_url: string | null;
   } | null => {
     if (temaSemanaList.length === 0) return null;
@@ -117,6 +118,7 @@ export async function DashboardBelowFold({
           title: theme.title,
           description: (theme as { description?: string | null }).description ?? null,
           course_id: theme.course_id,
+          unit_id: (theme as { unit_id?: string | null }).unit_id ?? null,
           video_url: (theme as { video_url?: string | null }).video_url ?? null,
         };
       }
@@ -127,6 +129,7 @@ export async function DashboardBelowFold({
       title: theme.title,
       description: (theme as { description?: string | null }).description ?? null,
       course_id: theme.course_id,
+      unit_id: (theme as { unit_id?: string | null }).unit_id ?? null,
       video_url: (theme as { video_url?: string | null }).video_url ?? null,
     };
   };
@@ -136,6 +139,7 @@ export async function DashboardBelowFold({
     title: string;
     description: string | null;
     course_id: string | null;
+    unit_id: string | null;
     video_url: string | null;
   } | null = pickWeekThemeForStudent();
 
@@ -312,7 +316,9 @@ export async function DashboardBelowFold({
           tabMission: t("dashboardTabNextMission"),
           tabFeedback: t("dashboardTabLastFeedback"),
           viewTheory: t("dashboardViewTheory"),
+          viewLesson: t("dashboardViewLesson"),
           viewVideo: t("dashboardViewVideo"),
+          hideVideo: t("dashboardHideVideo"),
           noWeekTheme: t("dashboardNoWeekTheme"),
           viewAllMissions: t("dashboardViewAllMissions"),
           noMissions: noMissionsMessage,

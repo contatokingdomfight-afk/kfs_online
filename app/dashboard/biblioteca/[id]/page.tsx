@@ -8,10 +8,11 @@ import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { CourseContentViewer } from "../CourseContentViewer";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ unit?: string }> };
 
-export default async function CursoDetailPage({ params }: Props) {
+export default async function CursoDetailPage({ params, searchParams }: Props) {
   const { id: courseId } = await params;
+  const { unit: initialOpenUnitId } = await searchParams;
   const supabase = await createClient();
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
@@ -165,6 +166,7 @@ export default async function CursoDetailPage({ params }: Props) {
             completedUnitIds={[...completedUnitIds]}
             completedModuleIds={[...completedModuleIds]}
             studentId={lockedPreview ? null : studentId}
+            initialOpenUnitId={initialOpenUnitId ?? null}
             videoComingSoon={t("videoComingSoon")}
             completePreviousUnit={t("completePreviousUnit")}
             videoUnavailable={t("videoUnavailable")}

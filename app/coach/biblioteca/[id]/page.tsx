@@ -105,7 +105,7 @@ export default async function CoachBibliotecaCursoPage({ params }: Props) {
                     <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>{mod.description}</p>
                   )}
                   {units.map((u, uIdx) => (
-                    <div key={u.id} className="card" style={{ padding: 0, overflow: "hidden" }}>
+                    <div key={u.id} id={`unit-${u.id}`} className="card" style={{ padding: 0, overflow: "hidden", scrollMarginTop: 16 }}>
                       <div style={{ padding: "clamp(12px, 3vw, 16px)", borderBottom: "1px solid var(--border)" }}>
                         <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
                           {uIdx + 1}. {u.name}

@@ -53,7 +53,7 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
 
   const { data: themes } = await supabase
     .from("WeekTheme")
-    .select("modality, title, description, course_id, video_url")
+    .select("modality, title, description, course_id, unit_id, video_url")
     .eq("week_start", weekStart);
 
   const { data: courses } = await supabase
@@ -63,8 +63,37 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
-  const themeByModality = new Map((themes ?? []).map((th) => [th.modality, th]));
   const courseList = courses ?? [];
+  const courseIds = courseList.map((c) => c.id);
+
+  let unitsByCourse: Record<string, { id: string; name: string }[]> = {};
+  if (courseIds.length > 0) {
+    const { data: modules } = await supabase
+      .from("CourseModule")
+      .select("id, course_id, sort_order")
+      .in("course_id", courseIds)
+      .eq("status", "PUBLISHED")
+      .order("sort_order", { ascending: true });
+    const moduleList = modules ?? [];
+    const moduleIds = moduleList.map((m) => m.id);
+    const courseIdByModuleId = new Map(moduleList.map((m) => [m.id, m.course_id as string]));
+    if (moduleIds.length > 0) {
+      const { data: units } = await supabase
+        .from("CourseUnit")
+        .select("id, module_id, name, sort_order")
+        .in("module_id", moduleIds)
+        .eq("status", "PUBLISHED")
+        .order("sort_order", { ascending: true });
+      (units ?? []).forEach((u) => {
+        const courseId = courseIdByModuleId.get(u.module_id);
+        if (!courseId) return;
+        const list = unitsByCourse[courseId] ?? (unitsByCourse[courseId] = []);
+        list.push({ id: u.id, name: u.name });
+      });
+    }
+  }
+
+  const themeByModality = new Map((themes ?? []).map((th) => [th.modality, th]));
   const prevWeek = addWeeks(weekStart, -1);
   const nextWeek = addWeeks(weekStart, 1);
   const isCurrentWeek = weekStart === currentWeek;
@@ -184,8 +213,10 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
             initialTitle={theme?.title ?? ""}
             initialDescription={theme?.description ?? ""}
             initialCourseId={theme?.course_id ?? null}
+            initialUnitId={(theme as { unit_id?: string | null } | undefined)?.unit_id ?? null}
             initialVideoUrl={theme?.video_url ?? ""}
             courses={courseList}
+            unitsByCourse={unitsByCourse}
             initialLocale={locale as "pt" | "en"}
           />
         );
