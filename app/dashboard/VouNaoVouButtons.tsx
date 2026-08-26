@@ -28,7 +28,7 @@ const promoPanel: CSSProperties = {
   boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
 };
 
-const textOnPromo = { title: "#fff" as const, sub: "rgba(255,255,255,0.9)" as const };
+const textOnPromo = { title: "#fff" as const };
 
 function CheckIcon() {
   return (
@@ -131,70 +131,38 @@ export function VouNaoVouButtons({
   }
   if (currentStatus === "PENDING") {
     return (
-      <div style={{ marginTop: 4 }}>
+      <div style={{ marginTop: 4 }} title={intentGoingHint}>
         <div style={promoPanel}>
-          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-            <div
-              style={{
-                flexShrink: 0,
-                width: 48,
-                height: 48,
-                borderRadius: "50%",
-                background: "#fff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
-              }}
-              aria-hidden
-            >
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <circle cx="12" cy="12" r="11" stroke="var(--success)" strokeWidth={2} fill="rgba(34,197,94,0.12)" />
-                <path
-                  d="M8 12.5l2.5 2.5L16 9"
-                  stroke="var(--success)"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
+              <div style={{ flexShrink: 0 }}>
+                <CheckIcon />
+              </div>
               <p
                 style={{
                   margin: 0,
-                  fontSize: "clamp(16px, 4vw, 18px)",
-                  fontWeight: 700,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontWeight: 600,
                   color: textOnPromo.title,
                   lineHeight: 1.3,
                 }}
               >
                 {intentGoingTitle}
               </p>
-              <p
-                style={{
-                  margin: "8px 0 0",
-                  fontSize: "clamp(13px, 3.2vw, 15px)",
-                  color: textOnPromo.sub,
-                  lineHeight: 1.45,
-                }}
-              >
-                {intentGoingHint}
-              </p>
             </div>
+            <form action={formAction} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <input type="hidden" name="lessonId" value={lessonId} />
+              <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
+              <input type="hidden" name="intention" value="nao_vou" />
+              <button
+                type="submit"
+                style={{ ...btnNotGoingOnPromo, minHeight: 36, padding: "0.4em 0.9em", fontSize: "clamp(13px, 3.2vw, 14px)" }}
+              >
+                {notGoingLabel}
+              </button>
+              <PendingHint savingLabel={savingLabel} />
+            </form>
           </div>
-          <form
-            action={formAction}
-            style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginTop: 16 }}
-          >
-            <input type="hidden" name="lessonId" value={lessonId} />
-            <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
-            <input type="hidden" name="intention" value="nao_vou" />
-            <button type="submit" style={btnNotGoingOnPromo}>
-              {notGoingLabel}
-            </button>
-            <PendingHint savingLabel={savingLabel} />
-          </form>
         </div>
         {state?.error && (
           <span

@@ -146,7 +146,7 @@ export function ActionItems({
                   borderRadius: "var(--radius-sm)",
                 }}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: "1 1 200px", minWidth: 200 }}>
                   <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{p.studentName}</span>
                   <span style={{ marginLeft: 8, color: "var(--text-secondary)", fontSize: "clamp(13px, 3.2vw, 15px)" }}>
                     {p.paymentTypeLabel} · {Number(p.amount).toFixed(2)} € · {pendingPaymentPeriodLabel(p)}
@@ -254,7 +254,7 @@ export function ActionItems({
                   color: "inherit",
                 }}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: "1 1 200px", minWidth: 200 }}>
                   <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
                     {MODALITY_LABELS[l.modality] ?? l.modality}
                   </span>
