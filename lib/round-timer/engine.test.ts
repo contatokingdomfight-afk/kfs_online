@@ -31,6 +31,18 @@ describe("round-timer engine", () => {
     expect(s.phase).toBe("finished");
   });
 
+  it("catchUp collapses the rest phase into a direct round-to-round jump when restSec is 0", () => {
+    const cfg = clampConfig({ rounds: 3, roundSec: 60, restSec: 0, countdownSec: 0 });
+    let s = startFromIdle(initialState(cfg), 0);
+    expect(s.phase).toBe("round");
+    expect(s.roundIdx).toBe(0);
+    s = catchUp(s, 60_001);
+    // A fase "rest" (duração 0) nunca é observável: o motor já entrega o round seguinte.
+    expect(s.phase).toBe("round");
+    expect(s.roundIdx).toBe(1);
+    expect(s.completedRoundIdx).toBe(0);
+  });
+
   it("catchUp advances after long idle", () => {
     const cfg = clampConfig({ rounds: 1, roundSec: 60, restSec: 0, countdownSec: 5 });
     let s = startFromIdle(initialState(cfg), 0);

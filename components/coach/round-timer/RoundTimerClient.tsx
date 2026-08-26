@@ -123,6 +123,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
   const timerPhaseRef = useRef<TimerPhase>("idle");
   timerPhaseRef.current = timer.phase;
   const prevPhase = useRef(timer.phase);
+  const prevRoundIdx = useRef(timer.roundIdx);
   const lastCountdownSec = useRef<number | null>(null);
   const lastCountdownUrgentSec = useRef<number | null>(null);
   const prevRemForTenSec = useRef<number | null>(null);
@@ -306,11 +307,31 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
   /* Sons + vibração nas transições de fase */
   useEffect(() => {
     const was = prevPhase.current;
+    const wasRoundIdx = prevRoundIdx.current;
     const is = timer.phase;
+    const isRoundIdx = timer.roundIdx;
     prevPhase.current = is;
-    if (was === is) return;
+    prevRoundIdx.current = isRoundIdx;
+
+    // Com descanso a 0s, o motor (catchUp) avança de round para round na mesma
+    // iteração — a fase "rest" nunca chega a ser observada aqui, então o sino
+    // de fim/início de round nunca tocava. Deteta esse salto pela mudança de
+    // roundIdx com a fase a manter-se "round".
+    const skippedRestBetweenRounds = was === "round" && is === "round" && isRoundIdx !== wasRoundIdx;
+
+    if (was === is && !skippedRestBetweenRounds) return;
 
     void unlockAudio();
+
+    if (skippedRestBetweenRounds) {
+      playRoundEndBell();
+      vibrateMs(80);
+      window.setTimeout(() => {
+        playRoundStartBell();
+        vibrateMs(120);
+      }, 350);
+      return;
+    }
 
     if (is === "round" && (was === "countdown" || was === "rest")) {
       playRoundStartBell();
@@ -322,7 +343,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       playWorkoutEndBell();
       vibrateMs([100, 80, 100, 80, 100]);
     }
-  }, [timer.phase]);
+  }, [timer.phase, timer.roundIdx]);
 
   useEffect(() => {
     lastCountdownUrgentSec.current = null;
