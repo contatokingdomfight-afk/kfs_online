@@ -22,7 +22,8 @@
 1. **Idle / Finished** — configuração e **Iniciar**.  
 2. **Countdown** — preparação (opcional, segundos configuráveis).  
 3. **Round** — trabalho; índice 0-based em estado.  
-4. **Rest** — descanso entre rounds (pode ser 0 s; último round vai directamente para **finished** sem descanso).  
+4. **Rest** — descanso entre rounds (pode ser 0 s; último round vai directamente para **finished** sem descanso).
+   - **Descanso a 0 s (ago. 2026):** com `restSec = 0`, `catchUp()` no motor (`lib/round-timer/engine.ts`) colapsa `round → rest → round` na mesma iteração — a fase `rest` nunca chega a ser observada pela UI. `RoundTimerClient.tsx` deteta esse salto pela mudança de `roundIdx` com a fase a manter-se `round` e toca fim + início de round em sequência (sem isto, os sinos ficavam mudos sempre que não havia descanso entre assaltos).
 5. **Paused** — snapshot da fase actual.
 
 O atributo `data-ui` na raiz (idle / prepare / round / rest / done) vem de `uiKind()` sobre a fase efectiva (em pausa, a fase congelada) e pinta `--rt-accent`, `--rt-surface`, `--rt-clock` e os botões primários. Nos últimos ~10 s de um **round** a correr, `data-rt-urgent` activa pulso suave de fundo e dígitos amarelos (respeita `prefers-reduced-motion`).
@@ -44,6 +45,8 @@ Ficheiros em **`public/sounds/round-timer/`** (servidos como `/sounds/round-time
 | `start__boxing-bell.wav` | *Opcional / legado no disco;* o código **não** referencia este ficheiro desde a unificação do sino. |
 
 **Desbloqueio de áudio (mobile):** `unlockAudio()` em `audio.ts` — chamado no **Start**, nas transições de fase e antes dos bips; convém testar com um toque real do utilizador no botão Iniciar.
+
+**Reprodução via Web Audio API (ago. 2026):** o sino e o beep digital tocam via `AudioBufferSourceNode` (Web Audio API), não `new Audio(url)` — um `<audio>` HTML faz o browser/WebView pedir foco de áudio **exclusivo** ao SO, pausando música de fundo (YouTube Music, Spotify) no telemóvel do coach; a Web Audio API não disputa esse foco. `ensureResumed()` reactiva o `AudioContext` **antes de cada som** (não só uma vez no arranque) — alguns tablets suspendem o contexto sozinhos a meio da sessão (poupança de energia, ecrã a apagar), o que fazia o som ficar «agendado» mas nunca ouvido. Há um *fallback* para `<audio>` tradicional se o Web Audio falhar de vez (contexto indisponível ou som não descodifica).
 
 ### Quando toca o digital-beep
 

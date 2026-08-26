@@ -129,7 +129,7 @@
   - Matrícula, seguro anual, waiver, 1.º pagamento, gate presencial (jun. 2026)
 
 - **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**
-  - Mensalidades, **Europe/Lisbon** (5.º dia útil / dia 10)
+  - Mensalidades, **Europe/Lisbon** (dia 8 / dia 8 + 15 dias corridos)
   - Crons `payment-suspension`, `generate-monthly-payments`
   - Campos `Student` (grace / suspensão)
 

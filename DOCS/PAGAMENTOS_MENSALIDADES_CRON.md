@@ -7,7 +7,7 @@ Documentação operacional e técnica alinhada ao código (`lib/lisbon-payment-d
 - **Fuso:** `Europe/Lisbon` para dias úteis e prazos de mensalidade.
 - **Prazo de pagamento:** até ao **fim do dia civil 8** do mês de referência em Lisboa.
 - **Em atraso:** após o dia 8 sem `Payment` `PAID` para o `referenceMonth`, o sistema cria ou mantém registo **`LATE`** (automático ou via admin).
-- **Regularização:** **5 dias úteis** após o dia 8 para pagar antes do bloqueio. O campo `Student.paymentGraceEndsAt` guarda o fim desse prazo (fim do 5.º dia útil após o dia 8).
+- **Regularização:** **15 dias corridos** após o dia 8 (ou seja, até ao dia 23) para pagar antes do bloqueio. O campo `Student.paymentGraceEndsAt` guarda o fim desse prazo.
 - **Bloqueio sistémico:** após o prazo de regularização, o cron de suspensão remove o `planId`, guarda o plano em `suspendedPlanId`, pode cancelar subscrição Stripe e notifica o aluno.
 
 ## O que conta como “pago no mês”
@@ -24,7 +24,7 @@ Definidos em `vercel.json`:
 | Caminho | Horário (UTC) | Função |
 |--------|----------------|--------|
 | `/api/cron/lesson-reminders` | `0 6 * * *` | Lembretes de aulas (email Resend). |
-| `/api/cron/payment-suspension` | `30 7 * * *` | (1) Gera `LATE` **TUITION** para **mês anterior** e **mês corrente** (Lisboa), respeitando o 5.º dia útil; (2) suspende quem ultrapassou `paymentGraceEndsAt`. |
+| `/api/cron/payment-suspension` | `30 7 * * *` | (1) Gera `LATE` **TUITION** para **mês anterior** e **mês corrente** (Lisboa), respeitando o dia 8; (2) suspende quem ultrapassou `paymentGraceEndsAt`. |
 | `/api/cron/insurance-expiry-check` | `0 8 * * 1` | Aviso admin de seguros a expirar (`INSURANCE_ALERT_ADMIN_EMAIL`). |
 
 **Autenticação:** `Authorization: Bearer <CRON_SECRET>` ou cabeçalho `x-vercel-cron: 1`. A variável **`CRON_SECRET`** deve estar definida na Vercel e no `.env` local para testes manuais.
@@ -35,7 +35,7 @@ Definidos em `vercel.json`:
 
 ## Admin (ação manual)
 
-- **Gerar mensalidades** em `/admin/financeiro` usa **`force: true`**: cria `LATE` para quem não tem `PAID` e ainda não tem qualquer `Payment` naquele mês, **sem** esperar pelo 5.º dia útil (backfill / operação manual).
+- **Gerar mensalidades** em `/admin/financeiro` usa **`force: true`**: cria `LATE` para quem não tem `PAID` e ainda não tem qualquer `Payment` naquele mês, **sem** esperar pelo dia 8 (backfill / operação manual).
 
 ### Registar pagamento (consolidação por aluno + mês)
 
@@ -48,7 +48,7 @@ Definidos em `vercel.json`:
 
 | Coluna | Significado |
 |--------|-------------|
-| `paymentGraceEndsAt` | Fim do prazo de regularização (5.º dia útil após o dia 8 do mês em causa), em timestamptz. |
+| `paymentGraceEndsAt` | Fim do prazo de regularização (dia 8 + 15 dias corridos do mês em causa), em timestamptz. |
 | `paymentGraceReferenceMonth` | `YYYY-MM` da mensalidade associada ao aviso. |
 | `paymentSuspendedAt` | Quando o acesso foi suspenso por falta de pagamento. |
 | `suspendedPlanId` | Plano antes da suspensão; reposto após `PAID` / `clearGraceOnPaidPayment`. |
@@ -65,7 +65,7 @@ Enum `ATIVO`, `INADIMPLENTE`, `INATIVO`, `EXPERIMENTAL` (migração `20260628120
 
 ## Ficheiros principais
 
-- `lib/lisbon-payment-dates.ts` — 5.º dia útil, fim do dia 10, mês corrente/anterior em Lisboa.
+- `lib/lisbon-payment-dates.ts` — dia 8, fim do prazo de regularização (dia 8 + 15 dias corridos), mês corrente/anterior em Lisboa.
 - `lib/renewals.ts` — `getRenewalsPending`, `generateMonthlyPayments` (só `paymentType = TUITION`; opções `force`, `now`).
 - `lib/payment-grace.ts` — `startGracePeriodOnLatePayment`, `clearGraceOnPaidPayment`, `suspendStudentsPastGrace`.
 - `app/admin/financeiro/actions.ts` — `createPayment` (consolida `Payment` por aluno/mês).

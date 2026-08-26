@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateMonthlyPayments } from "@/lib/renewals";
 
 /**
- * Cron opcional: gera mensalidades (Payment LATE) após o 5.º dia útil em Lisboa
+ * Cron opcional: gera mensalidades (Payment LATE) após o dia 8 em Lisboa
  * (ou recupera meses já ultrapassados). Sem ?month= corre mês anterior + corrente (Lisboa).
  *
  * GET /api/cron/generate-monthly-payments

@@ -123,7 +123,7 @@ export type GenerateMonthlyPaymentsResult = {
 };
 
 export type GenerateMonthlyPaymentsOptions = {
-  /** Se true, ignora a regra do 5.º dia útil (ex.: ação de admin). */
+  /** Se true, ignora a regra do dia 8 (ex.: ação de admin). */
   force?: boolean;
   /** Instante de referência (cron / testes). */
   now?: Date;
@@ -132,7 +132,7 @@ export type GenerateMonthlyPaymentsOptions = {
 /**
  * Cria um registo de Payment (status LATE) para cada aluno com plano
  * sem PAID no mês de referência. Valor = plan.price_monthly.
- * Por defeito só corre após o fim do 5.º dia útil em Lisboa (ou mês já ultrapassado).
+ * Por defeito só corre após o fim do dia 8 em Lisboa (ou mês já ultrapassado).
  */
 export async function generateMonthlyPayments(
   supabase: SupabaseClient,

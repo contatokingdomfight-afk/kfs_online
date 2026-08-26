@@ -10,8 +10,8 @@ import { syncAllStudentPaymentStatuses } from "@/lib/student-payment-status";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Cron: (1) gera registos LATE após o 5.º dia útil (mês corrente e anterior em Lisboa);
- * (2) suspende alunos sem PAID após o fim do dia civil 10 em Lisboa.
+ * Cron: (1) gera registos LATE após o dia 8 (mês corrente e anterior em Lisboa);
+ * (2) suspende alunos sem PAID após o fim do prazo de regularização (dia 8 + 15 dias corridos) em Lisboa.
  * Coloca planId a null, guarda o plano em suspendedPlanId e cancela subscrição Stripe se existir.
  *
  * Authorization: Bearer <CRON_SECRET> ou x-vercel-cron: 1

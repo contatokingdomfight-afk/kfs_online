@@ -7,7 +7,7 @@ Documento de **estado atual** e **prioridades**. Para histórico antigo (multi-e
 - **Repositório:** `kfs_online` no GitHub (ex.: `contatokingdomfight-afk/kfs_online`); pushes e CI alinhados com este nome.
 - **Stack:** Next.js **15** (App Router), React 18, Node **20**, Supabase, Prisma, Stripe, Resend.
 - **Segurança:** `npm audit` sem vulnerabilidades conhecidas na última revisão; após `npm install` corre `npm audit` e `npm run build`.
-- **Mensalidades:** regras em **Europe/Lisbon** — atraso após **5.º dia útil**; prazo até **fim do dia 10**; suspensão automática via cron **`/api/cron/payment-suspension`**. Detalhe: **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
+- **Mensalidades:** regras em **Europe/Lisbon** — atraso após **dia 8**; regularização até **15 dias corridos** depois; suspensão automática via cron **`/api/cron/payment-suspension`**. Detalhe: **`DOCS/PAGAMENTOS_MENSALIDADES_CRON.md`**.
 - **Roadmap:** **`DOCS/ROADMAP_Plataforma_KFS.md`**.
 - **Sessão / Stripe (operacional):** `DOCS/memory.md` §3.2 e §3.4; `DOCS/STRIPE_KINGDOM_ONLINE.md`; variáveis em **`VARIAVEIS_AMBIENTE_VERCEL.txt`**.
 - **Notificações in-app e eventos:** **`DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`** (centrais aluno/coach/admin, gatilhos de inscrição).

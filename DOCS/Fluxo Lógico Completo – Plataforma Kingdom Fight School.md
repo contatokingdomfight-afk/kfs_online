@@ -260,7 +260,7 @@ Além do fluxo normal:
 
     - Pago (`PAID`)
 
-    - Atrasado (`LATE`) — mensalidades após 5.º dia útil; inscrição gera LATE ao atribuir plano
+    - Atrasado (`LATE`) — mensalidades após o dia 8; inscrição gera LATE ao atribuir plano
 
 - **Primeiro pagamento:** admin confirma bundle na secretaria (presencial) ou Stripe (online)
 

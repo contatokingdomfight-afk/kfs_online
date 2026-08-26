@@ -62,7 +62,7 @@ Repositório GitHub típico: `contatokingdomfight-afk/kfs_online` (ajusta se o t
 - **Tribo (comunidade)** – Feed por escola em desenvolvimento (`/dashboard/tribo`) — **DOCS/TRIBO_MVP.md**.
 - **PWA / mobile** – Instalação pelo site (atalho no ecrã); ícone e splash com marca 2026 — **DOCS/PWA.md**, **DOCS/MOBILE_APP_DISTRIBUICAO.md**. Capacitor (fase 2): **DOCS/CAPACITOR.md**.
 - **Eventos e notificações** – Inscrições em eventos (`/dashboard/eventos`), próximos eventos na home; notificações in-app — **DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md**.
-- **Mensalidades e suspensão** – Atraso após o **5.º dia útil** do mês em Lisboa; prazo até ao **dia 10**; cron — **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**.
+- **Mensalidades e suspensão** – Atraso após o **dia 8** do mês em Lisboa; regularização até **15 dias corridos** depois; cron — **DOCS/PAGAMENTOS_MENSALIDADES_CRON.md**.
 
 ## Contas de teste
 
