@@ -38,6 +38,42 @@ function formatClock(time: string): string {
   return time.length >= 5 ? time.slice(0, 5) : time;
 }
 
+/** "HH:MM[:SS]" → minutos desde a meia-noite (só para ordenar as linhas da tabela). */
+function parseMinutes(time: string): number {
+  const [h, m] = time.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+type TimeSlotRow = {
+  startTime: string;
+  endTime: string;
+  lessonsByWeekday: Partial<Record<number, PublicScheduleLesson[]>>;
+};
+
+/**
+ * Uma linha por horário exacto (início–fim) que existe em qualquer dia da
+ * semana — como a tabela de horários impressa de um ginásio. Evita de vez o
+ * problema do calendário contínuo (aulas em dias diferentes a "calhar" na
+ * mesma linha visual por coincidência): aqui cada linha já É um horário
+ * explícito, e dias sem aula nesse horário ficam simplesmente em branco.
+ */
+function buildTimeSlotRows(school: PublicSchoolSchedule): TimeSlotRow[] {
+  const rows = new Map<string, TimeSlotRow>();
+  for (const weekday of PUBLIC_SCHEDULE_WEEKDAYS) {
+    for (const lesson of school.lessonsByWeekday[weekday] ?? []) {
+      const key = `${lesson.startTime}-${lesson.endTime}`;
+      let row = rows.get(key);
+      if (!row) {
+        row = { startTime: lesson.startTime, endTime: lesson.endTime, lessonsByWeekday: {} };
+        rows.set(key, row);
+      }
+      const list = row.lessonsByWeekday[weekday] ?? (row.lessonsByWeekday[weekday] = []);
+      list.push(lesson);
+    }
+  }
+  return [...rows.values()].sort((a, b) => parseMinutes(a.startTime) - parseMinutes(b.startTime));
+}
+
 function schoolHasLessons(schedule: PublicSchoolSchedule): boolean {
   return PUBLIC_SCHEDULE_WEEKDAYS.some((wd) => (schedule.lessonsByWeekday[wd]?.length ?? 0) > 0);
 }
@@ -47,24 +83,16 @@ function lessonCountLabel(count: number, locale: "pt" | "en"): string {
   return count === 1 ? "1 aula" : `${count} aulas`;
 }
 
-/** Cartão de aula (desktop, dentro da coluna do dia). */
-function LessonBlock({ lesson }: { lesson: PublicScheduleLesson }) {
+/** Cartão de aula — uma célula da tabela desktop (já sabemos a hora pela linha). */
+function ModalityChip({ lesson }: { lesson: PublicScheduleLesson }) {
   const accent = modalityAccent(lesson.modality);
   return (
     <div
-      className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-2.5 shadow-sm transition-all hover:shadow-md"
+      className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-2 text-left shadow-sm transition-all hover:shadow-md"
       style={{ borderLeft: `3px solid ${accent}` }}
+      title={lesson.locationName ?? undefined}
     >
-      <div className="flex items-baseline gap-1.5">
-        <span className="font-mono text-xs font-bold tabular-nums" style={{ color: accent }}>
-          {formatClock(lesson.startTime)}
-        </span>
-        <span className="text-[10px] text-[var(--text-secondary)]">–</span>
-        <span className="font-mono text-xs tabular-nums text-[var(--text-secondary)]">
-          {formatClock(lesson.endTime)}
-        </span>
-      </div>
-      <p className="mt-1.5 text-sm font-semibold leading-snug text-[var(--text-primary)]">{lesson.modalityLabel}</p>
+      <p className="text-[12px] font-semibold leading-snug text-[var(--text-primary)]">{lesson.modalityLabel}</p>
       {lesson.locationName && (
         <p className="mt-1 truncate text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">
           {lesson.locationName}
@@ -141,66 +169,63 @@ function MobileWeekList({
   );
 }
 
-/** Grade 7 colunas — desktop. */
-function DesktopWeekTimetable({
-  school,
-  locale,
-  emptyDayLabel,
-}: {
-  school: PublicSchoolSchedule;
-  locale: "pt" | "en";
-  emptyDayLabel: string;
-}) {
+/**
+ * Tabela de horários — desktop. Uma linha por horário exacto (ver
+ * `buildTimeSlotRows`), como a grelha impressa de um ginásio: sem eixo
+ * proporcional, sem "buracos" a adivinhar — cada linha já diz a que horas é,
+ * e um dia sem aula naquela linha fica simplesmente em branco.
+ */
+function DesktopWeekTimetable({ school, locale }: { school: PublicSchoolSchedule; locale: "pt" | "en" }) {
+  const rows = buildTimeSlotRows(school);
+
   return (
     <div className="hidden overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] shadow-[0_8px_30px_rgba(0,0,0,0.25)] lg:block">
-      <div className="grid grid-cols-7 divide-x divide-[var(--border)]">
-        {PUBLIC_SCHEDULE_WEEKDAYS.map((weekday) => {
-          const lessons = school.lessonsByWeekday[weekday] ?? [];
-          const hasLessons = lessons.length > 0;
-          return (
-            <div key={weekday} className="flex min-h-[13rem] flex-col">
-              <div
-                className={`border-b border-[var(--border)] px-2 py-3 text-center ${
-                  hasLessons ? "bg-[var(--primary)]/10" : "bg-[var(--bg)]/60"
-                }`}
-              >
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            <th className="w-24 border-b border-[var(--border)] bg-[var(--bg)]/60 px-2 py-3" />
+            {PUBLIC_SCHEDULE_WEEKDAYS.map((weekday) => (
+              <th key={weekday} className="border-b border-[var(--border)] bg-[var(--primary)]/10 px-2 py-3 text-center font-normal">
                 <span className="block text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--primary)]">
                   {weekdayShortLabelForPublicSchedule(weekday, locale)}
                 </span>
                 <span className="mt-0.5 block text-[11px] font-medium text-[var(--text-secondary)]">
                   {weekdayLabelForPublicSchedule(weekday, locale)}
                 </span>
-              </div>
-              <div className="flex flex-1 flex-col gap-2 p-2.5">
-                {hasLessons ? (
-                  lessons.map((lesson) => <LessonBlock key={lesson.id} lesson={lesson} />)
-                ) : (
-                  <div className="flex flex-1 items-center justify-center px-1">
-                    <p className="text-center text-[11px] italic text-[var(--text-secondary)]/70">{emptyDayLabel}</p>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, idx) => (
+            <tr key={`${row.startTime}-${row.endTime}`} className={idx % 2 === 1 ? "bg-[var(--bg)]/30" : undefined}>
+              <td className="whitespace-nowrap border-b border-[var(--border)] px-2 py-2.5 text-center font-mono text-[11px] tabular-nums text-[var(--text-secondary)]">
+                {formatClock(row.startTime)}
+                <br />
+                {formatClock(row.endTime)}
+              </td>
+              {PUBLIC_SCHEDULE_WEEKDAYS.map((weekday) => (
+                <td key={weekday} className="border-b border-l border-[var(--border)] p-1.5 align-middle">
+                  <div className="flex flex-col gap-1.5">
+                    {(row.lessonsByWeekday[weekday] ?? []).map((lesson) => (
+                      <ModalityChip key={lesson.id} lesson={lesson} />
+                    ))}
                   </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function WeekTimetable({
-  school,
-  locale,
-  emptyDayLabel,
-}: {
-  school: PublicSchoolSchedule;
-  locale: "pt" | "en";
-  emptyDayLabel: string;
-}) {
+function WeekTimetable({ school, locale }: { school: PublicSchoolSchedule; locale: "pt" | "en" }) {
   return (
     <>
       <MobileWeekList school={school} locale={locale} />
-      <DesktopWeekTimetable school={school} locale={locale} emptyDayLabel={emptyDayLabel} />
+      <DesktopWeekTimetable school={school} locale={locale} />
     </>
   );
 }
@@ -236,7 +261,7 @@ export function WeeklyScheduleSection({
                     {school.schoolName}
                   </h3>
                 )}
-                <WeekTimetable school={school} locale={locale} emptyDayLabel={content.scheduleEmptyDay} />
+                <WeekTimetable school={school} locale={locale} />
               </div>
             ))}
           </div>
