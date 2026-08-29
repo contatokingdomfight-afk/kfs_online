@@ -14,7 +14,7 @@ import type { RadarAxis } from "./RadarStatsDynamic";
 import { getRankNameForIndex } from "@/lib/xp-missions";
 import { buildMissionsFromScores } from "@/lib/fighter-missions";
 import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
-import { beltIdFromRankName } from "@/components/belt-progression/belt-progression-data";
+import { beltIdFromRankName, BELT_DISPLAY } from "@/components/belt-progression/belt-progression-data";
 import type { AchievementWithStatus } from "@/lib/achievements";
 import { ImproveLibraryLink } from "@/components/improve/ImproveLibraryLink";
 import { EvaluationResultsDashboard } from "@/components/evaluation-results";
@@ -26,16 +26,6 @@ import {
   PerformanceRadarAvatarCarousel,
   PhysicalAssessmentBodyMapPanel,
 } from "@/components/fighter/PerformanceRadarAvatarCarousel";
-
-const BeltProgressionSection = dynamic(
-  () => import("@/components/belt-progression").then((m) => ({ default: m.BeltProgressionSection })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="rounded-2xl bg-bg-secondary border border-border h-32 animate-pulse" />
-    ),
-  }
-);
 
 const ProfileAchievements = dynamic(
   () =>
@@ -344,14 +334,29 @@ export function PerformanceFighterDashboard({
         />
       )}
 
-      {/* Progressão de Níveis e XP */}
+      {/* Progressão de Níveis e XP — resumo; detalhe completo em /dashboard/performance/faixa */}
       {xpCurrent != null && xpNext != null && rankIndex != null && (
-        <BeltProgressionSection
-          currentXP={xpCurrent}
-          nextBeltXP={xpNext}
-          currentBelt={beltIdFromRankName(getRankNameForIndex(rankIndex))}
-          beltTimeGate={beltTimeGate}
-        />
+        <Link
+          href="/dashboard/performance/faixa"
+          className="block rounded-2xl bg-bg-secondary border border-border p-4 shadow-md hover:border-primary/40 transition-colors no-underline text-inherit"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl" aria-hidden>
+                {BELT_DISPLAY[beltIdFromRankName(getRankNameForIndex(rankIndex))].emoji}
+              </span>
+              <div>
+                <h2 className="text-base font-bold text-text-primary">
+                  Faixa: {BELT_DISPLAY[beltIdFromRankName(getRankNameForIndex(rankIndex))].label}
+                </h2>
+                <p className="text-sm text-text-secondary">
+                  {xpCurrent} / {xpNext} XP
+                </p>
+              </div>
+            </div>
+            <span className="text-sm font-medium text-primary">Ver progressão →</span>
+          </div>
+        </Link>
       )}
 
       {/* Conquistas – resumo e link */}

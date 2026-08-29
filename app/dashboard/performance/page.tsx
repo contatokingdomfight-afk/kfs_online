@@ -33,8 +33,8 @@ import {
   getDetailOrder,
   groupDetailByGeneralDimension,
 } from "@/lib/performance-detail-from-config";
-import { getRankFromAthleteState, type BeltTimeGateInfo } from "@/lib/xp-missions";
-import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
+import type { BeltTimeGateInfo } from "@/lib/xp-missions";
+import { getRankInfoForStudent } from "@/lib/get-rank-info";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
@@ -185,42 +185,27 @@ export default async function DashboardPerformancePage() {
     physicalAssessmentDue =
       !lastPhysicalAssessment ||
       (lastPhysicalAssessment.nextDueAt != null && lastPhysicalAssessment.nextDueAt <= today);
-    const { data: athlete } = await supabase.from("Athlete").select("id, xp, createdAt").eq("studentId", studentId).single();
-    if (athlete) {
-      const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
-      if (synced) {
-        const rank = getRankFromAthleteState(
-          synced.xp,
-          synced.displayBeltIndex,
-          synced.lastBeltPromotionAt,
-          synced.createdAt
-        );
-        rankInfo = {
-          level: rank.level,
-          rankIndex: rank.rankIndex,
-          xpCurrent: rank.xpCurrent,
-          xpNext: rank.xpNext,
-          beltTimeGate: rank.beltTimeGate,
-        };
-      }
+    const athleteState = await getRankInfoForStudent(supabase, studentId);
+    if (athleteState) {
+      const athleteId = athleteState.athleteId;
+      rankInfo = athleteState.rankInfo;
       const { data: student } = await supabase.from("Student").select("primaryModality, planId").eq("id", studentId).single();
       const primaryModality = (student?.primaryModality as string | null) ?? null;
       primaryModalityLabel = primaryModality ? (modalityLabels.get(primaryModality) ?? MODALITY_LABELS[primaryModality] ?? primaryModality) : "Todas as modalidades";
-      const athleteXpForMissions = synced?.xp ?? ((athlete.xp as number | null) ?? 0);
       customMissions = (
         await getApplicableMissionTemplates(
           supabase,
-          athlete.id,
-          athleteXpForMissions,
+          athleteId,
+          athleteState.xp,
           primaryModality,
-          synced?.displayBeltIndex
+          athleteState.displayBeltIndex
         )
       ).map((t) => ({ id: t.id, name: t.name, description: t.description, xpReward: t.xpReward }));
       const { data: latestComment } = await supabase
         .from("Comment")
         .select("content, authorCoachId")
         .eq("targetType", "ATHLETE")
-        .eq("targetId", athlete.id)
+        .eq("targetId", athleteId)
         .eq("visibility", "SHARED")
         .order("createdAt", { ascending: false })
         .limit(1)
@@ -240,7 +225,7 @@ export default async function DashboardPerformancePage() {
       const { data: evalsRows } = await supabase
         .from("AthleteEvaluation")
         .select("gas, technique, strength, theory, scores, modality, coachId, note, created_at")
-        .eq("athleteId", athlete.id)
+        .eq("athleteId", athleteId)
         .order("created_at", { ascending: false })
         .limit(GENERAL_LAST_N);
       const aggregateRows = (evalsRows ?? []).map((e) => ({
