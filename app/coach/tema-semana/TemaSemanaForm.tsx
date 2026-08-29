@@ -6,6 +6,7 @@ import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { saveWeekTheme, type SaveWeekThemeResult } from "./actions";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { PUBLIC_SCHEDULE_WEEKDAYS, weekdayShortLabelForPublicSchedule } from "@/lib/weekday-labels";
 
 type Props = {
   weekStart: string;
@@ -15,6 +16,7 @@ type Props = {
   initialCourseId: string | null;
   initialUnitId: string | null;
   initialVideoUrl: string;
+  initialDaysByWeekday: Record<number, string>;
   courses: { id: string; name: string }[];
   unitsByCourse: Record<string, { id: string; name: string }[]>;
   initialLocale: Locale;
@@ -131,6 +133,7 @@ export function TemaSemanaForm({
   initialCourseId,
   initialUnitId,
   initialVideoUrl,
+  initialDaysByWeekday,
   courses,
   unitsByCourse,
   initialLocale,
@@ -198,6 +201,34 @@ export function TemaSemanaForm({
         />
         <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t("themeDescriptionHint")}</span>
       </label>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("themeDaysLabel")}</span>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+            gap: 8,
+          }}
+        >
+          {PUBLIC_SCHEDULE_WEEKDAYS.map((weekday) => (
+            <label key={weekday} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-secondary)" }}>
+                {weekdayShortLabelForPublicSchedule(weekday, initialLocale)}
+              </span>
+              <input
+                type="text"
+                name={`day_${weekday}`}
+                defaultValue={initialDaysByWeekday[weekday] ?? ""}
+                className="input"
+                maxLength={200}
+                autoComplete="off"
+                style={{ minHeight: 44 }}
+              />
+            </label>
+          ))}
+        </div>
+        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t("themeDaysHint")}</span>
+      </div>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("libraryVideoOptional")}</span>
         <select

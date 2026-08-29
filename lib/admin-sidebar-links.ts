@@ -20,6 +20,7 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
     { label: t("navLocations"), href: "/admin/locais" },
     { label: t("navPlans"), href: "/admin/planos" },
     { label: t("navCourses"), href: "/admin/cursos" },
+    { label: t("navWeekTheme"), href: "/admin/tema-semana" },
     { label: t("navEventsAdmin"), href: "/admin/eventos" },
     { label: "Arbitragem", href: "/coach/arbitragem" },
     {

@@ -6,6 +6,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { getWeekStartMondayForDateInLisbon, getWeekStartMondayLisbon } from "@/lib/lisbon-week";
 import { getModalitiesForWeekThemeEditor } from "@/lib/coach-week-theme-modalities";
+import { replaceWeekThemeDays } from "@/lib/week-theme-days";
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -64,7 +65,19 @@ export async function saveWeekTheme(
     return { error: error.message };
   }
 
+  const topicsByWeekday: Record<number, string> = {};
+  for (let weekday = 1; weekday <= 7; weekday++) {
+    topicsByWeekday[weekday] = ((formData.get(`day_${weekday}`) as string) ?? "").trim();
+  }
+  const { error: daysError } = await replaceWeekThemeDays(supabase, modality, weekStart, topicsByWeekday);
+  if (daysError) {
+    console.error("saveWeekTheme days error:", daysError);
+    return { error: daysError };
+  }
+
   revalidatePath("/coach/tema-semana");
+  revalidatePath("/coach/tema-semana/mensal");
+  revalidatePath("/admin/tema-semana");
   revalidatePath("/coach");
   revalidatePath("/coach/aula");
   revalidatePath("/dashboard");

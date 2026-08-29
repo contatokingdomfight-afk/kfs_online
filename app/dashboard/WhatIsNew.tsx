@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { weekdayShortLabelForPublicSchedule } from "@/lib/weekday-labels";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
 
 type WeekTheme = {
@@ -37,6 +38,8 @@ type WhatIsNewLabels = {
   viewVideo: string;
   hideVideo: string;
   noWeekTheme: string;
+  weekThemeDaysSectionLabel: string;
+  weekThemeTodayBadge: string;
   viewAllMissions: string;
   noMissions: string;
   noCoachFeedback: string;
@@ -44,8 +47,12 @@ type WhatIsNewLabels = {
   viewPerformanceLink: string;
 };
 
+type WeekThemeDay = { weekday: number; topic: string };
+
 type Props = {
   weekTheme: WeekTheme | null;
+  weekThemeDays?: WeekThemeDay[];
+  todayWeekday?: number;
   nextMission: Mission | null;
   coachFeedback: CoachFeedback | null;
   locale: "pt" | "en";
@@ -54,7 +61,7 @@ type Props = {
 
 const TABS = ["theme", "mission", "feedback"] as const;
 
-export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, labels }: Props) {
+export function WhatIsNew({ weekTheme, weekThemeDays, todayWeekday, nextMission, coachFeedback, locale, labels }: Props) {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("theme");
   const [videoOpen, setVideoOpen] = useState(false);
 
@@ -115,6 +122,41 @@ export function WhatIsNew({ weekTheme, nextMission, coachFeedback, locale, label
                     >
                       {weekTheme.description}
                     </p>
+                  ) : null}
+                  {weekThemeDays && weekThemeDays.length > 0 ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 0 12px 0" }}>
+                      <span style={{ fontSize: "clamp(12px, 3vw, 13px)", fontWeight: 600, color: "var(--text-secondary)" }}>
+                        {labels.weekThemeDaysSectionLabel}
+                      </span>
+                      {weekThemeDays.map((day) => {
+                        const isToday = day.weekday === todayWeekday;
+                        return (
+                          <div
+                            key={day.weekday}
+                            style={{
+                              display: "flex",
+                              gap: 8,
+                              alignItems: "baseline",
+                              padding: isToday ? "6px 8px" : "2px 0",
+                              borderRadius: isToday ? "var(--radius-sm, 6px)" : undefined,
+                              background: isToday ? "var(--primary-light)" : undefined,
+                            }}
+                          >
+                            <span style={{ fontSize: "clamp(13px, 3.2vw, 14px)", fontWeight: 600, color: isToday ? "var(--primary)" : "var(--text-primary)", minWidth: 36 }}>
+                              {weekdayShortLabelForPublicSchedule(day.weekday, locale)}
+                            </span>
+                            <span style={{ fontSize: "clamp(13px, 3.2vw, 14px)", color: "var(--text-primary)" }}>
+                              {day.topic}
+                            </span>
+                            {isToday ? (
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--primary)" }}>
+                                {labels.weekThemeTodayBadge}
+                              </span>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
                   ) : null}
                   {(weekTheme.course_id || weekTheme.unit_id || weekTheme.video_url) && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>

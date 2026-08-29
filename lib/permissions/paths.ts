@@ -20,6 +20,7 @@ const ORDERED_PATH_RULES: readonly Rule[] = [
   { prefix: "/admin/notificacoes", read: "admin:sistema:read", write: "admin:sistema:write" },
   { prefix: "/admin/configuracoes", read: "admin:sistema:read", write: "admin:sistema:write" },
   { prefix: "/admin/modalidades", read: "admin:sistema:read", write: "admin:sistema:write" },
+  { prefix: "/admin/tema-semana", read: "admin:sistema:read", write: "admin:sistema:write" },
   { prefix: "/admin/locais", read: "admin:sistema:read", write: "admin:sistema:write" },
   { prefix: "/admin/financeiro", read: "admin:financeiro:read", write: "admin:financeiro:write" },
   { prefix: "/admin/loja", read: "admin:financeiro:read", write: "admin:financeiro:write" },

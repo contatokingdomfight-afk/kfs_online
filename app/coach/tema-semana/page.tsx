@@ -7,6 +7,7 @@ import { getTranslations } from "@/lib/i18n";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { getModalitiesForWeekThemeEditor } from "@/lib/coach-week-theme-modalities";
 import { getWeekStartMondayForDateInLisbon, getWeekStartMondayLisbon } from "@/lib/lisbon-week";
+import { getWeekThemeDaysForWeek } from "@/lib/week-theme-days";
 import { TemaSemanaForm } from "./TemaSemanaForm";
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
@@ -56,6 +57,8 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
     .select("modality, title, description, course_id, unit_id, video_url")
     .eq("week_start", weekStart);
 
+  const weekThemeDays = await getWeekThemeDaysForWeek(supabase, weekStart);
+
   const { data: courses } = await supabase
     .from("Course")
     .select("id, name")
@@ -94,6 +97,12 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
   }
 
   const themeByModality = new Map((themes ?? []).map((th) => [th.modality, th]));
+  const daysByModality = new Map<string, Record<number, string>>();
+  for (const row of weekThemeDays) {
+    const days = daysByModality.get(row.modality) ?? {};
+    days[row.weekday] = row.topic;
+    daysByModality.set(row.modality, days);
+  }
   const prevWeek = addWeeks(weekStart, -1);
   const nextWeek = addWeeks(weekStart, 1);
   const isCurrentWeek = weekStart === currentWeek;
@@ -120,6 +129,12 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
         <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
           {t("weekThemeDescriptionCoach")}
         </p>
+        <Link
+          href="/coach/tema-semana/mensal"
+          style={{ display: "inline-block", marginTop: 8, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500, textDecoration: "none" }}
+        >
+          {t("navWeekThemeMonthly")} →
+        </Link>
       </div>
 
       {/* Navegação entre semanas — responsiva, toque fácil */}
@@ -215,6 +230,7 @@ export default async function TemaSemanaPage({ searchParams }: Props) {
             initialCourseId={theme?.course_id ?? null}
             initialUnitId={(theme as { unit_id?: string | null } | undefined)?.unit_id ?? null}
             initialVideoUrl={theme?.video_url ?? ""}
+            initialDaysByWeekday={daysByModality.get(modality) ?? {}}
             courses={courseList}
             unitsByCourse={unitsByCourse}
             initialLocale={locale as "pt" | "en"}

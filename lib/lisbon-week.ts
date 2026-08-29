@@ -26,3 +26,8 @@ export function getWeekStartMondayForDateInLisbon(ymd: string): string {
   const monday = subDays(instant, dowIso - 1);
   return formatInTimeZone(monday, LISBON_TZ, "yyyy-MM-dd");
 }
+
+/** Dia da semana de hoje em Lisboa: Segunda=1 … Domingo=7 (igual a `Lesson.weekday`). */
+export function getTodayWeekdayMon1Lisbon(now: Date = new Date()): number {
+  return parseInt(formatInTimeZone(now, LISBON_TZ, "i"), 10);
+}

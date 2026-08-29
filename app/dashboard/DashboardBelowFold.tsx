@@ -3,7 +3,8 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
-import { getWeekStartMondayLisbon } from "@/lib/lisbon-week";
+import { getWeekStartMondayLisbon, getTodayWeekdayMon1Lisbon } from "@/lib/lisbon-week";
+import { getWeekThemeDaysForWeek } from "@/lib/week-theme-days";
 import { normalizeModalityCode } from "@/lib/modality-normalize";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
@@ -60,7 +61,7 @@ export async function DashboardBelowFold({
   let currentMonthCount = 0;
   let attendanceGoal = 10;
 
-  const [goalRes, athleteRes, weekThemesRes] = await Promise.all([
+  const [goalRes, athleteRes, weekThemesRes, weekThemeDays] = await Promise.all([
     supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
     studentId
       ? supabase
@@ -77,6 +78,7 @@ export async function DashboardBelowFold({
       .select("modality, title, description, course_id, unit_id, video_url")
       .eq("week_start", weekStart)
       .order("modality", { ascending: true }),
+    getWeekThemeDaysForWeek(supabase, weekStart),
   ]);
 
   type AthleteRow = {
@@ -142,6 +144,14 @@ export async function DashboardBelowFold({
     unit_id: string | null;
     video_url: string | null;
   } | null = pickWeekThemeForStudent();
+
+  const weekThemeDaysForPrimary = weekThemeForPrimary
+    ? weekThemeDays
+        .filter((d) => d.modality === weekThemeForPrimary!.modality)
+        .sort((a, b) => a.weekday - b.weekday)
+        .map((d) => ({ weekday: d.weekday, topic: d.topic }))
+    : [];
+  const todayWeekday = getTodayWeekdayMon1Lisbon();
 
   if (studentId) {
     const attBase = () =>
@@ -307,6 +317,8 @@ export async function DashboardBelowFold({
 
       <WhatIsNew
         weekTheme={weekThemeForPrimary}
+        weekThemeDays={weekThemeDaysForPrimary}
+        todayWeekday={todayWeekday}
         nextMission={nextMission}
         coachFeedback={coachFeedback}
         locale={locale as "pt" | "en"}
@@ -320,6 +332,8 @@ export async function DashboardBelowFold({
           viewVideo: t("dashboardViewVideo"),
           hideVideo: t("dashboardHideVideo"),
           noWeekTheme: t("dashboardNoWeekTheme"),
+          weekThemeDaysSectionLabel: t("weekThemeDaysSectionLabel"),
+          weekThemeTodayBadge: t("weekThemeTodayBadge"),
           viewAllMissions: t("dashboardViewAllMissions"),
           noMissions: noMissionsMessage,
           noCoachFeedback: noCoachFeedbackMessage,

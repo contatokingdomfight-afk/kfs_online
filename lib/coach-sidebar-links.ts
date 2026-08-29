@@ -34,6 +34,7 @@ export function getCoachShellSidebarLinks(
     { label: t("navEvents"), href: "/coach/eventos" },
     { label: "Arbitragem", href: "/coach/arbitragem" as string },
     { label: t("navWeekTheme"), href: "/coach/tema-semana" },
+    { label: t("navWeekThemeMonthly"), href: "/coach/tema-semana/mensal" },
     { label: t("navStudents"), href: "/coach/alunos" },
     { label: t("navAthletesCoach"), href: "/coach/atletas" },
     { label: t("navTrials"), href: "/coach/experimentais" },
