@@ -58,8 +58,6 @@ export const homeContent = {
     step4Desc: "Métricas, feedback do coach e progresso visível.",
 
     scheduleTitle: "Horários das aulas",
-    scheduleSubtitle:
-      "Grade semanal nas nossas escolas. Actualizada automaticamente quando alteramos o calendário.",
     scheduleEmptyDay: "Sem aulas",
     scheduleCta: "Marcar aula experimental",
     scheduleFootnote:
@@ -77,7 +75,6 @@ export const homeContent = {
     planCtaOnRequest: "Falar com a secretaria",
     familyPlanHighlight: "Até 20% de desconto para toda a família",
     familyPlanNote: "Cada pessoa com o plano de referência que fizer sentido, e o desconto ajustado à tua situação. Fala connosco para simular o valor.",
-    plansDigitalNote: "Não consegues vir presencial? O plano digital dá acesso a todas as trilhas de cursos online.",
 
     // YouTube Shorts
     youtubeShortsTitle: "KFS em ação",
@@ -265,8 +262,6 @@ export const homeContent = {
     step4Desc: "Metrics, coach feedback and visible progress.",
 
     scheduleTitle: "Class schedule",
-    scheduleSubtitle:
-      "Weekly timetable at our schools. Updated automatically whenever we change the calendar.",
     scheduleEmptyDay: "No classes",
     scheduleCta: "Book a trial class",
     scheduleFootnote:
@@ -282,7 +277,6 @@ export const homeContent = {
     planCtaOnRequest: "Talk to our team",
     familyPlanHighlight: "Up to 20% off for the whole family",
     familyPlanNote: "Each person matched to the plan that fits them, with the discount tailored to your situation. Talk to us to work out your price.",
-    plansDigitalNote: "Can't make it in person? The digital plan gives you access to every course track online.",
 
     youtubeShortsTitle: "KFS in action",
     youtubeShortsSubtitle: "Some moments from our day on the mat.",

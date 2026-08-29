@@ -97,7 +97,6 @@ export default async function HomePage({ searchParams }: Props) {
         planCtaOnRequest={content.planCtaOnRequest}
         familyPlanHighlight={content.familyPlanHighlight}
         familyPlanNote={content.familyPlanNote}
-        plansDigitalNote={content.plansDigitalNote}
       />
       <WeeklyScheduleSection content={content} schedule={weeklySchedule} locale={locale} />
       <WhyChoose content={content} />

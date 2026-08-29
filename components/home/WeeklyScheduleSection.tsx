@@ -9,7 +9,6 @@ import {
 
 type ScheduleContent = {
   scheduleTitle: string;
-  scheduleSubtitle: string;
   scheduleEmptyDay: string;
   scheduleCta: string;
   scheduleFootnote: string;
@@ -247,7 +246,6 @@ export function WeeklyScheduleSection({
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--primary)]">Kingdom Fight</p>
           <h2 className="mt-2 text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">{content.scheduleTitle}</h2>
-          <p className="mt-3 text-[var(--text-secondary)]">{content.scheduleSubtitle}</p>
         </div>
 
         {activeSchedules.length === 0 ? (

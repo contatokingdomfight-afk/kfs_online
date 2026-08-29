@@ -13,7 +13,6 @@ type Props = {
   planCtaOnRequest: string;
   familyPlanHighlight: string;
   familyPlanNote: string;
-  plansDigitalNote: string;
 };
 
 function formatPlanPrice(amount: number, locale: "pt" | "en") {
@@ -36,7 +35,6 @@ export function Plans({
   planCtaOnRequest,
   familyPlanHighlight,
   familyPlanNote,
-  plansDigitalNote,
 }: Props) {
   return (
     <section id="plans" className="border-t border-[var(--border)] py-16 sm:py-24">
@@ -100,9 +98,6 @@ export function Plans({
             ))}
           </div>
         )}
-        <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-[var(--text-secondary)]">
-          {plansDigitalNote}
-        </p>
       </div>
     </section>
   );
