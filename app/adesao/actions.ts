@@ -9,12 +9,12 @@ import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import { isEnrollmentFormCurrent } from "@/lib/enrollment-form";
 
-export type SignMembershipAgreementResult = { error?: string };
+export type SignAdesaoDocumentsResult = { error?: string };
 
-export async function signMembershipAgreement(
-  _prev: SignMembershipAgreementResult | null,
+export async function signAdesaoDocuments(
+  _prev: SignAdesaoDocumentsResult | null,
   formData: FormData
-): Promise<SignMembershipAgreementResult> {
+): Promise<SignAdesaoDocumentsResult> {
   const studentId = await getCurrentStudentId();
   if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
 
@@ -68,37 +68,66 @@ export async function signMembershipAgreement(
     h.get("x-real-ip")?.trim() ||
     "unknown";
 
-  const row = {
+  const signedAtIso = new Date().toISOString();
+
+  const waiverRow = {
+    studentId,
+    waiverSigned: true,
+    waiverSignedAt: signedAtIso,
+    waiverVersion: settings.waiverVersion,
+    signatureName,
+    signatureIp,
+    guardianName: isMinor ? guardianName : null,
+    isMinor,
+    updatedAt: signedAtIso,
+  };
+
+  const { data: existingWaiver } = await supabase
+    .from("StudentWaiver")
+    .select("id")
+    .eq("studentId", studentId)
+    .maybeSingle();
+
+  if (existingWaiver?.id) {
+    const { error } = await supabase.from("StudentWaiver").update(waiverRow).eq("studentId", studentId);
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await supabase.from("StudentWaiver").insert({ id: crypto.randomUUID(), ...waiverRow });
+    if (error) return { error: error.message };
+  }
+
+  const agreementRow = {
     studentId,
     agreementSigned: true,
-    agreementSignedAt: new Date().toISOString(),
+    agreementSignedAt: signedAtIso,
     agreementVersion: settings.membershipAgreementVersion,
     planId,
     signatureName,
     signatureIp,
     guardianName: isMinor ? guardianName : null,
     isMinor,
-    updatedAt: new Date().toISOString(),
+    updatedAt: signedAtIso,
   };
 
-  const { data: existing } = await supabase
+  const { data: existingAgreement } = await supabase
     .from("StudentMembershipAgreement")
     .select("id")
     .eq("studentId", studentId)
     .maybeSingle();
 
-  if (existing?.id) {
-    const { error } = await supabase.from("StudentMembershipAgreement").update(row).eq("studentId", studentId);
+  if (existingAgreement?.id) {
+    const { error } = await supabase.from("StudentMembershipAgreement").update(agreementRow).eq("studentId", studentId);
     if (error) return { error: error.message };
   } else {
     const { error } = await supabase
       .from("StudentMembershipAgreement")
-      .insert({ id: crypto.randomUUID(), ...row });
+      .insert({ id: crypto.randomUUID(), ...agreementRow });
     if (error) return { error: error.message };
   }
 
   revalidatePath("/adesao");
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/perfil");
   revalidatePath("/dashboard/documentos-adesao");
   revalidatePath("/dashboard/financeiro");
   redirect("/dashboard/financeiro?pagamento_escola=1");

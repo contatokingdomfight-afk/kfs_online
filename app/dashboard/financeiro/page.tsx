@@ -49,13 +49,14 @@ export default async function DashboardFinanceiroPage({
   let onboardingFees = null;
 
   if (studentId) {
-    const { data: student } = await supabase
-      .from("Student")
-      .select("planId, adminGrantedFullAccess")
-      .eq("id", studentId)
-      .single();
+    const [{ data: student }, { data: membershipAgreement }] = await Promise.all([
+      supabase.from("Student").select("planId, adminGrantedFullAccess").eq("id", studentId).single(),
+      supabase.from("StudentMembershipAgreement").select("agreementSignedAt").eq("studentId", studentId).maybeSingle(),
+    ]);
     const adminFree = Boolean((student as { adminGrantedFullAccess?: boolean } | null)?.adminGrantedFullAccess);
-    const hasPaymentUnlock = await studentHasPaymentUnlock(supabase, studentId, adminFree);
+    const agreementSignedAt =
+      (membershipAgreement as { agreementSignedAt?: string | null } | null)?.agreementSignedAt ?? null;
+    const hasPaymentUnlock = await studentHasPaymentUnlock(supabase, studentId, adminFree, agreementSignedAt);
 
     if (student?.planId) {
       const { data: planRow } = await supabase

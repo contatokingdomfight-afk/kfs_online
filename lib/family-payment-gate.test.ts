@@ -100,4 +100,21 @@ describe("studentHasPaymentUnlock", () => {
     const supabase = createPaymentMockSupabase(2);
     await expect(studentHasPaymentUnlock(supabase, "solo-1", false)).resolves.toBe(true);
   });
+
+  it("aluno sem PAID mas dentro das 72h após assinar a adesão desbloqueia", async () => {
+    mockGetFamilyContext.mockResolvedValue(null);
+
+    const supabase = createPaymentMockSupabase(0);
+    const agreementSignedAt = new Date(Date.now() - 1000 * 60 * 60).toISOString(); // 1h atrás
+    await expect(studentHasPaymentUnlock(supabase, "solo-1", false, agreementSignedAt)).resolves.toBe(true);
+    expect(mockGetFamilyContext).not.toHaveBeenCalled();
+  });
+
+  it("aluno sem PAID e fora das 72h após assinar a adesão fica bloqueado", async () => {
+    mockGetFamilyContext.mockResolvedValue(null);
+
+    const supabase = createPaymentMockSupabase(0);
+    const agreementSignedAt = new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString(); // 4 dias atrás
+    await expect(studentHasPaymentUnlock(supabase, "solo-1", false, agreementSignedAt)).resolves.toBe(false);
+  });
 });

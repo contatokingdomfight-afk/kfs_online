@@ -400,6 +400,10 @@ export const messages = {
     schoolPaymentGateDismiss: "Entendi, vou à secretaria",
     schoolPaymentGateBanner:
       "Acesso limitado até confirmares o pagamento na secretaria. Os valores em dívida estão listados abaixo.",
+    signupGraceReminderBody:
+      "O teu período de acesso total termina a {data}. Se ainda não pagaste na secretaria, faz o pagamento para não perderes o acesso.",
+    signupGraceReminderCta: "Ir para Financeiro",
+    signupGraceReminderDismiss: "Dispensar aviso",
     schoolPaymentFamilyMemberFeesBanner:
       "Tens taxas individuais por regularizar (matrícula ou seguro). O teu acesso à plataforma mantém-se activo — trata disto na secretaria quando puderes.",
     financeFamilyMemberPlanLine: "acesso completo à plataforma",
@@ -1639,6 +1643,10 @@ export const messages = {
     schoolPaymentGateDismiss: "Got it, I'll go to the office",
     schoolPaymentGateBanner:
       "Limited access until payment is confirmed at the school office. Amounts due are listed below.",
+    signupGraceReminderBody:
+      "Your full-access period ends on {data}. If you haven't paid at the school office yet, do it soon to keep your access.",
+    signupGraceReminderCta: "Go to Finance",
+    signupGraceReminderDismiss: "Dismiss reminder",
     schoolPaymentFamilyMemberFeesBanner:
       "You have individual fees to settle (enrollment or insurance). Your platform access stays active — handle this at the school office when you can.",
     financeFamilyMemberPlanLine: "full platform access",

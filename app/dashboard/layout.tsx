@@ -15,6 +15,9 @@ import { DashboardSplash } from "@/components/DashboardSplash";
 import { buildStudentMobileBottomNav } from "@/lib/dashboard-student-mobile-nav";
 import { getDashboardStudentBaseLinks } from "@/lib/dashboard-student-base-links";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
+import { studentHasPaymentUnlock } from "@/lib/family-payment-gate";
+import { getSignupGraceState } from "@/lib/signup-grace";
+import { SignupGraceReminderBanner } from "@/components/payments/SignupGraceReminderBanner";
 
 export default async function DashboardLayout({
   children,
@@ -40,12 +43,36 @@ export default async function DashboardLayout({
   ]);
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
-  const [planAccess, studentRes, schoolAssistant] = await Promise.all([
+  const [planAccess, studentRes, schoolAssistant, membershipAgreementRes] = await Promise.all([
     getCachedPlanAccess(studentId),
-    studentId ? supabase.from("Student").select("planId").eq("id", studentId).single() : Promise.resolve({ data: null }),
+    studentId
+      ? supabase.from("Student").select("planId, adminGrantedFullAccess").eq("id", studentId).single()
+      : Promise.resolve({ data: null }),
     dbUser.role === "ALUNO" ? getActiveSchoolAssistantForUserId(supabase, dbUser.id) : Promise.resolve(null),
+    studentId
+      ? supabase.from("StudentMembershipAgreement").select("agreementSignedAt").eq("studentId", studentId).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
   const hasPlan = !!studentRes.data?.planId;
+
+  let showGraceReminder = false;
+  let graceExpiresAt: string | null = null;
+  if (dbUser.role === "ALUNO" && hasPlan && studentId) {
+    const adminFree = Boolean((studentRes.data as { adminGrantedFullAccess?: boolean } | null)?.adminGrantedFullAccess);
+    const agreementSignedAt =
+      (membershipAgreementRes.data as { agreementSignedAt?: string | null } | null)?.agreementSignedAt ?? null;
+    const graceState = getSignupGraceState(agreementSignedAt);
+    if (!adminFree && graceState.active) {
+      const hoursLeft = (new Date(graceState.expiresAt).getTime() - Date.now()) / 3_600_000;
+      if (hoursLeft <= 24) {
+        const coreUnlocked = await studentHasPaymentUnlock(supabase, studentId, false);
+        if (!coreUnlocked) {
+          showGraceReminder = true;
+          graceExpiresAt = graceState.expiresAt;
+        }
+      }
+    }
+  }
 
   const baseLinks = getDashboardStudentBaseLinks({
     t,
@@ -109,6 +136,14 @@ export default async function DashboardLayout({
         mobileBottomNav={mobileBottomNav}
       >
         <DashboardSplash locale={locale} displayName={dbUser.name} />
+        <SignupGraceReminderBanner
+          show={showGraceReminder}
+          expiresAt={graceExpiresAt}
+          locale={locale as "pt" | "en"}
+          body={t("signupGraceReminderBody")}
+          cta={t("signupGraceReminderCta")}
+          dismissLabel={t("signupGraceReminderDismiss")}
+        />
         <Suspense fallback={null}>
           <StudentOnboardingGate steps={onboardingSteps} labels={onboardingLabels}>
             {children}

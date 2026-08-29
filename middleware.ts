@@ -27,10 +27,9 @@ const publicPaths = [
   "/sitemap.xml",
 ];
 
-/** Aluno sem plano: onboarding, waiver, escolher plano, adesão, callback OAuth e free tier. */
+/** Aluno sem plano: onboarding, escolher plano, adesão, callback OAuth e free tier. */
 const studentAllowedWithoutPlanPrefixes = [
   "/onboarding",
-  "/waiver-signing",
   "/escolher-plano",
   "/adesao",
   "/auth/callback",
@@ -52,10 +51,6 @@ function isStudentAllowedWithoutPlan(pathname: string) {
 
 function isOnboardingPath(pathname: string) {
   return pathname === "/onboarding" || pathname.startsWith("/onboarding/");
-}
-
-function isWaiverPath(pathname: string) {
-  return pathname === "/waiver-signing" || pathname.startsWith("/waiver-signing/");
 }
 
 function isAdesaoPath(pathname: string) {
@@ -322,7 +317,7 @@ export async function middleware(request: NextRequest) {
       supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", student.id).maybeSingle(),
       supabase
         .from("StudentMembershipAgreement")
-        .select("agreementSigned, agreementVersion")
+        .select("agreementSigned, agreementVersion, agreementSignedAt")
         .eq("studentId", student.id)
         .maybeSingle(),
       insuranceSettingsPromise,
@@ -338,28 +333,22 @@ export async function middleware(request: NextRequest) {
       return redirectPreservingCookies(response, url);
     }
 
-    if (onboardingDone && !waiverSigned && !isWaiverPath(pathname) && !isOnboardingPath(pathname)) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/waiver-signing";
-      url.search = "";
-      return redirectPreservingCookies(response, url);
-    }
-
     /**
-     * `onboardingDone`/`waiverSigned` são pré-requisitos mais altos na prioridade — só
-     * verificar o contrato/pagamento depois de ambos concluídos. Sem isto, um aluno com
-     * `planId` atribuído mas ainda sem onboarding/termo (ex.: membro de plano família
-     * criado directamente pelo admin) entra em ciclo: /onboarding → (tem plano, contrato
-     * por assinar) → /adesao → (onboarding por concluir) → /onboarding → ...
+     * `onboardingDone` é pré-requisito mais alto na prioridade — só verificar
+     * termo/contrato/pagamento depois de concluído. Sem isto, um aluno com `planId`
+     * atribuído mas ainda sem onboarding (ex.: membro de plano família criado
+     * directamente pelo admin) entra em ciclo: /onboarding → (tem plano, docs por
+     * assinar) → /adesao → (onboarding por concluir) → /onboarding → ...
      */
-    if (student.planId && onboardingDone && waiverSigned) {
+    if (student.planId && onboardingDone) {
       const { mod, settings } = insuranceResult!;
       const agreementCurrent = mod.isMembershipAgreementCurrent(
         agreement as { agreementSigned?: boolean; agreementVersion?: string | null } | null,
         settings.membershipAgreementVersion
       );
+      const documentsSigned = waiverSigned && agreementCurrent;
 
-      if (!agreementCurrent) {
+      if (!documentsSigned) {
         if (isAdesaoPath(pathname)) {
           return response;
         }
@@ -372,12 +361,13 @@ export async function middleware(request: NextRequest) {
       const adminFree = Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess);
       if (!adminFree) {
         const { studentHasPaymentUnlock } = await import("@/lib/family-payment-gate");
-        const hasAccess = await studentHasPaymentUnlock(supabase, student.id, adminFree);
+        const agreementSignedAt = (agreement as { agreementSignedAt?: string | null } | null)?.agreementSignedAt ?? null;
+        const hasAccess = await studentHasPaymentUnlock(supabase, student.id, adminFree, agreementSignedAt);
 
         if (!hasAccess) {
-          // Rotas de onboarding/waiver/escolher-plano e a área de pagamento não podem
-          // ser bloqueadas pelo gate; caso contrário o check do waiver (acima) e o gate
-          // entram em ciclo infinito (/waiver-signing ↔ /dashboard/financeiro).
+          // Rotas de onboarding/adesão/escolher-plano e a área de pagamento não podem
+          // ser bloqueadas pelo gate; caso contrário o check de documentos assinados
+          // (acima) e o gate entram em ciclo infinito (/adesao ↔ /dashboard/financeiro).
           if (isStudentAwaitingSchoolPaymentPath(pathname) || isStudentAllowedWithoutPlan(pathname)) {
             return response;
           }

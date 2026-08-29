@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useFormState } from "react-dom";
-import { signMembershipAgreement, type SignMembershipAgreementResult } from "./actions";
+import { signAdesaoDocuments, type SignAdesaoDocumentsResult } from "./actions";
 import { FINAL_DECLARATIONS } from "@/lib/enrollment-form";
 import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
+import { WAIVER_BODY_PT } from "@/lib/waiver-content";
 
 type Props = {
   isMinor: boolean;
@@ -13,7 +14,7 @@ type Props = {
 };
 
 export function AdesaoSigningForm({ isMinor, planName, modalityLabel }: Props) {
-  const [state, formAction] = useFormState(signMembershipAgreement, null as SignMembershipAgreementResult | null);
+  const [state, formAction] = useFormState(signAdesaoDocuments, null as SignAdesaoDocumentsResult | null);
 
   return (
     <form action={formAction} style={{ maxWidth: 640, width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -27,6 +28,19 @@ export function AdesaoSigningForm({ isMinor, planName, modalityLabel }: Props) {
           </p>
         ) : null}
       </div>
+
+      <div
+        className="card"
+        style={{
+          padding: "clamp(16px, 4vw, 24px)",
+          maxHeight: "min(45vh, 360px)",
+          overflowY: "auto",
+          fontSize: 14,
+          lineHeight: 1.6,
+          color: "var(--text-secondary)",
+        }}
+        dangerouslySetInnerHTML={{ __html: WAIVER_BODY_PT }}
+      />
 
       <div
         className="card"
@@ -71,8 +85,8 @@ export function AdesaoSigningForm({ isMinor, planName, modalityLabel }: Props) {
       <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, cursor: "pointer" }}>
         <input type="checkbox" name="accepted" style={{ marginTop: 4 }} />
         <span>
-          Li e compreendo o Comprovativo de Adesão e as Condições Gerais de Adesão, e assino digitalmente ambos os
-          documentos como contrato de sócio da Kingdom Fight School.
+          Li e compreendo o Termo de Responsabilidade e Isenção e as Condições Gerais de Adesão, e assino
+          digitalmente ambos os documentos como sócio da Kingdom Fight School.
         </span>
       </label>
 

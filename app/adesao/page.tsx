@@ -27,7 +27,7 @@ export default async function AdesaoPage({ searchParams }: Props) {
   const params = await searchParams;
   const passoParam = params.passo === "2" ? 2 : 1;
 
-  const [{ data: student }, { data: agreement }, { data: enrollmentForm }] = await Promise.all([
+  const [{ data: student }, { data: agreement }, { data: enrollmentForm }, { data: waiver }] = await Promise.all([
     supabase.from("Student").select("planId, primaryModality, userId").eq("id", studentId).maybeSingle(),
     supabase
       .from("StudentMembershipAgreement")
@@ -35,13 +35,15 @@ export default async function AdesaoPage({ searchParams }: Props) {
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase.from("StudentEnrollmentForm").select("formCompleted, formVersion").eq("studentId", studentId).maybeSingle(),
+    supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", studentId).maybeSingle(),
   ]);
 
   const planId = (student as { planId?: string | null } | null)?.planId ?? null;
   const agreementCurrent = isMembershipAgreementCurrent(agreement, settings.membershipAgreementVersion);
   const formCurrent = isEnrollmentFormCurrent(enrollmentForm, settings.enrollmentFormVersion);
+  const waiverSigned = Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned);
 
-  if (agreementCurrent) {
+  if (agreementCurrent && waiverSigned) {
     redirect("/dashboard/documentos-adesao");
   }
 
