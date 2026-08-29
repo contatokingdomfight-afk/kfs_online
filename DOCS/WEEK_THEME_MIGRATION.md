@@ -40,6 +40,26 @@ Funcionalidades novas:
 - **Aluno:** lista compacta dos dias da semana (com "Hoje" destacado) na aba
   "Tema da Semana" do card "O que há de novo"
 
+## Migration 3: tema do mês (`add_month_theme.sql`)
+
+Adiciona a tabela **MonthTheme** (aditiva, sem FK):
+
+1. Abra o **Supabase Dashboard** → **SQL Editor**
+2. Copie o conteúdo de `prisma/migrations/add_month_theme.sql`
+3. Execute o script
+
+- `modality` + `month_start` (primeiro dia do mês) — PK
+- `title`, `description` — ambos opcionais
+
+Funcionalidades novas:
+
+- **Coach/Admin:** campo "Tema do mês" (título + descrição) no topo da vista
+  mensal (`/coach/tema-semana/mensal` e `/admin/tema-semana`), um por
+  modalidade/mês
+- **Aluno:** se a semana atual não tiver título próprio definido em
+  `/coach/tema-semana`, o dashboard mostra o título/descrição do mês em vez
+  disso (o vídeo/curso ligados à semana continuam a aparecer normalmente)
+
 ---
 
 *Referência cruzada: [INDEX.md](INDEX.md), [memory.md](memory.md) — abril 2026.*

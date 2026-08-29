@@ -5,6 +5,7 @@ import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getWeekStartMondayLisbon, getTodayWeekdayMon1Lisbon } from "@/lib/lisbon-week";
 import { getWeekThemeDaysForWeek } from "@/lib/week-theme-days";
+import { getMonthThemesForMonth } from "@/lib/month-theme";
 import { normalizeModalityCode } from "@/lib/modality-normalize";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
@@ -61,7 +62,7 @@ export async function DashboardBelowFold({
   let currentMonthCount = 0;
   let attendanceGoal = 10;
 
-  const [goalRes, athleteRes, weekThemesRes, weekThemeDays] = await Promise.all([
+  const [goalRes, athleteRes, weekThemesRes, weekThemeDays, monthThemesList] = await Promise.all([
     supabase.from("AttendanceGoal").select("target_value").eq("is_global", true).limit(1).single(),
     studentId
       ? supabase
@@ -79,6 +80,7 @@ export async function DashboardBelowFold({
       .eq("week_start", weekStart)
       .order("modality", { ascending: true }),
     getWeekThemeDaysForWeek(supabase, weekStart),
+    getMonthThemesForMonth(supabase, monthStart),
   ]);
 
   type AthleteRow = {
@@ -96,11 +98,36 @@ export async function DashboardBelowFold({
   const temaSemanaList = weekThemesRes.data ?? [];
 
   /**
-   * Tema a mostrar no dashboard: linhas `WeekTheme` com `week_start` = segunda em Lisboa.
-   * 1) Preferir modalidade primária do aluno (já normalizada no page) vs `WeekTheme.modality` (normalizado aqui).
-   * 2) Sem match ou sem primária: primeiro registo (ordem por modality na query).
-   * 3) Sem linhas: null → UI «Nenhum tema…».
+   * Tema a mostrar no dashboard: linhas `WeekTheme` (semana, Segunda em Lisboa) com
+   * fallback para `MonthTheme` (mês) quando a semana não tem título próprio.
+   * 1) Modalidade: preferir a primária do aluno se tiver linha na semana OU no mês;
+   *    senão, primeira linha disponível (semana antes de mês).
+   * 2) Título/descrição: se a semana tiver título preenchido, usa-os; senão usa os do
+   *    mês (se existirem); vídeo/curso ficam sempre ligados à linha da semana.
+   * 3) Sem nenhuma linha: null → UI «Nenhum tema…».
    */
+  /** Compara códigos de modalidade tolerando variantes (via normalizeModalityCode) e, na ausência de alias, igualdade literal. */
+  const modalityMatches = (a: string | null | undefined, b: string | null | undefined): boolean => {
+    if (!a || !b) return false;
+    const na = normalizeModalityCode(a);
+    const nb = normalizeModalityCode(b);
+    if (na && nb) return na === nb;
+    return a === b;
+  };
+
+  const resolveThemeModality = (): string | null => {
+    if (
+      studentPrimaryModality &&
+      (temaSemanaList.some((th) => modalityMatches((th as { modality?: string }).modality, studentPrimaryModality)) ||
+        monthThemesList.some((th) => modalityMatches(th.modality, studentPrimaryModality)))
+    ) {
+      return studentPrimaryModality;
+    }
+    if (temaSemanaList.length > 0) return temaSemanaList[0].modality;
+    if (monthThemesList.length > 0) return monthThemesList[0].modality;
+    return null;
+  };
+
   const pickWeekThemeForStudent = (): {
     modality: string;
     title: string;
@@ -109,30 +136,34 @@ export async function DashboardBelowFold({
     unit_id: string | null;
     video_url: string | null;
   } | null => {
-    if (temaSemanaList.length === 0) return null;
-    if (studentPrimaryModality) {
-      const theme = temaSemanaList.find(
-        (th) => normalizeModalityCode((th as { modality?: string }).modality) === studentPrimaryModality
-      );
-      if (theme) {
-        return {
-          modality: theme.modality,
-          title: theme.title,
-          description: (theme as { description?: string | null }).description ?? null,
-          course_id: theme.course_id,
-          unit_id: (theme as { unit_id?: string | null }).unit_id ?? null,
-          video_url: (theme as { video_url?: string | null }).video_url ?? null,
-        };
-      }
+    const resolvedModality = resolveThemeModality();
+    if (!resolvedModality) return null;
+
+    const weekRow = temaSemanaList.find((th) => modalityMatches((th as { modality?: string }).modality, resolvedModality));
+    const monthRow = monthThemesList.find((th) => modalityMatches(th.modality, resolvedModality));
+
+    const weekTitle = weekRow?.title?.trim() ?? "";
+    const monthHasContent = Boolean(monthRow?.title?.trim() || monthRow?.description?.trim());
+
+    if (!weekTitle && monthHasContent) {
+      return {
+        modality: resolvedModality,
+        title: monthRow?.title ?? "",
+        description: monthRow?.description ?? null,
+        course_id: weekRow?.course_id ?? null,
+        unit_id: (weekRow as { unit_id?: string | null } | undefined)?.unit_id ?? null,
+        video_url: (weekRow as { video_url?: string | null } | undefined)?.video_url ?? null,
+      };
     }
-    const theme = temaSemanaList[0];
+
+    if (!weekRow) return null;
     return {
-      modality: theme.modality,
-      title: theme.title,
-      description: (theme as { description?: string | null }).description ?? null,
-      course_id: theme.course_id,
-      unit_id: (theme as { unit_id?: string | null }).unit_id ?? null,
-      video_url: (theme as { video_url?: string | null }).video_url ?? null,
+      modality: resolvedModality,
+      title: weekRow.title,
+      description: (weekRow as { description?: string | null }).description ?? null,
+      course_id: weekRow.course_id,
+      unit_id: (weekRow as { unit_id?: string | null }).unit_id ?? null,
+      video_url: (weekRow as { video_url?: string | null }).video_url ?? null,
     };
   };
 
@@ -147,7 +178,7 @@ export async function DashboardBelowFold({
 
   const weekThemeDaysForPrimary = weekThemeForPrimary
     ? weekThemeDays
-        .filter((d) => d.modality === weekThemeForPrimary!.modality)
+        .filter((d) => modalityMatches(d.modality, weekThemeForPrimary!.modality))
         .sort((a, b) => a.weekday - b.weekday)
         .map((d) => ({ weekday: d.weekday, topic: d.topic }))
     : [];

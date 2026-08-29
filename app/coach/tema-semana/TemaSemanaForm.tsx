@@ -183,10 +183,10 @@ export function TemaSemanaForm({
           defaultValue={initialTitle}
           className="input"
           placeholder={t("themeTitlePlaceholder")}
-          required
           autoComplete="off"
           style={{ minHeight: 44 }}
         />
+        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t("themeTitleOptionalHint")}</span>
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>{t("themeDescriptionLabel")}</span>

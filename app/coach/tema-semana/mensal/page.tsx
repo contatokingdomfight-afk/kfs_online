@@ -9,7 +9,9 @@ import { getModalitiesForWeekThemeEditor } from "@/lib/coach-week-theme-modaliti
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { PUBLIC_SCHEDULE_WEEKDAYS } from "@/lib/weekday-labels";
 import { currentYearMonth, getMonthRange, loadWeekThemeMonthlyGrid } from "@/lib/week-theme-monthly";
+import { getMonthThemeForModality } from "@/lib/month-theme";
 import { WeekThemeMonthlyTable } from "@/components/week-theme/WeekThemeMonthlyTable";
+import { MonthThemeForm } from "@/components/week-theme/MonthThemeForm";
 
 type Props = { searchParams: Promise<{ month?: string; modality?: string }> };
 
@@ -33,12 +35,15 @@ export default async function TemaSemanaMensalPage({ searchParams }: Props) {
     params.modality && allowedModalities.includes(params.modality) ? params.modality : allowedModalities[0];
   const selectedMonth = params.month ?? currentYearMonth();
   const { label: monthLabel } = getMonthRange(selectedMonth);
+  /** "YYYY-MM-01" por string — evita o desvio de fuso de Date/toISOString (ver lib/month-theme-actions.ts). */
+  const monthStart = `${selectedMonth}-01`;
   const prevMonth = addMonths(selectedMonth, -1);
   const nextMonth = addMonths(selectedMonth, 1);
 
-  const weeks = selectedModality
-    ? await loadWeekThemeMonthlyGrid(supabase, selectedModality, selectedMonth, locale)
-    : [];
+  const [weeks, monthTheme] = await Promise.all([
+    selectedModality ? loadWeekThemeMonthlyGrid(supabase, selectedModality, selectedMonth, locale) : Promise.resolve([]),
+    selectedModality ? getMonthThemeForModality(supabase, selectedModality, monthStart) : Promise.resolve(null),
+  ]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 28px)", maxWidth: "min(720px, 100%)", width: "100%" }}>
@@ -118,6 +123,16 @@ export default async function TemaSemanaMensalPage({ searchParams }: Props) {
               →
             </Link>
           </div>
+
+          {selectedModality && (
+            <MonthThemeForm
+              modality={selectedModality}
+              month={selectedMonth}
+              initialTitle={monthTheme?.title ?? ""}
+              initialDescription={monthTheme?.description ?? ""}
+              locale={locale}
+            />
+          )}
 
           <WeekThemeMonthlyTable weeks={weeks} weekdays={PUBLIC_SCHEDULE_WEEKDAYS} locale={locale} editHrefBase="/coach/tema-semana" />
         </>

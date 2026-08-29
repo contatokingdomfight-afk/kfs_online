@@ -36,7 +36,6 @@ export async function saveWeekTheme(
   if (!modality || !MODALITIES.includes(modality as (typeof MODALITIES)[number])) {
     return { error: "Modalidade inválida." };
   }
-  if (!title) return { error: "Título do tema é obrigatório." };
 
   const supabase = await createClient();
   const allowedModalities = await getModalitiesForWeekThemeEditor(supabase, dbUser.role, await getCurrentCoachId());
