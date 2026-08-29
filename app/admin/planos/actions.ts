@@ -9,7 +9,7 @@ import { adminPermissionError } from "@/lib/permissions/assert";
 
 const MODALITY_SCOPES = ["NONE", "SINGLE", "ALL"] as const;
 
-export type PlanFormResult = { error?: string };
+export type PlanFormResult = { error?: string; success?: boolean };
 
 export async function createPlan(
   _prev: PlanFormResult | null,
@@ -26,7 +26,7 @@ export async function createPlan(
   const schoolId = (formData.get("schoolId") as string)?.trim();
   const includesDigital = formData.get("includes_digital_access") === "on" || formData.get("includes_digital_access") === "true";
   const modalityScope = (formData.get("modality_scope") as string)?.trim() || "SINGLE";
-  const isActive = formData.get("is_active") !== "off" && formData.get("is_active") !== "false";
+  const isActive = formData.get("is_active") === "on" || formData.get("is_active") === "true";
   const stripePriceId = (formData.get("stripePriceId") as string)?.trim() || null;
   const includesPerformance = formData.get("includes_performance_tracking") === "on" || formData.get("includes_performance_tracking") === "true";
   const includesCheckIn = formData.get("includes_check_in") === "on" || formData.get("includes_check_in") === "true";
@@ -97,7 +97,7 @@ export async function updatePlan(
   const priceStr = (formData.get("price_monthly") as string)?.trim();
   const includesDigital = formData.get("includes_digital_access") === "on" || formData.get("includes_digital_access") === "true";
   const modalityScope = (formData.get("modality_scope") as string)?.trim() || "SINGLE";
-  const isActive = formData.get("is_active") !== "off" && formData.get("is_active") !== "false";
+  const isActive = formData.get("is_active") === "on" || formData.get("is_active") === "true";
   const stripePriceId = (formData.get("stripePriceId") as string)?.trim() || null;
   const includesPerformance = formData.get("includes_performance_tracking") === "on" || formData.get("includes_performance_tracking") === "true";
   const includesCheckIn = formData.get("includes_check_in") === "on" || formData.get("includes_check_in") === "true";
@@ -142,7 +142,7 @@ export async function updatePlan(
   revalidatePath("/admin/planos");
   revalidatePath(`/admin/planos/${planId}`);
   revalidatePublicPlans();
-  return {};
+  return { success: true };
 }
 
 export type UpdatePlanPriceResult = { error?: string; success?: boolean };

@@ -2,6 +2,7 @@
 
 import { useFormState } from "react-dom";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createPlan, updatePlan, type PlanFormResult } from "./actions";
 
 const MODALITY_SCOPES = [
@@ -53,6 +54,11 @@ export function PlanForm({
   const [state, formAction] = useFormState(action, null as PlanFormResult | null);
   const [schools, setSchools] = useState<Array<{ id: string; name: string }>>([]);
   const [loadingSchools, setLoadingSchools] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state?.success) router.refresh();
+  }, [state?.success, router]);
 
   useEffect(() => {
     async function loadSchools() {
@@ -250,6 +256,11 @@ export function PlanForm({
           Plano ativo (visível para atribuição)
         </span>
       </label>
+      {state?.success && !state?.error && (
+        <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--success)" }}>
+          Plano guardado.
+        </p>
+      )}
       {state?.error && (
         <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>
           {state.error}
