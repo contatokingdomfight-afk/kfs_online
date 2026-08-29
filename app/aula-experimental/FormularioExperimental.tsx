@@ -82,14 +82,14 @@ export function FormularioExperimental({
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
-          Email ou telefone *
+          Telefone *
         </span>
         <input
-          type="text"
+          type="tel"
           name="contact"
           required
           className="input"
-          placeholder="email@exemplo.com ou +351..."
+          placeholder="+351 912 345 678"
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>

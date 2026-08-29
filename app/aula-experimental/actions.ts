@@ -18,7 +18,7 @@ export async function submitTrialRequest(
   const lessonSlot = (formData.get("lessonSlot") as string)?.trim() ?? "";
 
   if (!name) return { error: "Nome é obrigatório." };
-  if (!contact) return { error: "Contacto (email ou telefone) é obrigatório." };
+  if (!contact) return { error: "Telefone é obrigatório." };
   if (!modality) return { error: "Escolhe uma modalidade." };
   if (!schoolId) return { error: "Escolhe o local / escola." };
 
