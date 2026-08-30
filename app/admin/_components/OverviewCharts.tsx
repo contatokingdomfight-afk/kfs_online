@@ -16,56 +16,47 @@ import {
   Cell,
   Legend,
 } from "recharts";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 
-type MonthGrowth = { month: string; label: string; active: number; new: number };
-type MonthRevenue = { month: string; revenue: number; label: string };
+type GrowthBucket = { bucket: string; active: number; new: number; churned: number };
+type RevenueBucket = { bucket: string; revenue: number };
 type ModalityShare = { name: string; value: number };
 
 export type OverviewChartsProps = {
-  studentsGrowthByMonth: { month: string; active: number; new: number; churned: number }[];
-  revenueAccumulatedMonths: { month: string; revenue: number }[];
-  attendanceByModality30Days: { modality: string; count: number }[];
-  modalityNames: Record<string, string>;
+  growthByBucket: GrowthBucket[];
+  revenueByBucket: RevenueBucket[];
+  modalityPopularity: { modalityCode: string; modalityName: string; count: number }[];
   schoolName: string;
   labels: {
     growthTitle: string;
     revenueTitle: string;
     modalityTitle: string;
     noData: string;
+    activeLabel: string;
+    newLabel: string;
+    churnedLabel: string;
+    growthInfo: string;
+    revenueInfo: string;
+    modalityInfo: string;
   };
 };
 
 const MODALITY_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6"];
 
+function formatBucketLabel(bucket: string): string {
+  if (bucket.length === 10) return `${bucket.slice(8, 10)}/${bucket.slice(5, 7)}`;
+  return `${bucket.slice(5, 7)}/${bucket.slice(0, 4)}`;
+}
+
 export function OverviewCharts(props: OverviewChartsProps) {
-  const {
-    studentsGrowthByMonth,
-    revenueAccumulatedMonths,
-    attendanceByModality30Days,
-    modalityNames,
-    schoolName,
-    labels,
-  } = props;
+  const { growthByBucket, revenueByBucket, modalityPopularity, schoolName, labels } = props;
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const growthData: MonthGrowth[] = studentsGrowthByMonth.map((r) => ({
-    month: r.month,
-    label: `${r.month.slice(5)}/${r.month.slice(0, 4)}`,
-    active: r.active,
-    new: r.new,
-  }));
-
-  const revenueData: MonthRevenue[] = revenueAccumulatedMonths.map((r) => ({
-    ...r,
-    label: `${r.month.slice(5)}/${r.month.slice(0, 4)}`,
-  }));
-
-  const modalityData: ModalityShare[] = attendanceByModality30Days.map((r) => ({
-    name: (modalityNames[r.modality] ?? r.modality) || "Outras",
-    value: r.count,
-  }));
+  const growthData = growthByBucket.map((r) => ({ ...r, label: formatBucketLabel(r.bucket) }));
+  const revenueData = revenueByBucket.map((r) => ({ ...r, label: formatBucketLabel(r.bucket) }));
+  const modalityData: ModalityShare[] = modalityPopularity.map((r) => ({ name: r.modalityName, value: r.count }));
 
   if (!mounted) {
     return (
@@ -79,10 +70,10 @@ export function OverviewCharts(props: OverviewChartsProps) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(24px, 6vw, 32px)", minWidth: 0 }}>
-      {/* Crescimento de Alunos (6 meses) */}
       <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0, overflow: "hidden" }}>
-        <h3 style={{ margin: "0 0 16px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+        <h3 style={{ margin: "0 0 16px 0", display: "flex", alignItems: "center", gap: 8, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           {labels.growthTitle} ({schoolName})
+          <InlineInfoTip trigger="click" detail={labels.growthInfo} ariaLabel={labels.growthTitle} />
         </h3>
         {growthData.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>{labels.noData}</p>
@@ -97,18 +88,19 @@ export function OverviewCharts(props: OverviewChartsProps) {
                   contentStyle={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
                 />
                 <Legend />
-                <Line type="monotone" dataKey="active" stroke="var(--primary)" strokeWidth={2} name="Total" dot={{ fill: "var(--primary)" }} />
-                <Line type="monotone" dataKey="new" stroke="var(--success)" strokeWidth={2} name="Novos" dot={{ fill: "var(--success)" }} />
+                <Line type="monotone" dataKey="active" stroke="var(--primary)" strokeWidth={2} name={labels.activeLabel} dot={{ fill: "var(--primary)" }} />
+                <Line type="monotone" dataKey="new" stroke="var(--success)" strokeWidth={2} name={labels.newLabel} dot={{ fill: "var(--success)" }} />
+                <Line type="monotone" dataKey="churned" stroke="#f59e0b" strokeWidth={2} name={labels.churnedLabel} dot={{ fill: "#f59e0b" }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         )}
       </section>
 
-      {/* Receita Mensal (12 meses) */}
       <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0, overflow: "hidden" }}>
-        <h3 style={{ margin: "0 0 16px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+        <h3 style={{ margin: "0 0 16px 0", display: "flex", alignItems: "center", gap: 8, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           {labels.revenueTitle} ({schoolName})
+          <InlineInfoTip trigger="click" detail={labels.revenueInfo} ariaLabel={labels.revenueTitle} />
         </h3>
         {revenueData.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>{labels.noData}</p>
@@ -130,10 +122,10 @@ export function OverviewCharts(props: OverviewChartsProps) {
         )}
       </section>
 
-      {/* Popularidade das Modalidades (30 dias) */}
       <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0, overflow: "hidden" }}>
-        <h3 style={{ margin: "0 0 16px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+        <h3 style={{ margin: "0 0 16px 0", display: "flex", alignItems: "center", gap: 8, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           {labels.modalityTitle} ({schoolName})
+          <InlineInfoTip trigger="click" detail={labels.modalityInfo} ariaLabel={labels.modalityTitle} />
         </h3>
         {modalityData.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>{labels.noData}</p>

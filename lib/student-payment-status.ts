@@ -97,7 +97,10 @@ export async function syncStudentPaymentStatus(
   if (familyCtx && !familyCtx.isTitular) {
     const next: AutoStudentStatus = row.adminGrantedFullAccess || row.planId ? "ATIVO" : "INADIMPLENTE";
     if (next === row.status) return { updated: false, status: row.status };
-    const { error } = await supabase.from("Student").update({ status: next }).eq("id", studentId);
+    const { error } = await supabase
+      .from("Student")
+      .update({ status: next, statusChangedAt: new Date().toISOString() })
+      .eq("id", studentId);
     if (error) {
       console.error(`syncStudentPaymentStatus(${studentId}):`, error.message);
       return { updated: false, status: row.status };
@@ -143,7 +146,7 @@ export async function syncStudentPaymentStatus(
     return { updated: false, status: row.status };
   }
 
-  const statusPatch: Record<string, unknown> = { status: next };
+  const statusPatch: Record<string, unknown> = { status: next, statusChangedAt: new Date().toISOString() };
   if (next === "ATIVO" && row.adminGrantedFullAccess) {
     statusPatch.paymentSuspendedAt = null;
     statusPatch.suspendedPlanId = null;

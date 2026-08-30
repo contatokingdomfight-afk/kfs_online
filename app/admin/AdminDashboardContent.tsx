@@ -1,14 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAdminDashboardStats } from "@/lib/admin-dashboard-stats";
+import { getCachedSchools } from "@/lib/cached-reference-data";
 import { getActionItemsData } from "@/lib/admin-action-items";
 import { getTodayTrialClassesForAdmin } from "@/lib/today-trial-classes";
 import { TodayTrialClassesHighlight } from "@/components/TodayTrialClassesHighlight";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { AdminSchoolFilter } from "./AdminSchoolFilter";
-import { BusinessHealthStats } from "./_components/BusinessHealthStats";
 import { ActionItems } from "./_components/ActionItems";
 import { ManagementGrid } from "./_components/ManagementGrid";
-import { OverviewChartsDynamic } from "./_components/OverviewChartsDynamic";
 import { getTranslations } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { hasAllV1AdminPermissions, type ResolvedAdminAccess, adminAccessAllows } from "@/lib/permissions/resolve";
@@ -27,9 +25,9 @@ type Props = {
 };
 
 export async function AdminDashboardContent({ client, schoolId, access }: Props) {
-  const [locale, stats, actionItems, todayTrials] = await Promise.all([
+  const [locale, schools, actionItems, todayTrials] = await Promise.all([
     getLocaleFromCookies(),
-    getAdminDashboardStats(client, schoolId),
+    getCachedSchools(client),
     getActionItemsData(client, schoolId),
     getTodayTrialClassesForAdmin(client, schoolId),
   ]);
@@ -51,15 +49,9 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
     );
   }
 
-  const modalityNames: Record<string, string> = {};
-  stats.studentsByModality.forEach((m) => {
-    modalityNames[m.modalityCode] = m.modalityName;
-  });
-
-  const schoolName = schoolId ? stats.schools.find((s) => s.id === schoolId)?.name ?? "Todas" : "Todas";
-
   const financeShortcuts = canAccessFinanceiro(access)
     ? [
+        { href: "/admin/dashboard", icon: "📊", label: t("adminDashboardShortcut") },
         { href: "/admin/loja/vendas/novo", icon: "🧾", label: t("adminQuickRegisterSale") },
         { href: "/admin/loja", icon: "🛍️", label: t("navLoja") },
         { href: "/admin/financeiro", icon: "💶", label: t("navFinance") },
@@ -112,7 +104,7 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
-        <AdminSchoolFilter schools={stats.schools} currentSchoolId={schoolId} />
+        <AdminSchoolFilter schools={schools} currentSchoolId={schoolId} />
       </div>
 
       <TodayTrialClassesHighlight
@@ -127,20 +119,6 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
           goToLesson: t("adminViewLesson"),
         }}
         manageHref="/admin/experimentais"
-      />
-
-      {/* Secção: SAÚDE DO NEGÓCIO */}
-      <BusinessHealthStats
-        revenueCurrentMonth={stats.revenueCurrentMonth}
-        activeStudents={stats.activeStudents}
-        newStudentsThisMonth={stats.newStudentsThisMonth}
-        avgAttendanceLast7Days={stats.avgAttendanceLast7Days}
-        labels={{
-          revenueThisMonth: t("adminRevenueThisMonth"),
-          activeStudents: t("adminActiveStudents"),
-          newStudentsMonth: t("adminNewStudentsMonth"),
-          avgAttendanceDaily: t("adminAvgAttendanceDaily"),
-        }}
       />
 
       {/* Gestão da plataforma (atalhos no mesmo modelo dos tiles) */}
@@ -165,22 +143,6 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
           cardHint: t("adminActionItemsCardHint"),
         }}
       />
-
-      {/* Secção 3: VISÃO GERAL - carregado dinamicamente para reduzir bundle inicial */}
-      <OverviewChartsDynamic
-        studentsGrowthByMonth={stats.studentsGrowthByMonth}
-        revenueAccumulatedMonths={stats.revenueAccumulatedMonths}
-        attendanceByModality30Days={stats.attendanceByModality30Days}
-        modalityNames={modalityNames}
-        schoolName={schoolName}
-        labels={{
-          growthTitle: t("adminChartGrowth"),
-          revenueTitle: t("adminChartRevenue"),
-          modalityTitle: t("adminChartModality"),
-          noData: t("adminNoData"),
-        }}
-      />
-
     </>
   );
 }

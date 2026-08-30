@@ -331,12 +331,16 @@ export async function updateStudent(
 
   const updates: {
     status?: string;
+    statusChangedAt?: string;
     schoolId?: string;
     planId?: string | null;
     primaryModality?: string | null;
     adminGrantedFullAccess?: boolean;
   } = {};
-  if (newStatus) updates.status = newStatus;
+  if (newStatus) {
+    updates.status = newStatus;
+    updates.statusChangedAt = new Date().toISOString();
+  }
   if (schoolId) updates.schoolId = schoolId;
   updates.planId = effectivePlanId;
   updates.primaryModality = newPrimaryModality;
@@ -448,6 +452,7 @@ export async function setStudentFullAccess(
       paymentSuspendedAt: null,
       suspendedPlanId: null,
       status: "ATIVO",
+      statusChangedAt: new Date().toISOString(),
     })
     .eq("id", studentId);
   if (error) return { error: error.message };

@@ -10,12 +10,15 @@ export function currentYearMonth(): string {
 
 export function getMonthRange(yearMonth: string): { start: string; end: string; label: string } {
   const [year, month] = yearMonth.split("-").map(Number);
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 0);
-  const label = start.toLocaleDateString("pt-PT", { month: "long", year: "numeric" });
+  /** Dias no mês via getters locais (sem passar por toISOString, que desvia a data em fusos UTC+N como Lisboa no horário de verão). */
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const monthStr = String(month).padStart(2, "0");
+  const start = `${year}-${monthStr}-01`;
+  const end = `${year}-${monthStr}-${String(daysInMonth).padStart(2, "0")}`;
+  const label = new Date(year, month - 1, 1).toLocaleDateString("pt-PT", { month: "long", year: "numeric" });
   return {
-    start: start.toISOString().split("T")[0],
-    end: end.toISOString().split("T")[0],
+    start,
+    end,
     label: label.charAt(0).toUpperCase() + label.slice(1),
   };
 }
