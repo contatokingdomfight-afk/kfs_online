@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import { createUnit, updateUnit, type UnitFormResult } from "./actions";
@@ -12,9 +12,10 @@ type Props = {
   unitId?: string;
   initialName?: string;
   initialDescription?: string;
-  initialContentType?: "VIDEO" | "TEXT";
+  initialContentType?: "VIDEO" | "TEXT" | "PDF";
   initialVideoUrl?: string;
   initialTextContent?: string;
+  initialPdfUrl?: string;
   initialSortOrder?: number;
   initialStatus?: "DRAFT" | "PUBLISHED";
   onSuccess?: () => void;
@@ -29,14 +30,42 @@ export function UnitForm({
   initialContentType = "VIDEO",
   initialVideoUrl = "",
   initialTextContent = "",
+  initialPdfUrl = "",
   initialSortOrder = 0,
   initialStatus = "PUBLISHED",
   onSuccess,
 }: Props) {
   const router = useRouter();
-  const [contentType, setContentType] = useState<"VIDEO" | "TEXT">(initialContentType);
+  const [contentType, setContentType] = useState<"VIDEO" | "TEXT" | "PDF">(initialContentType);
+  const [pdfUrl, setPdfUrl] = useState(initialPdfUrl);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const action = unitId ? updateUnit : createUnit;
   const [state, formAction] = useFormState(action, null as UnitFormResult | null);
+
+  async function handlePdfSelected(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      body.append("courseId", courseId);
+      body.append("moduleId", moduleId);
+      const res = await fetch("/api/coach/course-unit-pdf", { method: "POST", body });
+      const json = await res.json();
+      if (!res.ok) {
+        setUploadError(json.error ?? "Falha ao enviar o ficheiro.");
+        return;
+      }
+      setPdfUrl(json.url);
+    } catch {
+      setUploadError("Falha ao enviar o ficheiro.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   useEffect(() => {
     if (state && !state.error) {
@@ -74,10 +103,11 @@ export function UnitForm({
           name="contentType"
           className="input"
           value={contentType}
-          onChange={(e) => setContentType(e.target.value as "VIDEO" | "TEXT")}
+          onChange={(e) => setContentType(e.target.value as "VIDEO" | "TEXT" | "PDF")}
         >
           <option value="VIDEO">Vídeo</option>
-          <option value="TEXT">Texto para leitura</option>
+          <option value="TEXT">Texto para leitura (Markdown)</option>
+          <option value="PDF">PDF</option>
         </select>
       </label>
       {contentType === "VIDEO" && (
@@ -88,8 +118,18 @@ export function UnitForm({
       )}
       {contentType === "TEXT" && (
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Texto complementar</span>
+          <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Texto complementar (aceita Markdown: # títulos, **negrito**, listas)</span>
           <textarea name="textContent" defaultValue={initialTextContent} className="input" rows={6} style={{ resize: "vertical" }} placeholder="Conteúdo para leitura..." />
+        </label>
+      )}
+      {contentType === "PDF" && (
+        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Ficheiro PDF (máx. 4 MB)</span>
+          <input type="file" accept="application/pdf" onChange={handlePdfSelected} className="input" />
+          {uploading && <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>A carregar…</span>}
+          {!uploading && pdfUrl && <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>✓ PDF carregado</span>}
+          {uploadError && <span style={{ fontSize: 13, color: "var(--danger)" }}>{uploadError}</span>}
+          <input type="hidden" name="pdfUrl" value={pdfUrl} />
         </label>
       )}
       <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>

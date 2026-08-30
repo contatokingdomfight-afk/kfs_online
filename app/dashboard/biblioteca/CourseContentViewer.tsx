@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ConcluirUnidadeButton } from "./ConcluirUnidadeButton";
 import { ConcluirModuloButton } from "./ConcluirModuloButton";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
+import { UnitTextContent } from "@/components/biblioteca/UnitTextContent";
+import { PdfUnitViewer } from "@/components/biblioteca/PdfUnitViewer";
 
 type Unit = {
   id: string;
@@ -13,6 +15,7 @@ type Unit = {
   content_type: string;
   video_url: string | null;
   text_content: string | null;
+  pdf_url: string | null;
   sort_order: number;
 };
 
@@ -195,16 +198,12 @@ export function CourseContentViewer({
                             {u.content_type === "VIDEO" && u.video_url ? (
                               <VideoPlayer url={u.video_url} title={u.name} fallbackMessage={videoUnavailable} />
                             ) : u.content_type === "TEXT" && u.text_content ? (
-                              <div
-                                style={{
-                                  padding: "clamp(16px, 4vw, 20px)",
-                                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                                  lineHeight: 1.6,
-                                  color: "var(--text-primary)",
-                                  whiteSpace: "pre-wrap",
-                                }}
-                              >
-                                {u.text_content}
+                              <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                                <UnitTextContent text={u.text_content} />
+                              </div>
+                            ) : u.content_type === "PDF" ? (
+                              <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                                <PdfUnitViewer url={u.pdf_url} title={u.name} />
                               </div>
                             ) : (
                               <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>

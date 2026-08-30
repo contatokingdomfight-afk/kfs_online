@@ -30,11 +30,11 @@ export default async function CoachBibliotecaCursoPage({ params }: Props) {
 
   const moduleList = modules ?? [];
   const moduleIds = moduleList.map((m) => m.id);
-  let unitsByModule = new Map<string, { id: string; name: string; description: string | null; content_type: string; video_url: string | null; text_content: string | null; sort_order: number }[]>();
+  let unitsByModule = new Map<string, { id: string; name: string; description: string | null; content_type: string; video_url: string | null; text_content: string | null; pdf_url: string | null; sort_order: number }[]>();
   if (moduleIds.length > 0) {
     const { data: units } = await supabase
       .from("CourseUnit")
-      .select("id, module_id, name, description, content_type, video_url, text_content, sort_order")
+      .select("id, module_id, name, description, content_type, video_url, text_content, pdf_url, sort_order")
       .in("module_id", moduleIds)
       .eq("status", "PUBLISHED");
     (units ?? []).forEach((u) => {

@@ -6,6 +6,8 @@ import { DeleteUnitButton } from "../modules/units/DeleteUnitButton";
 import { ModuleForm } from "../modules/ModuleForm";
 import { UnitForm } from "../modules/units/UnitForm";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
+import { UnitTextContent } from "@/components/biblioteca/UnitTextContent";
+import { PdfUnitViewer } from "@/components/biblioteca/PdfUnitViewer";
 import { ViewersDrilldown } from "./ViewersDrilldown";
 import { getUnitViewers } from "../stats-actions";
 
@@ -17,6 +19,7 @@ type Unit = {
   content_type: string;
   video_url: string | null;
   text_content: string | null;
+  pdf_url: string | null;
   sort_order: number;
   status: "DRAFT" | "PUBLISHED";
 };
@@ -66,6 +69,13 @@ function UnitPreview({ unit }: { unit: Unit }) {
       <p style={{ margin: "10px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>Sem URL de vídeo definida.</p>
     );
   }
+  if (unit.content_type === "PDF") {
+    return (
+      <div style={{ marginTop: 10 }}>
+        <PdfUnitViewer url={unit.pdf_url} title={unit.name} fallbackMessage="Sem ficheiro PDF definido." />
+      </div>
+    );
+  }
   return unit.text_content ? (
     <div
       style={{
@@ -73,13 +83,9 @@ function UnitPreview({ unit }: { unit: Unit }) {
         padding: "clamp(12px, 3vw, 16px)",
         background: "var(--bg-secondary)",
         borderRadius: "var(--radius-md)",
-        fontSize: 14,
-        color: "var(--text-primary)",
-        lineHeight: 1.6,
-        whiteSpace: "pre-wrap",
       }}
     >
-      {unit.text_content}
+      <UnitTextContent text={unit.text_content} />
     </div>
   ) : (
     <p style={{ margin: "10px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>Sem texto definido.</p>
@@ -188,7 +194,7 @@ export function ModuleCard({ courseId, module, index, units, viewCountByUnitId }
                       {uIdx + 1}. {u.name}
                     </span>
                     <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                      {u.content_type === "VIDEO" ? "Vídeo" : "Texto"}
+                      {u.content_type === "VIDEO" ? "Vídeo" : u.content_type === "PDF" ? "PDF" : "Texto"}
                     </span>
                     {u.status === "DRAFT" && <DraftBadge />}
                     <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
@@ -232,9 +238,10 @@ export function ModuleCard({ courseId, module, index, units, viewCountByUnitId }
                         unitId={u.id}
                         initialName={u.name}
                         initialDescription={u.description ?? ""}
-                        initialContentType={u.content_type === "TEXT" ? "TEXT" : "VIDEO"}
+                        initialContentType={u.content_type === "TEXT" ? "TEXT" : u.content_type === "PDF" ? "PDF" : "VIDEO"}
                         initialVideoUrl={u.video_url ?? ""}
                         initialTextContent={u.text_content ?? ""}
+                        initialPdfUrl={u.pdf_url ?? ""}
                         initialSortOrder={u.sort_order}
                         initialStatus={u.status}
                         onSuccess={() => setEditingUnitId(null)}
