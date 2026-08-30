@@ -13,7 +13,6 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
     { label: t("navAthletes"), href: "/admin/atletas" },
     { label: t("navCoaches"), href: "/admin/coaches" },
     { label: t("navTrials"), href: "/admin/experimentais" },
-    { label: t("navLeads"), href: "/admin/leads" },
     { label: t("navSchools"), href: "/admin/escolas" },
     { label: t("navClasses"), href: "/admin/turmas" },
     { label: t("navModalities"), href: "/admin/modalidades" },
