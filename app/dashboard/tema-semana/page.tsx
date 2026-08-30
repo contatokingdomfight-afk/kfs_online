@@ -3,11 +3,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { requirePlan } from "@/lib/require-plan";
+import { getPlanAccess } from "@/lib/plan-access";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
-import { normalizeModalityCode } from "@/lib/modality-normalize";
 import { PUBLIC_SCHEDULE_WEEKDAYS } from "@/lib/weekday-labels";
 import { currentYearMonth, getMonthRange, loadWeekThemeMonthlyGrid } from "@/lib/week-theme-monthly";
 import { WeekThemeMonthlyTable } from "@/components/week-theme/WeekThemeMonthlyTable";
@@ -30,18 +30,31 @@ export default async function StudentTemaSemanaPage({ searchParams }: Props) {
   const t = getTranslations(locale);
   const params = await searchParams;
 
-  const [{ data: student }, modalities] = await Promise.all([
-    supabase.from("Student").select("primaryModality").eq("id", studentId).single(),
+  const [modalities, planAccess] = await Promise.all([
     getCachedModalityRefs(supabase),
+    getPlanAccess(supabase, studentId),
   ]);
 
   if (modalities.length === 0) redirect("/dashboard");
 
-  const studentModality = normalizeModalityCode((student as { primaryModality?: string | null } | null)?.primaryModality ?? null);
+  const modalityNameByCode = new Map(modalities.map((m) => [m.code, m.name]));
+  /** Plano de modalidade única (SINGLE): só a modalidade do aluno. Plano ALL (ex.: 80€/100€): todas.
+   *  `allowedModalities` vazio (edge-case do plano) não bloqueia — mostra o catálogo todo. */
+  const allowedCodes = planAccess.allowedModalities.length > 0 ? planAccess.allowedModalities : modalities.map((m) => m.code);
+
+  const selectableModalities = allowedCodes
+    .filter((code) => modalityNameByCode.has(code))
+    .map((code) => ({ code, name: MODALITY_LABELS[code] ?? modalityNameByCode.get(code) ?? code }));
+
+  if (selectableModalities.length === 0) redirect("/dashboard");
+
+  const requestedModality = params.modality;
   const selectedModality =
-    params.modality && modalities.some((m) => m.code === params.modality)
-      ? params.modality
-      : (studentModality && modalities.some((m) => m.code === studentModality) ? studentModality : modalities[0].code);
+    requestedModality && selectableModalities.some((m) => m.code === requestedModality)
+      ? requestedModality
+      : planAccess.primaryModality && selectableModalities.some((m) => m.code === planAccess.primaryModality)
+        ? planAccess.primaryModality
+        : selectableModalities[0].code;
 
   const currentMonth = currentYearMonth();
   const nextMonth = nextYearMonth(currentMonth);
@@ -62,16 +75,16 @@ export default async function StudentTemaSemanaPage({ searchParams }: Props) {
         </p>
       </div>
 
-      {modalities.length > 1 && (
+      {selectableModalities.length > 1 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {modalities.map((m) => (
+          {selectableModalities.map((m) => (
             <Link
               key={m.code}
               href={`/dashboard/tema-semana?modality=${m.code}`}
               className={m.code === selectedModality ? "btn btn-primary" : "btn btn-secondary"}
               style={{ textDecoration: "none", fontSize: "clamp(13px, 3.2vw, 15px)" }}
             >
-              {MODALITY_LABELS[m.code] ?? m.name}
+              {m.name}
             </Link>
           ))}
         </div>
