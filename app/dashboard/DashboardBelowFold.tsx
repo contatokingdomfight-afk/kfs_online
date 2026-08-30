@@ -369,6 +369,7 @@ export async function DashboardBelowFold({
           noMissions: noMissionsMessage,
           noCoachFeedback: noCoachFeedbackMessage,
           viewPerformanceLink: t("myPerformance"),
+          viewFullMonthLink: t("studentTemaSemanaViewFullMonth"),
         }}
       />
 

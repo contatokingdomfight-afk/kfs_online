@@ -45,6 +45,8 @@ type WhatIsNewLabels = {
   noCoachFeedback: string;
   /** Texto do link para a página de desempenho (com feedback com avaliação). */
   viewPerformanceLink: string;
+  /** Texto do link para a grade mensal (mês atual + seguinte). */
+  viewFullMonthLink: string;
 };
 
 type WeekThemeDay = { weekday: number; topic: string };
@@ -218,6 +220,19 @@ export function WhatIsNew({ weekTheme, weekThemeDays, todayWeekday, nextMission,
                   {labels.noWeekTheme}
                 </p>
               )}
+              <Link
+                href="/dashboard/tema-semana"
+                style={{
+                  display: "inline-block",
+                  marginTop: 12,
+                  fontSize: "clamp(13px, 3.2vw, 14px)",
+                  color: "var(--primary)",
+                  fontWeight: 500,
+                  textDecoration: "none",
+                }}
+              >
+                {labels.viewFullMonthLink} →
+              </Link>
             </div>
           )}
           {activeTab === "mission" && (
