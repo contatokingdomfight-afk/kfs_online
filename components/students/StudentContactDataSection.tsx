@@ -1,4 +1,5 @@
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 
 type Props = { studentId: string };
 
@@ -69,6 +70,10 @@ export async function StudentContactDataSection({ studentId }: Props) {
   const { data: student } = await supabase.from("Student").select("userId").eq("id", studentId).maybeSingle();
   if (!student) return null;
 
+  /** NIF e documento de identificação são dados fiscais sensíveis — só ADMIN vê (coach não, mesmo na própria ficha de aluno). */
+  const dbUser = await getCurrentDbUser();
+  const isAdmin = dbUser?.role === "ADMIN";
+
   const [{ data: user }, { data: profile }, { data: enrollment }] = await Promise.all([
     supabase.from("User").select("email").eq("id", student.userId).single(),
     supabase
@@ -79,7 +84,7 @@ export async function StudentContactDataSection({ studentId }: Props) {
     supabase
       .from("StudentEnrollmentForm")
       .select(
-        "formCompleted, addressLine, postalCode, emergencyContactName, emergencyContactRelationship, emergencyContactPhone, allergies, knownHealthCondition, emergencyMedication"
+        "formCompleted, addressLine, postalCode, emergencyContactName, emergencyContactRelationship, emergencyContactPhone, allergies, knownHealthCondition, emergencyMedication, taxId, idDocument"
       )
       .eq("studentId", studentId)
       .maybeSingle(),
@@ -88,6 +93,8 @@ export async function StudentContactDataSection({ studentId }: Props) {
   const phone = (profile?.phone as string | null) ?? null;
   const email = user?.email ?? null;
   const dob = formatDobPt((profile?.dateOfBirth as string | null) ?? null);
+  const taxId = isAdmin ? (enrollment?.taxId as string | null)?.trim() || null : null;
+  const idDocument = isAdmin ? (enrollment?.idDocument as string | null)?.trim() || null : null;
   const measures = formatMeasures(
     profile?.weightKg != null ? Number(profile.weightKg) : null,
     profile?.heightCm != null ? Number(profile.heightCm) : null
@@ -113,7 +120,9 @@ export async function StudentContactDataSection({ studentId }: Props) {
   const medicalNotes = (profile?.medicalNotes as string | null)?.trim() || null;
 
   const hasHealthDetail = Boolean(allergies || healthCondition || emergencyMed || medicalNotes);
-  const hasContact = Boolean(phone || email || dob || measures || address || emergEnrollment || emergProfile);
+  const hasContact = Boolean(
+    phone || email || dob || measures || address || emergEnrollment || emergProfile || taxId || idDocument
+  );
 
   if (!hasContact && !hasHealthDetail) {
     return (
@@ -148,6 +157,8 @@ export async function StudentContactDataSection({ studentId }: Props) {
           <Row label="Telefone" value={phone} href={phone ? `tel:${phone.replace(/\s/g, "")}` : undefined} />
           <Row label="E-mail" value={email} href={email ? `mailto:${email}` : undefined} />
           <Row label="Data de nascimento" value={dob} />
+          <Row label="Documento (CC / Passaporte)" value={idDocument} />
+          <Row label="NIF" value={taxId} />
           <Row label="Medidas" value={measures} />
           <Row label="Morada" value={address} />
           {emergEnrollment ? (
