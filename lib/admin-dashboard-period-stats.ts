@@ -12,6 +12,8 @@ import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { getWeekStartMondayForDateInLisbon } from "@/lib/lisbon-week";
 import { fetchAdminUserIdSet } from "@/lib/admin-dashboard-exclude-admins";
 import { fetchExpandedLessonsInRange } from "@/lib/admin-dashboard-stats";
+import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
+import { loadFamilyReferencePlanIdByStudent } from "@/lib/family-effective-plan";
 
 export type PeriodStats = {
   bucketUnit: "day" | "month";
@@ -310,34 +312,27 @@ export async function getAdminDashboardPeriodStats(
 
   let plansQuery = supabase.from("Plan").select("id, name");
   if (schoolId) plansQuery = plansQuery.eq("schoolId", schoolId);
-  let familyGroupsQuery = supabase
-    .from("FamilyGroup")
-    .select("id, planId")
-    .eq("isActive", true)
-    .gte("createdAt", periodStartTs)
-    .lt("createdAt", periodEndExclusiveTs);
-  if (schoolId) familyGroupsQuery = familyGroupsQuery.eq("schoolId", schoolId);
-  const [{ data: plans }, { data: familyGroupsInPeriod }] = await Promise.all([plansQuery, familyGroupsQuery]);
+  const [{ data: plans }] = await Promise.all([plansQuery]);
+
+  /** Ver `lib/admin-dashboard-stats.ts` — plano família conta no plano de referência de cada membro. */
+  const familyStudentIds = studentsForPlan.filter((s) => isFamilyPlan(s.planId)).map((s) => s.id);
+  const referencePlanByStudent = await loadFamilyReferencePlanIdByStudent(supabase, familyStudentIds);
 
   const countByPlan: Record<string, number> = {};
   let noPlanCount = 0;
   for (const s of studentsForPlan) {
-    if (!s.planId) {
+    const effectivePlanId = s.planId && isFamilyPlan(s.planId) ? referencePlanByStudent.get(s.id) ?? s.planId : s.planId;
+    if (!effectivePlanId) {
       noPlanCount++;
       continue;
     }
-    countByPlan[s.planId] = (countByPlan[s.planId] ?? 0) + 1;
-  }
-  const familyGroupCountByPlan: Record<string, number> = {};
-  for (const fg of familyGroupsInPeriod ?? []) {
-    const planId = (fg as { planId: string }).planId;
-    familyGroupCountByPlan[planId] = (familyGroupCountByPlan[planId] ?? 0) + 1;
+    countByPlan[effectivePlanId] = (countByPlan[effectivePlanId] ?? 0) + 1;
   }
   const newStudentsByPlan = (plans ?? [])
     .map((p) => ({
       planId: p.id,
       planName: p.name,
-      count: familyGroupCountByPlan[p.id] ?? countByPlan[p.id] ?? 0,
+      count: countByPlan[p.id] ?? 0,
     }))
     .filter((p) => p.count > 0)
     .sort((a, b) => b.count - a.count);

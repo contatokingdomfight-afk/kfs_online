@@ -7,6 +7,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCachedModalityRefs, getCachedSchools } from "@/lib/cached-reference-data";
 import { fetchAdminUserIdSet } from "@/lib/admin-dashboard-exclude-admins";
+import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
+import { loadFamilyReferencePlanIdByStudent } from "@/lib/family-effective-plan";
 import {
   expandLessonsForDateRange,
   fetchLessonCancellations,
@@ -89,30 +91,36 @@ export async function getAdminDashboardStats(
 
   let plansQuery = supabase.from("Plan").select("id, name");
   if (schoolId) plansQuery = plansQuery.eq("schoolId", schoolId);
-  let familyGroupsQuery = supabase.from("FamilyGroup").select("id, planId").eq("isActive", true);
-  if (schoolId) familyGroupsQuery = familyGroupsQuery.eq("schoolId", schoolId);
-  const [{ data: plans }, { data: familyGroups }] = await Promise.all([plansQuery, familyGroupsQuery]);
+  const [{ data: plans }] = await Promise.all([plansQuery]);
+
+  /**
+   * No plano família, `Student.planId` = "plan-familia" é só o agrupamento/desconto —
+   * a modalidade/plano real de cada membro vem de `FamilyGroupMember.referencePlanId`
+   * (ver DOCS/PLANO_FAMILIA.md). Para "Alunos por plano" contar a distribuição real,
+   * cada membro entra na contagem do seu plano de referência, não em "Kingdom Família".
+   */
+  const familyStudentIds = students
+    .filter((s) => isFamilyPlan((s as { planId?: string | null }).planId ?? null))
+    .map((s) => (s as { id: string }).id);
+  const referencePlanByStudent = await loadFamilyReferencePlanIdByStudent(supabase, familyStudentIds);
+
   const countByPlan: Record<string, number> = {};
   let noPlanCount = 0;
   for (const s of students) {
-    const planId = (s as { planId?: string | null }).planId ?? null;
-    if (!planId) {
+    const st = s as { id: string; planId?: string | null };
+    const rawPlanId = st.planId ?? null;
+    const effectivePlanId = rawPlanId && isFamilyPlan(rawPlanId) ? referencePlanByStudent.get(st.id) ?? rawPlanId : rawPlanId;
+    if (!effectivePlanId) {
       noPlanCount++;
       continue;
     }
-    countByPlan[planId] = (countByPlan[planId] ?? 0) + 1;
-  }
-  /** Planos com FamilyGroup (ex. Kingdom Família) contam grupos, não membros individuais */
-  const familyGroupCountByPlan: Record<string, number> = {};
-  for (const fg of familyGroups ?? []) {
-    const planId = (fg as { planId: string }).planId;
-    familyGroupCountByPlan[planId] = (familyGroupCountByPlan[planId] ?? 0) + 1;
+    countByPlan[effectivePlanId] = (countByPlan[effectivePlanId] ?? 0) + 1;
   }
   const studentsByPlan = (plans ?? [])
     .map((p) => ({
       planId: p.id,
       planName: p.name,
-      count: familyGroupCountByPlan[p.id] ?? countByPlan[p.id] ?? 0,
+      count: countByPlan[p.id] ?? 0,
     }))
     .filter((p) => p.count > 0)
     .sort((a, b) => b.count - a.count);

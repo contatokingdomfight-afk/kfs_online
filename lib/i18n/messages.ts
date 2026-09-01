@@ -905,7 +905,7 @@ export const messages = {
     adminCourseEngagementInfo:
       "Unidades e cursos concluídos, e alunos com compra paga, tudo dentro do período escolhido. O ranking mostra os cursos com mais conclusões nesse intervalo.",
     adminStudentsByPlanInfo:
-      "Quantos alunos têm cada plano neste momento. No plano Kingdom Família conta-se o número de grupos familiares, não o número de membros.",
+      "Quantos alunos têm cada plano neste momento. Alunos no plano Kingdom Família (agrupamento de desconto) contam no plano de referência real de cada um, não em «Kingdom Família».",
     adminStudentsByModalityInfo: "Quantos alunos têm cada modalidade como principal neste momento.",
     adminNewStudentsByModalityInfo:
       "Quantos alunos novos (pela modalidade principal) entraram dentro do período escolhido — esta quebra não é afetada pelo filtro de modalidade, para mostrar sempre a distribuição completa.",
@@ -2205,7 +2205,7 @@ export const messages = {
     adminCourseEngagementInfo:
       "Units and courses completed, and students with a paid purchase, all within the selected period. The ranking shows the courses with the most completions in that range.",
     adminStudentsByPlanInfo:
-      "How many students are on each plan right now. For the Kingdom Família plan, this counts family groups, not individual members.",
+      "How many students are on each plan right now. Students on the Kingdom Família plan (a billing discount group) are counted under each one's real reference plan, not under «Kingdom Família».",
     adminStudentsByModalityInfo: "How many students have each modality as their main one right now.",
     adminNewStudentsByModalityInfo:
       "How many new students (by main modality) joined within the selected period — this breakdown ignores the modality filter, so it always shows the full distribution.",
