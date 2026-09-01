@@ -40,19 +40,33 @@ export async function AdminMetricsDashboardContent({ client, schoolId, access }:
     <>
       <KpiCardGrid
         cards={[
-          { href: "/admin/alunos", icon: "👥", value: String(stats.activeStudents), label: t("adminActiveStudents") },
-          { href: "/admin/coaches", icon: "🥋", value: String(stats.activeCoaches), label: t("adminActiveCoaches") },
+          {
+            href: "/admin/alunos",
+            icon: "👥",
+            value: String(stats.activeStudents),
+            label: t("adminActiveStudents"),
+            info: t("adminActiveStudentsInfo"),
+          },
+          {
+            href: "/admin/coaches",
+            icon: "🥋",
+            value: String(stats.activeCoaches),
+            label: t("adminActiveCoaches"),
+            info: t("adminActiveCoachesInfo"),
+          },
           {
             href: "/admin/financeiro",
             icon: "⚠️",
             value: `${stats.delinquencyRate.percent.toFixed(1)}%`,
             label: t("adminDelinquencyRate"),
+            info: t("adminDelinquencyRateInfo"),
           },
           {
             href: "/admin/financeiro",
             icon: "🔮",
             value: `${stats.projectedMonthlyRevenue.toFixed(0)} €`,
             label: t("adminProjectedMonthlyRevenue"),
+            info: t("adminProjectedMonthlyRevenueInfo"),
           },
         ]}
       />

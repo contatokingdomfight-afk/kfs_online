@@ -11,21 +11,22 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  PieChart,
-  Pie,
   Cell,
   Legend,
 } from "recharts";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
+import { buildModalityColorMap } from "@/lib/modality-chart-colors";
 
 type GrowthBucket = { bucket: string; active: number; new: number; churned: number };
 type RevenueBucket = { bucket: string; revenue: number };
-type ModalityShare = { name: string; value: number };
+type ModalityShare = { code: string; name: string; value: number };
 
 export type OverviewChartsProps = {
   growthByBucket: GrowthBucket[];
   revenueByBucket: RevenueBucket[];
   modalityPopularity: { modalityCode: string; modalityName: string; count: number }[];
+  /** Catálogo de modalidades da escola, na ordem usada para atribuir cor consistente entre gráficos. */
+  modalityCatalog: { code: string; name: string }[];
   schoolName: string;
   labels: {
     growthTitle: string;
@@ -41,22 +42,24 @@ export type OverviewChartsProps = {
   };
 };
 
-const MODALITY_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6"];
-
 function formatBucketLabel(bucket: string): string {
   if (bucket.length === 10) return `${bucket.slice(8, 10)}/${bucket.slice(5, 7)}`;
   return `${bucket.slice(5, 7)}/${bucket.slice(0, 4)}`;
 }
 
 export function OverviewCharts(props: OverviewChartsProps) {
-  const { growthByBucket, revenueByBucket, modalityPopularity, schoolName, labels } = props;
+  const { growthByBucket, revenueByBucket, modalityPopularity, modalityCatalog, schoolName, labels } = props;
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const growthData = growthByBucket.map((r) => ({ ...r, label: formatBucketLabel(r.bucket) }));
   const revenueData = revenueByBucket.map((r) => ({ ...r, label: formatBucketLabel(r.bucket) }));
-  const modalityData: ModalityShare[] = modalityPopularity.map((r) => ({ name: r.modalityName, value: r.count }));
+  const modalityColorMap = buildModalityColorMap(modalityCatalog.map((m) => m.code));
+  const modalityData: ModalityShare[] = modalityPopularity
+    .map((r) => ({ code: r.modalityCode, name: r.modalityName, value: r.count }))
+    .sort((a, b) => b.value - a.value);
+  const modalityTotal = modalityData.reduce((s, d) => s + d.value, 0);
 
   if (!mounted) {
     return (
@@ -131,33 +134,37 @@ export function OverviewCharts(props: OverviewChartsProps) {
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>{labels.noData}</p>
         ) : (
           <div style={{ width: "100%", minWidth: 0 }}>
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={modalityData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={2}
-                  dataKey="value"
-                  nameKey="name"
-                >
-                  {modalityData.map((_, i) => (
-                    <Cell key={i} fill={MODALITY_COLORS[i % MODALITY_COLORS.length]} />
-                  ))}
-                </Pie>
+            <ResponsiveContainer width="100%" height={Math.max(180, modalityData.length * 42)}>
+              <BarChart
+                data={modalityData}
+                layout="vertical"
+                margin={{ top: 8, right: 24, left: 8, bottom: 0 }}
+                barCategoryGap={10}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                <XAxis type="number" tick={{ fill: "var(--text-secondary)", fontSize: 11 }} stroke="var(--border)" allowDecimals={false} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fill: "var(--text-primary)", fontSize: 12 }}
+                  stroke="var(--border)"
+                  width={110}
+                />
                 <Tooltip
+                  cursor={{ fill: "var(--bg-tertiary, rgba(128,128,128,0.1))" }}
                   contentStyle={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
-                  formatter={(value, name) => {
+                  formatter={(value) => {
                     const v = Number(value ?? 0);
-                    const total = modalityData.reduce((s, d) => s + d.value, 0);
-                    const pct = total > 0 ? ((v / total) * 100).toFixed(1) : "0";
-                    return [`${v} presenças (${pct}%)`, String(name ?? "")];
+                    const pct = modalityTotal > 0 ? ((v / modalityTotal) * 100).toFixed(1) : "0";
+                    return [`${v} presenças (${pct}%)`, ""];
                   }}
                 />
-                <Legend />
-              </PieChart>
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={22}>
+                  {modalityData.map((d) => (
+                    <Cell key={d.code} fill={modalityColorMap[d.code] ?? "var(--primary)"} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         )}

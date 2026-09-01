@@ -46,10 +46,34 @@ export async function AdminDashboardPeriodContent({ client, schoolId, period, mo
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
       <KpiCardGrid
         cards={[
-          { href: "/admin/financeiro", icon: "💰", value: `${stats.revenue.total.toFixed(0)} €`, label: t("adminRevenueInPeriod") },
-          { href: "/admin/alunos", icon: "✨", value: String(newStudentsInPeriod), label: t("adminNewStudentsInPeriod") },
-          { href: "/admin/presenca", icon: "📊", value: stats.avgAttendance.toFixed(1), label: t("adminAvgAttendanceInPeriod") },
-          { href: "/admin/turmas", icon: "🥊", value: `${stats.occupancyRate.averagePercent.toFixed(0)}%`, label: t("adminOccupancyRate") },
+          {
+            href: "/admin/financeiro",
+            icon: "💰",
+            value: `${stats.revenue.total.toFixed(0)} €`,
+            label: t("adminRevenueInPeriod"),
+            info: t("adminRevenueInPeriodInfo"),
+          },
+          {
+            href: "/admin/alunos",
+            icon: "✨",
+            value: String(newStudentsInPeriod),
+            label: t("adminNewStudentsInPeriod"),
+            info: t("adminNewStudentsInPeriodInfo"),
+          },
+          {
+            href: "/admin/presenca",
+            icon: "📊",
+            value: stats.avgAttendance.toFixed(1),
+            label: t("adminAvgAttendanceInPeriod"),
+            info: t("adminAvgAttendanceInPeriodInfo"),
+          },
+          {
+            href: "/admin/turmas",
+            icon: "🥊",
+            value: `${stats.occupancyRate.averagePercent.toFixed(0)}%`,
+            label: t("adminOccupancyRate"),
+            info: t("adminOccupancyRateInfo"),
+          },
         ]}
       />
       {stats.occupancyRate.lessonsWithoutCapacity > 0 && (
@@ -62,6 +86,7 @@ export async function AdminDashboardPeriodContent({ client, schoolId, period, mo
         growthByBucket={stats.growthByBucket}
         revenueByBucket={stats.revenue.byBucket}
         modalityPopularity={stats.modalityPopularity}
+        modalityCatalog={stats.modalityCatalog}
         schoolName={schoolName}
         labels={{
           growthTitle: t("adminChartGrowth"),
@@ -117,12 +142,14 @@ export async function AdminDashboardPeriodContent({ client, schoolId, period, mo
           noDataLabel={t("adminNoData")}
           info={t("adminCheckinsByWeekdayInfo")}
           weekdayLabels={weekdayLabels}
+          modalityCatalog={stats.modalityCatalog}
         />
         <EvaluationsPerWeekChartDynamic
           data={stats.evaluationsPerWeek}
           title={t("adminEvaluationsPerWeekTitle")}
           noDataLabel={t("adminNoData")}
           info={t("adminEvaluationsPerWeekInfo")}
+          modalityCatalog={stats.modalityCatalog}
         />
       </div>
 

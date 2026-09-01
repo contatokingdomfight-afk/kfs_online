@@ -15,16 +15,20 @@ import { fetchExpandedLessonsInRange } from "@/lib/admin-dashboard-stats";
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { loadFamilyReferencePlanIdByStudent } from "@/lib/family-effective-plan";
 
+export type ModalityBreakdown = { modalityCode: string; modalityName: string; count: number };
+
 export type PeriodStats = {
   bucketUnit: "day" | "month";
   revenue: { total: number; byBucket: { bucket: string; revenue: number }[] };
   growthByBucket: { bucket: string; active: number; new: number; churned: number }[];
   avgAttendance: number;
   modalityPopularity: { modalityCode: string; modalityName: string; count: number }[];
-  checkinsByWeekday: { weekday: number; count: number }[];
+  /** Catálogo de modalidades da escola, na ordem usada para atribuir cor consistente entre gráficos. */
+  modalityCatalog: { code: string; name: string }[];
+  checkinsByWeekday: { weekday: number; count: number; byModality: ModalityBreakdown[] }[];
   newStudentsByModality: { modalityCode: string; modalityName: string; count: number }[];
   newStudentsByPlan: { planId: string | null; planName: string; count: number }[];
-  evaluationsPerWeek: { weekStart: string; count: number }[];
+  evaluationsPerWeek: { weekStart: string; count: number; byModality: ModalityBreakdown[] }[];
   courseEngagement: {
     unitsCompleted: number;
     coursesCompleted: number;
@@ -259,6 +263,9 @@ export async function getAdminDashboardPeriodStats(
   const avgAttendance = occKeysFiltered.length > 0 ? totalAttFiltered / occKeysFiltered.length : 0;
 
   const weekdayCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
+  const weekdayModalityCounts: Record<number, Record<string, number>> = {
+    1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {}, 7: {},
+  };
   for (const key of occKeysFiltered) {
     const c = countByOccurrence.get(key) ?? 0;
     if (c === 0) continue;
@@ -267,8 +274,18 @@ export async function getAdminDashboardPeriodStats(
     const jsDay = new Date(y, m - 1, d).getDay();
     const weekday = jsDay === 0 ? 7 : jsDay;
     weekdayCounts[weekday] += c;
+    const modality = occMetaFiltered.get(key)?.modality || "";
+    weekdayModalityCounts[weekday][modality] = (weekdayModalityCounts[weekday][modality] ?? 0) + c;
   }
-  const checkinsByWeekday = [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, count: weekdayCounts[weekday] }));
+  const checkinsByWeekday = [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({
+    weekday,
+    count: weekdayCounts[weekday],
+    byModality: Object.entries(weekdayModalityCounts[weekday]).map(([code, cnt]) => ({
+      modalityCode: code,
+      modalityName: modalityNameByCode.get(code) ?? (code || "Sem modalidade"),
+      count: cnt,
+    })),
+  }));
 
   let occupancySum = 0;
   let occupancyCount = 0;
@@ -343,6 +360,7 @@ export async function getAdminDashboardPeriodStats(
   // --- avaliações de performance por semana ---
   const weekStarts = getWeekStartsInRange(periodStart, periodEnd);
   const weekCounts = new Map<string, number>(weekStarts.map((w) => [w, 0]));
+  const weekModalityCounts = new Map<string, Record<string, number>>(weekStarts.map((w) => [w, {}]));
   let athleteIds: string[] = [];
   if (studentIds.length > 0) {
     const { data: athletes } = await supabase.from("Athlete").select("id").in("studentId", studentIds);
@@ -351,7 +369,7 @@ export async function getAdminDashboardPeriodStats(
   if (athleteIds.length > 0) {
     let evalQuery = supabase
       .from("AthleteEvaluation")
-      .select("id, created_at")
+      .select("id, created_at, modality")
       .gte("created_at", periodStartTs)
       .lt("created_at", periodEndExclusiveTs)
       .in("athleteId", athleteIds);
@@ -361,12 +379,22 @@ export async function getAdminDashboardPeriodStats(
       const createdAt = (ev as { created_at: string }).created_at;
       const lisbonDate = formatInTimeZone(new Date(createdAt), LISBON_TZ, "yyyy-MM-dd");
       const weekStart = getWeekStartMondayForDateInLisbon(lisbonDate);
-      if (weekCounts.has(weekStart)) weekCounts.set(weekStart, (weekCounts.get(weekStart) ?? 0) + 1);
+      if (weekCounts.has(weekStart)) {
+        weekCounts.set(weekStart, (weekCounts.get(weekStart) ?? 0) + 1);
+        const modality = (ev as { modality?: string | null }).modality || "";
+        const rec = weekModalityCounts.get(weekStart);
+        if (rec) rec[modality] = (rec[modality] ?? 0) + 1;
+      }
     }
   }
   const evaluationsPerWeek = weekStarts.map((weekStart) => ({
     weekStart,
     count: weekCounts.get(weekStart) ?? 0,
+    byModality: Object.entries(weekModalityCounts.get(weekStart) ?? {}).map(([code, cnt]) => ({
+      modalityCode: code,
+      modalityName: modalityNameByCode.get(code) ?? (code || "Sem modalidade"),
+      count: cnt,
+    })),
   }));
 
   // --- engajamento em cursos ---
@@ -452,6 +480,7 @@ export async function getAdminDashboardPeriodStats(
     growthByBucket,
     avgAttendance,
     modalityPopularity,
+    modalityCatalog: modalities.map((m) => ({ code: m.code, name: m.name })),
     checkinsByWeekday,
     newStudentsByModality,
     newStudentsByPlan,

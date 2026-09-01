@@ -1,6 +1,9 @@
-import Link from "next/link";
+"use client";
 
-type Card = { href: string; icon: string; value: string; label: string };
+import Link from "next/link";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
+
+type Card = { href: string; icon: string; value: string; label: string; info?: string };
 
 type Props = { cards: Card[] };
 
@@ -24,8 +27,20 @@ export function KpiCardGrid({ cards }: Props) {
             textDecoration: "none",
             color: "inherit",
             display: "block",
+            position: "relative",
           }}
         >
+          {c.info && (
+            <span
+              style={{ position: "absolute", top: "clamp(10px, 2.5vw, 14px)", right: "clamp(10px, 2.5vw, 14px)" }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <InlineInfoTip trigger="click" detail={c.info} ariaLabel={c.label} />
+            </span>
+          )}
           <span style={{ fontSize: 24, marginBottom: 8, display: "block" }} aria-hidden>
             {c.icon}
           </span>
