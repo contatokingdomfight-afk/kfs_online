@@ -373,6 +373,92 @@ export async function updateStudent(
   return { success: true };
 }
 
+export type UpdateStudentPersonalDataResult = { error?: string; success?: boolean };
+
+/**
+ * Dados pessoais/fiscais (telefone, NIF, documento, morada, contacto de emergência, medidas) —
+ * normalmente preenchidos pelo próprio aluno na ficha de adesão. Permite ao admin corrigir ou
+ * acrescentar o que faltar (ex.: NIF em falta), sem exigir o resto do formulário de adesão.
+ */
+export async function updateStudentPersonalData(
+  _prev: UpdateStudentPersonalDataResult | null,
+  formData: FormData
+): Promise<UpdateStudentPersonalDataResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const studentId = (formData.get("studentId") as string)?.trim();
+  if (!studentId) return { error: "ID do aluno inválido." };
+
+  const supabase = createAdminClient();
+  const { data: student } = await supabase.from("Student").select("id").eq("id", studentId).maybeSingle();
+  if (!student) return { error: "Aluno não encontrado." };
+
+  const trim = (name: string) => ((formData.get(name) as string) ?? "").trim() || null;
+  const toNumber = (name: string) => {
+    const raw = (formData.get(name) as string)?.trim();
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const phone = trim("phone");
+  const dateOfBirth = trim("dateOfBirth");
+  const weightKg = toNumber("weightKg");
+  const heightCm = toNumber("heightCm");
+  const idDocument = trim("idDocument");
+  const taxId = trim("taxId");
+  const addressLine = trim("addressLine");
+  const postalCode = trim("postalCode");
+  const emergencyContactName = trim("emergencyContactName");
+  const emergencyContactRelationship = trim("emergencyContactRelationship");
+  const emergencyContactPhone = trim("emergencyContactPhone");
+
+  const { error: profileError } = await supabase.from("StudentProfile").upsert(
+    {
+      studentId,
+      phone,
+      dateOfBirth,
+      weightKg,
+      heightCm,
+      updatedAt: new Date().toISOString(),
+    },
+    { onConflict: "studentId" }
+  );
+  if (profileError) return { error: profileError.message };
+
+  const enrollmentPatch = {
+    idDocument,
+    taxId,
+    addressLine,
+    postalCode,
+    emergencyContactName,
+    emergencyContactRelationship,
+    emergencyContactPhone,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const { data: existingEnrollment } = await supabase
+    .from("StudentEnrollmentForm")
+    .select("id")
+    .eq("studentId", studentId)
+    .maybeSingle();
+
+  if (existingEnrollment?.id) {
+    const { error } = await supabase.from("StudentEnrollmentForm").update(enrollmentPatch).eq("studentId", studentId);
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await supabase
+      .from("StudentEnrollmentForm")
+      .insert({ id: crypto.randomUUID(), studentId, ...enrollmentPatch });
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath(`/admin/alunos/${studentId}`);
+  revalidatePath(`/coach/alunos/${studentId}`);
+  return { success: true };
+}
+
 export type SetFullAccessResult = { error?: string; success?: boolean };
 
 /** Atribui ao aluno um plano com acesso total (plataforma digital + todas as modalidades). */

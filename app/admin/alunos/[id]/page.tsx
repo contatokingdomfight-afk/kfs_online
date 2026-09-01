@@ -33,6 +33,7 @@ import { computeFamilyGroupMonthlyTuition, type FamilyPricingBreakdown } from "@
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { resolveEffectiveAccessPlan } from "@/lib/family-effective-plan";
 import { StudentContactDataSection } from "@/components/students/StudentContactDataSection";
+import { EditarDadosPessoaisSection } from "@/components/students/EditarDadosPessoaisSection";
 import { buildPaymentOverdueMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const GENERAL_LAST_N = 10;
@@ -675,6 +676,8 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
           />
         </div>
       </details>
+
+      <EditarDadosPessoaisSection studentId={studentId} />
 
       {user?.role === "ALUNO" && (
         <DeleteStudentButton
