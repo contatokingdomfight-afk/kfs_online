@@ -7,6 +7,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { fetchAdminPermissionCatalog } from "../actions";
 import { AdminUserPermissionsForm } from "../AdminUserPermissionsForm";
+import { DeleteAdminButton } from "./DeleteAdminButton";
 
 export const dynamic = "force-dynamic";
 
@@ -110,6 +111,16 @@ export default async function AdminPermissoesUserPage(props: PageProps) {
         soleAdmin={soleAdmin && u.role === "ADMIN"}
         locale={locale}
       />
+
+      {u.role === "ADMIN" && (
+        <DeleteAdminButton
+          userId={u.id}
+          userName={u.name || ""}
+          userEmail={u.email}
+          isSelf={dbUser.id === u.id}
+          soleAdmin={soleAdmin}
+        />
+      )}
     </div>
   );
 }
