@@ -48,6 +48,12 @@ export async function AdminMetricsDashboardContent({ client, schoolId, access }:
             value: `${stats.delinquencyRate.percent.toFixed(1)}%`,
             label: t("adminDelinquencyRate"),
           },
+          {
+            href: "/admin/financeiro",
+            icon: "🔮",
+            value: `${stats.projectedMonthlyRevenue.toFixed(0)} €`,
+            label: t("adminProjectedMonthlyRevenue"),
+          },
         ]}
       />
 

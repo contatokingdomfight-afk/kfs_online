@@ -9,6 +9,7 @@ import { getCachedModalityRefs, getCachedSchools } from "@/lib/cached-reference-
 import { fetchAdminUserIdSet } from "@/lib/admin-dashboard-exclude-admins";
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { loadFamilyReferencePlanIdByStudent } from "@/lib/family-effective-plan";
+import { computeFamilyGroupMonthlyTuition } from "@/lib/family-tuition";
 import {
   expandLessonsForDateRange,
   fetchLessonCancellations,
@@ -29,6 +30,8 @@ export type DashboardStats = {
   activeStudents: number;
   /** % de alunos ativos com Payment.status = LATE */
   delinquencyRate: { percent: number; lateStudentsCount: number };
+  /** Soma mensal esperada dos alunos ativos: preço do plano (ou o total combinado com desconto de cada grupo família). Estimativa por preço de tabela — não reflete descontos pontuais fora do grupo família. */
+  projectedMonthlyRevenue: number;
 };
 
 export async function fetchExpandedLessonsInRange(
@@ -89,9 +92,13 @@ export async function getAdminDashboardStats(
     studentsByModality.push({ modalityCode: "", modalityName: "Sem modalidade", count: countByModality[""] });
   }
 
-  let plansQuery = supabase.from("Plan").select("id, name");
+  let plansQuery = supabase.from("Plan").select("id, name, priceMonthly");
   if (schoolId) plansQuery = plansQuery.eq("schoolId", schoolId);
   const [{ data: plans }] = await Promise.all([plansQuery]);
+  const planPriceById: Record<string, number> = {};
+  for (const p of plans ?? []) {
+    planPriceById[(p as { id: string }).id] = Number((p as { priceMonthly?: number }).priceMonthly ?? 0);
+  }
 
   /**
    * No plano família, `Student.planId` = "plan-familia" é só o agrupamento/desconto —
@@ -144,12 +151,30 @@ export async function getAdminDashboardStats(
 
   let activeStudents = 0;
   const activeStudentIds: string[] = [];
+  /**
+   * Receita mensal prevista: preço de tabela de cada aluno ativo. No plano família a
+   * mensalidade é combinada (um só pagamento no titular, com desconto do grupo) — por
+   * isso membros de grupo são ignorados aqui e o total de cada grupo ativo é somado à
+   * parte, via `computeFamilyGroupMonthlyTuition` (ver `lib/family-tuition.ts`).
+   */
+  let projectedMonthlyRevenue = 0;
   for (const s of students) {
     const st = s as { id: string; planId?: string | null; status?: string };
     if (st.planId && st.status === "ATIVO") {
       activeStudents++;
       activeStudentIds.push(st.id);
+      if (!isFamilyPlan(st.planId)) {
+        projectedMonthlyRevenue += planPriceById[st.planId] ?? 0;
+      }
     }
+  }
+
+  let activeFamilyGroupsQuery = supabase.from("FamilyGroup").select("id").eq("isActive", true);
+  if (schoolId) activeFamilyGroupsQuery = activeFamilyGroupsQuery.eq("schoolId", schoolId);
+  const { data: activeFamilyGroups } = await activeFamilyGroupsQuery;
+  for (const fg of activeFamilyGroups ?? []) {
+    const result = await computeFamilyGroupMonthlyTuition(supabase, (fg as { id: string }).id);
+    if (!("error" in result)) projectedMonthlyRevenue += result.finalMonthlyAmount;
   }
 
   let lateStudentsCount = 0;
@@ -175,5 +200,6 @@ export async function getAdminDashboardStats(
     activeCoaches,
     activeStudents,
     delinquencyRate,
+    projectedMonthlyRevenue,
   };
 }
