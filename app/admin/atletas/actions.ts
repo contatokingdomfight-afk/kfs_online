@@ -70,6 +70,9 @@ export async function createAthlete(
 
   if (error) return { error: error.message };
 
+  /** A lista de Atletas mostra só quem quer competir; "Novo atleta" já assume essa intenção. */
+  await supabase.from("Student").update({ competitionAthlete: true }).eq("id", studentId);
+
   revalidatePath("/admin/atletas");
   revalidatePath("/admin/atletas/novo");
   revalidatePath("/coach/atletas");
