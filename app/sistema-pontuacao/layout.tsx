@@ -50,7 +50,11 @@ export default async function SistemaPontuacaoLayout({
     | { href: string; imageUrl: string | null; displayName: string | null; ariaLabel: string }
     | undefined;
 
-  if (dbUser.role === "ADMIN" && viewAs !== "aluno") {
+  /** Admin com "Ver como: Professor" deve navegar como coach aqui também — não só dentro de /coach. */
+  const isAdminViewingAsCoach = dbUser.role === "ADMIN" && viewAs === "coach";
+  const isRealAdmin = dbUser.role === "ADMIN" && !isAdminViewingAsCoach && viewAs !== "aluno";
+
+  if (isRealAdmin) {
     const access = await getCachedResolvedAdminAccess();
     const kfsPath = await getKfsPathnameFromRequest();
     if (access.kind === "granted" && kfsPath && !canAccessAdminPathname(access, kfsPath)) {
@@ -74,7 +78,7 @@ export default async function SistemaPontuacaoLayout({
       displayName: dbUser.name,
       ariaLabel: t("headerProfileAria"),
     };
-  } else if (dbUser.role === "COACH") {
+  } else if (dbUser.role === "COACH" || isAdminViewingAsCoach) {
     const access = await getCachedResolvedAdminAccess();
     const kfsPath = await getKfsPathnameFromRequest();
     if (access.kind === "granted" && kfsPath && !canAccessAdminPathname(access, kfsPath)) {
@@ -88,7 +92,7 @@ export default async function SistemaPontuacaoLayout({
       </>
     );
     const full = getCoachShellSidebarLinks(t, {
-      showAdminEntry: false,
+      showAdminEntry: dbUser.role === "ADMIN",
       coachStudentId: coachStudentId || null,
     });
     sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
