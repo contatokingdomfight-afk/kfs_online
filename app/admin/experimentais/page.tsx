@@ -5,6 +5,8 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
+import { formatInTimeZone } from "date-fns-tz";
+import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import {
   formatTrialScheduleLine,
   isActiveTrial,
@@ -12,6 +14,15 @@ import {
 } from "@/lib/trial-class-utils";
 import { ConvertTrialButton } from "./ConvertTrialButton";
 import { AcceptTrialButton } from "./AcceptTrialButton";
+
+function formatRegisteredAt(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  try {
+    return formatInTimeZone(new Date(iso), LISBON_TZ, "dd/MM/yyyy 'às' HH:mm");
+  } catch {
+    return null;
+  }
+}
 
 type SearchParams = Promise<{ filter?: string }>;
 
@@ -207,6 +218,11 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
                     MODALITY_LABELS
                   )}
                 </p>
+                {formatRegisteredAt(t.createdAt) && (
+                  <p style={{ margin: "4px 0 0 0", fontSize: "clamp(12px, 3vw, 13px)", color: "var(--text-secondary)", opacity: 0.8 }}>
+                    Inscrito em {formatRegisteredAt(t.createdAt)}
+                  </p>
+                )}
                 {!t.convertedToStudent && isActiveTrial(t, today) && (
                   <div style={{ marginTop: "clamp(8px, 2vw, 12px)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
                     {!t.acceptedAt && <AcceptTrialButton trialId={t.id} />}
