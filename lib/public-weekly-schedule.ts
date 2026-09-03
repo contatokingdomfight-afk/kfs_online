@@ -76,10 +76,16 @@ async function fetchPublicWeeklySchedule(): Promise<PublicSchoolSchedule[]> {
     const sched = bySchool.get(r.schoolId);
     if (!sched) continue;
 
+    /** Ainda não há programa oficial de MMA — a única aula dessa modalidade é treino de competição aos sábados. */
+    const publicLabel =
+      wd === 6 && r.modality === "MMA"
+        ? "Treino para competição"
+        : (modalityLabelByCode.get(r.modality) ?? MODALITY_LABELS[r.modality] ?? r.modality);
+
     sched.lessonsByWeekday[wd].push({
       id: r.id,
       modality: r.modality,
-      modalityLabel: modalityLabelByCode.get(r.modality) ?? MODALITY_LABELS[r.modality] ?? r.modality,
+      modalityLabel: publicLabel,
       weekday: wd,
       startTime: r.startTime,
       endTime: r.endTime,
