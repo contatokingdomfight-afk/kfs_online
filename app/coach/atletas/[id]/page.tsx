@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { redirect } from "next/navigation";
@@ -35,7 +36,9 @@ export default async function CoachAtletaPage({ params }: Props) {
 
   const { id: athleteId } = await params;
   const locale = await getLocaleFromCookies();
-  const supabase = await createClient();
+  const result = getAdminClientOrNull();
+  if (!result.client) return <AdminConfigMissing errorType={result.error} />;
+  const supabase = result.client;
 
   const { data: athlete } = await supabase.from("Athlete").select("id, studentId, level, mainCoachId").eq("id", athleteId).single();
 
