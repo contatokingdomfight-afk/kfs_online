@@ -8,12 +8,14 @@ import {
   EVALUATION_LABELS_BY_MODALITY,
   GENERAL_PERFORMANCE_AXES,
   categoryToPerformanceAxisId,
+  type GeneralPerformanceAxisId,
 } from "@/lib/performance-utils";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import type { CategoryConfig, CriterionConfig } from "@/lib/evaluation-config";
 import { getAllCriterionIds } from "@/lib/evaluation-config";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
+import { SCORE_ANCHORS } from "@/lib/evaluation-score-anchors";
 
 const SCORES_1_5 = [1, 2, 3, 4, 5];
 const SCORES_1_10 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -229,6 +231,7 @@ export function CoachStudentProfileModal(props: Props) {
   const [touchedIds, setTouchedIds] = useState<Set<string>>(() => new Set());
   const [globalBaseline, setGlobalBaseline] = useState(DEFAULT_BASELINE);
   const [sectionBaselines, setSectionBaselines] = useState<Record<string, number>>({});
+  const [openAnchorAxis, setOpenAnchorAxis] = useState<GeneralPerformanceAxisId | null>(null);
 
   useEffect(() => {
     if (!criterionIds.length) return;
@@ -344,6 +347,7 @@ export function CoachStudentProfileModal(props: Props) {
   }, [scores, touchedIds, criterionIds, selectedModality]);
 
   const modal = (
+    <>
     <div
       role="dialog"
       aria-modal={true}
@@ -575,6 +579,7 @@ export function CoachStudentProfileModal(props: Props) {
                         const status = getSectionStatus(cat, scores, touchedIds);
                         const avg = getSectionAverage(cat, scores);
                         const statusIcon = status === "complete" ? "✓" : status === "partial" ? "•" : "○";
+                        const axisId = categoryToPerformanceAxisId(cat);
                         return (
                           <div
                             key={cat.nome}
@@ -629,6 +634,8 @@ export function CoachStudentProfileModal(props: Props) {
                                     isTouched={touchedIds.has(c.id)}
                                     onValueChange={(v) => updateScore(c.id, v)}
                                     inputRef={(el) => { criterionInputRefs.current[c.id] = el; }}
+                                    axisId={axisId}
+                                    onShowAnchor={setOpenAnchorAxis}
                                   />
                                 ))}
                               </div>
@@ -675,6 +682,10 @@ export function CoachStudentProfileModal(props: Props) {
         </form>
       </div>
     </div>
+    {openAnchorAxis && (
+      <ScoreAnchorModal axisId={openAnchorAxis} onClose={() => setOpenAnchorAxis(null)} />
+    )}
+    </>
   );
 
   if (!portalReady) return null;
@@ -688,9 +699,11 @@ type CriterionRowProps = {
   isTouched: boolean;
   onValueChange: (v: number) => void;
   inputRef: (el: HTMLInputElement | HTMLButtonElement | HTMLSelectElement | null) => void;
+  axisId: GeneralPerformanceAxisId | null;
+  onShowAnchor: (axisId: GeneralPerformanceAxisId) => void;
 };
 
-function CriterionRow({ criterion, value, baseline, isTouched, onValueChange, inputRef }: CriterionRowProps) {
+function CriterionRow({ criterion, value, baseline, isTouched, onValueChange, inputRef, axisId, onShowAnchor }: CriterionRowProps) {
   const isUnrated = !isTouched;
   const delta = value - baseline;
   const clamped = (v: number) => Math.min(MAX_SCORE, Math.max(MIN_SCORE, v));
@@ -702,7 +715,20 @@ function CriterionRow({ criterion, value, baseline, isTouched, onValueChange, in
       } ${delta !== 0 ? "ring-1 ring-[var(--primary)]/40" : ""}`}
     >
       <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-        <span className="text-sm font-medium text-[var(--text-primary)]">{criterion.label}</span>
+        <span className="text-sm font-medium text-[var(--text-primary)] inline-flex items-center gap-1.5">
+          {criterion.label}
+          {axisId && (
+            <button
+              type="button"
+              onClick={() => onShowAnchor(axisId)}
+              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--border)] text-[11px] font-semibold text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
+              aria-label={`O que significa a nota de ${criterion.label}?`}
+              title="O que significa cada nota?"
+            >
+              ?
+            </button>
+          )}
+        </span>
         <span className="text-sm font-medium text-[var(--text-primary)] tabular-nums">
           {value}
           {delta !== 0 && (
@@ -771,6 +797,46 @@ function CriterionRow({ criterion, value, baseline, isTouched, onValueChange, in
           aria-label={`${criterion.label}, ajuste fino ${value} de 10`}
         />
         <span className="text-sm font-medium text-[var(--text-primary)] w-9 shrink-0 tabular-nums">{value}/10</span>
+      </div>
+    </div>
+  );
+}
+
+function ScoreAnchorModal({ axisId, onClose }: { axisId: GeneralPerformanceAxisId; onClose: () => void }) {
+  const axis = GENERAL_PERFORMANCE_AXES.find((a) => a.id === axisId);
+  const anchors = SCORE_ANCHORS[axisId];
+
+  return (
+    <div
+      role="dialog"
+      aria-modal={true}
+      aria-labelledby="score-anchor-modal-title"
+      className="fixed inset-0 flex items-center justify-center bg-black/50 p-4"
+      style={{ zIndex: EVALUATION_MODAL_Z + 100 }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="card w-full max-w-[420px] max-h-[85vh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-5 shadow-xl">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h3 id="score-anchor-modal-title" className="m-0 text-base font-semibold text-[var(--text-primary)]">
+            {axis?.label ?? "Critério"} — o que significa cada nota
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar"
+            className="btn shrink-0 h-9 w-9 rounded-full p-0"
+          >
+            ×
+          </button>
+        </div>
+        <ul className="m-0 list-none p-0 flex flex-col gap-3">
+          {anchors.map((a) => (
+            <li key={a.range} className="flex gap-3">
+              <span className="shrink-0 w-12 text-sm font-semibold tabular-nums text-[var(--primary)]">{a.range}</span>
+              <span className="text-sm text-[var(--text-primary)]">{a.description}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
