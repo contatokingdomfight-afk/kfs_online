@@ -77,6 +77,7 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
       items: [
         { href: "/admin/escolas", icon: "🏫", label: t("navSchools") },
         { href: "/admin/turmas", icon: "🥋", label: t("navClasses") },
+        { href: "/admin/presenca", icon: "✅", label: t("navPresence") },
         { href: "/admin/modalidades", icon: "🥊", label: t("navModalities") },
         { href: "/admin/locais", icon: "📍", label: t("navLocations") },
       ],
