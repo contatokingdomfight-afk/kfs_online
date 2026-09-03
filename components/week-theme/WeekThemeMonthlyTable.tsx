@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { weekdayLabelForPublicSchedule } from "@/lib/weekday-labels";
+import { weekdayLabelForPublicSchedule, weekdayShortLabelForPublicSchedule } from "@/lib/weekday-labels";
 import type { WeekThemeMonthlyRow } from "@/lib/week-theme-monthly";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
@@ -106,7 +106,7 @@ export function WeekThemeMonthlyTable({ weeks, weekdays, locale, editHrefBase }:
                           border: `1px solid ${color}55`,
                         }}
                       >
-                        {weekdayLabelForPublicSchedule(weekday, locale)}
+                        {weekdayShortLabelForPublicSchedule(weekday, locale)}
                       </span>
                       <span style={{ color: "var(--text-primary)", paddingTop: 2 }}>{topic}</span>
                     </li>
