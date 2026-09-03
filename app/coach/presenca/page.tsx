@@ -16,14 +16,33 @@ const STATUS_LABEL: Record<string, string> = {
   ABSENT: "Falta",
 };
 
-export default async function CoachPresencaPage() {
+const WINDOW_DAYS = 14;
+
+function addDaysYmd(ymd: string, days: number): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days));
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+}
+
+function formatYmdPt(ymd: string): string {
+  const [, m, d] = ymd.split("-");
+  return `${d}/${m}`;
+}
+
+type SearchParams = Promise<{ start?: string }>;
+
+export default async function CoachPresencaPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) redirect("/dashboard");
 
   const adminResult = getAdminClientOrNull();
   const supabase = adminResult.client ?? (await createClient());
   const today = new Date().toISOString().slice(0, 10);
-  const inTwoWeeks = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const params = await searchParams;
+  const rangeStart = params.start && /^\d{4}-\d{2}-\d{2}$/.test(params.start) ? params.start : today;
+  const rangeEnd = addDaysYmd(rangeStart, WINDOW_DAYS);
+  const prevStart = addDaysYmd(rangeStart, -WINDOW_DAYS);
+  const nextStart = addDaysYmd(rangeStart, WINDOW_DAYS);
 
   const { data: lessonsRaw } = await supabase
     .from("Lesson")
@@ -37,7 +56,7 @@ export default async function CoachPresencaPage() {
     supabase,
     defs.map((d) => d.id)
   );
-  const list = expandLessonsForDateRange(defs, cancellations, today, inTwoWeeks);
+  const list = expandLessonsForDateRange(defs, cancellations, rangeStart, rangeEnd);
   const lessonIds = [...new Set(list.map((l) => l.id))];
   const { data: attendances } =
     lessonIds.length > 0
@@ -99,13 +118,39 @@ export default async function CoachPresencaPage() {
         </h1>
       </div>
 
-      <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-        Próximas 2 semanas. Clica em Ver/confirmar para gerir as presenças de cada aula.
+      <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+        Clica em Ver/confirmar para gerir as presenças de aulas de hoje em diante. Navega para trás para ver o
+        histórico de aulas passadas.
       </p>
+
+      <div style={{ marginBottom: "clamp(16px, 4vw, 20px)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+        <Link
+          href={`/coach/presenca?start=${prevStart}`}
+          className="btn btn-secondary"
+          style={{ textDecoration: "none", fontSize: "clamp(13px, 3.2vw, 15px)" }}
+        >
+          ← Anteriores
+        </Link>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 600, color: "var(--text-primary)" }}>
+          {formatYmdPt(rangeStart)} – {formatYmdPt(addDaysYmd(rangeEnd, -1))}
+        </span>
+        <Link
+          href={`/coach/presenca?start=${nextStart}`}
+          className="btn btn-secondary"
+          style={{ textDecoration: "none", fontSize: "clamp(13px, 3.2vw, 15px)" }}
+        >
+          Seguintes →
+        </Link>
+        {rangeStart !== today && (
+          <Link href="/coach/presenca" style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)", textDecoration: "none" }}>
+            Hoje
+          </Link>
+        )}
+      </div>
 
       {list.length === 0 ? (
         <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>
-          Nenhuma aula nos próximos 14 dias.
+          Nenhuma aula neste período.
         </p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
@@ -127,12 +172,14 @@ export default async function CoachPresencaPage() {
                   <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                     {formatLessonDate(lesson.occurrenceDate)} · {lesson.startTime}–{lesson.endTime}
                   </span>
-                  <Link
-                    href={`/coach/aula?lesson=${lesson.id}&date=${encodeURIComponent(lesson.occurrenceDate)}`}
-                    style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)", textDecoration: "none", marginLeft: "auto" }}
-                  >
-                    Ver/confirmar →
-                  </Link>
+                  {lesson.occurrenceDate >= today && (
+                    <Link
+                      href={`/coach/aula?lesson=${lesson.id}&date=${encodeURIComponent(lesson.occurrenceDate)}`}
+                      style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)", textDecoration: "none", marginLeft: "auto" }}
+                    >
+                      Ver/confirmar →
+                    </Link>
+                  )}
                 </div>
                 {lessonAtts.length === 0 ? (
                   <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
