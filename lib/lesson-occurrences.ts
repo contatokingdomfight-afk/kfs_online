@@ -17,6 +17,8 @@ export type LessonDefinitionRow = {
   planningNotes: string | null;
   isOneOff: boolean;
   isOpenClass: boolean;
+  /** true = restrita a alunos com registo de Atleta (ex.: treino de competição). */
+  athletesOnly?: boolean;
   /** false = não expandir para /aula-experimental (definição ainda existe na agenda interna). */
   offerTrialBooking?: boolean;
   createdAt?: string;
@@ -40,6 +42,7 @@ export function rowsToLessonDefinitions(rows: unknown[] | null | undefined): Les
       planningNotes: (r.planningNotes as string | null) ?? null,
       isOneOff: Boolean(r.isOneOff),
       isOpenClass: Boolean(r.isOpenClass),
+      athletesOnly: Boolean(r.athletesOnly),
       offerTrialBooking: r.offerTrialBooking === false ? false : true,
     };
   });

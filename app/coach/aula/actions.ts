@@ -189,7 +189,7 @@ export async function coachCheckInStudent(
 
   const { data: lesson } = await supabase
     .from("Lesson")
-    .select("id, schoolId, modality, isOpenClass")
+    .select("id, schoolId, modality, isOpenClass, athletesOnly")
     .eq("id", lessonId)
     .single();
   if (!lesson?.schoolId) return { error: "Aula não encontrada." };
@@ -203,6 +203,7 @@ export async function coachCheckInStudent(
     schoolId: lesson.schoolId,
     modality: lesson.modality ?? "",
     isOpenClass: Boolean((lesson as { isOpenClass?: boolean }).isOpenClass),
+    athletesOnly: Boolean((lesson as { athletesOnly?: boolean }).athletesOnly),
   });
   if (eligibility.error) return { error: eligibility.error };
 

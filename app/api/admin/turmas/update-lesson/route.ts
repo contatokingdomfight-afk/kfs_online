@@ -49,6 +49,7 @@ export async function POST(request: Request) {
     typeof planningRaw === "string" && planningRaw.trim() !== "" ? planningRaw.trim() : null;
 
   const isOpenClass = body.isOpenClass === true;
+  const athletesOnly = body.athletesOnly === true;
 
   const offerTrialBooking =
     body.offerTrialBooking === false || body.offerTrialBooking === "false" ? false : true;
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
       capacity,
       planningNotes,
       isOpenClass,
+      athletesOnly,
       offerTrialBooking,
       weekday,
     });

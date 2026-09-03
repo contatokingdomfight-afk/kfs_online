@@ -82,7 +82,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   let lessonsQuery = supabase
     .from("Lesson")
-    .select("id, modality, date, weekday, startTime, endTime, locationId, isOpenClass, schoolId, isOneOff, coachId")
+    .select("id, modality, date, weekday, startTime, endTime, locationId, isOpenClass, athletesOnly, schoolId, isOneOff, coachId")
     .order("startTime", { ascending: true });
   if (studentSchoolId) {
     lessonsQuery = lessonsQuery.or(`schoolId.eq.${studentSchoolId},isOpenClass.eq.true`);
@@ -119,6 +119,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       planningNotes: (r.planningNotes as string | null) ?? null,
       isOneOff: Boolean(r.isOneOff),
       isOpenClass: Boolean(r.isOpenClass),
+      athletesOnly: Boolean(r.athletesOnly),
     };
   });
 

@@ -37,6 +37,8 @@ export type CoachLessonContext = {
   schoolId: string;
   modality: string;
   isOpenClass: boolean;
+  /** true = restrita a alunos com registo de Atleta (ex.: treino de competição). */
+  athletesOnly?: boolean;
 };
 
 type PlanRow = {
@@ -101,9 +103,11 @@ function buildPlanAccessInput(
 export function isStudentEligibleForCoachLesson(
   student: StudentRow,
   plan: PlanRow | undefined,
-  lesson: Pick<CoachLessonContext, "modality" | "isOpenClass">
+  lesson: Pick<CoachLessonContext, "modality" | "isOpenClass" | "athletesOnly">,
+  isAthlete: boolean = false
 ): boolean {
   if (student.status !== "ATIVO") return false;
+  if (lesson.athletesOnly && !isAthlete) return false;
   const access = buildPlanAccessInput(student, plan);
   return isLessonParticipationAllowedByPlan(
     {
@@ -140,7 +144,7 @@ export async function loadCoachLessonRoster(
   supabase: SupabaseClient,
   params: LoadCoachLessonRosterParams
 ): Promise<{ students: CoachLessonStudentRow[] }> {
-  const { lessonId, occurrenceYmd, schoolId, modality, isOpenClass } = params;
+  const { lessonId, occurrenceYmd, schoolId, modality, isOpenClass, athletesOnly } = params;
 
   const [{ data: schoolStudents }, { data: attList }] = await Promise.all([
     supabase
@@ -158,6 +162,15 @@ export async function loadCoachLessonRoster(
   const students = (schoolStudents ?? []) as StudentRow[];
   if (students.length === 0) {
     return { students: [] };
+  }
+
+  const athleteStudentIdSet = new Set<string>();
+  if (athletesOnly) {
+    const { data: athleteRows } = await supabase
+      .from("Athlete")
+      .select("studentId")
+      .in("studentId", students.map((s) => s.id));
+    for (const row of athleteRows ?? []) athleteStudentIdSet.add((row as { studentId: string }).studentId);
   }
 
   const planIds = [...new Set(students.map((s) => s.planId).filter(Boolean))] as string[];
@@ -188,7 +201,9 @@ export async function loadCoachLessonRoster(
   };
 
   const eligibleIds = students
-    .filter((s) => isStudentEligibleForCoachLesson(s, planForStudent(s), { modality, isOpenClass }))
+    .filter((s) =>
+      isStudentEligibleForCoachLesson(s, planForStudent(s), { modality, isOpenClass, athletesOnly }, athleteStudentIdSet.has(s.id))
+    )
     .map((s) => s.id);
 
   if (eligibleIds.length === 0) {
@@ -413,8 +428,18 @@ export async function assertStudentEligibleForCoachLesson(
     }
   }
 
-  if (!isStudentEligibleForCoachLesson(row, plan, params)) {
-    return { error: "Este aluno não está elegível para esta aula (plano ou modalidade)." };
+  let isAthlete = false;
+  if (params.athletesOnly) {
+    const { data: athleteRow } = await supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle();
+    isAthlete = Boolean(athleteRow);
+  }
+
+  if (!isStudentEligibleForCoachLesson(row, plan, params, isAthlete)) {
+    return {
+      error: params.athletesOnly && !isAthlete
+        ? "Esta aula é só para atletas de competição."
+        : "Este aluno não está elegível para esta aula (plano ou modalidade).",
+    };
   }
 
   return { student: row, plan };

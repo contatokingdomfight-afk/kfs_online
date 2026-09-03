@@ -40,7 +40,7 @@ export async function performCheckIn(
 
   const { data: lessonData } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime, isOpenClass, weekday")
+    .select("id, modality, date, startTime, endTime, isOpenClass, athletesOnly, weekday")
     .eq("id", lessonId)
     .single();
   if (!lessonData) return { error: "Aula não encontrada." };
@@ -48,6 +48,13 @@ export async function performCheckIn(
   const isOpenClass = Boolean((lessonData as { isOpenClass?: boolean }).isOpenClass);
   if (!planAccess.hasCheckIn && !isOpenClass) {
     return { error: "O teu plano não inclui check-in de aulas presenciais." };
+  }
+
+  if ((lessonData as { athletesOnly?: boolean }).athletesOnly) {
+    const { data: athleteRow } = await supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle();
+    if (!athleteRow) {
+      return { error: "Esta aula é só para atletas de competição." };
+    }
   }
 
   const occ = resolveOccurrenceYmd(

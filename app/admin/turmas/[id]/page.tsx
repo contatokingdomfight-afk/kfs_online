@@ -30,7 +30,7 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
   const { data: lesson } = await supabase
     .from("Lesson")
     .select(
-      "id, modality, date, weekday, startTime, endTime, coachId, schoolId, locationId, capacity, planningNotes, isOneOff, isOpenClass, offerTrialBooking"
+      "id, modality, date, weekday, startTime, endTime, coachId, schoolId, locationId, capacity, planningNotes, isOneOff, isOpenClass, athletesOnly, offerTrialBooking"
     )
     .eq("id", lessonId)
     .single();
@@ -153,6 +153,20 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
             Aula livre
           </span>
         )}
+        {(lesson as { athletesOnly?: boolean }).athletesOnly && (
+          <span
+            style={{
+              marginLeft: 8,
+              fontSize: 12,
+              padding: "2px 6px",
+              borderRadius: 4,
+              backgroundColor: "#7c2d12",
+              color: "#fff",
+            }}
+          >
+            Só atletas de competição
+          </span>
+        )}
       </p>
       <EditarAulaForm
         lessonId={lessonId}
@@ -168,6 +182,7 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
         initialCapacity={lesson.capacity ?? ""}
         initialPlanningNotes={lesson.planningNotes ?? ""}
         initialIsOpenClass={Boolean((lesson as { isOpenClass?: boolean }).isOpenClass)}
+        initialAthletesOnly={Boolean((lesson as { athletesOnly?: boolean }).athletesOnly)}
         initialOfferTrialBooking={(lesson as { offerTrialBooking?: boolean }).offerTrialBooking !== false}
         coachOptions={coachOptions}
         locationOptions={locationOptions ?? []}

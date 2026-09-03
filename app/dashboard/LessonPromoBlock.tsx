@@ -10,6 +10,7 @@ export type LessonPromoLesson = {
   endTime: string;
   locationId?: string | null;
   isOpenClass?: boolean;
+  athletesOnly?: boolean;
   schoolId?: string | null;
   schoolName?: string | null;
 };
@@ -154,6 +155,21 @@ export function LessonPromoBlock({
             }}
           >
             Aula livre
+          </span>
+        )}
+        {lesson.athletesOnly && (
+          <span
+            style={{
+              marginLeft: 8,
+              fontSize: "clamp(12px, 3vw, 14px)",
+              fontWeight: 600,
+              backgroundColor: "rgba(255,255,255,0.2)",
+              border: "1px solid rgba(255,255,255,0.55)",
+              borderRadius: 999,
+              padding: "2px 8px",
+            }}
+          >
+            Só atletas de competição
           </span>
         )}
       </p>

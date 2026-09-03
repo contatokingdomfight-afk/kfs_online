@@ -52,7 +52,7 @@ export default async function CoachAgendaPage({ searchParams }: { searchParams: 
   let allLessonsQuery = supabase
     .from("Lesson")
     .select(
-      "id, modality, date, weekday, startTime, endTime, coachId, schoolId, isOneOff, isOpenClass, locationId, capacity, planningNotes"
+      "id, modality, date, weekday, startTime, endTime, coachId, schoolId, isOneOff, isOpenClass, athletesOnly, locationId, capacity, planningNotes"
     )
     .order("startTime", { ascending: true });
 
@@ -190,6 +190,11 @@ export default async function CoachAgendaPage({ searchParams }: { searchParams: 
                 <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
                   {MODALITY_LABELS[lesson.modality ?? ""] ?? lesson.modality ?? ""}
                 </span>
+                {(lesson as { athletesOnly?: boolean }).athletesOnly && (
+                  <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "#7c2d12", color: "#fff" }}>
+                    Só atletas
+                  </span>
+                )}
                 <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                   {formatLessonDate(lesson.occurrenceDate)} · {lesson.startTime}–{lesson.endTime}
                 </span>

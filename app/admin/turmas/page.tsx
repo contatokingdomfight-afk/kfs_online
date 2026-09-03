@@ -44,7 +44,7 @@ export default async function AdminTurmasPage({
   const { data: lessonsRaw, error: lessonsError } = await supabase
     .from("Lesson")
     .select(
-      "id, modality, date, weekday, startTime, endTime, capacity, coachId, locationId, planningNotes, isOneOff, isOpenClass, createdAt, schoolId"
+      "id, modality, date, weekday, startTime, endTime, capacity, coachId, locationId, planningNotes, isOneOff, isOpenClass, athletesOnly, createdAt, schoolId"
     )
     .order("modality", { ascending: true })
     .order("startTime", { ascending: true });
@@ -86,6 +86,7 @@ export default async function AdminTurmasPage({
       planningNotes: (r.planningNotes as string | null) ?? null,
       isOneOff: Boolean(r.isOneOff),
       isOpenClass: Boolean(r.isOpenClass),
+      athletesOnly: Boolean(r.athletesOnly),
       createdAt: r.createdAt as string | undefined,
     };
   });

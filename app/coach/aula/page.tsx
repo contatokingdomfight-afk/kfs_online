@@ -41,7 +41,7 @@ export default async function CoachAulaPage({
   let lessonsRaw = (await supabase
     .from("Lesson")
     .select(
-      "id, modality, date, weekday, startTime, endTime, locationId, schoolId, isOneOff, coachId, isOpenClass, capacity, planningNotes"
+      "id, modality, date, weekday, startTime, endTime, locationId, schoolId, isOneOff, coachId, isOpenClass, athletesOnly, capacity, planningNotes"
     )
     .order("startTime", { ascending: true })).data ?? [];
 
@@ -103,6 +103,7 @@ export default async function CoachAulaPage({
       schoolId: selectedLesson.schoolId,
       modality: selectedLesson.modality ?? "",
       isOpenClass: Boolean(selectedLesson.isOpenClass),
+      athletesOnly: Boolean(selectedLesson.athletesOnly),
     });
     rosterStudents = roster.students;
   }
@@ -182,6 +183,11 @@ export default async function CoachAulaPage({
                 </Link>
                 <div className="coach-aula-selected-info">
                   <span className="coach-aula-selected-modality">{MODALITY_LABELS[selectedLesson.modality ?? ""] ?? selectedLesson.modality ?? ""}</span>
+                  {selectedLesson.athletesOnly && (
+                    <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "#7c2d12", color: "#fff", marginLeft: 6 }}>
+                      Só atletas
+                    </span>
+                  )}
                   <span className="coach-aula-selected-time">
                     {selectedLesson.locationId && locationById.get(selectedLesson.locationId)
                       ? `${locationById.get(selectedLesson.locationId)} · `

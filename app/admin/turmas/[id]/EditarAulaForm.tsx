@@ -35,6 +35,8 @@ type Props = {
   initialCapacity: string | number;
   initialPlanningNotes: string;
   initialIsOpenClass?: boolean;
+  /** true = restrita a alunos com registo de Atleta (ex.: treino de competição). */
+  initialAthletesOnly?: boolean;
   /** Quando false, a turma não aparece no formulário público /aula-experimental. */
   initialOfferTrialBooking?: boolean;
   coachOptions: CoachOption[];
@@ -56,6 +58,7 @@ export function EditarAulaForm({
   initialCapacity,
   initialPlanningNotes,
   initialIsOpenClass = false,
+  initialAthletesOnly = false,
   initialOfferTrialBooking = true,
   coachOptions,
   locationOptions,
@@ -103,6 +106,7 @@ export function EditarAulaForm({
       capacity,
       planningNotes: ((fd.get("planningNotes") as string) || "").trim() || null,
       isOpenClass: fd.get("isOpenClass") === "on",
+      athletesOnly: fd.get("athletesOnly") === "on",
     };
 
     if (isOneOff) {
@@ -389,6 +393,17 @@ export function EditarAulaForm({
         />
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
           Aula livre (aberta a alunos de qualquer modalidade da escola)
+        </span>
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <input
+          type="checkbox"
+          name="athletesOnly"
+          defaultChecked={initialAthletesOnly}
+          style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
+        />
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
+          Só atletas de competição (restringe o check-in a alunos com registo de Atleta; continua visível na agenda para todos)
         </span>
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

@@ -41,6 +41,7 @@ export async function createLesson(formData: FormData) {
   const planningNotes = (formData.get("planningNotes") as string) || null;
   const isOneOff = formData.get("isOneOff") === "on"; // checkbox: marcado = aula única
   const isOpenClass = formData.get("isOpenClass") === "on";
+  const athletesOnly = formData.get("athletesOnly") === "on";
   const offerTrialBooking = formData.get("excludeTrialBooking") !== "on";
   const weekdayStr = (formData.get("weekday") as string | null)?.trim() || null;
 
@@ -103,6 +104,7 @@ export async function createLesson(formData: FormData) {
     planningNotes: planningNotes || null,
     isOneOff,
     isOpenClass,
+    athletesOnly,
   };
 
   const { error } = await supabase.from("Lesson").insert(row);
@@ -160,6 +162,7 @@ export async function updateLesson(
   const capacityStr = (formData.get("capacity") as string)?.trim() || null;
   const planningNotes = (formData.get("planningNotes") as string)?.trim() || null;
   const isOpenClass = formData.get("isOpenClass") === "on";
+  const athletesOnly = formData.get("athletesOnly") === "on";
   const offerTrialBooking = formData.get("excludeTrialBooking") !== "on";
   const weekdayStr = (formData.get("weekday") as string | null)?.trim() ?? "";
 
@@ -200,6 +203,7 @@ export async function updateLesson(
     capacity,
     planningNotes,
     isOpenClass,
+    athletesOnly,
     offerTrialBooking,
     weekday,
   });

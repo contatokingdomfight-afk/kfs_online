@@ -20,6 +20,7 @@ export type LessonRow = {
   planningNotes: string | null;
   isOneOff?: boolean;
   isOpenClass?: boolean;
+  athletesOnly?: boolean;
   createdAt?: string;
   schoolId?: string | null;
 };
@@ -198,6 +199,7 @@ function WeekLessonRow({
       { style: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 } },
       lesson.isOneOff && React.createElement("span", { style: { fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--bg-primary)", color: "var(--text-secondary)" } }, "Aula única"),
       lesson.isOpenClass && React.createElement("span", { style: { fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--primary)", color: "#fff" } }, "Aula livre"),
+      lesson.athletesOnly && React.createElement("span", { style: { fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "#7c2d12", color: "#fff" } }, "Só atletas"),
       schoolName &&
         React.createElement(
           "span",
@@ -331,6 +333,11 @@ function ModalityLessonRow({
         {lesson.isOpenClass && (
           <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "var(--primary)", color: "#fff" }}>
             Aula livre
+          </span>
+        )}
+        {lesson.athletesOnly && (
+          <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 4, backgroundColor: "#7c2d12", color: "#fff" }}>
+            Só atletas
           </span>
         )}
         {schoolName && (

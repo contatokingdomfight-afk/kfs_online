@@ -23,6 +23,8 @@ export type UpdateLessonPayload = {
   capacity: number | null;
   planningNotes: string | null;
   isOpenClass: boolean;
+  /** true = restrita a alunos com registo de Atleta (ex.: treino de competição). */
+  athletesOnly: boolean;
   /** Incluir no formulário público /aula-experimental (default true em novas turmas). */
   offerTrialBooking: boolean;
   /** Recorrente: 1–7. */
@@ -41,6 +43,7 @@ export async function performUpdateLesson(payload: UpdateLessonPayload): Promise
     capacity,
     planningNotes,
     isOpenClass,
+    athletesOnly,
     offerTrialBooking,
     weekday,
   } = payload;
@@ -107,6 +110,7 @@ export async function performUpdateLesson(payload: UpdateLessonPayload): Promise
     capacity,
     planningNotes: planningNotes || null,
     isOpenClass,
+    athletesOnly,
     offerTrialBooking,
   };
 

@@ -311,6 +311,8 @@ model Lesson {
   planningNotes  String?
   isOneOff       Boolean   @default(false) // true = aula única (evento); false = recorrente semanal
   isOpenClass    Boolean   @default(false) // true = aula aberta a qualquer modalidade da escola
+  /// true = restrita a alunos com registo de Atleta (ex.: treino de competição). Continua visível na agenda para todos, com etiqueta.
+  athletesOnly   Boolean   @default(false)
   /// Quando false, a turma não aparece no formulário público /aula-experimental (útil para testes ou horários internos).
   offerTrialBooking Boolean @default(true)
   createdAt      DateTime  @default(now())
