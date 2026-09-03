@@ -9,6 +9,10 @@
       "schedule": "30 7 * * *"
     },
     {
+      "path": "/api/cron/generate-monthly-payments?force=1",
+      "schedule": "0 6 1 * *"
+    },
+    {
       "path": "/api/cron/insurance-expiry-check",
       "schedule": "0 8 * * 1"
     }
