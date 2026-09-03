@@ -35,7 +35,7 @@ type Props = {
   initialCapacity: string | number;
   initialPlanningNotes: string;
   initialIsOpenClass?: boolean;
-  /** true = restrita a alunos com registo de Atleta (ex.: treino de competição). */
+  /** true = restrita a alunos marcados como "atleta de competição" (Student.competitionAthlete). */
   initialAthletesOnly?: boolean;
   /** Quando false, a turma não aparece no formulário público /aula-experimental. */
   initialOfferTrialBooking?: boolean;
@@ -403,7 +403,7 @@ export function EditarAulaForm({
           style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
         />
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
-          Só atletas de competição (restringe o check-in a alunos com registo de Atleta; continua visível na agenda para todos)
+          Só atletas de competição (restringe o check-in a alunos marcados como atleta de competição; continua visível na agenda para todos)
         </span>
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

@@ -3,6 +3,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
+import { CompetitionAthleteControls } from "@/components/CompetitionAthleteControls";
 import { CoachAlunoEvaluateButton } from "./CoachAlunoEvaluateButton";
 
 type Props = { studentId: string };
@@ -17,7 +18,7 @@ export async function CoachAlunoOverviewActions({ studentId }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, schoolId")
+    .select("id, userId, status, schoolId, competitionAthlete")
     .eq("id", studentId)
     .single();
 
@@ -52,6 +53,13 @@ export async function CoachAlunoOverviewActions({ studentId }: Props) {
           assistantActive={assistantActive}
           targetUserRole={user?.role}
           studentStatus={student.status}
+        />
+      ) : null}
+
+      {canManageAssistant ? (
+        <CompetitionAthleteControls
+          studentId={studentId}
+          active={Boolean((student as { competitionAthlete?: boolean }).competitionAthlete)}
         />
       ) : null}
 

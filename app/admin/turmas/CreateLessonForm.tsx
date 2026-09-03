@@ -260,7 +260,7 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
       <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <input type="checkbox" name="athletesOnly" value="on" style={{ width: 18, height: 18, accentColor: "#c1121f" }} />
         <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
-          Só atletas de competição (restringe o check-in a alunos com registo de Atleta; continua visível na agenda para todos)
+          Só atletas de competição (restringe o check-in a alunos marcados como atleta de competição; continua visível na agenda para todos)
         </span>
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

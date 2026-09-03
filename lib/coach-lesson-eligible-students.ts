@@ -37,7 +37,7 @@ export type CoachLessonContext = {
   schoolId: string;
   modality: string;
   isOpenClass: boolean;
-  /** true = restrita a alunos com registo de Atleta (ex.: treino de competição). */
+  /** true = restrita a alunos marcados como "atleta de competição" (Student.competitionAthlete). */
   athletesOnly?: boolean;
 };
 
@@ -56,6 +56,7 @@ type StudentRow = {
   planId: string | null;
   primaryModality: string | null;
   status: string;
+  competitionAthlete?: boolean;
 };
 
 function buildPlanAccessInput(
@@ -103,11 +104,10 @@ function buildPlanAccessInput(
 export function isStudentEligibleForCoachLesson(
   student: StudentRow,
   plan: PlanRow | undefined,
-  lesson: Pick<CoachLessonContext, "modality" | "isOpenClass" | "athletesOnly">,
-  isAthlete: boolean = false
+  lesson: Pick<CoachLessonContext, "modality" | "isOpenClass" | "athletesOnly">
 ): boolean {
   if (student.status !== "ATIVO") return false;
-  if (lesson.athletesOnly && !isAthlete) return false;
+  if (lesson.athletesOnly && !student.competitionAthlete) return false;
   const access = buildPlanAccessInput(student, plan);
   return isLessonParticipationAllowedByPlan(
     {
@@ -149,7 +149,7 @@ export async function loadCoachLessonRoster(
   const [{ data: schoolStudents }, { data: attList }] = await Promise.all([
     supabase
       .from("Student")
-      .select("id, userId, planId, primaryModality, status")
+      .select("id, userId, planId, primaryModality, status, competitionAthlete")
       .eq("schoolId", schoolId)
       .eq("status", "ATIVO"),
     supabase
@@ -162,15 +162,6 @@ export async function loadCoachLessonRoster(
   const students = (schoolStudents ?? []) as StudentRow[];
   if (students.length === 0) {
     return { students: [] };
-  }
-
-  const athleteStudentIdSet = new Set<string>();
-  if (athletesOnly) {
-    const { data: athleteRows } = await supabase
-      .from("Athlete")
-      .select("studentId")
-      .in("studentId", students.map((s) => s.id));
-    for (const row of athleteRows ?? []) athleteStudentIdSet.add((row as { studentId: string }).studentId);
   }
 
   const planIds = [...new Set(students.map((s) => s.planId).filter(Boolean))] as string[];
@@ -201,9 +192,7 @@ export async function loadCoachLessonRoster(
   };
 
   const eligibleIds = students
-    .filter((s) =>
-      isStudentEligibleForCoachLesson(s, planForStudent(s), { modality, isOpenClass, athletesOnly }, athleteStudentIdSet.has(s.id))
-    )
+    .filter((s) => isStudentEligibleForCoachLesson(s, planForStudent(s), { modality, isOpenClass, athletesOnly }))
     .map((s) => s.id);
 
   if (eligibleIds.length === 0) {
@@ -401,7 +390,7 @@ export async function assertStudentEligibleForCoachLesson(
 ): Promise<{ error?: string; student?: StudentRow; plan?: PlanRow }> {
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, planId, primaryModality, status, schoolId")
+    .select("id, userId, planId, primaryModality, status, schoolId, competitionAthlete")
     .eq("id", studentId)
     .maybeSingle();
 
@@ -428,15 +417,9 @@ export async function assertStudentEligibleForCoachLesson(
     }
   }
 
-  let isAthlete = false;
-  if (params.athletesOnly) {
-    const { data: athleteRow } = await supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle();
-    isAthlete = Boolean(athleteRow);
-  }
-
-  if (!isStudentEligibleForCoachLesson(row, plan, params, isAthlete)) {
+  if (!isStudentEligibleForCoachLesson(row, plan, params)) {
     return {
-      error: params.athletesOnly && !isAthlete
+      error: params.athletesOnly && !row.competitionAthlete
         ? "Esta aula é só para atletas de competição."
         : "Este aluno não está elegível para esta aula (plano ou modalidade).",
     };

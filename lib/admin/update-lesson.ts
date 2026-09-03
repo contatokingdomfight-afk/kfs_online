@@ -23,7 +23,7 @@ export type UpdateLessonPayload = {
   capacity: number | null;
   planningNotes: string | null;
   isOpenClass: boolean;
-  /** true = restrita a alunos com registo de Atleta (ex.: treino de competição). */
+  /** true = restrita a alunos marcados como "atleta de competição" (Student.competitionAthlete). */
   athletesOnly: boolean;
   /** Incluir no formulário público /aula-experimental (default true em novas turmas). */
   offerTrialBooking: boolean;

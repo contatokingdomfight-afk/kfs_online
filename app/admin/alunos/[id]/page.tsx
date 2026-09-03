@@ -21,6 +21,7 @@ import { filterModalitiesForStudentEvaluation } from "@/lib/coach-student-evalua
 import { DeleteStudentButton } from "./DeleteStudentButton";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
 import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
+import { CompetitionAthleteControls } from "@/components/CompetitionAthleteControls";
 import { SchoolAssistantBadge } from "@/components/SchoolAssistantBadge";
 import { StudentInsuranceSection } from "./StudentInsuranceSection";
 import { StudentExtraSessionsSection } from "./StudentExtraSessionsSection";
@@ -66,7 +67,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality, schoolId, adminGrantedFullAccess")
+    .select("id, userId, status, planId, primaryModality, schoolId, adminGrantedFullAccess, competitionAthlete")
     .eq("id", studentId)
     .single();
 
@@ -489,6 +490,11 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
         assistantActive={assistantActive}
         targetUserRole={user?.role}
         studentStatus={student.status}
+      />
+
+      <CompetitionAthleteControls
+        studentId={studentId}
+        active={Boolean((student as { competitionAthlete?: boolean }).competitionAthlete)}
       />
 
       <section

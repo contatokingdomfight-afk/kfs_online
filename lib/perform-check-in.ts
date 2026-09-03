@@ -51,8 +51,12 @@ export async function performCheckIn(
   }
 
   if ((lessonData as { athletesOnly?: boolean }).athletesOnly) {
-    const { data: athleteRow } = await supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle();
-    if (!athleteRow) {
+    const { data: studentRow } = await supabase
+      .from("Student")
+      .select("competitionAthlete")
+      .eq("id", studentId)
+      .maybeSingle();
+    if (!(studentRow as { competitionAthlete?: boolean } | null)?.competitionAthlete) {
       return { error: "Esta aula é só para atletas de competição." };
     }
   }

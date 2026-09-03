@@ -17,7 +17,7 @@ export type LessonDefinitionRow = {
   planningNotes: string | null;
   isOneOff: boolean;
   isOpenClass: boolean;
-  /** true = restrita a alunos com registo de Atleta (ex.: treino de competição). */
+  /** true = restrita a alunos marcados como "atleta de competição" (Student.competitionAthlete). */
   athletesOnly?: boolean;
   /** false = não expandir para /aula-experimental (definição ainda existe na agenda interna). */
   offerTrialBooking?: boolean;

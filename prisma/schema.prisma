@@ -160,6 +160,8 @@ model Student {
   registrationMode    String  @default("INVITE")
   /// Login com email gerado (@alunos.kingdomfight.pt), sem caixa de correio real.
   syntheticLoginEmail Boolean @default(false)
+  /// true = aluno quer competir; flag manual (admin ou coach da escola), separado de `Athlete` (XP/faixas/avaliações).
+  competitionAthlete  Boolean @default(false)
   createdAt DateTime      @default(now())
 
   athlete     Athlete?
@@ -311,7 +313,7 @@ model Lesson {
   planningNotes  String?
   isOneOff       Boolean   @default(false) // true = aula única (evento); false = recorrente semanal
   isOpenClass    Boolean   @default(false) // true = aula aberta a qualquer modalidade da escola
-  /// true = restrita a alunos com registo de Atleta (ex.: treino de competição). Continua visível na agenda para todos, com etiqueta.
+  /// true = restrita a alunos marcados como "atleta de competição" (Student.competitionAthlete). Continua visível na agenda para todos, com etiqueta.
   athletesOnly   Boolean   @default(false)
   /// Quando false, a turma não aparece no formulário público /aula-experimental (útil para testes ou horários internos).
   offerTrialBooking Boolean @default(true)
