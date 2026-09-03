@@ -25,6 +25,7 @@ import {
 import {
   expandLessonsForDateRange,
   fetchLessonCancellations,
+  ymdAddDays,
   type LessonDefinitionRow,
 } from "@/lib/lesson-occurrences";
 
@@ -123,14 +124,26 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     };
   });
 
-  const expanded = expandLessonsForDateRange(lessonsAsDefs, cancellations, today, endOfWeek);
-  const lessonsRawExpanded = expanded.map((L) => ({
+  /**
+   * Expande até 14 dias à frente (não só até domingo desta semana): se não sobrar nenhuma
+   * aula elegível nesta semana, o cartão "Próxima aula" procura mais à frente em vez de
+   * ficar vazio — ver uso de `extendedLessons`/fallback mais abaixo.
+   */
+  const extendedEnd = ymdAddDays(today, 14);
+  const expanded = expandLessonsForDateRange(lessonsAsDefs, cancellations, today, extendedEnd);
+  const lessonsRawExpandedAll = expanded.map((L) => ({
     ...L,
     date: L.occurrenceDate,
     modality: L.modality ?? "",
     schoolName: L.schoolId ? schoolNameById.get(L.schoolId) ?? null : null,
   }));
+  const lessonsRawExpanded = lessonsRawExpandedAll.filter((l) => l.date <= endOfWeek);
   const lessons = filterDashboardLessonsByPlanModality(lessonsRawExpanded, {
+    hasPlan,
+    allowedModalities,
+    studentPrimaryModality,
+  });
+  const extendedLessons = filterDashboardLessonsByPlanModality(lessonsRawExpandedAll, {
     hasPlan,
     allowedModalities,
     studentPrimaryModality,
@@ -149,23 +162,43 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const nonOpenUpcoming = eligibleLessons.filter((l) => !Boolean((l as { isOpenClass?: boolean }).isOpenClass));
   const openUpcoming = eligibleLessons.filter((l) => Boolean((l as { isOpenClass?: boolean }).isOpenClass));
 
+  /**
+   * Sem nenhuma aula elegível nesta semana (ex.: a última já passou), procura mais à frente
+   * (até 14 dias) para o cartão "Próxima aula" nunca ficar vazio — só o dia mais próximo
+   * encontrado, com todas as aulas desse dia (mesmo padrão do resto da semana).
+   */
+  let fallbackNextLessons: typeof nonOpenUpcoming = [];
+  if (nonOpenUpcoming.length === 0 && openUpcoming.length === 0) {
+    const beyondThisWeek = extendedLessons
+      .filter((l) => l.date > endOfWeek)
+      .filter((l) => isLessonEligibleForNextCard(l, nowForCard))
+      .sort((a, b) => (a.date === b.date ? a.startTime.localeCompare(b.startTime) : a.date.localeCompare(b.date)));
+    const nextDate = beyondThisWeek[0]?.date;
+    if (nextDate) {
+      fallbackNextLessons = beyondThisWeek.filter((l) => l.date === nextDate);
+    }
+  }
+
   /** Com plano: aulas normais (não «livres»). Sem plano: todas as aulas livres elegíveis ficam aqui (evita duplicar a secção de baixo). */
   const primaryNextRows =
     nonOpenUpcoming.length > 0
       ? nonOpenUpcoming.map((lesson) => ({ lesson, ...getLessonCheckInUiState(lesson, nowForCard) }))
-      : openUpcoming.map((lesson) => ({ lesson, ...getLessonCheckInUiState(lesson, nowForCard) }));
+      : openUpcoming.length > 0
+        ? openUpcoming.map((lesson) => ({ lesson, ...getLessonCheckInUiState(lesson, nowForCard) }))
+        : fallbackNextLessons.map((lesson) => ({ lesson, ...getLessonCheckInUiState(lesson, nowForCard) }));
 
   const additionalOpenLessons =
     nonOpenUpcoming.length > 0
       ? openUpcoming.map((lesson) => ({ lesson, ...getLessonCheckInUiState(lesson, nowForCard) }))
       : [];
 
-  const showNextLessonSection = lessons.length > 0;
-
   const hasOpenClassesCarousel = additionalOpenLessons.length > 0;
   const hasPrimaryNextCarousel = primaryNextRows.length > 0;
+  const showNextLessonSection = hasPrimaryNextCarousel || hasOpenClassesCarousel || lessons.length > 0;
 
-  const uniqueLessonIdsForAttendance = [...new Set(lessons.map((l) => l.id))];
+  const uniqueLessonIdsForAttendance = [
+    ...new Set([...lessons.map((l) => l.id), ...fallbackNextLessons.map((l) => l.id)]),
+  ];
   const attendanceByLesson: Record<string, { status: string; checkedInAt: string | null }> = {};
   if (studentId && uniqueLessonIdsForAttendance.length > 0) {
     const { data: attendances } = await supabase
