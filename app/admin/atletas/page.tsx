@@ -24,8 +24,16 @@ export default async function AdminAtletasPage() {
     .order("id");
 
   const list = athletes ?? [];
-  const studentIds = list.map((a) => a.studentId);
+  const athleteStudentIds = new Set(list.map((a) => a.studentId));
   const coachIds = [...new Set(list.map((a) => a.mainCoachId).filter(Boolean))] as string[];
+
+  const { data: flaggedStudents } = await supabase
+    .from("Student")
+    .select("id, userId")
+    .eq("competitionAthlete", true);
+  const flagOnly = (flaggedStudents ?? []).filter((s) => !athleteStudentIds.has(s.id));
+
+  const studentIds = [...new Set([...list.map((a) => a.studentId), ...flagOnly.map((s) => s.id)])];
 
   const { data: students } =
     studentIds.length > 0 ? await supabase.from("Student").select("id, userId").in("id", studentIds) : { data: [] };
@@ -45,6 +53,27 @@ export default async function AdminAtletasPage() {
   const coachIdToName = new Map(
     (coaches ?? []).map((c) => [c.id, coachNameById.get(c.userId) ?? c.userId])
   );
+
+  type Row =
+    | { kind: "athlete"; key: string; studentId: string; level: string; coachName: string | null; href: string }
+    | { kind: "flag"; key: string; studentId: string; href: string };
+
+  const rows: Row[] = [
+    ...list.map((a): Row => ({
+      kind: "athlete",
+      key: `athlete-${a.id}`,
+      studentId: a.studentId,
+      level: a.level,
+      coachName: a.mainCoachId ? coachIdToName.get(a.mainCoachId) ?? null : null,
+      href: `/coach/atletas/${a.id}`,
+    })),
+    ...flagOnly.map((s): Row => ({
+      kind: "flag",
+      key: `flag-${s.id}`,
+      studentId: s.id,
+      href: `/admin/alunos/${s.id}`,
+    })),
+  ];
 
   return (
     <div style={{ maxWidth: "min(700px, 100%)" }}>
@@ -80,9 +109,10 @@ export default async function AdminAtletasPage() {
         </Link>
       </div>
 
-      {list.length === 0 ? (
+      {rows.length === 0 ? (
         <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>
-          Ainda não há atletas. Um atleta é um aluno em acompanhamento; adiciona um em &quot;Novo atleta&quot;.
+          Ainda não há atletas. Um atleta é um aluno em acompanhamento; adiciona um em &quot;Novo atleta&quot;, ou
+          marca um aluno como atleta de competição no perfil dele.
         </p>
       ) : (
         <ul
@@ -95,13 +125,12 @@ export default async function AdminAtletasPage() {
             gap: "clamp(10px, 2.5vw, 12px)",
           }}
         >
-          {list.map((a) => {
-            const u = studentToUser.get(a.studentId);
-            const coachName = a.mainCoachId ? coachIdToName.get(a.mainCoachId) : null;
+          {rows.map((row) => {
+            const u = studentToUser.get(row.studentId);
             return (
-              <li key={a.id}>
+              <li key={row.key}>
                 <Link
-                  href={`/coach/atletas/${a.id}`}
+                  href={row.href}
                   className="card"
                   style={{
                     display: "block",
@@ -114,20 +143,34 @@ export default async function AdminAtletasPage() {
                     <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
                       {u?.name || u?.email || "—"}
                     </span>
-                    <span
-                      style={{
-                        fontSize: "clamp(12px, 3vw, 14px)",
-                        padding: "2px 8px",
-                        borderRadius: "var(--radius-md)",
-                        backgroundColor: "var(--bg)",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      {LEVEL_LABEL[a.level] ?? a.level}
-                    </span>
-                    {coachName && (
+                    {row.kind === "athlete" ? (
+                      <span
+                        style={{
+                          fontSize: "clamp(12px, 3vw, 14px)",
+                          padding: "2px 8px",
+                          borderRadius: "var(--radius-md)",
+                          backgroundColor: "var(--bg)",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        {LEVEL_LABEL[row.level] ?? row.level}
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: "clamp(12px, 3vw, 14px)",
+                          padding: "2px 8px",
+                          borderRadius: "var(--radius-md)",
+                          backgroundColor: "#7c2d12",
+                          color: "#fff",
+                        }}
+                      >
+                        Atleta de competição
+                      </span>
+                    )}
+                    {row.kind === "athlete" && row.coachName && (
                       <span style={{ fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>
-                        Coach: {coachName}
+                        Coach: {row.coachName}
                       </span>
                     )}
                     <span style={{ marginLeft: "auto", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--primary)" }}>
