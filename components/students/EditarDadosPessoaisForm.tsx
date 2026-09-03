@@ -11,6 +11,7 @@ type Props = {
   studentId: string;
   initial: {
     phone: string;
+    nickname: string;
     dateOfBirth: string;
     weightKg: string;
     heightCm: string;
@@ -89,6 +90,7 @@ export function EditarDadosPessoaisForm({ studentId, initial }: Props) {
         <input type="hidden" name="studentId" value={studentId} />
 
         <Field label="Telefone" name="phone" defaultValue={initial.phone} />
+        <Field label="Apelido de lutador" name="nickname" defaultValue={initial.nickname} />
         <Field label="Data de nascimento" name="dateOfBirth" defaultValue={initial.dateOfBirth} type="date" />
         <Field label="Documento (CC / Passaporte)" name="idDocument" defaultValue={initial.idDocument} />
         <Field label="NIF" name="taxId" defaultValue={initial.taxId} />

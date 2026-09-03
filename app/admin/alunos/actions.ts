@@ -403,6 +403,7 @@ export async function updateStudentPersonalData(
   };
 
   const phone = trim("phone");
+  const nickname = trim("nickname");
   const dateOfBirth = trim("dateOfBirth");
   const weightKg = toNumber("weightKg");
   const heightCm = toNumber("heightCm");
@@ -418,6 +419,7 @@ export async function updateStudentPersonalData(
     {
       studentId,
       phone,
+      nickname,
       dateOfBirth,
       weightKg,
       heightCm,

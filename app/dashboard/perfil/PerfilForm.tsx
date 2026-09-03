@@ -11,6 +11,7 @@ import { ProfileAvatarField } from "@/components/ProfileAvatarField";
 type Props = {
   initial: {
     name: string;
+    nickname: string;
     email: string;
     avatarUrl: string;
     phone: string;
@@ -82,6 +83,20 @@ export function PerfilForm({ initial, locale }: Props) {
             className="input"
             placeholder={t("nameLabel")}
           />
+        </label>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+            {t("nicknameLabel")}
+          </span>
+          <input
+            type="text"
+            name="nickname"
+            defaultValue={initial.nickname}
+            className="input"
+            placeholder={t("nicknameLabel")}
+            maxLength={40}
+          />
+          <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t("nicknameHint")}</span>
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>

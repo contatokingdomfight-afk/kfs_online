@@ -78,7 +78,7 @@ export async function StudentContactDataSection({ studentId }: Props) {
     supabase.from("User").select("email").eq("id", student.userId).single(),
     supabase
       .from("StudentProfile")
-      .select("phone, dateOfBirth, weightKg, heightCm, medicalNotes, emergencyContact")
+      .select("phone, nickname, dateOfBirth, weightKg, heightCm, medicalNotes, emergencyContact")
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase
@@ -91,6 +91,7 @@ export async function StudentContactDataSection({ studentId }: Props) {
   ]);
 
   const phone = (profile?.phone as string | null) ?? null;
+  const nickname = (profile?.nickname as string | null)?.trim() || null;
   const email = user?.email ?? null;
   const dob = formatDobPt((profile?.dateOfBirth as string | null) ?? null);
   const taxId = isAdmin ? (enrollment?.taxId as string | null)?.trim() || null : null;
@@ -121,7 +122,7 @@ export async function StudentContactDataSection({ studentId }: Props) {
 
   const hasHealthDetail = Boolean(allergies || healthCondition || emergencyMed || medicalNotes);
   const hasContact = Boolean(
-    phone || email || dob || measures || address || emergEnrollment || emergProfile || taxId || idDocument
+    phone || nickname || email || dob || measures || address || emergEnrollment || emergProfile || taxId || idDocument
   );
 
   if (!hasContact && !hasHealthDetail) {
@@ -155,6 +156,7 @@ export async function StudentContactDataSection({ studentId }: Props) {
       {hasContact ? (
         <dl style={{ margin: "0 0 16px", display: "grid", gap: 12 }}>
           <Row label="Telefone" value={phone} href={phone ? `tel:${phone.replace(/\s/g, "")}` : undefined} />
+          <Row label="Apelido de lutador" value={nickname} />
           <Row label="E-mail" value={email} href={email ? `mailto:${email}` : undefined} />
           <Row label="Data de nascimento" value={dob} />
           <Row label="Documento (CC / Passaporte)" value={idDocument} />

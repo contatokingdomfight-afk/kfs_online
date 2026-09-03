@@ -38,7 +38,7 @@ export default async function DashboardPerfilPage() {
 
   const { data: profile } = await supabase
     .from("StudentProfile")
-    .select("weightKg, heightCm, reachCm, dateOfBirth, medicalNotes, emergencyContact, phone")
+    .select("weightKg, heightCm, reachCm, dateOfBirth, medicalNotes, emergencyContact, phone, nickname")
     .eq("studentId", studentId)
     .maybeSingle();
 
@@ -62,6 +62,7 @@ export default async function DashboardPerfilPage() {
 
   const initial = {
     name: user?.name ?? "",
+    nickname: (profile as { nickname?: string | null } | undefined)?.nickname ?? "",
     email: user?.email ?? "",
     avatarUrl: (user as { avatarUrl?: string | null } | undefined)?.avatarUrl ?? "",
     phone: (profile as { phone?: string | null } | undefined)?.phone ?? "",

@@ -14,7 +14,7 @@ export async function EditarDadosPessoaisSection({ studentId }: Props) {
   const supabase = result.client;
 
   const [{ data: profile }, { data: enrollment }] = await Promise.all([
-    supabase.from("StudentProfile").select("phone, dateOfBirth, weightKg, heightCm").eq("studentId", studentId).maybeSingle(),
+    supabase.from("StudentProfile").select("phone, nickname, dateOfBirth, weightKg, heightCm").eq("studentId", studentId).maybeSingle(),
     supabase
       .from("StudentEnrollmentForm")
       .select("idDocument, taxId, addressLine, postalCode, emergencyContactName, emergencyContactRelationship, emergencyContactPhone")
@@ -56,6 +56,7 @@ export async function EditarDadosPessoaisSection({ studentId }: Props) {
           studentId={studentId}
           initial={{
             phone: str(profile?.phone),
+            nickname: str(profile?.nickname),
             dateOfBirth: str(profile?.dateOfBirth).slice(0, 10),
             weightKg: str(profile?.weightKg),
             heightCm: str(profile?.heightCm),

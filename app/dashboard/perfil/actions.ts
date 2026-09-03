@@ -12,6 +12,7 @@ export async function saveStudentProfile(_prev: SaveProfileResult | null, formDa
   if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
 
   const name = (formData.get("name") as string)?.trim() || null;
+  const nickname = (formData.get("nickname") as string)?.trim() || null;
   const avatarRaw = (formData.get("avatarUrl") as string)?.trim() || null;
   const avatarUrl = avatarRaw ? (rewriteSupabaseLegacyStoragePublicUrl(avatarRaw) ?? avatarRaw) : null;
   const phone = (formData.get("phone") as string)?.trim() || null;
@@ -69,6 +70,7 @@ export async function saveStudentProfile(_prev: SaveProfileResult | null, formDa
     medicalNotes: medicalNotes || null,
     emergencyContact: emergencyContact || null,
     phone: phone || null,
+    nickname: nickname || null,
     updatedAt: new Date().toISOString(),
   };
 
