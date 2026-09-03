@@ -670,7 +670,7 @@ export const messages = {
     navAgenda: "Agenda",
     navAthletesCoach: "Atletas",
     navWeekTheme: "Tema da Semana",
-    navWeekThemeMonthly: "Vista mensal",
+    navWeekThemeMonthly: "Planejamento mensal",
     navRoundTimer: "Timer de rounds",
     coachRoundTimerTitle: "Timer de rounds",
     coachRoundTimerBack: "Voltar ao painel",
