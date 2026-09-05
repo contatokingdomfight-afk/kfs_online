@@ -113,8 +113,14 @@ export function PerformanceRadarAvatarCarousel({
   const showBodySlide = Boolean(payload) && !radarOnly;
 
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const radarSlideRef = useRef<HTMLDivElement>(null);
+  const bodySlideRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(showBodySlide);
+  /** Só o slide ativo deve ditar a altura do carrossel — sem isto, o mapa corporal (mais alto)
+   * estica o slide do radar mesmo estando fora de vista (altura de flex-row = a do maior filho). */
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [slideHeight, setSlideHeight] = useState<number | undefined>(undefined);
 
   const updateArrows = useCallback(() => {
     const el = scrollerRef.current;
@@ -122,6 +128,7 @@ export function PerformanceRadarAvatarCarousel({
     const { scrollLeft, scrollWidth, clientWidth } = el;
     setCanPrev(scrollLeft > 4);
     setCanNext(scrollLeft < scrollWidth - clientWidth - 4);
+    if (clientWidth > 0) setActiveIndex(Math.round(scrollLeft / clientWidth));
   }, []);
 
   useEffect(() => {
@@ -132,6 +139,17 @@ export function PerformanceRadarAvatarCarousel({
     ro.observe(el);
     return () => ro.disconnect();
   }, [showBodySlide, updateArrows]);
+
+  useEffect(() => {
+    const activeEl = activeIndex === 0 ? radarSlideRef.current : bodySlideRef.current;
+    if (!activeEl) return;
+    const measure = () => setSlideHeight(activeEl.getBoundingClientRect().height);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(activeEl);
+    return () => ro.disconnect();
+  }, [activeIndex, showBodySlide]);
 
   const scrollByDir = (dir: -1 | 1) => {
     const el = scrollerRef.current;
@@ -207,17 +225,19 @@ export function PerformanceRadarAvatarCarousel({
           role="region"
           aria-label={L.sectionTitle}
           tabIndex={0}
-          className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1"
+          className="flex items-start overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth pb-1"
           style={{
             WebkitOverflowScrolling: "touch",
             scrollbarGutter: "stable",
+            height: slideHeight,
+            transition: "height 0.2s ease",
           }}
         >
-          <div className="min-w-full shrink-0 snap-start box-border px-1">
+          <div ref={radarSlideRef} className="min-w-full shrink-0 snap-start box-border px-1">
             <p className="text-xs text-[var(--text-secondary)] mb-2 m-0">{L.slideRadarCaption}</p>
             {radar}
           </div>
-          <div className="min-w-full shrink-0 snap-start box-border px-1">
+          <div ref={bodySlideRef} className="min-w-full shrink-0 snap-start box-border px-1">
             <PhysicalAssessmentBodyMapPanel payload={payload!} />
           </div>
         </div>
