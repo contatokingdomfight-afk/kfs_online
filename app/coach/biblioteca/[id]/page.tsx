@@ -6,6 +6,8 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { toEmbedVideoUrl, YOUTUBE_IFRAME_ALLOW } from "@/lib/youtube-embed";
+import { PdfUnitViewer } from "@/components/biblioteca/PdfUnitViewer";
+import { SlideDeckViewer } from "@/components/biblioteca/SlideDeckViewer";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -135,6 +137,14 @@ export default async function CoachBibliotecaCursoPage({ params }: Props) {
                           }}
                         >
                           {u.text_content}
+                        </div>
+                      ) : u.content_type === "PDF" ? (
+                        <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                          <PdfUnitViewer url={u.pdf_url} title={u.name} />
+                        </div>
+                      ) : u.content_type === "SLIDES" ? (
+                        <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                          <SlideDeckViewer url={u.pdf_url} title={u.name} />
                         </div>
                       ) : (
                         <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>

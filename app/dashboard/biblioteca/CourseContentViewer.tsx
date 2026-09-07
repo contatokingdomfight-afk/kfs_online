@@ -7,6 +7,7 @@ import { ConcluirModuloButton } from "./ConcluirModuloButton";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
 import { UnitTextContent } from "@/components/biblioteca/UnitTextContent";
 import { PdfUnitViewer } from "@/components/biblioteca/PdfUnitViewer";
+import { SlideDeckViewer } from "@/components/biblioteca/SlideDeckViewer";
 
 type Unit = {
   id: string;
@@ -204,6 +205,10 @@ export function CourseContentViewer({
                             ) : u.content_type === "PDF" ? (
                               <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
                                 <PdfUnitViewer url={u.pdf_url} title={u.name} />
+                              </div>
+                            ) : u.content_type === "SLIDES" ? (
+                              <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>
+                                <SlideDeckViewer url={u.pdf_url} title={u.name} />
                               </div>
                             ) : (
                               <div style={{ padding: "clamp(16px, 4vw, 20px)" }}>

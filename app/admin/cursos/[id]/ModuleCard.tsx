@@ -8,6 +8,7 @@ import { UnitForm } from "../modules/units/UnitForm";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
 import { UnitTextContent } from "@/components/biblioteca/UnitTextContent";
 import { PdfUnitViewer } from "@/components/biblioteca/PdfUnitViewer";
+import { SlideDeckViewer } from "@/components/biblioteca/SlideDeckViewer";
 import { ViewersDrilldown } from "./ViewersDrilldown";
 import { getUnitViewers } from "../stats-actions";
 
@@ -73,6 +74,13 @@ function UnitPreview({ unit }: { unit: Unit }) {
     return (
       <div style={{ marginTop: 10 }}>
         <PdfUnitViewer url={unit.pdf_url} title={unit.name} fallbackMessage="Sem ficheiro PDF definido." />
+      </div>
+    );
+  }
+  if (unit.content_type === "SLIDES") {
+    return (
+      <div style={{ marginTop: 10 }}>
+        <SlideDeckViewer url={unit.pdf_url} title={unit.name} fallbackMessage="Sem ficheiro de slides definido." />
       </div>
     );
   }
@@ -194,7 +202,13 @@ export function ModuleCard({ courseId, module, index, units, viewCountByUnitId }
                       {uIdx + 1}. {u.name}
                     </span>
                     <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                      {u.content_type === "VIDEO" ? "Vídeo" : u.content_type === "PDF" ? "PDF" : "Texto"}
+                      {u.content_type === "VIDEO"
+                        ? "Vídeo"
+                        : u.content_type === "PDF"
+                          ? "PDF"
+                          : u.content_type === "SLIDES"
+                            ? "Slides"
+                            : "Texto"}
                     </span>
                     {u.status === "DRAFT" && <DraftBadge />}
                     <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
@@ -238,7 +252,15 @@ export function ModuleCard({ courseId, module, index, units, viewCountByUnitId }
                         unitId={u.id}
                         initialName={u.name}
                         initialDescription={u.description ?? ""}
-                        initialContentType={u.content_type === "TEXT" ? "TEXT" : u.content_type === "PDF" ? "PDF" : "VIDEO"}
+                        initialContentType={
+                          u.content_type === "TEXT"
+                            ? "TEXT"
+                            : u.content_type === "PDF"
+                              ? "PDF"
+                              : u.content_type === "SLIDES"
+                                ? "SLIDES"
+                                : "VIDEO"
+                        }
                         initialVideoUrl={u.video_url ?? ""}
                         initialTextContent={u.text_content ?? ""}
                         initialPdfUrl={u.pdf_url ?? ""}

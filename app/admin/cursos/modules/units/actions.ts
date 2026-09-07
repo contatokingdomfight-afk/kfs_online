@@ -7,9 +7,10 @@ import { assertCourseUnitActor } from "@/lib/auth/course-unit-authorization";
 
 export type UnitFormResult = { error?: string };
 
-function parseContentType(raw: FormDataEntryValue | null): "VIDEO" | "TEXT" | "PDF" {
+function parseContentType(raw: FormDataEntryValue | null): "VIDEO" | "TEXT" | "PDF" | "SLIDES" {
   if (raw === "TEXT") return "TEXT";
   if (raw === "PDF") return "PDF";
+  if (raw === "SLIDES") return "SLIDES";
   return "VIDEO";
 }
 
@@ -37,7 +38,8 @@ export async function createUnit(
   if (!name) return { error: "Nome é obrigatório." };
   if (contentType === "VIDEO" && !videoUrl) return { error: "URL do vídeo é obrigatória para conteúdo em vídeo." };
   if (contentType === "TEXT" && !textContent) return { error: "Texto é obrigatório para conteúdo de leitura." };
-  if (contentType === "PDF" && !pdfUrl) return { error: "Ficheiro PDF é obrigatório para conteúdo em PDF." };
+  if ((contentType === "PDF" || contentType === "SLIDES") && !pdfUrl)
+    return { error: "Ficheiro PDF é obrigatório para este tipo de conteúdo." };
   const sortOrder = sortOrderStr ? parseInt(sortOrderStr, 10) : 0;
   if (isNaN(sortOrder)) return { error: "Ordem deve ser um número." };
 
@@ -52,7 +54,7 @@ export async function createUnit(
     content_type: contentType,
     video_url: contentType === "VIDEO" ? videoUrl : null,
     text_content: contentType === "TEXT" ? textContent : null,
-    pdf_url: contentType === "PDF" ? pdfUrl : null,
+    pdf_url: contentType === "PDF" || contentType === "SLIDES" ? pdfUrl : null,
     sort_order: sortOrder,
     status,
   });
@@ -92,7 +94,8 @@ export async function updateUnit(
   if (!name) return { error: "Dados inválidos." };
   if (contentType === "VIDEO" && !videoUrl) return { error: "URL do vídeo é obrigatória para conteúdo em vídeo." };
   if (contentType === "TEXT" && !textContent) return { error: "Texto é obrigatório para conteúdo de leitura." };
-  if (contentType === "PDF" && !pdfUrl) return { error: "Ficheiro PDF é obrigatório para conteúdo em PDF." };
+  if ((contentType === "PDF" || contentType === "SLIDES") && !pdfUrl)
+    return { error: "Ficheiro PDF é obrigatório para este tipo de conteúdo." };
   const sortOrder = sortOrderStr ? parseInt(sortOrderStr, 10) : 0;
   if (isNaN(sortOrder)) return { error: "Ordem deve ser um número." };
 
@@ -106,7 +109,7 @@ export async function updateUnit(
       content_type: contentType,
       video_url: contentType === "VIDEO" ? videoUrl : null,
       text_content: contentType === "TEXT" ? textContent : null,
-      pdf_url: contentType === "PDF" ? pdfUrl : null,
+      pdf_url: contentType === "PDF" || contentType === "SLIDES" ? pdfUrl : null,
       sort_order: sortOrder,
       status,
       updated_at: new Date().toISOString(),

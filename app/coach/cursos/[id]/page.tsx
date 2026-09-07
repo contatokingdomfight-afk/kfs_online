@@ -187,7 +187,13 @@ export default async function CoachEditarCursoPage({ params }: Props) {
                           <div>
                             <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>{uIdx + 1}. {u.name}</span>
                             <span style={{ fontSize: 12, color: "var(--text-secondary)", marginLeft: 8 }}>
-                              {u.content_type === "VIDEO" ? "Vídeo" : u.content_type === "PDF" ? "PDF" : "Texto"}
+                              {u.content_type === "VIDEO"
+                                ? "Vídeo"
+                                : u.content_type === "PDF"
+                                  ? "PDF"
+                                  : u.content_type === "SLIDES"
+                                    ? "Slides"
+                                    : "Texto"}
                             </span>
                           </div>
                           <DeleteUnitButton unitId={u.id} courseId={course.id} unitName={u.name} />

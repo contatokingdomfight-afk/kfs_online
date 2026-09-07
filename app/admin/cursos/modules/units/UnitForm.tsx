@@ -12,7 +12,7 @@ type Props = {
   unitId?: string;
   initialName?: string;
   initialDescription?: string;
-  initialContentType?: "VIDEO" | "TEXT" | "PDF";
+  initialContentType?: "VIDEO" | "TEXT" | "PDF" | "SLIDES";
   initialVideoUrl?: string;
   initialTextContent?: string;
   initialPdfUrl?: string;
@@ -36,7 +36,7 @@ export function UnitForm({
   onSuccess,
 }: Props) {
   const router = useRouter();
-  const [contentType, setContentType] = useState<"VIDEO" | "TEXT" | "PDF">(initialContentType);
+  const [contentType, setContentType] = useState<"VIDEO" | "TEXT" | "PDF" | "SLIDES">(initialContentType);
   const [pdfUrl, setPdfUrl] = useState(initialPdfUrl);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -103,11 +103,12 @@ export function UnitForm({
           name="contentType"
           className="input"
           value={contentType}
-          onChange={(e) => setContentType(e.target.value as "VIDEO" | "TEXT" | "PDF")}
+          onChange={(e) => setContentType(e.target.value as "VIDEO" | "TEXT" | "PDF" | "SLIDES")}
         >
           <option value="VIDEO">Vídeo</option>
           <option value="TEXT">Texto para leitura (Markdown)</option>
           <option value="PDF">PDF</option>
+          <option value="SLIDES">Slides (PDF navegável página a página)</option>
         </select>
       </label>
       {contentType === "VIDEO" && (
@@ -122,13 +123,18 @@ export function UnitForm({
           <textarea name="textContent" defaultValue={initialTextContent} className="input" rows={6} style={{ resize: "vertical" }} placeholder="Conteúdo para leitura..." />
         </label>
       )}
-      {contentType === "PDF" && (
+      {(contentType === "PDF" || contentType === "SLIDES") && (
         <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Ficheiro PDF (máx. 4 MB)</span>
           <input type="file" accept="application/pdf" onChange={handlePdfSelected} className="input" />
           {uploading && <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>A carregar…</span>}
           {!uploading && pdfUrl && <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>✓ PDF carregado</span>}
           {uploadError && <span style={{ fontSize: 13, color: "var(--danger)" }}>{uploadError}</span>}
+          {contentType === "SLIDES" && (
+            <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+              O aluno vê uma página de cada vez, com botões de avançar/voltar.
+            </span>
+          )}
           <input type="hidden" name="pdfUrl" value={pdfUrl} />
         </label>
       )}
