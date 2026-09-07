@@ -349,7 +349,16 @@ export async function middleware(request: NextRequest) {
       const documentsSigned = waiverSigned && agreementCurrent;
 
       if (!documentsSigned) {
-        if (isAdesaoPath(pathname) || pathname.startsWith("/api/adesao/")) {
+        // /dashboard/perfil fica acessível porque o comprovativo de adesão pode
+        // exigir que o aluno complete lá dados em falta (nome, data de nascimento)
+        // antes de conseguir avançar — sem isto, o link fica preso a redirecionar
+        // sempre de volta para /adesao.
+        if (
+          isAdesaoPath(pathname) ||
+          pathname.startsWith("/api/adesao/") ||
+          pathname === "/dashboard/perfil" ||
+          pathname.startsWith("/dashboard/perfil/")
+        ) {
           return response;
         }
         // Uma API não pode ser redirecionada para uma página (o POST seria reenviado

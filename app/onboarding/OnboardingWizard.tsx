@@ -32,12 +32,22 @@ export function OnboardingWizard({ userName, schools, defaultSchoolId, locale }:
     () => defaultSchoolId || schools[0]?.id || ""
   );
   const [error, setError] = useState<string | null>(null);
+  const [personalDataError, setPersonalDataError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const name = userName?.trim() || t("onboardingWelcomeNameFallback");
 
   function toggleGoal(id: string) {
     setGoals((prev) => (prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]));
+  }
+
+  function handlePersonalDataNext() {
+    if (!dateOfBirth) {
+      setPersonalDataError(t("onboardingWizardDateOfBirthRequired"));
+      return;
+    }
+    setPersonalDataError(null);
+    setStep(3);
   }
 
   async function handleFinish() {
@@ -133,6 +143,7 @@ export function OnboardingWizard({ userName, schools, defaultSchoolId, locale }:
                 type="date"
                 value={dateOfBirth}
                 onChange={(e) => setDateOfBirth(e.target.value)}
+                required
                 className="input"
               />
             </label>
@@ -161,9 +172,12 @@ export function OnboardingWizard({ userName, schools, defaultSchoolId, locale }:
               />
             </label>
           </div>
+          {personalDataError && (
+            <p style={{ fontSize: 14, color: "var(--danger)", margin: 0 }}>{personalDataError}</p>
+          )}
           <button
             type="button"
-            onClick={() => setStep(3)}
+            onClick={handlePersonalDataNext}
             className="btn btn-primary"
             style={{ alignSelf: "flex-start" }}
           >

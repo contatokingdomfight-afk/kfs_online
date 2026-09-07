@@ -16,6 +16,8 @@ export async function completeOnboarding(formData: FormData): Promise<CompleteOn
   const goalsRaw = formData.get("goals") as string; // JSON array
   const schoolId = (formData.get("schoolId") as string)?.trim() || null;
 
+  if (!dateOfBirth) return { error: "Data de nascimento é obrigatória." };
+
   const weightKg = weightRaw === "" ? null : Number(weightRaw);
   const heightCm = heightRaw === "" ? null : Number(heightRaw);
   if (weightRaw && (Number.isNaN(Number(weightRaw)) || Number(weightRaw) <= 0)) return { error: "Peso inválido." };

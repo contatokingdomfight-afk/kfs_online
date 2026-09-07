@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { useFormState } from "react-dom";
 import { saveEnrollmentForm, type SaveEnrollmentFormResult } from "./enrollment-actions";
@@ -131,13 +132,31 @@ export function ComprovativoForm({ prefill }: Props) {
         <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", display: "flex", flexDirection: "column", gap: 14 }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Identificação do(a) sócio(a)</h2>
           <Field label="Nome completo">
-            <input type="text" className="input w-full" value={prefill.fullName} readOnly />
+            <input type="text" className="input w-full" value={prefill.fullName} readOnly required />
+            {!prefill.fullName ? (
+              <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--danger)" }}>
+                Falta o teu nome no perfil.{" "}
+                <Link href="/dashboard/perfil" style={{ color: "var(--primary)", fontWeight: 600 }}>
+                  Atualiza aqui
+                </Link>{" "}
+                antes de continuares.
+              </p>
+            ) : null}
           </Field>
           <Field label="Data de nascimento">
-            <input type="date" className="input w-full" value={prefill.dateOfBirth} readOnly />
+            <input type="date" className="input w-full" value={prefill.dateOfBirth} readOnly required />
+            {!prefill.dateOfBirth ? (
+              <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--danger)" }}>
+                Falta a tua data de nascimento no perfil.{" "}
+                <Link href="/dashboard/perfil" style={{ color: "var(--primary)", fontWeight: 600 }}>
+                  Atualiza aqui
+                </Link>{" "}
+                antes de continuares.
+              </p>
+            ) : null}
           </Field>
           <Field label="E-mail">
-            <input type="email" className="input w-full" value={prefill.email} readOnly />
+            <input type="email" className="input w-full" value={prefill.email} readOnly required />
           </Field>
           <Field label="Cartão de Cidadão / Passaporte n.º">
             <input id="idDocument" name="idDocument" type="text" required className="input w-full" defaultValue={e.idDocument ?? ""} />

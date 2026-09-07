@@ -19,11 +19,16 @@ export default async function DocumentosAdesaoPage() {
   const t = getTranslations(locale);
   const settings = await getInsuranceSettings(supabase);
 
-  const [{ data: student }, { data: agreement }, { data: enrollmentForm }] = await Promise.all([
+  const [{ data: student }, { data: agreement }, { data: waiver }, { data: enrollmentForm }] = await Promise.all([
     supabase.from("Student").select("planId, userId").eq("id", studentId).maybeSingle(),
     supabase
       .from("StudentMembershipAgreement")
       .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl, agreementVersion")
+      .eq("studentId", studentId)
+      .maybeSingle(),
+    supabase
+      .from("StudentWaiver")
+      .select("waiverSigned, waiverSignedAt, signatureName, signatureImageUrl, waiverVersion")
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase.from("StudentEnrollmentForm").select("*").eq("studentId", studentId).maybeSingle(),
@@ -83,6 +88,14 @@ export default async function DocumentosAdesaoPage() {
           agreementVersion:
             (agreement as { agreementVersion?: string | null } | null)?.agreementVersion ??
             settings.membershipAgreementVersion,
+        }}
+        waiver={{
+          waiverSigned: Boolean(waiver?.waiverSigned),
+          waiverSignedAt: (waiver as { waiverSignedAt?: string | null } | null)?.waiverSignedAt ?? null,
+          signatureName: (waiver as { signatureName?: string | null } | null)?.signatureName ?? null,
+          signatureImageUrl: (waiver as { signatureImageUrl?: string | null } | null)?.signatureImageUrl ?? null,
+          waiverVersion:
+            (waiver as { waiverVersion?: string | null } | null)?.waiverVersion ?? settings.waiverVersion,
         }}
         enrollment={{
           formCompleted: Boolean(enrollmentForm?.formCompleted),
