@@ -4,7 +4,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { getThisWeekRangeLisbon } from "@/lib/lesson-utils";
+import { getThisWeekRangeLisbon, getDashboardLessonWeekRangeLisbon } from "@/lib/lesson-utils";
 import {
   calendarDateLisbon,
   getLessonCheckInUiState,
@@ -68,7 +68,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const planAccess = await getCachedPlanAccess(studentId);
   const { hasCheckIn, allowedModalities } = planAccess;
 
-  const { today, endOfWeek } = getThisWeekRangeLisbon();
+  const { today } = getThisWeekRangeLisbon();
+  const { start: weekStart, end: weekEnd, usingNextWeek } = getDashboardLessonWeekRangeLisbon();
   const todayStr = calendarDateLisbon(new Date());
 
   let studentSchoolId: string | null = null;
@@ -137,7 +138,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     modality: L.modality ?? "",
     schoolName: L.schoolId ? schoolNameById.get(L.schoolId) ?? null : null,
   }));
-  const lessonsRawExpanded = lessonsRawExpandedAll.filter((l) => l.date <= endOfWeek);
+  const lessonsRawExpanded = lessonsRawExpandedAll.filter((l) => l.date >= weekStart && l.date <= weekEnd);
   const lessons = filterDashboardLessonsByPlanModality(lessonsRawExpanded, {
     hasPlan,
     allowedModalities,
@@ -170,7 +171,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   let fallbackNextLessons: typeof nonOpenUpcoming = [];
   if (nonOpenUpcoming.length === 0 && openUpcoming.length === 0) {
     const beyondThisWeek = extendedLessons
-      .filter((l) => l.date > endOfWeek)
+      .filter((l) => l.date > weekEnd)
       .filter((l) => isLessonEligibleForNextCard(l, nowForCard))
       .sort((a, b) => (a.date === b.date ? a.startTime.localeCompare(b.startTime) : a.date.localeCompare(b.date)));
     const nextDate = beyondThisWeek[0]?.date;
@@ -223,11 +224,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         ? t("dashboardStripeCancel")
         : null;
 
+  const openClassesSectionTitle = t(
+    usingNextWeek ? "dashboardOpenClassesNextWeekTitle" : "dashboardOpenClassesThisWeekTitle"
+  );
+
   const openClassesSlotForPlan =
     hasPlan && hasOpenClassesCarousel ? (
       <OpenClassesCarouselShell
         itemCount={additionalOpenLessons.length}
-        sectionTitle={t("dashboardOpenClassesThisWeekTitle")}
+        sectionTitle={openClassesSectionTitle}
         swipeHint={t("dashboardOpenClassesCarouselHint")}
         ariaLabelPrev={t("dashboardCarouselPrev")}
         ariaLabelNext={t("dashboardCarouselNext")}
@@ -331,7 +336,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {!hasPlan && hasOpenClassesCarousel && (
         <OpenClassesCarouselShell
           itemCount={additionalOpenLessons.length}
-          sectionTitle={t("dashboardOpenClassesThisWeekTitle")}
+          sectionTitle={openClassesSectionTitle}
           swipeHint={t("dashboardOpenClassesCarouselHint")}
           ariaLabelPrev={t("dashboardCarouselPrev")}
           ariaLabelNext={t("dashboardCarouselNext")}

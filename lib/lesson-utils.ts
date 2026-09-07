@@ -88,6 +88,31 @@ export function getThisWeekRangeLisbon(now: Date = new Date()): { today: string;
   return { today, endOfWeek };
 }
 
+/**
+ * Intervalo de datas do bloco "próximas aulas" no dashboard do aluno.
+ * Normalmente hoje até ao fim desta semana (`getThisWeekRangeLisbon`). A partir de
+ * sábado às 12h (Lisboa), passa a mostrar já a semana seguinte inteira (segunda a
+ * sábado) em vez do que resta desta — dá ao aluno uma vista da semana que vem com
+ * antecedência. `usingNextWeek` indica qual dos dois casos se aplicou (para adaptar
+ * títulos de secção que hoje assumem "esta semana").
+ */
+export function getDashboardLessonWeekRangeLisbon(
+  now: Date = new Date()
+): { start: string; end: string; usingNextWeek: boolean } {
+  const { today, endOfWeek } = getThisWeekRangeLisbon(now);
+  const hourLisbon = Number(formatInTimeZone(now, LISBON_TZ, "H"));
+  const shortW = new Intl.DateTimeFormat("en-US", { timeZone: LISBON_TZ, weekday: "short" })
+    .format(now)
+    .replace(/\.$/, "")
+    .trim();
+  if (shortW === "Sat" && hourLisbon >= 12) {
+    const nextMonday = ymdAddDays(endOfWeek, 2);
+    const nextWeekEnd = ymdAddDays(nextMonday, 5);
+    return { start: nextMonday, end: nextWeekEnd, usingNextWeek: true };
+  }
+  return { start: today, end: endOfWeek, usingNextWeek: false };
+}
+
 /** Segunda-feira da semana de uma data em YYYY-MM-DD. */
 export function getWeekStartMondayForDate(d: Date): string {
   const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
