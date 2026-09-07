@@ -159,6 +159,7 @@ export default async function DashboardPerformancePage() {
         .from("StudentPhysicalAssessment")
         .select("assessedAt, nextDueAt, formData")
         .eq("studentId", studentId)
+        .eq("status", "SUBMITTED")
         .order("assessedAt", { ascending: false })
         .limit(1),
       supabase.from("StudentProfile").select("heightCm, weightKg").eq("studentId", studentId).maybeSingle(),

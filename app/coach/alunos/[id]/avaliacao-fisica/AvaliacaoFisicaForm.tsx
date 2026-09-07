@@ -3,11 +3,12 @@
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
-import { savePhysicalAssessment } from "./actions";
+import { savePhysicalAssessment, type SaveAssessmentResult } from "./actions";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { PhysicalAssessmentInstructorScoreHints } from "@/components/physical-assessment/PhysicalAssessmentInstructorScoreHints";
 
 type SubmitPhase = "idle" | "saving" | "saved";
+import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import {
   OBJECTIVE_OPTIONS,
   MEDICAL_CONDITIONS,
@@ -31,6 +32,9 @@ type Props = {
   studentHeight: number | null;
   studentWeight: number | null;
   assessmentDate: string;
+  /** Rascunho guardado anteriormente (se houver) — pré-preenche o formulário para retomar. */
+  initialFormData?: PhysicalAssessmentFormData | null;
+  initialClearance?: string | null;
 };
 
 /** No blur: ajusta `type=number` com min/max ao intervalo (evita erro nativo ao guardar). */
@@ -63,12 +67,19 @@ export function AvaliacaoFisicaForm({
   studentHeight,
   studentWeight,
   assessmentDate,
+  initialFormData,
+  initialClearance,
 }: Props) {
-  const [state, formAction] = useFormState(savePhysicalAssessment, null as { error?: string; success?: boolean } | null);
+  const fd = initialFormData ?? {};
+  const [state, formAction] = useFormState(savePhysicalAssessment, null as SaveAssessmentResult | null);
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
+  const [lastIntent, setLastIntent] = useState<"draft" | "submit">("submit");
+  /** Controla o hidden input "intent"; só disparamos requestSubmit() depois de React confirmar
+   * (via effect, que corre após o commit) que o DOM já reflete o valor escolhido. */
+  const [pendingIntent, setPendingIntent] = useState<"draft" | "submit" | null>(null);
 
   useEffect(() => {
     if (state?.error) {
@@ -82,10 +93,20 @@ export function AvaliacaoFisicaForm({
   useEffect(() => {
     if (submitPhase !== "saved") return;
     const t = window.setTimeout(() => {
-      router.push(afterSaveHref);
+      if (lastIntent === "draft") {
+        router.refresh();
+      } else {
+        router.push(afterSaveHref);
+      }
     }, 1000);
     return () => window.clearTimeout(t);
-  }, [submitPhase, afterSaveHref, router]);
+  }, [submitPhase, afterSaveHref, router, lastIntent]);
+
+  useEffect(() => {
+    if (!pendingIntent) return;
+    formRef.current?.requestSubmit();
+    setPendingIntent(null);
+  }, [pendingIntent]);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -100,8 +121,19 @@ export function AvaliacaoFisicaForm({
       form.reportValidity();
       return;
     }
+    setLastIntent("submit");
     setSubmitPhase("saving");
-    queueMicrotask(() => form.requestSubmit());
+    setPendingIntent("submit");
+  };
+
+  const handleSaveDraftClick = () => {
+    const form = formRef.current;
+    if (!form) return;
+    form.querySelectorAll<HTMLInputElement>('input[type="number"]').forEach(clampNumberInputToMinMax);
+    // Rascunho pode ficar incompleto — não valida campos obrigatórios (ex.: liberação).
+    setLastIntent("draft");
+    setSubmitPhase("saving");
+    setPendingIntent("draft");
   };
 
   return (
@@ -109,12 +141,14 @@ export function AvaliacaoFisicaForm({
       ref={formRef}
       action={formAction}
       className="space-y-6 md:space-y-8 w-full"
+      noValidate
       onInvalid={() => setSubmitPhase("idle")}
       onBlur={(e) => {
         if (e.target instanceof HTMLInputElement) clampNumberInputToMinMax(e.target);
       }}
     >
       <input type="hidden" name="studentId" value={studentId} />
+      <input type="hidden" name="intent" value={pendingIntent ?? lastIntent} readOnly />
       {state?.error && (
         <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-2 text-sm text-red-600 dark:text-red-400">
           {state.error}
@@ -125,9 +159,9 @@ export function AvaliacaoFisicaForm({
         open={showConfirm}
         onClose={() => setShowConfirm(false)}
         onConfirm={handleConfirmSubmit}
-        title="Guardar avaliação física?"
+        title="Entregar avaliação física?"
         message="A ficha será registada e a próxima renovação ficará agendada para daqui a 6 meses. Deseja continuar?"
-        confirmLabel="Sim, guardar"
+        confirmLabel="Sim, entregar"
         cancelLabel="Cancelar"
         variant="primary"
       />
@@ -150,6 +184,22 @@ export function AvaliacaoFisicaForm({
                   Aguarda enquanto a ficha de anamnese e avaliação física é registada no servidor.
                 </p>
                 <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden">
+                  <div className="h-full w-[40%] rounded-full bg-[var(--primary)] animate-loading-bar" />
+                </div>
+              </>
+            ) : lastIntent === "draft" ? (
+              <>
+                <div
+                  className="mx-auto w-12 h-12 rounded-full bg-amber-500/30 flex items-center justify-center mb-4"
+                  aria-hidden
+                >
+                  <span className="text-2xl text-amber-600 dark:text-amber-400">✓</span>
+                </div>
+                <p className="text-lg font-semibold text-[var(--text-primary)] mb-2">Rascunho guardado</p>
+                <p className="text-sm text-[var(--text-secondary)] mb-4">
+                  Podes continuar mais tarde — o que já preencheste fica guardado nesta ficha.
+                </p>
+                <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden opacity-60">
                   <div className="h-full w-[40%] rounded-full bg-[var(--primary)] animate-loading-bar" />
                 </div>
               </>
@@ -199,13 +249,25 @@ export function AvaliacaoFisicaForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-2.5 mt-3">
           {OBJECTIVE_OPTIONS.map((o) => (
             <label key={o.value} className="flex items-start gap-2.5 text-sm min-w-0">
-              <input type="checkbox" name="objectives" value={o.value} className="rounded mt-0.5 shrink-0" />
+              <input
+                type="checkbox"
+                name="objectives"
+                value={o.value}
+                defaultChecked={fd.objectives?.includes(o.value)}
+                className="rounded mt-0.5 shrink-0"
+              />
               <span>{o.label}</span>
             </label>
           ))}
           <label className="flex flex-col gap-1.5 text-sm min-w-0 sm:col-span-2 xl:col-span-3">
             <span className="font-medium text-text-primary">Outro</span>
-            <input type="text" name="objectiveOther" className="input w-full max-w-xl" placeholder="especificar" />
+            <input
+              type="text"
+              name="objectiveOther"
+              defaultValue={fd.objectiveOther ?? ""}
+              className="input w-full max-w-xl"
+              placeholder="especificar"
+            />
           </label>
         </div>
       </fieldset>
@@ -217,32 +279,44 @@ export function AvaliacaoFisicaForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2.5">
           {MEDICAL_CONDITIONS.map((c) => (
             <label key={c} className="flex items-start gap-2.5 text-sm min-w-0">
-              <input type="checkbox" name="medicalConditions" value={c} className="rounded mt-0.5 shrink-0" />
+              <input
+                type="checkbox"
+                name="medicalConditions"
+                value={c}
+                defaultChecked={fd.medicalConditions?.includes(c)}
+                className="rounded mt-0.5 shrink-0"
+              />
               <span>{MEDICAL_CONDITIONS_LABELS[c] ?? c}</span>
             </label>
           ))}
         </div>
         <label className="mt-3 flex flex-col gap-1.5 text-sm max-w-xl">
           <span className="text-text-secondary">Outros (especificar)</span>
-          <input type="text" name="medicalConditionsOther" className="input w-full" />
+          <input type="text" name="medicalConditionsOther" defaultValue={fd.medicalConditionsOther ?? ""} className="input w-full" />
         </label>
         <p className="text-sm text-text-secondary mt-5 mb-2 font-medium">3.2 Medicação regular?</p>
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-8">
           <label className="flex items-center gap-2 text-sm">
-            <input type="radio" name="usesMedication" value="false" defaultChecked /> Não
+            <input type="radio" name="usesMedication" value="false" defaultChecked={!fd.usesMedication} /> Não
           </label>
           <label className="flex items-center gap-2 text-sm">
-            <input type="radio" name="usesMedication" value="true" /> Sim
+            <input type="radio" name="usesMedication" value="true" defaultChecked={fd.usesMedication === true} /> Sim
           </label>
         </div>
-        <input type="text" name="medicationDetail" className="input mt-2 w-full max-w-xl" placeholder="Qual?" />
+        <input
+          type="text"
+          name="medicationDetail"
+          defaultValue={fd.medicationDetail ?? ""}
+          className="input mt-2 w-full max-w-xl"
+          placeholder="Qual?"
+        />
         <p className="text-sm text-text-secondary mt-5 mb-2 font-medium">3.3 Lesões relevantes?</p>
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-8">
           <label className="flex items-center gap-2 text-sm">
-            <input type="radio" name="hasInjuries" value="false" defaultChecked /> Não
+            <input type="radio" name="hasInjuries" value="false" defaultChecked={!fd.hasInjuries} /> Não
           </label>
           <label className="flex items-center gap-2 text-sm">
-            <input type="radio" name="hasInjuries" value="true" /> Sim
+            <input type="radio" name="hasInjuries" value="true" defaultChecked={fd.hasInjuries === true} /> Sim
           </label>
         </div>
       </fieldset>
@@ -254,16 +328,24 @@ export function AvaliacaoFisicaForm({
           Se alguma resposta for SIM → encaminhar para avaliação médica.
         </p>
         <ul className="m-0 p-0 list-none space-y-2 max-w-3xl">
-          {[
-            { name: "parqChestPain", label: "Sente dor no peito durante exercício?" },
-            { name: "parqFainted", label: "Já desmaiou ou perdeu equilíbrio?" },
-            { name: "parqBoneJoint", label: "Tem problema ósseo/articular agravado pelo exercício?" },
-            { name: "parqDoctorLimit", label: "Médico já recomendou limitar atividade física?" },
-            { name: "parqOther", label: "Tem alguma outra condição que afete o treino?" },
-          ].map(({ name, label }) => (
+          {(
+            [
+              { name: "parqChestPain", label: "Sente dor no peito durante exercício?" },
+              { name: "parqFainted", label: "Já desmaiou ou perdeu equilíbrio?" },
+              { name: "parqBoneJoint", label: "Tem problema ósseo/articular agravado pelo exercício?" },
+              { name: "parqDoctorLimit", label: "Médico já recomendou limitar atividade física?" },
+              { name: "parqOther", label: "Tem alguma outra condição que afete o treino?" },
+            ] as const
+          ).map(({ name, label }) => (
             <li key={name} className="rounded-lg border border-border bg-bg/40 px-3 py-2.5 md:px-4">
               <label className="flex items-start gap-3 text-sm cursor-pointer">
-                <input type="checkbox" name={name} value="true" className="rounded mt-0.5 shrink-0" />
+                <input
+                  type="checkbox"
+                  name={name}
+                  value="true"
+                  defaultChecked={fd[name] === true}
+                  className="rounded mt-0.5 shrink-0"
+                />
                 <span>
                   <span className="font-medium text-text-primary">SIM</span>
                   <span className="text-text-secondary"> — {label}</span>
@@ -280,7 +362,13 @@ export function AvaliacaoFisicaForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 mt-3">
           {ACTIVITY_LEVELS.map((a) => (
             <label key={a.value} className="flex items-start gap-2.5 text-sm min-w-0">
-              <input type="radio" name="activityLevel" value={a.value} className="mt-0.5 shrink-0" />
+              <input
+                type="radio"
+                name="activityLevel"
+                value={a.value}
+                defaultChecked={fd.activityLevel === a.value}
+                className="mt-0.5 shrink-0"
+              />
               <span>{a.label}</span>
             </label>
           ))}
@@ -288,15 +376,21 @@ export function AvaliacaoFisicaForm({
         <p className="text-sm font-medium text-text-primary mt-5 mb-2">Experiência prévia em artes marciais?</p>
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-8">
           <label className="flex items-center gap-2 text-sm">
-            <input type="radio" name="previousMartialArts" value="false" defaultChecked /> Não
+            <input type="radio" name="previousMartialArts" value="false" defaultChecked={!fd.previousMartialArts} /> Não
           </label>
           <label className="flex items-center gap-2 text-sm">
-            <input type="radio" name="previousMartialArts" value="true" /> Sim
+            <input type="radio" name="previousMartialArts" value="true" defaultChecked={fd.previousMartialArts === true} /> Sim
           </label>
         </div>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl">
-          <input type="text" name="previousModality" className="input w-full" placeholder="Modalidade" />
-          <input type="text" name="previousPracticeTime" className="input w-full" placeholder="Tempo de prática" />
+          <input type="text" name="previousModality" defaultValue={fd.previousModality ?? ""} className="input w-full" placeholder="Modalidade" />
+          <input
+            type="text"
+            name="previousPracticeTime"
+            defaultValue={fd.previousPracticeTime ?? ""}
+            className="input w-full"
+            placeholder="Tempo de prática"
+          />
         </div>
       </fieldset>
 
@@ -318,7 +412,7 @@ export function AvaliacaoFisicaForm({
               min={100}
               max={250}
               step={1}
-              defaultValue={studentHeight ?? ""}
+              defaultValue={fd.heightCm ?? studentHeight ?? ""}
               placeholder="ex.: 172"
               className="input w-full max-w-[10rem]"
             />
@@ -331,7 +425,7 @@ export function AvaliacaoFisicaForm({
               min={20}
               max={300}
               step={0.1}
-              defaultValue={studentWeight ?? ""}
+              defaultValue={fd.weightKg ?? studentWeight ?? ""}
               placeholder="ex.: 70,5"
               className="input w-full max-w-[10rem]"
             />
@@ -341,44 +435,75 @@ export function AvaliacaoFisicaForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl">
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>FC repouso (bpm)</span>
-            <input type="number" name="heartRateRest" min={30} max={200} className="input w-full max-w-[8rem]" />
+            <input type="number" name="heartRateRest" min={30} max={200} defaultValue={fd.heartRateRest ?? ""} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>FC em atividade (bpm)</span>
-            <input type="number" name="heartRateActivity" min={40} max={220} className="input w-full max-w-[8rem]" />
+            <input
+              type="number"
+              name="heartRateActivity"
+              min={40}
+              max={220}
+              defaultValue={fd.heartRateActivity ?? ""}
+              className="input w-full max-w-[8rem]"
+            />
             <span className="text-[11px] text-text-secondary leading-snug">
               Ex.: após aquecimento ou após um teste leve; regista o contexto nas notas se precisares.
             </span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>PA</span>
-            <input type="text" name="bloodPressure" className="input w-full max-w-[8rem]" placeholder="120/80" />
+            <input type="text" name="bloodPressure" defaultValue={fd.bloodPressure ?? ""} className="input w-full max-w-[8rem]" placeholder="120/80" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Sat. O₂</span>
-            <input type="text" name="saturationO2" className="input w-full max-w-[8rem]" />
+            <input type="text" name="saturationO2" defaultValue={fd.saturationO2 ?? ""} className="input w-full max-w-[8rem]" />
           </label>
         </div>
         <p className="text-sm text-text-secondary mt-5 mb-2 font-medium">6.2 Mobilidade</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
           {MOBILITY_OPTIONS.map((m) => (
             <label key={m} className="flex items-start gap-2.5 text-sm min-w-0">
-              <input type="checkbox" name="mobilityLimitations" value={m} className="rounded mt-0.5 shrink-0" />
+              <input
+                type="checkbox"
+                name="mobilityLimitations"
+                value={m}
+                defaultChecked={fd.mobilityLimitations?.includes(m)}
+                className="rounded mt-0.5 shrink-0"
+              />
               <span>{MOBILITY_LABELS[m] ?? m}</span>
             </label>
           ))}
         </div>
-        <input type="text" name="mobilityNotes" className="input mt-3 w-full max-w-3xl" placeholder="Observações" />
+        <input
+          type="text"
+          name="mobilityNotes"
+          defaultValue={fd.mobilityNotes ?? ""}
+          className="input mt-3 w-full max-w-3xl"
+          placeholder="Observações"
+        />
         <p className="text-sm text-text-secondary mt-5 mb-2 font-medium">6.3 Postural</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
           {POSTURAL_OPTIONS.map((p) => (
             <label key={p} className="flex items-start gap-2.5 text-sm min-w-0">
-              <input type="checkbox" name="posturalAssessment" value={p} className="rounded mt-0.5 shrink-0" />
+              <input
+                type="checkbox"
+                name="posturalAssessment"
+                value={p}
+                defaultChecked={fd.posturalAssessment?.includes(p)}
+                className="rounded mt-0.5 shrink-0"
+              />
               <span>{POSTURAL_LABELS[p] ?? p}</span>
             </label>
           ))}
         </div>
-        <input type="text" name="posturalNotes" className="input mt-3 w-full max-w-3xl" placeholder="Observações" />
+        <input
+          type="text"
+          name="posturalNotes"
+          defaultValue={fd.posturalNotes ?? ""}
+          className="input mt-3 w-full max-w-3xl"
+          placeholder="Observações"
+        />
       </fieldset>
 
       {/* 6.4 Antropometria (opcional) */}
@@ -400,6 +525,7 @@ export function AvaliacaoFisicaForm({
               min={18}
               max={75}
               step={1}
+              defaultValue={fd.breadthShoulderCm ?? ""}
               className="input w-full max-w-[7.5rem]"
             />
             <span className="text-[11px] text-text-secondary leading-snug">
@@ -408,96 +534,208 @@ export function AvaliacaoFisicaForm({
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Braço esq.: ombro → ponta do dedo (cm)</span>
-            <input type="number" name="lenArmShoulderFingertipLeftCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="lenArmShoulderFingertipLeftCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.lenArmShoulderFingertipLeftCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Braço dir.: ombro → ponta do dedo (cm)</span>
-            <input type="number" name="lenArmShoulderFingertipRightCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="lenArmShoulderFingertipRightCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.lenArmShoulderFingertipRightCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Perna esq.: entrepé (virilha → tornozelo int., cm)</span>
-            <input type="number" name="lenLegInseamLeftCm" min={35} max={145} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="lenLegInseamLeftCm"
+              min={35}
+              max={145}
+              step={1}
+              defaultValue={fd.lenLegInseamLeftCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
             <span className="text-[11px] text-text-secondary leading-snug">
               Complementa a altura no perfil; protocolo da escola (ex.: ISAK).
             </span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Perna dir.: entrepé (virilha → tornozelo int., cm)</span>
-            <input type="number" name="lenLegInseamRightCm" min={35} max={145} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="lenLegInseamRightCm"
+              min={35}
+              max={145}
+              step={1}
+              defaultValue={fd.lenLegInseamRightCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
         </div>
         <p className="text-xs text-text-secondary font-medium mb-2">Circunferências</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-4">
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Pescoço (cm)</span>
-            <input type="number" name="circNeckCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input type="number" name="circNeckCm" min={8} max={320} step={1} defaultValue={fd.circNeckCm ?? ""} className="input w-full max-w-[7.5rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Cabeça (cm)</span>
-            <input type="number" name="circHeadCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input type="number" name="circHeadCm" min={8} max={320} step={1} defaultValue={fd.circHeadCm ?? ""} className="input w-full max-w-[7.5rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Braço relax. / meio braço — esq. (cm)</span>
-            <input type="number" name="circArmLeftCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="circArmLeftCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.circArmLeftCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Braço relax. / meio braço — dir. (cm)</span>
-            <input type="number" name="circArmRightCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="circArmRightCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.circArmRightCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Bíceps esq. (cm)</span>
-            <input type="number" name="circBicepsLeftCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="circBicepsLeftCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.circBicepsLeftCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
             <span className="text-[11px] text-text-secondary leading-snug">ex.: braço flexionado</span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Bíceps dir. (cm)</span>
-            <input type="number" name="circBicepsRightCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="circBicepsRightCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.circBicepsRightCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
             <span className="text-[11px] text-text-secondary leading-snug">ex.: braço flexionado</span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Antebraço esq. (cm)</span>
-            <input type="number" name="circForearmLeftCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="circForearmLeftCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.circForearmLeftCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Antebraço dir. (cm)</span>
-            <input type="number" name="circForearmRightCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="circForearmRightCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.circForearmRightCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Abdómen (cm)</span>
-            <input type="number" name="circAbdomenCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input type="number" name="circAbdomenCm" min={8} max={320} step={1} defaultValue={fd.circAbdomenCm ?? ""} className="input w-full max-w-[7.5rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Tórax (cm)</span>
-            <input type="number" name="circChestCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input type="number" name="circChestCm" min={8} max={320} step={1} defaultValue={fd.circChestCm ?? ""} className="input w-full max-w-[7.5rem]" />
             <span className="text-[11px] text-text-secondary leading-snug">ex.: nível dos mamilos; seguir protocolo da escola</span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Quadril (cm)</span>
-            <input type="number" name="circHipCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input type="number" name="circHipCm" min={8} max={320} step={1} defaultValue={fd.circHipCm ?? ""} className="input w-full max-w-[7.5rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Coxa esq. (cm)</span>
-            <input type="number" name="circThighLeftCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="circThighLeftCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.circThighLeftCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Coxa dir. (cm)</span>
-            <input type="number" name="circThighRightCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="circThighRightCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.circThighRightCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Panturrilha esq. (cm)</span>
-            <input type="number" name="circCalfLeftCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="circCalfLeftCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.circCalfLeftCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Panturrilha dir. (cm)</span>
-            <input type="number" name="circCalfRightCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input
+              type="number"
+              name="circCalfRightCm"
+              min={8}
+              max={320}
+              step={1}
+              defaultValue={fd.circCalfRightCm ?? ""}
+              className="input w-full max-w-[7.5rem]"
+            />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>N.º calçado (BR ou nota)</span>
-            <input type="text" name="shoeSizeBr" maxLength={16} className="input w-full max-w-[10rem]" placeholder="ex.: 40" />
+            <input type="text" name="shoeSizeBr" maxLength={16} defaultValue={fd.shoeSizeBr ?? ""} className="input w-full max-w-[10rem]" placeholder="ex.: 40" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Comprimento do pé (cm)</span>
-            <input type="number" name="footLengthCm" min={8} max={320} step={1} className="input w-full max-w-[7.5rem]" />
+            <input type="number" name="footLengthCm" min={8} max={320} step={1} defaultValue={fd.footLengthCm ?? ""} className="input w-full max-w-[7.5rem]" />
           </label>
         </div>
       </fieldset>
@@ -508,23 +746,23 @@ export function AvaliacaoFisicaForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 mt-3 max-w-4xl">
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Flexões / 1 min</span>
-            <input type="number" name="pushups1min" min={0} max={500} className="input w-full max-w-[8rem]" />
+            <input type="number" name="pushups1min" min={0} max={500} defaultValue={fd.pushups1min ?? ""} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Barras (pull-ups) / 1 min</span>
-            <input type="number" name="pullUps1min" min={0} max={200} className="input w-full max-w-[8rem]" />
+            <input type="number" name="pullUps1min" min={0} max={200} defaultValue={fd.pullUps1min ?? ""} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Abdominais / 1 min</span>
-            <input type="number" name="situps1min" min={0} max={500} className="input w-full max-w-[8rem]" />
+            <input type="number" name="situps1min" min={0} max={500} defaultValue={fd.situps1min ?? ""} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Prancha (seg)</span>
-            <input type="number" name="plankSeconds" min={0} max={36000} className="input w-full max-w-[8rem]" />
+            <input type="number" name="plankSeconds" min={0} max={36000} defaultValue={fd.plankSeconds ?? ""} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Agachamentos / 1 min</span>
-            <input type="number" name="squats1min" min={0} max={500} className="input w-full max-w-[8rem]" />
+            <input type="number" name="squats1min" min={0} max={500} defaultValue={fd.squats1min ?? ""} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0 sm:col-span-2 lg:col-span-3">
             <span>Distância em 1 min (corrida ou esteira)</span>
@@ -535,6 +773,7 @@ export function AvaliacaoFisicaForm({
                 min={1}
                 max={200000}
                 step="any"
+                defaultValue={fd.runDistance1minMeters ?? ""}
                 className="input w-full max-w-[9rem]"
                 placeholder="ex.: 280 ou 1,2"
               />
@@ -549,7 +788,7 @@ export function AvaliacaoFisicaForm({
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0 sm:col-span-2 lg:col-span-3">
             <span>Corrida — observações (opcional)</span>
-            <input type="text" name="runTest" className="input w-full max-w-md" />
+            <input type="text" name="runTest" defaultValue={fd.runTest ?? ""} className="input w-full max-w-md" />
           </label>
         </div>
       </fieldset>
@@ -564,35 +803,43 @@ export function AvaliacaoFisicaForm({
         <div className="flex flex-wrap gap-4 mb-2">
           <span className="text-sm text-text-secondary shrink-0">Sexo para tabelas:</span>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="radio" name="referenceSex" value="" defaultChecked className="rounded-full" />
+            <input type="radio" name="referenceSex" value="" defaultChecked={!fd.referenceSex} className="rounded-full" />
             Não indicar
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="radio" name="referenceSex" value="F" className="rounded-full" />
+            <input type="radio" name="referenceSex" value="F" defaultChecked={fd.referenceSex === "F"} className="rounded-full" />
             Raparigas
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="radio" name="referenceSex" value="M" className="rounded-full" />
+            <input type="radio" name="referenceSex" value="M" defaultChecked={fd.referenceSex === "M"} className="rounded-full" />
             Rapazes
           </label>
         </div>
         <PhysicalAssessmentInstructorScoreHints formRef={formRef} studentDob={studentDob} />
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-3 mt-3 max-w-6xl">
-          {[
-            { label: "Condição física", name: "scoreCondition" },
-            { label: "Mobilidade", name: "scoreMobility" },
-            { label: "Coordenação", name: "scoreCoordination" },
-            { label: "Resistência", name: "scoreEndurance" },
-            { label: "Força", name: "scoreStrength" },
-            { label: "Velocidade", name: "scoreSpeed" },
-          ].map(({ label, name }) => (
+          {(
+            [
+              { label: "Condição física", name: "scoreCondition" },
+              { label: "Mobilidade", name: "scoreMobility" },
+              { label: "Coordenação", name: "scoreCoordination" },
+              { label: "Resistência", name: "scoreEndurance" },
+              { label: "Força", name: "scoreStrength" },
+              { label: "Velocidade", name: "scoreSpeed" },
+            ] as const
+          ).map(({ label, name }) => (
             <label key={name} className="flex flex-col gap-1.5 text-sm min-w-0">
               <span className="leading-snug">{label}</span>
-              <input type="number" name={name} min={1} max={10} className="input w-full max-w-[4.5rem]" />
+              <input type="number" name={name} min={1} max={10} defaultValue={fd[name] ?? ""} className="input w-full max-w-[4.5rem]" />
             </label>
           ))}
         </div>
-        <textarea name="instructorNotes" rows={2} className="input mt-4 w-full max-w-3xl" placeholder="Observações do instrutor" />
+        <textarea
+          name="instructorNotes"
+          rows={2}
+          defaultValue={fd.instructorNotes ?? ""}
+          className="input mt-4 w-full max-w-3xl"
+          placeholder="Observações do instrutor"
+        />
       </fieldset>
 
       {/* 9. Termo */}
@@ -603,29 +850,44 @@ export function AvaliacaoFisicaForm({
         </p>
         <label className="mt-4 flex flex-col gap-1.5 text-sm max-w-xs">
           <span className="font-medium text-text-primary">Data assinatura (aluno)</span>
-          <input type="date" name="signatureDate" className="input w-full min-w-[10rem]" />
+          <input type="date" name="signatureDate" defaultValue={fd.signatureDate ?? ""} className="input w-full min-w-[10rem]" />
         </label>
       </fieldset>
 
       {/* 10. Liberação */}
       <fieldset className="rounded-xl bg-bg-secondary border border-border p-4 md:p-6">
         <legend className="text-base font-semibold text-text-primary">10. Liberação</legend>
+        <p className="text-xs text-text-secondary mt-1 mb-1 max-w-3xl">
+          Obrigatória só para entregar a ficha — não é preciso para guardar como rascunho.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 max-w-4xl">
           {CLEARANCE_OPTIONS.map((c) => (
             <label
               key={c.value}
               className="flex items-start gap-2.5 text-sm rounded-lg border border-border px-3 py-3 cursor-pointer hover:bg-bg/30 min-h-[3.25rem]"
             >
-              <input type="radio" name="clearance" value={c.value} required className="mt-0.5 shrink-0" />
+              <input
+                type="radio"
+                name="clearance"
+                value={c.value}
+                required
+                defaultChecked={initialClearance === c.value}
+                className="mt-0.5 shrink-0"
+              />
               <span className="leading-snug">{c.label}</span>
             </label>
           ))}
         </div>
       </fieldset>
 
-      <button type="button" onClick={handleSubmitClick} className="btn btn-primary w-full sm:w-auto">
-        Guardar avaliação física
-      </button>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <button type="button" onClick={handleSaveDraftClick} className="btn btn-secondary w-full sm:w-auto">
+          Guardar rascunho
+        </button>
+        <button type="button" onClick={handleSubmitClick} className="btn btn-primary w-full sm:w-auto">
+          Entregar avaliação física
+        </button>
+      </div>
     </form>
   );
 }

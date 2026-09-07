@@ -177,6 +177,7 @@ export async function getAchievementUnlockContext(
       .from("StudentPhysicalAssessment")
       .select("id")
       .eq("studentId", studentId)
+      .eq("status", "SUBMITTED")
       .limit(1)
       .maybeSingle(),
     computeBadgeStats(supabase, studentId),

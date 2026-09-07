@@ -42,6 +42,7 @@ export async function getWhatIsNewNextMission(
     .from("StudentPhysicalAssessment")
     .select("assessedAt, nextDueAt, formData")
     .eq("studentId", studentId)
+    .eq("status", "SUBMITTED")
     .order("assessedAt", { ascending: false })
     .limit(1);
 

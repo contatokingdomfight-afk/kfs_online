@@ -84,7 +84,7 @@ function parseRunDistance1minMeters(formData: FormData): number | null {
   return meters;
 }
 
-export type SaveAssessmentResult = { error?: string; success?: boolean };
+export type SaveAssessmentResult = { error?: string; success?: boolean; isDraft?: boolean };
 
 export async function savePhysicalAssessment(
   _prev: SaveAssessmentResult | null,
@@ -102,17 +102,25 @@ export async function savePhysicalAssessment(
 
   const supabase = await createClient();
 
-  const clearance = (formData.get("clearance") as string)?.trim();
-  if (!clearance || !["APTO", "APTO_RESTRICOES", "NECESSITA_AVALIACAO_MEDICA"].includes(clearance)) {
+  const isDraft = ((formData.get("intent") as string) || "submit").trim() === "draft";
+
+  const clearanceRaw = (formData.get("clearance") as string)?.trim() || null;
+  if (!isDraft && (!clearanceRaw || !["APTO", "APTO_RESTRICOES", "NECESSITA_AVALIACAO_MEDICA"].includes(clearanceRaw))) {
     return { error: "Seleciona uma liberação (Apto / Apto com restrições / Necessita avaliação médica)." };
   }
+  const clearance = clearanceRaw;
 
   const assessedAtStr = (formData.get("assessedAt") as string)?.trim();
   const assessedAt = assessedAtStr ? new Date(assessedAtStr) : new Date();
   if (Number.isNaN(assessedAt.getTime())) return { error: "Data da avaliação inválida." };
 
-  const nextDue = new Date(assessedAt);
-  nextDue.setMonth(nextDue.getMonth() + MONTHS_UNTIL_NEXT);
+  /** Rascunho não tem data de renovação — só passa a contar quando entregue. */
+  let nextDueAtStr: string | null = null;
+  if (!isDraft) {
+    const nextDue = new Date(assessedAt);
+    nextDue.setMonth(nextDue.getMonth() + MONTHS_UNTIL_NEXT);
+    nextDueAtStr = nextDue.toISOString().slice(0, 10);
+  }
 
   const formDataJson: PhysicalAssessmentFormData = {
     objectives: formData.getAll("objectives") as string[],
@@ -195,19 +203,37 @@ export async function savePhysicalAssessment(
   }
   if (!finalCoachId) return { error: "Nenhum coach encontrado para associar à avaliação." };
 
-  const { error } = await supabase.from("StudentPhysicalAssessment").insert({
-    id: randomUUID(),
+  const payload = {
     studentId,
     coachId: finalCoachId,
     assessedAt: assessedAt.toISOString().slice(0, 10),
-    nextDueAt: nextDue.toISOString().slice(0, 10),
+    nextDueAt: nextDueAtStr,
     clearance,
     formData: formDataJson,
-  });
+    status: isDraft ? "DRAFT" : "SUBMITTED",
+  };
+
+  /** Guardar rascunho várias vezes atualiza a mesma linha em vez de duplicar; entregar
+   * "promove" o rascunho existente (se houver) para SUBMITTED em vez de criar outra linha. */
+  const { data: existingDraft } = await supabase
+    .from("StudentPhysicalAssessment")
+    .select("id")
+    .eq("studentId", studentId)
+    .eq("status", "DRAFT")
+    .maybeSingle();
+
+  const { error } = existingDraft
+    ? await supabase.from("StudentPhysicalAssessment").update(payload).eq("id", existingDraft.id)
+    : await supabase.from("StudentPhysicalAssessment").insert({ id: randomUUID(), ...payload });
 
   if (error) {
     console.error("savePhysicalAssessment:", error);
     return { error: error.message };
+  }
+
+  if (isDraft) {
+    revalidatePath(`/coach/alunos/${studentId}/avaliacao-fisica`);
+    return { success: true, isDraft: true };
   }
 
   await fulfillPendingPhysicalAssessmentRequests(supabase, studentId);

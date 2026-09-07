@@ -26,6 +26,7 @@ export default async function DashboardFichaFisicaPage() {
       .from("StudentPhysicalAssessment")
       .select("assessedAt, nextDueAt, clearance, formData, coachId")
       .eq("studentId", studentId)
+      .eq("status", "SUBMITTED")
       .order("assessedAt", { ascending: false })
       .limit(1),
     supabase.from("Student").select("userId").eq("id", studentId).single(),

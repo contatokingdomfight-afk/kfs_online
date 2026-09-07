@@ -3,6 +3,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { AvaliacaoFisicaForm } from "./AvaliacaoFisicaForm";
+import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -56,13 +57,22 @@ export default async function CoachAlunoAvaliacaoFisicaPage({ params, searchPara
   const weight = profile?.weightKg != null ? Number(profile.weightKg) : null;
   const today = new Date().toISOString().slice(0, 10);
 
+  const { data: draft } = await supabase
+    .from("StudentPhysicalAssessment")
+    .select("assessedAt, clearance, formData")
+    .eq("studentId", studentId)
+    .eq("status", "DRAFT")
+    .maybeSingle();
+
   return (
     <div className="p-4 sm:p-6 max-w-3xl xl:max-w-6xl 2xl:max-w-7xl mx-auto pb-12">
       <h1 className="text-xl sm:text-2xl font-semibold text-text-primary m-0 mb-6">
         Ficha de Anamnese e Avaliação Física
       </h1>
       <p className="text-sm text-text-secondary mb-6">
-        Preenche a ficha e guarda. A renovação é obrigatória a cada 6 meses.
+        {draft
+          ? "Continuação de um rascunho guardado anteriormente — os campos já preenchidos foram recuperados."
+          : "Preenche a ficha e guarda. A renovação é obrigatória a cada 6 meses."}
       </p>
       <AvaliacaoFisicaForm
         studentId={studentId}
@@ -73,7 +83,9 @@ export default async function CoachAlunoAvaliacaoFisicaPage({ params, searchPara
         studentPhone={phone}
         studentHeight={height}
         studentWeight={weight}
-        assessmentDate={today}
+        assessmentDate={draft?.assessedAt ? String(draft.assessedAt).slice(0, 10) : today}
+        initialFormData={(draft?.formData as PhysicalAssessmentFormData | null) ?? null}
+        initialClearance={(draft?.clearance as string | null) ?? null}
       />
     </div>
   );

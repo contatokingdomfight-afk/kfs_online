@@ -131,6 +131,7 @@ export async function PerformanceContent({ studentId }: Props) {
         .from("StudentPhysicalAssessment")
         .select("assessedAt, nextDueAt, formData")
         .eq("studentId", studentId)
+        .eq("status", "SUBMITTED")
         .order("assessedAt", { ascending: false })
         .limit(1)
         .maybeSingle(),

@@ -108,6 +108,7 @@ export default async function CoachAtletaPage({ params }: Props) {
       .from("StudentPhysicalAssessment")
       .select("assessedAt, nextDueAt, clearance, formData")
       .eq("studentId", athlete.studentId)
+      .eq("status", "SUBMITTED")
       .order("assessedAt", { ascending: false })
       .limit(1)
       .maybeSingle(),

@@ -203,16 +203,17 @@ model PhysicalAssessmentRequest {
 }
 
 model StudentPhysicalAssessment {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   studentId   String
-  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   coachId     String
-  coach       Coach    @relation(fields: [coachId], references: [id], onDelete: Cascade)
-  assessedAt  DateTime @db.Date
-  nextDueAt   DateTime @db.Date
-  clearance   String   // APTO | APTO_RESTRICOES | NECESSITA_AVALIACAO_MEDICA
-  formData    Json     @default("{}")
-  createdAt   DateTime @default(now())
+  coach       Coach     @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  assessedAt  DateTime  @db.Date
+  nextDueAt   DateTime? @db.Date
+  clearance   String?   // APTO | APTO_RESTRICOES | NECESSITA_AVALIACAO_MEDICA — nulo enquanto DRAFT
+  formData    Json      @default("{}")
+  status      String    @default("SUBMITTED") // DRAFT | SUBMITTED — DRAFT não conta como avaliação atual
+  createdAt   DateTime  @default(now())
 }
 
 model Athlete {

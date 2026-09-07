@@ -42,6 +42,7 @@ export async function PhysicalAssessmentSummary({ studentId }: Props) {
       .from("StudentPhysicalAssessment")
       .select("assessedAt, nextDueAt, clearance, formData")
       .eq("studentId", studentId)
+      .eq("status", "SUBMITTED")
       .order("assessedAt", { ascending: false })
       .limit(1)
       .maybeSingle(),
