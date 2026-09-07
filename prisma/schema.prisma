@@ -401,6 +401,7 @@ model StudentWaiver {
   waiverSignedAt DateTime?
   waiverVersion  String?
   signatureName  String?
+  signatureImageUrl String?
   signatureIp    String?
   guardianName   String?
   isMinor        Boolean   @default(false)

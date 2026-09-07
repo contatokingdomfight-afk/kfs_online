@@ -23,7 +23,7 @@ export default async function DocumentosAdesaoPage() {
     supabase.from("Student").select("planId, userId").eq("id", studentId).maybeSingle(),
     supabase
       .from("StudentMembershipAgreement")
-      .select("agreementSigned, agreementSignedAt, signatureName, agreementVersion")
+      .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl, agreementVersion")
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase.from("StudentEnrollmentForm").select("*").eq("studentId", studentId).maybeSingle(),
@@ -78,6 +78,8 @@ export default async function DocumentosAdesaoPage() {
           agreementSigned: Boolean(agreement?.agreementSigned),
           agreementSignedAt: (agreement as { agreementSignedAt?: string | null } | null)?.agreementSignedAt ?? null,
           signatureName: (agreement as { signatureName?: string | null } | null)?.signatureName ?? null,
+          signatureImageUrl:
+            (agreement as { signatureImageUrl?: string | null } | null)?.signatureImageUrl ?? null,
           agreementVersion:
             (agreement as { agreementVersion?: string | null } | null)?.agreementVersion ??
             settings.membershipAgreementVersion,

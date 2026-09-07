@@ -47,12 +47,12 @@ export async function CoachAlunoAdminEnrollmentSection({ studentId }: Props) {
     await Promise.all([
     supabase
       .from("StudentWaiver")
-      .select("waiverSigned, waiverSignedAt, signatureName")
+      .select("waiverSigned, waiverSignedAt, signatureName, signatureImageUrl")
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase
       .from("StudentMembershipAgreement")
-      .select("agreementSigned, agreementSignedAt, signatureName")
+      .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl")
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase
@@ -150,6 +150,7 @@ export async function CoachAlunoAdminEnrollmentSection({ studentId }: Props) {
                 waiverSigned: Boolean(waiverRow.waiverSigned),
                 waiverSignedAt: (waiverRow.waiverSignedAt as string | null) ?? null,
                 signatureName: (waiverRow.signatureName as string | null) ?? null,
+                signatureImageUrl: (waiverRow.signatureImageUrl as string | null) ?? null,
               }
             : null
         }
@@ -159,6 +160,7 @@ export async function CoachAlunoAdminEnrollmentSection({ studentId }: Props) {
                 agreementSigned: Boolean(agreementRow.agreementSigned),
                 agreementSignedAt: (agreementRow.agreementSignedAt as string | null) ?? null,
                 signatureName: (agreementRow.signatureName as string | null) ?? null,
+                signatureImageUrl: (agreementRow.signatureImageUrl as string | null) ?? null,
               }
             : null
         }

@@ -21,10 +21,14 @@ export async function signAdesaoDocuments(
   const signatureName = (formData.get("signatureName") as string)?.trim();
   const guardianName = (formData.get("guardianName") as string)?.trim() || null;
   const accepted = formData.get("accepted") === "on" || formData.get("accepted") === "true";
+  const signatureImageUrl = (formData.get("signatureImageUrl") as string)?.trim() || null;
 
   if (!accepted) return { error: "Deves aceitar as condições para continuar." };
   if (!signatureName || signatureName.length < 3) {
     return { error: "Indica o teu nome completo como assinatura." };
+  }
+  if (!signatureImageUrl) {
+    return { error: "Assina no espaço indicado (desenha com o dedo ou o rato) antes de continuar." };
   }
 
   const supabase = await createClient();
@@ -76,6 +80,7 @@ export async function signAdesaoDocuments(
     waiverSignedAt: signedAtIso,
     waiverVersion: settings.waiverVersion,
     signatureName,
+    signatureImageUrl,
     signatureIp,
     guardianName: isMinor ? guardianName : null,
     isMinor,
@@ -103,6 +108,7 @@ export async function signAdesaoDocuments(
     agreementVersion: settings.membershipAgreementVersion,
     planId,
     signatureName,
+    signatureImageUrl,
     signatureIp,
     guardianName: isMinor ? guardianName : null,
     isMinor,

@@ -7,6 +7,7 @@ type AgreementInfo = {
   agreementSigned: boolean;
   agreementSignedAt: string | null;
   signatureName: string | null;
+  signatureImageUrl: string | null;
   agreementVersion: string | null;
 };
 
@@ -218,7 +219,25 @@ export function MembershipDocumentsReadView({
               </div>
             ) : null}
           </dl>
-        ) : (
+        ) : null}
+        {agreement.agreementSigned && agreement.signatureImageUrl ? (
+          <div style={{ margin: "0 0 16px" }}>
+            <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              {pt ? "Assinatura" : "Signature"}
+            </p>
+            <img
+              src={agreement.signatureImageUrl}
+              alt={pt ? "Assinatura desenhada" : "Drawn signature"}
+              style={{
+                maxWidth: 260,
+                background: "#fff",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--border)",
+              }}
+            />
+          </div>
+        ) : null}
+        {!agreement.agreementSigned && (
           <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--text-secondary)" }}>
             {pt ? "Contrato ainda não assinado." : "Contract not signed yet."}
           </p>

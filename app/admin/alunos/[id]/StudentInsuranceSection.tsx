@@ -20,12 +20,14 @@ type WaiverInfo = {
   waiverSigned: boolean;
   waiverSignedAt: string | null;
   signatureName: string | null;
+  signatureImageUrl: string | null;
 };
 
 type MembershipAgreementInfo = {
   agreementSigned: boolean;
   agreementSignedAt: string | null;
   signatureName: string | null;
+  signatureImageUrl: string | null;
 };
 
 type EnrollmentFormInfo = {
@@ -137,6 +139,13 @@ export function StudentInsuranceSection({
                   : ""
               }`
             : "Pendente"}
+          {membershipAgreement?.agreementSigned && membershipAgreement.signatureImageUrl ? (
+            <img
+              src={membershipAgreement.signatureImageUrl}
+              alt="Assinatura desenhada"
+              style={{ display: "block", marginTop: 6, maxWidth: 160, background: "#fff", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+            />
+          ) : null}
         </p>
         <p style={{ margin: "0 0 8px" }}>
           <strong>Termo:</strong>{" "}
@@ -145,6 +154,13 @@ export function StudentInsuranceSection({
                 waiver.waiverSignedAt ? ` em ${new Date(waiver.waiverSignedAt).toLocaleDateString("pt-PT")}` : ""
               }`
             : "Pendente"}
+          {waiver?.waiverSigned && waiver.signatureImageUrl ? (
+            <img
+              src={waiver.signatureImageUrl}
+              alt="Assinatura desenhada"
+              style={{ display: "block", marginTop: 6, maxWidth: 160, background: "#fff", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+            />
+          ) : null}
         </p>
         <p style={{ margin: 0 }}>
           <strong>Seguro:</strong>{" "}

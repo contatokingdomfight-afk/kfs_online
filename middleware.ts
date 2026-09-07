@@ -349,8 +349,16 @@ export async function middleware(request: NextRequest) {
       const documentsSigned = waiverSigned && agreementCurrent;
 
       if (!documentsSigned) {
-        if (isAdesaoPath(pathname)) {
+        if (isAdesaoPath(pathname) || pathname.startsWith("/api/adesao/")) {
           return response;
+        }
+        // Uma API não pode ser redirecionada para uma página (o POST seria reenviado
+        // para /adesao e interpretado como uma Server Action inválida) — devolve JSON.
+        if (pathname.startsWith("/api/")) {
+          return NextResponse.json(
+            { error: "Assina os documentos de adesão antes de continuar." },
+            { status: 403 }
+          );
         }
         const url = request.nextUrl.clone();
         url.pathname = "/adesao";
