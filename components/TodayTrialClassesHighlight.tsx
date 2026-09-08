@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { TodayTrialClass } from "@/lib/today-trial-classes";
 import { AcceptTrialButton } from "@/app/admin/experimentais/AcceptTrialButton";
 import { ConvertTrialButton } from "@/app/admin/experimentais/ConvertTrialButton";
+import { buildTrialConfirmationMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
 type Props = {
   trials: TodayTrialClass[];
@@ -125,6 +126,11 @@ export function TodayTrialClassesHighlight({
           const modLabel = modalityLabels[trial.modality] ?? trial.modality;
           const timeRange = formatTimeRange(trial.startTime, trial.endTime);
           const isPending = !trial.acceptedAt;
+          const startOnly = trial.startTime ? trial.startTime.slice(0, 5) : null;
+          const waUrl =
+            !trial.contact.includes("@") && startOnly
+              ? buildWhatsAppUrl(trial.contact, buildTrialConfirmationMessage(trial.name, modLabel, startOnly))
+              : null;
 
           return (
             <li
@@ -191,6 +197,29 @@ export function TodayTrialClassesHighlight({
                   gap: 8,
                 }}
               >
+                {waUrl ? (
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary"
+                    title="Confirmar no WhatsApp"
+                    aria-label={`Confirmar aula experimental de ${trial.name} no WhatsApp`}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      padding: 0,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 18,
+                      flexShrink: 0,
+                      textDecoration: "none",
+                    }}
+                  >
+                    <span aria-hidden>💬</span>
+                  </a>
+                ) : null}
                 {coachScope && isPending ? <AcceptTrialButton trialId={trial.id} /> : null}
                 {coachScope && trial.contact.includes("@") ? (
                   <ConvertTrialButton trialId={trial.id} />

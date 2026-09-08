@@ -23,3 +23,9 @@ export function buildPaymentOverdueMessage(studentFirstName: string): string {
   const name = studentFirstName.trim() || "tudo bem";
   return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Notamos que a tua mensalidade está em atraso — passa na secretaria ou regulariza o pagamento para manteres o acesso às aulas e à plataforma. Qualquer dúvida, é só responder por aqui. Obrigado! 🥋`;
 }
+
+/** Mensagem para confirmar presença numa aula experimental marcada para hoje. */
+export function buildTrialConfirmationMessage(name: string, modalityLabel: string, time: string): string {
+  const firstName = name.trim().split(" ")[0] || name.trim();
+  return `Olá ${firstName}! Passando para confirmar a tua aula experimental de ${modalityLabel} hoje às ${time} na Kingdom Fight School. 🥋`;
+}
