@@ -140,106 +140,117 @@ export function TodayTrialClassesHighlight({
                 borderRadius: "var(--radius-md)",
                 backgroundColor: "var(--bg)",
                 border: "1px solid var(--border)",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
               }}
             >
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                {timeRange ? (
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+                  {timeRange ? (
+                    <span
+                      style={{
+                        fontFamily: "ui-monospace, monospace",
+                        fontSize: "clamp(13px, 3.2vw, 15px)",
+                        fontWeight: 700,
+                        color: "var(--primary)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {timeRange}
+                    </span>
+                  ) : null}
                   <span
                     style={{
-                      fontFamily: "ui-monospace, monospace",
-                      fontSize: "clamp(13px, 3.2vw, 15px)",
-                      fontWeight: 700,
-                      color: "var(--primary)",
-                      flexShrink: 0,
+                      fontSize: "clamp(15px, 3.8vw, 17px)",
+                      fontWeight: 600,
+                      color: "var(--text-primary)",
                     }}
                   >
-                    {timeRange}
+                    {trial.name}
                   </span>
-                ) : null}
-                <span
-                  style={{
-                    fontSize: "clamp(15px, 3.8vw, 17px)",
-                    fontWeight: 600,
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {trial.name}
-                </span>
-                <span
-                  style={{
-                    fontSize: "clamp(12px, 3vw, 13px)",
-                    padding: "2px 8px",
-                    borderRadius: "var(--radius-md)",
-                    backgroundColor: isPending ? "var(--warning)" : "var(--info, #0ea5e9)",
-                    color: isPending ? "var(--text-primary)" : "#fff",
-                    fontWeight: 600,
-                  }}
-                >
-                  {isPending ? labels.pendingBadge : labels.acceptedBadge}
-                </span>
-              </div>
-              <p
-                style={{
-                  margin: "4px 0 0 0",
-                  fontSize: "clamp(13px, 3.2vw, 15px)",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                {modLabel}
-                {trial.contact ? ` · ${trial.contact}` : ""}
-              </p>
-              <div
-                style={{
-                  marginTop: "clamp(8px, 2vw, 10px)",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                {waUrl ? (
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-secondary"
-                    title="Confirmar no WhatsApp"
-                    aria-label={`Confirmar aula experimental de ${trial.name} no WhatsApp`}
+                  <span
                     style={{
-                      width: 40,
-                      height: 40,
-                      padding: 0,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 18,
-                      flexShrink: 0,
-                      textDecoration: "none",
-                    }}
-                  >
-                    <span aria-hidden>💬</span>
-                  </a>
-                ) : null}
-                {coachScope && isPending ? <AcceptTrialButton trialId={trial.id} /> : null}
-                {coachScope && trial.contact.includes("@") ? (
-                  <ConvertTrialButton trialId={trial.id} />
-                ) : null}
-                {!coachScope && isPending ? <AcceptTrialButton trialId={trial.id} /> : null}
-                {!coachScope && trial.contact.includes("@") ? <ConvertTrialButton trialId={trial.id} /> : null}
-                {coachScope && trial.lessonId ? (
-                  <Link
-                    href={`/coach/aula?lesson=${trial.lessonId}&date=${encodeURIComponent(trial.lessonDate)}`}
-                    style={{
-                      fontSize: "clamp(13px, 3.2vw, 15px)",
-                      color: "var(--primary)",
-                      textDecoration: "none",
+                      fontSize: "clamp(12px, 3vw, 13px)",
+                      padding: "2px 8px",
+                      borderRadius: "var(--radius-md)",
+                      backgroundColor: isPending ? "var(--warning)" : "var(--info, #0ea5e9)",
+                      color: isPending ? "var(--text-primary)" : "#fff",
                       fontWeight: 600,
                     }}
                   >
-                    {labels.goToLesson} →
-                  </Link>
+                    {isPending ? labels.pendingBadge : labels.acceptedBadge}
+                  </span>
+                </div>
+                <p
+                  style={{
+                    margin: "4px 0 0 0",
+                    fontSize: "clamp(13px, 3.2vw, 15px)",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  {modLabel}
+                  {trial.contact ? ` · ${trial.contact}` : ""}
+                </p>
+                {(coachScope && isPending) ||
+                (coachScope && trial.contact.includes("@")) ||
+                (!coachScope && isPending) ||
+                (!coachScope && trial.contact.includes("@")) ||
+                (coachScope && trial.lessonId) ? (
+                  <div
+                    style={{
+                      marginTop: "clamp(8px, 2vw, 10px)",
+                      display: "flex",
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    {coachScope && isPending ? <AcceptTrialButton trialId={trial.id} /> : null}
+                    {coachScope && trial.contact.includes("@") ? (
+                      <ConvertTrialButton trialId={trial.id} />
+                    ) : null}
+                    {!coachScope && isPending ? <AcceptTrialButton trialId={trial.id} /> : null}
+                    {!coachScope && trial.contact.includes("@") ? <ConvertTrialButton trialId={trial.id} /> : null}
+                    {coachScope && trial.lessonId ? (
+                      <Link
+                        href={`/coach/aula?lesson=${trial.lessonId}&date=${encodeURIComponent(trial.lessonDate)}`}
+                        style={{
+                          fontSize: "clamp(13px, 3.2vw, 15px)",
+                          color: "var(--primary)",
+                          textDecoration: "none",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {labels.goToLesson} →
+                      </Link>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
+              {waUrl ? (
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  title="Confirmar no WhatsApp"
+                  aria-label={`Confirmar aula experimental de ${trial.name} no WhatsApp`}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    padding: 0,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 18,
+                    flexShrink: 0,
+                    textDecoration: "none",
+                  }}
+                >
+                  <span aria-hidden>💬</span>
+                </a>
+              ) : null}
             </li>
           );
         })}
