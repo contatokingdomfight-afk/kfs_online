@@ -6,6 +6,12 @@ import {
   rememberLongSessionFromCookieValue,
   resolveSupabaseCookieOptions,
 } from "@/lib/supabase/cookie-options";
+import { edgeCacheGet, edgeCacheSet } from "@/lib/edge-ttl-cache";
+
+/** TTL do cache do "gate" do aluno (onboarding/termo/contrato/pagamento) — ver DOCS do plano de custo. */
+const STUDENT_GATE_CACHE_TTL_MS = 10_000;
+/** InsuranceSettings é config global de admin, muda raramente — TTL bem mais folgado, chave fixa. */
+const INSURANCE_SETTINGS_CACHE_TTL_MS = 5 * 60_000;
 
 /** Inclui `/auth/update-password`: link do email de reset traz `?code=`; tem de ser público antes da sessão existir. */
 const publicPaths = [
@@ -300,31 +306,72 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    /** Módulo de seguro só é preciso com plano atribuído; import dinâmico mantém o bundle Edge leve. */
-    const insuranceSettingsPromise = student.planId
-      ? import("@/lib/insurance-settings").then(async (mod) => ({
-          mod,
-          settings: await mod.getInsuranceSettings(supabase),
-        }))
-      : Promise.resolve(null);
+    /**
+     * "Gate" do aluno (onboarding/termo/contrato/pagamento) muda só por acção de admin —
+     * cache curto por studentId evita repetir 4-6 queries em navegações seguidas (incl.
+     * prefetch do <Link>). `getUser()` acima e a árvore de redirects abaixo continuam a
+     * correr sempre — só a busca destes dados é que pode vir do cache.
+     */
+    const gateCacheKey = `student-gate:${student.id}`;
+    let gate = edgeCacheGet<{ onboardingDone: boolean; documentsSigned: boolean; hasAccess: boolean }>(gateCacheKey);
 
-    const [{ data: profile }, { data: waiver }, { data: agreement }, insuranceResult] = await Promise.all([
-      supabase
-        .from("StudentProfile")
-        .select("hasCompletedOnboarding")
-        .eq("studentId", student.id)
-        .maybeSingle(),
-      supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", student.id).maybeSingle(),
-      supabase
-        .from("StudentMembershipAgreement")
-        .select("agreementSigned, agreementVersion, agreementSignedAt")
-        .eq("studentId", student.id)
-        .maybeSingle(),
-      insuranceSettingsPromise,
-    ]);
+    if (!gate) {
+      /** Módulo de seguro só é preciso com plano atribuído; import dinâmico mantém o bundle Edge leve. */
+      const insuranceSettingsPromise = student.planId
+        ? import("@/lib/insurance-settings").then(async (mod) => {
+            let settings = edgeCacheGet<Awaited<ReturnType<typeof mod.getInsuranceSettings>>>("insurance-settings:global");
+            if (!settings) {
+              settings = await mod.getInsuranceSettings(supabase);
+              edgeCacheSet("insurance-settings:global", settings, INSURANCE_SETTINGS_CACHE_TTL_MS);
+            }
+            return { mod, settings };
+          })
+        : Promise.resolve(null);
 
-    const onboardingDone = Boolean((profile as { hasCompletedOnboarding?: boolean } | null)?.hasCompletedOnboarding);
-    const waiverSigned = Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned);
+      const [{ data: profile }, { data: waiver }, { data: agreement }, insuranceResult] = await Promise.all([
+        supabase
+          .from("StudentProfile")
+          .select("hasCompletedOnboarding")
+          .eq("studentId", student.id)
+          .maybeSingle(),
+        supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", student.id).maybeSingle(),
+        supabase
+          .from("StudentMembershipAgreement")
+          .select("agreementSigned, agreementVersion, agreementSignedAt")
+          .eq("studentId", student.id)
+          .maybeSingle(),
+        insuranceSettingsPromise,
+      ]);
+
+      const onboardingDone = Boolean(
+        (profile as { hasCompletedOnboarding?: boolean } | null)?.hasCompletedOnboarding
+      );
+      const waiverSigned = Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned);
+
+      let documentsSigned = false;
+      let hasAccess = false;
+      if (student.planId && onboardingDone && insuranceResult) {
+        const { mod, settings } = insuranceResult;
+        const agreementCurrent = mod.isMembershipAgreementCurrent(
+          agreement as { agreementSigned?: boolean; agreementVersion?: string | null } | null,
+          settings.membershipAgreementVersion
+        );
+        documentsSigned = waiverSigned && agreementCurrent;
+
+        if (documentsSigned) {
+          const { studentHasPaymentUnlock } = await import("@/lib/family-payment-gate");
+          const agreementSignedAt =
+            (agreement as { agreementSignedAt?: string | null } | null)?.agreementSignedAt ?? null;
+          // adminGrantedFullAccess é aplicado à parte (fora do cache, vem sempre fresco do Student) — aqui é sempre false.
+          hasAccess = await studentHasPaymentUnlock(supabase, student.id, false, agreementSignedAt);
+        }
+      }
+
+      gate = { onboardingDone, documentsSigned, hasAccess };
+      edgeCacheSet(gateCacheKey, gate, STUDENT_GATE_CACHE_TTL_MS);
+    }
+
+    const { onboardingDone, documentsSigned, hasAccess } = gate;
 
     if (!onboardingDone && !isOnboardingPath(pathname) && !isPublicBrowserPath(pathname)) {
       const url = request.nextUrl.clone();
@@ -341,13 +388,6 @@ export async function middleware(request: NextRequest) {
      * assinar) → /adesao → (onboarding por concluir) → /onboarding → ...
      */
     if (student.planId && onboardingDone) {
-      const { mod, settings } = insuranceResult!;
-      const agreementCurrent = mod.isMembershipAgreementCurrent(
-        agreement as { agreementSigned?: boolean; agreementVersion?: string | null } | null,
-        settings.membershipAgreementVersion
-      );
-      const documentsSigned = waiverSigned && agreementCurrent;
-
       if (!documentsSigned) {
         // /dashboard/perfil fica acessível porque o comprovativo de adesão pode
         // exigir que o aluno complete lá dados em falta (nome, data de nascimento)
@@ -377,10 +417,6 @@ export async function middleware(request: NextRequest) {
 
       const adminFree = Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess);
       if (!adminFree) {
-        const { studentHasPaymentUnlock } = await import("@/lib/family-payment-gate");
-        const agreementSignedAt = (agreement as { agreementSignedAt?: string | null } | null)?.agreementSignedAt ?? null;
-        const hasAccess = await studentHasPaymentUnlock(supabase, student.id, adminFree, agreementSignedAt);
-
         if (!hasAccess) {
           // Rotas de onboarding/adesão/escolher-plano e a área de pagamento não podem
           // ser bloqueadas pelo gate; caso contrário o check de documentos assinados
@@ -445,6 +481,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /* PWA: sw.js e manifest não podem ser interceptados (instalação / Lighthouse) */
-    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
