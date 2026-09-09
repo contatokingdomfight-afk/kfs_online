@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
-import { AdminAlunoQuickActions, EditarAlunoForm } from "./EditarAlunoForm";
 import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evaluation-config";
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import {
@@ -18,39 +16,16 @@ import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AvaliarAlunoButton } from "@/app/coach/alunos/[id]/AvaliarAlunoButton";
 import { getPlanAccess } from "@/lib/plan-access";
 import { filterModalitiesForStudentEvaluation } from "@/lib/coach-student-evaluation-modalities";
-import { DeleteStudentButton } from "./DeleteStudentButton";
-import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
 import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachControls";
 import { CompetitionAthleteControls } from "@/components/CompetitionAthleteControls";
-import { SchoolAssistantBadge } from "@/components/SchoolAssistantBadge";
-import { StudentInsuranceSection } from "./StudentInsuranceSection";
-import { StudentExtraSessionsSection } from "./StudentExtraSessionsSection";
-import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
-import { getInsuranceSettings } from "@/lib/insurance-settings";
-import { formatInTimeZone } from "date-fns-tz";
-import { LISBON_TZ, currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
-import { getFamilyContext } from "@/lib/family-group";
-import { computeFamilyGroupMonthlyTuition, type FamilyPricingBreakdown } from "@/lib/family-tuition";
-import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
-import { resolveEffectiveAccessPlan } from "@/lib/family-effective-plan";
 import { StudentContactDataSection } from "@/components/students/StudentContactDataSection";
-import { EditarDadosPessoaisSection } from "@/components/students/EditarDadosPessoaisSection";
-import { buildPaymentOverdueMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
+import Link from "next/link";
 
 const GENERAL_LAST_N = 10;
 
-const formatEur = (n: number) => `€${n.toFixed(2).replace(".", ",")}`;
-
-const STATUS_LABEL: Record<string, string> = {
-  ATIVO: "Ativo",
-  INADIMPLENTE: "Inadimplente",
-  INATIVO: "Inativo",
-  EXPERIMENTAL: "Experimental",
-};
-
 type Props = { params: Promise<{ id: string }> };
 
-export default async function AdminAlunoEditarPage({ params }: Props) {
+export default async function AdminAlunoOverviewPage({ params }: Props) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
@@ -59,134 +34,24 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: schools } = await supabase
-    .from("School")
-    .select("id, name")
-    .eq("isActive", true)
-    .order("name", { ascending: true });
-
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality, schoolId, adminGrantedFullAccess, competitionAthlete")
+    .select("id, userId, status, primaryModality, competitionAthlete")
     .eq("id", studentId)
     .single();
 
-  if (!student) {
-    return (
-      <div>
-        <p style={{ color: "var(--text-secondary)", marginBottom: 16 }}>Aluno não encontrado.</p>
-        <Link href="/admin/alunos" className="btn btn-secondary" style={{ textDecoration: "none" }}>
-          ← Voltar à lista
-        </Link>
-      </div>
-    );
-  }
+  if (!student) return null;
 
   const { data: user } = await supabase
     .from("User")
     .select("id, name, email, role, avatarUrl")
     .eq("id", student.userId)
     .single();
-  const [{ data: waiverRow }, { data: agreementRow }, { data: enrollmentRow }, { data: coverageRow }, insuranceSettings] =
-    await Promise.all([
-    supabase
-      .from("StudentWaiver")
-      .select("waiverSigned, waiverSignedAt, signatureName, signatureImageUrl")
-      .eq("studentId", studentId)
-      .maybeSingle(),
-    supabase
-      .from("StudentMembershipAgreement")
-      .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl")
-      .eq("studentId", studentId)
-      .maybeSingle(),
-    supabase
-      .from("StudentEnrollmentForm")
-      .select(
-        "formCompleted, formCompletedAt, taxId, idDocument, paymentMethod, debitIban, emergencyContactName, emergencyContactPhone, paymentProofPath, paymentProofFileName, paymentProofUploadedAt"
-      )
-      .eq("studentId", studentId)
-      .maybeSingle(),
-    supabase
-      .from("StudentInsuranceCoverage")
-      .select("covered, coverageStartDate, coverageEndDate, policyReference, notes")
-      .eq("studentId", studentId)
-      .maybeSingle(),
-    getInsuranceSettings(supabase),
-  ]);
-
-  const paymentProofPath = (enrollmentRow as { paymentProofPath?: string | null } | null)?.paymentProofPath ?? null;
-  const paymentProofSignedUrl = paymentProofPath
-    ? (
-        await supabase.storage.from("payment-proofs").createSignedUrl(paymentProofPath, 300)
-      ).data?.signedUrl ?? null
-    : null;
-
-  const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
-
-  const familyCtx = await getFamilyContext(supabase, studentId);
-  let familyPricing: FamilyPricingBreakdown | null = null;
-  if (familyCtx) {
-    const pricing = await computeFamilyGroupMonthlyTuition(supabase, familyCtx.group.id);
-    if (!("error" in pricing)) familyPricing = pricing;
-  }
-  const myFamilyShare = familyPricing?.members.find((m) => m.studentId === studentId) ?? null;
-  const familyDiscountPct = familyPricing?.discountPercent ?? 0;
-  const myShareBase = myFamilyShare?.referencePrice ?? null;
-  const myShareFinal =
-    myShareBase != null ? Math.round(myShareBase * (1 - familyDiscountPct / 100) * 100) / 100 : null;
-
   const { data: studentProfile } = await supabase
     .from("StudentProfile")
     .select("weightKg, heightCm, medicalNotes, emergencyContact, phone")
     .eq("studentId", studentId)
     .maybeSingle();
-
-  const overdueWhatsAppUrl =
-    student.status === "INADIMPLENTE" && studentProfile?.phone
-      ? buildWhatsAppUrl(studentProfile.phone, buildPaymentOverdueMessage((user?.name ?? "").split(" ")[0] ?? ""))
-      : null;
-
-  const { data: plans } = await supabase
-    .from("Plan")
-    .select("id, name, priceMonthly, schoolId, isActive, modalityScope")
-    .eq("isActive", true)
-    .order("priceMonthly", { ascending: true });
-
-  let planRows = [...(plans ?? [])];
-  const currentPlanId = student.planId;
-  if (currentPlanId && !planRows.some((p) => p.id === currentPlanId)) {
-    const { data: currentPlan } = await supabase
-      .from("Plan")
-      .select("id, name, priceMonthly, schoolId, isActive, modalityScope")
-      .eq("id", currentPlanId)
-      .maybeSingle();
-    if (currentPlan) planRows = [currentPlan, ...planRows];
-  }
-
-  const schoolIds = [...new Set(planRows.map((p) => p.schoolId).filter(Boolean))] as string[];
-  const { data: plansSchools } =
-    schoolIds.length > 0
-      ? await supabase.from("School").select("id, name").in("id", schoolIds)
-      : { data: [] as { id: string; name: string | null }[] };
-  const schoolNameById = new Map((plansSchools ?? []).map((s) => [s.id, s.name ?? s.id]));
-
-  const studentSchoolId = (student as { schoolId?: string }).schoolId ?? "";
-  planRows.sort((a, b) => {
-    const aHere = a.schoolId === studentSchoolId ? 0 : 1;
-    const bHere = b.schoolId === studentSchoolId ? 0 : 1;
-    if (aHere !== bHere) return aHere - bHere;
-    return Number(a.priceMonthly) - Number(b.priceMonthly);
-  });
-
-  const planOptions = planRows.map((p) => {
-    const schoolLabel = schoolNameById.get(p.schoolId ?? "") ?? "Escola?";
-    // O plano família não tem mensalidade fixa por pessoa: o valor é a soma das quotas
-    // de referência dos membros (com desconto), cobrada no titular. Evitamos afirmar «€80/mês».
-    const label = isFamilyPlan(p.id, p.name)
-      ? `${p.name} (gestão por grupo) — ${schoolLabel}`
-      : `${p.name} (€${Number(p.priceMonthly).toFixed(0)}/mês) — ${schoolLabel}`;
-    return { id: p.id, label };
-  });
   const { data: modalityRows } = await supabase
     .from("ModalityRef")
     .select("code, name")
@@ -195,24 +60,6 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     { code: "", name: "Todas as modalidades" },
     ...(modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code })),
   ];
-  const studentPlan = planRows.find((p) => p.id === student.planId);
-  const accessPlan = student.planId
-    ? await resolveEffectiveAccessPlan(supabase, studentId, student.planId)
-    : null;
-  const scope = accessPlan?.modalityScope ?? null;
-  const requiresPrimaryModality = planRequiresPrimaryModality(
-    scope,
-    accessPlan?.id,
-    accessPlan?.name
-  );
-  const rawPrimary = (student as { primaryModality?: string | null }).primaryModality ?? null;
-  const initialPrimaryModality = requiresPrimaryModality ? rawPrimary ?? "" : "";
-  const modalityOptionsForForm = requiresPrimaryModality
-    ? (modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code }))
-    : [
-        { code: "", name: "Todas as modalidades" },
-        ...(modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code })),
-      ];
 
   const allConfigs = await loadAllEvaluationConfigs(supabase);
   const evaluationConfigByModality: Record<string, ModalityEvaluationConfigPayload | null> = {};
@@ -220,42 +67,13 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
     evaluationConfigByModality[m.code] = allConfigs.get(m.code) ?? null;
   }
   const planAccess = await getPlanAccess(supabase, studentId);
-
-  let extraSessionsData: {
-    planName: string | null;
-    currentReferenceMonth: string;
-    used: number;
-    limit: number;
-    remaining: number;
-    extraGrants: Array<{ id: string; referenceMonth: string; quantity: number; note: string | null }>;
-  } | null = null;
-  if (planAccess.maxCheckInsPerMonth !== null) {
-    const currentReferenceMonth = currentReferenceMonthLisbon(new Date());
-    const [{ data: subscribedPlan }, monthly, { data: extraRows }] = await Promise.all([
-      supabase.from("Plan").select("name").eq("id", planAccess.currentPlanId ?? "").maybeSingle(),
-      getMonthlyCheckInLimit(supabase, studentId, planAccess.maxCheckInsPerMonth, currentReferenceMonth),
-      supabase
-        .from("StudentExtraSessions")
-        .select("id, referenceMonth, quantity, note")
-        .eq("studentId", studentId)
-        .eq("referenceMonth", currentReferenceMonth)
-        .order("createdAt", { ascending: false }),
-    ]);
-    extraSessionsData = {
-      planName: (subscribedPlan as { name?: string } | null)?.name ?? null,
-      currentReferenceMonth,
-      used: monthly.used,
-      limit: monthly.limit ?? planAccess.maxCheckInsPerMonth,
-      remaining: monthly.remaining ?? 0,
-      extraGrants: (extraRows ?? []) as Array<{ id: string; referenceMonth: string; quantity: number; note: string | null }>,
-    };
-  }
-
   const modalitiesForEvaluate = filterModalitiesForStudentEvaluation(
     modalityRows ?? [],
     evaluationConfigByModality,
     planAccess.allowedModalities
   );
+
+  const rawPrimary = (student as { primaryModality?: string | null }).primaryModality ?? null;
 
   // Performance: athlete + evaluations → radar e última avaliação (para pré-preencher modal)
   let generalPerformanceScores: Record<string, number> | null = null;
@@ -305,7 +123,6 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   }
   const attendanceByModality = await getAttendanceByModality(supabase, studentId);
   const hasPerformance = generalPerformanceScores && Object.keys(generalPerformanceScores).length > 0;
-
   const modalityNameFor = (code: string) => modalityOptions.find((m) => m.code === code)?.name ?? MODALITY_LABELS[code] ?? code;
 
   const profileForModal = {
@@ -327,123 +144,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
   const assistantActive = Boolean(assistRow?.id && assistRow.revokedAt == null);
 
   return (
-    <div style={{ maxWidth: "min(720px, 100%)" }}>
-      <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
-        <Link
-          href="/admin/alunos"
-          style={{
-            color: "var(--text-secondary)",
-            fontSize: "clamp(15px, 3.8vw, 17px)",
-            textDecoration: "none",
-            fontWeight: 500,
-          }}
-        >
-          ← Voltar
-        </Link>
-      </div>
-      <h1 style={{ margin: "0 0 4px 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
-        {user?.name || "Aluno"}
-      </h1>
-      <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-        {user?.email}
-      </p>
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 4 }}>
-        <span
-          style={{
-            fontSize: "clamp(12px, 3vw, 14px)",
-            padding: "2px 8px",
-            borderRadius: "var(--radius-md)",
-            backgroundColor: student.status === "INADIMPLENTE" ? "var(--danger)" : "var(--bg)",
-            color: student.status === "INADIMPLENTE" ? "#fff" : "var(--text-secondary)",
-            fontWeight: 600,
-          }}
-        >
-          {STATUS_LABEL[student.status] ?? student.status}
-        </span>
-        {overdueWhatsAppUrl ? (
-          <a
-            href={overdueWhatsAppUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-secondary"
-            style={{
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 12px",
-              fontSize: "clamp(13px, 3.2vw, 14px)",
-            }}
-          >
-            <span aria-hidden>💬</span> Lembrar pagamento (WhatsApp)
-          </a>
-        ) : null}
-      </div>
-      {assistantActive ? (
-        <div style={{ marginTop: 4, marginBottom: 4, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-          <SchoolAssistantBadge active />
-        </div>
-      ) : null}
-      {familyCtx ? (
-        <div style={{ marginTop: 8, marginBottom: 4, display: "flex", flexDirection: "column", gap: 6 }}>
-          <Link
-            href={`/admin/familias/${familyCtx.group.id}`}
-            className="card"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "8px 12px",
-              textDecoration: "none",
-              color: "inherit",
-              fontSize: 14,
-            }}
-          >
-            <span style={{ fontWeight: 600 }}>
-              Plano família — {familyCtx.isTitular ? "titular" : "membro"}
-            </span>
-            <span style={{ color: "var(--text-secondary)" }}>
-              {familyCtx.group.name || "Grupo familiar"} · {familyCtx.memberCount}{" "}
-              {familyCtx.memberCount === 1 ? "membro" : "membros"}
-            </span>
-          </Link>
-          {familyPricing ? (
-            <p style={{ margin: 0, fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-              {familyCtx.isTitular ? (
-                <>
-                  Mensalidade combinada da família:{" "}
-                  <strong style={{ color: "var(--text-primary)" }}>
-                    {formatEur(familyPricing.finalMonthlyAmount)}/mês
-                  </strong>{" "}
-                  (base {formatEur(familyPricing.baseTotal)}
-                  {familyPricing.discountPercent > 0 ? ` −${familyPricing.discountPercent}%` : ""}). Cobrada
-                  apenas no titular; os membros não têm mensalidade própria.
-                </>
-              ) : myFamilyShare?.usedFallback || myShareBase == null ? (
-                <>
-                  Quota individual <strong style={{ color: "var(--text-primary)" }}>por definir</strong> —
-                  falta o plano de referência deste membro (a usar {formatEur(myShareBase ?? 80)} como
-                  fallback). A mensalidade é cobrada no titular.
-                </>
-              ) : (
-                <>
-                  Quota individual:{" "}
-                  <strong style={{ color: "var(--text-primary)" }}>
-                    {myFamilyShare?.referencePlanName ? `${myFamilyShare.referencePlanName} — ` : ""}
-                    {formatEur(myShareBase)}
-                  </strong>
-                  {familyDiscountPct > 0 && myShareFinal != null
-                    ? ` · −${familyDiscountPct}% = ${formatEur(myShareFinal)}/mês`
-                    : "/mês"}
-                  . A mensalidade é cobrada no titular; o preço do catálogo do plano família não se
-                  aplica por pessoa.
-                </>
-              )}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-
+    <>
       <StudentContactDataSection studentId={studentId} />
 
       <div
@@ -464,10 +165,10 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
           modalities={modalitiesForEvaluate}
           evaluationConfigByModality={evaluationConfigByModality}
           lastEvalScoresByModality={Object.keys(lastEvalScoresByModality).length > 0 ? lastEvalScoresByModality : undefined}
-          successRedirectHref={`/coach/alunos/${studentId}/performance`}
+          successRedirectHref={`/admin/alunos/${studentId}/performance`}
         />
         <Link
-          href={`/coach/alunos/${studentId}/avaliacao-fisica?next=${encodeURIComponent(`/admin/alunos/${studentId}`)}`}
+          href={`/admin/alunos/${studentId}/avaliacao-fisica`}
           className="btn btn-secondary"
           style={{
             flex: 1,
@@ -528,7 +229,7 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
               embedded
             />
             <Link
-              href={`/coach/alunos/${studentId}/performance`}
+              href={`/admin/alunos/${studentId}/performance`}
               className="btn btn-secondary"
               style={{ marginTop: "clamp(12px, 3vw, 16px)", textDecoration: "none", alignSelf: "flex-start" }}
             >
@@ -562,138 +263,6 @@ export default async function AdminAlunoEditarPage({ params }: Props) {
           </div>
         )}
       </section>
-
-      <AdminAlunoQuickActions
-        studentId={studentId}
-        initialPlanId={student.planId ?? ""}
-        initialAdminGrantedFullAccess={Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess)}
-        editedUserRole={user?.role}
-      />
-
-      <StudentInsuranceSection
-        studentId={studentId}
-        waiver={
-          waiverRow
-            ? {
-                waiverSigned: Boolean(waiverRow.waiverSigned),
-                waiverSignedAt: (waiverRow.waiverSignedAt as string | null) ?? null,
-                signatureName: (waiverRow.signatureName as string | null) ?? null,
-                signatureImageUrl: (waiverRow.signatureImageUrl as string | null) ?? null,
-              }
-            : null
-        }
-        membershipAgreement={
-          agreementRow
-            ? {
-                agreementSigned: Boolean(agreementRow.agreementSigned),
-                agreementSignedAt: (agreementRow.agreementSignedAt as string | null) ?? null,
-                signatureName: (agreementRow.signatureName as string | null) ?? null,
-                signatureImageUrl: (agreementRow.signatureImageUrl as string | null) ?? null,
-              }
-            : null
-        }
-        enrollmentForm={
-          enrollmentRow
-            ? {
-                formCompleted: Boolean(enrollmentRow.formCompleted),
-                formCompletedAt: (enrollmentRow.formCompletedAt as string | null) ?? null,
-                taxId: (enrollmentRow.taxId as string | null) ?? null,
-                idDocument: (enrollmentRow.idDocument as string | null) ?? null,
-                paymentMethod: (enrollmentRow.paymentMethod as string | null) ?? null,
-                debitIban: (enrollmentRow.debitIban as string | null) ?? null,
-                emergencyContactName: (enrollmentRow.emergencyContactName as string | null) ?? null,
-                emergencyContactPhone: (enrollmentRow.emergencyContactPhone as string | null) ?? null,
-                paymentProofFileName: (enrollmentRow.paymentProofFileName as string | null) ?? null,
-                paymentProofUploadedAt: (enrollmentRow.paymentProofUploadedAt as string | null) ?? null,
-              }
-            : null
-        }
-        paymentProofSignedUrl={paymentProofSignedUrl}
-        coverage={
-          coverageRow
-            ? {
-                covered: Boolean(coverageRow.covered),
-                coverageStartDate: (coverageRow.coverageStartDate as string | null) ?? null,
-                coverageEndDate: (coverageRow.coverageEndDate as string | null) ?? null,
-                policyReference: (coverageRow.policyReference as string | null) ?? null,
-                notes: (coverageRow.notes as string | null) ?? null,
-              }
-            : null
-        }
-        annualAmount={insuranceSettings.annualAmount}
-        defaultPolicyReference={insuranceSettings.policyReference ?? ""}
-        todayYmd={todayYmd}
-      />
-
-      {extraSessionsData && (
-        <StudentExtraSessionsSection
-          studentId={studentId}
-          planName={extraSessionsData.planName}
-          maxCheckInsPerMonth={planAccess.maxCheckInsPerMonth}
-          currentReferenceMonth={extraSessionsData.currentReferenceMonth}
-          used={extraSessionsData.used}
-          limit={extraSessionsData.limit}
-          remaining={extraSessionsData.remaining}
-          extraGrants={extraSessionsData.extraGrants}
-        />
-      )}
-
-      <details
-        open
-        className="aluno-edit-details"
-        style={{
-          marginTop: "clamp(24px, 6vw, 32px)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius-md)",
-          backgroundColor: "var(--bg-secondary)",
-          overflow: "hidden",
-        }}
-      >
-        <summary
-          style={{
-            padding: "clamp(14px, 3.5vw, 18px)",
-            fontSize: "clamp(15px, 3.8vw, 17px)",
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            cursor: "pointer",
-            listStyle: "none",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <span style={{ opacity: 0.8 }} aria-hidden>▼</span>
-          Editar dados do aluno
-        </summary>
-        <div style={{ padding: "0 clamp(14px, 3.5vw, 18px) clamp(14px, 3.5vw, 18px) clamp(14px, 3.5vw, 18px)", borderTop: "1px solid var(--border)" }}>
-          <EditarAlunoForm
-            key={`${student.status}-${(student as { schoolId?: string }).schoolId ?? ""}-${student.planId ?? ""}-${initialPrimaryModality}-${user?.name ?? ""}`}
-            studentId={studentId}
-            initialName={user?.name ?? ""}
-            initialStatus={student.status}
-            initialSchoolId={(student as { schoolId?: string }).schoolId ?? ""}
-            schoolOptions={(schools ?? []).map((s) => ({ id: s.id, name: s.name ?? s.id }))}
-            initialPlanId={student.planId ?? ""}
-            initialPrimaryModality={initialPrimaryModality}
-            planOptions={planOptions}
-            modalityOptions={modalityOptionsForForm}
-            requiresPrimaryModality={requiresPrimaryModality}
-            isFamilyPlanMember={Boolean(familyCtx)}
-            referencePlanName={accessPlan?.name ?? myFamilyShare?.referencePlanName ?? null}
-            statusLabels={STATUS_LABEL}
-          />
-        </div>
-      </details>
-
-      <EditarDadosPessoaisSection studentId={studentId} />
-
-      {user?.role === "ALUNO" && (
-        <DeleteStudentButton
-          studentId={studentId}
-          studentName={user?.name ?? ""}
-          studentEmail={user?.email ?? ""}
-        />
-      )}
-    </div>
+    </>
   );
 }
