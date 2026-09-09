@@ -387,12 +387,20 @@ export default async function CoachAulaPage({
                 </section>
               ) : null}
 
-              <h2 id="lista-presencas-heading" className="coach-aula-list-title">
+              <h2
+                id="lista-presencas-heading"
+                className="coach-aula-list-title"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+              >
                 Lista de presenças
+                <span
+                  title="Alunos ativos elegíveis para esta aula (por plano/modalidade). Pesquisa por nome para marcar presença mesmo sem pré-confirmação «Vou». Pré-treino e RPE aparecem quando o aluno os regista na app."
+                  aria-label="Alunos ativos elegíveis para esta aula (por plano/modalidade). Pesquisa por nome para marcar presença mesmo sem pré-confirmação «Vou». Pré-treino e RPE aparecem quando o aluno os regista na app."
+                  style={{ fontSize: 15, fontWeight: 400, color: "var(--text-secondary)", cursor: "help" }}
+                >
+                  ⓘ
+                </span>
               </h2>
-              <p className="coach-aula-wellness-hint" style={{ margin: "0 0 16px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                Alunos ativos elegíveis para esta aula (por plano/modalidade). Pesquisa por nome para marcar presença mesmo sem pré-confirmação «Vou». Pré-treino e RPE aparecem quando o aluno os regista na app.
-              </p>
 
               <CoachAulaCrossModalityCheckIn
                 candidates={crossModalityCandidates}
