@@ -82,6 +82,11 @@ export function LessonPromoBlock({
 
   const blockedCopy = participationBlockedCopy(t, hasPlan, hasCheckIn, participationAllowedByPlan);
   const showRsvpBlocked = Boolean(blockedCopy) && !openClassParticipation;
+  /** Cartão bloqueado (sem plano/check-in): tom neutro em vez do vermelho de destaque, reservado a ações disponíveis. */
+  const isLockedCard = showRsvpBlocked;
+  const mutedTextColor = isLockedCard ? "var(--text-secondary)" : "rgba(255,255,255,0.9)";
+  const pillBg = isLockedCard ? "var(--bg)" : "rgba(255,255,255,0.2)";
+  const pillBorder = isLockedCard ? "var(--border)" : "rgba(255,255,255,0.55)";
 
   const checkInHref = `/check-in/${lesson.id}?date=${encodeURIComponent(lesson.date)}`;
   const checkInAlreadyDone = Boolean(att?.checkedInAt);
@@ -94,8 +99,8 @@ export function LessonPromoBlock({
     <div
       className="card"
       style={{
-        backgroundColor: "var(--primary)",
-        color: "#fff",
+        backgroundColor: isLockedCard ? "var(--bg-secondary)" : "var(--primary)",
+        color: isLockedCard ? "var(--text-primary)" : "#fff",
         padding: "clamp(20px, 5vw, 24px)",
         boxSizing: "border-box",
         height: "100%",
@@ -103,7 +108,7 @@ export function LessonPromoBlock({
         flexDirection: "column",
       }}
     >
-      <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 8px 0", opacity: 0.9 }}>
+      <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 8px 0", color: mutedTextColor }}>
         {t("dashboardNextLessonSubtitle")}
       </p>
       {openClassLocationHighlight && (
@@ -148,8 +153,8 @@ export function LessonPromoBlock({
               marginLeft: 8,
               fontSize: "clamp(12px, 3vw, 14px)",
               fontWeight: 600,
-              backgroundColor: "rgba(255,255,255,0.2)",
-              border: "1px solid rgba(255,255,255,0.55)",
+              backgroundColor: pillBg,
+              border: `1px solid ${pillBorder}`,
               borderRadius: 999,
               padding: "2px 8px",
             }}
@@ -163,8 +168,8 @@ export function LessonPromoBlock({
               marginLeft: 8,
               fontSize: "clamp(12px, 3vw, 14px)",
               fontWeight: 600,
-              backgroundColor: "rgba(255,255,255,0.2)",
-              border: "1px solid rgba(255,255,255,0.55)",
+              backgroundColor: pillBg,
+              border: `1px solid ${pillBorder}`,
               borderRadius: 999,
               padding: "2px 8px",
             }}
@@ -173,13 +178,13 @@ export function LessonPromoBlock({
           </span>
         )}
       </p>
-      <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 12px 0", opacity: 0.9 }}>
+      <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 12px 0", color: mutedTextColor }}>
         {!openClassLocationHighlight && locationName ? `${locationName} · ` : ""}
         {formatNextLessonDate(lesson.date, locale)} · {lesson.startTime}–{lesson.endTime}
       </p>
       <div style={{ marginTop: 12 }}>
         {showRsvpBlocked ? (
-          <p style={{ margin: 0, fontSize: 14, opacity: 0.9 }}>
+          <p style={{ margin: 0, fontSize: 14, color: mutedTextColor }}>
             🔒 {blockedCopy}
           </p>
         ) : (

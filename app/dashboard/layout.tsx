@@ -92,19 +92,16 @@ export default async function DashboardLayout({
     navTribe: t("navTribe"),
     navAthleteProfile: t("navAthleteProfile"),
     navLibrary: t("navLibrary"),
-    choosePlanLabel: "✨ " + t("choosePlanTitle"),
+    choosePlanLabel: t("choosePlanShortTitle"),
   });
 
   const onboardingSteps = [
     { title: t("onboardingWelcomeTitle"), description: t("onboardingWelcomeDesc") },
     { title: t("onboardingHomeTitle"), description: t("onboardingHomeDesc") },
     { title: t("onboardingAthleteTitle"), description: t("onboardingAthleteDesc") },
-    { title: t("onboardingConquestsTitle"), description: t("onboardingConquestsDesc") },
-    { title: t("onboardingStoreTitle"), description: t("onboardingStoreDesc") },
     { title: t("onboardingLibraryTitle"), description: t("onboardingLibraryDesc") },
-    { title: t("onboardingEventsTitle"), description: t("onboardingEventsDesc") },
+    { title: t("onboardingStoreTitle"), description: t("onboardingStoreDesc") },
     { title: t("onboardingFinanceTitle"), description: t("onboardingFinanceDesc") },
-    { title: t("onboardingProfileTitle"), description: t("onboardingProfileDesc") },
     { title: t("onboardingDoneTitle"), description: t("onboardingDoneDesc") },
   ];
 

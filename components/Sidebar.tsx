@@ -12,6 +12,13 @@ export type SidebarLink = {
   children?: SidebarLink[];
   /** Sem `children`: considerar activo se `activeHref` for igual a algum destes prefixos (exact ou sub-rota). */
   groupActiveHrefs?: string[];
+  /** Ícone opcional (emoji) mostrado antes do label. */
+  icon?: string;
+  /**
+   * Nome da secção a que este link pertence (ex.: "Pessoas", "Académico"). Links consecutivos
+   * com a mesma secção partilham um cabeçalho; links sem `section` não mostram cabeçalho algum.
+   */
+  section?: string;
 };
 
 export function Sidebar({
@@ -87,8 +94,10 @@ export function Sidebar({
           padding: "0 12px 0 0",
         }}
       >
-        {links.map((item) => {
+        {links.map((item, idx) => {
           const hasChildren = item.children && item.children.length > 0;
+          const previousSection = idx > 0 ? links[idx - 1].section : undefined;
+          const showSectionHeader = !!item.section && item.section !== previousSection;
           // Sem filhos: URL exacta, ou `groupActiveHrefs` se definido. Com filhos: item, prefixo do item, ou qualquer filho.
           const navHighlighted = (() => {
             if (!activeHref) return false;
@@ -107,12 +116,31 @@ export function Sidebar({
           })();
           return (
             <div key={item.href}>
+              {showSectionHeader && (
+                <div
+                  style={{
+                    padding: idx === 0 ? "0 20px 6px" : "16px 20px 6px",
+                    fontSize: "clamp(10px, 2.6vw, 11px)",
+                    fontWeight: 700,
+                    color: "var(--text-secondary)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  {item.section}
+                </div>
+              )}
               <Link
                 href={item.href}
                 prefetch={item.prefetch}
                 className="app-sidebar-nav-link"
                 style={linkStyle(navHighlighted)}
               >
+                {item.icon && (
+                  <span aria-hidden="true" style={{ marginRight: 10, fontSize: "1.05em" }}>
+                    {item.icon}
+                  </span>
+                )}
                 {item.label}
               </Link>
               {hasChildren && (

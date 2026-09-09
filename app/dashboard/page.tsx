@@ -393,16 +393,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           }
         />
       </Suspense>
-
-      <div className="card">
-        <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", marginBottom: 12 }}>
-          {t("restrictedArea")} Email: {dbUser?.email}
-          {dbUser?.name && ` · ${dbUser.name}`}
-        </p>
-        <p style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-          {t("profile")} {dbUser?.role ?? "—"}
-        </p>
-      </div>
     </div>
   );
 }

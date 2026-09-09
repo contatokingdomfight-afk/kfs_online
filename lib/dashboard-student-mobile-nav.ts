@@ -134,6 +134,6 @@ export async function getStudentMobileBottomNavConfig(locale: "pt" | "en", t: (k
     navTribe: t("navTribe"),
     navAthleteProfile: t("navAthleteProfile"),
     navLibrary: t("navLibrary"),
-    choosePlanLabel: "✨ " + t("choosePlanTitle"),
+    choosePlanLabel: t("choosePlanShortTitle"),
   });
 }
