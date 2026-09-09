@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { BrandSplashLogo } from "@/components/BrandSplashLogo";
 import { BRAND_ICON_BG } from "@/lib/brand";
+import { isNativeAppShell } from "@/lib/capacitor-native";
 
 const SESSION_KEY = "kfs-dashboard-splash-shown";
 
@@ -15,12 +16,15 @@ type Props = {
 /**
  * Mostra um splash screen de ecrã inteiro ao abrir o dashboard pela primeira vez por sessão.
  * Usa sessionStorage para não repetir em navegações subsequentes.
+ * Na app instalada (PWA/Capacitor), o `PwaLaunchSplash` já cobre este momento — evita mostrar
+ * os dois ecrãs de logo em sequência.
  */
 export function DashboardSplash({ locale, displayName }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (typeof sessionStorage === "undefined") return;
+    if (isNativeAppShell()) return;
     const alreadyShown = sessionStorage.getItem(SESSION_KEY);
     if (!alreadyShown) {
       setVisible(true);

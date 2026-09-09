@@ -10,24 +10,13 @@ const MIN_VISIBLE_MS = 750;
 const FADE_MS = 400;
 const MAX_VISIBLE_MS = 2600;
 
-function isInstalledWebApp(): boolean {
-  if (typeof window === "undefined") return false;
-  if (isNativeAppShell()) return true;
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.matchMedia("(display-mode: fullscreen)").matches ||
-    // Safari iOS «Adicionar ao ecrã principal»
-    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
-  );
-}
-
 /**
  * Ecrã preto + logo transparente até a app carregar (cobre splash nativo com tonalidades diferentes).
  */
 function shouldShowLaunchSplash(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    if (!isInstalledWebApp()) return false;
+    if (!isNativeAppShell()) return false;
     if (sessionStorage.getItem(SESSION_KEY)) return false;
     return true;
   } catch {
