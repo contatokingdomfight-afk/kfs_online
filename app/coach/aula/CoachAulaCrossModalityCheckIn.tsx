@@ -79,8 +79,14 @@ export function CoachAulaCrossModalityCheckIn({ candidates, lessonId, occurrence
 
   return (
     <div style={{ marginBottom: "clamp(16px, 4vw, 20px)" }}>
-      <button type="button" className="btn btn-secondary" onClick={() => setOpen((v) => !v)}>
-        {open ? "Fechar check-in avulso" : "+ Check-in avulso (aluno de outra modalidade)"}
+      <button
+        type="button"
+        className="btn btn-secondary"
+        onClick={() => setOpen((v) => !v)}
+        title="Para alunos de outra modalidade ou plano"
+        aria-label={open ? "Fechar check-in avulso" : "Check-in avulso, para alunos de outra modalidade ou plano"}
+      >
+        {open ? "Fechar" : "Check-in avulso"}
       </button>
       {open && (
         <div
