@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isStudentEligibleForCoachLesson } from "./coach-lesson-eligible-students";
+import {
+  isStudentEligibleForCoachLesson,
+  isStudentEligibleForCrossModalityCheckIn,
+} from "./coach-lesson-eligible-students";
 
 type Student = {
   id: string;
@@ -7,6 +10,7 @@ type Student = {
   planId: string | null;
   primaryModality: string | null;
   status: string;
+  competitionAthlete?: boolean;
 };
 
 type Plan = {
@@ -106,5 +110,43 @@ describe("isStudentEligibleForCoachLesson", () => {
         isOpenClass: false,
       })
     ).toBe(false);
+  });
+});
+
+describe("isStudentEligibleForCrossModalityCheckIn (check-in avulso)", () => {
+  it("aluno Muay Thai (plano single) é elegível para check-in avulso numa aula de Boxe", () => {
+    expect(isStudentEligibleForCrossModalityCheckIn(muayStudent, presencialIPlan, {})).toBe(true);
+  });
+
+  it("exclui aluno INADIMPLENTE", () => {
+    expect(
+      isStudentEligibleForCrossModalityCheckIn({ ...muayStudent, status: "INADIMPLENTE" }, presencialIPlan, {})
+    ).toBe(false);
+  });
+
+  it("exclui aluno sem plano", () => {
+    expect(isStudentEligibleForCrossModalityCheckIn({ ...muayStudent, planId: null }, undefined, {})).toBe(false);
+  });
+
+  it("exclui plano sem check-in", () => {
+    expect(
+      isStudentEligibleForCrossModalityCheckIn(muayStudent, { ...presencialIPlan, includes_check_in: false }, {})
+    ).toBe(false);
+  });
+
+  it("aula 'só atletas' exclui aluno que não é atleta de competição", () => {
+    expect(
+      isStudentEligibleForCrossModalityCheckIn(muayStudent, presencialIPlan, { athletesOnly: true })
+    ).toBe(false);
+  });
+
+  it("aula 'só atletas' inclui aluno marcado como atleta de competição", () => {
+    expect(
+      isStudentEligibleForCrossModalityCheckIn(
+        { ...muayStudent, competitionAthlete: true },
+        presencialIPlan,
+        { athletesOnly: true }
+      )
+    ).toBe(true);
   });
 });

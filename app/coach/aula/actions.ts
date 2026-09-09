@@ -8,7 +8,10 @@ import { sendCheckInConfirmation } from "@/lib/notifications/email";
 import { createPresenceConfirmedNotification, notifyStudentOfNewCoachEvaluation } from "@/lib/notifications/in-app";
 import { grantBadgesIfEligible } from "@/lib/gamification";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
-import { assertStudentEligibleForCoachLesson } from "@/lib/coach-lesson-eligible-students";
+import {
+  assertStudentEligibleForCoachLesson,
+  assertStudentEligibleForCrossModalityCheckIn,
+} from "@/lib/coach-lesson-eligible-students";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getPlanAccess } from "@/lib/plan-access";
 import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
@@ -175,7 +178,8 @@ export async function setAttendanceStatus(
 export async function coachCheckInStudent(
   lessonId: string,
   occurrenceDate: string,
-  studentId: string
+  studentId: string,
+  options?: { crossModality?: boolean }
 ): Promise<{ error?: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Sessão inválida." };
@@ -198,13 +202,19 @@ export async function coachCheckInStudent(
   // cliente admin para verificar a elegibilidade de outro aluno (mesmo padrão da listagem
   // em app/coach/aula/page.tsx, que já usa getAdminClientOrNull para o roster).
   const adminSupabase = getAdminClientOrNull().client ?? supabase;
-  const eligibility = await assertStudentEligibleForCoachLesson(adminSupabase, studentId, {
-    lessonId,
-    schoolId: lesson.schoolId,
-    modality: lesson.modality ?? "",
-    isOpenClass: Boolean((lesson as { isOpenClass?: boolean }).isOpenClass),
-    athletesOnly: Boolean((lesson as { athletesOnly?: boolean }).athletesOnly),
-  });
+  const crossModality = Boolean(options?.crossModality);
+  const eligibility = crossModality
+    ? await assertStudentEligibleForCrossModalityCheckIn(adminSupabase, studentId, {
+        schoolId: lesson.schoolId,
+        athletesOnly: Boolean((lesson as { athletesOnly?: boolean }).athletesOnly),
+      })
+    : await assertStudentEligibleForCoachLesson(adminSupabase, studentId, {
+        lessonId,
+        schoolId: lesson.schoolId,
+        modality: lesson.modality ?? "",
+        isOpenClass: Boolean((lesson as { isOpenClass?: boolean }).isOpenClass),
+        athletesOnly: Boolean((lesson as { athletesOnly?: boolean }).athletesOnly),
+      });
   if (eligibility.error) return { error: eligibility.error };
 
   const now = new Date().toISOString();
@@ -227,7 +237,11 @@ export async function coachCheckInStudent(
     attendanceId = (existing as { id: string }).id;
     const { error } = await supabase
       .from("Attendance")
-      .update({ status: "CONFIRMED", checkedInAt: now })
+      .update({
+        status: "CONFIRMED",
+        checkedInAt: now,
+        ...(crossModality ? { isCrossModality: true } : {}),
+      })
       .eq("id", attendanceId);
     if (error) {
       console.error("coachCheckInStudent update error:", error);
@@ -242,6 +256,7 @@ export async function coachCheckInStudent(
       status: "CONFIRMED",
       checkedInAt: now,
       isExperimental: false,
+      isCrossModality: crossModality,
       occurrenceDate: occ,
     });
     if (error) {
@@ -265,8 +280,9 @@ export async function coachCheckInStudentFromForm(
   const lessonId = (formData.get("lessonId") as string)?.trim();
   const studentId = (formData.get("studentId") as string)?.trim();
   const occurrenceDate = (formData.get("occurrenceDate") as string)?.trim().slice(0, 10) ?? "";
+  const crossModality = formData.get("crossModality") === "true";
   if (!lessonId || !studentId) return { error: "Dados inválidos." };
-  return coachCheckInStudent(lessonId, occurrenceDate, studentId);
+  return coachCheckInStudent(lessonId, occurrenceDate, studentId, { crossModality });
 }
 
 export type SaveEvaluationFromLessonResult = { error?: string; success?: boolean };

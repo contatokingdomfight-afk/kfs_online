@@ -29,6 +29,8 @@ export type CoachLessonStudentRow = {
   rpeRecordedAt: string | null;
   /** null quando o plano não tem limite mensal de check-ins. */
   monthlyLimit: { used: number; limit: number; remaining: number } | null;
+  /** true = "check-in avulso" (aluno de outra modalidade/plano, marcado manualmente). */
+  isCrossModality: boolean;
 };
 
 export type CoachLessonContext = {
@@ -118,6 +120,22 @@ export function isStudentEligibleForCoachLesson(
   );
 }
 
+/**
+ * Verifica se o aluno pode ser marcado presente via "check-in avulso" — ignora a
+ * modalidade/âmbito do plano (é exatamente para quando não bate), mas continua a exigir
+ * plano ativo com check-in incluído, e "só atletas" quando aplicável.
+ */
+export function isStudentEligibleForCrossModalityCheckIn(
+  student: StudentRow,
+  plan: PlanRow | undefined,
+  lesson: Pick<CoachLessonContext, "athletesOnly">
+): boolean {
+  if (student.status !== "ATIVO") return false;
+  if (lesson.athletesOnly && !student.competitionAthlete) return false;
+  const access = buildPlanAccessInput(student, plan);
+  return access.hasPlan && access.hasCheckIn;
+}
+
 function rosterSortRank(status: string | null): number {
   if (status === "CONFIRMED") return 0;
   if (status === "PENDING") return 1;
@@ -154,7 +172,7 @@ export async function loadCoachLessonRoster(
       .eq("status", "ATIVO"),
     supabase
       .from("Attendance")
-      .select("id, studentId, status, checkedInAt, rpe, rpeRecordedAt")
+      .select("id, studentId, status, checkedInAt, rpe, rpeRecordedAt, isCrossModality")
       .eq("lessonId", lessonId)
       .eq("occurrenceDate", occurrenceYmd),
   ]);
@@ -191,8 +209,18 @@ export async function loadCoachLessonRoster(
     return planById.get(student.planId);
   };
 
+  const crossModalityIds = new Set(
+    (attList ?? [])
+      .filter((a) => (a as { isCrossModality?: boolean }).isCrossModality)
+      .map((a) => a.studentId as string)
+  );
+
   const eligibleIds = students
-    .filter((s) => isStudentEligibleForCoachLesson(s, planForStudent(s), { modality, isOpenClass, athletesOnly }))
+    .filter(
+      (s) =>
+        isStudentEligibleForCoachLesson(s, planForStudent(s), { modality, isOpenClass, athletesOnly }) ||
+        crossModalityIds.has(s.id)
+    )
     .map((s) => s.id);
 
   if (eligibleIds.length === 0) {
@@ -209,6 +237,7 @@ export async function loadCoachLessonRoster(
         checkedInAt: string | null;
         rpe: number | null;
         rpeRecordedAt: string | null;
+        isCrossModality?: boolean;
       },
     ])
   );
@@ -375,6 +404,7 @@ export async function loadCoachLessonRoster(
       rpe: att?.rpe != null ? Number(att.rpe) : null,
       rpeRecordedAt: att?.rpeRecordedAt ?? null,
       monthlyLimit: monthlyLimitByStudent.get(s.id) ?? null,
+      isCrossModality: Boolean(att?.isCrossModality),
     };
   });
 
@@ -426,4 +456,93 @@ export async function assertStudentEligibleForCoachLesson(
   }
 
   return { student: row, plan };
+}
+
+/** Valida elegibilidade de um aluno para "check-in avulso" (ignora modalidade/âmbito do plano). */
+export async function assertStudentEligibleForCrossModalityCheckIn(
+  supabase: SupabaseClient,
+  studentId: string,
+  params: { schoolId: string; athletesOnly?: boolean }
+): Promise<{ error?: string; student?: StudentRow; plan?: PlanRow }> {
+  const { data: student } = await supabase
+    .from("Student")
+    .select("id, userId, planId, primaryModality, status, schoolId, competitionAthlete")
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (!student) return { error: "Aluno não encontrado." };
+  if ((student as { schoolId?: string }).schoolId !== params.schoolId) {
+    return { error: "Este aluno não pertence à escola desta aula." };
+  }
+
+  const row = student as StudentRow;
+  if (row.status !== "ATIVO") return { error: "Só alunos ativos podem ser marcados presentes." };
+
+  let plan: PlanRow | undefined;
+  if (row.planId) {
+    const effectivePlanId = isFamilyPlan(row.planId)
+      ? (await loadFamilyReferencePlanIdByStudent(supabase, [studentId])).get(studentId)
+      : row.planId;
+    if (effectivePlanId) {
+      const { data: planRow } = await supabase
+        .from("Plan")
+        .select("id, name, modalityScope, includes_check_in, isActive")
+        .eq("id", effectivePlanId)
+        .maybeSingle();
+      plan = planRow as PlanRow | undefined;
+    }
+  }
+
+  if (!isStudentEligibleForCrossModalityCheckIn(row, plan, params)) {
+    return {
+      error: params.athletesOnly && !row.competitionAthlete
+        ? "Esta aula é só para atletas de competição."
+        : "Este aluno não tem um plano ativo com check-in incluído.",
+    };
+  }
+
+  return { student: row, plan };
+}
+
+export type CrossModalityCandidate = {
+  studentId: string;
+  name: string | null;
+  email: string;
+  primaryModality: string | null;
+};
+
+/**
+ * Alunos ativos da escola que NÃO aparecem no roster normal desta aula (candidatos a
+ * "check-in avulso"). `excludeStudentIds` deve vir do roster já carregado.
+ */
+export async function loadCrossModalityCandidates(
+  supabase: SupabaseClient,
+  schoolId: string,
+  excludeStudentIds: string[]
+): Promise<CrossModalityCandidate[]> {
+  const { data: schoolStudents } = await supabase
+    .from("Student")
+    .select("id, userId, primaryModality")
+    .eq("schoolId", schoolId)
+    .eq("status", "ATIVO");
+
+  const excludeSet = new Set(excludeStudentIds);
+  const candidates = (schoolStudents ?? []).filter((s) => !excludeSet.has(s.id));
+  if (candidates.length === 0) return [];
+
+  const userIds = [...new Set(candidates.map((s) => s.userId))];
+  const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
+  const userById = new Map((users ?? []).map((u) => [u.id, u]));
+
+  return candidates
+    .map((s) => {
+      const u = userById.get(s.userId);
+      return {
+        studentId: s.id,
+        name: u?.name ?? null,
+        email: u?.email ?? "",
+        primaryModality: (s as { primaryModality?: string | null }).primaryModality ?? null,
+      };
+    })
+    .sort((a, b) => (a.name ?? a.email).localeCompare(b.name ?? b.email, "pt"));
 }

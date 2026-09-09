@@ -29,6 +29,7 @@ type Props = {
   rpeRecordedAt: string | null;
   canEvaluate?: boolean;
   monthlyLimit?: { used: number; limit: number; remaining: number } | null;
+  isCrossModality?: boolean;
 };
 
 export function AttendanceRow({
@@ -50,6 +51,7 @@ export function AttendanceRow({
   rpeRecordedAt,
   canEvaluate = true,
   monthlyLimit,
+  isCrossModality = false,
 }: Props) {
   const router = useRouter();
   const [statusState, statusAction] = useFormState(setAttendanceStatusFromForm, null as { error?: string } | null);
@@ -118,6 +120,14 @@ export function AttendanceRow({
             {evaluatedInThisLesson && (
               <span className="coach-attendance-tag coach-attendance-tag--evaluated" title="Já avaliado nesta aula">
                 Avaliado
+              </span>
+            )}
+            {isCrossModality && (
+              <span
+                className="coach-attendance-tag coach-attendance-tag--cross-modality"
+                title="Check-in avulso: aluno de outra modalidade/plano"
+              >
+                Avulso
               </span>
             )}
             <span className={`coach-attendance-status ${statusClass}`}>{statusLabel}</span>

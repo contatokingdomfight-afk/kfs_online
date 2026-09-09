@@ -332,6 +332,7 @@ model Attendance {
   student        Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
   status         AttendanceStatus @default(PENDING)
   isExperimental Boolean          @default(false)
+  isCrossModality Boolean         @default(false)
   createdAt      DateTime         @default(now())
   occurrenceDate DateTime         @db.Date
   checkedInAt    DateTime?        @db.Timestamptz(6)

@@ -1357,6 +1357,10 @@
   background-color: var(--primary);
   color: #fff;
 }
+.coach-attendance-tag--cross-modality {
+  background-color: #b45309;
+  color: #fff;
+}
 
 .coach-attendance-email {
   font-size: var(--text-sm);

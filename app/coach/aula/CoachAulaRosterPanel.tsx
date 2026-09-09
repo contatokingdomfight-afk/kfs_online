@@ -131,6 +131,7 @@ export function CoachAulaRosterPanel({
               rpe={s.rpe}
               rpeRecordedAt={s.rpeRecordedAt}
               monthlyLimit={s.monthlyLimit}
+              isCrossModality={s.isCrossModality}
               profile={{
                 name: s.name,
                 email: s.email,

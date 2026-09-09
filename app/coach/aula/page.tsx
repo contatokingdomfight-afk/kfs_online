@@ -18,8 +18,9 @@ import { RoundTimerClient } from "@/components/coach/round-timer/RoundTimerClien
 import { AcceptTrialButton } from "@/app/admin/experimentais/AcceptTrialButton";
 import { ConvertTrialButton } from "@/app/admin/experimentais/ConvertTrialButton";
 import { CoachAulaRosterPanel } from "./CoachAulaRosterPanel";
+import { CoachAulaCrossModalityCheckIn } from "./CoachAulaCrossModalityCheckIn";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
-import { loadCoachLessonRoster } from "@/lib/coach-lesson-eligible-students";
+import { loadCoachLessonRoster, loadCrossModalityCandidates } from "@/lib/coach-lesson-eligible-students";
 
 export default async function CoachAulaPage({
   searchParams,
@@ -75,6 +76,7 @@ export default async function CoachAulaPage({
   const timerLocale = (locale === "en" ? "en" : "pt") as Locale;
 
   let rosterStudents: Awaited<ReturnType<typeof loadCoachLessonRoster>>["students"] = [];
+  let crossModalityCandidates: Awaited<ReturnType<typeof loadCrossModalityCandidates>> = [];
 
   let evaluationConfig: Awaited<ReturnType<typeof loadEvaluationConfigForModality>> = null;
   if (selectedLesson?.modality) {
@@ -106,6 +108,11 @@ export default async function CoachAulaPage({
       athletesOnly: Boolean(selectedLesson.athletesOnly),
     });
     rosterStudents = roster.students;
+    crossModalityCandidates = await loadCrossModalityCandidates(
+      adminSupabase,
+      selectedLesson.schoolId,
+      rosterStudents.map((s) => s.studentId)
+    );
   }
 
   type TrialInSession = {
@@ -386,6 +393,12 @@ export default async function CoachAulaPage({
               <p className="coach-aula-wellness-hint" style={{ margin: "0 0 16px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
                 Alunos ativos elegíveis para esta aula (por plano/modalidade). Pesquisa por nome para marcar presença mesmo sem pré-confirmação «Vou». Pré-treino e RPE aparecem quando o aluno os regista na app.
               </p>
+
+              <CoachAulaCrossModalityCheckIn
+                candidates={crossModalityCandidates}
+                lessonId={selectedLesson.id}
+                occurrenceDate={selectedLesson.occurrenceDate}
+              />
 
               <CoachAulaRosterPanel
                 students={rosterStudents}
