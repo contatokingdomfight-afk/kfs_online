@@ -25,6 +25,13 @@ export function AuthSessionKeepAlive() {
     const onlineThrottleMs = 45_000;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let visibleInterval: ReturnType<typeof setInterval> | null = null;
+    /**
+     * Ao voltar de background, `visibilitychange`, `pageshow` e `focus` disparam quase em simultâneo
+     * — sem isto, cada um chamava `refreshAfterResume()` de forma independente e podia haver 2-3
+     * pedidos de refresh concorrentes para o mesmo refresh_token (ainda não rodado). Serializa: uma
+     * chamada em curso é reaproveitada pelas seguintes em vez de abrir outro pedido.
+     */
+    let resumeRefreshInFlight: Promise<void> | null = null;
 
     /** Só pede refresh ao Auth quando o access JWT está ausente, expirado ou perto de expirar (alinhado ao ticker interno). */
     function shouldRefreshAccessJwt(session: { expires_at?: number; refresh_token?: string } | null): boolean {
@@ -66,7 +73,8 @@ export function AuthSessionKeepAlive() {
      * Agora só pedimos refresh quando o access JWT já expirou ou está perto de expirar (igual ao intervalo visível).
      */
     const refreshAfterResume = () => {
-      void (async () => {
+      if (resumeRefreshInFlight) return;
+      resumeRefreshInFlight = (async () => {
         try {
           const {
             data: { session },
@@ -83,6 +91,8 @@ export function AuthSessionKeepAlive() {
           } catch {
             /* ignorar — rede ou sessão já inválida */
           }
+        } finally {
+          resumeRefreshInFlight = null;
         }
       })();
     };

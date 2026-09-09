@@ -226,8 +226,11 @@ export async function middleware(request: NextRequest) {
     // Só vale a pena esperar/repetir quando o erro não tem `status` HTTP (falha de rede/fetch);
     // uma sessão genuinamente inválida/expirada vem com status (401/403) e falha sempre da mesma
     // forma, pelo que aí não compensa atrasar a resposta.
+    // 3 tentativas (~2.7s no pior caso) em vez de 2 (~1s): em 4G/dados móveis logo após reabrir a
+    // app, o 1º pedido (DNS+TLS a frio) pode ainda não ter respondido dentro de 1s — continuava a
+    // deslogar sessões válidas nesse intervalo.
     let { data: userData, error: userError } = await supabase.auth.getUser();
-    const RETRY_DELAYS_MS = [300, 700];
+    const RETRY_DELAYS_MS = [400, 900, 1400];
     for (const delayMs of RETRY_DELAYS_MS) {
       if (userData?.user || !userError) break;
       const status = (userError as { status?: number } | null)?.status;
