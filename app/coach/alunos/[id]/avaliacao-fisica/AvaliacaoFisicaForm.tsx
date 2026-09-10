@@ -1,11 +1,15 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import { savePhysicalAssessment, type SaveAssessmentResult } from "./actions";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { PhysicalAssessmentInstructorScoreHints } from "@/components/physical-assessment/PhysicalAssessmentInstructorScoreHints";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
+import { SignaturePad, type SignaturePadHandle } from "@/components/SignaturePad";
+
+const AUTOSAVE_INTERVAL_MS = 60_000;
 
 type SubmitPhase = "idle" | "saving" | "saved";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
@@ -81,6 +85,46 @@ export function AvaliacaoFisicaForm({
    * (via effect, que corre após o commit) que o DOM já reflete o valor escolhido. */
   const [pendingIntent, setPendingIntent] = useState<"draft" | "submit" | null>(null);
 
+  const sigPadRef = useRef<SignaturePadHandle>(null);
+  const [signatureImageUrl, setSignatureImageUrl] = useState(fd.signatureImageUrl ?? "");
+  const [signatureError, setSignatureError] = useState<string | null>(null);
+  const [signatureUploading, setSignatureUploading] = useState(false);
+
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [lastAutoSavedAt, setLastAutoSavedAt] = useState<Date | null>(null);
+  const dirtyRef = useRef(false);
+
+  /** Envia o desenho do canvas para o storage se houver traço novo; devolve o URL a usar (novo ou o já existente). */
+  const uploadSignatureIfNeeded = useCallback(async (): Promise<string> => {
+    const pad = sigPadRef.current;
+    if (!pad || pad.isEmpty()) return signatureImageUrl;
+    setSignatureUploading(true);
+    setSignatureError(null);
+    try {
+      const blob = await pad.toBlob();
+      if (!blob) {
+        setSignatureError("Não foi possível capturar a assinatura. Tenta novamente.");
+        return signatureImageUrl;
+      }
+      const body = new FormData();
+      body.append("file", blob, "signature.png");
+      body.append("studentId", studentId);
+      const res = await fetch("/api/avaliacao-fisica/signature", { method: "POST", body });
+      const json = await res.json();
+      if (!res.ok) {
+        setSignatureError(json.error ?? "Falha ao guardar a assinatura.");
+        return signatureImageUrl;
+      }
+      setSignatureImageUrl(json.url as string);
+      return json.url as string;
+    } catch {
+      setSignatureError("Falha ao guardar a assinatura. Verifica a ligação e tenta novamente.");
+      return signatureImageUrl;
+    } finally {
+      setSignatureUploading(false);
+    }
+  }, [signatureImageUrl, studentId]);
+
   useEffect(() => {
     if (state?.error) {
       setSubmitPhase("idle");
@@ -112,7 +156,7 @@ export function AvaliacaoFisicaForm({
 
   const handleSubmitClick = () => setShowConfirm(true);
 
-  const handleConfirmSubmit = () => {
+  const handleConfirmSubmit = async () => {
     setShowConfirm(false);
     const form = formRef.current;
     if (!form) return;
@@ -121,20 +165,54 @@ export function AvaliacaoFisicaForm({
       form.reportValidity();
       return;
     }
+    await uploadSignatureIfNeeded();
+    dirtyRef.current = false;
     setLastIntent("submit");
     setSubmitPhase("saving");
     setPendingIntent("submit");
   };
 
-  const handleSaveDraftClick = () => {
+  const handleSaveDraftClick = async () => {
     const form = formRef.current;
     if (!form) return;
     form.querySelectorAll<HTMLInputElement>('input[type="number"]').forEach(clampNumberInputToMinMax);
-    // Rascunho pode ficar incompleto — não valida campos obrigatórios (ex.: liberação).
+    // Rascunho pode ficar incompleto — não valida campos obrigatórios (ex.: liberação ou assinatura).
+    await uploadSignatureIfNeeded();
+    dirtyRef.current = false;
     setLastIntent("draft");
     setSubmitPhase("saving");
     setPendingIntent("draft");
   };
+
+  /** Guarda em segundo plano (sem modal nem redirect) — usada pelo autosave periódico. */
+  const silentAutoSave = useCallback(async () => {
+    const form = formRef.current;
+    if (!form || !dirtyRef.current) return;
+    setAutoSaveStatus("saving");
+    try {
+      const url = await uploadSignatureIfNeeded();
+      const snapshot = new FormData(form);
+      snapshot.set("intent", "draft");
+      if (url) snapshot.set("signatureImageUrl", url);
+      const result = await savePhysicalAssessment(null, snapshot);
+      if (result.error) {
+        setAutoSaveStatus("error");
+      } else {
+        dirtyRef.current = false;
+        setAutoSaveStatus("saved");
+        setLastAutoSavedAt(new Date());
+      }
+    } catch {
+      setAutoSaveStatus("error");
+    }
+  }, [uploadSignatureIfNeeded]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (submitPhase === "idle") void silentAutoSave();
+    }, AUTOSAVE_INTERVAL_MS);
+    return () => window.clearInterval(interval);
+  }, [submitPhase, silentAutoSave]);
 
   return (
     <form
@@ -146,9 +224,13 @@ export function AvaliacaoFisicaForm({
       onBlur={(e) => {
         if (e.target instanceof HTMLInputElement) clampNumberInputToMinMax(e.target);
       }}
+      onChange={() => {
+        dirtyRef.current = true;
+      }}
     >
       <input type="hidden" name="studentId" value={studentId} />
       <input type="hidden" name="intent" value={pendingIntent ?? lastIntent} readOnly />
+      <input type="hidden" name="signatureImageUrl" value={signatureImageUrl} readOnly />
       {state?.error && (
         <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-2 text-sm text-red-600 dark:text-red-400">
           {state.error}
@@ -438,7 +520,13 @@ export function AvaliacaoFisicaForm({
             <input type="number" name="heartRateRest" min={30} max={200} defaultValue={fd.heartRateRest ?? ""} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
-            <span>FC em atividade (bpm)</span>
+            <span className="inline-flex items-center gap-1.5">
+              FC em atividade (bpm)
+              <InlineInfoTip
+                detail="Ex.: após aquecimento ou após um teste leve; regista o contexto nas notas se precisares."
+                ariaLabel="Mais informação sobre FC em atividade"
+              />
+            </span>
             <input
               type="number"
               name="heartRateActivity"
@@ -447,9 +535,6 @@ export function AvaliacaoFisicaForm({
               defaultValue={fd.heartRateActivity ?? ""}
               className="input w-full max-w-[8rem]"
             />
-            <span className="text-[11px] text-text-secondary leading-snug">
-              Ex.: após aquecimento ou após um teste leve; regista o contexto nas notas se precisares.
-            </span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>PA</span>
@@ -508,17 +593,23 @@ export function AvaliacaoFisicaForm({
 
       {/* 6.4 Antropometria (opcional) */}
       <fieldset className="rounded-xl bg-bg-secondary border border-border p-4 md:p-6">
-        <legend className="text-base font-semibold text-text-primary">
+        <legend className="text-base font-semibold text-text-primary inline-flex items-center gap-1.5">
           6.4 Comprimentos e circunferências (opcional)
+          <InlineInfoTip
+            detail="Valores em centímetros (inteiro). Esquerda/direita permitem assimetrias. Não substitui avaliação clínica; serve para acompanhamento desportivo e evolução (ex.: representação ilustrativa)."
+            ariaLabel="Mais informação sobre comprimentos e circunferências"
+          />
         </legend>
-        <p className="text-xs text-text-secondary mt-1 mb-4 max-w-4xl leading-relaxed">
-          Valores em centímetros (inteiro). Esquerda/direita permitem assimetrias. Não substitui avaliação
-          clínica; serve para acompanhamento desportivo e evolução (ex.: representação ilustrativa).
-        </p>
-        <p className="text-xs text-text-secondary font-medium mb-2">Comprimentos</p>
+        <p className="text-xs text-text-secondary font-medium mb-2 mt-3">Comprimentos</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-6 gap-y-3 mb-6">
           <label className="flex flex-col gap-1.5 text-sm min-w-0 sm:col-span-2 xl:col-span-2">
-            <span>Largura dos ombros — biaquatorial (cm)</span>
+            <span className="inline-flex items-center gap-1.5">
+              Largura dos ombros — biaquatorial (cm)
+              <InlineInfoTip
+                detail="Distância entre os acrómios (pontas dos ombros), costas eretas; protocolo da escola (ex.: ISAK)."
+                ariaLabel="Mais informação sobre largura dos ombros"
+              />
+            </span>
             <input
               type="number"
               name="breadthShoulderCm"
@@ -528,9 +619,6 @@ export function AvaliacaoFisicaForm({
               defaultValue={fd.breadthShoulderCm ?? ""}
               className="input w-full max-w-[7.5rem]"
             />
-            <span className="text-[11px] text-text-secondary leading-snug">
-              Distância entre os acrómios (pontas dos ombros), costas eretas; protocolo da escola (ex.: ISAK).
-            </span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Braço esq.: ombro → ponta do dedo (cm)</span>
@@ -797,8 +885,9 @@ export function AvaliacaoFisicaForm({
       <fieldset className="rounded-xl bg-bg-secondary border border-border p-4 md:p-6">
         <legend className="text-base font-semibold text-text-primary">8. Avaliação do instrutor (1–10)</legend>
         <p className="text-xs text-text-secondary mt-1 mb-3 max-w-4xl leading-relaxed">
-          Normas de referência (tabelas por idade 9–18, raparigas/rapazes): indica o sexo para calcular sugestões a partir
-          de flexões, abdominais, IMC e (opcionalmente) distância em 1 min. Podes ajustar todas as notas manualmente.
+          Normas de referência por idade (juvenis 9–18; adultas a partir dos 19) e sexo: indica o sexo para calcular
+          sugestões a partir de flexões, abdominais, IMC e (opcionalmente) distância em 1 min. Podes ajustar todas as
+          notas manualmente.
         </p>
         <div className="flex flex-wrap gap-4 mb-2">
           <span className="text-sm text-text-secondary shrink-0">Sexo para tabelas:</span>
@@ -848,10 +937,35 @@ export function AvaliacaoFisicaForm({
         <p className="text-sm text-text-secondary max-w-3xl leading-relaxed">
           Declaro que as informações são verdadeiras e estou ciente dos riscos.
         </p>
-        <label className="mt-4 flex flex-col gap-1.5 text-sm max-w-xs">
-          <span className="font-medium text-text-primary">Data assinatura (aluno)</span>
-          <input type="date" name="signatureDate" defaultValue={fd.signatureDate ?? ""} className="input w-full min-w-[10rem]" />
-        </label>
+        <div className="mt-4 flex flex-col sm:flex-row gap-4 max-w-3xl">
+          <label className="flex flex-col gap-1.5 text-sm max-w-xs">
+            <span className="font-medium text-text-primary">Data assinatura (aluno)</span>
+            <input type="date" name="signatureDate" defaultValue={fd.signatureDate ?? ""} className="input w-full min-w-[10rem]" />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm flex-1 min-w-0">
+            <span className="font-medium text-text-primary">Nome do aluno (assinatura)</span>
+            <input type="text" name="signatureName" defaultValue={fd.signatureName ?? studentName} className="input w-full" />
+          </label>
+        </div>
+        <div className="mt-4 max-w-md">
+          {signatureImageUrl ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-text-primary">Assinatura registada</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={signatureImageUrl}
+                alt="Assinatura do aluno"
+                className="max-w-[220px] rounded-md border border-border bg-white"
+              />
+              <span className="text-[11px] text-text-secondary">Para substituir, assina de novo abaixo.</span>
+            </div>
+          ) : null}
+          <div className="mt-3">
+            <SignaturePad ref={sigPadRef} label="Assinatura do aluno (desenha com o dedo ou o rato)" height={160} />
+          </div>
+          {signatureUploading && <p className="text-xs text-text-secondary mt-2 mb-0">A guardar assinatura…</p>}
+          {signatureError && <p className="text-xs text-red-500 mt-2 mb-0">{signatureError}</p>}
+        </div>
       </fieldset>
 
       {/* 10. Liberação */}
@@ -880,12 +994,36 @@ export function AvaliacaoFisicaForm({
         </div>
       </fieldset>
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
         <button type="button" onClick={handleSaveDraftClick} className="btn btn-secondary w-full sm:w-auto">
           Guardar rascunho
         </button>
         <button type="button" onClick={handleSubmitClick} className="btn btn-primary w-full sm:w-auto">
           Entregar avaliação física
+        </button>
+        <span className="text-xs text-text-secondary">
+          {autoSaveStatus === "saving"
+            ? "A guardar automaticamente…"
+            : autoSaveStatus === "saved" && lastAutoSavedAt
+              ? `Guardado automaticamente às ${lastAutoSavedAt.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}`
+              : autoSaveStatus === "error"
+                ? "Falha ao guardar automaticamente — usa «Guardar rascunho»."
+                : ""}
+        </span>
+      </div>
+
+      {/* Atalho flutuante para guardar rascunho — ocupa o lugar do assistente de chat do admin
+          nesta página (ver AdminChatWidgetGate), para não competir com o preenchimento da ficha. */}
+      <div className="admin-chat-fab-wrap">
+        <button
+          type="button"
+          onClick={handleSaveDraftClick}
+          className="btn btn-primary"
+          style={{ width: 56, height: 56, borderRadius: "50%", padding: 0, fontSize: 20, boxShadow: "0 4px 16px rgba(0,0,0,0.35)" }}
+          aria-label="Guardar rascunho"
+          title="Guardar rascunho"
+        >
+          💾
         </button>
       </div>
     </form>

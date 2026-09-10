@@ -194,6 +194,8 @@ export async function savePhysicalAssessment(
     scoreSpeed: parseInt(String(formData.get("scoreSpeed")), 10) || null,
     instructorNotes: (formData.get("instructorNotes") as string)?.trim() || undefined,
     signatureDate: (formData.get("signatureDate") as string)?.trim() || undefined,
+    signatureName: (formData.get("signatureName") as string)?.trim() || undefined,
+    signatureImageUrl: (formData.get("signatureImageUrl") as string)?.trim() || null,
   };
 
   let finalCoachId = coachId ?? null;

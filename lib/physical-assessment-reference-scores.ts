@@ -98,6 +98,106 @@ const RUN_M_PER_MIN_SOFT: Record<ReferenceSex, Record<number, { fair: number; go
   },
 };
 
+/**
+ * Referências para adultos (19+): abdominais 1 min. de Golding et al. (1986), "The Y's Way to
+ * Physical Fitness" (YMCA) — teste de 1 minuto, igual ao campo desta ficha. Flexões do ACSM
+ * ("Health-Related Physical Fitness Assessment Manual") — repetições até à exaustão, não
+ * especificamente 1 minuto; usa-se aqui como aproximação (prática comum em calculadoras de
+ * fitness), não é uma correspondência perfeita ao protocolo desta ficha.
+ * IMC: faixa saudável da OMS para adultos (18,5–24,9 kg/m²), não varia por idade.
+ */
+type AdultTierKey = "VERY_POOR" | "POOR" | "BELOW_AVERAGE" | "AVERAGE" | "ABOVE_AVERAGE" | "GOOD" | "EXCELLENT";
+
+const ADULT_TIER_SCORE: Record<AdultTierKey, number> = {
+  VERY_POOR: 2,
+  POOR: 3,
+  BELOW_AVERAGE: 4,
+  AVERAGE: 6,
+  ABOVE_AVERAGE: 7,
+  GOOD: 8,
+  EXCELLENT: 9,
+};
+
+const ADULT_TIER_LABEL_PT: Record<AdultTierKey, string> = {
+  VERY_POOR: "Muito fraco",
+  POOR: "Fraco",
+  BELOW_AVERAGE: "Abaixo da média",
+  AVERAGE: "Média",
+  ABOVE_AVERAGE: "Acima da média",
+  GOOD: "Bom",
+  EXCELLENT: "Excelente",
+};
+
+const ADULT_TIER_LABEL_EN: Record<AdultTierKey, string> = {
+  VERY_POOR: "Very poor",
+  POOR: "Poor",
+  BELOW_AVERAGE: "Below average",
+  AVERAGE: "Average",
+  ABOVE_AVERAGE: "Above average",
+  GOOD: "Good",
+  EXCELLENT: "Excellent",
+};
+
+type AdultTier = { min: number; score: number; label: string; labelEn: string };
+type AdultAgeBand = { minAge: number; maxAge: number; tiers: AdultTier[] };
+
+function tier(min: number, key: AdultTierKey): AdultTier {
+  return { min, score: ADULT_TIER_SCORE[key], label: ADULT_TIER_LABEL_PT[key], labelEn: ADULT_TIER_LABEL_EN[key] };
+}
+
+/** Abdominais 1 min. — homens (Golding et al. 1986). */
+const ADULT_SITUP_1MIN_MALE: AdultAgeBand[] = [
+  { minAge: 19, maxAge: 25, tiers: [tier(0, "VERY_POOR"), tier(25, "POOR"), tier(31, "BELOW_AVERAGE"), tier(35, "AVERAGE"), tier(39, "ABOVE_AVERAGE"), tier(44, "GOOD"), tier(50, "EXCELLENT")] },
+  { minAge: 26, maxAge: 35, tiers: [tier(0, "VERY_POOR"), tier(22, "POOR"), tier(29, "BELOW_AVERAGE"), tier(31, "AVERAGE"), tier(35, "ABOVE_AVERAGE"), tier(40, "GOOD"), tier(46, "EXCELLENT")] },
+  { minAge: 36, maxAge: 45, tiers: [tier(0, "VERY_POOR"), tier(17, "POOR"), tier(23, "BELOW_AVERAGE"), tier(27, "AVERAGE"), tier(30, "ABOVE_AVERAGE"), tier(35, "GOOD"), tier(42, "EXCELLENT")] },
+  { minAge: 46, maxAge: 55, tiers: [tier(0, "VERY_POOR"), tier(13, "POOR"), tier(18, "BELOW_AVERAGE"), tier(22, "AVERAGE"), tier(25, "ABOVE_AVERAGE"), tier(29, "GOOD"), tier(36, "EXCELLENT")] },
+  { minAge: 56, maxAge: 65, tiers: [tier(0, "VERY_POOR"), tier(9, "POOR"), tier(13, "BELOW_AVERAGE"), tier(17, "AVERAGE"), tier(21, "ABOVE_AVERAGE"), tier(25, "GOOD"), tier(32, "EXCELLENT")] },
+  { minAge: 66, maxAge: 200, tiers: [tier(0, "VERY_POOR"), tier(7, "POOR"), tier(11, "BELOW_AVERAGE"), tier(15, "AVERAGE"), tier(19, "ABOVE_AVERAGE"), tier(22, "GOOD"), tier(29, "EXCELLENT")] },
+];
+
+/** Abdominais 1 min. — mulheres (Golding et al. 1986). */
+const ADULT_SITUP_1MIN_FEMALE: AdultAgeBand[] = [
+  { minAge: 19, maxAge: 25, tiers: [tier(0, "VERY_POOR"), tier(18, "POOR"), tier(25, "BELOW_AVERAGE"), tier(29, "AVERAGE"), tier(33, "ABOVE_AVERAGE"), tier(37, "GOOD"), tier(44, "EXCELLENT")] },
+  { minAge: 26, maxAge: 35, tiers: [tier(0, "VERY_POOR"), tier(13, "POOR"), tier(21, "BELOW_AVERAGE"), tier(25, "AVERAGE"), tier(29, "ABOVE_AVERAGE"), tier(33, "GOOD"), tier(40, "EXCELLENT")] },
+  { minAge: 36, maxAge: 45, tiers: [tier(0, "VERY_POOR"), tier(7, "POOR"), tier(15, "BELOW_AVERAGE"), tier(19, "AVERAGE"), tier(23, "ABOVE_AVERAGE"), tier(27, "GOOD"), tier(34, "EXCELLENT")] },
+  { minAge: 46, maxAge: 55, tiers: [tier(0, "VERY_POOR"), tier(5, "POOR"), tier(10, "BELOW_AVERAGE"), tier(14, "AVERAGE"), tier(18, "ABOVE_AVERAGE"), tier(22, "GOOD"), tier(28, "EXCELLENT")] },
+  { minAge: 56, maxAge: 65, tiers: [tier(0, "VERY_POOR"), tier(3, "POOR"), tier(7, "BELOW_AVERAGE"), tier(10, "AVERAGE"), tier(13, "ABOVE_AVERAGE"), tier(18, "GOOD"), tier(25, "EXCELLENT")] },
+  { minAge: 66, maxAge: 200, tiers: [tier(0, "VERY_POOR"), tier(2, "POOR"), tier(5, "BELOW_AVERAGE"), tier(11, "AVERAGE"), tier(14, "ABOVE_AVERAGE"), tier(17, "GOOD"), tier(24, "EXCELLENT")] },
+];
+
+/** Flexões (ACSM, até à exaustão — usado como aproximação ao teste de 1 min.) — homens. */
+const ADULT_PUSHUP_MALE: AdultAgeBand[] = [
+  { minAge: 19, maxAge: 29, tiers: [tier(0, "POOR"), tier(20, "BELOW_AVERAGE"), tier(24, "AVERAGE"), tier(30, "ABOVE_AVERAGE"), tier(39, "GOOD"), tier(47, "EXCELLENT")] },
+  { minAge: 30, maxAge: 39, tiers: [tier(0, "POOR"), tier(15, "BELOW_AVERAGE"), tier(20, "AVERAGE"), tier(25, "ABOVE_AVERAGE"), tier(34, "GOOD"), tier(41, "EXCELLENT")] },
+  { minAge: 40, maxAge: 49, tiers: [tier(0, "POOR"), tier(12, "BELOW_AVERAGE"), tier(16, "AVERAGE"), tier(21, "ABOVE_AVERAGE"), tier(28, "GOOD"), tier(34, "EXCELLENT")] },
+  { minAge: 50, maxAge: 59, tiers: [tier(0, "POOR"), tier(9, "BELOW_AVERAGE"), tier(13, "AVERAGE"), tier(18, "ABOVE_AVERAGE"), tier(25, "GOOD"), tier(31, "EXCELLENT")] },
+  { minAge: 60, maxAge: 200, tiers: [tier(0, "POOR"), tier(6, "BELOW_AVERAGE"), tier(11, "AVERAGE"), tier(17, "ABOVE_AVERAGE"), tier(24, "GOOD"), tier(30, "EXCELLENT")] },
+];
+
+/** Flexões (ACSM) — mulheres. */
+const ADULT_PUSHUP_FEMALE: AdultAgeBand[] = [
+  { minAge: 19, maxAge: 29, tiers: [tier(0, "POOR"), tier(12, "BELOW_AVERAGE"), tier(17, "AVERAGE"), tier(23, "ABOVE_AVERAGE"), tier(30, "GOOD"), tier(36, "EXCELLENT")] },
+  { minAge: 30, maxAge: 39, tiers: [tier(0, "POOR"), tier(10, "BELOW_AVERAGE"), tier(14, "AVERAGE"), tier(22, "ABOVE_AVERAGE"), tier(30, "GOOD"), tier(37, "EXCELLENT")] },
+  { minAge: 40, maxAge: 49, tiers: [tier(0, "POOR"), tier(8, "BELOW_AVERAGE"), tier(11, "AVERAGE"), tier(17, "ABOVE_AVERAGE"), tier(24, "GOOD"), tier(31, "EXCELLENT")] },
+  { minAge: 50, maxAge: 59, tiers: [tier(0, "POOR"), tier(7, "BELOW_AVERAGE"), tier(10, "AVERAGE"), tier(14, "ABOVE_AVERAGE"), tier(21, "GOOD"), tier(25, "EXCELLENT")] },
+  { minAge: 60, maxAge: 200, tiers: [tier(0, "VERY_POOR"), tier(3, "BELOW_AVERAGE"), tier(5, "AVERAGE"), tier(12, "ABOVE_AVERAGE"), tier(19, "GOOD"), tier(23, "EXCELLENT")] },
+];
+
+const ADULT_BMI_HEALTHY: BmiBand = { age: 0, min: 18.5, max: 24.9 };
+
+function adultBandFor(rows: AdultAgeBand[], ageYears: number): AdultAgeBand {
+  return rows.find((r) => ageYears >= r.minAge && ageYears <= r.maxAge) ?? rows[rows.length - 1];
+}
+
+/** Maior tier cujo mínimo é atingido pelas repetições (staircase, tal como as tabelas de origem). */
+function adultTierForReps(reps: number, band: AdultAgeBand): AdultTier {
+  let chosen = band.tiers[0];
+  for (const t of band.tiers) {
+    if (reps >= t.min) chosen = t;
+  }
+  return chosen;
+}
+
 export function ageYearsAtAssessment(dateOfBirthIso: string | null | undefined, assessedAtIso: string): number | null {
   if (!dateOfBirthIso?.trim()) return null;
   const dob = dateOfBirthIso.trim().slice(0, 10);
@@ -208,6 +308,10 @@ export function computePhysicalAssessmentReferenceScores(
     return emptyBreakdown(linesPt, linesEn);
   }
 
+  if (ageYears >= 19) {
+    return computeAdultReferenceScores(d, { ageYears, sex, h, w }, push, linesPt, linesEn);
+  }
+
   const abdFlexRows = sex === "F" ? GIRLS_ABDOM_FLEX : BOYS_ABDOM_FLEX;
   const bmiRows = sex === "F" ? GIRLS_BMI_HEALTHY : BOYS_BMI_HEALTHY;
   const band = bandForAge(abdFlexRows, ageYears);
@@ -272,6 +376,120 @@ export function computePhysicalAssessmentReferenceScores(
     push(
       `Condição / composição (IMC): ${bmi.toFixed(1)} kg/m² vs zona saudável ${bmiBand.min}–${bmiBand.max} (${sex === "F" ? "raparigas" : "rapazes"}, ${bmiBand.age} a.) → ${scoreCondition}.`,
       `Condition / composition (BMI): ${bmi.toFixed(1)} vs healthy range ${bmiBand.min}–${bmiBand.max} (${sex === "F" ? "girls" : "boys"}, age ${bmiBand.age}) → ${scoreCondition}.`
+    );
+  } else {
+    push("Condição física (IMC): falta altura e peso nesta ficha — preenche ou usa o perfil.", "Condition (BMI): height and weight missing on this form — fill them or use profile data.");
+  }
+
+  const scoreMobility = mobilityPostureScore10(d);
+  if (scoreMobility != null) {
+    push(
+      `Mobilidade / postura: inferida a partir das opções marcadas (sem «Senta e alcança» em cm na ficha) → ${scoreMobility}.`,
+      `Mobility / posture: inferred from selected options (no sit-and-reach cm in this form) → ${scoreMobility}.`
+    );
+  } else {
+    push("Mobilidade: sem itens marcados em mobilidade/postura — atribui manualmente.", "Mobility: no mobility/posture items selected — set manually.");
+  }
+
+  const parts = [scoreStrength, scoreEndurance, scoreCondition].filter((x): x is number => x != null);
+  let scoreCoordination: number | null = null;
+  if (parts.length >= 2) {
+    scoreCoordination = Math.round(parts.reduce((a, b) => a + b, 0) / parts.length);
+    push(
+      `Coordenação: estimativa pela média de força, resistência e condição (${parts.join(", ")}) → ${scoreCoordination} (sem teste 4×10 m).`,
+      `Coordination: estimated from mean of strength, endurance, condition → ${scoreCoordination} (no 4×10 m test).`
+    );
+  } else {
+    push("Coordenação: dados insuficientes para estimativa — atribui manualmente.", "Coordination: insufficient data for estimate — set manually.");
+  }
+
+  return {
+    scoreCondition,
+    scoreMobility,
+    scoreCoordination,
+    scoreEndurance,
+    scoreStrength,
+    scoreSpeed,
+    linesPt,
+    linesEn,
+  };
+}
+
+/** Ramo adulto (19+) de {@link computePhysicalAssessmentReferenceScores} — ver tabelas ADULT_* acima. */
+function computeAdultReferenceScores(
+  d: Partial<PhysicalAssessmentFormData>,
+  opts: { ageYears: number; sex: ReferenceSex; h: number | null | undefined; w: number | null | undefined },
+  push: (pt: string, en: string) => void,
+  linesPt: string[],
+  linesEn: string[]
+): ReferenceScoreBreakdown {
+  const { ageYears, sex, h, w } = opts;
+  const sexLabelPt = sex === "F" ? "mulheres" : "homens";
+  const sexLabelEn = sex === "F" ? "women" : "men";
+
+  const pushupBand = adultBandFor(sex === "F" ? ADULT_PUSHUP_FEMALE : ADULT_PUSHUP_MALE, ageYears);
+  let scoreStrength: number | null = null;
+  if (typeof d.pushups1min === "number" && d.pushups1min >= 0) {
+    const t = adultTierForReps(d.pushups1min, pushupBand);
+    scoreStrength = t.score;
+    push(
+      `Força (flexões, ACSM, ${sexLabelPt} ${pushupBand.minAge}–${pushupBand.maxAge === 200 ? "+" : pushupBand.maxAge} anos): ${d.pushups1min} rep. → ${t.label} → sugestão ${scoreStrength}. Tabela até à exaustão, usada como aproximação ao teste de 1 min.`,
+      `Strength (push-ups, ACSM, ${sexLabelEn} ${pushupBand.minAge}–${pushupBand.maxAge === 200 ? "+" : pushupBand.maxAge}): ${d.pushups1min} reps → ${t.labelEn} → suggestion ${scoreStrength}. To-exhaustion table, used as an approximation for the 1-min test.`
+    );
+  } else {
+    push("Força (flexões): sem valor — preenche o teste ou atribui nota manual.", "Strength (push-ups): no value — fill the test or set the score manually.");
+  }
+
+  const situpBand = adultBandFor(sex === "F" ? ADULT_SITUP_1MIN_FEMALE : ADULT_SITUP_1MIN_MALE, ageYears);
+  let abdomScore: number | null = null;
+  if (typeof d.situps1min === "number" && d.situps1min >= 0) {
+    const t = adultTierForReps(d.situps1min, situpBand);
+    abdomScore = t.score;
+    push(
+      `Abdominais 1 min (Golding/YMCA, ${sexLabelPt} ${situpBand.minAge}–${situpBand.maxAge === 200 ? "+" : situpBand.maxAge} anos): ${d.situps1min} rep. → ${t.label} → ${abdomScore}.`,
+      `Sit-ups 1 min (Golding/YMCA, ${sexLabelEn} ${situpBand.minAge}–${situpBand.maxAge === 200 ? "+" : situpBand.maxAge}): ${d.situps1min} reps → ${t.labelEn} → ${abdomScore}.`
+    );
+  }
+
+  let runScore: number | null = null;
+  let scoreSpeed: number | null = null;
+  if (typeof d.runDistance1minMeters === "number" && d.runDistance1minMeters > 0) {
+    const mpm = d.runDistance1minMeters;
+    const runBase = runMetersPerMinToScore10(mpm, sex, 18);
+    runScore = runBase;
+    scoreSpeed = Math.max(2, Math.min(10, runBase - 1));
+    push(
+      `Distância 1 min (${mpm} m/min): resistência (aprox., sem tabela validada para adultos — usa a referência de 18 anos como base) ${runScore}; velocidade (aprox.) ${scoreSpeed}.`,
+      `1-min distance (${mpm} m/min): endurance (approx., no validated adult table — using the 18-year-old reference as a base) ${runScore}; speed (approx.) ${scoreSpeed}.`
+    );
+  } else {
+    push(
+      "Velocidade / resistência aeróbia: não registados nesta ficha; podes usar abdominais e distância 1 min para resistência aproximada.",
+      "Aerobic endurance: not on this form; use sit-ups and 1-min distance for a rough endurance estimate."
+    );
+  }
+
+  let scoreEndurance: number | null = abdomScore;
+  if (abdomScore != null && runScore != null) {
+    scoreEndurance = Math.round((abdomScore + runScore) / 2);
+    push(`Resistência combinada (abdominais + distância 1 min): média → ${scoreEndurance}.`, `Combined endurance (sit-ups + 1-min distance): average → ${scoreEndurance}.`);
+  } else if (abdomScore != null) {
+    scoreEndurance = abdomScore;
+    push(`Resistência: baseada nas abdominais → ${scoreEndurance}.`, `Endurance: based on sit-ups → ${scoreEndurance}.`);
+  } else if (runScore != null) {
+    scoreEndurance = runScore;
+    push(`Resistência: só distância 1 min (aproximação) → ${scoreEndurance}.`, `Endurance: 1-min distance only (approximation) → ${scoreEndurance}.`);
+  } else {
+    push("Resistência: sem abdominais nem distância 1 min — usa nota manual ou preenche os testes.", "Endurance: no sit-ups or 1-min distance — set manually or fill tests.");
+  }
+
+  let scoreCondition: number | null = null;
+  if (typeof h === "number" && typeof w === "number" && h > 0 && w > 0) {
+    const bmi = w / (h / 100) ** 2;
+    scoreCondition = bmiToScore10(bmi, ADULT_BMI_HEALTHY);
+    push(
+      `Condição / composição (IMC): ${bmi.toFixed(1)} kg/m² vs zona saudável adulta 18,5–24,9 (OMS) → ${scoreCondition}.`,
+      `Condition / composition (BMI): ${bmi.toFixed(1)} vs adult healthy range 18.5–24.9 (WHO) → ${scoreCondition}.`
     );
   } else {
     push("Condição física (IMC): falta altura e peso nesta ficha — preenche ou usa o perfil.", "Condition (BMI): height and weight missing on this form — fill them or use profile data.");

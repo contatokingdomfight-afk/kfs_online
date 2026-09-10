@@ -108,6 +108,10 @@ export type PhysicalAssessmentFormData = {
   instructorNotes?: string;
   /** 9. Termo */
   signatureDate?: string;
+  /** Nome escrito pelo aluno a confirmar a assinatura desenhada. */
+  signatureName?: string;
+  /** PNG da assinatura desenhada (bucket "signatures", ver /api/avaliacao-fisica/signature). */
+  signatureImageUrl?: string | null;
   /** 10. Liberação já em clearance (coluna) */
 };
 

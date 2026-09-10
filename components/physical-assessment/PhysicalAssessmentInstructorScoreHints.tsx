@@ -9,11 +9,44 @@ import {
   computePhysicalAssessmentReferenceScores,
   type ReferenceSex,
 } from "@/lib/physical-assessment-reference-scores";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 
 type Props = {
   formRef: RefObject<HTMLFormElement | null>;
   studentDob: string | null;
 };
+
+/** Divide "Rótulo: resto da frase" no primeiro ":" perto do início; sem ":" cedo, a linha inteira é o rótulo. */
+function splitHintLine(line: string): { header: string; rest: string } {
+  const idx = line.indexOf(":");
+  if (idx === -1 || idx > 60) return { header: line, rest: "" };
+  return { header: line.slice(0, idx + 1), rest: line.slice(idx + 1).trim() };
+}
+
+/** Caixa que mostra só o rótulo e expande ao clicar para revelar a frase completa. */
+function HintLineBox({ line }: { line: string }) {
+  const [open, setOpen] = useState(false);
+  const { header, rest } = splitHintLine(line);
+
+  if (!rest) {
+    return <li className="text-xs text-text-secondary list-none rounded-md border border-border/60 px-2.5 py-1.5">{header}</li>;
+  }
+
+  return (
+    <li className="list-none">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between gap-2 text-left text-xs rounded-md border border-border/60 px-2.5 py-1.5 text-text-secondary hover:bg-bg/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+      >
+        <span className="font-medium text-text-primary">{header}</span>
+        <span aria-hidden className="shrink-0 text-text-secondary">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && <p className="text-xs text-text-secondary mt-1.5 mb-0 pl-2.5 leading-relaxed">{rest}</p>}
+    </li>
+  );
+}
 
 function readInput(form: HTMLFormElement, name: string): string {
   const el = form.elements.namedItem(name);
@@ -113,13 +146,20 @@ export function PhysicalAssessmentInstructorScoreHints({ formRef, studentDob }: 
 
   return (
     <div className="rounded-lg border border-border bg-bg/40 p-4 mt-4 max-w-5xl">
-      <p className="text-sm font-medium text-text-primary m-0 mb-2">Sugestão automática (tabelas de referência)</p>
-      <p className="text-xs text-text-secondary m-0 mb-3 leading-relaxed">
-        Usa as normas por idade (9–18 anos) que indicaste (raparigas/rapazes) para <strong>abdominais</strong>,{" "}
-        <strong>flexões</strong> e <strong>IMC</strong>. A resistência pode combinar abdominais com a distância em 1 min
-        (aproximação; não substitui VAIVÉM/milha). A <strong>velocidade</strong> pode ser sugerida de forma aproximada a
-        partir dessa distância (não equivale aos tempos 20/40 m das tabelas). A <strong>coordenação</strong> usa uma
-        estimativa pela média de outras dimensões quando não há teste 4×10 m na ficha.
+      <p className="text-sm font-medium text-text-primary m-0 mb-2 inline-flex items-center gap-1.5">
+        Sugestão automática (tabelas de referência)
+        <InlineInfoTip
+          ariaLabel="Como funciona a sugestão automática"
+          detail={
+            "Usa normas por idade e sexo para abdominais, flexões e IMC: dos 9 aos 18 anos, tabelas juvenis " +
+            "(raparigas/rapazes); a partir dos 19 anos, abdominais 1 min. de Golding et al. (YMCA) e flexões do " +
+            "ACSM (esta última até à exaustão, usada como aproximação ao teste de 1 min. desta ficha) e IMC " +
+            "saudável da OMS (18,5–24,9). A resistência pode combinar abdominais com a distância em 1 min " +
+            "(aproximação; não substitui VAIVÉM/milha, sem tabela validada para adultos). A velocidade pode ser " +
+            "sugerida de forma aproximada a partir dessa distância (não equivale aos tempos 20/40 m das tabelas). " +
+            "A coordenação usa uma estimativa pela média de outras dimensões quando não há teste 4×10 m na ficha."
+          }
+        />
       </p>
       <div className="flex flex-wrap gap-2 mb-3">
         <button type="button" className="btn btn-secondary text-sm" onClick={recalc}>
@@ -130,9 +170,9 @@ export function PhysicalAssessmentInstructorScoreHints({ formRef, studentDob }: 
         </button>
       </div>
       {hint ? (
-        <ul className="text-xs text-text-secondary space-y-1.5 m-0 pl-4 list-disc max-w-4xl">
+        <ul className="text-xs text-text-secondary space-y-1.5 m-0 p-0 max-w-4xl">
           {hint.pt.map((line, i) => (
-            <li key={i}>{line}</li>
+            <HintLineBox key={i} line={line} />
           ))}
         </ul>
       ) : (
