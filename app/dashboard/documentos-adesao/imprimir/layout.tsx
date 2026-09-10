@@ -4,7 +4,7 @@ export default function MembershipPrintLayout({ children }: { children: React.Re
       <style>{`
         @media print {
           @page {
-            margin: 15mm;
+            margin: 8mm;
           }
           .no-print,
           nav,
