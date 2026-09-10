@@ -6,11 +6,11 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
 
-export default async function AdminAlunoContratoPage({ params }: Props) {
+export default async function CoachAlunoContratoPage({ params }: Props) {
   const dbUser = await getCurrentDbUser();
-  if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) redirect("/dashboard");
 
   const { id: studentId } = await params;
 
-  return <StudentContractPrintView studentId={studentId} backHref={`/admin/alunos/${studentId}/plano-seguro`} />;
+  return <StudentContractPrintView studentId={studentId} backHref={`/coach/alunos/${studentId}`} />;
 }

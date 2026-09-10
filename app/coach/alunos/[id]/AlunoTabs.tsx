@@ -23,6 +23,7 @@ export function AlunoTabs({ studentId, showInscricaoTab = false }: Props) {
     ...(showInscricaoTab
       ? [{ href: `${base}/inscricao`, label: "Plano e seguro" as const }]
       : []),
+    { href: `${base}/contrato`, label: "Contrato" },
     { href: `${base}/avaliacao-fisica`, label: "Avaliação física" },
     { href: `${base}/avaliacoes`, label: "Avaliações" },
     { href: `${base}/performance`, label: "Performance" },

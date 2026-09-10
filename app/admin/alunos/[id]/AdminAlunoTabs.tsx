@@ -18,6 +18,7 @@ export function AdminAlunoTabs({ studentId }: Props) {
   const tabs = [
     { href: base, label: "Visão geral", exact: true as const },
     { href: `${base}/plano-seguro`, label: "Plano e seguro" },
+    { href: `${base}/contrato`, label: "Contrato" },
     { href: `${base}/avaliacao-fisica`, label: "Avaliação física" },
     { href: `${base}/avaliacoes`, label: "Avaliações" },
     { href: `${base}/performance`, label: "Performance" },
