@@ -4,6 +4,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { MODALITY_LABELS, formatLessonDate } from "@/lib/lesson-utils";
+import { weekdayLabelForPublicSchedule } from "@/lib/weekday-labels";
 import { NovaExperimentalForm } from "./NovaExperimentalForm";
 
 export default async function AdminExperimentaisNovoPage() {
@@ -17,15 +18,21 @@ export default async function AdminExperimentaisNovoPage() {
 
   const { data: lessons } = await supabase
     .from("Lesson")
-    .select("id, modality, date, startTime, endTime")
-    .gte("date", today)
-    .order("date", { ascending: true })
+    .select("id, modality, date, weekday, startTime, endTime, isOneOff, offerTrialBooking")
+    .eq("offerTrialBooking", true)
     .order("startTime", { ascending: true })
-    .limit(50);
+    .limit(200);
 
-  const lessonOptions = (lessons ?? []).map((l) => ({
+  // Aulas recorrentes (a maioria) não têm `date` — repetem semanalmente por `weekday`, por isso continuam
+  // "disponíveis" independentemente da data de hoje. Só as aulas únicas (`isOneOff`) precisam de já não
+  // ter passado.
+  const upcoming = (lessons ?? []).filter((l) => l.isOneOff !== true || (l.date && l.date >= today));
+
+  const lessonOptions = upcoming.map((l) => ({
     id: l.id,
-    label: `${MODALITY_LABELS[l.modality] ?? l.modality} · ${formatLessonDate(l.date)} ${l.startTime}–${l.endTime}`,
+    label: `${MODALITY_LABELS[l.modality] ?? l.modality} · ${
+      l.isOneOff && l.date ? formatLessonDate(l.date) : `${weekdayLabelForPublicSchedule(l.weekday ?? 0, "pt")}s`
+    } ${l.startTime}–${l.endTime}`,
   }));
 
   return (

@@ -266,7 +266,7 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
       <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <input type="checkbox" name="excludeTrialBooking" value="on" style={{ width: 18, height: 18, accentColor: "#c1121f" }} />
         <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
-          Ocultar do formulário público de aula experimental (/aula-experimental)
+          Ocultar das opções de aula experimental (formulário público /aula-experimental e "Nova inscrição" no admin)
         </span>
       </label>
       <label style={{ minWidth: 0 }}>

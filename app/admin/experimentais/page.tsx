@@ -11,7 +11,10 @@ import {
   formatTrialScheduleLine,
   isActiveTrial,
   isCompletedTrial,
+  trialLessonYmd,
 } from "@/lib/trial-class-utils";
+import { formatLessonDate } from "@/lib/lesson-utils";
+import { buildTrialConfirmationMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { ConvertTrialButton } from "./ConvertTrialButton";
 import { AcceptTrialButton } from "./AcceptTrialButton";
 
@@ -180,55 +183,96 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
         >
           {filtered.map((t) => {
             const lesson = t.lessonId ? lessonMap.get(t.lessonId) : null;
+            const waUrl =
+              !t.contact.includes("@") && lesson?.startTime
+                ? buildWhatsAppUrl(
+                    t.contact,
+                    buildTrialConfirmationMessage(
+                      t.name,
+                      MODALITY_LABELS[t.modality] ?? t.modality,
+                      lesson.startTime.slice(0, 5),
+                      formatLessonDate(trialLessonYmd(t.lessonDate))
+                    )
+                  )
+                : null;
             return (
-              <li key={t.id} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
-                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                    {t.name}
-                  </span>
-                  <span
+              <li
+                key={t.id}
+                className="card"
+                style={{ padding: "clamp(14px, 3.5vw, 18px)", display: "flex", alignItems: "center", gap: 10 }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
+                      {t.name}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "clamp(12px, 3vw, 14px)",
+                        padding: "2px 8px",
+                        borderRadius: "var(--radius-md)",
+                        backgroundColor: t.convertedToStudent
+                          ? "var(--success)"
+                          : t.acceptedAt
+                            ? "var(--info, #0ea5e9)"
+                            : "var(--warning)",
+                        color: t.convertedToStudent || t.acceptedAt ? "#fff" : "var(--text-primary)",
+                      }}
+                    >
+                      {t.convertedToStudent
+                        ? "Convertido"
+                        : isCompletedTrial(t, today)
+                          ? "Realizado"
+                          : t.acceptedAt
+                            ? "Aceite"
+                            : "Pendente"}
+                    </span>
+                  </div>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+                    {t.contact}
+                  </p>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+                    {formatTrialScheduleLine(
+                      { lessonDate: String(t.lessonDate), modality: t.modality },
+                      lesson ? { startTime: lesson.startTime, endTime: lesson.endTime } : null,
+                      MODALITY_LABELS
+                    )}
+                  </p>
+                  {formatRegisteredAt(t.createdAt) && (
+                    <p style={{ margin: "4px 0 0 0", fontSize: "clamp(12px, 3vw, 13px)", color: "var(--text-secondary)", opacity: 0.8 }}>
+                      Inscrito em {formatRegisteredAt(t.createdAt)}
+                    </p>
+                  )}
+                  {!t.convertedToStudent && isActiveTrial(t, today) && (
+                    <div style={{ marginTop: "clamp(8px, 2vw, 12px)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+                      {!t.acceptedAt && <AcceptTrialButton trialId={t.id} />}
+                      {t.contact.includes("@") && <ConvertTrialButton trialId={t.id} />}
+                    </div>
+                  )}
+                </div>
+                {waUrl && !t.convertedToStudent && isActiveTrial(t, today) ? (
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary"
+                    title="Confirmar no WhatsApp"
+                    aria-label={`Confirmar aula experimental de ${t.name} no WhatsApp`}
                     style={{
-                      fontSize: "clamp(12px, 3vw, 14px)",
-                      padding: "2px 8px",
-                      borderRadius: "var(--radius-md)",
-                      backgroundColor: t.convertedToStudent
-                        ? "var(--success)"
-                        : t.acceptedAt
-                          ? "var(--info, #0ea5e9)"
-                          : "var(--warning)",
-                      color: t.convertedToStudent || t.acceptedAt ? "#fff" : "var(--text-primary)",
+                      width: 40,
+                      height: 40,
+                      padding: 0,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 18,
+                      flexShrink: 0,
+                      textDecoration: "none",
                     }}
                   >
-                    {t.convertedToStudent
-                      ? "Convertido"
-                      : isCompletedTrial(t, today)
-                        ? "Realizado"
-                        : t.acceptedAt
-                          ? "Aceite"
-                          : "Pendente"}
-                  </span>
-                </div>
-                <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                  {t.contact}
-                </p>
-                <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                  {formatTrialScheduleLine(
-                    { lessonDate: String(t.lessonDate), modality: t.modality },
-                    lesson ? { startTime: lesson.startTime, endTime: lesson.endTime } : null,
-                    MODALITY_LABELS
-                  )}
-                </p>
-                {formatRegisteredAt(t.createdAt) && (
-                  <p style={{ margin: "4px 0 0 0", fontSize: "clamp(12px, 3vw, 13px)", color: "var(--text-secondary)", opacity: 0.8 }}>
-                    Inscrito em {formatRegisteredAt(t.createdAt)}
-                  </p>
-                )}
-                {!t.convertedToStudent && isActiveTrial(t, today) && (
-                  <div style={{ marginTop: "clamp(8px, 2vw, 12px)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                    {!t.acceptedAt && <AcceptTrialButton trialId={t.id} />}
-                    {t.contact.includes("@") && <ConvertTrialButton trialId={t.id} />}
-                  </div>
-                )}
+                    <span aria-hidden>💬</span>
+                  </a>
+                ) : null}
               </li>
             );
           })}
