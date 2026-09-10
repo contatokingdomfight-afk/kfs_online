@@ -52,7 +52,7 @@ export function Plans({
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className={`relative flex h-[21rem] flex-col rounded-xl border p-6 transition-all hover:shadow-lg ${
+                className={`relative flex flex-col rounded-xl border p-6 transition-all hover:shadow-lg ${
                   plan.popular
                     ? "border-[var(--primary)] bg-[var(--primary)]/5"
                     : "border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--primary)]/30"
@@ -77,7 +77,7 @@ export function Plans({
                   )}
                 </div>
                 {plan.description ? (
-                  <p className="mt-3 line-clamp-3 text-sm text-[var(--text-secondary)]">{plan.description}</p>
+                  <p className="mt-3 text-sm text-[var(--text-secondary)]">{plan.description}</p>
                 ) : null}
                 {plan.priceOnRequest ? (
                   <div className="mt-3 rounded-lg bg-[var(--primary)]/10 px-3 py-2" title={familyPlanNote}>
