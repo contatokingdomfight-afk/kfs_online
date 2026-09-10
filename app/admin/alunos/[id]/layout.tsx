@@ -74,6 +74,7 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
+      <div className="no-print">
       <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
         <Link
           href="/admin/alunos"
@@ -186,6 +187,7 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
       ) : null}
 
       <AdminAlunoTabs studentId={studentId} />
+      </div>
 
       {children}
     </div>

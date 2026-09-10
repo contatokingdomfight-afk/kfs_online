@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import {
@@ -145,6 +146,14 @@ export function StudentInsuranceSection({
               alt="Assinatura desenhada"
               style={{ display: "block", marginTop: 6, maxWidth: 160, background: "#fff", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
             />
+          ) : null}
+          {membershipAgreement?.agreementSigned ? (
+            <Link
+              href={`/admin/alunos/${studentId}/contrato`}
+              style={{ display: "inline-block", marginTop: 6, fontSize: 13, color: "var(--primary)" }}
+            >
+              Ver / imprimir contrato completo →
+            </Link>
           ) : null}
         </p>
         <p style={{ margin: "0 0 8px" }}>

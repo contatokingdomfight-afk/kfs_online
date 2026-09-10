@@ -1637,3 +1637,25 @@ html[data-kfs-native="capacitor"] body {
   padding: 6px 10px;
   text-align: left;
 }
+
+/* Impressão (ex.: contrato de adesão): esconde a chrome autenticada (sidebar, header, drawer,
+   barra inferior) em qualquer ecrã — não só nas páginas /imprimir dedicadas. */
+@media print {
+  .no-print,
+  .app-shell-header,
+  .app-shell-drawer,
+  .app-shell-overlay,
+  nav[aria-label="Menu inferior"] {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+}
