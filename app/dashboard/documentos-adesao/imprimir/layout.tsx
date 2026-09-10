@@ -4,7 +4,7 @@ export default function MembershipPrintLayout({ children }: { children: React.Re
       <style>{`
         @media print {
           @page {
-            margin: 25mm 20mm;
+            margin: 15mm;
           }
           .no-print,
           nav,
@@ -20,9 +20,15 @@ export default function MembershipPrintLayout({ children }: { children: React.Re
             box-shadow: none !important;
             border: 1px solid #ddd !important;
           }
+          .print-doc-container {
+            max-width: none !important;
+            padding: 0 !important;
+          }
         }
       `}</style>
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 16px 48px" }}>{children}</div>
+      <div className="print-doc-container" style={{ maxWidth: 720, margin: "0 auto", padding: "24px 16px 48px" }}>
+        {children}
+      </div>
     </>
   );
 }
