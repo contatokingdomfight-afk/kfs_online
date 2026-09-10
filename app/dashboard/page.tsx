@@ -18,6 +18,7 @@ import { NextLessonCard } from "./NextLessonCard";
 import { OPEN_CLASS_CARD_WIDTH } from "./open-classes-carousel-constants";
 import { OpenClassesCarouselShell } from "./OpenClassesCarouselShell";
 import { DashboardBelowFold } from "./DashboardBelowFold";
+import { ExploreSection } from "./ExploreSection";
 import {
   filterDashboardLessonsByPlanModality,
   isLessonParticipationAllowedByPlan,
@@ -377,6 +378,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {!hasPlan && (
         <DashboardUpcomingEventsStrip studentId={studentId} locale={locale as "pt" | "en"} />
       )}
+
+      {!hasPlan && <ExploreSection hasPerformanceTracking={false} t={t as (key: string) => string} />}
 
       <Suspense fallback={<BelowFoldSkeleton />}>
         <DashboardBelowFold

@@ -101,8 +101,16 @@ export function LessonPromoBlock({
       style={{
         backgroundColor: isLockedCard ? "var(--bg-secondary)" : "var(--primary)",
         color: isLockedCard ? "var(--text-primary)" : "#fff",
+        // Cartão bloqueado é muito próximo do fundo da página (--bg vs --bg-secondary) — sem reforçar
+        // a borda, a "espreitadela" do próximo cartão no carrossel fica quase invisível e parece um
+        // vazio. `borderWidth` sozinho (não o shorthand `border`) evita misturar com o `.card` do CSS.
+        borderWidth: isLockedCard ? "1.5px" : "1px",
         padding: "clamp(20px, 5vw, 24px)",
         boxSizing: "border-box",
+        // Sem isto, o cartão encolhe ao tamanho do texto em vez de preencher o "slot" de 380px
+        // reservado no carrossel (o wrapper em page.tsx é `display:flex` em linha) — sobrava um
+        // vazio dentro do próprio slot, antes do cartão seguinte começar.
+        width: "100%",
         height: "100%",
         display: "flex",
         flexDirection: "column",
