@@ -20,6 +20,10 @@ type Props = {
   insuranceAmount?: number;
   showEnrollment: boolean;
   showInsurance: boolean;
+  /** Assinatura do contrato de adesão (passo 2) — opcional: nem todos os usos deste resumo têm este contexto. */
+  agreementSigned?: boolean;
+  signatureName?: string | null;
+  signatureImageUrl?: string | null;
 };
 
 function Row({ label, value }: { label: string; value: string | null | undefined }) {
@@ -44,6 +48,9 @@ export function EnrollmentFormSummary({
   insuranceAmount = 0,
   showEnrollment,
   showInsurance,
+  agreementSigned,
+  signatureName,
+  signatureImageUrl,
 }: Props) {
   const paymentLabel = enrollmentPaymentMethodLabel(form.paymentMethod);
   const showTransferIban =
@@ -86,6 +93,30 @@ export function EnrollmentFormSummary({
         Consentimentos: foto {form.consentPhoto ? "sim" : "não"} · vídeo {form.consentVideo ? "sim" : "não"} · redes{" "}
         {form.consentSocialMedia ? "sim" : "não"} · marketing {form.consentMarketing ? "sim" : "não"}
       </p>
+      {agreementSigned ? (
+        <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
+          <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+            ✓ Li e aceitei as Condições Gerais de Adesão e o Termo de Responsabilidade
+          </p>
+          {signatureImageUrl ? (
+            <>
+              <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+                Assinatura
+              </p>
+              <img
+                src={signatureImageUrl}
+                alt="Assinatura desenhada"
+                style={{ maxWidth: 260, background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
+              />
+            </>
+          ) : null}
+          {signatureName ? (
+            <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
+              Assinado por: {signatureName}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

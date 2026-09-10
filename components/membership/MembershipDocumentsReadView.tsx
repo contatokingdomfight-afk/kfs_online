@@ -177,6 +177,9 @@ export function MembershipDocumentsReadView({
             insuranceAmount={prefill.insuranceAmount}
             showEnrollment={prefill.showEnrollment}
             showInsurance={prefill.showInsurance}
+            agreementSigned={agreement.agreementSigned}
+            signatureName={agreement.signatureName}
+            signatureImageUrl={agreement.signatureImageUrl}
           />
         ) : null}
       </section>

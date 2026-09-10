@@ -13,9 +13,14 @@ export default async function ImprimirComprovativoPage() {
   if (!studentId) redirect("/sign-in");
 
   const supabase = await createClient();
-  const [{ data: student }, { data: enrollmentForm }] = await Promise.all([
+  const [{ data: student }, { data: enrollmentForm }, { data: agreement }] = await Promise.all([
     supabase.from("Student").select("planId, userId").eq("id", studentId).maybeSingle(),
     supabase.from("StudentEnrollmentForm").select("*").eq("studentId", studentId).maybeSingle(),
+    supabase
+      .from("StudentMembershipAgreement")
+      .select("agreementSigned, signatureName, signatureImageUrl")
+      .eq("studentId", studentId)
+      .maybeSingle(),
   ]);
 
   if (!enrollmentForm?.formCompleted) {
@@ -47,6 +52,9 @@ export default async function ImprimirComprovativoPage() {
         insuranceAmount={prefill.insuranceAmount}
         showEnrollment={prefill.showEnrollment}
         showInsurance={prefill.showInsurance}
+        agreementSigned={agreement?.agreementSigned}
+        signatureName={agreement?.signatureName}
+        signatureImageUrl={agreement?.signatureImageUrl}
       />
     </>
   );

@@ -21,7 +21,7 @@ export default async function ImprimirContratoPage() {
   const settings = await getInsuranceSettings(supabase);
   const { data: agreement } = await supabase
     .from("StudentMembershipAgreement")
-    .select("agreementSigned, agreementSignedAt, signatureName, agreementVersion")
+    .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl, agreementVersion")
     .eq("studentId", studentId)
     .maybeSingle();
 
@@ -59,6 +59,18 @@ export default async function ImprimirContratoPage() {
             </dd>
           </div>
         </dl>
+        {(agreement as { signatureImageUrl?: string | null }).signatureImageUrl ? (
+          <div style={{ margin: "0 0 20px" }}>
+            <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              Assinatura
+            </p>
+            <img
+              src={(agreement as { signatureImageUrl?: string | null }).signatureImageUrl as string}
+              alt="Assinatura desenhada"
+              style={{ maxWidth: 260, background: "#fff", border: "1px solid #ddd", borderRadius: 8 }}
+            />
+          </div>
+        ) : null}
         <div
           style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}
           dangerouslySetInnerHTML={{ __html: MEMBERSHIP_AGREEMENT_BODY_PT }}
