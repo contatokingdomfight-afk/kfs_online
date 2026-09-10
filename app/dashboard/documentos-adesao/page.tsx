@@ -42,7 +42,7 @@ export default async function DocumentosAdesaoPage() {
     <div style={{ maxWidth: "min(720px, 100%)" }}>
       <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
         <Link
-          href="/dashboard/perfil"
+          href="/dashboard"
           style={{
             color: "var(--text-secondary)",
             fontSize: "clamp(15px, 3.8vw, 17px)",

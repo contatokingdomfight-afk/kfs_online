@@ -20,3 +20,9 @@ export function edgeCacheGet<T>(key: string): T | undefined {
 export function edgeCacheSet<T>(key: string, value: T, ttlMs: number): void {
   store.set(key, { value, expiresAt: Date.now() + ttlMs });
 }
+
+/** Invalida uma entrada imediatamente (ex.: depois de uma ação que muda o estado cacheado — não
+ * esperar pelo TTL). Best-effort, mesma limitação de instância descrita acima. */
+export function edgeCacheDelete(key: string): void {
+  store.delete(key);
+}

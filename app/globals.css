@@ -1649,6 +1649,20 @@ html[data-kfs-native="capacitor"] body {
     display: none !important;
   }
 
+  /* A área de conteúdo é um <main> com overflow:auto e altura limitada pelo flex (para scroll no
+     ecrã) — sem isto, a impressão fica cortada ao que cabia na "janela" de scroll em vez de sair
+     o documento completo em várias páginas. */
+  html,
+  body,
+  .app-shell,
+  .app-shell-inner,
+  .app-shell-main,
+  main {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
   body {
     background: #fff !important;
     color: #111 !important;
