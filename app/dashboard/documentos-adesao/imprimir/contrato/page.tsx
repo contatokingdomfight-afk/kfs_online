@@ -75,6 +75,23 @@ export default async function ImprimirContratoPage() {
           style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}
           dangerouslySetInnerHTML={{ __html: MEMBERSHIP_AGREEMENT_BODY_PT }}
         />
+        {(agreement as { signatureImageUrl?: string | null }).signatureImageUrl ? (
+          <div style={{ margin: "24px 0 0", paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+            <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              Assinatura
+            </p>
+            <img
+              src={(agreement as { signatureImageUrl?: string | null }).signatureImageUrl as string}
+              alt="Assinatura desenhada"
+              style={{ maxWidth: 260, background: "#fff", border: "1px solid #ddd", borderRadius: 8 }}
+            />
+            {agreement.signatureName ? (
+              <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
+                Assinado por: {agreement.signatureName}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </section>
     </>
   );
