@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { EvaluationHistoryModalDetail } from "@/lib/evaluation-history-modal-types";
 
@@ -61,9 +61,20 @@ type Props = {
   getEvaluationById: (evalId: string) => Promise<EvaluationHistoryModalDetail | { error: string }>;
   backHref: string;
   backLabel: string;
+  sectionTitle?: string;
+  introOverride?: ReactNode;
+  showBackLink?: boolean;
 };
 
-export function EvaluationHistoryClient({ list, getEvaluationById, backHref, backLabel }: Props) {
+export function EvaluationHistoryClient({
+  list,
+  getEvaluationById,
+  backHref,
+  backLabel,
+  sectionTitle,
+  introOverride,
+  showBackLink = true,
+}: Props) {
   const [modalEval, setModalEval] = useState<EvaluationHistoryModalDetail | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +105,10 @@ export function EvaluationHistoryClient({ list, getEvaluationById, backHref, bac
   return (
     <>
       <div className="card p-4 sm:p-6">
-        {defaultIntro}
+        {sectionTitle ? (
+          <h2 className="text-base font-semibold text-text-primary m-0 mb-1">{sectionTitle}</h2>
+        ) : null}
+        {introOverride ?? defaultIntro}
         {list.length === 0 ? (
           <div className="text-center py-6">
             <p className="text-text-secondary">Ainda não há avaliações.</p>
@@ -126,9 +140,11 @@ export function EvaluationHistoryClient({ list, getEvaluationById, backHref, bac
           </ul>
         )}
         {error && <p className="mt-4 text-sm text-danger">{error}</p>}
-        <Link href={backHref} className="inline-block mt-6 text-sm font-medium text-primary no-underline hover:underline">
-          {backLabel} →
-        </Link>
+        {showBackLink ? (
+          <Link href={backHref} className="inline-block mt-6 text-sm font-medium text-primary no-underline hover:underline">
+            {backLabel} →
+          </Link>
+        ) : null}
       </div>
 
       {modalEval && (

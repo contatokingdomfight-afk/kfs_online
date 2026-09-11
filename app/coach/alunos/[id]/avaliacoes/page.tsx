@@ -4,8 +4,8 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { getEvaluationById } from "../actions";
-import { EvaluationHistoryClient } from "@/components/evaluation/EvaluationHistoryClient";
-import { resolveCoachDisplayNamesByCoachIds } from "@/lib/evaluation-history-helpers";
+import { StudentEvaluationsHistoryClient } from "@/components/evaluation/StudentEvaluationsHistoryClient";
+import { fetchStudentEvaluationHistory } from "@/lib/student-evaluations-history";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -18,56 +18,38 @@ export default async function CoachAlunoAvaliacoesPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: student } = await supabase
-    .from("Student")
-    .select("id")
-    .eq("id", studentId)
-    .single();
-
+  const { data: student } = await supabase.from("Student").select("id").eq("id", studentId).single();
   if (!student) return null;
 
-  const { data: athlete } = await supabase.from("Athlete").select("id").eq("studentId", studentId).single();
-  if (!athlete) {
-    return (
-      <div className="max-w-[min(640px,100%)] mx-auto">
-        <div className="card p-6">
-          <h1 className="text-xl font-bold text-text-primary mb-2">Histórico de avaliações</h1>
-          <p className="text-text-secondary mb-4">Este aluno ainda não tem perfil de atleta. As avaliações aparecem aqui após a primeira avaliação.</p>
-          <Link href={`/coach/alunos/${studentId}`} className="btn btn-primary inline-block no-underline">
-            ← Voltar ao perfil
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const { data: athlete } = await supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle();
 
-  const { data: evals } = await supabase
-    .from("AthleteEvaluation")
-    .select("id, coachId, created_at")
-    .eq("athleteId", athlete.id)
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  const coachIds = [...new Set((evals ?? []).map((e) => e.coachId).filter(Boolean))] as string[];
-  const nameByCoachId = await resolveCoachDisplayNamesByCoachIds(coachIds);
-
-  const list = (evals ?? []).map((e) => ({
-    id: e.id,
-    coachName: nameByCoachId.get(e.coachId ?? "") ?? "Treinador",
-    date: e.created_at
-      ? new Date(e.created_at).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
-      : "",
-  }));
+  const items = await fetchStudentEvaluationHistory(supabase, studentId, {
+    athleteId: athlete?.id ?? null,
+    physicalViewBaseHref: `/coach/alunos/${studentId}/avaliacoes/fisica`,
+  });
 
   return (
     <div className="max-w-[min(640px,100%)] mx-auto">
-      <h1 className="text-xl font-bold text-text-primary mb-6">Histórico de avaliações</h1>
-      <EvaluationHistoryClient
-        list={list}
+      <h1 className="text-xl font-bold text-text-primary mb-2">Histórico de avaliações</h1>
+      <p className="text-sm text-text-secondary mb-6">
+        Fichas de <strong>avaliação física</strong> entregues e sessões de <strong>performance</strong> nas modalidades.
+      </p>
+      <StudentEvaluationsHistoryClient
+        items={items}
         getEvaluationById={getEvaluationById}
         backHref={`/coach/alunos/${studentId}/performance`}
         backLabel="Ver perfil de performance"
+        newPhysicalHref={`/coach/alunos/${studentId}/avaliacao-fisica?next=${encodeURIComponent(`/coach/alunos/${studentId}/avaliacoes`)}`}
+        newPerformanceHref={`/coach/alunos/${studentId}/performance`}
       />
+      {items.length > 0 ? (
+        <Link
+          href={`/coach/alunos/${studentId}/performance`}
+          className="inline-block mt-6 text-sm font-medium text-primary no-underline hover:underline"
+        >
+          Ver perfil de performance →
+        </Link>
+      ) : null}
     </div>
   );
 }
