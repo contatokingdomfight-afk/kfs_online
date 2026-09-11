@@ -5,6 +5,8 @@ import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content
 import { loadEnrollmentFormPrefill, type EnrollmentFormRow } from "@/lib/enrollment-form";
 import { EnrollmentFormSummary } from "@/app/adesao/EnrollmentFormSummary";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
+import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
+import { getActiveSchoolSignatures } from "@/lib/school-signatures";
 
 function fmtDateTime(iso: string | null): string | null {
   if (!iso) return null;
@@ -53,6 +55,8 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
     );
   }
 
+  const schoolSignatures = await getActiveSchoolSignatures();
+
   const prefill = await loadEnrollmentFormPrefill(supabase, studentId, student.userId);
   if (!prefill) {
     return (
@@ -89,6 +93,10 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
         insuranceAmount={prefill.insuranceAmount}
         showEnrollment={prefill.showEnrollment}
         showInsurance={prefill.showInsurance}
+        agreementSigned={agreement?.agreementSigned}
+        signatureName={agreement?.signatureName}
+        signatureImageUrl={agreement?.signatureImageUrl}
+        schoolSignatures={schoolSignatures}
       />
 
       <section className="card" style={{ marginTop: 16, padding: "clamp(16px, 4vw, 24px)" }}>
@@ -126,8 +134,9 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
             />
           </div>
         ) : null}
+        <SchoolSignatureBlock signatures={schoolSignatures} />
         <div
-          style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}
+          style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: schoolSignatures.length > 0 ? 20 : 0 }}
           dangerouslySetInnerHTML={{ __html: MEMBERSHIP_AGREEMENT_BODY_PT }}
         />
       </section>

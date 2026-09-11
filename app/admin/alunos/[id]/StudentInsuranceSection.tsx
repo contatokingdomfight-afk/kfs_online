@@ -116,6 +116,16 @@ export function StudentInsuranceSection({
               : ""}
           </p>
         ) : null}
+        {enrollmentForm?.formCompleted ? (
+          <p style={{ margin: "0 0 8px" }}>
+            <Link
+              href={`/admin/alunos/${studentId}/comprovativo`}
+              style={{ display: "inline-block", fontSize: 13, color: "var(--primary)" }}
+            >
+              Ver / imprimir só o comprovativo →
+            </Link>
+          </p>
+        ) : null}
         <p style={{ margin: "0 0 8px" }}>
           <strong>Comprovativo de pagamento:</strong>{" "}
           {paymentProofSignedUrl && enrollmentForm?.paymentProofFileName ? (

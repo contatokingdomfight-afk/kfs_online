@@ -5,7 +5,9 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getThisWeekRange, formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
-import { getWeekStartMondayForDateInLisbon } from "@/lib/lisbon-week";
+import { getWeekStartMondayForDateInLisbon, getTodayWeekdayMon1Lisbon } from "@/lib/lisbon-week";
+import { getWeekThemeDaysForWeek } from "@/lib/week-theme-days";
+import { weekdayShortLabelForPublicSchedule } from "@/lib/weekday-labels";
 import {
   expandLessonsForDateRange,
   fetchLessonCancellations,
@@ -86,16 +88,25 @@ export default async function CoachAulaPage({
   const occurrenceYmd = selectedLesson?.occurrenceDate ?? "";
 
   let weekThemeThisLesson: { title: string; description: string | null; course_id: string | null; unit_id: string | null; video_url: string | null } | null = null;
+  let weekThemeDaysThisLesson: { weekday: number; topic: string }[] = [];
   if (selectedLesson?.modality && occurrenceYmd) {
     const weekStart = getWeekStartMondayForDateInLisbon(occurrenceYmd);
-    const { data: wt } = await supabase
-      .from("WeekTheme")
-      .select("title, description, course_id, unit_id, video_url")
-      .eq("week_start", weekStart)
-      .eq("modality", selectedLesson.modality)
-      .maybeSingle();
+    const [{ data: wt }, weekThemeDaysRows] = await Promise.all([
+      supabase
+        .from("WeekTheme")
+        .select("title, description, course_id, unit_id, video_url")
+        .eq("week_start", weekStart)
+        .eq("modality", selectedLesson.modality)
+        .maybeSingle(),
+      getWeekThemeDaysForWeek(supabase, weekStart, selectedLesson.modality),
+    ]);
     if (wt) weekThemeThisLesson = wt;
+    weekThemeDaysThisLesson = weekThemeDaysRows
+      .slice()
+      .sort((a, b) => a.weekday - b.weekday)
+      .map((d) => ({ weekday: d.weekday, topic: d.topic }));
   }
+  const todayWeekdayForLesson = getTodayWeekdayMon1Lisbon();
 
   if (lessonId && selectedLesson && occurrenceYmd && selectedLesson.schoolId) {
     const adminSupabase = getAdminClientOrNull().client ?? supabase;
@@ -226,7 +237,37 @@ export default async function CoachAulaPage({
                     {t("coachAulaWeekThemeTitle")}
                   </h2>
                   <p style={{ margin: "0 0 10px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>{weekThemeThisLesson.title}</p>
-                  {weekThemeThisLesson.description ? (
+                  {weekThemeDaysThisLesson.length > 0 ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 0 10px 0" }}>
+                      <span style={{ fontSize: "clamp(12px, 3vw, 13px)", fontWeight: 600, color: "var(--text-secondary)" }}>
+                        {t("weekThemeDaysSectionLabel")}
+                      </span>
+                      {weekThemeDaysThisLesson.map((day) => {
+                        const isToday = day.weekday === todayWeekdayForLesson;
+                        return (
+                          <div
+                            key={day.weekday}
+                            style={{
+                              display: "flex",
+                              gap: 8,
+                              alignItems: "baseline",
+                              padding: isToday ? "6px 8px" : "2px 0",
+                              borderRadius: isToday ? "var(--radius-sm, 6px)" : undefined,
+                              background: isToday ? "var(--primary-light)" : undefined,
+                            }}
+                          >
+                            <span style={{ fontSize: "clamp(13px, 3.2vw, 14px)", fontWeight: 600, color: isToday ? "var(--primary)" : "var(--text-primary)", minWidth: 36 }}>
+                              {weekdayShortLabelForPublicSchedule(day.weekday, locale as "pt" | "en")}
+                            </span>
+                            <span style={{ fontSize: "clamp(13px, 3.2vw, 14px)", color: "var(--text-primary)" }}>{day.topic}</span>
+                            {isToday ? (
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--primary)" }}>{t("weekThemeTodayBadge")}</span>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : weekThemeThisLesson.description ? (
                     <p
                       style={{
                         margin: "0 0 10px 0",

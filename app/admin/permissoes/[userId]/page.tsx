@@ -8,6 +8,7 @@ import { getTranslations } from "@/lib/i18n";
 import { fetchAdminPermissionCatalog } from "../actions";
 import { AdminUserPermissionsForm } from "../AdminUserPermissionsForm";
 import { DeleteAdminButton } from "./DeleteAdminButton";
+import { SchoolSignatureSection } from "./SchoolSignatureSection";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function AdminPermissoesUserPage(props: PageProps) {
 
   const { data: row, error } = await admin.client
     .from("User")
-    .select("id, email, name, role, adminUseGranularPermissions")
+    .select("id, email, name, role, adminUseGranularPermissions, signsForSchool, schoolSignatureImageUrl")
     .eq("id", userId)
     .maybeSingle();
 
@@ -36,6 +37,8 @@ export default async function AdminPermissoesUserPage(props: PageProps) {
     name: string | null;
     role: string;
     adminUseGranularPermissions: boolean | null;
+    signsForSchool: boolean | null;
+    schoolSignatureImageUrl: string | null;
   };
 
   if (u.role !== "ADMIN" && u.role !== "COACH") {
@@ -111,6 +114,14 @@ export default async function AdminPermissoesUserPage(props: PageProps) {
         soleAdmin={soleAdmin && u.role === "ADMIN"}
         locale={locale}
       />
+
+      {u.role === "ADMIN" && (
+        <SchoolSignatureSection
+          userId={u.id}
+          initialSignsForSchool={Boolean(u.signsForSchool)}
+          initialSignatureImageUrl={u.schoolSignatureImageUrl}
+        />
+      )}
 
       {u.role === "ADMIN" && (
         <DeleteAdminButton

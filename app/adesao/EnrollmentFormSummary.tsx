@@ -6,6 +6,8 @@ import {
 } from "@/lib/enrollment-form";
 import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
 import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
+import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
+import type { SchoolSignature } from "@/lib/school-signatures";
 
 type Props = {
   form: EnrollmentFormRow;
@@ -24,6 +26,8 @@ type Props = {
   agreementSigned?: boolean;
   signatureName?: string | null;
   signatureImageUrl?: string | null;
+  /** Assinaturas fixas dos admins que assinam pela escola — opcional, só quando o chamador as buscou. */
+  schoolSignatures?: SchoolSignature[];
 };
 
 function Row({ label, value }: { label: string; value: string | null | undefined }) {
@@ -51,6 +55,7 @@ export function EnrollmentFormSummary({
   agreementSigned,
   signatureName,
   signatureImageUrl,
+  schoolSignatures,
 }: Props) {
   const paymentLabel = enrollmentPaymentMethodLabel(form.paymentMethod);
   const showTransferIban =
@@ -115,6 +120,7 @@ export function EnrollmentFormSummary({
               Assinado por: {signatureName}
             </p>
           ) : null}
+          <SchoolSignatureBlock signatures={schoolSignatures ?? []} />
         </div>
       ) : null}
     </section>

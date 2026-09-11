@@ -20,6 +20,8 @@ import { ExploreSection } from "./ExploreSection";
 type Props = {
   studentId: string | null;
   studentPrimaryModality: string | null;
+  /** Modalidades a que o plano do aluno dá acesso — quando tem mais de uma, mostra o tema de todas, não só da primária. */
+  allowedModalities: string[];
   hasPlan: boolean;
   hasCheckIn: boolean;
   hasPerformanceTracking: boolean;
@@ -32,6 +34,7 @@ type Props = {
 export async function DashboardBelowFold({
   studentId,
   studentPrimaryModality,
+  allowedModalities,
   hasPlan,
   hasCheckIn,
   hasPerformanceTracking,
@@ -115,39 +118,26 @@ export async function DashboardBelowFold({
     return a === b;
   };
 
-  const resolveThemeModality = (): string | null => {
-    if (
-      studentPrimaryModality &&
-      (temaSemanaList.some((th) => modalityMatches((th as { modality?: string }).modality, studentPrimaryModality)) ||
-        monthThemesList.some((th) => modalityMatches(th.modality, studentPrimaryModality)))
-    ) {
-      return studentPrimaryModality;
-    }
-    if (temaSemanaList.length > 0) return temaSemanaList[0].modality;
-    if (monthThemesList.length > 0) return monthThemesList[0].modality;
-    return null;
-  };
-
-  const pickWeekThemeForStudent = (): {
+  type ResolvedTheme = {
     modality: string;
     title: string;
     description: string | null;
     course_id: string | null;
     unit_id: string | null;
     video_url: string | null;
-  } | null => {
-    const resolvedModality = resolveThemeModality();
-    if (!resolvedModality) return null;
+  };
 
-    const weekRow = temaSemanaList.find((th) => modalityMatches((th as { modality?: string }).modality, resolvedModality));
-    const monthRow = monthThemesList.find((th) => modalityMatches(th.modality, resolvedModality));
+  /** Constrói o tema de uma modalidade: semana (se tiver título) com fallback para o mês. */
+  const buildThemeForModality = (modality: string): ResolvedTheme | null => {
+    const weekRow = temaSemanaList.find((th) => modalityMatches((th as { modality?: string }).modality, modality));
+    const monthRow = monthThemesList.find((th) => modalityMatches(th.modality, modality));
 
     const weekTitle = weekRow?.title?.trim() ?? "";
     const monthHasContent = Boolean(monthRow?.title?.trim() || monthRow?.description?.trim());
 
     if (!weekTitle && monthHasContent) {
       return {
-        modality: resolvedModality,
+        modality,
         title: monthRow?.title ?? "",
         description: monthRow?.description ?? null,
         course_id: weekRow?.course_id ?? null,
@@ -158,7 +148,7 @@ export async function DashboardBelowFold({
 
     if (!weekRow) return null;
     return {
-      modality: resolvedModality,
+      modality,
       title: weekRow.title,
       description: (weekRow as { description?: string | null }).description ?? null,
       course_id: weekRow.course_id,
@@ -167,21 +157,54 @@ export async function DashboardBelowFold({
     };
   };
 
-  let weekThemeForPrimary: {
-    modality: string;
-    title: string;
-    description: string | null;
-    course_id: string | null;
-    unit_id: string | null;
-    video_url: string | null;
-  } | null = pickWeekThemeForStudent();
+  /** Semana sem título mas com dias preenchidos (WeekThemeDay) ainda conta como "tem conteúdo". */
+  const hasContentForModality = (modality: string): boolean =>
+    temaSemanaList.some((th) => modalityMatches((th as { modality?: string }).modality, modality) && Boolean((th as { title?: string }).title?.trim())) ||
+    monthThemesList.some(
+      (th) => modalityMatches(th.modality, modality) && Boolean(th.title?.trim() || th.description?.trim())
+    ) ||
+    weekThemeDays.some((d) => modalityMatches(d.modality, modality) && Boolean(d.topic?.trim()));
 
-  const weekThemeDaysForPrimary = weekThemeForPrimary
-    ? weekThemeDays
-        .filter((d) => modalityMatches(d.modality, weekThemeForPrimary!.modality))
-        .sort((a, b) => a.weekday - b.weekday)
-        .map((d) => ({ weekday: d.weekday, topic: d.topic }))
-    : [];
+  /**
+   * Modalidades a resolver: se o plano dá acesso a mais do que uma (ex.: plano "todas as
+   * modalidades"), mostra o tema de cada uma que tenha conteúdo esta semana/mês — não só a
+   * primária. Com uma única modalidade permitida (ou nenhuma info de plano), mantém o
+   * comportamento anterior: primária se tiver conteúdo, senão a primeira modalidade disponível.
+   */
+  const resolveThemeModalities = (): string[] => {
+    if (allowedModalities.length > 1) {
+      const ordered = studentPrimaryModality
+        ? [studentPrimaryModality, ...allowedModalities.filter((m) => !modalityMatches(m, studentPrimaryModality))]
+        : allowedModalities;
+      const withContent = ordered.filter((m) => hasContentForModality(m));
+      if (withContent.length > 0) return withContent;
+      // Sem conteúdo em nenhuma modalidade do plano: cai para o comportamento de modalidade única.
+    }
+
+    if (
+      studentPrimaryModality &&
+      (temaSemanaList.some((th) => modalityMatches((th as { modality?: string }).modality, studentPrimaryModality)) ||
+        monthThemesList.some((th) => modalityMatches(th.modality, studentPrimaryModality)))
+    ) {
+      return [studentPrimaryModality];
+    }
+    if (temaSemanaList.length > 0) return [temaSemanaList[0].modality];
+    if (monthThemesList.length > 0) return [monthThemesList[0].modality];
+    return [];
+  };
+
+  const weekThemesForStudent: Array<ResolvedTheme & { days: { weekday: number; topic: string }[] }> =
+    resolveThemeModalities()
+      .map((modality) => buildThemeForModality(modality))
+      .filter((theme): theme is ResolvedTheme => theme !== null)
+      .map((theme) => ({
+        ...theme,
+        days: weekThemeDays
+          .filter((d) => modalityMatches(d.modality, theme.modality))
+          .sort((a, b) => a.weekday - b.weekday)
+          .map((d) => ({ weekday: d.weekday, topic: d.topic })),
+      }));
+
   const todayWeekday = getTodayWeekdayMon1Lisbon();
 
   if (studentId) {
@@ -347,8 +370,7 @@ export async function DashboardBelowFold({
       {openClassesSlot}
 
       <WhatIsNew
-        weekTheme={weekThemeForPrimary}
-        weekThemeDays={weekThemeDaysForPrimary}
+        weekThemes={weekThemesForStudent}
         todayWeekday={todayWeekday}
         nextMission={nextMission}
         coachFeedback={coachFeedback}

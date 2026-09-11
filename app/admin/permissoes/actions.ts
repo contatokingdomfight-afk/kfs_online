@@ -81,6 +81,50 @@ export async function updateUserAdminPermissions(
   return { success: true };
 }
 
+export type UpdateSchoolSignatureResult = { error?: string; success?: boolean };
+
+/**
+ * Marca/desmarca um admin como "assina contratos pela escola" e, quando fornecida, guarda a
+ * imagem da assinatura desenhada — usada em todos os comprovativos/contratos/termos de adesão.
+ */
+export async function updateSchoolSignature(
+  _prev: UpdateSchoolSignatureResult | null,
+  formData: FormData
+): Promise<UpdateSchoolSignatureResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const targetId = (formData.get("userId") as string)?.trim();
+  if (!targetId) return { error: "Utilizador inválido." };
+
+  const signsForSchool = formData.get("signsForSchool") === "true";
+  const signatureImageUrl = (formData.get("signatureImageUrl") as string)?.trim() || null;
+
+  const supabase = createAdminClient();
+
+  const { data: target, error: tErr } = await supabase
+    .from("User")
+    .select("id, role, schoolSignatureImageUrl")
+    .eq("id", targetId)
+    .single();
+  if (tErr || !target) return { error: "Utilizador não encontrado." };
+  if (target.role !== "ADMIN") return { error: "Só administradores podem assinar pela escola." };
+
+  const existingSignature = (target as { schoolSignatureImageUrl?: string | null }).schoolSignatureImageUrl ?? null;
+  if (signsForSchool && !signatureImageUrl && !existingSignature) {
+    return { error: "Desenha a assinatura antes de guardar." };
+  }
+
+  const patch: Record<string, unknown> = { signsForSchool };
+  if (signatureImageUrl) patch.schoolSignatureImageUrl = signatureImageUrl;
+
+  const { error: uErr } = await supabase.from("User").update(patch).eq("id", targetId);
+  if (uErr) return { error: uErr.message };
+
+  revalidatePath(`/admin/permissoes/${targetId}`);
+  return { success: true };
+}
+
 type AdminSupa = ReturnType<typeof createAdminClient>;
 
 /**

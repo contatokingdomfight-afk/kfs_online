@@ -7,6 +7,7 @@ import { getTranslations } from "@/lib/i18n";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { loadEnrollmentFormPrefill, type EnrollmentFormRow } from "@/lib/enrollment-form";
 import { MembershipDocumentsReadView } from "@/components/membership/MembershipDocumentsReadView";
+import { getActiveSchoolSignatures } from "@/lib/school-signatures";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export default async function DocumentosAdesaoPage() {
   const userId = (student as { userId?: string } | null)?.userId;
   const planId = (student as { planId?: string | null } | null)?.planId ?? null;
   const prefill = userId ? await loadEnrollmentFormPrefill(supabase, studentId, userId) : null;
+  const schoolSignatures = await getActiveSchoolSignatures();
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
@@ -106,6 +108,7 @@ export default async function DocumentosAdesaoPage() {
         }}
         enrollmentForm={enrollmentForm ? (enrollmentForm as EnrollmentFormRow) : null}
         prefill={prefill}
+        schoolSignatures={schoolSignatures}
       />
     </div>
   );

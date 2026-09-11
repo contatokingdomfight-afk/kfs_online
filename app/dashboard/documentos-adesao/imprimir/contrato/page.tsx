@@ -5,6 +5,8 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
+import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
+import { getActiveSchoolSignatures } from "@/lib/school-signatures";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,8 @@ export default async function ImprimirContratoPage() {
   if (!agreement?.agreementSigned) {
     redirect("/dashboard/documentos-adesao");
   }
+
+  const schoolSignatures = await getActiveSchoolSignatures();
 
   return (
     <>
@@ -71,8 +75,9 @@ export default async function ImprimirContratoPage() {
             />
           </div>
         ) : null}
+        <SchoolSignatureBlock signatures={schoolSignatures} />
         <div
-          style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)" }}
+          style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: schoolSignatures.length > 0 ? 20 : 0 }}
           dangerouslySetInnerHTML={{ __html: MEMBERSHIP_AGREEMENT_BODY_PT }}
         />
         {(agreement as { signatureImageUrl?: string | null }).signatureImageUrl ? (
@@ -90,6 +95,7 @@ export default async function ImprimirContratoPage() {
                 Assinado por: {agreement.signatureName}
               </p>
             ) : null}
+            <SchoolSignatureBlock signatures={schoolSignatures} />
           </div>
         ) : null}
       </section>

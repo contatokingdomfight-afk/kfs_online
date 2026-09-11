@@ -3,6 +3,8 @@ import { EnrollmentFormSummary } from "@/app/adesao/EnrollmentFormSummary";
 import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
 import { WAIVER_BODY_PT } from "@/lib/waiver-content";
 import type { EnrollmentFormRow } from "@/lib/enrollment-form";
+import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
+import type { SchoolSignature } from "@/lib/school-signatures";
 
 type AgreementInfo = {
   agreementSigned: boolean;
@@ -48,6 +50,7 @@ type Props = {
   enrollmentForm: EnrollmentFormRow | null;
   prefill: Prefill | null;
   hasPlan: boolean;
+  schoolSignatures: SchoolSignature[];
 };
 
 function fmtDateTime(iso: string | null, locale: "pt" | "en"): string | null {
@@ -92,6 +95,7 @@ export function MembershipDocumentsReadView({
   enrollmentForm,
   prefill,
   hasPlan,
+  schoolSignatures,
 }: Props) {
   const pt = locale === "pt";
   const allComplete = agreement.agreementSigned && waiver.waiverSigned && enrollment.formCompleted;
@@ -180,6 +184,7 @@ export function MembershipDocumentsReadView({
             agreementSigned={agreement.agreementSigned}
             signatureName={agreement.signatureName}
             signatureImageUrl={agreement.signatureImageUrl}
+            schoolSignatures={schoolSignatures}
           />
         ) : null}
       </section>
@@ -250,6 +255,12 @@ export function MembershipDocumentsReadView({
               }}
             />
           </div>
+        ) : null}
+        {agreement.agreementSigned ? (
+          <SchoolSignatureBlock
+            signatures={schoolSignatures}
+            title={pt ? "Pela Kingdom Fight School" : "For Kingdom Fight School"}
+          />
         ) : null}
         {!agreement.agreementSigned && (
           <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--text-secondary)" }}>
@@ -333,8 +344,15 @@ export function MembershipDocumentsReadView({
             {pt ? "Termo ainda não assinado." : "Waiver not signed yet."}
           </p>
         )}
+        {waiver.waiverSigned ? (
+          <SchoolSignatureBlock
+            signatures={schoolSignatures}
+            title={pt ? "Pela Kingdom Fight School" : "For Kingdom Fight School"}
+          />
+        ) : null}
         <div
           style={{
+            marginTop: waiver.waiverSigned && schoolSignatures.length > 0 ? 16 : 0,
             padding: "clamp(16px, 4vw, 20px)",
             maxHeight: "min(60vh, 520px)",
             overflowY: "auto",

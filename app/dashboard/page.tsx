@@ -385,6 +385,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <DashboardBelowFold
           studentId={studentId}
           studentPrimaryModality={studentPrimaryModality}
+          allowedModalities={planAccess.allowedModalities}
           hasPlan={hasPlan}
           hasCheckIn={hasCheckIn}
           hasPerformanceTracking={planAccess.hasPerformanceTracking}
