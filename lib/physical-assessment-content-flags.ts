@@ -1,4 +1,5 @@
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
+import { getRunPaceMinPerKm } from "@/lib/run-pace";
 
 /**
  * Há conteúdo na ficha para além das circunferências (6.4): anamnese, PAR-Q, sinais vitais, testes, etc.
@@ -31,6 +32,7 @@ export function hasAnamnesisOrNonAnthroAssessmentContent(
   if (typeof d.heartRateRest === "number" && d.heartRateRest > 0) return true;
   if (typeof d.heartRateActivity === "number" && d.heartRateActivity > 0) return true;
   if (d.bloodPressure?.trim()) return true;
+  if (d.bloodPressureActivity?.trim()) return true;
   if (d.saturationO2?.trim()) return true;
 
   if (Array.isArray(d.mobilityLimitations) && d.mobilityLimitations.length > 0) return true;
@@ -43,7 +45,7 @@ export function hasAnamnesisOrNonAnthroAssessmentContent(
   if (typeof d.situps1min === "number" && d.situps1min > 0) return true;
   if (typeof d.plankSeconds === "number" && d.plankSeconds > 0) return true;
   if (typeof d.squats1min === "number" && d.squats1min > 0) return true;
-  if (typeof d.runDistance1minMeters === "number" && d.runDistance1minMeters > 0) return true;
+  if (getRunPaceMinPerKm(d) != null) return true;
   if (d.runTest?.trim()) return true;
 
   if (typeof d.scoreCondition === "number" && d.scoreCondition > 0) return true;

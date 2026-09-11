@@ -77,7 +77,7 @@ function buildDemoFormData(signatureDate: string): PhysicalAssessmentFormData {
     situps1min: 32,
     plankSeconds: 75,
     squats1min: 30,
-    runDistance1minMeters: 320,
+    runPaceMinPerKm: 3.125,
     runTest: "5 km leve / ocasional",
     referenceSex: "M",
     scoreCondition: 7,

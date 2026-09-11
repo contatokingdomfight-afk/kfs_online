@@ -147,6 +147,8 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - Secção 6.4, altura/peso, `humanoid3dBodyVariant`, notificação `PHYSICAL_ASSESSMENT` → `/dashboard/ficha-fisica`.
 
 - UI: `AvaliacaoFisicaForm.tsx`, `IllustrativeBodyAvatar` (2D principal, 3D opcional).
+- Teste de corrida: campo **minutos por quilómetro** (`runPaceMinPerKm` no JSON); fichas antigas com `runDistance1minMeters` são convertidas na leitura (`lib/run-pace.ts`).
+- Sinais vitais (6.1): referências por idade e classificação automática em `lib/physical-assessment-vital-signs.ts` + `PhysicalAssessmentVitalSignsHints.tsx` — PA repouso (SBC/AHA: normal, pré-HT, HT1, HT2+), PA em atividade (alertas de segurança), duplo produto (FC×PAS), trava dos testes físicos se PA ≥160/100 ou alerta crítico no esforço.
 
 
 

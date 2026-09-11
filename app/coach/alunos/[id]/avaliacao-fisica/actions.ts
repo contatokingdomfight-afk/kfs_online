@@ -72,16 +72,13 @@ function parseHeartRateBpm(formData: FormData, name: string, min: number, max: n
   return n;
 }
 
-/** Distância percorrida em 1 min: valor + unidade m|km → metros inteiros. */
-function parseRunDistance1minMeters(formData: FormData): number | null {
-  const raw = (formData.get("runDistance1minValue") as string)?.trim();
+/** Ritmo de corrida: minutos por quilómetro (ex.: 6,5). */
+function parseRunPaceMinPerKm(formData: FormData): number | null {
+  const raw = (formData.get("runPaceMinPerKm") as string)?.trim();
   if (!raw) return null;
   const n = parseFloat(raw.replace(",", "."));
-  if (!Number.isFinite(n) || n <= 0) return null;
-  const unit = ((formData.get("runDistance1minUnit") as string)?.trim() || "m").toLowerCase();
-  const meters = unit === "km" ? Math.round(n * 1000) : Math.round(n);
-  if (meters < 1 || meters > 200_000) return null;
-  return meters;
+  if (!Number.isFinite(n) || n < 2 || n > 30) return null;
+  return Math.round(n * 100) / 100;
 }
 
 export type SaveAssessmentResult = { error?: string; success?: boolean; isDraft?: boolean };
@@ -144,6 +141,7 @@ export async function savePhysicalAssessment(
     heartRateRest: parseHeartRateBpm(formData, "heartRateRest", 30, 200),
     heartRateActivity: parseHeartRateBpm(formData, "heartRateActivity", 40, 220),
     bloodPressure: (formData.get("bloodPressure") as string)?.trim() || null,
+    bloodPressureActivity: (formData.get("bloodPressureActivity") as string)?.trim() || null,
     saturationO2: (formData.get("saturationO2") as string)?.trim() || null,
     mobilityLimitations: formData.getAll("mobilityLimitations") as string[],
     mobilityNotes: (formData.get("mobilityNotes") as string)?.trim() || undefined,
@@ -179,7 +177,7 @@ export async function savePhysicalAssessment(
     situps1min: parseReps1min(formData, "situps1min", 500),
     plankSeconds: parseReps1min(formData, "plankSeconds", 36000),
     squats1min: parseReps1min(formData, "squats1min", 500),
-    runDistance1minMeters: parseRunDistance1minMeters(formData),
+    runPaceMinPerKm: parseRunPaceMinPerKm(formData),
     runTest: (formData.get("runTest") as string)?.trim() || null,
     referenceSex: (() => {
       const s = (formData.get("referenceSex") as string)?.trim();

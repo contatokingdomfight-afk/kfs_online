@@ -19,26 +19,12 @@ import {
   ageYearsAtAssessment,
   computePhysicalAssessmentReferenceScores,
 } from "@/lib/physical-assessment-reference-scores";
+import { formatRunPaceMinPerKm, getRunPaceMinPerKm } from "@/lib/run-pace";
 
 function simNao(v: boolean | undefined | null, locale: "pt" | "en"): string {
   if (v === true) return locale === "pt" ? "Sim" : "Yes";
   if (v === false) return locale === "pt" ? "Não" : "No";
   return "—";
-}
-
-function formatRunDistance1min(meters: number, locale: "pt" | "en"): string {
-  if (!Number.isFinite(meters) || meters <= 0) return "—";
-  if (meters >= 1000) {
-    const km = meters / 1000;
-    const str =
-      km >= 100
-        ? String(Math.round(km))
-        : locale === "pt"
-          ? km.toLocaleString("pt-PT", { maximumFractionDigits: 2, minimumFractionDigits: 0 })
-          : km.toLocaleString("en-GB", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
-    return `${str} km`;
-  }
-  return `${Math.round(meters)} m`;
 }
 
 function clearanceLabel(value: string, locale: "pt" | "en"): string {
@@ -249,7 +235,8 @@ export function PhysicalAssessmentReadOnlyView({
           </p>
           {line(L ? "FC repouso (bpm)" : "Resting HR (bpm)", d.heartRateRest ?? "—")}
           {line(L ? "FC em atividade (bpm)" : "Activity HR (bpm)", d.heartRateActivity ?? "—")}
-          {line(L ? "Pressão arterial" : "Blood pressure", d.bloodPressure ?? "—")}
+          {line(L ? "PA repouso" : "Resting BP", d.bloodPressure ?? "—")}
+          {line(L ? "PA em atividade" : "Activity BP", d.bloodPressureActivity ?? "—")}
           {line(L ? "Saturação O₂" : "O₂ saturation", d.saturationO2 ?? "—")}
           <p className="text-xs font-semibold text-[var(--text-secondary)] m-0 mt-2">
             {L ? "6.2 Mobilidade" : "6.2 Mobility"}
@@ -315,8 +302,11 @@ export function PhysicalAssessmentReadOnlyView({
           {line(L ? "Prancha (s)" : "Plank (s)", d.plankSeconds ?? "—")}
           {line(L ? "Agachamentos / 1 min" : "Squats / 1 min", d.squats1min ?? "—")}
           {line(
-            L ? "Distância em 1 min" : "Distance in 1 min",
-            d.runDistance1minMeters != null ? formatRunDistance1min(d.runDistance1minMeters, locale) : "—"
+            L ? "Minutos por quilómetro" : "Minutes per kilometre",
+            (() => {
+              const pace = getRunPaceMinPerKm(d);
+              return pace != null ? formatRunPaceMinPerKm(pace, locale) : "—";
+            })()
           )}
           {line(L ? "Corrida / teste (notas)" : "Run / test (notes)", d.runTest ?? "—")}
         </>

@@ -36,7 +36,10 @@ export type PhysicalAssessmentFormData = {
   heartRateRest?: number | null;
   /** FC durante esforço leve a moderado (ex.: após teste), bpm */
   heartRateActivity?: number | null;
+  /** PA em repouso (sistólica/diastólica), ex.: 120/80 */
   bloodPressure?: string | null;
+  /** PA durante esforço leve-moderado ou pós-teste, ex.: 160/75 */
+  bloodPressureActivity?: string | null;
   saturationO2?: string | null;
   /** 6.2 Mobilidade */
   mobilityLimitations?: string[];
@@ -92,7 +95,9 @@ export type PhysicalAssessmentFormData = {
   situps1min?: number | null;
   plankSeconds?: number | null;
   squats1min?: number | null;
-  /** Distância em corrida/caminhada em 1 min, armazenada em metros (o formulário pode pedir m ou km). */
+  /** Ritmo de corrida/caminhada: minutos para completar 1 km (ex.: 6,5 = 6 min 30 s/km). */
+  runPaceMinPerKm?: number | null;
+  /** @deprecated Legado — distância em 1 min (metros). Lido só para fichas antigas; converter com getRunPaceMinPerKm. */
   runDistance1minMeters?: number | null;
   runTest?: string | null;
   /** Sexo biológico para consulta das tabelas de referência (raparigas / rapazes). */

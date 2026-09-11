@@ -6,6 +6,8 @@ import { useFormState } from "react-dom";
 import { savePhysicalAssessment, type SaveAssessmentResult } from "./actions";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { PhysicalAssessmentInstructorScoreHints } from "@/components/physical-assessment/PhysicalAssessmentInstructorScoreHints";
+import { PhysicalAssessmentVitalSignsHints } from "@/components/physical-assessment/PhysicalAssessmentVitalSignsHints";
+import type { VitalSignsSafety } from "@/lib/physical-assessment-vital-signs";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { SignaturePad, type SignaturePadHandle } from "@/components/SignaturePad";
 
@@ -13,6 +15,7 @@ const AUTOSAVE_INTERVAL_MS = 60_000;
 
 type SubmitPhase = "idle" | "saving" | "saved";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
+import { getRunPaceMinPerKm } from "@/lib/run-pace";
 import {
   OBJECTIVE_OPTIONS,
   MEDICAL_CONDITIONS,
@@ -93,6 +96,14 @@ export function AvaliacaoFisicaForm({
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [lastAutoSavedAt, setLastAutoSavedAt] = useState<Date | null>(null);
   const dirtyRef = useRef(false);
+  const [vitalSignsSafety, setVitalSignsSafety] = useState<VitalSignsSafety>({
+    blockMaxEffortTests: false,
+    bannerPt: null,
+    restBpCategory: null,
+  });
+  const handleVitalSignsSafetyChange = useCallback((safety: VitalSignsSafety) => {
+    setVitalSignsSafety(safety);
+  }, []);
 
   /** Envia o desenho do canvas para o storage se houver traço novo; devolve o URL a usar (novo ou o já existente). */
   const uploadSignatureIfNeeded = useCallback(async (): Promise<string> => {
@@ -139,10 +150,11 @@ export function AvaliacaoFisicaForm({
     const t = window.setTimeout(() => {
       if (lastIntent === "draft") {
         router.refresh();
+        setSubmitPhase("idle");
       } else {
         router.push(afterSaveHref);
       }
-    }, 1000);
+    }, 1200);
     return () => window.clearTimeout(t);
   }, [submitPhase, afterSaveHref, router, lastIntent]);
 
@@ -278,12 +290,9 @@ export function AvaliacaoFisicaForm({
                   <span className="text-2xl text-amber-600 dark:text-amber-400">✓</span>
                 </div>
                 <p className="text-lg font-semibold text-[var(--text-primary)] mb-2">Rascunho guardado</p>
-                <p className="text-sm text-[var(--text-secondary)] mb-4">
+                <p className="text-sm text-[var(--text-secondary)]">
                   Podes continuar mais tarde — o que já preencheste fica guardado nesta ficha.
                 </p>
-                <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden opacity-60">
-                  <div className="h-full w-[40%] rounded-full bg-[var(--primary)] animate-loading-bar" />
-                </div>
               </>
             ) : (
               <>
@@ -516,7 +525,13 @@ export function AvaliacaoFisicaForm({
         <p className="text-sm text-text-secondary mt-2 mb-2 font-medium">6.1 Sinais vitais (opcional)</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl">
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
-            <span>FC repouso (bpm)</span>
+            <span className="inline-flex items-center gap-1.5">
+              FC repouso (bpm)
+              <InlineInfoTip
+                detail="Medida sentado, em repouso, após alguns minutos sem esforço."
+                ariaLabel="Mais informação sobre FC em repouso"
+              />
+            </span>
             <input type="number" name="heartRateRest" min={30} max={200} defaultValue={fd.heartRateRest ?? ""} className="input w-full max-w-[8rem]" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
@@ -537,14 +552,47 @@ export function AvaliacaoFisicaForm({
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
-            <span>PA</span>
+            <span className="inline-flex items-center gap-1.5">
+              PA repouso
+              <InlineInfoTip
+                detail="Pressão arterial em repouso (sentado), formato sistólica/diastólica — ex.: 120/80."
+                ariaLabel="Mais informação sobre pressão arterial"
+              />
+            </span>
             <input type="text" name="bloodPressure" defaultValue={fd.bloodPressure ?? ""} className="input w-full max-w-[8rem]" placeholder="120/80" />
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
-            <span>Sat. O₂</span>
-            <input type="text" name="saturationO2" defaultValue={fd.saturationO2 ?? ""} className="input w-full max-w-[8rem]" />
+            <span className="inline-flex items-center gap-1.5">
+              PA em atividade
+              <InlineInfoTip
+                detail="Pressão arterial durante ou logo após esforço leve-moderado (ex.: 160/75). A PAS deve subir; a PAD tende a manter-se estável."
+                ariaLabel="Mais informação sobre PA em atividade"
+              />
+            </span>
+            <input
+              type="text"
+              name="bloodPressureActivity"
+              defaultValue={fd.bloodPressureActivity ?? ""}
+              className="input w-full max-w-[8rem]"
+              placeholder="160/75"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm min-w-0">
+            <span className="inline-flex items-center gap-1.5">
+              Sat. O₂
+              <InlineInfoTip
+                detail="Saturação periférica em ar ambiente — ex.: 98 ou 98%."
+                ariaLabel="Mais informação sobre saturação de oxigénio"
+              />
+            </span>
+            <input type="text" name="saturationO2" defaultValue={fd.saturationO2 ?? ""} className="input w-full max-w-[8rem]" placeholder="98" />
           </label>
         </div>
+        <PhysicalAssessmentVitalSignsHints
+          formRef={formRef}
+          studentDob={studentDob}
+          onSafetyChange={handleVitalSignsSafetyChange}
+        />
         <p className="text-sm text-text-secondary mt-5 mb-2 font-medium">6.2 Mobilidade</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
           {MOBILITY_OPTIONS.map((m) => (
@@ -829,8 +877,17 @@ export function AvaliacaoFisicaForm({
       </fieldset>
 
       {/* 7. Testes */}
-      <fieldset className="rounded-xl bg-bg-secondary border border-border p-4 md:p-6">
+      <fieldset
+        className="rounded-xl bg-bg-secondary border border-border p-4 md:p-6"
+        disabled={vitalSignsSafety.blockMaxEffortTests}
+      >
         <legend className="text-base font-semibold text-text-primary">7. Testes físicos básicos</legend>
+        {vitalSignsSafety.blockMaxEffortTests && (
+          <p className="text-sm text-red-700 dark:text-red-300 mt-2 mb-0 max-w-3xl">
+            Bloqueado: PA de repouso ou resposta ao esforço em zona crítica. Corrige os sinais vitais ou obtém liberação
+            médica antes de registar testes de esforço.
+          </p>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 mt-3 max-w-4xl">
           <label className="flex flex-col gap-1.5 text-sm min-w-0">
             <span>Flexões / 1 min</span>
@@ -852,26 +909,25 @@ export function AvaliacaoFisicaForm({
             <span>Agachamentos / 1 min</span>
             <input type="number" name="squats1min" min={0} max={500} defaultValue={fd.squats1min ?? ""} className="input w-full max-w-[8rem]" />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm min-w-0 sm:col-span-2 lg:col-span-3">
-            <span>Distância em 1 min (corrida ou esteira)</span>
-            <div className="flex flex-wrap items-end gap-2">
-              <input
-                type="number"
-                name="runDistance1minValue"
-                min={1}
-                max={200000}
-                step="any"
-                defaultValue={fd.runDistance1minMeters ?? ""}
-                className="input w-full max-w-[9rem]"
-                placeholder="ex.: 280 ou 1,2"
-              />
-              <select name="runDistance1minUnit" className="input max-w-[5.5rem]" defaultValue="m" aria-label="Unidade (metros ou quilómetros)">
-                <option value="m">metros (m)</option>
-                <option value="km">quilómetros (km)</option>
-              </select>
-            </div>
+          <label className="flex flex-col gap-1.5 text-sm min-w-0">
+            <span>Minutos por quilómetro (corrida ou esteira)</span>
+            <input
+              type="number"
+              name="runPaceMinPerKm"
+              min={2}
+              max={30}
+              step="any"
+              defaultValue={(() => {
+                const pace = getRunPaceMinPerKm(fd);
+                if (pace == null) return "";
+                const rounded = Math.round(pace * 100) / 100;
+                return rounded;
+              })()}
+              className="input w-full max-w-[9rem]"
+              placeholder="ex.: 6,5"
+            />
             <span className="text-[11px] text-text-secondary leading-snug">
-              O valor é guardado em metros; escolhe km se registaste a distância em quilómetros (ex.: 0,35 km → 350 m).
+              Tempo para completar 1 km (ex.: 6 min 30 s → 6,5).
             </span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm min-w-0 sm:col-span-2 lg:col-span-3">
@@ -886,7 +942,7 @@ export function AvaliacaoFisicaForm({
         <legend className="text-base font-semibold text-text-primary">8. Avaliação do instrutor (1–10)</legend>
         <p className="text-xs text-text-secondary mt-1 mb-3 max-w-4xl leading-relaxed">
           Normas de referência por idade (juvenis 9–18; adultas a partir dos 19) e sexo: indica o sexo para calcular
-          sugestões a partir de flexões, abdominais, IMC e (opcionalmente) distância em 1 min. Podes ajustar todas as
+          sugestões a partir de flexões, abdominais, IMC e (opcionalmente) ritmo de corrida (min/km). Podes ajustar todas as
           notas manualmente.
         </p>
         <div className="flex flex-wrap gap-4 mb-2">

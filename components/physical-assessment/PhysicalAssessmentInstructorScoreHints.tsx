@@ -76,12 +76,7 @@ function readRadio(form: HTMLFormElement, name: string): string {
 function gatherPartialFormData(form: HTMLFormElement): Partial<PhysicalAssessmentFormData> {
   const pushups = readNumber(form, "pushups1min");
   const situps = readNumber(form, "situps1min");
-  const runUnit = readInput(form, "runDistance1minUnit").toLowerCase() || "m";
-  const runVal = readNumber(form, "runDistance1minValue");
-  let runDistance1minMeters: number | null = null;
-  if (runVal != null && runVal > 0) {
-    runDistance1minMeters = runUnit === "km" ? Math.round(runVal * 1000) : Math.round(runVal);
-  }
+  const runPaceMinPerKm = readNumber(form, "runPaceMinPerKm");
   const ref = readRadio(form, "referenceSex");
   const referenceSex: ReferenceSex | null = ref === "F" || ref === "M" ? ref : null;
 
@@ -90,7 +85,7 @@ function gatherPartialFormData(form: HTMLFormElement): Partial<PhysicalAssessmen
     weightKg: readNumber(form, "weightKg"),
     pushups1min: pushups,
     situps1min: situps,
-    runDistance1minMeters,
+    runPaceMinPerKm: runPaceMinPerKm != null && runPaceMinPerKm > 0 ? runPaceMinPerKm : null,
     referenceSex,
     mobilityLimitations: readCheckedCheckboxes(form, "mobilityLimitations") as PhysicalAssessmentFormData["mobilityLimitations"],
     posturalAssessment: readCheckedCheckboxes(form, "posturalAssessment") as PhysicalAssessmentFormData["posturalAssessment"],
@@ -154,9 +149,9 @@ export function PhysicalAssessmentInstructorScoreHints({ formRef, studentDob }: 
             "Usa normas por idade e sexo para abdominais, flexões e IMC: dos 9 aos 18 anos, tabelas juvenis " +
             "(raparigas/rapazes); a partir dos 19 anos, abdominais 1 min. de Golding et al. (YMCA) e flexões do " +
             "ACSM (esta última até à exaustão, usada como aproximação ao teste de 1 min. desta ficha) e IMC " +
-            "saudável da OMS (18,5–24,9). A resistência pode combinar abdominais com a distância em 1 min " +
+            "saudável da OMS (18,5–24,9). A resistência pode combinar abdominais com o ritmo de corrida (min/km) " +
             "(aproximação; não substitui VAIVÉM/milha, sem tabela validada para adultos). A velocidade pode ser " +
-            "sugerida de forma aproximada a partir dessa distância (não equivale aos tempos 20/40 m das tabelas). " +
+            "sugerida de forma aproximada a partir desse ritmo (não equivale aos tempos 20/40 m das tabelas). " +
             "A coordenação usa uma estimativa pela média de outras dimensões quando não há teste 4×10 m na ficha."
           }
         />

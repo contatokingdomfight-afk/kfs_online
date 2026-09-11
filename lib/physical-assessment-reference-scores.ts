@@ -7,6 +7,7 @@
  * senta-e-alcança em cm, etc.) não entram no cálculo automático.
  */
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
+import { formatRunPaceMinPerKm, getRunPaceMinPerKm, runMetersPerMinFromPace } from "@/lib/run-pace";
 
 export type ReferenceSex = "F" | "M";
 
@@ -271,7 +272,7 @@ export type ReferenceScoreBreakdown = {
   scoreCoordination: number | null;
   scoreEndurance: number | null;
   scoreStrength: number | null;
-  /** Aproximação a partir da distância 1 min; tabelas oficiais usam 20/40 m. */
+  /** Aproximação a partir do ritmo de corrida (min/km); tabelas oficiais usam 20/40 m. */
   scoreSpeed: number | null;
   linesPt: string[];
   linesEn: string[];
@@ -339,34 +340,36 @@ export function computePhysicalAssessmentReferenceScores(
 
   let runScore: number | null = null;
   let scoreSpeed: number | null = null;
-  if (typeof d.runDistance1minMeters === "number" && d.runDistance1minMeters > 0) {
-    const mpm = d.runDistance1minMeters;
+  const runPace = getRunPaceMinPerKm(d);
+  if (runPace != null) {
+    const mpm = runMetersPerMinFromPace(runPace);
     const runBase = runMetersPerMinToScore10(mpm, sex, ageYears);
     runScore = runBase;
     scoreSpeed = Math.max(2, Math.min(10, runBase - 1));
+    const paceLabel = formatRunPaceMinPerKm(runPace, "pt");
     push(
-      `Distância 1 min (${mpm} m/min): resistência (aprox.) ${runScore}; velocidade (aprox., mais exigente) ${scoreSpeed} — não substitui VAIVÉM/milha nem tempos 20/40 m.`,
-      `1-min distance (${mpm} m/min): endurance (approx.) ${runScore}; speed (approx., stricter) ${scoreSpeed} — does not replace shuttle/mile or 20/40 m tables.`
+      `Ritmo de corrida (${paceLabel}): resistência (aprox.) ${runScore}; velocidade (aprox., mais exigente) ${scoreSpeed} — não substitui VAIVÉM/milha nem tempos 20/40 m.`,
+      `Run pace (${formatRunPaceMinPerKm(runPace, "en")}): endurance (approx.) ${runScore}; speed (approx., stricter) ${scoreSpeed} — does not replace shuttle/mile or 20/40 m tables.`
     );
   } else {
     push(
-      "Velocidade / resistência aeróbia (tabelas VAIVÉM, milha): não registados nesta ficha; podes usar abdominais e distância 1 min para resistência aproximada.",
-      "Aerobic endurance (shuttle, mile tables): not on this form; use sit-ups and 1-min distance for a rough endurance estimate."
+      "Velocidade / resistência aeróbia (tabelas VAIVÉM, milha): não registados nesta ficha; podes usar abdominais e ritmo de corrida (min/km) para resistência aproximada.",
+      "Aerobic endurance (shuttle, mile tables): not on this form; use sit-ups and run pace (min/km) for a rough endurance estimate."
     );
   }
 
   let scoreEndurance: number | null = abdomScore;
   if (abdomScore != null && runScore != null) {
     scoreEndurance = Math.round((abdomScore + runScore) / 2);
-    push(`Resistência combinada (abdominais + distância 1 min): média → ${scoreEndurance}.`, `Combined endurance (sit-ups + 1-min distance): average → ${scoreEndurance}.`);
+    push(`Resistência combinada (abdominais + ritmo de corrida): média → ${scoreEndurance}.`, `Combined endurance (sit-ups + run pace): average → ${scoreEndurance}.`);
   } else if (abdomScore != null) {
     scoreEndurance = abdomScore;
     push(`Resistência: baseada nas abdominais → ${scoreEndurance}.`, `Endurance: based on sit-ups → ${scoreEndurance}.`);
   } else if (runScore != null) {
     scoreEndurance = runScore;
-    push(`Resistência: só distância 1 min (aproximação) → ${scoreEndurance}.`, `Endurance: 1-min distance only (approximation) → ${scoreEndurance}.`);
+    push(`Resistência: só ritmo de corrida (aproximação) → ${scoreEndurance}.`, `Endurance: run pace only (approximation) → ${scoreEndurance}.`);
   } else {
-    push("Resistência: sem abdominais nem distância 1 min — usa nota manual ou preenche os testes.", "Endurance: no sit-ups or 1-min distance — set manually or fill tests.");
+    push("Resistência: sem abdominais nem ritmo de corrida — usa nota manual ou preenche os testes.", "Endurance: no sit-ups or run pace — set manually or fill tests.");
   }
 
   let scoreCondition: number | null = null;
@@ -453,34 +456,36 @@ function computeAdultReferenceScores(
 
   let runScore: number | null = null;
   let scoreSpeed: number | null = null;
-  if (typeof d.runDistance1minMeters === "number" && d.runDistance1minMeters > 0) {
-    const mpm = d.runDistance1minMeters;
+  const runPaceAdult = getRunPaceMinPerKm(d);
+  if (runPaceAdult != null) {
+    const mpm = runMetersPerMinFromPace(runPaceAdult);
     const runBase = runMetersPerMinToScore10(mpm, sex, 18);
     runScore = runBase;
     scoreSpeed = Math.max(2, Math.min(10, runBase - 1));
+    const paceLabel = formatRunPaceMinPerKm(runPaceAdult, "pt");
     push(
-      `Distância 1 min (${mpm} m/min): resistência (aprox., sem tabela validada para adultos — usa a referência de 18 anos como base) ${runScore}; velocidade (aprox.) ${scoreSpeed}.`,
-      `1-min distance (${mpm} m/min): endurance (approx., no validated adult table — using the 18-year-old reference as a base) ${runScore}; speed (approx.) ${scoreSpeed}.`
+      `Ritmo de corrida (${paceLabel}): resistência (aprox., sem tabela validada para adultos — usa a referência de 18 anos como base) ${runScore}; velocidade (aprox.) ${scoreSpeed}.`,
+      `Run pace (${formatRunPaceMinPerKm(runPaceAdult, "en")}): endurance (approx., no validated adult table — using the 18-year-old reference as a base) ${runScore}; speed (approx.) ${scoreSpeed}.`
     );
   } else {
     push(
-      "Velocidade / resistência aeróbia: não registados nesta ficha; podes usar abdominais e distância 1 min para resistência aproximada.",
-      "Aerobic endurance: not on this form; use sit-ups and 1-min distance for a rough endurance estimate."
+      "Velocidade / resistência aeróbia: não registados nesta ficha; podes usar abdominais e ritmo de corrida (min/km) para resistência aproximada.",
+      "Aerobic endurance: not on this form; use sit-ups and run pace (min/km) for a rough endurance estimate."
     );
   }
 
   let scoreEndurance: number | null = abdomScore;
   if (abdomScore != null && runScore != null) {
     scoreEndurance = Math.round((abdomScore + runScore) / 2);
-    push(`Resistência combinada (abdominais + distância 1 min): média → ${scoreEndurance}.`, `Combined endurance (sit-ups + 1-min distance): average → ${scoreEndurance}.`);
+    push(`Resistência combinada (abdominais + ritmo de corrida): média → ${scoreEndurance}.`, `Combined endurance (sit-ups + run pace): average → ${scoreEndurance}.`);
   } else if (abdomScore != null) {
     scoreEndurance = abdomScore;
     push(`Resistência: baseada nas abdominais → ${scoreEndurance}.`, `Endurance: based on sit-ups → ${scoreEndurance}.`);
   } else if (runScore != null) {
     scoreEndurance = runScore;
-    push(`Resistência: só distância 1 min (aproximação) → ${scoreEndurance}.`, `Endurance: 1-min distance only (approximation) → ${scoreEndurance}.`);
+    push(`Resistência: só ritmo de corrida (aproximação) → ${scoreEndurance}.`, `Endurance: run pace only (approximation) → ${scoreEndurance}.`);
   } else {
-    push("Resistência: sem abdominais nem distância 1 min — usa nota manual ou preenche os testes.", "Endurance: no sit-ups or 1-min distance — set manually or fill tests.");
+    push("Resistência: sem abdominais nem ritmo de corrida — usa nota manual ou preenche os testes.", "Endurance: no sit-ups or run pace — set manually or fill tests.");
   }
 
   let scoreCondition: number | null = null;
