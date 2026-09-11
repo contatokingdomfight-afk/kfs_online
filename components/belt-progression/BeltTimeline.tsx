@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useId } from "react";
+import { FloatingTooltip, useTooltipTrigger } from "@/components/ui/FloatingTooltip";
 import { BELT_ORDER, BELT_DISPLAY, BELT_XP, formatXP } from "./belt-progression-data";
 import type { BeltId } from "./belt-progression-data";
 
@@ -73,13 +74,15 @@ function BeltNode({
   isPast: boolean;
   showConnector: boolean;
 }) {
-  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipId = useId();
+  const { open, anchorRef, triggerProps } = useTooltipTrigger<HTMLButtonElement>();
   const label = BELT_DISPLAY[beltId].label;
 
   return (
     <div className="flex flex-shrink-0 snap-center items-center">
       <div className="relative flex flex-col items-center">
         <button
+          ref={anchorRef}
           type="button"
           className={`
             flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full text-base sm:text-lg
@@ -94,24 +97,17 @@ function BeltNode({
             ${!isCurrent && !isPast ? "opacity-95" : ""}
             hover:z-[1] hover:scale-[1.06] hover:shadow-md active:scale-100
           `}
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
-          onFocus={() => setShowTooltip(true)}
-          onBlur={() => setShowTooltip(false)}
           aria-current={isCurrent ? "step" : undefined}
           aria-label={`Nível ${label}, XP necessário: ${formatXP(xpRequired)}`}
+          aria-describedby={open ? tooltipId : undefined}
+          {...triggerProps}
         >
           {emoji}
         </button>
-        {showTooltip && (
-          <div
-            className="absolute z-20 bottom-full left-1/2 mb-2 -translate-x-1/2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-sm shadow-xl whitespace-nowrap"
-            role="tooltip"
-          >
-            <p className="font-semibold text-[var(--text-primary)]">Nível {label}</p>
-            <p className="text-xs text-[var(--text-secondary)]">XP mín.: {formatXP(xpRequired)}</p>
-          </div>
-        )}
+        <FloatingTooltip anchorRef={anchorRef} open={open} id={tooltipId} maxWidth={200}>
+          <p className="font-semibold text-[var(--text-primary)]">Nível {label}</p>
+          <p className="mt-0.5 text-[var(--text-secondary)]">XP mín.: {formatXP(xpRequired)}</p>
+        </FloatingTooltip>
       </div>
       {showConnector && (
         <div

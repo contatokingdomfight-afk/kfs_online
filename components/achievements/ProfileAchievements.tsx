@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Tooltipped } from "@/components/ui/FloatingTooltip";
 import type { AchievementWithStatus } from "@/lib/achievements";
 
 type Props = {
@@ -31,7 +32,16 @@ export function ProfileAchievements({ achievements, backHref = "/dashboard" }: P
       </p>
       <div className="flex flex-wrap gap-2">
         {achievements.map((a) => (
-          <div key={a.id} className="relative group">
+          <Tooltipped
+            key={a.id}
+            maxWidth={200}
+            content={
+              <>
+                <p className="font-semibold text-[var(--text-primary)]">{a.name}</p>
+                <p className="mt-0.5 text-[var(--text-secondary)]">{a.description}</p>
+              </>
+            }
+          >
             <button
               type="button"
               className={`
@@ -43,21 +53,7 @@ export function ProfileAchievements({ achievements, backHref = "/dashboard" }: P
             >
               {a.isUnlocked ? a.icon : "🔒"}
             </button>
-            {/* Tooltip CSS puro — sem getBoundingClientRect, sem reflow */}
-            <div
-              role="tooltip"
-              className="
-                pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2
-                hidden group-hover:block group-focus-within:block
-                z-50 w-max max-w-[200px] rounded-lg
-                bg-[var(--bg)] border border-[var(--border)] shadow-xl
-                px-3 py-2
-              "
-            >
-              <p className="font-semibold text-[var(--text-primary)] text-xs whitespace-normal">{a.name}</p>
-              <p className="text-[var(--text-secondary)] mt-0.5 text-xs whitespace-normal">{a.description}</p>
-            </div>
-          </div>
+          </Tooltipped>
         ))}
       </div>
       <p className="text-sm text-[var(--text-secondary)] mt-3">
