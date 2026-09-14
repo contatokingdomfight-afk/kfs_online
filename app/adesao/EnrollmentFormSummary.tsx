@@ -6,6 +6,7 @@ import {
 } from "@/lib/enrollment-form";
 import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
 import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
+import { ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER } from "@/lib/sports-insurance-coverage";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
 import type { SchoolSignature } from "@/lib/school-signatures";
 
@@ -82,7 +83,7 @@ export function EnrollmentFormSummary({
       <Row label="Início" value={form.membershipStartDate ? new Date(`${form.membershipStartDate}T12:00:00`).toLocaleDateString("pt-PT") : null} />
       <Row label="Mensalidade" value={`${monthlyAmount.toFixed(2)} €`} />
       {showEnrollment ? <Row label="Inscrição" value={`${enrollmentAmount.toFixed(2)} €`} /> : null}
-      {showInsurance ? (
+      {showInsurance && !ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? (
         <Row label="Seguro" value={`${formatDecimalAmountInput(insuranceAmount)} €`} />
       ) : null}
       <Row label="Pagamento" value={paymentLabel ?? undefined} />
@@ -90,13 +91,14 @@ export function EnrollmentFormSummary({
       {form.debitIban && form.paymentMethod === "DEBIT_DIRECT" ? (
         <Row label="IBAN (legado)" value={form.debitIban} />
       ) : null}
-      {showInsurance ? <InsuranceCoverageBlock compact annualAmount={insuranceAmount} /> : null}
+      {showInsurance || ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? (
+        <InsuranceCoverageBlock compact annualAmount={insuranceAmount} />
+      ) : null}
       {form.allergies ? <Row label="Alergias" value={form.allergies} /> : null}
       {form.knownHealthCondition ? <Row label="Saúde" value={form.knownHealthCondition} /> : null}
       {form.emergencyMedication ? <Row label="Medicação" value={form.emergencyMedication} /> : null}
       <p style={{ margin: "10px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
-        Consentimentos: foto {form.consentPhoto ? "sim" : "não"} · vídeo {form.consentVideo ? "sim" : "não"} · redes{" "}
-        {form.consentSocialMedia ? "sim" : "não"} · marketing {form.consentMarketing ? "sim" : "não"}
+        Consentimentos: foto sim · vídeo sim · redes sim · marketing sim
       </p>
       {agreementSigned ? (
         <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--border)" }}>

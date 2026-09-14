@@ -1,4 +1,7 @@
-import { SPORTS_INSURANCE_COVERAGE } from "@/lib/sports-insurance-coverage";
+import {
+  ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER,
+  SPORTS_INSURANCE_COVERAGE,
+} from "@/lib/sports-insurance-coverage";
 import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
 
 type Props = {
@@ -8,10 +11,58 @@ type Props = {
   annualAmount?: number;
 };
 
+const BLANK = "—";
+
 export function InsuranceCoverageBlock({ locale = "pt", compact = false, annualAmount }: Props) {
   const pt = locale === "pt";
-  const c = SPORTS_INSURANCE_COVERAGE;
   const fontSize = compact ? 13 : 14;
+
+  if (ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER) {
+    return (
+      <div
+        style={{
+          marginTop: compact ? 8 : 12,
+          padding: compact ? "10px 12px" : "12px 14px",
+          borderRadius: "var(--radius-md)",
+          border: "1px solid var(--border)",
+          background: "var(--bg-secondary)",
+          fontSize,
+          lineHeight: 1.55,
+          color: "var(--text-secondary)",
+        }}
+      >
+        <p style={{ margin: "0 0 8px", fontWeight: 600, color: "var(--text-primary)" }}>
+          {pt ? "Cobertura PDCR" : "PDCR coverage"}
+        </p>
+        <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 4 }}>
+          <li>
+            {pt ? "Produto" : "Product"}: <strong>{BLANK}</strong>
+          </li>
+          <li>
+            {pt ? "Atividade" : "Activity"}: <strong>{BLANK}</strong>
+          </li>
+          <li>
+            {pt ? "Morte" : "Death"}: <strong>{BLANK}</strong>
+          </li>
+          <li>
+            {pt ? "Invalidez Permanente" : "Permanent disability"}: <strong>{BLANK}</strong>
+          </li>
+          <li>
+            {pt ? "Despesas de Tratamento" : "Treatment expenses"}: <strong>{BLANK}</strong>
+          </li>
+          <li>
+            {pt ? "Despesas de Funeral" : "Funeral expenses"}: <strong>{BLANK}</strong>
+          </li>
+          <li>
+            {pt ? "Prémio comercial anual inestornável por aderente" : "Annual non-refundable premium per member"}:{" "}
+            <strong>{BLANK}</strong>
+          </li>
+        </ul>
+      </div>
+    );
+  }
+
+  const c = SPORTS_INSURANCE_COVERAGE;
   const annualPremiumLabel =
     annualAmount != null && Number.isFinite(annualAmount)
       ? `${formatDecimalAmountInput(annualAmount)} €`

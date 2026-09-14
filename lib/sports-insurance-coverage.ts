@@ -1,6 +1,9 @@
 /** Cobertura PDCR — seguro desportivo federado (texto informativo no comprovativo). */
 export const SPORTS_INSURANCE_ANNUAL_PREMIUM = 25;
 
+/** Seguro ainda não fechado — comprovativo/impressão mostram campos em branco para preenchimento manual. */
+export const ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER = true;
+
 export const SPORTS_INSURANCE_COVERAGE = {
   product: "APMDA",
   activity: "JIU JITSU",

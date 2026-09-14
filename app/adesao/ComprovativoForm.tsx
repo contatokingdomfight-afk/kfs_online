@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { useFormState } from "react-dom";
 import { saveEnrollmentForm, type SaveEnrollmentFormResult } from "./enrollment-actions";
 import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
+import { ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER } from "@/lib/sports-insurance-coverage";
 import { CopyTextButton } from "@/components/ui/CopyTextButton";
 import {
   GYM_ENROLLMENT_INFO,
@@ -217,7 +218,7 @@ export function ComprovativoForm({ prefill }: Props) {
           <ul style={{ margin: "14px 0 0", paddingLeft: 18, color: "var(--text-secondary)", lineHeight: 1.7 }}>
             {prefill.showEnrollment ? <li>Inscrição: {prefill.enrollmentAmount.toFixed(2)} €</li> : null}
             <li>Mensalidade: {prefill.monthlyAmount.toFixed(2)} €</li>
-            {prefill.showInsurance ? (
+            {prefill.showInsurance && !ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? (
               <li>Seguro: {formatDecimalAmountInput(prefill.insuranceAmount)} €</li>
             ) : null}
           </ul>
@@ -299,7 +300,7 @@ export function ComprovativoForm({ prefill }: Props) {
 
       {/* Passo 3 — Seguro e saúde */}
       <div ref={stepRefs[2]} style={stepStyle(2)}>
-        {prefill.showInsurance ? (
+        {prefill.showInsurance && !ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? (
           <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
             <h2 style={{ margin: "0 0 10px", fontSize: 16, fontWeight: 600 }}>Seguro desportivo</h2>
             <p style={{ margin: "0 0 10px", fontSize: 14, color: "var(--text-secondary)" }}>
@@ -328,6 +329,16 @@ export function ComprovativoForm({ prefill }: Props) {
           </section>
         ) : null}
 
+        {ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? (
+          <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
+            <h2 style={{ margin: "0 0 10px", fontSize: 16, fontWeight: 600 }}>Seguro desportivo</h2>
+            <p style={{ margin: "0 0 10px", fontSize: 14, color: "var(--text-secondary)" }}>
+              Cobertura a definir — campos em branco para preenchimento manual.
+            </p>
+            <InsuranceCoverageBlock compact annualAmount={prefill.insuranceAmount} />
+          </section>
+        ) : null}
+
         <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", display: "flex", flexDirection: "column", gap: 14 }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Dados de saúde</h2>
           <Field label="Alergias relevantes">
@@ -353,13 +364,18 @@ export function ComprovativoForm({ prefill }: Props) {
             { name: "consentSocialMedia", label: "Autorizo a publicação da minha imagem em redes sociais e materiais promocionais." },
             { name: "consentMarketing", label: "Autorizo comunicações comerciais por email, SMS ou outros meios." },
           ].map((item) => (
-            <label key={item.name} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, cursor: "pointer" }}>
-              <input type="checkbox" name={item.name} defaultChecked={Boolean((e as Record<string, boolean | undefined>)[item.name])} style={{ marginTop: 4 }} />
-              <span>{item.label}</span>
-            </label>
+            <div key={item.name} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14 }}>
+              <input type="hidden" name={item.name} value="on" />
+              <span style={{ color: "var(--success)", fontWeight: 700, marginTop: 1 }} aria-hidden>
+                ✓
+              </span>
+              <span>
+                {item.label} <strong style={{ color: "var(--text-primary)" }}>(sim)</strong>
+              </span>
+            </div>
           ))}
           <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>
-            As autorizações são facultativas e podem ser retiradas relativamente a utilizações futuras.
+            Estes consentimentos são registados como autorizados no comprovativo de adesão.
           </p>
         </section>
       </div>

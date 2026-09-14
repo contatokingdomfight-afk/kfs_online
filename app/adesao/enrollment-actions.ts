@@ -14,6 +14,7 @@ import {
   type PaymentMethodValue,
 } from "@/lib/enrollment-form";
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
+import { ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER } from "@/lib/sports-insurance-coverage";
 
 export type SaveEnrollmentFormResult = { error?: string };
 
@@ -131,11 +132,11 @@ export async function saveEnrollmentForm(
     allergies,
     knownHealthCondition,
     emergencyMedication,
-    consentPhoto: checkboxOn(formData, "consentPhoto"),
-    consentVideo: checkboxOn(formData, "consentVideo"),
-    consentSocialMedia: checkboxOn(formData, "consentSocialMedia"),
-    consentMarketing: checkboxOn(formData, "consentMarketing"),
-    insuranceAccepted: fees.showInsurance ? insuranceAccepted : false,
+    consentPhoto: true,
+    consentVideo: true,
+    consentSocialMedia: true,
+    consentMarketing: true,
+    insuranceAccepted: fees.showInsurance && !ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? insuranceAccepted : false,
     membershipStartDate: membershipStartDate || new Date().toISOString().slice(0, 10),
     updatedAt: new Date().toISOString(),
   };
