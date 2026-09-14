@@ -27,6 +27,7 @@ const publicPaths = [
   "/auth/callback",
   "/auth/forgot-password",
   "/auth/update-password",
+  "/auth/verify-email",
   "/termos",
   "/privacidade",
   "/modalidades",

@@ -186,7 +186,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 
 
 - **404:** `app/not-found.tsx`
-- **Email:** `app/auth/verify-email`, redirect pós-signup, erros no sign-in; activar «Confirm email» no Supabase Dashboard
+- **Email:** `app/auth/verify-email` (rota **pública** no `middleware.ts` desde set. 2026 — sem isto, pós-signup caía em `/sign-in?reason=middleware-no-user`), redirect pós-signup, erros no sign-in; activar «Confirm email» no Supabase Dashboard. Registo com sessão imediata → `/onboarding` (não `/dashboard`).
 - **RGPD:** `/termos`, `/privacidade`, `components/CookieBanner.tsx`, checkbox no registo, «Eliminar conta» em `/dashboard/perfil`
 - **Password:** `ChangePasswordSection` no perfil (oculto para Google OAuth)
 - **Sentry:** `@sentry/nextjs`, `instrumentation.ts`, `app/global-error.tsx` — env `SENTRY_DSN`
@@ -376,7 +376,7 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Peso pós-treino:** colunas `Attendance.postWeightKg` / `postWeightRecordedAt` (`20260821160100_attendance_post_weight.sql`); registo opcional no formulário RPE (`/dashboard/bem-estar/rpe`) + atalho após check-in; espelha em `BodyWeightEntry` e `StudentProfile.weightKg`.
 - **Push Web (gratuito):** VAPID (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`); tabela `PushSubscription` (`20260821160200_push_subscriptions.sql`); `/api/push/subscribe`, toggle em `/dashboard/perfil`; handler `push`/`notificationclick` em `public/sw.js`; mirror opcional de notificações in-app (`lib/push/notify-student.ts`). Sem custo de serviço — self-hosted. RLS: `authUserId = (auth.uid())::text`.
 - **Migrações Supabase EU (ago. 2026):** `20260821160000_admin_rbac_permissions`, `20260821160100_attendance_post_weight`, `20260821160200_push_subscriptions` — **aplicadas** em produção.
-- **Qualidade:** Playwright `e2e/public-smoke.spec.ts`, `e2e/critical-flow.spec.ts` (credenciais `PLAYWRIGHT_TEST_*`); Lighthouse mobile `npm run lighthouse:mobile` (`lighthouserc.cjs`); checklist actualizado em [`TESTE_REGRESSAO_PRODUCAO.md`](TESTE_REGRESSAO_PRODUCAO.md).
+- **Qualidade:** Playwright `e2e/public-smoke.spec.ts`, `e2e/critical-flow.spec.ts`, `e2e/signup-onboarding.spec.ts` (cadastro + onboarding; credenciais `PLAYWRIGHT_TEST_*` ou `TEST_SEED_PASSWORD` + `SUPABASE_SERVICE_ROLE_KEY`); Lighthouse mobile `npm run lighthouse:mobile` (`lighthouserc.cjs`); checklist actualizado em [`TESTE_REGRESSAO_PRODUCAO.md`](TESTE_REGRESSAO_PRODUCAO.md).
 - **Fix deploy biblioteca:** `LandscapeVideoOverlay` — cast `ScreenOrientation.lock` para tipos DOM (`7adfd39`).
 
 ## Entregas produto (ago. 2026 — sprint 2)

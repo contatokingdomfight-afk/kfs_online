@@ -72,7 +72,7 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
       return;
     }
     if (data?.session) {
-      const target = initialNext && initialNext.startsWith("/") ? initialNext : "/dashboard";
+      const target = initialNext && initialNext.startsWith("/") ? initialNext : "/onboarding";
       router.push(target);
       router.refresh();
       return;
