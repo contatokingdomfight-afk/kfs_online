@@ -8,7 +8,7 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import { isEnrollmentFormCurrent } from "@/lib/enrollment-form";
-import { edgeCacheDelete } from "@/lib/edge-ttl-cache";
+import { invalidateStudentGateCache } from "@/lib/student-gate-cache";
 
 export type SignAdesaoDocumentsResult = { error?: string };
 
@@ -135,7 +135,7 @@ export async function signAdesaoDocuments(
   // O gate de middleware cacheia "documentsSigned" por 10s (lib/edge-ttl-cache.ts) — sem isto, um
   // aluno que navegue logo a seguir a assinar podia ainda ser tratado como "por assinar" e ficar
   // preso a saltar entre /adesao e /dashboard/documentos-adesao até a cache expirar.
-  edgeCacheDelete(`student-gate:${studentId}`);
+  await invalidateStudentGateCache(studentId);
 
   revalidatePath("/adesao");
   revalidatePath("/dashboard");

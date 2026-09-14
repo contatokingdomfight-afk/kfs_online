@@ -6,7 +6,8 @@ import {
   rememberLongSessionFromCookieValue,
   resolveSupabaseCookieOptions,
 } from "@/lib/supabase/cookie-options";
-import { edgeCacheGet, edgeCacheSet } from "@/lib/edge-ttl-cache";
+import { edgeCacheDelete, edgeCacheGet, edgeCacheSet } from "@/lib/edge-ttl-cache";
+import { STUDENT_GATE_REFRESH_COOKIE, studentGateCacheKey } from "@/lib/student-gate-cache";
 
 /** TTL do cache do "gate" do aluno (onboarding/termo/contrato/pagamento) — ver DOCS do plano de custo. */
 const STUDENT_GATE_CACHE_TTL_MS = 10_000;
@@ -315,7 +316,13 @@ export async function middleware(request: NextRequest) {
      * prefetch do <Link>). `getUser()` acima e a árvore de redirects abaixo continuam a
      * correr sempre — só a busca destes dados é que pode vir do cache.
      */
-    const gateCacheKey = `student-gate:${student.id}`;
+    const gateCacheKey = studentGateCacheKey(student.id);
+    const gateRefreshStudentId = request.cookies.get(STUDENT_GATE_REFRESH_COOKIE)?.value;
+    if (gateRefreshStudentId === student.id) {
+      edgeCacheDelete(gateCacheKey);
+      response.cookies.set(STUDENT_GATE_REFRESH_COOKIE, "", { path: "/", maxAge: 0 });
+    }
+
     let gate = edgeCacheGet<{ onboardingDone: boolean; documentsSigned: boolean; hasAccess: boolean }>(gateCacheKey);
 
     if (!gate) {

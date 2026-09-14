@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { completeOnboarding } from "./actions";
 import { getTranslations } from "@/lib/i18n";
 
@@ -22,7 +21,6 @@ type Props = {
 
 export function OnboardingWizard({ userName, schools, defaultSchoolId, locale }: Props) {
   const t = getTranslations(locale);
-  const router = useRouter();
   const [step, setStep] = useState(1);
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [weightKg, setWeightKg] = useState("");
@@ -53,20 +51,20 @@ export function OnboardingWizard({ userName, schools, defaultSchoolId, locale }:
   async function handleFinish() {
     setError(null);
     setLoading(true);
-    const formData = new FormData();
-    formData.set("dateOfBirth", dateOfBirth);
-    formData.set("weightKg", weightKg);
-    formData.set("heightCm", heightCm);
-    formData.set("goals", JSON.stringify(goals));
-    formData.set("schoolId", schoolId);
-    const result = await completeOnboarding(formData);
-    setLoading(false);
-    if (result.error) {
-      setError(result.error);
-      return;
+    try {
+      const formData = new FormData();
+      formData.set("dateOfBirth", dateOfBirth);
+      formData.set("weightKg", weightKg);
+      formData.set("heightCm", heightCm);
+      formData.set("goals", JSON.stringify(goals));
+      formData.set("schoolId", schoolId);
+      const result = await completeOnboarding(formData);
+      if (result.error) {
+        setError(result.error);
+      }
+    } finally {
+      setLoading(false);
     }
-    router.push("/dashboard");
-    router.refresh();
   }
 
   const totalSteps = 4;

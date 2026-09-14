@@ -1,8 +1,10 @@
 "use server";
 
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
-import { revalidatePath } from "next/cache";
+import { invalidateStudentGateCache } from "@/lib/student-gate-cache";
 
 export type CompleteOnboardingResult = { error?: string };
 
@@ -64,7 +66,12 @@ export async function completeOnboarding(formData: FormData): Promise<CompleteOn
     if (error) return { error: error.message };
   }
 
+  // O middleware cacheia onboardingDone ~10s; sem invalidar, /dashboard volta a /onboarding.
+  await invalidateStudentGateCache(studentId);
+
   revalidatePath("/dashboard");
   revalidatePath("/onboarding");
-  return {};
+  revalidatePath("/adesao");
+  revalidatePath("/escolher-plano");
+  redirect("/dashboard");
 }
