@@ -6,8 +6,13 @@ import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
 import { AutoPrintTrigger } from "@/components/documents/AutoPrintTrigger";
+import { PrintDocumentTitle } from "@/components/documents/PrintDocumentTitle";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
+import {
+  buildMembershipPrintDocumentTitle,
+  loadStudentPrintName,
+} from "@/lib/print-document-title";
 
 export const dynamic = "force-dynamic";
 
@@ -33,9 +38,12 @@ export default async function ImprimirContratoPage() {
   }
 
   const schoolSignatures = await getActiveSchoolSignatures();
+  const studentName = await loadStudentPrintName(supabase, studentId, agreement.signatureName);
+  const printTitle = buildMembershipPrintDocumentTitle("contrato", studentName);
 
   return (
     <>
+      <PrintDocumentTitle title={printTitle} />
       <AutoPrintTrigger />
       <div className="no-print" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
         <Link href="/dashboard/documentos-adesao" className="btn btn-secondary" style={{ textDecoration: "none" }}>

@@ -4,8 +4,13 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
 import { AutoPrintTrigger } from "@/components/documents/AutoPrintTrigger";
+import { PrintDocumentTitle } from "@/components/documents/PrintDocumentTitle";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
+import {
+  buildMembershipPrintDocumentTitle,
+  loadStudentPrintName,
+} from "@/lib/print-document-title";
 
 function fmtDateTime(iso: string | null): string | null {
   if (!iso) return null;
@@ -29,7 +34,7 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
   const supabase = result.client;
 
   const [{ data: student }, { data: agreement }, { data: enrollmentForm }] = await Promise.all([
-    supabase.from("Student").select("id").eq("id", studentId).single(),
+    supabase.from("Student").select("id, userId").eq("id", studentId).single(),
     supabase
       .from("StudentMembershipAgreement")
       .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl, agreementVersion")
@@ -55,9 +60,12 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
   }
 
   const schoolSignatures = await getActiveSchoolSignatures();
+  const studentName = await loadStudentPrintName(supabase, studentId, agreement.signatureName);
+  const printTitle = buildMembershipPrintDocumentTitle("contrato", studentName);
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
+      <PrintDocumentTitle title={printTitle} />
       <AutoPrintTrigger />
       <div className="no-print" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
         <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>

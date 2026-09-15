@@ -5,7 +5,9 @@ import { loadEnrollmentFormPrefill, type EnrollmentFormRow } from "@/lib/enrollm
 import { EnrollmentFormSummary } from "@/app/adesao/EnrollmentFormSummary";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
 import { AutoPrintTrigger } from "@/components/documents/AutoPrintTrigger";
+import { PrintDocumentTitle } from "@/components/documents/PrintDocumentTitle";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
+import { buildMembershipPrintDocumentTitle } from "@/lib/print-document-title";
 
 type Props = {
   studentId: string;
@@ -62,8 +64,11 @@ export async function StudentEnrollmentPrintView({ studentId, backHref }: Props)
     );
   }
 
+  const printTitle = buildMembershipPrintDocumentTitle("comprovativo", prefill.fullName);
+
   return (
     <>
+      <PrintDocumentTitle title={printTitle} />
       <AutoPrintTrigger />
       <div className="no-print print-doc-root" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
         <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>
