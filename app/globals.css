@@ -1641,9 +1641,9 @@ html[data-kfs-native="capacitor"] body {
 /* Impressão (ex.: contrato de adesão): esconde a chrome autenticada (sidebar, header, drawer,
    barra inferior, chat) em qualquer ecrã — não só nas páginas /imprimir dedicadas. */
 @media print {
-  /* Margem 0 suprime na maioria dos browsers o cabeçalho/rodapé automático (data, URL, título). */
+  /* Margens em @page aplicam-se a cada folha impressa (padding no body só afecta o início do documento). */
   @page {
-    margin: 0;
+    margin: 22mm 10mm 14mm 10mm;
   }
 
   .no-print,
@@ -1672,15 +1672,16 @@ html[data-kfs-native="capacitor"] body {
   body {
     background: #fff !important;
     color: #111 !important;
-    padding: 24mm 10mm 12mm !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   .enrollment-form-document {
-    padding-top: 4mm;
+    padding-top: 0;
   }
 
   .print-doc-root {
-    padding-top: 8mm;
+    padding-top: 0;
   }
 
   .card {

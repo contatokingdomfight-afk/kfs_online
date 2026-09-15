@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { AUTO_PRINT_STORAGE_KEY } from "@/components/documents/AutoPrintTrigger";
 
 function StatusBadge({
   ok,
@@ -62,6 +63,7 @@ export function MembershipDocumentSection({
   children,
   defaultExpanded = false,
 }: Props) {
+  const router = useRouter();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const hasContent =
     children != null &&
@@ -135,16 +137,18 @@ export function MembershipDocumentSection({
         <div className="no-print" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginLeft: "auto" }}>
           <StatusBadge ok={ok} okLabel={okLabel} pendingLabel={pendingLabel} />
           {printHref && ok ? (
-            <Link
-              href={printHref}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
               className="btn btn-secondary"
-              style={{ textDecoration: "none", fontSize: 13, whiteSpace: "nowrap" }}
-              onClick={(e) => e.stopPropagation()}
+              style={{ fontSize: 13, whiteSpace: "nowrap" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                sessionStorage.setItem(AUTO_PRINT_STORAGE_KEY, "1");
+                router.push(printHref);
+              }}
             >
               {printLabel}
-            </Link>
+            </button>
           ) : null}
         </div>
       </div>

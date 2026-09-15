@@ -4,6 +4,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { loadEnrollmentFormPrefill, type EnrollmentFormRow } from "@/lib/enrollment-form";
 import { EnrollmentFormSummary } from "@/app/adesao/EnrollmentFormSummary";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
+import { AutoPrintTrigger } from "@/components/documents/AutoPrintTrigger";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
 
 type Props = {
@@ -63,6 +64,7 @@ export async function StudentEnrollmentPrintView({ studentId, backHref }: Props)
 
   return (
     <>
+      <AutoPrintTrigger />
       <div className="no-print print-doc-root" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
         <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>
           ← Voltar

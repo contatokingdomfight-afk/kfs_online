@@ -4,7 +4,7 @@ export default function MembershipPrintLayout({ children }: { children: React.Re
       <style>{`
         @media print {
           @page {
-            margin: 0;
+            margin: 22mm 10mm 14mm 10mm;
           }
           .no-print,
           nav,
@@ -16,13 +16,14 @@ export default function MembershipPrintLayout({ children }: { children: React.Re
           body {
             background: #fff !important;
             color: #111 !important;
-            padding: 24mm 10mm 12mm !important;
+            padding: 0 !important;
+            margin: 0 !important;
           }
           .enrollment-form-document {
-            padding-top: 4mm;
+            padding-top: 0;
           }
           .print-doc-root {
-            padding-top: 8mm;
+            padding-top: 0;
           }
           .card {
             box-shadow: none !important;

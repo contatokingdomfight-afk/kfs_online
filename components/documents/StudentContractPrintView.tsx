@@ -3,6 +3,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
+import { AutoPrintTrigger } from "@/components/documents/AutoPrintTrigger";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
 
@@ -57,6 +58,7 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
+      <AutoPrintTrigger />
       <div className="no-print" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
         <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>
           ← Voltar
