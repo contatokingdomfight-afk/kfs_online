@@ -67,7 +67,7 @@ export async function StudentEnrollmentPrintView({ studentId, backHref }: Props)
         <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>
           ← Voltar
         </Link>
-        <PrintDocumentButton />
+        <PrintDocumentButton label="Imprimir comprovativo" />
       </div>
       <EnrollmentFormSummary
         form={enrollmentForm as EnrollmentFormRow}

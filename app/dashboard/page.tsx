@@ -31,6 +31,8 @@ import {
 } from "@/lib/lesson-occurrences";
 
 import { normalizeModalityCode } from "@/lib/modality-normalize";
+import { resolveDashboardParticipationAccess } from "@/lib/drop-in-check-in-access";
+import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
@@ -72,6 +74,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const { today } = getThisWeekRangeLisbon();
   const { start: weekStart, end: weekEnd, usingNextWeek } = getDashboardLessonWeekRangeLisbon();
   const todayStr = calendarDateLisbon(new Date());
+  const referenceMonth = currentReferenceMonthLisbon(new Date());
 
   let studentSchoolId: string | null = null;
   let studentPrimaryModality: string | null = null;
@@ -82,6 +85,24 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     studentPrimaryModality = normalizeModalityCode((student as { primaryModality?: string } | null)?.primaryModality ?? null);
     hasPlan = !!student?.planId;
   }
+
+  const participation = await resolveDashboardParticipationAccess(
+    supabase,
+    studentId,
+    referenceMonth,
+    planAccess,
+    studentPrimaryModality,
+    hasPlan
+  );
+  const {
+    effectiveHasCheckIn,
+    effectiveHasPlan,
+    hasDropInCredits,
+    effectiveAllowedModalities,
+    planFilterInput,
+  } = participation;
+  const showSubscribeCta = !hasPlan && !hasDropInCredits;
+  const isFreeTierForLessonCards = !effectiveHasCheckIn;
 
   let lessonsQuery = supabase
     .from("Lesson")
@@ -141,23 +162,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   }));
   const lessonsRawExpanded = lessonsRawExpandedAll.filter((l) => l.date >= weekStart && l.date <= weekEnd);
   const lessons = filterDashboardLessonsByPlanModality(lessonsRawExpanded, {
-    hasPlan,
-    allowedModalities,
+    hasPlan: effectiveHasPlan,
+    allowedModalities: effectiveAllowedModalities,
     studentPrimaryModality,
   });
   const extendedLessons = filterDashboardLessonsByPlanModality(lessonsRawExpandedAll, {
-    hasPlan,
-    allowedModalities,
+    hasPlan: effectiveHasPlan,
+    allowedModalities: effectiveAllowedModalities,
     studentPrimaryModality,
   });
-
-  const planFilterInput = {
-    hasPlan,
-    hasCheckIn,
-    allowedModalities,
-    studentPrimaryModality,
-    modalitiesListLength: MODALITIES_LIST.length,
-  };
   const locationById = Object.fromEntries(locationsList.map((loc) => [loc.id, loc.name])) as Record<string, string>;
   const nowForCard = new Date();
   const eligibleLessons = lessons.filter((l) => isLessonEligibleForNextCard(l, nowForCard));
@@ -219,9 +232,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   }
 
   const stripeBanner =
-    !hasPlan && stripeQuery === "success"
+    showSubscribeCta && stripeQuery === "success"
       ? t("dashboardStripeSuccess")
-      : !hasPlan && stripeQuery === "cancel"
+      : showSubscribeCta && stripeQuery === "cancel"
         ? t("dashboardStripeCancel")
         : null;
 
@@ -258,11 +271,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               attendanceByLesson={attendanceByLesson}
               attendanceLookupKey={`${row.lesson.id}_${row.lesson.date}`}
               participationAllowedByPlan={isLessonParticipationAllowedByPlan(row.lesson, planFilterInput)}
-              hasPlan={hasPlan}
-              hasCheckIn={hasCheckIn}
+              hasPlan={effectiveHasPlan}
+              hasCheckIn={effectiveHasCheckIn}
               locale={locale as "pt" | "en"}
               todayStr={todayStr}
-              isFreeTier={!hasPlan}
+              isFreeTier={isFreeTierForLessonCards}
               t={t as (key: string) => string}
               statusLabels={STATUS_LABEL}
             />
@@ -273,7 +286,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
-      {!hasPlan && stripeBanner && (
+      {!showSubscribeCta && stripeBanner && (
         <div
           role="status"
           className="card"
@@ -287,7 +300,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           {stripeBanner}
         </div>
       )}
-      {!hasPlan && (
+      {showSubscribeCta && (
         <ChoosePlanCTA message={t("freeTierCtaMessage")} ctaLabel={t("freeTierCtaButton")} />
       )}
       {showNextLessonSection && hasPrimaryNextCarousel && (
@@ -318,11 +331,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 attendanceByLesson={attendanceByLesson}
                 attendanceLookupKey={`${row.lesson.id}_${row.lesson.date}`}
                 participationAllowedByPlan={isLessonParticipationAllowedByPlan(row.lesson, planFilterInput)}
-                hasPlan={hasPlan}
-                hasCheckIn={hasCheckIn}
+                hasPlan={effectiveHasPlan}
+                hasCheckIn={effectiveHasCheckIn}
                 locale={locale as "pt" | "en"}
                 todayStr={todayStr}
-                isFreeTier={!hasPlan}
+                isFreeTier={isFreeTierForLessonCards}
                 t={t as (key: string) => string}
                 statusLabels={STATUS_LABEL}
               />
@@ -330,11 +343,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           ))}
         </OpenClassesCarouselShell>
       )}
-      {showNextLessonSection && !hasPrimaryNextCarousel && !hasOpenClassesCarousel && !hasPlan && (
-        <NextLessonCard isFreeTier={!hasPlan} t={t as (key: string) => string} />
+      {showSubscribeCta && !hasPrimaryNextCarousel && !hasOpenClassesCarousel && (
+        <NextLessonCard isFreeTier={isFreeTierForLessonCards} t={t as (key: string) => string} />
       )}
 
-      {!hasPlan && hasOpenClassesCarousel && (
+      {showSubscribeCta && hasOpenClassesCarousel && (
         <OpenClassesCarouselShell
           itemCount={additionalOpenLessons.length}
           sectionTitle={openClassesSectionTitle}
@@ -362,11 +375,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 attendanceByLesson={attendanceByLesson}
                 attendanceLookupKey={`${row.lesson.id}_${row.lesson.date}`}
                 participationAllowedByPlan={isLessonParticipationAllowedByPlan(row.lesson, planFilterInput)}
-                hasPlan={hasPlan}
-                hasCheckIn={hasCheckIn}
+                hasPlan={effectiveHasPlan}
+                hasCheckIn={effectiveHasCheckIn}
                 locale={locale as "pt" | "en"}
                 todayStr={todayStr}
-                isFreeTier={!hasPlan}
+                isFreeTier={isFreeTierForLessonCards}
                 t={t as (key: string) => string}
                 statusLabels={STATUS_LABEL}
               />
@@ -375,19 +388,19 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </OpenClassesCarouselShell>
       )}
 
-      {!hasPlan && (
+      {showSubscribeCta && (
         <DashboardUpcomingEventsStrip studentId={studentId} locale={locale as "pt" | "en"} />
       )}
 
-      {!hasPlan && <ExploreSection hasPerformanceTracking={false} t={t as (key: string) => string} />}
+      {showSubscribeCta && <ExploreSection hasPerformanceTracking={false} t={t as (key: string) => string} />}
 
       <Suspense fallback={<BelowFoldSkeleton />}>
         <DashboardBelowFold
           studentId={studentId}
           studentPrimaryModality={studentPrimaryModality}
           allowedModalities={planAccess.allowedModalities}
-          hasPlan={hasPlan}
-          hasCheckIn={hasCheckIn}
+          hasPlan={hasPlan || hasDropInCredits}
+          hasCheckIn={effectiveHasCheckIn}
           hasPerformanceTracking={planAccess.hasPerformanceTracking}
           openClassesSlot={openClassesSlotForPlan}
           upcomingEventsSlot={

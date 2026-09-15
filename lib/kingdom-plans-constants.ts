@@ -10,6 +10,9 @@ export const KINGDOM_PLAN_FAMILIA_MIN_MEMBERS = 2;
 /** Mensalidade por pessoa no grupo familiar (desconto face ao FULL ~100 €). */
 export const KINGDOM_PLAN_FAMILIA_MONTHLY_PER_PERSON = 80;
 
+/** Mensalidade comercial do plano Kingdom Week (5 aulas/mês). */
+export const KINGDOM_WEEK_MONTHLY_PRICE_EUR = 25;
+
 export const PLANS_EXCLUDED_FROM_SELF_SERVICE: readonly string[] = [KINGDOM_PLAN_FAMILIA_ID];
 
 /**

@@ -13,12 +13,14 @@ import { buildPaymentOverdueMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 function pendingPaymentPeriodLabel(p: PendingPayment): string {
   if (p.paymentType === "ENROLLMENT") return "Matrícula";
   if (p.paymentType === "INSURANCE") return p.referenceYear ? `Seguro ${p.referenceYear}` : "Seguro";
+  if (p.paymentType === "EXTRA_SESSION") return p.referenceMonth || "Aula avulsa";
   return p.referenceMonth || "—";
 }
 
-const PAYMENT_TYPE_FILTERS: { value: "all" | "TUITION" | "INSURANCE" | "ENROLLMENT"; label: string }[] = [
+const PAYMENT_TYPE_FILTERS: { value: "all" | "TUITION" | "INSURANCE" | "ENROLLMENT" | "EXTRA_SESSION"; label: string }[] = [
   { value: "all", label: "Todos" },
   { value: "TUITION", label: "Mensalidade" },
+  { value: "EXTRA_SESSION", label: "Aulas avulsas" },
   { value: "INSURANCE", label: "Seguro" },
   { value: "ENROLLMENT", label: "Matrícula" },
 ];

@@ -83,30 +83,6 @@ export default async function CheckInPage({ params, searchParams }: Props) {
   }
 
   const isOpenClass = Boolean((lesson as { isOpenClass?: boolean }).isOpenClass);
-  if (!planAccess.hasCheckIn && !isOpenClass) {
-    return (
-      <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
-        <h1 className="text-mobile-lg" style={{ color: "var(--text-primary)", marginBottom: 12 }}>
-          {t("checkIn")}
-        </h1>
-        <p className="text-mobile-base" style={{ color: "var(--danger)", marginBottom: 24 }}>
-          {locale === "pt"
-            ? "O teu plano não inclui check-in de aulas presenciais."
-            : "Your plan does not include in-person class check-in."}
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
-          {!hasPlan && (
-            <Link href="/escolher-plano" className="btn btn-primary">
-              {locale === "pt" ? "Ver planos e preços" : "View plans and prices"}
-            </Link>
-          )}
-          <Link href="/dashboard" className="btn btn-secondary">
-            {t("goToDashboard")}
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   const occ = resolveOccurrenceYmd(
     {
@@ -132,9 +108,33 @@ export default async function CheckInPage({ params, searchParams }: Props) {
     );
   }
 
+  const referenceMonth = occ.ymd.slice(0, 7);
+  let usingDropInCreditsOnly = false;
+
+  if (!planAccess.hasCheckIn && !isOpenClass) {
+    const dropInMonthly = await getMonthlyCheckInLimit(supabase, studentId, 0, referenceMonth, lessonId);
+    if ((dropInMonthly.remaining ?? 0) <= 0) {
+      return (
+        <div className="container-mobile" style={{ paddingTop: "clamp(24px, 6vw, 32px)", textAlign: "center" }}>
+          <h1 className="text-mobile-lg" style={{ color: "var(--text-primary)", marginBottom: 12 }}>
+            {t("checkIn")}
+          </h1>
+          <p className="text-mobile-base" style={{ color: "var(--danger)", marginBottom: 24 }}>
+            {locale === "pt"
+              ? "Não tens aulas avulsas disponíveis este mês. Fala com a secretaria."
+              : "You have no drop-in classes available this month. Please contact the front desk."}
+          </p>
+          <Link href="/dashboard" className="btn btn-primary">
+            {t("goToDashboard")}
+          </Link>
+        </div>
+      );
+    }
+    usingDropInCreditsOnly = true;
+  }
+
   let monthlyLimit: { used: number; limit: number; remaining: number } | null = null;
-  if (planAccess.maxCheckInsPerMonth !== null) {
-    const referenceMonth = occ.ymd.slice(0, 7);
+  if (planAccess.maxCheckInsPerMonth !== null && !usingDropInCreditsOnly) {
     const monthly = await getMonthlyCheckInLimit(
       supabase,
       studentId,
@@ -172,6 +172,15 @@ export default async function CheckInPage({ params, searchParams }: Props) {
           </div>
         </div>
       );
+    }
+  } else if (usingDropInCreditsOnly) {
+    const dropInMonthly = await getMonthlyCheckInLimit(supabase, studentId, 0, referenceMonth, lessonId);
+    if (dropInMonthly.limit !== null) {
+      monthlyLimit = {
+        used: dropInMonthly.used,
+        limit: dropInMonthly.limit,
+        remaining: dropInMonthly.remaining ?? 0,
+      };
     }
   }
 

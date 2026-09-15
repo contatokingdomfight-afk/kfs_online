@@ -196,6 +196,9 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
         >
           Novo aluno
         </Link>
+        <Link href="/admin/alunos/novo?mode=avulsa" className="btn btn-secondary" style={{ textDecoration: "none" }}>
+          Aula avulsa
+        </Link>
       </div>
       <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
         Convite por email ou cadastro presencial (secretaria). Depois atribui plano e regista pagamentos no financeiro.

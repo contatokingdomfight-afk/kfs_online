@@ -298,11 +298,21 @@ Contexto técnico e decisões recentes (**prioridade para continuidade** e alinh
 - **Finalizar onboarding (set. 2026):** o gate do `middleware.ts` cacheia `onboardingDone` ~10s por aluno; ao clicar «Finalizar configuração», a BD actualizava mas o redirect para `/dashboard` voltava a `/onboarding` (cache stale). Fix: `invalidateStudentGateCache` (`lib/student-gate-cache.ts`, cookie `kfs-student-gate-refresh` + limpeza Edge) e `redirect("/dashboard")` em `completeOnboarding` (mesmo padrão que `/adesao`).
 - **Passo 1 — Comprovativo:** ficha de inscrição (`StudentEnrollmentForm`, migração `20260717150000_student_enrollment_form.sql`): CC/NIF, morada, emergência, saúde, consentimentos RGPD (sempre **sim** no comprovativo), forma de pagamento (**espécie** ou **transferência** para IBAN `LT383250045228499203` em `lib/enrollment-form.ts`; sem débito direto); cobertura PDCR (`lib/sports-insurance-coverage.ts`, `ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER=true` até fechar seguro — campos em branco; prémio APMDA 25 € quando a flag for `false`); identificação do ginásio com nome comercial «Também chamada Kingdom Fight School» e telefone `+351936832300`.
 - **Passo 2 — Condições Gerais:** texto em `lib/membership-agreement-content.ts`; assinatura digital (`StudentMembershipAgreement`, migração `20260717140000_membership_agreement.sql`).
-- **Consulta (só leitura):** `/dashboard/documentos-adesao` — comprovativo + contrato com data de aceite/assinatura, nome e versão; botões **Imprimir / Guardar PDF** (`/dashboard/documentos-adesao/imprimir/comprovativo` e `/contrato`); link no perfil («Documentos legais»). `/adesao` fica só para preencher/assinar; quem já assinou é redireccionado para documentos.
+- **Consulta (só leitura):** `/dashboard/documentos-adesao` — comprovativo, condições gerais e termo em **secções colapsáveis** (`MembershipDocumentSection`); botão **Imprimir** sempre visível à direita; expandir para ler inline. Impressão em documentos separados: `/dashboard/documentos-adesao/imprimir/comprovativo` e `/imprimir/contrato` (sem bordas/cabeçalho browser; chat oculto em `@media print` — `app/globals.css`). `/adesao` fica só para preencher/assinar; quem já assinou é redireccionado para documentos.
+- **Admin/coach — ficha do aluno:** tab **Documentos de adesão** (`/admin|coach/alunos/[id]/contrato`) — mesma vista colapsável (`StaffStudentMembershipDocumentsView`); impressão dedicada em `/comprovativo` e `/contrato/imprimir`. `StudentContractPrintView` imprime **só** as Condições Gerais (comprovativo separado).
 - **Financeiro aluno:** `/dashboard/financeiro` — dados para transferência copiáveis (`SchoolTransferPaymentCard`); subscrição Stripe desactivada («em breve»). Plano Presencial I (55 €): escolha de modalidade no `/escolher-plano` e confirmação no modal (`PlanSchoolPaymentModal`).
 - **Gate middleware:** com `planId` e contrato por assinar → `/adesao` (antes do gate de pagamento). Contas com plano existente: migração marca `legacy` em ambas as tabelas.
 - **Versões:** `InsuranceSettings.membershipAgreementVersion`, `enrollmentFormVersion` (`lib/insurance-settings.ts`).
 
+
+## Aulas avulsas e Kingdom Week (set. 2026)
+
+- **Preços:** aula avulsa **10 €**; plano **Kingdom Week** **25 €/mês** (5 aulas); após esgotar o pacote mensal, **4 aulas por 25 €** (−40% vs 4×10 €). Constantes e cálculo em `lib/drop-in-sessions-pricing.ts` (testes unitários).
+- **Migração:** `20260915120000_kingdom_week_price_25.sql` — actualiza preço do plano Kingdom Week na BD.
+- **Cadastro mínimo (admin/coach):** tab «Aula avulsa» em `/admin/alunos/novo` (`?mode=avulsa`) e atalho coach — `DropInQuickRegisterForm`, `app/admin/alunos/drop-in-actions.ts` (nome, email, NIF, telemóvel, modalidade).
+- **Créditos:** `StudentExtraSessionsSection` + `StudentDropInSessionsPanel`; concessão em `lib/extra-sessions-grant.ts`; contexto mensal em `lib/extra-sessions-context.ts`.
+- **Check-in:** `lib/drop-in-check-in-access.ts`, `lib/perform-check-in.ts`, elegibilidade coach em `lib/coach-lesson-eligible-students.ts`; RSVP/check-in no dashboard avulso.
+- **Financeiro:** receita `EXTRA_SESSION` em `lib/admin-revenue-breakdown.ts`; agrupamento/listagem e filtro «Aulas avulsas» no admin.
 
 
 ## Pagamento antecipado (mensalidades)

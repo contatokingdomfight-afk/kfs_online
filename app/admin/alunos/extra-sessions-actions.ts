@@ -5,25 +5,28 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseFinancePaymentMethodRequired } from "@/lib/finance-payment-method";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
+import { executeExtraSessionsGrant } from "@/lib/extra-sessions-grant";
+import { assertStaffCanManageStudentDropIn } from "@/lib/staff-drop-in-access";
 
 export type ExtraSessionsActionResult = { error?: string; success?: boolean };
 
 /**
- * Regista o pagamento de aulas extra (além do limite mensal do plano, ex.: Kingdom Week)
- * e concede-as de imediato ao aluno no mês de referência (StudentExtraSessions).
+ * Regista pagamento de aulas avulsas/extra e concede-as no mês (StudentExtraSessions).
+ * Admin ou coach (escola do aluno). Valor validado automaticamente (€10/aula ou pacote Week).
  */
 export async function grantExtraSessions(
   _prev: ExtraSessionsActionResult | null,
   formData: FormData
 ): Promise<ExtraSessionsActionResult> {
   const dbUser = await getCurrentDbUser();
-  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  if (!dbUser) return { error: "Não autorizado." };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const quantityStr = (formData.get("quantity") as string)?.trim();
   const amountStr = (formData.get("amount") as string)?.trim();
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim() || currentReferenceMonthLisbon(new Date());
   const note = (formData.get("note") as string)?.trim() || null;
+  const revalidateCoachPath = (formData.get("revalidateCoachPath") as string)?.trim() || null;
 
   if (!studentId) return { error: "Aluno inválido." };
   const quantity = parseInt(quantityStr ?? "", 10);
@@ -35,30 +38,24 @@ export async function grantExtraSessions(
   if ("error" in methodResult) return { error: methodResult.error };
 
   const supabase = createAdminClient();
+  const access = await assertStaffCanManageStudentDropIn(supabase, dbUser, studentId);
+  if (!access.ok) return { error: access.error };
 
-  const paymentId = crypto.randomUUID();
-  const { error: paymentError } = await supabase.from("Payment").insert({
-    id: paymentId,
+  const result = await executeExtraSessionsGrant(supabase, {
     studentId,
-    amount: amount.toFixed(2),
-    status: "PAID",
-    paymentType: "EXTRA_SESSION",
+    quantity,
+    amount,
     referenceMonth,
     paymentMethod: methodResult.method,
-  });
-  if (paymentError) return { error: paymentError.message };
-
-  const { error: grantError } = await supabase.from("StudentExtraSessions").insert({
-    id: crypto.randomUUID(),
-    studentId,
-    referenceMonth,
-    quantity,
-    paymentId,
     note,
   });
-  if (grantError) return { error: grantError.message };
+  if (result.error) return result;
 
   revalidatePath(`/admin/alunos/${studentId}`);
+  revalidatePath(`/admin/alunos/${studentId}/plano-seguro`);
+  revalidatePath(`/coach/alunos/${studentId}`);
+  if (revalidateCoachPath) revalidatePath(revalidateCoachPath);
   revalidatePath("/admin/financeiro");
+  revalidatePath("/coach/financeiro");
   return { success: true };
 }

@@ -4,21 +4,30 @@ export default function MembershipPrintLayout({ children }: { children: React.Re
       <style>{`
         @media print {
           @page {
-            margin: 8mm;
+            margin: 0;
           }
           .no-print,
           nav,
           header,
-          footer {
+          footer,
+          .admin-chat-fab-wrap {
             display: none !important;
           }
           body {
             background: #fff !important;
             color: #111 !important;
+            padding: 12mm 10mm !important;
           }
           .card {
             box-shadow: none !important;
-            border: 1px solid #ddd !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+          }
+          .insurance-coverage-block {
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
           }
           .print-doc-container {
             max-width: none !important;

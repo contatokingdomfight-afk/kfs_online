@@ -46,9 +46,6 @@ export async function performCheckIn(
   if (!lessonData) return { error: "Aula não encontrada." };
 
   const isOpenClass = Boolean((lessonData as { isOpenClass?: boolean }).isOpenClass);
-  if (!planAccess.hasCheckIn && !isOpenClass) {
-    return { error: "O teu plano não inclui check-in de aulas presenciais." };
-  }
 
   if ((lessonData as { athletesOnly?: boolean }).athletesOnly) {
     const { data: studentRow } = await supabase
@@ -71,6 +68,32 @@ export async function performCheckIn(
   if (!occ.ok) return { error: occ.error };
 
   const occurrenceYmd = occ.ymd;
+  const referenceMonth = occurrenceYmd.slice(0, 7);
+  let usingDropInCreditsOnly = false;
+
+  if (!planAccess.hasCheckIn && !isOpenClass) {
+    const dropInMonthly = await getMonthlyCheckInLimit(supabase, studentId, 0, referenceMonth, lessonId);
+    if ((dropInMonthly.remaining ?? 0) <= 0) {
+      return { error: "Não tens aulas avulsas disponíveis este mês. Fala com a secretaria." };
+    }
+    usingDropInCreditsOnly = true;
+
+    const { data: studentRow } = await supabase
+      .from("Student")
+      .select("primaryModality")
+      .eq("id", studentId)
+      .maybeSingle();
+    const dropInModality = normalizeModalityCode(
+      (studentRow as { primaryModality?: string | null } | null)?.primaryModality
+    );
+    if (!dropInModality) {
+      return { error: "Modalidade não definida na tua ficha. Contacta a receção." };
+    }
+    if (lessonData.modality !== dropInModality) {
+      const modLabel = MODALITY_LABELS[dropInModality] ?? dropInModality;
+      return { error: "Só podes fazer check-in na tua modalidade (" + modLabel + ") ou em aulas livres." };
+    }
+  }
 
   const windowFields = {
     date: occurrenceYmd,
@@ -114,6 +137,7 @@ export async function performCheckIn(
   const studentPrimaryModality = normalizeModalityCode(planAccess.primaryModality);
   const isSingleModalityPlan = planAccess.allowedModalities.length === 1;
   if (
+    !usingDropInCreditsOnly &&
     !isOpenClass &&
     isSingleModalityPlan &&
     studentPrimaryModality &&
@@ -136,8 +160,7 @@ export async function performCheckIn(
     }
   }
 
-  if (planAccess.maxCheckInsPerMonth !== null) {
-    const referenceMonth = occurrenceYmd.slice(0, 7);
+  if (planAccess.maxCheckInsPerMonth !== null && !usingDropInCreditsOnly) {
     const monthly = await getMonthlyCheckInLimit(
       supabase,
       studentId,
@@ -149,6 +172,11 @@ export async function performCheckIn(
       return {
         error: `Já usaste as ${monthly.limit} aulas do teu plano este mês. Fala com a secretaria para adicionares mais aulas.`,
       };
+    }
+  } else if (usingDropInCreditsOnly) {
+    const dropInMonthly = await getMonthlyCheckInLimit(supabase, studentId, 0, referenceMonth, lessonId);
+    if ((dropInMonthly.remaining ?? 0) <= 0) {
+      return { error: "Não tens aulas avulsas disponíveis este mês. Fala com a secretaria." };
     }
   }
 

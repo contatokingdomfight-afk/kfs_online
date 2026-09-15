@@ -117,6 +117,15 @@ export default async function CoachAlunosPage({ searchParams }: { searchParams: 
         <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
           Alunos
         </h1>
+        <div style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <Link
+            href="/coach/alunos/novo"
+            className="btn btn-secondary"
+            style={{ fontSize: "clamp(14px, 3.5vw, 16px)", textDecoration: "none", padding: "8px 12px" }}
+          >
+            Aula avulsa
+          </Link>
+        </div>
       </div>
 
       <AlunosFiltersPanel

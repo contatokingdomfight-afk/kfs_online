@@ -20,6 +20,7 @@ export function InsuranceCoverageBlock({ locale = "pt", compact = false, annualA
   if (ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER) {
     return (
       <div
+        className="insurance-coverage-block"
         style={{
           marginTop: compact ? 8 : 12,
           padding: compact ? "10px 12px" : "12px 14px",
@@ -70,6 +71,7 @@ export function InsuranceCoverageBlock({ locale = "pt", compact = false, annualA
 
   return (
     <div
+      className="insurance-coverage-block"
       style={{
         marginTop: compact ? 8 : 12,
         padding: compact ? "10px 12px" : "12px 14px",

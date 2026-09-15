@@ -28,6 +28,7 @@ export type PaymentListRow = {
 export function paymentTypeLabelPt(paymentType: string): string {
   if (paymentType === "INSURANCE") return "Seguro";
   if (paymentType === "ENROLLMENT") return "Matrícula";
+  if (paymentType === "EXTRA_SESSION") return "Aula avulsa";
   return "Mensalidade";
 }
 

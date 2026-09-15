@@ -2,8 +2,6 @@ import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
-import { loadEnrollmentFormPrefill, type EnrollmentFormRow } from "@/lib/enrollment-form";
-import { EnrollmentFormSummary } from "@/app/adesao/EnrollmentFormSummary";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
@@ -20,9 +18,9 @@ type Props = {
 };
 
 /**
- * Vista de impressão do contrato de adesão (Condições Gerais + comprovativo), partilhada entre
- * a ficha do aluno em /admin e em /coach — mesmo conteúdo, só muda o `backHref` e a autorização
- * de acesso (feita pela página que usa este componente, não aqui).
+ * Vista de impressão das Condições Gerais de Adesão (documento separado do comprovativo).
+ * Partilhada entre a ficha do aluno em /admin e em /coach — o comprovativo tem a sua própria rota
+ * `/comprovativo` via StudentEnrollmentPrintView.
  */
 export async function StudentContractPrintView({ studentId, backHref }: Props) {
   const result = getAdminClientOrNull();
@@ -30,13 +28,13 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
   const supabase = result.client;
 
   const [{ data: student }, { data: agreement }, { data: enrollmentForm }] = await Promise.all([
-    supabase.from("Student").select("userId").eq("id", studentId).single(),
+    supabase.from("Student").select("id").eq("id", studentId).single(),
     supabase
       .from("StudentMembershipAgreement")
       .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl, agreementVersion")
       .eq("studentId", studentId)
       .maybeSingle(),
-    supabase.from("StudentEnrollmentForm").select("*").eq("studentId", studentId).maybeSingle(),
+    supabase.from("StudentEnrollmentForm").select("formCompleted").eq("studentId", studentId).maybeSingle(),
   ]);
 
   if (!student) return null;
@@ -45,8 +43,8 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
     return (
       <div className="card" style={{ padding: "clamp(20px, 5vw, 24px)" }}>
         <p style={{ margin: "0 0 16px", color: "var(--text-secondary)" }}>
-          O aluno ainda não preencheu e assinou o contrato de adesão na plataforma — não há nada para
-          imprimir ainda.
+          O aluno ainda não preencheu o comprovativo e assinou as Condições Gerais na plataforma — não há nada
+          para imprimir ainda.
         </p>
         <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>
           ← Voltar
@@ -57,49 +55,16 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
 
   const schoolSignatures = await getActiveSchoolSignatures();
 
-  const prefill = await loadEnrollmentFormPrefill(supabase, studentId, student.userId);
-  if (!prefill) {
-    return (
-      <div className="card" style={{ padding: "clamp(20px, 5vw, 24px)" }}>
-        <p style={{ margin: "0 0 16px", color: "var(--text-secondary)" }}>
-          Falta o aluno ter um plano atribuído para gerar o contrato completo.
-        </p>
-        <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>
-          ← Voltar
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
       <div className="no-print" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
         <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>
           ← Voltar
         </Link>
-        <PrintDocumentButton />
+        <PrintDocumentButton label="Imprimir Condições Gerais" />
       </div>
 
-      <EnrollmentFormSummary
-        form={enrollmentForm as EnrollmentFormRow}
-        fullName={prefill.fullName}
-        email={prefill.email}
-        dateOfBirth={prefill.dateOfBirth}
-        phone={prefill.phone}
-        planName={prefill.planName}
-        modalityLabel={prefill.modalityLabel}
-        monthlyAmount={prefill.monthlyAmount}
-        enrollmentAmount={prefill.enrollmentAmount}
-        insuranceAmount={prefill.insuranceAmount}
-        showEnrollment={prefill.showEnrollment}
-        showInsurance={prefill.showInsurance}
-        agreementSigned={agreement?.agreementSigned}
-        signatureName={agreement?.signatureName}
-        signatureImageUrl={agreement?.signatureImageUrl}
-        schoolSignatures={schoolSignatures}
-      />
-
-      <section className="card" style={{ marginTop: 16, padding: "clamp(16px, 4vw, 24px)" }}>
+      <section className="card" style={{ padding: "clamp(16px, 4vw, 24px)" }}>
         <h1 style={{ margin: "0 0 16px", fontSize: 22, fontWeight: 700 }}>Condições Gerais de Adesão</h1>
         <dl style={{ margin: "0 0 20px", fontSize: 14, color: "var(--text-secondary)", display: "grid", gap: 6 }}>
           {agreement.signatureName ? (

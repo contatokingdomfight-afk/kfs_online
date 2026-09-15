@@ -120,6 +120,22 @@ export function isStudentEligibleForCoachLesson(
   );
 }
 
+/** Aluno só com créditos avulsos (sem plano com check-in incluído). */
+export function isStudentEligibleForDropInLesson(
+  student: StudentRow,
+  lesson: Pick<CoachLessonContext, "modality" | "isOpenClass" | "athletesOnly">
+): boolean {
+  if (student.status !== "ATIVO") return false;
+  if (lesson.athletesOnly && !student.competitionAthlete) return false;
+  if (lesson.isOpenClass) return true;
+  if (!student.primaryModality) return false;
+  return student.primaryModality === lesson.modality;
+}
+
+function isDropInOnlyStudent(student: StudentRow, plan: PlanRow | undefined): boolean {
+  return !buildPlanAccessInput(student, plan).hasCheckIn;
+}
+
 /**
  * Verifica se o aluno pode ser marcado presente via "check-in avulso" — ignora a
  * modalidade/âmbito do plano (é exatamente para quando não bate), mas continua a exigir
@@ -215,18 +231,6 @@ export async function loadCoachLessonRoster(
       .map((a) => a.studentId as string)
   );
 
-  const eligibleIds = students
-    .filter(
-      (s) =>
-        isStudentEligibleForCoachLesson(s, planForStudent(s), { modality, isOpenClass, athletesOnly }) ||
-        crossModalityIds.has(s.id)
-    )
-    .map((s) => s.id);
-
-  if (eligibleIds.length === 0) {
-    return { students: [] };
-  }
-
   const attendanceByStudent = new Map(
     (attList ?? []).map((a) => [
       a.studentId as string,
@@ -242,15 +246,81 @@ export async function loadCoachLessonRoster(
     ])
   );
 
+  const referenceMonth = currentReferenceMonthLisbon(new Date());
+  const dropInOnlyStudents = students.filter((s) => isDropInOnlyStudent(s, planForStudent(s)));
+  const dropInRemainingByStudent = new Map<string, number>();
+  const dropInLimitByStudent = new Map<string, { used: number; limit: number; remaining: number }>();
+
+  if (dropInOnlyStudents.length > 0) {
+    const dropInIds = dropInOnlyStudents.map((s) => s.id);
+    const [ry, rm] = referenceMonth.split("-").map(Number);
+    const lastDay = new Date(ry, rm, 0).getDate();
+    const monthStart = `${referenceMonth}-01`;
+    const monthEnd = `${referenceMonth}-${String(lastDay).padStart(2, "0")}`;
+
+    const [{ data: dropInAtt }, { data: dropInExtra }] = await Promise.all([
+      supabase
+        .from("Attendance")
+        .select("studentId")
+        .in("studentId", dropInIds)
+        .eq("status", "CONFIRMED")
+        .gte("occurrenceDate", monthStart)
+        .lte("occurrenceDate", monthEnd),
+      supabase
+        .from("StudentExtraSessions")
+        .select("studentId, quantity")
+        .in("studentId", dropInIds)
+        .eq("referenceMonth", referenceMonth),
+    ]);
+
+    const usedDropIn = new Map<string, number>();
+    for (const row of dropInAtt ?? []) {
+      const sid = (row as { studentId: string }).studentId;
+      usedDropIn.set(sid, (usedDropIn.get(sid) ?? 0) + 1);
+    }
+    const extraDropIn = new Map<string, number>();
+    for (const row of dropInExtra ?? []) {
+      const r = row as { studentId: string; quantity: number };
+      extraDropIn.set(r.studentId, (extraDropIn.get(r.studentId) ?? 0) + (r.quantity ?? 0));
+    }
+
+    for (const s of dropInOnlyStudents) {
+      const limit = extraDropIn.get(s.id) ?? 0;
+      const used = usedDropIn.get(s.id) ?? 0;
+      const remaining = Math.max(0, limit - used);
+      dropInRemainingByStudent.set(s.id, remaining);
+      if (limit > 0) {
+        dropInLimitByStudent.set(s.id, { used, limit, remaining });
+      }
+    }
+  }
+
+  const lessonCtx = { modality, isOpenClass, athletesOnly };
+  const eligibleIds = students
+    .filter((s) => {
+      if (isStudentEligibleForCoachLesson(s, planForStudent(s), lessonCtx)) return true;
+      if (crossModalityIds.has(s.id)) return true;
+      if (attendanceByStudent.has(s.id) && isStudentEligibleForDropInLesson(s, lessonCtx)) return true;
+      return (
+        (dropInRemainingByStudent.get(s.id) ?? 0) > 0 && isStudentEligibleForDropInLesson(s, lessonCtx)
+      );
+    })
+    .map((s) => s.id);
+
+  if (eligibleIds.length === 0) {
+    return { students: [] };
+  }
+
   const eligibleStudents = students.filter((s) => eligibleIds.includes(s.id));
   const userIds = [...new Set(eligibleStudents.map((s) => s.userId))];
 
-  const referenceMonth = currentReferenceMonthLisbon(new Date());
   const monthlyCapStudentIds = eligibleStudents
     .filter((s) => (planForStudent(s)?.max_check_ins_per_month ?? null) !== null)
     .map((s) => s.id);
 
-  const monthlyLimitByStudent = new Map<string, { used: number; limit: number; remaining: number }>();
+  const monthlyLimitByStudent = new Map<string, { used: number; limit: number; remaining: number }>(
+    dropInLimitByStudent
+  );
   if (monthlyCapStudentIds.length > 0) {
     const [ry, rm] = referenceMonth.split("-").map(Number);
     const lastDay = new Date(ry, rm, 0).getDate();
@@ -388,7 +458,7 @@ export async function loadCoachLessonRoster(
       studentId: s.id,
       name: u?.name ?? null,
       email: u?.email ?? "",
-      planLabel: plan?.name ?? null,
+      planLabel: plan?.name ?? (isDropInOnlyStudent(s, plan) ? "Aula avulsa" : null),
       attendanceId: att?.id ?? null,
       status: att?.status ?? null,
       checkedInAt: att?.checkedInAt ?? null,

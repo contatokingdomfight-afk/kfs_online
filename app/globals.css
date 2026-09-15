@@ -1639,12 +1639,18 @@ html[data-kfs-native="capacitor"] body {
 }
 
 /* Impressão (ex.: contrato de adesão): esconde a chrome autenticada (sidebar, header, drawer,
-   barra inferior) em qualquer ecrã — não só nas páginas /imprimir dedicadas. */
+   barra inferior, chat) em qualquer ecrã — não só nas páginas /imprimir dedicadas. */
 @media print {
+  /* Margem 0 suprime na maioria dos browsers o cabeçalho/rodapé automático (data, URL, título). */
+  @page {
+    margin: 0;
+  }
+
   .no-print,
   .app-shell-header,
   .app-shell-drawer,
   .app-shell-overlay,
+  .admin-chat-fab-wrap,
   nav[aria-label="Menu inferior"] {
     display: none !important;
   }
@@ -1666,10 +1672,19 @@ html[data-kfs-native="capacitor"] body {
   body {
     background: #fff !important;
     color: #111 !important;
+    padding: 12mm 10mm !important;
   }
 
   .card {
     box-shadow: none !important;
-    border: 1px solid #ddd !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+
+  .insurance-coverage-block {
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
   }
 }

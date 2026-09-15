@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 import {
@@ -11,8 +11,9 @@ import {
   type CreateStudentResult,
 } from "../actions";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
+import { DropInQuickRegisterForm } from "./DropInQuickRegisterForm";
 
-type Mode = "invite" | "presencial";
+type Mode = "invite" | "presencial" | "avulsa";
 
 function generateClientPassword(): string {
   const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -27,7 +28,11 @@ function generateClientPassword(): string {
 
 export function NovoAlunoForm() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("invite");
+  const searchParams = useSearchParams();
+  const initialModeParam = searchParams.get("mode");
+  const [mode, setMode] = useState<Mode>(
+    initialModeParam === "avulsa" ? "avulsa" : initialModeParam === "presencial" ? "presencial" : "invite"
+  );
   const [schools, setSchools] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
 
@@ -132,9 +137,21 @@ export function NovoAlunoForm() {
         >
           Cadastro presencial
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "avulsa"}
+          className={mode === "avulsa" ? "btn btn-primary" : "btn btn-secondary"}
+          style={{ fontSize: 14 }}
+          onClick={() => setMode("avulsa")}
+        >
+          Aula avulsa
+        </button>
       </div>
 
-      {mode === "invite" ? (
+      {mode === "avulsa" ? (
+        <DropInQuickRegisterForm />
+      ) : mode === "invite" ? (
         <form action={inviteAction} className="card" style={cardStyle}>
           <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>
             Envia um email ao aluno para definir a senha. Podes ignorar o convite e gerir só o financeiro no admin.

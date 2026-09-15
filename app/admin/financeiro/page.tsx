@@ -37,6 +37,8 @@ function formatRevenueRowParts(
       return { categoryTag: t("adminFinanceRevenueTagPlan"), title: row.label };
     case "PLAN_NONE":
       return { categoryTag: t("adminFinanceRevenueTagPlanNone"), title: "" };
+    case "DROP_IN":
+      return { categoryTag: "Aulas avulsas", title: row.label };
     case "COURSE":
       return { categoryTag: t("adminFinanceRevenueTagCourse"), title: row.label };
     case "EVENT":

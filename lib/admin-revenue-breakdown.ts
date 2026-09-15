@@ -2,7 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type RevenueRowCategory = "PLAN" | "PLAN_NONE" | "COURSE" | "EVENT" | "MANUAL" | "MERCHANDISE";
+export type RevenueRowCategory = "PLAN" | "PLAN_NONE" | "DROP_IN" | "COURSE" | "EVENT" | "MANUAL" | "MERCHANDISE";
 
 export type RevenueBreakdownRow = {
   key: string;
@@ -62,7 +62,7 @@ export async function getRevenueBreakdown(
 
   const { data: payments, error: payErr } = await supabase
     .from("Payment")
-    .select("id, studentId, amount, status")
+    .select("id, studentId, amount, status, paymentType")
     .eq("status", "PAID")
     .eq("referenceMonth", referenceMonth);
 
@@ -91,9 +91,14 @@ export async function getRevenueBreakdown(
 
   const byPlan = new Map<string, number>();
   let noPlan = 0;
+  let dropInTotal = 0;
   for (const p of payments ?? []) {
-    const row = p as { studentId: string; amount: string | number };
+    const row = p as { studentId: string; amount: string | number; paymentType?: string | null };
     const amount = Number(row.amount);
+    if (row.paymentType === "EXTRA_SESSION") {
+      dropInTotal += amount;
+      continue;
+    }
     const planId = planIdByStudent.get(row.studentId) ?? null;
     if (!planId) {
       noPlan += amount;
@@ -208,6 +213,9 @@ export async function getRevenueBreakdown(
   }
   if (noPlan > 0) {
     rows.push({ key: "plan:none", label: "", amount: noPlan, category: "PLAN_NONE" });
+  }
+  if (dropInTotal > 0) {
+    rows.push({ key: "drop-in:total", label: "Aulas avulsas", amount: dropInTotal, category: "DROP_IN" });
   }
   for (const courseId of [...byCourse.keys()].sort(
     (a, b) => (courseNameById.get(a) ?? a).localeCompare(courseNameById.get(b) ?? b, "pt")

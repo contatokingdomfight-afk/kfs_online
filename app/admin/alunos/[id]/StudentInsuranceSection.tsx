@@ -122,7 +122,7 @@ export function StudentInsuranceSection({
               href={`/admin/alunos/${studentId}/comprovativo`}
               style={{ display: "inline-block", fontSize: 13, color: "var(--primary)" }}
             >
-              Ver / imprimir só o comprovativo →
+              Ver / imprimir comprovativo →
             </Link>
           </p>
         ) : null}
@@ -162,7 +162,7 @@ export function StudentInsuranceSection({
               href={`/admin/alunos/${studentId}/contrato`}
               style={{ display: "inline-block", marginTop: 6, fontSize: 13, color: "var(--primary)" }}
             >
-              Ver / imprimir contrato completo →
+              Ver documentos de adesão →
             </Link>
           ) : null}
         </p>

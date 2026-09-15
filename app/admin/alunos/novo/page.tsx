@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { NovoAlunoForm } from "./NovoAlunoForm";
 
 export default function AdminAlunosNovoPage() {
@@ -22,10 +23,18 @@ export default function AdminAlunosNovoPage() {
       </h1>
       <p style={{ margin: "0 0 clamp(20px, 5vw, 24px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
         <strong>Enviar convite</strong> — o aluno recebe email para definir a senha.{" "}
-        <strong>Cadastro presencial</strong> — a secretaria cria a conta com senha inicial (adultos com email da ficha;
-        menores com email interno @alunos.kingdomfight.pt). Depois atribui o plano e regista pagamentos no financeiro.
+        <strong>Cadastro presencial</strong> — a secretaria cria a conta com senha inicial.{" "}
+        <strong>Aula avulsa</strong> — cadastro mínimo (nome, email, NIF, telemóvel) + pagamento de aulas (€10/aula) sem plano mensal.
       </p>
-      <NovoAlunoForm />
+      <NovoAlunoFormWrapper />
     </div>
+  );
+}
+
+function NovoAlunoFormWrapper() {
+  return (
+    <Suspense fallback={<p style={{ color: "var(--text-secondary)" }}>A carregar formulário…</p>}>
+      <NovoAlunoForm />
+    </Suspense>
   );
 }

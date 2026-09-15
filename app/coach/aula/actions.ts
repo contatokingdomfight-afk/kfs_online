@@ -9,12 +9,13 @@ import { createPresenceConfirmedNotification, notifyStudentOfNewCoachEvaluation 
 import { grantBadgesIfEligible } from "@/lib/gamification";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 import {
-  assertStudentEligibleForCoachLesson,
   assertStudentEligibleForCrossModalityCheckIn,
 } from "@/lib/coach-lesson-eligible-students";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { getPlanAccess } from "@/lib/plan-access";
-import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
+import {
+  assertStudentEligibleForCoachLessonCheckIn,
+  assertStudentMonthlyCheckInAllowed,
+} from "@/lib/drop-in-check-in-access";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function assertMonthlyCheckInLimitNotExceeded(
@@ -23,20 +24,7 @@ async function assertMonthlyCheckInLimitNotExceeded(
   occurrenceYmd: string,
   lessonId: string
 ): Promise<{ error?: string }> {
-  const planAccess = await getPlanAccess(supabase, studentId);
-  if (planAccess.maxCheckInsPerMonth === null) return {};
-  const referenceMonth = occurrenceYmd.slice(0, 7);
-  const monthly = await getMonthlyCheckInLimit(
-    supabase,
-    studentId,
-    planAccess.maxCheckInsPerMonth,
-    referenceMonth,
-    lessonId
-  );
-  if ((monthly.remaining ?? 0) <= 0) {
-    return { error: `Este aluno já usou as ${monthly.limit} aulas do plano este mês.` };
-  }
-  return {};
+  return assertStudentMonthlyCheckInAllowed(supabase, studentId, occurrenceYmd, lessonId);
 }
 
 async function onAttendanceConfirmed(supabase: SupabaseClient, attendanceId: string): Promise<void> {
@@ -208,8 +196,9 @@ export async function coachCheckInStudent(
         schoolId: lesson.schoolId,
         athletesOnly: Boolean((lesson as { athletesOnly?: boolean }).athletesOnly),
       })
-    : await assertStudentEligibleForCoachLesson(adminSupabase, studentId, {
+    : await assertStudentEligibleForCoachLessonCheckIn(adminSupabase, studentId, {
         lessonId,
+        occurrenceYmd: occ,
         schoolId: lesson.schoolId,
         modality: lesson.modality ?? "",
         isOpenClass: Boolean((lesson as { isOpenClass?: boolean }).isOpenClass),

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getPlanAccess } from "@/lib/plan-access";
 import { performCheckIn } from "@/lib/perform-check-in";
 import { weekdayFromYmd } from "@/lib/lesson-occurrences";
+import { assertStudentCanSetLessonIntention } from "@/lib/drop-in-check-in-access";
 
 /** Ciclo de Presença 2.0: Intenção (RSVP) – Vou = PENDING, Não vou = ABSENT. */
 export async function setAttendanceIntention(
@@ -26,14 +27,20 @@ export async function setAttendanceIntention(
 
   const { data: lessonRow } = await supabase
     .from("Lesson")
-    .select("isOpenClass, date, isOneOff, weekday")
+    .select("isOpenClass, date, isOneOff, weekday, modality")
     .eq("id", lessonId)
     .single();
   if (!lessonRow) return { error: "Aula não encontrada." };
 
   const isOpenClass = Boolean((lessonRow as { isOpenClass?: boolean }).isOpenClass);
   if (!planAccess.hasCheckIn && !isOpenClass) {
-    return { error: "O teu plano não inclui check-in de aulas presenciais." };
+    const gate = await assertStudentCanSetLessonIntention(supabase, studentId, {
+      isOpenClass,
+      modality: (lessonRow as { modality?: string }).modality ?? "",
+      occurrenceYmd: occ,
+      lessonId,
+    });
+    if (gate.error) return gate;
   }
 
   const rawDate = (lessonRow as { date?: string | null }).date;

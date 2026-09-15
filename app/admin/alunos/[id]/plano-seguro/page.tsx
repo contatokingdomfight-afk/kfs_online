@@ -4,12 +4,10 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { AdminAlunoQuickActions } from "../EditarAlunoForm";
 import { StudentInsuranceSection } from "../StudentInsuranceSection";
-import { StudentExtraSessionsSection } from "../StudentExtraSessionsSection";
-import { getPlanAccess } from "@/lib/plan-access";
-import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
+import { StudentDropInSessionsPanel } from "@/components/students/StudentDropInSessionsPanel";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { formatInTimeZone } from "date-fns-tz";
-import { LISBON_TZ, currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
+import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -67,37 +65,6 @@ export default async function AdminAlunoPlanoSeguroPage({ params }: Props) {
     : null;
 
   const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
-
-  const planAccess = await getPlanAccess(supabase, studentId);
-  let extraSessionsData: {
-    planName: string | null;
-    currentReferenceMonth: string;
-    used: number;
-    limit: number;
-    remaining: number;
-    extraGrants: Array<{ id: string; referenceMonth: string; quantity: number; note: string | null }>;
-  } | null = null;
-  if (planAccess.maxCheckInsPerMonth !== null) {
-    const currentReferenceMonth = currentReferenceMonthLisbon(new Date());
-    const [{ data: subscribedPlan }, monthly, { data: extraRows }] = await Promise.all([
-      supabase.from("Plan").select("name").eq("id", planAccess.currentPlanId ?? "").maybeSingle(),
-      getMonthlyCheckInLimit(supabase, studentId, planAccess.maxCheckInsPerMonth, currentReferenceMonth),
-      supabase
-        .from("StudentExtraSessions")
-        .select("id, referenceMonth, quantity, note")
-        .eq("studentId", studentId)
-        .eq("referenceMonth", currentReferenceMonth)
-        .order("createdAt", { ascending: false }),
-    ]);
-    extraSessionsData = {
-      planName: (subscribedPlan as { name?: string } | null)?.name ?? null,
-      currentReferenceMonth,
-      used: monthly.used,
-      limit: monthly.limit ?? planAccess.maxCheckInsPerMonth,
-      remaining: monthly.remaining ?? 0,
-      extraGrants: (extraRows ?? []) as Array<{ id: string; referenceMonth: string; quantity: number; note: string | null }>,
-    };
-  }
 
   return (
     <>
@@ -163,18 +130,7 @@ export default async function AdminAlunoPlanoSeguroPage({ params }: Props) {
         todayYmd={todayYmd}
       />
 
-      {extraSessionsData && (
-        <StudentExtraSessionsSection
-          studentId={studentId}
-          planName={extraSessionsData.planName}
-          maxCheckInsPerMonth={planAccess.maxCheckInsPerMonth}
-          currentReferenceMonth={extraSessionsData.currentReferenceMonth}
-          used={extraSessionsData.used}
-          limit={extraSessionsData.limit}
-          remaining={extraSessionsData.remaining}
-          extraGrants={extraSessionsData.extraGrants}
-        />
-      )}
+      <StudentDropInSessionsPanel studentId={studentId} />
     </>
   );
 }

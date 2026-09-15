@@ -39,7 +39,7 @@ export default async function ImprimirContratoPage() {
         <Link href="/dashboard/documentos-adesao" className="btn btn-secondary" style={{ textDecoration: "none" }}>
           ← Voltar
         </Link>
-        <PrintDocumentButton />
+        <PrintDocumentButton label="Imprimir Condições Gerais" />
       </div>
       <section className="card" style={{ padding: "clamp(16px, 4vw, 24px)" }}>
         <h1 style={{ margin: "0 0 16px", fontSize: 22, fontWeight: 700 }}>Condições Gerais de Adesão</h1>

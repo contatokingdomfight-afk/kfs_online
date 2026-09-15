@@ -1,10 +1,11 @@
-import Link from "next/link";
 import { EnrollmentFormSummary } from "@/app/adesao/EnrollmentFormSummary";
 import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
 import { WAIVER_BODY_PT } from "@/lib/waiver-content";
 import type { EnrollmentFormRow } from "@/lib/enrollment-form";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
+import { MembershipDocumentSection } from "@/components/membership/MembershipDocumentSection";
 import type { SchoolSignature } from "@/lib/school-signatures";
+import Link from "next/link";
 
 type AgreementInfo = {
   agreementSigned: boolean;
@@ -51,6 +52,11 @@ type Props = {
   prefill: Prefill | null;
   hasPlan: boolean;
   schoolSignatures: SchoolSignature[];
+  /** Rotas de impressão dedicadas — por omissão, dashboard do aluno. */
+  printComprovativoHref?: string;
+  printContratoHref?: string;
+  /** Banner «continuar adesão» — só no dashboard do aluno. */
+  showIncompleteBanner?: boolean;
 };
 
 function fmtDateTime(iso: string | null, locale: "pt" | "en"): string | null {
@@ -61,29 +67,18 @@ function fmtDateTime(iso: string | null, locale: "pt" | "en"): string | null {
   });
 }
 
-function StatusBadge({
-  ok,
-  okLabel,
-  pendingLabel,
-}: {
-  ok: boolean;
-  okLabel: string;
-  pendingLabel: string;
-}) {
+function MetaList({ items }: { items: { label: string; value: string | null | undefined }[] }) {
+  const visible = items.filter((i) => i.value);
+  if (visible.length === 0) return null;
   return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "4px 10px",
-        borderRadius: 999,
-        fontSize: 12,
-        fontWeight: 600,
-        background: ok ? "color-mix(in srgb, #16a34a 15%, transparent)" : "color-mix(in srgb, var(--danger) 12%, transparent)",
-        color: ok ? "#16a34a" : "var(--danger)",
-      }}
-    >
-      {ok ? okLabel : pendingLabel}
-    </span>
+    <dl style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)", display: "grid", gap: 6 }}>
+      {visible.map((item) => (
+        <div key={item.label}>
+          <dt style={{ fontWeight: 600, color: "var(--text-primary)", display: "inline" }}>{item.label}: </dt>
+          <dd style={{ display: "inline", margin: 0 }}>{item.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -96,13 +91,16 @@ export function MembershipDocumentsReadView({
   prefill,
   hasPlan,
   schoolSignatures,
+  printComprovativoHref = "/dashboard/documentos-adesao/imprimir/comprovativo",
+  printContratoHref = "/dashboard/documentos-adesao/imprimir/contrato",
+  showIncompleteBanner = true,
 }: Props) {
   const pt = locale === "pt";
   const allComplete = agreement.agreementSigned && waiver.waiverSigned && enrollment.formCompleted;
 
   return (
-    <div style={{ maxWidth: "min(720px, 100%)", display: "flex", flexDirection: "column", gap: 20 }}>
-      {!allComplete ? (
+    <div style={{ maxWidth: "min(720px, 100%)", display: "flex", flexDirection: "column", gap: 16 }}>
+      {!allComplete && showIncompleteBanner ? (
         <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", fontSize: 14, lineHeight: 1.55 }}>
           <p style={{ margin: "0 0 12px", color: "var(--text-secondary)" }}>
             {pt
@@ -121,52 +119,28 @@ export function MembershipDocumentsReadView({
         </section>
       ) : null}
 
-      <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, flex: 1 }}>
-            {pt ? "Comprovativo de Adesão" : "Enrollment form"}
-          </h2>
-          <StatusBadge
-            ok={enrollment.formCompleted}
-            okLabel={pt ? "Aceite" : "Accepted"}
-            pendingLabel={pt ? "Pendente" : "Pending"}
-          />
-        </div>
-        {enrollment.formCompleted ? (
-          <p style={{ margin: "0 0 12px" }}>
-            <Link
-              href="/dashboard/documentos-adesao/imprimir/comprovativo"
-              className="btn btn-secondary"
-              style={{ textDecoration: "none", fontSize: 13, display: "inline-block" }}
-            >
-              {pt ? "Imprimir / Guardar PDF" : "Print / Save PDF"}
-            </Link>
-          </p>
-        ) : null}
-        {enrollment.formCompleted ? (
-          <dl style={{ margin: "0 0 16px", fontSize: 14, color: "var(--text-secondary)", display: "grid", gap: 6 }}>
-            {enrollment.formCompletedAt ? (
-              <div>
-                <dt style={{ fontWeight: 600, color: "var(--text-primary)", display: "inline" }}>
-                  {pt ? "Data de aceite: " : "Accepted on: "}
-                </dt>
-                <dd style={{ display: "inline", margin: 0 }}>{fmtDateTime(enrollment.formCompletedAt, locale)}</dd>
-              </div>
-            ) : null}
-            {enrollment.formVersion ? (
-              <div>
-                <dt style={{ fontWeight: 600, color: "var(--text-primary)", display: "inline" }}>
-                  {pt ? "Versão: " : "Version: "}
-                </dt>
-                <dd style={{ display: "inline", margin: 0 }}>{enrollment.formVersion}</dd>
-              </div>
-            ) : null}
-          </dl>
-        ) : (
-          <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--text-secondary)" }}>
-            {pt ? "Comprovativo ainda não preenchido." : "Enrollment form not completed yet."}
-          </p>
-        )}
+      <MembershipDocumentSection
+        title={pt ? "Comprovativo de Adesão" : "Enrollment form"}
+        ok={enrollment.formCompleted}
+        okLabel={pt ? "Aceite" : "Accepted"}
+        pendingLabel={pt ? "Pendente" : "Pending"}
+        printHref={printComprovativoHref}
+        printLabel={pt ? "Imprimir" : "Print"}
+        pendingMessage={pt ? "Comprovativo ainda não preenchido." : "Enrollment form not completed yet."}
+        summary={
+          enrollment.formCompleted ? (
+            <MetaList
+              items={[
+                {
+                  label: pt ? "Data de aceite" : "Accepted on",
+                  value: fmtDateTime(enrollment.formCompletedAt, locale),
+                },
+                { label: pt ? "Versão" : "Version", value: enrollment.formVersion },
+              ]}
+            />
+          ) : undefined
+        }
+      >
         {enrollmentForm && prefill ? (
           <EnrollmentFormSummary
             form={enrollmentForm}
@@ -187,59 +161,32 @@ export function MembershipDocumentsReadView({
             schoolSignatures={schoolSignatures}
           />
         ) : null}
-      </section>
+      </MembershipDocumentSection>
 
-      <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, flex: 1 }}>
-            {pt ? "Condições Gerais de Adesão" : "Membership terms"}
-          </h2>
-          <StatusBadge
-            ok={agreement.agreementSigned}
-            okLabel={pt ? "Assinado" : "Signed"}
-            pendingLabel={pt ? "Pendente" : "Pending"}
-          />
-        </div>
-        {agreement.agreementSigned ? (
-          <p style={{ margin: "0 0 12px" }}>
-            <Link
-              href="/dashboard/documentos-adesao/imprimir/contrato"
-              className="btn btn-secondary"
-              style={{ textDecoration: "none", fontSize: 13, display: "inline-block" }}
-            >
-              {pt ? "Imprimir / Guardar PDF" : "Print / Save PDF"}
-            </Link>
-          </p>
-        ) : null}
-        {agreement.agreementSigned ? (
-          <dl style={{ margin: "0 0 16px", fontSize: 14, color: "var(--text-secondary)", display: "grid", gap: 6 }}>
-            {agreement.signatureName ? (
-              <div>
-                <dt style={{ fontWeight: 600, color: "var(--text-primary)", display: "inline" }}>
-                  {pt ? "Assinado por: " : "Signed by: "}
-                </dt>
-                <dd style={{ display: "inline", margin: 0 }}>{agreement.signatureName}</dd>
-              </div>
-            ) : null}
-            {agreement.agreementSignedAt ? (
-              <div>
-                <dt style={{ fontWeight: 600, color: "var(--text-primary)", display: "inline" }}>
-                  {pt ? "Data da assinatura: " : "Signed on: "}
-                </dt>
-                <dd style={{ display: "inline", margin: 0 }}>{fmtDateTime(agreement.agreementSignedAt, locale)}</dd>
-              </div>
-            ) : null}
-            {agreement.agreementVersion ? (
-              <div>
-                <dt style={{ fontWeight: 600, color: "var(--text-primary)", display: "inline" }}>
-                  {pt ? "Versão: " : "Version: "}
-                </dt>
-                <dd style={{ display: "inline", margin: 0 }}>{agreement.agreementVersion}</dd>
-              </div>
-            ) : null}
-          </dl>
-        ) : null}
-        {agreement.agreementSigned && agreement.signatureImageUrl ? (
+      <MembershipDocumentSection
+        title={pt ? "Condições Gerais de Adesão" : "Membership terms"}
+        ok={agreement.agreementSigned}
+        okLabel={pt ? "Assinado" : "Signed"}
+        pendingLabel={pt ? "Pendente" : "Pending"}
+        printHref={printContratoHref}
+        printLabel={pt ? "Imprimir" : "Print"}
+        pendingMessage={pt ? "Contrato ainda não assinado." : "Contract not signed yet."}
+        summary={
+          agreement.agreementSigned ? (
+            <MetaList
+              items={[
+                { label: pt ? "Assinado por" : "Signed by", value: agreement.signatureName },
+                {
+                  label: pt ? "Data da assinatura" : "Signed on",
+                  value: fmtDateTime(agreement.agreementSignedAt, locale),
+                },
+                { label: pt ? "Versão" : "Version", value: agreement.agreementVersion },
+              ]}
+            />
+          ) : undefined
+        }
+      >
+        {agreement.signatureImageUrl ? (
           <div style={{ margin: "0 0 16px" }}>
             <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
               {pt ? "Assinatura" : "Signature"}
@@ -256,73 +203,43 @@ export function MembershipDocumentsReadView({
             />
           </div>
         ) : null}
-        {agreement.agreementSigned ? (
-          <SchoolSignatureBlock
-            signatures={schoolSignatures}
-            title={pt ? "Pela Kingdom Fight School" : "For Kingdom Fight School"}
-          />
-        ) : null}
-        {!agreement.agreementSigned && (
-          <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--text-secondary)" }}>
-            {pt ? "Contrato ainda não assinado." : "Contract not signed yet."}
-          </p>
-        )}
+        <SchoolSignatureBlock
+          signatures={schoolSignatures}
+          title={pt ? "Pela Kingdom Fight School" : "For Kingdom Fight School"}
+        />
         <div
           style={{
-            padding: "clamp(16px, 4vw, 20px)",
-            maxHeight: "min(60vh, 520px)",
-            overflowY: "auto",
+            marginTop: schoolSignatures.length > 0 ? 16 : 0,
             fontSize: 14,
             lineHeight: 1.6,
             color: "var(--text-secondary)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-md)",
-            background: "var(--bg-secondary)",
           }}
           dangerouslySetInnerHTML={{ __html: MEMBERSHIP_AGREEMENT_BODY_PT }}
         />
-      </section>
+      </MembershipDocumentSection>
 
-      <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, flex: 1 }}>
-            {pt ? "Termo de Responsabilidade" : "Liability waiver"}
-          </h2>
-          <StatusBadge
-            ok={waiver.waiverSigned}
-            okLabel={pt ? "Assinado" : "Signed"}
-            pendingLabel={pt ? "Pendente" : "Pending"}
-          />
-        </div>
-        {waiver.waiverSigned ? (
-          <dl style={{ margin: "0 0 16px", fontSize: 14, color: "var(--text-secondary)", display: "grid", gap: 6 }}>
-            {waiver.signatureName ? (
-              <div>
-                <dt style={{ fontWeight: 600, color: "var(--text-primary)", display: "inline" }}>
-                  {pt ? "Assinado por: " : "Signed by: "}
-                </dt>
-                <dd style={{ display: "inline", margin: 0 }}>{waiver.signatureName}</dd>
-              </div>
-            ) : null}
-            {waiver.waiverSignedAt ? (
-              <div>
-                <dt style={{ fontWeight: 600, color: "var(--text-primary)", display: "inline" }}>
-                  {pt ? "Data da assinatura: " : "Signed on: "}
-                </dt>
-                <dd style={{ display: "inline", margin: 0 }}>{fmtDateTime(waiver.waiverSignedAt, locale)}</dd>
-              </div>
-            ) : null}
-            {waiver.waiverVersion ? (
-              <div>
-                <dt style={{ fontWeight: 600, color: "var(--text-primary)", display: "inline" }}>
-                  {pt ? "Versão: " : "Version: "}
-                </dt>
-                <dd style={{ display: "inline", margin: 0 }}>{waiver.waiverVersion}</dd>
-              </div>
-            ) : null}
-          </dl>
-        ) : null}
-        {waiver.waiverSigned && waiver.signatureImageUrl ? (
+      <MembershipDocumentSection
+        title={pt ? "Termo de Responsabilidade" : "Liability waiver"}
+        ok={waiver.waiverSigned}
+        okLabel={pt ? "Assinado" : "Signed"}
+        pendingLabel={pt ? "Pendente" : "Pending"}
+        pendingMessage={pt ? "Termo ainda não assinado." : "Waiver not signed yet."}
+        summary={
+          waiver.waiverSigned ? (
+            <MetaList
+              items={[
+                { label: pt ? "Assinado por" : "Signed by", value: waiver.signatureName },
+                {
+                  label: pt ? "Data da assinatura" : "Signed on",
+                  value: fmtDateTime(waiver.waiverSignedAt, locale),
+                },
+                { label: pt ? "Versão" : "Version", value: waiver.waiverVersion },
+              ]}
+            />
+          ) : undefined
+        }
+      >
+        {waiver.signatureImageUrl ? (
           <div style={{ margin: "0 0 16px" }}>
             <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
               {pt ? "Assinatura" : "Signature"}
@@ -339,33 +256,20 @@ export function MembershipDocumentsReadView({
             />
           </div>
         ) : null}
-        {!waiver.waiverSigned && (
-          <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--text-secondary)" }}>
-            {pt ? "Termo ainda não assinado." : "Waiver not signed yet."}
-          </p>
-        )}
-        {waiver.waiverSigned ? (
-          <SchoolSignatureBlock
-            signatures={schoolSignatures}
-            title={pt ? "Pela Kingdom Fight School" : "For Kingdom Fight School"}
-          />
-        ) : null}
+        <SchoolSignatureBlock
+          signatures={schoolSignatures}
+          title={pt ? "Pela Kingdom Fight School" : "For Kingdom Fight School"}
+        />
         <div
           style={{
             marginTop: waiver.waiverSigned && schoolSignatures.length > 0 ? 16 : 0,
-            padding: "clamp(16px, 4vw, 20px)",
-            maxHeight: "min(60vh, 520px)",
-            overflowY: "auto",
             fontSize: 14,
             lineHeight: 1.6,
             color: "var(--text-secondary)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-md)",
-            background: "var(--bg-secondary)",
           }}
           dangerouslySetInnerHTML={{ __html: WAIVER_BODY_PT }}
         />
-      </section>
+      </MembershipDocumentSection>
     </div>
   );
 }

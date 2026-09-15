@@ -13,6 +13,7 @@ import { CoachStudentWellbeingSection } from "./_components/CoachStudentWellbein
 import { CoachAlunoOverviewActions } from "./_components/CoachAlunoOverviewActions";
 import { CoachAlunoAdminEnrollmentSection } from "./_components/CoachAlunoAdminEnrollmentSection";
 import { StudentContactDataSection } from "@/components/students/StudentContactDataSection";
+import { StudentDropInSessionsPanel } from "@/components/students/StudentDropInSessionsPanel";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -47,6 +48,11 @@ export default async function CoachAlunoPerfilPage({ params }: Props) {
       <Suspense fallback={<CoachNotesSkeleton />}>
         <CoachNotes studentId={studentId} />
       </Suspense>
+
+      <StudentDropInSessionsPanel
+        studentId={studentId}
+        revalidateCoachPath={`/coach/alunos/${studentId}`}
+      />
     </div>
   );
 }

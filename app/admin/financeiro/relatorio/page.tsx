@@ -25,6 +25,8 @@ function revenueCategoryLabel(category: string): string {
       return "Plano";
     case "PLAN_NONE":
       return "Mensalidade (sem plano)";
+    case "DROP_IN":
+      return "Aulas avulsas";
     case "COURSE":
       return "Curso";
     case "EVENT":

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { StudentContractPrintView } from "@/components/documents/StudentContractPrintView";
+import { StaffStudentMembershipDocumentsView } from "@/components/documents/StaffStudentMembershipDocumentsView";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +11,13 @@ export default async function CoachAlunoContratoPage({ params }: Props) {
   if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) redirect("/dashboard");
 
   const { id: studentId } = await params;
+  const base = `/coach/alunos/${studentId}`;
 
-  return <StudentContractPrintView studentId={studentId} backHref={`/coach/alunos/${studentId}`} />;
+  return (
+    <StaffStudentMembershipDocumentsView
+      studentId={studentId}
+      printComprovativoHref={`${base}/comprovativo`}
+      printContratoHref={`${base}/contrato/imprimir`}
+    />
+  );
 }
