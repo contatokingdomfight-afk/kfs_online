@@ -35,6 +35,8 @@ type Prefill = {
   dateOfBirth: string;
   phone: string;
   planName: string;
+  primaryModality: string | null;
+  modalityScope: string | null;
   modalityLabel: string | null;
   monthlyAmount: number;
   enrollmentAmount: number;
@@ -149,6 +151,8 @@ export function MembershipDocumentsReadView({
             dateOfBirth={prefill.dateOfBirth}
             phone={prefill.phone}
             planName={prefill.planName}
+            primaryModality={prefill.primaryModality}
+            modalityScope={prefill.modalityScope}
             modalityLabel={prefill.modalityLabel}
             monthlyAmount={prefill.monthlyAmount}
             enrollmentAmount={prefill.enrollmentAmount}

@@ -1,13 +1,5 @@
-import {
-  GYM_ENROLLMENT_INFO,
-  SCHOOL_TRANSFER_IBAN,
-  enrollmentPaymentMethodLabel,
-  type EnrollmentFormRow,
-} from "@/lib/enrollment-form";
-import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
-import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
-import { ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER } from "@/lib/sports-insurance-coverage";
-import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
+import { EnrollmentFormDocumentView } from "@/components/documents/EnrollmentFormDocumentView";
+import type { EnrollmentFormRow } from "@/lib/enrollment-form";
 import type { SchoolSignature } from "@/lib/school-signatures";
 
 type Props = {
@@ -17,114 +9,42 @@ type Props = {
   dateOfBirth: string;
   phone: string;
   planName: string;
+  primaryModality?: string | null;
+  modalityScope?: string | null;
   modalityLabel: string | null;
   monthlyAmount: number;
   enrollmentAmount: number;
   insuranceAmount?: number;
   showEnrollment: boolean;
   showInsurance: boolean;
-  /** Assinatura do contrato de adesão (passo 2) — opcional: nem todos os usos deste resumo têm este contexto. */
   agreementSigned?: boolean;
   signatureName?: string | null;
   signatureImageUrl?: string | null;
-  /** Assinaturas fixas dos admins que assinam pela escola — opcional, só quando o chamador as buscou. */
   schoolSignatures?: SchoolSignature[];
 };
 
-function Row({ label, value }: { label: string; value: string | null | undefined }) {
-  if (!value) return null;
+/** Comprovativo de adesão preenchido — layout oficial para consulta e impressão. */
+export function EnrollmentFormSummary(props: Props) {
   return (
-    <p style={{ margin: "0 0 6px", fontSize: 14, color: "var(--text-secondary)" }}>
-      <strong>{label}:</strong> {value}
-    </p>
-  );
-}
-
-export function EnrollmentFormSummary({
-  form,
-  fullName,
-  email,
-  dateOfBirth,
-  phone,
-  planName,
-  modalityLabel,
-  monthlyAmount,
-  enrollmentAmount,
-  insuranceAmount = 0,
-  showEnrollment,
-  showInsurance,
-  agreementSigned,
-  signatureName,
-  signatureImageUrl,
-  schoolSignatures,
-}: Props) {
-  const paymentLabel = enrollmentPaymentMethodLabel(form.paymentMethod);
-  const showTransferIban =
-    form.paymentMethod === "TRANSFER" || form.paymentMethod === "DEBIT_DIRECT";
-
-  return (
-    <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", fontSize: 14, lineHeight: 1.55 }}>
-      <h2 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600 }}>Comprovativo de Adesão</h2>
-      <p style={{ margin: "0 0 10px", color: "var(--text-secondary)" }}>
-        {GYM_ENROLLMENT_INFO.name}
-        <br />
-        {GYM_ENROLLMENT_INFO.tradeName}
-      </p>
-      <Row label="Nome" value={fullName} />
-      <Row label="Data de nascimento" value={dateOfBirth ? new Date(`${dateOfBirth}T12:00:00`).toLocaleDateString("pt-PT") : null} />
-      <Row label="CC/Passaporte" value={form.idDocument} />
-      <Row label="NIF" value={form.taxId} />
-      <Row label="Morada" value={`${form.addressLine ?? ""}${form.postalCode ? `, ${form.postalCode}` : ""}`} />
-      <Row label="Telefone" value={phone} />
-      <Row label="E-mail" value={email} />
-      <Row label="Emergência" value={`${form.emergencyContactName ?? ""} (${form.emergencyContactRelationship ?? ""}) — ${form.emergencyContactPhone ?? ""}`} />
-      <Row label="Plano" value={planName} />
-      <Row label="Modalidade" value={modalityLabel} />
-      <Row label="Início" value={form.membershipStartDate ? new Date(`${form.membershipStartDate}T12:00:00`).toLocaleDateString("pt-PT") : null} />
-      <Row label="Mensalidade" value={`${monthlyAmount.toFixed(2)} €`} />
-      {showEnrollment ? <Row label="Inscrição" value={`${enrollmentAmount.toFixed(2)} €`} /> : null}
-      {showInsurance && !ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? (
-        <Row label="Seguro" value={`${formatDecimalAmountInput(insuranceAmount)} €`} />
-      ) : null}
-      <Row label="Pagamento" value={paymentLabel ?? undefined} />
-      {showTransferIban ? <Row label="IBAN" value={SCHOOL_TRANSFER_IBAN} /> : null}
-      {form.debitIban && form.paymentMethod === "DEBIT_DIRECT" ? (
-        <Row label="IBAN (legado)" value={form.debitIban} />
-      ) : null}
-      {showInsurance || ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? (
-        <InsuranceCoverageBlock compact annualAmount={insuranceAmount} />
-      ) : null}
-      {form.allergies ? <Row label="Alergias" value={form.allergies} /> : null}
-      {form.knownHealthCondition ? <Row label="Saúde" value={form.knownHealthCondition} /> : null}
-      {form.emergencyMedication ? <Row label="Medicação" value={form.emergencyMedication} /> : null}
-      <p style={{ margin: "10px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
-        Consentimentos: foto sim · vídeo sim · redes sim · marketing sim
-      </p>
-      {agreementSigned ? (
-        <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
-          <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
-            ✓ Li e aceitei as Condições Gerais de Adesão e o Termo de Responsabilidade
-          </p>
-          {signatureImageUrl ? (
-            <>
-              <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
-                Assinatura
-              </p>
-              <img
-                src={signatureImageUrl}
-                alt="Assinatura desenhada"
-                style={{ maxWidth: 260, background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}
-              />
-            </>
-          ) : null}
-          {signatureName ? (
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
-              Assinado por: {signatureName}
-            </p>
-          ) : null}
-          <SchoolSignatureBlock signatures={schoolSignatures ?? []} />
-        </div>
-      ) : null}
-    </section>
+    <EnrollmentFormDocumentView
+      form={props.form}
+      fullName={props.fullName}
+      email={props.email}
+      dateOfBirth={props.dateOfBirth}
+      phone={props.phone}
+      planName={props.planName}
+      primaryModality={props.primaryModality ?? null}
+      modalityScope={props.modalityScope ?? null}
+      modalityLabel={props.modalityLabel}
+      monthlyAmount={props.monthlyAmount}
+      enrollmentAmount={props.enrollmentAmount}
+      insuranceAmount={props.insuranceAmount}
+      showEnrollment={props.showEnrollment}
+      showInsurance={props.showInsurance}
+      agreementSigned={props.agreementSigned}
+      signatureName={props.signatureName}
+      signatureImageUrl={props.signatureImageUrl}
+      schoolSignatures={props.schoolSignatures}
+    />
   );
 }
