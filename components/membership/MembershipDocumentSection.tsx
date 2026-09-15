@@ -42,6 +42,8 @@ type Props = {
   printLabel?: string;
   /** Mensagem quando o documento ainda não existe / não foi preenchido. */
   pendingMessage?: ReactNode;
+  /** Permite expandir mesmo antes de haver conteúdo renderizado (ex.: comprovativo concluído). */
+  forceExpandable?: boolean;
   children?: ReactNode;
   defaultExpanded?: boolean;
 };
@@ -56,11 +58,16 @@ export function MembershipDocumentSection({
   printHref,
   printLabel = "Imprimir",
   pendingMessage,
+  forceExpandable = false,
   children,
   defaultExpanded = false,
 }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const canExpand = ok && Boolean(children);
+  const hasContent =
+    children != null &&
+    children !== false &&
+    !(Array.isArray(children) && children.every((c) => c == null || c === false));
+  const canExpand = forceExpandable || hasContent;
 
   return (
     <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
@@ -75,6 +82,7 @@ export function MembershipDocumentSection({
         {canExpand ? (
           <button
             type="button"
+            className="no-print"
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
             style={{
@@ -109,16 +117,28 @@ export function MembershipDocumentSection({
               ▶
             </span>
             <span style={{ minWidth: 0 }}>{title}</span>
+            <span
+              style={{
+                flexShrink: 0,
+                fontSize: 12,
+                fontWeight: 500,
+                color: "var(--text-secondary)",
+              }}
+            >
+              {expanded ? "Recolher" : "Expandir"}
+            </span>
           </button>
         ) : (
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, flex: "1 1 180px", minWidth: 0 }}>{title}</h2>
         )}
 
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+        <div className="no-print" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginLeft: "auto" }}>
           <StatusBadge ok={ok} okLabel={okLabel} pendingLabel={pendingLabel} />
           {printHref && ok ? (
             <Link
               href={printHref}
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn btn-secondary"
               style={{ textDecoration: "none", fontSize: 13, whiteSpace: "nowrap" }}
               onClick={(e) => e.stopPropagation()}

@@ -63,7 +63,7 @@ export async function StudentEnrollmentPrintView({ studentId, backHref }: Props)
 
   return (
     <>
-      <div className="no-print" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
+      <div className="no-print print-doc-root" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
         <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>
           ← Voltar
         </Link>
@@ -76,6 +76,8 @@ export async function StudentEnrollmentPrintView({ studentId, backHref }: Props)
         dateOfBirth={prefill.dateOfBirth}
         phone={prefill.phone}
         planName={prefill.planName}
+        primaryModality={prefill.primaryModality}
+        modalityScope={prefill.modalityScope}
         modalityLabel={prefill.modalityLabel}
         monthlyAmount={prefill.monthlyAmount}
         enrollmentAmount={prefill.enrollmentAmount}

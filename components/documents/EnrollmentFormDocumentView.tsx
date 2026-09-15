@@ -268,7 +268,7 @@ export function EnrollmentFormDocumentView({
             title={item.title}
             yes={item.yes}
             no={item.no}
-            allowed={Boolean(form[item.key])}
+            allowed
           />
         ))}
         <p style={{ ...bodyText, margin: "12px 0 0", fontSize: 13 }}>{ENROLLMENT_CONSENT_FOOTNOTE}</p>

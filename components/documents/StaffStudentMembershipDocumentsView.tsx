@@ -46,7 +46,8 @@ export async function StaffStudentMembershipDocumentsView({
   const schoolSignatures = await getActiveSchoolSignatures();
 
   return (
-    <MembershipDocumentsReadView
+    <div style={{ maxWidth: "min(720px, 100%)" }}>
+      <MembershipDocumentsReadView
       locale={locale}
       showIncompleteBanner={false}
       printComprovativoHref={printComprovativoHref}
@@ -79,5 +80,6 @@ export async function StaffStudentMembershipDocumentsView({
       prefill={prefill}
       schoolSignatures={schoolSignatures}
     />
+    </div>
   );
 }

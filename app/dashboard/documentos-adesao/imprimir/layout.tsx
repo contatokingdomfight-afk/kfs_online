@@ -16,7 +16,13 @@ export default function MembershipPrintLayout({ children }: { children: React.Re
           body {
             background: #fff !important;
             color: #111 !important;
-            padding: 12mm 10mm !important;
+            padding: 24mm 10mm 12mm !important;
+          }
+          .enrollment-form-document {
+            padding-top: 4mm;
+          }
+          .print-doc-root {
+            padding-top: 8mm;
           }
           .card {
             box-shadow: none !important;

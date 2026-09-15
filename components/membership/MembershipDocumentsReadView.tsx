@@ -128,6 +128,7 @@ export function MembershipDocumentsReadView({
         pendingLabel={pt ? "Pendente" : "Pending"}
         printHref={printComprovativoHref}
         printLabel={pt ? "Imprimir" : "Print"}
+        forceExpandable={enrollment.formCompleted}
         pendingMessage={pt ? "Comprovativo ainda não preenchido." : "Enrollment form not completed yet."}
         summary={
           enrollment.formCompleted ? (
@@ -164,6 +165,10 @@ export function MembershipDocumentsReadView({
             signatureImageUrl={agreement.signatureImageUrl}
             schoolSignatures={schoolSignatures}
           />
+        ) : enrollment.formCompleted ? (
+          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
+            {pt ? "Falta o plano do aluno para mostrar o comprovativo completo." : "Student plan is missing for the full enrollment form."}
+          </p>
         ) : null}
       </MembershipDocumentSection>
 
@@ -174,6 +179,7 @@ export function MembershipDocumentsReadView({
         pendingLabel={pt ? "Pendente" : "Pending"}
         printHref={printContratoHref}
         printLabel={pt ? "Imprimir" : "Print"}
+        forceExpandable
         pendingMessage={pt ? "Contrato ainda não assinado." : "Contract not signed yet."}
         summary={
           agreement.agreementSigned ? (
@@ -227,6 +233,7 @@ export function MembershipDocumentsReadView({
         ok={waiver.waiverSigned}
         okLabel={pt ? "Assinado" : "Signed"}
         pendingLabel={pt ? "Pendente" : "Pending"}
+        forceExpandable
         pendingMessage={pt ? "Termo ainda não assinado." : "Waiver not signed yet."}
         summary={
           waiver.waiverSigned ? (
