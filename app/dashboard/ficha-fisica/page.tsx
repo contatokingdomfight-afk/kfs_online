@@ -9,6 +9,7 @@ import { normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouett
 import { BodyMapSkeletonInvite } from "@/components/physical-assessment/BodyMapSkeletonInvite";
 import { PhysicalAssessmentReadOnlyView } from "@/components/physical-assessment/PhysicalAssessmentReadOnlyView";
 import { RequestPhysicalAssessmentPanel } from "@/components/physical-assessment/RequestPhysicalAssessmentPanel";
+import { PhysicalAssessmentEvolution } from "@/components/physical-assessment/PhysicalAssessmentEvolution";
 
 export const dynamic = "force-dynamic";
 
@@ -27,8 +28,7 @@ export default async function DashboardFichaFisicaPage() {
       .select("assessedAt, nextDueAt, clearance, formData, coachId")
       .eq("studentId", studentId)
       .eq("status", "SUBMITTED")
-      .order("assessedAt", { ascending: false })
-      .limit(1),
+      .order("assessedAt", { ascending: true }),
     supabase.from("Student").select("userId").eq("id", studentId).single(),
     supabase.from("StudentProfile").select("heightCm, weightKg, dateOfBirth").eq("studentId", studentId).maybeSingle(),
     supabase
@@ -42,7 +42,12 @@ export default async function DashboardFichaFisicaPage() {
 
   const hasPendingPhysicalRequest = Boolean(pendingRequestRow?.id);
 
-  const row = physRows?.[0] ?? null;
+  const allRows = physRows ?? [];
+  const row = allRows.length > 0 ? allRows[allRows.length - 1] : null;
+  const evolutionRows = allRows.map((r) => ({
+    assessedAt: String(r.assessedAt).slice(0, 10),
+    formData: normalizePhysicalFormDataJson(r.formData) ?? {},
+  }));
   const { data: user } = student?.userId
     ? await supabase.from("User").select("name").eq("id", student.userId).single()
     : { data: null };
@@ -121,6 +126,11 @@ export default async function DashboardFichaFisicaPage() {
       />
       {profile?.heightCm != null || profile?.weightKg != null ? (
         <p className="mx-auto mt-4 max-w-2xl px-0 text-xs text-[var(--text-secondary)] sm:px-1">{t("fichaFisicaProfileHint")}</p>
+      ) : null}
+      {evolutionRows.length >= 2 ? (
+        <div className="mt-8">
+          <PhysicalAssessmentEvolution rows={evolutionRows} locale={locale as "pt" | "en"} />
+        </div>
       ) : null}
       <section className="mt-10 border-t border-[var(--border)] pt-8 lg:mt-12 lg:pt-10">
         <RequestPhysicalAssessmentPanel locale={locale as "pt" | "en"} initialPending={hasPendingPhysicalRequest} />

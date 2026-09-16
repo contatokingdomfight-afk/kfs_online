@@ -24,6 +24,8 @@ import {
 import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import { buildPhysicalAvatarCarouselForStudentView } from "@/lib/build-performance-physical-carousel";
 import { hasIllustrativeAnthropometry, normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
+import { extractPhysicalKpiScores, type PhysicalKpiScores } from "@/lib/physical-assessment-kpi-scores";
+import type { PhysicalEvolutionRow } from "@/lib/physical-assessment-evolution";
 import {
   PERFORMANCE_DETAIL_BY_DIMENSION,
   PERFORMANCE_DETAIL_ORDER,
@@ -152,6 +154,9 @@ export default async function DashboardPerformancePage() {
     scoresForRadar: Record<string, number>;
   } | null = null;
   let physicalAvatarCarousel: ReturnType<typeof buildPhysicalAvatarCarouselForStudentView> | null = null;
+  let physicalKpiScores: PhysicalKpiScores | null = null;
+  let physicalKpiAssessedAt: string | null = null;
+  let physicalEvolutionRows: PhysicalEvolutionRow[] = [];
   if (studentId) {
     const [achievementContext, physRes, profileRes] = await Promise.all([
       getAchievementUnlockContext(supabase, studentId),
@@ -160,18 +165,24 @@ export default async function DashboardPerformancePage() {
         .select("assessedAt, nextDueAt, formData")
         .eq("studentId", studentId)
         .eq("status", "SUBMITTED")
-        .order("assessedAt", { ascending: false })
-        .limit(1),
+        .order("assessedAt", { ascending: true }),
       supabase.from("StudentProfile").select("heightCm, weightKg").eq("studentId", studentId).maybeSingle(),
     ]);
 
     profileAchievements = getAchievementsWithStatus(achievementContext);
 
-    const lastPhysRow = physRes.data?.[0] ?? null;
+    const allPhysRows = physRes.data ?? [];
+    const lastPhysRow = allPhysRows.length > 0 ? allPhysRows[allPhysRows.length - 1] : null;
     lastPhysicalAssessment = lastPhysRow
       ? { assessedAt: lastPhysRow.assessedAt, nextDueAt: lastPhysRow.nextDueAt }
       : null;
     const normalizedPhysicalForm = normalizePhysicalFormDataJson(lastPhysRow?.formData ?? null);
+    physicalKpiScores = extractPhysicalKpiScores(normalizedPhysicalForm);
+    physicalKpiAssessedAt = lastPhysRow ? String(lastPhysRow.assessedAt).slice(0, 10) : null;
+    physicalEvolutionRows = allPhysRows.map((r) => ({
+      assessedAt: String(r.assessedAt).slice(0, 10),
+      formData: normalizePhysicalFormDataJson(r.formData) ?? {},
+    }));
     const profileBodyMetrics = {
       heightCm: profileRes.data?.heightCm != null ? Number(profileRes.data.heightCm) : null,
       weightKg: profileRes.data?.weightKg != null ? Number(profileRes.data.weightKg) : null,
@@ -466,6 +477,9 @@ export default async function DashboardPerformancePage() {
           : undefined
       }
       physicalAvatarCarousel={physicalAvatarCarousel}
+      physicalKpiScores={physicalKpiScores}
+      physicalKpiAssessedAt={physicalKpiAssessedAt}
+      physicalEvolutionRows={physicalEvolutionRows}
       physicalFichaReadOnlyLink={{
         href: "/dashboard/ficha-fisica",
         label: t("perfLinkFullPhysicalFicha"),

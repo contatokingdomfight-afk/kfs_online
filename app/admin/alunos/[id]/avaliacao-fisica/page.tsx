@@ -7,7 +7,7 @@ import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ next?: string | string[] }>;
+  searchParams: Promise<{ next?: string | string[]; assessmentId?: string | string[] }>;
 };
 
 /** Evita open redirect: só caminhos internos /coach/* ou /admin/*. */
@@ -30,6 +30,8 @@ export default async function AdminAlunoAvaliacaoFisicaPage({ params, searchPara
   const { id: studentId } = await params;
   const sp = await searchParams;
   const afterSaveHref = safeAfterSavePath(sp.next, studentId);
+  const assessmentIdRaw = Array.isArray(sp.assessmentId) ? sp.assessmentId[0] : sp.assessmentId;
+  const editingAssessmentId = assessmentIdRaw?.trim() || null;
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
@@ -52,12 +54,21 @@ export default async function AdminAlunoAvaliacaoFisicaPage({ params, searchPara
   const weight = profile?.weightKg != null ? Number(profile.weightKg) : null;
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data: draft } = await supabase
-    .from("StudentPhysicalAssessment")
-    .select("assessedAt, clearance, formData")
-    .eq("studentId", studentId)
-    .eq("status", "DRAFT")
-    .maybeSingle();
+  const { data: draft } = editingAssessmentId
+    ? await supabase
+        .from("StudentPhysicalAssessment")
+        .select("id, assessedAt, clearance, formData, status")
+        .eq("studentId", studentId)
+        .eq("id", editingAssessmentId)
+        .maybeSingle()
+    : await supabase
+        .from("StudentPhysicalAssessment")
+        .select("id, assessedAt, clearance, formData, status")
+        .eq("studentId", studentId)
+        .eq("status", "DRAFT")
+        .maybeSingle();
+
+  const isEditingSubmitted = draft?.status === "SUBMITTED";
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
@@ -65,12 +76,15 @@ export default async function AdminAlunoAvaliacaoFisicaPage({ params, searchPara
         Ficha de Anamnese e Avaliação Física
       </h1>
       <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
-        {draft
-          ? "Continuação de um rascunho guardado anteriormente — os campos já preenchidos foram recuperados."
-          : "Preenche a ficha e guarda. A renovação é obrigatória a cada 6 meses."}
+        {isEditingSubmitted
+          ? "A editar uma ficha já entregue — as alterações são guardadas na mesma ficha."
+          : draft
+            ? "Continuação de um rascunho guardado anteriormente — os campos já preenchidos foram recuperados."
+            : "Preenche a ficha e guarda. A renovação é obrigatória a cada 6 meses."}
       </p>
       <AvaliacaoFisicaForm
         studentId={studentId}
+        assessmentId={draft?.id ?? undefined}
         afterSaveHref={afterSaveHref}
         studentName={name}
         studentEmail={email}

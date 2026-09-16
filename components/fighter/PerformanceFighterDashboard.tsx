@@ -26,6 +26,9 @@ import {
   PerformanceRadarAvatarCarousel,
   PhysicalAssessmentBodyMapPanel,
 } from "@/components/fighter/PerformanceRadarAvatarCarousel";
+import { PhysicalAssessmentEvolution } from "@/components/physical-assessment/PhysicalAssessmentEvolution";
+import type { PhysicalEvolutionRow } from "@/lib/physical-assessment-evolution";
+import { PHYSICAL_KPI_DEFS, type PhysicalKpiScores } from "@/lib/physical-assessment-kpi-scores";
 
 const ProfileAchievements = dynamic(
   () =>
@@ -108,6 +111,12 @@ type Props = {
   physicalFichaReadOnlyLink?: { href: string; label: string } | null;
   /** Dica sob o radar em modo só-radar (mapa na secção de dados biométricos). */
   physicalRadarOnlyHint?: string | null;
+  /** Notas 1–10 do treinador (força, resistência, velocidade, etc.) da última ficha física entregue. */
+  physicalKpiScores?: PhysicalKpiScores | null;
+  /** Data da ficha de onde vêm as notas acima (para a legenda). */
+  physicalKpiAssessedAt?: string | null;
+  /** Histórico de fichas físicas entregues (≥2) para o gráfico de evolução. */
+  physicalEvolutionRows?: PhysicalEvolutionRow[];
   locale?: "pt" | "en";
 };
 
@@ -142,6 +151,9 @@ export function PerformanceFighterDashboard({
   physicalAvatarCarousel = null,
   physicalFichaReadOnlyLink = null,
   physicalRadarOnlyHint = null,
+  physicalKpiScores = null,
+  physicalKpiAssessedAt = null,
+  physicalEvolutionRows = [],
   locale = "pt",
 }: Props) {
   const systemMissions: Mission[] = buildMissionsFromScores(scores, axes, maxScore);
@@ -309,6 +321,44 @@ export function PerformanceFighterDashboard({
 
       {/* Objetivos / Quests */}
       <MissionCard missions={missions} locale={locale} />
+
+      {/* KPIs físicos (força, resistência, velocidade, etc.) — notas do treinador na última ficha entregue */}
+      {physicalKpiScores && (
+        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+            <h2 className="text-base font-bold text-text-primary uppercase tracking-wider">
+              {locale === "pt" ? "KPIs físicos" : "Physical KPIs"}
+            </h2>
+            <span className="text-xs text-text-secondary">
+              {locale === "pt" ? "Escala 1–10" : "1–10 scale"}
+            </span>
+          </div>
+          <p className="text-sm text-text-secondary mb-3">
+            {locale === "pt"
+              ? "Notas do treinador na tua última ficha de avaliação física"
+              : "Coach's scores from your latest physical assessment"}
+            {physicalKpiAssessedAt ? ` · ${physicalKpiAssessedAt}` : ""}.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {PHYSICAL_KPI_DEFS.filter((def) => typeof physicalKpiScores[def.key] === "number").map((def) => (
+              <StatCard
+                key={def.key}
+                icon={<span aria-hidden>{def.icon}</span>}
+                label={locale === "pt" ? def.labelPt : def.labelEn}
+                score={physicalKpiScores[def.key] as number}
+                maxScore={10}
+                tooltip={locale === "pt" ? def.tooltipPt : def.tooltipEn}
+                tooltipAriaLabel={locale === "pt" ? `Como se calcula: ${def.labelPt}` : `How this is calculated: ${def.labelEn}`}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Evolução entre fichas físicas entregues */}
+      {physicalEvolutionRows.length >= 2 && (
+        <PhysicalAssessmentEvolution rows={physicalEvolutionRows} locale={locale} />
+      )}
 
       {checkInWellness && (
         <CheckInWellnessSection

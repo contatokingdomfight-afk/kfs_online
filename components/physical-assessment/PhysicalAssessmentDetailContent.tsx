@@ -11,6 +11,8 @@ type Props = {
   assessmentId: string;
   backHref: string;
   backLabel: string;
+  /** Rota do formulário para reabrir esta ficha (já entregue) para edição. */
+  editHref: string;
 };
 
 export async function PhysicalAssessmentDetailContent({
@@ -19,6 +21,7 @@ export async function PhysicalAssessmentDetailContent({
   assessmentId,
   backHref,
   backLabel,
+  editHref,
 }: Props) {
   const locale = await getLocaleFromCookies();
 
@@ -57,9 +60,14 @@ export async function PhysicalAssessmentDetailContent({
 
   return (
     <div className="max-w-3xl mx-auto pb-10">
-      <Link href={backHref} className="inline-block mb-4 text-sm text-text-secondary hover:text-primary no-underline">
-        ← {backLabel}
-      </Link>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Link href={backHref} className="inline-block text-sm text-text-secondary hover:text-primary no-underline">
+          ← {backLabel}
+        </Link>
+        <Link href={editHref} className="btn btn-secondary no-underline">
+          Editar ficha
+        </Link>
+      </div>
       <PhysicalAssessmentReadOnlyView
         formData={formData}
         clearance={String(row.clearance ?? "")}

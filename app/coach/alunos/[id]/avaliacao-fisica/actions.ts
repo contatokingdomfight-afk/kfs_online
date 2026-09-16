@@ -196,7 +196,26 @@ export async function savePhysicalAssessment(
     signatureImageUrl: (formData.get("signatureImageUrl") as string)?.trim() || null,
   };
 
-  let finalCoachId = coachId ?? null;
+  /** Se vier um assessmentId, estamos a editar uma ficha específica (rascunho ou já entregue) em vez
+   * de criar/retomar uma nova — usado quando admin/coach reabre uma ficha entregue para corrigir um
+   * dado em falta (ex.: ritmo de corrida que o aluno só fez depois por ter esquecido os ténis). */
+  const editingAssessmentId = (formData.get("assessmentId") as string)?.trim() || null;
+  let editingExistingCoachId: string | null = null;
+  let wasAlreadySubmitted = false;
+  if (editingAssessmentId) {
+    const { data: existingRow } = await supabase
+      .from("StudentPhysicalAssessment")
+      .select("id, coachId, status")
+      .eq("id", editingAssessmentId)
+      .eq("studentId", studentId)
+      .maybeSingle();
+    if (!existingRow) return { error: "Avaliação não encontrada." };
+    editingExistingCoachId = (existingRow.coachId as string | null) ?? null;
+    wasAlreadySubmitted = existingRow.status === "SUBMITTED";
+  }
+
+  /** A editar: mantém o coach original da ficha (autoria não muda por quem corrigiu um dado). */
+  let finalCoachId = editingExistingCoachId ?? coachId ?? null;
   if (!finalCoachId && dbUser.role === "ADMIN") {
     const { data: first } = await supabase.from("Coach").select("id").limit(1).single();
     finalCoachId = first?.id ?? null;
@@ -215,15 +234,19 @@ export async function savePhysicalAssessment(
 
   /** Guardar rascunho várias vezes atualiza a mesma linha em vez de duplicar; entregar
    * "promove" o rascunho existente (se houver) para SUBMITTED em vez de criar outra linha. */
-  const { data: existingDraft } = await supabase
-    .from("StudentPhysicalAssessment")
-    .select("id")
-    .eq("studentId", studentId)
-    .eq("status", "DRAFT")
-    .maybeSingle();
+  const { data: existingDraft } = editingAssessmentId
+    ? { data: null }
+    : await supabase
+        .from("StudentPhysicalAssessment")
+        .select("id")
+        .eq("studentId", studentId)
+        .eq("status", "DRAFT")
+        .maybeSingle();
 
-  const { error } = existingDraft
-    ? await supabase.from("StudentPhysicalAssessment").update(payload).eq("id", existingDraft.id)
+  const updateId = editingAssessmentId ?? existingDraft?.id ?? null;
+
+  const { error } = updateId
+    ? await supabase.from("StudentPhysicalAssessment").update(payload).eq("id", updateId)
     : await supabase.from("StudentPhysicalAssessment").insert({ id: randomUUID(), ...payload });
 
   if (error) {
@@ -236,12 +259,16 @@ export async function savePhysicalAssessment(
     return { success: true, isDraft: true };
   }
 
-  await fulfillPendingPhysicalAssessmentRequests(supabase, studentId);
+  /** Corrigir uma ficha já entregue não é uma nova entrega: não repetir notificação ao aluno
+   * nem "cumprir" pedidos de avaliação pendentes outra vez. */
+  if (!wasAlreadySubmitted) {
+    await fulfillPendingPhysicalAssessmentRequests(supabase, studentId);
 
-  try {
-    await notifyStudentOfNewPhysicalAssessment(supabase, { studentId, coachId: finalCoachId });
-  } catch (e) {
-    console.error("notifyStudentOfNewPhysicalAssessment:", e);
+    try {
+      await notifyStudentOfNewPhysicalAssessment(supabase, { studentId, coachId: finalCoachId });
+    } catch (e) {
+      console.error("notifyStudentOfNewPhysicalAssessment:", e);
+    }
   }
 
   revalidatePath(`/coach/alunos/${studentId}`);
@@ -252,5 +279,11 @@ export async function savePhysicalAssessment(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/notificacoes");
   revalidatePath("/coach");
+  if (editingAssessmentId) {
+    revalidatePath(`/admin/alunos/${studentId}/avaliacoes/fisica/${editingAssessmentId}`);
+    revalidatePath(`/coach/alunos/${studentId}/avaliacoes/fisica/${editingAssessmentId}`);
+    revalidatePath(`/admin/alunos/${studentId}/avaliacoes`);
+    revalidatePath(`/coach/alunos/${studentId}/avaliacoes`);
+  }
   return { success: true };
 }

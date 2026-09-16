@@ -15,6 +15,8 @@ export default async function AdminAlunoAvaliacaoFisicaDetailPage({ params }: Pr
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
 
   const backHref = `/admin/alunos/${studentId}/avaliacoes`;
+  const detailHref = `/admin/alunos/${studentId}/avaliacoes/fisica/${assessmentId}`;
+  const editHref = `/admin/alunos/${studentId}/avaliacao-fisica?assessmentId=${assessmentId}&next=${encodeURIComponent(detailHref)}`;
 
   return (
     <PhysicalAssessmentDetailContent
@@ -23,6 +25,7 @@ export default async function AdminAlunoAvaliacaoFisicaDetailPage({ params }: Pr
       assessmentId={assessmentId}
       backHref={backHref}
       backLabel="Histórico de avaliações"
+      editHref={editHref}
     />
   );
 }

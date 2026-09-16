@@ -30,6 +30,8 @@ import {
 
 type Props = {
   studentId: string;
+  /** Ficha específica a editar (rascunho ou já entregue). Omitido → cria/retoma normalmente. */
+  assessmentId?: string;
   /** Destino após guardar com sucesso (perfil aluno, admin, etc.). */
   afterSaveHref: string;
   studentName: string;
@@ -66,6 +68,7 @@ function clampNumberInputToMinMax(el: HTMLInputElement) {
 
 export function AvaliacaoFisicaForm({
   studentId,
+  assessmentId,
   afterSaveHref,
   studentName,
   studentEmail,
@@ -241,6 +244,7 @@ export function AvaliacaoFisicaForm({
       }}
     >
       <input type="hidden" name="studentId" value={studentId} />
+      {assessmentId && <input type="hidden" name="assessmentId" value={assessmentId} />}
       <input type="hidden" name="intent" value={pendingIntent ?? lastIntent} readOnly />
       <input type="hidden" name="signatureImageUrl" value={signatureImageUrl} readOnly />
       {state?.error && (

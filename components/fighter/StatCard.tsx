@@ -1,12 +1,16 @@
 "use client";
 
 import { ReactNode } from "react";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 
 type Props = {
   icon: ReactNode;
   label: string;
   score: number;
   maxScore?: number;
+  /** Texto do tooltip "i" ao lado do rótulo — explica como esta nota é calculada. */
+  tooltip?: string;
+  tooltipAriaLabel?: string;
 };
 
 function getScoreBarStyle(score: number, max: number): React.CSSProperties {
@@ -16,7 +20,7 @@ function getScoreBarStyle(score: number, max: number): React.CSSProperties {
   return { backgroundColor: "var(--success)" };
 }
 
-export function StatCard({ icon, label, score, maxScore = 10 }: Props) {
+export function StatCard({ icon, label, score, maxScore = 10, tooltip, tooltipAriaLabel }: Props) {
   const value = Math.min(maxScore, Math.max(0, score));
   const percent = maxScore > 0 ? (value / maxScore) * 100 : 0;
   const barStyle = getScoreBarStyle(value, maxScore);
@@ -28,7 +32,10 @@ export function StatCard({ icon, label, score, maxScore = 10 }: Props) {
           {icon}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-text-secondary truncate">{label}</p>
+          <p className="text-sm font-medium text-text-secondary truncate m-0 inline-flex items-center gap-1.5">
+            <span className="truncate">{label}</span>
+            {tooltip && <InlineInfoTip detail={tooltip} ariaLabel={tooltipAriaLabel ?? `Como se calcula: ${label}`} />}
+          </p>
           <p className="text-lg font-bold text-text-primary tabular-nums">
             {value.toFixed(1)}
             <span className="text-sm font-normal text-text-secondary">/{maxScore}</span>
