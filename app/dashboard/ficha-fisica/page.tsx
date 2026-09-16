@@ -46,6 +46,7 @@ export default async function DashboardFichaFisicaPage() {
   const row = allRows.length > 0 ? allRows[allRows.length - 1] : null;
   const evolutionRows = allRows.map((r) => ({
     assessedAt: String(r.assessedAt).slice(0, 10),
+    nextDueAt: r.nextDueAt != null ? String(r.nextDueAt).slice(0, 10) : null,
     formData: normalizePhysicalFormDataJson(r.formData) ?? {},
   }));
   const { data: user } = student?.userId
@@ -127,7 +128,7 @@ export default async function DashboardFichaFisicaPage() {
       {profile?.heightCm != null || profile?.weightKg != null ? (
         <p className="mx-auto mt-4 max-w-2xl px-0 text-xs text-[var(--text-secondary)] sm:px-1">{t("fichaFisicaProfileHint")}</p>
       ) : null}
-      {evolutionRows.length >= 2 ? (
+      {evolutionRows.length >= 1 ? (
         <div className="mt-8">
           <PhysicalAssessmentEvolution rows={evolutionRows} locale={locale as "pt" | "en"} />
         </div>

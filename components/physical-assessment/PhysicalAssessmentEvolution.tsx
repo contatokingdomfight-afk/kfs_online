@@ -19,10 +19,27 @@ function formatDateLabel(iso: string, locale: "pt" | "en") {
   return d.toLocaleDateString(locale === "pt" ? "pt-PT" : "en-GB", { day: "2-digit", month: "short", year: "2-digit" });
 }
 
+function formatFullDate(iso: string, locale: "pt" | "en") {
+  const d = new Date(`${iso}T00:00:00`);
+  return d.toLocaleDateString(locale === "pt" ? "pt-PT" : "en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 function formatValue(v: number, unit: string, locale: "pt" | "en") {
   const rounded = Math.round(v * 100) / 100;
   const str = rounded.toLocaleString(locale === "pt" ? "pt-PT" : "en-GB", { maximumFractionDigits: 2 });
   return `${str} ${unit}`;
+}
+
+function SectionFrame({ locale, children }: { locale: "pt" | "en"; children: React.ReactNode }) {
+  const L = locale === "pt";
+  return (
+    <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+      <h2 className="text-base font-semibold text-text-primary m-0 mb-1">
+        {L ? "Evolução entre avaliações" : "Evolution across assessments"}
+      </h2>
+      {children}
+    </section>
+  );
 }
 
 export function PhysicalAssessmentEvolution({ rows, locale }: Props) {
@@ -36,7 +53,40 @@ export function PhysicalAssessmentEvolution({ rows, locale }: Props) {
   const activeKey = selectedKey && availableMetrics.some((m) => m.key === selectedKey) ? selectedKey : (availableMetrics[0]?.key ?? null);
   const metric = availableMetrics.find((m) => m.key === activeKey) ?? null;
 
-  if (availableMetrics.length === 0 || !metric) return null;
+  if (rows.length === 0) return null;
+
+  /** Só uma ficha entregue (o caso mais comum agora) — sem histórico para comparar ainda. */
+  if (rows.length === 1) {
+    const only = rows[0];
+    return (
+      <SectionFrame locale={locale}>
+        <p className="text-sm text-text-secondary m-0">
+          {L
+            ? `Primeiro registo em ${formatFullDate(only.assessedAt, locale)}.`
+            : `First record on ${formatFullDate(only.assessedAt, locale)}.`}{" "}
+          {only.nextDueAt
+            ? L
+              ? `Volta aqui depois da próxima avaliação (prevista para ${formatFullDate(only.nextDueAt, locale)}) para veres a tua evolução.`
+              : `Come back after your next assessment (due ${formatFullDate(only.nextDueAt, locale)}) to see your progress here.`
+            : L
+              ? "Volta aqui depois da próxima avaliação para veres a tua evolução."
+              : "Come back after your next assessment to see your progress here."}
+        </p>
+      </SectionFrame>
+    );
+  }
+
+  if (availableMetrics.length === 0 || !metric) {
+    return (
+      <SectionFrame locale={locale}>
+        <p className="text-sm text-text-secondary m-0">
+          {L
+            ? "Ainda não há a mesma métrica preenchida em pelo menos duas fichas entregues para comparar."
+            : "No single metric has been filled in on at least two submitted assessments yet to compare."}
+        </p>
+      </SectionFrame>
+    );
+  }
 
   const series = buildPhysicalEvolutionSeries(rows, metric);
   const chartData = series.map((p) => ({ dateLabel: formatDateLabel(p.assessedAt, locale), value: p.value }));

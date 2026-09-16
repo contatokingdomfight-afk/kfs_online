@@ -173,6 +173,7 @@ export async function PerformanceContent({ studentId }: Props) {
     physicalKpiAssessedAt = lastPhys ? String(lastPhys.assessedAt).slice(0, 10) : null;
     physicalEvolutionRows = allPhysRows.map((r) => ({
       assessedAt: String(r.assessedAt).slice(0, 10),
+      nextDueAt: r.nextDueAt != null ? String(r.nextDueAt).slice(0, 10) : null,
       formData: normalizePhysicalFormDataJson(r.formData) ?? {},
     }));
 

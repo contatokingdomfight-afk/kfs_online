@@ -32,7 +32,12 @@ export const PHYSICAL_EVOLUTION_METRICS: PhysicalEvolutionMetric[] = [
   { key: "runPaceMinPerKm", labelPt: "Ritmo de corrida", labelEn: "Run pace", unit: "min/km", category: "testes", improvementDirection: "down", getValue: (fd) => getRunPaceMinPerKm(fd) },
 ];
 
-export type PhysicalEvolutionRow = { assessedAt: string; formData: PhysicalAssessmentFormData };
+export type PhysicalEvolutionRow = {
+  assessedAt: string;
+  /** Renovação prevista desta ficha (6 meses após assessedAt) — usada no estado de "primeiro registo". */
+  nextDueAt?: string | null;
+  formData: PhysicalAssessmentFormData;
+};
 
 export type PhysicalEvolutionPoint = { assessedAt: string; value: number };
 

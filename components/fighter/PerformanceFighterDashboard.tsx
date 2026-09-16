@@ -356,7 +356,7 @@ export function PerformanceFighterDashboard({
       )}
 
       {/* Evolução entre fichas físicas entregues */}
-      {physicalEvolutionRows.length >= 2 && (
+      {physicalEvolutionRows.length >= 1 && (
         <PhysicalAssessmentEvolution rows={physicalEvolutionRows} locale={locale} />
       )}
 
