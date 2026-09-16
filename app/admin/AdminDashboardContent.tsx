@@ -70,6 +70,8 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
         { href: "/admin/atletas", icon: "🤸", label: t("navAthletes") },
         { href: "/admin/coaches", icon: "👨‍🏫", label: t("navCoaches") },
         { href: "/admin/experimentais", icon: "🧪", label: t("navTrials") },
+        { href: "/admin/indicacoes", icon: "🤝", label: "Indicações" },
+        { href: "/coach/cobertura-avaliacoes", icon: "🗒️", label: "Cobertura de avaliações" },
       ],
     },
     {
