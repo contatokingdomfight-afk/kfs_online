@@ -13,7 +13,8 @@ export type NotificationType =
   | "COACH_EVALUATION"
   | "PHYSICAL_ASSESSMENT"
   | "PHYSICAL_ASSESSMENT_REQUEST"
-  | "TRIBE_COMMENT";
+  | "TRIBE_COMMENT"
+  | "REENGAGEMENT";
 
 type InsertPayload = {
   studentId: string;
@@ -174,6 +175,17 @@ export async function createPresenceConfirmedNotification(
     title,
     body,
     href: "/dashboard/historico",
+  });
+}
+
+/** Central de notificações: aluno inativo há vários dias (cron `reengagement-check`). */
+export async function notifyStudentOfInactivity(supabase: SupabaseClient, studentId: string): Promise<void> {
+  await createInAppNotification(supabase, {
+    studentId,
+    type: "REENGAGEMENT",
+    title: "Sentimos a tua falta!",
+    body: "Já não te vemos nos treinos há uns dias — que tal marcar a próxima aula?",
+    href: "/dashboard",
   });
 }
 

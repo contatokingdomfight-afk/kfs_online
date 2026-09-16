@@ -285,6 +285,50 @@ export async function sendTrialAcceptanceConfirmation(
   }
 }
 
+/**
+ * Envia email de reengajamento a um aluno inativo há vários dias (cron `reengagement-check`).
+ */
+export async function sendReengagementEmail(
+  to: string,
+  studentName: string | null
+): Promise<{ error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("RESEND_API_KEY não definida; email de reengajamento não enviado.");
+    return {};
+  }
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+    const greeting = studentName ? `Olá ${studentName}` : "Olá";
+    const inner = `
+        <p style="margin:0 0 16px;">${greeting},</p>
+        <p style="margin:0 0 16px;">Já não te vemos nos treinos há uns dias. Sentimos a tua falta!</p>
+        <p style="margin:0 0 16px;">Que tal marcar a próxima aula e voltar ao tatame?</p>
+        <p style="margin:20px 0 0;">Até já!</p>
+    `.trim();
+    const text = `${greeting},\n\nJá não te vemos nos treinos há uns dias. Sentimos a tua falta!\n\nQue tal marcar a próxima aula e voltar ao tatame?\n\nAté já!\n\n— Kingdom Fight School`;
+
+    const { error } = await resend.emails.send({
+      from: getFrom(),
+      to: [to],
+      subject: "Sentimos a tua falta – Kingdom Fight School",
+      text,
+      html: wrapTransactionalEmail(inner),
+    });
+
+    if (error) {
+      console.error("sendReengagementEmail error:", error);
+      return { error: String(error.message ?? error) };
+    }
+    return {};
+  } catch (e) {
+    console.error("sendReengagementEmail exception:", e);
+    return { error: e instanceof Error ? e.message : "Erro ao enviar email." };
+  }
+}
+
 /** Alerta semanal ao admin: alunos com seguro a expirar ou expirado. */
 export async function sendInsuranceExpiryAlertToAdmin(lines: string[]): Promise<{ error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
