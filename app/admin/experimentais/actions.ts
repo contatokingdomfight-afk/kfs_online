@@ -166,7 +166,7 @@ export async function convertTrialToStudent(
 
   const { data: trial } = await supabase
     .from("TrialClass")
-    .select("id, name, contact, convertedToStudent, lessonId, lessonDate")
+    .select("id, name, contact, convertedToStudent, lessonId, lessonDate, referredByStudentId")
     .eq("id", trialId)
     .single();
   if (!trial) return { error: "Inscrição não encontrada." };
@@ -238,6 +238,7 @@ export async function convertTrialToStudent(
     userId,
     schoolId,
     status: "ATIVO",
+    referredByStudentId: (trial as { referredByStudentId?: string | null }).referredByStudentId ?? null,
   });
   if (studentError) return { error: studentError.message };
 

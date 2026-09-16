@@ -14,7 +14,8 @@ export type NotificationType =
   | "PHYSICAL_ASSESSMENT"
   | "PHYSICAL_ASSESSMENT_REQUEST"
   | "TRIBE_COMMENT"
-  | "REENGAGEMENT";
+  | "REENGAGEMENT"
+  | "REFERRAL_REWARD";
 
 type InsertPayload = {
   studentId: string;

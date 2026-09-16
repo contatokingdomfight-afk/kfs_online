@@ -153,10 +153,12 @@ export async function generateMonthlyPayments(
   let created = 0;
 
   for (const p of pending) {
+    const paymentId = crypto.randomUUID();
+    const finalAmount = await applyUnconsumedReferralCredits(supabase, p.studentId, p.priceMonthly, paymentId);
     const { error } = await supabase.from("Payment").insert({
-      id: crypto.randomUUID(),
+      id: paymentId,
       studentId: p.studentId,
-      amount: p.priceMonthly,
+      amount: finalAmount,
       status: "LATE",
       referenceMonth,
       paymentType: "TUITION",
@@ -171,4 +173,41 @@ export async function generateMonthlyPayments(
   }
 
   return { created, skipped: pending.length - created };
+}
+
+/**
+ * Aplica os créditos de indicação por consumir de um aluno ao valor da mensalidade, reduzindo-o
+ * (nunca abaixo de 0) e marcando os créditos usados como consumidos neste pagamento. Créditos que
+ * excedam o valor da mensalidade ficam por consumir (aplicam-se no mês seguinte).
+ */
+async function applyUnconsumedReferralCredits(
+  supabase: SupabaseClient,
+  studentId: string,
+  amount: number,
+  paymentId: string
+): Promise<number> {
+  const { data: credits } = await supabase
+    .from("ReferralCredit")
+    .select("id, amount")
+    .eq("studentId", studentId)
+    .is("consumedAt", null)
+    .order("created_at", { ascending: true });
+  if (!credits?.length) return amount;
+
+  let remaining = amount;
+  const consumedIds: string[] = [];
+  for (const c of credits) {
+    if (remaining <= 0) break;
+    const creditAmount = Number((c as { amount: number | string }).amount);
+    if (!Number.isFinite(creditAmount) || creditAmount <= 0) continue;
+    remaining = Math.max(0, Math.round((remaining - creditAmount) * 100) / 100);
+    consumedIds.push((c as { id: string }).id);
+  }
+  if (consumedIds.length > 0) {
+    await supabase
+      .from("ReferralCredit")
+      .update({ consumedAt: new Date().toISOString(), consumedPaymentId: paymentId })
+      .in("id", consumedIds);
+  }
+  return remaining;
 }

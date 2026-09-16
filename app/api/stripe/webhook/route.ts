@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { clearGraceOnPaidPayment } from "@/lib/payment-grace";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
+import { grantReferralRewardIfEligible } from "@/lib/referral-rewards";
 import { stripe, STRIPE_WEBHOOK_SECRET } from "@/lib/stripe/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 
@@ -181,6 +182,7 @@ export async function POST(request: NextRequest) {
         }
         await clearGraceOnPaidPayment(supabase, studentId);
         await syncStudentPaymentStatus(supabase, studentId);
+        await grantReferralRewardIfEligible(supabase, studentId);
         break;
       }
       default:

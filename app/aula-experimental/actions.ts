@@ -16,6 +16,7 @@ export async function submitTrialRequest(
   const modality = (formData.get("modality") as string)?.trim();
   const schoolId = (formData.get("schoolId") as string)?.trim();
   const lessonSlot = (formData.get("lessonSlot") as string)?.trim() ?? "";
+  const referrerStudentId = (formData.get("referrerStudentId") as string)?.trim() || null;
 
   if (!name) return { error: "Nome é obrigatório." };
   if (!contact) return { error: "Telefone é obrigatório." };
@@ -71,6 +72,12 @@ export async function submitTrialRequest(
     .maybeSingle();
   if (cancelled) return { error: "Esta data foi cancelada. Escolhe outra aula." };
 
+  let validReferrerId: string | null = null;
+  if (referrerStudentId) {
+    const { data: referrer } = await supabase.from("Student").select("id").eq("id", referrerStudentId).maybeSingle();
+    validReferrerId = referrer?.id ?? null;
+  }
+
   const id = crypto.randomUUID();
   const { error } = await supabase.from("TrialClass").insert({
     id,
@@ -80,6 +87,7 @@ export async function submitTrialRequest(
     lessonDate: occurrenceYmd,
     lessonId,
     convertedToStudent: false,
+    referredByStudentId: validReferrerId,
   });
 
   if (error) return { error: error.message };

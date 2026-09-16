@@ -172,6 +172,24 @@ model Student {
   physicalAssessments          StudentPhysicalAssessment[]
   physicalAssessmentRequests  PhysicalAssessmentRequest[]
   schoolAssistantCoach        SchoolAssistantCoach?
+  /// Indicação de amigos: quem indicou este aluno (null se não veio de indicação).
+  referredByStudentId       String?
+  /// Quando a recompensa de indicação foi atribuída ao indicador — guarda de idempotência.
+  referralRewardGrantedAt   DateTime?
+  referralCredits           ReferralCredit[]
+}
+
+/// Créditos de indicação por atribuir/atribuídos na mensalidade presencial do indicador.
+model ReferralCredit {
+  id                String    @id @default(cuid())
+  studentId         String
+  student           Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount            Decimal   @db.Decimal(10, 2)
+  reason            String
+  referredStudentId String?
+  consumedAt        DateTime?
+  consumedPaymentId String?
+  createdAt         DateTime  @default(now())
 }
 
 /// Aluno promovido a treinador assistente na escola (presenças; sem avaliações de desempenho).
@@ -359,6 +377,8 @@ model TrialClass {
   acceptedAt        DateTime? // pedido aceite (antes de converter em aluno)
   convertedToStudent Boolean  @default(false)
   createdAt         DateTime  @default(now())
+  /// Aluno que indicou este pedido (via link `/aula-experimental?ref=<studentId>`).
+  referredByStudentId String?
 }
 
 // Comentários do coach: targetType + targetId (polimórfico – Athlete ou Lesson)

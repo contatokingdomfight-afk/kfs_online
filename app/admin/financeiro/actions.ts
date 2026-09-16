@@ -18,6 +18,7 @@ import { familyGroupIdForTuition } from "@/lib/family-tuition";
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/retail/constants";
 import { parseFinancePaymentMethodRequired } from "@/lib/finance-payment-method";
 import { parseDecimalAmount } from "@/lib/parse-decimal-amount";
+import { grantReferralRewardIfEligible } from "@/lib/referral-rewards";
 import {
   tuitionStartMonthFromCreatedAt,
   isTuitionMonthBeforeEnrollment,
@@ -408,6 +409,7 @@ export async function markPendingPaymentPaid(
   if (paymentType === "TUITION") {
     await clearGraceOnPaidPayment(supabase, studentId);
     await syncStudentPaymentStatus(supabase, studentId);
+    await grantReferralRewardIfEligible(supabase, studentId);
   } else if (paymentType === "ENROLLMENT") {
     await supabase.from("Student").update({ enrollmentFeeWaived: false }).eq("id", studentId);
   } else if (paymentType === "INSURANCE") {
@@ -524,7 +526,7 @@ export async function updateAdminPayment(
   const supabase = createAdminClient();
   const { data: existing, error: fetchErr } = await supabase
     .from("Payment")
-    .select("id, studentId, paymentType, referenceMonth, stripeInvoiceId")
+    .select("id, studentId, paymentType, referenceMonth, stripeInvoiceId, status")
     .eq("id", id)
     .maybeSingle();
   if (fetchErr) return { error: fetchErr.message };
@@ -546,10 +548,16 @@ export async function updateAdminPayment(
     .eq("id", id);
   if (upErr) return { error: upErr.message };
 
+  const wasAlreadyPaid = (existing as { status: string }).status === "PAID";
+  const paymentType = (existing as { paymentType: string }).paymentType;
+
   if (status === "LATE" && referenceMonth) {
     await startGracePeriodOnLatePayment(supabase, studentId, referenceMonth);
   } else if (status === "PAID") {
     await clearGraceOnPaidPayment(supabase, studentId);
+    if (!wasAlreadyPaid && paymentType === "TUITION") {
+      await grantReferralRewardIfEligible(supabase, studentId);
+    }
   }
 
   await syncStudentPaymentStatus(supabase, studentId);

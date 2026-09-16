@@ -13,7 +13,7 @@ import { FormularioExperimental } from "./FormularioExperimental";
 import { getDefaultOnboardingSchoolId, sortSchoolsForOnboarding } from "@/lib/onboarding-default-school";
 import { SCHOOL_PUBLIC_CONTACT } from "@/lib/school-contact";
 
-type SearchParams = Promise<{ sucesso?: string; data?: string; hora?: string }>;
+type SearchParams = Promise<{ sucesso?: string; data?: string; hora?: string; ref?: string }>;
 
 function ymdToPtDate(ymd: string): string {
   const [y, m, d] = ymd.split("-");
@@ -45,6 +45,14 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} backHref="/" backLabel="← Voltar à página inicial" />;
   const supabase = result.client;
+
+  /** Link de indicação de amigos (`?ref=<studentId>`) — só aceite se corresponder a um aluno real. */
+  const refCandidate = params.ref?.trim() || null;
+  let referrerStudentId: string | null = null;
+  if (refCandidate) {
+    const { data: referrer } = await supabase.from("Student").select("id").eq("id", refCandidate).maybeSingle();
+    referrerStudentId = referrer?.id ?? null;
+  }
   const today = calendarDateLisbon(new Date());
   const rangeEnd = addDaysYmd(today, 56);
 
@@ -154,6 +162,7 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
           defaultSchoolId={defaultSchoolId}
           modalityOptions={modalityOptions}
           lessonsBySchoolId={lessonsBySchoolId}
+          referrerStudentId={referrerStudentId}
         />
       </div>
     </main>

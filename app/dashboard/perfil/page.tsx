@@ -9,7 +9,9 @@ import { ChangePasswordSection } from "./ChangePasswordSection";
 import { DeleteAccountSection } from "./DeleteAccountSection";
 import { PushNotificationToggle } from "@/components/PushNotificationToggle";
 import { LegalDocumentsSection } from "./LegalDocumentsSection";
+import { ReferralInviteSection } from "./ReferralInviteSection";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { getPublicOrigin } from "@/lib/site-public-url";
 
 /** Valor para `input type="date"` (YYYY-MM-DD). */
 function dateOfBirthForInput(value: unknown): string {
@@ -60,6 +62,13 @@ export default async function DashboardPerfilPage() {
       .maybeSingle(),
   ]);
 
+  const [{ count: invitedCount }, { data: referredStudents }] = await Promise.all([
+    supabase.from("TrialClass").select("id", { count: "exact", head: true }).eq("referredByStudentId", studentId),
+    supabase.from("Student").select("referralRewardGrantedAt").eq("referredByStudentId", studentId),
+  ]);
+  const convertedCount = (referredStudents ?? []).filter((r) => r.referralRewardGrantedAt != null).length;
+  const referralLink = `${getPublicOrigin()}/aula-experimental?ref=${studentId}`;
+
   const initial = {
     name: user?.name ?? "",
     nickname: (profile as { nickname?: string | null } | undefined)?.nickname ?? "",
@@ -102,6 +111,12 @@ export default async function DashboardPerfilPage() {
         {t("profileIntro")}
       </p>
       <PerfilForm initial={initial} locale={locale as "pt" | "en"} />
+      <ReferralInviteSection
+        referralLink={referralLink}
+        invitedCount={invitedCount ?? 0}
+        convertedCount={convertedCount}
+        locale={locale as "pt" | "en"}
+      />
       <LegalDocumentsSection
         locale={locale as "pt" | "en"}
         waiverSigned={Boolean(waiver?.waiverSigned)}

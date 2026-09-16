@@ -12,11 +12,14 @@ export function FormularioExperimental({
   defaultSchoolId,
   modalityOptions,
   lessonsBySchoolId,
+  referrerStudentId,
 }: {
   schools: { id: string; name: string }[];
   defaultSchoolId?: string;
   modalityOptions: ModalityOption[];
   lessonsBySchoolId: Record<string, Record<string, LessonSlot[]>>;
+  /** Aluno que partilhou o link de indicação (`?ref=`), se aplicável. */
+  referrerStudentId?: string | null;
 }) {
   const [state, formAction] = useFormState(submitTrialRequest, null as SubmitTrialResult | null);
   const [schoolId, setSchoolId] = useState(defaultSchoolId || schools[0]?.id || "");
@@ -51,6 +54,7 @@ export function FormularioExperimental({
         gap: "clamp(16px, 4vw, 20px)",
       }}
     >
+      {referrerStudentId && <input type="hidden" name="referrerStudentId" value={referrerStudentId} />}
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Local / escola *
