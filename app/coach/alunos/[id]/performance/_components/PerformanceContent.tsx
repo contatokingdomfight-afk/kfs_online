@@ -28,6 +28,8 @@ import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { buildPhysicalAvatarCarouselForStudentView } from "@/lib/build-performance-physical-carousel";
+import { extractPhysicalKpiScores, type PhysicalKpiScores } from "@/lib/physical-assessment-kpi-scores";
+import type { PhysicalEvolutionRow } from "@/lib/physical-assessment-evolution";
 
 const GENERAL_LAST_N = 10;
 
@@ -90,6 +92,9 @@ export async function PerformanceContent({ studentId }: Props) {
   let omitLastEvaluationNoteBody = false;
   let lastEvaluation: { coachName: string; date: string; note: string | null } | null = null;
   let lastPhysSnapshot: { assessedAt: string; nextDueAt: string | null; formData?: unknown } | null = null;
+  let physicalKpiScores: PhysicalKpiScores | null = null;
+  let physicalKpiAssessedAt: string | null = null;
+  let physicalEvolutionRows: PhysicalEvolutionRow[] = [];
 
   const { data: athlete } = await supabase.from("Athlete").select("id, xp, createdAt").eq("studentId", studentId).single();
 
@@ -132,9 +137,7 @@ export async function PerformanceContent({ studentId }: Props) {
         .select("assessedAt, nextDueAt, formData")
         .eq("studentId", studentId)
         .eq("status", "SUBMITTED")
-        .order("assessedAt", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+        .order("assessedAt", { ascending: true }),
       supabase
         .from("AthleteEvaluation")
         .select("gas, technique, strength, theory, scores, modality, coachId, note, created_at")
@@ -159,12 +162,19 @@ export async function PerformanceContent({ studentId }: Props) {
       }
     }
 
-    const lastPhys = lastPhysRes.data;
+    const allPhysRows = lastPhysRes.data ?? [];
+    const lastPhys = allPhysRows.length > 0 ? allPhysRows[allPhysRows.length - 1] : null;
     lastPhysSnapshot = lastPhys ?? null;
     lastPhysicalAssessment = lastPhys ? { assessedAt: lastPhys.assessedAt, nextDueAt: lastPhys.nextDueAt } : null;
     const today = new Date().toISOString().slice(0, 10);
     physicalAssessmentDue =
       !lastPhysicalAssessment || (lastPhysicalAssessment.nextDueAt != null && lastPhysicalAssessment.nextDueAt <= today);
+    physicalKpiScores = extractPhysicalKpiScores(normalizePhysicalFormDataJson(lastPhys?.formData ?? null));
+    physicalKpiAssessedAt = lastPhys ? String(lastPhys.assessedAt).slice(0, 10) : null;
+    physicalEvolutionRows = allPhysRows.map((r) => ({
+      assessedAt: String(r.assessedAt).slice(0, 10),
+      formData: normalizePhysicalFormDataJson(r.formData) ?? {},
+    }));
 
     const evalsRows = evalsRes.data ?? [];
     const normalizedPhysicalForm = normalizePhysicalFormDataJson(lastPhys?.formData ?? null);
@@ -309,6 +319,9 @@ export async function PerformanceContent({ studentId }: Props) {
       lastEvaluation={lastEvaluation ?? undefined}
       evaluationsHistoryHref={`/coach/alunos/${studentId}/avaliacoes`}
       physicalAvatarCarousel={physicalAvatarCarousel}
+      physicalKpiScores={physicalKpiScores}
+      physicalKpiAssessedAt={physicalKpiAssessedAt}
+      physicalEvolutionRows={physicalEvolutionRows}
       locale={locale as "pt" | "en"}
     />
   );
