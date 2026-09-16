@@ -230,6 +230,8 @@ export async function savePhysicalAssessment(
     clearance,
     formData: formDataJson,
     status: isDraft ? "DRAFT" : "SUBMITTED",
+    /** Só marca "editado" quando é mesmo uma correção a uma ficha já entregue — não na entrega original. */
+    ...(wasAlreadySubmitted ? { editedAt: new Date().toISOString(), editedByUserId: dbUser.id } : {}),
   };
 
   /** Guardar rascunho várias vezes atualiza a mesma linha em vez de duplicar; entregar

@@ -27,7 +27,7 @@ export async function PhysicalAssessmentDetailContent({
 
   const { data: row } = await supabase
     .from("StudentPhysicalAssessment")
-    .select("id, studentId, coachId, assessedAt, nextDueAt, clearance, formData, status")
+    .select("id, studentId, coachId, assessedAt, nextDueAt, clearance, formData, status, editedAt, editedByUserId")
     .eq("id", assessmentId)
     .eq("studentId", studentId)
     .eq("status", "SUBMITTED")
@@ -58,6 +58,12 @@ export async function PhysicalAssessmentDetailContent({
   const studentName = (user?.name as string | null)?.trim() || (locale === "pt" ? "Aluno" : "Student");
   const formData = normalizePhysicalFormDataJson(row.formData) ?? {};
 
+  let editedByName: string | null = null;
+  if (row.editedByUserId) {
+    const { data: editorUser } = await supabase.from("User").select("name").eq("id", row.editedByUserId).maybeSingle();
+    editedByName = (editorUser?.name as string | null) ?? null;
+  }
+
   return (
     <div className="max-w-3xl mx-auto pb-10">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -81,6 +87,8 @@ export async function PhysicalAssessmentDetailContent({
           heightCm: profile?.heightCm != null ? Number(profile.heightCm) : null,
           weightKg: profile?.weightKg != null ? Number(profile.weightKg) : null,
         }}
+        editedAt={row.editedAt ? String(row.editedAt) : null}
+        editedByName={editedByName}
       />
     </div>
   );

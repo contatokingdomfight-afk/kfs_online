@@ -25,7 +25,7 @@ export default async function DashboardFichaFisicaPage() {
   const [{ data: physRows }, { data: student }, { data: profile }, { data: pendingRequestRow }] = await Promise.all([
     supabase
       .from("StudentPhysicalAssessment")
-      .select("assessedAt, nextDueAt, clearance, formData, coachId")
+      .select("assessedAt, nextDueAt, clearance, formData, coachId, editedAt, editedByUserId")
       .eq("studentId", studentId)
       .eq("status", "SUBMITTED")
       .order("assessedAt", { ascending: true }),
@@ -63,6 +63,12 @@ export default async function DashboardFichaFisicaPage() {
   }
 
   const studentName = (user?.name as string | null)?.trim() || (locale === "pt" ? "Aluno" : "Student");
+
+  let editedByName: string | null = null;
+  if (row?.editedByUserId) {
+    const { data: editorUser } = await supabase.from("User").select("name").eq("id", row.editedByUserId).maybeSingle();
+    editedByName = (editorUser?.name as string | null) ?? null;
+  }
 
   if (!row) {
     return (
@@ -124,6 +130,8 @@ export default async function DashboardFichaFisicaPage() {
           heightCm: profile?.heightCm != null ? Number(profile.heightCm) : null,
           weightKg: profile?.weightKg != null ? Number(profile.weightKg) : null,
         }}
+        editedAt={row.editedAt ? String(row.editedAt) : null}
+        editedByName={editedByName}
       />
       {profile?.heightCm != null || profile?.weightKg != null ? (
         <p className="mx-auto mt-4 max-w-2xl px-0 text-xs text-[var(--text-secondary)] sm:px-1">{t("fichaFisicaProfileHint")}</p>

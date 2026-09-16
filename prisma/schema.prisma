@@ -214,6 +214,9 @@ model StudentPhysicalAssessment {
   formData    Json      @default("{}")
   status      String    @default("SUBMITTED") // DRAFT | SUBMITTED — DRAFT não conta como avaliação atual
   createdAt   DateTime  @default(now())
+  /// Preenchidos só quando uma ficha já SUBMITTED é reaberta e corrigida (não na entrega original).
+  editedAt        DateTime?
+  editedByUserId  String?
 }
 
 model Athlete {

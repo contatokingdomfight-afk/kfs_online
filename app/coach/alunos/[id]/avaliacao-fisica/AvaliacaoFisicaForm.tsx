@@ -62,8 +62,11 @@ function clampNumberInputToMinMax(el: HTMLInputElement) {
     const hi = Number(el.max);
     if (Number.isFinite(hi)) v = Math.min(v, hi);
   }
-  const rounded = Math.round(v);
-  if (rounded !== n) el.value = String(rounded);
+  /** Campos com step decimal (ex.: peso, ritmo de corrida) não podem ser arredondados a inteiro. */
+  const stepAttr = el.getAttribute("step");
+  const allowsDecimals = stepAttr === "any" || (stepAttr != null && !Number.isInteger(Number(stepAttr)));
+  const finalValue = allowsDecimals ? Math.round(v * 100) / 100 : Math.round(v);
+  if (finalValue !== n) el.value = String(finalValue);
 }
 
 export function AvaliacaoFisicaForm({

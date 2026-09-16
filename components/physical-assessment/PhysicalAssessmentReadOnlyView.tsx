@@ -68,6 +68,9 @@ type Props = {
   studentDateOfBirth?: string | null;
   /** Altura/peso do perfil para escala neutra do mapa quando a ficha não tem antropometria suficiente. */
   profileBodyMetrics?: ProfileBodyMetrics | null;
+  /** Preenchidos só quando esta ficha (já entregue) foi reaberta e corrigida depois da entrega original. */
+  editedAt?: string | null;
+  editedByName?: string | null;
 };
 
 /**
@@ -83,6 +86,8 @@ export function PhysicalAssessmentReadOnlyView({
   locale,
   studentDateOfBirth = null,
   profileBodyMetrics = null,
+  editedAt = null,
+  editedByName = null,
 }: Props) {
   const L = locale === "pt";
   const objectives =
@@ -151,6 +156,12 @@ export function PhysicalAssessmentReadOnlyView({
           {nextDueAt ? line(L ? "Próxima renovação" : "Next renewal due", nextDueAt) : null}
           {coachName ? line(L ? "Registado por" : "Recorded by", coachName) : null}
           {line(L ? "Liberação" : "Clearance", clearanceLabel(clearance, locale))}
+          {editedAt
+            ? line(
+                L ? "Editado por último em" : "Last edited on",
+                `${new Date(editedAt).toLocaleDateString(L ? "pt-PT" : "en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })}${editedByName ? ` · ${editedByName}` : ""}`
+              )
+            : null}
         </>,
         "meta"
       )}
