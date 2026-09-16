@@ -49,6 +49,12 @@ export function getCoachShellSidebarLinks(
       icon: "📈",
       section: t("coachGroupStudents"),
     },
+    {
+      label: "Cobertura de avaliações",
+      href: "/coach/cobertura-avaliacoes" as string,
+      icon: "🗒️",
+      section: t("coachGroupStudents"),
+    },
     { label: t("navWeekTheme"), href: "/coach/tema-semana", icon: "🗓️", section: t("coachGroupContent") },
     {
       label: t("navWeekThemeMonthly"),

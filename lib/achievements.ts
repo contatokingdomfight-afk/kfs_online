@@ -85,7 +85,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: "atleta_consistente",
     name: "Atleta Consistente",
-    description: "Completar missões durante 7 dias seguidos",
+    description: "Presença confirmada em 7 dias seguidos",
     icon: "🔥",
     condition: "streak_days",
     conditionParam: 7,
@@ -189,7 +189,7 @@ export async function getAchievementUnlockContext(
   const consecutiveWeeks = stats.consecutiveWeeks;
 
   const missionsCompletedCount = totalClasses;
-  const streakDays = 0;
+  const streakDays = stats.maxDailyStreak;
 
   return {
     studentId,

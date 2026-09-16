@@ -14,6 +14,7 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
     { label: t("navAthletes"), href: "/admin/atletas", icon: "🤸", section: t("adminGroupPeople") },
     { label: t("navCoaches"), href: "/admin/coaches", icon: "👨‍🏫", section: t("adminGroupPeople") },
     { label: t("navTrials"), href: "/admin/experimentais", icon: "🧪", section: t("adminGroupPeople") },
+    { label: "Indicações", href: "/admin/indicacoes" as string, icon: "🤝", section: t("adminGroupPeople") },
     { label: t("navSchools"), href: "/admin/escolas", icon: "🏫", section: t("adminGroupAcademic") },
     { label: t("navClasses"), href: "/admin/turmas", icon: "🥋", section: t("adminGroupAcademic") },
     { label: t("navPresence"), href: "/admin/presenca", icon: "✅", section: t("adminGroupAcademic") },

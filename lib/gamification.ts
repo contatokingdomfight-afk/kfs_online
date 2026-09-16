@@ -87,6 +87,8 @@ export type BadgeStats = {
   totalClasses: number;
   byModality: Record<string, number>;
   consecutiveWeeks: number;
+  /** Maior sequência de dias de calendário seguidos com presença confirmada. */
+  maxDailyStreak: number;
 };
 
 /** Calcula totais e sequência de semanas a partir das presenças confirmadas. */
@@ -103,7 +105,7 @@ export async function computeBadgeStats(
     (a) => (a as { countsForGamification?: boolean }).countsForGamification !== false
   );
   if (!rows.length) {
-    return { totalClasses: 0, byModality: {}, consecutiveWeeks: 0 };
+    return { totalClasses: 0, byModality: {}, consecutiveWeeks: 0, maxDailyStreak: 0 };
   }
 
   const lessonIds = [...new Set(rows.map((a) => a.lessonId))];
@@ -116,11 +118,16 @@ export async function computeBadgeStats(
 
   const byModality: Record<string, number> = {};
   const weekSet = new Set<string>();
+  const daySet = new Set<string>();
   for (const a of rows) {
     const mod = modById.get(a.lessonId);
     if (mod) byModality[mod] = (byModality[mod] ?? 0) + 1;
     const occ = (a as { occurrenceDate?: string }).occurrenceDate;
-    if (occ && typeof occ === "string") weekSet.add(getWeekKey(occ.slice(0, 10)));
+    if (occ && typeof occ === "string") {
+      const day = occ.slice(0, 10);
+      weekSet.add(getWeekKey(day));
+      daySet.add(day);
+    }
   }
 
   const sortedWeeks = Array.from(weekSet).sort();
@@ -139,10 +146,27 @@ export async function computeBadgeStats(
     maxStreak = Math.max(maxStreak, streak);
   }
 
+  const sortedDays = Array.from(daySet).sort();
+  let maxDailyStreak = 0;
+  let dayStreak = 0;
+  for (let i = 0; i < sortedDays.length; i++) {
+    if (i === 0) {
+      dayStreak = 1;
+    } else {
+      const prev = new Date(sortedDays[i - 1]);
+      const curr = new Date(sortedDays[i]);
+      const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+      if (diffDays === 1) dayStreak++;
+      else dayStreak = 1;
+    }
+    maxDailyStreak = Math.max(maxDailyStreak, dayStreak);
+  }
+
   return {
     totalClasses: rows.length,
     byModality,
     consecutiveWeeks: maxStreak,
+    maxDailyStreak,
   };
 }
 
