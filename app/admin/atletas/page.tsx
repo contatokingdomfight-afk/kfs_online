@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { redirect } from "next/navigation";
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -10,9 +11,14 @@ const LEVEL_LABEL: Record<string, string> = {
   AVANCADO: "Avançado",
 };
 
-export default async function AdminAtletasPage() {
+type SearchParams = Promise<{ modality?: string }>;
+
+export default async function AdminAtletasPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+
+  const params = await searchParams;
+  const selectedModality = params.modality?.trim() || null;
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -49,24 +55,53 @@ export default async function AdminAtletasPage() {
   const coachNameById = new Map((coachUsers ?? []).map((u) => [u.id, u.name]));
   const coachIdToName = new Map((coaches ?? []).map((c) => [c.id, coachNameById.get(c.userId) ?? c.userId]));
 
+  const { data: attendances } =
+    studentIds.length > 0
+      ? await supabase.from("Attendance").select("studentId, lessonId").in("studentId", studentIds).eq("status", "CONFIRMED")
+      : { data: [] };
+  const lessonIds = [...new Set((attendances ?? []).map((a) => a.lessonId as string))];
+  const { data: lessons } = lessonIds.length
+    ? await supabase.from("Lesson").select("id, modality").in("id", lessonIds)
+    : { data: [] };
+  const modalityByLessonId = new Map((lessons ?? []).map((l) => [l.id as string, l.modality as string]));
+
+  /** Modalidades praticadas por cada atleta, derivadas das aulas frequentadas. */
+  const modalitiesByStudentId = new Map<string, Set<string>>();
+  for (const a of attendances ?? []) {
+    const modality = modalityByLessonId.get(a.lessonId as string);
+    if (!modality) continue;
+    const studentId = a.studentId as string;
+    const set = modalitiesByStudentId.get(studentId) ?? new Set<string>();
+    set.add(modality);
+    modalitiesByStudentId.set(studentId, set);
+  }
+
   type Row = {
     key: string;
     studentId: string;
     level: string | null;
     coachName: string | null;
+    modalities: string[];
     href: string;
   };
 
-  const rows: Row[] = flagged.map((s) => {
+  let rows: Row[] = flagged.map((s) => {
     const athlete = athleteByStudentId.get(s.id);
     return {
       key: s.id,
       studentId: s.id,
       level: athlete?.level ?? null,
       coachName: athlete?.mainCoachId ? coachIdToName.get(athlete.mainCoachId) ?? null : null,
+      modalities: [...(modalitiesByStudentId.get(s.id) ?? [])].sort(),
       href: athlete ? `/coach/atletas/${athlete.id}` : `/admin/alunos/${s.id}`,
     };
   });
+
+  const availableModalities = [...new Set(rows.flatMap((r) => r.modalities))].sort();
+
+  if (selectedModality) {
+    rows = rows.filter((r) => r.modalities.includes(selectedModality));
+  }
 
   return (
     <div style={{ maxWidth: "min(700px, 100%)" }}>
@@ -102,10 +137,47 @@ export default async function AdminAtletasPage() {
         </Link>
       </div>
 
+      {availableModalities.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: "clamp(16px, 4vw, 20px)" }}>
+          <Link
+            href="/admin/atletas"
+            style={{
+              fontSize: "clamp(13px, 3.2vw, 14px)",
+              padding: "4px 12px",
+              borderRadius: "var(--radius-md)",
+              textDecoration: "none",
+              fontWeight: 500,
+              backgroundColor: !selectedModality ? "var(--primary)" : "var(--bg)",
+              color: !selectedModality ? "#fff" : "var(--text-secondary)",
+            }}
+          >
+            Todas
+          </Link>
+          {availableModalities.map((m) => (
+            <Link
+              key={m}
+              href={`/admin/atletas?modality=${encodeURIComponent(m)}`}
+              style={{
+                fontSize: "clamp(13px, 3.2vw, 14px)",
+                padding: "4px 12px",
+                borderRadius: "var(--radius-md)",
+                textDecoration: "none",
+                fontWeight: 500,
+                backgroundColor: selectedModality === m ? "var(--primary)" : "var(--bg)",
+                color: selectedModality === m ? "#fff" : "var(--text-secondary)",
+              }}
+            >
+              {MODALITY_LABELS[m] || m}
+            </Link>
+          ))}
+        </div>
+      )}
+
       {rows.length === 0 ? (
         <p style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)" }}>
-          Ainda não há atletas de competição. Marca um aluno como atleta de competição no perfil dele, ou adiciona um
-          em &quot;Novo atleta&quot;.
+          {selectedModality
+            ? "Nenhum atleta de competição pratica esta modalidade."
+            : "Ainda não há atletas de competição. Marca um aluno como atleta de competição no perfil dele, ou adiciona um em \"Novo atleta\"."}
         </p>
       ) : (
         <ul
@@ -173,6 +245,24 @@ export default async function AdminAtletasPage() {
                     <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                       {u.email}
                     </p>
+                  )}
+                  {row.modalities.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                      {row.modalities.map((m) => (
+                        <span
+                          key={m}
+                          style={{
+                            fontSize: "clamp(11px, 2.8vw, 13px)",
+                            padding: "2px 8px",
+                            borderRadius: "var(--radius-md)",
+                            backgroundColor: "var(--bg-secondary)",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          {MODALITY_LABELS[m] || m}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </Link>
               </li>
