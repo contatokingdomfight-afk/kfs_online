@@ -203,6 +203,9 @@ export async function createEvaluation(
     return { error: error.message };
   }
 
+  const { processMissionAwards } = await import("@/lib/xp-missions");
+  await processMissionAwards(supabase, athleteId);
+
   const sid = (athlete as { studentId?: string }).studentId;
   if (sid) await notifyStudentOfNewCoachEvaluation(supabase, { studentId: sid, coachId: effectiveCoachId });
 

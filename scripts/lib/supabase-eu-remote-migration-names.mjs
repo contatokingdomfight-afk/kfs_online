@@ -84,4 +84,6 @@ export const SUPABASE_EU_REMOTE_MIGRATION_NAMES = new Set([
   "20260821160000_admin_rbac_permissions",
   "20260821160100_attendance_post_weight",
   "20260821160200_push_subscriptions",
+  "20260917120000_athlete_xp_snapshot",
+  "20260917130000_leaderboard_period_rpc",
 ]);

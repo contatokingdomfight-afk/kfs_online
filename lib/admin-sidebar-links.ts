@@ -45,6 +45,7 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
       ],
     },
     { label: t("navMissions"), href: "/admin/missoes", icon: "🎯", section: t("adminGroupPlatform") },
+    { label: "Tribo", href: "/admin/tribo" as string, icon: "📣", section: t("adminGroupPlatform") },
     { label: t("navGoals"), href: "/admin/metas", icon: "📌", section: t("adminGroupPlatform") },
     { label: t("navSettings"), href: "/admin/configuracoes", icon: "⚙️", section: t("adminGroupPlatform") },
     { label: t("navPermissions"), href: "/admin/permissoes", icon: "🔐", section: t("adminGroupPlatform") },

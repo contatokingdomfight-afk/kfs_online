@@ -10,6 +10,7 @@ import { notifyStudentOfNewCoachEvaluation } from "@/lib/notifications/in-app";
 import { getPlanAccess } from "@/lib/plan-access";
 import type { EvaluationHistoryModalDetail } from "@/lib/evaluation-history-modal-types";
 import { evaluationHistoryCoachDisplayName, evaluationHistoryFetchPreviousSnapshot } from "@/lib/evaluation-history-helpers";
+import { assertEvaluationNotRateLimited } from "@/lib/evaluation-rate-limit";
 
 export type SaveStandaloneEvaluationResult = { error?: string; success?: boolean };
 
@@ -123,6 +124,9 @@ export async function saveStandaloneEvaluation(
   }
 
   if (!effectiveCoachId) return { error: "Não foi possível associar um coach ao atleta. Cria um perfil de coach na escola ou atribui um coach ao aluno." };
+
+  const rateLimit = await assertEvaluationNotRateLimited(supabase, athlete.id, modality);
+  if (rateLimit.error) return { error: rateLimit.error };
 
   const { error } = await supabase.from("AthleteEvaluation").insert({
     athleteId: athlete.id,

@@ -12,6 +12,7 @@ import {
   assertStudentEligibleForCrossModalityCheckIn,
 } from "@/lib/coach-lesson-eligible-students";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { assertEvaluationNotRateLimited } from "@/lib/evaluation-rate-limit";
 import {
   assertStudentEligibleForCoachLessonCheckIn,
   assertStudentMonthlyCheckInAllowed,
@@ -361,6 +362,9 @@ export async function saveEvaluationFromLesson(
     }
     athlete = { id: newId };
   }
+
+  const rateLimit = await assertEvaluationNotRateLimited(supabase, athlete.id, modality);
+  if (rateLimit.error) return { error: rateLimit.error };
 
   const { error } = await supabase.from("AthleteEvaluation").insert({
     athleteId: athlete.id,

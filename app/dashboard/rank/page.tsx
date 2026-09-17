@@ -7,14 +7,22 @@ import { getPlanAccess } from "@/lib/plan-access";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getFilteredSchoolLeaderboard } from "@/lib/leaderboard";
+import { getEvolutionLeaderboard } from "@/lib/leaderboard-evolution";
 import { getBeltIndexFromXp, getBeltName } from "@/lib/belts";
-import { parseRankAgeParam, parseRankModalityParam } from "@/lib/rank-filters";
+import {
+  parseRankAgeParam,
+  parseRankModalityParam,
+  parseRankModeParam,
+  parseRankPeriodParam,
+  rankPeriodToStartDate,
+} from "@/lib/rank-filters";
+import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { RankFiltersForm } from "./RankFiltersForm";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ school?: string; modality?: string; age?: string }>;
+  searchParams: Promise<{ school?: string; modality?: string; age?: string; period?: string; mode?: string }>;
 };
 
 export default async function DashboardRankPage({ searchParams }: PageProps) {
@@ -54,20 +62,30 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
 
   const modality = parseRankModalityParam(params.modality);
   const ageBucket = parseRankAgeParam(params.age);
+  const period = parseRankPeriodParam(params.period);
+  const mode = parseRankModeParam(params.mode);
+  const periodStart = rankPeriodToStartDate(period);
 
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
 
-  const { rows, error, errorKind } = await getFilteredSchoolLeaderboard(
-    supabase,
-    {
-      schoolId: resolvedSchoolId,
-      modality,
-      ageBucket,
-    },
-    100,
-    mySchoolId
-  );
+  const leaderboardFilters = { schoolId: resolvedSchoolId, modality, ageBucket };
+
+  const xpResult =
+    mode === "XP"
+      ? await getFilteredSchoolLeaderboard(supabase, { ...leaderboardFilters, periodStart }, 100, mySchoolId)
+      : null;
+
+  const evolutionResult =
+    mode === "EVOLUTION"
+      ? await getEvolutionLeaderboard(supabase, leaderboardFilters, periodStart, calendarDateLisbon(new Date()), 100)
+      : null;
+
+  const rows = xpResult?.rows ?? [];
+  const error = xpResult?.error ?? evolutionResult?.error ?? null;
+  const errorKind = xpResult?.errorKind;
+  const evolutionRows = evolutionResult?.rows ?? [];
+  const excludedCount = evolutionResult?.excludedCount ?? 0;
 
   const filterMessages = {
     filterSchool: t("rankFilterSchool"),
@@ -84,6 +102,14 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
     modalityBoxing: t("rankModalityBoxing"),
     modalityKick: t("rankModalityKick"),
     modalityMma: t("rankModalityMma"),
+    filterPeriod: t("rankFilterPeriod"),
+    periodAll: t("rankPeriodAll"),
+    periodWeek: t("rankPeriodWeek"),
+    periodMonth: t("rankPeriodMonth"),
+    periodLast30d: t("rankPeriodLast30d"),
+    filterMode: t("rankFilterMode"),
+    modeXp: t("rankModeXp"),
+    modeEvolution: t("rankModeEvolution"),
   };
 
   return (
@@ -106,6 +132,8 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
         currentSchoolId={resolvedSchoolId}
         currentModality={modality}
         currentAge={ageBucket}
+        currentPeriod={period}
+        currentMode={mode}
         messages={filterMessages}
       />
 
@@ -124,36 +152,93 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
         >
           {t("rankError")}: {error}
         </div>
-      ) : rows.length === 0 ? (
+      ) : mode === "XP" ? (
+        rows.length === 0 ? (
+          <p className="text-sm text-[var(--text-secondary)]">{t("rankEmptyFiltered")}</p>
+        ) : (
+          <div className="card overflow-x-auto" style={{ padding: 0 }}>
+            <table className="w-full text-sm border-collapse" style={{ minWidth: 280 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                  <th
+                    scope="col"
+                    className="text-left py-3 px-3 font-semibold text-[var(--text-primary)]"
+                    style={{ width: 56 }}
+                  >
+                    #
+                  </th>
+                  <th scope="col" className="text-left py-3 px-2 font-semibold text-[var(--text-primary)]">
+                    {t("rankColName")}
+                  </th>
+                  <th scope="col" className="text-left py-3 px-2 font-semibold text-[var(--text-primary)] hidden sm:table-cell">
+                    {t("rankColBelt")}
+                  </th>
+                  <th scope="col" className="text-right py-3 px-3 font-semibold text-[var(--text-primary)]">
+                    XP
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  const beltIdx = getBeltIndexFromXp(row.xp);
+                  const beltLabel = getBeltName(beltIdx);
+                  const highlight = row.is_current_user;
+                  return (
+                    <tr
+                      key={row.student_id}
+                      style={{
+                        borderBottom: "1px solid var(--border)",
+                        backgroundColor: highlight ? "var(--bg-secondary)" : undefined,
+                      }}
+                    >
+                      <td className="py-3 px-3 align-middle text-[var(--text-primary)] font-medium">{row.rank}</td>
+                      <td className="py-3 px-2 align-middle text-[var(--text-primary)]">
+                        {row.display_name || "—"}
+                        {highlight && (
+                          <span
+                            className="ml-2 text-xs font-semibold"
+                            style={{ color: "var(--primary)" }}
+                          >
+                            ({t("rankYou")})
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-2 align-middle text-[var(--text-secondary)] hidden sm:table-cell">
+                        {beltLabel}
+                      </td>
+                      <td className="py-3 px-3 align-middle text-right font-semibold text-[var(--primary)]">
+                        {row.xp.toLocaleString(locale === "en" ? "en-GB" : "pt-PT")}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : evolutionRows.length === 0 ? (
         <p className="text-sm text-[var(--text-secondary)]">{t("rankEmptyFiltered")}</p>
       ) : (
         <div className="card overflow-x-auto" style={{ padding: 0 }}>
           <table className="w-full text-sm border-collapse" style={{ minWidth: 280 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                <th
-                  scope="col"
-                  className="text-left py-3 px-3 font-semibold text-[var(--text-primary)]"
-                  style={{ width: 56 }}
-                >
+                <th scope="col" className="text-left py-3 px-3 font-semibold text-[var(--text-primary)]" style={{ width: 56 }}>
                   #
                 </th>
                 <th scope="col" className="text-left py-3 px-2 font-semibold text-[var(--text-primary)]">
                   {t("rankColName")}
                 </th>
-                <th scope="col" className="text-left py-3 px-2 font-semibold text-[var(--text-primary)] hidden sm:table-cell">
-                  {t("rankColBelt")}
-                </th>
                 <th scope="col" className="text-right py-3 px-3 font-semibold text-[var(--text-primary)]">
-                  XP
+                  {t("rankColEvolution")}
                 </th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
-                const beltIdx = getBeltIndexFromXp(row.xp);
-                const beltLabel = getBeltName(beltIdx);
+              {evolutionRows.map((row) => {
                 const highlight = row.is_current_user;
+                const positive = row.delta > 0;
+                const negative = row.delta < 0;
                 return (
                   <tr
                     key={row.student_id}
@@ -166,25 +251,28 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
                     <td className="py-3 px-2 align-middle text-[var(--text-primary)]">
                       {row.display_name || "—"}
                       {highlight && (
-                        <span
-                          className="ml-2 text-xs font-semibold"
-                          style={{ color: "var(--primary)" }}
-                        >
+                        <span className="ml-2 text-xs font-semibold" style={{ color: "var(--primary)" }}>
                           ({t("rankYou")})
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-2 align-middle text-[var(--text-secondary)] hidden sm:table-cell">
-                      {beltLabel}
-                    </td>
-                    <td className="py-3 px-3 align-middle text-right font-semibold text-[var(--primary)]">
-                      {row.xp.toLocaleString(locale === "en" ? "en-GB" : "pt-PT")}
+                    <td
+                      className="py-3 px-3 align-middle text-right font-semibold"
+                      style={{ color: positive ? "var(--success)" : negative ? "var(--danger)" : "var(--text-secondary)" }}
+                    >
+                      {positive ? "+" : ""}
+                      {row.delta.toLocaleString(locale === "en" ? "en-GB" : "pt-PT")}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+          {excludedCount > 0 && (
+            <p className="text-xs text-[var(--text-secondary)] p-3">
+              {t("rankEvolutionExcludedNote").replace("{count}", String(excludedCount))}
+            </p>
+          )}
         </div>
       )}
     </div>

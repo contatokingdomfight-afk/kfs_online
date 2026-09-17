@@ -69,7 +69,7 @@ function canFallbackToMySchoolOnly(
   filters: LeaderboardFilters,
   mySchoolId: string | null | undefined
 ): boolean {
-  if (filters.modality || filters.ageBucket) return false;
+  if (filters.modality || filters.ageBucket || filters.periodStart) return false;
   const sid = filters.schoolId;
   if (sid == null || sid === "") return true;
   if (!mySchoolId) return false;
@@ -92,6 +92,8 @@ export type LeaderboardFilters = {
   modality?: string | null;
   /** KIDS | TEENS | ADULTS | MASTERS; omitir = todas as idades. */
   ageBucket?: string | null;
+  /** Data ISO (YYYY-MM-DD); quando definida, ranking = XP ganho desde esta data (snapshots diários). Omitir = XP total/lifetime. */
+  periodStart?: string | null;
 };
 
 /**
@@ -115,6 +117,7 @@ export async function getFilteredSchoolLeaderboard(
     p_modality: filters.modality ?? null,
     p_age_bucket: filters.ageBucket ?? null,
     p_limit: limit,
+    p_period_start: filters.periodStart ?? null,
   });
 
   if (
