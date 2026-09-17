@@ -15,6 +15,7 @@ import {
   buildAnatomicalBodyMapRegions,
 } from "@/lib/anatomical-body-map-from-form";
 import { hasIllustrativeAnthropometry, type ProfileBodyMetrics } from "@/lib/illustrative-body-silhouette";
+import { computeBMI, getBMICategory, getBMICategoryLabel } from "@/lib/bmi";
 import {
   ageYearsAtAssessment,
   computePhysicalAssessmentReferenceScores,
@@ -129,6 +130,16 @@ export function PhysicalAssessmentReadOnlyView({
         })
       : null;
 
+  // IMC com a altura/peso desta ficha; se não tiverem sido preenchidos aqui, usa o perfil do aluno
+  // (mesmo critério de fallback já usado para as tabelas de referência acima).
+  const bmiHeightCm = d.heightCm ?? profileBodyMetrics?.heightCm ?? null;
+  const bmiWeightKg = d.weightKg ?? profileBodyMetrics?.weightKg ?? null;
+  const bmiValue =
+    bmiHeightCm != null && bmiWeightKg != null && bmiHeightCm > 0 && bmiWeightKg > 0
+      ? computeBMI(bmiWeightKg, bmiHeightCm)
+      : null;
+  const bmiCategoryLabel = bmiValue != null ? getBMICategoryLabel(getBMICategory(bmiValue), locale) : null;
+
   const bodyMapRegions = buildAnatomicalBodyMapRegions(d, locale);
   const bodyMapOverall = anatomicalBodyMapOverall(d, locale, profileBodyMetrics);
   const showAnatomicalBodyMap =
@@ -241,6 +252,7 @@ export function PhysicalAssessmentReadOnlyView({
               {line(L ? "Peso (kg)" : "Weight (kg)", d.weightKg ?? "—")}
             </>
           ) : null}
+          {bmiValue != null ? line(L ? "IMC" : "BMI", `${bmiValue.toFixed(1)} — ${bmiCategoryLabel}`) : null}
           <p className="text-xs font-semibold text-[var(--text-secondary)] m-0 mt-1">
             {L ? "6.1 Sinais vitais" : "6.1 Vitals"}
           </p>
