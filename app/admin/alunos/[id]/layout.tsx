@@ -74,8 +74,11 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
     !Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned) ||
     !isEnrollmentFormCurrent(enrollmentForm, settings.enrollmentFormVersion);
 
+  // Sem restrição de estado: documentos pendentes são relevantes independentemente de o aluno
+  // estar Ativo, Inadimplente ou Inativo (ao contrário do lembrete de pagamento, específico de
+  // Inadimplente).
   const documentsPendingWhatsAppUrl =
-    student.status === "ATIVO" && hasPendingDocuments && studentProfile?.phone
+    hasPendingDocuments && studentProfile?.phone
       ? buildWhatsAppUrl(
           studentProfile.phone,
           buildDocumentsPendingMessage((user?.name ?? "").split(" ")[0] ?? "", `${getPublicOrigin()}/adesao`)
