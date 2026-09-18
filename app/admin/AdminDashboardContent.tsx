@@ -82,6 +82,7 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
         { href: "/admin/presenca", icon: "✅", label: t("navPresence") },
         { href: "/admin/modalidades", icon: "🥊", label: t("navModalities") },
         { href: "/admin/locais", icon: "📍", label: t("navLocations") },
+        { href: "/admin/documentos-adesao", icon: "📝", label: "Adesões pendentes" },
       ],
     },
     {

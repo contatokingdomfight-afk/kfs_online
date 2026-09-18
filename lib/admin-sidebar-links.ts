@@ -20,6 +20,7 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
     { label: t("navPresence"), href: "/admin/presenca", icon: "✅", section: t("adminGroupAcademic") },
     { label: t("navModalities"), href: "/admin/modalidades", icon: "🥊", section: t("adminGroupAcademic") },
     { label: t("navLocations"), href: "/admin/locais", icon: "📍", section: t("adminGroupAcademic") },
+    { label: "Adesões pendentes", href: "/admin/documentos-adesao" as string, icon: "📝", section: t("adminGroupAcademic") },
     { label: "Arbitragem", href: "/coach/arbitragem", icon: "🏆", section: t("adminGroupAcademic") },
     { label: t("navPlans"), href: "/admin/planos", icon: "💳", section: t("adminGroupContentFinance") },
     { label: t("navCourses"), href: "/admin/cursos", icon: "📚", section: t("adminGroupContentFinance") },

@@ -708,6 +708,64 @@ export async function promoteStudentToRole(
   return { success: true };
 }
 
+export type ChangeStudentLoginEmailResult = { error?: string; success?: boolean };
+
+/**
+ * Troca o email de login de um aluno (ex.: Kids com email interno `@alunos.kingdomfight.pt`
+ * que passa a plano pago e a família quer entrar com o email real dela) — mesma conta,
+ * mesmo histórico (Student/Athlete/Attendance/etc. não mudam, só User.email e o email do
+ * utilizador de autenticação). Não faz "linking" de identidades (Google fica como método de
+ * entrada separado) — a família define password nova nesse email via "Esqueci a senha".
+ */
+export async function changeStudentLoginEmail(
+  _prev: ChangeStudentLoginEmailResult | null,
+  formData: FormData
+): Promise<ChangeStudentLoginEmailResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+
+  const studentId = (formData.get("studentId") as string)?.trim();
+  const newEmail = (formData.get("newEmail") as string)?.trim().toLowerCase();
+  if (!studentId) return { error: "Aluno inválido." };
+  if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+    return { error: "Indica um email válido." };
+  }
+  if (isSyntheticStudentEmail(newEmail)) {
+    return { error: "Usa o email real da família, não um email interno da plataforma." };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: student } = await supabase.from("Student").select("id, userId").eq("id", studentId).maybeSingle();
+  if (!student) return { error: "Aluno não encontrado." };
+
+  const { data: user } = await supabase.from("User").select("id, authUserId, email").eq("id", student.userId).maybeSingle();
+  if (!user?.authUserId) return { error: "Utilizador de autenticação não encontrado." };
+
+  const { data: collision } = await supabase
+    .from("User")
+    .select("id")
+    .ilike("email", newEmail)
+    .neq("id", user.id)
+    .maybeSingle();
+  if (collision) return { error: "Já existe outra conta com este email." };
+
+  const { error: authError } = await supabase.auth.admin.updateUserById(user.authUserId, {
+    email: newEmail,
+    email_confirm: true,
+  });
+  if (authError) return { error: authError.message };
+
+  const { error: userError } = await supabase.from("User").update({ email: newEmail }).eq("id", user.id);
+  if (userError) return { error: userError.message };
+
+  await supabase.from("Student").update({ syntheticLoginEmail: false }).eq("id", studentId);
+
+  revalidatePath("/admin/alunos");
+  revalidatePath(`/admin/alunos/${studentId}`);
+  return { success: true };
+}
+
 export type DeleteStudentResult = { error?: string };
 
 /**

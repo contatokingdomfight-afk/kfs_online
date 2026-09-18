@@ -30,7 +30,7 @@ export async function CoachAlunoAdminEnrollmentSection({ studentId }: Props) {
     supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
     supabase
       .from("Student")
-      .select("id, userId, status, planId, primaryModality, schoolId, adminGrantedFullAccess")
+      .select("id, userId, status, planId, primaryModality, schoolId, adminGrantedFullAccess, syntheticLoginEmail")
       .eq("id", studentId)
       .single(),
   ]);
@@ -140,6 +140,8 @@ export async function CoachAlunoAdminEnrollmentSection({ studentId }: Props) {
           (student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess
         )}
         editedUserRole={user?.role}
+        initialLoginEmail={user?.email ?? null}
+        initialSyntheticLoginEmail={Boolean((student as { syntheticLoginEmail?: boolean }).syntheticLoginEmail)}
       />
 
       <StudentInsuranceSection

@@ -18,6 +18,7 @@ export default async function AdminAlunoContratoPage({ params }: Props) {
       studentId={studentId}
       printComprovativoHref={`${base}/comprovativo`}
       printContratoHref={`${base}/contrato/imprimir`}
+      showAdminSignShortcut
     />
   );
 }

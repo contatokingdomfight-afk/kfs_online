@@ -8,10 +8,12 @@ import {
   setStudentFullAccess,
   clearStudentPlanAccess,
   promoteStudentToRole,
+  changeStudentLoginEmail,
   type UpdateStudentResult,
   type SetFullAccessResult,
   type ClearStudentPlanResult,
   type PromoteStudentResult,
+  type ChangeStudentLoginEmailResult,
 } from "../actions";
 import { getTranslations } from "@/lib/i18n";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
@@ -93,16 +95,23 @@ export function AdminAlunoQuickActions({
   initialPlanId,
   initialAdminGrantedFullAccess = false,
   editedUserRole,
+  initialLoginEmail,
+  initialSyntheticLoginEmail = false,
 }: {
   studentId: string;
   initialPlanId: string;
   initialAdminGrantedFullAccess?: boolean;
   /** Papel na BD do utilizador deste registo de aluno (não o admin logado). */
   editedUserRole: string | null | undefined;
+  /** Email de login actual (User.email) — para mostrar/trocar quando é um email interno (Kids). */
+  initialLoginEmail?: string | null;
+  /** true quando o email actual é o gerado internamente (@alunos.kingdomfight.pt). */
+  initialSyntheticLoginEmail?: boolean;
 }) {
   const [fullAccessState, fullAccessFormAction] = useFormState(setStudentFullAccess, null as SetFullAccessResult | null);
   const [clearPlanState, clearPlanFormAction] = useFormState(clearStudentPlanAccess, null as ClearStudentPlanResult | null);
   const [promoteState, promoteFormAction] = useFormState(promoteStudentToRole, null as PromoteStudentResult | null);
+  const [emailState, emailFormAction] = useFormState(changeStudentLoginEmail, null as ChangeStudentLoginEmailResult | null);
   const router = useRouter();
 
   const roleNorm = String(editedUserRole ?? "")
@@ -119,6 +128,9 @@ export function AdminAlunoQuickActions({
   useEffect(() => {
     if (promoteState?.success) router.refresh();
   }, [promoteState?.success, router]);
+  useEffect(() => {
+    if (emailState?.success) router.refresh();
+  }, [emailState?.success, router]);
 
   return (
     <div
@@ -246,6 +258,54 @@ export function AdminAlunoQuickActions({
           <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{promoteState.error}</p>
         )}
       </div>
+
+      {initialSyntheticLoginEmail && (
+        <div
+          style={{
+            padding: "clamp(12px, 3vw, 14px)",
+            background: "var(--surface)",
+            borderRadius: "var(--radius-md)",
+            borderLeft: "3px solid var(--warning, #d97706)",
+          }}
+        >
+          <p style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+            Email de login (interno)
+          </p>
+          <p style={{ margin: "0 0 10px 0", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.55 }}>
+            Este aluno entra com um email interno gerado pela plataforma (
+            <code style={{ fontSize: 11 }}>{initialLoginEmail}</code>) — típico de sócios Kids sem email
+            próprio. Se passar a um plano onde a família quer entrar com o email real dela (ex.: ao passar
+            para um plano adulto), troca aqui — fica a mesma conta e o mesmo histórico, só muda o email de
+            login. Depois, a família define uma password nova através de «Esqueci a senha» nesse email.
+          </p>
+          <form
+            action={emailFormAction}
+            style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-start" }}
+          >
+            <input type="hidden" name="studentId" value={studentId} />
+            <input
+              type="email"
+              name="newEmail"
+              placeholder="email.real@gmail.com"
+              required
+              className="input"
+              style={{ flex: "1 1 220px", minWidth: 0 }}
+            />
+            <button type="submit" className="btn" style={{ fontSize: 14, padding: "8px 14px", backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)" }}>
+              Trocar email de login
+            </button>
+          </form>
+          {emailState?.success && (
+            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--success)" }}>
+              Email de login atualizado. A família já pode entrar com o novo email (via «Esqueci a senha»
+              para definir a password).
+            </p>
+          )}
+          {emailState?.error && (
+            <p style={{ margin: "8px 0 0 0", fontSize: 13, color: "var(--danger)" }}>{emailState.error}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

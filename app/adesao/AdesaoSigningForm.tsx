@@ -13,10 +13,31 @@ type Props = {
   isMinor: boolean;
   planName: string;
   modalityLabel: string | null;
+  /** Acção a chamar ao assinar; por omissão a do próprio aluno (sessão). O admin passa uma
+   * variante ligada ao `studentId` alvo (ver app/admin/alunos/[id]/contrato/assinar). */
+  action?: (
+    prevState: SignAdesaoDocumentsResult | null,
+    formData: FormData
+  ) => Promise<SignAdesaoDocumentsResult>;
+  /** Endpoint de upload da assinatura; por omissão o do próprio aluno (sessão). */
+  signatureUploadUrl?: string;
+  /** Id do aluno alvo, só necessário no fluxo do admin — vai no upload da assinatura, que
+   * não tem sessão de aluno para o admin resolver sozinho. */
+  studentId?: string;
+  /** Link "Voltar ao comprovativo"; por omissão o passo 1 do próprio /adesao. */
+  backHref?: string;
 };
 
-export function AdesaoSigningForm({ isMinor, planName, modalityLabel }: Props) {
-  const [state, formAction] = useFormState(signAdesaoDocuments, null as SignAdesaoDocumentsResult | null);
+export function AdesaoSigningForm({
+  isMinor,
+  planName,
+  modalityLabel,
+  action = signAdesaoDocuments,
+  signatureUploadUrl = "/api/adesao/signature",
+  studentId,
+  backHref = "/adesao?passo=1",
+}: Props) {
+  const [state, formAction] = useFormState(action, null as SignAdesaoDocumentsResult | null);
   const formRef = useRef<HTMLFormElement>(null);
   const sigPadRef = useRef<SignaturePadHandle>(null);
   /** true só na 2.ª chamada de onSubmit (disparada por requestSubmit() após o upload) — deixa submeter normalmente. */
@@ -55,7 +76,8 @@ export function AdesaoSigningForm({ isMinor, planName, modalityLabel }: Props) {
       }
       const body = new FormData();
       body.append("file", blob, "signature.png");
-      const res = await fetch("/api/adesao/signature", { method: "POST", body });
+      if (studentId) body.append("studentId", studentId);
+      const res = await fetch(signatureUploadUrl, { method: "POST", body });
       const json = await res.json();
       if (!res.ok) {
         setLocalError(json.error ?? "Falha ao guardar a assinatura.");
@@ -160,7 +182,7 @@ export function AdesaoSigningForm({ isMinor, planName, modalityLabel }: Props) {
       ) : null}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-        <Link href="/adesao?passo=1" className="btn btn-secondary" style={{ textDecoration: "none" }}>
+        <Link href={backHref} className="btn btn-secondary" style={{ textDecoration: "none" }}>
           Voltar ao comprovativo
         </Link>
         <button type="submit" className="btn btn-primary" disabled={uploading}>

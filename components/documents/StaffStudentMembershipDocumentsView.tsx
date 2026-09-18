@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
-import { getInsuranceSettings } from "@/lib/insurance-settings";
-import { loadEnrollmentFormPrefill, type EnrollmentFormRow } from "@/lib/enrollment-form";
+import { getInsuranceSettings, isMembershipAgreementCurrent } from "@/lib/insurance-settings";
+import { isEnrollmentFormCurrent, loadEnrollmentFormPrefill, type EnrollmentFormRow } from "@/lib/enrollment-form";
 import { MembershipDocumentsReadView } from "@/components/membership/MembershipDocumentsReadView";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
 
@@ -10,6 +11,8 @@ type Props = {
   printComprovativoHref: string;
   printContratoHref: string;
   locale?: "pt" | "en";
+  /** Mostra o botão "Preencher e assinar (presencial)" quando há algo pendente — só na ficha de admin. */
+  showAdminSignShortcut?: boolean;
 };
 
 /** Vista colapsável de comprovativo, condições gerais e termo — para admin/coach na ficha do aluno. */
@@ -18,6 +21,7 @@ export async function StaffStudentMembershipDocumentsView({
   printComprovativoHref,
   printContratoHref,
   locale = "pt",
+  showAdminSignShortcut = false,
 }: Props) {
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -45,8 +49,28 @@ export async function StaffStudentMembershipDocumentsView({
   const prefill = userId ? await loadEnrollmentFormPrefill(supabase, studentId, userId) : null;
   const schoolSignatures = await getActiveSchoolSignatures();
 
+  const agreementCurrent = isMembershipAgreementCurrent(agreement, settings.membershipAgreementVersion);
+  const formCurrent = isEnrollmentFormCurrent(enrollmentForm, settings.enrollmentFormVersion);
+  const waiverSigned = Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned);
+  const hasPendingDocuments = !agreementCurrent || !formCurrent || !waiverSigned;
+
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
+      {showAdminSignShortcut && hasPendingDocuments ? (
+        <div style={{ marginBottom: 16 }}>
+          <Link
+            href={`/admin/alunos/${studentId}/contrato/assinar`}
+            className="btn btn-primary"
+            style={{ textDecoration: "none", display: "inline-block" }}
+          >
+            ✍️ Preencher e assinar (presencial)
+          </Link>
+          <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+            Para alunos sem acesso próprio à plataforma (ex.: sócios Kids) — preenche com o sócio ou
+            encarregado de educação presente.
+          </p>
+        </div>
+      ) : null}
       <MembershipDocumentsReadView
       locale={locale}
       showIncompleteBanner={false}

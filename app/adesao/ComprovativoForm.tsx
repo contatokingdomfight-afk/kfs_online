@@ -21,6 +21,12 @@ import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
 
 type Props = {
   prefill: EnrollmentFormPrefill;
+  /** Acção a chamar ao submeter; por omissão a do próprio aluno (sessão). O admin passa uma
+   * variante ligada ao `studentId` alvo (ver app/admin/alunos/[id]/contrato/assinar). */
+  action?: (
+    prevState: SaveEnrollmentFormResult | null,
+    formData: FormData
+  ) => Promise<SaveEnrollmentFormResult>;
 };
 
 const STEP_LABELS = ["Os teus dados", "Plano e pagamento", "Seguro e saúde", "Consentimentos"];
@@ -70,8 +76,8 @@ function StepProgress({ step }: { step: number }) {
   );
 }
 
-export function ComprovativoForm({ prefill }: Props) {
-  const [state, formAction] = useFormState(saveEnrollmentForm, null as SaveEnrollmentFormResult | null);
+export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props) {
+  const [state, formAction] = useFormState(action, null as SaveEnrollmentFormResult | null);
   const e = prefill.existing;
   const initialPayment =
     e.paymentMethod === "CASH" || e.paymentMethod === "TRANSFER"

@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
@@ -10,15 +11,20 @@ import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import { isEnrollmentFormCurrent } from "@/lib/enrollment-form";
 import { invalidateStudentGateCache } from "@/lib/student-gate-cache";
 
-export type SignAdesaoDocumentsResult = { error?: string };
+export type SignAdesaoDocumentsResult = { error?: string; planId?: string | null };
 
-export async function signAdesaoDocuments(
-  _prev: SignAdesaoDocumentsResult | null,
+/**
+ * Núcleo da assinatura (Termo de Responsabilidade + Condições Gerais), independente de
+ * quem submete — o próprio aluno em `/adesao`, ou o admin em
+ * `/admin/alunos/[id]/contrato/assinar` (ex.: sócios Kids sem acesso próprio à plataforma,
+ * com o encarregado de educação presente). `supabase` já vem com o cliente certo para o
+ * chamador (sessão do aluno vs. admin service-role).
+ */
+export async function applyAdesaoSigning(
+  supabase: SupabaseClient,
+  studentId: string,
   formData: FormData
 ): Promise<SignAdesaoDocumentsResult> {
-  const studentId = await getCurrentStudentId();
-  if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
-
   const signatureName = (formData.get("signatureName") as string)?.trim();
   const guardianName = (formData.get("guardianName") as string)?.trim() || null;
   const accepted = formData.get("accepted") === "on" || formData.get("accepted") === "true";
@@ -26,13 +32,12 @@ export async function signAdesaoDocuments(
 
   if (!accepted) return { error: "Deves aceitar as condições para continuar." };
   if (!signatureName || signatureName.length < 3) {
-    return { error: "Indica o teu nome completo como assinatura." };
+    return { error: "Indica o nome completo como assinatura." };
   }
   if (!signatureImageUrl) {
     return { error: "Assina no espaço indicado (desenha com o dedo ou o rato) antes de continuar." };
   }
 
-  const supabase = await createClient();
   const settings = await getInsuranceSettings(supabase);
 
   const { data: student } = await supabase
@@ -136,6 +141,20 @@ export async function signAdesaoDocuments(
   // preso a saltar entre /adesao e /dashboard/documentos-adesao até a cache expirar.
   await invalidateStudentGateCache(studentId);
 
+  return { planId };
+}
+
+export async function signAdesaoDocuments(
+  _prev: SignAdesaoDocumentsResult | null,
+  formData: FormData
+): Promise<SignAdesaoDocumentsResult> {
+  const studentId = await getCurrentStudentId();
+  if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
+
+  const supabase = await createClient();
+  const result = await applyAdesaoSigning(supabase, studentId, formData);
+  if (result.error) return result;
+
   revalidatePath("/adesao");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/perfil");
@@ -143,5 +162,5 @@ export async function signAdesaoDocuments(
   revalidatePath("/dashboard/financeiro");
   // Sem plano (aula avulsa): paga por sessão, não por mensalidade — não faz sentido
   // mandar para o gate de pagamento de mensalidade.
-  redirect(planId ? "/dashboard/financeiro?pagamento_escola=1" : "/dashboard");
+  redirect(result.planId ? "/dashboard/financeiro?pagamento_escola=1" : "/dashboard");
 }

@@ -2,11 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
-import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import {
   isEnrollmentFormCurrent,
   ALLOWED_PAYMENT_PROOF_TYPES,
@@ -23,14 +23,17 @@ function checkboxOn(formData: FormData, name: string): boolean {
   return v === "on" || v === "true";
 }
 
-export async function saveEnrollmentForm(
-  _prev: SaveEnrollmentFormResult | null,
+/**
+ * Núcleo da gravação do comprovativo, independente de quem o preenche (o próprio aluno
+ * em `/adesao`, ou o admin em `/admin/alunos/[id]/contrato/assinar` — ex.: sócios Kids
+ * sem acesso próprio à plataforma). `supabase` já vem com o cliente certo para o chamador
+ * (sessão do aluno vs. admin service-role).
+ */
+export async function applyEnrollmentFormSubmission(
+  supabase: SupabaseClient,
+  studentId: string,
   formData: FormData
 ): Promise<SaveEnrollmentFormResult> {
-  const studentId = await getCurrentStudentId();
-  if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
-
-  const supabase = await createClient();
   const settings = await getInsuranceSettings(supabase);
 
   const { data: student } = await supabase
@@ -171,6 +174,20 @@ export async function saveEnrollmentForm(
   if (profile?.id) {
     await supabase.from("StudentProfile").update(profilePatch).eq("id", profile.id);
   }
+
+  return {};
+}
+
+export async function saveEnrollmentForm(
+  _prev: SaveEnrollmentFormResult | null,
+  formData: FormData
+): Promise<SaveEnrollmentFormResult> {
+  const studentId = await getCurrentStudentId();
+  if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
+
+  const supabase = await createClient();
+  const result = await applyEnrollmentFormSubmission(supabase, studentId, formData);
+  if (result.error) return result;
 
   revalidatePath("/adesao");
   revalidatePath("/dashboard/documentos-adesao");

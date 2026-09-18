@@ -22,13 +22,13 @@ export default async function AdminAlunoPlanoSeguroPage({ params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, planId, adminGrantedFullAccess")
+    .select("id, userId, planId, adminGrantedFullAccess, syntheticLoginEmail")
     .eq("id", studentId)
     .single();
 
   if (!student) return null;
 
-  const { data: user } = await supabase.from("User").select("role").eq("id", student.userId).maybeSingle();
+  const { data: user } = await supabase.from("User").select("role, email").eq("id", student.userId).maybeSingle();
 
   const [{ data: waiverRow }, { data: agreementRow }, { data: enrollmentRow }, { data: coverageRow }, insuranceSettings] =
     await Promise.all([
@@ -73,6 +73,8 @@ export default async function AdminAlunoPlanoSeguroPage({ params }: Props) {
         initialPlanId={student.planId ?? ""}
         initialAdminGrantedFullAccess={Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess)}
         editedUserRole={user?.role}
+        initialLoginEmail={user?.email ?? null}
+        initialSyntheticLoginEmail={Boolean((student as { syntheticLoginEmail?: boolean }).syntheticLoginEmail)}
       />
 
       <StudentInsuranceSection
