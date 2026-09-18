@@ -138,6 +138,8 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-secondary"
+            title="Lembrar pagamento em atraso (WhatsApp)"
+            aria-label="Lembrar pagamento em atraso (WhatsApp)"
             style={{
               textDecoration: "none",
               display: "inline-flex",
@@ -147,7 +149,7 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
               fontSize: "clamp(13px, 3.2vw, 14px)",
             }}
           >
-            <span aria-hidden>💬</span> Lembrar pagamento (WhatsApp)
+            <span aria-hidden>💬</span> WhatsApp
           </a>
         ) : null}
         {documentsPendingWhatsAppUrl ? (
@@ -156,6 +158,8 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-secondary"
+            title="Lembrar documentos de adesão pendentes (WhatsApp)"
+            aria-label="Lembrar documentos de adesão pendentes (WhatsApp)"
             style={{
               textDecoration: "none",
               display: "inline-flex",
@@ -165,7 +169,7 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
               fontSize: "clamp(13px, 3.2vw, 14px)",
             }}
           >
-            <span aria-hidden>📝</span> Lembrar documentos pendentes (WhatsApp)
+            <span aria-hidden>📝</span> WhatsApp
           </a>
         ) : null}
       </div>
