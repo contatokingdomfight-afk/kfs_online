@@ -8,6 +8,7 @@ import { FINAL_DECLARATIONS } from "@/lib/enrollment-form";
 import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
 import { WAIVER_BODY_PT } from "@/lib/waiver-content";
 import { SignaturePad, type SignaturePadHandle } from "@/components/SignaturePad";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 type Props = {
   isMinor: boolean;
@@ -100,6 +101,7 @@ export function AdesaoSigningForm({
       onSubmit={handleSubmit}
       style={{ maxWidth: 640, width: "100%", display: "flex", flexDirection: "column", gap: 16 }}
     >
+      <FormLoadingModal message="A guardar assinatura e contrato…" />
       <input type="hidden" name="signatureImageUrl" value={signatureImageUrl} readOnly />
       <div className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", fontSize: 14, lineHeight: 1.5 }}>
         <p style={{ margin: "0 0 6px", color: "var(--text-secondary)" }}>

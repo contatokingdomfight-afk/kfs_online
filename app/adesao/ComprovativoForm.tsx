@@ -8,6 +8,7 @@ import { saveEnrollmentForm, type SaveEnrollmentFormResult } from "./enrollment-
 import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
 import { ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER } from "@/lib/sports-insurance-coverage";
 import { CopyTextButton } from "@/components/ui/CopyTextButton";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import {
   GYM_ENROLLMENT_INFO,
   GDPR_CONSENT_INTRO,
@@ -126,6 +127,7 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props
       action={formAction}
       style={{ maxWidth: 640, width: "100%", minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}
     >
+      <FormLoadingModal message="A guardar comprovativo…" />
       <div ref={formTopRef} />
       <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
         Estes dados são exigidos para o contrato de adesão e o seguro desportivo obrigatório — leva cerca de 3
