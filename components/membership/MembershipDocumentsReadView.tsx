@@ -109,15 +109,10 @@ export function MembershipDocumentsReadView({
               ? "Ainda não concluíste todos os passos da adesão. Completa o comprovativo e assina o contrato para activar a tua inscrição."
               : "You have not completed all membership steps yet."}
           </p>
-          {hasPlan ? (
-            <Link href="/adesao" className="btn btn-primary" style={{ textDecoration: "none", display: "inline-block" }}>
-              {pt ? "Continuar adesão" : "Continue membership"}
-            </Link>
-          ) : (
-            <Link href="/escolher-plano" className="btn btn-primary" style={{ textDecoration: "none", display: "inline-block" }}>
-              {pt ? "Escolher plano" : "Choose a plan"}
-            </Link>
-          )}
+          {/* /adesao já funciona sem plano atribuído (aluno de aula avulsa inclusive) — sempre o mesmo destino. */}
+          <Link href="/adesao" className="btn btn-primary" style={{ textDecoration: "none", display: "inline-block" }}>
+            {pt ? "Continuar adesão" : "Continue membership"}
+          </Link>
         </section>
       ) : null}
 

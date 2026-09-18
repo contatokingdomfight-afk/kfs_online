@@ -5,7 +5,10 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { getFamilyContext } from "@/lib/family-group";
 import { computeFamilyGroupMonthlyTuition, type FamilyPricingBreakdown } from "@/lib/family-tuition";
-import { buildPaymentOverdueMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
+import { buildDocumentsPendingMessage, buildPaymentOverdueMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
+import { getInsuranceSettings, isMembershipAgreementCurrent } from "@/lib/insurance-settings";
+import { isEnrollmentFormCurrent } from "@/lib/enrollment-form";
+import { getPublicOrigin } from "@/lib/site-public-url";
 import { AdminAlunoTabs } from "./AdminAlunoTabs";
 
 const formatEur = (n: number) => `€${n.toFixed(2).replace(".", ",")}`;
@@ -58,6 +61,25 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
   const overdueWhatsAppUrl =
     student.status === "INADIMPLENTE" && studentProfile?.phone
       ? buildWhatsAppUrl(studentProfile.phone, buildPaymentOverdueMessage((user?.name ?? "").split(" ")[0] ?? ""))
+      : null;
+
+  const [settings, { data: agreement }, { data: waiver }, { data: enrollmentForm }] = await Promise.all([
+    getInsuranceSettings(supabase),
+    supabase.from("StudentMembershipAgreement").select("agreementSigned, agreementVersion").eq("studentId", studentId).maybeSingle(),
+    supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", studentId).maybeSingle(),
+    supabase.from("StudentEnrollmentForm").select("formCompleted, formVersion").eq("studentId", studentId).maybeSingle(),
+  ]);
+  const hasPendingDocuments =
+    !isMembershipAgreementCurrent(agreement, settings.membershipAgreementVersion) ||
+    !Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned) ||
+    !isEnrollmentFormCurrent(enrollmentForm, settings.enrollmentFormVersion);
+
+  const documentsPendingWhatsAppUrl =
+    student.status === "ATIVO" && hasPendingDocuments && studentProfile?.phone
+      ? buildWhatsAppUrl(
+          studentProfile.phone,
+          buildDocumentsPendingMessage((user?.name ?? "").split(" ")[0] ?? "", `${getPublicOrigin()}/adesao`)
+        )
       : null;
 
   const familyCtx = await getFamilyContext(supabase, studentId);
@@ -123,6 +145,24 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
             }}
           >
             <span aria-hidden>💬</span> Lembrar pagamento (WhatsApp)
+          </a>
+        ) : null}
+        {documentsPendingWhatsAppUrl ? (
+          <a
+            href={documentsPendingWhatsAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secondary"
+            style={{
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 12px",
+              fontSize: "clamp(13px, 3.2vw, 14px)",
+            }}
+          >
+            <span aria-hidden>📝</span> Lembrar documentos pendentes (WhatsApp)
           </a>
         ) : null}
       </div>

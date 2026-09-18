@@ -24,6 +24,12 @@ export function buildPaymentOverdueMessage(studentFirstName: string): string {
   return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Notamos que a tua mensalidade está em atraso — passa na secretaria ou regulariza o pagamento para manteres o acesso às aulas e à plataforma. Qualquer dúvida, é só responder por aqui. Obrigado! 🥋`;
 }
 
+/** Mensagem para lembrar documentos de adesão pendentes (comprovativo/contrato/termo), com link direto para assinar. */
+export function buildDocumentsPendingMessage(studentFirstName: string, signingUrl: string): string {
+  const name = studentFirstName.trim() || "tudo bem";
+  return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Reparámos que ainda tens documentos de adesão por ler e assinar (comprovativo, condições gerais e termo de responsabilidade). Podes fazer isso aqui: ${signingUrl}. Qualquer dúvida, é só responder por aqui. Obrigado! 🥋`;
+}
+
 /**
  * Mensagem para confirmar presença numa aula experimental. `whenLabel` por omissão é "hoje";
  * passa uma data (ex.: "seg., 14 set.") para aulas marcadas para outro dia.

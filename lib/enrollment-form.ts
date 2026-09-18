@@ -121,20 +121,16 @@ export async function loadEnrollmentFormPrefill(
     supabase.from("StudentEnrollmentForm").select("*").eq("studentId", studentId).maybeSingle(),
   ]);
 
-  const planId = (student as { planId?: string | null } | null)?.planId;
-  if (!planId) return null;
+  const planId = (student as { planId?: string | null } | null)?.planId ?? null;
 
-  const { data: plan } = await supabase
-    .from("Plan")
-    .select("name, priceMonthly, modalityScope")
-    .eq("id", planId)
-    .maybeSingle();
+  const { data: plan } = planId
+    ? await supabase.from("Plan").select("name, priceMonthly, modalityScope").eq("id", planId).maybeSingle()
+    : { data: null };
 
   const fees = await getStudentOnboardingFeesState(supabase, studentId);
-  const monthlyAmount = resolvePlanMonthlyTuition(
-    planId,
-    Number((plan as { priceMonthly?: number } | null)?.priceMonthly ?? 0)
-  );
+  const monthlyAmount = planId
+    ? resolvePlanMonthlyTuition(planId, Number((plan as { priceMonthly?: number } | null)?.priceMonthly ?? 0))
+    : 0;
 
   const primaryModality = (student as { primaryModality?: string | null } | null)?.primaryModality ?? null;
   const modalityLabel = primaryModality ? MODALITY_LABELS[primaryModality] ?? primaryModality : null;
@@ -150,9 +146,9 @@ export async function loadEnrollmentFormPrefill(
     email: user?.email ?? "",
     dateOfBirth,
     phone: (profile as { phone?: string | null } | null)?.phone ?? "",
-    planName: (plan as { name?: string } | null)?.name ?? "Plano",
+    planName: planId ? (plan as { name?: string } | null)?.name ?? "Plano" : "Aula avulsa (sem plano mensal)",
     primaryModality,
-    modalityScope: (plan as { modalityScope?: string | null } | null)?.modalityScope ?? null,
+    modalityScope: planId ? (plan as { modalityScope?: string | null } | null)?.modalityScope ?? null : null,
     modalityLabel,
     monthlyAmount,
     enrollmentAmount: fees.enrollmentAmount,

@@ -42,7 +42,6 @@ export async function signAdesaoDocuments(
     .maybeSingle();
 
   const planId = (student as { planId?: string | null } | null)?.planId ?? null;
-  if (!planId) return { error: "Escolhe um plano antes de assinar o contrato de adesão." };
 
   const { data: enrollmentForm } = await supabase
     .from("StudentEnrollmentForm")
@@ -142,5 +141,7 @@ export async function signAdesaoDocuments(
   revalidatePath("/dashboard/perfil");
   revalidatePath("/dashboard/documentos-adesao");
   revalidatePath("/dashboard/financeiro");
-  redirect("/dashboard/financeiro?pagamento_escola=1");
+  // Sem plano (aula avulsa): paga por sessão, não por mensalidade — não faz sentido
+  // mandar para o gate de pagamento de mensalidade.
+  redirect(planId ? "/dashboard/financeiro?pagamento_escola=1" : "/dashboard");
 }

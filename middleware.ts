@@ -65,6 +65,20 @@ function isAdesaoPath(pathname: string) {
   return pathname === "/adesao" || pathname.startsWith("/adesao/");
 }
 
+/** Espelha lib/enrollment-form.ts#isEnrollmentFormCurrent — duplicado aqui (em vez de importar
+ * lib/enrollment-form.ts) para não puxar as suas dependências pesadas (lib/family-tuition,
+ * lib/lesson-utils) para o bundle Edge do middleware. Manter em sincronia se a lógica de
+ * versão do comprovativo mudar. */
+function isEnrollmentFormCurrentLite(
+  row: { formCompleted?: boolean; formVersion?: string | null } | null | undefined,
+  currentVersion: string
+): boolean {
+  if (!row?.formCompleted) return false;
+  const version = row.formVersion ?? "";
+  if (!version || version === "legacy") return true;
+  return version === currentVersion;
+}
+
 /** Free tier: explora agenda (só leitura), biblioteca em pré-visualização e perfil; check-in mostra mensagem se sem plano. */
 function isStudentFreeTierPath(pathname: string) {
   if (pathname === "/dashboard") return true;
@@ -327,32 +341,37 @@ export async function middleware(request: NextRequest) {
     let gate = edgeCacheGet<{ onboardingDone: boolean; documentsSigned: boolean; hasAccess: boolean }>(gateCacheKey);
 
     if (!gate) {
-      /** Módulo de seguro só é preciso com plano atribuído; import dinâmico mantém o bundle Edge leve. */
-      const insuranceSettingsPromise = student.planId
-        ? import("@/lib/insurance-settings").then(async (mod) => {
-            let settings = edgeCacheGet<Awaited<ReturnType<typeof mod.getInsuranceSettings>>>("insurance-settings:global");
-            if (!settings) {
-              settings = await mod.getInsuranceSettings(supabase);
-              edgeCacheSet("insurance-settings:global", settings, INSURANCE_SETTINGS_CACHE_TTL_MS);
-            }
-            return { mod, settings };
-          })
-        : Promise.resolve(null);
+      /** Precisa de InsuranceSettings mesmo sem plano (para validar versão do comprovativo/contrato
+       * de alunos de aula avulsa); import dinâmico mantém o bundle Edge leve. */
+      const insuranceSettingsPromise = import("@/lib/insurance-settings").then(async (mod) => {
+        let settings = edgeCacheGet<Awaited<ReturnType<typeof mod.getInsuranceSettings>>>("insurance-settings:global");
+        if (!settings) {
+          settings = await mod.getInsuranceSettings(supabase);
+          edgeCacheSet("insurance-settings:global", settings, INSURANCE_SETTINGS_CACHE_TTL_MS);
+        }
+        return { mod, settings };
+      });
 
-      const [{ data: profile }, { data: waiver }, { data: agreement }, insuranceResult] = await Promise.all([
-        supabase
-          .from("StudentProfile")
-          .select("hasCompletedOnboarding")
-          .eq("studentId", student.id)
-          .maybeSingle(),
-        supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", student.id).maybeSingle(),
-        supabase
-          .from("StudentMembershipAgreement")
-          .select("agreementSigned, agreementVersion, agreementSignedAt")
-          .eq("studentId", student.id)
-          .maybeSingle(),
-        insuranceSettingsPromise,
-      ]);
+      const [{ data: profile }, { data: waiver }, { data: agreement }, { data: enrollmentForm }, insuranceResult] =
+        await Promise.all([
+          supabase
+            .from("StudentProfile")
+            .select("hasCompletedOnboarding")
+            .eq("studentId", student.id)
+            .maybeSingle(),
+          supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", student.id).maybeSingle(),
+          supabase
+            .from("StudentMembershipAgreement")
+            .select("agreementSigned, agreementVersion, agreementSignedAt")
+            .eq("studentId", student.id)
+            .maybeSingle(),
+          supabase
+            .from("StudentEnrollmentForm")
+            .select("formCompleted, formVersion")
+            .eq("studentId", student.id)
+            .maybeSingle(),
+          insuranceSettingsPromise,
+        ]);
 
       const onboardingDone = Boolean(
         (profile as { hasCompletedOnboarding?: boolean } | null)?.hasCompletedOnboarding
@@ -361,15 +380,24 @@ export async function middleware(request: NextRequest) {
 
       let documentsSigned = false;
       let hasAccess = false;
-      if (student.planId && onboardingDone && insuranceResult) {
+      if (onboardingDone) {
         const { mod, settings } = insuranceResult;
         const agreementCurrent = mod.isMembershipAgreementCurrent(
           agreement as { agreementSigned?: boolean; agreementVersion?: string | null } | null,
           settings.membershipAgreementVersion
         );
-        documentsSigned = waiverSigned && agreementCurrent;
+        const formCurrent = isEnrollmentFormCurrentLite(
+          enrollmentForm as { formCompleted?: boolean; formVersion?: string | null } | null,
+          settings.enrollmentFormVersion
+        );
+        // Comprovativo incluído de propósito: são os mesmos 3 documentos que o admin vê em
+        // /admin/alunos/[id]/contrato — sem isto, um aluno podia ter waiver+contrato assinados
+        // mas nunca ter preenchido o comprovativo e ainda assim passar no gate.
+        documentsSigned = waiverSigned && agreementCurrent && formCurrent;
 
-        if (documentsSigned) {
+        // hasAccess (gate de pagamento de mensalidade) só se aplica a quem tem plano —
+        // aluno sem plano paga por sessão avulsa (lib/extra-sessions-grant.ts), fora deste gate.
+        if (student.planId && documentsSigned) {
           const { studentHasPaymentUnlock } = await import("@/lib/family-payment-gate");
           const agreementSignedAt =
             (agreement as { agreementSignedAt?: string | null } | null)?.agreementSignedAt ?? null;
@@ -450,6 +478,45 @@ export async function middleware(request: NextRequest) {
       }
 
       return response;
+    }
+
+    /**
+     * Aluno sem plano (drop-in/avulso, ou experimental convertido sem plano atribuído) mas já
+     * onboarded: sem este bloco cai direto no free-tier abaixo (que inclui /dashboard) sem
+     * nunca ser confrontado com comprovativo/contrato/termo — alunos criados via
+     * drop-in-actions.ts entram com StudentProfile.hasCompletedOnboarding já true e zero
+     * documentos assinados.
+     *
+     * Espelha o bloco `student.planId && onboardingDone` acima: mesmas excepções (/adesao,
+     * /api/adesao/, /dashboard/perfil). /escolher-plano fica de propósito FORA da excepção —
+     * um aluno sem plano com documentos por assinar é enviado para /adesao primeiro, tal como
+     * já acontece hoje para quem tem plano e documentos pendentes tenta ir a /escolher-plano.
+     * Não consulta isStudentFreeTierPath/isStudentAllowedWithoutPlan de propósito, para a
+     * redirecção acontecer a partir de qualquer página (incl. /dashboard), como pedido.
+     *
+     * Não pode reintroduzir ciclo: /adesao já não bloqueia por falta de planId (ver
+     * app/adesao/page.tsx, enrollment-actions.ts, actions.ts), por isso esta página nunca
+     * manda este aluno de volta para /escolher-plano nem para /dashboard.
+     */
+    if (!student.planId && onboardingDone && !documentsSigned) {
+      if (
+        isAdesaoPath(pathname) ||
+        pathname.startsWith("/api/adesao/") ||
+        pathname === "/dashboard/perfil" ||
+        pathname.startsWith("/dashboard/perfil/")
+      ) {
+        return response;
+      }
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { error: "Assina os documentos de adesão antes de continuar." },
+          { status: 403 }
+        );
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = "/adesao";
+      url.search = "";
+      return redirectPreservingCookies(response, url);
     }
 
     if (isStudentAllowedWithoutPlan(pathname) || isStudentFreeTierPath(pathname)) {

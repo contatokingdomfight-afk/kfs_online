@@ -40,7 +40,6 @@ export async function saveEnrollmentForm(
     .maybeSingle();
 
   const planId = (student as { planId?: string | null } | null)?.planId ?? null;
-  if (!planId) return { error: "Escolhe um plano antes de preencher o comprovativo." };
 
   const idDocument = (formData.get("idDocument") as string)?.trim();
   const taxId = (formData.get("taxId") as string)?.trim();

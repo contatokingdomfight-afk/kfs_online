@@ -38,7 +38,6 @@ export default async function AdesaoPage({ searchParams }: Props) {
     supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", studentId).maybeSingle(),
   ]);
 
-  const planId = (student as { planId?: string | null } | null)?.planId ?? null;
   const agreementCurrent = isMembershipAgreementCurrent(agreement, settings.membershipAgreementVersion);
   const formCurrent = isEnrollmentFormCurrent(enrollmentForm, settings.enrollmentFormVersion);
   const waiverSigned = Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned);
@@ -46,8 +45,6 @@ export default async function AdesaoPage({ searchParams }: Props) {
   if (agreementCurrent && waiverSigned) {
     redirect("/dashboard/documentos-adesao");
   }
-
-  if (!planId) redirect("/escolher-plano");
 
   const userId = (student as { userId?: string } | null)?.userId;
   const prefill = userId ? await loadEnrollmentFormPrefill(supabase, studentId, userId) : null;
