@@ -55,7 +55,9 @@ export function dimensionCodeToGeneralDimension(
   if (
     upper.startsWith("MUAY_") ||
     upper.startsWith("BOX_") ||
-    upper.startsWith("KICKBOXING_")
+    upper.startsWith("KICKBOXING_") ||
+    upper.startsWith("BJJ_") ||
+    upper.startsWith("MMA_")
   )
     return "tecnico";
   return null;
