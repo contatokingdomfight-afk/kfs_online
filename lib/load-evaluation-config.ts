@@ -26,9 +26,14 @@ export async function loadAllEvaluationConfigs(
   return new Map(codes.map((mod, i) => [mod, configs[i]]));
 }
 
-/** Muay Thai e Kickboxing partilham a mesma estrutura de avaliação. */
-const MUAY_KICKBOXING_ALIAS: Record<string, string> = {
+/**
+ * Modalidades que reutilizam a estrutura de avaliação de outra (sem duplicar dados):
+ * Kickboxing e Muay Thai Kids avaliam-se como Muay Thai; Boxing Kids como Boxing.
+ */
+const EVALUATION_CONFIG_ALIAS: Record<string, string> = {
   KICKBOXING: "MUAY_THAI",
+  MTKIDS: "MUAY_THAI",
+  BKIDS: "BOXING",
 };
 
 /** Modalidades que usam SEMPRE EvaluationComponent (nunca config legado). */
@@ -36,7 +41,7 @@ const MODALITIES_USE_COMPONENTS = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] a
 
 /**
  * Carrega a configuração de avaliação para uma modalidade.
- * KICKBOXING usa a mesma config que MUAY_THAI (avaliação idêntica).
+ * KICKBOXING e MTKIDS usam a mesma config que MUAY_THAI; BKIDS a de BOXING (ver EVALUATION_CONFIG_ALIAS).
  * Para MUAY_THAI/BOXING/KICKBOXING/MMA: usa SEMPRE EvaluationComponent + EvaluationCriterion.
  * Para outras modalidades: fallback para ModalityEvaluationConfig (JSON legado).
  */
@@ -44,7 +49,7 @@ export async function loadEvaluationConfigForModality(
   supabase: SupabaseClient,
   modality: string
 ): Promise<ModalityEvaluationConfigPayload | null> {
-  const effectiveModality = MUAY_KICKBOXING_ALIAS[modality] ?? modality;
+  const effectiveModality = EVALUATION_CONFIG_ALIAS[modality] ?? modality;
   const useComponentsOnly = MODALITIES_USE_COMPONENTS.includes(effectiveModality as (typeof MODALITIES_USE_COMPONENTS)[number]);
 
   const { data: components } = await supabase
