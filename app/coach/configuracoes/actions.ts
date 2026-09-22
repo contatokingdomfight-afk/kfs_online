@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
 import { revalidatePath } from "next/cache";
@@ -15,6 +16,8 @@ export async function saveCoachProfile(
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Sessão inválida. Faz login." };
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Acesso negado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim() || null;
   const avatarRaw = (formData.get("avatarUrl") as string)?.trim() || null;

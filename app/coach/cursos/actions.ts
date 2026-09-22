@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const CATEGORIES = ["TECHNIQUE", "MINDSET", "PERFORMANCE"] as const;
@@ -12,6 +13,7 @@ export type CoachCourseFormResult = { error?: string };
 async function getAuthorizedCoachStudent() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) return null;
+  if (await adminPermissionError("admin:cursos:write")) return null;
 
   const supabase = createAdminClient();
   const { data: student } = await supabase

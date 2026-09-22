@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type CoCreatorResult = { error?: string };
@@ -14,6 +15,8 @@ export async function addCoCreator(
   if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) {
     return { error: "Não autorizado." };
   }
+  const permErr = await adminPermissionError("admin:cursos:write");
+  if (permErr) return { error: permErr };
 
   const courseId = (formData.get("courseId") as string)?.trim();
   const coachEmail = (formData.get("coachEmail") as string)?.trim().toLowerCase();
@@ -103,6 +106,8 @@ export async function removeCoCreator(
   if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) {
     return { error: "Não autorizado." };
   }
+  const permErr = await adminPermissionError("admin:cursos:write");
+  if (permErr) return { error: permErr };
 
   const courseId = (formData.get("courseId") as string)?.trim();
   const coCreatorId = (formData.get("coCreatorId") as string)?.trim();

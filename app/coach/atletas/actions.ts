@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { createClient } from "@/lib/supabase/server";
 import { notifyStudentOfNewCoachEvaluation } from "@/lib/notifications/in-app";
@@ -15,6 +16,8 @@ export async function updateAthlete(
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Não autorizado." };
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const athleteId = (formData.get("athleteId") as string)?.trim();
   const level = formData.get("level") as string;
@@ -59,6 +62,8 @@ export async function createComment(
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Não autorizado." };
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const coachId = await getCurrentCoachId();
   if (!coachId) return { error: "Apenas coaches podem adicionar comentários." };
@@ -108,6 +113,8 @@ export async function updateCommentVisibility(
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Não autorizado." };
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const commentId = (formData.get("commentId") as string)?.trim();
   const athleteId = (formData.get("athleteId") as string)?.trim();
@@ -163,6 +170,8 @@ export async function createEvaluation(
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Não autorizado." };
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const coachId = await getCurrentCoachId();
   if (dbUser.role === "COACH" && !coachId) return { error: "Perfil de coach não encontrado." };

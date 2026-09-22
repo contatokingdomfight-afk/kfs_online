@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
@@ -26,6 +27,8 @@ export async function saveStandaloneEvaluation(
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Sessão inválida." };
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Sem permissão." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   let currentCoachId = await getCurrentCoachId();
   if (dbUser.role === "COACH" && !currentCoachId) {
@@ -166,6 +169,8 @@ export async function saveStandaloneEvaluation(
 export async function getEvaluationById(evalId: string): Promise<EvaluationHistoryModalDetail | { error: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) return { error: "Sem permissão." };
+  const permErr = await adminPermissionError("admin:alunos:read");
+  if (permErr) return { error: permErr };
 
   const supabase = await createClient();
   const { data: evalRow, error: evalErr } = await supabase

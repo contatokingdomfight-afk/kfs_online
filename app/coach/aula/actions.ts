@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError, adminPermissionErrorOrSchoolAssistant } from "@/lib/permissions/assert";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { revalidatePath } from "next/cache";
 import { sendCheckInConfirmation } from "@/lib/notifications/email";
@@ -79,6 +80,8 @@ async function assertCoachCanManageLesson(
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN" && !schoolAssistant) {
     return { error: "Sem permissão." };
   }
+  const permErr = await adminPermissionErrorOrSchoolAssistant("admin:turmas:write");
+  if (permErr) return { error: permErr };
 
   if (schoolAssistant) {
     const { data: lesson } = await supabase.from("Lesson").select("schoolId").eq("id", lessonId).single();
@@ -112,6 +115,8 @@ export async function setAttendanceStatus(
   const schoolAssistant =
     dbUser.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabase, dbUser.id) : null;
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN" && !schoolAssistant) return { error: "Sem permissão." };
+  const permErr = await adminPermissionErrorOrSchoolAssistant("admin:turmas:write");
+  if (permErr) return { error: permErr };
 
   if (schoolAssistant) {
     const { data: att } = await supabase.from("Attendance").select("lessonId").eq("id", attendanceId).single();
@@ -290,6 +295,8 @@ export async function saveEvaluationFromLesson(
   if (assistantUser) return { error: "Treinadores assistentes não podem registar avaliações." };
 
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Sem permissão." };
+  const permErr = await adminPermissionError("admin:turmas:write");
+  if (permErr) return { error: permErr };
 
   const currentCoachId = await getCurrentCoachId();
   if (dbUser.role === "COACH" && !currentCoachId) return { error: "Perfil de coach não encontrado." };

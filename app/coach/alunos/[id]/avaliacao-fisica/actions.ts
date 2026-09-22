@@ -3,6 +3,7 @@
 import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { revalidatePath } from "next/cache";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
@@ -90,6 +91,8 @@ export async function savePhysicalAssessment(
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Sessão inválida." };
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN") return { error: "Sem permissão." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const coachId = await getCurrentCoachId();
   if (dbUser.role === "COACH" && !coachId) return { error: "Perfil de coach não encontrado." };

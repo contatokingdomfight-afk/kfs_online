@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 
@@ -30,9 +31,11 @@ async function assertCanManageAssistantForStudent(
     .maybeSingle();
   if (!student?.schoolId || !student.userId) return { ok: false, error: "Aluno não encontrado." };
 
-  if (dbUser.role === "ADMIN") return { ok: true, student };
+  if (dbUser.role !== "ADMIN" && dbUser.role !== "COACH") return { ok: false, error: "Sem permissão." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { ok: false, error: permErr };
 
-  if (dbUser.role !== "COACH") return { ok: false, error: "Sem permissão." };
+  if (dbUser.role === "ADMIN") return { ok: true, student };
 
   const coachId = await getCurrentCoachId();
   if (!coachId) return { ok: false, error: "Perfil de coach não encontrado." };

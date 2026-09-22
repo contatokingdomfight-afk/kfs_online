@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { getWeekStartMondayForDateInLisbon, getWeekStartMondayLisbon } from "@/lib/lisbon-week";
 import { getModalitiesForWeekThemeEditor } from "@/lib/coach-week-theme-modalities";
@@ -22,6 +23,8 @@ export async function saveWeekTheme(
   if (!dbUser || (dbUser.role !== "COACH" && dbUser.role !== "ADMIN")) {
     return { error: "Não autorizado." };
   }
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const modality = (formData.get("modality") as string)?.trim();
   const title = (formData.get("title") as string)?.trim();
