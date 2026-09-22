@@ -1,7 +1,7 @@
 # Fighter Card — MVP e alinhamento técnico
 
-> **Estado:** especificação (ainda não implementado).
-> **Última revisão:** 22 setembro 2026 — primeira versão, a partir do brainstorm de crescimento (ver [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) §16, item 1).
+> **Estado:** código implementado (`dev`/`main`) — **falta aplicar a migração em produção** (`20260922120000_fighter_card_public.sql`) antes do toggle funcionar para alunos reais. Verificado visualmente (dados de exemplo) que o cartão renderiza correctamente via `next/og`; o caminho "indisponível" já funciona em produção mesmo sem a migração (degrada sem rebentar).
+> **Última revisão:** 22 setembro 2026 — implementação completa a partir da especificação (ver §16, item 1, no [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md)).
 
 Cartão de conquista partilhável, gerado automaticamente a partir dos dados reais do aluno (faixa, XP, presença, badges), pensado para ser publicado no Instagram Stories, WhatsApp ou onde o aluno quiser — e trazer alunos novos através dele.
 

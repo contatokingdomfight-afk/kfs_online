@@ -40,7 +40,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) | Roadmap por área (aluno, admin, coach, BD, deploy) |
 | [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md) | Especificação geral da plataforma (inclui secção Tribo / comunidade) |
 | [`TRIBO_MVP.md`](TRIBO_MVP.md) | Tribo (comunidade): MVP **em curso** — feed, media, RLS, moderação |
-| [`FIGHTER_CARD_MVP.md`](FIGHTER_CARD_MVP.md) | Cartão de conquista partilhável (crescimento): **especificado**, por implementar |
+| [`FIGHTER_CARD_MVP.md`](FIGHTER_CARD_MVP.md) | Cartão de conquista partilhável (crescimento): **implementado**, falta aplicar migração em produção |
 | [`Fluxo Lógico Completo – Plataforma Kingdom Fight School.md`](Fluxo%20Lógico%20Completo%20–%20Plataforma%20Kingdom%20Fight%20School.md) | Fluxos de negócio |
 | [`FLUXO_DE_CADASTRO_E_ONBOARDING.md`](FLUXO_DE_CADASTRO_E_ONBOARDING.md) | Cadastro, onboarding, escolha de plano e pagamento na escola |
 
