@@ -2,18 +2,19 @@
 
 > **Última revisão:** 22 abril 2026.  
 > **Contexto:** ficha de anamnese / avaliação física (secção 6.4) em `StudentPhysicalAssessment.formData`.  
-> **Índice geral:** [`INDEX.md`](INDEX.md) · **Memória:** [`memory.md`](memory.md) (performance, carrossel) · **3D GLB:** [`AVATAR_3D_BASE_GLTF.md`](AVATAR_3D_BASE_GLTF.md)
+> **Índice geral:** [`INDEX.md`](INDEX.md) · **Memória:** [`memory.md`](memory.md) (performance, carrossel)  
+> **22 set. 2026:** removida a opção WebGL/3D (`Humanoid3DPanel`, GLBs `human-base*.glb`, doc `AVATAR_3D_BASE_GLTF.md`) — código morto, sem nenhum import na app; só existe a vista **2D ilustrativa** descrita abaixo.
 
 Este documento fecha as **fases 0–4** do trabalho da silhueta: inventário campo ↔ corpo, regras de produto, pipeline único, critérios de aceite, regressão manual e referências de código.
 
 ---
 
-## 1. Decisão de produto (vista 2D vs 3D)
+## 1. Decisão de produto (vista 2D)
 
 | Decisão | Estado |
 |--------|--------|
 | Vista **principal** na app e no carrossel de performance | **SVG 2D** (`Avatar` → `Body` + pose + equipamento). Por defeito **Vitruviano** (`poseTag "star"`): braços horizontais, pernas em aberto moderado, membros superiores como linhas rectas até às mãos. |
-| **WebGL / modelo 3D** (`Humanoid3DPanel`) | **Opcional**: chips «Silhueta 2D» / «Modelo 3D» quando `show3dViewOption` / `allowLazyHumanoid3d`; chunk 3D carregado só ao escolher 3D (`next/dynamic`, `ssr: false`) |
+| **WebGL / modelo 3D** | **Removido** (22 set. 2026) — código morto sem uso na app; ver nota no topo do documento |
 | Natureza dos dados | **Ilustrativo**, não clínico, não foto do aluno; copy em i18n e legendas |
 
 Resumos compactos que **não** passam `show3dViewOption` mantêm **apenas 2D**.
@@ -103,10 +104,10 @@ Testes: `lib/illustrative-body-2d-pipeline.test.ts` e `lib/illustrative-body-sil
 
 ---
 
-## 7. Rig técnico e 3D
+## 7. Rig técnico
 
 - **`TechnicalRigSvg`** e **`lib/avatar-rig-joints.ts`**: mesmos `BodyScaleFactors` e `PoseLayout` que o avatar ilustrativo; alinhamento ao viewBox / geometria descrito nos comentários dos ficheiros. Alterar joints com o **mesmo** par `scales` + `pose` que o 2D.
-- **3D:** `Humanoid3DPanel` + cena Three.js; variante GLB `humanoid3dBodyVariant` + env — ver `AVATAR_3D_BASE_GLTF.md`.
+- **3D:** removido (22 set. 2026) — ver nota no topo do documento.
 
 ---
 

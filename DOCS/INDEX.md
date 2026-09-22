@@ -91,7 +91,6 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | Documento | Conteúdo |
 |-----------|----------|
 | [`MELHORIAS_DASHBOARD.md`](MELHORIAS_DASHBOARD.md) | Dashboard aluno (`/dashboard`): carrosséis, Presencial I, aulas abertas, Lisboa; **eventos** (home + `/dashboard/eventos`); ver `memory.md` |
-| [`AVATAR_3D_BASE_GLTF.md`](AVATAR_3D_BASE_GLTF.md) | Vista 3D: GLBs M/F (`human-base-male.glb` / `human-base-female.glb`), fallback e env |
 | [`SILHUETA_CORPORAL_2D_ILUSTRATIVA.md`](SILHUETA_CORPORAL_2D_ILUSTRATIVA.md) | Silhueta 2D ilustrativa: campo ↔ corpo, pipeline, 2D/3D, critérios de aceite, checklist de regressão |
 | [`CONTAS_TESTE.md`](CONTAS_TESTE.md) | Contas de teste e `seed:test-users` |
 | [`GUIA_TESTE_VALIDACAO_PERFIS.md`](GUIA_TESTE_VALIDACAO_PERFIS.md) | Checklist por perfil |
