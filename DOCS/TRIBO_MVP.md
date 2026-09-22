@@ -1,7 +1,7 @@
 # Tribo (comunidade) — MVP e alinhamento técnico
 
-> **Estado:** em desenvolvimento / MVP (código + migrações).  
-> **Última revisão (documentação):** 22 maio 2026 — estado «em curso»; rotas `/dashboard/tribo`, `/t/p/[postId]`. *Anterior:* 19 maio 2026 — decisões de produto (media, curtir, partilha, âmbito).
+> **Estado:** MVP completo em produção, incl. moderação admin (`/admin/tribo`: ocultar/apagar posts e comentários).  
+> **Última revisão (documentação):** 22 setembro 2026 — moderação admin entregue. *Anterior:* 22 maio 2026 — estado «em curso»; rotas `/dashboard/tribo`, `/t/p/[postId]`. 19 maio 2026 — decisões de produto (media, curtir, partilha, âmbito).
 
 Este documento fecha a lacuna entre o roadmap e a **implementação**. A [Especificação Kingdom Digital](Especificacao_Plataforma_Kingdom_Digital.md) resume o produto; aqui ficam critérios de aceite, dados e UX.
 
@@ -110,7 +110,7 @@ Detalhe SQL: migração `supabase/migrations/20260520140000_tribe_mvp.sql`; apli
 
 - **Aluno (app):** `/dashboard/tribo` — feed, compositor, detalhe com `?post=`. No mobile, **Tribo** é atalho fixo na barra inferior com Início, Perfil de atleta (ou Biblioteca) e Eventos; **Bem-estar** fica em «Mais» (`lib/dashboard-student-mobile-nav.ts`). Modais do compositor usam `z-index` acima da barra (`MobileAppBottomNav`); ver `tribo-feed.css`. Validação de anexos (tamanho/tipo/limite) no cliente ao escolher ficheiros + confirmação do servidor.
 - **Partilha pública:** `/t/p/[postId]` — OG/meta, CTA registo, redirect se já autenticado.
-- **Admin (fase seguinte):** `/admin/tribo` se necessário lista por escola.
+- **Admin:** `/admin/tribo` — feito. Lista posts/comentários por escola (filtro), ocultar/apagar (soft) posts e comentários; gate `dbUser.role === "ADMIN"`, regra de rota `admin:sistema:*`.
 
 ---
 

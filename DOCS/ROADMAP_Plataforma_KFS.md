@@ -1,7 +1,7 @@
 # Roadmap – Plataforma Kingdom Fight School
 
 > O que **já está feito** vs **por fazer**, alinhado ao [Plano de Negócios](./Plano_de_Negócios_Kingdom_Fight_School.md) e à [Especificação Kingdom Digital](./Especificacao_Plataforma_Kingdom_Digital.md).  
-> **Última revisão (documentação):** junho 2026 — seguro, matrícula, 1.º pagamento, gate presencial — [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md). *Anterior:* 22 maio 2026 — marca/PWA, treinador assistente, Tribo.
+> **Última revisão (documentação):** 22 setembro 2026 — Tribo (moderação admin), Rank v2 (período/evolução/anti-abuso), critérios BJJ/MMA + Muay Thai Kids/Boxing Kids, adesão sem plano + assinatura presencial + troca de email de login, qualidade (CI automatizado, testes, alerta financeiro semanal); corrigidas contradições do doc (Push Web e «ver como melhorar» já estavam feitos, mas ainda constavam como por fazer). *Anterior:* junho 2026 — seguro, matrícula, 1.º pagamento, gate presencial — [`FINANCEIRO_INSCRICAO_SEGURO.md`](FINANCEIRO_INSCRICAO_SEGURO.md).
 
 **Legenda:** **Feito** = em produção. **Por fazer** = não implementado ou só operacional (dados em falta).
 
@@ -11,19 +11,14 @@
 
 | Prioridade | Área | O quê |
 |------------|------|--------|
-| 1 | Comunidade | **Tribo** — feed (imagens+GIF, comentários, curtidas luva/soco, visibilidade escola/todas, partilha `/t/p` → registo); MVP aluno em curso — [`TRIBO_MVP.md`](TRIBO_MVP.md) |
-| 2 | Gamificação | **Rank v2** — filtro por período; ranking por evolução nas dimensões (não só XP); anti-abuso |
-| 3 | Performance | **«Ver como melhorar»** nos critérios → ligação a conteúdos da biblioteca |
-| 4 | Avaliação (dados) | Completar **critérios dos 5 pilares** na BD por modalidade (foco **BJJ / MMA** onde faltar) — o Admin **Avaliação** já existe |
-| 5 | Bem-estar | **Biometria** além do autorrelato (dispositivos / métricas) — v1 check-in + agregados já feitos |
-| 6 | Mobile | **PWA** no site (feito — marca 2026, `kfs-app-icon.png`, splash preto — [`PWA.md`](PWA.md)). **Capacitor:** scaffold + OAuth (`CAPACITOR.md`); **por fazer:** builds assinados, App Links, **lojas** |
-| 7 | Notificações | **Push Web (VAPID, gratuito)** — toggle perfil + mirror in-app; in-app na plataforma — ver `DOCS/memory.md` |
-| 8 | Qualidade | **E2E** (ex. Playwright); relatórios/alertas no financeiro admin; **Lighthouse** em produção |
-| 9 | Bem-estar / check-in | **Peso após o treino** no fluxo de recolha biométrica do check-in (além do pré-aula) — permitir estimar **variação de peso/líquido por sessão** e **médias por aluno** (com contexto: modalidade, duração, hidratação já recolhida) |
-| 10 | Avaliação física / aluno | **Antropometria alargada na ficha (anamnese)** + **avatar corporal** derivado dos dados (MVP 2D/SVG ilustrativo; futuro: ajuste de atributos / cenários de meta); ver §2c |
-| 11 | Admin / plataforma | **Permissões (RBAC)** — ecrã admin e modelo: controlar o que cada utilizador de backoffice vê/edita/executa; fases em [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](./PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md) (alinhado a RLS + server actions) |
+| 1 | Mobile | **PWA** no site (feito — marca 2026, `kfs-app-icon.png`, splash preto — [`PWA.md`](PWA.md)). **Capacitor:** scaffold + OAuth feito (`CAPACITOR.md`); **por fazer:** builds assinados, App Links, **publicação nas lojas** (Apple/Google — maioritariamente do lado do utilizador: contas developer) |
+| 2 | Admin / plataforma | **Permissões (RBAC) fase 2** — v1 (ecrã `/admin/permissoes` + guards de layout/rota) já feito; falta aplicar a verificação em **todas as server actions** do admin (hoje só as rotas estão protegidas); fases em [`PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md`](./PLANO_ACAO_PERMISSOES_ADMIN_RBAC.md) |
+| 3 | Bem-estar | **Biometria** além do autorrelato (dispositivos / métricas) — v1 check-in + agregados já feitos |
+| 4 | Bem-estar / check-in | **Peso após o treino**: campo de captura já feito (`Attendance.postWeightKg`); falta a **análise** — estimar **variação de peso/líquido por sessão** e **médias por aluno** (com contexto: modalidade, duração, hidratação já recolhida) |
+| 5 | Avaliação física / aluno | **Futuro:** cenários / metas ("e se…") sobre o avatar corporal, com distinção explícita de projeção vs. dados reais da última avaliação; ver §2c (antropometria + avatar MVP já feitos) |
+| 6 | Avaliação (dados) | Critérios dos 5 pilares completos para **BJJ / MMA** (feito) e **Muay Thai Kids / Boxing Kids** (feito — reaproveitam critérios das versões adultas); **Karate / outras modalidades ainda não activas na escola** — baixa prioridade até existir procura |
 
-**Já entregue (alto nível):** Auth Supabase, multi-escola, turmas/recorrência, check-in + bem-estar no check-in, planos Stripe + presencial + crons Lisboa, biblioteca 360º, loja/eventos, gamificação (XP, faixas, missões, badges, **rank v1** com filtros escola/modalidade/faixa etária e **RPCs na BD de produção**), tema da semana, emails Resend (presença + lembretes) + SMTP Supabase, i18n PT/EN, dark/light, **definir Professor/Administrador** em qualquer `User.role` (`promoteStudentToRole`), UI em `/admin/alunos/[id]` e `/coach/alunos/[id]` (admin logado).
+**Já entregue (alto nível):** Auth Supabase, multi-escola, turmas/recorrência, check-in + bem-estar no check-in, planos Stripe + presencial + crons Lisboa, biblioteca 360º, loja/eventos, gamificação (XP, faixas, missões, badges, **rank v1 e v2** — filtros escola/modalidade/faixa etária, **filtro por período**, **ranking por evolução** nas dimensões e **anti-abuso** (1 avaliação/atleta/modalidade/dia), com RPCs e snapshot diário de XP na BD de produção), tema da semana, emails Resend (presença + lembretes) + SMTP Supabase, **Push Web (VAPID)** com mirror in-app, i18n PT/EN, dark/light, **definir Professor/Administrador** em qualquer `User.role` (`promoteStudentToRole`), UI em `/admin/alunos/[id]` e `/coach/alunos/[id]` (admin logado), **Tribo MVP completo** (feed, media, curtidas, comentários, partilha `/t/p` → registo, **moderação admin** em `/admin/tribo`), **«ver como melhorar»** (radar → sugestões da biblioteca por eixo fraco), **critérios de avaliação BJJ/MMA** e alias Muay Thai Kids/Boxing Kids, **adesão sem plano mensal** (assinatura presencial pelo admin para Kids, troca de email de login sintético→real, lista `/admin/documentos-adesao` de pendentes + lembrete WhatsApp), **qualidade**: CI automatizado no GitHub Actions (lint + typecheck + testes em cada push/PR), E2E (Playwright) e Lighthouse agendados, testes unitários das fichas físicas, alerta financeiro semanal por email ao admin.
 
 ---
 
@@ -46,7 +41,7 @@
 |------|--------|--------|
 | Dashboard, carrosséis, aulas livres (`isOpenClass`) | Feito | `lib/dashboard-lesson-filter.ts` — semana em **Lisboa** (`getThisWeekRangeLisbon` + `calendarDateLisbon` em `app/dashboard/page.tsx`); com plano **uma modalidade** (ex. Presencial I) filtra aulas fechadas à modalidade e mostra **todas** as aulas abertas; `getCachedLocations` via re-export em `lib/plan-access.ts` |
 | Check-in, histórico, QR (coach) | Feito | `/check-in/[lessonId]`, `Attendance`, Lisboa |
-| Performance, radar SVG, missões, conquistas, rank (v1) | Feito | `get_leaderboard_filtered` + `get_leaderboard_my_school` (migrações `20260402120000` / `20260412120000`); `lib/leaderboard.ts` (fallback se RPC ausente); filtros em `/dashboard/rank` |
+| Performance, radar SVG, missões, conquistas, rank (v1 + v2) | Feito | `get_leaderboard_filtered` (5 args, `p_period_start`) + `get_leaderboard_my_school`; `lib/leaderboard.ts`, `lib/rank-filters.ts` (filtro por período), `lib/rank-evolution.ts`/`lib/leaderboard-evolution.ts` (ranking por evolução nas dimensões); anti-abuso `lib/evaluation-rate-limit.ts` (1 avaliação/atleta/modalidade/dia Lisboa); snapshot diário `AthleteXpSnapshot` (cron `xp-snapshot`); filtros em `/dashboard/rank` |
 | Metas assiduidade, IMC, metas avaliação | Feito | Admin configurações + dashboard |
 | Bem-estar (hub, RPE, dores, peso, benchmarks) | Feito | `memory.md` §3.15 |
 | «Ver como melhorar» → biblioteca | **Feito** | `lib/library-improve-suggestions.ts`; links dashboard + performance |
@@ -60,6 +55,9 @@
 | Pilares, subcategorias, critérios por modalidade | Feito | `/admin/avaliacao` |
 | Replicar critério em várias modalidades | Feito | |
 | Config sem cache obsoleto | Feito | `load-evaluation-config.ts` |
+| Critérios técnicos e táticos — BJJ e MMA/grappling | Feito | Migrações `20260918120000_seed_bjj_evaluation` (9 dimensões técnicas + 8 táticas) e `20260918130000_seed_mma_grappling_evaluation` (7 técnicas + 8 táticas); `dimensionCodeToGeneralDimension` em `lib/performance-utils.ts` mapeia prefixos `BJJ_`/`MMA_` ao pilar "Técnico" |
+| Muay Thai Kids / Boxing Kids avaliam-se como as versões adultas | Feito | Alias `EVALUATION_CONFIG_ALIAS` em `lib/load-evaluation-config.ts` (`MTKIDS`→`MUAY_THAI`, `BKIDS`→`BOXING`), sem duplicar dados |
+| Karate e outras modalidades ainda não activas | **Por fazer (baixa prioridade)** | Sem critérios na BD; só relevante quando a escola passar a oferecer a modalidade |
 
 ---
 
@@ -75,7 +73,7 @@ Objetivo: enriquecer a ficha com **circunferências e medidas** que permitam um 
 | **Futuro: “mexer nos atributos”** | **Por fazer** | Cenários / **metas** (“e se…”) com distinção explícita de **projecção** vs. dados reais da última avaliação; evitar substituir a ficha clínica |
 | **Editar ficha já entregue** (admin/coach) + rasto de auditoria | Feito | Reabrir e corrigir dado em falta sem duplicar registo nem repetir notificação; `editedAt`/`editedByUserId` mostrados na vista de leitura (autoria original preservada) — `savePhysicalAssessment`, migração `20260916120000_physical_assessment_edit_audit.sql` |
 | **KPIs físicos** (força, resistência, velocidade, etc.) + **evolução entre avaliações** | Feito | Perfil do Atleta (aluno/coach/admin): cartões 1–10 com tooltip explicando o cálculo + gráfico de linha por métrica entre fichas entregues; estado de "primeiro registo" quando só há 1 ficha — `lib/physical-assessment-kpi-scores.ts`, `lib/physical-assessment-evolution.ts`, `components/physical-assessment/PhysicalAssessmentEvolution.tsx` |
-| Testes automatizados para `lib/physical-assessment-evolution.ts` e `lib/physical-assessment-kpi-scores.ts` | **Por fazer** | Lógica pura (fácil de testar) sem `*.test.ts`, ao contrário do padrão do resto de `lib/`; só verificado manualmente no browser até agora |
+| Testes automatizados para `lib/physical-assessment-evolution.ts` e `lib/physical-assessment-kpi-scores.ts` | Feito | `*.test.ts` correspondentes (14 testes) |
 
 ---
 
@@ -96,7 +94,11 @@ Objetivo: enriquecer a ficha com **circunferências e medidas** que permitam um 
 |------|--------|--------|
 | Lista, convite, edição, planos, acesso total | Feito | |
 | **Definir Professor / Administrador** | Feito | `promoteStudentToRole` — qualquer papel atual; no-op se igual; `AdminAlunoQuickActions` em `/admin/alunos/[id]` e `/coach/alunos/[id]` (admin) |
-| **Ecrã e modelo de permissões (RBAC)** | **Feito (v1)** | `/admin/permissoes`, migração `20260821160000_admin_rbac_permissions.sql`; guards layout + `lib/permissions/assert.ts` |
+| **Ecrã e modelo de permissões (RBAC)** | **Feito (v1)** | `/admin/permissoes`, migração `20260821160000_admin_rbac_permissions.sql`; guards layout + `lib/permissions/assert.ts`; **falta** aplicar a todas as server actions (fase 2, ver resumo executivo) |
+| **Adesão sem plano mensal** | Feito | `/adesao` já não exige `planId`; alunos avulsos assinam waiver + contrato + comprovativo na mesma; redirect automático ao entrar na plataforma com documentos por assinar (`middleware.ts`) |
+| **Assinatura presencial pelo admin** | Feito | `/admin/alunos/[id]/contrato/assinar` — para alunos Kids sem acesso próprio à plataforma; reaproveita `applyEnrollmentFormSubmission`/`applyAdesaoSigning` |
+| **Troca de email de login (sintético → real)** | Feito | `changeStudentLoginEmail` — quando um aluno Kids passa a ter email próprio (ex. Google), liga a conta existente ao novo email sem perder histórico |
+| **Lista de documentos de adesão pendentes** | Feito | `/admin/documentos-adesao` — atalho na secção Académico do admin; botão de lembrete por WhatsApp (`buildDocumentsPendingMessage`) |
 
 ---
 
@@ -131,12 +133,12 @@ Principais entidades **em uso:** `User`, `Student`, `StudentProfile`, `Coach`, `
 
 | Bloco especificação | Estado |
 |---------------------|--------|
-| Performance + KPIs + sugestões biblioteca + biométricos check-in | **Feito** (falta ligação «ver como melhorar» → biblioteca); **extensões:** peso pós-treino (§3, prioridade 9); antropometria + avatar ilustrativo (§2c — coach + aluno em `/dashboard/performance`, 2.º painel do carrossel) |
+| Performance + KPIs + sugestões biblioteca + biométricos check-in | **Feito**, incl. «ver como melhorar» → biblioteca (`lib/library-improve-suggestions.ts`, radar → cursos por eixo fraco); **extensões por fazer:** análise/médias do peso pós-treino (§3, resumo executivo); cenários de meta sobre o avatar (§2c) |
 | Biblioteca 360º | **Feito** |
-| Gamificação + presença (exc. rank v2 / Battle Pass) | **Feito** |
+| Gamificação + presença, incl. **rank v2** (período, evolução, anti-abuso; Battle Pass fora de âmbito) | **Feito** |
 | Sala invertida (tema da semana) | **Feito** |
 | Loja / eventos | **Feito** (incl. `/dashboard/eventos`, strip na home, notificações in-app de inscrição — `DOCS/NOTIFICACOES_IN_APP_E_EVENTOS.md`) |
-| Tribo (comunidade) | **Em curso (MVP aluno)** — [`TRIBO_MVP.md`](TRIBO_MVP.md); `/dashboard/tribo`, `/t/p/[id]`, migração `20260520140000_tribe_mvp.sql` |
+| Tribo (comunidade) | **Feito (MVP completo)** — feed, media, curtidas, comentários, partilha, **moderação admin** (`/admin/tribo`) — [`TRIBO_MVP.md`](TRIBO_MVP.md); `/dashboard/tribo`, `/t/p/[id]`, migração `20260520140000_tribe_mvp.sql` |
 
 ---
 
@@ -144,13 +146,15 @@ Principais entidades **em uso:** `User`, `Student`, `StudentProfile`, `Coach`, `
 
 | Item | Estado |
 |------|--------|
-| Next.js 15, Node 20, Vercel | Feito |
-| Crons (`lesson-reminders`, `payment-suspension`, `insurance-expiry-check`) + `CRON_SECRET` | Feito |
-| Vitest (`npm test`), seed testes | Feito |
+| Next.js 15, Node 24, Vercel | Feito |
+| Crons (`lesson-reminders`, `payment-suspension`, `generate-monthly-payments`, `insurance-expiry-check`, `reengagement-check`, `xp-snapshot`, `financial-weekly-alert`) + `CRON_SECRET` | Feito |
+| Vitest (`npm test`, 150 testes), seed testes | Feito |
+| **CI (GitHub Actions)** | Feito — `.github/workflows/ci.yml` (lint+typecheck+testes em cada push/PR); `e2e-nightly.yml` (Playwright contra produção) e `lighthouse-weekly.yml` agendados — precisam de secrets no GitHub para correr autenticados |
 | Emails Resend + doc | Feito — `DOCS/CONFIGURAR_RESEND.md` |
+| Push Web (VAPID) | Feito — tabela `PushSubscription`, toggle em `/dashboard/perfil`, mirror in-app |
 | PWA | Feito — `DOCS/PWA.md` |
-| RPCs ranking na BD | Feito — `DOCS/APLICAR_MIGRATIONS_SUPABASE.md` (Ranking); novos projetos Supabase: aplicar `20260402120000` e `20260412120000` em ordem |
-| Capacitor / lojas | **Em curso** — projetos `android/` + `ios/`; publicação lojas por fazer |
+| RPCs ranking na BD | Feito — `DOCS/APLICAR_MIGRATIONS_SUPABASE.md` (Ranking); novos projetos Supabase: aplicar `20260402120000`, `20260412120000` e `20260917130000` em ordem |
+| Capacitor / lojas | **Em curso** — projetos `android/` + `ios/`; builds assinados, App Links e publicação nas lojas por fazer |
 
 ---
 
