@@ -1,0 +1,51 @@
+name: E2E nocturno (produção)
+
+# Corre contra https://kingdomfight.com (ou PLAYWRIGHT_BASE_URL, se definido nos secrets).
+# Precisa destes secrets no repo (Settings → Secrets and variables → Actions) para os testes
+# autenticados/signup correrem; sem eles, esses specs ficam skip automaticamente e só o
+# smoke público (e2e/public-smoke.spec.ts) corre:
+#   PLAYWRIGHT_TEST_EMAIL / PLAYWRIGHT_TEST_PASSWORD   → conta de aluno de teste já existente
+#   NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / TEST_SEED_PASSWORD
+#                                                       → criação/remoção da conta efémera de signup
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 06:00 UTC ≈ 07:00 Lisboa (inverno) / 06:00 (verão, ajustar se necessário)
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: Playwright (produção)
+    runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL || 'https://kingdomfight.com' }}
+      PLAYWRIGHT_TEST_EMAIL: ${{ secrets.PLAYWRIGHT_TEST_EMAIL }}
+      PLAYWRIGHT_TEST_PASSWORD: ${{ secrets.PLAYWRIGHT_TEST_PASSWORD }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      TEST_SEED_PASSWORD: ${{ secrets.TEST_SEED_PASSWORD }}
+      DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Instalar browsers do Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Testes E2E
+        run: npm run test:e2e
+
+      - name: Guardar relatório em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

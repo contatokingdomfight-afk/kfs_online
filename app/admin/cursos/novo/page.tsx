@@ -42,7 +42,7 @@ export default async function AdminCursosNovoPage() {
           lineHeight: 1.6,
         }}
       >
-        <strong style={{ color: "var(--text-primary)" }}>Passo 1:</strong> Preenche os dados gerais do curso abaixo e clica em "Criar curso".<br />
+        <strong style={{ color: "var(--text-primary)" }}>Passo 1:</strong> Preenche os dados gerais do curso abaixo e clica em &quot;Criar curso&quot;.<br />
         <strong style={{ color: "var(--text-primary)" }}>Passo 2:</strong> Serás redirecionado para a página de edição onde poderás adicionar <strong>módulos</strong> e <strong>unidades</strong> (vídeos e textos) ao curso.
       </div>
       <CursoForm modalities={modalities ?? []} />

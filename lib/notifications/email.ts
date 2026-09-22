@@ -329,16 +329,28 @@ export async function sendReengagementEmail(
   }
 }
 
+/**
+ * Email do admin para alertas automáticos (crons). Ordem: variável específica do alerta (se
+ * definida) → ADMIN_ALERT_EMAIL genérico → endereço extraído de RESEND_FROM_EMAIL.
+ */
+function resolveAdminAlertEmail(specificEnvVar?: string): string | undefined {
+  return (
+    specificEnvVar?.trim() ||
+    process.env.ADMIN_ALERT_EMAIL?.trim() ||
+    process.env.RESEND_FROM_EMAIL?.match(/<([^>]+)>/)?.[1]
+  );
+}
+
 /** Alerta semanal ao admin: alunos com seguro a expirar ou expirado. */
 export async function sendInsuranceExpiryAlertToAdmin(lines: string[]): Promise<{ error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
-  const adminEmail = process.env.INSURANCE_ALERT_ADMIN_EMAIL?.trim() || process.env.RESEND_FROM_EMAIL?.match(/<([^>]+)>/)?.[1];
+  const adminEmail = resolveAdminAlertEmail(process.env.INSURANCE_ALERT_ADMIN_EMAIL);
   if (!apiKey) {
     console.warn("RESEND_API_KEY não definida; alerta de seguro não enviado.");
     return {};
   }
   if (!adminEmail) {
-    console.warn("Sem email de admin para alerta de seguro (INSURANCE_ALERT_ADMIN_EMAIL ou RESEND_FROM_EMAIL).");
+    console.warn("Sem email de admin para alerta de seguro (INSURANCE_ALERT_ADMIN_EMAIL, ADMIN_ALERT_EMAIL ou RESEND_FROM_EMAIL).");
     return {};
   }
   if (lines.length === 0) return {};
@@ -358,6 +370,48 @@ export async function sendInsuranceExpiryAlertToAdmin(lines: string[]): Promise<
       from: getFrom(),
       to: [adminEmail],
       subject: `Seguros a renovar (${lines.length}) – Kingdom Fight School`,
+      text,
+      html: wrapTransactionalEmail(inner),
+    });
+    if (error) return { error: String(error.message ?? error) };
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao enviar email." };
+  }
+}
+
+/** Resumo financeiro semanal ao admin (cron `financial-weekly-alert`): receitas/despesas/saldo do mês + inadimplência. */
+export async function sendFinancialWeeklyAlertToAdmin(
+  lines: string[],
+  referenceMonth: string
+): Promise<{ error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const adminEmail = resolveAdminAlertEmail(process.env.FINANCIAL_ALERT_ADMIN_EMAIL);
+  if (!apiKey) {
+    console.warn("RESEND_API_KEY não definida; resumo financeiro não enviado.");
+    return {};
+  }
+  if (!adminEmail) {
+    console.warn("Sem email de admin para resumo financeiro (FINANCIAL_ALERT_ADMIN_EMAIL, ADMIN_ALERT_EMAIL ou RESEND_FROM_EMAIL).");
+    return {};
+  }
+  if (lines.length === 0) return {};
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+    const listHtml = lines.map((l) => `<li style="margin:0 0 8px;">${l.replace(/</g, "&lt;")}</li>`).join("");
+    const inner = `
+      <p style="margin:0 0 16px;">Resumo financeiro do mês (${referenceMonth}):</p>
+      <ul style="margin:0;padding-left:20px;">${listHtml}</ul>
+      <p style="margin:16px 0 0;font-size:14px;color:#71717a;">Detalhe completo em Admin → Financeiro → Relatório.</p>
+    `.trim();
+    const text = `Resumo financeiro (${referenceMonth}):\n\n${lines.join("\n")}\n\n— Kingdom Fight School`;
+
+    const { error } = await resend.emails.send({
+      from: getFrom(),
+      to: [adminEmail],
+      subject: `Resumo financeiro ${referenceMonth} – Kingdom Fight School`,
       text,
       html: wrapTransactionalEmail(inner),
     });

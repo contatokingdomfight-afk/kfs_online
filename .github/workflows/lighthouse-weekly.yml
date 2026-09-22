@@ -1,0 +1,31 @@
+name: Lighthouse semanal (produção)
+
+# Corre lighthouserc.cjs (npm run lighthouse:mobile) contra kingdomfight.com/ e /dashboard.
+# Resultados: "warn" no relatório do Actions se performance < 0.5 ou acessibilidade < 0.85
+# (não falha o job — é só sinal). Relatório completo fica no link de "temporary-public-storage"
+# nos logs do passo "Lighthouse CI".
+
+on:
+  schedule:
+    - cron: "0 7 * * 1" # segunda-feira, 07:00 UTC
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Lighthouse CI
+        run: npm run lighthouse:mobile

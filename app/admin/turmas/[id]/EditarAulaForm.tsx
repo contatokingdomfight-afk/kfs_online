@@ -416,7 +416,7 @@ export function EditarAulaForm({
           style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
         />
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
-          Ocultar das opções de aula experimental (formulário público /aula-experimental e "Nova inscrição" no admin)
+          Ocultar das opções de aula experimental (formulário público /aula-experimental e &quot;Nova inscrição&quot; no admin)
         </span>
       </label>
       {state?.error && (
