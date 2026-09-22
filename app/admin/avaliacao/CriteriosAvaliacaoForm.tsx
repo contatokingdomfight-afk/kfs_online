@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { saveModalityEvaluationConfig } from "./actions";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { parseConfig } from "@/lib/evaluation-config";
 
 function newCriterionId(): string {
@@ -131,6 +132,7 @@ export function CriteriosAvaliacaoForm({ modality, initialConfig }: Props) {
         action={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: 20 }}
       >
+        <FormLoadingModal message="A guardar critérios…" />
         <input type="hidden" name="modality" value={modality} />
 
         {categorias.map((cat, catIndex) => (

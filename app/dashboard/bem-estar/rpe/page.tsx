@@ -125,6 +125,7 @@ export default async function RpePage() {
               modalityLabel={modalityLabel}
               occurrenceDate={occ}
               saveLabel={loc === "pt" ? "Guardar RPE" : "Save RPE"}
+              savingLabel={loc === "pt" ? "A guardar…" : "Saving…"}
               weightLabel={loc === "pt" ? "Peso (kg)" : "Weight (kg)"}
               weightOptionalHint={
                 loc === "pt"

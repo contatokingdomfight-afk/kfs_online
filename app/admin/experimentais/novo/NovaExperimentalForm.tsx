@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useFormState } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createTrialClass, type CreateTrialResult } from "../actions";
 
 type LessonOption = { id: string; label: string };
@@ -27,6 +28,7 @@ export function NovaExperimentalForm({ lessonOptions }: { lessonOptions: LessonO
         gap: "clamp(16px, 4vw, 20px)",
       }}
     >
+      <FormLoadingModal message="A guardar…" />
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           Nome *

@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { submitBodyWeightAction, updateWeightGoalsAction, type SimpleFormState } from "../actions";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -33,6 +34,7 @@ export function WeightEntryForm({ locale }: Pick<Props, "locale">) {
         background: "var(--bg-elevated)",
       }}
     >
+      <FormLoadingModal message={locale === "pt" ? "A guardar…" : "Saving…"} />
       <h2 style={{ fontSize: "clamp(16px, 4vw, 18px)", margin: 0, color: "var(--text-primary)" }}>
         {locale === "pt" ? "Novo registo de peso" : "New weight entry"}
       </h2>
@@ -78,6 +80,7 @@ export function WeightGoalsForm({ locale, currentGoalKg, currentGoalDate }: Prop
         background: "var(--bg-elevated)",
       }}
     >
+      <FormLoadingModal message={locale === "pt" ? "A guardar…" : "Saving…"} />
       <h2 style={{ fontSize: "clamp(16px, 4vw, 18px)", margin: 0, color: "var(--text-primary)" }}>
         {locale === "pt" ? "Meta de peso" : "Weight goal"}
       </h2>

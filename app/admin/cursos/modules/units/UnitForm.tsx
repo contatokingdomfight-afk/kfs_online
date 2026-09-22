@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 import { createUnit, updateUnit, type UnitFormResult } from "./actions";
 import { FormLoadingBar } from "@/components/FormLoadingBar";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 type Props = {
   courseId: string;
@@ -85,6 +86,7 @@ export function UnitForm({
         gap: 12,
       }}
     >
+      <FormLoadingModal message={unitId ? "A guardar…" : "A adicionar unidade…"} />
       <FormLoadingBar message={unitId ? "A guardar…" : "A adicionar unidade…"} />
       <input type="hidden" name="courseId" value={courseId} />
       <input type="hidden" name="moduleId" value={moduleId} />

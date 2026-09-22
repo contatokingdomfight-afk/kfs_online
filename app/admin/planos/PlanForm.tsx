@@ -4,6 +4,7 @@ import { useFormState } from "react-dom";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createPlan, updatePlan, type PlanFormResult } from "./actions";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 const MODALITY_SCOPES = [
   { value: "NONE", label: "Só digital (sem presencial)" },
@@ -88,6 +89,7 @@ export function PlanForm({
         gap: "clamp(16px, 4vw, 20px)",
       }}
     >
+      <FormLoadingModal message="A guardar…" />
       {planId && <input type="hidden" name="planId" value={planId} />}
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>

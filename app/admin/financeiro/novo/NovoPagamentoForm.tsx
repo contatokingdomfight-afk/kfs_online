@@ -13,6 +13,7 @@ import { blurActiveElementBeforeSubmit } from "@/lib/blur-before-form-submit";
 import { formatDecimalAmountInput, parseDecimalAmount } from "@/lib/parse-decimal-amount";
 import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 import { VoidLateTuitionForm } from "@/components/admin/VoidLateTuitionForm";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 type Props = {
   defaultReferenceMonth: string;
@@ -370,6 +371,7 @@ export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount
             onSubmit={blurActiveElementBeforeSubmit}
             style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}
           >
+            <FormLoadingModal message="A guardar…" />
             <input type="hidden" name="studentId" value={selected.studentId} />
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>

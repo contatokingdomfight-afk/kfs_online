@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import {
   createCriterion,
   updateCriterion,
@@ -87,6 +88,7 @@ function DeleteCriterionForm({ criterionId }: { criterionId: string }) {
   const [deleteState, deleteAction] = useFormState(deleteCriterion, null);
   return (
     <form action={deleteAction} style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <FormLoadingModal message="A remover…" />
       <input type="hidden" name="criterionId" value={criterionId} />
       <DeleteCriterionSubmitButton />
       {deleteState?.error && <span style={{ color: "var(--danger)", fontSize: "var(--text-xs)" }}>{deleteState.error}</span>}
@@ -248,6 +250,7 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
                     )}
                   </div>
                   <form action={deleteCompAction} style={{ display: "inline-flex" }}>
+                    <FormLoadingModal message="A apagar…" />
                     <input type="hidden" name="componentId" value={comp.componentId} />
                     <button
                       type="submit"
@@ -279,6 +282,7 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
                         action={critUpdateAction}
                         style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
                       >
+                        <FormLoadingModal message="A guardar…" />
                         <input type="hidden" name="criterionId" value={c.id} />
                         <input
                           type="text"
@@ -330,6 +334,7 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
                   action={critAction}
                   style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
                 >
+                  <FormLoadingModal message="A guardar critério…" />
                   <input type="hidden" name="componentId" value={comp.componentId} />
                   <input
                     type="hidden"
@@ -432,6 +437,7 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
               action={compAction}
               style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
             >
+              <FormLoadingModal message="A criar sub-categoria…" />
               <input type="hidden" name="modality" value={modality} />
               <input type="hidden" name="dimensionId" value={block.dimensionId} />
               <input
@@ -479,6 +485,7 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
             action={compAction}
             style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}
           >
+            <FormLoadingModal message="A criar categoria…" />
             <input type="hidden" name="modality" value={modality} />
             <p style={{ margin: "0 0 var(--space-1) 0", fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-primary)" }}>
               Nova categoria

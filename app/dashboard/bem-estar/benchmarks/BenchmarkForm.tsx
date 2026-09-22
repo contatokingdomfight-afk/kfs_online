@@ -3,6 +3,7 @@
 import { useFormState, useFormStatus } from "react-dom";
 import { submitBenchmarkAction, type SimpleFormState } from "../actions";
 import { BENCHMARK_PRESETS } from "@/lib/benchmark-presets";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -31,6 +32,7 @@ export function BenchmarkForm({ locale }: Props) {
         background: "var(--bg-elevated)",
       }}
     >
+      <FormLoadingModal message={locale === "pt" ? "A guardar…" : "Saving…"} />
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontWeight: 600 }}>{locale === "pt" ? "Teste" : "Test"}</span>
         <select

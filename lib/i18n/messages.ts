@@ -145,6 +145,7 @@ export const messages = {
     rankEmpty: "Ainda não há dados de ranking para a tua escola.",
     rankEmptyFiltered:
       "Ninguém corresponde a estes filtros. Tenta «Todas» num dos critérios ou confirma a data de nascimento no perfil se escolheste faixa etária.",
+    rankFiltersToggle: "Filtros",
     rankFilterSchool: "Escola",
     rankFilterModality: "Modalidade",
     rankFilterAge: "Faixa etária",
@@ -1475,6 +1476,7 @@ export const messages = {
     rankEmpty: "No leaderboard data for your school yet.",
     rankEmptyFiltered:
       "No one matches these filters. Try \"All\" on one of the criteria, or check your date of birth in your profile if you chose an age band.",
+    rankFiltersToggle: "Filters",
     rankFilterSchool: "School",
     rankFilterModality: "Modality",
     rankFilterAge: "Age group",

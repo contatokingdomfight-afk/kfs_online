@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import {
   renewStudentInsurance,
   registerInsurancePayment,
@@ -195,12 +196,14 @@ export function StudentInsuranceSection({
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
         <form action={renewAction}>
+          <FormLoadingModal message="A renovar o seguro…" />
           <input type="hidden" name="studentId" value={studentId} />
           <button type="submit" className="btn btn-primary" style={{ fontSize: 14 }}>
             Renovar seguro (+1 ano)
           </button>
         </form>
         <form action={clearAction}>
+          <FormLoadingModal message="A guardar…" />
           <input type="hidden" name="studentId" value={studentId} />
           <button type="submit" className="btn btn-secondary" style={{ fontSize: 14 }}>
             Marcar sem cobertura
@@ -211,6 +214,7 @@ export function StudentInsuranceSection({
       {clearState?.error ? <p style={{ color: "var(--danger)", fontSize: 14 }}>{clearState.error}</p> : null}
 
       <form action={payAction} style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "flex-end", marginBottom: 20 }}>
+        <FormLoadingModal message="A registar o pagamento…" />
         <input type="hidden" name="studentId" value={studentId} />
         <div>
           <label style={{ display: "block", fontSize: 13, marginBottom: 4 }}>Registar pagamento seguro (€)</label>
@@ -235,6 +239,7 @@ export function StudentInsuranceSection({
       {payState?.error ? <p style={{ color: "var(--danger)", fontSize: 14 }}>{payState.error}</p> : null}
 
       <form action={updateAction} style={{ display: "grid", gap: 12 }}>
+        <FormLoadingModal message="A guardar…" />
         <input type="hidden" name="studentId" value={studentId} />
         <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
           <input type="checkbox" name="covered" defaultChecked={coverage?.covered ?? false} />

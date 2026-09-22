@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormState } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createCourse, updateCourse, type CourseFormResult } from "./actions";
 
 const CATEGORIES = [
@@ -71,6 +72,7 @@ export function CursoForm({
         gap: "clamp(16px, 4vw, 20px)",
       }}
     >
+      <FormLoadingModal message="A guardar…" />
       {courseId && <input type="hidden" name="courseId" value={courseId} />}
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>

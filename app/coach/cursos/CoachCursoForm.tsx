@@ -2,6 +2,7 @@
 
 import { useFormState } from "react-dom";
 import { createCoachCourse, updateCoachCourse, type CoachCourseFormResult } from "./actions";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 const CATEGORIES = [
   { value: "TECHNIQUE", label: "Técnica" },
@@ -59,6 +60,7 @@ export function CoachCursoForm({
         gap: "clamp(16px, 4vw, 20px)",
       }}
     >
+      <FormLoadingModal message="A guardar…" />
       {courseId && <input type="hidden" name="courseId" value={courseId} />}
 
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>

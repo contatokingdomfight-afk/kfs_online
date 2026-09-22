@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormState } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { updateInsuranceSettings, type UpdateInsuranceSettingsResult } from "./actions";
 
 type Props = {
@@ -18,6 +19,7 @@ export function InsuranceSettingsForm({
 
   return (
     <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <FormLoadingModal message="A guardar…" />
       <div>
         <label htmlFor="annualAmount" style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
           Valor anual do seguro (€)

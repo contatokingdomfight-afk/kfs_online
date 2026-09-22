@@ -88,6 +88,7 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
   const excludedCount = evolutionResult?.excludedCount ?? 0;
 
   const filterMessages = {
+    filtersToggle: t("rankFiltersToggle"),
     filterSchool: t("rankFilterSchool"),
     filterModality: t("rankFilterModality"),
     filterAge: t("rankFilterAge"),

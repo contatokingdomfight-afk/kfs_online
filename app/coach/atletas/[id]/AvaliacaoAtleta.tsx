@@ -3,6 +3,7 @@
 import { useFormState } from "react-dom";
 import { createEvaluation, type CreateEvaluationResult } from "../actions";
 import { RADAR_LABELS } from "@/lib/performance-utils";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 const SCORES = [1, 2, 3, 4, 5];
 
@@ -24,6 +25,7 @@ export function AvaliacaoAtleta({ athleteId }: Props) {
         gap: "clamp(12px, 3vw, 16px)",
       }}
     >
+      <FormLoadingModal message="A guardar avaliação…" />
       <input type="hidden" name="athleteId" value={athleteId} />
       <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 600, color: "var(--text-primary)" }}>
         Nova avaliação (1–5)

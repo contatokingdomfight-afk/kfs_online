@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { submitRpeAction, type RpeFormState } from "../actions";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 function SaveButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -17,11 +18,20 @@ type Props = {
   modalityLabel: string;
   occurrenceDate: string;
   saveLabel: string;
+  savingLabel?: string;
   weightLabel: string;
   weightOptionalHint: string;
 };
 
-export function RpeQuickForm({ attendanceId, modalityLabel, occurrenceDate, saveLabel, weightLabel, weightOptionalHint }: Props) {
+export function RpeQuickForm({
+  attendanceId,
+  modalityLabel,
+  occurrenceDate,
+  saveLabel,
+  savingLabel = "A guardar…",
+  weightLabel,
+  weightOptionalHint,
+}: Props) {
   const [state, action] = useFormState(submitRpeAction, null as RpeFormState);
 
   return (
@@ -36,6 +46,7 @@ export function RpeQuickForm({ attendanceId, modalityLabel, occurrenceDate, save
         borderBottom: "1px solid var(--border)",
       }}
     >
+      <FormLoadingModal message={savingLabel} />
       <input type="hidden" name="attendanceId" value={attendanceId} />
       <div style={{ flex: "1 1 200px" }}>
         <strong style={{ color: "var(--text-primary)" }}>{modalityLabel}</strong>

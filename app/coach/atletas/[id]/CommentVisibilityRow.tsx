@@ -2,6 +2,7 @@
 
 import { useFormState } from "react-dom";
 import { updateCommentVisibility, type UpdateCommentVisibilityResult } from "../actions";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 type Props = {
   commentId: string;
@@ -14,6 +15,7 @@ export function CommentVisibilityRow({ commentId, athleteId, initialVisibility }
 
   return (
     <form action={formAction} style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginTop: 10 }}>
+      <FormLoadingModal message="A guardar…" />
       <input type="hidden" name="commentId" value={commentId} />
       <input type="hidden" name="athleteId" value={athleteId} />
       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--text-secondary)" }}>

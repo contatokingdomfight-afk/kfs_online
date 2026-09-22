@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormState } from "react-dom";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createGoal, updateGoal, type GoalActionResult } from "./actions";
 import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
 import type { AdminBusinessGoalRow } from "@/lib/admin-business-goals";
@@ -22,6 +23,7 @@ export function AdminGoalForm({ schools, goal }: Props) {
 
   return (
     <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 480 }}>
+      <FormLoadingModal message="A guardar…" />
       {isEdit && <input type="hidden" name="goalId" value={goal!.id} />}
       {state?.error && <p style={{ margin: 0, color: "var(--danger)", fontSize: 14 }}>{state.error}</p>}
       {state?.success && <p style={{ margin: 0, color: "var(--primary)", fontSize: 14 }}>Guardado.</p>}

@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
 import { SignaturePad, type SignaturePadHandle } from "@/components/SignaturePad";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { updateSchoolSignature, type UpdateSchoolSignatureResult } from "../actions";
 
 type Props = {
@@ -92,6 +94,8 @@ export function SchoolSignatureSection({ userId, initialSignsForSchool, initialS
       </p>
 
       <form ref={formRef} action={formAction} onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <FormLoadingModal message="A guardar…" />
+        <LoadingOverlay open={uploading} message="A guardar assinatura…" />
         <input type="hidden" name="userId" value={userId} />
         <input type="hidden" name="signsForSchool" value={signsForSchool ? "true" : "false"} />
         <input type="hidden" name="signatureImageUrl" value={pendingSignatureUrl} readOnly />

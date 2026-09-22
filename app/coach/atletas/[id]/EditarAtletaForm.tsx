@@ -2,6 +2,7 @@
 
 import { useFormState } from "react-dom";
 import { updateAthlete, type UpdateAthleteResult } from "../actions";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 type CoachOption = { id: string; name: string };
 
@@ -27,6 +28,7 @@ export function EditarAtletaForm({ athleteId, initialLevel, levelLabels, coaches
         gap: "clamp(12px, 3vw, 16px)",
       }}
     >
+      <FormLoadingModal message="A guardar…" />
       <input type="hidden" name="athleteId" value={athleteId} />
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>

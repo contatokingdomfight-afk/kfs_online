@@ -14,6 +14,7 @@ import {
 } from "../actions";
 import type { FamilyGroupDetail } from "@/lib/family-group";
 import type { FamilyPricingBreakdown } from "@/lib/family-tuition";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 
 type PlanOption = { id: string; name: string; priceMonthly: number };
 
@@ -37,6 +38,7 @@ function ReferencePlanSelect({
   const [state, action] = useFormState(updateMemberReferencePlan, null as FamilyActionResult | null);
   return (
     <form action={action} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <FormLoadingModal message="A guardar…" />
       <input type="hidden" name="groupId" value={groupId} />
       <input type="hidden" name="studentId" value={studentId} />
       <select
@@ -125,6 +127,7 @@ export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }:
           <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>Não foi possível calcular a mensalidade.</p>
         )}
         <form action={discountAction} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+          <FormLoadingModal message="A guardar…" />
           <input type="hidden" name="groupId" value={group.id} />
           <label style={{ fontSize: 14 }}>
             Desconto % (default do grupo)
@@ -173,6 +176,7 @@ export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }:
               </div>
               {m.role === "MEMBER" && group.isActive && (
                 <form action={removeAction}>
+                  <FormLoadingModal message="A remover…" />
                   <input type="hidden" name="groupId" value={group.id} />
                   <input type="hidden" name="studentId" value={m.studentId} />
                   <button type="submit" className="btn btn-secondary" style={{ fontSize: 13 }}>
@@ -189,6 +193,7 @@ export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }:
         <section className="card" style={{ padding: 14 }}>
           <h2 style={{ fontSize: 17, fontWeight: 600, margin: "0 0 12px" }}>Adicionar membro</h2>
           <form action={addAction} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <FormLoadingModal message="A adicionar…" />
             <input type="hidden" name="groupId" value={group.id} />
             <input type="hidden" name="studentId" value={selectedStudentId} />
             <input type="hidden" name="referencePlanId" value={newMemberReferencePlanId} />
@@ -247,6 +252,7 @@ export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }:
 
       {group.isActive && (
         <form action={deactAction}>
+          <FormLoadingModal message="A desactivar…" />
           <input type="hidden" name="groupId" value={group.id} />
           <button type="submit" className="btn btn-secondary" style={{ color: "var(--danger)", borderColor: "var(--danger)" }}>
             Desactivar grupo
