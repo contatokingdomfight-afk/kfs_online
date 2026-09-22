@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { blockProductionSeed } from "@/lib/auth/guard-production-seed";
 import { revalidatePath } from "next/cache";
 import { SEED_MISSIONS } from "./seed-missions-data";
@@ -19,6 +20,8 @@ export async function seedMissionsFromDoc(): Promise<SeedMissionsResult> {
 
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Sem permissão." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   let supabase;
   try {
@@ -74,6 +77,8 @@ export async function createMission(
 ): Promise<MissionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Sem permissão." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim();
   if (!name) return { error: "Nome da missão é obrigatório." };
@@ -114,6 +119,8 @@ export async function createMission(
 export async function deleteMission(missionId: string): Promise<MissionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Sem permissão." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
   if (!missionId) return { error: "ID em falta." };
 
   let supabase;

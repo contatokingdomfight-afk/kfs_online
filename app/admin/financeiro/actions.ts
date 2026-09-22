@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadStudentPaymentRows, type StudentPaymentRow } from "@/lib/admin-student-payment-context";
 import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
@@ -35,6 +36,8 @@ export async function searchStudentsForPayment(
 ): Promise<SearchStudentsForPaymentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:read");
+  if (permErr) return { error: permErr };
 
   const q = query.trim();
   if (q.length < 2) {
@@ -62,6 +65,8 @@ export async function createPayment(
 ): Promise<CreatePaymentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const amountStr = (formData.get("amount") as string)?.trim();
@@ -149,6 +154,8 @@ export async function voidLateTuition(
 ): Promise<CreatePaymentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
@@ -197,6 +204,7 @@ export const voidErroneousLateTuition = voidLateTuition;
 export async function getRenewalsPendingAction(referenceMonth: string) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return [];
+  if (await adminPermissionError("admin:financeiro:read")) return [];
   const supabase = createAdminClient();
   return getRenewalsPending(supabase, referenceMonth);
 }
@@ -207,6 +215,8 @@ export async function generateMonthlyPaymentsAction(
 ): Promise<GenerateMonthlyPaymentsResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { created: 0, skipped: 0, error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { created: 0, skipped: 0, error: permErr };
   const supabase = createAdminClient();
   const result = await generateMonthlyPayments(supabase, referenceMonth, { force: true });
   revalidatePath("/admin/financeiro");
@@ -229,6 +239,8 @@ export async function generateMonthlyPaymentsFormAction(
 export async function dedupeDuplicatePaymentsAction(): Promise<void> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) redirect("/dashboard");
 
   const supabase = createAdminClient();
   const { data: rows, error } = await supabase
@@ -307,6 +319,8 @@ function parsePaymentIds(formData: FormData): string[] {
 export async function deleteAdminPayment(formData: FormData) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) redirect("/dashboard");
 
   const ids = parsePaymentIds(formData);
   if (ids.length === 0) return;
@@ -373,6 +387,8 @@ export async function markPendingPaymentPaid(
 ): Promise<MarkPendingPaymentPaidResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const paymentId = (formData.get("paymentId") as string)?.trim();
   const amountStr = (formData.get("amount") as string)?.trim();
@@ -441,6 +457,8 @@ export async function registerFamilyMemberTuition(
 ): Promise<RegisterFamilyMemberTuitionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const memberStudentId = (formData.get("memberStudentId") as string)?.trim();
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
@@ -506,6 +524,8 @@ export async function updateAdminPayment(
 ): Promise<PaymentActionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const id = (formData.get("id") as string)?.trim();
   const amountStr = (formData.get("amount") as string)?.trim();
@@ -580,6 +600,8 @@ export async function createFinancialExpense(
 ): Promise<ExpenseActionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const amountStr = (formData.get("amount") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() ?? "";
@@ -619,6 +641,8 @@ export async function updateFinancialExpense(
 ): Promise<ExpenseActionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const id = (formData.get("id") as string)?.trim();
   const amountStr = (formData.get("amount") as string)?.trim();
@@ -659,6 +683,8 @@ export async function updateFinancialExpense(
 export async function deleteFinancialExpense(formData: FormData) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) redirect("/dashboard");
   const id = (formData.get("id") as string)?.trim();
   if (!id) return;
   const supabase = createAdminClient();
@@ -677,6 +703,8 @@ export async function createManualRevenue(
 ): Promise<ManualRevenueActionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const amountStr = (formData.get("amount") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() ?? "";
@@ -705,6 +733,8 @@ export async function createManualRevenue(
 export async function deleteManualRevenue(formData: FormData) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) redirect("/dashboard");
   const id = (formData.get("id") as string)?.trim();
   if (!id) return;
   const supabase = createAdminClient();
@@ -724,6 +754,8 @@ export async function createAdvanceTuitionPayments(
 ): Promise<AdvanceTuitionPaymentsResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const startMonth = (formData.get("startMonth") as string)?.trim();
@@ -774,6 +806,8 @@ export async function createFirstPayment(
 ): Promise<CreateFirstPaymentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
@@ -829,6 +863,8 @@ export async function createCashDeposit(
 ): Promise<CashDepositActionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
 
   const amountStr = (formData.get("amount") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || "Depósito de espécie na conta";
@@ -860,6 +896,8 @@ export async function createCashDeposit(
 export async function deleteCashDeposit(formData: FormData) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) redirect("/dashboard");
   const id = (formData.get("id") as string)?.trim();
   if (!id) return;
   const supabase = createAdminClient();

@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type ViewerRow = { studentId: string; name: string; email: string; completedAt: string | null };
@@ -35,7 +36,7 @@ async function resolveViewers(
 async function assertAdmin(): Promise<string | null> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return "Não autorizado.";
-  return null;
+  return adminPermissionError("admin:cursos:read");
 }
 
 /** Alunos que concluíram uma unidade (aula) específica. */

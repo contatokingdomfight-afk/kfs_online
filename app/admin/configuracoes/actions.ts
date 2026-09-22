@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncPendingInsuranceAmounts } from "@/lib/sync-pending-insurance-amount";
 
@@ -13,6 +14,8 @@ export async function updateAttendanceGoal(
 ): Promise<UpdateAttendanceGoalResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const valueStr = (formData.get("target_value") as string)?.trim();
   const value = valueStr ? parseInt(valueStr, 10) : 10;
@@ -54,6 +57,8 @@ export async function updateInsuranceSettings(
 ): Promise<UpdateInsuranceSettingsResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const amountStr = (formData.get("annualAmount") as string)?.trim();
   const enrollmentStr = (formData.get("enrollmentAmount") as string)?.trim();

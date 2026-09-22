@@ -7,6 +7,7 @@ import { parseFinancePaymentMethodRequired } from "@/lib/finance-payment-method"
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { executeExtraSessionsGrant } from "@/lib/extra-sessions-grant";
 import { assertStaffCanManageStudentDropIn } from "@/lib/staff-drop-in-access";
+import { adminPermissionError } from "@/lib/permissions/assert";
 
 export type ExtraSessionsActionResult = { error?: string; success?: boolean };
 
@@ -40,6 +41,8 @@ export async function grantExtraSessions(
   const supabase = createAdminClient();
   const access = await assertStaffCanManageStudentDropIn(supabase, dbUser, studentId);
   if (!access.ok) return { error: access.error };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const result = await executeExtraSessionsGrant(supabase, {
     studentId,

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { applyEnrollmentFormSubmission, type SaveEnrollmentFormResult } from "@/app/adesao/enrollment-actions";
 import { applyAdesaoSigning, type SignAdesaoDocumentsResult } from "@/app/adesao/actions";
@@ -19,6 +20,8 @@ export async function adminSaveEnrollmentForm(
 ): Promise<SaveEnrollmentFormResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const supabase = createAdminClient();
   const result = await applyEnrollmentFormSubmission(supabase, studentId, formData);
@@ -37,6 +40,8 @@ export async function adminSignAdesaoDocuments(
 ): Promise<SignAdesaoDocumentsResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const supabase = createAdminClient();
   const result = await applyAdesaoSigning(supabase, studentId, formData);

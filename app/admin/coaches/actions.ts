@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe/server";
 
@@ -14,6 +15,8 @@ export async function createCoach(
 ): Promise<CreateCoachResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:coaches:write");
+  if (permErr) return { error: permErr };
 
   const email = (formData.get("email") as string)?.trim();
   const name = (formData.get("name") as string)?.trim() || null;
@@ -110,6 +113,8 @@ export type UpdateCoachResult = { error?: string };
 export async function updateCoach(_prev: UpdateCoachResult | null, formData: FormData): Promise<UpdateCoachResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:coaches:write");
+  if (permErr) return { error: permErr };
 
   const coachId = (formData.get("coachId") as string)?.trim();
   if (!coachId) return { error: "ID do coach inválido." };
@@ -165,6 +170,8 @@ export async function setCoachActive(
 ): Promise<{ error?: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:coaches:write");
+  if (permErr) return { error: permErr };
 
   const coachId = (formData.get("coachId") as string)?.trim();
   const active = formData.get("active") === "true";
@@ -185,6 +192,8 @@ export async function deleteCoach(
 ): Promise<{ error?: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:coaches:write");
+  if (permErr) return { error: permErr };
 
   const coachId = (formData.get("coachId") as string)?.trim();
   if (!coachId) return { error: "ID do coach inválido." };
@@ -217,6 +226,8 @@ export async function deleteCoachAccount(
 ): Promise<DeleteCoachAccountResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:coaches:write");
+  if (permErr) return { error: permErr };
 
   const coachId = (formData.get("coachId") as string)?.trim();
   if (!coachId) return { error: "ID do coach inválido." };
@@ -361,6 +372,8 @@ export async function toggleCoursePermission(
 ): Promise<ToggleCoursePermissionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:coaches:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const value = formData.get("value") === "true";

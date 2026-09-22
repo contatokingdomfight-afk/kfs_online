@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { coachTeachesAtSchool } from "@/lib/coach-schools";
 import { revalidatePath } from "next/cache";
 import { revalidatePublicWeeklySchedule } from "@/lib/public-weekly-schedule";
@@ -26,6 +27,8 @@ export async function createLesson(formData: FormData) {
   if (!dbUser || dbUser.role !== "ADMIN") {
     return { error: "Não autorizado." };
   }
+  const permErr = await adminPermissionError("admin:turmas:write");
+  if (permErr) return { error: permErr };
 
   const supabase = getSupabaseForAdminWrite() ?? (await createClient());
 
@@ -150,6 +153,8 @@ export async function updateLesson(
   if (!dbUser || dbUser.role !== "ADMIN") {
     return { error: "Não autorizado." };
   }
+  const permErr = await adminPermissionError("admin:turmas:write");
+  if (permErr) return { error: permErr };
 
   const lessonId = (formData.get("lessonId") as string)?.trim();
   const modality = (formData.get("modality") as string)?.trim();
@@ -220,5 +225,7 @@ export async function deleteLesson(lessonId: string, returnQuery?: string): Prom
   if (!dbUser || dbUser.role !== "ADMIN") {
     return { error: "Não autorizado." };
   }
+  const permErr = await adminPermissionError("admin:turmas:write");
+  if (permErr) return { error: permErr };
   return performDeleteLesson(lessonId, returnQuery);
 }

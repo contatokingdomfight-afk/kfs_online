@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { randomUUID } from "crypto";
 
@@ -20,6 +21,8 @@ function slugFromName(name: string): string {
 export async function createDimension(_prev: DimensionResult | null, formData: FormData): Promise<DimensionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim() || "";
   const codeInput = (formData.get("code") as string)?.trim()?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "";
@@ -58,6 +61,8 @@ export async function createDimension(_prev: DimensionResult | null, formData: F
 export async function deleteDimension(_prev: DimensionResult | null, formData: FormData): Promise<DimensionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const id = (formData.get("dimensionId") as string)?.trim();
   if (!id) return { error: "ID da componente é obrigatório." };

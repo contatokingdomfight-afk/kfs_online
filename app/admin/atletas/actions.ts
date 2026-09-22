@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
 import { loadStudentSummaryRows, type StudentSummaryRow } from "@/lib/admin-student-summary";
@@ -17,6 +18,8 @@ export type SearchStudentsForAthleteResult = { error: string } | { results: Stud
 export async function searchStudentsForNewAthlete(query: string): Promise<SearchStudentsForAthleteResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:read");
+  if (permErr) return { error: permErr };
 
   const q = query.trim();
   if (q.length < 2) {
@@ -42,6 +45,8 @@ export async function createAthlete(
 ): Promise<CreateAthleteResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const mainCoachIdRaw = (formData.get("mainCoachId") as string)?.trim() || null;

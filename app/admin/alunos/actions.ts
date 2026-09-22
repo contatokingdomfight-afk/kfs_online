@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
@@ -100,6 +101,8 @@ export async function createStudent(
 ): Promise<CreateStudentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const email = (formData.get("email") as string)?.trim();
   const name = (formData.get("name") as string)?.trim() || null;
@@ -151,6 +154,8 @@ export async function createStudentPresencial(
 ): Promise<CreateStudentPresencialResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim();
   const schoolId = (formData.get("schoolId") as string)?.trim();
@@ -240,6 +245,8 @@ export async function updateStudent(
 ): Promise<UpdateStudentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   if (!studentId) return { error: "ID do aluno inválido." };
@@ -386,6 +393,8 @@ export async function updateStudentPersonalData(
 ): Promise<UpdateStudentPersonalDataResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   if (!studentId) return { error: "ID do aluno inválido." };
@@ -470,6 +479,8 @@ export async function setStudentFullAccess(
 ): Promise<SetFullAccessResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   if (!studentId) return { error: "ID do aluno inválido." };
@@ -561,6 +572,8 @@ export async function clearStudentPlanAccess(
 ): Promise<ClearStudentPlanResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   if (!studentId) return { error: "ID do aluno inválido." };
@@ -627,6 +640,8 @@ export async function promoteStudentToRole(
 ): Promise<PromoteStudentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const newRole = formData.get("newRole") as string | null;
@@ -723,6 +738,8 @@ export async function changeStudentLoginEmail(
 ): Promise<ChangeStudentLoginEmailResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const newEmail = (formData.get("newEmail") as string)?.trim().toLowerCase();
@@ -778,6 +795,8 @@ export async function deleteStudent(
 ): Promise<DeleteStudentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   if (!studentId) return { error: "ID do aluno inválido." };

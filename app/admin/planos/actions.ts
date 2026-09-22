@@ -154,6 +154,8 @@ export async function updatePlanPrice(
 ): Promise<UpdatePlanPriceResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:planos:write");
+  if (permErr) return { error: permErr };
 
   const planPriceId = (formData.get("planPriceId") as string)?.trim();
   const stripePriceId = (formData.get("stripePriceId") as string)?.trim();

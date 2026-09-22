@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
+import type { AdminPermissionCode } from "@/lib/permissions/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
 import {
@@ -14,16 +16,17 @@ import { refreshFamilyTitularPendingTuition } from "@/lib/family-tuition";
 
 export type FamilyActionResult = { error?: string };
 
-async function assertAdmin() {
+async function assertAdmin(code: AdminPermissionCode) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return null;
+  if (await adminPermissionError(code)) return null;
   return dbUser;
 }
 
 export async function searchStudentsForFamily(query: string): Promise<
   { error: string } | { results: Array<{ studentId: string; name: string; email: string }> }
 > {
-  if (!(await assertAdmin())) return { error: "Não autorizado." };
+  if (!(await assertAdmin("admin:alunos:read"))) return { error: "Não autorizado." };
 
   const q = query.trim();
   if (q.length < 2) return { error: "Indica pelo menos 2 caracteres." };
@@ -54,7 +57,7 @@ export async function createFamilyGroup(
   _prev: FamilyActionResult | null,
   formData: FormData
 ): Promise<FamilyActionResult> {
-  if (!(await assertAdmin())) return { error: "Não autorizado." };
+  if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const name = (formData.get("name") as string)?.trim() || null;
   const titularStudentId = (formData.get("titularStudentId") as string)?.trim();
@@ -91,7 +94,7 @@ export async function addFamilyMember(
   _prev: FamilyActionResult | null,
   formData: FormData
 ): Promise<FamilyActionResult> {
-  if (!(await assertAdmin())) return { error: "Não autorizado." };
+  if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
   const studentId = (formData.get("studentId") as string)?.trim();
@@ -152,7 +155,7 @@ export async function removeFamilyMember(
   _prev: FamilyActionResult | null,
   formData: FormData
 ): Promise<FamilyActionResult> {
-  if (!(await assertAdmin())) return { error: "Não autorizado." };
+  if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
   const studentId = (formData.get("studentId") as string)?.trim();
@@ -190,7 +193,7 @@ export async function updateFamilyGroupDiscount(
   _prev: FamilyActionResult | null,
   formData: FormData
 ): Promise<FamilyActionResult> {
-  if (!(await assertAdmin())) return { error: "Não autorizado." };
+  if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
   const discountPercent = parseFloat((formData.get("discountPercent") as string)?.trim() || "");
@@ -217,7 +220,7 @@ export async function updateMemberReferencePlan(
   _prev: FamilyActionResult | null,
   formData: FormData
 ): Promise<FamilyActionResult> {
-  if (!(await assertAdmin())) return { error: "Não autorizado." };
+  if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
   const studentId = (formData.get("studentId") as string)?.trim();
@@ -242,7 +245,7 @@ export async function deactivateFamilyGroup(
   _prev: FamilyActionResult | null,
   formData: FormData
 ): Promise<FamilyActionResult> {
-  if (!(await assertAdmin())) return { error: "Não autorizado." };
+  if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
   if (!groupId) return { error: "Grupo inválido." };
@@ -258,7 +261,7 @@ export async function deactivateFamilyGroup(
 export async function getStudentFamilyBadge(
   studentId: string
 ): Promise<{ role: "TITULAR" | "MEMBER"; groupId: string; groupName: string | null } | null> {
-  if (!(await assertAdmin())) return null;
+  if (!(await assertAdmin("admin:alunos:read"))) return null;
   const supabase = createAdminClient();
   const ctx = await getFamilyContext(supabase, studentId);
   if (!ctx) return null;

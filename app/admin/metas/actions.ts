@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
+import type { AdminPermissionCode } from "@/lib/permissions/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   deriveGoalStatusAfterProgress,
@@ -19,9 +21,10 @@ import {
 
 export type GoalActionResult = { error?: string; success?: boolean };
 
-async function assertAdmin() {
+async function assertAdmin(code: AdminPermissionCode) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return null;
+  if (await adminPermissionError(code)) return null;
   return dbUser;
 }
 
@@ -45,6 +48,8 @@ export async function listAdminGoals(filters?: {
   schoolId?: string | null;
   status?: string | null;
 }): Promise<AdminGoalWithSchool[]> {
+  if (!(await assertAdmin("admin:sistema:read"))) return [];
+
   const supabase = createAdminClient();
   let query = supabase
     .from("AdminBusinessGoal")
@@ -97,6 +102,8 @@ export async function getAdminGoalDetail(goalId: string): Promise<{
   goal: AdminGoalWithSchool | null;
   entries: (AdminGoalEntryRow & { authorName: string })[];
 }> {
+  if (!(await assertAdmin("admin:sistema:read"))) return { goal: null, entries: [] };
+
   const supabase = createAdminClient();
   const { data: goal } = await supabase
     .from("AdminBusinessGoal")
@@ -174,7 +181,7 @@ async function syncGoalCurrentValue(supabase: ReturnType<typeof createAdminClien
 }
 
 export async function createGoal(_prev: GoalActionResult | null, formData: FormData): Promise<GoalActionResult> {
-  const dbUser = await assertAdmin();
+  const dbUser = await assertAdmin("admin:sistema:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const title = (formData.get("title") as string)?.trim();
@@ -218,7 +225,7 @@ export async function createGoal(_prev: GoalActionResult | null, formData: FormD
 }
 
 export async function updateGoal(_prev: GoalActionResult | null, formData: FormData): Promise<GoalActionResult> {
-  const dbUser = await assertAdmin();
+  const dbUser = await assertAdmin("admin:sistema:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const goalId = (formData.get("goalId") as string)?.trim();
@@ -279,7 +286,7 @@ export async function updateGoal(_prev: GoalActionResult | null, formData: FormD
 }
 
 export async function cancelGoal(_prev: GoalActionResult | null, formData: FormData): Promise<GoalActionResult> {
-  const dbUser = await assertAdmin();
+  const dbUser = await assertAdmin("admin:sistema:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const goalId = (formData.get("goalId") as string)?.trim();
@@ -299,7 +306,7 @@ export async function cancelGoal(_prev: GoalActionResult | null, formData: FormD
 }
 
 export async function completeGoal(_prev: GoalActionResult | null, formData: FormData): Promise<GoalActionResult> {
-  const dbUser = await assertAdmin();
+  const dbUser = await assertAdmin("admin:sistema:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const goalId = (formData.get("goalId") as string)?.trim();
@@ -319,7 +326,7 @@ export async function completeGoal(_prev: GoalActionResult | null, formData: For
 }
 
 export async function addGoalEntry(_prev: GoalActionResult | null, formData: FormData): Promise<GoalActionResult> {
-  const dbUser = await assertAdmin();
+  const dbUser = await assertAdmin("admin:sistema:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const goalId = (formData.get("goalId") as string)?.trim();
@@ -365,7 +372,7 @@ export async function addGoalEntry(_prev: GoalActionResult | null, formData: For
 }
 
 export async function deleteGoalEntry(_prev: GoalActionResult | null, formData: FormData): Promise<GoalActionResult> {
-  const dbUser = await assertAdmin();
+  const dbUser = await assertAdmin("admin:sistema:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const entryId = (formData.get("entryId") as string)?.trim();

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { renewStudentInsuranceCoverage } from "@/lib/renew-student-insurance-coverage";
 
@@ -26,6 +27,8 @@ export async function renewStudentInsurance(
 ): Promise<InsuranceActionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   if (!studentId) return { error: "Aluno inválido." };
@@ -45,6 +48,8 @@ export async function registerInsurancePayment(
 ): Promise<InsuranceActionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const amountStr = (formData.get("amount") as string)?.trim();
@@ -96,6 +101,8 @@ export async function updateStudentInsuranceCoverage(
 ): Promise<InsuranceActionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const covered = formData.get("covered") === "on" || formData.get("covered") === "true";
@@ -144,6 +151,8 @@ export async function clearStudentInsuranceCoverage(
 ): Promise<InsuranceActionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   if (!studentId) return { error: "Aluno inválido." };

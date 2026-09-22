@@ -2,6 +2,7 @@
 
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { revalidatePath } from "next/cache";
 
 export type ModalityResult = { error?: string; success?: boolean };
@@ -9,6 +10,8 @@ export type ModalityResult = { error?: string; success?: boolean };
 export async function createModality(_prev: ModalityResult | null, formData: FormData): Promise<ModalityResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const code = (formData.get("code") as string)?.trim()?.toUpperCase().replace(/\s+/g, "_") || "";
   const name = (formData.get("name") as string)?.trim() || "";
@@ -45,6 +48,8 @@ export async function createModality(_prev: ModalityResult | null, formData: For
 export async function deleteModality(code: string): Promise<ModalityResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
   const trimmed = code?.trim();
   if (!trimmed) return { error: "Código inválido." };
 

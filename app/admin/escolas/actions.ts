@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
@@ -9,6 +10,8 @@ export type SchoolResult = { success?: string; error?: string } | null;
 export async function createSchool(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:escolas:write");
+  if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim();
   const address = (formData.get("address") as string)?.trim() || null;
@@ -41,6 +44,8 @@ export async function createSchool(_prev: SchoolResult, formData: FormData): Pro
 export async function updateSchool(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:escolas:write");
+  if (permErr) return { error: permErr };
 
   const id = (formData.get("schoolId") as string)?.trim();
   const name = (formData.get("name") as string)?.trim();
@@ -68,6 +73,8 @@ export async function updateSchool(_prev: SchoolResult, formData: FormData): Pro
 export async function toggleSchoolActive(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:escolas:write");
+  if (permErr) return { error: permErr };
 
   const id = (formData.get("schoolId") as string)?.trim();
   const isActive = formData.get("isActive") === "true";

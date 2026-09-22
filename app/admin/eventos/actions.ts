@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError, adminPermissionErrorOrSchoolAssistant } from "@/lib/permissions/assert";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 import { parseEventDay } from "@/lib/event-form-dates";
@@ -21,6 +22,8 @@ export async function createEvent(
 ): Promise<EventFormResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
@@ -99,6 +102,8 @@ export async function updateEvent(
 ): Promise<EventFormResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const eventId = (formData.get("eventId") as string)?.trim();
   if (!eventId) return { error: "ID do evento inválido." };
@@ -178,6 +183,8 @@ export async function updateEvent(
 export async function deleteEvent(eventId: string): Promise<{ error?: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
   if (!eventId?.trim()) return { error: "ID do evento inválido." };
 
   const supabase = createAdminClient();
@@ -194,6 +201,8 @@ export async function setRegistrationStatus(
 ): Promise<{ error?: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:sistema:write");
+  if (permErr) return { error: permErr };
 
   const supabase = createAdminClient();
   const rid = registrationId.trim();
@@ -343,6 +352,8 @@ export async function redeemEventTicket(checkinToken: string, eventId: string): 
 
   const gate = await assertAdminOrSchoolAssistantForStudent(dbUser, (reg as { studentId: string }).studentId);
   if (!gate.ok) return { ok: false, error: gate.error };
+  const permErr = await adminPermissionErrorOrSchoolAssistant("admin:sistema:write");
+  if (permErr) return { ok: false, error: permErr };
 
   return executeEventCheckin(supabase, reg as RegCheckinRow, eid);
 }
@@ -374,6 +385,8 @@ export async function redeemEventCheckinByRegistrationId(
 
   const gate = await assertAdminOrSchoolAssistantForStudent(dbUser, (reg as { studentId: string }).studentId);
   if (!gate.ok) return { ok: false, error: gate.error };
+  const permErr = await adminPermissionErrorOrSchoolAssistant("admin:sistema:write");
+  if (permErr) return { ok: false, error: permErr };
 
   return executeEventCheckin(supabase, reg as RegCheckinRow, eid);
 }

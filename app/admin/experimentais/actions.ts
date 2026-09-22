@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -20,6 +21,8 @@ export async function createTrialClass(
 ): Promise<CreateTrialResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:comercial:write");
+  if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim();
   const contact = (formData.get("contact") as string)?.trim();
@@ -61,6 +64,8 @@ export async function acceptTrialRequest(
 ): Promise<AcceptTrialResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "COACH")) return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:comercial:write");
+  if (permErr) return { error: permErr };
 
   const trialId = (formData.get("trialId") as string)?.trim();
   if (!trialId) return { error: "Inscrição inválida." };
@@ -158,6 +163,8 @@ export async function convertTrialToStudent(
 ): Promise<ConvertTrialResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "COACH")) return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:comercial:write");
+  if (permErr) return { error: permErr };
 
   const trialId = (formData.get("trialId") as string)?.trim();
   if (!trialId) return { error: "Inscrição inválida." };

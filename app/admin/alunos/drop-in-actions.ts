@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseFinancePaymentMethodRequired } from "@/lib/finance-payment-method";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
@@ -33,6 +34,8 @@ export async function createDropInStudent(
 ): Promise<CreateDropInStudentResult> {
   const dbUser = await getCurrentDbUser();
   if (!canStaffManageDropInSessions(dbUser)) return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim();
   const schoolId = (formData.get("schoolId") as string)?.trim();

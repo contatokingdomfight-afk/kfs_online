@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { adminPermissionError } from "@/lib/permissions/assert";
+import type { AdminPermissionCode } from "@/lib/permissions/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PRODUCT_CATEGORIES, type ProductCategory, PAYMENT_METHODS, type RetailPaymentMethod } from "@/lib/retail/constants";
 import { recordStockMovement } from "@/lib/retail/inventory";
@@ -11,15 +13,15 @@ import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
 
 export type ActionResult = { error?: string; success?: boolean; id?: string };
 
-function requireAdmin() {
-  return getCurrentDbUser().then((u) => {
-    if (!u || u.role !== "ADMIN") return null;
-    return u;
-  });
+async function requireAdmin(code: AdminPermissionCode) {
+  const u = await getCurrentDbUser();
+  if (!u || u.role !== "ADMIN") return null;
+  if (await adminPermissionError(code)) return null;
+  return u;
 }
 
 export async function createSupplier(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const name = (formData.get("name") as string)?.trim();
@@ -41,7 +43,7 @@ export async function createSupplier(_prev: ActionResult | null, formData: FormD
 }
 
 export async function createProduct(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const name = (formData.get("name") as string)?.trim();
@@ -94,7 +96,7 @@ export async function createProduct(_prev: ActionResult | null, formData: FormDa
 }
 
 export async function addProductVariant(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const productId = (formData.get("productId") as string)?.trim();
@@ -128,7 +130,7 @@ export async function addProductVariant(_prev: ActionResult | null, formData: Fo
 }
 
 export async function toggleProductActive(formData: FormData) {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) redirect("/dashboard");
   const id = (formData.get("id") as string)?.trim();
   const isActive = formData.get("isActive") === "true";
@@ -139,7 +141,7 @@ export async function toggleProductActive(formData: FormData) {
 }
 
 export async function updateProduct(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const id = (formData.get("id") as string)?.trim();
@@ -176,7 +178,7 @@ export async function updateProduct(_prev: ActionResult | null, formData: FormDa
 }
 
 export async function updateSupplier(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const id = (formData.get("id") as string)?.trim();
@@ -201,7 +203,7 @@ export async function updateSupplier(_prev: ActionResult | null, formData: FormD
 }
 
 export async function deleteProduct(formData: FormData) {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) redirect("/dashboard");
   const id = (formData.get("id") as string)?.trim();
   if (!id) return;
@@ -217,7 +219,7 @@ export async function deleteProduct(formData: FormData) {
 }
 
 export async function deleteSupplier(formData: FormData) {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) redirect("/dashboard");
   const id = (formData.get("id") as string)?.trim();
   if (!id) return;
@@ -230,7 +232,7 @@ export async function deleteSupplier(formData: FormData) {
 }
 
 export async function recordStockIn(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const variantId = (formData.get("variantId") as string)?.trim();
@@ -286,7 +288,7 @@ export async function recordStockIn(_prev: ActionResult | null, formData: FormDa
 }
 
 export async function recordStockAdjust(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const variantId = (formData.get("variantId") as string)?.trim();
@@ -319,7 +321,7 @@ export async function registerRetailSale(
   _prev: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) return { error: "Não autorizado." };
 
   const schoolId = (formData.get("schoolId") as string)?.trim();
@@ -356,7 +358,7 @@ export async function registerRetailSale(
 }
 
 export async function searchStudentsForRetail(query: string): Promise<{ error?: string; results?: { id: string; name: string }[] }> {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:read");
   if (!dbUser) return { error: "Não autorizado." };
   const q = query.trim();
   if (q.length < 2) return { error: "Indica pelo menos 2 caracteres." };
@@ -380,7 +382,7 @@ export async function searchStudentsForRetail(query: string): Promise<{ error?: 
 }
 
 export async function searchVariantsAction(query: string) {
-  const dbUser = await requireAdmin();
+  const dbUser = await requireAdmin("admin:financeiro:read");
   if (!dbUser) return { error: "Não autorizado.", variants: [] };
   const { searchVariantsForSale } = await import("@/lib/retail/catalog");
   const supabase = createAdminClient();
