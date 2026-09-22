@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
+import { isFighterCardEligibleAge } from "@/lib/fighter-card";
 import { revalidatePath } from "next/cache";
 
 export type SaveProfileResult = { error?: string; success?: boolean };
@@ -93,4 +94,49 @@ export async function saveStudentProfile(_prev: SaveProfileResult | null, formDa
   revalidatePath("/dashboard/perfil");
   revalidatePath("/dashboard/rank");
   return { success: true };
+}
+
+export type SetFighterCardPublicResult = { error?: string; success?: boolean; enabled?: boolean };
+
+/** Liga/desliga o Fighter Card partilhável (ver DOCS/FIGHTER_CARD_MVP.md). Opt-in explícito. */
+export async function setFighterCardPublic(enabled: boolean): Promise<SetFighterCardPublicResult> {
+  const studentId = await getCurrentStudentId();
+  if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
+
+  const supabase = await createClient();
+  const { data: student } = await supabase.from("Student").select("status").eq("id", studentId).maybeSingle();
+  if (!student) return { error: "Aluno não encontrado." };
+  if (student.status !== "ATIVO") {
+    return { error: "Só alunos activos podem ter um Fighter Card público." };
+  }
+
+  const { data: existing } = await supabase
+    .from("StudentProfile")
+    .select("id, dateOfBirth")
+    .eq("studentId", studentId)
+    .maybeSingle();
+
+  if (enabled && !isFighterCardEligibleAge((existing as { dateOfBirth?: string | null } | null)?.dateOfBirth)) {
+    return {
+      error:
+        "Precisas de preencher a tua data de nascimento aqui em cima (e ter mais de 12 anos) para activar o Fighter Card.",
+    };
+  }
+
+  if (existing) {
+    const { error } = await supabase
+      .from("StudentProfile")
+      .update({ fighterCardPublic: enabled, updatedAt: new Date().toISOString() })
+      .eq("id", existing.id);
+    if (error) return { error: error.message };
+  } else if (enabled) {
+    const { error } = await supabase
+      .from("StudentProfile")
+      .insert({ id: crypto.randomUUID(), studentId, fighterCardPublic: true });
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath("/dashboard/perfil");
+  revalidatePath(`/t/f/${studentId}`);
+  return { success: true, enabled };
 }

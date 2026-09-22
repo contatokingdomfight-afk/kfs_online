@@ -10,8 +10,10 @@ import { DeleteAccountSection } from "./DeleteAccountSection";
 import { PushNotificationToggle } from "@/components/PushNotificationToggle";
 import { LegalDocumentsSection } from "./LegalDocumentsSection";
 import { ReferralInviteSection } from "./ReferralInviteSection";
+import { FighterCardSection } from "./FighterCardSection";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getPublicOrigin } from "@/lib/site-public-url";
+import { isFighterCardEligibleAge } from "@/lib/fighter-card";
 
 /** Valor para `input type="date"` (YYYY-MM-DD). */
 function dateOfBirthForInput(value: unknown): string {
@@ -40,7 +42,7 @@ export default async function DashboardPerfilPage() {
 
   const { data: profile } = await supabase
     .from("StudentProfile")
-    .select("weightKg, heightCm, reachCm, dateOfBirth, medicalNotes, emergencyContact, phone, nickname")
+    .select("weightKg, heightCm, reachCm, dateOfBirth, medicalNotes, emergencyContact, phone, nickname, fighterCardPublic")
     .eq("studentId", studentId)
     .maybeSingle();
 
@@ -68,6 +70,11 @@ export default async function DashboardPerfilPage() {
   ]);
   const convertedCount = (referredStudents ?? []).filter((r) => r.referralRewardGrantedAt != null).length;
   const referralLink = `${getPublicOrigin()}/aula-experimental?ref=${studentId}`;
+  const fighterCardUrl = `${getPublicOrigin()}/t/f/${studentId}`;
+  const fighterCardImageUrl = `${getPublicOrigin()}/t/f/${studentId}/image`;
+  const fighterCardEligibleAge = isFighterCardEligibleAge(
+    (profile as { dateOfBirth?: string | null } | undefined)?.dateOfBirth
+  );
 
   const initial = {
     name: user?.name ?? "",
@@ -115,6 +122,14 @@ export default async function DashboardPerfilPage() {
         referralLink={referralLink}
         invitedCount={invitedCount ?? 0}
         convertedCount={convertedCount}
+        locale={locale as "pt" | "en"}
+      />
+      <FighterCardSection
+        studentId={studentId}
+        initialEnabled={Boolean((profile as { fighterCardPublic?: boolean } | undefined)?.fighterCardPublic)}
+        eligibleAge={fighterCardEligibleAge}
+        cardUrl={fighterCardUrl}
+        imageUrl={fighterCardImageUrl}
         locale={locale as "pt" | "en"}
       />
       <LegalDocumentsSection

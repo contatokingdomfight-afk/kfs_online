@@ -122,6 +122,11 @@ export const messages = {
     tribePublicLogin: "Já tenho conta",
     tribePublicSchoolPost: "Publicação da tua escola na app.",
     tribePublicGlobalPost: "Publicação visível em todas as escolas.",
+    fighterCardPublicTitle: "Fighter Card",
+    fighterCardPublicSubtitle: "A evolução deste atleta na Kingdom Fight School.",
+    fighterCardPublicCta: "Quero experimentar uma aula grátis",
+    fighterCardPublicHome: "Conhecer a Kingdom Fight School",
+    fighterCardPublicUnavailable: "Este Fighter Card não está disponível.",
     tribeBlockedTitle: "Tribo indisponível",
     tribeBlockedMissingSchool:
       "A tua conta de aluno não está associada a uma escola. Contacta a secretaria da KFS para corrigires o registo.",
@@ -1453,6 +1458,11 @@ export const messages = {
     tribePublicLogin: "I already have an account",
     tribePublicSchoolPost: "A post from a school on the app.",
     tribePublicGlobalPost: "A post visible across all schools.",
+    fighterCardPublicTitle: "Fighter Card",
+    fighterCardPublicSubtitle: "This athlete's journey at Kingdom Fight School.",
+    fighterCardPublicCta: "I want a free trial class",
+    fighterCardPublicHome: "Learn about Kingdom Fight School",
+    fighterCardPublicUnavailable: "This Fighter Card isn't available.",
     tribeBlockedTitle: "Tribe unavailable",
     tribeBlockedMissingSchool:
       "Your student account is not linked to a school. Please contact KFS support so we can fix your profile.",
