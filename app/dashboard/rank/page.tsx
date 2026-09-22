@@ -14,6 +14,7 @@ import {
   parseRankModalityParam,
   parseRankModeParam,
   parseRankPeriodParam,
+  rankMedal,
   rankPeriodToStartDate,
 } from "@/lib/rank-filters";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
@@ -184,6 +185,7 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
                   const beltIdx = getBeltIndexFromXp(row.xp);
                   const beltLabel = getBeltName(beltIdx);
                   const highlight = row.is_current_user;
+                  const medal = rankMedal(row.rank);
                   return (
                     <tr
                       key={row.student_id}
@@ -192,7 +194,16 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
                         backgroundColor: highlight ? "var(--bg-secondary)" : undefined,
                       }}
                     >
-                      <td className="py-3 px-3 align-middle text-[var(--text-primary)] font-medium">{row.rank}</td>
+                      <td className="py-3 px-3 align-middle text-[var(--text-primary)] font-medium">
+                        {medal ? (
+                          <span style={{ fontSize: 20, lineHeight: 1 }}>
+                            <span aria-hidden="true">{medal}</span>
+                            <span className="sr-only">{`#${row.rank}`}</span>
+                          </span>
+                        ) : (
+                          row.rank
+                        )}
+                      </td>
                       <td className="py-3 px-2 align-middle text-[var(--text-primary)]">
                         {row.display_name || "—"}
                         {highlight && (
@@ -240,6 +251,7 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
                 const highlight = row.is_current_user;
                 const positive = row.delta > 0;
                 const negative = row.delta < 0;
+                const medal = rankMedal(row.rank);
                 return (
                   <tr
                     key={row.student_id}
@@ -248,7 +260,16 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
                       backgroundColor: highlight ? "var(--bg-secondary)" : undefined,
                     }}
                   >
-                    <td className="py-3 px-3 align-middle text-[var(--text-primary)] font-medium">{row.rank}</td>
+                    <td className="py-3 px-3 align-middle text-[var(--text-primary)] font-medium">
+                      {medal ? (
+                        <span style={{ fontSize: 20, lineHeight: 1 }}>
+                          <span aria-hidden="true">{medal}</span>
+                          <span className="sr-only">{`#${row.rank}`}</span>
+                        </span>
+                      ) : (
+                        row.rank
+                      )}
+                    </td>
                     <td className="py-3 px-2 align-middle text-[var(--text-primary)]">
                       {row.display_name || "—"}
                       {highlight && (

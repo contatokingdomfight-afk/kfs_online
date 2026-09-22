@@ -68,3 +68,11 @@ export function rankPeriodToStartDate(period: RankPeriod, now: Date = new Date()
   const monday = new Date(Date.UTC(y, (m ?? 1) - 1, (d ?? 1) - daysSinceMonday));
   return formatInTimeZone(monday, "UTC", "yyyy-MM-dd");
 }
+
+/** Medalha para o pódio (1.º = ouro, 2.º = prata, 3.º = bronze); `null` a partir do 4.º lugar. */
+export function rankMedal(rank: number): "🥇" | "🥈" | "🥉" | null {
+  if (rank === 1) return "🥇";
+  if (rank === 2) return "🥈";
+  if (rank === 3) return "🥉";
+  return null;
+}
