@@ -3,15 +3,31 @@
  * Mesmo padrão de lib/home-content.ts: objeto bilingue, sem chamadas a BD.
  */
 
+import {
+  Swords,
+  Zap,
+  Move,
+  Baby,
+  Flame,
+  Shield,
+  Handshake,
+  Footprints,
+  Dumbbell,
+  Brain,
+  Puzzle,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+
 export type ModalidadesLocale = "pt" | "en";
 export type ModalidadeSlug = "muay-thai" | "boxe" | "jiu-jitsu" | "kids";
 
-export type ModalidadeBenefit = { icon: string; title: string; desc: string };
+export type ModalidadeBenefit = { icon: LucideIcon; title: string; desc: string };
 export type ModalidadeFaqItem = { q: string; a: string };
 
 export type ModalidadeContent = {
   slug: ModalidadeSlug;
-  icon: string;
+  icon: LucideIcon;
   name: string;
   tagline: string;
   metaTitle: string;
@@ -67,7 +83,7 @@ const modalidadesContentData: Record<
     items: {
       "muay-thai": {
         slug: "muay-thai",
-        icon: "🦵",
+        icon: Swords,
         name: "Muay Thai",
         tagline: "A arte das oito armas",
         metaTitle: "Muay Thai em Oeiras e Cascais | Kingdom Fight School",
@@ -83,22 +99,22 @@ const modalidadesContentData: Record<
         benefitsTitle: "Porquê treinar Muay Thai",
         benefits: [
           {
-            icon: "🦵",
+            icon: Swords,
             title: "Domínio de 8 armas",
             desc: "Socos, cotovelos, joelhos e chutes: a arte das oito armas trabalha o corpo todo, não só braços ou pernas.",
           },
           {
-            icon: "🔥",
+            icon: Flame,
             title: "Condicionamento brutal",
             desc: "Queima calórica elevada, resistência cardiovascular e força funcional em cada treino — sem precisar de ginásio à parte.",
           },
           {
-            icon: "🛡️",
+            icon: Shield,
             title: "Defesa pessoal real",
             desc: "Técnicas eficazes de clinch e combate à curta e média distância, testadas em contexto competitivo há séculos.",
           },
           {
-            icon: "🤝",
+            icon: Handshake,
             title: "Disciplina e evolução",
             desc: "Aulas estruturadas por nível, com o seu progresso acompanhado na plataforma — avaliações, presenças e conquistas.",
           },
@@ -127,7 +143,7 @@ const modalidadesContentData: Record<
       },
       boxe: {
         slug: "boxe",
-        icon: "🥊",
+        icon: Zap,
         name: "Boxe",
         tagline: "A arte nobre",
         metaTitle: "Boxe em Oeiras e Cascais | Kingdom Fight School",
@@ -143,22 +159,22 @@ const modalidadesContentData: Record<
         benefitsTitle: "Porquê treinar Boxe",
         benefits: [
           {
-            icon: "🥊",
+            icon: Zap,
             title: "Fundamentos sólidos",
             desc: "Jab, cross, hook, uppercut: a base técnica de qualquer lutador começa nos punhos, trabalhada com rigor desde o primeiro dia.",
           },
           {
-            icon: "👟",
+            icon: Footprints,
             title: "Jogo de pés e reflexos",
             desc: "Footwork, esquiva e timing que melhoram a coordenação motora e a leitura de movimento do adversário.",
           },
           {
-            icon: "💪",
+            icon: Dumbbell,
             title: "Cardio de alta intensidade",
             desc: "Um dos treinos mais completos para queima calórica, resistência e explosão muscular.",
           },
           {
-            icon: "🧠",
+            icon: Brain,
             title: "Foco mental",
             desc: "Estratégia, leitura de adversário e controlo emocional sob pressão — dentro e fora do ringue.",
           },
@@ -187,7 +203,7 @@ const modalidadesContentData: Record<
       },
       "jiu-jitsu": {
         slug: "jiu-jitsu",
-        icon: "🤼",
+        icon: Move,
         name: "Jiu-Jitsu",
         tagline: "A arte suave",
         metaTitle: "Jiu-Jitsu em Oeiras e Cascais | Kingdom Fight School",
@@ -203,22 +219,22 @@ const modalidadesContentData: Record<
         benefitsTitle: "Porquê treinar Jiu-Jitsu",
         benefits: [
           {
-            icon: "🧩",
+            icon: Puzzle,
             title: "Técnica acima da força",
             desc: "Alavancagem e posicionamento sobrepõem-se à força bruta — tamanho não decide o combate.",
           },
           {
-            icon: "🤼",
+            icon: Move,
             title: "Domínio no chão",
             desc: "Quedas, passagem de guarda e finalizações: controlo total do combate em qualquer posição.",
           },
           {
-            icon: "🧠",
+            icon: Brain,
             title: "Xadrez físico",
             desc: "Desenvolve raciocínio tático, paciência e resolução de problemas em tempo real, sob pressão.",
           },
           {
-            icon: "👨‍👩‍👧‍👦",
+            icon: Users,
             title: "Para todas as idades",
             desc: "Modalidade adaptável, dos mais novos aos adultos, com progressão de faixas e níveis bem definida.",
           },
@@ -247,7 +263,7 @@ const modalidadesContentData: Record<
       },
       kids: {
         slug: "kids",
-        icon: "🧒",
+        icon: Baby,
         name: "Kids",
         tagline: "Disciplina, confiança e diversão desde cedo",
         metaTitle: "Kids — Artes Marciais para Crianças em Oeiras e Cascais | Kingdom Fight School",
@@ -271,22 +287,22 @@ const modalidadesContentData: Record<
         benefitsTitle: "Porque um desporto de combate faz bem à sua criança",
         benefits: [
           {
-            icon: "🧠",
+            icon: Brain,
             title: "Disciplina e foco",
             desc: "Rotina, regras claras e atenção sustentada que se refletem na escola e em casa, não só no tapete.",
           },
           {
-            icon: "💪",
+            icon: Dumbbell,
             title: "Desenvolvimento motor",
             desc: "Coordenação, equilíbrio, força e agilidade trabalhados numa fase crucial do crescimento.",
           },
           {
-            icon: "🛡️",
+            icon: Shield,
             title: "Confiança e autodefesa",
             desc: "Aprender a proteger-se e a ganhar segurança em si próprio — uma ferramenta real contra o bullying.",
           },
           {
-            icon: "🤝",
+            icon: Handshake,
             title: "Respeito e socialização",
             desc: "Valores como respeito pelo colega e pelo treinador, espírito de equipa e novas amizades a cada aula.",
           },
@@ -332,7 +348,7 @@ const modalidadesContentData: Record<
     items: {
       "muay-thai": {
         slug: "muay-thai",
-        icon: "🦵",
+        icon: Swords,
         name: "Muay Thai",
         tagline: "The art of eight limbs",
         metaTitle: "Muay Thai in Oeiras and Cascais | Kingdom Fight School",
@@ -348,22 +364,22 @@ const modalidadesContentData: Record<
         benefitsTitle: "Why train Muay Thai",
         benefits: [
           {
-            icon: "🦵",
+            icon: Swords,
             title: "Eight weapons, one body",
             desc: "Punches, elbows, knees and kicks: the art of eight limbs trains the whole body, not just arms or legs.",
           },
           {
-            icon: "🔥",
+            icon: Flame,
             title: "Brutal conditioning",
             desc: "High calorie burn, cardiovascular endurance and functional strength in every session — no separate gym needed.",
           },
           {
-            icon: "🛡️",
+            icon: Shield,
             title: "Real self-defense",
             desc: "Effective clinch and close/mid-range combat techniques, proven in competition for centuries.",
           },
           {
-            icon: "🤝",
+            icon: Handshake,
             title: "Discipline and progress",
             desc: "Level-based classes, with your progress tracked on the platform — evaluations, attendance and achievements.",
           },
@@ -392,7 +408,7 @@ const modalidadesContentData: Record<
       },
       boxe: {
         slug: "boxe",
-        icon: "🥊",
+        icon: Zap,
         name: "Boxing",
         tagline: "The sweet science",
         metaTitle: "Boxing in Oeiras and Cascais | Kingdom Fight School",
@@ -408,22 +424,22 @@ const modalidadesContentData: Record<
         benefitsTitle: "Why train Boxing",
         benefits: [
           {
-            icon: "🥊",
+            icon: Zap,
             title: "Solid fundamentals",
             desc: "Jab, cross, hook, uppercut: any fighter's technical base starts with the hands, drilled with rigor from day one.",
           },
           {
-            icon: "👟",
+            icon: Footprints,
             title: "Footwork and reflexes",
             desc: "Footwork, head movement and timing that improve motor coordination and reading your opponent's movement.",
           },
           {
-            icon: "💪",
+            icon: Dumbbell,
             title: "High-intensity cardio",
             desc: "One of the most complete workouts for calorie burn, endurance and explosive strength.",
           },
           {
-            icon: "🧠",
+            icon: Brain,
             title: "Mental focus",
             desc: "Strategy, reading your opponent and emotional control under pressure — inside and outside the ring.",
           },
@@ -452,7 +468,7 @@ const modalidadesContentData: Record<
       },
       "jiu-jitsu": {
         slug: "jiu-jitsu",
-        icon: "🤼",
+        icon: Move,
         name: "Jiu-Jitsu",
         tagline: "The gentle art",
         metaTitle: "Jiu-Jitsu in Oeiras and Cascais | Kingdom Fight School",
@@ -468,22 +484,22 @@ const modalidadesContentData: Record<
         benefitsTitle: "Why train Jiu-Jitsu",
         benefits: [
           {
-            icon: "🧩",
+            icon: Puzzle,
             title: "Technique over strength",
             desc: "Leverage and positioning overcome raw strength — size doesn't decide the fight.",
           },
           {
-            icon: "🤼",
+            icon: Move,
             title: "Ground mastery",
             desc: "Takedowns, guard passing and submissions: full control of the fight in any position.",
           },
           {
-            icon: "🧠",
+            icon: Brain,
             title: "Physical chess",
             desc: "Develops tactical thinking, patience and real-time problem solving, under pressure.",
           },
           {
-            icon: "👨‍👩‍👧‍👦",
+            icon: Users,
             title: "For all ages",
             desc: "An adaptable discipline, from kids to adults, with a clear belt and level progression system.",
           },
@@ -512,7 +528,7 @@ const modalidadesContentData: Record<
       },
       kids: {
         slug: "kids",
-        icon: "🧒",
+        icon: Baby,
         name: "Kids",
         tagline: "Discipline, confidence and fun from an early age",
         metaTitle: "Kids — Martial Arts for Children in Oeiras and Cascais | Kingdom Fight School",
@@ -536,22 +552,22 @@ const modalidadesContentData: Record<
         benefitsTitle: "Why a combat sport is good for your child",
         benefits: [
           {
-            icon: "🧠",
+            icon: Brain,
             title: "Discipline and focus",
             desc: "Routine, clear rules and sustained attention that carry over into school and home life, not just the mat.",
           },
           {
-            icon: "💪",
+            icon: Dumbbell,
             title: "Motor development",
             desc: "Coordination, balance, strength and agility trained during a crucial stage of growth.",
           },
           {
-            icon: "🛡️",
+            icon: Shield,
             title: "Confidence and self-defense",
             desc: "Learning to protect themselves and gain self-assurance — a real tool against bullying.",
           },
           {
-            icon: "🤝",
+            icon: Handshake,
             title: "Respect and socializing",
             desc: "Values like respect for teammates and coaches, team spirit and new friendships in every class.",
           },

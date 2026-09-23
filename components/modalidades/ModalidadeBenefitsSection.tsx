@@ -1,4 +1,6 @@
-type Benefit = { icon: string; title: string; desc: string };
+import type { LucideIcon } from "lucide-react";
+
+type Benefit = { icon: LucideIcon; title: string; desc: string };
 
 type Props = {
   title: string;
@@ -16,9 +18,7 @@ export function ModalidadeBenefitsSection({ title, benefits }: Props) {
               key={i}
               className="flex gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-6 transition-all hover:border-[var(--primary)]/30"
             >
-              <span className="text-2xl" aria-hidden>
-                {b.icon}
-              </span>
+              <b.icon className="w-6 h-6 shrink-0 text-[var(--primary)]" aria-hidden />
               <div>
                 <h3 className="font-semibold text-[var(--text-primary)]">{b.title}</h3>
                 <p className="mt-1 text-sm text-[var(--text-secondary)]">{b.desc}</p>

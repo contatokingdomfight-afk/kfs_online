@@ -51,9 +51,7 @@ export default async function ModalidadesHubPage() {
               href={`/modalidades/${m.slug}`}
               className="group flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-8 text-center transition-all hover:border-[var(--primary)]/40 hover:shadow-lg"
             >
-              <span className="text-4xl" aria-hidden>
-                {m.icon}
-              </span>
+              <m.icon className="w-9 h-9 text-[var(--primary)]" aria-hidden />
               <h2 className="text-xl font-bold text-[var(--text-primary)]">{m.name}</h2>
               <p className="text-sm text-[var(--text-secondary)]">{m.tagline}</p>
               <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[var(--primary)]">

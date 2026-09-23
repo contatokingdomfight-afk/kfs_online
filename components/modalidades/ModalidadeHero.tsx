@@ -1,13 +1,14 @@
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 
 type Props = {
-  icon: string;
+  icon: LucideIcon;
   title: string;
   subtitle: string;
   ctaLabel: string;
 };
 
-export function ModalidadeHero({ icon, title, subtitle, ctaLabel }: Props) {
+export function ModalidadeHero({ icon: Icon, title, subtitle, ctaLabel }: Props) {
   return (
     <section className="relative overflow-hidden py-16 sm:py-24">
       <div
@@ -17,8 +18,8 @@ export function ModalidadeHero({ icon, title, subtitle, ctaLabel }: Props) {
         }}
       />
       <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-        <span className="text-5xl" aria-hidden>
-          {icon}
+        <span className="flex justify-center text-[var(--primary)]" aria-hidden>
+          <Icon className="w-12 h-12" />
         </span>
         <h1 className="mt-4 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl md:text-5xl">
           {title}

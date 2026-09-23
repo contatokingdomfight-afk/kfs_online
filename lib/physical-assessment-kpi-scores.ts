@@ -1,3 +1,4 @@
+import { Dumbbell, HeartPulse, Zap, Scale, Move, Target, type LucideIcon } from "lucide-react";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 
 export type PhysicalKpiKey =
@@ -10,7 +11,7 @@ export type PhysicalKpiKey =
 
 export type PhysicalKpiDef = {
   key: PhysicalKpiKey;
-  icon: string;
+  icon: LucideIcon;
   labelPt: string;
   labelEn: string;
   tooltipPt: string;
@@ -21,7 +22,7 @@ export type PhysicalKpiDef = {
 export const PHYSICAL_KPI_DEFS: PhysicalKpiDef[] = [
   {
     key: "scoreStrength",
-    icon: "💪",
+    icon: Dumbbell,
     labelPt: "Força",
     labelEn: "Strength",
     tooltipPt:
@@ -31,7 +32,7 @@ export const PHYSICAL_KPI_DEFS: PhysicalKpiDef[] = [
   },
   {
     key: "scoreEndurance",
-    icon: "🫀",
+    icon: HeartPulse,
     labelPt: "Resistência",
     labelEn: "Endurance",
     tooltipPt:
@@ -41,7 +42,7 @@ export const PHYSICAL_KPI_DEFS: PhysicalKpiDef[] = [
   },
   {
     key: "scoreSpeed",
-    icon: "⚡",
+    icon: Zap,
     labelPt: "Velocidade",
     labelEn: "Speed",
     tooltipPt:
@@ -51,7 +52,7 @@ export const PHYSICAL_KPI_DEFS: PhysicalKpiDef[] = [
   },
   {
     key: "scoreCondition",
-    icon: "⚖️",
+    icon: Scale,
     labelPt: "Condição física",
     labelEn: "Physical condition",
     tooltipPt:
@@ -61,7 +62,7 @@ export const PHYSICAL_KPI_DEFS: PhysicalKpiDef[] = [
   },
   {
     key: "scoreMobility",
-    icon: "🤸",
+    icon: Move,
     labelPt: "Mobilidade",
     labelEn: "Mobility",
     tooltipPt:
@@ -71,7 +72,7 @@ export const PHYSICAL_KPI_DEFS: PhysicalKpiDef[] = [
   },
   {
     key: "scoreCoordination",
-    icon: "🎯",
+    icon: Target,
     labelPt: "Coordenação",
     labelEn: "Coordination",
     tooltipPt:

@@ -347,7 +347,7 @@ export function PerformanceFighterDashboard({
             {PHYSICAL_KPI_DEFS.filter((def) => typeof physicalKpiScores[def.key] === "number").map((def) => (
               <StatCard
                 key={def.key}
-                icon={<span aria-hidden>{def.icon}</span>}
+                icon={<def.icon size={16} aria-hidden />}
                 label={locale === "pt" ? def.labelPt : def.labelEn}
                 score={physicalKpiScores[def.key] as number}
                 maxScore={10}

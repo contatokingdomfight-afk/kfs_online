@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { X } from "lucide-react";
+import { X, Eye } from "lucide-react";
 import type { ViewerRow } from "../stats-actions";
 
 type Props = {
@@ -50,9 +50,10 @@ export function ViewersDrilldown({ label, fetchViewers }: Props) {
         type="button"
         onClick={handleOpen}
         className="btn btn-secondary"
-        style={{ fontSize: 12, padding: "4px 10px", minHeight: 28 }}
+        style={{ fontSize: 12, padding: "4px 10px", minHeight: 28, display: "inline-flex", alignItems: "center", gap: 4 }}
       >
-        👁 {label}
+        <Eye size={13} aria-hidden />
+        {label}
       </button>
       {open && (
         <div
@@ -87,8 +88,9 @@ export function ViewersDrilldown({ label, fetchViewers }: Props) {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <h2 id="viewers-drilldown-title" style={{ margin: 0, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                👁 {label}
+              <h2 id="viewers-drilldown-title" style={{ margin: 0, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}>
+                <Eye size={16} aria-hidden />
+                {label}
               </h2>
               <button
                 type="button"
