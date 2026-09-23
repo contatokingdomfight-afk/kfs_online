@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Rocket } from "lucide-react";
 
 type Lesson = {
   id: string;
@@ -122,7 +123,7 @@ export function CurrentOrNextClassCard({
           padding: "clamp(12px, 3vw, 16px) clamp(20px, 5vw, 24px)",
         }}
       >
-        <span aria-hidden>🚀</span>
+        <Rocket size={16} aria-hidden />
         {manageLabel}
       </Link>
     </section>

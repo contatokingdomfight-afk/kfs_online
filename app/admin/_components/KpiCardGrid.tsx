@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 
-type Card = { href: string; icon: string; value: string; label: string; info?: string };
+type Card = { href: string; icon: LucideIcon; value: string; label: string; info?: string };
 
 type Props = { cards: Card[] };
 
@@ -41,8 +42,8 @@ export function KpiCardGrid({ cards }: Props) {
               <InlineInfoTip trigger="click" detail={c.info} ariaLabel={c.label} />
             </span>
           )}
-          <span style={{ fontSize: 24, marginBottom: 8, display: "block" }} aria-hidden>
-            {c.icon}
+          <span style={{ marginBottom: 8, display: "block", color: "var(--primary)" }} aria-hidden>
+            <c.icon size={24} />
           </span>
           <div style={{ fontSize: "clamp(18px, 4.5vw, 24px)", fontWeight: 700, color: "var(--text-primary)" }}>
             {c.value}

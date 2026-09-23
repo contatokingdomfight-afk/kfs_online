@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { Users, Whistle, AlertTriangle, TrendingUp } from "lucide-react";
 import { getAdminDashboardStats } from "@/lib/admin-dashboard-stats";
 import { KpiCardGrid } from "../_components/KpiCardGrid";
 import { BreakdownList } from "../_components/BreakdownList";
@@ -42,28 +43,28 @@ export async function AdminMetricsDashboardContent({ client, schoolId, access }:
         cards={[
           {
             href: "/admin/alunos",
-            icon: "👥",
+            icon: Users,
             value: String(stats.activeStudents),
             label: t("adminActiveStudents"),
             info: t("adminActiveStudentsInfo"),
           },
           {
             href: "/admin/coaches",
-            icon: "🥋",
+            icon: Whistle,
             value: String(stats.activeCoaches),
             label: t("adminActiveCoaches"),
             info: t("adminActiveCoachesInfo"),
           },
           {
             href: "/admin/financeiro",
-            icon: "⚠️",
+            icon: AlertTriangle,
             value: `${stats.delinquencyRate.percent.toFixed(1)}%`,
             label: t("adminDelinquencyRate"),
             info: t("adminDelinquencyRateInfo"),
           },
           {
             href: "/admin/financeiro",
-            icon: "🔮",
+            icon: TrendingUp,
             value: `${stats.projectedMonthlyRevenue.toFixed(0)} €`,
             label: t("adminProjectedMonthlyRevenue"),
             info: t("adminProjectedMonthlyRevenueInfo"),

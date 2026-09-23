@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Users } from "lucide-react";
 import type { CoachLessonStudentRow } from "@/lib/coach-lesson-eligible-students";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AttendanceRow } from "./AttendanceRow";
@@ -103,7 +104,7 @@ export function CoachAulaRosterPanel({
       {filtered.length === 0 ? (
         <div className="coach-aula-empty-list">
           <span className="coach-aula-empty-icon" aria-hidden>
-            👥
+            <Users size={32} />
           </span>
           <p>Nenhum aluno encontrado com estes filtros.</p>
           <p className="coach-aula-empty-hint">

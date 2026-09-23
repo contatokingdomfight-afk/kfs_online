@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -270,7 +271,7 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
                       textDecoration: "none",
                     }}
                   >
-                    <span aria-hidden>💬</span>
+                    <MessageCircle size={15} aria-hidden />
                   </a>
                 ) : null}
               </li>

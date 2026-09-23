@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PenLine } from "lucide-react";
 
 type Props = {
   title: string;
@@ -64,7 +65,7 @@ export function WeekThemeCard({
           fontSize: "clamp(14px, 3.5vw, 16px)",
         }}
       >
-        <span aria-hidden>✍️</span>
+        <PenLine size={15} aria-hidden />
         {defineLabel}
       </Link>
     </section>

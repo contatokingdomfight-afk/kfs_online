@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useFormState } from "react-dom";
+import { MapPin, Phone, Mail } from "lucide-react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createSchool, updateSchool, toggleSchoolActive, type SchoolResult } from "./actions";
 
@@ -155,8 +156,9 @@ export function EscolasManager({ schools: initialSchools }: { schools: School[] 
                   )}
                 </div>
                 {school.city && (
-                  <p style={{ margin: "4px 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-                    📍 {school.city}
+                  <p style={{ margin: "4px 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <MapPin size={13} aria-hidden />
+                    {school.city}
                   </p>
                 )}
                 {school.address && (
@@ -165,13 +167,15 @@ export function EscolasManager({ schools: initialSchools }: { schools: School[] 
                   </p>
                 )}
                 {school.phone && (
-                  <p style={{ margin: "4px 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-                    📞 {school.phone}
+                  <p style={{ margin: "4px 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <Phone size={13} aria-hidden />
+                    {school.phone}
                   </p>
                 )}
                 {school.email && (
-                  <p style={{ margin: "4px 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-                    ✉️ {school.email}
+                  <p style={{ margin: "4px 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <Mail size={13} aria-hidden />
+                    {school.email}
                   </p>
                 )}
               </div>

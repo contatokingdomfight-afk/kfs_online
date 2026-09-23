@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { QrCode } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -217,7 +218,7 @@ export default async function CoachAulaPage({
                   href={`/coach/aula/qr?lesson=${selectedLesson.id}&date=${encodeURIComponent(selectedLesson.occurrenceDate)}`}
                   className="btn btn-secondary coach-aula-qr-btn"
                 >
-                  <span aria-hidden>📱</span> QR Code
+                  <QrCode size={15} aria-hidden /> QR Code
                 </Link>
               </div>
 

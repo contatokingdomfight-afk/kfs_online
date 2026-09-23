@@ -1,3 +1,4 @@
+import { BookOpen, Trophy, CreditCard } from "lucide-react";
 import { BreakdownList } from "../../_components/BreakdownList";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 
@@ -23,9 +24,9 @@ type Props = {
 
 export function CourseEngagementSection({ engagement, labels }: Props) {
   const tiles = [
-    { icon: "📘", value: engagement.unitsCompleted, label: labels.unitsCompleted },
-    { icon: "🏆", value: engagement.coursesCompleted, label: labels.coursesCompleted },
-    { icon: "💳", value: engagement.studentsWithPaidPurchase, label: labels.studentsWithPurchase },
+    { icon: BookOpen, value: engagement.unitsCompleted, label: labels.unitsCompleted },
+    { icon: Trophy, value: engagement.coursesCompleted, label: labels.coursesCompleted },
+    { icon: CreditCard, value: engagement.studentsWithPaidPurchase, label: labels.studentsWithPurchase },
   ];
 
   return (
@@ -44,8 +45,8 @@ export function CourseEngagementSection({ engagement, labels }: Props) {
       >
         {tiles.map((tile) => (
           <div key={tile.label} style={{ padding: "clamp(12px, 3vw, 16px)", background: "var(--bg-secondary)", borderRadius: "var(--radius-md)" }}>
-            <span style={{ fontSize: 22, marginBottom: 6, display: "block" }} aria-hidden>
-              {tile.icon}
+            <span style={{ marginBottom: 6, display: "block", color: "var(--primary)" }} aria-hidden>
+              <tile.icon size={22} />
             </span>
             <div style={{ fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: "var(--text-primary)" }}>{tile.value}</div>
             <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{tile.label}</div>

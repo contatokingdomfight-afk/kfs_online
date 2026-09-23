@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { Banknote, Sparkles, BarChart3, Swords } from "lucide-react";
 import { getAdminDashboardPeriodStats } from "@/lib/admin-dashboard-period-stats";
 import { KpiCardGrid } from "../_components/KpiCardGrid";
 import { BreakdownList } from "../_components/BreakdownList";
@@ -48,28 +49,28 @@ export async function AdminDashboardPeriodContent({ client, schoolId, period, mo
         cards={[
           {
             href: "/admin/financeiro",
-            icon: "💰",
+            icon: Banknote,
             value: `${stats.revenue.total.toFixed(0)} €`,
             label: t("adminRevenueInPeriod"),
             info: t("adminRevenueInPeriodInfo"),
           },
           {
             href: "/admin/alunos",
-            icon: "✨",
+            icon: Sparkles,
             value: String(newStudentsInPeriod),
             label: t("adminNewStudentsInPeriod"),
             info: t("adminNewStudentsInPeriodInfo"),
           },
           {
             href: "/admin/presenca",
-            icon: "📊",
+            icon: BarChart3,
             value: stats.avgAttendance.toFixed(1),
             label: t("adminAvgAttendanceInPeriod"),
             info: t("adminAvgAttendanceInPeriodInfo"),
           },
           {
             href: "/admin/turmas",
-            icon: "🥊",
+            icon: Swords,
             value: `${stats.occupancyRate.averagePercent.toFixed(0)}%`,
             label: t("adminOccupancyRate"),
             info: t("adminOccupancyRateInfo"),
