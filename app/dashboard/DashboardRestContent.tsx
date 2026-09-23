@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircle2, Target, LineChart, PartyPopper, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getTranslations } from "@/lib/i18n";
 import { formatLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
@@ -305,7 +306,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
                 <div style={{ marginTop: 6, height: 4, borderRadius: 2, backgroundColor: "var(--border)", overflow: "hidden" }}>
                   <div style={{ height: "100%", width: `${Math.min(100, (currentMonthCount / attendanceGoal) * 100)}%`, backgroundColor: currentMonthCount >= attendanceGoal ? "var(--success)" : "var(--primary)", transition: "width 0.3s ease" }} />
                 </div>
-                {currentMonthCount >= attendanceGoal && <p style={{ margin: "4px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--success)" }}>✓ {t("goalReached")}</p>}
+                {currentMonthCount >= attendanceGoal && <p style={{ margin: "4px 0 0 0", fontSize: "clamp(11px, 2.8vw, 13px)", color: "var(--success)", display: "flex", alignItems: "center", gap: 4 }}><CheckCircle2 size={13} aria-hidden />{t("goalReached")}</p>}
               </div>
             </div>
             <div style={{ marginTop: "clamp(16px, 4vw, 20px)", paddingTop: "clamp(16px, 4vw, 20px)", borderTop: "1px solid var(--border)" }}>
@@ -321,7 +322,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
       )}
       {activeMissions.length > 0 && hasPerformanceTracking && (
         <section>
-          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>🎯 {t("featuredMissions")}</h2>
+          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}><Target size={18} aria-hidden />{t("featuredMissions")}</h2>
           <p style={{ margin: "0 0 clamp(12px, 3vw, 16px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("featuredMissionsDescription")}</p>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
             {activeMissions.map((mission) => (
@@ -404,7 +405,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
       )}
       {weeklyProgress.length > 0 && hasCheckIn && (
         <section>
-          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>📈 {t("weeklyProgress")}</h2>
+          <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}><LineChart size={18} aria-hidden />{t("weeklyProgress")}</h2>
           <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
             <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("weeklyProgressDescription")}</p>
             <div style={{ display: "flex", alignItems: "flex-end", gap: "clamp(8px, 2vw, 12px)", height: 200, padding: "0 0 clamp(8px, 2vw, 12px) 0" }}>
@@ -486,13 +487,13 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
           <section>
             <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>{t("monthGoal")}</h2>
             <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)", borderLeft: currentMonthCount >= attendanceGoal ? "4px solid var(--success)" : undefined }}>
-              {currentMonthCount >= attendanceGoal && <p style={{ margin: "0 0 8px 0", fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--success)" }}>🎉 {locale === "pt" ? "Parabéns!" : "Congratulations!"}</p>}
+              {currentMonthCount >= attendanceGoal && <p style={{ margin: "0 0 8px 0", fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--success)", display: "flex", alignItems: "center", gap: 6 }}><PartyPopper size={16} aria-hidden />{locale === "pt" ? "Parabéns!" : "Congratulations!"}</p>}
               <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{t("confirmedThisMonth")}</p>
               <p style={{ margin: 0, fontSize: "clamp(24px, 6vw, 28px)", fontWeight: 700, color: currentMonthCount >= attendanceGoal ? "var(--success)" : "var(--primary)" }}>{currentMonthCount} / {attendanceGoal} {t("classesCount")}</p>
               <div style={{ marginTop: 10, height: 8, borderRadius: 4, backgroundColor: "var(--border)", overflow: "hidden" }}>
                 <div style={{ height: "100%", width: `${Math.min(100, (currentMonthCount / attendanceGoal) * 100)}%`, backgroundColor: currentMonthCount >= attendanceGoal ? "var(--success)" : "var(--primary)", transition: "width 0.3s ease" }} />
               </div>
-              {currentMonthCount >= attendanceGoal && <p style={{ margin: "8px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--success)" }}>✓ {t("goalReached")}</p>}
+              {currentMonthCount >= attendanceGoal && <p style={{ margin: "8px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--success)", display: "flex", alignItems: "center", gap: 6 }}><CheckCircle2 size={15} aria-hidden />{t("goalReached")}</p>}
             </div>
           </section>
           {studentProfile?.weightKg != null && studentProfile?.heightCm != null && (() => {
@@ -527,7 +528,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
                     const improve = improveByAxisId.get(e.id as GeneralPerformanceAxisId);
                     return (
                       <li key={e.id} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
-                        <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>🎯 {msg}</p>
+                        <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}><Target size={16} aria-hidden />{msg}</p>
                         <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{e.label}: {e.score.toFixed(1)} / {maxScore}</p>
                         <div style={{ marginTop: 8, height: 6, borderRadius: 3, backgroundColor: "var(--border)", overflow: "hidden" }}><div style={{ height: "100%", width: `${Math.min(100, (e.score / maxScore) * 100)}%`, backgroundColor: "var(--primary)" }} /></div>
                         {improve ? (
@@ -551,7 +552,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
             <section>
               <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>{t("nextConquest")}</h2>
               <div className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-                <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>🎯 {nextBadge.name}</p>
+                <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}><Target size={16} aria-hidden />{nextBadge.name}</p>
                 {nextBadge.description && <p style={{ margin: "4px 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{nextBadge.description}</p>}
                 <p style={{ margin: 0, fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{nextBadge.current} / {nextBadge.target}</p>
                 <div style={{ marginTop: 8, height: 6, borderRadius: 3, backgroundColor: "var(--border)", overflow: "hidden" }}><div style={{ height: "100%", width: `${nextBadge.progressPct}%`, backgroundColor: "var(--primary)", transition: "width 0.3s ease" }} /></div>
@@ -569,7 +570,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(8px, 2vw, 10px)" }}>
                 {earnedBadges.map((b) => (
                   <li key={b.badgeCode} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)" }}>
-                    <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>🏆 {b.name}</p>
+                    <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}><Trophy size={16} aria-hidden />{b.name}</p>
                     {b.description && <p style={{ margin: "4px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{b.description}</p>}
                     <p style={{ margin: "4px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>{new Date(b.earnedAt).toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", { day: "2-digit", month: "short", year: "numeric" })}</p>
                   </li>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Lock, QrCode } from "lucide-react";
 import { formatNextLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
 import { VouNaoVouButtons } from "./VouNaoVouButtons";
 
@@ -192,8 +193,9 @@ export function LessonPromoBlock({
       </p>
       <div style={{ marginTop: 12 }}>
         {showRsvpBlocked ? (
-          <p style={{ margin: 0, fontSize: 14, color: mutedTextColor }}>
-            🔒 {blockedCopy}
+          <p style={{ margin: 0, fontSize: 14, color: mutedTextColor, display: "flex", alignItems: "center", gap: 6 }}>
+            <Lock size={14} aria-hidden />
+            {blockedCopy}
           </p>
         ) : (
           <VouNaoVouButtons
@@ -241,7 +243,8 @@ export function LessonPromoBlock({
                   border: isToday ? "none" : "2px solid rgba(255,255,255,0.6)",
                 }}
               >
-                📲 {t("dashboardCheckInButton")}
+                <QrCode size={18} aria-hidden />
+                {t("dashboardCheckInButton")}
               </Link>
               <p style={{ marginTop: 12, marginBottom: 0, fontSize: "clamp(12px, 3vw, 14px)", opacity: 0.9 }}>
                 {t("atGymScanQr")}{" "}

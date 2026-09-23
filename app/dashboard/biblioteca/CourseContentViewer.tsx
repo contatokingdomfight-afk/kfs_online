@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
 import { ConcluirUnidadeButton } from "./ConcluirUnidadeButton";
 import { ConcluirModuloButton } from "./ConcluirModuloButton";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
@@ -175,7 +176,7 @@ export function CourseContentViewer({
                         {!lockedPreview &&
                           studentId &&
                           (completedUnitSet.has(u.id) ? (
-                            <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
+                            <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 4 }}><CheckCircle2 size={14} aria-hidden />Concluído</span>
                           ) : isUnlocked ? (
                             <div onClick={(e) => e.stopPropagation()}>
                               <ConcluirUnidadeButton unitId={u.id} courseId={courseId} />
@@ -242,7 +243,7 @@ export function CourseContentViewer({
                   {!lockedPreview &&
                     studentId &&
                     (completedModuleSet.has(mod.id) ? (
-                      <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>✓ Concluído</span>
+                      <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 4 }}><CheckCircle2 size={14} aria-hidden />Concluído</span>
                     ) : (
                       <ConcluirModuloButton moduleId={mod.id} courseId={courseId} />
                     ))}

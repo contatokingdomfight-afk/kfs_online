@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Zap } from "lucide-react";
 
 type Props = {
   t: (key: string) => string;
@@ -9,8 +10,9 @@ type Props = {
 export function NextLessonCard({ t, isFreeTier = false }: Props) {
   return (
     <section>
-      <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
-        ⚡ {t("dashboardNextLessonTitle")}
+      <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
+        <Zap size={18} aria-hidden />
+        {t("dashboardNextLessonTitle")}
       </h2>
       <div className="card" style={{ padding: "clamp(20px, 5vw, 24px)" }}>
         <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-secondary)" }}>

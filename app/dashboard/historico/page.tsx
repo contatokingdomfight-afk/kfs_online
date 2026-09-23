@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LineChart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -186,8 +187,9 @@ export default async function DashboardHistoricoPage({
       </div>
 
       <section className="card" style={{ padding: "clamp(20px, 5vw, 28px)" }}>
-        <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(16px, 4vw, 20px)", color: "var(--text-primary)" }}>
-          📈 {t("dashboardHistoricoWeeklyChart")}
+        <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(16px, 4vw, 20px)", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
+          <LineChart size={18} aria-hidden />
+          {t("dashboardHistoricoWeeklyChart")}
         </h2>
         <div style={{ display: "flex", alignItems: "flex-end", gap: "clamp(8px, 2vw, 12px)", height: 180, padding: "0 0 clamp(8px, 2vw, 12px) 0" }}>
           {weeklyProgress.map((week, index) => {

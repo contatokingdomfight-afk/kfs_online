@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 import { completeUnit } from "./actions";
 
 type Props = { unitId: string; courseId: string };
@@ -24,8 +25,9 @@ export function ConcluirUnidadeButton({ unitId, courseId }: Props) {
 
   if (done) {
     return (
-      <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>
-        ✓ Concluído
+      <span style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 4 }}>
+        <CheckCircle2 size={14} aria-hidden />
+        Concluído
       </span>
     );
   }

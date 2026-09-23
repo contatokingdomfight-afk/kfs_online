@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Gauge, BookOpen, Trophy, History, Map } from "lucide-react";
 
 type Props = {
   hasPerformanceTracking: boolean;
@@ -8,7 +9,7 @@ type Props = {
 const CARDS = [
   {
     id: "performance",
-    icon: "📊",
+    icon: Gauge,
     href: "/dashboard/performance",
     titleKey: "dashboardExplorePerformance",
     descKey: "dashboardExplorePerformanceDesc",
@@ -16,7 +17,7 @@ const CARDS = [
   },
   {
     id: "library",
-    icon: "📚",
+    icon: BookOpen,
     href: "/dashboard/biblioteca",
     titleKey: "dashboardExploreLibraryCard",
     descKey: "dashboardExploreLibraryDesc",
@@ -24,7 +25,7 @@ const CARDS = [
   },
   {
     id: "conquests",
-    icon: "🏆",
+    icon: Trophy,
     href: "/dashboard/conquistas",
     titleKey: "dashboardExploreConquests",
     descKey: "dashboardExploreConquestsDesc",
@@ -32,7 +33,7 @@ const CARDS = [
   },
   {
     id: "history",
-    icon: "🗓️",
+    icon: History,
     href: "/dashboard/historico",
     titleKey: "dashboardExploreHistory",
     descKey: "dashboardExploreHistoryDesc",
@@ -45,8 +46,9 @@ export function ExploreSection({ hasPerformanceTracking, t }: Props) {
 
   return (
     <section>
-      <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
-        🗺️ {t("dashboardExploreTitle")}
+      <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
+        <Map size={18} aria-hidden />
+        {t("dashboardExploreTitle")}
       </h2>
       <div
         style={{
@@ -69,7 +71,7 @@ export function ExploreSection({ hasPerformanceTracking, t }: Props) {
               gap: 8,
             }}
           >
-            <span style={{ fontSize: "clamp(24px, 6vw, 28px)" }}>{card.icon}</span>
+            <card.icon size={26} aria-hidden />
             <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
               {t(card.titleKey)}
             </p>

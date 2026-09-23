@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Shield, CheckCircle2 } from "lucide-react";
 
 const BELT_COLORS: Record<string, string> = {
   WHITE: "#e5e5e5",
@@ -64,8 +65,9 @@ export function WarriorPanel({
             cursor: "pointer",
           }}
         >
-          <h2 style={{ margin: "0 0 4px 0", fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: "var(--text-primary)" }}>
-            🛡️ {t("dashboardWarriorPanelTitle")}
+          <h2 style={{ margin: "0 0 4px 0", fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
+            <Shield size={20} aria-hidden />
+            {t("dashboardWarriorPanelTitle")}
           </h2>
           <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-secondary)" }}>
             {t("dashboardWarriorGreeting")} {studentName ?? t("dashboardWarriorDefaultName")}!
@@ -133,8 +135,9 @@ export function WarriorPanel({
                 />
               </div>
               {goalReached && (
-                <p style={{ margin: "6px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--success)" }}>
-                  ✓ {t("goalReached")}
+                <p style={{ margin: "6px 0 0 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--success)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <CheckCircle2 size={14} aria-hidden />
+                  {t("goalReached")}
                 </p>
               )}
             </div>

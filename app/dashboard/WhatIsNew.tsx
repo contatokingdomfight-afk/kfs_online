@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Target } from "lucide-react";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { weekdayShortLabelForPublicSchedule } from "@/lib/weekday-labels";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
@@ -75,8 +76,9 @@ export function WhatIsNew({ weekThemes, todayWeekday, nextMission, coachFeedback
 
   return (
     <section>
-      <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)" }}>
-        🎯 {labels.title}
+      <h2 style={{ fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 600, marginBottom: "clamp(12px, 3vw, 16px)", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
+        <Target size={18} aria-hidden />
+        {labels.title}
       </h2>
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ display: "flex", borderBottom: "1px solid var(--border)" }}>
