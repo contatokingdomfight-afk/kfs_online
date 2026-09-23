@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Check } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -65,7 +66,7 @@ export function SuccessConfirmModal({ open, onClose, title, message, closeLabel 
             gap: 10,
           }}
         >
-          <span aria-hidden style={{ fontSize: 28 }}>✓</span>
+          <Check size={26} aria-hidden />
           {title}
         </p>
         {message && (

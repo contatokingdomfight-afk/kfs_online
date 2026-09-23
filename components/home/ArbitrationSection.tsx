@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Gift, ClipboardList, Trophy, type LucideIcon } from "lucide-react";
 
 type Content = {
   arbitrationTitle: string;
@@ -14,10 +15,10 @@ type Content = {
   arbitrationCtaPlatform: string;
 };
 
-const features = [
-  (c: Content) => ({ title: c.arbitrationFeature1, desc: c.arbitrationFeature1Desc, icon: "🆓" }),
-  (c: Content) => ({ title: c.arbitrationFeature2, desc: c.arbitrationFeature2Desc, icon: "📋" }),
-  (c: Content) => ({ title: c.arbitrationFeature3, desc: c.arbitrationFeature3Desc, icon: "🏆" }),
+const features: ((c: Content) => { title: string; desc: string; icon: LucideIcon })[] = [
+  (c) => ({ title: c.arbitrationFeature1, desc: c.arbitrationFeature1Desc, icon: Gift }),
+  (c) => ({ title: c.arbitrationFeature2, desc: c.arbitrationFeature2Desc, icon: ClipboardList }),
+  (c) => ({ title: c.arbitrationFeature3, desc: c.arbitrationFeature3Desc, icon: Trophy }),
 ];
 
 export function ArbitrationSection({ content }: { content: Content }) {
@@ -38,14 +39,14 @@ export function ArbitrationSection({ content }: { content: Content }) {
 
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
           {features.map((fn, i) => {
-            const { title, desc, icon } = fn(content);
+            const { title, desc, icon: Icon } = fn(content);
             return (
               <div
                 key={i}
                 className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6 text-center shadow-sm"
               >
-                <div className="text-3xl" aria-hidden>
-                  {icon}
+                <div className="flex justify-center text-[var(--primary)]" aria-hidden>
+                  <Icon className="w-8 h-8" />
                 </div>
                 <h3 className="mt-4 font-semibold text-[var(--text-primary)]">{title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{desc}</p>

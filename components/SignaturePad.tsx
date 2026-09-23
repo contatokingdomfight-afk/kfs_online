@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { PenLine } from "lucide-react";
 
 export type SignaturePadHandle = {
   isEmpty: () => boolean;
@@ -128,12 +129,14 @@ export const SignaturePad = forwardRef<SignaturePadHandle, Props>(function Signa
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              gap: 6,
               fontSize: 13,
               color: "#9ca3af",
               pointerEvents: "none",
             }}
           >
-            ✍️ Toca e arrasta para assinar
+            <PenLine size={14} aria-hidden />
+            Toca e arrasta para assinar
           </span>
         )}
       </div>

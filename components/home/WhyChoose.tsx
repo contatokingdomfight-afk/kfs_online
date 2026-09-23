@@ -1,3 +1,5 @@
+import { Whistle, ClipboardList, Handshake, TrendingUp, type LucideIcon } from "lucide-react";
+
 type Content = {
   whyTitle: string;
   why1: string;
@@ -10,11 +12,11 @@ type Content = {
   why5Desc: string;
 };
 
-const items = [
-  (c: Content) => ({ title: c.why1, desc: c.why1Desc, icon: "🥋" }),
-  (c: Content) => ({ title: c.why2, desc: c.why2Desc, icon: "📋" }),
-  (c: Content) => ({ title: c.why4, desc: c.why4Desc, icon: "🤝" }),
-  (c: Content) => ({ title: c.why5, desc: c.why5Desc, icon: "📈" }),
+const items: ((c: Content) => { title: string; desc: string; icon: LucideIcon })[] = [
+  (c) => ({ title: c.why1, desc: c.why1Desc, icon: Whistle }),
+  (c) => ({ title: c.why2, desc: c.why2Desc, icon: ClipboardList }),
+  (c) => ({ title: c.why4, desc: c.why4Desc, icon: Handshake }),
+  (c) => ({ title: c.why5, desc: c.why5Desc, icon: TrendingUp }),
 ];
 
 export function WhyChoose({ content }: { content: Content }) {
@@ -26,13 +28,13 @@ export function WhyChoose({ content }: { content: Content }) {
         </h2>
         <div className="mt-12 grid gap-6 sm:grid-cols-2">
           {items.map((fn, i) => {
-            const { title, desc, icon } = fn(content);
+            const { title, desc, icon: Icon } = fn(content);
             return (
               <div
                 key={i}
                 className="flex gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-6 transition-all hover:border-[var(--primary)]/30"
               >
-                <span className="text-2xl">{icon}</span>
+                <Icon className="w-6 h-6 shrink-0 text-[var(--primary)]" aria-hidden />
                 <div>
                   <h3 className="font-semibold text-[var(--text-primary)]">
                     {title}

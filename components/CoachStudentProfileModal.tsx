@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useFormState, useFormStatus } from "react-dom";
+import { CheckCircle2, CircleDot, Circle, Phone, AlertTriangle } from "lucide-react";
 import { saveCoachStudentEvaluation } from "@/app/coach/save-student-evaluation-action";
 import {
   EVALUATION_LABELS_BY_MODALITY,
@@ -404,7 +405,7 @@ export function CoachStudentProfileModal(props: Props) {
                     catsInDim.length > 0
                       ? catsInDim.reduce((s, c) => s + (categoryAverages.get(c.nome) ?? 0), 0) / catsInDim.length
                       : null;
-                  const Icon = status === "complete" ? "✓" : status === "partial" ? "•" : "○";
+                  const StatusIcon = status === "complete" ? CheckCircle2 : status === "partial" ? CircleDot : Circle;
                   return (
                     <li key={dim.id}>
                       <button
@@ -415,7 +416,9 @@ export function CoachStudentProfileModal(props: Props) {
                           if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
                         }}
                       >
-                        <span className="text-[var(--text-primary)]" aria-hidden>{Icon}</span>
+                        <span className="text-[var(--text-primary)] inline-flex align-middle" aria-hidden>
+                          <StatusIcon size={14} />
+                        </span>
                         <span className="ml-1.5 text-[var(--text-primary)]">{dim.label}</span>
                         {avg != null && !Number.isNaN(avg) && (
                           <span className="block text-xs text-[var(--text-secondary)] mt-0.5">
@@ -448,7 +451,12 @@ export function CoachStudentProfileModal(props: Props) {
                     {profile.name || profile.email || "Aluno"}
                   </p>
                   {profile.name ? <p className="m-0.5 text-sm text-[var(--text-secondary)]">{profile.email}</p> : null}
-                  {profile.phone ? <p className="mt-1 text-sm text-[var(--text-secondary)]">📞 {profile.phone}</p> : null}
+                  {profile.phone ? (
+                    <p className="mt-1 text-sm text-[var(--text-secondary)] flex items-center gap-1.5">
+                      <Phone size={13} aria-hidden />
+                      {profile.phone}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               {(profile.weightKg != null || profile.heightCm != null) && (
@@ -578,7 +586,7 @@ export function CoachStudentProfileModal(props: Props) {
                       {evaluationConfig.categorias.map((cat, index) => {
                         const status = getSectionStatus(cat, scores, touchedIds);
                         const avg = getSectionAverage(cat, scores);
-                        const statusIcon = status === "complete" ? "✓" : status === "partial" ? "•" : "○";
+                        const StatusIcon = status === "complete" ? CheckCircle2 : status === "partial" ? CircleDot : Circle;
                         const axisId = categoryToPerformanceAxisId(cat);
                         return (
                           <div
@@ -593,7 +601,9 @@ export function CoachStudentProfileModal(props: Props) {
                             >
                               <summary className="flex items-center justify-between gap-2 py-3 px-4 cursor-pointer list-none select-none font-semibold text-[var(--text-primary)] text-sm">
                                 <span className="flex items-center gap-2">
-                                  <span aria-hidden className="text-base">{statusIcon}</span>
+                                  <span aria-hidden className="inline-flex">
+                                    <StatusIcon size={15} />
+                                  </span>
                                   <span>{cat.nome}</span>
                                   <span className="text-[var(--text-secondary)] font-normal">
                                     {cat.criterios.length} itens
@@ -736,7 +746,10 @@ function CriterionRow({ criterion, value, baseline, isTouched, onValueChange, in
           )}
         </span>
         {isUnrated && (
-          <span className="text-xs text-amber-600 font-medium w-full">⚠ não avaliado</span>
+          <span className="text-xs text-amber-600 font-medium w-full inline-flex items-center gap-1">
+            <AlertTriangle size={12} aria-hidden />
+            não avaliado
+          </span>
         )}
       </div>
       {criterion.description && (

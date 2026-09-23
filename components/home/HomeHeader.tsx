@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Swords, Timer, Scale, X, Menu } from "lucide-react";
 
 type Props = {
   ctaLabel: string;
@@ -65,15 +66,15 @@ export function HomeHeader({
 
         <div className="hidden shrink-0 items-center gap-1 lg:flex lg:gap-2">
           <Link href="/modalidades" className={navLinkClass}>
-            <span aria-hidden>🥋</span>
+            <Swords size={16} aria-hidden />
             <span>{modalidadesLabel}</span>
           </Link>
           <Link href="/timer" className={navLinkClass}>
-            <span aria-hidden>⏱️</span>
+            <Timer size={16} aria-hidden />
             <span>{timerLabel}</span>
           </Link>
           <Link href="/arbitragem" className={navLinkClass}>
-            <span aria-hidden>🏆</span>
+            <Scale size={16} aria-hidden />
             <span>{judgingLabel}</span>
           </Link>
           <Link
@@ -91,7 +92,7 @@ export function HomeHeader({
           aria-label={menuOpen ? navMenuCloseLabel : navMenuLabel}
           className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg text-[var(--text-primary)] lg:hidden"
         >
-          {menuOpen ? "✕" : "☰"}
+          {menuOpen ? <X size={20} aria-hidden /> : <Menu size={20} aria-hidden />}
         </button>
       </div>
 
@@ -112,15 +113,15 @@ export function HomeHeader({
           ))}
           <div className="my-1 border-t border-[var(--border)]" />
           <Link href="/modalidades" onClick={() => setMenuOpen(false)} className={mobileLinkClass}>
-            <span aria-hidden>🥋</span>
+            <Swords size={16} aria-hidden />
             <span>{modalidadesLabel}</span>
           </Link>
           <Link href="/timer" onClick={() => setMenuOpen(false)} className={mobileLinkClass}>
-            <span aria-hidden>⏱️</span>
+            <Timer size={16} aria-hidden />
             <span>{timerLabel}</span>
           </Link>
           <Link href="/arbitragem" onClick={() => setMenuOpen(false)} className={mobileLinkClass}>
-            <span aria-hidden>🏆</span>
+            <Scale size={16} aria-hidden />
             <span>{judgingLabel}</span>
           </Link>
           <Link

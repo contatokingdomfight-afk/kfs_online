@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 import type { TodayTrialClass } from "@/lib/today-trial-classes";
 import { AcceptTrialButton } from "@/app/admin/experimentais/AcceptTrialButton";
 import { ConvertTrialButton } from "@/app/admin/experimentais/ConvertTrialButton";
@@ -248,7 +249,7 @@ export function TodayTrialClassesHighlight({
                     textDecoration: "none",
                   }}
                 >
-                  <span aria-hidden>💬</span>
+                  <MessageCircle size={15} aria-hidden />
                 </a>
               ) : null}
             </li>

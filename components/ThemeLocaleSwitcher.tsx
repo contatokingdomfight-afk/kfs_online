@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Settings } from "lucide-react";
 import {
   setThemeCookieValue,
   setLocaleCookieValue,
@@ -119,7 +120,7 @@ export function ThemeLocaleSwitcher({
         aria-label="Abrir tema e idioma"
         title="Tema e idioma"
       >
-        <span style={{ fontSize: 20 }} aria-hidden>⚙</span>
+        <Settings size={18} aria-hidden />
       </button>
     );
   }
