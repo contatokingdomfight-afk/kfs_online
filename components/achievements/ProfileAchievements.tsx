@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Lock } from "lucide-react";
 import { Tooltipped } from "@/components/ui/FloatingTooltip";
 import type { AchievementWithStatus } from "@/lib/achievements";
 
@@ -51,7 +52,7 @@ export function ProfileAchievements({ achievements, backHref = "/dashboard" }: P
               `}
               aria-label={a.isUnlocked ? a.name : `${a.name} (bloqueada)`}
             >
-              {a.isUnlocked ? a.icon : "🔒"}
+              {a.isUnlocked ? a.icon : <Lock size={16} aria-hidden />}
             </button>
           </Tooltipped>
         ))}

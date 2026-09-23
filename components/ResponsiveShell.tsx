@@ -3,6 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { X } from "lucide-react";
 import { APP_SHELL_DESKTOP_MEDIA } from "@/lib/layout-breakpoints";
 import { Sidebar, type SidebarLink } from "./Sidebar";
 import type { Theme, Locale } from "@/lib/theme-locale";
@@ -190,7 +191,7 @@ export function ResponsiveShell({
                 justifyContent: "center",
               }}
             >
-              ✕
+              <X size={18} aria-hidden />
             </button>
             </div>
             <Sidebar

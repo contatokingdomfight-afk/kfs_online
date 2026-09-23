@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Target } from "lucide-react";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/theme-locale";
 
@@ -37,7 +38,7 @@ export function MissionCard({ missions, locale = "pt" }: Props) {
   return (
     <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
       <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-1 flex items-center gap-2">
-        <span aria-hidden>🎯</span>
+        <Target size={16} aria-hidden />
         {t("missionsObjectivesTitle")}
       </h2>
       <p className="text-sm text-text-secondary mb-4">{t("missionsObjectivesSubtitle")}</p>

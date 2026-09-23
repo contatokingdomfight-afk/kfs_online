@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Star } from "lucide-react";
 import type { DetailGroup, DetailItem, DimensionDetail } from "@/lib/performance-detail-structure";
 
 type Props = {
@@ -17,12 +18,12 @@ function StarRating({ value, max = 5 }: { value: number; max?: number }) {
   return (
     <div className="flex gap-0.5" aria-label={`${v} de ${max} estrelas`}>
       {Array.from({ length: max }, (_, i) => (
-        <span
+        <Star
           key={i}
+          size={14}
+          fill={i < v ? "var(--warning)" : "none"}
           style={{ color: i < v ? "var(--warning)" : "var(--border)" }}
-        >
-          ★
-        </span>
+        />
       ))}
     </div>
   );

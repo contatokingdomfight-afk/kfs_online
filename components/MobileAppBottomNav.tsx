@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { X } from "lucide-react";
 
 export type MobileNavIconId =
   | "home"
@@ -464,7 +465,7 @@ export function MobileAppBottomNav({
                   WebkitTapHighlightColor: "transparent",
                 }}
               >
-                ✕
+                <X size={18} aria-hidden />
               </button>
             </div>
             <div

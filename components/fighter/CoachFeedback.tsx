@@ -1,5 +1,7 @@
 "use client";
 
+import { MessageCircle } from "lucide-react";
+
 type Props = {
   quote: string;
   coachName?: string;
@@ -9,7 +11,7 @@ export function CoachFeedback({ quote, coachName = "Teu treinador" }: Props) {
   return (
     <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
       <h2 className="text-base font-bold text-text-primary mb-3 flex items-center gap-2">
-        <span aria-hidden>💬</span>
+        <MessageCircle size={16} aria-hidden />
         Feedback do treinador
       </h2>
       <blockquote className="relative pl-4 border-l-4 border-primary/60 py-1">

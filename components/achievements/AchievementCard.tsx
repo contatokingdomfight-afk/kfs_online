@@ -1,5 +1,6 @@
 "use client";
 
+import { Lock } from "lucide-react";
 import type { AchievementWithStatus } from "@/lib/achievements";
 
 type Props = {
@@ -26,7 +27,7 @@ export function AchievementCard({ achievement, className = "" }: Props) {
             ${isUnlocked ? "ring-[var(--primary)]/30 shadow-lg bg-gradient-to-br from-[var(--bg)] to-[var(--border)]" : "ring-[var(--border)] grayscale opacity-80"}
           `}
         >
-          {isUnlocked ? icon : "🔒"}
+          {isUnlocked ? icon : <Lock size={22} aria-hidden />}
         </div>
         <h3 className="mt-3 font-bold text-[var(--text-primary)] text-sm sm:text-base truncate w-full">
           {name}

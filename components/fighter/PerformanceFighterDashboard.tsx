@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { Swords, Target, Dumbbell, Brain, BookOpen, Trophy, ClipboardList, type LucideIcon } from "lucide-react";
 import type { PhysicalAvatarCarouselPayload } from "@/lib/build-performance-physical-carousel";
 import { PerformanceHeroCard } from "./PerformanceHeroCard";
 import { StatCard } from "./StatCard";
@@ -49,12 +50,12 @@ const CATEGORY_LABEL: Record<string, string> = {
   PERFORMANCE: "Performance",
 };
 
-const AXIS_ICONS: Record<string, string> = {
-  tecnico: "🥊",
-  tatico: "🎯",
-  fisico: "💪",
-  mental: "🧠",
-  teorico: "📚",
+const AXIS_ICONS: Record<string, LucideIcon> = {
+  tecnico: Swords,
+  tatico: Target,
+  fisico: Dumbbell,
+  mental: Brain,
+  teorico: BookOpen,
 };
 
 type Props = {
@@ -220,15 +221,18 @@ export function PerformanceFighterDashboard({
               <span className="text-xs text-text-secondary">Performance geral 1–10</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              {axes.map((a) => (
-                <StatCard
-                  key={a.id}
-                  icon={<span aria-hidden>{AXIS_ICONS[a.id] ?? "•"}</span>}
-                  label={a.label}
-                  score={scores[a.id] ?? 0}
-                  maxScore={maxScore}
-                />
-              ))}
+              {axes.map((a) => {
+                const AxisIcon = AXIS_ICONS[a.id] ?? Target;
+                return (
+                  <StatCard
+                    key={a.id}
+                    icon={<AxisIcon size={16} aria-hidden />}
+                    label={a.label}
+                    score={scores[a.id] ?? 0}
+                    maxScore={maxScore}
+                  />
+                );
+              })}
             </div>
           </section>
 
@@ -419,7 +423,7 @@ export function PerformanceFighterDashboard({
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-2xl" aria-hidden>🏆</span>
+              <Trophy className="w-6 h-6" aria-hidden />
               <div>
                 <h2 className="text-base font-bold text-text-primary">Conquistas</h2>
                 <p className="text-sm text-text-secondary">Badges e metas que já desbloqueaste</p>
@@ -434,7 +438,7 @@ export function PerformanceFighterDashboard({
       {lastEvaluation && (
         <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
           <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-2 flex items-center gap-2">
-            <span aria-hidden>📋</span>
+            <ClipboardList size={16} aria-hidden />
             Última avaliação
           </h2>
           <p className="text-sm text-text-secondary mb-1">
@@ -471,7 +475,7 @@ export function PerformanceFighterDashboard({
       {suggestedCourses.length > 0 && (
         <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
           <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-2 flex items-center gap-2">
-            <span aria-hidden>📚</span>
+            <BookOpen size={16} aria-hidden />
             Ver como melhorar
           </h2>
           <p className="text-sm text-text-secondary mb-3">

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CheckCircle2, AlertTriangle, ArrowDown, ArrowUp, Stethoscope, Moon, BedDouble, Droplet, Wind, Battery, type LucideIcon } from "lucide-react";
 import type { CheckInWellnessAggregates } from "@/lib/check-in-wellness-aggregates";
 
 export type CheckInWellnessCopy = {
@@ -100,28 +101,28 @@ function hydrationInsight(pct: number): { kind: StatusKind; gauge: number } {
 function StatusIcon({ kind }: { kind: StatusKind }) {
   if (kind === "normal") {
     return (
-      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--success)_18%,transparent)] text-[length:12px] leading-none" aria-hidden>
-        ✓
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--success)_18%,transparent)]" aria-hidden>
+        <CheckCircle2 size={12} />
       </span>
     );
   }
   if (kind === "attention") {
     return (
-      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--warning)_22%,transparent)] text-[length:12px] leading-none" aria-hidden>
-        !
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--warning)_22%,transparent)]" aria-hidden>
+        <AlertTriangle size={12} />
       </span>
     );
   }
   if (kind === "lower") {
     return (
-      <span className="inline-flex h-5 w-5 items-center justify-center text-[length:14px] leading-none" aria-hidden>
-        ↓
+      <span className="inline-flex h-5 w-5 items-center justify-center" aria-hidden>
+        <ArrowDown size={14} />
       </span>
     );
   }
   return (
-    <span className="inline-flex h-5 w-5 items-center justify-center text-[length:14px] leading-none" aria-hidden>
-      ↑
+    <span className="inline-flex h-5 w-5 items-center justify-center" aria-hidden>
+      <ArrowUp size={14} />
     </span>
   );
 }
@@ -147,7 +148,7 @@ function VerticalGauge({ fill01, fillColor }: { fill01: number; fillColor: strin
 }
 
 function BiometricCard({
-  icon,
+  icon: Icon,
   abbr,
   mainNum,
   unit,
@@ -157,7 +158,7 @@ function BiometricCard({
   accent,
   extraHint,
 }: {
-  icon: string;
+  icon: LucideIcon;
   abbr: string;
   mainNum: string;
   unit: string;
@@ -174,8 +175,8 @@ function BiometricCard({
     <article className="relative flex min-h-[120px] min-w-0 gap-2 rounded-2xl border border-border bg-transparent p-3 sm:min-h-[132px] sm:gap-3 sm:p-4">
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-2">
-          <span className="text-[1.15rem] leading-none opacity-95" aria-hidden>
-            {icon}
+          <span className="opacity-95" aria-hidden>
+            <Icon size={18} />
           </span>
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-secondary">{abbr}</span>
         </div>
@@ -216,9 +217,7 @@ export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-text-primary">
-            <span aria-hidden className="text-xl">
-              🩺
-            </span>
+            <Stethoscope size={20} aria-hidden />
             {copy.title}
           </h2>
           <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-text-secondary">{copy.intro}</p>
@@ -232,7 +231,7 @@ export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <BiometricCard
-          icon="😴"
+          icon={Moon}
           abbr={copy.abbrSleepH}
           mainNum={format1(data.avgSleepHours)}
           unit="h"
@@ -242,7 +241,7 @@ export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
           accent={statusColor(sh.kind)}
         />
         <BiometricCard
-          icon="💤"
+          icon={BedDouble}
           abbr={copy.abbrSleepQ}
           mainNum={format1(data.avgSleepQuality)}
           unit="/5"
@@ -252,7 +251,7 @@ export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
           accent={statusColor(sq.kind)}
         />
         <BiometricCard
-          icon="💧"
+          icon={Droplet}
           abbr={copy.abbrHydration}
           mainNum={String(Math.round(data.hydrationOkPercent))}
           unit="%"
@@ -263,7 +262,7 @@ export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
           extraHint={copy.hydrationHint}
         />
         <BiometricCard
-          icon="🧘"
+          icon={Wind}
           abbr={copy.abbrStress}
           mainNum={format1(data.avgStress)}
           unit="/5"
@@ -273,7 +272,7 @@ export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
           accent={statusColor(st.kind)}
         />
         <BiometricCard
-          icon="🔋"
+          icon={Battery}
           abbr={copy.abbrFatigue}
           mainNum={format1(data.avgFatigue)}
           unit="/5"
