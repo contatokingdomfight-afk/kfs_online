@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { AlertTriangle } from "lucide-react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import {
   createCriterion,
@@ -245,7 +246,8 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
                           whiteSpace: "nowrap",
                         }}
                       >
-                        ⚠ Sem critérios — não aparece na avaliação
+                        <AlertTriangle size={11} style={{ display: "inline", verticalAlign: -1, marginRight: 4 }} aria-hidden />
+                        Sem critérios — não aparece na avaliação
                       </span>
                     )}
                   </div>

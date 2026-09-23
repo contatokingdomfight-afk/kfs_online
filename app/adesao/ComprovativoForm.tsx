@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { Landmark, Calendar, CreditCard, Check } from "lucide-react";
 import { useFormState } from "react-dom";
 import { saveEnrollmentForm, type SaveEnrollmentFormResult } from "./enrollment-actions";
 import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
@@ -262,7 +263,10 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props
                 fontSize: 14,
               }}
             >
-              <p style={{ margin: "0 0 8px", fontWeight: 600 }}>🏦 Dados para transferência</p>
+              <p style={{ margin: "0 0 8px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                <Landmark size={16} aria-hidden />
+                Dados para transferência
+              </p>
               <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>
                 Destinatário: <strong style={{ color: "var(--text-primary)" }}>{SCHOOL_PAYMENT_DETAILS.recipientName}</strong>
               </p>
@@ -280,15 +284,17 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props
                 Revolut:{" "}
                 <strong style={{ color: "var(--text-primary)" }}>{SCHOOL_PAYMENT_DETAILS.revolutTag}</strong>
               </p>
-              <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                📅 As mensalidades seguintes devem ser pagas {SCHOOL_PAYMENT_DETAILS.monthlyDueDayNote}.
+              <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 6 }}>
+                <Calendar size={13} aria-hidden style={{ flexShrink: 0, marginTop: 1 }} />
+                As mensalidades seguintes devem ser pagas {SCHOOL_PAYMENT_DETAILS.monthlyDueDayNote}.
               </p>
             </div>
           ) : null}
 
           <div>
-            <label htmlFor="paymentProof" style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
-              💳 Comprovativo de pagamento {paymentMethod === "TRANSFER" ? "" : "(opcional)"}
+            <label htmlFor="paymentProof" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
+              <CreditCard size={15} aria-hidden />
+              Comprovativo de pagamento {paymentMethod === "TRANSFER" ? "" : "(opcional)"}
             </label>
             <input
               id="paymentProof"
@@ -374,8 +380,8 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props
           ].map((item) => (
             <div key={item.name} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14 }}>
               <input type="hidden" name={item.name} value="on" />
-              <span style={{ color: "var(--success)", fontWeight: 700, marginTop: 1 }} aria-hidden>
-                ✓
+              <span style={{ color: "var(--success)", marginTop: 1 }} aria-hidden>
+                <Check size={15} />
               </span>
               <span>
                 {item.label} <strong style={{ color: "var(--text-primary)" }}>(sim)</strong>

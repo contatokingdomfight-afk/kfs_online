@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -288,8 +289,9 @@ export default async function AdminFinanceiroCoachesPage({ searchParams }: { sea
               </div>
 
               {hourlyRate === 0 && lessonCount > 0 && (
-                <p style={{ margin: "10px 0 0 0", fontSize: 13, color: "var(--warning, var(--primary))", fontStyle: "italic" }}>
-                  ⚠ Define o valor/hora neste coach para calcular automaticamente o pagamento por aulas.
+                <p style={{ margin: "10px 0 0 0", fontSize: 13, color: "var(--warning, var(--primary))", fontStyle: "italic", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <AlertTriangle size={13} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+                  Define o valor/hora neste coach para calcular automaticamente o pagamento por aulas.
                 </p>
               )}
 

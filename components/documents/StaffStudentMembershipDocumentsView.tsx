@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PenLine } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getInsuranceSettings, isMembershipAgreementCurrent } from "@/lib/insurance-settings";
@@ -91,9 +92,10 @@ export async function StaffStudentMembershipDocumentsView({
           <Link
             href={`/admin/alunos/${studentId}/contrato/assinar`}
             className="btn btn-primary"
-            style={{ textDecoration: "none", display: "inline-block" }}
+            style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            ✍️ Preencher e assinar (presencial)
+            <PenLine size={15} aria-hidden />
+            Preencher e assinar (presencial)
           </Link>
           <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
             Para alunos sem acesso próprio à plataforma (ex.: sócios Kids) — preenche com o sócio ou

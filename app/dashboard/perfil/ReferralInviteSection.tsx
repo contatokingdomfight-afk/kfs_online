@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Handshake } from "lucide-react";
 
 type Props = {
   referralLink: string;
@@ -41,7 +42,7 @@ export function ReferralInviteSection({ referralLink, invitedCount, convertedCou
       style={{ marginTop: "clamp(20px, 5vw, 24px)" }}
     >
       <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-2 flex items-center gap-2">
-        <span aria-hidden>🤝</span>
+        <Handshake size={16} aria-hidden />
         {L ? "Convida um amigo" : "Invite a friend"}
       </h2>
       <p className="text-sm text-text-secondary mb-4">

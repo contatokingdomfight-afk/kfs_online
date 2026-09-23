@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 import { useFormState } from "react-dom";
 import { createUnit, updateUnit, type UnitFormResult } from "./actions";
 import { FormLoadingBar } from "@/components/FormLoadingBar";
@@ -130,7 +131,12 @@ export function UnitForm({
           <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Ficheiro PDF (máx. 4 MB)</span>
           <input type="file" accept="application/pdf" onChange={handlePdfSelected} className="input" />
           {uploading && <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>A carregar…</span>}
-          {!uploading && pdfUrl && <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>✓ PDF carregado</span>}
+          {!uploading && pdfUrl && (
+            <span style={{ fontSize: 13, color: "var(--text-secondary)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <CheckCircle2 size={13} aria-hidden />
+              PDF carregado
+            </span>
+          )}
           {uploadError && <span style={{ fontSize: 13, color: "var(--danger)" }}>{uploadError}</span>}
           {contentType === "SLIDES" && (
             <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>

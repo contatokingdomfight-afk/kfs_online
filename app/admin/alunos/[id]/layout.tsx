@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageCircle, FileText } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -149,7 +150,7 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
               fontSize: "clamp(13px, 3.2vw, 14px)",
             }}
           >
-            <span aria-hidden>💬</span> WhatsApp
+            <MessageCircle size={14} aria-hidden /> WhatsApp
           </a>
         ) : null}
         {documentsPendingWhatsAppUrl ? (
@@ -169,7 +170,7 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
               fontSize: "clamp(13px, 3.2vw, 14px)",
             }}
           >
-            <span aria-hidden>📝</span> WhatsApp
+            <FileText size={14} aria-hidden /> WhatsApp
           </a>
         ) : null}
       </div>

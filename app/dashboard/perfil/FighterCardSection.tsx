@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Trophy } from "lucide-react";
 import { setFighterCardPublic } from "./actions";
 
 type Props = {
@@ -75,7 +76,7 @@ export function FighterCardSection({ studentId, initialEnabled, eligibleAge, car
       style={{ marginTop: "clamp(20px, 5vw, 24px)" }}
     >
       <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-2 flex items-center gap-2">
-        <span aria-hidden>🏆</span>
+        <Trophy size={16} aria-hidden />
         {L ? "Fighter Card" : "Fighter Card"}
       </h2>
       <p className="text-sm text-text-secondary mb-4">
