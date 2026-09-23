@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type MembershipPrintDocumentKind = "contrato" | "comprovativo";
+export type MembershipPrintDocumentKind = "contrato" | "comprovativo" | "termo";
 
 const INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
 
@@ -15,6 +15,7 @@ export function buildMembershipPrintDocumentTitle(
 ): string {
   const name = sanitizePrintDocumentNamePart(studentName) || "Aluno";
   if (kind === "comprovativo") return `Comprovativo de adesão ${name}`;
+  if (kind === "termo") return `Termo de responsabilidade ${name}`;
   return `Contrato de adesão ${name}`;
 }
 

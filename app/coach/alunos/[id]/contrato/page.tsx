@@ -18,6 +18,7 @@ export default async function CoachAlunoContratoPage({ params }: Props) {
       studentId={studentId}
       printComprovativoHref={`${base}/comprovativo`}
       printContratoHref={`${base}/contrato/imprimir`}
+      printTermoHref={`${base}/contrato/termo`}
     />
   );
 }

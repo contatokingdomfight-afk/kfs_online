@@ -5,11 +5,13 @@ import { getInsuranceSettings, isMembershipAgreementCurrent } from "@/lib/insura
 import { isEnrollmentFormCurrent, loadEnrollmentFormPrefill, type EnrollmentFormRow } from "@/lib/enrollment-form";
 import { MembershipDocumentsReadView } from "@/components/membership/MembershipDocumentsReadView";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
+import { PhysicalDocumentsFiledStatus } from "@/components/documents/PhysicalDocumentsFiledStatus";
 
 type Props = {
   studentId: string;
   printComprovativoHref: string;
   printContratoHref: string;
+  printTermoHref: string;
   locale?: "pt" | "en";
   /** Mostra o botão "Preencher e assinar (presencial)" quando há algo pendente — só na ficha de admin. */
   showAdminSignShortcut?: boolean;
@@ -20,6 +22,7 @@ export async function StaffStudentMembershipDocumentsView({
   studentId,
   printComprovativoHref,
   printContratoHref,
+  printTermoHref,
   locale = "pt",
   showAdminSignShortcut = false,
 }: Props) {
@@ -46,8 +49,32 @@ export async function StaffStudentMembershipDocumentsView({
 
   const userId = (student as { userId?: string } | null)?.userId;
   const planId = (student as { planId?: string | null } | null)?.planId ?? null;
+
+  // Consulta isolada e tolerante a falhas: enquanto a migração da coluna
+  // "physicalDocumentsFiledAt" não estiver aplicada em produção, o resto da ficha (comprovativo,
+  // contrato, termo) continua a funcionar normalmente — só este bloco fica por mostrar.
+  const { data: filedStatus } = await supabase
+    .from("Student")
+    .select("physicalDocumentsFiledAt, physicalDocumentsFiledByUserId")
+    .eq("id", studentId)
+    .maybeSingle();
+  const physicalDocumentsFiledAt =
+    (filedStatus as { physicalDocumentsFiledAt?: string | null } | null)?.physicalDocumentsFiledAt ?? null;
+  const physicalDocumentsFiledByUserId =
+    (filedStatus as { physicalDocumentsFiledByUserId?: string | null } | null)?.physicalDocumentsFiledByUserId ?? null;
+
   const prefill = userId ? await loadEnrollmentFormPrefill(supabase, studentId, userId) : null;
   const schoolSignatures = await getActiveSchoolSignatures();
+
+  let filedByName: string | null = null;
+  if (physicalDocumentsFiledByUserId) {
+    const { data: filedByUser } = await supabase
+      .from("User")
+      .select("name")
+      .eq("id", physicalDocumentsFiledByUserId)
+      .maybeSingle();
+    filedByName = (filedByUser as { name?: string | null } | null)?.name ?? null;
+  }
 
   const agreementCurrent = isMembershipAgreementCurrent(agreement, settings.membershipAgreementVersion);
   const formCurrent = isEnrollmentFormCurrent(enrollmentForm, settings.enrollmentFormVersion);
@@ -56,6 +83,9 @@ export async function StaffStudentMembershipDocumentsView({
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
+      {showAdminSignShortcut && !hasPendingDocuments && physicalDocumentsFiledAt ? (
+        <PhysicalDocumentsFiledStatus studentId={studentId} filedAt={physicalDocumentsFiledAt} filedByName={filedByName} />
+      ) : null}
       {showAdminSignShortcut && hasPendingDocuments ? (
         <div style={{ marginBottom: 16 }}>
           <Link
@@ -76,6 +106,7 @@ export async function StaffStudentMembershipDocumentsView({
       showIncompleteBanner={false}
       printComprovativoHref={printComprovativoHref}
       printContratoHref={printContratoHref}
+      printTermoHref={printTermoHref}
       hasPlan={Boolean(planId)}
       agreement={{
         agreementSigned: Boolean(agreement?.agreementSigned),

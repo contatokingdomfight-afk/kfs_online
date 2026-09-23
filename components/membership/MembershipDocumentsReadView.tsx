@@ -57,6 +57,7 @@ type Props = {
   /** Rotas de impressão dedicadas — por omissão, dashboard do aluno. */
   printComprovativoHref?: string;
   printContratoHref?: string;
+  printTermoHref?: string;
   /** Banner «continuar adesão» — só no dashboard do aluno. */
   showIncompleteBanner?: boolean;
 };
@@ -95,6 +96,7 @@ export function MembershipDocumentsReadView({
   schoolSignatures,
   printComprovativoHref = "/dashboard/documentos-adesao/imprimir/comprovativo",
   printContratoHref = "/dashboard/documentos-adesao/imprimir/contrato",
+  printTermoHref,
   showIncompleteBanner = true,
 }: Props) {
   const pt = locale === "pt";
@@ -228,6 +230,8 @@ export function MembershipDocumentsReadView({
         ok={waiver.waiverSigned}
         okLabel={pt ? "Assinado" : "Signed"}
         pendingLabel={pt ? "Pendente" : "Pending"}
+        printHref={printTermoHref}
+        printLabel={pt ? "Imprimir" : "Print"}
         forceExpandable
         pendingMessage={pt ? "Termo ainda não assinado." : "Waiver not signed yet."}
         summary={

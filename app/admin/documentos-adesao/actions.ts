@@ -111,12 +111,61 @@ export async function markAdesaoDocumentsOnPaper(studentId: string): Promise<Mar
     if (error) return { error: error.message };
   }
 
+  // O próprio pedido ao admin já confirma "assinado e arquivado" (ver texto do ConfirmModal) —
+  // não faz sentido pedir para reimprimir/arquivar um papel que já está arquivado.
+  await supabase
+    .from("Student")
+    .update({ physicalDocumentsFiledAt: signedAtIso, physicalDocumentsFiledByUserId: dbUser.id })
+    .eq("id", studentId);
+
   await invalidateStudentGateCache(studentId);
 
   revalidatePath("/admin/documentos-adesao");
   revalidatePath(`/admin/alunos/${studentId}/contrato`);
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/documentos-adesao");
+
+  return { ok: true };
+}
+
+export type MarkPhysicallyFiledResult = { error?: string; ok?: boolean };
+
+/** Admin confirma que já imprimiu e arquivou fisicamente o pacote de documentos deste aluno. */
+export async function markDocumentsPhysicallyFiled(studentId: string): Promise<MarkPhysicallyFiledResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("Student")
+    .update({ physicalDocumentsFiledAt: new Date().toISOString(), physicalDocumentsFiledByUserId: dbUser.id })
+    .eq("id", studentId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/documentos-adesao");
+  revalidatePath(`/admin/alunos/${studentId}/contrato`);
+
+  return { ok: true };
+}
+
+/** Desfaz uma marcação por engano — o aluno volta a aparecer na lista "por imprimir/arquivar". */
+export async function unmarkDocumentsPhysicallyFiled(studentId: string): Promise<MarkPhysicallyFiledResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("Student")
+    .update({ physicalDocumentsFiledAt: null, physicalDocumentsFiledByUserId: null })
+    .eq("id", studentId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/documentos-adesao");
+  revalidatePath(`/admin/alunos/${studentId}/contrato`);
 
   return { ok: true };
 }
