@@ -9,6 +9,7 @@ import { getInsuranceSettings, isMembershipAgreementCurrent } from "@/lib/insura
 import { isEnrollmentFormCurrent } from "@/lib/enrollment-form";
 import { buildDocumentsPendingMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { getPublicOrigin } from "@/lib/site-public-url";
+import { MarkPhysicalContractButton } from "./MarkPhysicalContractButton";
 
 const STATUS_LABEL: Record<string, string> = {
   ATIVO: "Ativo",
@@ -149,6 +150,7 @@ export default async function AdminDocumentosAdesaoPage({ searchParams }: { sear
                     <Link href={`/admin/alunos/${r.studentId}/contrato/assinar`} className="btn btn-primary" style={{ textDecoration: "none", fontSize: 13 }}>
                       ✍️ Assinar presencial
                     </Link>
+                    <MarkPhysicalContractButton studentId={r.studentId} studentName={r.name} />
                     {whatsAppUrl ? (
                       <a
                         href={whatsAppUrl}
