@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { X } from "lucide-react";
 
 const ACK_KEY = "kfs-signup-grace-ack";
 
@@ -70,7 +71,7 @@ export function SignupGraceReminderBanner({ show, expiresAt, locale, body, cta, 
           className="btn btn-secondary"
           style={{ fontSize: 13, padding: "6px 12px" }}
         >
-          ✕
+          <X size={14} aria-hidden />
         </button>
       </div>
     </div>

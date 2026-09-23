@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useState } from "react";
 import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 import type { PendingPayment, PendingTrial, LowAttendanceLesson } from "@/lib/admin-action-items";
 import { AcceptTrialButton } from "../experimentais/AcceptTrialButton";
@@ -181,7 +182,7 @@ export function ActionItems({
                               textDecoration: "none",
                             }}
                           >
-                            <span aria-hidden>💬</span>
+                            <MessageCircle size={18} aria-hidden />
                           </a>
                         ) : null;
                       })()

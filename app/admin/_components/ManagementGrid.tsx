@@ -1,6 +1,7 @@
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 
-type GridItem = { href: string; icon: string; label: string };
+type GridItem = { href: string; icon: LucideIcon; label: string };
 type Group = { title: string; items: GridItem[] };
 
 type Props = {
@@ -61,7 +62,7 @@ export function ManagementGrid({ groups, title }: Props) {
                     fontWeight: 500,
                   }}
                 >
-                  <span aria-hidden>{item.icon}</span>
+                  <item.icon size={18} aria-hidden style={{ flexShrink: 0 }} />
                   {item.label}
                 </Link>
               ))}

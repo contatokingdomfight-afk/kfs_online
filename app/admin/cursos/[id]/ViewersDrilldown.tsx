@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { X } from "lucide-react";
 import type { ViewerRow } from "../stats-actions";
 
 type Props = {
@@ -96,7 +97,7 @@ export function ViewersDrilldown({ label, fetchViewers }: Props) {
                 className="btn btn-secondary"
                 style={{ fontSize: 14, padding: "4px 10px", minHeight: 32 }}
               >
-                ✕
+                <X size={14} aria-hidden />
               </button>
             </div>
             <div style={{ overflowY: "auto", flex: 1 }}>

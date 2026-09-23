@@ -1,4 +1,32 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  LayoutDashboard,
+  Receipt,
+  ShoppingBag,
+  Banknote,
+  LineChart,
+  GraduationCap,
+  Dumbbell,
+  Whistle,
+  FlaskConical,
+  Handshake,
+  ListChecks,
+  School,
+  Layers,
+  CheckCircle2,
+  Swords,
+  MapPin,
+  FileText,
+  CreditCard,
+  Book,
+  Sparkles,
+  ClipboardList,
+  Target,
+  Megaphone,
+  TrendingUp,
+  Settings,
+  Lock,
+} from "lucide-react";
 import { getCachedSchools } from "@/lib/cached-reference-data";
 import { getActionItemsData } from "@/lib/admin-action-items";
 import { getTodayTrialClassesForAdmin } from "@/lib/today-trial-classes";
@@ -51,11 +79,11 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
 
   const financeShortcuts = canAccessFinanceiro(access)
     ? [
-        { href: "/admin/dashboard", icon: "📊", label: t("adminDashboardShortcut") },
-        { href: "/admin/loja/vendas/novo", icon: "🧾", label: t("adminQuickRegisterSale") },
-        { href: "/admin/loja", icon: "🛍️", label: t("navLoja") },
-        { href: "/admin/financeiro", icon: "💶", label: t("navFinance") },
-        { href: "/admin/financeiro/relatorio", icon: "📈", label: t("adminQuickFinanceReport") },
+        { href: "/admin/dashboard", icon: LayoutDashboard, label: t("adminDashboardShortcut") },
+        { href: "/admin/loja/vendas/novo", icon: Receipt, label: t("adminQuickRegisterSale") },
+        { href: "/admin/loja", icon: ShoppingBag, label: t("navLoja") },
+        { href: "/admin/financeiro", icon: Banknote, label: t("navFinance") },
+        { href: "/admin/financeiro/relatorio", icon: LineChart, label: t("adminQuickFinanceReport") },
       ]
     : [];
 
@@ -66,42 +94,42 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
     {
       title: t("adminGroupPeople"),
       items: [
-        { href: "/admin/alunos", icon: "🧑‍🎓", label: t("navStudents") },
-        { href: "/admin/atletas", icon: "🤸", label: t("navAthletes") },
-        { href: "/admin/coaches", icon: "👨‍🏫", label: t("navCoaches") },
-        { href: "/admin/experimentais", icon: "🧪", label: t("navTrials") },
-        { href: "/admin/indicacoes", icon: "🤝", label: "Indicações" },
-        { href: "/coach/cobertura-avaliacoes", icon: "🗒️", label: "Cobertura de avaliações" },
+        { href: "/admin/alunos", icon: GraduationCap, label: t("navStudents") },
+        { href: "/admin/atletas", icon: Dumbbell, label: t("navAthletes") },
+        { href: "/admin/coaches", icon: Whistle, label: t("navCoaches") },
+        { href: "/admin/experimentais", icon: FlaskConical, label: t("navTrials") },
+        { href: "/admin/indicacoes", icon: Handshake, label: "Indicações" },
+        { href: "/coach/cobertura-avaliacoes", icon: ListChecks, label: "Cobertura de avaliações" },
       ],
     },
     {
       title: t("adminGroupAcademic"),
       items: [
-        { href: "/admin/escolas", icon: "🏫", label: t("navSchools") },
-        { href: "/admin/turmas", icon: "🥋", label: t("navClasses") },
-        { href: "/admin/presenca", icon: "✅", label: t("navPresence") },
-        { href: "/admin/modalidades", icon: "🥊", label: t("navModalities") },
-        { href: "/admin/locais", icon: "📍", label: t("navLocations") },
-        { href: "/admin/documentos-adesao", icon: "📝", label: "Adesões pendentes" },
+        { href: "/admin/escolas", icon: School, label: t("navSchools") },
+        { href: "/admin/turmas", icon: Layers, label: t("navClasses") },
+        { href: "/admin/presenca", icon: CheckCircle2, label: t("navPresence") },
+        { href: "/admin/modalidades", icon: Swords, label: t("navModalities") },
+        { href: "/admin/locais", icon: MapPin, label: t("navLocations") },
+        { href: "/admin/documentos-adesao", icon: FileText, label: "Adesões pendentes" },
       ],
     },
     {
       title: t("adminGroupContentFinance"),
       items: [
-        { href: "/admin/planos", icon: "💳", label: t("navPlans") },
-        { href: "/admin/cursos", icon: "📚", label: t("navCourses") },
-        { href: "/admin/eventos", icon: "✨", label: t("navEventsAdmin") },
+        { href: "/admin/planos", icon: CreditCard, label: t("navPlans") },
+        { href: "/admin/cursos", icon: Book, label: t("navCourses") },
+        { href: "/admin/eventos", icon: Sparkles, label: t("navEventsAdmin") },
       ],
     },
     {
       title: t("adminGroupPlatform"),
       items: [
-        { href: "/admin/avaliacao", icon: "📊", label: t("navEvaluationCriteria") },
-        { href: "/admin/missoes", icon: "🎯", label: t("navMissions") },
-        { href: "/admin/tribo", icon: "📣", label: "Tribo" },
-        { href: "/admin/metas", icon: "📌", label: t("navGoals") },
-        { href: "/admin/configuracoes", icon: "⚙️", label: t("navSettings") },
-        { href: "/admin/permissoes", icon: "🔐", label: t("navPermissions") },
+        { href: "/admin/avaliacao", icon: ClipboardList, label: t("navEvaluationCriteria") },
+        { href: "/admin/missoes", icon: Target, label: t("navMissions") },
+        { href: "/admin/tribo", icon: Megaphone, label: "Tribo" },
+        { href: "/admin/metas", icon: TrendingUp, label: t("navGoals") },
+        { href: "/admin/configuracoes", icon: Settings, label: t("navSettings") },
+        { href: "/admin/permissoes", icon: Lock, label: t("navPermissions") },
       ],
     },
   ];

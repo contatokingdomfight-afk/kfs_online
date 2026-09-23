@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import { X } from "lucide-react";
 import type { EvaluationHistoryModalDetail } from "@/lib/evaluation-history-modal-types";
 
 /** Linha de base 1–10 alinhada com o formulário do treinador (valores só a 5 = “não avaliado” em registos antigos). */
@@ -169,7 +170,7 @@ export function EvaluationHistoryClient({
                 className="p-2 text-text-secondary hover:text-text-primary shrink-0"
                 aria-label="Fechar"
               >
-                ✕
+                <X size={18} aria-hidden />
               </button>
             </div>
             <div className="p-4 space-y-4">

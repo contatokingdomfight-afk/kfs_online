@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { X, MessageCircle } from "lucide-react";
 import {
   ADMIN_CHAT_TREE,
   findNodeById,
@@ -397,7 +398,7 @@ export function AdminChatWidget() {
               aria-label="Fechar"
               style={{ background: "none", border: "none", color: "var(--text-secondary)", fontSize: 18, cursor: "pointer" }}
             >
-              ✕
+              <X size={18} aria-hidden />
             </button>
           </div>
 
@@ -482,7 +483,7 @@ export function AdminChatWidget() {
           marginLeft: "auto",
         }}
       >
-        {open ? "✕" : "💬"}
+        {open ? <X size={24} aria-hidden /> : <MessageCircle size={24} aria-hidden />}
       </button>
     </div>
   );
