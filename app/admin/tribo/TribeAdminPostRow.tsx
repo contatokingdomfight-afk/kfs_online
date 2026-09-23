@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { ThumbsUp, MessageCircle } from "lucide-react";
 import {
   adminDeleteTribePostAction,
   adminHideTribePostAction,
@@ -110,13 +111,17 @@ export function TribeAdminPostRow({
       )}
 
       <div style={{ display: "flex", gap: 12, fontSize: 13, color: "var(--text-secondary)" }}>
-        <span>👊 {likeCount}</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ThumbsUp size={13} aria-hidden />
+          {likeCount}
+        </span>
         <button
           type="button"
           onClick={toggleComments}
-          style={{ background: "none", border: "none", padding: 0, color: "var(--text-secondary)", cursor: "pointer", fontSize: 13 }}
+          style={{ background: "none", border: "none", padding: 0, color: "var(--text-secondary)", cursor: "pointer", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 4 }}
         >
-          💬 {commentCount} {commentsOpen ? "▲" : "▼"}
+          <MessageCircle size={13} aria-hidden />
+          {commentCount} {commentsOpen ? "▲" : "▼"}
         </button>
         <span>{new Date(post.createdAt).toLocaleString("pt-PT", { dateStyle: "medium", timeStyle: "short" })}</span>
       </div>

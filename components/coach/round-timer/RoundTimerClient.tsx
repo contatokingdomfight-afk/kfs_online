@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { getTranslations } from "@/lib/i18n";
 import {
@@ -634,7 +635,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
             aria-label={soundOn ? tk.soundOn : tk.soundOff}
             title={soundOn ? tk.soundOn : tk.soundOff}
           >
-            {soundOn ? "🔊" : "🔇"}
+            {soundOn ? <Volume2 size={16} aria-hidden /> : <VolumeX size={16} aria-hidden />}
           </button>
           <button type="button" className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0" onClick={toggleFullscreen}>
             {fullscreen ? tk.exitFs : tk.fullscreen}
@@ -658,7 +659,7 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
               aria-label={soundOn ? tk.soundOn : tk.soundOff}
               title={soundOn ? tk.soundOn : tk.soundOff}
             >
-              {soundOn ? "🔊" : "🔇"}
+              {soundOn ? <Volume2 size={16} aria-hidden /> : <VolumeX size={16} aria-hidden />}
             </button>
             <button type="button" className="round-timer-btn round-timer-btn-secondary text-sm py-2 min-h-0" onClick={toggleFullscreen}>
               {fullscreen ? tk.exitFs : tk.fullscreen}

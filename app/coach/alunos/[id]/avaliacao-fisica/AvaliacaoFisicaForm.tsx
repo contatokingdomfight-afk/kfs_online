@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Check, Save } from "lucide-react";
 import { useFormState } from "react-dom";
 import { savePhysicalAssessment, type SaveAssessmentResult } from "./actions";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -294,7 +295,7 @@ export function AvaliacaoFisicaForm({
                   className="mx-auto w-12 h-12 rounded-full bg-amber-500/30 flex items-center justify-center mb-4"
                   aria-hidden
                 >
-                  <span className="text-2xl text-amber-600 dark:text-amber-400">✓</span>
+                  <Check size={22} className="text-amber-600 dark:text-amber-400" />
                 </div>
                 <p className="text-lg font-semibold text-[var(--text-primary)] mb-2">Rascunho guardado</p>
                 <p className="text-sm text-[var(--text-secondary)]">
@@ -307,7 +308,7 @@ export function AvaliacaoFisicaForm({
                   className="mx-auto w-12 h-12 rounded-full bg-green-500/30 flex items-center justify-center mb-4"
                   aria-hidden
                 >
-                  <span className="text-2xl text-green-600 dark:text-green-400">✓</span>
+                  <Check size={22} className="text-green-600 dark:text-green-400" />
                 </div>
                 <p className="text-lg font-semibold text-[var(--text-primary)] mb-2">Dados guardados</p>
                 <p className="text-sm text-[var(--text-secondary)] mb-4">
@@ -1086,7 +1087,7 @@ export function AvaliacaoFisicaForm({
           aria-label="Guardar rascunho"
           title="Guardar rascunho"
         >
-          💾
+          <Save size={22} aria-hidden />
         </button>
       </div>
     </form>

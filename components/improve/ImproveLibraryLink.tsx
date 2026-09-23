@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BookOpen } from "lucide-react";
 
 type Props = {
   courseId: string;
@@ -25,7 +26,8 @@ export function ImproveLibraryLink({ courseId, courseName, axisLabel, locale, cl
       href={`/dashboard/biblioteca/${courseId}`}
       className={`inline-flex items-center gap-1 text-sm font-medium text-primary no-underline hover:underline ${className}`}
     >
-      📚 {label} →
+      <BookOpen size={14} aria-hidden />
+      {label} →
     </Link>
   );
 }

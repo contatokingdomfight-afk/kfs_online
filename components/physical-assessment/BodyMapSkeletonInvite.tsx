@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Ruler } from "lucide-react";
 
 type Props = {
   locale: "pt" | "en";
@@ -32,10 +33,10 @@ export function BodyMapSkeletonInvite({ locale, scheduleHref, className }: Props
     >
       <div className="flex items-center gap-3">
         <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--bg)] text-xl"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--bg)]"
           aria-hidden
         >
-          📏
+          <Ruler size={20} />
         </div>
         <div className="text-left">
           <p className="m-0 text-sm font-semibold text-[var(--text-primary)]">{copy.title}</p>
