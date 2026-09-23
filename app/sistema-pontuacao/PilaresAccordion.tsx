@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { Swords, Target, Dumbbell, Brain, BookOpen, type LucideIcon } from "lucide-react";
 
-const PILARES = [
+const PILARES: {
+  id: string;
+  titulo: string;
+  emoji: LucideIcon;
+  resumo: string;
+  descricao: string;
+}[] = [
   {
     id: "tecnico",
     titulo: "Técnico",
-    emoji: "🥊",
+    emoji: Swords,
     resumo: "Execução técnica (socos, chutes, clinch, defesas, etc., consoante a modalidade)",
     descricao:
       "Avalia a qualidade da execução das técnicas da modalidade: precisão dos golpes, postura, deslocamento, defesas e combinações. O treinador observa critérios como jab, low kick, posicionamento, clinch, etc., consoante a arte marcial.",
@@ -14,7 +21,7 @@ const PILARES = [
   {
     id: "tatico",
     titulo: "Tático",
-    emoji: "🎯",
+    emoji: Target,
     resumo: "Leitura de luta, posicionamento, controle de distância, estratégias ofensivas e defensivas",
     descricao:
       "Reflete a capacidade de ler o combate, escolher o momento certo para atacar ou defender, controlar a distância e o ritmo, e aplicar estratégias adequadas ao adversário e ao contexto da luta.",
@@ -22,7 +29,7 @@ const PILARES = [
   {
     id: "fisico",
     titulo: "Físico",
-    emoji: "💪",
+    emoji: Dumbbell,
     resumo: "Condicionamento, força e resistência",
     descricao:
       "Inclui resistência (gás), recuperação entre séries, manutenção da intensidade e, quando relevante, força de golpe e explosividade. A avaliação física periódica (anamnese e testes) também contribui para este pilar.",
@@ -30,7 +37,7 @@ const PILARES = [
   {
     id: "mental",
     titulo: "Mental",
-    emoji: "🧠",
+    emoji: Brain,
     resumo: "Foco, calma sob pressão e consistência",
     descricao:
       "Avalia concentração durante o treino, resiliência, confiança, controlo sob pressão e disciplina. É o pilar que sustenta a aplicação consistente dos outros em situação de stress ou competição.",
@@ -38,12 +45,12 @@ const PILARES = [
   {
     id: "teorico",
     titulo: "Teórico",
-    emoji: "📚",
+    emoji: BookOpen,
     resumo: "Conhecimento das regras, combate e conceitos da modalidade",
     descricao:
       "Mede o conhecimento das regras, arbitragem, conceitos técnicos (posição, guarda, ângulos) e a capacidade de relacionar teoria com prática e de compreender os feedbacks do treinador.",
   },
-] as const;
+];
 
 export function PilaresAccordion() {
   const [openId, setOpenId] = useState<string | null>(PILARES[0].id);
@@ -90,7 +97,7 @@ export function PilaresAccordion() {
                 aria-controls={`pilar-${p.id}`}
                 id={`pilar-btn-${p.id}`}
               >
-                <span style={{ fontSize: "1.25em" }} aria-hidden>{p.emoji}</span>
+                <span aria-hidden><p.emoji size={18} /></span>
                 <span style={{ flex: 1 }}>{p.titulo}</span>
                 <span
                   style={{

@@ -424,7 +424,7 @@ export const messages = {
       "A mensalidade do grupo é tratada pelo titular na secretaria. Aqui só vês as tuas taxas individuais, se existirem.",
     freeTierCtaMessage:
       "O teu perfil está pronto. Escolhe um plano para desbloquear check-in nas aulas, vídeos na biblioteca e toda a experiência Kingdom. Enquanto isso, podes ver a agenda e a estrutura dos cursos.",
-    freeTierCtaButton: "✨ Ver planos e preços",
+    freeTierCtaButton: "Ver planos e preços",
     dashboardStripeSuccess:
       "Pagamento concluído. O teu plano será ativado em segundos — atualiza a página se ainda vires o modo demonstração.",
     dashboardStripeCancel: "Pagamento cancelado. Continua a explorar ou escolhe um plano quando quiseres.",
@@ -1758,7 +1758,7 @@ export const messages = {
       "Group tuition is handled by the plan holder at the school office. Here you only see your individual fees, if any.",
     freeTierCtaMessage:
       "Your profile is ready. Choose a plan to unlock class check-in, library videos and the full Kingdom experience. Meanwhile you can browse the schedule and course structure.",
-    freeTierCtaButton: "✨ View plans and pricing",
+    freeTierCtaButton: "View plans and pricing",
     dashboardStripeSuccess:
       "Payment successful. Your plan will activate in a few seconds — refresh if you still see demo mode.",
     dashboardStripeCancel: "Payment cancelled. Keep exploring or pick a plan whenever you're ready.",

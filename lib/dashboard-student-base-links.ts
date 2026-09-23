@@ -59,7 +59,7 @@ export function getDashboardStudentBaseLinks(params: {
     { label: t("navHome"), href: "/dashboard" },
     ...(hasSchoolAssistantCoach ? [{ label: assistantLabel, href: "/coach" }] : []),
     { label: bemEstarLabel, href: "/dashboard/bem-estar" },
-    { label: "✨ " + t("choosePlanTitle"), href: "/escolher-plano" },
+    { label: t("choosePlanTitle"), href: "/escolher-plano" },
     { label: t("navLibrary"), href: "/dashboard/biblioteca" },
     { label: t("navProfile"), href: "/dashboard/perfil" },
     { label: t("navPhysicalFicha"), href: "/dashboard/ficha-fisica" },

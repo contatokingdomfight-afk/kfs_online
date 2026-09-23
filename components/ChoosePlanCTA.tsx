@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 
 type Props = {
   message?: string;
@@ -7,7 +8,7 @@ type Props = {
 
 export function ChoosePlanCTA({
   message = "Seu perfil está pronto! Escolha um plano para desbloquear as aulas, a biblioteca e começar a treinar de verdade. 💪",
-  ctaLabel = "✨ Ver Planos e Preços",
+  ctaLabel = "Ver Planos e Preços",
 }: Props) {
   return (
     <div
@@ -37,8 +38,12 @@ export function ChoosePlanCTA({
           padding: "10px 20px",
           borderRadius: 8,
           fontSize: "clamp(14px, 3.5vw, 16px)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
         }}
       >
+        <Sparkles size={16} aria-hidden />
         {ctaLabel}
       </Link>
     </div>
