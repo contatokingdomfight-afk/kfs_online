@@ -89,4 +89,5 @@ export const SUPABASE_EU_REMOTE_MIGRATION_NAMES = new Set([
   "20260918120000_seed_bjj_evaluation",
   "20260918130000_seed_mma_grappling_evaluation",
   "20260922120000_fighter_card_public",
+  "20260923120000_student_physical_documents_filed",
 ]);
