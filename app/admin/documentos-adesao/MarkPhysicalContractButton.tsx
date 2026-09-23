@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileCheck2 } from "lucide-react";
 import { ConfirmModal } from "@/components/ConfirmModalDynamic";
 import { markAdesaoDocumentsOnPaper } from "./actions";
 
@@ -31,9 +32,10 @@ export function MarkPhysicalContractButton({ studentId, studentName }: { student
         onClick={() => setConfirmOpen(true)}
         disabled={pending}
         className="btn btn-secondary"
-        style={{ fontSize: 13, opacity: pending ? 0.7 : 1 }}
+        style={{ fontSize: 13, opacity: pending ? 0.7 : 1, display: "inline-flex", alignItems: "center", gap: 6 }}
       >
-        {pending ? "A gravar…" : "📄 Já tem contrato físico"}
+        <FileCheck2 size={15} aria-hidden />
+        {pending ? "A gravar…" : "Já tem contrato físico"}
       </button>
       {error && <span style={{ fontSize: 12, color: "var(--danger)" }}>{error}</span>}
       <ConfirmModal

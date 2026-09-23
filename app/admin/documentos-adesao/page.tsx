@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { MessageCircle, PartyPopper, PenLine } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -107,8 +108,9 @@ export default async function AdminDocumentosAdesaoPage({ searchParams }: { sear
       <Header schools={schools} schoolId={schoolId} />
 
       {rows.length === 0 ? (
-        <p style={{ color: "var(--text-secondary)" }}>
-          Nenhum aluno com documentos de adesão pendentes — tudo assinado. 🎉
+        <p style={{ color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 8 }}>
+          <PartyPopper size={18} aria-hidden />
+          Nenhum aluno com documentos de adesão pendentes — tudo assinado.
         </p>
       ) : (
         <>
@@ -147,8 +149,13 @@ export default async function AdminDocumentosAdesaoPage({ searchParams }: { sear
                     <Link href={`/admin/alunos/${r.studentId}/contrato`} className="btn btn-secondary" style={{ textDecoration: "none", fontSize: 13 }}>
                       Ver ficha
                     </Link>
-                    <Link href={`/admin/alunos/${r.studentId}/contrato/assinar`} className="btn btn-primary" style={{ textDecoration: "none", fontSize: 13 }}>
-                      ✍️ Assinar presencial
+                    <Link
+                      href={`/admin/alunos/${r.studentId}/contrato/assinar`}
+                      className="btn btn-primary"
+                      style={{ textDecoration: "none", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}
+                    >
+                      <PenLine size={15} aria-hidden />
+                      Assinar presencial
                     </Link>
                     <MarkPhysicalContractButton studentId={r.studentId} studentName={r.name} />
                     {whatsAppUrl ? (
@@ -159,7 +166,8 @@ export default async function AdminDocumentosAdesaoPage({ searchParams }: { sear
                         className="btn btn-secondary"
                         style={{ textDecoration: "none", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}
                       >
-                        <span aria-hidden>💬</span> Lembrar (WhatsApp)
+                        <MessageCircle size={15} aria-hidden />
+                        Lembrar (WhatsApp)
                       </a>
                     ) : (
                       <span style={{ fontSize: 12, color: "var(--text-secondary)", alignSelf: "center" }}>
