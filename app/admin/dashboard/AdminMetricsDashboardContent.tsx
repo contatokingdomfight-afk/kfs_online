@@ -43,28 +43,28 @@ export async function AdminMetricsDashboardContent({ client, schoolId, access }:
         cards={[
           {
             href: "/admin/alunos",
-            icon: Users,
+            icon: <Users size={24} aria-hidden />,
             value: String(stats.activeStudents),
             label: t("adminActiveStudents"),
             info: t("adminActiveStudentsInfo"),
           },
           {
             href: "/admin/coaches",
-            icon: Whistle,
+            icon: <Whistle size={24} aria-hidden />,
             value: String(stats.activeCoaches),
             label: t("adminActiveCoaches"),
             info: t("adminActiveCoachesInfo"),
           },
           {
             href: "/admin/financeiro",
-            icon: AlertTriangle,
+            icon: <AlertTriangle size={24} aria-hidden />,
             value: `${stats.delinquencyRate.percent.toFixed(1)}%`,
             label: t("adminDelinquencyRate"),
             info: t("adminDelinquencyRateInfo"),
           },
           {
             href: "/admin/financeiro",
-            icon: TrendingUp,
+            icon: <TrendingUp size={24} aria-hidden />,
             value: `${stats.projectedMonthlyRevenue.toFixed(0)} €`,
             label: t("adminProjectedMonthlyRevenue"),
             info: t("adminProjectedMonthlyRevenueInfo"),

@@ -49,28 +49,28 @@ export async function AdminDashboardPeriodContent({ client, schoolId, period, mo
         cards={[
           {
             href: "/admin/financeiro",
-            icon: Banknote,
+            icon: <Banknote size={24} aria-hidden />,
             value: `${stats.revenue.total.toFixed(0)} €`,
             label: t("adminRevenueInPeriod"),
             info: t("adminRevenueInPeriodInfo"),
           },
           {
             href: "/admin/alunos",
-            icon: Sparkles,
+            icon: <Sparkles size={24} aria-hidden />,
             value: String(newStudentsInPeriod),
             label: t("adminNewStudentsInPeriod"),
             info: t("adminNewStudentsInPeriodInfo"),
           },
           {
             href: "/admin/presenca",
-            icon: BarChart3,
+            icon: <BarChart3 size={24} aria-hidden />,
             value: stats.avgAttendance.toFixed(1),
             label: t("adminAvgAttendanceInPeriod"),
             info: t("adminAvgAttendanceInPeriodInfo"),
           },
           {
             href: "/admin/turmas",
-            icon: Swords,
+            icon: <Swords size={24} aria-hidden />,
             value: `${stats.occupancyRate.averagePercent.toFixed(0)}%`,
             label: t("adminOccupancyRate"),
             info: t("adminOccupancyRateInfo"),

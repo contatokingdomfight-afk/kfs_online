@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 
-type Card = { href: string; icon: LucideIcon; value: string; label: string; info?: string };
+/** icon já resolvido como elemento pelo chamador (Server Component) — ver nota em Sidebar.tsx sobre a fronteira Server/Client. */
+type Card = { href: string; icon: ReactNode; value: string; label: string; info?: string };
 
 type Props = { cards: Card[] };
 
@@ -43,7 +44,7 @@ export function KpiCardGrid({ cards }: Props) {
             </span>
           )}
           <span style={{ marginBottom: 8, display: "block", color: "var(--primary)" }} aria-hidden>
-            <c.icon size={24} />
+            {c.icon}
           </span>
           <div style={{ fontSize: "clamp(18px, 4.5vw, 24px)", fontWeight: 700, color: "var(--text-primary)" }}>
             {c.value}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { ThemeLocaleSwitcher } from "@/components/ThemeLocaleSwitcher";
 import { LogoutButton } from "@/components/LogoutButton";
 import { SidebarPwaInstall } from "@/components/SidebarPwaInstall";
@@ -13,8 +13,8 @@ export type SidebarLink = {
   children?: SidebarLink[];
   /** Sem `children`: considerar activo se `activeHref` for igual a algum destes prefixos (exact ou sub-rota). */
   groupActiveHrefs?: string[];
-  /** Ícone opcional mostrado antes do label. */
-  icon?: LucideIcon;
+  /** Ícone opcional (já resolvido como elemento — ver nota em lib/admin-sidebar-links.tsx) mostrado antes do label. */
+  icon?: ReactNode;
   /**
    * Nome da secção a que este link pertence (ex.: "Pessoas", "Académico"). Links consecutivos
    * com a mesma secção partilham um cabeçalho; links sem `section` não mostram cabeçalho algum.
@@ -138,7 +138,9 @@ export function Sidebar({
                 style={linkStyle(navHighlighted)}
               >
                 {item.icon && (
-                  <item.icon aria-hidden="true" size={18} style={{ marginRight: 10, flexShrink: 0 }} />
+                  <span aria-hidden="true" style={{ marginRight: 10, flexShrink: 0, display: "inline-flex" }}>
+                    {item.icon}
+                  </span>
                 )}
                 {item.label}
               </Link>
