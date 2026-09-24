@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { setAttendanceIntentionFromForm } from "./actions";
 
 type Props = {
@@ -66,6 +67,9 @@ const btnNotGoingOnPromo: CSSProperties = {
   borderRadius: "var(--radius-md)",
   cursor: "pointer",
   fontWeight: 500,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
 };
 
 export function VouNaoVouButtons({
@@ -158,6 +162,7 @@ export function VouNaoVouButtons({
                 type="submit"
                 style={{ ...btnNotGoingOnPromo, minHeight: 36, padding: "0.4em 0.9em", fontSize: "clamp(13px, 3.2vw, 14px)" }}
               >
+                <ThumbsDown size={14} aria-hidden />
                 {notGoingLabel}
               </button>
               <PendingHint savingLabel={savingLabel} />
@@ -195,8 +200,12 @@ export function VouNaoVouButtons({
               fontSize: "clamp(14px, 3.5vw, 16px)",
               minHeight: 44,
               padding: "0.5em 1em",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
             }}
           >
+            <ThumbsUp size={15} aria-hidden />
             {goingLabel}
           </button>
           <PendingHint savingLabel={savingLabel} />
@@ -206,6 +215,7 @@ export function VouNaoVouButtons({
           <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
           <input type="hidden" name="intention" value="nao_vou" />
           <button type="submit" style={btnNotGoingOnPromo}>
+            <ThumbsDown size={14} aria-hidden />
             {notGoingLabel}
           </button>
           <PendingHint savingLabel={savingLabel} />

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { CheckCircle2 } from "lucide-react";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
@@ -285,7 +286,8 @@ export function EventosBoard({
                     <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
                       {reg?.status === "CONFIRMED" && e.type === "OTHER" ? (
                         <>
-                          <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500 }}>
+                          <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+                            <CheckCircle2 size={16} aria-hidden />
                             {t("registered")}
                           </p>
                           <p style={{ margin: 0, fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)", lineHeight: 1.45 }}>
@@ -294,7 +296,8 @@ export function EventosBoard({
                         </>
                       ) : reg?.status === "CONFIRMED" && reg.checkin_token?.trim() ? (
                         <>
-                          <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500 }}>
+                          <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+                            <CheckCircle2 size={16} aria-hidden />
                             {t("registered")}
                           </p>
                           <EventIngressoCard
@@ -306,7 +309,8 @@ export function EventosBoard({
                           />
                         </>
                       ) : reg?.status === "CONFIRMED" ? (
-                        <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500 }}>
+                        <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--primary)", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+                          <CheckCircle2 size={16} aria-hidden />
                           {t("registered")}
                         </p>
                       ) : (

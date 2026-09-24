@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getTranslations } from "@/lib/i18n";
 
@@ -96,8 +97,12 @@ export async function DashboardUpcomingEventsStrip({ studentId, locale }: Props)
                       fontSize: 12,
                       fontWeight: 600,
                       color: "var(--primary)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
                     }}
                   >
+                    <CheckCircle2 size={12} aria-hidden />
                     {t("registered")}
                   </span>
                 ) : null}
