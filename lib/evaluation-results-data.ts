@@ -174,10 +174,12 @@ export function subLabelFromCategoryName(categoryName: string | null | undefined
   return rest || t;
 }
 
-export const DIMENSION_ICONS: Record<string, string> = {
-  tecnico: "🥊",
-  tatico: "🎯",
-  fisico: "💪",
-  mental: "🧠",
-  teorico: "📚",
+import { Swords, Target, Dumbbell, Brain, BookOpen, type LucideIcon } from "lucide-react";
+
+export const DIMENSION_ICONS: Record<string, LucideIcon> = {
+  tecnico: Swords,
+  tatico: Target,
+  fisico: Dumbbell,
+  mental: Brain,
+  teorico: BookOpen,
 };

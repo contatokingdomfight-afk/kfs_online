@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Circle } from "lucide-react";
 import type { DimensionScore } from "@/lib/evaluation-results-data";
 import { DIMENSION_ICONS } from "@/lib/evaluation-results-data";
 
@@ -42,11 +43,11 @@ export function EvaluationSummary({
       <div className="space-y-3">
         {dimensionScores.map((d) => {
           const pct = d.maxScore > 0 ? (d.score / d.maxScore) * 100 : 0;
-          const icon = DIMENSION_ICONS[d.id] ?? "•";
+          const Icon = DIMENSION_ICONS[d.id] ?? Circle;
           return (
             <div key={d.id} className="flex items-center gap-3">
-              <span className="w-8 text-center flex-shrink-0" aria-hidden>
-                {icon}
+              <span className="w-8 flex justify-center flex-shrink-0" aria-hidden>
+                <Icon size={16} />
               </span>
               <span className="w-24 flex-shrink-0 text-sm font-medium text-[var(--text-primary)]">
                 {d.label}
