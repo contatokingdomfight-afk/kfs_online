@@ -33,6 +33,7 @@
 | Áreas aluno / coach / admin | Feito | Rotas `/dashboard`, `/coach`, `/admin` |
 | Sessão após idle (mobile / PWA) | Feito | `AuthSessionKeepAlive`, cookies `kfs_auth_long` — [`memory.md`](memory.md) (Sessão web), [`PWA.md`](PWA.md) |
 | Treinador assistente (escola) | Feito | `SchoolAssistantCoach`, rotas limitadas coach + eventos escola — [`memory.md`](memory.md) |
+| Confirmação de conta / reset de password por email | Feito (código) — **falta passo manual na Supabase** | Corrige erro no iPhone (link de confirmação a falhar) trocando PKCE por `token_hash`/`verifyOtp` — [`AUTH_EMAIL_CONFIRM.md`](AUTH_EMAIL_CONFIRM.md); exige trocar os templates "Confirm signup" e "Reset Password" na Supabase, sem isso o fix não tem efeito |
 
 ---
 

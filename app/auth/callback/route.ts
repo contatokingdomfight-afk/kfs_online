@@ -2,37 +2,12 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { syncUser } from "@/lib/auth/sync-user";
+import { formatErrorForQueryParam } from "@/lib/auth/format-error-for-query-param";
 import {
   REMEMBER_DEVICE_COOKIE_NAME,
   rememberLongSessionFromCookieValue,
   resolveSupabaseCookieOptions,
 } from "@/lib/supabase/cookie-options";
-
-/** Erros do PostgREST vêm como objeto `{ message, code, details }`, não como `Error`. */
-function formatErrorForQueryParam(err: unknown, maxLen = 450): string {
-  if (err instanceof Error) return truncate(err.message, maxLen);
-  if (err && typeof err === "object") {
-    const o = err as Record<string, unknown>;
-    const msg = typeof o.message === "string" ? o.message : null;
-    const code = typeof o.code === "string" ? o.code : null;
-    const details = typeof o.details === "string" ? o.details : null;
-    const hint = typeof o.hint === "string" ? o.hint : null;
-    if (msg) {
-      const parts = [msg, code && `code=${code}`, details && details, hint && `hint=${hint}`].filter(Boolean);
-      return truncate(parts.join(" | "), maxLen);
-    }
-  }
-  try {
-    return truncate(JSON.stringify(err), maxLen);
-  } catch {
-    return truncate(String(err), maxLen);
-  }
-}
-
-function truncate(s: string, maxLen: number): string {
-  if (s.length <= maxLen) return s;
-  return `${s.slice(0, maxLen - 3)}...`;
-}
 
 /**
  * OAuth callback no servidor: lê o PKCE code-verifier dos cookies (escritos no sign-in)

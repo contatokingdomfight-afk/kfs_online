@@ -63,7 +63,10 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
       password,
       options: {
         data: { full_name: name.trim() || undefined },
-        emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+        // Vai parar a `{{ .RedirectTo }}` no template de confirmação — ver app/auth/confirm/route.ts
+        // (não usa /auth/callback aqui de propósito: PKCE exige o code-verifier no mesmo browser que
+        // pediu o signup, o que falha quando o link é aberto noutro contexto, ex.: Mail do iPhone).
+        emailRedirectTo: `${origin}${nextPath}`,
       },
     });
     setLoading(false);

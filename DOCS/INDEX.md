@@ -127,6 +127,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [`AUTH_EMAIL_CONFIRM.md`](AUTH_EMAIL_CONFIRM.md) | Confirmação de conta / reset de password por `token_hash` (fix do erro no iPhone) — **exige trocar os templates de email na Supabase**, ver documento |
 | [`GOOGLE_OAUTH_SETUP.md`](GOOGLE_OAUTH_SETUP.md) | Setup principal OAuth |
 | [`GOOGLE_OAUTH_PASSOS_RAPIDOS.md`](GOOGLE_OAUTH_PASSOS_RAPIDOS.md) | Passos rápidos |
 | [`GOOGLE_OAUTH_USAR_EXISTENTE.md`](GOOGLE_OAUTH_USAR_EXISTENTE.md) | Reutilizar cliente existente |

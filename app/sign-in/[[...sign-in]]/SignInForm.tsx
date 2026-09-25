@@ -163,7 +163,15 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
           </p>
           {(error || urlError) && (
             <p className="text-mobile-sm" style={{ color: "var(--danger)", margin: 0 }}>
-              {error || (urlError === "exchange_failed" && (initialLocale === "en" ? "Login failed. Please try again." : "Falha ao iniciar sessão. Tenta novamente.")) || (urlError === "missing_code" && (initialLocale === "en" ? "Invalid callback." : "Callback inválido.")) || (urlError === "no_user" && (initialLocale === "en" ? "No user returned." : "Sessão não encontrada."))}
+              {error ||
+                (urlError === "exchange_failed" && (initialLocale === "en" ? "Login failed. Please try again." : "Falha ao iniciar sessão. Tenta novamente.")) ||
+                (urlError === "missing_code" && (initialLocale === "en" ? "Invalid callback." : "Callback inválido.")) ||
+                (urlError === "no_user" && (initialLocale === "en" ? "No user returned." : "Sessão não encontrada.")) ||
+                (urlError === "verify_failed" &&
+                  (initialLocale === "en"
+                    ? "This confirmation link already expired or was used. If you already confirmed your account, just log in below."
+                    : "Este link de confirmação já expirou ou foi usado. Se já confirmaste a conta, faz login abaixo.")) ||
+                (urlError === "missing_token" && (initialLocale === "en" ? "Invalid confirmation link." : "Link de confirmação inválido."))}
             </p>
           )}
           {showResendVerification && (

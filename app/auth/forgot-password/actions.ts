@@ -32,8 +32,10 @@ async function getPasswordResetSiteUrl(): Promise<string> {
 }
 
 /**
- * PKCE: o code verifier tem de ficar em cookies (mesmo jar que o callback).
- * Por isso resetPasswordForEmail corre no servidor com @supabase/ssr + cookies().
+ * `redirectTo` aponta para /auth/update-password directamente (não para /auth/callback): o
+ * template de email na Supabase deve usar `token_hash`/`verifyOtp` (ver app/auth/confirm/route.ts),
+ * não a troca de código PKCE — essa exige o code-verifier no mesmo browser que pediu o reset, o que
+ * falha quando o link é aberto noutro contexto (ex.: app Mail do iPhone vs. Safari/PWA instalada).
  */
 export async function requestPasswordReset(
   _prev: RequestPasswordResetState | null,
@@ -45,7 +47,7 @@ export async function requestPasswordReset(
   }
 
   const siteUrl = await getPasswordResetSiteUrl();
-  const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent("/auth/update-password")}`;
+  const redirectTo = `${siteUrl}/auth/update-password`;
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });

@@ -25,6 +25,7 @@ const publicPaths = [
   "/arbitragem",
   "/julgamento",
   "/auth/callback",
+  "/auth/confirm",
   "/auth/forgot-password",
   "/auth/update-password",
   "/auth/verify-email",
@@ -41,6 +42,7 @@ const studentAllowedWithoutPlanPrefixes = [
   "/escolher-plano",
   "/adesao",
   "/auth/callback",
+  "/auth/confirm",
   "/auth/update-password",
 ];
 
@@ -183,6 +185,11 @@ export async function middleware(request: NextRequest) {
    * (sobretudo PWA/mobile: 1.ª tentativa falha, 2.ª funciona).
    */
   if (pathname === "/auth/callback" || pathname.startsWith("/auth/callback/")) {
+    return NextResponse.next({ request: withKfsPathname(request) });
+  }
+
+  /** Confirmação por email (token_hash/verifyOtp) — mesma razão do /auth/callback acima. */
+  if (pathname === "/auth/confirm" || pathname.startsWith("/auth/confirm/")) {
     return NextResponse.next({ request: withKfsPathname(request) });
   }
 
