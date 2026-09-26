@@ -6,6 +6,10 @@ export const FIGHTER_CARD_HEIGHT = 1920;
 
 const BRAND_PRIMARY = "#c1121f";
 const BRAND_DARK = "#0a0a0a";
+const BRAND_GOLD = "#d4af37";
+
+/** Nome pelo qual a fonte carregada de `public/fonts/BebasNeue-Regular.ttf` é registada no `ImageResponse`. */
+export const DISPLAY_FONT_FAMILY = "Bebas Neue";
 
 /** Cor aproximada por faixa, só para o selo visual do cartão (não é dado de negócio). */
 function beltColorHex(beltName: string): string {
@@ -60,16 +64,36 @@ export function buildFighterCardElement(data: FighterCardData, ctaHost: string) 
         fontFamily: "sans-serif",
         padding: "72px 64px",
         color: "#ffffff",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Marca-d'água decorativa: preenche o vazio central sem competir com o conteúdo. */}
+      <div
+        style={{
+          display: "flex",
+          position: "absolute",
+          left: -120,
+          top: 760,
+          fontFamily: DISPLAY_FONT_FAMILY,
+          fontSize: 220,
+          letterSpacing: 6,
+          color: "rgba(255,255,255,0.035)",
+          transform: "rotate(-8deg)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        KINGDOM FIGHT
+      </div>
+
       {/* Cabeçalho / marca */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div
           style={{
             display: "flex",
-            fontSize: 34,
-            fontWeight: 800,
-            letterSpacing: 4,
+            fontFamily: DISPLAY_FONT_FAMILY,
+            fontSize: 46,
+            letterSpacing: 6,
             color: BRAND_PRIMARY,
           }}
         >
@@ -107,7 +131,16 @@ export function buildFighterCardElement(data: FighterCardData, ctaHost: string) 
             {initials(data.name)}
           </div>
         )}
-        <div style={{ display: "flex", fontSize: 56, fontWeight: 700, marginTop: 36, textAlign: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            fontFamily: DISPLAY_FONT_FAMILY,
+            fontSize: 68,
+            letterSpacing: 1,
+            marginTop: 36,
+            textAlign: "center",
+          }}
+        >
           {data.name}
         </div>
         {data.primaryModalityLabel ? (
@@ -153,8 +186,10 @@ export function buildFighterCardElement(data: FighterCardData, ctaHost: string) 
               minWidth: 220,
             }}
           >
-            <div style={{ display: "flex", fontSize: 48, fontWeight: 800 }}>{stat.value}</div>
-            <div style={{ display: "flex", fontSize: 24, color: "#c9c9c9", marginTop: 6 }}>{stat.label}</div>
+            <div style={{ display: "flex", fontFamily: DISPLAY_FONT_FAMILY, fontSize: 56, letterSpacing: 1 }}>
+              {stat.value}
+            </div>
+            <div style={{ display: "flex", fontSize: 22, color: "#c9c9c9", marginTop: 4 }}>{stat.label}</div>
           </div>
         ))}
       </div>
@@ -167,8 +202,9 @@ export function buildFighterCardElement(data: FighterCardData, ctaHost: string) 
               key={b.code}
               style={{
                 display: "flex",
-                backgroundColor: "rgba(193,18,31,0.18)",
-                border: `2px solid ${BRAND_PRIMARY}`,
+                backgroundColor: "rgba(212,175,55,0.12)",
+                border: `2px solid ${BRAND_GOLD}`,
+                color: BRAND_GOLD,
                 borderRadius: 999,
                 padding: "12px 24px",
                 fontSize: 24,
@@ -199,15 +235,20 @@ export function buildFighterCardElement(data: FighterCardData, ctaHost: string) 
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
             marginTop: 20,
             backgroundColor: BRAND_PRIMARY,
             borderRadius: 16,
-            padding: "20px 40px",
-            fontSize: 30,
-            fontWeight: 700,
+            padding: "22px 48px",
           }}
         >
-          Treina comigo → {ctaHost}/aula-experimental
+          <div style={{ display: "flex", fontFamily: DISPLAY_FONT_FAMILY, fontSize: 34, letterSpacing: 1 }}>
+            Treina comigo →
+          </div>
+          <div style={{ display: "flex", fontSize: 22, color: "rgba(255,255,255,0.85)", marginTop: 4 }}>
+            {ctaHost}/aula-experimental
+          </div>
         </div>
       </div>
     </div>

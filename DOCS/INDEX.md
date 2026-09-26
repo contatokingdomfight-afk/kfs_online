@@ -42,6 +42,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`TRIBO_MVP.md`](TRIBO_MVP.md) | Tribo (comunidade): MVP **em curso** — feed, media, RLS, moderação |
 | [`FIGHTER_CARD_MVP.md`](FIGHTER_CARD_MVP.md) | Cartão de conquista partilhável (crescimento): **feito e em produção** |
 | [`REFERRAL_LEVELS_MVP.md`](REFERRAL_LEVELS_MVP.md) | Níveis de indicação, badge e leaderboard (crescimento): **especificação, por implementar** |
+| [`BOLETIM_PAIS_MVP.md`](BOLETIM_PAIS_MVP.md) | Boletim mensal por email aos pais de alunos Kids (crescimento): **especificação, por implementar** |
 | [`Fluxo Lógico Completo – Plataforma Kingdom Fight School.md`](Fluxo%20Lógico%20Completo%20–%20Plataforma%20Kingdom%20Fight%20School.md) | Fluxos de negócio |
 | [`FLUXO_DE_CADASTRO_E_ONBOARDING.md`](FLUXO_DE_CADASTRO_E_ONBOARDING.md) | Cadastro, onboarding, escolha de plano e pagamento na escola |
 
