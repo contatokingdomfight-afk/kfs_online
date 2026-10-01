@@ -133,7 +133,7 @@ export const homeContent = {
       },
       {
         q: "Quais modalidades vocês têm?",
-        a: "Muay Thai, Boxe, Kickboxing e mais — presencial ou combinado com o plano digital.",
+        a: "Muay Thai, Boxe e mais — presencial ou combinado com o plano digital.",
       },
       {
         q: "Não posso ir presencial — há alternativa?",
@@ -331,7 +331,7 @@ export const homeContent = {
       },
       {
         q: "What modalities do you offer?",
-        a: "Muay Thai, Boxing, Kickboxing and more — in person or combined with the digital plan.",
+        a: "Muay Thai, Boxing and more — in person or combined with the digital plan.",
       },
       {
         q: "I can't train in person — is there an alternative?",
