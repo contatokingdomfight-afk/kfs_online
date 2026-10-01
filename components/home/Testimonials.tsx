@@ -1,27 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getSchoolMapsUrl } from "@/lib/school-contact";
+import { SCHOOL_GOOGLE_REVIEWS_URL } from "@/lib/school-contact";
+
+type Testimonial = { quote: string; name: string };
 
 type Content = {
   testimonialsTitle: string;
-  testimonial1: string;
-  testimonial1Name: string;
-  testimonial2: string;
-  testimonial2Name: string;
-  testimonial3: string;
-  testimonial3Name: string;
+  testimonials: readonly Testimonial[];
   testimonialsGoogleCta: string;
 };
 
-const testimonialsFromContent = (c: Content) => [
-  { quote: c.testimonial1, name: c.testimonial1Name },
-  { quote: c.testimonial2, name: c.testimonial2Name },
-  { quote: c.testimonial3, name: c.testimonial3Name },
-];
-
 export function Testimonials({ content }: { content: Content }) {
-  const items = testimonialsFromContent(content);
+  const items = content.testimonials;
   const [active, setActive] = useState(0);
 
   useEffect(() => {
@@ -80,7 +71,7 @@ export function Testimonials({ content }: { content: Content }) {
         </div>
         <p className="mt-6 text-center">
           <a
-            href={getSchoolMapsUrl()}
+            href={SCHOOL_GOOGLE_REVIEWS_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-medium text-[var(--primary)] hover:underline"

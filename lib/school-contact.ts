@@ -18,3 +18,7 @@ export function formatSchoolPhoneForDisplay(phone: string): string {
 export function getSchoolMapsUrl(address: string = SCHOOL_PUBLIC_CONTACT.address): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 }
+
+/** Link directo ao separador de Avaliações do perfil "Kingdom Fight School" no Google Maps (não só a ficha geral). */
+export const SCHOOL_GOOGLE_REVIEWS_URL =
+  "https://www.google.com/maps/place/Kingdom+Fight+School/@38.7856476,-9.345031,17z/data=!4m8!3m7!1s0xd1ecf7f29c1591b:0x1ba4a66db1613c5e!8m2!3d38.7856476!4d-9.345031!9m1!1b1!16s%2Fg%2F11wb07yjzn";

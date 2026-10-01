@@ -118,12 +118,48 @@ export const homeContent = {
 
     // Testimonials — avaliações reais do Google (perfil "Kingdom Fight School" no Google Maps)
     testimonialsTitle: "O que dizem os nossos alunos",
-    testimonial1: "Excelente ambiente de treinamento. Ótimos professores e estrutura nova e atualizada. 🥊",
-    testimonial1Name: "Dudu M.",
-    testimonial2: "Excelente experiência! Ambiente muito bem cuidado, atendimento atencioso e uma equipa extremamente profissional.",
-    testimonial2Name: "Rodrigo M.",
-    testimonial3: "Escola de combate com profissionais e pessoas excelentes. Ambiente amigável e agradável com treinos de ponta.",
-    testimonial3Name: "João B.",
+    testimonials: [
+      {
+        quote: "Excelente ambiente de treinamento. Ótimos professores e estrutura nova e atualizada. 🥊",
+        name: "Dudu M.",
+      },
+      {
+        quote: "Excelente experiência! Ambiente muito bem cuidado, atendimento atencioso e uma equipa extremamente profissional.",
+        name: "Rodrigo M.",
+      },
+      {
+        quote: "Escola de combate com profissionais e pessoas excelentes. Ambiente amigável e agradável com treinos de ponta.",
+        name: "João B.",
+      },
+      {
+        quote: "Ambiente agradável, professores atenciosos e profissionais! Um ótimo lugar para aprender, se exercitar e desestressar!",
+        name: "Felipe B.",
+      },
+      {
+        quote: "Professores incríveis e acolhedores. Ambiente familiar e tranquilo.",
+        name: "Allana P.",
+      },
+      {
+        quote: "Melhor lugar pra treino. Professores excelentes e espaço incrível.",
+        name: "Kamila F.",
+      },
+      {
+        quote: "Espaço bem equipado e agradável. Professores muito bons.",
+        name: "Cátia H.",
+      },
+      {
+        quote: "Excelentes professores, estrutura top demais. Super indico.",
+        name: "Luiz Felipe L.",
+      },
+      {
+        quote: "Profissionais excelentes e comprometidos, ótimo espaço!",
+        name: "Alice M.",
+      },
+      {
+        quote: "Espaço top, super recomendo — crianças e adultos, muito bom.",
+        name: "Família Brother",
+      },
+    ],
     testimonialsGoogleCta: "Ver todas as avaliações no Google (5,0 ★ · 38 avaliações)",
 
     // FAQ
@@ -322,12 +358,48 @@ export const homeContent = {
     why5Desc: "Metrics and tracking of your progress.",
 
     testimonialsTitle: "What our students say",
-    testimonial1: "Excellent training environment. Great instructors and a brand new, upgraded facility. 🥊",
-    testimonial1Name: "Dudu M.",
-    testimonial2: "Excellent experience! A very well-kept space, attentive service and an extremely professional team.",
-    testimonial2Name: "Rodrigo M.",
-    testimonial3: "A combat school with excellent professionals and people. A friendly, welcoming atmosphere with top-level training.",
-    testimonial3Name: "João B.",
+    testimonials: [
+      {
+        quote: "Excellent training environment. Great instructors and a brand new, upgraded facility. 🥊",
+        name: "Dudu M.",
+      },
+      {
+        quote: "Excellent experience! A very well-kept space, attentive service and an extremely professional team.",
+        name: "Rodrigo M.",
+      },
+      {
+        quote: "A combat school with excellent professionals and people. A friendly, welcoming atmosphere with top-level training.",
+        name: "João B.",
+      },
+      {
+        quote: "A pleasant atmosphere, attentive and professional instructors! A great place to learn, work out and de-stress!",
+        name: "Felipe B.",
+      },
+      {
+        quote: "Incredible, welcoming instructors. A family-like, calm atmosphere.",
+        name: "Allana P.",
+      },
+      {
+        quote: "Best place to train. Excellent instructors and an amazing space.",
+        name: "Kamila F.",
+      },
+      {
+        quote: "A well-equipped, pleasant space. Very good instructors.",
+        name: "Cátia H.",
+      },
+      {
+        quote: "Excellent instructors, top-notch facility. Highly recommend.",
+        name: "Luiz Felipe L.",
+      },
+      {
+        quote: "Excellent, committed professionals, great space!",
+        name: "Alice M.",
+      },
+      {
+        quote: "Great space, highly recommend — for kids and adults alike.",
+        name: "Família Brother",
+      },
+    ],
     testimonialsGoogleCta: "See all reviews on Google (5.0 ★ · 38 reviews)",
 
     faqTitle: "Frequently asked questions",
