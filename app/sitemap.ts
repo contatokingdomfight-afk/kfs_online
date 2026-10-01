@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getPublicOrigin } from "@/lib/site-public-url";
-import { MODALIDADES_ORDER } from "@/lib/modalidades-content";
+import { MODALIDADES_DYNAMIC_SLUGS, MODALIDADE_LANDING_SLUGS, getModalidadeContent } from "@/lib/modalidades-content";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const origin = getPublicOrigin();
@@ -15,12 +15,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${origin}/privacidade`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
   ];
 
-  const modalidadeRoutes: MetadataRoute.Sitemap = MODALIDADES_ORDER.map((slug) => ({
-    url: `${origin}/modalidades/${slug}`,
+  const landingRoutes: MetadataRoute.Sitemap = MODALIDADE_LANDING_SLUGS.map((slug) => ({
+    url: `${origin}${getModalidadeContent("pt", slug).path}`,
     lastModified: now,
     changeFrequency: "monthly",
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...modalidadeRoutes];
+  const modalidadeDynamicRoutes: MetadataRoute.Sitemap = MODALIDADES_DYNAMIC_SLUGS.map((slug) => ({
+    url: `${origin}/modalidades/${slug}`,
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...landingRoutes, ...modalidadeDynamicRoutes];
 }

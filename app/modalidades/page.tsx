@@ -5,6 +5,7 @@ import { getAllModalidades, getModalidadesHubContent } from "@/lib/modalidades-c
 import { ModalidadesHeader } from "@/components/modalidades/ModalidadesHeader";
 import { CTASection } from "@/components/home/CTASection";
 import { PublicSiteFooter } from "@/components/PublicSiteFooter";
+import { LocalBusinessJsonLd } from "@/components/seo/LocalBusinessJsonLd";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocaleFromCookies()) === "en" ? "en" : "pt";
@@ -30,6 +31,7 @@ export default async function ModalidadesHubPage() {
 
   return (
     <main className="min-h-screen bg-[var(--bg)]">
+      <LocalBusinessJsonLd />
       <ModalidadesHeader hubLabel={hubLabel} />
 
       <section className="py-16 text-center sm:py-20">
@@ -48,7 +50,7 @@ export default async function ModalidadesHubPage() {
           {modalidades.map((m) => (
             <Link
               key={m.slug}
-              href={`/modalidades/${m.slug}`}
+              href={m.path}
               className="group flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-8 text-center transition-all hover:border-[var(--primary)]/40 hover:shadow-lg"
             >
               <m.icon className="w-9 h-9 text-[var(--primary)]" aria-hidden />

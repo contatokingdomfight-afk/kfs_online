@@ -32,6 +32,11 @@ const publicPaths = [
   "/termos",
   "/privacidade",
   "/modalidades",
+  "/muay-thai-sintra",
+  "/boxe-sintra",
+  "/kickboxing-sintra",
+  "/jiu-jitsu-sintra",
+  "/mma-sintra",
   "/robots.txt",
   "/sitemap.xml",
 ];

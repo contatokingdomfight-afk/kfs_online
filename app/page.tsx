@@ -21,6 +21,7 @@ import { Footer } from "@/components/home/Footer";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { loadPublicWeeklySchedule } from "@/lib/public-weekly-schedule";
 import { loadPublicPlans } from "@/lib/public-plans";
+import { LocalBusinessJsonLd } from "@/components/seo/LocalBusinessJsonLd";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -32,15 +33,14 @@ function firstSearchParam(v: string | string[] | undefined): string | undefined 
 export const metadata: Metadata = {
   title: "Kingdom Fight School | Treine com Propósito. Lute com Disciplina.",
   description:
-    "Escola de artes marciais com base em valores cristãos. Muay Thai, Boxe, Kickboxing. Metodologia estruturada, treinadores experientes. Oeiras e Cascais.",
+    "Escola de artes marciais com base em valores cristãos, em Algueirão-Mem Martins, Sintra. Muay Thai, Boxe, Kickboxing. Metodologia estruturada, treinadores experientes.",
   keywords: [
-    "artes marciais",
-    "Muay Thai",
-    "Boxe",
-    "Kickboxing",
+    "artes marciais Sintra",
+    "Muay Thai Sintra",
+    "Boxe Sintra",
+    "Kickboxing Sintra",
     "Kingdom Fight",
-    "Oeiras",
-    "Cascais",
+    "Algueirão-Mem Martins",
     "escola de luta",
   ],
   openGraph: {
@@ -66,6 +66,7 @@ export default async function HomePage({ searchParams }: Props) {
 
   return (
     <main className="min-h-screen bg-[var(--bg)]">
+      <LocalBusinessJsonLd />
       <HomeHeader
         ctaLabel={content.headerCta}
         modalidadesLabel={content.headerModalidades}

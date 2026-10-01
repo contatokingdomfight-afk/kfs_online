@@ -203,6 +203,9 @@ export const homeContent = {
     footerDirections: "Como chegar",
     footerRights: "© Kingdom Fight School. Todos os direitos reservados.",
 
+    // Secção de localização nas páginas de modalidade
+    modalidadeLocationTitle: "Onde fica a Kingdom Fight School",
+
     // Arbitragem (homepage)
     arbitrationTitle: "Arbitragem na Kingdom",
     arbitrationSubtitle: "Do treino ao evento",
@@ -397,6 +400,9 @@ export const homeContent = {
     footerPhoneLabel: "Phone",
     footerDirections: "Get directions",
     footerRights: "© Kingdom Fight School. All rights reserved.",
+
+    // Location section on modality pages
+    modalidadeLocationTitle: "Where to find Kingdom Fight School",
 
     arbitrationTitle: "Arbitration at Kingdom",
     arbitrationSubtitle: "From training to event day",

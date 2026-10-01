@@ -84,7 +84,7 @@ export function Footer({ content, locale = "pt" }: { content: Content; locale?: 
               {modalidades.map((m) => (
                 <li key={m.slug}>
                   <Link
-                    href={`/modalidades/${m.slug}`}
+                    href={m.path}
                     className="text-sm text-[var(--text-primary)] hover:text-[var(--primary)]"
                   >
                     {m.name}

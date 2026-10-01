@@ -14,7 +14,12 @@ const nextConfig = {
     },
   },
   async redirects() {
-    return [{ source: "/julgamento", destination: "/arbitragem", permanent: true }];
+    return [
+      { source: "/julgamento", destination: "/arbitragem", permanent: true },
+      { source: "/modalidades/muay-thai", destination: "/muay-thai-sintra", permanent: true },
+      { source: "/modalidades/boxe", destination: "/boxe-sintra", permanent: true },
+      { source: "/modalidades/jiu-jitsu", destination: "/jiu-jitsu-sintra", permanent: true },
+    ];
   },
   /** Pedidos legados a /favicon.ico passam a servir o ícone gerado em app/icon.tsx */
   async rewrites() {

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import {
-  MODALIDADES_ORDER,
+  MODALIDADES_DYNAMIC_SLUGS,
   getModalidadeContent,
-  isModalidadeSlug,
+  isModalidadesDynamicRouteSlug,
 } from "@/lib/modalidades-content";
 import { ModalidadesHeader } from "@/components/modalidades/ModalidadesHeader";
 import { ModalidadeHero } from "@/components/modalidades/ModalidadeHero";
@@ -13,16 +13,17 @@ import { ModalidadeBenefitsSection } from "@/components/modalidades/ModalidadeBe
 import { FAQSection } from "@/components/home/FAQSection";
 import { CTASection } from "@/components/home/CTASection";
 import { PublicSiteFooter } from "@/components/PublicSiteFooter";
+import { LocalBusinessJsonLd } from "@/components/seo/LocalBusinessJsonLd";
 
 type Params = Promise<{ slug: string }>;
 
 export async function generateStaticParams() {
-  return MODALIDADES_ORDER.map((slug) => ({ slug }));
+  return MODALIDADES_DYNAMIC_SLUGS.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
-  if (!isModalidadeSlug(slug)) return {};
+  if (!isModalidadesDynamicRouteSlug(slug)) return {};
   const locale = (await getLocaleFromCookies()) === "en" ? "en" : "pt";
   const content = getModalidadeContent(locale, slug);
   return {
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function ModalidadePage({ params }: { params: Params }) {
   const { slug } = await params;
-  if (!isModalidadeSlug(slug)) notFound();
+  if (!isModalidadesDynamicRouteSlug(slug)) notFound();
 
   const locale = ((await getLocaleFromCookies()) === "en" ? "en" : "pt") as "pt" | "en";
   const content = getModalidadeContent(locale, slug);
@@ -48,6 +49,7 @@ export default async function ModalidadePage({ params }: { params: Params }) {
 
   return (
     <main className="min-h-screen bg-[var(--bg)]">
+      <LocalBusinessJsonLd />
       <ModalidadesHeader hubLabel={hubLabel} breadcrumbLabel={content.name} />
 
       <ModalidadeHero

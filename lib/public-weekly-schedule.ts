@@ -104,6 +104,23 @@ export async function loadPublicWeeklySchedule(): Promise<PublicSchoolSchedule[]
   })();
 }
 
+/** Horário filtrado a uma (ou mais) modalidade — para as páginas de SEO local por modalidade. */
+export function filterScheduleByModality(
+  schedule: PublicSchoolSchedule[],
+  modalityCodes: readonly string[]
+): PublicSchoolSchedule[] {
+  const codes = new Set(modalityCodes);
+  return schedule.map((school) => ({
+    ...school,
+    lessonsByWeekday: Object.fromEntries(
+      Object.entries(school.lessonsByWeekday).map(([weekday, lessons]) => [
+        weekday,
+        lessons.filter((lesson) => codes.has(lesson.modality)),
+      ])
+    ) as Record<number, PublicScheduleLesson[]>,
+  }));
+}
+
 /** Chamar após criar/editar/apagar aulas na agenda. */
 export function revalidatePublicWeeklySchedule() {
   revalidateTag("public-weekly-schedule");
