@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Swords, Timer, Scale, X, Menu } from "lucide-react";
+import { Swords, Timer, Scale, LogIn, X, Menu } from "lucide-react";
 
 type Props = {
   ctaLabel: string;
   modalidadesLabel: string;
   timerLabel: string;
   judgingLabel: string;
+  signInLabel: string;
   navHowItWorksLabel: string;
   navPlansLabel: string;
   navScheduleLabel: string;
@@ -30,6 +31,7 @@ export function HomeHeader({
   modalidadesLabel,
   timerLabel,
   judgingLabel,
+  signInLabel,
   navHowItWorksLabel,
   navPlansLabel,
   navScheduleLabel,
@@ -77,6 +79,10 @@ export function HomeHeader({
             <Scale size={16} aria-hidden />
             <span>{judgingLabel}</span>
           </Link>
+          <Link href="/sign-in" className={navLinkClass}>
+            <LogIn size={16} aria-hidden />
+            <span>{signInLabel}</span>
+          </Link>
           <Link
             href="/aula-experimental"
             className="btn btn-primary px-4 py-2.5 text-sm font-semibold"
@@ -123,6 +129,10 @@ export function HomeHeader({
           <Link href="/arbitragem" onClick={() => setMenuOpen(false)} className={mobileLinkClass}>
             <Scale size={16} aria-hidden />
             <span>{judgingLabel}</span>
+          </Link>
+          <Link href="/sign-in" onClick={() => setMenuOpen(false)} className={mobileLinkClass}>
+            <LogIn size={16} aria-hidden />
+            <span>{signInLabel}</span>
           </Link>
           <Link
             href="/aula-experimental"

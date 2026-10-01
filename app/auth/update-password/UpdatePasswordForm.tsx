@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { translateAuthErrorMessage } from "@/lib/auth/auth-error-messages";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -17,22 +18,16 @@ export function UpdatePasswordForm({ initialLocale }: { initialLocale: Locale })
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savePhase, setSavePhase] = useState<"idle" | "saving" | "success">("idle");
   const [sessionReady, setSessionReady] = useState<boolean | null>(null);
-  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSessionReady(!!session);
     });
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
-    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -53,15 +48,13 @@ export function UpdatePasswordForm({ initialLocale }: { initialLocale: Locale })
 
     if (err) {
       setSavePhase("idle");
-      setError(err.message);
+      setError(translateAuthErrorMessage(err.message, initialLocale));
       return;
     }
 
     setSavePhase("success");
-    redirectTimerRef.current = setTimeout(() => {
-      router.push("/dashboard");
-      router.refresh();
-    }, 900);
+    router.push("/dashboard");
+    router.refresh();
   }
 
   const overlayOpen = savePhase !== "idle";
@@ -107,19 +100,43 @@ export function UpdatePasswordForm({ initialLocale }: { initialLocale: Locale })
           {t("updatePasswordDescription")}
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div style={{ position: "relative" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder={t("passwordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              autoComplete="new-password"
+              className="input"
+              disabled={overlayOpen}
+              style={{ paddingRight: 72 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              disabled={overlayOpen}
+              style={{
+                position: "absolute",
+                right: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                padding: "4px 6px",
+                color: "var(--text-secondary)",
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+              aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+            >
+              {showPassword ? t("hidePassword") : t("showPassword")}
+            </button>
+          </div>
           <input
-            type="password"
-            placeholder={t("passwordPlaceholder")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            autoComplete="new-password"
-            className="input"
-            disabled={overlayOpen}
-          />
-          <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder={t("passwordConfirmPlaceholder")}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}

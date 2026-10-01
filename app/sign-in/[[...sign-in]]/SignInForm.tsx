@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -9,6 +9,7 @@ import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { buildAuthCallbackUrl } from "@/lib/auth/oauth-callback-url";
 import { openOAuthAuthorizeUrl } from "@/lib/capacitor-open-oauth";
 import { isEmailNotConfirmedError } from "@/lib/auth/email-confirmation";
+import { translateAuthErrorMessage } from "@/lib/auth/auth-error-messages";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -16,6 +17,7 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
   const t = getTranslations(initialLocale);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savePhase, setSavePhase] = useState<"idle" | "saving" | "success">("idle");
   const [rememberDevice, setRememberDevice] = useState(true);
@@ -27,7 +29,6 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
   const accountDeleted = searchParams.get("deleted") === "1";
   const [showResendVerification, setShowResendVerification] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
-  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const overlayOpen = savePhase !== "idle" || googleLoading;
   const overlayMessage = googleLoading
@@ -36,12 +37,6 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
       ? t("signInSuccessRedirect")
       : t("signingIn");
   const overlayShowSpinner = googleLoading || savePhase === "saving";
-
-  useEffect(() => {
-    return () => {
-      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
-    };
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,16 +55,14 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
         setError(t("emailNotVerified"));
       } else {
         setShowResendVerification(false);
-        setError(err.message);
+        setError(translateAuthErrorMessage(err.message, initialLocale));
       }
       return;
     }
     setSavePhase("success");
     const target = nextUrl && nextUrl.startsWith("/") ? nextUrl : "/dashboard";
-    redirectTimerRef.current = setTimeout(() => {
-      router.push(target);
-      router.refresh();
-    }, 900);
+    router.push(target);
+    router.refresh();
   }
 
   async function handleGoogleSignIn() {
@@ -89,7 +82,7 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
     });
     if (err) {
       setGoogleLoading(false);
-      setError(err.message);
+      setError(translateAuthErrorMessage(err.message, initialLocale));
       return;
     }
     if (data?.url) {
@@ -105,7 +98,7 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
     const supabase = createClient();
     const { error: err } = await supabase.auth.resend({ type: "signup", email: email.trim() });
     if (err) {
-      setResendMessage(err.message);
+      setResendMessage(translateAuthErrorMessage(err.message, initialLocale));
       return;
     }
     setResendMessage(t("verifyEmailResent"));
@@ -147,15 +140,39 @@ export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
             className="input"
             disabled={overlayOpen}
           />
-          <input
-            type="password"
-            placeholder={t("passwordPlaceholder")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="input"
-            disabled={overlayOpen}
-          />
+          <div style={{ position: "relative" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder={t("passwordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="input"
+              disabled={overlayOpen}
+              style={{ paddingRight: 72 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              disabled={overlayOpen}
+              style={{
+                position: "absolute",
+                right: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                padding: "4px 6px",
+                color: "var(--text-secondary)",
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+              aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+            >
+              {showPassword ? t("hidePassword") : t("showPassword")}
+            </button>
+          </div>
           <p className="text-mobile-sm text-right" style={{ margin: "-8px 0 0 0" }}>
             <Link href="/auth/forgot-password" style={{ color: "var(--primary)", textDecoration: "none" }}>
               {t("forgotPassword")}

@@ -306,6 +306,19 @@
   }
 }
 
+@media (min-width: 768px) {
+  .container-mobile {
+    max-width: 560px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-mobile {
+    max-width: 640px;
+    padding: 32px 40px;
+  }
+}
+
 /* ========================================
    LISTA ESPERA - Mobile first, desktop limpo (coluna única)
    ======================================== */

@@ -86,7 +86,7 @@ export function Plans({
                 ) : null}
                 <div className="mt-auto pt-4">
                   <Link
-                    href="/aula-experimental"
+                    href={`/aula-experimental?plano=${encodeURIComponent(plan.id)}`}
                     className={`block w-full rounded-lg py-3 text-center font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                       plan.popular ? "btn btn-primary" : "btn btn-secondary"
                     }`}

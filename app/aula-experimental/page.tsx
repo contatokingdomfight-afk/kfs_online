@@ -12,8 +12,11 @@ import {
 import { FormularioExperimental } from "./FormularioExperimental";
 import { getDefaultOnboardingSchoolId, sortSchoolsForOnboarding } from "@/lib/onboarding-default-school";
 import { SCHOOL_PUBLIC_CONTACT } from "@/lib/school-contact";
+import { loadPublicPlans } from "@/lib/public-plans";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+import { getTranslations } from "@/lib/i18n";
 
-type SearchParams = Promise<{ sucesso?: string; data?: string; hora?: string; ref?: string }>;
+type SearchParams = Promise<{ sucesso?: string; data?: string; hora?: string; ref?: string; plano?: string; planoNome?: string }>;
 
 function ymdToPtDate(ymd: string): string {
   const [y, m, d] = ymd.split("-");
@@ -21,10 +24,11 @@ function ymdToPtDate(ymd: string): string {
   return `${d}/${m}/${y}`;
 }
 
-function buildTrialWhatsAppUrl(phone: string, data?: string, hora?: string): string {
+function buildTrialWhatsAppUrl(phone: string, data?: string, hora?: string, plano?: string): string {
   const digits = phone.replace(/\D/g, "");
   const quando = data && hora ? `no dia ${ymdToPtDate(data)} às ${hora} horas` : "";
-  const message = `Olá! Gostaria de confirmar a minha aula experimental${quando ? " " + quando : ""}!`;
+  const planoTxt = plano ? ` (interesse no plano ${plano})` : "";
+  const message = `Olá! Gostaria de confirmar a minha aula experimental${quando ? " " + quando : ""}!${planoTxt}`;
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 
@@ -39,8 +43,10 @@ export type LessonSlot = { id: string; occurrenceDate: string; label: string };
 
 export default async function AulaExperimentalPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
+  const locale = (await getLocaleFromCookies()) as "pt" | "en";
+  const t = getTranslations(locale);
   const sucesso = params.sucesso === "1";
-  const whatsappUrl = buildTrialWhatsAppUrl(SCHOOL_PUBLIC_CONTACT.phone, params.data, params.hora);
+  const whatsappUrl = buildTrialWhatsAppUrl(SCHOOL_PUBLIC_CONTACT.phone, params.data, params.hora, params.planoNome);
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} backHref="/" backLabel="← Voltar à página inicial" />;
@@ -56,7 +62,7 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
   const today = calendarDateLisbon(new Date());
   const rangeEnd = addDaysYmd(today, 56);
 
-  const [modalities, schoolsRes, lessonsRes] = await Promise.all([
+  const [modalities, schoolsRes, lessonsRes, publicPlans] = await Promise.all([
     getCachedModalityRefs(supabase),
     supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
     supabase
@@ -65,7 +71,12 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
         "id, modality, date, weekday, startTime, endTime, schoolId, isOneOff, isOpenClass, offerTrialBooking, locationId, coachId, capacity, planningNotes"
       )
       .order("startTime", { ascending: true }),
+    loadPublicPlans(),
   ]);
+
+  const interestedPlanName = params.plano
+    ? (publicPlans.find((p) => p.id === params.plano)?.name ?? null)
+    : null;
 
   const schools = sortSchoolsForOnboarding(schoolsRes.data ?? []);
   const defaultSchoolId = getDefaultOnboardingSchoolId(schools);
@@ -114,10 +125,10 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
       <main className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: "var(--bg)" }}>
         <div className="container-mobile">
           <h1 className="text-mobile-lg font-semibold text-center mb-3" style={{ color: "var(--text-primary)" }}>
-            Pedido recebido
+            {t("trialSuccessTitle")}
           </h1>
           <p className="text-mobile-base text-center mb-6" style={{ color: "var(--text-secondary)", lineHeight: 1.5 }}>
-            Obrigado! A tua inscrição para a aula experimental foi registada. Entraremos em contacto em breve para confirmar.
+            {t("trialSuccessMessage")}
           </p>
           <a
             href={whatsappUrl}
@@ -126,10 +137,10 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
             className="btn btn-primary w-full"
             style={{ textAlign: "center", textDecoration: "none", display: "block", marginBottom: "12px" }}
           >
-            Fale connosco no WhatsApp
+            {t("trialSuccessWhatsApp")}
           </a>
           <Link href="/" className="btn btn-secondary w-full" style={{ textAlign: "center", textDecoration: "none" }}>
-            Voltar ao início
+            {t("trialSuccessBackHome")}
           </Link>
         </div>
       </main>
@@ -149,20 +160,23 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
             textDecoration: "none",
           }}
         >
-          ← Voltar
+          {t("trialPageBack")}
         </Link>
         <h1 className="text-mobile-lg font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
-          Aula experimental
+          {t("trialPageTitle")}
         </h1>
         <p className="text-mobile-base mb-6" style={{ color: "var(--text-secondary)", lineHeight: 1.5 }}>
-          Escolhe o <strong>local</strong>, depois a modalidade e a data. Entraremos em contacto para confirmar a tua vaga.
+          {t("trialPageIntro")}
         </p>
         <FormularioExperimental
+          locale={locale}
           schools={schools.map((s) => ({ id: s.id, name: s.name ?? "" }))}
           defaultSchoolId={defaultSchoolId}
           modalityOptions={modalityOptions}
           lessonsBySchoolId={lessonsBySchoolId}
           referrerStudentId={referrerStudentId}
+          interestedPlanName={interestedPlanName}
+          schoolPhone={SCHOOL_PUBLIC_CONTACT.phone}
         />
       </div>
     </main>

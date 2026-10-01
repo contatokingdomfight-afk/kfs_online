@@ -370,6 +370,7 @@ model TrialClass {
   id                String    @id @default(cuid())
   name              String
   contact           String
+  email             String?
   modality          String
   lessonDate        DateTime  @db.Date
   lessonId          String?
@@ -379,6 +380,8 @@ model TrialClass {
   createdAt         DateTime  @default(now())
   /// Aluno que indicou este pedido (via link `/aula-experimental?ref=<studentId>`).
   referredByStudentId String?
+  /// Nome do plano em que a pessoa demonstrou interesse (clicou "Começar" num plano da home).
+  interestedPlan    String?
 }
 
 // Comentários do coach: targetType + targetId (polimórfico – Athlete ou Lesson)

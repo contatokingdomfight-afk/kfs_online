@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { persistRememberDeviceChoice } from "@/lib/auth/remember-device";
 import { buildAuthCallbackUrl } from "@/lib/auth/oauth-callback-url";
 import { openOAuthAuthorizeUrl } from "@/lib/capacitor-open-oauth";
+import { translateAuthErrorMessage } from "@/lib/auth/auth-error-messages";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -15,6 +16,7 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
@@ -35,7 +37,7 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
     });
     if (err) {
       setGoogleLoading(false);
-      setError(err.message);
+      setError(translateAuthErrorMessage(err.message, initialLocale));
       return;
     }
     if (data?.url) {
@@ -71,7 +73,7 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
     });
     setLoading(false);
     if (err) {
-      setError(err.message);
+      setError(translateAuthErrorMessage(err.message, initialLocale));
       return;
     }
     if (data?.session) {
@@ -120,15 +122,38 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
             required
             className="input"
           />
-          <input
-            type="password"
-            placeholder={t("passwordPlaceholder")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            className="input"
-          />
+          <div style={{ position: "relative" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder={t("passwordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              className="input"
+              style={{ paddingRight: 72 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              style={{
+                position: "absolute",
+                right: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                padding: "4px 6px",
+                color: "var(--text-secondary)",
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+              aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+            >
+              {showPassword ? t("hidePassword") : t("showPassword")}
+            </button>
+          </div>
           {error && (
             <p className="text-mobile-sm" style={{ color: "var(--danger)", margin: 0 }}>
               {error}

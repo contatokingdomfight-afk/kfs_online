@@ -12,6 +12,7 @@ export const homeContent = {
     headerModalidades: "Modalidades",
     headerTimer: "Timer",
     headerJudging: "Arbitragem",
+    headerSignIn: "Entrar",
     navHowItWorks: "Como Funciona",
     navPlans: "Planos",
     navSchedule: "Horários",
@@ -115,14 +116,15 @@ export const homeContent = {
     why5: "Evolução real",
     why5Desc: "Métricas e acompanhamento do seu progresso.",
 
-    // Testimonials
+    // Testimonials — avaliações reais do Google (perfil "Kingdom Fight School" no Google Maps)
     testimonialsTitle: "O que dizem os nossos alunos",
-    testimonial1: "A Kingdom transformou a minha forma de treinar. Disciplina e propósito em cada aula.",
-    testimonial1Name: "Aluno KFS",
-    testimonial2: "Metodologia clara, evolução visível. Recomendo a todos.",
-    testimonial2Name: "Aluno KFS",
-    testimonial3: "Mais do que um ginásio — uma escola de vida.",
-    testimonial3Name: "Aluno KFS",
+    testimonial1: "Excelente ambiente de treinamento. Ótimos professores e estrutura nova e atualizada. 🥊",
+    testimonial1Name: "Dudu M.",
+    testimonial2: "Excelente experiência! Ambiente muito bem cuidado, atendimento atencioso e uma equipa extremamente profissional.",
+    testimonial2Name: "Rodrigo M.",
+    testimonial3: "Escola de combate com profissionais e pessoas excelentes. Ambiente amigável e agradável com treinos de ponta.",
+    testimonial3Name: "João B.",
+    testimonialsGoogleCta: "Ver todas as avaliações no Google (5,0 ★ · 38 avaliações)",
 
     // FAQ
     faqTitle: "Perguntas frequentes",
@@ -220,6 +222,7 @@ export const homeContent = {
     headerModalidades: "Programs",
     headerTimer: "Timer",
     headerJudging: "Arbitration",
+    headerSignIn: "Sign in",
     navHowItWorks: "How It Works",
     navPlans: "Plans",
     navSchedule: "Schedule",
@@ -316,12 +319,13 @@ export const homeContent = {
     why5Desc: "Metrics and tracking of your progress.",
 
     testimonialsTitle: "What our students say",
-    testimonial1: "Kingdom transformed how I train. Discipline and purpose in every class.",
-    testimonial1Name: "KFS Student",
-    testimonial2: "Clear methodology, visible evolution. I recommend to everyone.",
-    testimonial2Name: "KFS Student",
-    testimonial3: "More than a gym — a school of life.",
-    testimonial3Name: "KFS Student",
+    testimonial1: "Excellent training environment. Great instructors and a brand new, upgraded facility. 🥊",
+    testimonial1Name: "Dudu M.",
+    testimonial2: "Excellent experience! A very well-kept space, attentive service and an extremely professional team.",
+    testimonial2Name: "Rodrigo M.",
+    testimonial3: "A combat school with excellent professionals and people. A friendly, welcoming atmosphere with top-level training.",
+    testimonial3Name: "João B.",
+    testimonialsGoogleCta: "See all reviews on Google (5.0 ★ · 38 reviews)",
 
     faqTitle: "Frequently asked questions",
     faqItems: [

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getSchoolMapsUrl } from "@/lib/school-contact";
 
 type Content = {
   testimonialsTitle: string;
@@ -10,6 +11,7 @@ type Content = {
   testimonial2Name: string;
   testimonial3: string;
   testimonial3Name: string;
+  testimonialsGoogleCta: string;
 };
 
 const testimonialsFromContent = (c: Content) => [
@@ -76,6 +78,16 @@ export function Testimonials({ content }: { content: Content }) {
             />
           ))}
         </div>
+        <p className="mt-6 text-center">
+          <a
+            href={getSchoolMapsUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-[var(--primary)] hover:underline"
+          >
+            {content.testimonialsGoogleCta}
+          </a>
+        </p>
       </div>
     </section>
   );

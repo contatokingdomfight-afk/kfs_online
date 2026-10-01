@@ -7,19 +7,24 @@ import { weekdayFromYmd } from "@/lib/lesson-occurrences";
 
 export type SubmitTrialResult = { error?: string };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function submitTrialRequest(
   _prev: SubmitTrialResult | null,
   formData: FormData
 ): Promise<SubmitTrialResult> {
   const name = (formData.get("name") as string)?.trim();
   const contact = (formData.get("contact") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim() || null;
   const modality = (formData.get("modality") as string)?.trim();
   const schoolId = (formData.get("schoolId") as string)?.trim();
   const lessonSlot = (formData.get("lessonSlot") as string)?.trim() ?? "";
   const referrerStudentId = (formData.get("referrerStudentId") as string)?.trim() || null;
+  const interestedPlan = (formData.get("interestedPlanName") as string)?.trim() || null;
 
   if (!name) return { error: "Nome é obrigatório." };
   if (!contact) return { error: "Telefone é obrigatório." };
+  if (email && !EMAIL_RE.test(email)) return { error: "Email inválido." };
   if (!modality) return { error: "Escolhe uma modalidade." };
   if (!schoolId) return { error: "Escolhe o local / escola." };
 
@@ -83,11 +88,13 @@ export async function submitTrialRequest(
     id,
     name,
     contact,
+    email,
     modality,
     lessonDate: occurrenceYmd,
     lessonId,
     convertedToStudent: false,
     referredByStudentId: validReferrerId,
+    interestedPlan,
   });
 
   if (error) return { error: error.message };
@@ -95,5 +102,6 @@ export async function submitTrialRequest(
   revalidatePath("/aula-experimental");
   const startTime = (lesson as { startTime?: string | null }).startTime ?? "";
   const params = new URLSearchParams({ sucesso: "1", data: occurrenceYmd, hora: startTime });
+  if (interestedPlan) params.set("planoNome", interestedPlan);
   redirect(`/aula-experimental?${params.toString()}`);
 }

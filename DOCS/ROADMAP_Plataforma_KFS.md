@@ -178,6 +178,21 @@ Ideias para atrair **novos alunos** e **novos professores**, discutidas em sess�
 
 ---
 
+## 17. Backlog — usabilidade da área pública (não autenticada)
+
+Resultado de uma auditoria de UX à área não logada (1 out. 2026), com postura de "lead" externo. Itens já corrigidos nessa sessão: sem link "Entrar" no menu da home, CTA de planos sem contexto, formulário de aula experimental só em PT e sem email, formulário sem alternativa quando não há horário, depoimentos genéricos ("Aluno KFS"), senha sem mostrar/ocultar, delay artificial de 900ms no login, erros Supabase crus em inglês, container estreito em desktop nos formulários. Itens abaixo ainda por fazer:
+
+| # | Item | Notas |
+|---|------|-------|
+| 1 | **Páginas legais (`/termos`, `/privacidade`) só em português** | Hardcoded PT, sem `getTranslations`/i18n, apesar de estarem linkadas do rodapé bilingue e do checkbox de registo. Um visitante em EN que aceita os termos cai num documento só em PT |
+| 2 | **Banner de cookies é cosmético** | `CookieBanner.tsx` guarda a escolha em `localStorage`, mas nem o Meta Pixel (`/lista_espera`) nem o Vercel Analytics verificam esse valor antes de carregar/disparar — risco de compliance (RGPD) |
+| 3 | **Meta Pixel só na landing de ads isolada** | Só existe em `/lista_espera` (que não é linkada de lugar nenhum do site principal). O funil realmente usado (home → `/aula-experimental`) não gera nenhum evento de conversão rastreável |
+| 4 | **`/timer` sem CTA de conversão** | Ao contrário de `/arbitragem` (que linka para `/sign-in`), a ferramenta gratuita de timer só tem "← Voltar ao início" — zero caminho de conversão para quem chega via SEO. Fix trivial (replicar padrão do `/arbitragem`) |
+| 5 | **Navegação inconsistente fora da home** | `/modalidades/*` e páginas legais usam só um breadcrumb minimalista (`ModalidadesHeader`/`LegalPageShell`), sem nav nem CTA — quem chega direto numa página de modalidade via Google não tem atalho para Planos/FAQ/Horários |
+| 6 | **Consentimentos de imagem/marketing fixos em "sim" na adesão** | `app/adesao/ComprovativoForm.tsx` (~linha 375–390): os 4 checkboxes de autorização (foto, vídeo, redes sociais, marketing) são `<input type="hidden" value="on">` — não há opção real de recusar. Fica já depois do login, mas é a continuação direta do funil de registo e é um ponto de atenção RGPD |
+
+---
+
 ## Referências
 
 - Contexto técnico detalhado: [`memory.md`](memory.md)  

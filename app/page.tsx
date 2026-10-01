@@ -71,6 +71,7 @@ export default async function HomePage({ searchParams }: Props) {
         modalidadesLabel={content.headerModalidades}
         timerLabel={content.headerTimer}
         judgingLabel={content.headerJudging}
+        signInLabel={content.headerSignIn}
         navHowItWorksLabel={content.navHowItWorks}
         navPlansLabel={content.navPlans}
         navScheduleLabel={content.navSchedule}
