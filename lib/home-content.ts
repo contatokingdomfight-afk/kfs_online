@@ -36,7 +36,7 @@ export const homeContent = {
     statsStudentsLabel: "Comunidade em evolução",
     statsMethod: "Metodologia",
     statsMethodLabel: "estruturada",
-    statsModalities: "Muay Thai, Boxe, Kickboxing e mais",
+    statsModalities: "Muay Thai, Boxe e mais",
 
     // About
     aboutTitle: "Sobre a Kingdom Fight",
@@ -247,7 +247,7 @@ export const homeContent = {
     statsStudentsLabel: "Community in evolution",
     statsMethod: "Structured",
     statsMethodLabel: "methodology",
-    statsModalities: "Muay Thai, Boxing, Kickboxing and more",
+    statsModalities: "Muay Thai, Boxing and more",
 
     aboutTitle: "About Kingdom Fight",
     missionTitle: "Mission",

@@ -305,7 +305,7 @@ const modalidadesContentData: Record<
         tagline: "Socos e chutes em alta intensidade",
         metaTitle: "Kickboxing em Sintra | Kingdom Fight School",
         metaDescription:
-          "Treine Kickboxing em Sintra, em Algueirão-Mem Martins, na Kingdom Fight School. Socos e chutes a alta intensidade, para todos os níveis. Experimente uma aula.",
+          "Kickboxing na Kingdom Fight School, em Algueirão-Mem Martins, Sintra: combine Boxe e Muay Thai para uma base completa de socos e chutes. Fale connosco.",
         metaKeywords: [
           "Kickboxing Sintra",
           "Kickboxing Algueirão-Mem Martins",
@@ -315,75 +315,67 @@ const modalidadesContentData: Record<
         ],
         heroTitle: "Kickboxing",
         heroSubtitle:
-          "Uma modalidade de combate em pé que combina socos e chutes num treino intenso, directo e muito eficaz — técnica e condicionamento físico em cada aula.",
-        introTitle: "Kickboxing em Algueirão-Mem Martins",
+          "O Kickboxing combina socos e chutes num treino intenso e directo. Na Kingdom Fight, a base do Kickboxing é coberta combinando as aulas de Boxe e Muay Thai.",
+        introTitle: "Como funciona o Kickboxing na Kingdom Fight",
         introText:
-          "A Kingdom Fight School fica em Algueirão-Mem Martins, Sintra, e é lá que damos as nossas aulas de Kickboxing. O Kickboxing combina as técnicas de socos do Boxe com chutes de perna, num sistema de combate em pé mais directo, sem o uso de cotovelos ou joelhos como no Muay Thai. É uma modalidade dinâmica, que exige explosão, resistência e boa leitura de distância. Nas nossas aulas trabalhamos a técnica de forma isolada — socos, chutes, combinações e deslocamento — antes de aplicar em sequências e sparring controlado, com progressão adaptada ao nível de cada aluno.",
-        benefitsTitle: "Porquê treinar Kickboxing",
+          "A Kingdom Fight School fica em Algueirão-Mem Martins, Sintra. Não temos, para já, uma turma dedicada de Kickboxing — e preferimos dizer isso com clareza em vez de prometer algo que não existe. O que oferecemos é a combinação das nossas aulas de Boxe (a base de socos) e Muay Thai (que acrescenta os chutes, além de cotovelos, joelhos e clinch), que cobre grande parte da técnica do Kickboxing. Se houver procura suficiente para uma turma dedicada, fale connosco — é esse tipo de interesse que nos ajuda a decidir abrir novas turmas.",
+        benefitsTitle: "Como chegar ao Kickboxing na Kingdom Fight",
         benefits: [
           {
             icon: Zap,
-            title: "Socos e chutes combinados",
-            desc: "Uma modalidade completa que junta a técnica de punhos do Boxe aos chutes de perna, sem precisar de experiência prévia em nenhuma das duas.",
+            title: "Base de Boxe",
+            desc: "As nossas aulas de Boxe dão-lhe a base de socos — jab, cross, hook, uppercut — que o Kickboxing também usa.",
           },
           {
             icon: Flame,
-            title: "Treino de alta intensidade",
-            desc: "Um dos treinos mais exigentes a nível cardiovascular — queima calórica elevada e condicionamento físico completo.",
+            title: "Chutes via Muay Thai",
+            desc: "As aulas de Muay Thai acrescentam os chutes de perna (e também cotovelos, joelhos e clinch, que o Kickboxing não usa).",
           },
           {
             icon: Footprints,
-            title: "Explosão e mobilidade",
-            desc: "Trabalha potência nas pernas, mobilidade de anca e deslocamento, com ganhos visíveis fora do tatame.",
+            title: "Condicionamento elevado",
+            desc: "Combinar as duas modalidades dá-lhe um dos condicionamentos físicos mais completos que existem.",
           },
           {
             icon: Handshake,
-            title: "Progressão estruturada",
-            desc: "Aulas organizadas por nível, com acompanhamento do treinador e evolução visível na plataforma.",
+            title: "Diga-nos se há interesse",
+            desc: "Quanto mais pessoas pedirem Kickboxing dedicado, mais depressa conseguimos avaliar abrir uma turma só para isso.",
           },
         ],
         forWhomTitle: "Para quem é",
         forWhomText:
-          "Para quem procura um treino de combate em pé intenso e directo, sem a curva de aprendizagem do clinch ou dos cotovelos/joelhos do Muay Thai. Turmas organizadas por nível — não é preciso experiência prévia.",
+          "Para quem procura especificamente o estilo de combate do Kickboxing — socos e chutes, sem clinch. Hoje, o caminho para lá chegar na Kingdom Fight é combinar Boxe e Muay Thai; fale connosco para percebermos o melhor ponto de partida para si.",
         faqTitle: "Perguntas frequentes sobre Kickboxing",
         faqItems: [
           {
-            q: "Preciso de ter experiência para começar Kickboxing?",
-            a: "Não. Começamos pelos fundamentos de socos e chutes antes de avançar para combinações mais complexas.",
-          },
-          {
-            q: "O Kickboxing é indicado para iniciantes?",
-            a: "Sim. É uma das modalidades mais diretas para começar — sem a curva de aprendizagem de clinch de outras artes marciais.",
-          },
-          {
-            q: "O que preciso de levar para a primeira aula?",
-            a: "Roupa de treino confortável chega para experimentar. Para continuar, a equipa ajuda a escolher ligaduras, luvas e caneleiras.",
+            q: "Há uma aula dedicada de Kickboxing?",
+            a: "Não, ainda não — e preferimos ser diretos sobre isso. Hoje cobrimos a base do Kickboxing combinando as aulas de Boxe e de Muay Thai.",
           },
           {
             q: "Qual é a diferença entre Kickboxing e Muay Thai?",
-            a: "O Kickboxing usa apenas socos e chutes de perna; o Muay Thai acrescenta cotovelos, joelhos e clinch. Se gosta de um, é provável que também goste do outro.",
+            a: "O Kickboxing usa apenas socos e chutes de perna; o Muay Thai acrescenta cotovelos, joelhos e clinch. Nas nossas aulas de Muay Thai já pratica a parte de chutes.",
           },
           {
-            q: "Onde ficam as aulas de Kickboxing em Sintra?",
-            a: "Na Kingdom Fight School, em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
-          },
-          {
-            q: "Posso fazer uma aula experimental de Kickboxing?",
+            q: "Posso fazer uma aula experimental de Boxe ou Muay Thai para começar?",
             a: "Sim — a aula experimental é gratuita e sem compromisso. Marque através do botão nesta página.",
           },
           {
-            q: "Quanto custa treinar Kickboxing na Kingdom Fight?",
+            q: "Onde fica a Kingdom Fight School?",
+            a: "Em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
+          },
+          {
+            q: "Quanto custa treinar na Kingdom Fight?",
             a: "Os preços dos nossos planos estão listados nesta página. Fale connosco se tiver dúvidas sobre qual se adapta melhor a si.",
           },
         ],
-        ctaHeadline: "Pronto para experimentar Kickboxing?",
-        ctaSub: "Marque já a sua aula experimental gratuita — sem compromisso.",
+        ctaHeadline: "Interessado em Kickboxing na Kingdom Fight?",
+        ctaSub: "Fale connosco ou experimente uma aula de Boxe ou Muay Thai — sem compromisso.",
         ctaButton: "Aula Experimental",
         path: "/kickboxing-sintra",
         scheduleModalityCodes: ["KICKBOXING"],
         showFounders: false,
         teamNote:
-          "As aulas de Kickboxing são conduzidas pela equipa técnica da Kingdom Fight School, com acompanhamento próximo e progressão adaptada a cada aluno.",
+          "O caminho para o Kickboxing na Kingdom Fight passa pela equipa técnica de Boxe e Muay Thai, que já cobre grande parte dessa base técnica.",
       },
       "jiu-jitsu": {
         slug: "jiu-jitsu",
@@ -828,7 +820,7 @@ const modalidadesContentData: Record<
         tagline: "High-intensity punches and kicks",
         metaTitle: "Kickboxing in Sintra | Kingdom Fight School",
         metaDescription:
-          "Train Kickboxing in Sintra, in Algueirão-Mem Martins, at Kingdom Fight School. High-intensity punches and kicks, for all levels. Try a class.",
+          "Kickboxing at Kingdom Fight School, in Algueirão-Mem Martins, Sintra: combine Boxing and Muay Thai for a complete punch-and-kick base. Get in touch.",
         metaKeywords: [
           "Kickboxing Sintra",
           "Kickboxing Algueirão-Mem Martins",
@@ -838,75 +830,67 @@ const modalidadesContentData: Record<
         ],
         heroTitle: "Kickboxing",
         heroSubtitle:
-          "A standing combat discipline combining punches and kicks into an intense, direct and highly effective workout — technique and conditioning in every class.",
-        introTitle: "Kickboxing in Algueirão-Mem Martins",
+          "Kickboxing combines punches and kicks into an intense, direct workout. At Kingdom Fight, the Kickboxing base is covered by combining our Boxing and Muay Thai classes.",
+        introTitle: "How Kickboxing works at Kingdom Fight",
         introText:
-          "Kingdom Fight School is based in Algueirão-Mem Martins, Sintra, and that's where we teach our Kickboxing classes. Kickboxing combines Boxing's punching techniques with leg kicks, in a more direct standing combat system that doesn't use elbows or knees like Muay Thai. It's a dynamic discipline that demands explosiveness, endurance and good distance management. In our classes we work technique in isolation — punches, kicks, combinations and footwork — before applying it in sequences and controlled sparring, with progression adapted to each student's level.",
-        benefitsTitle: "Why train Kickboxing",
+          "Kingdom Fight School is based in Algueirão-Mem Martins, Sintra. We don't yet have a dedicated Kickboxing class — and we'd rather say that clearly than promise something that doesn't exist. What we offer is a combination of our Boxing classes (the punching base) and Muay Thai (which adds the kicks, plus elbows, knees and clinch), covering much of Kickboxing's technique. If there's enough demand for a dedicated class, let us know — that kind of interest is exactly what helps us decide to open new classes.",
+        benefitsTitle: "How to get to Kickboxing at Kingdom Fight",
         benefits: [
           {
             icon: Zap,
-            title: "Punches and kicks combined",
-            desc: "A complete discipline that joins Boxing's hand technique with leg kicks, no prior experience in either needed.",
+            title: "A Boxing base",
+            desc: "Our Boxing classes give you the punching base — jab, cross, hook, uppercut — that Kickboxing also uses.",
           },
           {
             icon: Flame,
-            title: "High-intensity training",
-            desc: "One of the most demanding workouts cardiovascularly — high calorie burn and complete physical conditioning.",
+            title: "Kicks via Muay Thai",
+            desc: "Our Muay Thai classes add the leg kicks (plus elbows, knees and clinch, which Kickboxing doesn't use).",
           },
           {
             icon: Footprints,
-            title: "Explosiveness and mobility",
-            desc: "Builds leg power, hip mobility and footwork, with gains that show outside the gym too.",
+            title: "High-level conditioning",
+            desc: "Combining both disciplines gives you one of the most complete physical conditioning programs there is.",
           },
           {
             icon: Handshake,
-            title: "Structured progression",
-            desc: "Level-based classes, with coach supervision and visible progress tracked on the platform.",
+            title: "Tell us if you're interested",
+            desc: "The more people ask for a dedicated Kickboxing class, the faster we can assess opening one.",
           },
         ],
         forWhomTitle: "Who it's for",
         forWhomText:
-          "For anyone looking for an intense, direct standing combat workout, without the learning curve of Muay Thai's clinch, elbows or knees. Classes organized by level — no prior experience needed.",
+          "For anyone specifically looking for Kickboxing's style of combat — punches and kicks, no clinch. Today, the way to get there at Kingdom Fight is by combining Boxing and Muay Thai; get in touch so we can suggest the best starting point for you.",
         faqTitle: "Frequently asked questions about Kickboxing",
         faqItems: [
           {
-            q: "Do I need experience to start Kickboxing?",
-            a: "No. We start with punching and kicking fundamentals before moving to more complex combinations.",
-          },
-          {
-            q: "Is Kickboxing suitable for beginners?",
-            a: "Yes. It's one of the most direct disciplines to start with — without the clinch learning curve of other martial arts.",
-          },
-          {
-            q: "What do I need to bring to my first class?",
-            a: "Comfortable training clothes are enough to try it out. To continue, our team helps you choose hand wraps, gloves and shin guards.",
+            q: "Is there a dedicated Kickboxing class?",
+            a: "Not yet — and we'd rather be direct about it. Today we cover Kickboxing's base by combining our Boxing and Muay Thai classes.",
           },
           {
             q: "What's the difference between Kickboxing and Muay Thai?",
-            a: "Kickboxing only uses punches and leg kicks; Muay Thai adds elbows, knees and clinch. If you like one, you'll likely enjoy the other too.",
+            a: "Kickboxing only uses punches and leg kicks; Muay Thai adds elbows, knees and clinch. In our Muay Thai classes you already practice the kicking side.",
           },
           {
-            q: "Where are the Kickboxing classes in Sintra?",
-            a: "At Kingdom Fight School, in Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
-          },
-          {
-            q: "Can I book a Kickboxing trial class?",
+            q: "Can I book a Boxing or Muay Thai trial class to get started?",
             a: "Yes — the trial class is free and with no commitment. Book it using the button on this page.",
           },
           {
-            q: "How much does it cost to train Kickboxing at Kingdom Fight?",
+            q: "Where is Kingdom Fight School?",
+            a: "In Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
+          },
+          {
+            q: "How much does it cost to train at Kingdom Fight?",
             a: "Our plan prices are listed on this page. Get in touch if you have questions about which one fits you best.",
           },
         ],
-        ctaHeadline: "Ready to try Kickboxing?",
-        ctaSub: "Book your free trial class now — no commitment.",
+        ctaHeadline: "Interested in Kickboxing at Kingdom Fight?",
+        ctaSub: "Get in touch or try a Boxing or Muay Thai class — no commitment.",
         ctaButton: "Free Trial Class",
         path: "/kickboxing-sintra",
         scheduleModalityCodes: ["KICKBOXING"],
         showFounders: false,
         teamNote:
-          "Kickboxing classes are taught by Kingdom Fight School's coaching team, with close supervision and progression adapted to each student.",
+          "The path to Kickboxing at Kingdom Fight goes through the Boxing and Muay Thai coaching team, which already covers much of that technical base.",
       },
       "jiu-jitsu": {
         slug: "jiu-jitsu",
