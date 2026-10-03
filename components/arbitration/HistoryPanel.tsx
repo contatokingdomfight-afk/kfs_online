@@ -147,6 +147,7 @@ export function HistoryPanel({ fights, events, judges, canDeleteFights = false }
             <option value="">Modalidade</option>
             <option value="BOXING">Boxe</option>
             <option value="MUAY_THAI">Muay Thai</option>
+            <option value="KICKBOXING">Kickboxing</option>
           </select>
           <input className="input" type="date" value={date} onChange={(e) => updateFilter("data", e.target.value)} />
           <input className="input" placeholder="Atleta" value={athlete} onChange={(e) => updateFilter("atleta", e.target.value)} />

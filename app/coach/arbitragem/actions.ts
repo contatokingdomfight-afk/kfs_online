@@ -12,7 +12,11 @@ import {
   winnerFromTotals,
 } from "@/lib/arbitration/scoring";
 import {
+  BUILTIN_CRITERIA_SETS,
+  DEFAULT_CRITERIA_SET,
+  defaultCriteriaSetForModality,
   dynamicScoresFromEvaluationRow,
+  isBuiltinCriteriaSetId,
   legacyCriteriaColumnsFromScores,
   normalizeCriteriaInput,
   parseCriteriaSnapshot,
@@ -54,15 +58,23 @@ function criteriaToDb(
   };
 }
 
-async function loadEventCriteria(
+/**
+ * Critérios de um combate: cada combate tem o seu próprio snapshot (definido na criação,
+ * conforme a modalidade), com fallback para o snapshot do evento em combates antigos.
+ */
+async function loadFightCriteria(
   supabase: ReturnType<typeof supabaseOrThrow>,
   fightId: string
 ): Promise<ArbitrationCriterionDef[]> {
   const { data: fight } = await supabase
     .from("ArbitrationFight")
-    .select("event:ArbitrationEvent(criteriaSnapshot)")
+    .select("criteriaSnapshot, event:ArbitrationEvent(criteriaSnapshot)")
     .eq("id", fightId)
     .single();
+
+  if (fight?.criteriaSnapshot) {
+    return parseCriteriaSnapshot(fight.criteriaSnapshot);
+  }
 
   const event = unwrapSupabaseJoin(
     fight?.event as { criteriaSnapshot: unknown } | { criteriaSnapshot: unknown }[] | null
@@ -245,10 +257,13 @@ export async function createArbitrationEvent(input: {
   const access = await requireArbitrationAccess();
   const supabase = supabaseOrThrow();
 
-  let criteriaSnapshot: ArbitrationCriterionDef[] = parseCriteriaSnapshot(null);
+  let criteriaSnapshot: ArbitrationCriterionDef[] = DEFAULT_CRITERIA_SET.criteria;
   const setId = input.criteriaSetId?.trim() || null;
 
-  if (setId && setId !== "builtin-kingdom-6") {
+  if (setId && isBuiltinCriteriaSetId(setId)) {
+    const builtin = BUILTIN_CRITERIA_SETS.find((s) => s.id === setId);
+    if (builtin) criteriaSnapshot = builtin.criteria;
+  } else if (setId) {
     const { data: setRow } = await supabase
       .from("ArbitrationCriteriaSet")
       .select("criteria")
@@ -266,7 +281,7 @@ export async function createArbitrationEvent(input: {
       eventDate: input.eventDate || null,
       location: input.location?.trim() || null,
       totalRoundsDefault: input.totalRoundsDefault,
-      criteriaSetId: setId && setId !== "builtin-kingdom-6" ? setId : null,
+      criteriaSetId: setId && !isBuiltinCriteriaSetId(setId) ? setId : null,
       criteriaSnapshot,
       createdByUserId: access.userId,
     })
@@ -304,16 +319,16 @@ export async function createArbitrationCriteriaSet(input: { name: string; labels
 
 export async function deleteArbitrationCriteriaSet(id: string) {
   await requireArbitrationAccess();
-  if (id === "builtin-kingdom-6") throw new Error("O perfil padrão não pode ser apagado.");
+  if (isBuiltinCriteriaSetId(id)) throw new Error("Perfis padrão não podem ser apagados.");
 
   const supabase = supabaseOrThrow();
-  const { count } = await supabase
-    .from("ArbitrationEvent")
-    .select("id", { count: "exact", head: true })
-    .eq("criteriaSetId", id);
+  const [{ count: eventCount }, { count: fightCount }] = await Promise.all([
+    supabase.from("ArbitrationEvent").select("id", { count: "exact", head: true }).eq("criteriaSetId", id),
+    supabase.from("ArbitrationFight").select("id", { count: "exact", head: true }).eq("criteriaSetId", id),
+  ]);
 
-  if ((count ?? 0) > 0) {
-    throw new Error("Este perfil está associado a eventos e não pode ser apagado.");
+  if ((eventCount ?? 0) > 0 || (fightCount ?? 0) > 0) {
+    throw new Error("Este perfil está associado a eventos ou combates e não pode ser apagado.");
   }
 
   const { error } = await supabase.from("ArbitrationCriteriaSet").delete().eq("id", id);
@@ -348,10 +363,31 @@ export async function createArbitrationFight(input: {
   athleteRedName: string;
   totalRounds: number;
   judgeIds: string[];
+  /** Perfil de critérios para este combate. Omitido = perfil padrão da modalidade. */
+  criteriaSetId?: string | null;
 }) {
   await requireArbitrationAccess();
   const supabase = supabaseOrThrow();
   await syncStaffArbitrationJudges(supabase);
+
+  const requestedSetId = input.criteriaSetId?.trim() || null;
+  let criteriaSnapshot: ArbitrationCriterionDef[] = defaultCriteriaSetForModality(input.modality).criteria;
+  let criteriaSetId: string | null = null;
+
+  if (requestedSetId && !isBuiltinCriteriaSetId(requestedSetId)) {
+    const { data: setRow } = await supabase
+      .from("ArbitrationCriteriaSet")
+      .select("criteria")
+      .eq("id", requestedSetId)
+      .maybeSingle();
+    if (setRow?.criteria) {
+      criteriaSnapshot = parseCriteriaSnapshot(setRow.criteria);
+      criteriaSetId = requestedSetId;
+    }
+  } else if (requestedSetId && isBuiltinCriteriaSetId(requestedSetId)) {
+    const builtin = BUILTIN_CRITERIA_SETS.find((s) => s.id === requestedSetId);
+    if (builtin) criteriaSnapshot = builtin.criteria;
+  }
 
   const { data: fight, error } = await supabase
     .from("ArbitrationFight")
@@ -364,6 +400,8 @@ export async function createArbitrationFight(input: {
       athleteRedName: input.athleteRedName.trim(),
       totalRounds: input.totalRounds,
       status: "SCHEDULED",
+      criteriaSetId,
+      criteriaSnapshot,
     })
     .select("id")
     .single();
@@ -452,7 +490,7 @@ export async function saveArbitrationRound(input: {
     };
   }
 
-  const criteria = await loadEventCriteria(supabase, input.fightId);
+  const criteria = await loadFightCriteria(supabase, input.fightId);
   const criteriaIds = criteria.map((c) => c.id);
 
   const blueTotal = sumCornerScores(input.scores.blue, criteriaIds);
@@ -541,7 +579,7 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
   const { data: fight } = await supabase
     .from("ArbitrationFight")
     .select(
-      `id, modality, category, weightClass, athleteBlueName, athleteRedName, status, totalRounds, currentRound, winner, decisionType,
+      `id, modality, category, weightClass, athleteBlueName, athleteRedName, status, totalRounds, currentRound, winner, decisionType, criteriaSnapshot,
        event:ArbitrationEvent(id, name, roundDurationSeconds, criteriaSnapshot)`
     )
     .eq("id", fightId)
@@ -556,7 +594,7 @@ export async function getFightJudgingState(fightId: string, fightJudgeId: string
       | null
   );
 
-  const criteria = parseCriteriaSnapshot(event?.criteriaSnapshot);
+  const criteria = parseCriteriaSnapshot(fight.criteriaSnapshot ?? event?.criteriaSnapshot);
 
   const { data: rounds } = await supabase
     .from("ArbitrationFightRound")

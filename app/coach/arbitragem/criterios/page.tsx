@@ -4,6 +4,7 @@ import { ArbitrationSubNav } from "@/components/arbitration/ArbitrationSubNav";
 import {
   ArbitrationCriteriaList,
   ArbitrationScoringGuide,
+  ModalityScoringGuide,
 } from "@/components/arbitration/ArbitrationCriteriaReference";
 
 export const metadata = {
@@ -34,9 +35,18 @@ export default async function ArbitragemCriteriosPage() {
       </header>
       <ArbitrationSubNav />
       <p style={{ color: "var(--text-secondary)", marginBottom: 20, fontSize: 14, maxWidth: 640 }}>
-        Consulta os critérios e a escala de pontuação antes de julgar. Cada evento usa um perfil fixo no momento da
-        criação — o que vês aqui é o que será aplicado nos combates desse evento.
+        Consulta os critérios e a escala de pontuação antes de julgar. Cada combate escolhe o seu próprio perfil
+        (conforme a modalidade) no momento em que é criado.
       </p>
+
+      <section className="arb-card" style={{ marginBottom: 20 }}>
+        <h2 style={{ margin: "0 0 4px", fontSize: 17, fontWeight: 700 }}>Como pontua cada modalidade</h2>
+        <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--text-secondary)" }}>
+          Muay Thai, Kickboxing e Boxe têm hierarquias de critérios diferentes — a mesma ação (ex.: volume de socos)
+          pesa de forma diferente em cada uma.
+        </p>
+        <ModalityScoringGuide />
+      </section>
 
       <section className="arb-card" style={{ marginBottom: 20 }}>
         <ArbitrationScoringGuide />

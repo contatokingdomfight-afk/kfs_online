@@ -65,8 +65,9 @@ export function CriteriaSetsPanel({ sets }: Props) {
     <section className="arb-card">
       <h2 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700 }}>Perfis de critérios</h2>
       <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--text-secondary)" }}>
-        O perfil Kingdom (padrão) tem os 6 critérios actuais. Crie outros perfis e escolha um ao criar cada evento — fica
-        fixo para todos os combates desse evento.
+        Há um perfil padrão por modalidade (Muay Thai, Kickboxing, Boxe) e um genérico (Kingdom). Ao criar um
+        combate, o perfil certo é sugerido pela modalidade — pode trocar por qualquer perfil daqui, incluindo os
+        que criar abaixo.
       </p>
 
       {message ? <p style={{ color: "var(--success)", fontSize: 14 }}>{message}</p> : null}
@@ -100,8 +101,11 @@ export function CriteriaSetsPanel({ sets }: Props) {
               }}
             >
               {set.criteria.map((c, index) => (
-                <li key={c.id}>
+                <li key={c.id} style={{ marginBottom: c.description ? 4 : 0 }}>
                   {index + 1}. {c.label}
+                  {c.description ? (
+                    <div style={{ fontSize: 12, marginTop: 1 }}>{c.description}</div>
+                  ) : null}
                 </li>
               ))}
             </ol>

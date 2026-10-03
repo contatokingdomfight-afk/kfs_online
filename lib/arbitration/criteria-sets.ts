@@ -3,22 +3,143 @@ import {
   CRITERIA_LABELS_PT,
   type ArbitrationCriterionDef,
   type ArbitrationCriteriaSetRow,
+  type ArbitrationModality,
   type CriteriaKey,
 } from "./types";
 
 export type { ArbitrationCriterionDef, ArbitrationCriteriaSetRow };
 
 export const BUILTIN_KINGDOM_CRITERIA_SET_ID = "builtin-kingdom-6";
+export const BUILTIN_MUAY_THAI_CRITERIA_SET_ID = "builtin-muay-thai";
+export const BUILTIN_KICKBOXING_CRITERIA_SET_ID = "builtin-kickboxing";
+export const BUILTIN_BOXING_CRITERIA_SET_ID = "builtin-boxing";
 
 export const DEFAULT_CRITERIA_SET: ArbitrationCriteriaSetRow = {
   id: BUILTIN_KINGDOM_CRITERIA_SET_ID,
-  name: "Kingdom (padrão)",
+  name: "Kingdom (genérico)",
   isBuiltin: true,
+  modalityCode: null,
   criteria: CRITERIA_KEYS.map((id) => ({
     id,
     label: CRITERIA_LABELS_PT[id as CriteriaKey],
   })),
 };
+
+/**
+ * Perfis por modalidade — hierarquia de critérios conforme regulamentação de cada desporto
+ * (FPKMT/IFMA/WMC para Muay Thai, FPKMT/WAKO para Kickboxing, FPB/IBA para Boxe).
+ * Ordenados por prioridade de decisão: o 1.º critério pesa mais que o 2.º, etc.
+ */
+export const MUAY_THAI_CRITERIA_SET: ArbitrationCriteriaSetRow = {
+  id: BUILTIN_MUAY_THAI_CRITERIA_SET_ID,
+  name: "Muay Thai (IFMA/WMC)",
+  isBuiltin: true,
+  modalityCode: "MUAY_THAI",
+  criteria: [
+    {
+      id: "effective_damage",
+      label: "Dano efetivo",
+      description:
+        "Impacto acumulado pesa mais que volume: um pontapé médio limpo que desequilibra vale mais que vários socos leves bloqueados. Golpes com massa corporal (pontapés, joelhadas, cotoveladas) pesam mais que socos sem rotação de anca.",
+    },
+    {
+      id: "clean_technique",
+      label: "Técnica limpa",
+      description:
+        "O golpe só conta se atingir o alvo sem ser bloqueado/defletido pela guarda — nesse caso, a métrica conta a favor de quem defendeu. Boa mecânica (extensão, rotação de anca, estabilidade) reforça a pontuação.",
+    },
+    {
+      id: "clinch_throws",
+      label: "Clinch e projeções",
+      description:
+        "Domínio do clinch (controlo de nuca/mãos por dentro, joelhadas, quebra de postura) e projeções/varreduras legais de Muay Thai pontuam fortemente. Quem fica de pé numa projeção pontua; se ambos caírem, pontua quem fica por cima.",
+    },
+    {
+      id: "posture_ring_generalship",
+      label: "Postura e ring generalship",
+      description:
+        "Compostura ao sofrer um golpe (não demonstrar dor, manter a guarda) neutraliza o impacto aos olhos dos juízes. Avançar conectando pontua; avançar às cegas e ser contra-atacado conta para o adversário. Inclui controlo do espaço do ringue.",
+    },
+  ],
+};
+
+export const KICKBOXING_CRITERIA_SET: ArbitrationCriteriaSetRow = {
+  id: BUILTIN_KICKBOXING_CRITERIA_SET_ID,
+  name: "Kickboxing (FPKMT/WAKO)",
+  isBuiltin: true,
+  modalityCode: "KICKBOXING",
+  criteria: [
+    {
+      id: "volume_combinations",
+      label: "Volume e combinações",
+      description:
+        "Ao contrário do Muay Thai, o Kickboxing é um desporto de volume: sequências de socos/pontapés que entram limpas pontuam golpe a golpe (lógica do sistema de clicker). É o critério com mais peso.",
+    },
+    {
+      id: "clean_connection",
+      label: "Conexão limpa",
+      description:
+        "O golpe só pontua com alvo legal e área de contacto correta (luva ou tíbia/peito do pé); golpes nos antebraços/luvas valem 0. Precisa de força e trajetória de anca — toques fracos não contam.",
+    },
+    {
+      id: "ring_generalship_restrictions",
+      label: "Ring generalship e restrições",
+      description:
+        "Controlo do ringue e da distância. Clinch é proibido ou muito restrito (ex.: no K-1, 1 segundo para 1 joelhada) e cotoveladas são sempre proibidas. Algumas disciplinas exigem uma cota mínima de pontapés por assalto.",
+    },
+  ],
+};
+
+export const BOXING_CRITERIA_SET: ArbitrationCriteriaSetRow = {
+  id: BUILTIN_BOXING_CRITERIA_SET_ID,
+  name: "Boxe (FPB/IBA)",
+  isBuiltin: true,
+  modalityCode: "BOXING",
+  criteria: [
+    {
+      id: "quality_blows",
+      label: "Golpes válidos e qualificados",
+      description:
+        "Só conta se atingir zona de alvo legal (cabeça/tronco acima da cintura) com a zona dos nós dos dedos da luva fechada e carregar força de corpo/ombro/anca. Toques leves, socos estendidos ou golpes com a palma ('slapping') não pontuam.",
+    },
+    {
+      id: "effective_aggressiveness",
+      label: "Agressividade efetiva",
+      description:
+        "Avançar conectando golpes limpos pontua; avançar disparando socos retidos na guarda ou no ar, ou ser contra-atacado, conta a favor do adversário.",
+    },
+    {
+      id: "ring_generalship",
+      label: "Domínio do ringue",
+      description:
+        "Cortar o ringue, prender o adversário nas cordas/cantos, ditar a distância (jab à longa distância, infighting à curta) e controlar o centro do ringue.",
+    },
+    {
+      id: "defence",
+      label: "Defesa técnica",
+      description:
+        "Esquivas, bloqueios e footwork que fazem o adversário falhar golpes. Não ganha o assalto sozinha, mas desempata quando o volume de golpes limpos é parecido.",
+    },
+  ],
+};
+
+export const BUILTIN_CRITERIA_SETS: ArbitrationCriteriaSetRow[] = [
+  DEFAULT_CRITERIA_SET,
+  MUAY_THAI_CRITERIA_SET,
+  KICKBOXING_CRITERIA_SET,
+  BOXING_CRITERIA_SET,
+];
+
+export const BUILTIN_CRITERIA_SET_IDS = new Set(BUILTIN_CRITERIA_SETS.map((s) => s.id));
+
+export function isBuiltinCriteriaSetId(id: string | null | undefined): boolean {
+  return !!id && BUILTIN_CRITERIA_SET_IDS.has(id);
+}
+
+/** Perfil sugerido para uma modalidade (usado para pré-seleccionar ao criar um combate). */
+export function defaultCriteriaSetForModality(modality: ArbitrationModality): ArbitrationCriteriaSetRow {
+  return BUILTIN_CRITERIA_SETS.find((s) => s.modalityCode === modality) ?? DEFAULT_CRITERIA_SET;
+}
 
 const LEGACY_CRITERIA_DB_SUFFIX: Record<string, string> = {
   offensiveVolume: "OffensiveVolume",
@@ -76,9 +197,14 @@ export function parseCriteriaSnapshot(raw: unknown): ArbitrationCriterionDef[] {
     if (!item || typeof item !== "object") continue;
     const id = (item as { id?: unknown }).id;
     const label = (item as { label?: unknown }).label;
+    const description = (item as { description?: unknown }).description;
     if (typeof id !== "string" || typeof label !== "string") continue;
     if (!id.trim() || !label.trim()) continue;
-    parsed.push({ id: id.trim(), label: label.trim() });
+    parsed.push({
+      id: id.trim(),
+      label: label.trim(),
+      ...(typeof description === "string" && description.trim() ? { description: description.trim() } : {}),
+    });
   }
   if (parsed.length < MIN_CRITERIA_COUNT) return DEFAULT_CRITERIA_SET.criteria;
   return parsed.slice(0, MAX_CRITERIA_COUNT);

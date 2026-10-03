@@ -105,6 +105,7 @@ export function computeDecisionType(winners: ArbitrationCorner[]): ArbitrationDe
 export function modalityLabel(modality: string, locale: "pt" | "en" = "pt"): string {
   if (modality === "BOXING") return locale === "pt" ? "Boxe" : "Boxing";
   if (modality === "MUAY_THAI") return locale === "pt" ? "Muay Thai" : "Muay Thai";
+  if (modality === "KICKBOXING") return "Kickboxing";
   return modality;
 }
 

@@ -11,8 +11,8 @@ import type {
   JudgeHistoryRoundRow,
 } from "./types";
 import {
-  BUILTIN_KINGDOM_CRITERIA_SET_ID,
-  DEFAULT_CRITERIA_SET,
+  BUILTIN_CRITERIA_SETS,
+  BUILTIN_CRITERIA_SET_IDS,
   parseCriteriaSnapshot,
 } from "./criteria-sets";
 import { unwrapSupabaseJoin } from "./supabase-join";
@@ -46,7 +46,7 @@ export async function listArbitrationEvents(): Promise<ArbitrationEventRow[]> {
 
 export async function listArbitrationCriteriaSets(): Promise<ArbitrationCriteriaSetRow[]> {
   const supabase = clientOrNull();
-  if (!supabase) return [DEFAULT_CRITERIA_SET];
+  if (!supabase) return BUILTIN_CRITERIA_SETS;
 
   const { data } = await supabase
     .from("ArbitrationCriteriaSet")
@@ -60,7 +60,7 @@ export async function listArbitrationCriteriaSets(): Promise<ArbitrationCriteria
     isBuiltin: Boolean(row.isBuiltin),
   }));
 
-  return [DEFAULT_CRITERIA_SET, ...custom.filter((s) => s.id !== BUILTIN_KINGDOM_CRITERIA_SET_ID)];
+  return [...BUILTIN_CRITERIA_SETS, ...custom.filter((s) => !BUILTIN_CRITERIA_SET_IDS.has(s.id))];
 }
 
 export async function listArbitrationJudges(): Promise<ArbitrationJudgeRow[]> {

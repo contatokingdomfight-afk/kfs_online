@@ -464,6 +464,32 @@
   font-weight: 600;
   color: var(--text-primary);
   padding-right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arb-criterion-info-btn {
+  font-family: inherit;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.arb-criterion-info-btn:hover {
+  color: var(--primary);
+}
+
+.arb-criterion-desc {
+  margin: 2px 0 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .arb-criteria-header {

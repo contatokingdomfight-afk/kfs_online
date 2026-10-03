@@ -12,11 +12,18 @@ import {
 } from "@/lib/arbitration/occurrences";
 import { modalityLabel, maxCriteriaTotal, suggestTenPointMust, sumCornerScores, winnerFromTotals } from "@/lib/arbitration/scoring";
 import {
+  BOXING_CRITERIA_SET,
   DEFAULT_CRITERIA_SET,
+  KICKBOXING_CRITERIA_SET,
+  MUAY_THAI_CRITERIA_SET,
+  defaultCriteriaSetForModality,
   emptyDynamicScores,
   PUBLIC_CRITERIA_PRESETS_STORAGE_KEY,
   parseCriteriaSnapshot,
 } from "@/lib/arbitration/criteria-sets";
+import { ModalityScoringGuide } from "@/components/arbitration/ArbitrationCriteriaReference";
+
+const BUILTIN_MODALITY_PRESETS = [MUAY_THAI_CRITERIA_SET, KICKBOXING_CRITERIA_SET, BOXING_CRITERIA_SET, DEFAULT_CRITERIA_SET];
 import type {
   ArbitrationModality,
   ArbitrationCriterionDef,
@@ -125,24 +132,28 @@ export function PublicJudgingClient({ locale }: Props) {
     [locale, t]
   );
 
+  const [view, setView] = useState<"tool" | "guide">("tool");
   const [phase, setPhase] = useState<Phase>("setup");
   const [modality, setModality] = useState<ArbitrationModality>("BOXING");
   const [totalRounds, setTotalRounds] = useState(3);
   const [athleteBlueName, setAthleteBlueName] = useState(DEFAULT_BLUE);
   const [athleteRedName, setAthleteRedName] = useState(DEFAULT_RED);
   const [activeRound, setActiveRound] = useState(1);
-  const [criteriaPresets, setCriteriaPresets] = useState<PublicCriteriaPreset[]>([DEFAULT_CRITERIA_SET]);
-  const [selectedPresetId, setSelectedPresetId] = useState(DEFAULT_CRITERIA_SET.id);
+  const [criteriaPresets, setCriteriaPresets] = useState<PublicCriteriaPreset[]>(BUILTIN_MODALITY_PRESETS);
+  const [selectedPresetId, setSelectedPresetId] = useState(defaultCriteriaSetForModality("BOXING").id);
+  const [presetTouched, setPresetTouched] = useState(false);
   const criteria = useMemo(() => {
     const preset = criteriaPresets.find((p) => p.id === selectedPresetId);
     return preset?.criteria ?? DEFAULT_CRITERIA_SET.criteria;
   }, [criteriaPresets, selectedPresetId]);
   const criteriaIds = useMemo(() => criteria.map((c) => c.id), [criteria]);
   const maxTotal = useMemo(() => maxCriteriaTotal(criteria.length), [criteria.length]);
-  const [rounds, setRounds] = useState<RoundState[]>(() => emptyRounds(3, DEFAULT_CRITERIA_SET.criteria));
+  const [rounds, setRounds] = useState<RoundState[]>(() =>
+    emptyRounds(3, defaultCriteriaSetForModality("BOXING").criteria)
+  );
 
-  const [blue, setBlue] = useState<DynamicCornerScores>(emptyScores(DEFAULT_CRITERIA_SET.criteria));
-  const [red, setRed] = useState<DynamicCornerScores>(emptyScores(DEFAULT_CRITERIA_SET.criteria));
+  const [blue, setBlue] = useState<DynamicCornerScores>(emptyScores(defaultCriteriaSetForModality("BOXING").criteria));
+  const [red, setRed] = useState<DynamicCornerScores>(emptyScores(defaultCriteriaSetForModality("BOXING").criteria));
   const [officialBlue, setOfficialBlue] = useState<number | null>(null);
   const [officialRed, setOfficialRed] = useState<number | null>(null);
   const [occurrences, setOccurrences] = useState<OccurrenceInput>(emptyOccurrences());
@@ -152,8 +163,13 @@ export function PublicJudgingClient({ locale }: Props) {
   const isLocked = currentRoundState?.isLocked ?? false;
 
   useEffect(() => {
-    setCriteriaPresets([DEFAULT_CRITERIA_SET, ...loadStoredPresets()]);
+    setCriteriaPresets([...BUILTIN_MODALITY_PRESETS, ...loadStoredPresets()]);
   }, []);
+
+  useEffect(() => {
+    if (presetTouched) return;
+    setSelectedPresetId(defaultCriteriaSetForModality(modality).id);
+  }, [modality, presetTouched]);
 
   useEffect(() => {
     const rs = rounds.find((r) => r.roundNumber === activeRound);
@@ -280,26 +296,73 @@ export function PublicJudgingClient({ locale }: Props) {
         </p>
       </div>
 
-      {phase === "setup" ? (
+      <nav className="arb-gestao-tabs" aria-label={locale === "pt" ? "Secções" : "Sections"}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === "tool"}
+          className={view === "tool" ? "arb-gestao-tab arb-gestao-tab-active" : "arb-gestao-tab"}
+          onClick={() => setView("tool")}
+        >
+          {locale === "pt" ? "Arbitrar" : "Score a bout"}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === "guide"}
+          className={view === "guide" ? "arb-gestao-tab arb-gestao-tab-active" : "arb-gestao-tab"}
+          onClick={() => setView("guide")}
+        >
+          {locale === "pt" ? "Como pontua cada modalidade" : "How each discipline scores"}
+        </button>
+      </nav>
+
+      {view === "guide" ? (
+        <div className="arb-card">
+          <ModalityScoringGuide initialModality={modality} />
+        </div>
+      ) : null}
+
+      {view === "tool" && phase === "setup" ? (
         <div className="arb-card" style={{ display: "grid", gap: 14 }}>
+          <label style={{ display: "grid", gap: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>{copy.modality}</span>
+            <select
+              className="input"
+              value={modality}
+              onChange={(e) => {
+                setModality(e.target.value as ArbitrationModality);
+                setPresetTouched(false);
+              }}
+            >
+              <option value="BOXING">Boxe</option>
+              <option value="MUAY_THAI">Muay Thai</option>
+              <option value="KICKBOXING">Kickboxing</option>
+            </select>
+          </label>
           <label style={{ display: "grid", gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>
               {locale === "pt" ? "Critérios de avaliação" : "Scoring criteria"}
             </span>
-            <select className="input" value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)}>
+            <select
+              className="input"
+              value={selectedPresetId}
+              onChange={(e) => {
+                setSelectedPresetId(e.target.value);
+                setPresetTouched(true);
+              }}
+            >
               {criteriaPresets.map((preset) => (
                 <option key={preset.id} value={preset.id}>
                   {preset.name} ({preset.criteria.length})
                 </option>
               ))}
             </select>
-          </label>
-          <label style={{ display: "grid", gap: 6 }}>
-            <span style={{ fontSize: 13, fontWeight: 600 }}>{copy.modality}</span>
-            <select className="input" value={modality} onChange={(e) => setModality(e.target.value as ArbitrationModality)}>
-              <option value="BOXING">Boxe</option>
-              <option value="MUAY_THAI">Muay Thai</option>
-            </select>
+            <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+              {locale === "pt"
+                ? "Sugerido pela modalidade. Veja \"Como pontua cada modalidade\" acima para a explicação completa."
+                : "Suggested by discipline. See \"How each discipline scores\" above for the full explanation."}
+            </span>
           </label>
           <label style={{ display: "grid", gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>{copy.rounds}</span>
@@ -333,7 +396,7 @@ export function PublicJudgingClient({ locale }: Props) {
         </div>
       ) : null}
 
-      {phase === "judging" ? (
+      {view === "tool" && phase === "judging" ? (
         <>
           <div className="arb-judging-meta">
             <div style={{ fontSize: 14, fontWeight: 600 }}>
@@ -387,6 +450,7 @@ export function PublicJudgingClient({ locale }: Props) {
                 <CriteriaRow
                   key={criterion.id}
                   label={criterion.label}
+                  description={criterion.description}
                   criterionId={criterion.id}
                   blueValue={blue[criterion.id] ?? null}
                   redValue={red[criterion.id] ?? null}
@@ -467,7 +531,7 @@ export function PublicJudgingClient({ locale }: Props) {
         </>
       ) : null}
 
-      {phase === "done" ? (
+      {view === "tool" && phase === "done" ? (
         <div className="arb-card">
           <h2 style={{ margin: "0 0 16px", fontSize: 18, fontWeight: 800 }}>{copy.resultTitle}</h2>
           {lockedRounds.map((r) => (

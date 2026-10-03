@@ -349,6 +349,7 @@ export function JudgingPanel({ fightId, fightJudgeId, judgeLabel, initial }: Pro
               <CriteriaRow
                 key={criterion.id}
                 label={criterion.label}
+                description={criterion.description}
                 criterionId={criterion.id}
                 blueValue={blue[criterion.id] ?? null}
                 redValue={red[criterion.id] ?? null}

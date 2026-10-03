@@ -1,4 +1,4 @@
-export type ArbitrationModality = "BOXING" | "MUAY_THAI";
+export type ArbitrationModality = "BOXING" | "MUAY_THAI" | "KICKBOXING";
 export type ArbitrationFightStatus = "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 export type ArbitrationCorner = "BLUE" | "RED" | "DRAW";
 export type ArbitrationDecisionType = "UNANIMOUS" | "SPLIT" | "MAJORITY" | "DRAW";
@@ -64,6 +64,8 @@ export type OccurrenceInput = {
 export type ArbitrationCriterionDef = {
   id: string;
   label: string;
+  /** Explicação curta do critério (mostrada como tooltip/texto de apoio). */
+  description?: string;
 };
 
 export type ArbitrationCriteriaSetRow = {
@@ -71,6 +73,8 @@ export type ArbitrationCriteriaSetRow = {
   name: string;
   criteria: ArbitrationCriterionDef[];
   isBuiltin: boolean;
+  /** Modalidade a que este perfil se destina (null = genérico/customizado). */
+  modalityCode?: ArbitrationModality | null;
 };
 
 export type ArbitrationEventRow = {

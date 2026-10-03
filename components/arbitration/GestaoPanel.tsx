@@ -12,6 +12,7 @@ import {
   parseGestaoSection,
   type GestaoSectionId,
 } from "@/components/arbitration/GestaoSectionNav";
+import { defaultCriteriaSetForModality } from "@/lib/arbitration/criteria-sets";
 import type {
   ArbitrationCriteriaSetRow,
   ArbitrationEventRow,
@@ -55,6 +56,14 @@ export function GestaoPanel({ events, judges, criteriaSets }: Props) {
   const [athleteRed, setAthleteRed] = useState("");
   const [totalRounds, setTotalRounds] = useState(3);
   const [selectedJudges, setSelectedJudges] = useState<string[]>([]);
+  const [fightCriteriaSetId, setFightCriteriaSetId] = useState(
+    () => defaultCriteriaSetForModality("BOXING").id
+  );
+
+  useEffect(() => {
+    const suggested = defaultCriteriaSetForModality(modality).id;
+    if (criteriaSets.some((s) => s.id === suggested)) setFightCriteriaSetId(suggested);
+  }, [modality, criteriaSets]);
 
   useEffect(() => {
     if (events.length === 0) {
@@ -117,6 +126,7 @@ export function GestaoPanel({ events, judges, criteriaSets }: Props) {
           athleteRedName: athleteRed,
           totalRounds: rounds,
           judgeIds: selectedJudges,
+          criteriaSetId: fightCriteriaSetId,
         });
         setMessage("Combate criado. Vê a lista em Combates.");
         setCategory("");
@@ -148,13 +158,20 @@ export function GestaoPanel({ events, judges, criteriaSets }: Props) {
               <input className="input" placeholder="Nome do evento" value={eventName} onChange={(e) => setEventName(e.target.value)} />
               <input className="input" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
               <input className="input" placeholder="Local" value={eventLocation} onChange={(e) => setEventLocation(e.target.value)} />
-              <select className="input" value={eventCriteriaSetId} onChange={(e) => setEventCriteriaSetId(e.target.value)}>
-                {criteriaSets.map((set) => (
-                  <option key={set.id} value={set.id}>
-                    {set.name} ({set.criteria.length} critérios)
-                  </option>
-                ))}
-              </select>
+              <label style={{ display: "grid", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Perfil de critérios por omissão</span>
+                <select className="input" value={eventCriteriaSetId} onChange={(e) => setEventCriteriaSetId(e.target.value)}>
+                  {criteriaSets.map((set) => (
+                    <option key={set.id} value={set.id}>
+                      {set.name} ({set.criteria.length} critérios)
+                    </option>
+                  ))}
+                </select>
+                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                  Cada combate escolhe os seus próprios critérios (por modalidade) ao ser criado — isto é só a
+                  sugestão de referência do evento, útil para eventos de modalidade única.
+                </span>
+              </label>
               <button type="button" className="btn btn-primary" disabled={pending || !eventName.trim()} onClick={createEvent}>
                 Criar evento
               </button>
@@ -209,7 +226,21 @@ export function GestaoPanel({ events, judges, criteriaSets }: Props) {
                 <select className="input" value={modality} onChange={(e) => setModality(e.target.value as ArbitrationModality)}>
                   <option value="BOXING">Boxe</option>
                   <option value="MUAY_THAI">Muay Thai</option>
+                  <option value="KICKBOXING">Kickboxing</option>
                 </select>
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Critérios de pontuação</span>
+                  <select className="input" value={fightCriteriaSetId} onChange={(e) => setFightCriteriaSetId(e.target.value)}>
+                    {criteriaSets.map((set) => (
+                      <option key={set.id} value={set.id}>
+                        {set.name} ({set.criteria.length} critérios)
+                      </option>
+                    ))}
+                  </select>
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                    Sugerido automaticamente pela modalidade — pode trocar antes de criar o combate.
+                  </span>
+                </label>
                 <input className="input" placeholder="Categoria (ex.: Sénior)" value={category} onChange={(e) => setCategory(e.target.value)} />
                 <input className="input" placeholder="Peso (ex.: -70 kg)" value={weightClass} onChange={(e) => setWeightClass(e.target.value)} />
                 <input className="input" placeholder="Atleta Azul" value={athleteBlue} onChange={(e) => setAthleteBlue(e.target.value)} />

@@ -5,12 +5,13 @@ import { PublicJudgingClient } from "@/components/arbitration/PublicJudgingClien
 import type { Locale } from "@/lib/i18n";
 
 export const metadata: Metadata = {
-  title: "Arbitragem Grátis | Boxe e Muay Thai | Kingdom Fight School",
+  title: "Arbitragem Grátis | Boxe, Muay Thai e Kickboxing | Kingdom Fight School",
   description:
-    "Ferramenta gratuita de arbitragem 10-Point Must para boxe e Muay Thai. Um juiz, critérios por round, sem registo. Ideal para treinos e eventos informais.",
+    "Ferramenta gratuita de arbitragem 10-Point Must para boxe, Muay Thai e kickboxing, com guia explicando como cada modalidade pontua. Um juiz, critérios por round, sem registo.",
   keywords: [
     "arbitragem boxe",
     "arbitragem muay thai",
+    "arbitragem kickboxing",
     "10 point must",
     "scorecard boxing",
     "arbitragem combate",
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "/arbitragem" },
   openGraph: {
-    title: "Arbitragem grátis — Boxe e Muay Thai",
+    title: "Arbitragem grátis — Boxe, Muay Thai e Kickboxing",
     description: "Arbitragem 10-Point Must no telemóvel, sem registo. Por Kingdom Fight School.",
     type: "website",
   },
