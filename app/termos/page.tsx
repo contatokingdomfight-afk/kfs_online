@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPageShell, LegalSection } from "@/components/legal/LegalPageShell";
+import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 
 export const metadata: Metadata = {
   title: "Termos de Serviço | Kingdom Fight School",
@@ -8,8 +9,75 @@ export const metadata: Metadata = {
 };
 
 export default async function TermosPage() {
+  const locale = ((await getLocaleFromCookies()) === "en" ? "en" : "pt") as "pt" | "en";
+
+  if (locale === "en") {
+    return (
+      <LegalPageShell title="Terms of Service" updatedAt="June 28, 2026" locale="en">
+        <LegalSection title="1. Service description">
+          <p>
+            Kingdom Fight School provides a digital school-management and student-experience platform (class
+            check-in, library, events, payments, physical assessment and communication), for students, coaches and
+            the martial arts school&apos;s administration.
+          </p>
+        </LegalSection>
+        <LegalSection title="2. Eligibility">
+          <p>
+            Registration is permitted for people aged 16 or over. Minors may only use the service with authorization
+            from a parent or legal guardian, who assumes responsibility for use of the account.
+          </p>
+        </LegalSection>
+        <LegalSection title="3. Account and responsibilities">
+          <p>
+            You are responsible for the confidentiality of your credentials and for all activity on your account.
+            You must provide truthful information and keep it up to date. The school may suspend accounts in case of
+            abusive use, fraud or breach of these terms.
+          </p>
+        </LegalSection>
+        <LegalSection title="4. Payments and cancellations">
+          <p>
+            Plans and subscriptions may be processed through Stripe, with automatic renewal according to the chosen
+            cycle. If a monthly payment is late, a grace period applies until the end of day 10 (Lisbon time) of the
+            month in question, after which access to the plan may be suspended until payment is regularized.
+            In-person payments recorded by the school follow the rules communicated at the front desk.
+          </p>
+          <p>
+            You can manage Stripe subscriptions in the student&apos;s financial area, or contact the school for
+            questions about cancellations and refunds.
+          </p>
+        </LegalSection>
+        <LegalSection title="5. Intellectual property">
+          <p>
+            Platform content (text, videos, brand, training materials) is the property of Kingdom Fight School or
+            the respective rights holders. Reproduction or distribution without authorization is not permitted.
+          </p>
+        </LegalSection>
+        <LegalSection title="6. Limitation of liability">
+          <p>
+            The platform is provided &quot;as is&quot;. The school is not liable for temporary interruptions,
+            third-party failures (payments, email, hosting) or indirect damages. Sports practice involves physical
+            risk; students must follow coaches&apos; guidance and disclose relevant health conditions.
+          </p>
+        </LegalSection>
+        <LegalSection title="7. Governing law">
+          <p>
+            These terms are governed by Portuguese law. For disputes, the courts of the district where Kingdom Fight
+            School is headquartered have jurisdiction, without prejudice to consumers&apos; legal rights.
+          </p>
+        </LegalSection>
+        <p style={{ marginTop: 8, fontSize: 14 }}>
+          Questions:{" "}
+          <a href="mailto:contato@kingdomfight.com" style={{ color: "var(--primary)" }}>
+            contato@kingdomfight.com
+          </a>
+          . Also see the <Link href="/privacidade">Privacy Policy</Link>.
+        </p>
+      </LegalPageShell>
+    );
+  }
+
   return (
-    <LegalPageShell title="Termos de Serviço" updatedAt="28 de junho de 2026">
+    <LegalPageShell title="Termos de Serviço" updatedAt="28 de junho de 2026" locale="pt">
       <LegalSection title="1. Descrição do serviço">
         <p>
           A Kingdom Fight School disponibiliza uma plataforma digital de gestão escolar e experiência do aluno

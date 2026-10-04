@@ -15,6 +15,7 @@ import { SCHOOL_PUBLIC_CONTACT } from "@/lib/school-contact";
 import { loadPublicPlans } from "@/lib/public-plans";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { MetaPixelTrackEvent } from "@/components/MetaPixelTrackEvent";
 
 type SearchParams = Promise<{ sucesso?: string; data?: string; hora?: string; ref?: string; plano?: string; planoNome?: string }>;
 
@@ -123,6 +124,7 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
   if (sucesso) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: "var(--bg)" }}>
+        <MetaPixelTrackEvent event="Lead" />
         <div className="container-mobile">
           <h1 className="text-mobile-lg font-semibold text-center mb-3" style={{ color: "var(--text-primary)" }}>
             {t("trialSuccessTitle")}

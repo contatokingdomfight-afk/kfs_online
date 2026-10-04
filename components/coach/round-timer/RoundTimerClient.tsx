@@ -108,6 +108,8 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
       soundOn: t("coachRoundTimerSoundOn"),
       soundOff: t("coachRoundTimerSoundOff"),
       backHome: t("navHome"),
+      kfsCta: t("coachRoundTimerKfsCta"),
+      kfsLogin: t("coachRoundTimerKfsLogin"),
     }),
     [t]
   );
@@ -923,6 +925,24 @@ export function RoundTimerClient({ locale, variant = "page" }: Props) {
           </>
         )}
       </div>
+
+      {isPublic ? (
+        <div
+          style={{
+            marginTop: 24,
+            padding: 16,
+            borderRadius: "var(--radius-lg)",
+            border: "1px solid var(--border)",
+            background: "var(--bg-secondary)",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--text-secondary)" }}>{tk.kfsCta}</p>
+          <Link href="/sign-in" className="btn btn-secondary" style={{ textDecoration: "none", display: "inline-block" }}>
+            {tk.kfsLogin}
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

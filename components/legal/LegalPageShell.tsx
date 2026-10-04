@@ -1,26 +1,30 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PublicSiteFooter } from "@/components/PublicSiteFooter";
+import { PublicQuickNav } from "@/components/PublicQuickNav";
 
 type Props = {
   title: string;
   children: ReactNode;
   updatedAt?: string;
+  locale?: "pt" | "en";
 };
 
-export async function LegalPageShell({ title, children, updatedAt }: Props) {
+export async function LegalPageShell({ title, children, updatedAt, locale = "pt" }: Props) {
   return (
     <div style={{ minHeight: "100dvh", background: "var(--bg)", color: "var(--text-primary)" }}>
       <header
         style={{
           borderBottom: "1px solid var(--border)",
-          padding: "16px clamp(16px, 4vw, 24px)",
           background: "var(--surface)",
         }}
       >
-        <Link href="/" style={{ color: "var(--primary)", textDecoration: "none", fontWeight: 600, fontSize: 15 }}>
-          ← Kingdom Fight School
-        </Link>
+        <div style={{ padding: "16px clamp(16px, 4vw, 24px) 0" }}>
+          <Link href="/" style={{ color: "var(--primary)", textDecoration: "none", fontWeight: 600, fontSize: 15 }}>
+            ← Kingdom Fight School
+          </Link>
+        </div>
+        <PublicQuickNav locale={locale} />
       </header>
       <article
         style={{
@@ -34,7 +38,7 @@ export async function LegalPageShell({ title, children, updatedAt }: Props) {
         <h1 style={{ margin: "0 0 8px 0", fontSize: "clamp(24px, 5vw, 28px)", fontWeight: 700 }}>{title}</h1>
         {updatedAt ? (
           <p style={{ margin: "0 0 24px 0", color: "var(--text-secondary)", fontSize: 14 }}>
-            Última atualização: {updatedAt}
+            {locale === "pt" ? "Última atualização" : "Last updated"}: {updatedAt}
           </p>
         ) : null}
         <div style={{ display: "flex", flexDirection: "column", gap: 16, color: "var(--text-primary)" }}>{children}</div>

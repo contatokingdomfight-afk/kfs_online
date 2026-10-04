@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { getStoredCookieConsent, setStoredCookieConsent, type CookieConsentValue } from "@/lib/cookie-consent";
 
-const STORAGE_KEY = "kfs_cookie_consent";
 /** Acima da barra inferior mobile (BAR_Z=20_000) e do sheet «Mais» (SHEET_Z=20_500). */
 const COOKIE_BANNER_Z = 25_000;
 /** Altura aproximada da MobileAppBottomNav + safe-area. */
@@ -28,11 +28,7 @@ export function CookieBanner() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
-    } catch {
-      setVisible(true);
-    }
+    if (!getStoredCookieConsent()) setVisible(true);
   }, []);
 
   useEffect(() => {
@@ -44,12 +40,8 @@ export function CookieBanner() {
     return () => mql.removeEventListener("change", sync);
   }, []);
 
-  function save(value: "all" | "essential") {
-    try {
-      localStorage.setItem(STORAGE_KEY, value);
-    } catch {
-      /* ignore */
-    }
+  function save(value: CookieConsentValue) {
+    setStoredCookieConsent(value);
     setVisible(false);
   }
 

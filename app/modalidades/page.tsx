@@ -32,7 +32,7 @@ export default async function ModalidadesHubPage() {
   return (
     <main className="min-h-screen bg-[var(--bg)]">
       <LocalBusinessJsonLd />
-      <ModalidadesHeader hubLabel={hubLabel} />
+      <ModalidadesHeader hubLabel={hubLabel} locale={locale} />
 
       <section className="py-16 text-center sm:py-20">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">

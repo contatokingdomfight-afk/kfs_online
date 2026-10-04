@@ -55,7 +55,7 @@ export async function ModalidadeLandingTemplate({ slug }: { slug: ModalidadeSlug
       <LocalBusinessJsonLd />
       <ModalidadeJsonLd content={content} />
 
-      <ModalidadesHeader hubLabel={hubLabel} breadcrumbLabel={content.name} />
+      <ModalidadesHeader hubLabel={hubLabel} breadcrumbLabel={content.name} locale={locale} />
 
       <ModalidadeHero
         icon={content.icon}

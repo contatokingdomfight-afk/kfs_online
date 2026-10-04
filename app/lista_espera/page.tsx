@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { FormularioListaEspera } from "./FormularioListaEspera";
-import { MetaPixelScript } from "./MetaPixelScript";
 import { YouTubeIframe } from "@/components/YouTubeIframe";
 import { youtubeEmbedSrc } from "@/lib/youtube-embed";
 
@@ -28,7 +27,6 @@ export default async function ListaEsperaPage({ searchParams }: { searchParams: 
 
   return (
     <>
-      <MetaPixelScript />
       <main
         className="min-h-screen flex flex-col items-center lista-espera-page"
         style={{ backgroundColor: "var(--bg)", paddingTop: "clamp(24px, 6vw, 48px)", paddingBottom: "clamp(48px, 10vw, 80px)" }}

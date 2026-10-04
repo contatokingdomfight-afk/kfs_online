@@ -12,6 +12,7 @@ import { AuthSessionKeepAlive } from "@/components/AuthSessionKeepAlive";
 import { CapacitorNativeBridge } from "@/components/CapacitorNativeBridge";
 import { PwaLaunchSplash } from "@/components/PwaLaunchSplash";
 import { CookieBanner } from "@/components/CookieBanner";
+import { MetaPixelScript } from "@/components/MetaPixelScript";
 import { BRAND_BG, BRAND_ICON_BG } from "@/lib/brand";
 
 const inter = Inter({
@@ -83,6 +84,7 @@ export default async function RootLayout({
           <ThemeLocaleSwitcherFixedOnlyOnPublic initialTheme={theme} initialLocale={locale} />
           {children}
           <CookieBanner />
+          <MetaPixelScript />
           <VercelMetrics />
         </PwaInstallProvider>
       </body>

@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { PublicQuickNav } from "@/components/PublicQuickNav";
 
 type Props = {
   hubLabel: string;
   breadcrumbLabel?: string;
+  locale?: "pt" | "en";
 };
 
-export function ModalidadesHeader({ hubLabel, breadcrumbLabel }: Props) {
+export function ModalidadesHeader({ hubLabel, breadcrumbLabel, locale = "pt" }: Props) {
   return (
     <header className="border-b border-[var(--border)] bg-[var(--bg)]">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-4 sm:px-6 lg:px-8">
@@ -29,6 +31,9 @@ export function ModalidadesHeader({ hubLabel, breadcrumbLabel }: Props) {
             <span className="text-sm font-medium text-[var(--text-primary)]">{breadcrumbLabel}</span>
           </>
         ) : null}
+      </div>
+      <div className="mx-auto max-w-6xl">
+        <PublicQuickNav locale={locale} />
       </div>
     </header>
   );

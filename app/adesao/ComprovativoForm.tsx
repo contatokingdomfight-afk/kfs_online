@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { Landmark, Calendar, CreditCard, Check } from "lucide-react";
+import { Landmark, Calendar, CreditCard } from "lucide-react";
 import { useFormState } from "react-dom";
 import { saveEnrollmentForm, type SaveEnrollmentFormResult } from "./enrollment-actions";
 import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
@@ -13,6 +13,8 @@ import { FormLoadingModal } from "@/components/FormLoadingModal";
 import {
   GYM_ENROLLMENT_INFO,
   GDPR_CONSENT_INTRO,
+  ENROLLMENT_CONSENT_SECTIONS,
+  ENROLLMENT_CONSENT_FOOTNOTE,
   PAYMENT_METHOD_OPTIONS,
   SCHOOL_TRANSFER_IBAN,
   SCHOOL_PAYMENT_DETAILS,
@@ -88,6 +90,12 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props
         ? "TRANSFER"
         : "CASH";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodValue>(initialPayment);
+  const [consents, setConsents] = useState({
+    consentPhoto: e.consentPhoto ?? true,
+    consentVideo: e.consentVideo ?? true,
+    consentSocialMedia: e.consentSocialMedia ?? true,
+    consentMarketing: e.consentMarketing ?? true,
+  });
   const [step, setStep] = useState(0);
   const formTopRef = useRef<HTMLDivElement>(null);
   const stepRefs = [
@@ -372,24 +380,29 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props
         <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", display: "flex", flexDirection: "column", gap: 12 }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Proteção de dados e consentimentos</h2>
           <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>{GDPR_CONSENT_INTRO}</p>
-          {[
-            { name: "consentPhoto", label: "Autorizo a captação e utilização de fotografias para divulgação institucional." },
-            { name: "consentVideo", label: "Autorizo a captação e utilização de vídeos para divulgação institucional." },
-            { name: "consentSocialMedia", label: "Autorizo a publicação da minha imagem em redes sociais e materiais promocionais." },
-            { name: "consentMarketing", label: "Autorizo comunicações comerciais por email, SMS ou outros meios." },
-          ].map((item) => (
-            <div key={item.name} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14 }}>
-              <input type="hidden" name={item.name} value="on" />
-              <span style={{ color: "var(--success)", marginTop: 1 }} aria-hidden>
-                <Check size={15} />
-              </span>
-              <span>
-                {item.label} <strong style={{ color: "var(--text-primary)" }}>(sim)</strong>
-              </span>
-            </div>
-          ))}
+          {ENROLLMENT_CONSENT_SECTIONS.map((item) => {
+            const checked = consents[item.key];
+            return (
+              <label
+                key={item.key}
+                style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, cursor: "pointer" }}
+              >
+                <input
+                  type="checkbox"
+                  name={item.key}
+                  checked={checked}
+                  onChange={(ev) => setConsents((prev) => ({ ...prev, [item.key]: ev.target.checked }))}
+                  style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0 }}
+                />
+                <span>
+                  <strong style={{ color: "var(--text-primary)" }}>{item.title}:</strong>{" "}
+                  {checked ? item.yes : item.no}
+                </span>
+              </label>
+            );
+          })}
           <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>
-            Estes consentimentos são registados como autorizados no comprovativo de adesão.
+            {ENROLLMENT_CONSENT_FOOTNOTE}
           </p>
         </section>
       </div>

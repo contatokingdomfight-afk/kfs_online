@@ -50,7 +50,7 @@ export default async function ModalidadePage({ params }: { params: Params }) {
   return (
     <main className="min-h-screen bg-[var(--bg)]">
       <LocalBusinessJsonLd />
-      <ModalidadesHeader hubLabel={hubLabel} breadcrumbLabel={content.name} />
+      <ModalidadesHeader hubLabel={hubLabel} breadcrumbLabel={content.name} locale={locale} />
 
       <ModalidadeHero
         icon={content.icon}
