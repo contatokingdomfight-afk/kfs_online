@@ -5,6 +5,7 @@ import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { getPublicOrigin } from "@/lib/site-public-url";
 import { CoachPerfilForm } from "./CoachPerfilForm";
 
 export default async function CoachConfiguracoesPage() {
@@ -26,15 +27,26 @@ export default async function CoachConfiguracoesPage() {
 
   let phone: string = "";
   let dateOfBirth: string = "";
+  let bio: string = "";
+  let yearsExperience: string = "";
+  let instagramHandle: string = "";
+  let facebookUrl: string = "";
+  let publicProfileEnabled = false;
   if (coachId) {
     const { data: coach } = await supabase
       .from("Coach")
-      .select("phone, date_of_birth")
+      .select("phone, date_of_birth, bio, yearsExperience, instagramHandle, facebookUrl, publicProfileEnabled")
       .eq("id", coachId)
       .single();
     phone = (coach as { phone?: string | null } | null)?.phone ?? "";
     const dob = (coach as { date_of_birth?: string | null } | null)?.date_of_birth;
     dateOfBirth = typeof dob === "string" ? dob : "";
+    bio = (coach as { bio?: string | null } | null)?.bio ?? "";
+    const years = (coach as { yearsExperience?: number | null } | null)?.yearsExperience;
+    yearsExperience = years != null ? String(years) : "";
+    instagramHandle = (coach as { instagramHandle?: string | null } | null)?.instagramHandle ?? "";
+    facebookUrl = (coach as { facebookUrl?: string | null } | null)?.facebookUrl ?? "";
+    publicProfileEnabled = Boolean((coach as { publicProfileEnabled?: boolean } | null)?.publicProfileEnabled);
   }
 
   const initial = {
@@ -43,6 +55,11 @@ export default async function CoachConfiguracoesPage() {
     avatarUrl: (user as { avatarUrl?: string | null } | undefined)?.avatarUrl ?? "",
     phone,
     dateOfBirth,
+    bio,
+    yearsExperience,
+    instagramHandle,
+    facebookUrl,
+    publicProfileEnabled,
   };
 
   return (
@@ -66,7 +83,12 @@ export default async function CoachConfiguracoesPage() {
       <p style={{ margin: "0 0 clamp(20px, 5vw, 24px) 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
         {t("coachProfileIntro")}
       </p>
-      <CoachPerfilForm initial={initial} locale={locale as "pt" | "en"} hasCoachRow={!!coachId} />
+      <CoachPerfilForm
+        initial={initial}
+        locale={locale as "pt" | "en"}
+        hasCoachRow={!!coachId}
+        publicProfileUrl={coachId ? `${getPublicOrigin()}/t/c/${coachId}` : ""}
+      />
     </div>
   );
 }

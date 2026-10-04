@@ -364,6 +364,41 @@ export async function deleteCoachAccount(
   redirect("/admin/coaches");
 }
 
+export type ModerateCoachTestimonialResult = { error?: string };
+
+export async function moderateCoachTestimonial(
+  _prev: ModerateCoachTestimonialResult | null,
+  formData: FormData
+): Promise<ModerateCoachTestimonialResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:coaches:write");
+  if (permErr) return { error: permErr };
+
+  const testimonialId = (formData.get("testimonialId") as string)?.trim();
+  const decision = formData.get("decision") as string;
+  if (!testimonialId) return { error: "ID inválido." };
+  if (decision !== "APPROVED" && decision !== "REJECTED") return { error: "Decisão inválida." };
+
+  const supabase = createAdminClient();
+  const { data: testimonial } = await supabase
+    .from("CoachTestimonial")
+    .select("coachId")
+    .eq("id", testimonialId)
+    .maybeSingle();
+  if (!testimonial) return { error: "Depoimento não encontrado." };
+
+  const { error } = await supabase
+    .from("CoachTestimonial")
+    .update({ status: decision, moderatedByUserId: dbUser.id, moderatedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+    .eq("id", testimonialId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/coaches/depoimentos");
+  revalidatePath(`/t/c/${testimonial.coachId}`);
+  return {};
+}
+
 export type ToggleCoursePermissionResult = { error?: string };
 
 export async function toggleCoursePermission(

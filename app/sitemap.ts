@@ -1,8 +1,25 @@
 import type { MetadataRoute } from "next";
 import { getPublicOrigin } from "@/lib/site-public-url";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { MODALIDADES_DYNAMIC_SLUGS, MODALIDADE_LANDING_SLUGS, getModalidadeContent } from "@/lib/modalidades-content";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+async function getPublicCoachRoutes(origin: string, now: Date): Promise<MetadataRoute.Sitemap> {
+  const admin = getAdminClientOrNull();
+  if (!admin.client) return [];
+  const { data: coaches } = await admin.client
+    .from("Coach")
+    .select("id")
+    .eq("publicProfileEnabled", true)
+    .eq("is_active", true);
+  return (coaches ?? []).map((c) => ({
+    url: `${origin}/t/c/${c.id as string}`,
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = getPublicOrigin();
   const now = new Date();
 
@@ -29,5 +46,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...landingRoutes, ...modalidadeDynamicRoutes];
+  const coachRoutes = await getPublicCoachRoutes(origin, now);
+
+  return [...staticRoutes, ...landingRoutes, ...modalidadeDynamicRoutes, ...coachRoutes];
 }

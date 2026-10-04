@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { redirect } from "next/navigation";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -11,6 +12,7 @@ import { PushNotificationToggle } from "@/components/PushNotificationToggle";
 import { LegalDocumentsSection } from "./LegalDocumentsSection";
 import { ReferralInviteSection } from "./ReferralInviteSection";
 import { FighterCardSection } from "./FighterCardSection";
+import { CoachTestimonialSection } from "./CoachTestimonialSection";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getPublicOrigin } from "@/lib/site-public-url";
 import { isFighterCardEligibleAge } from "@/lib/fighter-card";
@@ -63,6 +65,31 @@ export default async function DashboardPerfilPage() {
       .eq("studentId", studentId)
       .maybeSingle(),
   ]);
+
+  const { data: athlete } = await supabase.from("Athlete").select("mainCoachId").eq("studentId", studentId).maybeSingle();
+  const mainCoachId = (athlete as { mainCoachId?: string | null } | null)?.mainCoachId ?? null;
+  let mainCoachName = "";
+  let existingTestimonial: { rating: number; body: string; status: "PENDING" | "APPROVED" | "REJECTED" } | null = null;
+  if (mainCoachId) {
+    // Nome do coach lido via admin client: a sessão do aluno (RLS) só pode ler o próprio User.
+    const admin = getAdminClientOrNull().client;
+    if (admin) {
+      const { data: coachRow } = await admin.from("Coach").select("userId").eq("id", mainCoachId).maybeSingle();
+      if (coachRow?.userId) {
+        const { data: coachUser } = await admin.from("User").select("name").eq("id", coachRow.userId).maybeSingle();
+        mainCoachName = coachUser?.name?.trim() || "";
+      }
+    }
+    const { data: testimonialRow } = await supabase
+      .from("CoachTestimonial")
+      .select("rating, body, status")
+      .eq("coachId", mainCoachId)
+      .eq("studentId", studentId)
+      .maybeSingle();
+    if (testimonialRow) {
+      existingTestimonial = testimonialRow as { rating: number; body: string; status: "PENDING" | "APPROVED" | "REJECTED" };
+    }
+  }
 
   const [{ count: invitedCount }, { data: referredStudents }] = await Promise.all([
     supabase.from("TrialClass").select("id", { count: "exact", head: true }).eq("referredByStudentId", studentId),
@@ -132,6 +159,14 @@ export default async function DashboardPerfilPage() {
         imageUrl={fighterCardImageUrl}
         locale={locale as "pt" | "en"}
       />
+      {mainCoachId && mainCoachName ? (
+        <CoachTestimonialSection
+          coachId={mainCoachId}
+          coachName={mainCoachName}
+          existing={existingTestimonial}
+          locale={locale as "pt" | "en"}
+        />
+      ) : null}
       <LegalDocumentsSection
         locale={locale as "pt" | "en"}
         waiverSigned={Boolean(waiver?.waiverSigned)}

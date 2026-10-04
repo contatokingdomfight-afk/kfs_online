@@ -24,6 +24,12 @@ export async function saveCoachProfile(
   const avatarUrl = avatarRaw ? (rewriteSupabaseLegacyStoragePublicUrl(avatarRaw) ?? avatarRaw) : null;
   const phone = (formData.get("phone") as string)?.trim() || null;
   const dateOfBirth = (formData.get("dateOfBirth") as string)?.trim() || null;
+  const bio = (formData.get("bio") as string)?.trim() || null;
+  const yearsExperienceRaw = (formData.get("yearsExperience") as string)?.trim();
+  const yearsExperience = yearsExperienceRaw ? Number(yearsExperienceRaw) : null;
+  const instagramHandle = (formData.get("instagramHandle") as string)?.trim().replace(/^@/, "") || null;
+  const facebookUrl = (formData.get("facebookUrl") as string)?.trim() || null;
+  const publicProfileEnabled = (formData.get("publicProfileEnabled") as string) === "on";
 
   const supabase = await createClient();
 
@@ -43,6 +49,11 @@ export async function saveCoachProfile(
       .update({
         phone: phone || null,
         date_of_birth: dateOfBirth || null,
+        bio,
+        yearsExperience: Number.isFinite(yearsExperience) ? yearsExperience : null,
+        instagramHandle,
+        facebookUrl,
+        publicProfileEnabled,
       })
       .eq("id", coachId);
     if (coachError) {
@@ -53,5 +64,6 @@ export async function saveCoachProfile(
 
   revalidatePath("/coach");
   revalidatePath("/coach/configuracoes");
+  if (coachId) revalidatePath(`/t/c/${coachId}`);
   return { success: true };
 }

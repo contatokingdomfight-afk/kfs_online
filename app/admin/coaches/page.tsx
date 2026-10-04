@@ -15,10 +15,10 @@ export default async function AdminCoachesPage() {
   const adminResult = getAdminClientOrNull();
   const supabase = adminResult.client ?? (await createClient());
 
-  const { data: coaches } = await supabase
-    .from("Coach")
-    .select("id, userId, specialties, createdAt, is_active")
-    .order("createdAt", { ascending: false });
+  const [{ data: coaches }, { count: pendingTestimonials }] = await Promise.all([
+    supabase.from("Coach").select("id, userId, specialties, createdAt, is_active").order("createdAt", { ascending: false }),
+    supabase.from("CoachTestimonial").select("id", { count: "exact", head: true }).eq("status", "PENDING"),
+  ]);
 
   const list = coaches ?? [];
   const userIds = list.map((c) => c.userId);
@@ -69,9 +69,16 @@ export default async function AdminCoachesPage() {
           Coaches
         </h1>
         <Link
+          href="/admin/coaches/depoimentos"
+          className="btn btn-secondary"
+          style={{ marginLeft: "auto", textDecoration: "none" }}
+        >
+          Depoimentos{pendingTestimonials ? ` (${pendingTestimonials})` : ""}
+        </Link>
+        <Link
           href="/admin/coaches/novo"
           className="btn btn-primary"
-          style={{ marginLeft: "auto", textDecoration: "none" }}
+          style={{ textDecoration: "none" }}
         >
           Novo coach
         </Link>
