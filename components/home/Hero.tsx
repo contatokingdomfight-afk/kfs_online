@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeroBackgroundVideo } from "./HeroBackgroundVideo";
 
 type Content = {
   heroHeadline1: string;
@@ -13,18 +14,7 @@ export function Hero({ content }: { content: Content }) {
     <section className="relative isolate overflow-hidden py-16 sm:py-24 lg:py-32">
       {/* Vídeo de fundo (treino real) — pausado/oculto com prefers-reduced-motion, mostra o poster estático */}
       <div className="absolute inset-0 -z-30 overflow-hidden motion-reduce:hidden">
-        <video
-          className="h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster="/media/banner-home-poster.jpg"
-          aria-hidden="true"
-        >
-          <source src="/media/banner-home.mp4" type="video/mp4" />
-        </video>
+        <HeroBackgroundVideo />
       </div>
       <div
         className="absolute inset-0 -z-30 hidden bg-cover bg-center motion-reduce:block"
