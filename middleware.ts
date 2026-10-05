@@ -571,6 +571,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /* PWA: sw.js e manifest não podem ser interceptados (instalação / Lighthouse) */
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|mov)$).*)",
   ],
 };
