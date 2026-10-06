@@ -9,6 +9,7 @@ import { KINGDOM_PLAN_FAMILIA_ID, isFamilyPlan } from "@/lib/kingdom-plans-const
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { getFamilyContext, type FamilyGroupRole, type FamilyGroupRow, type FamilyContext } from "@/lib/family-context";
+import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 
 export { getFamilyContext };
 export type { FamilyGroupRole, FamilyGroupRow, FamilyContext };
@@ -320,6 +321,84 @@ export async function assignFamilyPlanToStudent(
   const pending = await ensureOnboardingPendingPayments(supabase, studentId, KINGDOM_PLAN_FAMILIA_ID);
 
   if (pending.error) return { error: pending.error };
+  return {};
+}
+
+/**
+ * Desactiva o grupo e passa cada membro (ainda no plano família) para o seu plano de
+ * referência individual: mensalidades LATE do mês corrente/futuras ficam com o preço
+ * individual (sem desconto nem familyGroupId) e membros que não eram cobrados passam a
+ * ter mensalidade própria. Sem isto o titular ficava com `plan-familia` e o
+ * `repairOrphanFamilyTitulars` reactivava o grupo ao abrir /admin/familias.
+ */
+export async function deactivateFamilyGroupAndRebill(
+  supabase: SupabaseClient,
+  groupId: string
+): Promise<{ error?: string }> {
+  const { data: memberRows } = await supabase
+    .from("FamilyGroupMember")
+    .select("studentId, referencePlanId")
+    .eq("familyGroupId", groupId);
+  const members = (memberRows ?? []) as { studentId: string; referencePlanId: string | null }[];
+
+  const studentIds = members.map((m) => m.studentId);
+  const { data: studentRows } = studentIds.length
+    ? await supabase.from("Student").select("id, planId").in("id", studentIds)
+    : { data: [] as { id: string; planId: string | null }[] };
+  const planByStudent = new Map(
+    (studentRows ?? []).map((s) => [(s as { id: string }).id, (s as { planId: string | null }).planId])
+  );
+
+  /** Só quem ainda está no plano família precisa de passar para plano individual. */
+  const toRebill = members.filter((m) => {
+    const planId = planByStudent.get(m.studentId);
+    return planId ? isFamilyPlan(planId) : false;
+  });
+
+  if (toRebill.some((m) => !m.referencePlanId)) {
+    return {
+      error:
+        "Define o plano de referência de todos os membros activos antes de desactivar — é o plano individual para onde passam.",
+    };
+  }
+
+  const refPlanIds = [...new Set(toRebill.map((m) => m.referencePlanId!))];
+  const { data: refPlans } = refPlanIds.length
+    ? await supabase.from("Plan").select("id, priceMonthly").in("id", refPlanIds)
+    : { data: [] as { id: string; priceMonthly: number }[] };
+  const priceByPlan = new Map(
+    (refPlans ?? []).map((p) => [(p as { id: string }).id, Number((p as { priceMonthly: number }).priceMonthly ?? 0)])
+  );
+
+  const { error: groupErr } = await supabase
+    .from("FamilyGroup")
+    .update({ isActive: false, updatedAt: new Date().toISOString() })
+    .eq("id", groupId);
+  if (groupErr) return { error: groupErr.message };
+
+  const currentMonth = currentReferenceMonthLisbon(new Date());
+  for (const m of toRebill) {
+    const planId = m.referencePlanId!;
+    const { error: planErr } = await supabase.from("Student").update({ planId }).eq("id", m.studentId);
+    if (planErr) return { error: planErr.message };
+
+    // Mensalidades pendentes (nunca PAID) passam ao preço individual, fora do grupo.
+    const { error: payErr } = await supabase
+      .from("Payment")
+      .update({ amount: priceByPlan.get(planId) ?? 0, familyGroupId: null })
+      .eq("studentId", m.studentId)
+      .eq("paymentType", "TUITION")
+      .eq("status", "LATE")
+      .gte("referenceMonth", currentMonth);
+    if (payErr) return { error: payErr.message };
+
+    // Membros não tinham mensalidade própria: cria a do mês corrente se ainda não existir
+    // (o grupo já está inactivo, portanto o valor é o do plano individual).
+    const pending = await ensureOnboardingPendingPayments(supabase, m.studentId, planId);
+    if (pending.error) return { error: pending.error };
+    await syncStudentPaymentStatus(supabase, m.studentId);
+  }
+
   return {};
 }
 

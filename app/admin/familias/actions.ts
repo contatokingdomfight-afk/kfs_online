@@ -11,6 +11,7 @@ import {
   assignFamilyPlanToStudent,
   getFamilyContext,
   ensureFamilyGroupAsTitular,
+  deactivateFamilyGroupAndRebill,
 } from "@/lib/family-group";
 import { refreshFamilyTitularPendingTuition } from "@/lib/family-tuition";
 
@@ -251,10 +252,18 @@ export async function deactivateFamilyGroup(
   if (!groupId) return { error: "Grupo inválido." };
 
   const supabase = createAdminClient();
-  await supabase.from("FamilyGroup").update({ isActive: false, updatedAt: new Date().toISOString() }).eq("id", groupId);
+  const { data: members } = await supabase
+    .from("FamilyGroupMember")
+    .select("studentId")
+    .eq("familyGroupId", groupId);
+
+  const result = await deactivateFamilyGroupAndRebill(supabase, groupId);
+  if (result.error) return { error: result.error };
 
   revalidatePath("/admin/familias");
   revalidatePath(`/admin/familias/${groupId}`);
+  revalidatePath("/admin/financeiro");
+  for (const m of members ?? []) revalidatePath(`/admin/alunos/${(m as { studentId: string }).studentId}`);
   return {};
 }
 

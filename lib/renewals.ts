@@ -75,8 +75,16 @@ export async function getRenewalsPending(
         .select("studentId, role, familyGroupId")
         .in("studentId", candidateIds)
     : { data: [] as { studentId: string; role: string; familyGroupId: string }[] };
+  // Grupos desactivados deixam de contar: cada pessoa é cobrada pelo seu próprio plano.
+  const familyGroupIds = [...new Set((familyRows ?? []).map((f) => f.familyGroupId))];
+  const { data: activeGroups } = familyGroupIds.length
+    ? await supabase.from("FamilyGroup").select("id").in("id", familyGroupIds).eq("isActive", true)
+    : { data: [] as { id: string }[] };
+  const activeGroupIds = new Set((activeGroups ?? []).map((g) => g.id));
   const familyByStudent = new Map(
-    (familyRows ?? []).map((f) => [f.studentId, f as { studentId: string; role: string; familyGroupId: string }])
+    (familyRows ?? [])
+      .filter((f) => activeGroupIds.has(f.familyGroupId))
+      .map((f) => [f.studentId, f as { studentId: string; role: string; familyGroupId: string }])
   );
 
   const withPlan = students.filter((s) => {
