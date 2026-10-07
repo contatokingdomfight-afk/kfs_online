@@ -10,6 +10,8 @@ import { getLeaderboardV2 } from "@/lib/leaderboard";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { summarizeXp, isXpSource, type XpSource, type XpSummaryRow } from "@/lib/xp-rules";
 import { MyXpCard } from "./MyXpCard";
+import { BeltSwatch } from "@/components/graduation/BeltSwatch";
+import { displayGradeLabel, loadDisplayGrades } from "@/lib/graduation/display-grade";
 import { getEvolutionLeaderboard } from "@/lib/leaderboard-evolution";
 import { getBeltIndexFromXp, getBeltName } from "@/lib/belts";
 import {
@@ -99,6 +101,7 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
 
   const rows = xpResult?.rows ?? [];
   const error = xpResult?.error ?? evolutionResult?.error ?? null;
+  const displayGrades = rows.length ? await loadDisplayGrades(rows.map((r) => r.student_id)) : new Map();
   const me = rows.find((r) => r.is_current_user) ?? null;
   // A RPC inclui sempre o aluno; se ficou fora do top, não conta para o total listado.
   const totalRanked = me && me.rank > rows.length ? me.rank : rows.length;
@@ -204,9 +207,9 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
               </thead>
               <tbody>
                 {rows.map((row) => {
-                  // Faixa ainda calculada pelo XP antigo até à migração para graus de graduação.
-                  const beltIdx = getBeltIndexFromXp(row.legacy_xp);
-                  const beltLabel = getBeltName(beltIdx);
+                  // Grau de graduação (modalidade publicada); senão a faixa antiga por XP.
+                  const grade = displayGrades.get(row.student_id);
+                  const beltLabel = grade ? displayGradeLabel(grade) : getBeltName(getBeltIndexFromXp(row.legacy_xp));
                   const highlight = row.is_current_user;
                   const medal = rankMedal(row.rank);
                   return (
@@ -239,7 +242,10 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
                         )}
                       </td>
                       <td className="py-3 px-2 align-middle text-[var(--text-secondary)] hidden sm:table-cell">
-                        {beltLabel}
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          {grade && <BeltSwatch colors={grade.colors} width={22} height={8} />}
+                          {beltLabel}
+                        </span>
                       </td>
                       <td className="py-3 px-3 align-middle text-right font-semibold text-[var(--primary)]">
                         {row.score.toLocaleString(locale === "en" ? "en-GB" : "pt-PT")}

@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRankInfoForStudent } from "@/lib/get-rank-info";
 import { computeBadgeStats, getBadgeDefinition } from "@/lib/gamification";
 import { getBeltName } from "@/lib/belts";
+import { displayGradeLabel, loadDisplayGrade } from "@/lib/graduation/display-grade";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 export { FIGHTER_CARD_KIDS_MAX_AGE, calculateAge, isFighterCardEligibleAge } from "@/lib/fighter-card-age";
@@ -14,6 +15,10 @@ export type FighterCardData = {
   name: string;
   avatarUrl: string | null;
   beltName: string;
+  /** Cores do grau de graduação (quando a modalidade tem graduação publicada). */
+  beltColors?: string[];
+  /** Texto do selo; omitido = "Faixa {beltName}". */
+  beltLabel?: string;
   primaryModalityLabel: string | null;
   xp: number;
   totalClasses: number;
@@ -71,7 +76,7 @@ export async function getFighterCardData(
     .eq("id", student.userId)
     .maybeSingle();
 
-  const [rankInfo, stats, badgeRows] = await Promise.all([
+  const [rankInfo, stats, badgeRows, grade] = await Promise.all([
     getRankInfoForStudent(supabase, studentId),
     computeBadgeStats(supabase, studentId),
     supabase
@@ -80,6 +85,7 @@ export async function getFighterCardData(
       .eq("studentId", studentId)
       .order("earnedAt", { ascending: false })
       .limit(4),
+    loadDisplayGrade(studentId),
   ]);
 
   const badges = (badgeRows.data ?? []).map((b) => ({
@@ -95,7 +101,9 @@ export async function getFighterCardData(
       studentId,
       name: (user as { name?: string | null } | null)?.name?.trim() || "Aluno Kingdom",
       avatarUrl: (user as { avatarUrl?: string | null } | null)?.avatarUrl ?? null,
-      beltName: getBeltName(rankInfo?.displayBeltIndex ?? 0),
+      // Grau de graduação quando publicado; senão a faixa antiga por XP.
+      beltName: grade ? displayGradeLabel(grade) : getBeltName(rankInfo?.displayBeltIndex ?? 0),
+      ...(grade ? { beltColors: grade.colors, beltLabel: grade.gradeName ? `Grau ${grade.gradeName}` : "Sem graduação" } : {}),
       primaryModalityLabel: primaryModality ? (MODALITY_LABELS[primaryModality] ?? primaryModality) : null,
       xp: rankInfo?.xp ?? 0,
       totalClasses: stats.totalClasses,

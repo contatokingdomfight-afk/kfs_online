@@ -58,7 +58,7 @@ export async function loadStudentGraduations(
     supabase.from("Student").select("primaryModality").eq("id", studentId).maybeSingle(),
     supabase
       .from("StudentGrade")
-      .select("modalityCode, gradeId, awardedAt")
+      .select("modalityCode, gradeId, awardedAt, source")
       .eq("studentId", studentId)
       .order("awardedAt", { ascending: false }),
     loadConfirmedAttendances(supabase, studentId),
@@ -81,9 +81,9 @@ export async function loadStudentGraduations(
     attendanceByModality.set(code, list);
   }
 
-  const latestGrade = new Map<string, { gradeId: string; awardedAt: string }>();
+  const latestGrade = new Map<string, { gradeId: string; awardedAt: string; source: string }>();
   for (const g of gradeRows ?? []) {
-    if (!latestGrade.has(g.modalityCode)) latestGrade.set(g.modalityCode, { gradeId: g.gradeId, awardedAt: g.awardedAt });
+    if (!latestGrade.has(g.modalityCode)) latestGrade.set(g.modalityCode, { gradeId: g.gradeId, awardedAt: g.awardedAt, source: g.source });
   }
 
   const primary = (student?.primaryModality as string | null) ?? null;
@@ -197,6 +197,7 @@ export async function loadStudentGraduations(
         monthlyMinAttendances: template.monthlyMinAttendances,
         currentGradeIndex,
         lastAwardedAt,
+        currentGradeSource: (latest?.source as "EXAM" | "MIGRATION" | "MANUAL" | undefined) ?? null,
         attendanceDates: attendanceByModality.get(code) ?? [],
         performanceAvg: averageEvaluationScores(evaluations),
         performanceEvaluationCount: evaluations.length,

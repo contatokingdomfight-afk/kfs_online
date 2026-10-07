@@ -41,10 +41,10 @@ export async function loadModalityReadiness(
       supabase.from("Student").select("id, userId, primaryModality").eq("status", "ATIVO").order("id").range(from, to)
     ),
     fetchAllPages<{ id: string }>((from, to) => supabase.from("Lesson").select("id").eq("modality", modalityCode).order("id").range(from, to)),
-    fetchAllPages<{ studentId: string; gradeId: string; awardedAt: string }>((from, to) =>
+    fetchAllPages<{ studentId: string; gradeId: string; awardedAt: string; source: string }>((from, to) =>
       supabase
         .from("StudentGrade")
-        .select("studentId, gradeId, awardedAt")
+        .select("studentId, gradeId, awardedAt, source")
         .eq("modalityCode", modalityCode)
         .order("awardedAt", { ascending: false })
         .range(from, to)
@@ -72,7 +72,7 @@ export async function loadModalityReadiness(
     list.push(new Date(`${a.occurrenceDate}T00:00:00Z`));
     attendanceByStudent.set(a.studentId, list);
   }
-  const latestGrade = new Map<string, { gradeId: string; awardedAt: string }>();
+  const latestGrade = new Map<string, { gradeId: string; awardedAt: string; source: string }>();
   for (const g of gradeRows) if (!latestGrade.has(g.studentId)) latestGrade.set(g.studentId, g);
 
   const relevant = students.filter(
@@ -189,6 +189,7 @@ export async function loadModalityReadiness(
         monthlyMinAttendances: template.monthlyMinAttendances,
         currentGradeIndex,
         lastAwardedAt: latest ? new Date(latest.awardedAt) : null,
+        currentGradeSource: (latest?.source as "EXAM" | "MIGRATION" | "MANUAL" | undefined) ?? null,
         attendanceDates: attendanceByStudent.get(s.id) ?? [],
         performanceAvg: averageEvaluationScores(evals),
         performanceEvaluationCount: evals.length,

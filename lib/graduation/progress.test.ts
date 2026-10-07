@@ -133,6 +133,15 @@ describe("computeStudentProgress", () => {
     expect(p.isReadyForExam).toBe(false);
   });
 
+  it("credits accumulated time up to a migrated grade", () => {
+    // Roxo (índice 6) atribuído por migração hoje: o acumulado até Roxo (35 meses) conta como cumprido.
+    const base = { currentGradeIndex: 6, lastAwardedAt: new Date("2026-01-01T00:00:00Z"), attendanceDates: attendances(8, 4) };
+    const migrated = computeStudentProgress(input({ ...base, currentGradeSource: "MIGRATION" }));
+    expect(migrated.checks.find((c) => c.key === "accumulated")).toMatchObject({ status: "done", detail: "43 de 43 meses" });
+    const byExam = computeStudentProgress(input({ ...base, currentGradeSource: "EXAM" }));
+    expect(byExam.checks.find((c) => c.key === "accumulated")).toMatchObject({ status: "pending", detail: "8 de 43 meses" });
+  });
+
   it("blocks a retake until two months after a failed exam", () => {
     const base = { attendanceDates: attendances(3, 4), lastPhysicalAssessmentAt: NOW };
     const blocked = computeStudentProgress(input({ ...base, lastFailedExamAt: new Date("2026-09-01T00:00:00Z") }));

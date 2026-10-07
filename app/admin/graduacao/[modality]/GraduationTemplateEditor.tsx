@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, CheckCircle2, Copy, Eye, FileText, Plus, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Copy, Eye, FileText, Plus, Sparkles, Users } from "lucide-react";
 import {
   accumulatedMonths,
   templatePublishWarnings,
@@ -174,12 +174,20 @@ export function GraduationTemplateEditor({ modalityCode, modalityName, initialTe
           {accumulated[accumulated.length - 1] ?? 0} meses até ao grau máximo
         </p>
         {savedJson !== "null" && (
-          <Link
-            href={`/admin/graduacao/${encodeURIComponent(modalityCode)}/aluno`}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10, fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--primary)", textDecoration: "none" }}
-          >
-            <Eye size={16} aria-hidden /> Ver como aluno
-          </Link>
+          <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", marginTop: 10 }}>
+            <Link
+              href={`/admin/graduacao/${encodeURIComponent(modalityCode)}/aluno`}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--primary)", textDecoration: "none" }}
+            >
+              <Eye size={16} aria-hidden /> Ver como aluno
+            </Link>
+            <Link
+              href={`/admin/graduacao/${encodeURIComponent(modalityCode)}/migracao`}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--primary)", textDecoration: "none" }}
+            >
+              <Users size={16} aria-hidden /> Graus iniciais dos alunos
+            </Link>
+          </div>
         )}
       </header>
 

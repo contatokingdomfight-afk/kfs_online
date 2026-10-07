@@ -14,6 +14,9 @@ import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
 import { getWhatIsNewNextMission } from "@/lib/whatisnew-next-mission.server";
 import type { ReactNode } from "react";
 import { WarriorPanel } from "./WarriorPanel";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { loadStudentGraduations } from "@/lib/graduation/load-student-progress";
+import { toGraduationSummary } from "@/components/graduation/GraduationSummaryCard";
 import { WhatIsNew } from "./WhatIsNew";
 import { ExploreSection } from "./ExploreSection";
 
@@ -341,6 +344,16 @@ export async function DashboardBelowFold({
     }
   }
 
+  // Graduação publicada na modalidade principal substitui a faixa/XP antigos no painel.
+  const graduationAdmin = getAdminClientOrNull().client;
+  const [primaryGraduation] =
+    studentId && graduationAdmin && hasPerformanceTracking
+      ? await loadStudentGraduations(graduationAdmin, studentId).catch((err) => {
+          console.error("loadStudentGraduations (dashboard):", err);
+          return [];
+        })
+      : [];
+
   const beltLabel = athleteStats?.currentBelt
     ? t(("belt_" + athleteStats.currentBelt) as "belt_WHITE")
     : "—";
@@ -365,6 +378,7 @@ export async function DashboardBelowFold({
         hasPerformanceTracking={hasPerformanceTracking}
         t={t as (key: string) => string}
         beltLabel={beltLabel}
+        graduation={primaryGraduation ? toGraduationSummary(primaryGraduation) : null}
       />
 
       {openClassesSlot}

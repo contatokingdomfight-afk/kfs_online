@@ -38,6 +38,15 @@ function beltTextColor(beltName: string): string {
   return base === "branca" || base === "amarela" ? "#141414" : "#ffffff";
 }
 
+/** Texto escuro sobre cores claras (ex.: branco, laranja), claro sobre escuras. */
+function readableTextOn(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return "#ffffff";
+  const n = parseInt(m[1]!, 16);
+  const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  return lum > 0.6 ? "#141414" : "#ffffff";
+}
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -49,8 +58,9 @@ function initials(name: string): string {
  * link (OG) como na partilha nativa/descarregar. Só usa o subconjunto de CSS suportado pelo Satori.
  * `ctaHost` é o domínio a mostrar no rodapé (sem protocolo, ex. "kingdomfight.com"). */
 export function buildFighterCardElement(data: FighterCardData, ctaHost: string) {
-  const beltBg = beltColorHex(data.beltName);
-  const beltFg = beltTextColor(data.beltName);
+  const gradeColor = data.beltColors?.[0];
+  const beltBg = gradeColor ?? beltColorHex(data.beltName);
+  const beltFg = gradeColor ? readableTextOn(gradeColor) : beltTextColor(data.beltName);
 
   return (
     <div
@@ -163,7 +173,7 @@ export function buildFighterCardElement(data: FighterCardData, ctaHost: string) 
             fontWeight: 800,
           }}
         >
-          Faixa {data.beltName}
+          {data.beltLabel ?? `Faixa ${data.beltName}`}
         </div>
       </div>
 

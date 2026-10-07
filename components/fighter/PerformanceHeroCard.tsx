@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { getBeltName } from "@/lib/belts";
+import { BeltSwatch } from "@/components/graduation/BeltSwatch";
+import type { GraduationSummary } from "@/components/graduation/GraduationSummaryCard";
 
 type Props = {
   backHref: string;
@@ -17,6 +19,8 @@ type Props = {
   primaryModalityLabel?: string | null;
   /** Texto opcional sob a barra de XP (ex.: trava de tempo na faixa). */
   xpBarNote?: string;
+  /** Graduação publicada na modalidade: substitui faixa/nível/XP pelo grau e progresso para o exame. */
+  graduation?: GraduationSummary | null;
 };
 
 export function PerformanceHeroCard({
@@ -30,6 +34,7 @@ export function PerformanceHeroCard({
   xpNext = 1000,
   primaryModalityLabel,
   xpBarNote,
+  graduation,
 }: Props) {
   const beltName = getBeltName(rankIndex ?? 0);
   const normalized = Math.min(maxScore, Math.max(0, overallScore));
@@ -83,43 +88,85 @@ export function PerformanceHeroCard({
               <h1 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
                 Perfil do Atleta
               </h1>
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 rounded-lg bg-primary text-white text-sm font-bold"
-                  title="Nível"
-                >
-                  {level}
-                </span>
-                <span className="text-sm font-semibold text-primary border border-primary/50 rounded-lg px-2 py-1">
-                  {beltName}
-                </span>
-                {primaryModalityLabel && (
-                  <span className="text-xs text-text-secondary border border-border rounded-lg px-2 py-1">
-                    {primaryModalityLabel}
+              {graduation ? <GraduationHeroBlock graduation={graduation} primaryModalityLabel={primaryModalityLabel} /> : (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 rounded-lg bg-primary text-white text-sm font-bold"
+                    title="Nível"
+                  >
+                    {level}
                   </span>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-xs text-text-secondary">
-                  <span>XP para próximo nível</span>
-                  <span className="tabular-nums">
-                    {xpCurrent}/{xpNext}
+                  <span className="text-sm font-semibold text-primary border border-primary/50 rounded-lg px-2 py-1">
+                    {beltName}
                   </span>
+                  {primaryModalityLabel && (
+                    <span className="text-xs text-text-secondary border border-border rounded-lg px-2 py-1">
+                      {primaryModalityLabel}
+                    </span>
+                  )}
                 </div>
-                <div className="h-2.5 rounded-full bg-border overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
-                    style={{ width: `${xpPercent}%` }}
-                  />
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs text-text-secondary">
+                    <span>XP para próximo nível</span>
+                    <span className="tabular-nums">
+                      {xpCurrent}/{xpNext}
+                    </span>
+                  </div>
+                  <div className="h-2.5 rounded-full bg-border overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+                      style={{ width: `${xpPercent}%` }}
+                    />
+                  </div>
+                  {xpBarNote ? (
+                    <p className="text-[11px] leading-snug text-text-secondary mt-1.5">{xpBarNote}</p>
+                  ) : null}
                 </div>
-                {xpBarNote ? (
-                  <p className="text-[11px] leading-snug text-text-secondary mt-1.5">{xpBarNote}</p>
-                ) : null}
-              </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
     </header>
+  );
+}
+
+function GraduationHeroBlock({ graduation, primaryModalityLabel }: { graduation: GraduationSummary; primaryModalityLabel?: string | null }) {
+  const pct = graduation.totalChecks > 0 ? Math.round((graduation.doneCount / graduation.totalChecks) * 100) : 0;
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-2 text-sm font-semibold text-text-primary border border-border rounded-lg px-2 py-1">
+          <BeltSwatch colors={graduation.currentColors} width={28} height={10} />
+          {graduation.currentName ?? "Sem graduação"}
+        </span>
+        <span className="text-xs text-text-secondary border border-border rounded-lg px-2 py-1">{graduation.modalityName ?? primaryModalityLabel}</span>
+      </div>
+      <Link href="/dashboard/graduacao" className="block space-y-1.5 no-underline text-inherit">
+        <div className="flex justify-between gap-2 text-xs text-text-secondary">
+          <span>
+            {graduation.isReadyForExam
+              ? "Apto para exame"
+              : graduation.nextName
+                ? `Próximo grau: ${graduation.nextName}`
+                : "Grau máximo"}
+          </span>
+          {graduation.nextName && graduation.totalChecks > 0 && (
+            <span className="tabular-nums">
+              {graduation.doneCount}/{graduation.totalChecks} requisitos
+            </span>
+          )}
+        </div>
+        <div className="h-2.5 rounded-full bg-border overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ease-out ${graduation.isReadyForExam ? "bg-success" : "bg-primary"}`}
+            style={{ width: `${graduation.nextName ? pct : 100}%` }}
+          />
+        </div>
+        <p className="text-[11px] leading-snug text-primary mt-1.5 font-semibold">Ver a minha graduação →</p>
+      </Link>
+    </>
   );
 }

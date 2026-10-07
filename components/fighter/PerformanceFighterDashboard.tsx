@@ -30,7 +30,7 @@ import {
 import { PhysicalAssessmentEvolution } from "@/components/physical-assessment/PhysicalAssessmentEvolution";
 import type { PhysicalEvolutionRow } from "@/lib/physical-assessment-evolution";
 import { PHYSICAL_KPI_DEFS, type PhysicalKpiScores } from "@/lib/physical-assessment-kpi-scores";
-import { GraduationSummaryCard, type GraduationSummary } from "@/components/graduation/GraduationSummaryCard";
+import type { GraduationSummary } from "@/components/graduation/GraduationSummaryCard";
 
 const ProfileAchievements = dynamic(
   () =>
@@ -189,6 +189,7 @@ export function PerformanceFighterDashboard({
         xpCurrent={xpCurrent}
         xpNext={xpNext}
         primaryModalityLabel={primaryModalityLabel}
+        graduation={graduationSummary}
         xpBarNote={
           beltTimeGate?.waitingOnTime
             ? `Tempo na faixa: ${beltTimeGate.daysElapsedInBelt}/${beltTimeGate.minDaysRequired} dias (mín. ${beltTimeGate.minMonthsRequired} ${beltTimeGate.minMonthsRequired === 1 ? "mês" : "meses"}).`
@@ -392,10 +393,10 @@ export function PerformanceFighterDashboard({
         />
       )}
 
-      {graduationSummary && <GraduationSummaryCard summary={graduationSummary} />}
+      {/* Com graduação publicada, o grau e o progresso aparecem no cartão principal (hero). */}
 
       {/* Progressão de Níveis e XP — resumo; detalhe completo em /dashboard/performance/faixa */}
-      {xpCurrent != null && xpNext != null && rankIndex != null && (
+      {!graduationSummary && xpCurrent != null && xpNext != null && rankIndex != null && (
         <Link
           href="/dashboard/performance/faixa"
           className="block rounded-2xl bg-bg-secondary border border-border p-4 shadow-md hover:border-primary/40 transition-colors no-underline text-inherit"

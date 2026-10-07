@@ -32,6 +32,7 @@ export function getDashboardStudentBaseLinks(params: {
         ? [
             { label: t("navAthleteProfile"), href: "/dashboard/performance" },
             { label: "Histórico de avaliações", href: "/dashboard/performance/historico" },
+            { label: locale === "pt" ? "A minha graduação" : "My graduation", href: "/dashboard/graduacao" },
           ]
         : []),
       {

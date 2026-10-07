@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRankInfoForStudent } from "@/lib/get-rank-info";
 import { getBeltName } from "@/lib/belts";
+import { loadDisplayGrade } from "@/lib/graduation/display-grade";
 
 export type CoachTestimonialPublic = {
   id: string;
@@ -94,7 +95,7 @@ export async function getCoachPublicProfileData(
 
   const studentId = (coach as { studentId?: string | null }).studentId ?? null;
 
-  const [{ data: user }, { data: coachSchools }, rankInfo, currentStudents, lessonsTaughtCount, testimonialRows] =
+  const [{ data: user }, { data: coachSchools }, rankInfo, currentStudents, lessonsTaughtCount, testimonialRows, grade] =
     await Promise.all([
       supabase.from("User").select("name, avatarUrl").eq("id", coach.userId).maybeSingle(),
       supabase.from("CoachSchool").select("schoolId").eq("coachId", coachId),
@@ -108,6 +109,7 @@ export async function getCoachPublicProfileData(
         .eq("status", "APPROVED")
         .order("createdAt", { ascending: false })
         .limit(20),
+      studentId ? loadDisplayGrade(studentId) : Promise.resolve(null),
     ]);
 
   const schoolIds = [...new Set((coachSchools ?? []).map((r) => r.schoolId as string))];
@@ -162,7 +164,8 @@ export async function getCoachPublicProfileData(
       instagramHandle: (coach as { instagramHandle?: string | null }).instagramHandle ?? null,
       facebookUrl: (coach as { facebookUrl?: string | null }).facebookUrl ?? null,
       schoolNames: (schools ?? []).map((s) => s.name as string),
-      beltName: rankInfo ? getBeltName(rankInfo.displayBeltIndex) : null,
+      // Grau de graduação quando publicado (sem grau = não mostra); senão a faixa antiga por XP.
+      beltName: grade ? grade.gradeName : rankInfo ? getBeltName(rankInfo.displayBeltIndex) : null,
       currentStudentCount: currentStudents.count ?? 0,
       lessonsTaughtCount,
       testimonials,

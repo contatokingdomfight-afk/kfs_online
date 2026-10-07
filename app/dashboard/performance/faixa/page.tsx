@@ -8,6 +8,7 @@ import { getRankInfoForStudent } from "@/lib/get-rank-info";
 import { getRankNameForIndex } from "@/lib/xp-missions";
 import { beltIdFromRankName } from "@/components/belt-progression/belt-progression-data";
 import { BeltProgressionSection } from "@/components/belt-progression";
+import { loadDisplayGrade } from "@/lib/graduation/display-grade";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,9 @@ export default async function FaixaPage() {
   if (studentId && !planAccess.hasPerformanceTracking) {
     redirect("/dashboard?message=plan-no-performance");
   }
+
+  // Com graduação publicada na modalidade do aluno, a faixa por XP dá lugar ao grau.
+  if (studentId && (await loadDisplayGrade(studentId))) redirect("/dashboard/graduacao");
 
   const athleteState = studentId ? await getRankInfoForStudent(supabase, studentId) : null;
 

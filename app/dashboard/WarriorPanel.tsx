@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Shield, CheckCircle2 } from "lucide-react";
+import { BeltSwatch } from "@/components/graduation/BeltSwatch";
+import type { GraduationSummary } from "@/components/graduation/GraduationSummaryCard";
 
 const BELT_COLORS: Record<string, string> = {
   WHITE: "#e5e5e5",
@@ -28,6 +30,8 @@ type Props = {
   hasPerformanceTracking: boolean;
   t: (key: string) => string;
   beltLabel: string;
+  /** Graduação publicada: mostra o grau e o progresso para o exame em vez da faixa/XP antigos. */
+  graduation?: GraduationSummary | null;
 };
 
 export function WarriorPanel({
@@ -42,6 +46,7 @@ export function WarriorPanel({
   hasPerformanceTracking,
   t,
   beltLabel,
+  graduation,
 }: Props) {
   if (!hasCheckIn && !hasPerformanceTracking) return null;
 
@@ -73,7 +78,9 @@ export function WarriorPanel({
             {t("dashboardWarriorGreeting")} {studentName ?? t("dashboardWarriorDefaultName")}!
           </p>
 
-          {hasPerformanceTracking && (
+          {hasPerformanceTracking && graduation && <GraduationProgress graduation={graduation} />}
+
+          {hasPerformanceTracking && !graduation && (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
                 <span
@@ -152,5 +159,41 @@ export function WarriorPanel({
         </div>
       </Link>
     </section>
+  );
+}
+
+function GraduationProgress({ graduation }: { graduation: GraduationSummary }) {
+  const pct = graduation.nextName && graduation.totalChecks > 0 ? Math.round((graduation.doneCount / graduation.totalChecks) * 100) : 100;
+  return (
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 700, color: "var(--text-primary)" }}>
+          <BeltSwatch colors={graduation.currentColors} width={40} height={14} />
+          {graduation.currentName ?? "Sem graduação"}
+        </span>
+        <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{graduation.modalityName}</span>
+      </div>
+      <div style={{ marginBottom: 8 }}>
+        <p style={{ margin: "0 0 6px 0", fontSize: "clamp(12px, 3vw, 14px)", color: graduation.isReadyForExam ? "var(--success)" : "var(--text-secondary)", fontWeight: graduation.isReadyForExam ? 700 : 400 }}>
+          {graduation.isReadyForExam
+            ? "Apto para o exame!"
+            : graduation.nextName
+              ? "Requisitos para " + graduation.nextName + ": " + graduation.doneCount + "/" + graduation.totalChecks
+              : "Grau máximo"}
+        </p>
+        <div style={{ width: "100%", height: 10, backgroundColor: "var(--border)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              backgroundColor: graduation.isReadyForExam ? "var(--success)" : "var(--primary)",
+              transform: "scaleX(" + pct / 100 + ")",
+              transformOrigin: "left",
+              transition: "transform 0.3s ease",
+            }}
+          />
+        </div>
+      </div>
+    </>
   );
 }

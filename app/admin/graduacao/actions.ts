@@ -98,3 +98,73 @@ export async function getGraduationStarterDraft(
     },
   };
 }
+
+/**
+ * Graus iniciais (migração das faixas antigas): grava o grau escolhido para cada aluno como
+ * StudentGrade de origem MIGRATION. "Sem graduação" apaga os registos de migração/manuais.
+ * Alunos com grau obtido em exame não são alterados.
+ */
+export async function applyInitialGrades(
+  modalityCode: string,
+  changes: { studentId: string; gradeId: string | null }[]
+): Promise<{ error?: string; applied?: number }> {
+  const auth = await authorize();
+  if ("error" in auth) return { error: auth.error };
+  const result = getAdminClientOrNull();
+  if (!result.client) return { error: "Configuração Supabase em falta." };
+  const supabase = result.client;
+  if (changes.length === 0) return { applied: 0 };
+  if (changes.length > 1000) return { error: "Demasiadas alterações de uma vez." };
+
+  const template = await loadGraduationTemplate(supabase, modalityCode);
+  if (!template) return { error: "A modalidade não tem graduação configurada." };
+  const validGrades = new Set(template.grades.map((g) => g.id));
+  if (changes.some((c) => c.gradeId != null && !validGrades.has(c.gradeId))) return { error: "Grau inválido para esta modalidade." };
+
+  const studentIds = [...new Set(changes.map((c) => c.studentId))];
+  const { data: examGrades } = await supabase
+    .from("StudentGrade")
+    .select("studentId")
+    .eq("modalityCode", modalityCode)
+    .eq("source", "EXAM")
+    .in("studentId", studentIds);
+  const locked = new Set((examGrades ?? []).map((g) => g.studentId));
+  const allowed = changes.filter((c) => !locked.has(c.studentId));
+
+  const toClear = allowed.filter((c) => c.gradeId == null).map((c) => c.studentId);
+  if (toClear.length) {
+    const { error } = await supabase
+      .from("StudentGrade")
+      .delete()
+      .eq("modalityCode", modalityCode)
+      .in("source", ["MIGRATION", "MANUAL"])
+      .in("studentId", toClear);
+    if (error) {
+      console.error("applyInitialGrades delete:", error);
+      return { error: "Não foi possível remover graus." };
+    }
+  }
+
+  const now = new Date().toISOString();
+  const toInsert = allowed
+    .filter((c) => c.gradeId != null)
+    .map((c) => ({
+      studentId: c.studentId,
+      modalityCode,
+      gradeId: c.gradeId,
+      source: "MIGRATION",
+      awardedAt: now,
+      awardedByUserId: auth.userId,
+      notes: "Grau inicial (migração das faixas por XP)",
+    }));
+  if (toInsert.length) {
+    const { error } = await supabase.from("StudentGrade").insert(toInsert);
+    if (error) {
+      console.error("applyInitialGrades insert:", error);
+      return { error: "Não foi possível gravar os graus." };
+    }
+  }
+
+  revalidatePath(`/admin/graduacao/${modalityCode}/migracao`);
+  return { applied: allowed.length };
+}

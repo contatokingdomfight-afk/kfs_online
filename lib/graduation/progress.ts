@@ -39,6 +39,11 @@ export type StudentProgressInput = {
   currentGradeIndex: number;
   /** Data da última graduação (null = sem graduação). */
   lastAwardedAt: Date | null;
+  /**
+   * Origem do grau atual. Num grau atribuído por migração/manualmente (treino anterior à plataforma),
+   * o tempo acumulado até esse grau conta como cumprido.
+   */
+  currentGradeSource?: "EXAM" | "MIGRATION" | "MANUAL" | null;
   /** Datas das presenças confirmadas na modalidade (todas). */
   attendanceDates: Date[];
   /** Média 1–10 das últimas avaliações de performance na modalidade (null = sem avaliações). */
@@ -148,7 +153,9 @@ export function computeStudentProgress(input: StudentProgressInput): StudentProg
   const accumulatedTarget = accumulatedMonths(grades)[nextIndex] ?? 0;
   // Sem graduação, o acumulado coincide com o tempo mínimo — evita uma linha repetida.
   if (current && accumulatedTarget > next.minMonths) {
-    const have = qualifyingMonthsTotal;
+    const credited =
+      input.currentGradeSource === "MIGRATION" || input.currentGradeSource === "MANUAL" ? accumulatedMonths(grades)[currentGradeIndex] ?? 0 : 0;
+    const have = qualifyingMonthsTotal + credited;
     checks.push({
       key: "accumulated",
       label: `${monthsWord(accumulatedTarget)} de treino acumulado na modalidade`,
