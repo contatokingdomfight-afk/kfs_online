@@ -13,18 +13,28 @@ describe("buildExamSheet", () => {
   it("first grade has only new items and no review", () => {
     const sheet = buildExamSheet(template.grades, 0);
     expect(sheet.newEntries).toHaveLength(template.grades[0].items.length);
+    expect(sheet.previousEntries).toEqual([]);
     expect(sheet.reviewAxes).toEqual([]);
     expect(sheet.reviewCriticalEntries).toEqual([]);
   });
 
-  it("later grades add one review score per axis with all previous items as reference", () => {
-    const sheet = buildExamSheet(template.grades, 3);
-    expect(sheet.reviewAxes.map((r) => r.entry.key)).toEqual(["review:TECNICO", "review:TATICO", "review:TEORICO", "review:FISICO"]);
-    const tecnico = sheet.reviewAxes[0];
-    expect(tecnico.reference.map((r) => r.gradeName)).toEqual(["Branco", "Branco/Laranja", "Laranja"]);
+  it("second grade scores every item of the first grade individually, without axis review", () => {
+    const sheet = buildExamSheet(template.grades, 1);
+    expect(sheet.previousGradeName).toBe("Branco");
+    expect(sheet.previousEntries).toHaveLength(template.grades[0].items.length);
+    expect(sheet.previousEntries.every((e) => e.section === "REVIEW_ITEM" && e.gradeName === "Branco")).toBe(true);
+    expect(sheet.reviewAxes).toEqual([]);
   });
 
-  it("critical items of previous grades are scored individually", () => {
+  it("later grades: previous grade item by item, older grades one review score per axis", () => {
+    const sheet = buildExamSheet(template.grades, 3);
+    expect(sheet.previousGradeName).toBe("Laranja");
+    expect(sheet.previousEntries).toHaveLength(template.grades[2].items.length);
+    expect(sheet.reviewAxes.map((r) => r.entry.key)).toEqual(["review:TECNICO", "review:TATICO", "review:TEORICO", "review:FISICO"]);
+    expect(sheet.reviewAxes[0].reference.map((r) => r.gradeName)).toEqual(["Branco", "Branco/Laranja"]);
+  });
+
+  it("critical items of older grades are scored individually", () => {
     const grades = template.grades.map((g, i) => (i === 0 ? { ...g, items: g.items.map((it, j) => ({ ...it, isCritical: j === 0 })) } : g));
     const sheet = buildExamSheet(grades, 2);
     expect(sheet.reviewCriticalEntries).toHaveLength(1);
@@ -33,7 +43,7 @@ describe("buildExamSheet", () => {
 });
 
 describe("computeExamResult", () => {
-  const sheet = buildExamSheet(template.grades, 1);
+  const sheet = buildExamSheet(template.grades, 2);
   const keys = sheetEntries(sheet).map((e) => e.key);
 
   it("is incomplete until every entry has a score", () => {
@@ -46,7 +56,14 @@ describe("computeExamResult", () => {
   it("passes when every axis reaches the minimum in new items and review", () => {
     const r = computeExamResult(sheet, allScores(keys, 3));
     expect(r.passed).toBe(true);
-    expect(r.axes.every((a) => a.newPassed && a.reviewPassed)).toBe(true);
+    expect(r.axes.every((a) => a.newPassed && a.prevPassed && a.reviewPassed)).toBe(true);
+  });
+
+  it("fails when the previous grade items of one axis average below the minimum", () => {
+    const prevTatico = new Set(sheet.previousEntries.filter((e) => e.axis === "TATICO").map((e) => e.key));
+    const r = computeExamResult(sheet, allScores(keys, 4).map((s) => (prevTatico.has(s.key) ? { ...s, score: 2 } : s)));
+    expect(r.passed).toBe(false);
+    expect(r.axes.find((a) => a.axis === "TATICO")).toMatchObject({ newPassed: true, prevPassed: false, prevAvg: 2, reviewPassed: true });
   });
 
   it("fails when the review of one axis is below the minimum", () => {

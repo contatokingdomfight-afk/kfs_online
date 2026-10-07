@@ -50,29 +50,32 @@ export function ExamResultBreakdown({
 
   const sections: { title: string; filter: (s: ExamScoreRowView["section"]) => boolean }[] = [
     { title: "Conteúdo novo", filter: (s) => s === "NEW" },
-    { title: "Revisão dos graus anteriores", filter: (s) => s === "REVIEW_AXIS" || s === "REVIEW_ITEM" },
+    { title: "Graus anteriores", filter: (s) => s === "REVIEW_AXIS" || s === "REVIEW_ITEM" },
   ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
       <div className="card" style={{ padding: "var(--space-3)" }}>
         <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
-          Mínimo para aprovar: {fmt(result.passMin)} em cada eixo (itens novos e revisão) e nos itens fundamentais.
+          Mínimo para aprovar: {fmt(result.passMin)} em cada eixo (itens novos, grau anterior e revisão) e nos itens fundamentais.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "var(--space-2)" }}>
           {result.axes.map((a) => {
-            const failed = a.newPassed === false || a.reviewPassed === false;
+            const failed = a.newPassed === false || a.prevPassed === false || a.reviewPassed === false;
             return (
               <div key={a.axis} style={{ border: `1px solid ${failed ? "var(--danger)" : "var(--border)"}`, borderRadius: "var(--radius-md)", padding: "8px 10px", background: "var(--bg)" }}>
                 <p style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
                   <span aria-hidden>{GRADUATION_AXIS_META[a.axis].emoji}</span> {GRADUATION_AXIS_META[a.axis].label}
                   {failed ? (
                     <XCircle size={14} aria-label="Abaixo do mínimo" style={{ color: "var(--danger)", marginLeft: "auto" }} />
-                  ) : a.newPassed !== null || a.reviewPassed !== null ? (
+                  ) : a.newPassed !== null || (a.prevPassed ?? null) !== null || a.reviewPassed !== null ? (
                     <CheckCircle2 size={14} aria-label="Cumpre o mínimo" style={{ color: "var(--success)", marginLeft: "auto" }} />
                   ) : null}
                 </p>
                 {a.newCount > 0 && <p style={{ margin: "4px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>Novo: {fmt(a.newAvg)}</p>}
+                {(a.prevCount ?? 0) > 0 && (
+                  <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>Grau anterior: {fmt(a.prevAvg ?? null)}</p>
+                )}
                 {a.reviewPassed !== null && <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>Revisão: {fmt(a.reviewScore)}</p>}
               </div>
             );

@@ -223,8 +223,9 @@ function ExamContent({ graduation }: { graduation: StudentModalityGraduation }) 
       <p className="mb-0 mt-2 text-sm leading-relaxed text-text-secondary">
         {progress.reviewGrades.length > 0 ? (
           <>
-            O exame é <strong className="text-text-primary">cumulativo</strong>: és avaliado no que é novo em {next.name} e em tudo o que
-            aprendeste nos graus anteriores.
+            O exame é <strong className="text-text-primary">cumulativo</strong>: és avaliado item a item no que é novo em {next.name} e em
+            tudo o que aprendeste em {progress.reviewGrades[0]?.gradeName}
+            {progress.reviewGrades.length > 1 ? ", e em conjunto (por eixo) nos graus mais antigos" : ""}.
           </>
         ) : (
           <>Estes são os conteúdos do teu primeiro exame.</>
@@ -256,11 +257,17 @@ function ExamContent({ graduation }: { graduation: StudentModalityGraduation }) 
             {reviewCount} {reviewCount === 1 ? "item" : "itens"} que continuam a ser avaliados
           </p>
           <div className="mt-2 flex flex-col gap-2">
-            {progress.reviewGrades.map((g) => (
-              <details key={g.gradeId} className="group rounded-xl border border-border bg-bg">
+            {progress.reviewGrades.map((g, i) => (
+              // O grau imediatamente anterior (o primeiro da lista) é avaliado item a item; os mais antigos por eixo.
+              <details key={g.gradeId} className="group rounded-xl border border-border bg-bg" open={i === 0}>
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
                   <BeltSwatch colors={g.colors} width={36} height={10} />
-                  <span className="min-w-0 flex-1 text-sm font-semibold text-text-primary">{g.gradeName}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-text-primary">{g.gradeName}</span>
+                    <span className="block text-xs text-text-secondary">
+                      {i === 0 ? "Avaliado item a item" : "Avaliado em conjunto, por eixo"}
+                    </span>
+                  </span>
                   <span className="text-xs text-text-secondary">{g.items.length} itens</span>
                   <ChevronRight size={16} aria-hidden className="shrink-0 text-text-secondary transition-transform group-open:rotate-90" />
                 </summary>

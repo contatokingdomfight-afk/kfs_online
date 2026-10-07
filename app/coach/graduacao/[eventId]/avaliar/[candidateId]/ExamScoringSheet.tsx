@@ -110,6 +110,9 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
   };
 
   const grade = sheet.targetGrade;
+  const prevByAxis = GRADUATION_AXES.map((axis) => ({ axis, entries: sheet.previousEntries.filter((e) => e.axis === axis) })).filter(
+    (g) => g.entries.length > 0
+  );
   const newByAxis = GRADUATION_AXES.map((axis) => ({ axis, entries: sheet.newEntries.filter((e) => e.axis === axis) })).filter(
     (g) => g.entries.length > 0
   );
@@ -130,7 +133,7 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
               </li>
             ))}
             <li>
-              Para aprovar: média ≥ {formatScore(sheet.passMin)} nos itens novos e na revisão de cada eixo; itens ★ precisam de ≥ {formatScore(sheet.passMin)}{" "}
+              Para aprovar: média ≥ {formatScore(sheet.passMin)} nos itens novos, nos itens do grau anterior e na revisão de cada eixo; itens ★ precisam de ≥ {formatScore(sheet.passMin)}{" "}
               individualmente.
             </li>
             <li>Toca de novo numa nota para a apagar. As notas são gravadas automaticamente.</li>
@@ -153,9 +156,22 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
         </AxisBlock>
       ))}
 
+      {sheet.previousGradeName && prevByAxis.length > 0 && (
+        <>
+          <SectionTitle title={`Itens de ${sheet.previousGradeName}`} subtitle="Grau anterior — cada item avaliado individualmente" />
+          {prevByAxis.map(({ axis, entries }) => (
+            <AxisBlock key={`prev-${axis}`} axis={axis}>
+              {entries.map((e) => (
+                <EntryRow key={e.key} entry={e} state={scores[e.key]} passMin={sheet.passMin} onScore={setScore} onComment={setComment} />
+              ))}
+            </AxisBlock>
+          ))}
+        </>
+      )}
+
       {sheet.reviewAxes.length > 0 && (
         <>
-          <SectionTitle title="Revisão dos graus anteriores" subtitle="Uma nota por eixo sobre tudo o que foi aprendido antes" />
+          <SectionTitle title="Revisão dos graus mais antigos" subtitle={`Uma nota por eixo sobre tudo o que foi aprendido antes de ${sheet.previousGradeName ?? "o grau anterior"}`} />
           {sheet.reviewAxes.map((r) => {
             const count = r.reference.reduce((s, g) => s + g.items.length, 0);
             return (
@@ -189,7 +205,7 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
 
       {sheet.reviewCriticalEntries.length > 0 && (
         <>
-          <SectionTitle title="Itens fundamentais dos graus anteriores" subtitle="Avaliados individualmente" />
+          <SectionTitle title="Itens fundamentais dos graus mais antigos" subtitle="Avaliados individualmente" />
           <div className="card" style={{ padding: "var(--space-2) var(--space-3)" }}>
             {sheet.reviewCriticalEntries.map((e) => (
               <EntryRow
@@ -225,12 +241,19 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
             {myResult.axes.map((a) => {
               // Sem notas ainda = neutro (não "reprovado").
-              const failed = (a.newPassed === false && a.newAvg != null) || (a.reviewPassed === false && a.reviewScore != null);
-              const unknown = (a.newCount > 0 && a.newAvg == null) || (a.reviewPassed !== null && a.reviewScore == null);
+              const failed =
+                (a.newPassed === false && a.newAvg != null) ||
+                (a.prevPassed === false && a.prevAvg != null) ||
+                (a.reviewPassed === false && a.reviewScore != null);
+              const unknown =
+                (a.newCount > 0 && a.newAvg == null) ||
+                ((a.prevCount ?? 0) > 0 && a.prevAvg == null) ||
+                (a.reviewPassed !== null && a.reviewScore == null);
               const color = failed ? "var(--danger)" : unknown ? "var(--text-secondary)" : "var(--success)";
               return (
                 <span key={a.axis} style={{ fontSize: "var(--text-xs)", padding: "2px 8px", borderRadius: 999, border: `1px solid ${color}`, color }}>
                   {GRADUATION_AXIS_META[a.axis].emoji} {a.newAvg != null ? formatScore(a.newAvg) : "–"}
+                  {(a.prevCount ?? 0) > 0 && ` · ant ${a.prevAvg != null ? formatScore(a.prevAvg) : "–"}`}
                   {a.reviewPassed !== null && ` · rev ${a.reviewScore != null ? formatScore(a.reviewScore) : "–"}`}
                 </span>
               );
