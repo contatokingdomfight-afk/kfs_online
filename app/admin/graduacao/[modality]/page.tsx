@@ -19,9 +19,9 @@ export default async function AdminGraduacaoModalityPage({ params }: { params: P
   const modalityCode = decodeURIComponent(rawModality);
 
   const [{ data: modalities }, { data: courseRows }, { data: templates }, template] = await Promise.all([
-    result.client.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true }),
+    result.client.from("ModalityRef").select("code, name, graduationModalities").order("sortOrder", { ascending: true }),
     result.client.from("Course").select("id, name, modality, is_active").order("name", { ascending: true }),
-    result.client.from("GraduationTemplate").select("modalityCode"),
+    result.client.from("GraduationTemplate").select("modalityCode, isPublished"),
     loadGraduationTemplate(result.client, modalityCode),
   ]);
 
@@ -58,6 +58,17 @@ export default async function AdminGraduacaoModalityPage({ params }: { params: P
         initialTemplate={template}
         courses={courses}
         copySources={copySources}
+        components={(modality.graduationModalities as string[] | null) ?? []}
+        componentOptions={(modalities ?? [])
+          .filter((m) => m.code !== modalityCode)
+          .map((m) => ({
+            code: m.code,
+            name: m.name,
+            graduation: (() => {
+              const t = (templates ?? []).find((x) => x.modalityCode === m.code);
+              return t ? (t.isPublished ? "published" : "draft") : "none";
+            })() as "published" | "draft" | "none",
+          }))}
       />
     </div>
   );

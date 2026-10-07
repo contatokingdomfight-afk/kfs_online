@@ -13,6 +13,7 @@ import {
 } from "@/lib/graduation/template";
 import { getGraduationStarterDraft, saveGraduationTemplate } from "../actions";
 import { GradeCard } from "./GradeCard";
+import { ComponentsPanel, type ComponentOption } from "./ComponentsPanel";
 
 export type CourseOption = {
   id: string;
@@ -28,6 +29,9 @@ type Props = {
   initialTemplate: GraduationTemplateDraft | null;
   courses: CourseOption[];
   copySources: { code: string; name: string }[];
+  /** Modalidades base (modalidade composta, ex.: MMA). */
+  components: string[];
+  componentOptions: ComponentOption[];
 };
 
 export const newId = () => crypto.randomUUID();
@@ -52,7 +56,15 @@ export function emptyGrade(): GraduationGradeDraft {
   };
 }
 
-export function GraduationTemplateEditor({ modalityCode, modalityName, initialTemplate, courses, copySources }: Props) {
+export function GraduationTemplateEditor({
+  modalityCode,
+  modalityName,
+  initialTemplate,
+  courses,
+  copySources,
+  components,
+  componentOptions,
+}: Props) {
   const router = useRouter();
   const [draft, setDraft] = useState<GraduationTemplateDraft | null>(initialTemplate);
   const [savedJson, setSavedJson] = useState(() => JSON.stringify(initialTemplate));
@@ -74,15 +86,20 @@ export function GraduationTemplateEditor({ modalityCode, modalityName, initialTe
 
   if (!draft) {
     return (
-      <StarterChooser
-        modalityCode={modalityCode}
-        modalityName={modalityName}
-        copySources={copySources}
-        onStart={(d) => {
-          setDraft(d);
-          setExpandedId(d.grades[0]?.id ?? null);
-        }}
-      />
+      <>
+        <ComponentsPanel modalityCode={modalityCode} modalityName={modalityName} components={components} options={componentOptions} />
+        {components.length === 0 && (
+          <StarterChooser
+            modalityCode={modalityCode}
+            modalityName={modalityName}
+            copySources={copySources}
+            onStart={(d) => {
+              setDraft(d);
+              setExpandedId(d.grades[0]?.id ?? null);
+            }}
+          />
+        )}
+      </>
     );
   }
 

@@ -16,11 +16,12 @@ export default async function AdminGraduacaoPage() {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
 
   const [{ data: modalities }, { data: templates }, { data: grades }] = await Promise.all([
-    result.client.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true }),
+    result.client.from("ModalityRef").select("code, name, graduationModalities").order("sortOrder", { ascending: true }),
     result.client.from("GraduationTemplate").select("id, modalityCode, isPublished"),
     result.client.from("GraduationGrade").select("templateId, colors, minMonths, sortOrder").order("sortOrder", { ascending: true }),
   ]);
 
+  const nameOf = new Map((modalities ?? []).map((m) => [m.code as string, m.name as string]));
   const rows = (modalities ?? []).map((m) => {
     const template = (templates ?? []).find((t) => t.modalityCode === m.code) ?? null;
     const templateGrades = template ? (grades ?? []).filter((g) => g.templateId === template.id) : [];
@@ -30,6 +31,7 @@ export default async function AdminGraduacaoPage() {
       gradeCount: templateGrades.length,
       totalMonths: templateGrades.reduce((sum, g) => sum + (g.minMonths ?? 0), 0),
       gradeColors: templateGrades.map((g) => (g.colors ?? []) as string[]),
+      components: ((m.graduationModalities as string[] | null) ?? []).map((c) => nameOf.get(c) ?? c),
     };
   });
 
@@ -59,12 +61,14 @@ export default async function AdminGraduacaoPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ fontSize: "var(--text-base)", fontWeight: 600 }}>{m.name}</span>
-                  <TemplateStatus template={m.template} />
+                  <TemplateStatus template={m.template} composite={m.components.length > 0} />
                 </div>
                 <p style={{ margin: "4px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
                   {m.template
                     ? `${m.gradeCount} ${m.gradeCount === 1 ? "grau" : "graus"} · ${m.totalMonths} meses até ao grau máximo`
-                    : "Ainda sem graduação configurada"}
+                    : m.components.length > 0
+                      ? `Usa os graus de: ${m.components.join(", ")}`
+                      : "Ainda sem graduação configurada"}
                 </p>
                 {m.gradeColors.length > 0 && (
                   <div style={{ display: "flex", gap: 3, marginTop: 10, flexWrap: "wrap" }} aria-hidden>
@@ -83,9 +87,11 @@ export default async function AdminGraduacaoPage() {
   );
 }
 
-function TemplateStatus({ template }: { template: { isPublished: boolean } | null }) {
+function TemplateStatus({ template, composite }: { template: { isPublished: boolean } | null; composite?: boolean }) {
   const [label, color, bg] = !template
-    ? ["Por configurar", "var(--text-secondary)", "var(--bg)"]
+    ? composite
+      ? ["Composta", "var(--primary)", "color-mix(in srgb, var(--primary) 14%, transparent)"]
+      : ["Por configurar", "var(--text-secondary)", "var(--bg)"]
     : template.isPublished
       ? ["Publicado", "var(--success)", "color-mix(in srgb, var(--success) 14%, transparent)"]
       : ["Rascunho", "var(--warning)", "color-mix(in srgb, var(--warning) 14%, transparent)"];

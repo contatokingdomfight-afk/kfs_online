@@ -168,3 +168,25 @@ export async function applyInitialGrades(
   revalidatePath(`/admin/graduacao/${modalityCode}/migracao`);
   return { applied: allowed.length };
 }
+
+/** Modalidade composta (ex.: MMA): define as modalidades base cujos graus o aluno vê. Vazio = desligar. */
+export async function setGraduationComponents(modalityCode: string, components: string[]): Promise<{ error?: string; success?: boolean }> {
+  const auth = await authorize();
+  if ("error" in auth) return { error: auth.error };
+  const result = getAdminClientOrNull();
+  if (!result.client) return { error: "Configuração Supabase em falta." };
+
+  const { data: modalities } = await result.client.from("ModalityRef").select("code");
+  const valid = new Set((modalities ?? []).map((m) => m.code as string));
+  if (!valid.has(modalityCode)) return { error: "Modalidade não encontrada." };
+  const clean = [...new Set(components)].filter((c) => c !== modalityCode && valid.has(c));
+
+  const { error } = await result.client.from("ModalityRef").update({ graduationModalities: clean }).eq("code", modalityCode);
+  if (error) {
+    console.error("setGraduationComponents:", error);
+    return { error: "Não foi possível guardar." };
+  }
+  revalidatePath("/admin/graduacao");
+  revalidatePath(`/admin/graduacao/${modalityCode}`);
+  return { success: true };
+}

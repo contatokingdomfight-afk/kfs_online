@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadGraduationTemplate } from "./load-template";
+import { selectGraduationModalities } from "./modality-selection";
 import { averageEvaluationScores, computeStudentProgress, type StudentProgress } from "./progress";
 
 /** Últimas N avaliações de performance usadas na média (igual ao radar). */
@@ -55,15 +56,17 @@ export async function loadStudentGraduations(
   if (publishedCodes.size === 0) return [];
 
   const [{ data: student }, { data: gradeRows }, attendanceRows, { data: modalityRows }] = await Promise.all([
-    supabase.from("Student").select("primaryModality").eq("id", studentId).maybeSingle(),
+    supabase.from("Student").select("primaryModality, planId").eq("id", studentId).maybeSingle(),
     supabase
       .from("StudentGrade")
       .select("modalityCode, gradeId, awardedAt, source")
       .eq("studentId", studentId)
       .order("awardedAt", { ascending: false }),
     loadConfirmedAttendances(supabase, studentId),
-    supabase.from("ModalityRef").select("code, name"),
+    supabase.from("ModalityRef").select("code, name, graduationModalities"),
   ]);
+  const planId = (student?.planId as string | null) ?? null;
+  const { data: plan } = planId ? await supabase.from("Plan").select("modalityScope").eq("id", planId).maybeSingle() : { data: null };
 
   const lessonIds = [...new Set(attendanceRows.map((a) => a.lessonId as string))];
   const lessonModality = new Map<string, string>();
@@ -87,9 +90,17 @@ export async function loadStudentGraduations(
   }
 
   const primary = (student?.primaryModality as string | null) ?? null;
-  const codes = [...publishedCodes]
-    .filter((code) => code === preview || code === primary || attendanceByModality.has(code) || latestGrade.has(code))
-    .sort((a, b) => Number(b === primary) - Number(a === primary));
+  const codes = preview
+    ? [preview].filter((c) => publishedCodes.has(c))
+    : selectGraduationModalities({
+        published: [...publishedCodes],
+        primary,
+        attended: [...attendanceByModality.keys()],
+        graded: [...latestGrade.keys()],
+        planScope: (plan?.modalityScope as string | null) ?? null,
+        components: Object.fromEntries((modalityRows ?? []).map((m) => [m.code, (m.graduationModalities as string[] | null) ?? []])),
+        names: Object.fromEntries((modalityRows ?? []).map((m) => [m.code, m.name])),
+      });
   if (codes.length === 0) return [];
 
   const [templatesFull, { data: athlete }, { data: physical }, { data: completions }, { data: fulfilled }, { data: candidates }] =

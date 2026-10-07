@@ -75,8 +75,15 @@ export async function loadModalityReadiness(
   const latestGrade = new Map<string, { gradeId: string; awardedAt: string; source: string }>();
   for (const g of gradeRows) if (!latestGrade.has(g.studentId)) latestGrade.set(g.studentId, g);
 
+  // Modalidades compostas (ex.: MMA) cujos graus incluem esta modalidade: os seus alunos também contam.
+  const { data: composites } = await supabase.from("ModalityRef").select("code").contains("graduationModalities", [modalityCode]);
+  const compositeCodes = new Set((composites ?? []).map((c) => c.code as string));
   const relevant = students.filter(
-    (s) => s.primaryModality === modalityCode || attendanceByStudent.has(s.id) || latestGrade.has(s.id)
+    (s) =>
+      s.primaryModality === modalityCode ||
+      (s.primaryModality != null && compositeCodes.has(s.primaryModality)) ||
+      attendanceByStudent.has(s.id) ||
+      latestGrade.has(s.id)
   );
   const ids = relevant.map((s) => s.id);
   if (ids.length === 0) return { template, students: [] };
@@ -181,7 +188,7 @@ export async function loadModalityReadiness(
     return {
       studentId: s.id,
       name: names.get(s.userId) || "Sem nome",
-      isPrimary: s.primaryModality === modalityCode,
+      isPrimary: s.primaryModality === modalityCode || (s.primaryModality != null && compositeCodes.has(s.primaryModality)),
       pendingRequirements: (next?.requirements ?? []).filter((r) => !fulfilledSet.has(r.id)),
       activeConvocation: activeEvent ? { eventId: activeEvent.id, title: activeEvent.title, scheduledAt: activeEvent.scheduledAt } : null,
       progress: computeStudentProgress({

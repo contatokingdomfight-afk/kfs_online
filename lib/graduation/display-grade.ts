@@ -45,13 +45,14 @@ export async function loadDisplayGrades(studentIds: string[]): Promise<Map<strin
             .order("awardedAt", { ascending: false })
         ).data ?? []
     ),
-    supabase.from("ModalityRef").select("code, name"),
+    supabase.from("ModalityRef").select("code, name, graduationModalities"),
   ]);
 
   const gradeIds = [...new Set(grades.map((g) => g.gradeId as string))];
-  const gradeRows = await inChunks(gradeIds, async (chunk) => (await supabase.from("GraduationGrade").select("id, name, colors").in("id", chunk)).data ?? []);
+  const gradeRows = await inChunks(gradeIds, async (chunk) => (await supabase.from("GraduationGrade").select("id, name, colors, sortOrder").in("id", chunk)).data ?? []);
   const gradeById = new Map(gradeRows.map((g) => [g.id as string, g]));
   const modalityName = new Map((modalities ?? []).map((m) => [m.code as string, m.name as string]));
+  const components = new Map((modalities ?? []).map((m) => [m.code as string, ((m.graduationModalities as string[] | null) ?? []).filter((c) => published.has(c))]));
 
   // Último grau por (aluno, modalidade).
   const latest = new Map<string, string>();
@@ -63,6 +64,12 @@ export async function loadDisplayGrades(studentIds: string[]): Promise<Map<strin
   for (const s of students) {
     const primary = s.primaryModality as string | null;
     let code: string | null = primary && published.has(primary) ? primary : null;
+    // Modalidade composta (ex.: MMA): o grau mais alto entre as modalidades base (ou a primeira, sem graus).
+    const bases = primary ? components.get(primary) ?? [] : [];
+    if (!code && bases.length > 0) {
+      const position = (c: string) => (gradeById.get(latest.get(`${s.id}|${c}`) ?? "")?.sortOrder as number | undefined) ?? -1;
+      code = [...bases].sort((a, b) => position(b) - position(a))[0] ?? null;
+    }
     if (!code) code = grades.find((g) => g.studentId === s.id)?.modalityCode ?? null;
     if (!code) continue;
     const grade = gradeById.get(latest.get(`${s.id}|${code}`) ?? "");
