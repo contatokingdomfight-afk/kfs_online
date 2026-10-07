@@ -47,6 +47,9 @@ import { rankCoursesForImprovement, getImproveSuggestionsForAxes } from "@/lib/l
 import { getAccessibleLibraryCoursesForStudent } from "@/lib/accessible-library-courses";
 import type { GeneralPerformanceAxisId } from "@/lib/performance-utils";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { loadStudentGraduations } from "@/lib/graduation/load-student-progress";
+import { toGraduationSummary } from "@/components/graduation/GraduationSummaryCard";
 
 const GENERAL_LAST_N = 10;
 
@@ -105,6 +108,16 @@ export default async function DashboardPerformancePage() {
   if (studentId && !planAccess.hasPerformanceTracking) {
     redirect("/dashboard?message=plan-no-performance");
   }
+
+  // Em paralelo com o resto da página; uma falha aqui não deve partir o perfil do atleta.
+  const graduationAdmin = getAdminClientOrNull().client;
+  const graduationsPromise =
+    studentId && graduationAdmin
+      ? loadStudentGraduations(graduationAdmin, studentId).catch((err) => {
+          console.error("loadStudentGraduations:", err);
+          return [];
+        })
+      : Promise.resolve([]);
 
   const modalitiesList = await getCachedModalityRefs(supabase);
   const modalityLabels = new Map<string, string>(modalitiesList.map((m) => [m.code, m.name ?? m.code]));
@@ -433,6 +446,7 @@ export default async function DashboardPerformancePage() {
 
   const modalityLabelsForDashboard: Record<string, string> = { ...Object.fromEntries(modalityLabels), GENERAL: "Geral" };
   const scoresForDetail = enrichScoresForDetail(generalPerformanceScores!, groupedOrder);
+  const [primaryGraduation] = await graduationsPromise;
 
   return (
     <PerformanceFighterDashboard
@@ -450,6 +464,7 @@ export default async function DashboardPerformancePage() {
       xpCurrent={rankInfo?.xpCurrent}
       xpNext={rankInfo?.xpNext}
       beltTimeGate={rankInfo?.beltTimeGate}
+      graduationSummary={primaryGraduation ? toGraduationSummary(primaryGraduation) : null}
       customMissions={customMissions}
       primaryModalityLabel={primaryModalityLabel}
       physicalAssessmentMission={

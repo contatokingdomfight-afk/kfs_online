@@ -85,11 +85,11 @@ function intOrNull(v: unknown, min: number, max: number): number | null {
   return Math.min(max, Math.max(min, Math.round(n)));
 }
 
-function scoreOrNull(v: unknown): number | null {
+function scoreOrNull(v: unknown, max = 5): number | null {
   if (v === null || v === undefined || v === "") return null;
   const n = Number(v);
   if (!Number.isFinite(n)) return null;
-  return Math.round(Math.min(5, Math.max(1, n)) * 100) / 100;
+  return Math.round(Math.min(max, Math.max(1, n)) * 100) / 100;
 }
 
 function id(v: unknown): string | null {
@@ -179,7 +179,8 @@ export function normalizeTemplateDraft(input: unknown): NormalizeResult {
       colors,
       minMonths: intOrNull(g.minMonths, 0, 240) ?? 0,
       minAttendances: intOrNull(g.minAttendances, 0, 5000),
-      minPerformanceAvg: scoreOrNull(g.minPerformanceAvg),
+      // Avaliações de performance dos treinadores: escala 1–10 (radar). Exame: 1–5.
+      minPerformanceAvg: scoreOrNull(g.minPerformanceAvg, 10),
       physicalAssessmentMaxAgeMonths: intOrNull(g.physicalAssessmentMaxAgeMonths, 1, 60),
       passMinAxisAvg: scoreOrNull(g.passMinAxisAvg) ?? 3,
       items,

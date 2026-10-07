@@ -69,11 +69,11 @@ describe("normalizeTemplateDraft", () => {
 
   it("clamps numeric fields into range", () => {
     const draft = baseDraft();
-    Object.assign(draft.grades[0], { minMonths: -2, minPerformanceAvg: 9, passMinAxisAvg: 0, minAttendances: "" });
+    Object.assign(draft.grades[0], { minMonths: -2, minPerformanceAvg: 12, passMinAxisAvg: 0, minAttendances: "" });
     const res = normalizeTemplateDraft(draft);
     expect(res.ok).toBe(true);
     if (!res.ok) return;
-    expect(res.draft.grades[0]).toMatchObject({ minMonths: 0, minPerformanceAvg: 5, passMinAxisAvg: 1, minAttendances: null });
+    expect(res.draft.grades[0]).toMatchObject({ minMonths: 0, minPerformanceAvg: 10, passMinAxisAvg: 1, minAttendances: null });
   });
 
   it("rejects a grade without name", () => {

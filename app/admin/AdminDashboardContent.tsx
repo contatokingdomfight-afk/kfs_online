@@ -26,6 +26,7 @@ import {
   TrendingUp,
   Settings,
   Lock,
+  Medal,
 } from "lucide-react";
 import { getCachedSchools } from "@/lib/cached-reference-data";
 import { getActionItemsData } from "@/lib/admin-action-items";
@@ -125,6 +126,7 @@ export async function AdminDashboardContent({ client, schoolId, access }: Props)
       title: t("adminGroupPlatform"),
       items: [
         { href: "/admin/avaliacao", icon: ClipboardList, label: t("navEvaluationCriteria") },
+        { href: "/admin/graduacao", icon: Medal, label: "Graduação" },
         { href: "/admin/missoes", icon: Target, label: t("navMissions") },
         { href: "/admin/tribo", icon: Megaphone, label: "Tribo" },
         { href: "/admin/metas", icon: TrendingUp, label: t("navGoals") },

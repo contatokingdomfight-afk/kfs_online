@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, CheckCircle2, Copy, FileText, Plus, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Copy, Eye, FileText, Plus, Sparkles } from "lucide-react";
 import {
   accumulatedMonths,
   templatePublishWarnings,
@@ -172,6 +173,14 @@ export function GraduationTemplateEditor({ modalityCode, modalityName, initialTe
           {draft.grades.length} {draft.grades.length === 1 ? "grau" : "graus"} · {totalItems} itens avaliados ·{" "}
           {accumulated[accumulated.length - 1] ?? 0} meses até ao grau máximo
         </p>
+        {savedJson !== "null" && (
+          <Link
+            href={`/admin/graduacao/${encodeURIComponent(modalityCode)}/aluno`}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10, fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--primary)", textDecoration: "none" }}
+          >
+            <Eye size={16} aria-hidden /> Ver como aluno
+          </Link>
+        )}
       </header>
 
       <section className="card" style={{ marginBottom: "var(--space-5)", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>

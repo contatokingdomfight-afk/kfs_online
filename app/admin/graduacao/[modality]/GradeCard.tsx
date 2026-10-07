@@ -619,11 +619,11 @@ function PrerequisitesSection({ grade, accumulatedMonths, onChange }: SectionPro
           value={grade.minPerformanceAvg}
           onChange={(v) => onChange({ minPerformanceAvg: v })}
           min={1}
-          max={5}
-          step={0.1}
+          max={10}
+          step={0.5}
           placeholder="—"
-          suffix="/ 5"
-          help="Média das avaliações dos treinadores. Vazio = não exigido."
+          suffix="/ 10"
+          help="Média das últimas 10 avaliações dos treinadores nesta modalidade (escala 1–10, como no radar). Vazio = não exigido."
         />
         <NumberField
           id={`physical-${grade.id}`}

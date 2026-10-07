@@ -30,6 +30,7 @@ import {
 import { PhysicalAssessmentEvolution } from "@/components/physical-assessment/PhysicalAssessmentEvolution";
 import type { PhysicalEvolutionRow } from "@/lib/physical-assessment-evolution";
 import { PHYSICAL_KPI_DEFS, type PhysicalKpiScores } from "@/lib/physical-assessment-kpi-scores";
+import { GraduationSummaryCard, type GraduationSummary } from "@/components/graduation/GraduationSummaryCard";
 
 const ProfileAchievements = dynamic(
   () =>
@@ -73,6 +74,8 @@ type Props = {
   xpNext?: number;
   /** Trava de tempo na faixa (além do XP) para subir de nível. */
   beltTimeGate?: BeltTimeGateInfo;
+  /** Resumo da graduação (exame) na modalidade principal; null = sem graduação publicada. */
+  graduationSummary?: GraduationSummary | null;
   customMissions?: { id: string; name: string; description: string | null; xpReward: number }[];
   primaryModalityLabel?: string | null;
   /** Missão obrigatória: realizar/renovar avaliação física (aparece quando em falta ou >6 meses). */
@@ -134,6 +137,7 @@ export function PerformanceFighterDashboard({
   xpCurrent,
   xpNext,
   beltTimeGate,
+  graduationSummary = null,
   customMissions = [],
   primaryModalityLabel = null,
   physicalAssessmentMission = null,
@@ -387,6 +391,8 @@ export function PerformanceFighterDashboard({
           }
         />
       )}
+
+      {graduationSummary && <GraduationSummaryCard summary={graduationSummary} />}
 
       {/* Progressão de Níveis e XP — resumo; detalhe completo em /dashboard/performance/faixa */}
       {xpCurrent != null && xpNext != null && rankIndex != null && (
