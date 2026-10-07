@@ -61,6 +61,7 @@ export function getAdminBackofficeSidebarLinks(t: (key: MessageKey) => string): 
     { label: t("navLocations"), href: "/admin/locais", icon: <MapPin size={ICON_SIZE} aria-hidden />, section: t("adminGroupAcademic") },
     { label: "Adesões pendentes", href: "/admin/documentos-adesao" as string, icon: <FileText size={ICON_SIZE} aria-hidden />, section: t("adminGroupAcademic") },
     { label: "Arbitragem", href: "/coach/arbitragem", icon: <Scale size={ICON_SIZE} aria-hidden />, section: t("adminGroupAcademic") },
+    { label: "Exames de graduação", href: "/coach/graduacao" as string, icon: <Medal size={ICON_SIZE} aria-hidden />, section: t("adminGroupAcademic") },
     { label: t("navPlans"), href: "/admin/planos", icon: <CreditCard size={ICON_SIZE} aria-hidden />, section: t("adminGroupContentFinance") },
     { label: t("navCourses"), href: "/admin/cursos", icon: <Book size={ICON_SIZE} aria-hidden />, section: t("adminGroupContentFinance") },
     { label: t("navWeekTheme"), href: "/admin/tema-semana", icon: <CalendarDays size={ICON_SIZE} aria-hidden />, section: t("adminGroupContentFinance") },

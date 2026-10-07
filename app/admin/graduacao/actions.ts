@@ -21,8 +21,8 @@ async function authorize(): Promise<{ userId: string } | { error: string }> {
 }
 
 function friendlyDbError(message: string): string {
-  if (message.includes("StudentGrade")) {
-    return "Não é possível remover um grau que já foi atribuído a alunos.";
+  if (message.includes("StudentGrade") || message.includes("GraduationExamCandidate")) {
+    return "Não é possível remover um grau que já foi atribuído a alunos ou usado num exame.";
   }
   if (message.includes("graduation_template_foreign_ids")) {
     return "O template contém elementos de outra modalidade. Recarrega a página e tenta de novo.";

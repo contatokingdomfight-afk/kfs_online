@@ -9,6 +9,7 @@
  * - O exame é cumulativo: avalia os itens do próximo grau e de todos os graus anteriores.
  */
 
+import { EXAM_RETAKE_MIN_MONTHS, retakeAvailableFrom } from "./exam";
 import {
   accumulatedMonths,
   GRADUATION_AXES,
@@ -20,7 +21,7 @@ import {
 export type ProgressCheckStatus = "done" | "pending";
 
 export type ProgressCheck = {
-  key: "time" | "accumulated" | "attendances" | "performance" | "physical" | `course:${string}` | `requirement:${string}`;
+  key: "retake" | "time" | "accumulated" | "attendances" | "performance" | "physical" | `course:${string}` | `requirement:${string}`;
   label: string;
   status: ProgressCheckStatus;
   /** Texto curto do estado atual (ex.: "2 de 3 meses"). */
@@ -48,6 +49,8 @@ export type StudentProgressInput = {
   completedCourseIds: Set<string>;
   courseNames: Map<string, string>;
   fulfilledRequirementIds: Set<string>;
+  /** Última reprovação no exame do próximo grau (aplica o intervalo mínimo antes de repetir). */
+  lastFailedExamAt?: Date | null;
   now: Date;
 };
 
@@ -211,6 +214,17 @@ export function computeStudentProgress(input: StudentProgressInput): StudentProg
       label: r.label,
       status: done ? "done" : "pending",
       detail: done ? "Validado pela academia" : "A validar pela academia",
+    });
+  }
+
+  if (input.lastFailedExamAt) {
+    const from = retakeAvailableFrom(input.lastFailedExamAt);
+    const ok = input.now >= from;
+    checks.unshift({
+      key: "retake",
+      label: `Intervalo de ${monthsWord(EXAM_RETAKE_MIN_MONTHS)} após o último exame`,
+      status: ok ? "done" : "pending",
+      detail: ok ? "Já podes repetir o exame" : `Podes repetir a partir de ${formatDatePt(from)}`,
     });
   }
 

@@ -20,6 +20,7 @@ import {
   Book,
   BookOpen,
   Banknote,
+  Medal,
 } from "lucide-react";
 import type { SidebarLink } from "@/components/Sidebar";
 import type { MessageKey } from "@/lib/i18n";
@@ -61,6 +62,7 @@ export function getCoachShellSidebarLinks(
     { label: "Arbitragem", href: "/coach/arbitragem" as string, icon: <Scale size={ICON_SIZE} aria-hidden />, section: t("coachGroupClasses") },
     { label: t("navStudents"), href: "/coach/alunos", icon: <GraduationCap size={ICON_SIZE} aria-hidden />, section: t("coachGroupStudents") },
     { label: t("navAthletesCoach"), href: "/coach/atletas", icon: <Dumbbell size={ICON_SIZE} aria-hidden />, section: t("coachGroupStudents") },
+    { label: "Exames de graduação", href: "/coach/graduacao" as string, icon: <Medal size={ICON_SIZE} aria-hidden />, section: t("coachGroupStudents") },
     { label: t("navTrials"), href: "/coach/experimentais", icon: <FlaskConical size={ICON_SIZE} aria-hidden />, section: t("coachGroupStudents") },
     {
       label: t("navEvaluationDocs"),

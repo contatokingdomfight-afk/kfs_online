@@ -50,6 +50,7 @@ const ORDERED_PATH_RULES: readonly Rule[] = [
   { prefix: "/coach/presenca", read: "admin:turmas:read", write: "admin:turmas:write" },
   { prefix: "/coach/round-timer", read: "admin:turmas:read", write: "admin:turmas:write" },
   { prefix: "/coach/arbitragem", read: "admin:sistema:read", write: "admin:sistema:write" },
+  { prefix: "/coach/graduacao", read: "admin:alunos:read", write: "admin:alunos:write" },
   { prefix: "/coach/eventos", read: "admin:sistema:read", write: "admin:sistema:write" },
   { prefix: "/coach/alunos", read: "admin:alunos:read", write: "admin:alunos:write" },
   { prefix: "/coach/desempenho-modalidades", read: "admin:alunos:read", write: "admin:alunos:write" },

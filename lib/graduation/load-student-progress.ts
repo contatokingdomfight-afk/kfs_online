@@ -17,6 +17,19 @@ export type StudentModalityGraduation = {
   currentPosition: number;
   monthlyMinAttendances: number;
   progress: StudentProgress;
+  /** Convocatória para um exame agendado desta modalidade. */
+  convocation: { title: string; scheduledAt: string; location: string | null; gradeName: string } | null;
+  /** Exames já decididos, do mais recente para o mais antigo. */
+  examHistory: StudentExamHistoryEntry[];
+};
+
+export type StudentExamHistoryEntry = {
+  candidateId: string;
+  eventTitle: string;
+  scheduledAt: string;
+  gradeName: string;
+  gradeColors: string[];
+  status: "PASSED" | "FAILED" | "ABSENT";
 };
 
 /**
@@ -79,7 +92,8 @@ export async function loadStudentGraduations(
     .sort((a, b) => Number(b === primary) - Number(a === primary));
   if (codes.length === 0) return [];
 
-  const [templatesFull, { data: athlete }, { data: physical }, { data: completions }, { data: fulfilled }] = await Promise.all([
+  const [templatesFull, { data: athlete }, { data: physical }, { data: completions }, { data: fulfilled }, { data: candidates }] =
+    await Promise.all([
     Promise.all(codes.map((code) => loadGraduationTemplate(supabase, code))),
     supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle(),
     supabase
@@ -91,7 +105,17 @@ export async function loadStudentGraduations(
       .limit(1),
     supabase.from("CourseCompletion").select("course_id").eq("student_id", studentId),
     supabase.from("StudentGraduationRequirement").select("requirementId").eq("studentId", studentId),
+    supabase
+      .from("GraduationExamCandidate")
+      .select("id, eventId, gradeId, status, decidedAt")
+      .eq("studentId", studentId),
   ]);
+
+  const examEventIds = [...new Set((candidates ?? []).map((c) => c.eventId as string))];
+  const { data: examEvents } = examEventIds.length
+    ? await supabase.from("GraduationExamEvent").select("id, modalityCode, title, scheduledAt, location, status").in("id", examEventIds)
+    : { data: [] as { id: string; modalityCode: string; title: string; scheduledAt: string; location: string | null; status: string }[] };
+  const examEventById = new Map((examEvents ?? []).map((e) => [e.id, e]));
 
   const evaluationsByModality = new Map<string, { scores: Record<string, unknown> | null }[]>();
   if (athlete) {
@@ -128,7 +152,39 @@ export async function loadStudentGraduations(
     const evaluations = evaluationsByModality.get(code) ?? [];
     const lastAwardedAt = latest ? new Date(latest.awardedAt) : null;
 
+    const gradeById = new Map(template.grades.map((g) => [g.id, g]));
+    const nextGrade = template.grades[currentGradeIndex + 1] ?? null;
+    const modalityCandidates = (candidates ?? [])
+      .map((c) => ({ ...c, event: examEventById.get(c.eventId) }))
+      .filter((c) => c.event?.modalityCode === code);
+    const convocationRow = modalityCandidates.find((c) => c.status === "CONVOKED" && c.event?.status === "SCHEDULED");
+    const lastFailedExamAt = modalityCandidates
+      .filter((c) => c.status === "FAILED" && nextGrade && c.gradeId === nextGrade.id && c.decidedAt)
+      .map((c) => new Date(c.decidedAt as string))
+      .sort((a, b) => b.getTime() - a.getTime())[0];
+    const examHistory: StudentExamHistoryEntry[] = modalityCandidates
+      .filter((c) => c.status === "PASSED" || c.status === "FAILED" || c.status === "ABSENT")
+      .map((c) => ({
+        candidateId: c.id as string,
+        eventTitle: c.event!.title,
+        scheduledAt: c.event!.scheduledAt,
+        gradeName: gradeById.get(c.gradeId)?.name ?? "Grau",
+        gradeColors: gradeById.get(c.gradeId)?.colors ?? [],
+        status: c.status as StudentExamHistoryEntry["status"],
+      }))
+      .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt));
+
     result.push({
+      convocation:
+        convocationRow && convocationRow.event
+          ? {
+              title: convocationRow.event.title,
+              scheduledAt: convocationRow.event.scheduledAt,
+              location: convocationRow.event.location,
+              gradeName: gradeById.get(convocationRow.gradeId)?.name ?? "Grau",
+            }
+          : null,
+      examHistory,
       modalityCode: code,
       modalityName: modalityNames.get(code) ?? code,
       isPrimary: code === primary,
@@ -148,6 +204,7 @@ export async function loadStudentGraduations(
         completedCourseIds,
         courseNames,
         fulfilledRequirementIds,
+        lastFailedExamAt: lastFailedExamAt ?? null,
         now,
       }),
     });

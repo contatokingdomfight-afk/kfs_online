@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { BookOpen, Check, ChevronRight, Circle, Crown, PartyPopper, Star } from "lucide-react";
+import { BookOpen, CalendarDays, Check, ChevronRight, Circle, Crown, MapPin, PartyPopper, Star } from "lucide-react";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { GRADUATION_AXIS_META, type GraduationItemDraft } from "@/lib/graduation/template";
 import { groupItemsByAxis, type ProgressCheck } from "@/lib/graduation/progress";
-import type { StudentModalityGraduation } from "@/lib/graduation/load-student-progress";
+import type { StudentExamHistoryEntry, StudentModalityGraduation } from "@/lib/graduation/load-student-progress";
+import { ExamStatusChip, formatExamDate } from "@/components/graduation/ExamStatusChip";
 
 const card = "mt-4 rounded-2xl border border-border bg-bg-secondary p-4 sm:p-5";
 const eyebrow = "m-0 text-xs font-bold uppercase tracking-wider text-text-secondary";
@@ -42,7 +43,11 @@ export function StudentGraduationView({ graduation }: { graduation: StudentModal
         </div>
       </section>
 
+      {graduation.convocation && <ConvocationBanner convocation={graduation.convocation} />}
+
       {next ? <NextGrade graduation={graduation} /> : <TopGrade />}
+
+      {graduation.examHistory.length > 0 && <ExamHistory entries={graduation.examHistory} />}
     </div>
   );
 }
@@ -312,4 +317,67 @@ function TopGrade() {
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function ConvocationBanner({ convocation }: { convocation: NonNullable<StudentModalityGraduation["convocation"]> }) {
+  return (
+    <section
+      className="mt-4 rounded-2xl border p-4 sm:p-5"
+      style={{ borderColor: "var(--primary)", background: "color-mix(in srgb, var(--primary) 10%, transparent)" }}
+      aria-labelledby="convocatoria"
+    >
+      <p className={eyebrow} id="convocatoria" style={{ color: "var(--primary)" }}>
+        Estás convocado
+      </p>
+      <p className="m-0 mt-2 text-lg font-bold text-text-primary">Exame para {convocation.gradeName}</p>
+      <p className="m-0 mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-secondary">
+        <span className="inline-flex items-center gap-1">
+          <CalendarDays size={14} aria-hidden /> {formatExamDate(convocation.scheduledAt)}
+        </span>
+        {convocation.location && (
+          <span className="inline-flex items-center gap-1">
+            <MapPin size={14} aria-hidden /> {convocation.location}
+          </span>
+        )}
+      </p>
+      <p className="m-0 mt-2 text-sm text-text-primary">Revê abaixo tudo o que vai ser avaliado. Boa preparação!</p>
+    </section>
+  );
+}
+
+function ExamHistory({ entries }: { entries: StudentExamHistoryEntry[] }) {
+  return (
+    <section className={card} aria-labelledby="historico-exames">
+      <p className={eyebrow} id="historico-exames">
+        Os teus exames
+      </p>
+      <ul className="m-0 mt-3 flex list-none flex-col gap-2 p-0">
+        {entries.map((e) => {
+          const content = (
+            <>
+              <BeltSwatch colors={e.gradeColors} width={36} height={10} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-text-primary">{e.gradeName}</span>
+                <span className="block text-xs text-text-secondary">{formatExamDate(e.scheduledAt, false)}</span>
+              </span>
+              <ExamStatusChip status={e.status} />
+              {e.status !== "ABSENT" && <ChevronRight size={16} aria-hidden className="shrink-0 text-text-secondary" />}
+            </>
+          );
+          const cls = "flex items-center gap-3 rounded-xl border border-border bg-bg px-3 py-2.5";
+          return (
+            <li key={e.candidateId}>
+              {e.status === "ABSENT" ? (
+                <div className={cls}>{content}</div>
+              ) : (
+                <Link href={`/dashboard/graduacao/exame/${e.candidateId}`} className={`${cls} text-inherit no-underline`}>
+                  {content}
+                </Link>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
 }

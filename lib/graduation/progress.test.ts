@@ -133,6 +133,16 @@ describe("computeStudentProgress", () => {
     expect(p.isReadyForExam).toBe(false);
   });
 
+  it("blocks a retake until two months after a failed exam", () => {
+    const base = { attendanceDates: attendances(3, 4), lastPhysicalAssessmentAt: NOW };
+    const blocked = computeStudentProgress(input({ ...base, lastFailedExamAt: new Date("2026-09-01T00:00:00Z") }));
+    expect(blocked.checks[0]).toMatchObject({ key: "retake", status: "pending" });
+    expect(blocked.isReadyForExam).toBe(false);
+    const allowed = computeStudentProgress(input({ ...base, lastFailedExamAt: new Date("2026-07-01T00:00:00Z") }));
+    expect(allowed.checks[0]).toMatchObject({ key: "retake", status: "done" });
+    expect(allowed.isReadyForExam).toBe(true);
+  });
+
   it("has no next grade at the top of the template", () => {
     const p = computeStudentProgress(input({ currentGradeIndex: 9, lastAwardedAt: NOW }));
     expect(p.current?.name).toBe("Preto/Prata/Branco/Vermelho");
