@@ -185,7 +185,7 @@ export function computeStudentProgress(input: StudentProgressInput): StudentProg
       detail:
         avg == null
           ? "Ainda sem avaliações nesta modalidade"
-          : `Atual: ${formatScore(avg)} / 10 (${plural(input.performanceEvaluationCount, "avaliação", "avaliações")})`,
+          : `Atual: ${formatScore(avg)} (${plural(input.performanceEvaluationCount, "avaliação", "avaliações")})`,
       progress: avg == null ? 0 : Math.min(1, avg / next.minPerformanceAvg),
     });
   }

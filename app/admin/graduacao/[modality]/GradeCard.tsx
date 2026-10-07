@@ -622,8 +622,7 @@ function PrerequisitesSection({ grade, accumulatedMonths, onChange }: SectionPro
           max={10}
           step={0.5}
           placeholder="—"
-          suffix="/ 10"
-          help="Média das últimas 10 avaliações dos treinadores nesta modalidade (escala 1–10, como no radar). Vazio = não exigido."
+          help="Média das últimas 10 avaliações dos treinadores nesta modalidade, na escala em que dão as notas. Vazio = não exigido."
         />
         <NumberField
           id={`physical-${grade.id}`}
