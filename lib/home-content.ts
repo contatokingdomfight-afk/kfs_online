@@ -65,6 +65,8 @@ export const homeContent = {
       "Horários de referência (aulas semanais). Alterações pontuais ou cancelamentos podem variar — confirma connosco.",
     scheduleNoClasses:
       "Brevemente publicamos os horários. Entre em contacto ou marque uma aula experimental.",
+    tribeGalleryEyebrow: "Tribo Kingdom",
+    tribeGalleryTitle: "Dentro dos treinos",
 
     // Plans (cards vêm da tabela Plan — ver lib/public-plans.ts)
     plansTitle: "Planos",
@@ -309,6 +311,8 @@ export const homeContent = {
     scheduleFootnote:
       "Reference times (weekly classes). One-off changes or cancellations may vary — please confirm with us.",
     scheduleNoClasses: "We will publish schedules soon. Get in touch or book a trial class.",
+    tribeGalleryEyebrow: "Kingdom Tribe",
+    tribeGalleryTitle: "Inside our training",
 
     plansTitle: "Plans",
     planPer: "/month",

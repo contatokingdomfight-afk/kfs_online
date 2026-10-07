@@ -13,6 +13,7 @@ import { Founders } from "@/components/home/Founders";
 import { YouTubeShortsSection } from "@/components/home/YouTubeShortsSection";
 import { LogoSymbolismSection } from "@/components/home/LogoSymbolismSection";
 import { WeeklyScheduleSection } from "@/components/home/WeeklyScheduleSection";
+import { TribePhotoMarquee } from "@/components/home/TribePhotoMarquee";
 import { WhyChoose } from "@/components/home/WhyChoose";
 import { Testimonials } from "@/components/home/Testimonials";
 import { FAQSection } from "@/components/home/FAQSection";
@@ -21,6 +22,7 @@ import { Footer } from "@/components/home/Footer";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { loadPublicWeeklySchedule } from "@/lib/public-weekly-schedule";
 import { loadPublicPlans } from "@/lib/public-plans";
+import { loadPublicTribePhotos } from "@/lib/public-tribe-photos";
 import { LocalBusinessJsonLd } from "@/components/seo/LocalBusinessJsonLd";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -62,7 +64,11 @@ export default async function HomePage({ searchParams }: Props) {
 
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
   const content = getHomeContent(locale);
-  const [weeklySchedule, publicPlans] = await Promise.all([loadPublicWeeklySchedule(), loadPublicPlans()]);
+  const [weeklySchedule, publicPlans, tribePhotos] = await Promise.all([
+    loadPublicWeeklySchedule(),
+    loadPublicPlans(),
+    loadPublicTribePhotos(),
+  ]);
 
   return (
     <main className="min-h-screen bg-[var(--bg)]">
@@ -87,6 +93,10 @@ export default async function HomePage({ searchParams }: Props) {
       <HomePwaInstallBand locale={locale} title={content.pwaBandTitle} subtitle={content.pwaBandSub} />
       <Stats content={content} />
       <HowItWorks content={content} />
+      <TribePhotoMarquee
+        content={{ tribeGalleryEyebrow: content.tribeGalleryEyebrow, tribeGalleryTitle: content.tribeGalleryTitle }}
+        photos={tribePhotos}
+      />
       <Plans
         plans={publicPlans}
         plansTitle={content.plansTitle}
