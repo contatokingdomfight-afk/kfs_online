@@ -57,7 +57,20 @@ export async function applyEnrollmentFormSubmission(
   const knownHealthCondition = (formData.get("knownHealthCondition") as string)?.trim() || null;
   const emergencyMedication = (formData.get("emergencyMedication") as string)?.trim() || null;
   const membershipStartDate = (formData.get("membershipStartDate") as string)?.trim() || null;
+  const dateOfBirth = (formData.get("dateOfBirth") as string)?.trim() || "";
 
+  if (!dateOfBirth) return { error: "Indica a data de nascimento." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) return { error: "Data de nascimento inválida." };
+  {
+    const d = new Date(`${dateOfBirth}T12:00:00.000Z`);
+    if (Number.isNaN(d.getTime())) return { error: "Data de nascimento inválida." };
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (d > today) return { error: "A data de nascimento não pode ser no futuro." };
+    const min = new Date();
+    min.setFullYear(min.getFullYear() - 120);
+    if (d < min) return { error: "Data de nascimento fora do intervalo aceite." };
+  }
   if (!idDocument || idDocument.length < 4) return { error: "Indica o n.º do Cartão de Cidadão ou Passaporte." };
   if (!taxId || taxId.replace(/\s/g, "").length < 9) return { error: "Indica um NIF válido." };
   if (!addressLine || addressLine.length < 5) return { error: "Indica a morada completa." };
@@ -166,13 +179,22 @@ export async function applyEnrollmentFormSubmission(
 
   const profilePatch = {
     phone,
+    dateOfBirth,
     emergencyContact,
     medicalNotes: medicalNotes || null,
     updatedAt: new Date().toISOString(),
   };
 
+  // A data de nascimento só existe no perfil (o contrato e a regra de menores lêem-na de lá),
+  // por isso aqui um erro tem de bloquear — ao contrário dos restantes campos espelhados.
   if (profile?.id) {
-    await supabase.from("StudentProfile").update(profilePatch).eq("id", profile.id);
+    const { error } = await supabase.from("StudentProfile").update(profilePatch).eq("id", profile.id);
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await supabase
+      .from("StudentProfile")
+      .insert({ id: crypto.randomUUID(), studentId, ...profilePatch });
+    if (error) return { error: error.message };
   }
 
   return {};

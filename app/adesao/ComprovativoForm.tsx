@@ -162,16 +162,17 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props
             ) : null}
           </Field>
           <Field label="Data de nascimento">
-            <input type="date" className="input w-full" value={prefill.dateOfBirth} readOnly required />
-            {!prefill.dateOfBirth ? (
-              <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--danger)" }}>
-                Falta a tua data de nascimento no perfil.{" "}
-                <Link href="/dashboard/perfil" style={{ color: "var(--primary)", fontWeight: 600 }}>
-                  Atualiza aqui
-                </Link>{" "}
-                antes de continuares.
-              </p>
-            ) : null}
+            {/* Editável aqui: alunos registados presencialmente saltam o onboarding e chegam
+                sem data de nascimento — mandá-los para o perfil bloqueava a assinatura. */}
+            <input
+              id="dateOfBirth"
+              name="dateOfBirth"
+              type="date"
+              required
+              className="input w-full"
+              defaultValue={prefill.dateOfBirth}
+              max={new Date().toISOString().slice(0, 10)}
+            />
           </Field>
           <Field label="E-mail">
             <input type="email" className="input w-full" value={prefill.email} readOnly required />
