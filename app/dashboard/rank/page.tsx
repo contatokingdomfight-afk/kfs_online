@@ -6,7 +6,10 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getPlanAccess } from "@/lib/plan-access";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { getFilteredSchoolLeaderboard } from "@/lib/leaderboard";
+import { getLeaderboardV2 } from "@/lib/leaderboard";
+import { getCachedModalityRefs } from "@/lib/cached-reference-data";
+import { summarizeXp, isXpSource, type XpSource, type XpSummaryRow } from "@/lib/xp-rules";
+import { MyXpCard } from "./MyXpCard";
 import { getEvolutionLeaderboard } from "@/lib/leaderboard-evolution";
 import { getBeltIndexFromXp, getBeltName } from "@/lib/belts";
 import {
@@ -72,10 +75,22 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
 
   const leaderboardFilters = { schoolId: resolvedSchoolId, modality, ageBucket };
 
-  const xpResult =
+  const [xpResult, summaryRes, rulesRes, modalityRefs] =
     mode === "XP"
-      ? await getFilteredSchoolLeaderboard(supabase, { ...leaderboardFilters, periodStart }, 100, mySchoolId)
-      : null;
+      ? await Promise.all([
+          getLeaderboardV2(supabase, { ...leaderboardFilters, periodStart }, 200),
+          supabase.rpc("get_my_xp_summary", { p_period_start: periodStart }),
+          supabase.from("XpRule").select("source, xp"),
+          getCachedModalityRefs(supabase),
+        ])
+      : [null, null, null, []];
+  const modalityNames = new Map<string, string>(modalityRefs.map((m) => [m.code, m.name ?? m.code]));
+  const xpSummary = summarizeXp((summaryRes?.data as XpSummaryRow[] | null) ?? []);
+  const xpRules: Partial<Record<XpSource, number>> = Object.fromEntries(
+    ((rulesRes?.data as { source: string; xp: number }[] | null) ?? []).filter((r) => isXpSource(r.source)).map((r) => [r.source, r.xp])
+  );
+  const periodLabel =
+    period === "WEEK" ? t("rankPeriodWeek") : period === "MONTH" ? t("rankPeriodMonth") : period === "LAST_30D" ? t("rankPeriodLast30d") : null;
 
   const evolutionResult =
     mode === "EVOLUTION"
@@ -84,7 +99,9 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
 
   const rows = xpResult?.rows ?? [];
   const error = xpResult?.error ?? evolutionResult?.error ?? null;
-  const errorKind = xpResult?.errorKind;
+  const me = rows.find((r) => r.is_current_user) ?? null;
+  // A RPC inclui sempre o aluno; se ficou fora do top, não conta para o total listado.
+  const totalRanked = me && me.rank > rows.length ? me.rank : rows.length;
   const evolutionRows = evolutionResult?.rows ?? [];
   const excludedCount = evolutionResult?.excludedCount ?? 0;
 
@@ -139,15 +156,20 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
         messages={filterMessages}
       />
 
-      {errorKind === "ranking_rpc_not_deployed" ? (
-        <div
-          className="card p-4 text-sm space-y-2"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <p className="font-semibold text-[var(--text-primary)]">{t("rankError")}</p>
-          <p className="text-[var(--text-secondary)] leading-relaxed">{t("rankErrorRankingRpcMissing")}</p>
-        </div>
-      ) : error ? (
+      {mode === "XP" && !error && (
+        <MyXpCard
+          summary={xpSummary}
+          me={me}
+          totalRanked={totalRanked}
+          modality={modality}
+          modalityNames={modalityNames}
+          rules={xpRules}
+          periodLabel={periodLabel}
+          locale={locale}
+        />
+      )}
+
+      {error ? (
         <div
           className="card p-4 text-sm"
           style={{ color: "var(--danger)", borderColor: "var(--border)" }}
@@ -176,13 +198,14 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
                     {t("rankColBelt")}
                   </th>
                   <th scope="col" className="text-right py-3 px-3 font-semibold text-[var(--text-primary)]">
-                    XP
+                    {modality ? "XP" : "Pontos"}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => {
-                  const beltIdx = getBeltIndexFromXp(row.xp);
+                  // Faixa ainda calculada pelo XP antigo até à migração para graus de graduação.
+                  const beltIdx = getBeltIndexFromXp(row.legacy_xp);
                   const beltLabel = getBeltName(beltIdx);
                   const highlight = row.is_current_user;
                   const medal = rankMedal(row.rank);
@@ -219,7 +242,12 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
                         {beltLabel}
                       </td>
                       <td className="py-3 px-3 align-middle text-right font-semibold text-[var(--primary)]">
-                        {row.xp.toLocaleString(locale === "en" ? "en-GB" : "pt-PT")}
+                        {row.score.toLocaleString(locale === "en" ? "en-GB" : "pt-PT")}
+                        {!modality && (
+                          <span className="block text-xs font-normal text-[var(--text-secondary)]">
+                            {row.xp.toLocaleString(locale === "en" ? "en-GB" : "pt-PT")} XP
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );

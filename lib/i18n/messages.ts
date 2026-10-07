@@ -146,7 +146,7 @@ export const messages = {
     navRank: "Rank",
     rankTitle: "Ranking",
     rankSubtitle:
-      "Classificação por XP entre alunos ativos. Usa os filtros para te comparares com a tua escola, modalidade ou faixa etária.",
+      "Classificação entre alunos ativos: no geral pela Pontuação Kingdom (comparação justa entre modalidades) e, ao escolher uma modalidade, pelo XP nela. Usa os filtros para te comparares com a tua escola, modalidade ou faixa etária.",
     rankEmpty: "Ainda não há dados de ranking para a tua escola.",
     rankEmptyFiltered:
       "Ninguém corresponde a estes filtros. Tenta «Todas» num dos critérios ou confirma a data de nascimento no perfil se escolheste faixa etária.",
@@ -1514,7 +1514,7 @@ export const messages = {
     navRank: "Rank",
     rankTitle: "Leaderboard",
     rankSubtitle:
-      "XP ranking among active students. Use the filters to compare within your school, modality, or age group.",
+      "Ranking among active students: overall by Kingdom Score (fair across modalities) and, when you pick a modality, by XP in it. Use the filters to compare within your school, modality, or age group.",
     rankEmpty: "No leaderboard data for your school yet.",
     rankEmptyFiltered:
       "No one matches these filters. Try \"All\" on one of the criteria, or check your date of birth in your profile if you chose an age band.",

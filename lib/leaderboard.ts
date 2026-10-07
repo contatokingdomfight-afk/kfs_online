@@ -156,3 +156,50 @@ export async function getSchoolLeaderboard(
 ): Promise<LeaderboardResult> {
   return getFilteredSchoolLeaderboard(supabase, {}, limit, mySchoolId);
 }
+
+export type LeaderboardV2Row = {
+  rank: number;
+  student_id: string;
+  display_name: string;
+  /** Sem modalidade: Pontuação Kingdom (0–1000). Com modalidade: XP da modalidade. */
+  score: number;
+  xp: number;
+  /** XP antigo (Athlete.xp) — ainda usado para a faixa por XP até à migração para graus. */
+  legacy_xp: number;
+  athlete_id: string | null;
+  is_current_user: boolean;
+  modalities: string[];
+};
+
+/**
+ * Ranking v2 (RPC `get_leaderboard_v2`): XP calculado por modalidade a partir das fontes
+ * (presenças, avaliações, cursos, exames). Sem modalidade devolve a Pontuação Kingdom,
+ * normalizada por percentis para quem treina várias modalidades não ficar à frente só por volume.
+ * O aluno autenticado vem sempre incluído, mesmo fora do limite.
+ */
+export async function getLeaderboardV2(
+  supabase: SupabaseClient,
+  filters: LeaderboardFilters,
+  limit = 100
+): Promise<{ rows: LeaderboardV2Row[]; error: string | null }> {
+  const { data, error } = await supabase.rpc("get_leaderboard_v2", {
+    p_school_id: filters.schoolId ?? null,
+    p_modality: filters.modality ?? null,
+    p_age_bucket: filters.ageBucket ?? null,
+    p_limit: limit,
+    p_period_start: filters.periodStart ?? null,
+  });
+  if (error) return { rows: [], error: error.message };
+  const rows = (Array.isArray(data) ? data : []).map((r: Record<string, unknown>) => ({
+    rank: Number(r.rank ?? 0),
+    student_id: String(r.student_id ?? ""),
+    display_name: String(r.display_name ?? ""),
+    score: Number(r.score ?? 0),
+    xp: Number(r.xp ?? 0),
+    legacy_xp: Number(r.legacy_xp ?? 0),
+    athlete_id: r.athlete_id ? String(r.athlete_id) : null,
+    is_current_user: Boolean(r.is_current_user),
+    modalities: Array.isArray(r.modalities) ? (r.modalities as string[]) : [],
+  }));
+  return { rows, error: null };
+}
