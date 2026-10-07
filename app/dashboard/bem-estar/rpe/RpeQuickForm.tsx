@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { submitRpeAction, type RpeFormState } from "../actions";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 
@@ -32,7 +33,7 @@ export function RpeQuickForm({
   weightLabel,
   weightOptionalHint,
 }: Props) {
-  const [state, action] = useFormState(submitRpeAction, null as RpeFormState);
+  const [state, action] = useActionState(submitRpeAction, null as RpeFormState);
 
   return (
     <form

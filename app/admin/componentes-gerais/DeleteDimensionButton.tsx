@@ -1,11 +1,10 @@
 "use client";
 
-import { useFormState } from "react-dom";
 import { deleteDimension, type DimensionResult } from "./actions";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useActionState } from "react";
 
 export function DeleteDimensionButton({ dimensionId, dimensionName }: { dimensionId: string; dimensionName: string }) {
-  const [state, formAction] = useFormState(deleteDimension, null as DimensionResult | null);
+  const [state, formAction] = useActionState(deleteDimension, null as DimensionResult | null);
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {

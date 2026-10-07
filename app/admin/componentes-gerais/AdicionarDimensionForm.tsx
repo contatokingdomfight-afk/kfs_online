@@ -1,10 +1,10 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { createDimension, type DimensionResult } from "./actions";
 
 export function AdicionarDimensionForm() {
-  const [state, formAction] = useFormState(createDimension, null as DimensionResult | null);
+  const [state, formAction] = useActionState(createDimension, null as DimensionResult | null);
 
   return (
     <form

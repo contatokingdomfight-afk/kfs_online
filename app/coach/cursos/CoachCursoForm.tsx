@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { createCoachCourse, updateCoachCourse, type CoachCourseFormResult } from "./actions";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 
@@ -47,7 +47,7 @@ export function CoachCursoForm({
   initialAvailableForPurchase = true,
 }: Props) {
   const action = courseId ? updateCoachCourse : createCoachCourse;
-  const [state, formAction] = useFormState(action, null as CoachCourseFormResult | null);
+  const [state, formAction] = useActionState(action, null as CoachCourseFormResult | null);
 
   return (
     <form

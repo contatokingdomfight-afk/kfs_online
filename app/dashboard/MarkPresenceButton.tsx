@@ -1,12 +1,12 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { markPresence } from "./actions";
 
 type Props = { lessonId: string };
 
 export function MarkPresenceButton({ lessonId }: Props) {
-  const [state, formAction] = useFormState(
+  const [state, formAction] = useActionState(
     async (_: unknown, formData: FormData) => {
       const lid = formData.get("lessonId") as string;
       return lid ? await markPresence(lid) : {};

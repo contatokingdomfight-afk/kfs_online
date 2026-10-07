@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useRef, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { createCashDeposit, type CashDepositActionResult } from "../actions";
 
 function SubmitButton({ label }: { label: string }) {
@@ -31,7 +31,7 @@ export function CashDepositForm({
   physicalCashOnHand: number;
   labels: Labels;
 }) {
-  const [state, formAction] = useFormState(createCashDeposit, null as CashDepositActionResult | null);
+  const [state, formAction] = useActionState(createCashDeposit, null as CashDepositActionResult | null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {

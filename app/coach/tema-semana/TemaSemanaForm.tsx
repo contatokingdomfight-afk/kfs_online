@@ -1,7 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
-import { useEffect, useId, useState, type CSSProperties } from "react";
+import { useFormStatus } from "react-dom";
+import { useEffect, useId, useState, type CSSProperties, useActionState } from "react";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { saveWeekTheme, type SaveWeekThemeResult } from "./actions";
@@ -139,7 +139,7 @@ export function TemaSemanaForm({
   initialLocale,
 }: Props) {
   const t = getTranslations(initialLocale);
-  const [state, formAction] = useFormState(saveWeekTheme, null as SaveWeekThemeResult | null);
+  const [state, formAction] = useActionState(saveWeekTheme, null as SaveWeekThemeResult | null);
   const [successOpen, setSuccessOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState(initialCourseId ?? "");
   const [selectedUnitId, setSelectedUnitId] = useState(initialUnitId ?? "");

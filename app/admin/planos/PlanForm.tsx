@@ -1,7 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { createPlan, updatePlan, type PlanFormResult } from "./actions";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
@@ -52,7 +51,7 @@ export function PlanForm({
   initialIncludesExclusiveBenefits = false,
 }: Props) {
   const action = planId ? updatePlan : createPlan;
-  const [state, formAction] = useFormState(action, null as PlanFormResult | null);
+  const [state, formAction] = useActionState(action, null as PlanFormResult | null);
   const [schools, setSchools] = useState<Array<{ id: string; name: string }>>([]);
   const [loadingSchools, setLoadingSchools] = useState(true);
   const router = useRouter();

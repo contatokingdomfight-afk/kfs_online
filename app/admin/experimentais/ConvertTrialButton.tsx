@@ -1,10 +1,10 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { convertTrialToStudent, type ConvertTrialResult } from "./actions";
 
 export function ConvertTrialButton({ trialId }: { trialId: string }) {
-  const [state, formAction] = useFormState(convertTrialToStudent, null as ConvertTrialResult | null);
+  const [state, formAction] = useActionState(convertTrialToStudent, null as ConvertTrialResult | null);
 
   return (
     <form action={formAction} style={{ display: "inline-block" }}>

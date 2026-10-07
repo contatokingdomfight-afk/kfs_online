@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createCourse, updateCourse, type CourseFormResult } from "./actions";
 
@@ -59,7 +59,7 @@ export function CursoForm({
         { value: "KICKBOXING", label: "Kickboxing" },
         { value: "MMA", label: "MMA" },
       ];
-  const [state, formAction] = useFormState(action, null as CourseFormResult | null);
+  const [state, formAction] = useActionState(action, null as CourseFormResult | null);
 
   return (
     <form

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom";
 import { createModule, updateModule, type ModuleFormResult } from "./actions";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 
@@ -27,7 +26,7 @@ export function ModuleForm({
 }: Props) {
   const router = useRouter();
   const action = moduleId ? updateModule : createModule;
-  const [state, formAction] = useFormState(action, null as ModuleFormResult | null);
+  const [state, formAction] = useActionState(action, null as ModuleFormResult | null);
 
   useEffect(() => {
     if (state && !state.error) {

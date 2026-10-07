@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useActionState } from "react";
 import Link from "next/link";
-import { useFormState } from "react-dom";
 import { signAdesaoDocuments, type SignAdesaoDocumentsResult } from "./actions";
 import { FINAL_DECLARATIONS } from "@/lib/enrollment-form";
 import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
@@ -38,7 +37,7 @@ export function AdesaoSigningForm({
   studentId,
   backHref = "/adesao?passo=1",
 }: Props) {
-  const [state, formAction] = useFormState(action, null as SignAdesaoDocumentsResult | null);
+  const [state, formAction] = useActionState(action, null as SignAdesaoDocumentsResult | null);
   const formRef = useRef<HTMLFormElement>(null);
   const sigPadRef = useRef<SignaturePadHandle>(null);
   /** true só na 2.ª chamada de onSubmit (disparada por requestSubmit() após o upload) — deixa submeter normalmente. */

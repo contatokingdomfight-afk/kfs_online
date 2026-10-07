@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useMemo, useState, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { coachCheckInStudentFromForm } from "./actions";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
@@ -23,7 +22,7 @@ function CandidateRow({
   occurrenceDate: string;
 }) {
   const router = useRouter();
-  const [state, formAction] = useFormState(coachCheckInStudentFromForm, null as { error?: string } | null);
+  const [state, formAction] = useActionState(coachCheckInStudentFromForm, null as { error?: string } | null);
   const label = candidate.name || candidate.email;
   const modalityLabel = candidate.primaryModality
     ? MODALITY_LABELS[candidate.primaryModality] ?? candidate.primaryModality

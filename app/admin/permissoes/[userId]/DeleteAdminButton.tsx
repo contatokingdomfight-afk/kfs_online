@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState } from "react-dom";
+import { useState, useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { deleteAdmin } from "../actions";
 
@@ -19,7 +18,7 @@ export function DeleteAdminButton({
   soleAdmin: boolean;
 }) {
   const [confirm, setConfirm] = useState(false);
-  const [state, formAction] = useFormState(deleteAdmin, null);
+  const [state, formAction] = useActionState(deleteAdmin, null);
 
   const blockedReason = isSelf
     ? "Não podes eliminar a tua própria conta neste ecrã."

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useState, useEffect, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { saveModalityEvaluationConfig } from "./actions";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
@@ -48,7 +48,7 @@ type Props = { modality: string; initialConfig: string };
 export function CriteriosAvaliacaoForm({ modality, initialConfig }: Props) {
   const [categorias, setCategorias] = useState<CategoryEdit[]>(() => buildInitialState(initialConfig));
   const [successDismissed, setSuccessDismissed] = useState(false);
-  const [state, formAction] = useFormState(saveModalityEvaluationConfig, null as { error?: string; success?: boolean } | null);
+  const [state, formAction] = useActionState(saveModalityEvaluationConfig, null as { error?: string; success?: boolean } | null);
 
   useEffect(() => {
     setCategorias(buildInitialState(initialConfig));

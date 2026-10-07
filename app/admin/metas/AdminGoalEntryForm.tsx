@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { addGoalEntry, type GoalActionResult } from "./actions";
 import type { AdminGoalMetricType } from "@/lib/admin-business-goals";
 
@@ -19,7 +19,7 @@ function todayIso(): string {
 }
 
 export function AdminGoalEntryForm({ goalId, metricType, disabled }: Props) {
-  const [state, formAction] = useFormState(addGoalEntry, null as GoalActionResult | null);
+  const [state, formAction] = useActionState(addGoalEntry, null as GoalActionResult | null);
 
   return (
     <form action={formAction} className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>

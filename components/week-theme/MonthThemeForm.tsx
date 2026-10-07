@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { saveMonthTheme, type SaveMonthThemeResult } from "@/lib/month-theme-actions";
@@ -24,7 +25,7 @@ function SubmitButton({ label, savingLabel }: { label: string; savingLabel: stri
 
 export function MonthThemeForm({ modality, month, initialTitle, initialDescription, locale }: Props) {
   const t = getTranslations(locale);
-  const [state, formAction] = useFormState(saveMonthTheme, null as SaveMonthThemeResult | null);
+  const [state, formAction] = useActionState(saveMonthTheme, null as SaveMonthThemeResult | null);
 
   return (
     <form

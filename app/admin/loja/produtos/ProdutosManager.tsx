@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useActionState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import {
   createProduct,
   addProductVariant,
@@ -177,7 +177,7 @@ export function ProdutosManager({
 }
 
 function CreateProductForm({ suppliers, schools }: { suppliers: ProductSupplierRow[]; schools: School[] }) {
-  const [createState, createAction] = useFormState(createProduct, null as ActionResult | null);
+  const [createState, createAction] = useActionState(createProduct, null as ActionResult | null);
   const createRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -282,7 +282,7 @@ function ProductFields({
 }
 
 function CreateSupplierForm() {
-  const [state, action] = useFormState(createSupplier, null as ActionResult | null);
+  const [state, action] = useActionState(createSupplier, null as ActionResult | null);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.success) ref.current?.reset();
@@ -376,7 +376,7 @@ function EditSupplierCard({
   onDone: () => void;
   onCancel: () => void;
 }) {
-  const [state, action] = useFormState(updateSupplier, null as ActionResult | null);
+  const [state, action] = useActionState(updateSupplier, null as ActionResult | null);
   useEffect(() => {
     if (state?.success) onDone();
   }, [state, onDone]);
@@ -503,7 +503,7 @@ function EditProductCard({
   onDone: () => void;
   onCancel: () => void;
 }) {
-  const [state, action] = useFormState(updateProduct, null as ActionResult | null);
+  const [state, action] = useActionState(updateProduct, null as ActionResult | null);
   useEffect(() => {
     if (state?.success) onDone();
   }, [state, onDone]);
@@ -550,7 +550,7 @@ function RemoveProductButton({ product }: { product: ProductRow }) {
 }
 
 function VariantList({ productId, variants }: { productId: string; variants: ProductVariantRow[] }) {
-  const [state, action] = useFormState(addProductVariant, null as ActionResult | null);
+  const [state, action] = useActionState(addProductVariant, null as ActionResult | null);
   const activeVariants = variants.filter((v) => v.isActive);
 
   return (

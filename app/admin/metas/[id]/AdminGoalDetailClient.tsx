@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import Link from "next/link";
 import { cancelGoal, completeGoal, deleteGoalEntry, type GoalActionResult } from "../actions";
 import { AdminGoalEntryForm } from "../AdminGoalEntryForm";
@@ -26,8 +26,8 @@ type Props = {
 };
 
 export function AdminGoalDetailClient({ goal, entries, schools }: Props) {
-  const [cancelState, cancelAction] = useFormState(cancelGoal, null as GoalActionResult | null);
-  const [completeState, completeAction] = useFormState(completeGoal, null as GoalActionResult | null);
+  const [cancelState, cancelAction] = useActionState(cancelGoal, null as GoalActionResult | null);
+  const [completeState, completeAction] = useActionState(completeGoal, null as GoalActionResult | null);
   const pct = progressPercent(goal.currentValue, goal.targetValue);
   const overdue = isGoalOverdue(goal);
   const canPost = goal.status !== "CANCELLED";
@@ -126,7 +126,7 @@ function EntryRow({
   goalId: string;
   metricType: AdminGoalWithSchool["metricType"];
 }) {
-  const [state, action] = useFormState(deleteGoalEntry, null as GoalActionResult | null);
+  const [state, action] = useActionState(deleteGoalEntry, null as GoalActionResult | null);
   const sign = entry.deltaValue >= 0 ? "+" : "";
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { createEvaluation, type CreateEvaluationResult } from "../actions";
 import { RADAR_LABELS } from "@/lib/performance-utils";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function AvaliacaoAtleta({ athleteId }: Props) {
-  const [state, formAction] = useFormState(createEvaluation, null as CreateEvaluationResult | null);
+  const [state, formAction] = useActionState(createEvaluation, null as CreateEvaluationResult | null);
 
   return (
     <form

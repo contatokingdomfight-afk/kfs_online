@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { submitPainAction, type SimpleFormState } from "../actions";
 import { PAIN_REGIONS } from "@/lib/pain-regions";
 
@@ -16,7 +17,7 @@ function Submit({ label }: { label: string }) {
 type Props = { locale: "pt" | "en" };
 
 export function PainForm({ locale }: Props) {
-  const [state, action] = useFormState(submitPainAction, null as SimpleFormState);
+  const [state, action] = useActionState(submitPainAction, null as SimpleFormState);
 
   return (
     <form

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useFormState } from "react-dom";
+import { useState, useCallback, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { setAttendanceStatusFromForm, coachCheckInStudentFromForm } from "./actions";
 import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
@@ -54,8 +53,8 @@ export function AttendanceRow({
   isCrossModality = false,
 }: Props) {
   const router = useRouter();
-  const [statusState, statusAction] = useFormState(setAttendanceStatusFromForm, null as { error?: string } | null);
-  const [checkInState, checkInAction] = useFormState(coachCheckInStudentFromForm, null as { error?: string } | null);
+  const [statusState, statusAction] = useActionState(setAttendanceStatusFromForm, null as { error?: string } | null);
+  const [checkInState, checkInAction] = useActionState(coachCheckInStudentFromForm, null as { error?: string } | null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showSuccessConfirm, setShowSuccessConfirm] = useState(false);
 

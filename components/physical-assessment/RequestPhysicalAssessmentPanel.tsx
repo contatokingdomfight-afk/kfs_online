@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom";
 import { getTranslations } from "@/lib/i18n";
 import {
   cancelPhysicalAssessmentRequest,
@@ -18,7 +17,7 @@ type Props = {
 export function RequestPhysicalAssessmentPanel({ locale, initialPending }: Props) {
   const t = getTranslations(locale);
   const router = useRouter();
-  const [createState, createAction] = useFormState(
+  const [createState, createAction] = useActionState(
     createPhysicalAssessmentRequest,
     null as PhysicalAssessmentRequestActionResult | null
   );
@@ -29,7 +28,7 @@ export function RequestPhysicalAssessmentPanel({ locale, initialPending }: Props
     ): Promise<PhysicalAssessmentRequestActionResult> => cancelPhysicalAssessmentRequest(),
     []
   );
-  const [cancelState, cancelAction] = useFormState(
+  const [cancelState, cancelAction] = useActionState(
     cancelWrapped,
     null as PhysicalAssessmentRequestActionResult | null
   );

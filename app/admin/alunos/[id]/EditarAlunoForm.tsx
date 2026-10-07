@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import {
   updateStudent,
   setStudentFullAccess,
@@ -108,10 +108,10 @@ export function AdminAlunoQuickActions({
   /** true quando o email actual é o gerado internamente (@alunos.kingdomfight.pt). */
   initialSyntheticLoginEmail?: boolean;
 }) {
-  const [fullAccessState, fullAccessFormAction] = useFormState(setStudentFullAccess, null as SetFullAccessResult | null);
-  const [clearPlanState, clearPlanFormAction] = useFormState(clearStudentPlanAccess, null as ClearStudentPlanResult | null);
-  const [promoteState, promoteFormAction] = useFormState(promoteStudentToRole, null as PromoteStudentResult | null);
-  const [emailState, emailFormAction] = useFormState(changeStudentLoginEmail, null as ChangeStudentLoginEmailResult | null);
+  const [fullAccessState, fullAccessFormAction] = useActionState(setStudentFullAccess, null as SetFullAccessResult | null);
+  const [clearPlanState, clearPlanFormAction] = useActionState(clearStudentPlanAccess, null as ClearStudentPlanResult | null);
+  const [promoteState, promoteFormAction] = useActionState(promoteStudentToRole, null as PromoteStudentResult | null);
+  const [emailState, emailFormAction] = useActionState(changeStudentLoginEmail, null as ChangeStudentLoginEmailResult | null);
   const router = useRouter();
 
   const roleNorm = String(editedUserRole ?? "")
@@ -349,7 +349,7 @@ export function EditarAlunoForm({
     setUserDismissed(false);
     return updateStudent(prev, formData);
   };
-  const [state, formAction] = useFormState(wrappedAction, null as UpdateStudentResult | null);
+  const [state, formAction] = useActionState(wrappedAction, null as UpdateStudentResult | null);
   const router = useRouter();
 
   const showSuccess = Boolean(state?.success && !state?.error && !userDismissed);

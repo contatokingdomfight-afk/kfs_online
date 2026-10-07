@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState } from "react-dom";
+import { useState, useActionState } from "react";
 import { MapPin, Phone, Mail } from "lucide-react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createSchool, updateSchool, toggleSchoolActive, type SchoolResult } from "./actions";
@@ -17,7 +16,7 @@ type School = {
 };
 
 function ToggleSchoolActiveForm({ schoolId, isActive }: { schoolId: string; isActive: boolean }) {
-  const [toggleState, toggleAction] = useFormState(toggleSchoolActive, null);
+  const [toggleState, toggleAction] = useActionState(toggleSchoolActive, null);
   return (
     <form action={toggleAction} style={{ display: "inline" }}>
       <input type="hidden" name="schoolId" value={schoolId} />
@@ -48,8 +47,8 @@ export function EscolasManager({ schools: initialSchools }: { schools: School[] 
   const [editPhone, setEditPhone] = useState("");
   const [editEmail, setEditEmail] = useState("");
 
-  const [createState, createAction] = useFormState(createSchool, null as SchoolResult);
-  const [updateState, updateAction] = useFormState(updateSchool, null as SchoolResult);
+  const [createState, createAction] = useActionState(createSchool, null as SchoolResult);
+  const [updateState, updateAction] = useActionState(updateSchool, null as SchoolResult);
 
   const startEdit = (school: School) => {
     setEditingId(school.id);

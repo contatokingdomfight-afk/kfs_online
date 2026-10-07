@@ -6,7 +6,7 @@ import { saveStandaloneEvaluation } from "@/app/coach/alunos/[id]/actions";
 export type SaveCoachStudentEvaluationResult = { error?: string; success?: boolean };
 
 /**
- * Uma única action para o modal de avaliação (aula vs perfil), para um só `useFormState`
+ * Uma única action para o modal de avaliação (aula vs perfil), para um só `useActionState`
  * e transição/pending coerentes no cliente.
  */
 export async function saveCoachStudentEvaluation(

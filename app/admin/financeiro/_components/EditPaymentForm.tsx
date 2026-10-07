@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useRef, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { updateAdminPayment, type PaymentActionResult } from "../actions";
 import type { PaymentListRow } from "@/lib/admin-payment-list-grouping";
 import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
@@ -40,7 +40,7 @@ function defaultPaymentMethod(payment: PaymentListRow): FinancePaymentMethod {
 }
 
 export function EditPaymentForm({ payment, labels, onDone, onCancel }: Props) {
-  const [state, action] = useFormState(updateAdminPayment, null as PaymentActionResult | null);
+  const [state, action] = useActionState(updateAdminPayment, null as PaymentActionResult | null);
   const ref = useRef<HTMLFormElement>(null);
   const isPaid = payment.status === "PAID";
 

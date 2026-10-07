@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom";
 import { grantExtraSessions, type ExtraSessionsActionResult } from "../extra-sessions-actions";
 import { FINANCE_PAYMENT_METHODS, FINANCE_PAYMENT_METHOD_LABELS_PT } from "@/lib/finance-payment-method";
 import {
@@ -41,7 +40,7 @@ export function StudentExtraSessionsSection({
   revalidateCoachPath,
 }: Props) {
   const router = useRouter();
-  const [state, formAction] = useFormState(grantExtraSessions, null as ExtraSessionsActionResult | null);
+  const [state, formAction] = useActionState(grantExtraSessions, null as ExtraSessionsActionResult | null);
   const [quantity, setQuantity] = useState(mode === "plan_cap" ? KINGDOM_WEEK_EXHAUSTED_BUNDLE_QUANTITY : 1);
 
   const quote = useMemo(() => calculateDropInPrice(quantity, pricingContext), [quantity, pricingContext]);

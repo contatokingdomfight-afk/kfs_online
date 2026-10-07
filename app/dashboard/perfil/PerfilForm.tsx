@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useFormState } from "react-dom";
+import { useState, useTransition, useActionState } from "react";
 import { saveStudentProfile, type SaveProfileResult } from "./actions";
 import { getTranslations } from "@/lib/i18n";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
@@ -34,7 +33,7 @@ export function PerfilForm({ initial, locale }: Props) {
     setUserDismissed(false);
     return saveStudentProfile(prev, formData);
   };
-  const [state, formAction] = useFormState(wrappedAction, null as SaveProfileResult | null);
+  const [state, formAction] = useActionState(wrappedAction, null as SaveProfileResult | null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

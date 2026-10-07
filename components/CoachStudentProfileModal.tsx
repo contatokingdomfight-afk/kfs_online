@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback, useActionState } from "react";
 import { createPortal } from "react-dom";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import { CheckCircle2, CircleDot, Circle, Phone, AlertTriangle } from "lucide-react";
 import { saveCoachStudentEvaluation } from "@/app/coach/save-student-evaluation-action";
 import {
@@ -175,7 +175,7 @@ export function CoachStudentProfileModal(props: Props) {
   const initialScoresByModalityRef = useRef(initialScoresByModality);
   initialScoresByModalityRef.current = initialScoresByModality;
 
-  const [state, formAction] = useFormState(saveCoachStudentEvaluation, null);
+  const [state, formAction] = useActionState(saveCoachStudentEvaluation, null);
   const [portalReady, setPortalReady] = useState(false);
 
   useEffect(() => {

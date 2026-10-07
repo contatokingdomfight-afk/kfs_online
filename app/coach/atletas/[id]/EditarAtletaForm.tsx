@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { updateAthlete, type UpdateAthleteResult } from "../actions";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 
@@ -15,7 +15,7 @@ type Props = {
 };
 
 export function EditarAtletaForm({ athleteId, initialLevel, levelLabels, coaches, initialMainCoachId }: Props) {
-  const [state, formAction] = useFormState(updateAthlete, null as UpdateAthleteResult | null);
+  const [state, formAction] = useActionState(updateAthlete, null as UpdateAthleteResult | null);
 
   return (
     <form

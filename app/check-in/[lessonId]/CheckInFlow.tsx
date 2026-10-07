@@ -1,8 +1,8 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useActionState } from "react";
 import { submitCheckInAction, type CheckInFormState } from "./actions";
 import { CheckInSuccessModal } from "./CheckInSuccessModal";
 
@@ -62,7 +62,7 @@ type Props = {
 
 export function CheckInFlow({ lessonId, occurrenceDate, labels, locale, monthlyLimit }: Props) {
   const initial = useMemo(() => null as CheckInFormState, []);
-  const [state, formAction] = useFormState(submitCheckInAction, initial);
+  const [state, formAction] = useActionState(submitCheckInAction, initial);
 
   const scale = useMemo(
     () => [

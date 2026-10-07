@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import Link from "next/link";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
@@ -8,7 +8,7 @@ import { requestPasswordReset, type RequestPasswordResetState } from "./actions"
 
 export function ForgotPasswordForm({ initialLocale }: { initialLocale: Locale }) {
   const t = getTranslations(initialLocale);
-  const [state, formAction, pending] = useFormState(requestPasswordReset, null as RequestPasswordResetState | null);
+  const [state, formAction, pending] = useActionState(requestPasswordReset, null as RequestPasswordResetState | null);
 
   if (state?.success) {
     return (

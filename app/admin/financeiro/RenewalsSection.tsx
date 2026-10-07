@@ -1,7 +1,7 @@
 "use client";
 
+import { useActionState } from "react";
 import Link from "next/link";
-import { useFormState } from "react-dom";
 import {
   generateMonthlyPaymentsFormAction,
   type GenerateMonthlyPaymentsResult,
@@ -18,7 +18,7 @@ type Props = {
 };
 
 export function RenewalsSection({ referenceMonth, pending, noOuterCard, suppressTitle }: Props) {
-  const [state, formAction] = useFormState(
+  const [state, formAction] = useActionState(
     generateMonthlyPaymentsFormAction,
     null as GenerateMonthlyPaymentsResult | null
   );

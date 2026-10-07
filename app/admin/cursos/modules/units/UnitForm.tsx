@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
-import { useFormState } from "react-dom";
 import { createUnit, updateUnit, type UnitFormResult } from "./actions";
 import { FormLoadingBar } from "@/components/FormLoadingBar";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
@@ -43,7 +42,7 @@ export function UnitForm({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const action = unitId ? updateUnit : createUnit;
-  const [state, formAction] = useFormState(action, null as UnitFormResult | null);
+  const [state, formAction] = useActionState(action, null as UnitFormResult | null);
 
   async function handlePdfSelected(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

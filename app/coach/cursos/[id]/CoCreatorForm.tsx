@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { addCoCreator, removeCoCreator, type CoCreatorResult } from "../co-creator/actions";
 
 type CoCreator = {
@@ -18,7 +18,7 @@ type Props = {
 };
 
 export function CoCreatorForm({ courseId, coCreators, usedPct }: Props) {
-  const [state, formAction] = useFormState(addCoCreator, null as CoCreatorResult | null);
+  const [state, formAction] = useActionState(addCoCreator, null as CoCreatorResult | null);
 
   const available = 65 - usedPct;
 
@@ -116,7 +116,7 @@ export function CoCreatorForm({ courseId, coCreators, usedPct }: Props) {
 }
 
 function RemoveButton({ courseId, coCreatorId }: { courseId: string; coCreatorId: string }) {
-  const [state, formAction] = useFormState(removeCoCreator, null as CoCreatorResult | null);
+  const [state, formAction] = useActionState(removeCoCreator, null as CoCreatorResult | null);
 
   return (
     <form action={formAction}>

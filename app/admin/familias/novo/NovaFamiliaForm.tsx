@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useFormState } from "react-dom";
+import { useState, useTransition, useActionState } from "react";
 import { createFamilyGroup, searchStudentsForFamily, type FamilyActionResult } from "../actions";
 
 type SchoolOption = { id: string; name: string };
@@ -13,7 +12,7 @@ type Props = {
 };
 
 export function NovaFamiliaForm({ schools, plansBySchool }: Props) {
-  const [state, formAction] = useFormState(createFamilyGroup, null as FamilyActionResult | null);
+  const [state, formAction] = useActionState(createFamilyGroup, null as FamilyActionResult | null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Array<{ studentId: string; name: string; email: string }>>([]);
   const [titular, setTitular] = useState<{ studentId: string; name: string } | null>(null);

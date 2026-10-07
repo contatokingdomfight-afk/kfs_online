@@ -1,7 +1,7 @@
 "use client";
 
+import { useActionState } from "react";
 import Link from "next/link";
-import { useFormState } from "react-dom";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createTrialClass, type CreateTrialResult } from "../actions";
 
@@ -15,7 +15,7 @@ const MODALITY_OPTIONS = [
 ];
 
 export function NovaExperimentalForm({ lessonOptions }: { lessonOptions: LessonOption[] }) {
-  const [state, formAction] = useFormState(createTrialClass, null as CreateTrialResult | null);
+  const [state, formAction] = useActionState(createTrialClass, null as CreateTrialResult | null);
 
   return (
     <form

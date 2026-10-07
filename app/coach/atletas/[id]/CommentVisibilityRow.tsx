@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { updateCommentVisibility, type UpdateCommentVisibilityResult } from "../actions";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 
@@ -11,7 +11,7 @@ type Props = {
 };
 
 export function CommentVisibilityRow({ commentId, athleteId, initialVisibility }: Props) {
-  const [state, formAction] = useFormState(updateCommentVisibility, null as UpdateCommentVisibilityResult | null);
+  const [state, formAction] = useActionState(updateCommentVisibility, null as UpdateCommentVisibilityResult | null);
 
   return (
     <form action={formAction} style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginTop: 10 }}>

@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState } from "react-dom";
+import { useState, useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { deleteCoach, deleteCoachAccount } from "../actions";
 
 export function DeleteCoachButton({ coachId, coachName }: { coachId: string; coachName: string }) {
   const [confirm, setConfirm] = useState(false);
-  const [state, formAction] = useFormState(deleteCoach, null);
+  const [state, formAction] = useActionState(deleteCoach, null);
 
   const [confirmAccount, setConfirmAccount] = useState(false);
-  const [accountState, accountFormAction] = useFormState(deleteCoachAccount, null);
+  const [accountState, accountFormAction] = useActionState(deleteCoachAccount, null);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

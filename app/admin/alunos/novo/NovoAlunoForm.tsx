@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useState, useActionState } from "react";
 import {
   createStudent,
   createStudentPresencial,
@@ -36,8 +35,8 @@ export function NovoAlunoForm() {
   const [schools, setSchools] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
 
-  const [inviteState, inviteAction] = useFormState(createStudent, null as CreateStudentResult | null);
-  const [presencialState, presencialAction] = useFormState(
+  const [inviteState, inviteAction] = useActionState(createStudent, null as CreateStudentResult | null);
+  const [presencialState, presencialAction] = useActionState(
     createStudentPresencial,
     null as CreateStudentPresencialResult | null
   );

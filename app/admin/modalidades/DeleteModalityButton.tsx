@@ -1,11 +1,10 @@
 "use client";
 
-import { useFormState } from "react-dom";
 import { deleteModalityAction, type ModalityResult } from "./actions";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useActionState } from "react";
 
 export function DeleteModalityButton({ code }: { code: string }) {
-  const [state, formAction] = useFormState(deleteModalityAction, null as ModalityResult | null);
+  const [state, formAction] = useActionState(deleteModalityAction, null as ModalityResult | null);
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {

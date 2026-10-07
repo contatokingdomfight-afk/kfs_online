@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useMemo, useState, useActionState } from "react";
 import { createDropInStudent, type CreateDropInStudentResult } from "../drop-in-actions";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import { FINANCE_PAYMENT_METHODS, FINANCE_PAYMENT_METHOD_LABELS_PT } from "@/lib/finance-payment-method";
@@ -37,7 +36,7 @@ export function DropInQuickRegisterForm({
   const pricingContext: DropInPricingContext = { isKingdomWeekPlan: false, weekCapExhausted: false };
   const quote = useMemo(() => calculateDropInPrice(quantity, pricingContext), [quantity]);
 
-  const [state, formAction] = useFormState(createDropInStudent, null as CreateDropInStudentResult | null);
+  const [state, formAction] = useActionState(createDropInStudent, null as CreateDropInStudentResult | null);
 
   useEffect(() => {
     async function loadSchools() {

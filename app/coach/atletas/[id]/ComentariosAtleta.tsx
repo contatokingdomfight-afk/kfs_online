@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { createComment, type CreateCommentResult } from "../actions";
 import { CommentVisibilityRow } from "./CommentVisibilityRow";
 
@@ -37,7 +37,7 @@ type Props = {
 };
 
 export function ComentariosAtleta({ athleteId, comments, canAdd, currentCoachId, isAdmin }: Props) {
-  const [state, formAction] = useFormState(createComment, null as CreateCommentResult | null);
+  const [state, formAction] = useActionState(createComment, null as CreateCommentResult | null);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>

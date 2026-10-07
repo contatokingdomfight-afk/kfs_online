@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useState, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { XP_SOURCE_META, XP_SOURCES, type XpSource } from "@/lib/xp-rules";
 import { saveXpRules } from "./actions";
 
@@ -15,7 +15,7 @@ function Submit() {
 }
 
 export function XpRulesForm({ rules }: { rules: Record<XpSource, number> }) {
-  const [state, action] = useFormState(saveXpRules, null);
+  const [state, action] = useActionState(saveXpRules, null);
   const [values, setValues] = useState<Record<XpSource, string>>(
     () => Object.fromEntries(XP_SOURCES.map((s) => [s, String(rules[s])])) as Record<XpSource, string>
   );

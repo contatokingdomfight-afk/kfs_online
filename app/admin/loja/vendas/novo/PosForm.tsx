@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useCallback, useMemo, useState, useTransition, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { registerRetailSale, searchStudentsForRetail, searchVariantsAction, type ActionResult } from "../../actions";
 import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS_PT } from "@/lib/retail/constants";
 import { variantLabel } from "@/lib/retail/catalog";
@@ -32,7 +32,7 @@ function SubmitSale({ total }: { total: number }) {
 }
 
 export function PosForm({ schools }: { schools: School[] }) {
-  const [state, formAction] = useFormState(registerRetailSale, null as ActionResult | null);
+  const [state, formAction] = useActionState(registerRetailSale, null as ActionResult | null);
   const [schoolId, setSchoolId] = useState(schools[0]?.id ?? "");
   const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]>("CASH");
   const [query, setQuery] = useState("");

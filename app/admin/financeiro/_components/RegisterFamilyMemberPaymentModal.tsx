@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, useActionState } from "react";
 import { createPortal } from "react-dom";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import { registerFamilyMemberTuition, type RegisterFamilyMemberTuitionResult } from "../actions";
 import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
@@ -49,7 +49,7 @@ export function RegisterFamilyMemberPaymentModal({
   buttonClassName = "btn btn-primary",
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [state, formAction] = useFormState(
+  const [state, formAction] = useActionState(
     registerFamilyMemberTuition,
     null as RegisterFamilyMemberTuitionResult | null
   );

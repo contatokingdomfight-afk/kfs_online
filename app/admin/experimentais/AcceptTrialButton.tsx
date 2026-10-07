@@ -1,10 +1,10 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { acceptTrialRequest, type AcceptTrialResult } from "./actions";
 
 export function AcceptTrialButton({ trialId }: { trialId: string }) {
-  const [state, formAction] = useFormState(acceptTrialRequest, null as AcceptTrialResult | null);
+  const [state, formAction] = useActionState(acceptTrialRequest, null as AcceptTrialResult | null);
 
   return (
     <form action={formAction} style={{ display: "inline-block", marginRight: 8 }}>

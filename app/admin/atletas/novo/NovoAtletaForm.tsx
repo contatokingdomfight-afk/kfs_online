@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
-import { useFormState } from "react-dom";
+import { useCallback, useState, useActionState } from "react";
 import {
   createAthlete,
   searchStudentsForNewAthlete,
@@ -19,7 +18,7 @@ const LEVEL_OPTIONS = [
 type CoachOption = { id: string; name: string };
 
 export function NovoAtletaForm({ coachOptions }: { coachOptions: CoachOption[] }) {
-  const [state, formAction] = useFormState(createAthlete, null as CreateAthleteResult | null);
+  const [state, formAction] = useActionState(createAthlete, null as CreateAthleteResult | null);
 
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);

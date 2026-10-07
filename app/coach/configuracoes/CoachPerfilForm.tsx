@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState } from "react-dom";
+import { useState, useActionState } from "react";
 import { saveCoachProfile, type SaveCoachProfileResult } from "./actions";
 import { getTranslations } from "@/lib/i18n";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
@@ -33,7 +32,7 @@ export function CoachPerfilForm({ initial, locale, hasCoachRow, publicProfileUrl
     setUserDismissed(false);
     return saveCoachProfile(prev, formData);
   };
-  const [state, formAction] = useFormState(wrappedAction, null as SaveCoachProfileResult | null);
+  const [state, formAction] = useActionState(wrappedAction, null as SaveCoachProfileResult | null);
 
   const showSuccess = Boolean(state?.success && !state?.error && !userDismissed);
 

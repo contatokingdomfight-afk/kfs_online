@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { updateInsuranceSettings, type UpdateInsuranceSettingsResult } from "./actions";
 
@@ -15,7 +15,7 @@ export function InsuranceSettingsForm({
   initialEnrollmentAmount,
   initialPolicyReference,
 }: Props) {
-  const [state, formAction] = useFormState(updateInsuranceSettings, null as UpdateInsuranceSettingsResult | null);
+  const [state, formAction] = useActionState(updateInsuranceSettings, null as UpdateInsuranceSettingsResult | null);
 
   return (
     <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 16 }}>

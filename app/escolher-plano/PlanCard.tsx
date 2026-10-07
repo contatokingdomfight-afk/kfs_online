@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import { useFormState } from "react-dom";
+import { useRef, useState, useEffect, useActionState } from "react";
 import { PlanSchoolPaymentModal, type PlanSchoolPaymentFees } from "@/components/PlanSchoolPaymentModal";
 import { selectPlanPayAtSchool, type SelectPlanPayAtSchoolResult } from "./actions";
 import {
@@ -61,7 +60,7 @@ export function PlanCard({
   modalInsurance,
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction] = useFormState(selectPlanPayAtSchool, null as SelectPlanPayAtSchoolResult | null);
+  const [state, formAction] = useActionState(selectPlanPayAtSchool, null as SelectPlanPayAtSchoolResult | null);
   const [primaryModality, setPrimaryModality] = useState(modalityOptions[0]?.code ?? "");
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);

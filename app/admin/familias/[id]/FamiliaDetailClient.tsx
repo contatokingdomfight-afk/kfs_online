@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useFormState } from "react-dom";
+import { useState, useTransition, useActionState } from "react";
 import Link from "next/link";
 import {
   addFamilyMember,
@@ -35,7 +34,7 @@ function ReferencePlanSelect({
   currentPlanId: string | null;
   options: PlanOption[];
 }) {
-  const [state, action] = useFormState(updateMemberReferencePlan, null as FamilyActionResult | null);
+  const [state, action] = useActionState(updateMemberReferencePlan, null as FamilyActionResult | null);
   return (
     <form action={action} style={{ display: "flex", alignItems: "center", gap: 6 }}>
       <FormLoadingModal message="A guardar…" />
@@ -61,10 +60,10 @@ function ReferencePlanSelect({
 }
 
 export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }: Props) {
-  const [addState, addAction] = useFormState(addFamilyMember, null as FamilyActionResult | null);
-  const [removeState, removeAction] = useFormState(removeFamilyMember, null as FamilyActionResult | null);
-  const [deactState, deactAction] = useFormState(deactivateFamilyGroup, null as FamilyActionResult | null);
-  const [discountState, discountAction] = useFormState(updateFamilyGroupDiscount, null as FamilyActionResult | null);
+  const [addState, addAction] = useActionState(addFamilyMember, null as FamilyActionResult | null);
+  const [removeState, removeAction] = useActionState(removeFamilyMember, null as FamilyActionResult | null);
+  const [deactState, deactAction] = useActionState(deactivateFamilyGroup, null as FamilyActionResult | null);
+  const [discountState, discountAction] = useActionState(updateFamilyGroupDiscount, null as FamilyActionResult | null);
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Array<{ studentId: string; name: string; email: string }>>([]);

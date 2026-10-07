@@ -63,7 +63,7 @@ export async function seedMissionsFromDoc(): Promise<SeedMissionsResult> {
   return { inserted, skipped };
 }
 
-/** Wrapper para useFormState (recebe prev e formData). */
+/** Wrapper para useActionState (recebe prev e formData). */
 export async function runSeedMissions(
   _prev: SeedMissionsResult | null,
   _formData: FormData

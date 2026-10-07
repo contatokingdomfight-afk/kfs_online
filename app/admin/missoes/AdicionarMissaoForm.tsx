@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { createMission } from "./actions";
 
 const BELT_OPTIONS: { value: string; label: string }[] = [
@@ -28,7 +28,7 @@ export function AdicionarMissaoForm({
 }: {
   modalityOptions: { code: string; name: string }[];
 }) {
-  const [state, formAction] = useFormState(createMission, null);
+  const [state, formAction] = useActionState(createMission, null);
 
   return (
     <form action={formAction} className="rounded-xl bg-bg-secondary border border-border p-4 space-y-4">

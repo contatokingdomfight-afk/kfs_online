@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState } from "react-dom";
+import { useState, useActionState } from "react";
 import { MessageSquareHeart } from "lucide-react";
 import { submitCoachTestimonial, type SubmitCoachTestimonialResult } from "./coach-testimonial-actions";
 
@@ -26,7 +25,7 @@ const STATUS_LABEL_EN: Record<string, string> = {
 export function CoachTestimonialSection({ coachId, coachName, existing, locale }: Props) {
   const L = locale === "pt";
   const [rating, setRating] = useState(existing?.rating ?? 5);
-  const [state, formAction] = useFormState(submitCoachTestimonial, null as SubmitCoachTestimonialResult | null);
+  const [state, formAction] = useActionState(submitCoachTestimonial, null as SubmitCoachTestimonialResult | null);
 
   const statusLabel = existing ? (L ? STATUS_LABEL_PT[existing.status] : STATUS_LABEL_EN[existing.status]) : null;
 

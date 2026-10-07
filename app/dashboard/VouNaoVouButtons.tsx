@@ -1,7 +1,8 @@
 "use client";
 
+import { useActionState } from "react";
 import type { CSSProperties } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { setAttendanceIntentionFromForm } from "./actions";
 
@@ -85,7 +86,7 @@ export function VouNaoVouButtons({
   statusConfirmedLabel,
   statusAbsentLabel,
 }: Props) {
-  const [state, formAction] = useFormState(setAttendanceIntentionFromForm, null as { error?: string } | null);
+  const [state, formAction] = useActionState(setAttendanceIntentionFromForm, null as { error?: string } | null);
   const savingLabel = "A guardar…";
 
   if (currentStatus === "CONFIRMED") {

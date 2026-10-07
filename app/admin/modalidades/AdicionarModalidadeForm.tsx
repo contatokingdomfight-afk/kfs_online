@@ -1,10 +1,10 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { createModality, type ModalityResult } from "./actions";
 
 export function AdicionarModalidadeForm() {
-  const [state, formAction] = useFormState(createModality, null as ModalityResult | null);
+  const [state, formAction] = useActionState(createModality, null as ModalityResult | null);
 
   return (
     <form

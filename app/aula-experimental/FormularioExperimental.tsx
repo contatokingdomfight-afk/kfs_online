@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { useFormState } from "react-dom";
+import { useState, useMemo, useEffect, useActionState } from "react";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { submitTrialRequest, type SubmitTrialResult } from "./actions";
@@ -40,7 +39,7 @@ export function FormularioExperimental({
   schoolPhone: string;
 }) {
   const t = getTranslations(locale);
-  const [state, formAction] = useFormState(submitTrialRequest, null as SubmitTrialResult | null);
+  const [state, formAction] = useActionState(submitTrialRequest, null as SubmitTrialResult | null);
   const [schoolId, setSchoolId] = useState(defaultSchoolId || schools[0]?.id || "");
   const [selectedModality, setSelectedModality] = useState<string>("");
 

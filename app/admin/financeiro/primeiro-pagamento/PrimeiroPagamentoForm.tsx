@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
-import { useFormState } from "react-dom";
+import { useCallback, useMemo, useState, useActionState } from "react";
 import {
   createFirstPayment,
   searchStudentsForPayment,
@@ -23,7 +22,7 @@ export function PrimeiroPagamentoForm({
   defaultReferenceYear,
   initialStudent = null,
 }: Props) {
-  const [state, formAction] = useFormState(createFirstPayment, null as CreateFirstPaymentResult | null);
+  const [state, formAction] = useActionState(createFirstPayment, null as CreateFirstPaymentResult | null);
   const [referenceMonth, setReferenceMonth] = useState(defaultReferenceMonth);
   const [referenceYear, setReferenceYear] = useState(defaultReferenceYear);
   const [query, setQuery] = useState("");

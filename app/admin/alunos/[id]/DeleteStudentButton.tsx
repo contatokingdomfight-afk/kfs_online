@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState } from "react-dom";
+import { useState, useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { deleteStudent } from "../actions";
 
@@ -15,7 +14,7 @@ export function DeleteStudentButton({
   studentEmail: string;
 }) {
   const [confirm, setConfirm] = useState(false);
-  const [state, formAction] = useFormState(deleteStudent, null);
+  const [state, formAction] = useActionState(deleteStudent, null);
 
   return (
     <div

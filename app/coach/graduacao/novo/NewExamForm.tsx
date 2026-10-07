@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { createExamEvent } from "../actions";
 
 const label: React.CSSProperties = { display: "block", fontSize: "var(--text-sm)", fontWeight: 600, marginBottom: 6 };
@@ -15,7 +16,7 @@ function Submit() {
 }
 
 export function NewExamForm({ modalities }: { modalities: { code: string; name: string; isPublished: boolean }[] }) {
-  const [state, action] = useFormState(createExamEvent, null);
+  const [state, action] = useActionState(createExamEvent, null);
   const defaultModality = modalities.find((m) => m.isPublished)?.code ?? modalities[0]?.code;
 
   return (

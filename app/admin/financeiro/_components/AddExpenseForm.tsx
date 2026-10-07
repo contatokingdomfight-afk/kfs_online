@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useRef, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { createFinancialExpense, type ExpenseActionResult } from "../actions";
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
 import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
@@ -29,7 +29,7 @@ type Labels = {
 };
 
 export function AddExpenseForm({ defaultDate, labels }: { defaultDate: string; labels: Labels }) {
-  const [state, formAction] = useFormState(createFinancialExpense, null as ExpenseActionResult | null);
+  const [state, formAction] = useActionState(createFinancialExpense, null as ExpenseActionResult | null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {

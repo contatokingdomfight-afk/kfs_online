@@ -103,7 +103,7 @@ export async function checkIn(lessonId: string): Promise<{ error?: string; check
   return result;
 }
 
-/** Para useFormState: recebe formData com lessonId, occurrenceDate e intention (vou | nao_vou). */
+/** Para useActionState: recebe formData com lessonId, occurrenceDate e intention (vou | nao_vou). */
 export async function setAttendanceIntentionFromForm(
   _prev: { error?: string } | null,
   formData: FormData

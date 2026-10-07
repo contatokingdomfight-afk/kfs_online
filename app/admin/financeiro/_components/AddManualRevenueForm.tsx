@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useRef, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { createManualRevenue, type ManualRevenueActionResult } from "../actions";
 import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
@@ -24,7 +24,7 @@ type Labels = {
 };
 
 export function AddManualRevenueForm({ defaultDate, labels }: { defaultDate: string; labels: Labels }) {
-  const [state, formAction] = useFormState(createManualRevenue, null as ManualRevenueActionResult | null);
+  const [state, formAction] = useActionState(createManualRevenue, null as ManualRevenueActionResult | null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {

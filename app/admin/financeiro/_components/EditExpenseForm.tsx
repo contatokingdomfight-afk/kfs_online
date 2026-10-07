@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useRef, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { updateFinancialExpense, type ExpenseActionResult } from "../actions";
 import type { FinancialExpenseRow } from "@/lib/admin-finance-overview";
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
@@ -37,7 +37,7 @@ type Props = {
 };
 
 export function EditExpenseForm({ expense, labels, onDone, onCancel }: Props) {
-  const [state, action] = useFormState(updateFinancialExpense, null as ExpenseActionResult | null);
+  const [state, action] = useActionState(updateFinancialExpense, null as ExpenseActionResult | null);
   const ref = useRef<HTMLFormElement>(null);
 
   useEffect(() => {

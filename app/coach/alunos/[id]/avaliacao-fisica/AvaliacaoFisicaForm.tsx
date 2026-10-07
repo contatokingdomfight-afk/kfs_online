@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Save } from "lucide-react";
-import { useFormState } from "react-dom";
 import { savePhysicalAssessment, type SaveAssessmentResult } from "./actions";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { PhysicalAssessmentInstructorScoreHints } from "@/components/physical-assessment/PhysicalAssessmentInstructorScoreHints";
@@ -85,7 +84,7 @@ export function AvaliacaoFisicaForm({
   initialClearance,
 }: Props) {
   const fd = initialFormData ?? {};
-  const [state, formAction] = useFormState(savePhysicalAssessment, null as SaveAssessmentResult | null);
+  const [state, formAction] = useActionState(savePhysicalAssessment, null as SaveAssessmentResult | null);
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);

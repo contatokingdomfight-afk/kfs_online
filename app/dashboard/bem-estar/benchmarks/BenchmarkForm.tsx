@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { submitBenchmarkAction, type SimpleFormState } from "../actions";
 import { BENCHMARK_PRESETS } from "@/lib/benchmark-presets";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
@@ -17,7 +18,7 @@ function Submit({ label }: { label: string }) {
 type Props = { locale: "pt" | "en" };
 
 export function BenchmarkForm({ locale }: Props) {
-  const [state, action] = useFormState(submitBenchmarkAction, null as SimpleFormState);
+  const [state, action] = useActionState(submitBenchmarkAction, null as SimpleFormState);
 
   return (
     <form

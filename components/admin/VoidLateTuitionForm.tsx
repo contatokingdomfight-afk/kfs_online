@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { voidLateTuition, type CreatePaymentResult } from "@/app/admin/financeiro/actions";
 import { blurActiveElementBeforeSubmit } from "@/lib/blur-before-form-submit";
 
@@ -19,7 +19,7 @@ export function VoidLateTuitionForm({
   hint,
   buttonClassName = "btn btn-secondary",
 }: Props) {
-  const [state, action] = useFormState(voidLateTuition, null as CreatePaymentResult | null);
+  const [state, action] = useActionState(voidLateTuition, null as CreatePaymentResult | null);
 
   return (
     <form action={action} onSubmit={blurActiveElementBeforeSubmit}>

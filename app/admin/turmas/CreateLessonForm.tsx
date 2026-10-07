@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useFormState } from "react-dom";
+import { useMemo, useState, useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createLesson } from "./actions";
 
@@ -29,7 +28,7 @@ export function CreateLessonForm({ coaches, modalities, schools }: { coaches: Co
       selectedSchoolId ? coaches.filter((c) => c.schoolIds.includes(selectedSchoolId)) : [],
     [coaches, selectedSchoolId]
   );
-  const [state, formAction] = useFormState(
+  const [state, formAction] = useActionState(
     async (_: unknown, formData: FormData) => {
       return await createLesson(formData);
     },

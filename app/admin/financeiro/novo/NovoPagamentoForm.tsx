@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { useFormState } from "react-dom";
+import { useCallback, useEffect, useState, useActionState } from "react";
 import {
   createPayment,
   searchStudentsForPayment,
@@ -51,7 +50,7 @@ function formatTuitionMonthLabel(ym: string) {
 }
 
 export function NovoPagamentoForm({ defaultReferenceMonth, initialRow, urlAmount = "" }: Props) {
-  const [state, formAction] = useFormState(createPayment, null as CreatePaymentResult | null);
+  const [state, formAction] = useActionState(createPayment, null as CreatePaymentResult | null);
 
   const [referenceMonth, setReferenceMonth] = useState(defaultReferenceMonth);
   const [query, setQuery] = useState("");

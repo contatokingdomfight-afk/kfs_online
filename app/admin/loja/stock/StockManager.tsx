@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useRef, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { recordStockIn, recordStockAdjust, type ActionResult } from "../actions";
 import type { StockMovementRow } from "@/lib/retail/types";
 
@@ -24,8 +24,8 @@ type Props = {
 };
 
 export function StockManager({ schools, variants, movements }: Props) {
-  const [inState, inAction] = useFormState(recordStockIn, null as ActionResult | null);
-  const [adjState, adjAction] = useFormState(recordStockAdjust, null as ActionResult | null);
+  const [inState, inAction] = useActionState(recordStockIn, null as ActionResult | null);
+  const [adjState, adjAction] = useActionState(recordStockAdjust, null as ActionResult | null);
   const inRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {

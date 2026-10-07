@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useActionState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import {
   renewStudentInsurance,
@@ -70,10 +69,10 @@ export function StudentInsuranceSection({
   todayYmd,
 }: Props) {
   const router = useRouter();
-  const [renewState, renewAction] = useFormState(renewStudentInsurance, null as InsuranceActionResult | null);
-  const [payState, payAction] = useFormState(registerInsurancePayment, null as InsuranceActionResult | null);
-  const [updateState, updateAction] = useFormState(updateStudentInsuranceCoverage, null as InsuranceActionResult | null);
-  const [clearState, clearAction] = useFormState(clearStudentInsuranceCoverage, null as InsuranceActionResult | null);
+  const [renewState, renewAction] = useActionState(renewStudentInsurance, null as InsuranceActionResult | null);
+  const [payState, payAction] = useActionState(registerInsurancePayment, null as InsuranceActionResult | null);
+  const [updateState, updateAction] = useActionState(updateStudentInsuranceCoverage, null as InsuranceActionResult | null);
+  const [clearState, clearAction] = useActionState(clearStudentInsuranceCoverage, null as InsuranceActionResult | null);
 
   const insuranceStatus = computeInsuranceStatus(coverage, todayYmd);
   const currentYear = todayYmd.slice(0, 4);

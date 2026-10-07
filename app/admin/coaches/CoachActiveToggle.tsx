@@ -1,10 +1,10 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { setCoachActive } from "./actions";
 
 export function CoachActiveToggle({ coachId, isActive }: { coachId: string; isActive: boolean }) {
-  const [state, formAction] = useFormState(setCoachActive, null);
+  const [state, formAction] = useActionState(setCoachActive, null);
 
   return (
     <form action={formAction} style={{ flexShrink: 0 }}>

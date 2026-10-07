@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, useActionState } from "react";
 import { createPortal } from "react-dom";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import { markPendingPaymentPaid, type MarkPendingPaymentPaidResult } from "../actions";
 import { PaymentMethodSelect } from "@/components/admin/PaymentMethodSelect";
 
@@ -50,7 +50,7 @@ export function RegisterPendingPaymentModal({
   buttonClassName = "btn btn-primary",
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [state, formAction] = useFormState(markPendingPaymentPaid, null as MarkPendingPaymentPaidResult | null);
+  const [state, formAction] = useActionState(markPendingPaymentPaid, null as MarkPendingPaymentPaidResult | null);
   const [submittedAt, setSubmittedAt] = useState<number | null>(null);
   const [slowSubmit, setSlowSubmit] = useState(false);
   const titleId = useId();

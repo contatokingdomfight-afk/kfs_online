@@ -2,9 +2,8 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, useActionState } from "react";
 import { Landmark, Calendar, CreditCard } from "lucide-react";
-import { useFormState } from "react-dom";
 import { saveEnrollmentForm, type SaveEnrollmentFormResult } from "./enrollment-actions";
 import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverageBlock";
 import { ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER } from "@/lib/sports-insurance-coverage";
@@ -81,7 +80,7 @@ function StepProgress({ step }: { step: number }) {
 }
 
 export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props) {
-  const [state, formAction] = useFormState(action, null as SaveEnrollmentFormResult | null);
+  const [state, formAction] = useActionState(action, null as SaveEnrollmentFormResult | null);
   const e = prefill.existing;
   const initialPayment =
     e.paymentMethod === "CASH" || e.paymentMethod === "TRANSFER"

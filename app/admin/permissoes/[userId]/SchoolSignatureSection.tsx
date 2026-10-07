@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useRef, useState, useActionState } from "react";
 import { SignaturePad, type SignaturePadHandle } from "@/components/SignaturePad";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
@@ -14,7 +13,7 @@ type Props = {
 };
 
 export function SchoolSignatureSection({ userId, initialSignsForSchool, initialSignatureImageUrl }: Props) {
-  const [state, formAction] = useFormState(updateSchoolSignature, null as UpdateSchoolSignatureResult | null);
+  const [state, formAction] = useActionState(updateSchoolSignature, null as UpdateSchoolSignatureResult | null);
   const formRef = useRef<HTMLFormElement>(null);
   const sigPadRef = useRef<SignaturePadHandle>(null);
   const skipInterceptRef = useRef(false);

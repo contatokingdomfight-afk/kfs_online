@@ -1,10 +1,10 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { runSeedMissions, type SeedMissionsResult } from "./actions";
 
 export function SeedMissionsForm() {
-  const [state, formAction] = useFormState(runSeedMissions, null as SeedMissionsResult | null);
+  const [state, formAction] = useActionState(runSeedMissions, null as SeedMissionsResult | null);
 
   return (
     <form action={formAction} className="rounded-xl bg-bg-secondary border border-border p-4 mb-6">

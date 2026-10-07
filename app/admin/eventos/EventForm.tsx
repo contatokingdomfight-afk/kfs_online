@@ -1,7 +1,7 @@
 "use client";
 
+import { useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
-import { useFormState } from "react-dom";
 import { createEvent, updateEvent, type EventFormResult } from "./actions";
 import { EventBannerField } from "./EventBannerField";
 
@@ -46,7 +46,7 @@ export function EventForm({
   initialIsActive = true,
 }: Props) {
   const action = eventId ? updateEvent : createEvent;
-  const [state, formAction] = useFormState(action, null as EventFormResult | null);
+  const [state, formAction] = useActionState(action, null as EventFormResult | null);
 
   return (
     <form

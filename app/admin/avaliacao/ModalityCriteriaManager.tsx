@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useState, useEffect, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { AlertTriangle } from "lucide-react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import {
@@ -86,7 +86,7 @@ function DeleteCriterionSubmitButton() {
 }
 
 function DeleteCriterionForm({ criterionId }: { criterionId: string }) {
-  const [deleteState, deleteAction] = useFormState(deleteCriterion, null);
+  const [deleteState, deleteAction] = useActionState(deleteCriterion, null);
   return (
     <form action={deleteAction} style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
       <FormLoadingModal message="A remover…" />
@@ -144,10 +144,10 @@ export function ModalityCriteriaManager({ modality, modalityLabel, dimensionBloc
   const [addingStandaloneComp, setAddingStandaloneComp] = useState(false);
   const [newStandaloneCompName, setNewStandaloneCompName] = useState("");
 
-  const [critState, critAction] = useFormState(createCriterion, null as CriterionResult | null);
-  const [critUpdateState, critUpdateAction] = useFormState(updateCriterion, null as CriterionResult | null);
-  const [compState, compAction] = useFormState(createComponent, null as ComponentResult | null);
-  const [deleteCompState, deleteCompAction] = useFormState(deleteComponent, null as ComponentResult | null);
+  const [critState, critAction] = useActionState(createCriterion, null as CriterionResult | null);
+  const [critUpdateState, critUpdateAction] = useActionState(updateCriterion, null as CriterionResult | null);
+  const [compState, compAction] = useActionState(createComponent, null as ComponentResult | null);
+  const [deleteCompState, deleteCompAction] = useActionState(deleteComponent, null as ComponentResult | null);
 
   useEffect(() => {
     if (critState?.success) {

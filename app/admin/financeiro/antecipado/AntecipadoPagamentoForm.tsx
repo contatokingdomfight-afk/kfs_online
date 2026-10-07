@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
-import { useFormState } from "react-dom";
+import { useCallback, useState, useActionState } from "react";
 import {
   createAdvanceTuitionPayments,
   searchStudentsForPayment,
@@ -16,7 +15,7 @@ type Props = {
 };
 
 export function AntecipadoPagamentoForm({ defaultStartMonth }: Props) {
-  const [state, formAction] = useFormState(createAdvanceTuitionPayments, null as AdvanceTuitionPaymentsResult | null);
+  const [state, formAction] = useActionState(createAdvanceTuitionPayments, null as AdvanceTuitionPaymentsResult | null);
   const [startMonth, setStartMonth] = useState(defaultStartMonth);
   const [months, setMonths] = useState(3);
   const [query, setQuery] = useState("");

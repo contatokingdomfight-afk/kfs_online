@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { updatePlanPrice, type UpdatePlanPriceResult } from "./actions";
 
 type PlanPriceRow = {
@@ -42,7 +42,7 @@ export function PlanPriceForm({ planPrices }: Props) {
 }
 
 function PlanPriceRowForm({ planPrice }: { planPrice: PlanPriceRow }) {
-  const [state, formAction] = useFormState(updatePlanPrice, null as UpdatePlanPriceResult | null);
+  const [state, formAction] = useActionState(updatePlanPrice, null as UpdatePlanPriceResult | null);
 
   return (
     <form action={formAction} style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 12 }}>

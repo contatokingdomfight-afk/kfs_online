@@ -1,7 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { useCallback, useEffect, useMemo, useState, useActionState } from "react";
 import { getTranslations, type MessageKey } from "@/lib/i18n";
 import type { AdminPermissionRow, UpdateUserAdminPermsResult } from "./actions";
 import { updateUserAdminPermissions } from "./actions";
@@ -142,7 +142,7 @@ export function AdminUserPermissionsForm({
   locale: "pt" | "en";
 }) {
   const t = getTranslations(locale);
-  const [state, formAction] = useFormState(updateUserAdminPermissions, null as UpdateUserAdminPermsResult | null);
+  const [state, formAction] = useActionState(updateUserAdminPermissions, null as UpdateUserAdminPermsResult | null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [granular, setGranular] = useState(initialGranular);
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initialCodes));

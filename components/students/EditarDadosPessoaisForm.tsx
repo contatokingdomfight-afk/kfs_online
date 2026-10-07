@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import { updateStudentPersonalData, type UpdateStudentPersonalDataResult } from "@/app/admin/alunos/actions";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
@@ -59,7 +59,7 @@ export function EditarDadosPessoaisForm({ studentId, initial }: Props) {
     setUserDismissed(false);
     return updateStudentPersonalData(prev, formData);
   };
-  const [state, formAction] = useFormState(wrappedAction, null as UpdateStudentPersonalDataResult | null);
+  const [state, formAction] = useActionState(wrappedAction, null as UpdateStudentPersonalDataResult | null);
   const router = useRouter();
 
   const showSuccess = Boolean(state?.success && !state?.error && !userDismissed);

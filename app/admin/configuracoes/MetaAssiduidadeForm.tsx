@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState } from "react-dom";
+import { useState, useActionState } from "react";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { updateAttendanceGoal, type UpdateAttendanceGoalResult } from "./actions";
@@ -16,7 +15,7 @@ export function MetaAssiduidadeForm({ initialTargetValue, initialLocale }: Props
     setUserDismissed(false);
     return updateAttendanceGoal(prev, formData);
   };
-  const [state, formAction] = useFormState(wrappedAction, null as UpdateAttendanceGoalResult | null);
+  const [state, formAction] = useActionState(wrappedAction, null as UpdateAttendanceGoalResult | null);
 
   const showSuccess = Boolean(state?.success && !state?.error && !userDismissed);
 

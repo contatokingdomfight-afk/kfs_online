@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createGoal, updateGoal, type GoalActionResult } from "./actions";
 import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
@@ -16,7 +16,7 @@ type Props = {
 export function AdminGoalForm({ schools, goal }: Props) {
   const isEdit = Boolean(goal);
   const action = isEdit ? updateGoal : createGoal;
-  const [state, formAction] = useFormState(action, null as GoalActionResult | null);
+  const [state, formAction] = useActionState(action, null as GoalActionResult | null);
 
   const targetDisplay =
     goal?.metricType === "MONETARY" ? formatDecimalAmountInput(goal.targetValue) : String(goal?.targetValue ?? "");

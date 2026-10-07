@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useTransition } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useRef, useTransition, useActionState } from "react";
 import { getTranslations } from "@/lib/i18n";
 import { joinWaitlist, type JoinWaitlistResult } from "./actions";
 
@@ -15,7 +14,7 @@ declare global {
 
 export function FormularioListaEspera({ source, locale }: Props) {
   const t = getTranslations(locale);
-  const [state, formAction] = useFormState(joinWaitlist, null as JoinWaitlistResult | null);
+  const [state, formAction] = useActionState(joinWaitlist, null as JoinWaitlistResult | null);
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   const prevSuccess = useRef(false);

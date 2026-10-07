@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { submitBodyWeightAction, updateWeightGoalsAction, type SimpleFormState } from "../actions";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 
@@ -20,7 +21,7 @@ type Props = {
 };
 
 export function WeightEntryForm({ locale }: Pick<Props, "locale">) {
-  const [state, action] = useFormState(submitBodyWeightAction, null as SimpleFormState);
+  const [state, action] = useActionState(submitBodyWeightAction, null as SimpleFormState);
   return (
     <form
       action={action}
@@ -66,7 +67,7 @@ export function WeightEntryForm({ locale }: Pick<Props, "locale">) {
 }
 
 export function WeightGoalsForm({ locale, currentGoalKg, currentGoalDate }: Props) {
-  const [state, action] = useFormState(updateWeightGoalsAction, null as SimpleFormState);
+  const [state, action] = useActionState(updateWeightGoalsAction, null as SimpleFormState);
   return (
     <form
       action={action}

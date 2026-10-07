@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { CoachSchoolMultiSelect } from "@/components/CoachSchoolMultiSelect";
 import { updateCoach, type UpdateCoachResult } from "../actions";
@@ -26,7 +26,7 @@ export function EditarCoachForm({
   schools,
   initialSchoolIds,
 }: Props) {
-  const [state, formAction] = useFormState(updateCoach, null as UpdateCoachResult | null);
+  const [state, formAction] = useActionState(updateCoach, null as UpdateCoachResult | null);
 
   return (
     <form

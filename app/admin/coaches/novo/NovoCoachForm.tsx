@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useFormState } from "react-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { CoachSchoolMultiSelect } from "@/components/CoachSchoolMultiSelect";
 import { createCoach, type CreateCoachResult } from "../actions";
 
 export function NovoCoachForm() {
-  const [state, formAction] = useFormState(createCoach, null as CreateCoachResult | null);
+  const [state, formAction] = useActionState(createCoach, null as CreateCoachResult | null);
   const [schools, setSchools] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
 
