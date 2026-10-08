@@ -1870,3 +1870,28 @@ html[data-kfs-native="capacitor"] body {
 .perfil-anchor {
   scroll-margin-top: 80px;
 }
+
+/* Área do aluno (app/dashboard/layout.tsx → [data-dashboard]): sem barras de rolagem visíveis,
+ * vertical e horizontal. O scroll continua a funcionar (dedo, roda do rato, trackpad, teclado). */
+[data-dashboard],
+[data-dashboard] * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+[data-dashboard]::-webkit-scrollbar,
+[data-dashboard] *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+html:has([data-dashboard]),
+html:has([data-dashboard]) body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html:has([data-dashboard])::-webkit-scrollbar,
+html:has([data-dashboard]) body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
