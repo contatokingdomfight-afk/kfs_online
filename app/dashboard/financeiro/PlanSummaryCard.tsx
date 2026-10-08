@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { BookOpen, CalendarCheck, Gift, LineChart, CheckCircle2, Clock, Sparkles } from "lucide-react";
 
 export type PlanSummary = {
@@ -143,14 +142,6 @@ export function PlanSummaryCard({ plan, locale }: { plan: PlanSummary; locale: "
         <IncludeRow on={plan.includes.performance} icon={<LineChart size={18} />} label={pt ? "Perfil de atleta" : "Athlete profile"} />
         <IncludeRow on={plan.includes.benefits} icon={<Gift size={18} />} label={pt ? "Benefícios exclusivos" : "Exclusive benefits"} />
       </ul>
-
-      <Link
-        href="/escolher-plano"
-        className="btn btn-secondary"
-        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 44, textDecoration: "none", fontWeight: 600 }}
-      >
-        {pt ? "Ver outros planos" : "See other plans"}
-      </Link>
     </section>
   );
 }
