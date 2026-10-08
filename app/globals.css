@@ -1849,3 +1849,13 @@ html[data-kfs-native="capacitor"] body {
     opacity: 0;
   }
 }
+
+/* Carrossel com scroll lateral (components/ui/SwipeCarousel.tsx): desliza sem mostrar a barra. */
+.swipe-carousel-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+.swipe-carousel-scroll::-webkit-scrollbar {
+  display: none;
+}

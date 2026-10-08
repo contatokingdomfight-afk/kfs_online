@@ -2,7 +2,8 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Swords, Target, Dumbbell, Brain, BookOpen, Trophy, ClipboardList, type LucideIcon } from "lucide-react";
+import { Swords, Target, Dumbbell, Brain, BookOpen, Trophy, ClipboardList, HeartPulse, type LucideIcon } from "lucide-react";
+import type { SwipeCarouselPanel } from "@/components/ui/SwipeCarousel";
 import type { PhysicalAvatarCarouselPayload } from "@/lib/build-performance-physical-carousel";
 import { PerformanceHeroCard } from "./PerformanceHeroCard";
 import { StatCard } from "./StatCard";
@@ -122,6 +123,11 @@ type Props = {
   /** Histórico de fichas físicas entregues (≥2) para o gráfico de evolução. */
   physicalEvolutionRows?: PhysicalEvolutionRow[];
   locale?: "pt" | "en";
+  /**
+   * `carousel` (área do aluno): radar no topo e o detalhe (fortes/a melhorar, critérios, físico e
+   * corpo, bem-estar) num carrossel com scroll lateral. `stack` (omissão, ex.: vista do coach): coluna.
+   */
+  layout?: "stack" | "carousel";
 };
 
 export function PerformanceFighterDashboard({
@@ -160,7 +166,11 @@ export function PerformanceFighterDashboard({
   physicalKpiAssessedAt = null,
   physicalEvolutionRows = [],
   locale = "pt",
+  layout = "stack",
 }: Props) {
+  const pt = locale === "pt";
+  /** O carrossel só existe com resultados de avaliação; sem eles fica a coluna de sempre. */
+  const carousel = layout === "carousel" && Boolean(evaluationResultsData);
   const systemMissions: Mission[] = buildMissionsFromScores(scores, axes, maxScore);
   const customAsMissions: Mission[] = customMissions.map((c) => ({
     id: `custom-${c.id}`,
@@ -176,6 +186,93 @@ export function PerformanceFighterDashboard({
     axes.length > 0
       ? axes.reduce((s, a) => s + (scores[a.id] ?? 0), 0) / axes.length
       : 0;
+
+  const physicalKpisEl = physicalKpiScores ? (
+    <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+        <h2 className="text-base font-bold text-text-primary uppercase tracking-wider">
+          {pt ? "KPIs físicos" : "Physical KPIs"}
+        </h2>
+        <span className="text-xs text-text-secondary">{pt ? "Escala 1–10" : "1–10 scale"}</span>
+      </div>
+      <p className="text-sm text-text-secondary mb-3">
+        {pt
+          ? "Notas do treinador na tua última ficha de avaliação física"
+          : "Coach's scores from your latest physical assessment"}
+        {physicalKpiAssessedAt ? ` · ${physicalKpiAssessedAt}` : ""}.
+      </p>
+      <div className={carousel ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"}>
+        {PHYSICAL_KPI_DEFS.filter((def) => typeof physicalKpiScores[def.key] === "number").map((def) => (
+          <StatCard
+            key={def.key}
+            icon={<def.icon size={16} aria-hidden />}
+            label={pt ? def.labelPt : def.labelEn}
+            score={physicalKpiScores[def.key] as number}
+            maxScore={10}
+            tooltip={pt ? def.tooltipPt : def.tooltipEn}
+            tooltipAriaLabel={pt ? `Como se calcula: ${def.labelPt}` : `How this is calculated: ${def.labelEn}`}
+          />
+        ))}
+      </div>
+    </section>
+  ) : null;
+
+  const fichaLinkEl = physicalFichaReadOnlyLink ? (
+    <p className="m-0 text-center text-xs sm:text-left">
+      <Link
+        href={physicalFichaReadOnlyLink.href}
+        className="font-medium text-[var(--primary)] no-underline hover:underline"
+      >
+        {physicalFichaReadOnlyLink.label}
+      </Link>
+    </p>
+  ) : null;
+
+  /** Painéis do carrossel que vêm da ficha física e do questionário pré-treino. */
+  const extraPanels: SwipeCarouselPanel[] = [];
+  if (carousel && (physicalKpiScores || physicalAvatarCarousel || physicalEvolutionRows.length >= 1)) {
+    extraPanels.push({
+      id: "fisico",
+      label: pt ? "Físico e corpo" : "Body & fitness",
+      title: pt ? "Condição física e mapa corporal" : "Fitness and body map",
+      subtitle: physicalKpiAssessedAt
+        ? `${pt ? "Avaliação física de" : "Physical assessment of"} ${physicalKpiAssessedAt}`
+        : undefined,
+      icon: <Dumbbell size={20} />,
+      content: (
+        <div className="space-y-4">
+          {physicalAvatarCarousel ? <PhysicalAssessmentBodyMapPanel payload={physicalAvatarCarousel} /> : null}
+          {physicalKpisEl}
+          {physicalEvolutionRows.length >= 1 && (
+            <PhysicalAssessmentEvolution rows={physicalEvolutionRows} locale={locale} />
+          )}
+          {fichaLinkEl}
+        </div>
+      ),
+    });
+  }
+  if (carousel && checkInWellness) {
+    extraPanels.push({
+      id: "bem-estar",
+      label: pt ? "Bem-estar" : "Wellness",
+      title: checkInWellness.copy.title,
+      icon: <HeartPulse size={20} />,
+      content: (
+        <CheckInWellnessSection
+          data={checkInWellness.data}
+          // O mapa corporal está no painel «Físico e corpo»; aqui não se repete.
+          copy={{ ...checkInWellness.copy, bodyMapEvalHint: undefined }}
+        />
+      ),
+    });
+  }
+
+  const coachBlockEl = (
+    <>
+      {/* Coach feedback (comentário geral do treinador) */}
+      <CoachFeedback quote={coachFeedback ?? FALLBACK_COACH_ENCOURAGEMENT} coachName={coachName} />
+    </>
+  );
 
   return (
     <div className="max-w-[min(720px,100%)] mx-auto space-y-6 pb-8">
@@ -214,6 +311,8 @@ export function PerformanceFighterDashboard({
           physicalRadarOnlyHint={physicalRadarOnlyHint}
           improveSuggestions={improveSuggestions}
           locale={locale}
+          layout={carousel ? "carousel" : "stack"}
+          extraPanels={extraPanels}
         />
       ) : (
         <>
@@ -262,8 +361,11 @@ export function PerformanceFighterDashboard({
         </>
       )}
 
-      {/* KPIs por modalidade */}
-      {scoresByModality && Object.keys(scoresByModality).length > 0 && (
+      {/* No carrossel, o feedback do coach sobe para logo a seguir ao detalhe. */}
+      {carousel && coachBlockEl}
+
+      {/* KPIs por modalidade (no carrossel, o filtro de modalidade do resumo já cobre isto) */}
+      {!carousel && scoresByModality && Object.keys(scoresByModality).length > 0 && (
         <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
           <h2 className="text-base font-bold text-text-primary uppercase tracking-wider mb-2">
             Performance por modalidade
@@ -332,44 +434,14 @@ export function PerformanceFighterDashboard({
       <MissionCard missions={missions} locale={locale} />
 
       {/* KPIs físicos (força, resistência, velocidade, etc.) — notas do treinador na última ficha entregue */}
-      {physicalKpiScores && (
-        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-            <h2 className="text-base font-bold text-text-primary uppercase tracking-wider">
-              {locale === "pt" ? "KPIs físicos" : "Physical KPIs"}
-            </h2>
-            <span className="text-xs text-text-secondary">
-              {locale === "pt" ? "Escala 1–10" : "1–10 scale"}
-            </span>
-          </div>
-          <p className="text-sm text-text-secondary mb-3">
-            {locale === "pt"
-              ? "Notas do treinador na tua última ficha de avaliação física"
-              : "Coach's scores from your latest physical assessment"}
-            {physicalKpiAssessedAt ? ` · ${physicalKpiAssessedAt}` : ""}.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {PHYSICAL_KPI_DEFS.filter((def) => typeof physicalKpiScores[def.key] === "number").map((def) => (
-              <StatCard
-                key={def.key}
-                icon={<def.icon size={16} aria-hidden />}
-                label={locale === "pt" ? def.labelPt : def.labelEn}
-                score={physicalKpiScores[def.key] as number}
-                maxScore={10}
-                tooltip={locale === "pt" ? def.tooltipPt : def.tooltipEn}
-                tooltipAriaLabel={locale === "pt" ? `Como se calcula: ${def.labelPt}` : `How this is calculated: ${def.labelEn}`}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+      {!carousel && physicalKpisEl}
 
       {/* Evolução entre fichas físicas entregues */}
-      {physicalEvolutionRows.length >= 1 && (
+      {!carousel && physicalEvolutionRows.length >= 1 && (
         <PhysicalAssessmentEvolution rows={physicalEvolutionRows} locale={locale} />
       )}
 
-      {checkInWellness && (
+      {!carousel && checkInWellness && (
         <CheckInWellnessSection
           data={checkInWellness.data}
           copy={checkInWellness.copy}
@@ -473,10 +545,7 @@ export function PerformanceFighterDashboard({
       )}
 
       {/* Coach feedback (comentário geral do treinador) */}
-      <CoachFeedback
-        quote={coachFeedback ?? FALLBACK_COACH_ENCOURAGEMENT}
-        coachName={coachName}
-      />
+      {!carousel && coachBlockEl}
 
       {/* Conteúdos sugeridos (ligados ao contexto do feedback / modalidade) */}
       {suggestedCourses.length > 0 && (

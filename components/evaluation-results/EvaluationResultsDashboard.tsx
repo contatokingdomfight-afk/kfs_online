@@ -19,6 +19,8 @@ import { RadarStats } from "@/components/fighter/RadarStatsDynamic";
 import type { RadarAxis } from "@/components/fighter/RadarStatsDynamic";
 import { PerformanceRadarAvatarCarousel } from "@/components/fighter/PerformanceRadarAvatarCarousel";
 import { ImproveLibraryLink } from "@/components/improve/ImproveLibraryLink";
+import { SwipeCarousel, type SwipeCarouselPanel } from "@/components/ui/SwipeCarousel";
+import { Target, ListChecks } from "lucide-react";
 
 /** Filtro principal pré-selecionado ao abrir (valor comparado com `mainCategoryOptions`, PT, case-insensitive). */
 const INITIAL_MAIN_CATEGORY = "técnico";
@@ -45,6 +47,13 @@ type Props = {
     course: { id: string; name: string };
   }>;
   locale?: "pt" | "en";
+  /**
+   * `carousel` (área do aluno): resumo + radar no topo e o detalhe (pontos fortes/a melhorar,
+   * critérios e `extraPanels`) num carrossel com scroll lateral. `stack` (omissão): tudo em coluna.
+   */
+  layout?: "stack" | "carousel";
+  /** Painéis extra do carrossel (ex.: físico e corpo, bem-estar), a seguir aos de avaliação. */
+  extraPanels?: SwipeCarouselPanel[];
 };
 
 export function EvaluationResultsDashboard({
@@ -62,7 +71,10 @@ export function EvaluationResultsDashboard({
   physicalRadarOnlyHint = null,
   improveSuggestions = [],
   locale = "pt",
+  layout = "stack",
+  extraPanels = [],
 }: Props) {
+  const pt = locale === "pt";
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
   /** null = mostrar todas as subcategorias; valor = filtrar por prefixo principal (derivado dos dados). */
   const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
@@ -211,89 +223,141 @@ export function EvaluationResultsDashboard({
     </div>
   ) : undefined;
 
+  const summaryEl = (
+    <EvaluationSummary
+      controls={modalityControls}
+      dimensionScores={activeDimensionScores}
+      overallScore={activeOverallScore}
+      maxScore={maxScore}
+    />
+  );
+
+  // No carrossel, o mapa corporal vive no painel «Físico e corpo»: o radar fica sozinho no topo.
+  const radarOnly = layout === "carousel" || physicalBodyMapOnlyInWellness;
+  const radarEl = (
+    <div className="space-y-2">
+      <PerformanceRadarAvatarCarousel
+        radar={<RadarStats scores={activeRadarScores} axes={axes} maxScore={maxScore} />}
+        payload={physicalAvatarCarousel}
+        radarOnly={radarOnly}
+        radarOnlyHint={layout === "stack" && physicalBodyMapOnlyInWellness ? physicalRadarOnlyHint : undefined}
+      />
+      {physicalFichaReadOnlyLink && !radarOnly ? (
+        <p className="m-0 text-center text-xs">
+          <Link
+            href={physicalFichaReadOnlyLink.href}
+            className="font-medium text-[var(--primary)] no-underline hover:underline"
+          >
+            {physicalFichaReadOnlyLink.label}
+          </Link>
+        </p>
+      ) : null}
+    </div>
+  );
+
+  const strengthsEl = <StrengthsWeaknesses strengths={strengths} weaknesses={weaknesses} />;
+
+  const improveEl =
+    improveSuggestions.length > 0 ? (
+      <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 shadow-md">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)] mb-2">
+          {pt ? "Ver como melhorar na biblioteca" : "See how to improve in the library"}
+        </h3>
+        <ul className="list-none p-0 m-0 space-y-2">
+          {improveSuggestions.map((s) => (
+            <li key={s.axisId}>
+              <ImproveLibraryLink
+                courseId={s.course.id}
+                courseName={s.course.name}
+                axisLabel={s.axisLabel}
+                locale={locale}
+              />
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null;
+
+  const criteriaListEl = (
+    <>
+      {mainCategoryOptions.length > 1 && (
+        <CriteriaMainCategoryChips
+          options={mainCategoryOptions}
+          selected={selectedMainCategory}
+          onSelect={handleSelectMainCategory}
+        />
+      )}
+      <div key={selectedMainCategory ?? "all"} className="space-y-3">
+        {filteredCategoryNames.map((name, i) => (
+          <SkillCategory
+            key={name}
+            categoryName={name}
+            headingLabel={selectedMainCategory == null ? undefined : subLabelFromCategoryName(name)}
+            items={byCategory.get(name) ?? []}
+            defaultOpen={i === 0}
+            showTrend={true}
+          />
+        ))}
+      </div>
+    </>
+  );
+
+  if (layout === "carousel") {
+    const panels: SwipeCarouselPanel[] = [
+      {
+        id: "fortes",
+        label: pt ? "Fortes e a melhorar" : "Strengths & focus",
+        title: pt ? "Pontos fortes e a melhorar" : "Strengths and focus points",
+        subtitle: pt ? "Os teus critérios com nota mais alta e mais baixa" : "Your highest and lowest criteria",
+        icon: <Target size={20} />,
+        content: (
+          <div className="space-y-4">
+            {strengthsEl}
+            {improveEl}
+          </div>
+        ),
+      },
+      ...(criterionScores.length > 0
+        ? [
+            {
+              id: "criterios",
+              label: pt ? "Avaliação detalhada" : "Detailed evaluation",
+              subtitle: pt ? "Tudo o que o coach avalia, de 1 a 10" : "Everything your coach scores, 1–10",
+              icon: <ListChecks size={20} />,
+              content: <div className="space-y-3">{criteriaListEl}</div>,
+            },
+          ]
+        : []),
+      ...extraPanels,
+    ];
+    return (
+      <div className="space-y-6">
+        {summaryEl}
+        {radarEl}
+        <SwipeCarousel
+          title={pt ? "Explora o teu desempenho" : "Explore your performance"}
+          ariaLabel={pt ? "Detalhe do desempenho" : "Performance detail"}
+          prevLabel={pt ? "Painel anterior" : "Previous panel"}
+          nextLabel={pt ? "Painel seguinte" : "Next panel"}
+          panels={panels}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <EvaluationSummary
-        controls={modalityControls}
-        dimensionScores={activeDimensionScores}
-        overallScore={activeOverallScore}
-        maxScore={maxScore}
-      />
-
-      <div className="space-y-2">
-        <PerformanceRadarAvatarCarousel
-          radar={<RadarStats scores={activeRadarScores} axes={axes} maxScore={maxScore} />}
-          payload={physicalAvatarCarousel}
-          radarOnly={physicalBodyMapOnlyInWellness}
-          radarOnlyHint={physicalBodyMapOnlyInWellness ? physicalRadarOnlyHint : undefined}
-        />
-        {physicalFichaReadOnlyLink && !physicalBodyMapOnlyInWellness ? (
-          <p className="m-0 text-center text-xs">
-            <Link
-              href={physicalFichaReadOnlyLink.href}
-              className="font-medium text-[var(--primary)] no-underline hover:underline"
-            >
-              {physicalFichaReadOnlyLink.label}
-            </Link>
-          </p>
-        ) : null}
-      </div>
-
-      <StrengthsWeaknesses strengths={strengths} weaknesses={weaknesses} />
-      {improveSuggestions.length > 0 && (
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 shadow-md">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)] mb-2">
-            {locale === "pt" ? "Ver como melhorar na biblioteca" : "See how to improve in the library"}
-          </h3>
-          <ul className="list-none p-0 m-0 space-y-2">
-            {improveSuggestions.map((s) => (
-              <li key={s.axisId}>
-                <ImproveLibraryLink
-                  courseId={s.course.id}
-                  courseName={s.course.name}
-                  axisLabel={s.axisLabel}
-                  locale={locale}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
+      {summaryEl}
+      {radarEl}
+      {strengthsEl}
+      {improveEl}
       {criterionScores.length > 0 && (
-        <>
-          <section>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-3">
-              Critérios por categoria
-            </h2>
-            {mainCategoryOptions.length > 1 && (
-              <CriteriaMainCategoryChips
-                options={mainCategoryOptions}
-                selected={selectedMainCategory}
-                onSelect={handleSelectMainCategory}
-              />
-            )}
-            <div
-              key={selectedMainCategory ?? "all"}
-              className="space-y-3"
-            >
-              {filteredCategoryNames.map((name, i) => (
-                <SkillCategory
-                  key={name}
-                  categoryName={name}
-                  headingLabel={
-                    selectedMainCategory == null
-                      ? undefined
-                      : subLabelFromCategoryName(name)
-                  }
-                  items={byCategory.get(name) ?? []}
-                  defaultOpen={i === 0}
-                  showTrend={true}
-                />
-              ))}
-            </div>
-          </section>
-        </>
+        <section>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-3">
+            Critérios por categoria
+          </h2>
+          {criteriaListEl}
+        </section>
       )}
     </div>
   );
