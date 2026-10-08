@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Camera, Lock, QrCode } from "lucide-react";
+import { Lock, QrCode } from "lucide-react";
 import { formatNextLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
 import { VouNaoVouButtons } from "./VouNaoVouButtons";
 
@@ -129,29 +129,9 @@ export function LessonPromoBlock({
         flexDirection: "column",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, margin: "0 0 8px 0" }}>
-        <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: 0, color: mutedTextColor }}>
-          {t("dashboardNextLessonSubtitle")}
-        </p>
-        {photoUrl && (
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              flexShrink: 0,
-              padding: "3px 9px",
-              borderRadius: 999,
-              backgroundColor: "rgba(0,0,0,0.55)",
-              fontSize: 11,
-              color: "rgba(255,255,255,0.9)",
-            }}
-          >
-            <Camera size={12} aria-hidden />
-            {locale === "pt" ? "Foto da Tribo" : "Tribe photo"}
-          </span>
-        )}
-      </div>
+      <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 8px 0", color: mutedTextColor }}>
+        {t("dashboardNextLessonSubtitle")}
+      </p>
       {openClassLocationHighlight && (
         <div
           style={{
