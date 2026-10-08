@@ -116,7 +116,7 @@ export function getStudentNavAreas(params: StudentNavParams): StudentNavArea[] {
       children: [
         { label: t("navTribe"), href: "/dashboard/tribo" },
         { label: t("navEvents"), href: "/dashboard/eventos" },
-        { label: t("navStore"), href: "/dashboard/loja" },
+        { label: pt ? "Loja" : "Store", href: "/dashboard/loja" },
         ...(planAccess.hasExclusiveBenefits
           ? [{ label: t("navExclusiveBenefits"), href: "/dashboard/beneficios" }]
           : []),
