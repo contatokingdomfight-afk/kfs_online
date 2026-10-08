@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Target } from "lucide-react";
+import { Target, Flag, MessageSquareQuote, CalendarDays, ChevronDown } from "lucide-react";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { weekdayShortLabelForPublicSchedule } from "@/lib/weekday-labels";
 import { VideoPlayer } from "@/components/biblioteca/VideoPlayer";
@@ -67,11 +67,16 @@ const TABS = ["theme", "mission", "feedback"] as const;
 export function WhatIsNew({ weekThemes, todayWeekday, nextMission, coachFeedback, locale, labels }: Props) {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("theme");
   const [openVideoModality, setOpenVideoModality] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Record<string, number>>({});
+  const [openDescription, setOpenDescription] = useState<Record<string, boolean>>({});
+  const [expandedTopic, setExpandedTopic] = useState<Record<string, boolean>>({});
+  const [feedbackExpanded, setFeedbackExpanded] = useState(false);
+  const pt = locale !== "en";
 
   const tabs = [
-    { id: "theme" as const, label: labels.tabTheme },
-    { id: "mission" as const, label: labels.tabMission },
-    { id: "feedback" as const, label: labels.tabFeedback },
+    { id: "theme" as const, label: pt ? "Tema" : "Theme", icon: <CalendarDays size={16} aria-hidden />, aria: labels.tabTheme },
+    { id: "mission" as const, label: pt ? "Missão" : "Mission", icon: <Flag size={16} aria-hidden />, aria: labels.tabMission },
+    { id: "feedback" as const, label: pt ? "Coach" : "Coach", icon: <MessageSquareQuote size={16} aria-hidden />, aria: labels.tabFeedback },
   ];
 
   return (
@@ -87,11 +92,17 @@ export function WhatIsNew({ weekThemes, todayWeekday, nextMission, coachFeedback
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
+              aria-label={tab.aria}
+              aria-pressed={activeTab === tab.id}
               style={{
                 flex: 1,
-                padding: "clamp(12px, 3vw, 16px)",
-                fontSize: "clamp(13px, 3.2vw, 15px)",
-                fontWeight: 500,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                padding: "12px 8px",
+                fontSize: 14,
+                fontWeight: activeTab === tab.id ? 700 : 500,
                 background: activeTab === tab.id ? "var(--surface)" : "transparent",
                 color: activeTab === tab.id ? "var(--primary)" : "var(--text-secondary)",
                 border: "none",
@@ -99,6 +110,7 @@ export function WhatIsNew({ weekThemes, todayWeekday, nextMission, coachFeedback
                 cursor: "pointer",
               }}
             >
+              {tab.icon}
               {tab.label}
             </button>
           ))}
@@ -114,60 +126,140 @@ export function WhatIsNew({ weekThemes, todayWeekday, nextMission, coachFeedback
                       key={weekTheme.modality}
                       style={idx > 0 ? { marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" } : undefined}
                     >
-                      <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-                        {MODALITY_LABELS[weekTheme.modality] ?? weekTheme.modality}
-                      </span>
-                      <p style={{ margin: "8px 0 12px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
-                        {weekTheme.title}
-                      </p>
-                      {weekTheme.description ? (
-                        <p
-                          style={{
-                            margin: "0 0 12px 0",
-                            fontSize: "clamp(14px, 3.5vw, 16px)",
-                            color: "var(--text-secondary)",
-                            lineHeight: 1.55,
-                            whiteSpace: "pre-line",
-                          }}
-                        >
-                          {weekTheme.description}
-                        </p>
-                      ) : null}
-                      {weekTheme.days.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 0 12px 0" }}>
-                          <span style={{ fontSize: "clamp(12px, 3vw, 13px)", fontWeight: 600, color: "var(--text-secondary)" }}>
-                            {labels.weekThemeDaysSectionLabel}
-                          </span>
-                          {weekTheme.days.map((day) => {
-                            const isToday = day.weekday === todayWeekday;
-                            return (
-                              <div
-                                key={day.weekday}
-                                style={{
-                                  display: "flex",
-                                  gap: 8,
-                                  alignItems: "baseline",
-                                  padding: isToday ? "6px 8px" : "2px 0",
-                                  borderRadius: isToday ? "var(--radius-sm, 6px)" : undefined,
-                                  background: isToday ? "var(--primary-light)" : undefined,
-                                }}
-                              >
-                                <span style={{ fontSize: "clamp(13px, 3.2vw, 14px)", fontWeight: 600, color: isToday ? "var(--primary)" : "var(--text-primary)", minWidth: 36 }}>
-                                  {weekdayShortLabelForPublicSchedule(day.weekday, locale)}
-                                </span>
-                                <span style={{ fontSize: "clamp(13px, 3.2vw, 14px)", color: "var(--text-primary)" }}>
-                                  {day.topic}
-                                </span>
-                                {isToday ? (
-                                  <span style={{ fontSize: 11, fontWeight: 700, color: "var(--primary)" }}>
-                                    {labels.weekThemeTodayBadge}
-                                  </span>
+                      {(() => {
+                        const mod = weekTheme.modality;
+                        const days = weekTheme.days;
+                        // Dia aberto por omissão: hoje, senão o próximo com tema, senão o primeiro.
+                        const defaultDay =
+                          days.find((d) => d.weekday === todayWeekday)?.weekday ??
+                          days.find((d) => todayWeekday != null && d.weekday > todayWeekday)?.weekday ??
+                          days[0]?.weekday;
+                        const activeDay = selectedDay[mod] ?? defaultDay;
+                        const day = days.find((d) => d.weekday === activeDay) ?? null;
+                        const topicKey = `${mod}-${activeDay}`;
+                        const topicExpanded = Boolean(expandedTopic[topicKey]);
+                        const descriptionOpen = Boolean(openDescription[mod]);
+                        return (
+                          <>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "2px 10px",
+                                borderRadius: 999,
+                                border: "1px solid var(--border)",
+                                fontSize: 12,
+                                fontWeight: 600,
+                                color: "var(--text-secondary)",
+                              }}
+                            >
+                              {MODALITY_LABELS[mod] ?? mod}
+                            </span>
+                            <p style={{ margin: "8px 0 12px 0", fontSize: "clamp(17px, 4.2vw, 19px)", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1.3 }}>
+                              {weekTheme.title}
+                            </p>
+
+                            {days.length > 0 ? (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "0 0 12px 0" }}>
+                                <div role="tablist" aria-label={labels.weekThemeDaysSectionLabel} style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                  {days.map((d) => {
+                                    const on = d.weekday === activeDay;
+                                    const isToday = d.weekday === todayWeekday;
+                                    return (
+                                      <button
+                                        key={d.weekday}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={on}
+                                        onClick={() => setSelectedDay((p) => ({ ...p, [mod]: d.weekday }))}
+                                        style={{
+                                          height: 36,
+                                          padding: "0 14px",
+                                          borderRadius: 999,
+                                          border: `1px solid ${on ? "var(--primary)" : "var(--border)"}`,
+                                          background: on ? "var(--primary)" : "transparent",
+                                          color: on ? "#fff" : "var(--text-primary)",
+                                          fontSize: 13,
+                                          fontWeight: 700,
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        {weekdayShortLabelForPublicSchedule(d.weekday, locale)}
+                                        {isToday ? ` · ${labels.weekThemeTodayBadge}` : ""}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                {day ? (
+                                  <div style={{ padding: "12px 14px", borderRadius: 12, background: "var(--bg)", border: "1px solid var(--border)" }}>
+                                    <p
+                                      style={{
+                                        margin: 0,
+                                        fontSize: 14,
+                                        lineHeight: 1.5,
+                                        color: "var(--text-primary)",
+                                        ...(topicExpanded
+                                          ? {}
+                                          : { display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }),
+                                      }}
+                                    >
+                                      {day.topic}
+                                    </p>
+                                    {day.topic.length > 140 ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => setExpandedTopic((p) => ({ ...p, [topicKey]: !p[topicKey] }))}
+                                        style={{ border: 0, background: "none", padding: "6px 0 0", color: "var(--primary)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                                      >
+                                        {topicExpanded ? (pt ? "Ver menos" : "Show less") : pt ? "Ver mais" : "Show more"}
+                                      </button>
+                                    ) : null}
+                                  </div>
                                 ) : null}
                               </div>
-                            );
-                          })}
-                        </div>
-                      ) : null}
+                            ) : null}
+
+                            {weekTheme.description ? (
+                              <div style={{ margin: "0 0 12px 0" }}>
+                                <button
+                                  type="button"
+                                  aria-expanded={descriptionOpen}
+                                  onClick={() => setOpenDescription((p) => ({ ...p, [mod]: !p[mod] }))}
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    border: 0,
+                                    background: "none",
+                                    padding: 0,
+                                    color: "var(--text-secondary)",
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <ChevronDown
+                                    size={16}
+                                    aria-hidden
+                                    style={{ transform: descriptionOpen ? "rotate(180deg)" : "none", transition: "transform 150ms" }}
+                                  />
+                                  {descriptionOpen
+                                    ? pt
+                                      ? "Esconder descrição da semana"
+                                      : "Hide week description"
+                                    : pt
+                                      ? "Ver descrição da semana"
+                                      : "See week description"}
+                                </button>
+                                {descriptionOpen ? (
+                                  <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.55, whiteSpace: "pre-line" }}>
+                                    {weekTheme.description}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </>
+                        );
+                      })()}
                       {(weekTheme.course_id || weekTheme.unit_id || weekTheme.video_url) && (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                           {weekTheme.unit_id && weekTheme.course_id ? (
@@ -279,9 +371,30 @@ export function WhatIsNew({ weekThemes, todayWeekday, nextMission, coachFeedback
             <div>
               {coachFeedback ? (
                 <>
-                  <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)", lineHeight: 1.5 }}>
+                  <p
+                    style={{
+                      margin: "0 0 6px 0",
+                      fontSize: 15,
+                      color: "var(--text-primary)",
+                      lineHeight: 1.5,
+                      paddingLeft: 12,
+                      borderLeft: "3px solid var(--primary)",
+                      ...(feedbackExpanded
+                        ? {}
+                        : { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }),
+                    }}
+                  >
                     {coachFeedback.content}
                   </p>
+                  {coachFeedback.content.length > 220 ? (
+                    <button
+                      type="button"
+                      onClick={() => setFeedbackExpanded((v) => !v)}
+                      style={{ border: 0, background: "none", padding: "2px 0 8px", color: "var(--primary)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                    >
+                      {feedbackExpanded ? (pt ? "Ver menos" : "Show less") : pt ? "Ver mais" : "Show more"}
+                    </button>
+                  ) : null}
                   <p style={{ margin: 0, fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)" }}>
                     — {coachFeedback.coachName} · {new Date(coachFeedback.date).toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
