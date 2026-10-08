@@ -23,6 +23,7 @@ import {
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { RankFiltersForm } from "./RankFiltersForm";
 import { RankBoard, type RankBoardEntry } from "./RankBoard";
+import { loadRankNicknames } from "@/lib/leaderboard-nicknames";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +106,8 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
   // A RPC inclui sempre o aluno; se ficou fora do top, não conta para o total listado.
   const totalRanked = me && me.rank > rows.length ? me.rank : rows.length;
   const evolutionRows = evolutionResult?.rows ?? [];
+  // Alcunha (se o aluno definiu uma) em vez do nome.
+  const nicknames = await loadRankNicknames([...rows.map((r) => r.student_id), ...evolutionRows.map((r) => r.student_id)]);
   const excludedCount = evolutionResult?.excludedCount ?? 0;
 
   const filterMessages = {
@@ -141,7 +144,8 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
     return {
       id: row.student_id,
       rank: row.rank,
-      name: row.display_name || "—",
+      name: nicknames.get(row.student_id) ?? (row.display_name || "—"),
+      isNickname: nicknames.has(row.student_id),
       isMe: row.is_current_user,
       value: modality ? `${nf(row.score)} XP` : `${nf(row.score)} pts`,
       valueHint: modality ? undefined : `${nf(row.xp)} XP`,
@@ -156,7 +160,8 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
   const evolutionEntries: RankBoardEntry[] = evolutionRows.map((row) => ({
     id: row.student_id,
     rank: row.rank,
-    name: row.display_name || "—",
+    name: nicknames.get(row.student_id) ?? (row.display_name || "—"),
+    isNickname: nicknames.has(row.student_id),
     isMe: row.is_current_user,
     value: `${row.delta > 0 ? "+" : ""}${nf(row.delta)}`,
     valueColor: row.delta > 0 ? "var(--success)" : row.delta < 0 ? "var(--danger)" : "var(--text-secondary)",

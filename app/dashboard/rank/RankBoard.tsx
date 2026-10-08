@@ -5,6 +5,8 @@ export type RankBoardEntry = {
   rank: number;
   name: string;
   isMe: boolean;
+  /** O nome é a alcunha do aluno (mostra-se inteira, sem cortar ao primeiro nome). */
+  isNickname?: boolean;
   /** Valor principal (pontos, XP ou evolução), já formatado. */
   value: string;
   valueColor?: string;
@@ -96,7 +98,7 @@ export function RankBoard({ entries, youLabel, footer }: { entries: RankBoardEnt
                     color: e.isMe ? "var(--primary)" : "var(--text-primary)",
                   }}
                 >
-                  {e.isMe ? youLabel : e.name.split(/\s+/)[0]}
+                  {e.isMe ? youLabel : e.isNickname ? e.name : e.name.split(/\s+/)[0]}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 800, color: e.valueColor ?? "var(--text-primary)" }}>{e.value}</span>
                 <span
