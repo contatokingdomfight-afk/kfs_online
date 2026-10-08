@@ -3,6 +3,7 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { requirePlan } from "@/lib/require-plan";
+import { countActiveEventRegistrations } from "@/lib/event-registration-counts";
 import { EventosBoard, type DashboardEventRow, type EventRegistrationSummary } from "./EventosBoard";
 
 export default async function EventosPage() {
@@ -48,10 +49,12 @@ export default async function EventosPage() {
     }
   }
 
+  const registrationCounts = await countActiveEventRegistrations(events.map((e) => e.id));
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
       <div>
-        <h1 style={{ margin: "0 0 8px 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
+        <h1 style={{ margin: "0 0 8px 0", fontSize: "clamp(22px, 5vw, 28px)", fontWeight: 800, color: "var(--text-primary)" }}>
           {t("coursesAndEvents")}
         </h1>
         <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
@@ -59,7 +62,9 @@ export default async function EventosPage() {
         </p>
       </div>
 
-      <EventosBoard events={events} locale={locale as "pt" | "en"} registrationsByEventId={registrationsByEventId} />
+      <EventosBoard events={events} locale={locale as "pt" | "en"} registrationsByEventId={registrationsByEventId}
+        registrationCounts={registrationCounts}
+      />
     </div>
   );
 }

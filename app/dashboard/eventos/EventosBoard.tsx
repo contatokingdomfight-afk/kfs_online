@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { CheckCircle2 } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, MapPin, Users } from "lucide-react";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
@@ -60,6 +60,23 @@ function formatDateRangeLine(e: DashboardEventRow, locale: Locale): string {
   return `${formatOneDay(s, locale)} → ${formatOneDay(end, locale)}`;
 }
 
+/** Bloco de data (mês abreviado + dia) por cima da capa. */
+function monthDay(iso: string, locale: Locale): { m: string; d: string } {
+  const [y, mo, d] = iso.slice(0, 10).split("-").map(Number);
+  const date = new Date(y, mo - 1, d);
+  return {
+    m: date.toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", { month: "short" }).replace(".", "").toUpperCase(),
+    d: String(d).padStart(2, "0"),
+  };
+}
+
+/** Capa quando o evento não tem banner: gradiente por tipo. */
+const TYPE_COVER: Record<string, string> = {
+  CAMP: "linear-gradient(135deg, #3a1d0a 0%, #7c2d12 100%)",
+  WORKSHOP: "linear-gradient(135deg, #1e1b3a 0%, #3730a3 100%)",
+  OTHER: "linear-gradient(135deg, #2a1215 0%, #7f1d1d 100%)",
+};
+
 function formatTimeRange(st: string | null, et: string | null): string | null {
   if (!st?.trim() || !et?.trim()) return null;
   return `${st.trim().slice(0, 5)} – ${et.trim().slice(0, 5)}`;
@@ -69,10 +86,13 @@ export function EventosBoard({
   events,
   locale,
   registrationsByEventId,
+  registrationCounts = {},
 }: {
   events: DashboardEventRow[];
   locale: Locale;
   registrationsByEventId: Record<string, EventRegistrationSummary>;
+  /** Nº de inscrições activas por evento (só contagens). */
+  registrationCounts?: Record<string, number>;
 }) {
   const t = getTranslations(locale);
   const [selectedIso, setSelectedIso] = useState<string | null>(null);
@@ -149,7 +169,7 @@ export function EventosBoard({
         <button
           type="button"
           className={regFilter === "all" ? "btn btn-primary" : "btn btn-secondary"}
-          style={{ minHeight: 40 }}
+          style={{ minHeight: 40, borderRadius: 999 }}
           onClick={() => setRegFilter("all")}
         >
           {t("eventsFilterAll")}
@@ -157,7 +177,7 @@ export function EventosBoard({
         <button
           type="button"
           className={regFilter === "registered" ? "btn btn-primary" : "btn btn-secondary"}
-          style={{ minHeight: 40 }}
+          style={{ minHeight: 40, borderRadius: 999 }}
           onClick={() => setRegFilter("registered")}
         >
           {t("eventsFilterRegisteredActive")}
@@ -207,7 +227,17 @@ export function EventosBoard({
           </p>
         </div>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
+        <ul
+          style={{
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))",
+            gap: "clamp(12px, 3vw, 16px)",
+            alignItems: "start",
+          }}
+        >
           {displayList.map((e) => {
             const reg = regMap[e.id];
             const isRegistered = reg && (reg.status === "PENDING" || reg.status === "CONFIRMED");
@@ -215,6 +245,72 @@ export function EventosBoard({
               ? (rewriteSupabaseLegacyStoragePublicUrl(e.banner_url.trim()) ?? e.banner_url.trim())
               : "";
             const timeStr = formatTimeRange(e.start_time, e.end_time);
+            const md = monthDay(e.start_date ?? e.event_date, locale);
+            const regCount = registrationCounts[e.id] ?? 0;
+            const spotsLeft = e.max_participants != null ? Math.max(0, e.max_participants - regCount) : null;
+            const coverOverlay = (
+              <>
+                <span
+                  aria-hidden
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: 12,
+                    width: 50,
+                    height: 54,
+                    borderRadius: 12,
+                    background: "#fff",
+                    color: "#0b0b0b",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  <span style={{ fontSize: 10, fontWeight: 800, color: "#c1121f" }}>{md.m}</span>
+                  <span style={{ fontSize: 21, fontWeight: 800, lineHeight: 1 }}>{md.d}</span>
+                </span>
+                <span
+                  style={{
+                    position: "absolute",
+                    right: 12,
+                    top: 12,
+                    padding: "4px 10px",
+                    borderRadius: 999,
+                    background: "rgba(0,0,0,0.65)",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {eventTypeLabel(e.type, t)}
+                </span>
+                {isRegistered ? (
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      bottom: 12,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      padding: "4px 10px",
+                      borderRadius: 999,
+                      background: "var(--success)",
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    <CheckCircle2 size={14} aria-hidden />
+                    {t("registered")}
+                  </span>
+                ) : null}
+              </>
+            );
             return (
               <li
                 key={e.id}
@@ -232,6 +328,7 @@ export function EventosBoard({
                     onClick={() => setBannerLightbox({ src: banner, eventName: e.name })}
                     aria-label={t("eventsBannerOpenFullAria")}
                     style={{
+                      position: "relative",
                       border: "none",
                       padding: 0,
                       margin: 0,
@@ -243,42 +340,79 @@ export function EventosBoard({
                     }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={banner} alt="" style={{ width: "100%", height: 160, objectFit: "cover", display: "block", pointerEvents: "none" }} />
+                    <img src={banner} alt="" style={{ width: "100%", height: 170, objectFit: "cover", display: "block", pointerEvents: "none" }} />
+                    {coverOverlay}
                   </button>
-                ) : null}
+                ) : (
+                  <div
+                    style={{
+                      position: "relative",
+                      height: 130,
+                      background: TYPE_COVER[e.type] ?? TYPE_COVER.OTHER,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "rgba(255,255,255,0.35)",
+                    }}
+                  >
+                    <CalendarDays size={44} aria-hidden />
+                    {coverOverlay}
+                  </div>
+                )}
                 <div style={{ padding: "clamp(16px, 4vw, 20px)", display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                    <span
-                      style={{
-                        fontSize: "clamp(12px, 3vw, 14px)",
-                        padding: "2px 8px",
-                        background: "var(--surface)",
-                        borderRadius: "var(--radius-md)",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      {eventTypeLabel(e.type, t)}
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <span style={{ flex: 1, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>
+                      {e.name}
                     </span>
-                    <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                      {formatDateRangeLine(e, locale)}
-                    </span>
-                    <span style={{ marginLeft: "auto", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--primary)" }}>
-                      €{Number(e.price).toFixed(0)}
+                    <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 800, color: "var(--primary)", whiteSpace: "nowrap" }}>
+                      {Number(e.price) > 0 ? `€${Number(e.price).toFixed(0)}` : locale === "en" ? "Free" : "Grátis"}
                     </span>
                   </div>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--text-secondary)" }}>
+                    <CalendarDays size={15} aria-hidden />
+                    {formatDateRangeLine(e, locale)}
+                  </span>
                   {timeStr ? (
-                    <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                      <strong style={{ color: "var(--text-primary)" }}>{t("eventsTimePrefix")}:</strong> {timeStr}
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--text-secondary)" }}>
+                      <Clock size={15} aria-hidden />
+                      {timeStr}
                     </span>
                   ) : null}
                   {e.location?.trim() ? (
-                    <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-                      <strong style={{ color: "var(--text-primary)" }}>{t("eventsLocationPrefix")}:</strong> {e.location.trim()}
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--text-secondary)" }}>
+                      <MapPin size={15} aria-hidden />
+                      {e.location.trim()}
                     </span>
                   ) : null}
-                  <span style={{ fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>{e.name}</span>
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: spotsLeft === 0 ? "var(--warning)" : "var(--text-secondary)",
+                    }}
+                  >
+                    <Users size={15} aria-hidden />
+                    {regCount} {locale === "en" ? "registered" : regCount === 1 ? "inscrito" : "inscritos"}
+                    {spotsLeft != null
+                      ? ` · ${spotsLeft === 0 ? (locale === "en" ? "full" : "esgotado") : `${spotsLeft} ${locale === "en" ? "spots left" : spotsLeft === 1 ? "vaga" : "vagas"}`}`
+                      : ""}
+                  </span>
                   {e.description && (
-                    <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 14,
+                        color: "var(--text-secondary)",
+                        lineHeight: 1.5,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
                       {e.description}
                     </p>
                   )}

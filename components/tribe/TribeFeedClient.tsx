@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getTranslations } from "@/lib/i18n";
@@ -396,10 +396,13 @@ export function TribeFeedClient({
   initialPosts,
   locale,
   currentUserId,
+  topSlot,
 }: {
   initialPosts: TribeFeedPost[];
   locale: Locale;
   currentUserId: string;
+  /** Bloco por baixo do título (ex.: quem treina hoje, próximos eventos). */
+  topSlot?: ReactNode;
 }) {
   const t = useMemo(() => getTranslations(locale), [locale]);
   const router = useRouter();
@@ -478,6 +481,8 @@ export function TribeFeedClient({
           {t("tribeNewPost")}
         </button>
       </div>
+
+      {topSlot ? <div className="mb-6">{topSlot}</div> : null}
 
       {composerOpen && mounted
         ? createPortal(

@@ -8,6 +8,8 @@ import { loadTribeFeed } from "@/lib/tribe/feed";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { TribeAccessBlocked } from "@/components/tribe/TribeAccessBlocked";
 import { TribeFeedClient } from "@/components/tribe/TribeFeedClient";
+import { getCachedPlanAccess } from "@/lib/plan-access";
+import { TribeHighlights } from "./TribeHighlights";
 
 export default async function TriboPage() {
   await requirePlan();
@@ -74,12 +76,24 @@ export default async function TriboPage() {
       />
     );
   }
-  const posts = await loadTribeFeed(gate.ctx);
+  const [posts, planAccess] = await Promise.all([loadTribeFeed(gate.ctx), getCachedPlanAccess(gate.ctx.studentId)]);
 
   return (
     <main className="container-mobile py-6">
       <Suspense fallback={<div className="p-6 text-sm text-center">{t("loading")}</div>}>
-        <TribeFeedClient initialPosts={posts} locale={locale} currentUserId={gate.ctx.userId} />
+        <TribeFeedClient
+          initialPosts={posts}
+          locale={locale}
+          currentUserId={gate.ctx.userId}
+          topSlot={
+            <TribeHighlights
+              schoolId={gate.ctx.schoolId}
+              studentId={gate.ctx.studentId}
+              hasExclusiveBenefits={planAccess.hasExclusiveBenefits}
+              locale={locale}
+            />
+          }
+        />
       </Suspense>
     </main>
   );
