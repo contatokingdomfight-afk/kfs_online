@@ -27,7 +27,8 @@ export type MobileNavIconId =
   | "gear"
   | "building"
   | "layers"
-  | "flag";
+  | "flag"
+  | "dumbbell";
 
 export type MobileAppBottomNavItem = {
   label: string;
@@ -41,6 +42,8 @@ export type MobileAppBottomNavConfig = {
   primary: [MobileAppBottomNavItem, MobileAppBottomNavItem, MobileAppBottomNavItem, MobileAppBottomNavItem];
   overflow: MobileAppBottomNavItem[];
   moreLabel: string;
+  /** Ícone do botão do sheet (ex.: «user» quando o sheet é a «Conta» do aluno). Por omissão: três pontos. */
+  moreIcon?: MobileNavIconId;
 };
 
 const BAR_Z = 20_000;
@@ -210,6 +213,12 @@ function NavIcon({ id, active }: { id: MobileNavIconId; active: boolean }) {
           <path d="M4 22v-7" strokeLinecap="round" />
         </svg>
       );
+    case "dumbbell":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" style={s}>
+          <path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12" />
+        </svg>
+      );
     case "more":
     default:
       return (
@@ -375,7 +384,7 @@ export function MobileAppBottomNav({
             WebkitTapHighlightColor: "transparent",
           }}
         >
-          <NavIcon id="more" active={sheetOpen || overflowActive} />
+          <NavIcon id={config.moreIcon ?? "more"} active={sheetOpen || overflowActive} />
           <span>{config.moreLabel}</span>
         </button>
         </nav>

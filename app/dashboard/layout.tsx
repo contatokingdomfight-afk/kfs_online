@@ -13,7 +13,8 @@ import { StudentOnboardingGate } from "@/components/onboarding/StudentOnboarding
 import { getCachedPlanAccess } from "@/lib/plan-access";
 import { DashboardSplash } from "@/components/DashboardSplash";
 import { buildStudentMobileBottomNav } from "@/lib/dashboard-student-mobile-nav";
-import { getDashboardStudentBaseLinks } from "@/lib/dashboard-student-base-links";
+import { getStudentNavAreas } from "@/lib/dashboard-student-nav";
+import { buildStudentSidebarLinks } from "@/lib/dashboard-student-sidebar-links";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 import { studentHasPaymentUnlock } from "@/lib/family-payment-gate";
 import { getSignupGraceState } from "@/lib/signup-grace";
@@ -74,26 +75,15 @@ export default async function DashboardLayout({
     }
   }
 
-  const baseLinks = getDashboardStudentBaseLinks({
+  const navAreas = getStudentNavAreas({
     t,
     locale: locale as "pt" | "en",
     planAccess,
     hasPlan,
     hasSchoolAssistantCoach: Boolean(schoolAssistant),
   });
-
-  const mobileBottomNav = buildStudentMobileBottomNav(baseLinks, {
-    hasPlan,
-    hasPerformanceTracking: planAccess.hasPerformanceTracking,
-    moreLabel: locale === "pt" ? "Mais" : "More",
-    wellnessLabel: locale === "pt" ? "Bem-Estar" : "Wellness",
-    navHome: t("navHome"),
-    navEvents: t("navEvents"),
-    navTribe: t("navTribe"),
-    navAthleteProfile: t("navAthleteProfile"),
-    navLibrary: t("navLibrary"),
-    choosePlanLabel: t("choosePlanShortTitle"),
-  });
+  const sidebarLinks = buildStudentSidebarLinks(navAreas);
+  const mobileBottomNav = buildStudentMobileBottomNav(navAreas);
 
   const onboardingSteps = [
     { title: t("onboardingWelcomeTitle"), description: t("onboardingWelcomeDesc") },
@@ -116,7 +106,7 @@ export default async function DashboardLayout({
     <div data-dashboard style={{ minHeight: "100vh", backgroundColor: "var(--bg)", color: "var(--text-primary)" }}>
       <ResponsiveShell
         sidebarTitle={t("studentArea")}
-        sidebarLinks={baseLinks}
+        sidebarLinks={sidebarLinks}
         initialTheme={theme}
         initialLocale={locale}
         headerTitle="Kingdom Fight School"

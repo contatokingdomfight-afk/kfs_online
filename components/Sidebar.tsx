@@ -20,7 +20,38 @@ export type SidebarLink = {
    * com a mesma secção partilham um cabeçalho; links sem `section` não mostram cabeçalho algum.
    */
   section?: string;
+  /** Com `children`: só mostra os filhos quando o item está activo (navegação do aluno por áreas). */
+  collapseChildren?: boolean;
 };
+
+function hrefPath(href: string): string {
+  return href.split("?")[0];
+}
+
+function matchesPrefix(activeHref: string, base: string): boolean {
+  return activeHref === base || activeHref.startsWith(`${base}/`);
+}
+
+/** Destinos que contam para um filho: os `groupActiveHrefs` ou o próprio href (sem query). */
+function childTargets(child: SidebarLink): string[] {
+  return child.groupActiveHrefs?.length ? child.groupActiveHrefs : [hrefPath(child.href)];
+}
+
+/** Índice do filho com o prefixo mais longo a corresponder (evita marcar `/performance` em `/performance/historico`). */
+function bestChildIndex(children: SidebarLink[], activeHref: string): number {
+  let best = -1;
+  let bestLen = -1;
+  children.forEach((c, i) => {
+    for (const target of childTargets(c)) {
+      if (target === "/dashboard") continue;
+      if (matchesPrefix(activeHref, target) && target.length > bestLen) {
+        best = i;
+        bestLen = target.length;
+      }
+    }
+  });
+  return best;
+}
 
 export function Sidebar({
   title,
@@ -103,6 +134,9 @@ export function Sidebar({
           const navHighlighted = (() => {
             if (!activeHref) return false;
             if (hasChildren) {
+              if (item.collapseChildren) {
+                return matchesPrefix(activeHref, hrefPath(item.href)) || bestChildIndex(item.children!, activeHref) >= 0;
+              }
               return (
                 activeHref === item.href ||
                 activeHref.startsWith(`${item.href}/`) ||
@@ -144,11 +178,12 @@ export function Sidebar({
                 )}
                 {item.label}
               </Link>
-              {hasChildren && (
+              {hasChildren && (!item.collapseChildren || navHighlighted) && (
                 <div style={{ paddingLeft: 20 }}>
                   {item.children!.map((child, childIdx) => {
-                    const isChildActive =
-                      !!activeHref && (activeHref === child.href || activeHref.startsWith(`${child.href}/`));
+                    const isChildActive = item.collapseChildren
+                      ? !!activeHref && bestChildIndex(item.children!, activeHref) === childIdx
+                      : !!activeHref && (activeHref === child.href || activeHref.startsWith(`${child.href}/`));
                     return (
                       <Link
                         key={`${child.href}-${childIdx}`}

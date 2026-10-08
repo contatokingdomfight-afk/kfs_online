@@ -15,9 +15,9 @@ import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
 import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
 import { getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
 import { EvaluationDocsTabs } from "@/components/evaluation-docs/EvaluationDocsTabs";
-import { getEvaluationDocsStudentShellLinks } from "@/lib/sidebar-evaluation-docs-shell";
 import { NotificationBell } from "@/components/NotificationBell";
-import { getStudentMobileBottomNavConfig } from "@/lib/dashboard-student-mobile-nav";
+import { buildStudentMobileBottomNav, getStudentNavAreasForCurrentUser } from "@/lib/dashboard-student-mobile-nav";
+import { buildStudentSidebarLinks } from "@/lib/dashboard-student-sidebar-links";
 import {
   buildShellMobileBottomNav,
   dedupeSidebarFlatLinks,
@@ -107,8 +107,9 @@ export default async function SistemaPontuacaoLayout({
     };
   } else {
     sidebarTitle = t("studentArea");
-    sidebarLinks = getEvaluationDocsStudentShellLinks(t);
-    mobileBottomNav = await getStudentMobileBottomNavConfig(locale as "pt" | "en", t);
+    const navAreas = await getStudentNavAreasForCurrentUser(locale as "pt" | "en", t);
+    sidebarLinks = buildStudentSidebarLinks(navAreas);
+    mobileBottomNav = buildStudentMobileBottomNav(navAreas);
     mainShellClass = "dashboard-main";
     headerAvatar = {
       href: "/dashboard/perfil",

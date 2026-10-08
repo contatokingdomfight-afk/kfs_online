@@ -9,7 +9,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 import { getCachedPlanAccess } from "@/lib/plan-access";
 import { createClient } from "@/lib/supabase/server";
-import { getDashboardStudentBaseLinks } from "@/lib/dashboard-student-base-links";
+import { getStudentNavAreas, studentNavAreaHrefs, type StudentNavArea } from "@/lib/dashboard-student-nav";
 import type { MessageKey } from "@/lib/i18n";
 
 function iconForStudentNavHref(href: string): MobileNavIconId {
@@ -28,6 +28,8 @@ function iconForStudentNavHref(href: string): MobileNavIconId {
   if (href.startsWith("/dashboard/financeiro")) return "credit";
   if (href.startsWith("/dashboard/perfil")) return "user";
   if (href.startsWith("/dashboard/ficha-fisica")) return "file";
+  if (href.startsWith("/dashboard/documentos-adesao")) return "file";
+  if (href.startsWith("/dashboard/notificacoes")) return "flag";
   if (href.startsWith("/dashboard/beneficios")) return "star";
   if (href.startsWith("/escolher-plano")) return "sparkles";
   if (href.startsWith("/coach")) return "calendar";
@@ -46,65 +48,44 @@ function toMobileItem(link: DashboardNavLinkInput): MobileAppBottomNavItem {
 }
 
 /**
- * Quatro atalhos na barra + "Mais" com o restante do menu do aluno (mobile).
- * Com plano: Início, Perfil de atleta (ou Biblioteca), Tribo, Eventos — Bem-estar e o resto em «Mais».
+ * Barra inferior do aluno (mobile): as 4 áreas fixas (Hoje, Evolução, Treino, Tribo) e,
+ * no lugar de «Mais», a «Conta» com perfil, ficha física, financeiro, etc.
  */
-export function buildStudentMobileBottomNav(
-  baseLinks: DashboardNavLinkInput[],
-  opts: {
-    hasPlan: boolean;
-    hasPerformanceTracking: boolean;
-    moreLabel: string;
-    wellnessLabel: string;
-    navHome: string;
-    navEvents: string;
-    navTribe: string;
-    navAthleteProfile: string;
-    navLibrary: string;
-    choosePlanLabel: string;
-  }
-): MobileAppBottomNavConfig {
-  const primaryHrefSet = new Set<string>();
+export function buildStudentMobileBottomNav(areas: StudentNavArea[]): MobileAppBottomNavConfig {
+  const main = areas.filter((a) => a.id !== "conta").slice(0, 4);
+  const conta = areas.find((a) => a.id === "conta");
 
-  let primary: MobileAppBottomNavItem[];
-
-  if (opts.hasPlan) {
-    const slot2: MobileAppBottomNavItem = opts.hasPerformanceTracking
-      ? { label: opts.navAthleteProfile, href: "/dashboard/performance", icon: "chart" }
-      : { label: opts.navLibrary, href: "/dashboard/biblioteca", icon: "book" };
-
-    primary = [
-      { label: opts.navHome, href: "/dashboard", icon: "home" },
-      slot2,
-      { label: opts.navTribe, href: "/dashboard/tribo", icon: "users" },
-      { label: opts.navEvents, href: "/dashboard/eventos", icon: "calendar" },
-    ];
-  } else {
-    primary = [
-      { label: opts.navHome, href: "/dashboard", icon: "home" },
-      { label: opts.wellnessLabel, href: "/dashboard/bem-estar", icon: "heart" },
-      { label: opts.choosePlanLabel, href: "/escolher-plano", icon: "sparkles" },
-      { label: opts.navLibrary, href: "/dashboard/biblioteca", icon: "book" },
-    ];
-  }
-
-  for (const p of primary) primaryHrefSet.add(p.href);
-
-  const overflow: MobileAppBottomNavItem[] = [];
-  for (const link of baseLinks) {
-    if (primaryHrefSet.has(link.href)) continue;
-    overflow.push(toMobileItem(link));
-  }
+  const primary = main.map<MobileAppBottomNavItem>((a) => {
+    const group = studentNavAreaHrefs(a);
+    return {
+      label: a.label,
+      href: a.href,
+      icon: a.icon,
+      prefetch: a.prefetch,
+      // «Hoje» (/dashboard) é activo só na própria página; as outras áreas incluem as sub-páginas.
+      groupActiveHrefs: a.href === "/dashboard" || group.length === 0 ? undefined : group,
+    };
+  });
 
   return {
     primary: primary as MobileAppBottomNavConfig["primary"],
-    overflow,
-    moreLabel: opts.moreLabel,
+    overflow: (conta?.children ?? []).map(toMobileItem),
+    moreLabel: conta?.label ?? "Conta",
+    moreIcon: "user",
   };
 }
 
 /** Barra inferior do aluno (mobile), com base no plano — para layouts fora de `/dashboard`. */
 export async function getStudentMobileBottomNavConfig(locale: "pt" | "en", t: (key: MessageKey) => string): Promise<MobileAppBottomNavConfig> {
+  const areas = await getStudentNavAreasForCurrentUser(locale, t);
+  return buildStudentMobileBottomNav(areas);
+}
+
+/** Áreas de navegação do aluno autenticado (plano, acessos e assistente resolvidos aqui). */
+export async function getStudentNavAreasForCurrentUser(
+  locale: "pt" | "en",
+  t: (key: MessageKey) => string
+): Promise<StudentNavArea[]> {
   const studentId = await getCurrentStudentId();
   const [planAccess, supabase, dbUser] = await Promise.all([
     getCachedPlanAccess(studentId),
@@ -117,23 +98,11 @@ export async function getStudentMobileBottomNavConfig(locale: "pt" | "en", t: (k
   const hasPlan = !!studentRes.data?.planId;
   const schoolAssistant =
     dbUser?.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabase, dbUser.id) : null;
-  const baseLinks = getDashboardStudentBaseLinks({
+  return getStudentNavAreas({
     t,
     locale,
     planAccess,
     hasPlan,
     hasSchoolAssistantCoach: Boolean(schoolAssistant),
-  });
-  return buildStudentMobileBottomNav(baseLinks, {
-    hasPlan,
-    hasPerformanceTracking: planAccess.hasPerformanceTracking,
-    moreLabel: locale === "pt" ? "Mais" : "More",
-    wellnessLabel: locale === "pt" ? "Bem-Estar" : "Wellness",
-    navHome: t("navHome"),
-    navEvents: t("navEvents"),
-    navTribe: t("navTribe"),
-    navAthleteProfile: t("navAthleteProfile"),
-    navLibrary: t("navLibrary"),
-    choosePlanLabel: t("choosePlanShortTitle"),
   });
 }
