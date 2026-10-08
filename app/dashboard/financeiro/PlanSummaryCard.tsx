@@ -121,7 +121,7 @@ export function PlanSummaryCard({ plan, locale }: { plan: PlanSummary; locale: "
             <CalendarCheck size={20} color="var(--primary)" aria-hidden />
             <span style={{ flex: 1, fontSize: 14, fontWeight: 700 }}>{pt ? "Aulas este mês" : "Classes this month"}</span>
             <span style={{ fontSize: 15, fontWeight: 800 }}>
-              {checkIns.limit != null ? `${checkIns.used} / ${checkIns.limit}` : `${checkIns.used} · ${pt ? "ilimitadas" : "unlimited"}`}
+              {checkIns.limit != null ? `${checkIns.used} / ${checkIns.limit}` : `${checkIns.used} · ${pt ? "sem limite" : "no limit"}`}
             </span>
           </div>
           {checkIns.limit != null && (
