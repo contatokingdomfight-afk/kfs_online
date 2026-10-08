@@ -1859,3 +1859,14 @@ html[data-kfs-native="capacitor"] body {
 .swipe-carousel-scroll::-webkit-scrollbar {
   display: none;
 }
+
+/* Perfil do aluno (app/dashboard/perfil): as secções trazem margens próprias de quando estavam
+ * empilhadas numa coluna; dentro das colunas o espaçamento vem do gap. */
+.perfil-stack > * > section,
+.perfil-stack > section {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+.perfil-anchor {
+  scroll-margin-top: 80px;
+}

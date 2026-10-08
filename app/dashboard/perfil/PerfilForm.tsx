@@ -6,6 +6,7 @@ import { getTranslations } from "@/lib/i18n";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { ProfileAvatarField } from "@/components/ProfileAvatarField";
+import { HeartPulse, Ruler, UserRound } from "lucide-react";
 
 type Props = {
   initial: {
@@ -66,11 +67,12 @@ export function PerfilForm({ initial, locale }: Props) {
         gap: "clamp(16px, 4vw, 20px)",
       }}
     >
-      <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 600, color: "var(--text-primary)" }}>
+      <p style={{ margin: 0, display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
+        <UserRound size={18} color="var(--primary)" aria-hidden />
         {t("personalDataTitle")}
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
-        <ProfileAvatarField initialAvatarUrl={initial.avatarUrl} displayName={initial.name} locale={locale} />
+      <ProfileAvatarField initialAvatarUrl={initial.avatarUrl} displayName={initial.name} locale={locale} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 220px), 1fr))", gap: "clamp(12px, 3vw, 16px)" }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
             {t("nameLabel")}
@@ -154,9 +156,11 @@ export function PerfilForm({ initial, locale }: Props) {
         </label>
       </div>
 
-      <p style={{ margin: "8px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 600, color: "var(--text-primary)" }}>
+      <p style={{ margin: "8px 0 0 0", display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
+        <Ruler size={18} color="var(--primary)" aria-hidden />
         {t("profileBodyMeasurementsTitle")}
       </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 140px), 1fr))", gap: "clamp(12px, 3vw, 16px)" }}>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           {t("weightLabel")} ({t("weightUnit")})
@@ -198,6 +202,11 @@ export function PerfilForm({ initial, locale }: Props) {
           placeholder="ex: 180"
         />
       </label>
+      </div>
+      <p style={{ margin: "8px 0 0 0", display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
+        <HeartPulse size={18} color="var(--primary)" aria-hidden />
+        {locale === "en" ? "Health and emergency" : "Saúde e emergência"}
+      </p>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
           {t("medicalNotesLabel")}

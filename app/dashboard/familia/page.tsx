@@ -1,8 +1,23 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ChevronRight, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getFamilyHubForStudent } from "@/lib/family-group";
+
+const AVATAR_COLORS = ["#3b82f6", "#a855f7", "#14b8a6", "#f59e0b", "#ec4899", "#64748b"];
+
+function initialsOf(name: string): string {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("") || "?"
+  );
+}
 
 export default async function FamiliaHubPage() {
   const studentId = await getCurrentStudentId();
@@ -13,19 +28,36 @@ export default async function FamiliaHubPage() {
   if (!hub) redirect("/dashboard");
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto" }}>
-      <Link href="/dashboard" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 15 }}>
-        ← Início
-      </Link>
-      <h1 style={{ margin: "16px 0 4px", fontSize: 22, fontWeight: 600 }}>
-        {hub.groupName?.trim() || "Grupo familiar"}
-      </h1>
-      <p style={{ margin: "0 0 20px", fontSize: 14, color: "var(--text-secondary)" }}>
-        {hub.members.length} {hub.members.length === 1 ? "membro" : "membros"}
-      </p>
+    <div style={{ maxWidth: 640, margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: 16, paddingBottom: 24 }}>
+      <section className="card" style={{ padding: "clamp(16px, 4vw, 22px)", display: "flex", alignItems: "center", gap: 14 }}>
+        <span
+          aria-hidden
+          style={{
+            width: 52,
+            height: 52,
+            flexShrink: 0,
+            borderRadius: 14,
+            backgroundColor: "var(--primary)",
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Users size={26} />
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 800 }}>
+            {hub.groupName?.trim() || "Grupo familiar"}
+          </h1>
+          <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
+            {hub.members.length} {hub.members.length === 1 ? "membro" : "membros"} · plano família
+          </p>
+        </div>
+      </section>
 
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-        {hub.members.map((m) => (
+        {hub.members.map((m, i) => (
           <li
             key={m.studentId}
             className="card"
@@ -33,24 +65,42 @@ export default async function FamiliaHubPage() {
               padding: 14,
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              borderLeft: m.isSelf ? "3px solid var(--primary)" : undefined,
+              gap: 12,
+              borderColor: m.isSelf ? "var(--primary)" : undefined,
             }}
           >
-            <div style={{ flex: 1 }}>
-              <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+            <span
+              aria-hidden
+              style={{
+                width: 44,
+                height: 44,
+                flexShrink: 0,
+                borderRadius: "50%",
+                backgroundColor: m.isSelf ? "var(--primary)" : AVATAR_COLORS[i % AVATAR_COLORS.length],
+                color: "#fff",
+                fontWeight: 800,
+                fontSize: 15,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {initialsOf(m.name)}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: "block", fontWeight: 700, color: "var(--text-primary)" }}>
                 {m.name}
-                {m.isSelf ? " (você)" : ""}
+                {m.isSelf ? " (tu)" : ""}
               </span>
             </div>
             <span
               style={{
                 fontSize: 12,
-                fontWeight: 600,
-                padding: "2px 10px",
+                fontWeight: 700,
+                padding: "3px 10px",
                 borderRadius: 999,
-                backgroundColor: "var(--bg)",
-                color: "var(--text-secondary)",
+                border: "1px solid var(--border)",
+                color: m.role === "TITULAR" ? "var(--primary)" : "var(--text-secondary)",
               }}
             >
               {m.role === "TITULAR" ? "Titular" : "Membro"}
@@ -60,13 +110,16 @@ export default async function FamiliaHubPage() {
       </ul>
 
       {hub.isTitular && (
-        <p style={{ marginTop: 20, fontSize: 13, color: "var(--text-secondary)" }}>
-          Como titular, a mensalidade do grupo aparece na tua área{" "}
-          <Link href="/dashboard/financeiro" style={{ color: "var(--primary)", fontWeight: 600 }}>
-            Financeiro
-          </Link>
-          .
-        </p>
+        <Link
+          href="/dashboard/financeiro"
+          className="card"
+          style={{ padding: 14, display: "flex", alignItems: "center", gap: 12, textDecoration: "none", color: "inherit" }}
+        >
+          <span style={{ flex: 1, fontSize: 14 }}>
+            Como titular, a mensalidade do grupo aparece em <strong>Plano e pagamentos</strong>.
+          </span>
+          <ChevronRight size={18} color="var(--text-secondary)" aria-hidden />
+        </Link>
       )}
     </div>
   );
