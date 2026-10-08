@@ -4,14 +4,14 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getBeltIndexFromXp } from "@/lib/belts";
 import { computeBadgeStats } from "@/lib/gamification";
 
 export type AchievementConditionType =
   | "first_mission"
   | "first_physical_assessment"
   | "missions_completed"
-  | "belt_level"
+  | "graduations_passed"
+  | "legend"
   | "xp_milestone"
   | "streak_days"
   | "classes_total"
@@ -23,12 +23,12 @@ export type Achievement = {
   description: string;
   icon: string;
   condition: AchievementConditionType;
-  /** Parâmetro da condição (ex.: 100000 para xp_milestone, 4 para belt_level Verde). */
+  /** Parâmetro da condição (ex.: 100000 para xp_milestone, 50 para classes_total). */
   conditionParam?: number;
   xpReward: number;
 };
 
-/** Conquistas principais (progressão, faixas, marcos). */
+/** Conquistas principais (progressão, graduações, assiduidade, marcos). */
 export const ACHIEVEMENTS: Achievement[] = [
   {
     id: "primeiros_passos",
@@ -56,24 +56,6 @@ export const ACHIEVEMENTS: Achievement[] = [
     xpReward: 100,
   },
   {
-    id: "faixa_verde",
-    name: "Faixa Verde",
-    description: "Atingir a faixa verde",
-    icon: "🟢",
-    condition: "belt_level",
-    conditionParam: 4, // índice da faixa Verde
-    xpReward: 75,
-  },
-  {
-    id: "faixa_azul",
-    name: "Faixa Azul",
-    description: "Atingir a faixa azul",
-    icon: "🔵",
-    condition: "belt_level",
-    conditionParam: 6, // índice da faixa Azul
-    xpReward: 100,
-  },
-  {
     id: "xp_100k",
     name: "100 000 XP",
     description: "Acumular 100k XP",
@@ -92,21 +74,39 @@ export const ACHIEVEMENTS: Achievement[] = [
     xpReward: 80,
   },
   {
-    id: "elite",
-    name: "Elite",
-    description: "Atingir Faixa Preta",
-    icon: "⚫",
-    condition: "belt_level",
-    conditionParam: 10, // índice da faixa Preta
+    id: "primeira_graduacao",
+    name: "Primeira Graduação",
+    description: "Passar no primeiro exame de graduação",
+    icon: "🥋",
+    condition: "graduations_passed",
+    conditionParam: 1,
+    xpReward: 75,
+  },
+  {
+    id: "50_aulas",
+    name: "50 Aulas",
+    description: "50 presenças confirmadas",
+    icon: "💪",
+    condition: "classes_total",
+    conditionParam: 50,
+    xpReward: 100,
+  },
+  {
+    id: "imparavel",
+    name: "Imparável",
+    description: "Treinar 12 semanas seguidas",
+    icon: "⚡",
+    condition: "weeks_streak",
+    conditionParam: 12,
     xpReward: 200,
   },
   {
-    id: "lenda",
-    name: "Lenda",
-    description: "Atingir Faixa Dourada",
-    icon: "✨",
-    condition: "belt_level",
-    conditionParam: 11, // Preta/Dourado
+    id: "lenda_kingdom",
+    name: "Lenda Kingdom",
+    description: "200 aulas e pelo menos 2 graduações",
+    icon: "👑",
+    condition: "legend",
+    conditionParam: 200,
     xpReward: 300,
   },
 ];
@@ -124,14 +124,14 @@ export type AchievementUnlockContext = {
   streakDays: number;
   totalClasses: number;
   consecutiveWeeks: number;
+  /** Graduações obtidas em exame (StudentGrade com source EXAM). */
+  graduationsPassed: number;
 };
 
 /** Calcula quais conquistas estão desbloqueadas com base no contexto. */
 export function getAchievementsWithStatus(
   context: AchievementUnlockContext
 ): AchievementWithStatus[] {
-  const beltIndex = getBeltIndexFromXp(context.athleteXp);
-
   return ACHIEVEMENTS.map((a) => {
     let isUnlocked = false;
     switch (a.condition) {
@@ -144,8 +144,11 @@ export function getAchievementsWithStatus(
       case "missions_completed":
         isUnlocked = context.missionsCompletedCount >= (a.conditionParam ?? 10);
         break;
-      case "belt_level":
-        isUnlocked = beltIndex >= (a.conditionParam ?? 0);
+      case "graduations_passed":
+        isUnlocked = context.graduationsPassed >= (a.conditionParam ?? 1);
+        break;
+      case "legend":
+        isUnlocked = context.totalClasses >= (a.conditionParam ?? 200) && context.graduationsPassed >= 2;
         break;
       case "xp_milestone":
         isUnlocked = context.athleteXp >= (a.conditionParam ?? 0);
@@ -171,7 +174,7 @@ export async function getAchievementUnlockContext(
   supabase: SupabaseClient,
   studentId: string
 ): Promise<AchievementUnlockContext> {
-  const [athleteResult, physicalResult, stats] = await Promise.all([
+  const [athleteResult, physicalResult, stats, gradesResult] = await Promise.all([
     supabase.from("Athlete").select("xp").eq("studentId", studentId).single(),
     supabase
       .from("StudentPhysicalAssessment")
@@ -181,6 +184,7 @@ export async function getAchievementUnlockContext(
       .limit(1)
       .maybeSingle(),
     computeBadgeStats(supabase, studentId),
+    supabase.from("StudentGrade").select("id", { count: "exact", head: true }).eq("studentId", studentId).eq("source", "EXAM"),
   ]);
 
   const xp = (athleteResult.data?.xp as number | null) ?? 0;
@@ -199,5 +203,6 @@ export async function getAchievementUnlockContext(
     streakDays,
     totalClasses,
     consecutiveWeeks,
+    graduationsPassed: gradesResult.count ?? 0,
   };
 }
