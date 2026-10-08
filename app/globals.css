@@ -1731,10 +1731,11 @@ html[data-kfs-native="capacitor"] body {
 @keyframes kfs-marquee {
   to { transform: translate3d(-50%, 0, 0); }
 }
-/* Margem em vez de gap: as duas metades da faixa têm de medir exactamente o mesmo. */
+/* Margem em vez de gap: as duas metades da faixa têm de medir exactamente o mesmo.
+   Negativa porque o recuo 3D (translateZ) já encolhe cada cartão ~18px de cada lado. */
 .kfs-marquee__item {
   flex: none;
-  margin-right: 18px;
+  margin-right: -4px;
   perspective: 800px;
 }
 .kfs-glitch-card {
@@ -1757,6 +1758,10 @@ html[data-kfs-native="capacitor"] body {
   transform: translate3d(0, 0, -100px) rotateX(0deg) rotateY(0deg);
   transition: transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 300ms ease, box-shadow 300ms ease;
   will-change: transform;
+}
+/* Com uma foto em destaque, as restantes escurecem um pouco mais. */
+.kfs-marquee[data-paused="true"] .kfs-glitch-card:not([data-active="true"]) {
+  filter: grayscale(0.7) brightness(0.45);
 }
 .kfs-glitch-card[data-active="true"] {
   z-index: 2;

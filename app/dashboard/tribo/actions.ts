@@ -12,6 +12,7 @@ import {
 } from "@/lib/tribe/constants";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { loadTribeComments } from "@/lib/tribe/feed";
+import { revalidatePublicTribePhotos } from "@/lib/public-tribe-photos";
 
 export type TribeVisibility = "SCHOOL_ONLY" | "ALL_SCHOOLS";
 
@@ -103,6 +104,7 @@ export async function createTribePostAction(formData: FormData): Promise<{ error
   }
 
   revalidatePath("/dashboard/tribo");
+  revalidatePublicTribePhotos();
   return { postId };
 }
 
@@ -199,6 +201,7 @@ export async function deleteOwnTribePostAction(postId: string): Promise<{ error?
   const { error } = await supabase.from("TribePost").update({ status: "DELETED", updatedAt: new Date().toISOString() }).eq("id", postId);
   if (error) return { error: error.message };
   revalidatePath("/dashboard/tribo");
+  revalidatePublicTribePhotos();
   return {};
 }
 

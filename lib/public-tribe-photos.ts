@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
 
@@ -53,4 +53,10 @@ export async function loadPublicTribePhotos(): Promise<PublicTribePhoto[]> {
     revalidate: 300,
     tags: ["public-tribe-photos"],
   })();
+}
+
+/** Chamar depois de publicar, apagar ou moderar um post — senão a home espera pelo fim do cache. */
+export function revalidatePublicTribePhotos() {
+  revalidateTag("public-tribe-photos");
+  revalidatePath("/");
 }

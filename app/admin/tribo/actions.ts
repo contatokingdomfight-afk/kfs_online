@@ -14,6 +14,7 @@ import {
   unhideTribePost,
   type TribeAdminComment,
 } from "@/lib/tribe/moderation";
+import { revalidatePublicTribePhotos } from "@/lib/public-tribe-photos";
 
 async function requireAdmin(
   code: AdminPermissionCode
@@ -31,6 +32,7 @@ export async function adminHideTribePostAction(postId: string): Promise<{ error?
   const result = await hideTribePost(createAdminClient(), postId, gate.userId);
   revalidatePath("/admin/tribo");
   revalidatePath("/dashboard/tribo");
+  revalidatePublicTribePhotos();
   return result;
 }
 
@@ -40,6 +42,7 @@ export async function adminUnhideTribePostAction(postId: string): Promise<{ erro
   const result = await unhideTribePost(createAdminClient(), postId);
   revalidatePath("/admin/tribo");
   revalidatePath("/dashboard/tribo");
+  revalidatePublicTribePhotos();
   return result;
 }
 
@@ -49,6 +52,7 @@ export async function adminDeleteTribePostAction(postId: string): Promise<{ erro
   const result = await adminDeleteTribePost(createAdminClient(), postId, gate.userId);
   revalidatePath("/admin/tribo");
   revalidatePath("/dashboard/tribo");
+  revalidatePublicTribePhotos();
   return result;
 }
 
