@@ -6,6 +6,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { computeStudentGrowth } from "@/lib/student-growth";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
@@ -197,21 +198,14 @@ export async function getAdminDashboardPeriodStats(
   };
 
   // --- crescimento de alunos (com churn real via statusChangedAt) ---
-  const growthByBucket = bucketKeys.map((bucketKey) => {
-    const bucketStart = unit === "day" ? bucketKey : `${bucketKey}-01`;
-    const bucketEnd = unit === "day" ? bucketKey : lastDayOfMonth(bucketKey);
-    let activeCount = 0;
-    let newCount = 0;
-    let churnedCount = 0;
-    for (const s of students) {
-      const created = s.createdAt ? String(s.createdAt).slice(0, 10) : "";
-      if (created <= bucketEnd) activeCount++;
-      if (created >= bucketStart && created <= bucketEnd) newCount++;
-      const changedAt = s.statusChangedAt ? String(s.statusChangedAt).slice(0, 10) : "";
-      if (s.status === "INATIVO" && changedAt >= bucketStart && changedAt <= bucketEnd) churnedCount++;
-    }
-    return { bucket: bucketKey, active: activeCount, new: newCount, churned: churnedCount };
-  });
+  const growthByBucket = computeStudentGrowth(
+    students,
+    bucketKeys.map((key) => ({
+      key,
+      start: unit === "day" ? key : `${key}-01`,
+      end: unit === "day" ? key : lastDayOfMonth(key),
+    }))
+  );
 
   // --- aulas no período (base para presenças/popularidade/check-ins/ocupação) ---
   const expandedPeriod = await fetchExpandedLessonsInRange(supabase, periodStart, periodEnd, schoolId);
