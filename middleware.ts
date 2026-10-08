@@ -72,6 +72,17 @@ function isAdesaoPath(pathname: string) {
   return pathname === "/adesao" || pathname.startsWith("/adesao/");
 }
 
+/**
+ * Com a adesão por concluir, o aluno pode ver a página inicial (só leitura): é lá que aparece o
+ * cartão «Conclui a tua adesão». Só GET/HEAD — Server Actions da página (Vou/Não vou, etc.) são
+ * POST e continuam bloqueadas; todas as outras rotas continuam a ir para /adesao.
+ */
+function isReadOnlyDashboardHome(request: NextRequest): boolean {
+  if (request.nextUrl.pathname !== "/dashboard") return false;
+  if (request.method !== "GET" && request.method !== "HEAD") return false;
+  return !request.headers.has("next-action");
+}
+
 /** Espelha lib/enrollment-form.ts#isEnrollmentFormCurrent — duplicado aqui (em vez de importar
  * lib/enrollment-form.ts) para não puxar as suas dependências pesadas (lib/family-tuition,
  * lib/lesson-utils) para o bundle Edge do middleware. Manter em sincronia se a lógica de
@@ -448,7 +459,8 @@ export async function middleware(request: NextRequest) {
           isAdesaoPath(pathname) ||
           pathname.startsWith("/api/adesao/") ||
           pathname === "/dashboard/perfil" ||
-          pathname.startsWith("/dashboard/perfil/")
+          pathname.startsWith("/dashboard/perfil/") ||
+          isReadOnlyDashboardHome(request)
         ) {
           return response;
         }
@@ -515,7 +527,8 @@ export async function middleware(request: NextRequest) {
         isAdesaoPath(pathname) ||
         pathname.startsWith("/api/adesao/") ||
         pathname === "/dashboard/perfil" ||
-        pathname.startsWith("/dashboard/perfil/")
+        pathname.startsWith("/dashboard/perfil/") ||
+        isReadOnlyDashboardHome(request)
       ) {
         return response;
       }

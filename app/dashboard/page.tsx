@@ -35,6 +35,9 @@ import { resolveDashboardParticipationAccess } from "@/lib/drop-in-check-in-acce
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { loadPublicTribePhotos } from "@/lib/public-tribe-photos";
 import { assignWeeklyTribePhotos } from "@/lib/tribe-lesson-photos";
+import { getMembershipDocumentsStatus } from "@/lib/membership-documents-status";
+import { PendingAdesaoCard } from "./PendingAdesaoCard";
+import { PendingAdesaoClickGuard } from "./PendingAdesaoClickGuard";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
@@ -312,7 +315,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </OpenClassesCarouselShell>
     ) : null;
 
-  return (
+  /**
+   * Adesão por concluir: o middleware deixa ver a página inicial (só leitura) e manda tudo o resto
+   * para /adesao. Aqui mostra-se o cartão com o que falta e os cliques do conteúdo vão para lá.
+   */
+  const adesaoStatus =
+    dbUser.role === "ALUNO" && studentId ? await getMembershipDocumentsStatus(supabase, studentId) : null;
+  const pendingAdesao = adesaoStatus != null && !adesaoStatus.allDone;
+
+  const pageContent = (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
       {!showSubscribeCta && stripeBanner && (
         <div
@@ -442,4 +453,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </Suspense>
     </div>
   );
+
+  if (pendingAdesao && adesaoStatus) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
+        <PendingAdesaoCard status={adesaoStatus} locale={locale as "pt" | "en"} />
+        <PendingAdesaoClickGuard href={adesaoStatus.enrollmentFormDone ? "/adesao?passo=2" : "/adesao"}>
+          {pageContent}
+        </PendingAdesaoClickGuard>
+      </div>
+    );
+  }
+  return pageContent;
 }
