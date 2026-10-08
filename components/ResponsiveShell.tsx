@@ -33,6 +33,8 @@ type Props = {
   headerExtrasDesktopOnly?: React.ReactNode;
   /** Conteúdo extra no topo do sheet «Mais» (só mobile com barra inferior). */
   mobileBottomNavSheetLead?: React.ReactNode;
+  /** Bloco opcional no topo da barra lateral, por baixo do título (ex.: plano do aluno). */
+  sidebarLead?: React.ReactNode;
   /** Miniatura no canto (link para o ecrã de perfil / definições). */
   headerAvatar?: {
     href: string;
@@ -59,6 +61,7 @@ export function ResponsiveShell({
   headerAvatar,
   viewAsBanner,
   mobileBottomNavSheetLead,
+  sidebarLead,
   mainClassName,
   logoutLabel,
   mobileBottomNav,
@@ -196,6 +199,7 @@ export function ResponsiveShell({
             </div>
             <Sidebar
               title={sidebarTitle}
+              lead={sidebarLead}
               links={sidebarLinks}
               activeHref={pathname}
               initialTheme={initialTheme}

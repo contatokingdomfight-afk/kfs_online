@@ -55,6 +55,7 @@ function bestChildIndex(children: SidebarLink[], activeHref: string): number {
 
 export function Sidebar({
   title,
+  lead,
   links,
   activeHref,
   initialTheme,
@@ -62,6 +63,8 @@ export function Sidebar({
   logoutLabel,
 }: {
   title: string;
+  /** Bloco opcional por baixo do título (ex.: nome e plano do aluno). */
+  lead?: ReactNode;
   links: SidebarLink[];
   activeHref?: string;
   initialTheme: Theme;
@@ -114,6 +117,7 @@ export function Sidebar({
         >
           {title}
         </span>
+        {lead ? <div style={{ marginTop: 12 }}>{lead}</div> : null}
       </div>
       <nav
         style={{

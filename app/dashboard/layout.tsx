@@ -19,6 +19,7 @@ import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach"
 import { studentHasPaymentUnlock } from "@/lib/family-payment-gate";
 import { getSignupGraceState } from "@/lib/signup-grace";
 import { SignupGraceReminderBanner } from "@/components/payments/SignupGraceReminderBanner";
+import { AccountPlanChip } from "./AccountPlanChip";
 
 export default async function DashboardLayout({
   children,
@@ -55,6 +56,10 @@ export default async function DashboardLayout({
       : Promise.resolve({ data: null }),
   ]);
   const hasPlan = !!studentRes.data?.planId;
+  const planNameRes = hasPlan
+    ? await supabase.from("Plan").select("name").eq("id", studentRes.data!.planId as string).maybeSingle()
+    : { data: null };
+  const planName = (planNameRes.data as { name?: string } | null)?.name ?? null;
 
   let showGraceReminder = false;
   let graceExpiresAt: string | null = null;
@@ -84,6 +89,10 @@ export default async function DashboardLayout({
   });
   const sidebarLinks = buildStudentSidebarLinks(navAreas);
   const mobileBottomNav = buildStudentMobileBottomNav(navAreas);
+  const accountPlanChip =
+    dbUser.role === "ALUNO" || viewAs === "aluno" ? (
+      <AccountPlanChip displayName={dbUser.name ?? null} planName={planName} locale={locale as "pt" | "en"} />
+    ) : null;
 
   const onboardingSteps = [
     { title: t("onboardingWelcomeTitle"), description: t("onboardingWelcomeDesc") },
@@ -121,6 +130,8 @@ export default async function DashboardLayout({
         mainClassName="dashboard-main"
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
         mobileBottomNav={mobileBottomNav}
+        mobileBottomNavSheetLead={accountPlanChip}
+        sidebarLead={accountPlanChip}
       >
         <DashboardSplash locale={locale} displayName={dbUser.name} />
         <SignupGraceReminderBanner

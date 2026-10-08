@@ -12,6 +12,11 @@ import { getFamilyContext } from "@/lib/family-context";
 import { resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
 import { studentHasPaymentUnlock } from "@/lib/family-payment-gate";
 import { syncPendingInsuranceAmounts } from "@/lib/sync-pending-insurance-amount";
+import { getPlanAccess } from "@/lib/plan-access";
+import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
+import { PlanSummaryCard, type PlanSummary } from "./PlanSummaryCard";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +52,7 @@ export default async function DashboardFinanceiroPage({
   let pendingIndividualFees = false;
   let familyRole: "TITULAR" | "MEMBER" | null = null;
   let onboardingFees = null;
+  let planSummary: PlanSummary | null = null;
 
   if (studentId) {
     const [{ data: student }, { data: membershipAgreement }] = await Promise.all([
@@ -101,6 +107,37 @@ export default async function DashboardFinanceiroPage({
     const hasPendingPayments = payments.length > 0 && !payments.some((p) => p.status === "PAID");
     pendingIndividualFees = hasPendingPayments;
     awaitingSchoolPayment = hasPendingPayments && !hasPaymentUnlock;
+
+    if (plan) {
+      const access = await getPlanAccess(supabase, studentId);
+      const monthly = access.hasCheckIn
+        ? await getMonthlyCheckInLimit(supabase, studentId, access.maxCheckInsPerMonth, currentReferenceMonthLisbon(new Date()))
+        : { limit: null, used: 0, remaining: null };
+      const tuition = payments.find((p) => p.paymentType === "TUITION");
+      const pt = locale !== "en";
+      planSummary = {
+        name: plan.name,
+        priceLabel: familyRole === "MEMBER" ? null : `€${plan.price_monthly.toFixed(0)}${t("perMonth")}`,
+        note: familyRole === "MEMBER" ? t("financeFamilyMemberPlanLine") : null,
+        modalities: access.allowedModalities.map((m) => MODALITY_LABELS[m] ?? m),
+        checkIns: {
+          enabled: access.hasCheckIn,
+          used: monthly.used,
+          limit: monthly.limit,
+          perDayLimit: access.maxCheckInsPerDay,
+        },
+        includes: {
+          digital: access.hasDigitalAccess,
+          performance: access.hasPerformanceTracking,
+          benefits: access.hasExclusiveBenefits,
+        },
+        payment: !tuition
+          ? { tone: "none", label: pt ? "Sem mensalidades" : "No payments yet" }
+          : tuition.status === "PAID"
+            ? { tone: "ok", label: pt ? "Mensalidade em dia" : "Up to date" }
+            : { tone: "pending", label: pt ? "Mensalidade por pagar" : "Payment due" },
+      };
+    }
   }
 
   const loc = locale === "en" ? "en" : "pt";
@@ -130,7 +167,7 @@ export default async function DashboardFinanceiroPage({
         />
       </Suspense>
       <header>
-        <h1 className="text-xl font-bold text-text-primary">{t("financeTitle")}</h1>
+        <h1 className="text-xl font-bold text-text-primary">{locale === "en" ? "Plan & payments" : "Plano e pagamentos"}</h1>
         <p className="text-sm text-text-secondary mt-1">
           Plano, pagamentos e comprovantes. Para alterar dados de pagamento, contacta a secretaria.
         </p>
@@ -165,21 +202,18 @@ export default async function DashboardFinanceiroPage({
         />
       )}
 
-      {/* Plano atual */}
-      <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-        <h2 className="text-base font-bold text-text-primary mb-3">{t("financePlanSection")}</h2>
-        {plan && familyRole === "MEMBER" ? (
-          <p className="text-text-primary font-semibold">
-            {plan.name} · {t("financeFamilyMemberPlanLine")}
-          </p>
-        ) : plan ? (
-          <p className="text-text-primary font-semibold">
-            {plan.name} · €{plan.price_monthly.toFixed(0)}{t("perMonth")}
-          </p>
-        ) : (
+      {/* O meu plano */}
+      {planSummary ? (
+        <PlanSummaryCard plan={planSummary} locale={loc} />
+      ) : (
+        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
+          <h2 className="text-base font-bold text-text-primary mb-3">{t("financePlanSection")}</h2>
           <p className="text-text-secondary text-sm">{t("noPlanAssigned")}</p>
-        )}
-      </section>
+          <Link href="/escolher-plano" className="inline-block mt-3 text-sm font-medium text-primary no-underline hover:underline">
+            {locale === "en" ? "Choose a plan →" : "Escolher plano →"}
+          </Link>
+        </section>
+      )}
 
       {/* Pagamento por transferência / espécie */}
       <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">

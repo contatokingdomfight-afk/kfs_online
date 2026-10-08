@@ -45,7 +45,7 @@ export function getStudentNavAreas(params: StudentNavParams): StudentNavArea[] {
       { label: t("navPhysicalFicha"), href: "/dashboard/ficha-fisica" },
       ...(hasPlan
         ? [
-            { label: t("navFinance"), href: "/dashboard/financeiro" },
+            { label: pt ? "Plano e pagamentos" : "Plan & payments", href: "/dashboard/financeiro" },
             { label: pt ? "Documentos de adesão" : "Membership documents", href: "/dashboard/documentos-adesao" },
           ]
         : []),
