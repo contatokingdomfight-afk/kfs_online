@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Lock, QrCode } from "lucide-react";
+import { Camera, Lock, QrCode } from "lucide-react";
 import { formatNextLessonDate, MODALITY_LABELS } from "@/lib/lesson-utils";
 import { VouNaoVouButtons } from "./VouNaoVouButtons";
 
@@ -36,6 +36,8 @@ type Props = OpenLessonRow & {
   isFreeTier: boolean;
   t: (key: string) => string;
   statusLabels: Record<string, string>;
+  /** Foto da Tribo de fundo (sorteada por semana em `lib/tribe-lesson-photos.ts`); sem foto, fica o vermelho. */
+  backgroundPhotoUrl?: string | null;
 };
 
 function participationBlockedCopy(
@@ -66,6 +68,7 @@ export function LessonPromoBlock({
   checkInStartTimeLabel,
   t,
   statusLabels,
+  backgroundPhotoUrl,
 }: Props) {
   const att = attendanceByLesson[attendanceLookupKey] ?? attendanceByLesson[lesson.id];
   const isToday = lesson.date === todayStr;
@@ -89,6 +92,8 @@ export function LessonPromoBlock({
   const pillBg = isLockedCard ? "var(--bg)" : "rgba(255,255,255,0.2)";
   const pillBorder = isLockedCard ? "var(--border)" : "rgba(255,255,255,0.55)";
 
+  const photoUrl = !isLockedCard && backgroundPhotoUrl ? backgroundPhotoUrl : null;
+
   const checkInHref = `/check-in/${lesson.id}?date=${encodeURIComponent(lesson.date)}`;
   const checkInAlreadyDone = Boolean(att?.checkedInAt);
   const showCheckInCta = canUseCheckInLink && !checkInAlreadyDone;
@@ -100,7 +105,14 @@ export function LessonPromoBlock({
     <div
       className="card"
       style={{
-        backgroundColor: isLockedCard ? "var(--bg-secondary)" : "var(--primary)",
+        backgroundColor: isLockedCard ? "var(--bg-secondary)" : photoUrl ? "#0b0b0b" : "var(--primary)",
+        // Gradiente por cima da foto: texto e botões continuam legíveis com qualquer imagem.
+        backgroundImage: photoUrl
+          ? `linear-gradient(180deg, rgba(11,11,11,0.35) 0%, rgba(11,11,11,0.78) 45%, rgba(11,11,11,0.94) 100%), url("${photoUrl.replace(/"/g, "%22")}")`
+          : undefined,
+        backgroundSize: photoUrl ? "cover" : undefined,
+        backgroundPosition: photoUrl ? "center" : undefined,
+        position: "relative",
         color: isLockedCard ? "var(--text-primary)" : "#fff",
         // Cartão bloqueado é muito próximo do fundo da página (--bg vs --bg-secondary) — sem reforçar
         // a borda, a "espreitadela" do próximo cartão no carrossel fica quase invisível e parece um
@@ -117,9 +129,29 @@ export function LessonPromoBlock({
         flexDirection: "column",
       }}
     >
-      <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: "0 0 8px 0", color: mutedTextColor }}>
-        {t("dashboardNextLessonSubtitle")}
-      </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, margin: "0 0 8px 0" }}>
+        <p style={{ fontSize: "clamp(14px, 3.5vw, 16px)", margin: 0, color: mutedTextColor }}>
+          {t("dashboardNextLessonSubtitle")}
+        </p>
+        {photoUrl && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              flexShrink: 0,
+              padding: "3px 9px",
+              borderRadius: 999,
+              backgroundColor: "rgba(0,0,0,0.55)",
+              fontSize: 11,
+              color: "rgba(255,255,255,0.9)",
+            }}
+          >
+            <Camera size={12} aria-hidden />
+            {locale === "pt" ? "Foto da Tribo" : "Tribe photo"}
+          </span>
+        )}
+      </div>
       {openClassLocationHighlight && (
         <div
           style={{
@@ -255,7 +287,23 @@ export function LessonPromoBlock({
               </p>
             </>
           ) : checkInStartTimeLabel && !checkInWindowOpen ? (
-            <p style={{ margin: 0, fontSize: "clamp(13px, 3.2vw, 15px)", opacity: 0.95 }}>
+            <p
+              style={{
+                margin: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                minHeight: 48,
+                padding: "0 12px",
+                borderRadius: 12,
+                border: "1px dashed rgba(255,255,255,0.45)",
+                backgroundColor: "rgba(0,0,0,0.25)",
+                fontSize: "clamp(13px, 3.2vw, 15px)",
+                fontWeight: 600,
+              }}
+            >
+              <Lock size={16} aria-hidden />
               {t("dashboardCheckInAvailableFrom").replace("{time}", checkInStartTimeLabel)}
             </p>
           ) : null}

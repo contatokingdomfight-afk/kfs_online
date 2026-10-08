@@ -33,6 +33,8 @@ import {
 import { normalizeModalityCode } from "@/lib/modality-normalize";
 import { resolveDashboardParticipationAccess } from "@/lib/drop-in-check-in-access";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
+import { loadPublicTribePhotos } from "@/lib/public-tribe-photos";
+import { assignWeeklyTribePhotos } from "@/lib/tribe-lesson-photos";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
@@ -171,6 +173,31 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     allowedModalities: effectiveAllowedModalities,
     studentPrimaryModality,
   });
+  /**
+   * Foto da Tribo de fundo em cada aula: baralhadas por semana e distribuídas aula a aula.
+   * Conta desde segunda-feira desta semana (incluindo aulas já passadas) para a posição de cada
+   * aula na semana — e portanto a foto — não mudar ao longo dos dias.
+   */
+  const todayDow = new Date(`${today}T00:00:00Z`).getUTCDay();
+  const weekMonday = ymdAddDays(today, -((todayDow + 6) % 7));
+  const tribePhotos = await loadPublicTribePhotos().catch((err) => {
+    console.error("loadPublicTribePhotos (dashboard):", err);
+    return [];
+  });
+  const photoWeekLessons = filterDashboardLessonsByPlanModality(
+    expandLessonsForDateRange(lessonsAsDefs, cancellations, weekMonday, extendedEnd).map((L) => ({
+      ...L,
+      date: L.occurrenceDate,
+      modality: L.modality ?? "",
+      schoolName: L.schoolId ? schoolNameById.get(L.schoolId) ?? null : null,
+    })),
+    { hasPlan: effectiveHasPlan, allowedModalities: effectiveAllowedModalities, studentPrimaryModality }
+  );
+  const lessonPhotoByKey = assignWeeklyTribePhotos(
+    photoWeekLessons.map((l) => ({ key: `${l.id}_${l.date}`, date: l.date, startTime: l.startTime })),
+    tribePhotos.map((p) => p.url)
+  );
+
   const locationById = Object.fromEntries(locationsList.map((loc) => [loc.id, loc.name])) as Record<string, string>;
   const nowForCard = new Date();
   const eligibleLessons = lessons.filter((l) => isLessonEligibleForNextCard(l, nowForCard));
@@ -270,6 +297,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               locationById={locationById}
               attendanceByLesson={attendanceByLesson}
               attendanceLookupKey={`${row.lesson.id}_${row.lesson.date}`}
+              backgroundPhotoUrl={lessonPhotoByKey[`${row.lesson.id}_${row.lesson.date}`] ?? null}
               participationAllowedByPlan={isLessonParticipationAllowedByPlan(row.lesson, planFilterInput)}
               hasPlan={effectiveHasPlan}
               hasCheckIn={effectiveHasCheckIn}
@@ -330,6 +358,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 locationById={locationById}
                 attendanceByLesson={attendanceByLesson}
                 attendanceLookupKey={`${row.lesson.id}_${row.lesson.date}`}
+              backgroundPhotoUrl={lessonPhotoByKey[`${row.lesson.id}_${row.lesson.date}`] ?? null}
                 participationAllowedByPlan={isLessonParticipationAllowedByPlan(row.lesson, planFilterInput)}
                 hasPlan={effectiveHasPlan}
                 hasCheckIn={effectiveHasCheckIn}
@@ -374,6 +403,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 locationById={locationById}
                 attendanceByLesson={attendanceByLesson}
                 attendanceLookupKey={`${row.lesson.id}_${row.lesson.date}`}
+              backgroundPhotoUrl={lessonPhotoByKey[`${row.lesson.id}_${row.lesson.date}`] ?? null}
                 participationAllowedByPlan={isLessonParticipationAllowedByPlan(row.lesson, planFilterInput)}
                 hasPlan={effectiveHasPlan}
                 hasCheckIn={effectiveHasCheckIn}
