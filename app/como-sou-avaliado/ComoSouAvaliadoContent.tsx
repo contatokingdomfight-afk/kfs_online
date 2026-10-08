@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useMemo, useEffect, type ReactNode } from "react";
-import { BookOpen, Brain, ChevronDown, ClipboardCheck, Compass, Dumbbell, Gauge, Swords, TrendingUp, UserCheck } from "lucide-react";
+import { BookOpen, Brain, ChevronDown, ChevronLeft, ChevronRight, X, ClipboardCheck, Compass, Dumbbell, Gauge, Swords, TrendingUp, UserCheck } from "lucide-react";
 import type { DimensionDetail, DetailGroup, DetailItem } from "@/lib/performance-detail-structure";
 
 const DIMENSION_INTROS: Record<string, string> = {
@@ -94,7 +94,7 @@ export function ComoSouAvaliadoContent({
   scoresByModality = {},
 }: Props) {
   const [modalityFilter, setModalityFilter] = useState("");
-  const [selectedDim, setSelectedDim] = useState<string | null>(detailOrder[0] ?? null);
+  const [selectedDim, setSelectedDim] = useState<string | null>(null);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
   const mergedView = useMemo(
@@ -116,11 +116,7 @@ export function ComoSouAvaliadoContent({
 
   useEffect(() => {
     setOpenCategories(new Set());
-    const order =
-      modalityFilter && detailByModality[modalityFilter]?.detailOrder?.length
-        ? detailByModality[modalityFilter].detailOrder
-        : detailOrder;
-    setSelectedDim(order[0] ?? null);
+    setSelectedDim(null);
     // Só quando o utilizador muda o filtro de modalidade — não incluir detailOrder/detailByModality
     // para não repor o estado a cada re-render com novo object identity do servidor.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intencional
@@ -129,7 +125,27 @@ export function ComoSouAvaliadoContent({
   const showModalityFilter = modalityOptions.length > 1;
   const hasScores = Object.keys(active.dimensionAverages).length > 0;
   const dims = active.detailOrder.filter((k) => active.detailByDimension[k]?.groups?.length);
-  const currentDim = selectedDim && dims.includes(selectedDim) ? selectedDim : dims[0];
+  const currentDim = selectedDim && dims.includes(selectedDim) ? selectedDim : null;
+  const dimIndex = currentDim ? dims.indexOf(currentDim) : -1;
+  const openDim = (key: string | null) => {
+    setSelectedDim(key);
+    setOpenCategories(new Set());
+  };
+
+  // Painel aberto: Esc fecha e a página por trás não faz scroll.
+  useEffect(() => {
+    if (!currentDim) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedDim(null);
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [currentDim]);
   const detail = currentDim ? active.detailByDimension[currentDim] : null;
   const currentStyle = (currentDim && DIMENSION_STYLE[currentDim]) || FALLBACK_STYLE;
 
@@ -209,11 +225,9 @@ export function ComoSouAvaliadoContent({
             <button
               key={dimKey}
               type="button"
-              onClick={() => {
-                setSelectedDim(dimKey);
-                setOpenCategories(new Set());
-              }}
-              aria-pressed={selected}
+              onClick={() => openDim(dimKey)}
+              aria-haspopup="dialog"
+              aria-expanded={selected}
               style={{
                 borderRadius: 16,
                 border: selected ? `2px solid ${st.color}` : "1px solid var(--border)",
@@ -235,7 +249,10 @@ export function ComoSouAvaliadoContent({
                   <span style={{ fontSize: 20, fontWeight: 900, color: scoreColor(avg) }}>{avg > 0 ? avg.toFixed(1) : "–"}</span>
                 ) : null}
               </span>
-              <span style={{ fontSize: 15, fontWeight: 800 }}>{d.title}</span>
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, fontSize: 15, fontWeight: 800 }}>
+                {d.title}
+                <ChevronRight size={16} aria-hidden style={{ color: "var(--text-secondary)", flexShrink: 0 }} />
+              </span>
               {hasScores ? (
                 <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span aria-hidden style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--bg)", overflow: "hidden" }}>
@@ -251,12 +268,17 @@ export function ComoSouAvaliadoContent({
         })}
       </section>
 
-      {/* Critérios da área escolhida */}
+      {/* Critérios da área escolhida: painel por cima (folha em baixo no telemóvel, lateral no desktop). */}
       {detail && currentDim ? (
+        <div className="csa-overlay" onClick={() => setSelectedDim(null)}>
         <section
+          role="dialog"
+          aria-modal="true"
           aria-label={detail.title}
-          style={{ borderRadius: 18, border: "1px solid var(--border)", background: "var(--bg-secondary)", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}
+          className="csa-sheet"
+          onClick={(e) => e.stopPropagation()}
         >
+          <span aria-hidden className="csa-grabber" />
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span aria-hidden style={{ width: 44, height: 44, borderRadius: 14, background: `color-mix(in srgb, ${currentStyle.color} 18%, transparent)`, color: currentStyle.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               {currentStyle.icon}
@@ -267,6 +289,14 @@ export function ComoSouAvaliadoContent({
                 {DIMENSION_INTROS[currentDim] ?? `${countCriteria(detail)} critérios`}
               </span>
             </span>
+            {hasScores && (active.dimensionAverages[currentDim] ?? 0) > 0 ? (
+              <span style={{ fontSize: 22, fontWeight: 900, color: scoreColor(active.dimensionAverages[currentDim]) }}>
+                {active.dimensionAverages[currentDim].toFixed(1)}
+              </span>
+            ) : null}
+            <button type="button" onClick={() => setSelectedDim(null)} aria-label="Fechar" className="csa-icon-btn">
+              <X size={20} aria-hidden />
+            </button>
           </div>
 
           {detail.groups.map((group: DetailGroup, gi: number) => {
@@ -329,8 +359,39 @@ export function ComoSouAvaliadoContent({
               </div>
             );
           })}
+
+          {dims.length > 1 ? (
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+              <button type="button" className="csa-nav-btn" disabled={dimIndex <= 0} onClick={() => openDim(dims[dimIndex - 1])}>
+                <ChevronLeft size={18} aria-hidden />
+                {dimIndex > 0 ? active.detailByDimension[dims[dimIndex - 1]].title : ""}
+              </button>
+              <button type="button" className="csa-nav-btn" style={{ justifyContent: "flex-end" }} disabled={dimIndex >= dims.length - 1} onClick={() => openDim(dims[dimIndex + 1])}>
+                {dimIndex < dims.length - 1 ? active.detailByDimension[dims[dimIndex + 1]].title : ""}
+                <ChevronRight size={18} aria-hidden />
+              </button>
+            </div>
+          ) : null}
         </section>
+        </div>
       ) : null}
+      <style>{`
+        .csa-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.55); display: flex; align-items: flex-end; justify-content: center; animation: csa-fade 0.15s ease-out; }
+        .csa-sheet { width: 100%; max-height: 88vh; overflow-y: auto; scrollbar-width: none; background: var(--bg-secondary); border-radius: 22px 22px 0 0; border: 1px solid var(--border); padding: 10px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; animation: csa-up 0.2s ease-out; }
+        .csa-sheet::-webkit-scrollbar { display: none; }
+        .csa-grabber { width: 40px; height: 4px; border-radius: 2px; background: var(--border); align-self: center; margin-bottom: 4px; }
+        .csa-icon-btn { width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; border: 1px solid var(--border); background: var(--bg); color: var(--text-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .csa-nav-btn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; padding: 12px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text-primary); font-size: 13px; font-weight: 700; cursor: pointer; }
+        .csa-nav-btn:disabled { opacity: 0.35; cursor: default; }
+        @media (min-width: 900px) {
+          .csa-overlay { justify-content: flex-end; align-items: stretch; }
+          .csa-sheet { width: 480px; max-height: none; height: 100%; border-radius: 0; border-width: 0 0 0 1px; padding: 20px; animation: csa-left 0.2s ease-out; }
+          .csa-grabber { display: none; }
+        }
+        @keyframes csa-fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes csa-up { from { transform: translateY(40px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+        @keyframes csa-left { from { transform: translateX(40px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+      `}</style>
 
       <Link
         href={hasScores ? "/dashboard/performance" : "/dashboard"}
