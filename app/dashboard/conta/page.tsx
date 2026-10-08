@@ -165,6 +165,15 @@ export default async function ContaPage() {
       {/* Resto */}
       <nav aria-label={pt ? "Mais opções da conta" : "More account options"} style={{ ...card, overflow: "hidden" }}>
         {[
+          family && (
+            <Row
+              key="family"
+              href="/dashboard/familia"
+              icon={<Users size={20} />}
+              label={pt ? "Família" : "Family"}
+              hint={`${family.members.length} ${pt ? (family.members.length === 1 ? "membro" : "membros") : family.members.length === 1 ? "member" : "members"}`}
+            />
+          ),
           planId && (
             <Row
               key="docs"
@@ -187,15 +196,6 @@ export default async function ContaPage() {
               ) : undefined
             }
           />,
-          family && (
-            <Row
-              key="family"
-              href="/dashboard/familia"
-              icon={<Users size={20} />}
-              label={pt ? "Família" : "Family"}
-              hint={`${family.members.length} ${pt ? (family.members.length === 1 ? "membro" : "membros") : family.members.length === 1 ? "member" : "members"}`}
-            />
-          ),
           assistant && (
             <Row key="assistant" href="/coach" icon={<CalendarCheck size={20} />} label={pt ? "Assistente (presenças na escola)" : "Assistant (school check-in)"} />
           ),

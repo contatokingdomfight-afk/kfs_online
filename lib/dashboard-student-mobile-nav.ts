@@ -100,11 +100,15 @@ export async function getStudentNavAreasForCurrentUser(
   const hasPlan = !!studentRes.data?.planId;
   const schoolAssistant =
     dbUser?.role === "ALUNO" ? await getActiveSchoolAssistantForUserId(supabase, dbUser.id) : null;
+  const { count: familyCount } = studentId
+    ? await supabase.from("FamilyGroupMember").select("id", { count: "exact", head: true }).eq("studentId", studentId)
+    : { count: 0 };
   return getStudentNavAreas({
     t,
     locale,
     planAccess,
     hasPlan,
     hasSchoolAssistantCoach: Boolean(schoolAssistant),
+    hasFamily: (familyCount ?? 0) > 0,
   });
 }

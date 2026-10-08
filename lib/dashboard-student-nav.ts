@@ -25,6 +25,8 @@ export type StudentNavParams = {
   hasPlan: boolean;
   /** Treinador assistente: atalho para presenças na escola. */
   hasSchoolAssistantCoach?: boolean;
+  /** Pertence a um grupo familiar (mostra «Família» na conta). */
+  hasFamily?: boolean;
 };
 
 /**
@@ -32,7 +34,7 @@ export type StudentNavParams = {
  * Fonte única para a barra lateral (desktop), a barra inferior (mobile) e os layouts de documentação.
  */
 export function getStudentNavAreas(params: StudentNavParams): StudentNavArea[] {
-  const { t, locale, planAccess, hasPlan, hasSchoolAssistantCoach } = params;
+  const { t, locale, planAccess, hasPlan, hasSchoolAssistantCoach, hasFamily } = params;
   const pt = locale === "pt";
 
   const conta: StudentNavArea = {
@@ -43,12 +45,9 @@ export function getStudentNavAreas(params: StudentNavParams): StudentNavArea[] {
     children: [
       { label: t("navProfile"), href: "/dashboard/perfil" },
       { label: t("navPhysicalFicha"), href: "/dashboard/ficha-fisica" },
-      ...(hasPlan
-        ? [
-            { label: pt ? "Plano e pagamentos" : "Plan & payments", href: "/dashboard/financeiro" },
-            { label: pt ? "Documentos de adesão" : "Membership documents", href: "/dashboard/documentos-adesao" },
-          ]
-        : []),
+      ...(hasPlan ? [{ label: pt ? "Plano e pagamentos" : "Plan & payments", href: "/dashboard/financeiro" }] : []),
+      ...(hasFamily ? [{ label: pt ? "Família" : "Family", href: "/dashboard/familia" }] : []),
+      ...(hasPlan ? [{ label: pt ? "Documentos de adesão" : "Membership documents", href: "/dashboard/documentos-adesao" }] : []),
       { label: pt ? "Notificações" : "Notifications", href: "/dashboard/notificacoes" },
       ...(hasSchoolAssistantCoach
         ? [{ label: pt ? "Assistente (presenças na escola)" : "Assistant (school check-in)", href: "/coach" }]

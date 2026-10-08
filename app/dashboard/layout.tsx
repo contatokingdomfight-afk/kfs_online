@@ -45,7 +45,7 @@ export default async function DashboardLayout({
   ]);
   const t = getTranslations(locale as "pt" | "en");
   const supabase = await createClient();
-  const [planAccess, studentRes, schoolAssistant, membershipAgreementRes] = await Promise.all([
+  const [planAccess, studentRes, schoolAssistant, membershipAgreementRes, familyMemberRes] = await Promise.all([
     getCachedPlanAccess(studentId),
     studentId
       ? supabase.from("Student").select("planId, adminGrantedFullAccess").eq("id", studentId).single()
@@ -54,6 +54,9 @@ export default async function DashboardLayout({
     studentId
       ? supabase.from("StudentMembershipAgreement").select("agreementSignedAt").eq("studentId", studentId).maybeSingle()
       : Promise.resolve({ data: null }),
+    studentId
+      ? supabase.from("FamilyGroupMember").select("id", { count: "exact", head: true }).eq("studentId", studentId)
+      : Promise.resolve({ count: 0 }),
   ]);
   const hasPlan = !!studentRes.data?.planId;
   const planNameRes = hasPlan
@@ -86,6 +89,7 @@ export default async function DashboardLayout({
     planAccess,
     hasPlan,
     hasSchoolAssistantCoach: Boolean(schoolAssistant),
+    hasFamily: (familyMemberRes.count ?? 0) > 0,
   });
   const sidebarLinks = buildStudentSidebarLinks(navAreas);
   const mobileBottomNav = buildStudentMobileBottomNav(navAreas);

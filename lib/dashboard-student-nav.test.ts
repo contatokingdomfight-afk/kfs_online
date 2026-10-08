@@ -67,6 +67,22 @@ describe("getStudentNavAreas", () => {
     expect(conta(false)).not.toContain("/coach");
   });
 
+  it("conta segue a ordem Perfil, Ficha física, Plano e pagamentos, Família, Documentos, Notificações", () => {
+    const conta = getStudentNavAreas({ t, locale: "pt", planAccess: fullAccess, hasPlan: true, hasFamily: true })
+      .find((a) => a.id === "conta")!
+      .children.map((c) => c.href);
+    expect(conta.slice(0, 6)).toEqual([
+      "/dashboard/perfil",
+      "/dashboard/ficha-fisica",
+      "/dashboard/financeiro",
+      "/dashboard/familia",
+      "/dashboard/documentos-adesao",
+      "/dashboard/notificacoes",
+    ]);
+    const semFamilia = areas(fullAccess, true).find((a) => a.id === "conta")!.children.map((c) => c.href);
+    expect(semFamilia).not.toContain("/dashboard/familia");
+  });
+
   it("nenhum destino aparece em duas áreas (fora da própria entrada da área)", () => {
     const seen = new Map<string, string>();
     for (const area of areas(fullAccess, true)) {
