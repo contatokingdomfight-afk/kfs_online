@@ -1,12 +1,26 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import { useTransition } from "react";
+import {
+  Activity,
+  Bell,
+  CalendarCheck,
+  CheckCircle2,
+  ChevronRight,
+  CreditCard,
+  FileText,
+  Flame,
+  Megaphone,
+  Users,
+} from "lucide-react";
 import { markNotificationRead } from "../notification-actions";
 
 export type NotificationRowData = {
   id: string;
+  /** `Notification.type` (PAYMENT_OVERDUE, COACH_EVALUATION, …) — escolhe o ícone. */
+  type: string | null;
   title: string;
   body: string | null;
   href: string | null;
@@ -21,8 +35,24 @@ type Props = {
   markReadLabel: string;
 };
 
+/** Ícone e cor por tipo de notificação. */
+function typeVisual(type: string | null): { icon: ReactNode; bg: string; fg: string } {
+  const t = type ?? "";
+  if (t === "PAYMENT_RESTORED") return { icon: <CheckCircle2 size={20} />, bg: "rgba(74,222,128,0.16)", fg: "#4ade80" };
+  if (t.startsWith("PAYMENT")) return { icon: <CreditCard size={20} />, bg: "rgba(251,146,60,0.16)", fg: "#fb923c" };
+  if (t === "COACH_EVALUATION") return { icon: <FileText size={20} />, bg: "rgba(167,139,250,0.16)", fg: "#a78bfa" };
+  if (t.startsWith("PHYSICAL_ASSESSMENT")) return { icon: <Activity size={20} />, bg: "rgba(96,165,250,0.16)", fg: "#60a5fa" };
+  if (t === "PRESENCE_CONFIRMED") return { icon: <CalendarCheck size={20} />, bg: "rgba(74,222,128,0.16)", fg: "#4ade80" };
+  if (t.startsWith("TRIBE")) return { icon: <Users size={20} />, bg: "rgba(248,113,113,0.16)", fg: "#f87171" };
+  if (t === "REENGAGEMENT") return { icon: <Flame size={20} />, bg: "rgba(250,204,21,0.16)", fg: "#facc15" };
+  if (t === "GENERAL") return { icon: <Megaphone size={20} />, bg: "rgba(193,18,31,0.16)", fg: "#f87171" };
+  return { icon: <Bell size={20} />, bg: "var(--bg)", fg: "var(--text-secondary)" };
+}
+
 export function NotificationRow({ n, markReadLabel }: Props) {
   const [pending, startTransition] = useTransition();
+  const unread = !n.read_at;
+  const v = typeVisual(n.type);
 
   const mark = () =>
     startTransition(() => {
@@ -30,22 +60,75 @@ export function NotificationRow({ n, markReadLabel }: Props) {
     });
 
   const cardStyle: CSSProperties = {
-    display: "block",
-    padding: "clamp(14px, 3.5vw, 18px)",
-    borderLeft: n.read_at ? "3px solid transparent" : "3px solid var(--primary)",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 12,
+    padding: "14px 14px",
     textDecoration: "none",
     color: "inherit",
-    borderRadius: "var(--radius-md)",
-    backgroundColor: "var(--bg-secondary)",
-    border: "1px solid var(--border)",
+    borderRadius: 14,
+    backgroundColor: unread ? "var(--bg-secondary)" : "transparent",
+    border: `1px solid ${unread ? "var(--border)" : "transparent"}`,
     cursor: n.href ? "pointer" : "default",
   };
 
   const inner = (
     <>
-      <p style={{ margin: 0, fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>{n.title}</p>
-      {n.body && <p style={{ margin: "6px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>{n.body}</p>}
-      <p style={{ margin: "8px 0 0 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", opacity: 0.9 }}>{n.createdAtDisplay}</p>
+      <span
+        aria-hidden
+        style={{
+          width: 42,
+          height: 42,
+          flexShrink: 0,
+          borderRadius: 21,
+          backgroundColor: v.bg,
+          color: v.fg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {v.icon}
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 15, fontWeight: unread ? 800 : 600, color: "var(--text-primary)", lineHeight: 1.35 }}>
+          {n.title}
+        </span>
+        {n.body ? (
+          <span
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              marginTop: 3,
+              fontSize: 14,
+              color: "var(--text-secondary)",
+              lineHeight: 1.45,
+            }}
+          >
+            {n.body}
+          </span>
+        ) : null}
+        <span style={{ display: "block", marginTop: 6, fontSize: 12, color: "var(--text-secondary)" }}>{n.createdAtDisplay}</span>
+        {!n.href && unread ? (
+          <button
+            type="button"
+            onClick={mark}
+            disabled={pending}
+            className="btn btn-secondary"
+            style={{ marginTop: 10, fontSize: 13, minHeight: 36 }}
+          >
+            {pending ? "…" : markReadLabel}
+          </button>
+        ) : null}
+      </span>
+      <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, paddingTop: 4 }}>
+        {unread ? (
+          <span aria-label="Não lida" style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: "var(--primary)" }} />
+        ) : null}
+        {n.href ? <ChevronRight size={18} color="var(--text-secondary)" aria-hidden /> : null}
+      </span>
     </>
   );
 
@@ -63,17 +146,6 @@ export function NotificationRow({ n, markReadLabel }: Props) {
     <li>
       <div style={cardStyle} role="group">
         {inner}
-        {!n.read_at && (
-          <button
-            type="button"
-            onClick={mark}
-            disabled={pending}
-            className="btn btn-secondary"
-            style={{ marginTop: 10, fontSize: "clamp(12px, 3vw, 14px)" }}
-          >
-            {pending ? "…" : markReadLabel}
-          </button>
-        )}
       </div>
     </li>
   );

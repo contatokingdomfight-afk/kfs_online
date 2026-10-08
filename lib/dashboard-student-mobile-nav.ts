@@ -72,6 +72,8 @@ export function buildStudentMobileBottomNav(areas: StudentNavArea[]): MobileAppB
     overflow: (conta?.children ?? []).map(toMobileItem),
     moreLabel: conta?.label ?? "Conta",
     moreIcon: "user",
+    // «Conta» abre a página da conta (com tema, idioma e sair) em vez do sheet.
+    moreHref: conta?.href,
   };
 }
 

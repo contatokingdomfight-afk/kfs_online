@@ -44,6 +44,11 @@ export type MobileAppBottomNavConfig = {
   moreLabel: string;
   /** Ícone do botão do sheet (ex.: «user» quando o sheet é a «Conta» do aluno). Por omissão: três pontos. */
   moreIcon?: MobileNavIconId;
+  /**
+   * Com valor, o 5.º botão é uma ligação para esta página (ex.: «Conta» do aluno) em vez de abrir o
+   * sheet; fica activo nessa página e nas de `overflow`.
+   */
+  moreHref?: string;
 };
 
 const BAR_Z = 20_000;
@@ -360,6 +365,38 @@ export function MobileAppBottomNav({
             </Link>
           );
         })}
+        {config.moreHref ? (
+          (() => {
+            const moreActive =
+              overflowActive || pathname === config.moreHref || pathname.startsWith(`${config.moreHref}/`);
+            return (
+              <Link
+                href={config.moreHref}
+                aria-current={moreActive ? "page" : undefined}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
+                  padding: "6px 4px 8px",
+                  textDecoration: "none",
+                  color: moreActive ? "var(--primary)" : "var(--text-secondary)",
+                  fontWeight: moreActive ? 600 : 500,
+                  fontSize: 10,
+                  lineHeight: 1.15,
+                  textAlign: "center",
+                  WebkitTapHighlightColor: "transparent",
+                }}
+              >
+                <NavIcon id={config.moreIcon ?? "more"} active={moreActive} />
+                <span>{config.moreLabel}</span>
+              </Link>
+            );
+          })()
+        ) : (
         <button
           ref={moreBtnRef}
           type="button"
@@ -387,6 +424,7 @@ export function MobileAppBottomNav({
           <NavIcon id={config.moreIcon ?? "more"} active={sheetOpen || overflowActive} />
           <span>{config.moreLabel}</span>
         </button>
+        )}
         </nav>
       </div>
 

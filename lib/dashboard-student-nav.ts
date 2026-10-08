@@ -38,7 +38,7 @@ export function getStudentNavAreas(params: StudentNavParams): StudentNavArea[] {
   const conta: StudentNavArea = {
     id: "conta",
     label: pt ? "Conta" : "Account",
-    href: "/dashboard/perfil",
+    href: "/dashboard/conta",
     icon: "user",
     children: [
       { label: t("navProfile"), href: "/dashboard/perfil" },

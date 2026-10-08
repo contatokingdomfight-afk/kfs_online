@@ -31,6 +31,7 @@ export default async function CoachNotificationsPage() {
     const created_at = String(row.created_at ?? "");
     return {
       id: String(row.id),
+      type: row.type != null ? String(row.type) : null,
       title: String(row.title ?? ""),
       body: row.body != null ? String(row.body) : null,
       read_at: row.read_at != null ? String(row.read_at) : null,
