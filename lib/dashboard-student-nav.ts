@@ -60,9 +60,10 @@ export function getStudentNavAreas(params: StudentNavParams): StudentNavArea[] {
   const treino: StudentNavArea = {
     id: "treino",
     label: pt ? "Treino" : "Training",
-    href: "/dashboard/bem-estar",
+    href: "/dashboard/treino",
     icon: "dumbbell",
     children: [
+      { label: pt ? "Resumo" : "Overview", href: "/dashboard/treino" },
       { label: pt ? "Bem-estar e treino" : "Wellness & training", href: "/dashboard/bem-estar" },
       { label: t("navLibrary"), href: "/dashboard/biblioteca" },
       ...(hasPlan ? [{ label: pt ? "Tema da semana" : "Theme of the week", href: "/dashboard/tema-semana" }] : []),
