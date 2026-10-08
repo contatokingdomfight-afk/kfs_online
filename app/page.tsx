@@ -111,12 +111,12 @@ export default async function HomePage({ searchParams }: Props) {
         familyPlanNote={content.familyPlanNote}
       />
       <WeeklyScheduleSection content={content} schedule={weeklySchedule} locale={locale} />
+      <YouTubeShortsSection content={content} />
       <WhyChoose content={content} />
       <Testimonials content={content} />
       <FAQSection content={content} />
       <About content={content} />
       <Founders content={content} />
-      <YouTubeShortsSection content={content} />
       <LogoSymbolismSection content={content} />
       <ArbitrationSection content={content} />
       <CTASection content={content} />
