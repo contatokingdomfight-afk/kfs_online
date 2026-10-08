@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
-import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getTranslations } from "@/lib/i18n";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getWeekStartMondayLisbon, getTodayWeekdayMon1Lisbon } from "@/lib/lisbon-week";
@@ -9,16 +8,18 @@ import { getMonthThemesForMonth } from "@/lib/month-theme";
 import { normalizeModalityCode } from "@/lib/modality-normalize";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
-import { getWarriorBeltBarFromAthleteState } from "@/lib/athlete-warrior-stats";
 import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
 import { getWhatIsNewNextMission } from "@/lib/whatisnew-next-mission.server";
 import type { ReactNode } from "react";
-import { WarriorPanel } from "./WarriorPanel";
+import { HomeProgressPanel } from "./HomeProgressPanel";
+import { HomeTribePreview } from "./HomeTribePreview";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { loadStudentGraduations } from "@/lib/graduation/load-student-progress";
 import { toGraduationSummary } from "@/components/graduation/GraduationSummaryCard";
 import { WhatIsNew } from "./WhatIsNew";
-import { ExploreSection } from "./ExploreSection";
+import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
+import { weekDayMarks, weeksInARow } from "@/lib/attendance-streak";
+import { getLeaderboardV2 } from "@/lib/leaderboard";
 
 type Props = {
   studentId: string | null;
@@ -46,11 +47,7 @@ export async function DashboardBelowFold({
 }: Props) {
   if (!hasPlan) return null;
 
-  const [locale, supabase, dbUser] = await Promise.all([
-    getLocaleFromCookies(),
-    createClient(),
-    getCurrentDbUser(),
-  ]);
+  const [locale, supabase] = await Promise.all([getLocaleFromCookies(), createClient()]);
   const t = getTranslations(locale as "pt" | "en");
   /** Alinhar a `WeekTheme.week_start` com o calendário em Lisboa (evita desvio UTC no servidor). */
   const weekStart = getWeekStartMondayLisbon();
@@ -61,10 +58,8 @@ export async function DashboardBelowFold({
     0,
   ).toISOString().slice(0, 10);
 
-  let athleteStats: { currentBelt: string | null; currentXP: number; nextLevelXP: number } | null = null;
   let nextMission: { id: string; name: string; description: string | null; xpReward: number } | null = null;
   let coachFeedback: { content: string; coachName: string; date: string } | null = null;
-  let totalPresences = 0;
   let currentMonthCount = 0;
   let attendanceGoal = 10;
 
@@ -218,21 +213,52 @@ export async function DashboardBelowFold({
         .eq("studentId", studentId)
         .eq("status", "CONFIRMED")
         .eq("countsForGamification", true);
-    const [{ count: monthAttCount }, { count: totalAttCount }] = await Promise.all([
-      attBase().gte("occurrenceDate", monthStart).lte("occurrenceDate", monthEnd),
-      attBase(),
-    ]);
+    const { count: monthAttCount } = await attBase().gte("occurrenceDate", monthStart).lte("occurrenceDate", monthEnd);
     currentMonthCount = monthAttCount ?? 0;
-    totalPresences = totalAttCount ?? 0;
   }
+
+  /** Sequência de semanas, dias desta semana e posição no ranking da escola (fila da página inicial). */
+  const todayYmd = calendarDateLisbon(new Date());
+  const since = new Date(Date.now() - 26 * 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  let confirmedDates: string[] = [];
+  let goingDates: string[] = [];
+  let rankPosition: number | null = null;
+  let rankTotal: number | null = null;
+  if (studentId) {
+    const [{ data: recentAtt }, { data: studentRow }] = await Promise.all([
+      supabase
+        .from("Attendance")
+        .select("occurrenceDate, status")
+        .eq("studentId", studentId)
+        .in("status", ["CONFIRMED", "PENDING"])
+        .gte("occurrenceDate", since),
+      supabase.from("Student").select("schoolId").eq("id", studentId).maybeSingle(),
+    ]);
+    for (const a of recentAtt ?? []) {
+      const d = String((a as { occurrenceDate?: string | null }).occurrenceDate ?? "").slice(0, 10);
+      if (!d) continue;
+      if ((a as { status: string }).status === "CONFIRMED") confirmedDates.push(d);
+      else goingDates.push(d);
+    }
+    const schoolId = (studentRow as { schoolId?: string | null } | null)?.schoolId ?? null;
+    if (hasPerformanceTracking && schoolId) {
+      const board = await getLeaderboardV2(supabase, { schoolId, modality: null, ageBucket: null, periodStart: null }, 200).catch(() => null);
+      const me = board?.rows.find((r) => r.is_current_user) ?? null;
+      if (me) {
+        rankPosition = me.rank;
+        rankTotal = Math.max(board?.rows.length ?? 0, me.rank);
+      }
+    }
+  }
+  const streakWeeks = weeksInARow(confirmedDates, todayYmd);
+  const weekMarks = weekDayMarks(todayYmd, confirmedDates, goingDates, locale as "pt" | "en");
+  let xpTotalForHome: number | null = null;
 
   if (athlete) {
     const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
     const xpTotal = synced?.xp ?? (athlete.xp ?? 0);
+    xpTotalForHome = xpTotal;
     const dIdx = synced?.displayBeltIndex ?? (athlete.displayBeltIndex ?? 0);
-    const lastP = synced?.lastBeltPromotionAt ?? athlete.lastBeltPromotionAt;
-    const created = synced?.createdAt ?? athlete.createdAt;
-    athleteStats = getWarriorBeltBarFromAthleteState(xpTotal, dIdx, lastP, created);
 
     const xpForMissions = xpTotal;
 
@@ -354,10 +380,6 @@ export async function DashboardBelowFold({
         })
       : [];
 
-  const beltLabel = athleteStats?.currentBelt
-    ? t(("belt_" + athleteStats.currentBelt) as "belt_WHITE")
-    : "—";
-
   const noMissionsMessage = !athlete ? t("dashboardNoMissionsNoAthlete") : t("dashboardNoMissions");
 
   const noCoachFeedbackMessage = !athlete
@@ -366,18 +388,18 @@ export async function DashboardBelowFold({
 
   return (
     <>
-      <WarriorPanel
-        studentName={dbUser?.name ?? null}
-        currentBelt={athleteStats?.currentBelt ?? null}
-        currentXP={athleteStats?.currentXP ?? 0}
-        nextLevelXP={athleteStats?.nextLevelXP ?? 1000}
-        totalPresences={totalPresences}
-        currentMonthCount={currentMonthCount}
-        attendanceGoal={attendanceGoal}
+      <HomeProgressPanel
+        locale={locale as "pt" | "en"}
         hasCheckIn={hasCheckIn}
         hasPerformanceTracking={hasPerformanceTracking}
-        t={t as (key: string) => string}
-        beltLabel={beltLabel}
+        streakWeeks={streakWeeks}
+        xp={xpTotalForHome}
+        level={null}
+        rank={rankPosition}
+        rankTotal={rankTotal}
+        week={weekMarks}
+        monthCount={currentMonthCount}
+        monthGoal={attendanceGoal}
         graduation={primaryGraduation ? toGraduationSummary(primaryGraduation) : null}
       />
 
@@ -409,12 +431,9 @@ export async function DashboardBelowFold({
         }}
       />
 
-      {upcomingEventsSlot}
+      <HomeTribePreview locale={locale as "pt" | "en"} />
 
-      <ExploreSection
-        hasPerformanceTracking={hasPerformanceTracking}
-        t={t as (key: string) => string}
-      />
+      {upcomingEventsSlot}
     </>
   );
 }

@@ -323,8 +323,23 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     dbUser.role === "ALUNO" && studentId ? await getMembershipDocumentsStatus(supabase, studentId) : null;
   const pendingAdesao = adesaoStatus != null && !adesaoStatus.allDone;
 
+  const firstName = (dbUser.name ?? "").trim().split(/\s+/)[0] ?? "";
+  const todayLabel = new Date(`${todayStr}T12:00:00Z`).toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  });
+
   const pageContent = (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)" }}>
+      <header>
+        <h1 style={{ margin: 0, fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 800, color: "var(--text-primary)" }}>
+          {locale === "en" ? "Hi" : "Olá"}
+          {firstName ? `, ${firstName}` : ""}
+        </h1>
+        <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--text-secondary)", textTransform: "capitalize" }}>{todayLabel}</p>
+      </header>
       {!showSubscribeCta && stripeBanner && (
         <div
           role="status"
