@@ -1,10 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { BellRing, X } from "lucide-react";
 
 type Props = {
   locale: "pt" | "en";
+  /** "home": convite compacto na Home — só aparece enquanto o push não está activo e pode ser dispensado. */
+  variant?: "card" | "home";
 };
+
+const HOME_DISMISS_KEY = "kfs-push-invite-dismissed";
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -15,12 +20,23 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   return out;
 }
 
-export function PushNotificationToggle({ locale }: Props) {
+export function PushNotificationToggle({ locale, variant = "card" }: Props) {
   const [supported, setSupported] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [checked, setChecked] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (variant !== "home") return;
+    try {
+      setDismissed(window.localStorage.getItem(HOME_DISMISS_KEY) === "1");
+    } catch {
+      /* sem localStorage: mostra o convite */
+    }
+  }, [variant]);
 
   useEffect(() => {
     const ok =
@@ -41,6 +57,7 @@ export function PushNotificationToggle({ locale }: Props) {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
     setEnabled(Boolean(sub));
+    setChecked(true);
   }, [supported, publicKey]);
 
   useEffect(() => {
@@ -96,6 +113,55 @@ export function PushNotificationToggle({ locale }: Props) {
   };
 
   if (!supported || !publicKey) return null;
+
+  if (variant === "home") {
+    // Só enquanto não está activo (ou logo a seguir a activar, para mostrar a confirmação).
+    if (!checked || dismissed || (enabled && !message)) return null;
+    const dismiss = () => {
+      setDismissed(true);
+      try {
+        window.localStorage.setItem(HOME_DISMISS_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+    };
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 14, borderRadius: 18, border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
+        <span aria-hidden style={{ width: 42, height: 42, flexShrink: 0, borderRadius: 13, background: "rgba(96,165,250,0.16)", color: "#60a5fa", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <BellRing size={21} />
+        </span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: "block", fontSize: 15, fontWeight: 800 }}>
+            {enabled ? (locale === "pt" ? "Notificações activadas" : "Notifications on") : locale === "pt" ? "Activa as notificações" : "Turn on notifications"}
+          </span>
+          <span style={{ display: "block", fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>
+            {message && !enabled
+              ? message
+              : enabled
+                ? locale === "pt"
+                  ? "Vais receber o lembrete depois de cada aula."
+                  : "You'll get a reminder after each class."
+                : locale === "pt"
+                  ? "Lembramos-te de dar a nota depois da aula (+XP)."
+                  : "We'll remind you to rate each class (+XP)."}
+          </span>
+        </span>
+        {!enabled ? (
+          <button type="button" className="btn btn-primary" onClick={() => void toggle()} disabled={busy} style={{ flexShrink: 0 }}>
+            {busy ? "…" : locale === "pt" ? "Activar" : "Turn on"}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label={locale === "pt" ? "Fechar" : "Close"}
+          style={{ width: 32, height: 32, flexShrink: 0, borderRadius: 16, border: "none", background: "transparent", color: "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+        >
+          <X size={18} aria-hidden />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <section

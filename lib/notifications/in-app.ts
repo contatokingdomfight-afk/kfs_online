@@ -16,7 +16,8 @@ export type NotificationType =
   | "TRIBE_COMMENT"
   | "REENGAGEMENT"
   | "REFERRAL_REWARD"
-  | "GRADUATION";
+  | "GRADUATION"
+  | "RPE_PROMPT";
 
 type InsertPayload = {
   studentId: string;

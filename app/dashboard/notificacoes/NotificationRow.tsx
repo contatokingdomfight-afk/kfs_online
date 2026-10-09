@@ -14,6 +14,7 @@ import {
   Flame,
   Megaphone,
   Users,
+  Gauge,
 } from "lucide-react";
 import { markNotificationRead } from "../notification-actions";
 
@@ -44,6 +45,7 @@ function typeVisual(type: string | null): { icon: ReactNode; bg: string; fg: str
   if (t.startsWith("PHYSICAL_ASSESSMENT")) return { icon: <Activity size={20} />, bg: "rgba(96,165,250,0.16)", fg: "#60a5fa" };
   if (t === "PRESENCE_CONFIRMED") return { icon: <CalendarCheck size={20} />, bg: "rgba(74,222,128,0.16)", fg: "#4ade80" };
   if (t.startsWith("TRIBE")) return { icon: <Users size={20} />, bg: "rgba(248,113,113,0.16)", fg: "#f87171" };
+  if (t === "RPE_PROMPT") return { icon: <Gauge size={20} />, bg: "rgba(250,204,21,0.16)", fg: "#facc15" };
   if (t === "REENGAGEMENT") return { icon: <Flame size={20} />, bg: "rgba(250,204,21,0.16)", fg: "#facc15" };
   if (t === "GENERAL") return { icon: <Megaphone size={20} />, bg: "rgba(193,18,31,0.16)", fg: "#f87171" };
   return { icon: <Bell size={20} />, bg: "var(--bg)", fg: "var(--text-secondary)" };
