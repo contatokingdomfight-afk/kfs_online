@@ -921,7 +921,7 @@ export const messages = {
     adminGrowthNewLabel: "Novos",
     adminGrowthChurnedLabel: "Churn",
     adminChartGrowthInfo:
-      "Mostra como o número de alunos evoluiu no período escolhido: vermelho é o total de alunos ativos (quem passou a INATIVO deixa de contar), verde são os novos alunos, âmbar é quem passou a INATIVO (churn).",
+      "Mostra como o número de alunos evoluiu no período escolhido: vermelho é o total de alunos ativos, verde são os novos alunos, âmbar é o churn (quem passou a INATIVO ou ficou INADIMPLENTE sem plano) — estes deixam de contar como ativos.",
     adminChartRevenueInfo:
       "Soma das mensalidades, matrículas e seguros pagos dentro do período escolhido, agrupada por dia ou por mês consoante a opção selecionada.",
     adminChartModalityInfo:
@@ -2279,7 +2279,7 @@ export const messages = {
     adminGrowthNewLabel: "New",
     adminGrowthChurnedLabel: "Churn",
     adminChartGrowthInfo:
-      "Shows how the number of students changed over the selected period: red is active students (anyone who became INACTIVE stops counting), green is new students, amber is who became INATIVO (churn).",
+      "Shows how the number of students changed over the selected period: red is active students, green is new students, amber is churn (became INATIVO, or INADIMPLENTE with no plan) — they stop counting as active.",
     adminChartRevenueInfo:
       "Sum of tuition, enrollment and insurance payments within the selected period, grouped by day or by month depending on the option chosen.",
     adminChartModalityInfo:

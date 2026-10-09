@@ -29,9 +29,10 @@ describe("computeStudentGrowth", () => {
     expect(sep).toEqual({ bucket: "2026-09", active: 0, new: 1, churned: 1 });
   });
 
-  it("outros estados (ex.: INADIMPLENTE) continuam na linha de ativos", () => {
-    const [, sep] = computeStudentGrowth([{ createdAt: "2026-08-01", status: "INADIMPLENTE", statusChangedAt: "2026-09-10" }], months);
-    expect(sep.active).toBe(1);
-    expect(sep.churned).toBe(0);
+  it("INADIMPLENTE sem plano conta como churn; com plano continua ativo", () => {
+    const [, semPlano] = computeStudentGrowth([{ createdAt: "2026-08-01", status: "INADIMPLENTE", statusChangedAt: "2026-09-10", planId: null }], months);
+    expect(semPlano).toEqual({ bucket: "2026-09", active: 0, new: 0, churned: 1 });
+    const [, comPlano] = computeStudentGrowth([{ createdAt: "2026-08-01", status: "INADIMPLENTE", statusChangedAt: "2026-09-10", planId: "p1" }], months);
+    expect(comPlano).toEqual({ bucket: "2026-09", active: 1, new: 0, churned: 0 });
   });
 });

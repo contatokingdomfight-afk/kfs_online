@@ -197,7 +197,7 @@ export async function getAdminDashboardPeriodStats(
     byBucket: bucketKeys.map((b) => ({ bucket: b, revenue: revenueByBucket.get(b) ?? 0 })),
   };
 
-  // --- crescimento de alunos (com churn real via statusChangedAt) ---
+  // --- crescimento de alunos (churn = INATIVO ou INADIMPLENTE sem plano, data via statusChangedAt) ---
   const growthByBucket = computeStudentGrowth(
     students,
     bucketKeys.map((key) => ({
