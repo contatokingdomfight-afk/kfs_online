@@ -13,6 +13,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "verificar": "node scripts/verificar.mjs",
+    "testar:lembrete": "node scripts/testar-lembrete-pos-aula.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
