@@ -7,6 +7,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { getPlanAccess } from "@/lib/plan-access";
 import { RpeQuickForm } from "./RpeQuickForm";
+import { lessonMinutes } from "@/lib/training-load";
 
 export const metadata = {
   title: "RPE pós-treino | KFS",
@@ -46,9 +47,12 @@ export default async function RpePage() {
   const lessonIds = [...new Set(att.map((a) => a.lessonId))];
   const { data: lessons } =
     lessonIds.length > 0
-      ? await supabase.from("Lesson").select("id, modality").in("id", lessonIds)
-      : { data: [] as { id: string; modality: string }[] };
+      ? await supabase.from("Lesson").select("id, modality, startTime, endTime").in("id", lessonIds)
+      : { data: [] as { id: string; modality: string; startTime: string | null; endTime: string | null }[] };
   const modByLesson = new Map((lessons ?? []).map((l) => [l.id as string, l.modality as string]));
+  const minutesByLesson = new Map(
+    (lessons ?? []).map((l) => [l.id as string, lessonMinutes(l.startTime as string | null, l.endTime as string | null)])
+  );
 
   const pageTitle = loc === "pt" ? "Esforço percebido (RPE)" : "Perceived effort (RPE)";
   const pageIntro =
@@ -124,6 +128,8 @@ export default async function RpePage() {
               attendanceId={a.id}
               modalityLabel={modalityLabel}
               occurrenceDate={occ}
+              minutes={minutesByLesson.get(a.lessonId) ?? 60}
+              loadLabel={loc === "pt" ? "Carga" : "Load"}
               saveLabel={loc === "pt" ? "Guardar RPE" : "Save RPE"}
               savingLabel={loc === "pt" ? "A guardar…" : "Saving…"}
               weightLabel={loc === "pt" ? "Peso (kg)" : "Weight (kg)"}

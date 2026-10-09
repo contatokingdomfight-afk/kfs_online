@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitRpeAction, type RpeFormState } from "../actions";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
@@ -18,6 +18,9 @@ type Props = {
   attendanceId: string;
   modalityLabel: string;
   occurrenceDate: string;
+  /** Duração da aula, para mostrar a carga (RPE × minutos). */
+  minutes: number;
+  loadLabel: string;
   saveLabel: string;
   savingLabel?: string;
   weightLabel: string;
@@ -28,12 +31,15 @@ export function RpeQuickForm({
   attendanceId,
   modalityLabel,
   occurrenceDate,
+  minutes,
+  loadLabel,
   saveLabel,
   savingLabel = "A guardar…",
   weightLabel,
   weightOptionalHint,
 }: Props) {
   const [state, action] = useActionState(submitRpeAction, null as RpeFormState);
+  const [rpe, setRpe] = useState(5);
 
   return (
     <form
@@ -60,7 +66,8 @@ export function RpeQuickForm({
         <select
           name="rpe"
           required
-          defaultValue={5}
+          value={rpe}
+          onChange={(e) => setRpe(Number(e.target.value))}
           style={{
             padding: "8px 12px",
             borderRadius: "var(--radius-md)",
@@ -96,6 +103,9 @@ export function RpeQuickForm({
           }}
         />
       </label>
+      <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
+        {loadLabel}: <b style={{ color: "var(--text-primary)" }}>{rpe} × {minutes} = {rpe * minutes}</b>
+      </span>
       <SaveButton label={saveLabel} />
       <span id={`weight-hint-${attendanceId}`} style={{ width: "100%", fontSize: 12, color: "var(--text-secondary)" }}>
         {weightOptionalHint}

@@ -37,6 +37,8 @@ import { loadPublicTribePhotos } from "@/lib/public-tribe-photos";
 import { assignWeeklyTribePhotos } from "@/lib/tribe-lesson-photos";
 import { getMembershipDocumentsStatus } from "@/lib/membership-documents-status";
 import { PendingAdesaoCard } from "./PendingAdesaoCard";
+import { TrainingLoadAlert } from "./TrainingLoadAlert";
+import { HomeRpePrompt } from "./HomeRpePrompt";
 import { PendingAdesaoClickGuard } from "./PendingAdesaoClickGuard";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
@@ -340,6 +342,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </h1>
         <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--text-secondary)", textTransform: "capitalize" }}>{todayLabel}</p>
       </header>
+      {studentId && hasPlan && effectiveHasCheckIn && (
+        <Suspense fallback={null}>
+          <HomeRpePrompt studentId={studentId} locale={locale as "pt" | "en"} />
+          <TrainingLoadAlert studentId={studentId} locale={locale as "pt" | "en"} />
+        </Suspense>
+      )}
       {!showSubscribeCta && stripeBanner && (
         <div
           role="status"

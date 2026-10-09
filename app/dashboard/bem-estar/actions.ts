@@ -75,6 +75,9 @@ export async function submitRpeAction(_prev: RpeFormState, formData: FormData): 
   revalidatePath("/dashboard/bem-estar");
   revalidatePath("/dashboard/bem-estar/rpe");
   revalidatePath("/dashboard/bem-estar/peso");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/treino");
+  revalidatePath("/dashboard/treino/carga");
   return {};
 }
 

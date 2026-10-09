@@ -15,6 +15,7 @@ import type { MessageKey } from "@/lib/i18n";
 function iconForStudentNavHref(href: string): MobileNavIconId {
   if (href.includes("replayOnboarding=1")) return "star";
   if (href.startsWith("/dashboard/bem-estar")) return "heart";
+  if (href.startsWith("/dashboard/treino/carga")) return "chart";
   if (href.startsWith("/dashboard/performance/historico")) return "file";
   if (href.startsWith("/dashboard/performance")) return "chart";
   if (href.startsWith("/como-sou-avaliado") || href.startsWith("/sistema-pontuacao")) return "scale";

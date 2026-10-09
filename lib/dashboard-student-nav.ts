@@ -63,6 +63,7 @@ export function getStudentNavAreas(params: StudentNavParams): StudentNavArea[] {
     icon: "dumbbell",
     children: [
       { label: pt ? "Resumo" : "Overview", href: "/dashboard/treino" },
+      ...(hasPlan && planAccess.hasCheckIn ? [{ label: pt ? "Carga de treino" : "Training load", href: "/dashboard/treino/carga" }] : []),
       { label: pt ? "Bem-estar e treino" : "Wellness & training", href: "/dashboard/bem-estar" },
       { label: t("navLibrary"), href: "/dashboard/biblioteca" },
       ...(hasPlan ? [{ label: pt ? "Tema da semana" : "Theme of the week", href: "/dashboard/tema-semana" }] : []),

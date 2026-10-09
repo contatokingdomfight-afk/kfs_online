@@ -23,6 +23,9 @@ import { normalizeModalityCode } from "@/lib/modality-normalize";
 import { getAccessibleLibraryCoursesForStudent } from "@/lib/accessible-library-courses";
 import { BENCHMARK_PRESETS } from "@/lib/benchmark-presets";
 import { PAIN_REGIONS } from "@/lib/pain-regions";
+import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
+import { computeTrainingLoad, ZONE_COLORS, zoneLabel } from "@/lib/training-load";
+import { loadTrainingSessions } from "@/lib/training-load.server";
 
 export const dynamic = "force-dynamic";
 
@@ -183,6 +186,14 @@ export default async function TreinoPage() {
 
   const pendingRpe = rpePending ?? 0;
 
+  // Carga de treino (esforço × minutos), só com check-in no plano.
+  const showLoad = hasPlan && planAccess.hasCheckIn;
+  const todayLisbon = calendarDateLisbon(new Date());
+  const load = showLoad
+    ? computeTrainingLoad((await loadTrainingSessions(supabase, [studentId], todayLisbon)).get(studentId) ?? [], todayLisbon)
+    : null;
+  const loadColor = load ? ZONE_COLORS[load.zone] : "var(--border)";
+
   return (
     <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18, paddingBottom: 24 }}>
       <header>
@@ -227,6 +238,41 @@ export default async function TreinoPage() {
           </span>
           <ChevronRight size={20} color="var(--text-secondary)" aria-hidden />
         </Link>
+
+        {/* Carga de treino */}
+        {load && (
+          <Link
+            href="/dashboard/treino/carga"
+            style={{
+              ...card,
+              flex: "1 1 260px",
+              padding: 18,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              textDecoration: "none",
+              color: "inherit",
+              borderColor: load.zone === "high" || load.zone === "caution" ? loadColor : "var(--border)",
+            }}
+          >
+            <span aria-hidden style={{ width: 48, height: 48, flexShrink: 0, borderRadius: 14, backgroundColor: loadColor, color: "#111", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 900 }}>
+              {load.ratio != null ? load.ratio.toFixed(1).replace(".", pt ? "," : ".") : <Activity size={24} />}
+            </span>
+            <span style={{ flex: 1 }}>
+              <span style={{ display: "block", fontSize: 15, fontWeight: 800 }}>{zoneLabel(load.zone, pt)}</span>
+              <span style={{ display: "block", fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
+                {load.ratio != null
+                  ? pt
+                    ? `Carga de treino · ${load.ratio.toFixed(2).replace(".", ",")}× o teu normal`
+                    : `Training load · ${load.ratio.toFixed(2)}× your normal`
+                  : pt
+                    ? "Carga de treino · precisa de 3 semanas com nota de esforço"
+                    : "Training load · needs 3 weeks of effort ratings"}
+              </span>
+            </span>
+            <ChevronRight size={20} color="var(--text-secondary)" aria-hidden />
+          </Link>
+        )}
 
         {/* RPE por classificar */}
         {hasPlan && planAccess.hasCheckIn && (

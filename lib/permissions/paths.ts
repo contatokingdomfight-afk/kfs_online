@@ -56,6 +56,7 @@ const ORDERED_PATH_RULES: readonly Rule[] = [
   { prefix: "/coach/alunos", read: "admin:alunos:read", write: "admin:alunos:write" },
   { prefix: "/coach/desempenho-modalidades", read: "admin:alunos:read", write: "admin:alunos:write" },
   { prefix: "/coach/atletas", read: "admin:alunos:read", write: "admin:alunos:write" },
+  { prefix: "/coach/carga", read: "admin:alunos:read", write: "admin:alunos:write" },
   { prefix: "/coach/notificacoes", read: "admin:sistema:read", write: "admin:sistema:write" },
   { prefix: "/como-sou-avaliado", read: "admin:sistema:read", write: "admin:sistema:write" },
   { prefix: "/sistema-pontuacao", read: "admin:sistema:read", write: "admin:sistema:write" },
