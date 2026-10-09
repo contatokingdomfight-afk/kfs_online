@@ -122,18 +122,24 @@ export default async function CoachCargaPage({ searchParams }: { searchParams: S
     .from("Student")
     .select("id, userId, status")
     .in("id", [...lessonCountByStudent.keys()].slice(0, 2000));
-  const students = ((studentRows ?? []) as { id: string; userId: string; status: string }[]).filter(
+  const candidates = ((studentRows ?? []) as { id: string; userId: string; status: string }[]).filter(
     (s) => s.status !== "INATIVO" && inScope(s.id)
   );
+  const userIds = [...new Set(candidates.map((s) => s.userId))];
+  const { data: users } = userIds.length
+    ? await supabase.from("User").select("id, name, email, role").in("id", userIds)
+    : { data: [] };
+  const userRows = (users ?? []) as { id: string; name: string | null; email: string | null; role: string }[];
+  const nameByUser = new Map(userRows.map((u) => [u.id, u.name?.trim() || u.email || "—"]));
+  // Contas de admin (ex.: a conta de demonstração) não entram na lista da turma.
+  const adminUserIds = new Set(userRows.filter((u) => u.role === "ADMIN").map((u) => u.id));
+  const students = candidates.filter((s) => !adminUserIds.has(s.userId));
   const studentIds = students.map((s) => s.id);
 
-  const userIds = students.map((s) => s.userId);
-  const [sessionsByStudent, wellness, { data: users }] = await Promise.all([
+  const [sessionsByStudent, wellness] = await Promise.all([
     loadTrainingSessions(supabase, studentIds, today),
     loadWellnessSnapshots(supabase, studentIds, today),
-    userIds.length ? supabase.from("User").select("id, name, email").in("id", userIds) : Promise.resolve({ data: [] }),
   ]);
-  const nameByUser = new Map(((users ?? []) as { id: string; name: string | null; email: string | null }[]).map((u) => [u.id, u.name?.trim() || u.email || "—"]));
 
   type Row = {
     id: string;
