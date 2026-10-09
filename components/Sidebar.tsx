@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { IntentLink } from "@/components/IntentLink";
 import type { ReactNode } from "react";
 import { ThemeLocaleSwitcher } from "@/components/ThemeLocaleSwitcher";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -169,7 +169,7 @@ export function Sidebar({
                   {item.section}
                 </div>
               )}
-              <Link
+              <IntentLink
                 href={item.href}
                 prefetch={item.prefetch}
                 className="app-sidebar-nav-link"
@@ -181,7 +181,7 @@ export function Sidebar({
                   </span>
                 )}
                 {item.label}
-              </Link>
+              </IntentLink>
               {hasChildren && (!item.collapseChildren || navHighlighted) && (
                 <div style={{ paddingLeft: 20 }}>
                   {item.children!.map((child, childIdx) => {
@@ -189,7 +189,7 @@ export function Sidebar({
                       ? !!activeHref && bestChildIndex(item.children!, activeHref) === childIdx
                       : !!activeHref && (activeHref === child.href || activeHref.startsWith(`${child.href}/`));
                     return (
-                      <Link
+                      <IntentLink
                         key={`${child.href}-${childIdx}`}
                         href={child.href}
                         prefetch={child.prefetch}
@@ -202,7 +202,7 @@ export function Sidebar({
                         }}
                       >
                         {child.label}
-                      </Link>
+                      </IntentLink>
                     );
                   })}
                 </div>

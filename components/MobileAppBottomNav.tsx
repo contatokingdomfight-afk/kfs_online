@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
+import { IntentLink } from "@/components/IntentLink";
 import { usePathname, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 
@@ -335,7 +335,7 @@ export function MobileAppBottomNav({
         {config.primary.map((item) => {
           const active = itemActive(item);
           return (
-            <Link
+            <IntentLink
               key={item.href}
               href={item.href}
               prefetch={item.prefetch}
@@ -362,7 +362,7 @@ export function MobileAppBottomNav({
               <span style={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {item.label}
               </span>
-            </Link>
+            </IntentLink>
           );
         })}
         {config.moreHref ? (
@@ -370,7 +370,7 @@ export function MobileAppBottomNav({
             const moreActive =
               overflowActive || pathname === config.moreHref || pathname.startsWith(`${config.moreHref}/`);
             return (
-              <Link
+              <IntentLink
                 href={config.moreHref}
                 aria-current={moreActive ? "page" : undefined}
                 style={{
@@ -393,7 +393,7 @@ export function MobileAppBottomNav({
               >
                 <NavIcon id={config.moreIcon ?? "more"} active={moreActive} />
                 <span>{config.moreLabel}</span>
-              </Link>
+              </IntentLink>
             );
           })()
         ) : (
@@ -557,7 +557,7 @@ export function MobileAppBottomNav({
                 config.overflow.map((item) => {
                   const active = itemActive(item);
                   return (
-                    <Link
+                    <IntentLink
                       key={item.href}
                       href={item.href}
                       prefetch={item.prefetch}
@@ -579,7 +579,7 @@ export function MobileAppBottomNav({
                     >
                       <NavIcon id={item.icon} active={active} />
                       <span style={{ flex: 1 }}>{item.label}</span>
-                    </Link>
+                    </IntentLink>
                   );
                 })
               )}
