@@ -119,7 +119,7 @@ export default async function TreinoPage() {
       .select("id", { count: "exact", head: true })
       .eq("studentId", studentId)
       .eq("status", "CONFIRMED")
-      .is("rpe", null)
+      .or("rpe.is.null,rpeSource.eq.COACH")
       .gte("occurrenceDate", from14),
     supabase.from("BodyWeightEntry").select("weightKg, recordedAt").eq("studentId", studentId).order("recordedAt", { ascending: false }).limit(2),
     supabase.from("StudentProfile").select("weightKg, weightGoalKg").eq("studentId", studentId).maybeSingle(),

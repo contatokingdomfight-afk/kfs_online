@@ -39,7 +39,7 @@ export default async function RpePage() {
     .select("id, occurrenceDate, lessonId")
     .eq("studentId", studentId)
     .eq("status", "CONFIRMED")
-    .is("rpe", null)
+    .or("rpe.is.null,rpeSource.eq.COACH")
     .gte("occurrenceDate", from)
     .order("occurrenceDate", { ascending: false });
 

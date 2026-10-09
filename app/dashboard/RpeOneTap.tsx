@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { CheckCircle2 } from "lucide-react";
 import { submitRpeAction, type RpeFormState } from "./bem-estar/actions";
 
-type Props = { attendanceId: string; subtitle: string; minutes: number; locale: "pt" | "en" };
+type Props = { attendanceId: string; subtitle: string; minutes: number; xpReward: number; locale: "pt" | "en" };
 
 function RpeButton({ n, picked, onPick }: { n: number; picked: number | null; onPick: (n: number) => void }) {
   const { pending } = useFormStatus();
@@ -36,7 +36,7 @@ function RpeButton({ n, picked, onPick }: { n: number; picked: number | null; on
 }
 
 /** Nota de esforço (1–10) num toque: cada número é um botão que submete o formulário. */
-export function RpeOneTap({ attendanceId, subtitle, minutes, locale }: Props) {
+export function RpeOneTap({ attendanceId, subtitle, minutes, xpReward, locale }: Props) {
   const pt = locale !== "en";
   const [picked, setPicked] = useState<number | null>(null);
   const [state, action] = useActionState(async (prev: RpeFormState, fd: FormData) => {
@@ -51,6 +51,7 @@ export function RpeOneTap({ attendanceId, subtitle, minutes, locale }: Props) {
         <CheckCircle2 size={22} color="var(--success)" aria-hidden />
         <span style={{ fontSize: 14, fontWeight: 700 }}>
           {pt ? `Guardado · carga ${picked * minutes}` : `Saved · load ${picked * minutes}`}
+          {xpReward > 0 ? <span style={{ marginLeft: 8, color: "var(--primary)" }}>+{xpReward} XP</span> : null}
         </span>
       </div>
     );
@@ -59,9 +60,14 @@ export function RpeOneTap({ attendanceId, subtitle, minutes, locale }: Props) {
   return (
     <form action={action} style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, borderRadius: 18, border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
       <input type="hidden" name="attendanceId" value={attendanceId} />
-      <div>
-        <span style={{ display: "block", fontSize: 16, fontWeight: 800 }}>{pt ? "Como foi o treino?" : "How was training?"}</span>
-        <span style={{ display: "block", fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>{subtitle}</span>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: "block", fontSize: 16, fontWeight: 800 }}>{pt ? "Como foi o treino?" : "How was training?"}</span>
+          <span style={{ display: "block", fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>{subtitle}</span>
+        </span>
+        {xpReward > 0 ? (
+          <span style={{ flexShrink: 0, padding: "3px 9px", borderRadius: 999, background: "var(--primary)", color: "#fff", fontSize: 12, fontWeight: 800 }}>+{xpReward} XP</span>
+        ) : null}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 6 }}>
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (

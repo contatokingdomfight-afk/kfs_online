@@ -12,6 +12,7 @@ export const XP_SOURCES = [
   "COURSE_COMPLETED",
   "EXAM_PASSED",
   "EXAM_TAKEN",
+  "EFFORT_RATING",
 ] as const;
 export type XpSource = (typeof XP_SOURCES)[number];
 
@@ -23,6 +24,7 @@ export const XP_SOURCE_META: Record<XpSource, { label: string; rule: (xp: number
   COURSE_COMPLETED: { label: "Cursos concluídos", emoji: "🎓", rule: (xp) => `+${xp} XP por curso completo` },
   EXAM_PASSED: { label: "Exames aprovados", emoji: "🏅", rule: (xp) => `${xp} XP × número do grau obtido` },
   EXAM_TAKEN: { label: "Exames realizados", emoji: "📝", rule: (xp) => `${xp} XP por exame sem aprovação` },
+  EFFORT_RATING: { label: "Notas de esforço", emoji: "⚡", rule: (xp) => `${xp} XP por treino em que o aluno dá a nota de esforço (RPE)` },
 };
 
 export const DEFAULT_XP_RULES: Record<XpSource, number> = {
@@ -33,6 +35,7 @@ export const DEFAULT_XP_RULES: Record<XpSource, number> = {
   COURSE_COMPLETED: 20,
   EXAM_PASSED: 100,
   EXAM_TAKEN: 25,
+  EFFORT_RATING: 5,
 };
 
 export function isXpSource(v: string): v is XpSource {

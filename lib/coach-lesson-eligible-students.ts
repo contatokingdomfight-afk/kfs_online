@@ -27,6 +27,8 @@ export type CoachLessonStudentRow = {
   preLessonWellness: { zone: CoachLessonWellnessZone; tooltip: string } | null;
   rpe: number | null;
   rpeRecordedAt: string | null;
+  /** Quem deu a nota: STUDENT (o aluno) ou COACH (estimativa na aula). */
+  rpeSource: "STUDENT" | "COACH" | null;
   /** null quando o plano não tem limite mensal de check-ins. */
   monthlyLimit: { used: number; limit: number; remaining: number } | null;
   /** true = "check-in avulso" (aluno de outra modalidade/plano, marcado manualmente). */
@@ -188,7 +190,7 @@ export async function loadCoachLessonRoster(
       .eq("status", "ATIVO"),
     supabase
       .from("Attendance")
-      .select("id, studentId, status, checkedInAt, rpe, rpeRecordedAt, isCrossModality")
+      .select("id, studentId, status, checkedInAt, rpe, rpeRecordedAt, rpeSource, isCrossModality")
       .eq("lessonId", lessonId)
       .eq("occurrenceDate", occurrenceYmd),
   ]);
@@ -241,6 +243,7 @@ export async function loadCoachLessonRoster(
         checkedInAt: string | null;
         rpe: number | null;
         rpeRecordedAt: string | null;
+        rpeSource?: string | null;
         isCrossModality?: boolean;
       },
     ])
@@ -473,6 +476,7 @@ export async function loadCoachLessonRoster(
       preLessonWellness,
       rpe: att?.rpe != null ? Number(att.rpe) : null,
       rpeRecordedAt: att?.rpeRecordedAt ?? null,
+      rpeSource: att?.rpe == null ? null : att?.rpeSource === "COACH" ? "COACH" : "STUDENT",
       monthlyLimit: monthlyLimitByStudent.get(s.id) ?? null,
       isCrossModality: Boolean(att?.isCrossModality),
     };

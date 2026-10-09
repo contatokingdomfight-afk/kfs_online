@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { setAttendanceStatusFromForm, coachCheckInStudentFromForm } from "./actions";
+import { setAttendanceStatusFromForm, coachCheckInStudentFromForm, setCoachRpeFromForm } from "./actions";
 import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
@@ -26,6 +26,7 @@ type Props = {
   preLessonWellness: { zone: WellnessZone; tooltip: string } | null;
   rpe: number | null;
   rpeRecordedAt: string | null;
+  rpeSource?: "STUDENT" | "COACH" | null;
   canEvaluate?: boolean;
   monthlyLimit?: { used: number; limit: number; remaining: number } | null;
   isCrossModality?: boolean;
@@ -48,6 +49,7 @@ export function AttendanceRow({
   preLessonWellness,
   rpe,
   rpeRecordedAt,
+  rpeSource = null,
   canEvaluate = true,
   monthlyLimit,
   isCrossModality = false,
@@ -55,6 +57,9 @@ export function AttendanceRow({
   const router = useRouter();
   const [statusState, statusAction] = useActionState(setAttendanceStatusFromForm, null as { error?: string } | null);
   const [checkInState, checkInAction] = useActionState(coachCheckInStudentFromForm, null as { error?: string } | null);
+  const [rpeState, rpeAction] = useActionState(setCoachRpeFromForm, null as { error?: string; updated?: number } | null);
+  // O coach pode dar/acertar o esforço de quem esteve presente, desde que não tenha sido o aluno a dá-lo.
+  const coachCanSetRpe = status === "CONFIRMED" && Boolean(attendanceId) && rpeSource !== "STUDENT";
   const [modalOpen, setModalOpen] = useState(false);
   const [showSuccessConfirm, setShowSuccessConfirm] = useState(false);
 
@@ -105,7 +110,7 @@ export function AttendanceRow({
     }, 0);
   }, [router]);
 
-  const formError = statusState?.error ?? checkInState?.error;
+  const formError = statusState?.error ?? checkInState?.error ?? rpeState?.error;
 
   return (
     <>
@@ -144,7 +149,7 @@ export function AttendanceRow({
             )}
           </div>
           {studentName && <span className="coach-attendance-email">{studentEmail}</span>}
-          {(zoneShort || rpe != null) && (
+          {(zoneShort || rpe != null || coachCanSetRpe) && (
             <div className="coach-attendance-wellness" aria-label="Bem-estar e RPE">
               {zoneShort && (
                 <span className={`coach-wellness-zone-pill ${zoneClass}`} title={preLessonWellness?.tooltip}>
@@ -156,7 +161,8 @@ export function AttendanceRow({
                 {rpe != null ? (
                   <>
                     <strong>{rpe}</strong>
-                    {rpeRecordedAt ? (
+                    <span className="coach-attendance-rpe-time"> ({rpeSource === "COACH" ? "coach" : "aluno"})</span>
+                    {rpeRecordedAt && rpeSource !== "COACH" ? (
                       <span className="coach-attendance-rpe-time">
                         {" "}
                         (registado às{" "}
@@ -168,6 +174,32 @@ export function AttendanceRow({
                   "—"
                 )}
               </span>
+              {coachCanSetRpe && attendanceId ? (
+                <form action={rpeAction} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <input type="hidden" name="lessonId" value={lessonId} readOnly />
+                  <input type="hidden" name="occurrenceDate" value={occurrenceDate} readOnly />
+                  <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
+                  <select
+                    name="rpe"
+                    defaultValue={rpe ?? ""}
+                    aria-label={`Esforço de ${label}`}
+                    className="input"
+                    style={{ width: 70, minHeight: 32, padding: "2px 6px", fontSize: 13 }}
+                  >
+                    <option value="" disabled>
+                      1–10
+                    </option>
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="submit" className="btn btn-secondary" style={{ minHeight: 32, padding: "2px 10px", fontSize: 13 }}>
+                    {rpe == null ? "Dar" : "Acertar"}
+                  </button>
+                </form>
+              ) : null}
             </div>
           )}
         </div>

@@ -403,3 +403,47 @@ export async function saveEvaluationFromLesson(
   revalidatePath("/dashboard/notificacoes");
   return { success: true };
 }
+
+/**
+ * Esforço (RPE) registado pelo coach na aula — para um aluno ou para vários de uma vez
+ * («Esforço da aula»). Nunca substitui a nota dada pelo próprio aluno (só preenche vazias
+ * ou acerta as do coach); a nota do coach não dá XP.
+ */
+export async function setCoachRpeFromForm(
+  _prev: { error?: string; updated?: number } | null,
+  formData: FormData
+): Promise<{ error?: string; updated?: number }> {
+  const lessonId = String(formData.get("lessonId") ?? "").trim();
+  const occurrenceDate = String(formData.get("occurrenceDate") ?? "").trim().slice(0, 10);
+  const rpe = Number(formData.get("rpe"));
+  const attendanceIds = formData
+    .getAll("attendanceId")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  if (!lessonId || !/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate) || attendanceIds.length === 0) return { error: "Dados inválidos." };
+  if (!Number.isInteger(rpe) || rpe < 1 || rpe > 10) return { error: "Escolhe um esforço de 1 a 10." };
+
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser) return { error: "Sessão inválida." };
+  const supabase = await createClient();
+  const access = await assertCoachCanManageLesson(supabase, dbUser, lessonId);
+  if (access.error) return { error: access.error };
+
+  const { data, error } = await supabase
+    .from("Attendance")
+    .update({ rpe, rpeRecordedAt: new Date().toISOString(), rpeSource: "COACH" })
+    .in("id", attendanceIds.slice(0, 200))
+    .eq("lessonId", lessonId)
+    .eq("occurrenceDate", occurrenceDate)
+    .eq("status", "CONFIRMED")
+    .or("rpe.is.null,rpeSource.eq.COACH")
+    .select("id");
+  if (error) {
+    console.error("setCoachRpeFromForm error:", error);
+    return { error: error.message };
+  }
+
+  revalidatePath("/coach/aula");
+  revalidatePath("/coach/carga");
+  return { updated: (data ?? []).length };
+}

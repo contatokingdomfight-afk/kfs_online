@@ -48,9 +48,10 @@ export async function submitRpeAction(_prev: RpeFormState, formData: FormData): 
   const updatePayload: {
     rpe: number;
     rpeRecordedAt: string;
+    rpeSource: "STUDENT";
     postWeightKg?: number;
     postWeightRecordedAt?: string;
-  } = { rpe, rpeRecordedAt: nowIso };
+  } = { rpe, rpeRecordedAt: nowIso, rpeSource: "STUDENT" };
 
   if (postWeightKg != null) {
     updatePayload.postWeightKg = postWeightKg;

@@ -5,6 +5,7 @@ import { Users } from "lucide-react";
 import type { CoachLessonStudentRow } from "@/lib/coach-lesson-eligible-students";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AttendanceRow } from "./AttendanceRow";
+import { CoachClassRpeBulk } from "./CoachClassRpeBulk";
 
 type RosterFilter = "all" | "no_rsvp" | "pending";
 
@@ -35,6 +36,12 @@ export function CoachAulaRosterPanel({
     const absent = students.filter((s) => s.status === "ABSENT").length;
     return { confirmed, pending, noRsvp, absent, total: students.length };
   }, [students]);
+
+  // Presentes ainda sem nota de esforço (para o «Esforço da aula»).
+  const unratedAttendanceIds = useMemo(
+    () => students.filter((s) => s.status === "CONFIRMED" && s.attendanceId && s.rpe == null).map((s) => s.attendanceId as string),
+    [students]
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -82,6 +89,10 @@ export function CoachAulaRosterPanel({
         <span>·</span>
         <span>{counts.noRsvp} sem pré-confirmação</span>
       </div>
+
+      {unratedAttendanceIds.length > 0 ? (
+        <CoachClassRpeBulk lessonId={lessonId} occurrenceDate={occurrenceDate} attendanceIds={unratedAttendanceIds} />
+      ) : null}
 
       <label style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
         <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Pesquisar aluno</span>
@@ -131,6 +142,7 @@ export function CoachAulaRosterPanel({
               preLessonWellness={s.preLessonWellness}
               rpe={s.rpe}
               rpeRecordedAt={s.rpeRecordedAt}
+              rpeSource={s.rpeSource}
               monthlyLimit={s.monthlyLimit}
               isCrossModality={s.isCrossModality}
               profile={{

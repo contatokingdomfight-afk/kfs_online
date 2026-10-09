@@ -25,7 +25,7 @@ export async function HomeRpePrompt({ studentId, locale }: { studentId: string; 
     .select("id, lessonId, occurrenceDate")
     .eq("studentId", studentId)
     .eq("status", "CONFIRMED")
-    .is("rpe", null)
+    .or("rpe.is.null,rpeSource.eq.COACH")
     .gte("occurrenceDate", addDays(today, -1))
     .lte("occurrenceDate", today)
     .order("occurrenceDate", { ascending: false });
@@ -50,9 +50,11 @@ export async function HomeRpePrompt({ studentId, locale }: { studentId: string; 
   if (!candidate || !candidate.l) return null;
 
   const minutes = lessonMinutes(candidate.l.startTime, candidate.l.endTime);
+  const { data: rule } = await supabase.from("XpRule").select("xp").eq("source", "EFFORT_RATING").maybeSingle();
+  const xpReward = (rule as { xp?: number } | null)?.xp ?? 5;
   const isToday = String(candidate.a.occurrenceDate).slice(0, 10) === today;
   const when = isToday ? (pt ? "hoje" : "today") : pt ? "ontem" : "yesterday";
   const title = `${MODALITY_LABELS[candidate.l.modality] ?? candidate.l.modality} · ${when} ${(candidate.l.startTime ?? "").slice(0, 5)} · ${minutes} min`;
 
-  return <RpeOneTap attendanceId={candidate.a.id} subtitle={title} minutes={minutes} locale={locale} />;
+  return <RpeOneTap attendanceId={candidate.a.id} subtitle={title} minutes={minutes} xpReward={xpReward} locale={locale} />;
 }
