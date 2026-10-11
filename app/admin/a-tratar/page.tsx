@@ -6,7 +6,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { loadAdminTodo, type AdminTodoGroup, type AdminTodoItem } from "@/lib/admin-todo";
 import { ADMIN_TODO_ORDER, type AdminTodoKind } from "@/lib/admin-todo-rules";
-import { TodoActionButton } from "./TodoButtons";
+import { BulkTodoButton, TodoActionButton, WhatsAppSequence } from "./TodoButtons";
 import { TONE_COLOR, todoIcon } from "./todo-ui";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +57,33 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
       <TodoActionButton action="done" item={fields} label="Feito" doneAction={item.kind === "risco" || item.kind === "experimentais" ? "contactado" : "done"} />
     </span>
   );
+}
+
+/** Ação em lote do alerta (no cabeçalho). */
+function BulkControl({ g, schoolId }: { g: AdminTodoGroup; schoolId: string | null }) {
+  if (g.items.length === 0) return null;
+  if (g.kind === "pagamentos" || g.kind === "risco" || g.kind === "experimentais") {
+    const withPhone = g.items.filter((it) => it.whatsappUrl);
+    const missing = g.items.length - withPhone.length;
+    return (
+      <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+        <WhatsAppSequence
+          items={withPhone.map((it) => ({ kind: it.kind, doneKey: it.key, studentId: it.studentId, label: it.name, url: it.whatsappUrl! }))}
+          doneAction={g.kind === "pagamentos" ? "lembrete" : "contactado"}
+        />
+        {missing > 0 ? <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{missing} sem telefone</span> : null}
+      </span>
+    );
+  }
+  if (g.kind === "adesao") {
+    return <BulkTodoButton kind="adesao" schoolId={schoolId} label="Lembrar todos" confirmLabel={`Enviar lembrete no sino a ${g.items.length}?`} />;
+  }
+  if (g.kind === "fisicas") {
+    const n = g.items.filter((it) => !it.requested).length;
+    if (n === 0) return null;
+    return <BulkTodoButton kind="fisicas" schoolId={schoolId} label="Pedir a todos" confirmLabel={`Pedir avaliação física a ${n}?`} />;
+  }
+  return <BulkTodoButton kind="carga" schoolId={schoolId} label="Avisar os coaches" confirmLabel={`Avisar os coaches de ${g.items.length} ${g.items.length === 1 ? "aluno" : "alunos"}?`} />;
 }
 
 function GroupTable({ g }: { g: AdminTodoGroup }) {
@@ -146,7 +173,7 @@ export default async function AdminATratarPage({ searchParams }: { searchParams:
         </nav>
 
         <section aria-labelledby="todo-title" className="card" style={{ flex: "999 1 560px", minWidth: 0, padding: 0, overflow: "hidden" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", borderBottom: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "16px 18px", borderBottom: "1px solid var(--border)" }}>
             <span aria-hidden style={{ width: 44, height: 44, borderRadius: 14, background: current.items.length ? TONE_COLOR[current.tone] : TONE_COLOR.green, color: "#111", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 900, flexShrink: 0 }}>
               {current.items.length}
             </span>
@@ -157,6 +184,7 @@ export default async function AdminATratarPage({ searchParams }: { searchParams:
               </h2>
               {current.summary ? <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{current.summary}</span> : null}
             </div>
+            <BulkControl key={current.kind} g={current} schoolId={schoolId} />
           </div>
           {current.items.length === 0 ? (
             <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--text-secondary)" }}>
