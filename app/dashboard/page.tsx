@@ -39,6 +39,7 @@ import { getMembershipDocumentsStatus } from "@/lib/membership-documents-status"
 import { PendingAdesaoCard } from "./PendingAdesaoCard";
 import { TrainingLoadAlert } from "./TrainingLoadAlert";
 import { HomeRpePrompt } from "./HomeRpePrompt";
+import { HomeWellnessPrompt } from "./HomeWellnessPrompt";
 import { PendingAdesaoClickGuard } from "./PendingAdesaoClickGuard";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
@@ -345,6 +346,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {studentId && hasPlan && effectiveHasCheckIn && (
         <Suspense fallback={null}>
           <HomeRpePrompt studentId={studentId} locale={locale as "pt" | "en"} />
+          <HomeWellnessPrompt studentId={studentId} locale={locale as "pt" | "en"} />
           <TrainingLoadAlert studentId={studentId} locale={locale as "pt" | "en"} />
         </Suspense>
       )}

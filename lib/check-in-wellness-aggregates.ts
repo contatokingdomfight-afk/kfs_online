@@ -2,8 +2,10 @@
 
 export type PreLessonWellnessRow = {
   sleepHours: number | string;
-  sleepQuality: number;
-  hydrationOk: boolean;
+  /** null nos registos do questionário rápido (não perguntado). */
+  sleepQuality: number | null;
+  /** null nos registos do questionário rápido (não perguntado). */
+  hydrationOk: boolean | null;
   stress: number;
   fatigue: number;
   wellnessZone: "GREEN" | "YELLOW" | "RED";
@@ -12,8 +14,10 @@ export type PreLessonWellnessRow = {
 export type CheckInWellnessAggregates = {
   count: number;
   avgSleepHours: number;
-  avgSleepQuality: number;
-  hydrationOkPercent: number;
+  /** null quando nenhum registo tem qualidade do sono. */
+  avgSleepQuality: number | null;
+  /** null quando nenhum registo tem hidratação. */
+  hydrationOkPercent: number | null;
   avgStress: number;
   avgFatigue: number;
   zoneShare: { green: number; yellow: number; red: number };
@@ -24,9 +28,11 @@ export function aggregateCheckInWellness(rows: PreLessonWellnessRow[]): CheckInW
   const n = rows.length;
   let sumSleep = 0;
   let sumSq = 0;
+  let nSq = 0;
   let sumStress = 0;
   let sumFat = 0;
   let hydrated = 0;
+  let nHy = 0;
   let zG = 0;
   let zY = 0;
   let zR = 0;
@@ -34,10 +40,16 @@ export function aggregateCheckInWellness(rows: PreLessonWellnessRow[]): CheckInW
   for (const r of rows) {
     const sh = typeof r.sleepHours === "string" ? Number(r.sleepHours) : r.sleepHours;
     sumSleep += Number.isFinite(sh) ? sh : 0;
-    sumSq += r.sleepQuality;
+    if (r.sleepQuality != null) {
+      sumSq += r.sleepQuality;
+      nSq++;
+    }
     sumStress += r.stress;
     sumFat += r.fatigue;
-    if (r.hydrationOk) hydrated++;
+    if (r.hydrationOk != null) {
+      nHy++;
+      if (r.hydrationOk) hydrated++;
+    }
     if (r.wellnessZone === "GREEN") zG++;
     else if (r.wellnessZone === "YELLOW") zY++;
     else zR++;
@@ -46,8 +58,8 @@ export function aggregateCheckInWellness(rows: PreLessonWellnessRow[]): CheckInW
   return {
     count: n,
     avgSleepHours: sumSleep / n,
-    avgSleepQuality: sumSq / n,
-    hydrationOkPercent: (hydrated / n) * 100,
+    avgSleepQuality: nSq > 0 ? sumSq / nSq : null,
+    hydrationOkPercent: nHy > 0 ? (hydrated / nHy) * 100 : null,
     avgStress: sumStress / n,
     avgFatigue: sumFat / n,
     zoneShare: {

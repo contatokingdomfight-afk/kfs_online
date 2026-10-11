@@ -10,6 +10,7 @@ import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
 import { resolveOccurrenceYmd } from "@/lib/resolve-check-in-occurrence";
 import { SCHOOL_PUBLIC_CONTACT } from "@/lib/school-contact";
 import { CheckInFlow } from "./CheckInFlow";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -184,51 +185,49 @@ export default async function CheckInPage({ params, searchParams }: Props) {
     }
   }
 
+  const { data: wellnessRow } = await supabase
+    .from("PreLessonWellness")
+    .select("id")
+    .eq("studentId", studentId)
+    .eq("lessonId", lessonId)
+    .eq("occurrenceDate", occ.ymd)
+    .maybeSingle();
+  const wellnessDone = Boolean(wellnessRow);
+
+  const modalityLabel = MODALITY_LABELS[(lesson as { modality: string }).modality] ?? (lesson as { modality: string }).modality;
+  const startTime = String((lesson as { startTime?: string | null }).startTime ?? "").slice(0, 5);
+
   const labels =
     loc === "pt"
       ? {
-          title: "Check-in e bem-estar",
-          intro: "Antes de confirmar a presença, indica como te sentes hoje (ajuda o teu coach e a plataforma).",
-          sleepHours: "Horas de sono (última noite)",
-          sleepQuality: "Qualidade do sono",
-          hydration: "Hidratação",
-          hydrationYes: "Bem hidratado",
-          stress: "Stress",
-          fatigue: "Fadiga",
-          lowHigh: "1 = pior · 5 = melhor",
-          skipQuestionnaire: "Saltar questionário e só fazer check-in",
-          submitWithWellness: "Confirmar presença com este registo",
+          title: "Check-in",
+          intro: "3 toques para o teu coach saber como estás hoje.",
+          lessonLine: `${modalityLabel} · ${startTime}`,
+          submit: "Fazer check-in",
+          skip: "Fazer check-in sem responder",
+          missingOne: "Falta 1 resposta — ou faz check-in sem responder.",
+          missingMany: "Faltam {n} respostas — ou faz check-in sem responder.",
+          alreadyDone: "Bem-estar de hoje já registado.",
+          redHint: "Se estiveres em zona vermelha, a aula conta para o treino mas não para conquistas de assiduidade — para não premiar o excesso de treino.",
           successTitle: "Check-in realizado com sucesso!",
           backDashboard: "Voltar ao painel",
           thankYou: "Obrigado.",
           confirmedAt: "Presença registada às {time}.",
-          zoneGreen: "Verde: pronto a treinar",
-          zoneYellow: "Amarelo: atenção",
-          zoneRed: "Vermelho: priorizar recuperação (esta aula não conta para conquistas por assiduidade)",
-          wellnessHint:
-            "Se estiveres em zona vermelha, a tua presença conta para o treino, mas não para badges de assiduidade — para não premiar overtraining.",
         }
       : {
-          title: "Check-in & wellness",
-          intro: "Before confirming attendance, share how you feel today (helps your coach and the app).",
-          sleepHours: "Sleep hours (last night)",
-          sleepQuality: "Sleep quality",
-          hydration: "Hydration",
-          hydrationYes: "Well hydrated",
-          stress: "Stress",
-          fatigue: "Fatigue",
-          lowHigh: "1 = worst · 5 = best",
-          skipQuestionnaire: "Skip questionnaire and check in only",
-          submitWithWellness: "Confirm attendance with this log",
+          title: "Check-in",
+          intro: "3 taps so your coach knows how you feel today.",
+          lessonLine: `${modalityLabel} · ${startTime}`,
+          submit: "Check in",
+          skip: "Check in without answering",
+          missingOne: "1 answer missing — or check in without answering.",
+          missingMany: "{n} answers missing — or check in without answering.",
+          alreadyDone: "Today's wellness already logged.",
+          redHint: "In the red zone, the class counts for training but not for attendance badges — to avoid rewarding overtraining.",
           successTitle: "Check-in completed successfully!",
           backDashboard: "Back to dashboard",
           thankYou: "Thank you.",
           confirmedAt: "Attendance registered at {time}.",
-          zoneGreen: "Green: ready to train",
-          zoneYellow: "Yellow: caution",
-          zoneRed: "Red: prioritize recovery (this class won’t count toward attendance badges)",
-          wellnessHint:
-            "In the red zone, your class still counts for training, but not for attendance badges — to avoid rewarding overtraining.",
         };
 
   return (
@@ -238,6 +237,7 @@ export default async function CheckInPage({ params, searchParams }: Props) {
       labels={labels}
       locale={loc}
       monthlyLimit={monthlyLimit}
+      wellnessDone={wellnessDone}
     />
   );
 }

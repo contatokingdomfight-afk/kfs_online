@@ -17,7 +17,8 @@ import {
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
-import { computeWellnessZone, type WellnessCheckInInput } from "@/lib/wellness-score";
+import type { WellnessCheckInInput, WellnessZone } from "@/lib/wellness-score";
+import { getPreLessonWellnessZone, upsertPreLessonWellness } from "@/lib/pre-lesson-wellness";
 import { resolveOccurrenceYmd } from "@/lib/resolve-check-in-occurrence";
 import { normalizeModalityCode } from "@/lib/modality-normalize";
 
@@ -219,41 +220,17 @@ export async function performCheckIn(
     }
   }
 
+  // Bem-estar: o do formulário do check-in, ou o já respondido na Home para esta aula.
+  // Zona VERMELHA → esta presença não conta para conquistas por assiduidade.
   const wellnessOpt = options?.wellness;
+  let zone: WellnessZone | null = null;
   if (wellnessOpt && wellnessOpt !== "skip") {
-    const zone = computeWellnessZone(wellnessOpt);
-    const countsForGamification = zone !== "RED";
-
-    const { data: existingW } = await supabase
-      .from("PreLessonWellness")
-      .select("id")
-      .eq("studentId", studentId)
-      .eq("lessonId", lessonId)
-      .eq("occurrenceDate", occurrenceYmd)
-      .maybeSingle();
-
-    const row = {
-      id: (existingW as { id?: string } | null)?.id ?? crypto.randomUUID(),
-      studentId,
-      lessonId,
-      occurrenceDate: occurrenceYmd,
-      sleepHours: wellnessOpt.sleepHours,
-      sleepQuality: wellnessOpt.sleepQuality,
-      hydrationOk: wellnessOpt.hydrationOk,
-      stress: wellnessOpt.stress,
-      fatigue: wellnessOpt.fatigue,
-      wellnessZone: zone,
-    };
-
-    if (existingW) {
-      const { error: wErr } = await supabase.from("PreLessonWellness").update(row).eq("id", (existingW as { id: string }).id);
-      if (wErr) console.error("PreLessonWellness update:", wErr);
-    } else {
-      const { error: wErr } = await supabase.from("PreLessonWellness").insert(row);
-      if (wErr) console.error("PreLessonWellness insert:", wErr);
-    }
-
-    await supabase.from("Attendance").update({ countsForGamification }).eq("id", attendanceId);
+    zone = (await upsertPreLessonWellness(supabase, { studentId, lessonId, occurrenceDate: occurrenceYmd, input: wellnessOpt })).zone;
+  } else {
+    zone = await getPreLessonWellnessZone(supabase, { studentId, lessonId, occurrenceDate: occurrenceYmd });
+  }
+  if (zone) {
+    await supabase.from("Attendance").update({ countsForGamification: zone !== "RED" }).eq("id", attendanceId);
   }
 
   try {

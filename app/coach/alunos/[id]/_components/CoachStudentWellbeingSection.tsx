@@ -1,4 +1,5 @@
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { wellnessSummaryText } from "@/lib/wellness-score";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
 type WellnessZone = "GREEN" | "YELLOW" | "RED";
@@ -41,8 +42,8 @@ export async function CoachStudentWellbeingSection({ studentId }: Props) {
     lessonId: string;
     wellnessZone: WellnessZone;
     sleepHours: number;
-    sleepQuality: number;
-    hydrationOk: boolean;
+    sleepQuality: number | null;
+    hydrationOk: boolean | null;
     stress: number;
     fatigue: number;
   }>;
@@ -101,7 +102,7 @@ export async function CoachStudentWellbeingSection({ studentId }: Props) {
               const mod = modByLesson.get(w.lessonId) ?? "";
               const z = zoneLabel(w.wellnessZone);
               const dateStr = String(w.occurrenceDate).slice(0, 10);
-              const title = `Sono ${w.sleepHours}h · qualidade ${w.sleepQuality}/5 · hidratação ${w.hydrationOk ? "ok" : "baixa"} · stress ${w.stress}/5 · fadiga ${w.fatigue}/5`;
+              const title = wellnessSummaryText(w);
               return (
                 <li
                   key={w.id}

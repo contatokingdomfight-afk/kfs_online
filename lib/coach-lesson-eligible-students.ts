@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { wellnessSummaryText } from "@/lib/wellness-score";
 import { isLessonParticipationAllowedByPlan } from "@/lib/dashboard-lesson-filter";
 import { isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import { loadFamilyReferencePlanIdByStudent } from "@/lib/family-effective-plan";
@@ -413,8 +414,8 @@ export async function loadCoachLessonRoster(
     {
       zone: CoachLessonWellnessZone;
       sleepHours: number;
-      sleepQuality: number;
-      hydrationOk: boolean;
+      sleepQuality: number | null;
+      hydrationOk: boolean | null;
       stress: number;
       fatigue: number;
     }
@@ -424,8 +425,8 @@ export async function loadCoachLessonRoster(
       studentId: string;
       wellnessZone: CoachLessonWellnessZone;
       sleepHours: number;
-      sleepQuality: number;
-      hydrationOk: boolean;
+      sleepQuality: number | null;
+      hydrationOk: boolean | null;
       stress: number;
       fatigue: number;
     };
@@ -453,7 +454,7 @@ export async function loadCoachLessonRoster(
     const preLessonWellness = wdata
       ? {
           zone: wdata.zone,
-          tooltip: `Sono ${wdata.sleepHours}h · qualidade ${wdata.sleepQuality}/5 · hidratação ${wdata.hydrationOk ? "ok" : "baixa"} · stress ${wdata.stress}/5 · fadiga ${wdata.fatigue}/5`,
+          tooltip: wellnessSummaryText(wdata),
         }
       : null;
 

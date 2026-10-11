@@ -88,6 +88,16 @@ function scaleHigherIsBetter(v: number): { kind: StatusKind; gauge: number } {
   return { kind, gauge };
 }
 
+/** Escala 1–5 (maior = pior, ex.: stress e fadiga): ≤2,5 bom; 2,5–3,5 atenção; &gt;3,5 alto */
+function scaleLowerIsBetter(v: number): { kind: StatusKind; gauge: number } {
+  let kind: StatusKind;
+  if (v <= 2.5) kind = "normal";
+  else if (v <= 3.5) kind = "attention";
+  else kind = "higher";
+  const gauge = Math.max(0, Math.min(1, (v - 1) / 4));
+  return { kind, gauge };
+}
+
 /** Percentagem de check-ins hidratados */
 function hydrationInsight(pct: number): { kind: StatusKind; gauge: number } {
   let kind: StatusKind;
@@ -207,10 +217,11 @@ export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
   const hasZones = zoneShare.green + zoneShare.yellow + zoneShare.red > 0;
 
   const sh = sleepHoursInsight(data.avgSleepHours);
-  const sq = scaleHigherIsBetter(data.avgSleepQuality);
-  const hy = hydrationInsight(data.hydrationOkPercent);
-  const st = scaleHigherIsBetter(data.avgStress);
-  const fa = scaleHigherIsBetter(data.avgFatigue);
+  // Qualidade do sono e hidratação só existem nos registos do questionário antigo (null no rápido).
+  const sq = data.avgSleepQuality != null ? scaleHigherIsBetter(data.avgSleepQuality) : null;
+  const hy = data.hydrationOkPercent != null ? hydrationInsight(data.hydrationOkPercent) : null;
+  const st = scaleLowerIsBetter(data.avgStress);
+  const fa = scaleLowerIsBetter(data.avgFatigue);
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-bg-secondary p-4 sm:p-6">
@@ -240,27 +251,31 @@ export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
           gauge01={sh.gauge}
           accent={statusColor(sh.kind)}
         />
-        <BiometricCard
-          icon={BedDouble}
-          abbr={copy.abbrSleepQ}
-          mainNum={format1(data.avgSleepQuality)}
-          unit="/5"
-          statusKind={sq.kind}
-          copy={copy}
-          gauge01={sq.gauge}
-          accent={statusColor(sq.kind)}
-        />
-        <BiometricCard
-          icon={Droplet}
-          abbr={copy.abbrHydration}
-          mainNum={String(Math.round(data.hydrationOkPercent))}
-          unit="%"
-          statusKind={hy.kind}
-          copy={copy}
-          gauge01={hy.gauge}
-          accent={statusColor(hy.kind)}
-          extraHint={copy.hydrationHint}
-        />
+        {sq && data.avgSleepQuality != null ? (
+          <BiometricCard
+            icon={BedDouble}
+            abbr={copy.abbrSleepQ}
+            mainNum={format1(data.avgSleepQuality)}
+            unit="/5"
+            statusKind={sq.kind}
+            copy={copy}
+            gauge01={sq.gauge}
+            accent={statusColor(sq.kind)}
+          />
+        ) : null}
+        {hy && data.hydrationOkPercent != null ? (
+          <BiometricCard
+            icon={Droplet}
+            abbr={copy.abbrHydration}
+            mainNum={String(Math.round(data.hydrationOkPercent))}
+            unit="%"
+            statusKind={hy.kind}
+            copy={copy}
+            gauge01={hy.gauge}
+            accent={statusColor(hy.kind)}
+            extraHint={copy.hydrationHint}
+          />
+        ) : null}
         <BiometricCard
           icon={Wind}
           abbr={copy.abbrStress}
