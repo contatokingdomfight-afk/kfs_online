@@ -1895,3 +1895,33 @@ html:has([data-dashboard]) body::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
+
+/* Admin · «A tratar hoje» (/admin/a-tratar): desktop = menu lateral + tabela; telemóvel = chips + cartões. */
+.todo-layout { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.todo-nav { flex: 0 0 280px; display: flex; flex-direction: column; gap: 6px; }
+.todo-nav-link { min-height: 50px; }
+.todo-nav-title { flex: 1; }
+.todo-main { flex: 1 1 520px; min-width: 0; }
+.todo-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.todo-head-text { flex: 1 1 240px; min-width: 0; }
+.todo-head-bulk { flex: 0 1 auto; display: flex; justify-content: flex-end; }
+.todo-thead,
+.todo-tr { display: grid; grid-template-columns: var(--todo-cols); gap: 12px; align-items: center; }
+.todo-cell-label { display: none; }
+.todo-actions { display: flex; gap: 6px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+.todo-bulk-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.todo-hist-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: baseline; }
+
+@media (max-width: 760px) {
+  .todo-nav { flex: 1 1 100%; flex-direction: row; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .todo-nav::-webkit-scrollbar { display: none; }
+  .todo-nav-link { flex: 0 0 auto; min-height: 44px; }
+  .todo-nav-title { flex: 0 0 auto; white-space: nowrap; }
+  .todo-head-bulk { flex: 1 1 100%; justify-content: flex-start; }
+  .todo-bulk-stack { align-items: flex-start; }
+  .todo-thead { display: none; }
+  .todo-tr { display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+  .todo-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+  .todo-cell-label { display: inline; color: var(--text-secondary); font-weight: 600; }
+  .todo-actions { justify-content: flex-start; margin-top: 6px; }
+}
