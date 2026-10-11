@@ -33,6 +33,8 @@ export type DashboardStats = {
   delinquencyRate: { percent: number; lateStudentsCount: number };
   /** Soma mensal esperada dos alunos ativos: preço do plano (ou o total combinado com desconto de cada grupo família). Estimativa por preço de tabela — não reflete descontos pontuais fora do grupo família. */
   projectedMonthlyRevenue: number;
+  /** Mensalidades do mês corrente já pagas (referência = este mês). */
+  receivedThisMonth: number;
 };
 
 export async function fetchExpandedLessonsInRange(
@@ -193,6 +195,21 @@ export async function getAdminDashboardStats(
     lateStudentsCount,
   };
 
+  // Já recebido: mensalidades pagas com referência ao mês corrente (Lisboa), de qualquer aluno da escola.
+  const currentMonth = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Lisbon" }).slice(0, 7);
+  let receivedThisMonth = 0;
+  const scopedStudentIds = students.map((s) => (s as { id: string }).id);
+  for (let i = 0; i < scopedStudentIds.length; i += 200) {
+    const { data: paid } = await supabase
+      .from("Payment")
+      .select("amount")
+      .eq("status", "PAID")
+      .eq("paymentType", "TUITION")
+      .eq("referenceMonth", currentMonth)
+      .in("studentId", scopedStudentIds.slice(i, i + 200));
+    for (const p of (paid ?? []) as { amount: number | string }[]) receivedThisMonth += Number(p.amount) || 0;
+  }
+
   return {
     schools: schools.map((s) => ({ id: s.id, name: s.name })),
     totalStudents,
@@ -202,6 +219,7 @@ export async function getAdminDashboardStats(
     activeStudents,
     delinquencyRate,
     projectedMonthlyRevenue,
+    receivedThisMonth,
   };
 }
 

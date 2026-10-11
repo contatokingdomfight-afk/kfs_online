@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Users, Whistle, AlertTriangle, TrendingUp, DoorOpen, CalendarCheck } from "lucide-react";
+import { Users, Whistle, AlertTriangle, TrendingUp, DoorOpen, CalendarCheck, Wallet } from "lucide-react";
 import { getAdminDashboardStatsCached } from "@/lib/admin-dashboard-stats";
 import { getKpiTrends } from "@/lib/admin-kpi-trends";
 import { KpiCardGrid } from "../_components/KpiCardGrid";
@@ -75,10 +75,19 @@ export async function AdminMetricsDashboardContent({ client, schoolId, access }:
           },
           {
             href: "/admin/financeiro",
+            icon: <Wallet size={24} aria-hidden />,
+            value: `${stats.receivedThisMonth.toFixed(0)} €`,
+            label: "Recebido este mês",
+            info: "Mensalidades pagas com referência a este mês, face à receita prevista (preço do plano de cada aluno ativo; nas famílias, o valor do grupo).",
+            progress: stats.projectedMonthlyRevenue > 0 ? stats.receivedThisMonth / stats.projectedMonthlyRevenue : 0,
+            trend: { text: `de ${stats.projectedMonthlyRevenue.toFixed(0)} € previstos`, tone: "neutral" as const },
+          },
+          {
+            href: "/admin/financeiro",
             icon: <TrendingUp size={24} aria-hidden />,
-            value: `${stats.projectedMonthlyRevenue.toFixed(0)} €`,
-            label: t("adminProjectedMonthlyRevenue"),
-            info: t("adminProjectedMonthlyRevenueInfo"),
+            value: `${Math.max(0, stats.projectedMonthlyRevenue - stats.receivedThisMonth).toFixed(0)} €`,
+            label: "Falta receber",
+            info: "Receita prevista do mês menos o que já foi pago das mensalidades deste mês.",
           },
           {
             href: "/admin/alunos",

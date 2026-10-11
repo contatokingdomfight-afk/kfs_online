@@ -7,7 +7,8 @@ import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 /** icon já resolvido como elemento pelo chamador (Server Component) — ver nota em Sidebar.tsx sobre a fronteira Server/Client. */
 /** Tendência face ao período anterior; tone diz se a evolução é boa ou má (não se subiu ou desceu). */
 type Trend = { text: string; tone: "good" | "bad" | "neutral" };
-type Card = { href: string; icon: ReactNode; value: string; label: string; info?: string; trend?: Trend };
+/** progress: 0–1, barra por baixo do valor (ex.: recebido face ao previsto). */
+type Card = { href: string; icon: ReactNode; value: string; label: string; info?: string; trend?: Trend; progress?: number };
 
 const TREND_COLOR: Record<Trend["tone"], string> = { good: "var(--success)", bad: "var(--danger)", neutral: "var(--text-secondary)" };
 
@@ -54,6 +55,11 @@ export function KpiCardGrid({ cards }: Props) {
             {c.value}
           </div>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{c.label}</div>
+          {c.progress != null ? (
+            <div aria-hidden style={{ height: 6, borderRadius: 3, background: "var(--border)", marginTop: 8, overflow: "hidden" }}>
+              <div style={{ width: `${Math.round(Math.min(1, Math.max(0, c.progress)) * 100)}%`, height: "100%", borderRadius: 3, background: "var(--success)" }} />
+            </div>
+          ) : null}
           {c.trend ? <div style={{ fontSize: 12, fontWeight: 700, color: TREND_COLOR[c.trend.tone], marginTop: 4 }}>{c.trend.text}</div> : null}
         </Link>
       ))}
