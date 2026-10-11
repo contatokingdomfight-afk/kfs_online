@@ -1,11 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Banknote, Sparkles, BarChart3, Swords } from "lucide-react";
 import { getAdminDashboardPeriodStats } from "@/lib/admin-dashboard-period-stats";
+import { getAdminDashboardStatsCached } from "@/lib/admin-dashboard-stats";
 import { KpiCardGrid } from "../_components/KpiCardGrid";
 import { BreakdownList } from "../_components/BreakdownList";
 import { OverviewChartsDynamic } from "../_components/OverviewChartsDynamic";
 import { CheckinsByWeekdayChartDynamic, EvaluationsPerWeekChartDynamic } from "./_components/PeriodBarChartsDynamic";
 import { CourseEngagementSection } from "./_components/CourseEngagementSection";
+import { ContentTabs } from "@/components/ui/ContentTabs";
 import { getTranslations } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { hasAllV1AdminPermissions, type ResolvedAdminAccess } from "@/lib/permissions/resolve";
@@ -20,10 +22,18 @@ type Props = {
   schoolName: string;
 };
 
+const grid = (min: number): React.CSSProperties => ({
+  display: "grid",
+  gridTemplateColumns: `repeat(auto-fit, minmax(${min}px, 1fr))`,
+  gap: "clamp(16px, 4vw, 20px)",
+});
+
+/** Relatórios do período em 3 separadores (Alunos · Dinheiro · Treino) — os mesmos gráficos e listas de antes. */
 export async function AdminDashboardPeriodContent({ client, schoolId, period, modalityCode, access, schoolName }: Props) {
-  const [locale, stats] = await Promise.all([
+  const [locale, stats, snapshot] = await Promise.all([
     getLocaleFromCookies(),
     getAdminDashboardPeriodStats(client, schoolId, period, modalityCode),
+    getAdminDashboardStatsCached(client, schoolId),
   ]);
   const t = getTranslations(locale as "pt" | "en");
 
@@ -43,7 +53,83 @@ export async function AdminDashboardPeriodContent({ client, schoolId, period, mo
     t("adminWeekdaySun"),
   ];
 
-  return (
+  const chartLabels = {
+    growthTitle: t("adminChartGrowth"),
+    revenueTitle: t("adminChartRevenue"),
+    modalityTitle: t("adminChartModality"),
+    noData: t("adminNoData"),
+    activeLabel: t("adminGrowthActiveLabel"),
+    newLabel: t("adminGrowthNewLabel"),
+    churnedLabel: t("adminGrowthChurnedLabel"),
+    growthInfo: t("adminChartGrowthInfo"),
+    revenueInfo: t("adminChartRevenueInfo"),
+    modalityInfo: t("adminChartModalityInfo"),
+  };
+  const chartData = {
+    growthByBucket: stats.growthByBucket,
+    revenueByBucket: stats.revenue.byBucket,
+    modalityPopularity: stats.modalityPopularity,
+    modalityCatalog: stats.modalityCatalog,
+    schoolName,
+    labels: chartLabels,
+  };
+
+  const alunos = (
+    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
+      <KpiCardGrid
+        cards={[
+          {
+            href: "/admin/alunos",
+            icon: <Sparkles size={24} aria-hidden />,
+            value: String(newStudentsInPeriod),
+            label: t("adminNewStudentsInPeriod"),
+            info: t("adminNewStudentsInPeriodInfo"),
+          },
+        ]}
+      />
+      <OverviewChartsDynamic {...chartData} only={["growth"]} />
+      <div style={grid(260)}>
+        <BreakdownList
+          title={t("adminStudentsByPlanTitle")}
+          noDataLabel={t("adminNoData")}
+          infoTip={{ detail: t("adminStudentsByPlanInfo"), ariaLabel: t("adminStudentsByPlanTitle") }}
+          rows={snapshot.studentsByPlan.map((p) => ({
+            key: p.planId ?? "none",
+            label: p.planId ? p.planName : t("adminNoPlan"),
+            count: p.count,
+          }))}
+        />
+        <BreakdownList
+          title={t("adminStudentsByModalityTitle")}
+          noDataLabel={t("adminNoData")}
+          infoTip={{ detail: t("adminStudentsByModalityInfo"), ariaLabel: t("adminStudentsByModalityTitle") }}
+          rows={snapshot.studentsByModality
+            .filter((m) => m.count > 0)
+            .map((m) => ({ key: m.modalityCode || "none", label: m.modalityName, count: m.count }))}
+        />
+        <BreakdownList
+          title={t("adminNewStudentsByModalityTitle")}
+          noDataLabel={t("adminNoData")}
+          infoTip={{ detail: t("adminNewStudentsByModalityInfo"), ariaLabel: t("adminNewStudentsByModalityTitle") }}
+          rows={stats.newStudentsByModality
+            .filter((m) => m.count > 0)
+            .map((m) => ({ key: m.modalityCode || "none", label: m.modalityName, count: m.count }))}
+        />
+        <BreakdownList
+          title={t("adminNewStudentsByPlanTitle")}
+          noDataLabel={t("adminNoData")}
+          infoTip={{ detail: t("adminNewStudentsByPlanInfo"), ariaLabel: t("adminNewStudentsByPlanTitle") }}
+          rows={stats.newStudentsByPlan.map((p) => ({
+            key: p.planId ?? "none",
+            label: p.planId ? p.planName : t("adminNoPlan"),
+            count: p.count,
+          }))}
+        />
+      </div>
+    </div>
+  );
+
+  const dinheiro = (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
       <KpiCardGrid
         cards={[
@@ -54,13 +140,16 @@ export async function AdminDashboardPeriodContent({ client, schoolId, period, mo
             label: t("adminRevenueInPeriod"),
             info: t("adminRevenueInPeriodInfo"),
           },
-          {
-            href: "/admin/alunos",
-            icon: <Sparkles size={24} aria-hidden />,
-            value: String(newStudentsInPeriod),
-            label: t("adminNewStudentsInPeriod"),
-            info: t("adminNewStudentsInPeriodInfo"),
-          },
+        ]}
+      />
+      <OverviewChartsDynamic {...chartData} only={["revenue"]} />
+    </div>
+  );
+
+  const treino = (
+    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
+      <KpiCardGrid
+        cards={[
           {
             href: "/admin/presenca",
             icon: <BarChart3 size={24} aria-hidden />,
@@ -82,61 +171,8 @@ export async function AdminDashboardPeriodContent({ client, schoolId, period, mo
           {stats.occupancyRate.lessonsWithoutCapacity} {t("adminLessonsWithoutCapacity")}
         </p>
       )}
-
-      <OverviewChartsDynamic
-        growthByBucket={stats.growthByBucket}
-        revenueByBucket={stats.revenue.byBucket}
-        modalityPopularity={stats.modalityPopularity}
-        modalityCatalog={stats.modalityCatalog}
-        schoolName={schoolName}
-        labels={{
-          growthTitle: t("adminChartGrowth"),
-          revenueTitle: t("adminChartRevenue"),
-          modalityTitle: t("adminChartModality"),
-          noData: t("adminNoData"),
-          activeLabel: t("adminGrowthActiveLabel"),
-          newLabel: t("adminGrowthNewLabel"),
-          churnedLabel: t("adminGrowthChurnedLabel"),
-          growthInfo: t("adminChartGrowthInfo"),
-          revenueInfo: t("adminChartRevenueInfo"),
-          modalityInfo: t("adminChartModalityInfo"),
-        }}
-      />
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: "clamp(16px, 4vw, 20px)",
-        }}
-      >
-        <BreakdownList
-          title={t("adminNewStudentsByModalityTitle")}
-          noDataLabel={t("adminNoData")}
-          infoTip={{ detail: t("adminNewStudentsByModalityInfo"), ariaLabel: t("adminNewStudentsByModalityTitle") }}
-          rows={stats.newStudentsByModality
-            .filter((m) => m.count > 0)
-            .map((m) => ({ key: m.modalityCode || "none", label: m.modalityName, count: m.count }))}
-        />
-        <BreakdownList
-          title={t("adminNewStudentsByPlanTitle")}
-          noDataLabel={t("adminNoData")}
-          infoTip={{ detail: t("adminNewStudentsByPlanInfo"), ariaLabel: t("adminNewStudentsByPlanTitle") }}
-          rows={stats.newStudentsByPlan.map((p) => ({
-            key: p.planId ?? "none",
-            label: p.planId ? p.planName : t("adminNoPlan"),
-            count: p.count,
-          }))}
-        />
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: "clamp(16px, 4vw, 20px)",
-        }}
-      >
+      <OverviewChartsDynamic {...chartData} only={["modality"]} />
+      <div style={grid(320)}>
         <CheckinsByWeekdayChartDynamic
           data={stats.checkinsByWeekday}
           title={t("adminCheckinsByWeekdayTitle")}
@@ -153,7 +189,6 @@ export async function AdminDashboardPeriodContent({ client, schoolId, period, mo
           modalityCatalog={stats.modalityCatalog}
         />
       </div>
-
       <CourseEngagementSection
         engagement={stats.courseEngagement}
         labels={{
@@ -167,5 +202,16 @@ export async function AdminDashboardPeriodContent({ client, schoolId, period, mo
         }}
       />
     </div>
+  );
+
+  return (
+    <ContentTabs
+      ariaLabel="Relatórios"
+      tabs={[
+        { id: "alunos", label: "Alunos", content: alunos },
+        { id: "dinheiro", label: "Dinheiro", content: dinheiro },
+        { id: "treino", label: "Treino", content: treino },
+      ]}
+    />
   );
 }

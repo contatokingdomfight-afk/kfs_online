@@ -4,6 +4,7 @@
  * Suporta filtro por escola (schoolId opcional = todas as escolas).
  */
 
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCachedModalityRefs, getCachedSchools } from "@/lib/cached-reference-data";
 import { fetchAdminUserIdSet } from "@/lib/admin-dashboard-exclude-admins";
@@ -203,3 +204,6 @@ export async function getAdminDashboardStats(
     projectedMonthlyRevenue,
   };
 }
+
+/** Mesmo pedido: painel e separador «Alunos» partilham o cálculo. */
+export const getAdminDashboardStatsCached = cache(getAdminDashboardStats);

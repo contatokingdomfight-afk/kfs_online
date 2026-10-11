@@ -44,3 +44,15 @@ export function buildTrialConfirmationMessage(
   const dayPhrase = whenLabel === "hoje" ? "hoje" : `no dia ${whenLabel}`;
   return `Olá ${firstName}! Passando para confirmar a tua aula experimental de ${modalityLabel} ${dayPhrase} às ${time} na Kingdom Fight School. 🥋`;
 }
+
+/** Mensagem para quem deixou de treinar («em risco de sair»). */
+export function buildMissYouMessage(studentFirstName: string): string {
+  const name = studentFirstName.trim() || "tudo bem";
+  return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Sentimos a tua falta nos treinos — está tudo bem? Se precisares de ajuda com horários ou com o plano, é só responder por aqui. Esperamos por ti no tatame! 🥋`;
+}
+
+/** Mensagem de seguimento para quem fez aula experimental e ainda não se inscreveu. */
+export function buildTrialFollowUpMessage(name: string, modalityLabel: string, plansUrl: string): string {
+  const firstName = name.trim().split(" ")[0] || name.trim() || "tudo bem";
+  return `Olá ${firstName}! 👋 Obrigado por teres experimentado ${modalityLabel} na Kingdom Fight School. Gostaste? Se quiseres continuar, vê aqui os planos: ${plansUrl}. Qualquer dúvida, é só responder por aqui. 🥋`;
+}

@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Users, Whistle, AlertTriangle, TrendingUp } from "lucide-react";
-import { getAdminDashboardStats } from "@/lib/admin-dashboard-stats";
+import { Users, Whistle, AlertTriangle, TrendingUp, DoorOpen, CalendarCheck } from "lucide-react";
+import { getAdminDashboardStatsCached } from "@/lib/admin-dashboard-stats";
+import { getKpiTrends } from "@/lib/admin-kpi-trends";
 import { KpiCardGrid } from "../_components/KpiCardGrid";
-import { BreakdownList } from "../_components/BreakdownList";
 import { getTranslations } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { hasAllV1AdminPermissions, type ResolvedAdminAccess } from "@/lib/permissions/resolve";
@@ -15,10 +15,20 @@ type Props = {
 };
 
 export async function AdminMetricsDashboardContent({ client, schoolId, access }: Props) {
-  const [locale, stats] = await Promise.all([
+  const [locale, stats, trends] = await Promise.all([
     getLocaleFromCookies(),
-    getAdminDashboardStats(client, schoolId),
+    getAdminDashboardStatsCached(client, schoolId),
+    getKpiTrends(client, schoolId),
   ]);
+  const vs = `vs. ${trends.prevMonthLabel}`;
+  const fmt = (n: number) => n.toLocaleString("pt-PT", { maximumFractionDigits: 1 });
+  const deltaTrend = (delta: number, higherIsGood: boolean, suffix = "") =>
+    delta === 0
+      ? { text: `= igual a ${trends.prevMonthLabel}${suffix}`, tone: "neutral" as const }
+      : {
+          text: `${delta > 0 ? "▲ +" : "▼ −"}${fmt(Math.abs(delta))} ${vs}${suffix}`,
+          tone: (delta > 0) === higherIsGood ? ("good" as const) : ("bad" as const),
+        };
   const t = getTranslations(locale as "pt" | "en");
 
   if (isGranularRestrictedDashboard(access) && !hasAllV1AdminPermissions(access)) {
@@ -47,6 +57,7 @@ export async function AdminMetricsDashboardContent({ client, schoolId, access }:
             value: String(stats.activeStudents),
             label: t("adminActiveStudents"),
             info: t("adminActiveStudentsInfo"),
+            trend: deltaTrend(trends.activeDelta, true),
           },
           {
             href: "/admin/coaches",
@@ -69,35 +80,24 @@ export async function AdminMetricsDashboardContent({ client, schoolId, access }:
             label: t("adminProjectedMonthlyRevenue"),
             info: t("adminProjectedMonthlyRevenueInfo"),
           },
+          {
+            href: "/admin/alunos",
+            icon: <DoorOpen size={24} aria-hidden />,
+            value: String(trends.churnThisMonth),
+            label: "Saídas este mês",
+            info: "Alunos que passaram a INATIVO, ou ficaram INADIMPLENTES sem plano, este mês. A percentagem é sobre os ativos no fim do mês anterior.",
+            trend: deltaTrend(trends.churnThisMonth - trends.churnLastMonth, false, ` · ${fmt(trends.churnRatePct)}%`),
+          },
+          {
+            href: "/admin/presenca",
+            icon: <CalendarCheck size={24} aria-hidden />,
+            value: fmt(trends.trainingsPerStudentWeek),
+            label: "Treinos por aluno / semana",
+            info: "Presenças confirmadas nas últimas 4 semanas ÷ alunos ativos ÷ 4. A comparação é com as 4 semanas anteriores.",
+            trend: deltaTrend(Math.round((trends.trainingsPerStudentWeek - trends.trainingsPerStudentWeekPrev) * 10) / 10, true),
+          },
         ]}
       />
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: "clamp(16px, 4vw, 20px)",
-        }}
-      >
-        <BreakdownList
-          title={t("adminStudentsByPlanTitle")}
-          noDataLabel={t("adminNoData")}
-          infoTip={{ detail: t("adminStudentsByPlanInfo"), ariaLabel: t("adminStudentsByPlanTitle") }}
-          rows={stats.studentsByPlan.map((p) => ({
-            key: p.planId ?? "none",
-            label: p.planId ? p.planName : t("adminNoPlan"),
-            count: p.count,
-          }))}
-        />
-        <BreakdownList
-          title={t("adminStudentsByModalityTitle")}
-          noDataLabel={t("adminNoData")}
-          infoTip={{ detail: t("adminStudentsByModalityInfo"), ariaLabel: t("adminStudentsByModalityTitle") }}
-          rows={stats.studentsByModality
-            .filter((m) => m.count > 0)
-            .map((m) => ({ key: m.modalityCode || "none", label: m.modalityName, count: m.count }))}
-        />
-      </div>
     </>
   );
 }

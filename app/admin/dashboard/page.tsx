@@ -11,6 +11,9 @@ import { AdminDashboardPeriodFilter } from "./_components/AdminDashboardPeriodFi
 import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
 import { AdminSchoolFilter } from "../AdminSchoolFilter";
 import { getCachedSchools, getCachedModalityRefs } from "@/lib/cached-reference-data";
+import { hasAllV1AdminPermissions } from "@/lib/permissions/resolve";
+import { isGranularRestrictedDashboard } from "@/lib/permissions/paths";
+import { AdminTodoSummary } from "./AdminTodoSummary";
 
 const VALID_PERIOD = /^\d+[dm]$/;
 
@@ -34,6 +37,7 @@ export default async function AdminMetricsDashboardPage({ searchParams }: { sear
     getCachedModalityRefs(result.client),
   ]);
   const schoolName = schoolId ? schools.find((s) => s.id === schoolId)?.name ?? "Todas" : "Todas";
+  const fullDashboard = !(isGranularRestrictedDashboard(access) && !hasAllV1AdminPermissions(access));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)", minWidth: 0, overflowX: "hidden" }}>
@@ -44,9 +48,19 @@ export default async function AdminMetricsDashboardPage({ searchParams }: { sear
         <AdminSchoolFilter schools={schools} currentSchoolId={schoolId} />
       </div>
 
+      {fullDashboard ? (
+        <Suspense fallback={<div className="card" style={{ minHeight: 160 }} aria-busy="true" />}>
+          <AdminTodoSummary client={result.client} schoolId={schoolId} />
+        </Suspense>
+      ) : null}
+
       <Suspense fallback={<AdminMetricsDashboardSkeleton />}>
         <AdminMetricsDashboardContent client={result.client} schoolId={schoolId} access={access} />
       </Suspense>
+
+      {fullDashboard ? (
+        <h2 style={{ margin: "8px 0 -8px", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 800, color: "var(--text-primary)" }}>Relatórios</h2>
+      ) : null}
 
       <AdminDashboardPeriodFilter
         currentPeriod={period}

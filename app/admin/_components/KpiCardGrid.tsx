@@ -5,7 +5,11 @@ import type { ReactNode } from "react";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 
 /** icon já resolvido como elemento pelo chamador (Server Component) — ver nota em Sidebar.tsx sobre a fronteira Server/Client. */
-type Card = { href: string; icon: ReactNode; value: string; label: string; info?: string };
+/** Tendência face ao período anterior; tone diz se a evolução é boa ou má (não se subiu ou desceu). */
+type Trend = { text: string; tone: "good" | "bad" | "neutral" };
+type Card = { href: string; icon: ReactNode; value: string; label: string; info?: string; trend?: Trend };
+
+const TREND_COLOR: Record<Trend["tone"], string> = { good: "var(--success)", bad: "var(--danger)", neutral: "var(--text-secondary)" };
 
 type Props = { cards: Card[] };
 
@@ -50,6 +54,7 @@ export function KpiCardGrid({ cards }: Props) {
             {c.value}
           </div>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{c.label}</div>
+          {c.trend ? <div style={{ fontSize: 12, fontWeight: 700, color: TREND_COLOR[c.trend.tone], marginTop: 4 }}>{c.trend.text}</div> : null}
         </Link>
       ))}
     </section>

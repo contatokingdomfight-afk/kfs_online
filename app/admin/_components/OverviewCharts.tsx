@@ -28,6 +28,8 @@ export type OverviewChartsProps = {
   /** Catálogo de modalidades da escola, na ordem usada para atribuir cor consistente entre gráficos. */
   modalityCatalog: { code: string; name: string }[];
   schoolName: string;
+  /** Quais gráficos mostrar (por omissão, os três). */
+  only?: ("growth" | "revenue" | "modality")[];
   labels: {
     growthTitle: string;
     revenueTitle: string;
@@ -48,7 +50,8 @@ function formatBucketLabel(bucket: string): string {
 }
 
 export function OverviewCharts(props: OverviewChartsProps) {
-  const { growthByBucket, revenueByBucket, modalityPopularity, modalityCatalog, schoolName, labels } = props;
+  const { growthByBucket, revenueByBucket, modalityPopularity, modalityCatalog, schoolName, labels, only } = props;
+  const show = (k: "growth" | "revenue" | "modality") => !only || only.includes(k);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -64,15 +67,16 @@ export function OverviewCharts(props: OverviewChartsProps) {
   if (!mounted) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "clamp(24px, 6vw, 32px)", minWidth: 0 }}>
-        <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minHeight: 280 }} />
-        <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minHeight: 260 }} />
-        <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minHeight: 260 }} />
+        {show("growth") && <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minHeight: 280 }} />}
+        {show("revenue") && <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minHeight: 260 }} />}
+        {show("modality") && <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minHeight: 260 }} />}
       </div>
     );
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(24px, 6vw, 32px)", minWidth: 0 }}>
+      {show("growth") && (
       <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0, overflow: "hidden" }}>
         <h3 style={{ margin: "0 0 16px 0", display: "flex", alignItems: "center", gap: 8, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           {labels.growthTitle} ({schoolName})
@@ -99,7 +103,9 @@ export function OverviewCharts(props: OverviewChartsProps) {
           </div>
         )}
       </section>
+      )}
 
+      {show("revenue") && (
       <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0, overflow: "hidden" }}>
         <h3 style={{ margin: "0 0 16px 0", display: "flex", alignItems: "center", gap: 8, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           {labels.revenueTitle} ({schoolName})
@@ -124,7 +130,9 @@ export function OverviewCharts(props: OverviewChartsProps) {
           </div>
         )}
       </section>
+      )}
 
+      {show("modality") && (
       <section className="card" style={{ padding: "clamp(16px, 4vw, 20px)", minWidth: 0, overflow: "hidden" }}>
         <h3 style={{ margin: "0 0 16px 0", display: "flex", alignItems: "center", gap: 8, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
           {labels.modalityTitle} ({schoolName})
@@ -169,6 +177,7 @@ export function OverviewCharts(props: OverviewChartsProps) {
           </div>
         )}
       </section>
+      )}
     </div>
   );
 }
