@@ -127,7 +127,7 @@ export default async function ComoSouAvaliadoLayout({
         sidebarLinks={sidebarLinks}
         initialTheme={theme}
         initialLocale={locale}
-        headerTitle="Kingdom Fight School"
+        headerTitle="KFS"
         headerExtra={headerExtra}
         headerExtrasDesktopOnly={<ViewAsSwitcher />}
         mobileBottomNavSheetLead={<ViewAsSwitcher />}

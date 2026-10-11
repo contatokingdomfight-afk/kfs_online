@@ -18,25 +18,25 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["education", "sports", "fitness"],
     icons: [
       {
-        src: "/icons/kfs-emblem-192.png",
+        src: "/icons/kfs-emblem-192.png?v=2",
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/kfs-emblem-512.png",
+        src: "/icons/kfs-emblem-512.png?v=2",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/kfs-emblem-512-maskable.png",
+        src: "/icons/kfs-emblem-512-maskable.png?v=2",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
       },
       {
-        src: "/icons/kfs-emblem-180.png",
+        src: "/icons/kfs-emblem-180.png?v=2",
         sizes: "180x180",
         type: "image/png",
         purpose: "any",

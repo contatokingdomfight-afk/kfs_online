@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BrandSplashLogo } from "@/components/BrandSplashLogo";
 import { BRAND_ICON_BG } from "@/lib/brand";
-import { isNativeAppShell } from "@/lib/capacitor-native";
+import { isCapacitorNative } from "@/lib/capacitor-native";
 
 const SESSION_KEY = "kfs-pwa-launch-splash-seen";
 const MIN_VISIBLE_MS = 750;
@@ -11,12 +11,15 @@ const FADE_MS = 400;
 const MAX_VISIBLE_MS = 2600;
 
 /**
- * Ecrã preto + logo transparente até a app carregar (cobre splash nativo com tonalidades diferentes).
+ * Ecrã preto + logo até a app carregar. Só na app nativa e na PWA do iPhone: no Android a PWA instalada
+ * já mostra o ecrã de arranque do sistema (ícone + fundo do manifest) — mostrar o nosso a seguir dava
+ * dois logos seguidos.
  */
 function shouldShowLaunchSplash(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    if (!isNativeAppShell()) return false;
+    const iosStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    if (!isCapacitorNative() && !iosStandalone) return false;
     if (sessionStorage.getItem(SESSION_KEY)) return false;
     return true;
   } catch {
