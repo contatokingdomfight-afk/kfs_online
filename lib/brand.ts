@@ -28,3 +28,8 @@ export const BRAND_LOGO_HEIGHT = 630;
 
 export const BRAND_EMBLEM_WIDTH = 1024;
 export const BRAND_EMBLEM_HEIGHT = 1024;
+
+/** Emblema (coroa + octógono) recortado, para o cabeçalho da app (130×160, fundo transparente). */
+export const BRAND_EMBLEM_HEADER = "/brand/kfs-emblem-header.png";
+export const BRAND_EMBLEM_HEADER_WIDTH = 130;
+export const BRAND_EMBLEM_HEADER_HEIGHT = 160;

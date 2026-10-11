@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, Suspense } from "react";
+import { BRAND_EMBLEM_HEADER, BRAND_EMBLEM_HEADER_HEIGHT, BRAND_EMBLEM_HEADER_WIDTH } from "@/lib/brand";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
@@ -287,6 +288,15 @@ export function ResponsiveShell({
                 </svg>
               </button>
             ) : null}
+            {/* eslint-disable-next-line @next/next/no-img-element -- emblema pequeno e estático */}
+            <img
+              src={BRAND_EMBLEM_HEADER}
+              alt=""
+              aria-hidden
+              width={BRAND_EMBLEM_HEADER_WIDTH}
+              height={BRAND_EMBLEM_HEADER_HEIGHT}
+              style={{ height: "clamp(34px, 9vw, 40px)", width: "auto", flexShrink: 0, display: "block" }}
+            />
             <h1
               style={{
                 margin: 0,
