@@ -3,9 +3,26 @@
  * fica «Feito». Datas em YYYY-MM-DD (dia de Lisboa).
  */
 
-export type AdminTodoKind = "pagamentos" | "risco" | "carga" | "adesao" | "fisicas" | "experimentais";
+export type AdminTodoKind =
+  | "pagamentos"
+  | "vencer"
+  | "risco"
+  | "semplano"
+  | "carga"
+  | "adesao"
+  | "fisicas"
+  | "exame"
+  | "experimentais"
+  | "aniversarios";
 
-export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "risco", "carga", "adesao", "fisicas", "experimentais"];
+export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "vencer", "risco", "semplano", "carga", "adesao", "fisicas", "exame", "experimentais", "aniversarios"];
+
+/** Prazo da mensalidade: dia 8 do mês de referência (ver lib/lisbon-payment-dates.ts). */
+export const TUITION_DUE_DAY = 8;
+/** «A vencer»: mensalidades do mês por pagar nos últimos N dias antes do prazo. */
+export const DUE_SOON_DAYS = 3;
+/** «Registados sem plano»: contas criadas há pelo menos 1 dia e no máximo N dias. */
+export const NO_PLAN_WINDOW_DAYS = 60;
 
 /** Dias sem treinar a partir dos quais o aluno conta como «em risco de sair». */
 export const RISK_DAYS = 14;
@@ -60,6 +77,39 @@ export function trialToConvert(today: string, lessonDate: string | null, convert
   return daysAgo >= 0 && daysAgo <= TRIAL_WINDOW_DAYS ? { daysAgo } : null;
 }
 
+/** Data-limite (YYYY-MM-DD) da mensalidade de um mês de referência (YYYY-MM). */
+export function tuitionDueDate(referenceMonth: string): string {
+  return `${referenceMonth.slice(0, 7)}-${String(TUITION_DUE_DAY).padStart(2, "0")}`;
+}
+
+/** Em atraso só depois do prazo (antes do dia 8 a mensalidade do mês ainda não venceu). */
+export function isTuitionOverdue(today: string, referenceMonth: string): boolean {
+  return today > tuitionDueDate(referenceMonth);
+}
+
+/** A vencer: ainda dentro do prazo e a no máximo DUE_SOON_DAYS dias dele. */
+export function tuitionDueSoon(today: string, referenceMonth: string): { daysLeft: number } | null {
+  const daysLeft = daysBetween(today, tuitionDueDate(referenceMonth));
+  return daysLeft >= 0 && daysLeft <= DUE_SOON_DAYS ? { daysLeft } : null;
+}
+
+/** Aniversário hoje (0) ou amanhã (1); devolve também a idade que faz. */
+export function birthdaySoon(today: string, dateOfBirth: string | null): { inDays: 0 | 1; age: number } | null {
+  if (!dateOfBirth) return null;
+  const dob = dateOfBirth.slice(0, 10);
+  for (const inDays of [0, 1] as const) {
+    const day = addDaysYmd(today, inDays);
+    if (day.slice(5) === dob.slice(5)) return { inDays, age: Number(day.slice(0, 4)) - Number(dob.slice(0, 4)) };
+  }
+  return null;
+}
+
+/** Registado sem plano há pelo menos 1 dia e no máximo NO_PLAN_WINDOW_DAYS. */
+export function noPlanLead(today: string, createdAt: string): { days: number } | null {
+  const days = daysBetween(createdAt.slice(0, 10), today);
+  return days >= 1 && days <= NO_PLAN_WINDOW_DAYS ? { days } : null;
+}
+
 /**
  * Chave «Feito»: identifica a ocorrência tratada. Quando a situação muda (outro mês em atraso,
  * outra data de último treino, nova semana para lembretes), a chave muda e o item volta.
@@ -69,6 +119,8 @@ export function todoDoneKey(kind: AdminTodoKind, parts: { id: string; ref?: stri
     case "pagamentos":
     case "adesao":
       return `${parts.id}:${parts.ref ?? ""}:${weekKey(parts.today)}`;
+    case "aniversarios":
+      return `${parts.id}:${parts.today.slice(0, 4)}`;
     case "carga":
       return `${parts.id}:${weekKey(parts.today)}`;
     default:

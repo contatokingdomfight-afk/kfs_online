@@ -7,7 +7,10 @@ import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getPublicOrigin } from "@/lib/site-public-url";
 import {
+  buildBirthdayMessage,
+  buildChoosePlanMessage,
   buildDocumentsPendingMessage,
+  buildDueSoonMessage,
   buildMissYouMessage,
   buildPaymentOverdueMessage,
   buildTrialFollowUpMessage,
@@ -15,10 +18,16 @@ import {
 } from "@/lib/whatsapp";
 import { computeTrainingLoad } from "@/lib/training-load";
 import { loadTrainingSessions } from "@/lib/training-load.server";
+import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
 import {
   ADMIN_TODO_ORDER,
   addDaysYmd,
+  birthdaySoon,
   churnRisk,
+  isTuitionOverdue,
+  noPlanLead,
+  tuitionDueDate,
+  tuitionDueSoon,
   daysBetween,
   physicalDue,
   todoDoneKey,
@@ -26,7 +35,7 @@ import {
   type AdminTodoKind,
 } from "@/lib/admin-todo-rules";
 
-export type AdminTodoTone = "red" | "amber" | "blue";
+export type AdminTodoTone = "red" | "amber" | "blue" | "green";
 
 export type AdminTodoItem = {
   kind: AdminTodoKind;
@@ -97,17 +106,23 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
   const withPlan = students.filter((s) => s.planId && (s.status === "ATIVO" || s.status === "INADIMPLENTE"));
   const active = withPlan.filter((s) => s.status === "ATIVO");
   const ids = withPlan.map((s) => s.id);
+  const noPlan = students.filter((s) => !s.planId && s.status === "ATIVO" && noPlanLead(today, s.createdAt));
+  const profileIds = [...new Set([...students.filter((s) => s.status === "ATIVO" || s.status === "INADIMPLENTE").map((s) => s.id)])];
 
   const userIds = [...new Set(students.map((s) => s.userId))];
   const nameByUser = new Map<string, string>();
   const phoneByStudent = new Map<string, string | null>();
+  const dobByStudent = new Map<string, string | null>();
   for (const part of chunks(userIds, 200)) {
     const { data } = await supabase.from("User").select("id, name, email").in("id", part);
     for (const u of (data ?? []) as { id: string; name: string | null; email: string | null }[]) nameByUser.set(u.id, u.name?.trim() || u.email || "—");
   }
-  for (const part of chunks(ids, 200)) {
-    const { data } = await supabase.from("StudentProfile").select("studentId, phone").in("studentId", part);
-    for (const p of (data ?? []) as { studentId: string; phone: string | null }[]) phoneByStudent.set(p.studentId, p.phone);
+  for (const part of chunks(profileIds, 200)) {
+    const { data } = await supabase.from("StudentProfile").select("studentId, phone, dateOfBirth").in("studentId", part);
+    for (const p of (data ?? []) as { studentId: string; phone: string | null; dateOfBirth: string | null }[]) {
+      phoneByStudent.set(p.studentId, p.phone);
+      dobByStudent.set(p.studentId, p.dateOfBirth);
+    }
   }
   const nameOf = (s: S) => nameByUser.get(s.userId) ?? "—";
   const wa = (studentId: string, message: string) => {
@@ -123,9 +138,21 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
 
   // --- Pagamentos em atraso (mensalidades, como a inadimplência do painel) ---
   const late = new Map<string, { total: number; months: string[] }>();
+  const dueSoon = new Map<string, { total: number; ref: string; daysLeft: number }>();
   for (const part of chunks(ids, 200)) {
     const { data } = await supabase.from("Payment").select("studentId, amount, referenceMonth").eq("status", "LATE").eq("paymentType", "TUITION").in("studentId", part);
     for (const p of (data ?? []) as { studentId: string; amount: number | string; referenceMonth: string | null }[]) {
+      const ref = p.referenceMonth ? String(p.referenceMonth).slice(0, 7) : null;
+      // A mensalidade é criada no dia 1 mas só vence no dia 8: antes disso não está em atraso.
+      if (ref && !isTuitionOverdue(today, ref)) {
+        const soon = tuitionDueSoon(today, ref);
+        if (soon) {
+          const d = dueSoon.get(p.studentId) ?? { total: 0, ref, daysLeft: soon.daysLeft };
+          d.total += Number(p.amount) || 0;
+          dueSoon.set(p.studentId, d);
+        }
+        continue;
+      }
       const cur = late.get(p.studentId) ?? { total: 0, months: [] };
       cur.total += Number(p.amount) || 0;
       if (p.referenceMonth) cur.months.push(String(p.referenceMonth).slice(0, 7));
@@ -356,12 +383,133 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
 
+  // --- Mensalidades a vencer (nos 3 dias antes do dia 8) ---
+  const vencer: AdminTodoItem[] = withPlan
+    .filter((s) => dueSoon.has(s.id))
+    .map((s) => {
+      const d = dueSoon.get(s.id)!;
+      const dueLabel = d.daysLeft === 0 ? "hoje" : d.daysLeft === 1 ? "amanhã" : `a ${shortDate(tuitionDueDate(d.ref))}`;
+      return {
+        kind: "vencer" as const,
+        key: todoDoneKey("vencer", { id: s.id, ref: d.ref, today }),
+        studentId: s.id,
+        name: nameOf(s),
+        cells: [
+          { text: s.planId ? planNames.get(s.planId) ?? "—" : "—" },
+          { text: `${d.total.toFixed(0)} €` },
+          { text: `vence ${dueLabel}`, tone: d.daysLeft <= 1 ? ("amber" as const) : undefined },
+        ],
+        urgency: -d.daysLeft,
+        whatsappUrl: wa(s.id, buildDueSoonMessage(firstName(nameOf(s)), dueLabel)),
+        href: `/admin/alunos/${s.id}`,
+      };
+    })
+    .filter(notDone)
+    .sort((a, b) => b.urgency - a.urgency);
+
+  // --- Registados sem plano (contas dos últimos 60 dias) ---
+  const semplano: AdminTodoItem[] = noPlan
+    .map((s) => {
+      const lead = noPlanLead(today, s.createdAt)!;
+      return {
+        kind: "semplano" as const,
+        key: todoDoneKey("semplano", { id: s.id, today }),
+        studentId: s.id,
+        name: nameOf(s),
+        cells: [
+          { text: s.primaryModality ? MODALITY_LABELS[s.primaryModality] ?? s.primaryModality : "—" },
+          { text: `há ${lead.days} ${dayWord(lead.days)}`, tone: lead.days >= 7 ? ("amber" as const) : undefined },
+          { text: phoneByStudent.get(s.id) ? "com telefone" : "sem telefone", tone: phoneByStudent.get(s.id) ? undefined : ("amber" as const) },
+        ],
+        urgency: -lead.days,
+        whatsappUrl: wa(s.id, buildChoosePlanMessage(firstName(nameOf(s)), `${origin}/escolher-plano`)),
+        href: `/admin/alunos/${s.id}`,
+      };
+    })
+    .filter(notDone)
+    .sort((a, b) => b.urgency - a.urgency);
+
+  // --- Aptos para exame (modalidades com graduação publicada, sem convocatória ativa) ---
+  const inScope = new Set(active.map((s) => s.id));
+  const { data: publishedTemplates } = await supabase.from("GraduationTemplate").select("modalityCode").eq("isPublished", true);
+  const exame: AdminTodoItem[] = [];
+  for (const t of (publishedTemplates ?? []) as { modalityCode: string }[]) {
+    const readiness = await loadModalityReadiness(supabase, t.modalityCode).catch(() => null);
+    for (const r of readiness?.students ?? []) {
+      if (!inScope.has(r.studentId) || !r.progress.isReadyForExam || r.activeConvocation || !r.progress.next) continue;
+      const item: AdminTodoItem = {
+        kind: "exame",
+        key: todoDoneKey("exame", { id: r.studentId, ref: `${t.modalityCode}:${r.progress.next.id}`, today }),
+        studentId: r.studentId,
+        name: r.name,
+        cells: [
+          { text: MODALITY_LABELS[t.modalityCode] ?? t.modalityCode },
+          { text: r.progress.current?.name ?? "sem graduação" },
+          { text: r.progress.next.name, tone: "green" },
+        ],
+        urgency: r.progress.qualifyingMonthsSinceLastGrade,
+        whatsappUrl: null,
+        href: "/coach/graduacao",
+      };
+      if (notDone(item)) exame.push(item);
+    }
+  }
+  exame.sort((a, b) => b.urgency - a.urgency);
+
+  // --- Aniversários (hoje e amanhã) ---
+  const aniversarios: AdminTodoItem[] = students
+    .filter((s) => s.status === "ATIVO" || s.status === "INADIMPLENTE")
+    .map((s) => {
+      const b = birthdaySoon(today, dobByStudent.get(s.id) ?? null);
+      if (!b) return null;
+      return {
+        kind: "aniversarios" as const,
+        key: todoDoneKey("aniversarios", { id: s.id, today }),
+        studentId: s.id,
+        name: nameOf(s),
+        cells: [
+          { text: b.inDays === 0 ? "hoje" : "amanhã", tone: b.inDays === 0 ? ("green" as const) : undefined },
+          { text: b.age > 0 && b.age < 110 ? `faz ${b.age} anos` : "—" },
+        ],
+        urgency: -b.inDays,
+        whatsappUrl: wa(s.id, buildBirthdayMessage(firstName(nameOf(s)))),
+        href: `/admin/alunos/${s.id}`,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
+    .filter(notDone)
+    .sort((a, b) => b.urgency - a.urgency);
+
   const groups: Record<AdminTodoKind, AdminTodoGroup> = {
     pagamentos: {
       kind: "pagamentos", tone: "red", title: "Pagamentos em atraso", items: pagamentos,
       summary: pagamentos.length ? `${lateTotal.toFixed(0)} € em mensalidades em atraso` : "",
       info: "Alunos com mensalidades marcadas como em atraso (o mesmo critério da inadimplência). Volta a aparecer na semana seguinte se continuar por pagar.",
       columns: ["Aluno", "Plano", "Valor", "Em atraso", "Meses", ""],
+    },
+    vencer: {
+      kind: "vencer", tone: "amber", title: "Mensalidades a vencer", items: vencer,
+      summary: vencer.length ? "Vencem nos próximos 3 dias (prazo: dia 8)" : "",
+      info: "Mensalidades do mês ainda por pagar a 3 dias ou menos do prazo (dia 8). Um lembrete antes evita atrasos.",
+      columns: ["Aluno", "Plano", "Valor", "Prazo", ""],
+    },
+    semplano: {
+      kind: "semplano", tone: "blue", title: "Registados sem plano", items: semplano,
+      summary: semplano.length ? "Criaram conta nos últimos 60 dias e não escolheram plano" : "",
+      info: "Contas de aluno ativas, criadas há 1 a 60 dias, ainda sem plano. É receita à porta: um contacto ajuda a decidir.",
+      columns: ["Aluno", "Modalidade", "Registado", "Contacto", ""],
+    },
+    exame: {
+      kind: "exame", tone: "green", title: "Aptos para exame", items: exame,
+      summary: exame.length ? "Cumprem os requisitos do próximo grau e ainda não foram convocados" : "",
+      info: "Alunos que cumprem todos os requisitos do próximo grau (presenças, média, avaliação física, requisitos) nas modalidades com graduação publicada, sem convocatória ativa.",
+      columns: ["Aluno", "Modalidade", "Grau atual", "Próximo grau", ""],
+    },
+    aniversarios: {
+      kind: "aniversarios", tone: "green", title: "Aniversários", items: aniversarios,
+      summary: aniversarios.length ? "Hoje e amanhã" : "",
+      info: "Alunos ativos que fazem anos hoje ou amanhã (data de nascimento do perfil).",
+      columns: ["Aluno", "Quando", "Idade", ""],
     },
     risco: {
       kind: "risco", tone: "red", title: "Em risco de sair", items: risco,

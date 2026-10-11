@@ -3,9 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { CheckCircle2, ChevronRight, MessageCircle } from "lucide-react";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { loadAdminTodo } from "@/lib/admin-todo";
-import { TONE_COLOR, todoIcon } from "../a-tratar/todo-ui";
+import { TONE_BG, TONE_COLOR, todoIcon } from "../a-tratar/todo-ui";
 
-const TONE_BG: Record<string, string> = { red: "rgba(248,113,113,0.16)", amber: "rgba(251,191,36,0.16)", blue: "rgba(96,165,250,0.16)" };
 
 /** «A tratar hoje» no topo do painel: alertas com algo pendente + os primeiros em risco de sair. */
 export async function AdminTodoSummary({ client, schoolId }: { client: SupabaseClient; schoolId: string | null }) {

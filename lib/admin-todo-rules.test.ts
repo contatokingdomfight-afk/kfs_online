@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { churnRisk, physicalDue, todoDoneKey, trialToConvert, weekKey } from "@/lib/admin-todo-rules";
+import { birthdaySoon, churnRisk, isTuitionOverdue, noPlanLead, physicalDue, todoDoneKey, trialToConvert, tuitionDueSoon, weekKey } from "@/lib/admin-todo-rules";
 
 const today = "2026-10-11"; // domingo
 
@@ -40,5 +40,33 @@ describe("todoDoneKey", () => {
     expect(todoDoneKey("adesao", { id: "s1", today: "2026-10-12" })).toBe("s1::2026-10-12");
     expect(todoDoneKey("risco", { id: "s1", ref: "2026-09-20", today })).toBe("s1:2026-09-20");
     expect(todoDoneKey("risco", { id: "s1", ref: "2026-09-20", today: "2026-10-20" })).toBe("s1:2026-09-20");
+  });
+});
+
+describe("mensalidades", () => {
+  it("só fica em atraso depois do dia 8", () => {
+    expect(isTuitionOverdue("2026-10-08", "2026-10")).toBe(false);
+    expect(isTuitionOverdue("2026-10-09", "2026-10")).toBe(true);
+    expect(isTuitionOverdue("2026-10-02", "2026-09")).toBe(true);
+  });
+  it("a vencer nos 3 dias antes do prazo", () => {
+    expect(tuitionDueSoon("2026-10-04", "2026-10")).toBeNull();
+    expect(tuitionDueSoon("2026-10-05", "2026-10")).toEqual({ daysLeft: 3 });
+    expect(tuitionDueSoon("2026-10-08", "2026-10")).toEqual({ daysLeft: 0 });
+    expect(tuitionDueSoon("2026-10-09", "2026-10")).toBeNull();
+  });
+});
+
+describe("aniversários e registados sem plano", () => {
+  it("aniversário hoje ou amanhã, com a idade", () => {
+    expect(birthdaySoon(today, "1990-10-11")).toEqual({ inDays: 0, age: 36 });
+    expect(birthdaySoon(today, "2000-10-12")).toEqual({ inDays: 1, age: 26 });
+    expect(birthdaySoon(today, "2000-10-13")).toBeNull();
+    expect(birthdaySoon(today, null)).toBeNull();
+  });
+  it("registado há 1 a 60 dias", () => {
+    expect(noPlanLead(today, "2026-10-11T08:00:00Z")).toBeNull();
+    expect(noPlanLead(today, "2026-10-10T08:00:00Z")).toEqual({ days: 1 });
+    expect(noPlanLead(today, "2026-07-01T08:00:00Z")).toBeNull();
   });
 });

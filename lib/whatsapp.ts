@@ -56,3 +56,21 @@ export function buildTrialFollowUpMessage(name: string, modalityLabel: string, p
   const firstName = name.trim().split(" ")[0] || name.trim() || "tudo bem";
   return `Olá ${firstName}! 👋 Obrigado por teres experimentado ${modalityLabel} na Kingdom Fight School. Gostaste? Se quiseres continuar, vê aqui os planos: ${plansUrl}. Qualquer dúvida, é só responder por aqui. 🥋`;
 }
+
+/** Lembrete simpático antes do prazo da mensalidade (dia 8). */
+export function buildDueSoonMessage(studentFirstName: string, dueLabel: string): string {
+  const name = studentFirstName.trim() || "tudo bem";
+  return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Só para lembrar que a mensalidade deste mês vence ${dueLabel}. Se já pagaste, ignora esta mensagem. Obrigado! 🥋`;
+}
+
+/** Para quem criou conta mas ainda não escolheu plano. */
+export function buildChoosePlanMessage(studentFirstName: string, plansUrl: string): string {
+  const name = studentFirstName.trim() || "tudo bem";
+  return `Olá ${name}! 👋 Vimos que criaste conta na Kingdom Fight School — bem-vindo! Já escolheste o teu plano? Vê aqui as opções: ${plansUrl}. Se tiveres dúvidas sobre horários ou modalidades, é só responder por aqui. 🥋`;
+}
+
+/** Parabéns no dia de anos. */
+export function buildBirthdayMessage(studentFirstName: string): string {
+  const name = studentFirstName.trim();
+  return `Parabéns${name ? `, ${name}` : ""}! 🎉 Toda a equipa da Kingdom Fight School te deseja um dia incrível e um ano cheio de treinos e conquistas. 🥋`;
+}

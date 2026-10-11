@@ -11,9 +11,13 @@ import { TONE_COLOR, todoIcon } from "./todo-ui";
 
 export const dynamic = "force-dynamic";
 
-const ACTION_LABEL: Record<string, string> = { done: "feito", contactado: "contactado", lembrete: "lembrete enviado", pedido: "avaliação pedida" };
+const ACTION_LABEL: Record<string, string> = { done: "feito", contactado: "contactado", lembrete: "lembrete enviado", pedido: "avaliação pedida", "parabéns": "parabéns enviados", "coaches avisados": "coaches avisados" };
 const KIND_TITLE: Record<AdminTodoKind, string> = {
   pagamentos: "Pagamentos",
+  vencer: "Mensalidade a vencer",
+  semplano: "Sem plano",
+  exame: "Apto para exame",
+  aniversarios: "Aniversário",
   risco: "Risco de sair",
   carga: "Carga alta",
   adesao: "Adesão",
@@ -43,6 +47,12 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
     ) : (
       <TodoActionButton action="request" item={fields} label="Pedir avaliação" variant="primary" />
     );
+  if (item.kind === "exame" && item.href)
+    primary = (
+      <Link href={item.href} style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg)", display: "inline-flex", alignItems: "center", fontSize: 13, fontWeight: 800, textDecoration: "none", color: "var(--text-primary)" }}>
+        Convocar
+      </Link>
+    );
   if (item.kind === "carga" && item.href)
     primary = (
       <Link href={item.href} style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg)", display: "inline-flex", alignItems: "center", fontSize: 13, fontWeight: 800, textDecoration: "none", color: "var(--text-primary)" }}>
@@ -54,7 +64,12 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
     <span style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
       {item.kind === "adesao" ? waLink : null}
       {primary}
-      <TodoActionButton action="done" item={fields} label="Feito" doneAction={item.kind === "risco" || item.kind === "experimentais" ? "contactado" : "done"} />
+      <TodoActionButton
+        action="done"
+        item={fields}
+        label="Feito"
+        doneAction={item.kind === "risco" || item.kind === "experimentais" || item.kind === "semplano" ? "contactado" : item.kind === "aniversarios" ? "parabéns" : "done"}
+      />
     </span>
   );
 }
@@ -62,14 +77,14 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
 /** Ação em lote do alerta (no cabeçalho). */
 function BulkControl({ g, schoolId }: { g: AdminTodoGroup; schoolId: string | null }) {
   if (g.items.length === 0) return null;
-  if (g.kind === "pagamentos" || g.kind === "risco" || g.kind === "experimentais") {
+  if (g.kind === "pagamentos" || g.kind === "vencer" || g.kind === "risco" || g.kind === "semplano" || g.kind === "experimentais" || g.kind === "aniversarios") {
     const withPhone = g.items.filter((it) => it.whatsappUrl);
     const missing = g.items.length - withPhone.length;
     return (
       <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
         <WhatsAppSequence
           items={withPhone.map((it) => ({ kind: it.kind, doneKey: it.key, studentId: it.studentId, label: it.name, url: it.whatsappUrl! }))}
-          doneAction={g.kind === "pagamentos" ? "lembrete" : "contactado"}
+          doneAction={g.kind === "pagamentos" || g.kind === "vencer" ? "lembrete" : g.kind === "aniversarios" ? "parabéns" : "contactado"}
         />
         {missing > 0 ? <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{missing} sem telefone</span> : null}
       </span>
@@ -83,6 +98,7 @@ function BulkControl({ g, schoolId }: { g: AdminTodoGroup; schoolId: string | nu
     if (n === 0) return null;
     return <BulkTodoButton kind="fisicas" schoolId={schoolId} label="Pedir a todos" confirmLabel={`Pedir avaliação física a ${n}?`} />;
   }
+  if (g.kind !== "carga") return null;
   return <BulkTodoButton kind="carga" schoolId={schoolId} label="Avisar os coaches" confirmLabel={`Avisar os coaches de ${g.items.length} ${g.items.length === 1 ? "aluno" : "alunos"}?`} />;
 }
 
