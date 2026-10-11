@@ -56,3 +56,7 @@ scripts/tmp-*.jsonl*
 
 # Modelo GLB grande (opcional em dev; não versionar)
 /player.glb
+
+# WeoInvoice: registo local das facturas emitidas pelo script (dados pessoais)
+scripts/faturacao/registo-faturas.json
+scripts/faturacao/debug-ultima-resposta.html
