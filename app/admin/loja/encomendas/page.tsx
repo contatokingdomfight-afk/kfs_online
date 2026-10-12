@@ -18,6 +18,8 @@ import {
   type RetailOrder,
 } from "@/lib/retail/orders";
 import { OrderBuilder } from "@/components/retail/OrderBuilder";
+import { checkCoupon } from "@/app/dashboard/loja/actions";
+import { loadActivePromotions } from "@/lib/retail/discounts.server";
 import { advanceOrder, cancelOrderAsAdmin, confirmOrderPayment, createOrderForCustomer, markPaidOrdersOrdered } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -124,7 +126,7 @@ export default async function AdminEncomendasPage({ searchParams }: { searchPara
   const { estado } = await searchParams;
   const active = (TABS.find((t) => t.status === estado)?.status ?? "PENDING_PAYMENT") as OrderStatus;
 
-  const [orders, preorderProducts] = await Promise.all([loadOrders(supabase, { limit: 500 }), loadPreorderProducts(supabase)]);
+  const [orders, preorderProducts, promotions] = await Promise.all([loadOrders(supabase, { limit: 500 }), loadPreorderProducts(supabase), loadActivePromotions(supabase)]);
   const counts = new Map<OrderStatus, number>();
   for (const o of orders) counts.set(o.status, (counts.get(o.status) ?? 0) + 1);
   const shown = orders.filter((o) => o.status === active);
@@ -254,6 +256,12 @@ export default async function AdminEncomendasPage({ searchParams }: { searchPara
                     </li>
                   ))}
                 </ul>
+                {o.discountAmount > 0 ? (
+                  <p style={{ margin: 0, fontSize: 13, color: "var(--success)", fontWeight: 700 }}>
+                    −{euro(o.discountAmount)} · {o.discountLabel}
+                    {o.subtotalAmount != null ? <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}> (subtotal {euro(o.subtotalAmount)})</span> : null}
+                  </p>
+                ) : null}
                 {o.notes ? <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>Nota: {o.notes}</p> : null}
                 {proofUrl.has(o.id) && (
                   <a href={proofUrl.get(o.id)} target="_blank" rel="noopener noreferrer" style={{ ...btn, alignSelf: "flex-start" }}>
@@ -283,6 +291,8 @@ export default async function AdminEncomendasPage({ searchParams }: { searchPara
             products={preorderProducts}
             action={createOrderForCustomer}
             submitLabel="Registar encomenda"
+            promotions={promotions}
+            checkCoupon={checkCoupon}
             extraFields={
               <div className="card" style={{ padding: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 12 }}>
                 <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>

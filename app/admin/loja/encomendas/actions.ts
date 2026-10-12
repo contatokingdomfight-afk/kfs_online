@@ -53,6 +53,7 @@ export async function createOrderForCustomer(_prev: AdminOrderResult | null, for
     customerPhone: phone,
     notes: String(formData.get("notes") ?? "") || null,
     createdByUserId: user.id,
+    couponCode: String(formData.get("couponCode") ?? "") || null,
   });
   if (result.error) return { error: result.error };
   refresh();
@@ -78,8 +79,9 @@ export async function confirmOrderPayment(formData: FormData): Promise<void> {
     lines: order.lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity, unitPrice: l.unitPrice })),
     studentId: order.studentId,
     registeredByUserId: user.id,
-    notes: `Encomenda ${orderReference(order.number)}`,
+    notes: `Encomenda ${orderReference(order.number)}${order.discountLabel ? ` · ${order.discountLabel}` : ""}`,
     skipStock: true,
+    discountAmount: order.discountAmount,
   });
   if (sale.error) {
     console.error("[confirmOrderPayment]", sale.error);

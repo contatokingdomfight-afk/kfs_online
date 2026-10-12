@@ -87,6 +87,12 @@ export default async function MinhaEncomendaPage({ params, searchParams }: { par
             <strong>{euro(l.lineTotal)}</strong>
           </div>
         ))}
+        {order.discountAmount > 0 && (
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 14, color: "var(--success)", fontWeight: 700, borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 4 }}>
+            <span>{order.discountLabel}</span>
+            <span>−{euro(order.discountAmount)}</span>
+          </div>
+        )}
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 4 }}>
           <span>Total</span>
           <span>{euro(order.totalAmount)}</span>

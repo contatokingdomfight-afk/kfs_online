@@ -19,6 +19,8 @@ export type CreateRetailSaleInput = {
   notes?: string | null;
   /** Pré-encomendas: as peças vêm direto do fornecedor para o cliente, não passam pelo stock. */
   skipStock?: boolean;
+  /** Desconto sobre o total (promoção/cupão): as linhas ficam a preço cheio, o total da venda já descontado. */
+  discountAmount?: number;
 };
 
 export async function createRetailSale(
@@ -57,7 +59,7 @@ export async function createRetailSale(
     schoolId: input.schoolId,
     soldAt: new Date().toISOString(),
     paymentMethod: input.paymentMethod,
-    totalAmount: total.toFixed(2),
+    totalAmount: Math.max(0, total - (input.discountAmount ?? 0)).toFixed(2),
     status: "COMPLETED",
     studentId: input.studentId ?? null,
     registeredByUserId: input.registeredByUserId,

@@ -67,6 +67,9 @@ export default async function AdminLojaPage() {
         <Link href="/admin/loja/vendas" className="btn btn-secondary" style={{ textDecoration: "none", textAlign: "center" }}>
           Histórico de vendas
         </Link>
+        <Link href="/admin/loja/promocoes" className="btn btn-secondary" style={{ textDecoration: "none", textAlign: "center", gridColumn: "1 / -1" }}>
+          Promoções e cupões
+        </Link>
       </nav>
 
       <div

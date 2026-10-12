@@ -6,7 +6,8 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { loadPreorderProducts } from "@/lib/retail/orders";
 import { OrderBuilder } from "@/components/retail/OrderBuilder";
-import { createMyOrder } from "../../actions";
+import { checkCoupon, createMyOrder } from "../../actions";
+import { loadActivePromotions } from "@/lib/retail/discounts.server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export default async function EncomendarPage({ params }: { params: Promise<{ pro
   const schoolId = (student as { schoolId?: string | null } | null)?.schoolId ?? null;
   const [product] = await loadPreorderProducts(admin, { productId, schoolId });
   if (!product || product.variants.length === 0) notFound();
+  const promotions = (await loadActivePromotions(admin)).filter((p) => p.productId == null || p.productId === product.id);
   const prices = product.variants.map((v) => v.price);
   const minPrice = Math.min(...prices);
 
@@ -48,6 +50,8 @@ export default async function EncomendarPage({ params }: { params: Promise<{ pro
         products={[product]}
         action={createMyOrder}
         submitLabel="Enviar encomenda"
+        promotions={promotions}
+        checkCoupon={checkCoupon}
         footerNote={
           <p style={{ margin: 0, padding: "10px 12px", borderRadius: 10, background: "rgba(250,204,21,0.14)", border: "1px solid var(--warning)", fontSize: 13, lineHeight: 1.45 }}>
             Pagas por transferência (IBAN ou Revolut) ou na secretaria para confirmar. Só depois a encomenda segue para o fornecedor.

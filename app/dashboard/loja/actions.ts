@@ -6,8 +6,16 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ALLOWED_PAYMENT_PROOF_TYPES, MAX_PAYMENT_PROOF_BYTES } from "@/lib/enrollment-form";
 import { createRetailOrder, type OrderLineInput } from "@/lib/retail/orders";
+import { findActiveCoupon } from "@/lib/retail/discounts.server";
+import type { CouponRule } from "@/lib/retail/discounts";
 
 export type OrderActionResult = { error?: string; success?: boolean };
+
+/** Verifica um cupão antes de enviar (só pré-visualização; o servidor volta a validar ao criar). */
+export async function checkCoupon(raw: string): Promise<{ coupon?: CouponRule; error?: string }> {
+  const coupon = await findActiveCoupon(createAdminClient(), raw);
+  return coupon ? { coupon } : { error: "Cupão inválido ou já não está ativo." };
+}
 
 function parseLines(raw: FormDataEntryValue | null): OrderLineInput[] {
   try {
@@ -34,6 +42,7 @@ export async function createMyOrder(_prev: OrderActionResult | null, formData: F
     schoolId: (student as { schoolId?: string | null } | null)?.schoolId ?? null,
     studentId,
     notes: (formData.get("notes") as string | null) ?? null,
+    couponCode: (formData.get("couponCode") as string | null) ?? null,
   });
   if (result.error || !result.id) return { error: result.error ?? "Não foi possível enviar a encomenda." };
   revalidatePath("/dashboard/loja");

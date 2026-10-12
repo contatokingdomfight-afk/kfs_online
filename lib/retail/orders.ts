@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { imageForColor, parseProductImages, type ProductImage } from "@/lib/retail/product-images";
+import { computeDiscount } from "@/lib/retail/discounts";
+import { findActiveCoupon, loadActivePromotions } from "@/lib/retail/discounts.server";
 
 /** Encomendas da loja (pré-encomenda). Ver supabase/migrations/20261012140000_retail_orders.sql. */
 export const ORDER_STATUSES = ["PENDING_PAYMENT", "PAID", "ORDERED", "READY", "DELIVERED", "CANCELLED"] as const;
@@ -55,6 +57,11 @@ export type RetailOrder = {
   customerPhone: string | null;
   status: OrderStatus;
   totalAmount: number;
+  /** Antes do desconto (null em encomendas antigas = igual ao total). */
+  subtotalAmount: number | null;
+  discountAmount: number;
+  discountLabel: string | null;
+  couponCode: string | null;
   paymentMethod: string | null;
   paidAt: string | null;
   saleId: string | null;
@@ -71,9 +78,14 @@ export type RetailOrder = {
 };
 
 const ORDER_COLUMNS =
-  'id, number, schoolId, studentId, customerName, customerPhone, status, totalAmount, paymentMethod, paidAt, saleId, orderedAt, readyAt, deliveredAt, cancelledAt, proofPath, proofFileName, proofUploadedAt, notes, createdAt';
+  'id, number, schoolId, studentId, customerName, customerPhone, status, totalAmount, subtotalAmount, discountAmount, discountLabel, couponCode, paymentMethod, paidAt, saleId, orderedAt, readyAt, deliveredAt, cancelledAt, proofPath, proofFileName, proofUploadedAt, notes, createdAt';
 
-type OrderRow = Omit<RetailOrder, "lines" | "totalAmount" | "number"> & { totalAmount: number | string; number: number | string };
+type OrderRow = Omit<RetailOrder, "lines" | "totalAmount" | "number" | "subtotalAmount" | "discountAmount"> & {
+  totalAmount: number | string;
+  number: number | string;
+  subtotalAmount: number | string | null;
+  discountAmount: number | string | null;
+};
 
 export function lineLabel(l: Pick<OrderLine, "size" | "color">): string {
   return [l.color, l.size].filter(Boolean).join(" · ") || "Único";
@@ -112,6 +124,8 @@ export async function loadOrders(
     ...o,
     number: Number(o.number),
     totalAmount: Number(o.totalAmount),
+    subtotalAmount: o.subtotalAmount != null ? Number(o.subtotalAmount) : null,
+    discountAmount: Number(o.discountAmount ?? 0),
     lines: lines
       .filter((l) => l.orderId === o.id)
       .map((l) => {
@@ -179,6 +193,7 @@ export async function createRetailOrder(
     customerPhone?: string | null;
     notes?: string | null;
     createdByUserId?: string | null;
+    couponCode?: string | null;
   }
 ): Promise<{ error?: string; id?: string; number?: number }> {
   const lines = input.lines.filter((l) => l.variantId && l.quantity > 0);
@@ -186,8 +201,8 @@ export async function createRetailOrder(
   if (lines.some((l) => !Number.isInteger(l.quantity) || l.quantity > 20)) return { error: "Quantidade inválida." };
 
   const products = await loadPreorderProducts(supabase);
-  const variantInfo = new Map<string, { price: number; schoolId: string | null }>();
-  for (const p of products) for (const v of p.variants) variantInfo.set(v.id, { price: v.price, schoolId: p.schoolId });
+  const variantInfo = new Map<string, { price: number; schoolId: string | null; productId: string }>();
+  for (const p of products) for (const v of p.variants) variantInfo.set(v.id, { price: v.price, schoolId: p.schoolId, productId: p.id });
   if (lines.some((l) => !variantInfo.has(l.variantId))) return { error: "Este artigo já não está disponível para encomenda." };
 
   const id = crypto.randomUUID();
@@ -203,7 +218,16 @@ export async function createRetailOrder(
       recipientNote: l.recipientNote?.trim().slice(0, 80) || null,
     };
   });
-  const total = lineRows.reduce((acc, l) => acc + Number(l.lineTotal), 0);
+  // Desconto recalculado aqui (nunca confiar no valor do browser): o melhor entre promoção e cupão.
+  const coupon = input.couponCode?.trim() ? await findActiveCoupon(supabase, input.couponCode) : null;
+  if (input.couponCode?.trim() && !coupon) return { error: "Cupão inválido ou já não está ativo." };
+  const promotions = await loadActivePromotions(supabase);
+  const d = computeDiscount(
+    lineRows.map((l) => ({ productId: variantInfo.get(l.variantId)!.productId, quantity: l.quantity, lineTotal: Number(l.lineTotal) })),
+    promotions,
+    coupon
+  );
+  const total = d.total;
 
   const { data: created, error } = await supabase
     .from("RetailOrder")
@@ -215,6 +239,11 @@ export async function createRetailOrder(
       customerPhone: input.customerPhone?.trim() || null,
       status: "PENDING_PAYMENT",
       totalAmount: total.toFixed(2),
+      subtotalAmount: d.subtotal.toFixed(2),
+      discountAmount: d.discount.toFixed(2),
+      discountLabel: d.label,
+      couponCode: d.couponCode,
+      promotionId: d.promotionId,
       notes: input.notes?.trim() || null,
       createdByUserId: input.createdByUserId ?? null,
     })
