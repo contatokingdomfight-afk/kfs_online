@@ -52,12 +52,17 @@ export async function syncUser(supabaseUser: SupabaseUser) {
 
   if (existing) {
     console.log("[syncUser] utilizador existente encontrado:", existing.id, "role:", existing.role);
-    const { error: updateErr } = await supabase
-      .from("User")
-      .update({ email, name })
-      .eq("id", existing.id);
-    if (updateErr) {
-      console.error("[syncUser] erro ao atualizar User:", updateErr);
+    // O nome na tabela User é a fonte de verdade (o admin e o próprio aluno editam-no lá):
+    // o metadata do Auth só preenche um nome vazio. Antes isto corria em cada pedido
+    // (getCurrentDbUser) e repunha o nome antigo do login por cima das edições do admin.
+    const patch: { email?: string; name?: string } = {};
+    if (email && email !== existing.email) patch.email = email;
+    if (name && !existing.name?.trim()) patch.name = name;
+    if (Object.keys(patch).length > 0) {
+      const { error: updateErr } = await supabase.from("User").update(patch).eq("id", existing.id);
+      if (updateErr) {
+        console.error("[syncUser] erro ao atualizar User:", updateErr);
+      }
     }
     userId = existing.id;
   } else {
