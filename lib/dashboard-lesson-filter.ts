@@ -7,6 +7,8 @@ export type DashboardModalityViewInput = {
   /** De `getPlanAccess.allowedModalities` */
   allowedModalities: string[];
   studentPrimaryModality: string | null;
+  /** `Student.extraModalities`: modalidades além das do plano (ex.: KIDS que treina nos adultos). */
+  extraModalities?: string[];
 };
 
 /**
@@ -23,8 +25,10 @@ export function filterDashboardLessonsByPlanModality<
   if (!shouldRestrictDashboardToSingleModality(input)) return lessons;
   const only = normalizeModalityCode(input.allowedModalities[0] ?? input.studentPrimaryModality ?? "");
   if (!only) return lessons;
+  const extra = new Set((input.extraModalities ?? []).map((m) => m.trim().toUpperCase()));
   return lessons.filter((l) => {
     if (Boolean(l.isOpenClass)) return true;
+    if (l.modality && extra.has(String(l.modality).trim().toUpperCase())) return true;
     const n =
       normalizeModalityCode(l.modality) ??
       (l.modality ? String(l.modality).trim().toUpperCase() : null);
@@ -46,6 +50,8 @@ export type DashboardLessonFilterInput = {
   allowedModalities: string[];
   studentPrimaryModality: string | null;
   modalitiesListLength: number;
+  /** `Student.extraModalities` — contam como incluídas no plano. */
+  extraModalities?: string[];
 };
 
 /**
@@ -61,8 +67,9 @@ export function isLessonParticipationAllowedByPlan<T extends DashboardLessonRow>
   const { hasPlan, hasCheckIn, allowedModalities, studentPrimaryModality, modalitiesListLength } = input;
   if (!hasPlan) return false;
   if (!hasCheckIn) return false;
-  if (allowedModalities.length === 0) return false;
   const lessonModality = lesson.modality;
+  if (input.extraModalities?.includes(lessonModality)) return true;
+  if (allowedModalities.length === 0) return false;
   const isFullPlan = allowedModalities.length >= modalitiesListLength;
   // Plano multi-modalidade cobre só as modalidades do plano — não aulas de códigos novos (ex. MTKIDS).
   if (isFullPlan) return allowedModalities.includes(lessonModality);

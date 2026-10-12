@@ -37,7 +37,7 @@ export default async function AdminAlunoEditarDadosPage({ params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality, schoolId")
+    .select("id, userId, status, planId, primaryModality, schoolId, extraModalities")
     .eq("id", studentId)
     .single();
 
@@ -145,7 +145,7 @@ export default async function AdminAlunoEditarDadosPage({ params }: Props) {
         </summary>
         <div style={{ padding: "0 clamp(14px, 3.5vw, 18px) clamp(14px, 3.5vw, 18px) clamp(14px, 3.5vw, 18px)", borderTop: "1px solid var(--border)" }}>
           <EditarAlunoForm
-            key={`${student.status}-${(student as { schoolId?: string }).schoolId ?? ""}-${student.planId ?? ""}-${initialPrimaryModality}-${user?.name ?? ""}`}
+            key={`${student.status}-${(student as { schoolId?: string }).schoolId ?? ""}-${student.planId ?? ""}-${initialPrimaryModality}-${user?.name ?? ""}-${((student as { extraModalities?: string[] | null }).extraModalities ?? []).join(",")}`}
             studentId={studentId}
             initialName={user?.name ?? ""}
             initialStatus={student.status}
@@ -155,6 +155,8 @@ export default async function AdminAlunoEditarDadosPage({ params }: Props) {
             initialPrimaryModality={initialPrimaryModality}
             planOptions={planOptions}
             modalityOptions={modalityOptionsForForm}
+            allModalities={(modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code }))}
+            initialExtraModalities={(student as { extraModalities?: string[] | null }).extraModalities ?? []}
             requiresPrimaryModality={requiresPrimaryModality}
             isFamilyPlanMember={Boolean(familyCtx)}
             referencePlanName={accessPlan?.name ?? myFamilyShare?.referencePlanName ?? null}

@@ -343,6 +343,7 @@ export async function updateStudent(
     planId?: string | null;
     primaryModality?: string | null;
     adminGrantedFullAccess?: boolean;
+    extraModalities?: string[];
   } = {};
   if (newStatus) {
     updates.status = newStatus;
@@ -352,6 +353,14 @@ export async function updateStudent(
   updates.planId = effectivePlanId;
   updates.primaryModality = newPrimaryModality;
   if (planChanged) updates.adminGrantedFullAccess = false;
+  if (formData.get("extraModalitiesSent")) {
+    const picked = [...new Set(formData.getAll("extraModalities").map((v) => String(v).trim()).filter(Boolean))];
+    const { data: validRefs } = picked.length
+      ? await supabase.from("ModalityRef").select("code").in("code", picked)
+      : { data: [] as { code: string }[] };
+    const valid = new Set((validRefs ?? []).map((r) => r.code));
+    updates.extraModalities = picked.filter((c) => valid.has(c) && c !== newPrimaryModality);
+  }
 
   const { error: studentError } = await supabase.from("Student").update(updates).eq("id", studentId);
   if (studentError) return { error: studentError.message };

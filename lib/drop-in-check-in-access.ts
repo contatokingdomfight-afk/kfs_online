@@ -84,6 +84,7 @@ export async function resolveDashboardParticipationAccess(
       allowedModalities: effectiveAllowedModalities,
       studentPrimaryModality,
       modalitiesListLength: MODALITIES_LIST.length,
+      extraModalities: hasDropInCredits ? [] : planAccess.extraModalities,
     },
   };
 }

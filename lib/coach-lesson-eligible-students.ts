@@ -64,6 +64,8 @@ type StudentRow = {
   primaryModality: string | null;
   status: string;
   competitionAthlete?: boolean;
+  /** Modalidades extra (ex.: KIDS que também treina nos adultos). */
+  extraModalities?: string[] | null;
 };
 
 function buildPlanAccessInput(
@@ -75,6 +77,7 @@ function buildPlanAccessInput(
   allowedModalities: string[];
   studentPrimaryModality: string | null;
   modalitiesListLength: number;
+  extraModalities: string[];
 } {
   if (!student.planId || !plan || plan.isActive === false) {
     return {
@@ -83,6 +86,7 @@ function buildPlanAccessInput(
       allowedModalities: [],
       studentPrimaryModality: null,
       modalitiesListLength: MODALITIES_LIST.length,
+      extraModalities: [],
     };
   }
 
@@ -104,6 +108,7 @@ function buildPlanAccessInput(
     allowedModalities,
     studentPrimaryModality: primaryModality,
     modalitiesListLength: MODALITIES_LIST.length,
+    extraModalities: student.extraModalities ?? [],
   };
 }
 
@@ -188,7 +193,7 @@ export async function loadCoachLessonRoster(
   const [{ data: schoolStudents }, { data: attList }] = await Promise.all([
     supabase
       .from("Student")
-      .select("id, userId, planId, primaryModality, status, competitionAthlete")
+      .select("id, userId, planId, primaryModality, status, competitionAthlete, extraModalities")
       .eq("schoolId", schoolId)
       .eq("status", "ATIVO"),
     supabase
@@ -520,7 +525,7 @@ export async function assertStudentEligibleForCoachLesson(
 ): Promise<{ error?: string; student?: StudentRow; plan?: PlanRow }> {
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, planId, primaryModality, status, schoolId, competitionAthlete")
+    .select("id, userId, planId, primaryModality, status, schoolId, competitionAthlete, extraModalities")
     .eq("id", studentId)
     .maybeSingle();
 
@@ -566,7 +571,7 @@ export async function assertStudentEligibleForCrossModalityCheckIn(
 ): Promise<{ error?: string; student?: StudentRow; plan?: PlanRow }> {
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, planId, primaryModality, status, schoolId, competitionAthlete")
+    .select("id, userId, planId, primaryModality, status, schoolId, competitionAthlete, extraModalities")
     .eq("id", studentId)
     .maybeSingle();
 

@@ -9,6 +9,15 @@ export type SubmitTrialResult = { error?: string };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Menos do que isto entre abrir o formulário e enviar (3 passos) só é possível a um robô. */
+const MIN_FILL_MS = 5000;
+
+/** Nome «aleatório» de robô, ex.: «CkpBxitxfGJhEdbcScjOWi» — uma só palavra longa com maiúsculas no meio. */
+function looksLikeBotName(name: string): boolean {
+  if (/\s/.test(name) || name.length < 12) return false;
+  return (name.slice(1).match(/[A-Z]/g) ?? []).length >= 2;
+}
+
 export async function submitTrialRequest(
   _prev: SubmitTrialResult | null,
   formData: FormData
@@ -21,12 +30,15 @@ export async function submitTrialRequest(
   const lessonSlot = (formData.get("lessonSlot") as string)?.trim() ?? "";
   const referrerStudentId = (formData.get("referrerStudentId") as string)?.trim() || null;
   const interestedPlan = (formData.get("interestedPlanName") as string)?.trim() || null;
+  const honeypot = (formData.get("website") as string)?.trim() ?? "";
+  const elapsedMs = Number(formData.get("elapsedMs"));
 
   if (!name) return { error: "Nome é obrigatório." };
   if (!contact) return { error: "Telefone é obrigatório." };
   if (email && !EMAIL_RE.test(email)) return { error: "Email inválido." };
   if (!modality) return { error: "Escolhe uma modalidade." };
   if (!schoolId) return { error: "Escolhe o local / escola." };
+  if ((contact.match(/\d/g) ?? []).length < 9) return { error: "Telefone inválido." };
 
   const slotParts = lessonSlot.split("::");
   const lessonId = slotParts[0]?.trim() ?? "";
@@ -34,6 +46,10 @@ export async function submitTrialRequest(
   if (!lessonId || !occurrenceYmd || !/^\d{4}-\d{2}-\d{2}$/.test(occurrenceYmd)) {
     return { error: "Escolhe a data e hora da aula." };
   }
+
+  // Anti-spam: campo escondido preenchido, envio rápido demais ou nome aleatório → finge sucesso
+  // (sem gravar), para o robô não perceber que foi bloqueado.
+  const isSpam = Boolean(honeypot) || !Number.isFinite(elapsedMs) || elapsedMs < MIN_FILL_MS || looksLikeBotName(name);
 
   let supabase;
   try {
@@ -76,6 +92,12 @@ export async function submitTrialRequest(
     .eq("date", occurrenceYmd)
     .maybeSingle();
   if (cancelled) return { error: "Esta data foi cancelada. Escolhe outra aula." };
+
+  if (isSpam) {
+    console.warn("[aula-experimental] pedido bloqueado como spam", { honeypot: Boolean(honeypot), elapsedMs });
+    const startTime = (lesson as { startTime?: string | null }).startTime ?? "";
+    redirect(`/aula-experimental?${new URLSearchParams({ sucesso: "1", data: occurrenceYmd, hora: startTime }).toString()}`);
+  }
 
   let validReferrerId: string | null = null;
   if (referrerStudentId) {

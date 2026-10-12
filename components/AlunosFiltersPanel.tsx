@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 function buildQueryString(overrides: Record<string, string>): string {
   const p = new URLSearchParams();
@@ -9,6 +9,8 @@ function buildQueryString(overrides: Record<string, string>): string {
   if (overrides.school && overrides.school !== "all") p.set("school", overrides.school);
   if (overrides.plan && overrides.plan !== "all") p.set("plan", overrides.plan);
   if (overrides.q?.trim()) p.set("q", overrides.q.trim());
+  if (overrides.insurance && overrides.insurance !== "all") p.set("insurance", overrides.insurance);
+  if (overrides.vista && overrides.vista !== "all") p.set("vista", overrides.vista);
   const s = p.toString();
   return s ? `?${s}` : "";
 }
@@ -31,6 +33,11 @@ type Props = {
   plans: { id: string; name: string }[];
   hasSchoolFilter?: boolean;
   hasPlanFilter?: boolean;
+  /** false quando a página já mostra a pesquisa fora do painel. */
+  showSearch?: boolean;
+  title?: string;
+  /** Filtros extra no fim do painel. */
+  children?: ReactNode;
 };
 
 export function AlunosFiltersPanel({
@@ -51,9 +58,14 @@ export function AlunosFiltersPanel({
   plans,
   hasSchoolFilter = true,
   hasPlanFilter = true,
+  showSearch = true,
+  title = "Filtros",
+  children,
 }: Props) {
+  const searchActive = showSearch && !!defaultValue.trim();
+  const extraActive = !!baseFilters.insurance && baseFilters.insurance !== "all";
   const [open, setOpen] = useState(
-    filterStatus !== "all" || filterModality !== "all" || filterSchool !== "all" || filterPlan !== "all" || !!defaultValue
+    filterStatus !== "all" || filterModality !== "all" || filterSchool !== "all" || filterPlan !== "all" || searchActive || extraActive
   );
 
   const activeCount = [
@@ -61,7 +73,8 @@ export function AlunosFiltersPanel({
     filterModality !== "all",
     filterSchool !== "all",
     filterPlan !== "all",
-    !!defaultValue.trim(),
+    searchActive,
+    extraActive,
   ].filter(Boolean).length;
 
   return (
@@ -96,7 +109,7 @@ export function AlunosFiltersPanel({
         }}
         aria-expanded={open}
       >
-        Filtros
+        {title}
         {activeCount > 0 && (
           <span
             style={{
@@ -118,7 +131,7 @@ export function AlunosFiltersPanel({
       {open && (
         <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
           {/* Buscar */}
-          <div>
+          {showSearch && <div>
             <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
               Buscar
             </p>
@@ -127,6 +140,8 @@ export function AlunosFiltersPanel({
               {modality !== "all" && <input type="hidden" name="modality" value={modality} />}
               {school !== "all" && <input type="hidden" name="school" value={school} />}
               {plan !== "all" && <input type="hidden" name="plan" value={plan} />}
+              {baseFilters.insurance && baseFilters.insurance !== "all" && <input type="hidden" name="insurance" value={baseFilters.insurance} />}
+              {baseFilters.vista && baseFilters.vista !== "all" && <input type="hidden" name="vista" value={baseFilters.vista} />}
               <input
                 type="search"
                 name="q"
@@ -148,7 +163,7 @@ export function AlunosFiltersPanel({
                 Buscar
               </button>
             </form>
-          </div>
+          </div>}
 
           {/* Status */}
           <div>
@@ -298,6 +313,8 @@ export function AlunosFiltersPanel({
               </div>
             </div>
           )}
+
+          {children}
         </div>
       )}
     </div>

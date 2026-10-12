@@ -13,6 +13,7 @@ const fullAccess: PlanAccess = {
   hasExclusiveBenefits: true,
   allowedModalities: ["MUAY_THAI"],
   primaryModality: "MUAY_THAI",
+  extraModalities: [],
   currentPlanId: "plan-1",
   canSubscribeDigitalLibraryAddon: false,
 };

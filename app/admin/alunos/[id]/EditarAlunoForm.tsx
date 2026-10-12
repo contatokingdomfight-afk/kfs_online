@@ -325,6 +325,9 @@ type Props = {
   referencePlanName?: string | null;
   statusLabels: Record<string, string>;
   initialLocale?: "pt" | "en";
+  /** Todas as modalidades (para «Também treina em»). */
+  allModalities?: { code: string; name: string }[];
+  initialExtraModalities?: string[];
 };
 
 export function EditarAlunoForm({
@@ -342,6 +345,8 @@ export function EditarAlunoForm({
   referencePlanName = null,
   statusLabels,
   initialLocale = "pt",
+  allModalities = [],
+  initialExtraModalities = [],
 }: Props) {
   const t = getTranslations(initialLocale);
   const [userDismissed, setUserDismissed] = useState(false);
@@ -461,6 +466,28 @@ export function EditarAlunoForm({
           ))}
         </select>
       </label>
+      {allModalities.length > 0 && (
+        <fieldset style={{ border: 0, padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+          <input type="hidden" name="extraModalitiesSent" value="1" />
+          <legend style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)", padding: 0, marginBottom: 2 }}>
+            Também treina em
+          </legend>
+          <span style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 2 }}>
+            Além da modalidade do plano. Ex.: aluno do KIDS que também treina na turma de adultos — passa a aparecer na lista de presença dessas aulas e pode fazer check-in nelas.
+          </span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {allModalities.map((m) => (
+              <label
+                key={m.code}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)", backgroundColor: "var(--bg)", fontSize: 14, cursor: "pointer" }}
+              >
+                <input type="checkbox" name="extraModalities" value={m.code} defaultChecked={initialExtraModalities.includes(m.code)} />
+                {m.name}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
       {state?.error && (
         <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--danger)" }}>
           {state.error}

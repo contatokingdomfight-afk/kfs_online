@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
+import { Search } from "lucide-react";
 import { AlunoProfileLink } from "@/components/AlunoProfileLink";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -10,6 +12,8 @@ import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { computeInsuranceStatus, INSURANCE_STATUS_LABEL } from "@/lib/insurance-settings";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
+import { addDaysYmd, daysBetween, isTuitionOverdue, RISK_DAYS } from "@/lib/admin-todo-rules";
+import { fetchAllPages, inChunks } from "@/lib/graduation/queries";
 
 const INSURANCE_FILTER_LABEL: Record<string, string> = {
   expired: "Seguro expirado",
@@ -24,7 +28,23 @@ const STATUS_LABEL: Record<string, string> = {
   EXPERIMENTAL: "Experimental",
 };
 
-type SearchParams = Promise<{ status?: string; modality?: string; school?: string; plan?: string; q?: string; insurance?: string }>;
+/** Filtros rápidos (botões no topo da lista). */
+const VIEWS = [
+  { id: "all", label: "Todos" },
+  { id: "ativos", label: "Ativos" },
+  { id: "atraso", label: "Mensalidade em atraso" },
+  { id: "taxas", label: "Seguro/matrícula por pagar" },
+  { id: "sem-treino", label: `Sem treinar há ${RISK_DAYS}+ dias` },
+  { id: "sem-plano", label: "Sem plano" },
+] as const;
+type ViewId = (typeof VIEWS)[number]["id"];
+
+/** Janela para o «último treino» (mais antigo do que isto aparece como «há mais de 4 meses»). */
+const TRAINING_LOOKBACK_DAYS = 120;
+
+const eur = (n: number) => `${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2).replace(".", ",")} €`;
+
+type SearchParams = Promise<{ status?: string; modality?: string; school?: string; plan?: string; q?: string; insurance?: string; vista?: string }>;
 
 export default async function AdminAlunosPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
@@ -36,6 +56,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   const filterSchool = params.school ?? "all";
   const filterPlan = params.plan ?? "all";
   const filterInsurance = params.insurance ?? "all";
+  const view: ViewId = VIEWS.some((v) => v.id === params.vista) ? (params.vista as ViewId) : "all";
   const searchQuery = (params.q ?? "").trim().toLowerCase();
   const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");
 
@@ -43,11 +64,30 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const [{ data: schools }, { data: studentsData }, { data: plansData }, modalitiesForFilter] = await Promise.all([
+  const [{ data: schools }, { data: studentsData }, { data: plansData }, modalitiesForFilter, latePayments, recentAttendance] = await Promise.all([
     supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
     supabase.from("Student").select("id, userId, status, primaryModality, schoolId, planId, createdAt, registrationMode, syntheticLoginEmail").order("createdAt", { ascending: false }),
     supabase.from("Plan").select("id, name").eq("isActive", true).order("name", { ascending: true }),
     getCachedModalityRefs(supabase),
+    fetchAllPages<{ studentId: string; amount: number | string; paymentType: string; referenceMonth: string | null }>((from, to) =>
+      supabase
+        .from("Payment")
+        .select("studentId, amount, paymentType, referenceMonth")
+        .eq("status", "LATE")
+        .in("paymentType", ["TUITION", "INSURANCE", "ENROLLMENT"])
+        .order("id")
+        .range(from, to)
+    ),
+    fetchAllPages<{ studentId: string; occurrenceDate: string }>((from, to) =>
+      supabase
+        .from("Attendance")
+        .select("studentId, occurrenceDate")
+        .eq("status", "CONFIRMED")
+        .gte("occurrenceDate", addDaysYmd(todayYmd, -TRAINING_LOOKBACK_DAYS))
+        .lte("occurrenceDate", todayYmd)
+        .order("id")
+        .range(from, to)
+    ),
   ]);
 
   const students = studentsData ?? [];
@@ -74,38 +114,60 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   const userIds = [...new Set(filtered.map((s) => s.userId))];
   const studentIds = filtered.map((s) => s.id);
 
-  const [{ data: usersData }, { data: profilesData }, { data: insuranceData }] = await Promise.all([
-    supabase.from("User").select("id, name, email").in("id", userIds),
-    studentIds.length > 0
-      ? supabase.from("StudentProfile").select("studentId, phone").in("studentId", studentIds)
-      : Promise.resolve({ data: [] }),
-    studentIds.length > 0
-      ? supabase
-          .from("StudentInsuranceCoverage")
-          .select("studentId, covered, coverageStartDate, coverageEndDate")
-          .in("studentId", studentIds)
-      : Promise.resolve({ data: [] }),
+  const [usersData, profilesData, insuranceData] = await Promise.all([
+    inChunks(userIds, async (ids) => (await supabase.from("User").select("id, name, email").in("id", ids)).data ?? []),
+    inChunks(studentIds, async (ids) => (await supabase.from("StudentProfile").select("studentId, phone").in("studentId", ids)).data ?? []),
+    inChunks(studentIds, async (ids) =>
+      (await supabase.from("StudentInsuranceCoverage").select("studentId, covered, coverageStartDate, coverageEndDate").in("studentId", ids)).data ?? []
+    ),
   ]);
 
-  const userById = new Map((usersData ?? []).map((u) => [u.id, u]));
-  const profileByStudentId = new Map((profilesData ?? []).map((p) => [p.studentId, p]));
-  const insuranceByStudentId = new Map((insuranceData ?? []).map((r) => [r.studentId, r]));
+  const userById = new Map(usersData.map((u) => [u.id, u]));
+  const profileByStudentId = new Map(profilesData.map((p) => [p.studentId, p]));
+  const insuranceByStudentId = new Map(insuranceData.map((r) => [r.studentId, r]));
+  const insuranceStatusOf = (studentId: string) => {
+    const row = insuranceByStudentId.get(studentId);
+    return computeInsuranceStatus(
+      row
+        ? {
+            covered: Boolean(row.covered),
+            coverageStartDate: (row.coverageStartDate as string | null) ?? null,
+            coverageEndDate: (row.coverageEndDate as string | null) ?? null,
+            policyReference: null,
+            notes: null,
+          }
+        : null,
+      todayYmd
+    );
+  };
+
+  // Pagamentos em atraso (mesmos critérios do «A tratar hoje»: mensalidade só em atraso depois do dia 8).
+  const tuitionLateBy = new Map<string, number>();
+  const feesLateBy = new Map<string, number>();
+  for (const p of latePayments) {
+    const amount = Number(p.amount) || 0;
+    if (p.paymentType === "TUITION") {
+      const ref = p.referenceMonth ? String(p.referenceMonth).slice(0, 7) : null;
+      if (ref && !isTuitionOverdue(todayYmd, ref)) continue;
+      tuitionLateBy.set(p.studentId, (tuitionLateBy.get(p.studentId) ?? 0) + amount);
+    } else {
+      feesLateBy.set(p.studentId, (feesLateBy.get(p.studentId) ?? 0) + amount);
+    }
+  }
+  const lastTrainingBy = new Map<string, string>();
+  for (const a of recentAttendance) {
+    const d = String(a.occurrenceDate).slice(0, 10);
+    const prev = lastTrainingBy.get(a.studentId);
+    if (!prev || d > prev) lastTrainingBy.set(a.studentId, d);
+  }
+  const daysSinceTraining = (studentId: string) => {
+    const last = lastTrainingBy.get(studentId);
+    return last ? daysBetween(last, todayYmd) : null;
+  };
 
   if (filterInsurance !== "all") {
     filtered = filtered.filter((s) => {
-      const row = insuranceByStudentId.get(s.id);
-      const st = computeInsuranceStatus(
-        row
-          ? {
-              covered: Boolean(row.covered),
-              coverageStartDate: (row.coverageStartDate as string | null) ?? null,
-              coverageEndDate: (row.coverageEndDate as string | null) ?? null,
-              policyReference: null,
-              notes: null,
-            }
-          : null,
-        todayYmd
-      );
+      const st = insuranceStatusOf(s.id);
       if (filterInsurance === "expired") return st === "expired";
       if (filterInsurance === "expiring") return st === "expiring";
       if (filterInsurance === "none") return st === "none";
@@ -125,13 +187,56 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
     });
   }
 
+  const matchesView = (s: (typeof students)[number], v: ViewId) => {
+    const planId = (s as { planId?: string | null }).planId;
+    switch (v) {
+      case "ativos":
+        return s.status === "ATIVO";
+      case "atraso":
+        return (tuitionLateBy.get(s.id) ?? 0) > 0;
+      case "taxas":
+        return (feesLateBy.get(s.id) ?? 0) > 0;
+      case "sem-treino": {
+        if (s.status !== "ATIVO") return false;
+        const d = daysSinceTraining(s.id);
+        return d == null || d >= RISK_DAYS;
+      }
+      case "sem-plano":
+        return !planId && s.status !== "INATIVO";
+      default:
+        return true;
+    }
+  };
+  const viewCounts = Object.fromEntries(VIEWS.map((v) => [v.id, filtered.filter((s) => matchesView(s, v.id)).length])) as Record<ViewId, number>;
+  filtered = filtered.filter((s) => matchesView(s, view));
+
   filtered = [...filtered].sort((a, b) => {
     const nameA = userById.get(a.userId)?.name ?? "";
     const nameB = userById.get(b.userId)?.name ?? "";
     return nameA.localeCompare(nameB, "pt", { sensitivity: "base" });
   });
 
-  const baseFilters = { status: filterStatus, modality: filterModality, school: filterSchool, plan: filterPlan, q: params.q ?? "" };
+  const baseFilters = {
+    status: filterStatus,
+    modality: filterModality,
+    school: filterSchool,
+    plan: filterPlan,
+    q: params.q ?? "",
+    insurance: filterInsurance,
+    vista: view,
+  };
+  const hrefWith = (overrides: Partial<typeof baseFilters>) => {
+    const f = { ...baseFilters, ...overrides };
+    const q = new URLSearchParams();
+    if (f.status !== "all") q.set("status", f.status);
+    if (f.modality !== "all") q.set("modality", f.modality);
+    if (f.school !== "all") q.set("school", f.school);
+    if (f.plan !== "all") q.set("plan", f.plan);
+    if (f.q) q.set("q", f.q);
+    if (f.insurance !== "all") q.set("insurance", f.insurance);
+    if (f.vista !== "all") q.set("vista", f.vista);
+    return `/admin/alunos${q.toString() ? `?${q}` : ""}`;
+  };
 
   const schoolById = new Map((schools ?? []).map((s) => [s.id, s.name]));
   const planById = new Map((plansData ?? []).map((p) => [p.id, p.name]));
@@ -146,47 +251,36 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
       escola: schoolById.get(s.schoolId) ?? "",
       plano: planId ? (planById.get(planId) ?? planId) : "",
       status: STATUS_LABEL[s.status] ?? s.status,
-      seguro: INSURANCE_STATUS_LABEL[
-        computeInsuranceStatus(
-          insuranceByStudentId.get(s.id)
-            ? {
-                covered: Boolean(insuranceByStudentId.get(s.id)!.covered),
-                coverageStartDate: (insuranceByStudentId.get(s.id)!.coverageStartDate as string | null) ?? null,
-                coverageEndDate: (insuranceByStudentId.get(s.id)!.coverageEndDate as string | null) ?? null,
-                policyReference: null,
-                notes: null,
-              }
-            : null,
-          todayYmd
-        )
-      ],
+      seguro: INSURANCE_STATUS_LABEL[insuranceStatusOf(s.id)],
+      mensalidadeEmAtraso: tuitionLateBy.get(s.id) ?? 0,
+      ultimoTreino: lastTrainingBy.get(s.id) ?? "",
       criadoEm: String((s as { createdAt?: string }).createdAt ?? "").slice(0, 10),
     };
   });
 
+  const pill = (bg: string, color: string): CSSProperties => ({
+    fontSize: 12,
+    padding: "2px 8px",
+    borderRadius: 999,
+    backgroundColor: bg,
+    color,
+    fontWeight: 600,
+    whiteSpace: "nowrap",
+  });
+  const tint = (c: string) => `color-mix(in srgb, ${c} 14%, transparent)`;
+
   return (
-    <div style={{ maxWidth: "min(700px, 100%)", paddingTop: 8 }}>
+    <div style={{ maxWidth: "min(760px, 100%)", paddingTop: 8 }}>
       <div
         style={{
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
-          gap: "clamp(12px, 3vw, 16px)",
-          marginBottom: "clamp(20px, 5vw, 24px)",
+          gap: "clamp(10px, 3vw, 14px)",
+          marginBottom: 16,
         }}
       >
-        <Link
-          href="/admin"
-          className="btn btn-secondary"
-          style={{
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            textDecoration: "none",
-            padding: "8px 12px",
-          }}
-        >
-          ← Voltar
-        </Link>
-        <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
+        <h1 style={{ margin: 0, fontSize: "clamp(22px, 5.5vw, 28px)", fontWeight: 800, color: "var(--text-primary)" }}>
           Alunos
         </h1>
         <Link
@@ -200,9 +294,68 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
           Aula avulsa
         </Link>
       </div>
-      <p style={{ margin: "0 0 clamp(16px, 4vw, 20px) 0", fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-        Convite por email ou cadastro presencial (secretaria). Depois atribui plano e regista pagamentos no financeiro.
-      </p>
+
+      {/* Pesquisa sempre visível */}
+      <form method="get" action="/admin/alunos" role="search" style={{ position: "relative", marginBottom: 12 }}>
+        {Object.entries(baseFilters)
+          .filter(([k, v]) => k !== "q" && v && v !== "all")
+          .map(([k, v]) => (
+            <input key={k} type="hidden" name={k} value={v} />
+          ))}
+        <Search size={18} aria-hidden style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)" }} />
+        <input
+          type="search"
+          name="q"
+          defaultValue={params.q ?? ""}
+          placeholder="Procurar por nome, email ou telefone"
+          aria-label="Procurar aluno por nome, email ou telefone"
+          className="input"
+          style={{ width: "100%", paddingLeft: 40, minHeight: 46, fontSize: 16 }}
+        />
+      </form>
+
+      {/* Filtros rápidos */}
+      <nav aria-label="Filtros rápidos" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+        {VIEWS.map((v) => {
+          const active = view === v.id;
+          const n = viewCounts[v.id];
+          const alert = (v.id === "atraso" || v.id === "taxas" || v.id === "sem-treino") && n > 0;
+          return (
+            <Link
+              key={v.id}
+              href={hrefWith({ vista: v.id })}
+              aria-current={active ? "true" : undefined}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 600,
+                padding: "7px 12px",
+                borderRadius: 999,
+                textDecoration: "none",
+                border: `1px solid ${active ? "var(--primary)" : "var(--border)"}`,
+                backgroundColor: active ? "var(--primary)" : "var(--bg-secondary)",
+                color: active ? "#fff" : "var(--text-primary)",
+              }}
+            >
+              {v.label}
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  padding: "0 6px",
+                  borderRadius: 999,
+                  backgroundColor: active ? "rgba(255,255,255,0.25)" : alert ? tint("var(--danger)") : "var(--bg)",
+                  color: active ? "#fff" : alert ? "var(--danger)" : "var(--text-secondary)",
+                }}
+              >
+                {n}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
 
       <AlunosFiltersPanel
         basePath="/admin/alunos"
@@ -220,42 +373,39 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
         modalities={modalitiesForFilter}
         schools={schools ?? []}
         plans={plansData ?? []}
-      />
+        showSearch={false}
+        title="Mais filtros"
+      >
+        <div>
+          <p style={{ margin: "0 0 8px 0", fontSize: "clamp(13px, 3.2vw, 15px)", fontWeight: 600, color: "var(--text-primary)" }}>
+            Cobertura do seguro
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {(["all", "expired", "expiring", "none"] as const).map((key) => {
+              const active = filterInsurance === key;
+              return (
+                <Link
+                  key={key}
+                  href={hrefWith({ insurance: key })}
+                  className="btn"
+                  style={{
+                    textDecoration: "none",
+                    backgroundColor: active ? "var(--primary)" : "var(--bg-secondary)",
+                    color: active ? "#fff" : "var(--text-primary)",
+                  }}
+                >
+                  {key === "all" ? "Todos" : INSURANCE_FILTER_LABEL[key] ?? key}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </AlunosFiltersPanel>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-        <span style={{ fontSize: 13, color: "var(--text-secondary)", alignSelf: "center" }}>Seguro:</span>
-        {(["all", "expired", "expiring", "none"] as const).map((key) => {
-          const active = filterInsurance === key;
-          const q = new URLSearchParams();
-          if (filterStatus !== "all") q.set("status", filterStatus);
-          if (filterModality !== "all") q.set("modality", filterModality);
-          if (filterSchool !== "all") q.set("school", filterSchool);
-          if (filterPlan !== "all") q.set("plan", filterPlan);
-          if (params.q) q.set("q", params.q);
-          if (key !== "all") q.set("insurance", key);
-          const href = `/admin/alunos${q.toString() ? `?${q}` : ""}`;
-          const label = key === "all" ? "Todos" : INSURANCE_FILTER_LABEL[key] ?? key;
-          return (
-            <Link
-              key={key}
-              href={href}
-              style={{
-                fontSize: 13,
-                padding: "4px 10px",
-                borderRadius: "var(--radius-md)",
-                textDecoration: "none",
-                border: "1px solid var(--border)",
-                backgroundColor: active ? "var(--primary)" : "var(--bg-secondary)",
-                color: active ? "#fff" : "var(--text-primary)",
-              }}
-            >
-              {label}
-            </Link>
-          );
-        })}
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
+        <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+          {filtered.length} {filtered.length === 1 ? "aluno" : "alunos"}
+        </span>
         <ExportCsvButton rows={csvRows} filename="alunos-kfs.csv" />
       </div>
 
@@ -266,23 +416,13 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
             : "Nenhum aluno com este filtro."}
         </p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
           {filtered.map((s) => {
             const u = userById.get(s.userId);
             const primMod = (s as { primaryModality?: string | null }).primaryModality;
-            const insRow = insuranceByStudentId.get(s.id);
-            const insStatus = computeInsuranceStatus(
-              insRow
-                ? {
-                    covered: Boolean(insRow.covered),
-                    coverageStartDate: (insRow.coverageStartDate as string | null) ?? null,
-                    coverageEndDate: (insRow.coverageEndDate as string | null) ?? null,
-                    policyReference: null,
-                    notes: null,
-                  }
-                : null,
-              todayYmd
-            );
+            const planId = (s as { planId?: string | null }).planId;
+            const planName = planId ? (planById.get(planId) ?? "Plano") : null;
+            const insStatus = insuranceStatusOf(s.id);
             const insColor =
               insStatus === "covered"
                 ? "#16a34a"
@@ -293,6 +433,29 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
                     : "var(--text-secondary)";
             const registrationMode = (s as { registrationMode?: string }).registrationMode;
             const syntheticLoginEmail = (s as { syntheticLoginEmail?: boolean }).syntheticLoginEmail === true;
+
+            const tuitionLate = tuitionLateBy.get(s.id) ?? 0;
+            const feesLate = feesLateBy.get(s.id) ?? 0;
+            const payment =
+              tuitionLate > 0
+                ? { text: `${eur(tuitionLate)} em atraso`, color: "var(--danger)" }
+                : feesLate > 0
+                  ? { text: `Seguro/matrícula por pagar · ${eur(feesLate)}`, color: "#ca8a04" }
+                  : planId
+                    ? { text: "Pagamentos em dia", color: "#16a34a" }
+                    : null;
+
+            const days = daysSinceTraining(s.id);
+            const trainingAtRisk = s.status === "ATIVO" && (days == null || days >= RISK_DAYS);
+            const training =
+              days == null
+                ? "Sem treinos há mais de 4 meses"
+                : days === 0
+                  ? "Treinou hoje"
+                  : days === 1
+                    ? "Treinou ontem"
+                    : `Último treino há ${days} dias`;
+
             return (
               <li key={s.id}>
                 <AlunoProfileLink
@@ -300,81 +463,46 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
                   className="card"
                   style={{
                     display: "block",
-                    padding: "clamp(14px, 3.5vw, 18px)",
+                    padding: "clamp(12px, 3.2vw, 16px)",
                     textDecoration: "none",
                     color: "inherit",
                   }}
                 >
-                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 700, color: "var(--text-primary)", marginRight: 2 }}>
                       {u?.name || "—"}
                     </span>
-                    <span
-                      style={{
-                        fontSize: "clamp(12px, 3vw, 14px)",
-                        padding: "2px 8px",
-                        borderRadius: "var(--radius-md)",
-                        backgroundColor: "var(--bg)",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      {STATUS_LABEL[s.status] ?? s.status}
-                    </span>
+                    <span style={pill("var(--bg)", "var(--text-secondary)")}>{STATUS_LABEL[s.status] ?? s.status}</span>
                     {primMod && (
-                      <span
-                        style={{
-                          fontSize: "clamp(12px, 3vw, 14px)",
-                          padding: "2px 8px",
-                          borderRadius: "var(--radius-md)",
-                          backgroundColor: "var(--surface)",
-                          color: "var(--text-primary)",
-                        }}
-                      >
+                      <span style={pill("var(--surface)", "var(--text-primary)")}>
                         {modalitiesForFilter.find((x) => x.code === primMod)?.name ?? primMod}
                       </span>
                     )}
-                    <span
-                      style={{
-                        fontSize: "clamp(12px, 3vw, 14px)",
-                        padding: "2px 8px",
-                        borderRadius: "var(--radius-md)",
-                        backgroundColor: "var(--bg)",
-                        color: insColor,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {INSURANCE_STATUS_LABEL[insStatus]}
-                    </span>
+                    <span style={pill("var(--bg)", insColor)}>{INSURANCE_STATUS_LABEL[insStatus]}</span>
                     {registrationMode === "PRESENTIAL" && (
-                      <span
-                        title="Conta criada pela secretaria com senha inicial"
-                        style={{
-                          fontSize: "clamp(12px, 3vw, 14px)",
-                          padding: "2px 8px",
-                          borderRadius: "var(--radius-md)",
-                          backgroundColor: "var(--surface)",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
+                      <span title="Conta criada pela secretaria com senha inicial" style={pill("var(--surface)", "var(--text-secondary)")}>
                         Presencial
                       </span>
                     )}
                     {syntheticLoginEmail && (
-                      <span
-                        title="Login com email gerado pela secretaria; contacto do responsável no perfil"
-                        style={{
-                          fontSize: "clamp(12px, 3vw, 14px)",
-                          padding: "2px 8px",
-                          borderRadius: "var(--radius-md)",
-                          backgroundColor: "var(--surface)",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
+                      <span title="Login com email gerado pela secretaria; contacto do responsável no perfil" style={pill("var(--surface)", "var(--text-secondary)")}>
                         Email interno
                       </span>
                     )}
                   </div>
-                  <p style={{ margin: "4px 0 0 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 14px", marginTop: 8, fontSize: 13 }}>
+                    <span style={{ color: planName ? "var(--text-primary)" : "var(--text-secondary)", fontWeight: 600 }}>{planName ?? "Sem plano"}</span>
+                    {payment ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: payment.color, fontWeight: 600 }}>
+                        <span aria-hidden style={{ width: 7, height: 7, borderRadius: 999, backgroundColor: payment.color }} />
+                        {payment.text}
+                      </span>
+                    ) : null}
+                    {s.status !== "INATIVO" ? (
+                      <span style={{ color: trainingAtRisk ? "var(--danger)" : "var(--text-secondary)", fontWeight: trainingAtRisk ? 600 : 400 }}>{training}</span>
+                    ) : null}
+                  </div>
+                  <p style={{ margin: "4px 0 0 0", fontSize: 13, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {u?.email ?? "—"}
                   </p>
                 </AlunoProfileLink>

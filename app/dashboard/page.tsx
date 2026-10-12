@@ -173,11 +173,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     hasPlan: effectiveHasPlan,
     allowedModalities: effectiveAllowedModalities,
     studentPrimaryModality,
+    extraModalities: planFilterInput.extraModalities,
   });
   const extendedLessons = filterDashboardLessonsByPlanModality(lessonsRawExpandedAll, {
     hasPlan: effectiveHasPlan,
     allowedModalities: effectiveAllowedModalities,
     studentPrimaryModality,
+    extraModalities: planFilterInput.extraModalities,
   });
   /**
    * Foto da Tribo de fundo em cada aula: baralhadas por semana e distribuídas aula a aula.
@@ -197,7 +199,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       modality: L.modality ?? "",
       schoolName: L.schoolId ? schoolNameById.get(L.schoolId) ?? null : null,
     })),
-    { hasPlan: effectiveHasPlan, allowedModalities: effectiveAllowedModalities, studentPrimaryModality }
+    { hasPlan: effectiveHasPlan, allowedModalities: effectiveAllowedModalities, studentPrimaryModality, extraModalities: planFilterInput.extraModalities }
   );
   const lessonPhotoByKey = assignWeeklyTribePhotos(
     photoWeekLessons.map((l) => ({ key: `${l.id}_${l.date}`, date: l.date, startTime: l.startTime })),

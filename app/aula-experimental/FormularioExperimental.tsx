@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useActionState } from "react";
+import { useState, useMemo, useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import { ArrowLeft, Baby, CheckCircle2, Dumbbell, MapPin, MessageCircle, Swords } from "lucide-react";
 import { getTranslations } from "@/lib/i18n";
@@ -116,6 +116,12 @@ export function FormularioExperimental({
   const [modality, setModality] = useState("");
   const [day, setDay] = useState("");
   const [slotKey, setSlotKey] = useState("");
+  // Anti-spam: tempo desde que o formulário abriu (preenchido no envio).
+  const openedAt = useRef(0);
+  const elapsedRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    openedAt.current = Date.now();
+  }, []);
 
   const modalitiesForSchool = useMemo(() => {
     const byMod = lessonsBySchoolId[schoolId] ?? {};
@@ -183,7 +189,21 @@ export function FormularioExperimental({
   );
 
   return (
-    <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+    <form
+      action={formAction}
+      onSubmit={() => {
+        if (elapsedRef.current) elapsedRef.current.value = String(openedAt.current ? Date.now() - openedAt.current : 0);
+      }}
+      style={{ display: "flex", flexDirection: "column", gap: 18 }}
+    >
+      <input ref={elapsedRef} type="hidden" name="elapsedMs" defaultValue="0" />
+      {/* Armadilha para robôs: invisível para pessoas, os robôs preenchem tudo. */}
+      <div aria-hidden style={{ position: "absolute", left: -10000, top: "auto", width: 1, height: 1, overflow: "hidden" }}>
+        <label>
+          Website
+          <input type="text" name="website" tabIndex={-1} autoComplete="off" defaultValue="" />
+        </label>
+      </div>
       {referrerStudentId && <input type="hidden" name="referrerStudentId" value={referrerStudentId} />}
       {interestedPlanName && <input type="hidden" name="interestedPlanName" value={interestedPlanName} />}
       <input type="hidden" name="schoolId" value={schoolId} />

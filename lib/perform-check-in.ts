@@ -142,7 +142,8 @@ export async function performCheckIn(
     !isOpenClass &&
     isSingleModalityPlan &&
     studentPrimaryModality &&
-    lessonData.modality !== studentPrimaryModality
+    lessonData.modality !== studentPrimaryModality &&
+    !planAccess.extraModalities.includes(lessonData.modality)
   ) {
     const modLabel = MODALITY_LABELS[studentPrimaryModality] ?? studentPrimaryModality;
     return { error: "Só podes fazer check-in na tua modalidade (" + modLabel + ") ou em aulas livres." };

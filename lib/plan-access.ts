@@ -23,6 +23,8 @@ export type PlanAccess = {
   hasExclusiveBenefits: boolean;
   allowedModalities: string[];
   primaryModality: string | null;
+  /** `Student.extraModalities`: modalidades extra marcadas pela secretaria (somam-se ao plano). */
+  extraModalities: string[];
   /** `Student.planId` (plano de subscrição/base). */
   currentPlanId: string | null;
   /** Só com Kingdom Presencial I, sem o add-on da biblioteca ainda ativo. */
@@ -46,6 +48,7 @@ export async function getPlanAccess(
     hasExclusiveBenefits: false,
     allowedModalities: [],
     primaryModality: null,
+    extraModalities: [],
     currentPlanId: null,
     canSubscribeDigitalLibraryAddon: false,
   };
@@ -54,7 +57,7 @@ export async function getPlanAccess(
 
   const { data: student } = await supabase
     .from("Student")
-    .select("planId, primaryModality, digitalLibraryAddon")
+    .select("planId, primaryModality, digitalLibraryAddon, extraModalities")
     .eq("id", studentId)
     .single();
 
@@ -129,6 +132,7 @@ export async function getPlanAccess(
     hasExclusiveBenefits: plan.includes_exclusive_benefits === true,
     allowedModalities,
     primaryModality,
+    extraModalities: ((student as { extraModalities?: string[] | null }).extraModalities ?? []).filter((m) => m && m !== primaryModality),
     currentPlanId: student.planId,
     canSubscribeDigitalLibraryAddon,
   };
