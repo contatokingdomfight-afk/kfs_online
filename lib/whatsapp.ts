@@ -18,6 +18,12 @@ export function buildWhatsAppUrl(phone: string, message: string): string | null 
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 
+/** Recibo simples depois de registar um pagamento na secretaria. */
+export function buildPaymentReceiptMessage(studentFirstName: string, whatLabel: string, amountLabel: string, methodLabel: string): string {
+  const name = studentFirstName.trim() || "tudo bem";
+  return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Confirmamos a receção do teu pagamento: ${whatLabel} — ${amountLabel} (${methodLabel}). Obrigado! 🥋`;
+}
+
 /** Mensagem padrão de lembrete de mensalidade em atraso. */
 export function buildPaymentOverdueMessage(studentFirstName: string): string {
   const name = studentFirstName.trim() || "tudo bem";

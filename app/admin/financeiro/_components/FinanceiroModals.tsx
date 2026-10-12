@@ -36,7 +36,44 @@ const overlayStyle: React.CSSProperties = {
 
 export type { PaymentListRow } from "@/lib/admin-payment-list-grouping";
 
-type ModalId = "renewals" | "payments" | "expenses" | "revenue" | "cashDeposit";
+export type ModalId = "renewals" | "payments" | "expenses" | "revenue" | "cashDeposit";
+
+/** Janela (overlay) ou secção na própria página, com o mesmo conteúdo. */
+function SectionFrame({
+  inline,
+  labelledBy,
+  maxWidth,
+  onClose,
+  children,
+}: {
+  inline: boolean;
+  labelledBy: string;
+  maxWidth: number;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  if (inline) {
+    return (
+      <section className="card" aria-labelledby={labelledBy} style={{ padding: "clamp(16px, 4vw, 22px)", marginBottom: 16, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        {children}
+      </section>
+    );
+  }
+  return (
+    <div style={overlayStyle} role="presentation" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div
+        className="card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={labelledBy}
+        onClick={(e) => e.stopPropagation()}
+        style={modalCardStyle(maxWidth)}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export type RevenueModalRow = RevenueBreakdownListRow;
 
@@ -167,6 +204,12 @@ type Props = {
   recentCashDeposits: CashDepositRow[];
   depositErrorFromUrl: string | null;
   defaultCashDepositDate: string;
+  /** Secções mostradas diretamente na página (sem janela). */
+  inlineSections?: ModalId[];
+  /** Botões que abrem janelas (por omissão, todas as secções que não estão na página). */
+  buttons?: ModalId[];
+  /** Esconde o formulário completo de despesa (a página tem o registo rápido). */
+  hideAddExpense?: boolean;
 };
 
 function modalCardStyle(maxWidth: number): React.CSSProperties {
@@ -214,6 +257,7 @@ function ModalHeader({
   closeLabel,
   tip,
   marginBottom = 12,
+  hideClose = false,
 }: {
   titleId: string;
   title: string;
@@ -221,6 +265,7 @@ function ModalHeader({
   closeLabel: string;
   tip?: { detail: string; ariaLabel: string };
   marginBottom?: number;
+  hideClose?: boolean;
 }) {
   return (
     <div
@@ -246,7 +291,7 @@ function ModalHeader({
         {title}
       </h2>
       {tip ? <InlineInfoTip detail={tip.detail} ariaLabel={tip.ariaLabel} className="mt-0.5" /> : null}
-      <ModalCloseButton onClick={onClose} ariaLabel={closeLabel} />
+      {hideClose ? null : <ModalCloseButton onClick={onClose} ariaLabel={closeLabel} />}
     </div>
   );
 }
@@ -269,8 +314,13 @@ export function FinanceiroModals({
   defaultCashDepositDate,
   labels,
   locale,
+  inlineSections = [],
+  buttons,
+  hideAddExpense = false,
 }: Props) {
   const [open, setOpen] = useState<ModalId | null>(null);
+  const inlineSet = new Set(inlineSections);
+  const buttonSet = new Set<ModalId>(buttons ?? (["renewals", "payments", "expenses", "revenue", "cashDeposit"] as ModalId[]).filter((id) => !inlineSet.has(id)));
   const [mounted, setMounted] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"all" | "PAID" | "LATE">("all");
   const [filterPaymentType, setFilterPaymentType] = useState<"all" | "TUITION" | "INSURANCE" | "ENROLLMENT">("all");
@@ -345,47 +395,34 @@ export function FinanceiroModals({
     return map;
   }, [allPaymentRows]);
 
-  const modals = (
+  const renderSections = (inlineMode: boolean) => {
+  const show = (id: ModalId) => (inlineMode ? inlineSet.has(id) : open === id && !inlineSet.has(id));
+  return (
     <>
-      {open === "renewals" && (
-        <div style={overlayStyle} role="presentation" onClick={(e) => e.target === e.currentTarget && closeModal()}>
-          <div
-            className="card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId + "-r"}
-            onClick={(e) => e.stopPropagation()}
-            style={modalCardStyle(560)}
-          >
+      {show("renewals") && (
+        <SectionFrame inline={inlineMode} labelledBy={titleId + "-r"} maxWidth={560} onClose={closeModal}>
             <ModalHeader
               titleId={titleId + "-r"}
               title={`${labels.openRenewals} (${monthLabelShort})`}
               onClose={closeModal}
               closeLabel={labels.close}
+              hideClose={inlineMode}
               marginBottom={8}
             />
             <div style={{ overflow: "auto", minHeight: 0 }}>
               <RenewalsSection referenceMonth={referenceMonth} pending={renewalsPending} noOuterCard suppressTitle />
             </div>
-          </div>
-        </div>
+        </SectionFrame>
       )}
 
-      {open === "payments" && (
-        <div style={overlayStyle} role="presentation" onClick={(e) => e.target === e.currentTarget && closeModal()}>
-          <div
-            className="card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId + "-p"}
-            onClick={(e) => e.stopPropagation()}
-            style={modalCardStyle(640)}
-          >
+      {show("payments") && (
+        <SectionFrame inline={inlineMode} labelledBy={titleId + "-p"} maxWidth={640} onClose={closeModal}>
             <ModalHeader
               titleId={titleId + "-p"}
               title={labels.paymentsModalTitle}
               onClose={closeModal}
               closeLabel={labels.close}
+              hideClose={inlineMode}
             />
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
               <button
@@ -596,25 +633,17 @@ export function FinanceiroModals({
                 </ul>
               )}
             </div>
-          </div>
-        </div>
+        </SectionFrame>
       )}
 
-      {open === "expenses" && (
-        <div style={overlayStyle} role="presentation" onClick={(e) => e.target === e.currentTarget && closeModal()}>
-          <div
-            className="card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId + "-e"}
-            onClick={(e) => e.stopPropagation()}
-            style={modalCardStyle(700)}
-          >
+      {show("expenses") && (
+        <SectionFrame inline={inlineMode} labelledBy={titleId + "-e"} maxWidth={700} onClose={closeModal}>
             <ModalHeader
               titleId={titleId + "-e"}
               title={labels.expensesTitle}
               onClose={closeModal}
               closeLabel={labels.close}
+              hideClose={inlineMode}
             />
             {expenseErrorFromUrl && (
               <p role="alert" className="card" style={{ padding: 10, color: "var(--error)", marginBottom: 10, fontSize: 13 }}>
@@ -629,7 +658,7 @@ export function FinanceiroModals({
             )}
 
             <div style={{ overflow: "auto", minHeight: 0, flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
-              <AddExpenseForm
+              {hideAddExpense ? null : <AddExpenseForm
                 defaultDate={defaultExpenseDate}
                 labels={{
                   kindField: labels.formKindField,
@@ -643,7 +672,7 @@ export function FinanceiroModals({
                   submit: labels.formSubmit,
                   success: labels.expenseSaved,
                 }}
-              />
+              />}
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{labels.expensesTableTitle}</h3>
               {expenses.length === 0 && !expensesError ? (
                 <p style={{ color: "var(--text-secondary)", fontSize: 15 }}>{labels.noExpenses}</p>
@@ -669,11 +698,10 @@ export function FinanceiroModals({
                 />
               )}
             </div>
-          </div>
-        </div>
+        </SectionFrame>
       )}
 
-      {editingPayment && (
+      {!inlineMode && editingPayment && (
         <div
           style={{ ...overlayStyle, zIndex: 10001 }}
           role="presentation"
@@ -713,7 +741,7 @@ export function FinanceiroModals({
         </div>
       )}
 
-      {editingExpense && (
+      {!inlineMode && editingExpense && (
         <div
           style={{ ...overlayStyle, zIndex: 10001 }}
           role="presentation"
@@ -756,21 +784,14 @@ export function FinanceiroModals({
         </div>
       )}
 
-      {open === "cashDeposit" && (
-        <div style={overlayStyle} role="presentation" onClick={(e) => e.target === e.currentTarget && closeModal()}>
-          <div
-            className="card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId + "-cd"}
-            onClick={(e) => e.stopPropagation()}
-            style={modalCardStyle(560)}
-          >
+      {show("cashDeposit") && (
+        <SectionFrame inline={inlineMode} labelledBy={titleId + "-cd"} maxWidth={560} onClose={closeModal}>
             <ModalHeader
               titleId={titleId + "-cd"}
               title={labels.cashDepositTitle}
               onClose={closeModal}
               closeLabel={labels.close}
+              hideClose={inlineMode}
             />
             {depositErrorFromUrl && (
               <p role="alert" className="card" style={{ padding: 10, color: "var(--error)", marginBottom: 10, fontSize: 13 }}>
@@ -809,25 +830,17 @@ export function FinanceiroModals({
                 </div>
               ) : null}
             </div>
-          </div>
-        </div>
+        </SectionFrame>
       )}
 
-      {open === "revenue" && (
-        <div style={overlayStyle} role="presentation" onClick={(e) => e.target === e.currentTarget && closeModal()}>
-          <div
-            className="card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId + "-v"}
-            onClick={(e) => e.stopPropagation()}
-            style={modalCardStyle(900)}
-          >
+      {show("revenue") && (
+        <SectionFrame inline={inlineMode} labelledBy={titleId + "-v"} maxWidth={900} onClose={closeModal}>
             <ModalHeader
               titleId={titleId + "-v"}
               title={revenue.modalTitle}
               onClose={closeModal}
               closeLabel={labels.close}
+              hideClose={inlineMode}
               tip={{ detail: revenue.sectionHint, ariaLabel: revenue.sectionHintAria }}
             />
             {revenueErrorFromUrl && (
@@ -880,11 +893,11 @@ export function FinanceiroModals({
                 />
               </div>
             </div>
-          </div>
-        </div>
+        </SectionFrame>
       )}
     </>
   );
+  };
 
   return (
     <>
@@ -893,6 +906,9 @@ export function FinanceiroModals({
           {treasuryError}
         </p>
       ) : null}
+      {renderSections(true)}
+      {buttonSet.size > 0 ? (
+      <>
       <p
         style={{
           margin: "0 0 14px 0",
@@ -913,6 +929,7 @@ export function FinanceiroModals({
           marginBottom: "clamp(20px, 4vw, 28px)",
         }}
       >
+        {buttonSet.has("renewals") ? (
         <button
           type="button"
           className="btn btn-secondary"
@@ -921,6 +938,8 @@ export function FinanceiroModals({
         >
           {labels.openRenewals} ({renewalsPending.length})
         </button>
+        ) : null}
+        {buttonSet.has("payments") ? (
         <button
           type="button"
           className="btn btn-secondary"
@@ -929,6 +948,8 @@ export function FinanceiroModals({
         >
           {labels.openPayments} ({displayPaymentRows.length})
         </button>
+        ) : null}
+        {buttonSet.has("expenses") ? (
         <button
           type="button"
           className="btn btn-secondary"
@@ -937,6 +958,8 @@ export function FinanceiroModals({
         >
           {labels.openExpenses} ({expenses.length})
         </button>
+        ) : null}
+        {buttonSet.has("revenue") ? (
         <button
           type="button"
           className="btn btn-secondary"
@@ -945,6 +968,8 @@ export function FinanceiroModals({
         >
           {labels.openRevenue} ({revenue.rows.length})
         </button>
+        ) : null}
+        {buttonSet.has("cashDeposit") ? (
         <button
           type="button"
           className="btn btn-secondary"
@@ -953,8 +978,11 @@ export function FinanceiroModals({
         >
           {labels.openCashDeposits} ({recentCashDeposits.length})
         </button>
+        ) : null}
       </div>
-      {mounted && createPortal(modals, document.body)}
+      </>
+      ) : null}
+      {mounted && createPortal(renderSections(false), document.body)}
     </>
   );
 }

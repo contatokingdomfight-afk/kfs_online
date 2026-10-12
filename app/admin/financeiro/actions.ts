@@ -92,7 +92,36 @@ export async function createPayment(
   }
 
   const supabase = createAdminClient();
+  const core = await registerTuitionPaymentCore(supabase, {
+    studentId,
+    amount,
+    referenceMonth,
+    status: status as "PAID" | "LATE",
+    tuitionMonths,
+    paymentMethod,
+  });
+  if (core.error) return { error: core.error };
 
+  revalidatePath("/admin/financeiro", "layout");
+  revalidatePath("/admin/financeiro/novo");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/financeiro");
+  redirect("/admin/financeiro");
+}
+
+/** Regista mensalidade(s) de um aluno (titular ou individual) e atualiza carência/estado. */
+async function registerTuitionPaymentCore(
+  supabase: ReturnType<typeof createAdminClient>,
+  input: {
+    studentId: string;
+    amount: number;
+    referenceMonth: string;
+    status: "PAID" | "LATE";
+    tuitionMonths: number;
+    paymentMethod: import("@/lib/finance-payment-method").FinancePaymentMethod | null;
+  }
+): Promise<{ error?: string }> {
+  const { studentId, amount, referenceMonth, status, tuitionMonths, paymentMethod } = input;
   const familyCtx = await getFamilyContext(supabase, studentId);
   if (familyCtx && !familyCtx.isTitular) {
     return { error: "Aluno é membro de um grupo familiar; regista o pagamento no perfil do titular." };
@@ -139,12 +168,63 @@ export async function createPayment(
   }
 
   await syncStudentPaymentStatus(supabase, studentId);
+  return {};
+}
 
-  revalidatePath("/admin/financeiro");
-  revalidatePath("/admin/financeiro/novo");
+export type QuickReceiveResult = { error?: string; success?: boolean };
+
+/**
+ * «Recebido» da lista «Por receber»: marca como pago um registo em atraso (`paymentId`)
+ * ou regista a mensalidade do mês de quem ainda não tem registo (`studentId` + mês).
+ */
+export async function quickReceivePayment(input: {
+  paymentId?: string | null;
+  studentId?: string | null;
+  referenceMonth?: string | null;
+  amount: number;
+  paymentMethod: string;
+}): Promise<QuickReceiveResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
+
+  const amount = Number(input.amount);
+  if (!Number.isFinite(amount) || amount < 0) return { error: "Valor inválido." };
+  const parsedMethod = parseFinancePaymentMethodRequired(input.paymentMethod);
+  if ("error" in parsedMethod) return { error: parsedMethod.error };
+
+  if (input.paymentId) {
+    const fd = new FormData();
+    fd.set("paymentId", input.paymentId);
+    fd.set("amount", amount.toFixed(2));
+    fd.set("paymentMethod", parsedMethod.method);
+    return markPendingPaymentPaid(null, fd);
+  }
+
+  const studentId = input.studentId?.trim();
+  const referenceMonth = input.referenceMonth?.trim() ?? "";
+  if (!studentId) return { error: "Aluno é obrigatório." };
+  if (!/^\d{4}-\d{2}$/.test(referenceMonth)) return { error: "Mês de referência inválido." };
+
+  const supabase = createAdminClient();
+  const core = await registerTuitionPaymentCore(supabase, {
+    studentId,
+    amount,
+    referenceMonth,
+    status: "PAID",
+    tuitionMonths: 1,
+    paymentMethod: parsedMethod.method,
+  });
+  if (core.error) return { error: core.error };
+  await grantReferralRewardIfEligible(supabase, studentId);
+
+  revalidatePath("/admin/financeiro", "layout");
+  revalidatePath("/admin");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/financeiro");
-  redirect("/admin/financeiro");
+  revalidatePath(`/admin/alunos/${studentId}`);
+  return { success: true };
 }
 
 /** Remove mensalidade TUITION em atraso (ex.: bolsista, cobrança indevida). */
@@ -190,7 +270,7 @@ export async function voidLateTuition(
   // titular de família, restaura os membros em cascata (mesmo caminho do pagamento real).
   await clearGraceOnPaidPayment(supabase, studentId);
 
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   revalidatePath("/admin/financeiro/novo");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/financeiro");
@@ -219,7 +299,7 @@ export async function generateMonthlyPaymentsAction(
   if (permErr) return { created: 0, skipped: 0, error: permErr };
   const supabase = createAdminClient();
   const result = await generateMonthlyPayments(supabase, referenceMonth, { force: true });
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   return result;
 }
 
@@ -297,7 +377,7 @@ export async function dedupeDuplicatePaymentsAction(): Promise<void> {
     }
   }
 
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   redirect(`/admin/financeiro?deduped=${removed}`);
 }
 
@@ -368,7 +448,7 @@ export async function deleteAdminPayment(formData: FormData) {
     await syncStudentPaymentStatus(supabase, studentId);
   }
 
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/financeiro");
 }
@@ -433,7 +513,7 @@ export async function markPendingPaymentPaid(
     if (renew.error) return { error: renew.error };
   }
 
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   revalidatePath("/admin");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/financeiro");
@@ -507,7 +587,7 @@ export async function registerFamilyMemberTuition(
     }
   }
 
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   revalidatePath("/admin");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/financeiro");
@@ -582,7 +662,7 @@ export async function updateAdminPayment(
 
   await syncStudentPaymentStatus(supabase, studentId);
 
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/financeiro");
   return { success: true };
@@ -631,7 +711,56 @@ export async function createFinancialExpense(
     paymentMethod: parsedMethod.method,
   });
   if (error) return { error: error.message };
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
+  return { success: true };
+}
+
+export type ExpenseBatchItem = {
+  description: string;
+  amount: number;
+  category: string;
+  kind: string;
+  paymentMethod: string;
+};
+
+/** Lança várias despesas de uma vez (ex.: «Repetir despesas fixas do mês passado»). */
+export async function createFinancialExpensesBatch(
+  items: ExpenseBatchItem[],
+  occurredOnRaw: string
+): Promise<ExpenseActionResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:financeiro:write");
+  if (permErr) return { error: permErr };
+
+  const occurredOn = parseDateOnly(occurredOnRaw ?? "");
+  if (!occurredOn) return { error: "Data inválida (AAAA-MM-DD)." };
+  if (!Array.isArray(items) || items.length === 0) return { error: "Escolhe pelo menos uma despesa." };
+  if (items.length > 50) return { error: "Demasiadas despesas de uma vez." };
+
+  const rows = [];
+  for (const it of items) {
+    const description = String(it.description ?? "").trim();
+    const amount = Number(it.amount);
+    if (!description) return { error: "Há uma despesa sem descrição." };
+    if (!Number.isFinite(amount) || amount <= 0) return { error: `Valor inválido em «${description}».` };
+    const parsedMethod = parseFinancePaymentMethodRequired(it.paymentMethod);
+    if ("error" in parsedMethod) return { error: `${parsedMethod.error} («${description}»)` };
+    rows.push({
+      id: crypto.randomUUID(),
+      amount: amount.toFixed(2),
+      description,
+      occurredOn,
+      kind: it.kind === "FIXED" ? "FIXED" : "VARIABLE",
+      category: EXPENSE_CATEGORIES.includes(it.category as ExpenseCategory) ? it.category : "OTHER",
+      paymentMethod: parsedMethod.method,
+    });
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("FinancialExpense").insert(rows);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/financeiro", "layout");
   return { success: true };
 }
 
@@ -675,7 +804,7 @@ export async function updateFinancialExpense(
     })
     .eq("id", id);
   if (error) return { error: error.message };
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   revalidatePath("/admin/financeiro/relatorio");
   return { success: true };
 }
@@ -692,7 +821,7 @@ export async function deleteFinancialExpense(formData: FormData) {
   if (error) {
     redirect(`/admin/financeiro?expenseError=${encodeURIComponent(error.message)}`);
   }
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
 }
 
 export type ManualRevenueActionResult = { error?: string; success?: boolean };
@@ -726,7 +855,7 @@ export async function createManualRevenue(
     paymentMethod: parsedMethod.method,
   });
   if (error) return { error: error.message };
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   return { success: true };
 }
 
@@ -742,7 +871,7 @@ export async function deleteManualRevenue(formData: FormData) {
   if (error) {
     redirect(`/admin/financeiro?revenueError=${encodeURIComponent(error.message)}`);
   }
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
 }
 
 export type AdvanceTuitionPaymentsResult = { error?: string; success?: boolean; monthsPaid?: number };
@@ -790,7 +919,7 @@ export async function createAdvanceTuitionPayments(
   await clearGraceOnPaidPayment(supabase, studentId);
   await syncStudentPaymentStatus(supabase, studentId);
 
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   revalidatePath("/admin/financeiro/antecipado");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/financeiro");
@@ -844,7 +973,7 @@ export async function createFirstPayment(
   await clearGraceOnPaidPayment(supabase, studentId);
   await syncStudentPaymentStatus(supabase, studentId);
 
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   revalidatePath("/admin/financeiro/primeiro-pagamento");
   revalidatePath("/admin/financeiro/novo");
   revalidatePath(`/admin/alunos/${studentId}`);
@@ -889,7 +1018,7 @@ export async function createCashDeposit(
     return { error: error.message };
   }
 
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
   return { success: true };
 }
 
@@ -905,5 +1034,5 @@ export async function deleteCashDeposit(formData: FormData) {
   if (error) {
     redirect(`/admin/financeiro?depositError=${encodeURIComponent(error.message)}`);
   }
-  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro", "layout");
 }

@@ -134,7 +134,9 @@ export function getAdminNavAreas(t: (key: MessageKey) => string): AdminNavArea[]
       icon: <Wallet size={I} aria-hidden />,
       mobileIcon: "credit",
       items: [
-        { label: t("navFinance"), href: "/admin/financeiro", icon: <CreditCard size={I} aria-hidden />, hint: "Pagamentos e mensalidades", keywords: "pagamento mensalidade cobrar financeiro" },
+        { label: t("navFinance"), href: "/admin/financeiro", icon: <CreditCard size={I} aria-hidden />, hint: "Receber mensalidades, seguros e matrículas", keywords: "pagamento mensalidade cobrar financeiro receber recebido" },
+        { label: "Despesas", href: "/admin/financeiro/despesas", icon: <Receipt size={I} aria-hidden />, hint: "Lançar despesas e repetir as fixas", keywords: "despesa renda luz custo gasto" },
+        { label: "Movimentos", href: "/admin/financeiro/movimentos", icon: <Wallet size={I} aria-hidden />, hint: "Pagamentos, receitas, caixa e depósitos", keywords: "movimentos caixa especie deposito receita pagamentos" },
         { label: "Relatório financeiro", href: "/admin/financeiro/relatorio", icon: <TrendingUp size={I} aria-hidden />, keywords: "relatorio receita despesas" },
         { label: t("navPlans"), href: "/admin/planos", icon: <Tag size={I} aria-hidden />, hint: "Planos e preços", keywords: "preco plano" },
         { label: t("navLoja"), href: "/admin/loja", icon: <ShoppingBag size={I} aria-hidden />, hint: "Vendas, produtos e stock", keywords: "loja venda pos produtos stock" },

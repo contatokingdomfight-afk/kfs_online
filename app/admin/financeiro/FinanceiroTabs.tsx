@@ -4,21 +4,29 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./FinanceiroTabs.module.css";
 
-const TABS = [
-  { href: "/admin/financeiro", label: "Visão geral", exact: true },
-  { href: "/admin/financeiro/novo", label: "Registar pagamento" },
-  { href: "/admin/financeiro/compras", label: "Compras e inscrições" },
-  { href: "/admin/financeiro/coaches", label: "Pagamentos a coaches" },
-  { href: "/admin/financeiro/antecipado", label: "Pagamento antecipado" },
-  { href: "/admin/financeiro/primeiro-pagamento", label: "Primeiro pagamento" },
-  { href: "/admin/financeiro/relatorio", label: "Relatório consolidado" },
-] as const;
+const MAIS_PATHS = [
+  "/admin/financeiro/mais",
+  "/admin/financeiro/novo",
+  "/admin/financeiro/compras",
+  "/admin/financeiro/coaches",
+  "/admin/financeiro/antecipado",
+  "/admin/financeiro/primeiro-pagamento",
+];
 
-function isTabActive(pathname: string, href: string, exact?: boolean) {
-  if (exact) return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+const TABS: { href: string; label: string; exact?: boolean; paths?: string[] }[] = [
+  { href: "/admin/financeiro", label: "Receber", exact: true },
+  { href: "/admin/financeiro/despesas", label: "Despesas" },
+  { href: "/admin/financeiro/movimentos", label: "Movimentos" },
+  { href: "/admin/financeiro/relatorio", label: "Relatórios" },
+  { href: "/admin/financeiro/mais", label: "Mais", paths: MAIS_PATHS },
+];
+
+function isTabActive(pathname: string, tab: (typeof TABS)[number]) {
+  if (tab.exact) return pathname === tab.href;
+  return (tab.paths ?? [tab.href]).some((h) => pathname === h || pathname.startsWith(`${h}/`));
 }
 
+/** Separadores do financeiro: Receber · Despesas · Movimentos · Relatórios · Mais. */
 export function FinanceiroTabs() {
   const pathname = usePathname();
 
@@ -26,7 +34,7 @@ export function FinanceiroTabs() {
     <div className={styles.wrapper}>
       <nav className={styles.tabBar} aria-label="Secções do financeiro">
         {TABS.map((tab) => {
-          const active = isTabActive(pathname, tab.href, "exact" in tab ? tab.exact : false);
+          const active = isTabActive(pathname, tab);
           return (
             <Link
               key={tab.href}
@@ -39,9 +47,6 @@ export function FinanceiroTabs() {
           );
         })}
       </nav>
-      <Link href="/admin/loja" className={styles.lojaLink}>
-        Loja presencial →
-      </Link>
     </div>
   );
 }
