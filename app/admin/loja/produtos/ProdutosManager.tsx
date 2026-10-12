@@ -16,6 +16,7 @@ import {
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
 import type { ProductRow, ProductSupplierRow, ProductVariantRow } from "@/lib/retail/types";
+import { ProductImagesEditor } from "./ProductImagesEditor";
 import { variantLabel } from "@/lib/retail/catalog";
 import styles from "./ProdutosTabs.module.css";
 
@@ -277,6 +278,15 @@ function ProductFields({
           </select>
         </label>
       </div>
+      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+        <input type="checkbox" name="allowPreorder" value="true" defaultChecked={product?.allowPreorder ?? false} style={{ width: 18, height: 18, marginTop: 2 }} />
+        <span>
+          <span style={{ display: "block", fontSize: 14, fontWeight: 600 }}>Pré-encomenda</span>
+          <span style={{ display: "block", fontSize: 12, color: "var(--text-secondary)" }}>
+            Os alunos podem encomendar na Loja da app, mesmo sem stock (ex.: camisetas). As encomendas aparecem em Loja → Encomendas.
+          </span>
+        </span>
+      </label>
     </>
   );
 }
@@ -482,6 +492,11 @@ function CatalogSection({
                 <RemoveProductButton product={p} />
               </div>
             </div>
+            <ProductImagesEditor
+              productId={p.id}
+              initial={p.images}
+              colors={[...new Set((variantsByProduct[p.id] ?? []).filter((v) => v.isActive && v.color).map((v) => v.color as string))]}
+            />
             <VariantList productId={p.id} variants={variantsByProduct[p.id] ?? []} />
           </li>
         )

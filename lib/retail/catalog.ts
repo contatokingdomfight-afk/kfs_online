@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ProductCategory } from "@/lib/retail/constants";
+import { parseProductImages } from "@/lib/retail/product-images";
 import type { ProductRow, ProductSupplierRow, ProductVariantRow, VariantWithProduct } from "@/lib/retail/types";
 
 function effectivePrice(variant: ProductVariantRow, product: ProductRow): number {
@@ -30,7 +31,7 @@ export async function listProducts(
 ): Promise<ProductRow[]> {
   let q = supabase
     .from("Product")
-    .select("id, name, sku, category, salePrice, supplierId, schoolId, isActive, description")
+    .select("id, name, sku, category, salePrice, supplierId, schoolId, isActive, description, allowPreorder, images")
     .order("name", { ascending: true });
   if (options?.activeOnly) q = q.eq("isActive", true);
   const { data } = await q;
@@ -44,6 +45,8 @@ export async function listProducts(
     schoolId: (r as { schoolId?: string | null }).schoolId ?? null,
     isActive: Boolean((r as { isActive: boolean }).isActive),
     description: (r as { description?: string | null }).description ?? null,
+    allowPreorder: Boolean((r as { allowPreorder?: boolean }).allowPreorder),
+    images: parseProductImages((r as { images?: unknown }).images),
   }));
 }
 
@@ -53,7 +56,7 @@ export async function getProductWithVariants(
 ): Promise<{ product: ProductRow | null; variants: ProductVariantRow[] }> {
   const { data: product } = await supabase
     .from("Product")
-    .select("id, name, sku, category, salePrice, supplierId, schoolId, isActive, description")
+    .select("id, name, sku, category, salePrice, supplierId, schoolId, isActive, description, allowPreorder, images")
     .eq("id", productId)
     .maybeSingle();
   if (!product) return { product: null, variants: [] };
@@ -74,6 +77,8 @@ export async function getProductWithVariants(
     schoolId?: string | null;
     isActive: boolean;
     description?: string | null;
+    allowPreorder?: boolean;
+    images?: unknown;
   };
 
   return {
@@ -87,6 +92,8 @@ export async function getProductWithVariants(
       schoolId: p.schoolId ?? null,
       isActive: p.isActive,
       description: p.description ?? null,
+      allowPreorder: Boolean(p.allowPreorder),
+      images: parseProductImages(p.images),
     },
     variants: (variants ?? []).map((v) => ({
       id: (v as { id: string }).id,
@@ -144,6 +151,8 @@ export async function searchVariantsForSale(
       schoolId: null,
       isActive: true,
       description: null,
+      allowPreorder: false,
+      images: [],
     };
     const label = `${product.name} ${variantLabel(variant)} ${variant.sku}`.toLowerCase();
     if (q && !label.includes(q) && !product.name.toLowerCase().includes(q) && !variant.sku.toLowerCase().includes(q)) {

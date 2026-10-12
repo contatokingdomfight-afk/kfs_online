@@ -23,10 +23,12 @@ export default async function AdminLojaPage() {
   const supabase = result.client;
 
   const month = currentReferenceMonthLisbon(new Date());
-  const [lowStock, sales] = await Promise.all([
+  const [lowStock, sales, { count: pendingOrderCount }] = await Promise.all([
     listLowStock(supabase),
     listRetailSales(supabase, { month, limit: 10 }),
+    supabase.from("RetailOrder").select("id", { count: "exact", head: true }).eq("status", "PENDING_PAYMENT"),
   ]);
+  const pendingOrders = pendingOrderCount ?? 0;
 
   const salesTotal = sales.reduce((s, r) => s + r.totalAmount, 0);
 
@@ -59,7 +61,10 @@ export default async function AdminLojaPage() {
         <Link href="/admin/loja/stock" className="btn btn-secondary" style={{ textDecoration: "none", textAlign: "center" }}>
           Stock
         </Link>
-        <Link href="/admin/loja/vendas" className="btn btn-secondary" style={{ textDecoration: "none", textAlign: "center", gridColumn: "1 / -1" }}>
+        <Link href="/admin/loja/encomendas" className="btn btn-secondary" style={{ textDecoration: "none", textAlign: "center" }}>
+          Encomendas{pendingOrders > 0 ? ` · ${pendingOrders} por pagar` : ""}
+        </Link>
+        <Link href="/admin/loja/vendas" className="btn btn-secondary" style={{ textDecoration: "none", textAlign: "center" }}>
           Histórico de vendas
         </Link>
       </nav>

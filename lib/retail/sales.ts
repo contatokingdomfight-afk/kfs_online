@@ -17,6 +17,8 @@ export type CreateRetailSaleInput = {
   studentId?: string | null;
   registeredByUserId: string;
   notes?: string | null;
+  /** Pré-encomendas: as peças vêm direto do fornecedor para o cliente, não passam pelo stock. */
+  skipStock?: boolean;
 };
 
 export async function createRetailSale(
@@ -69,7 +71,7 @@ export async function createRetailSale(
     return { error: linesErr.message };
   }
 
-  for (const line of lineRows) {
+  for (const line of input.skipStock ? [] : lineRows) {
     const stockResult = await recordStockMovement(supabase, {
       variantId: line.variantId,
       schoolId: input.schoolId,

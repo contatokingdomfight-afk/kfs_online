@@ -63,6 +63,21 @@ export function buildFeesOverdueMessage(studentFirstName: string, whatLabel: str
   return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Reparámos que ${whatLabel} ainda está por pagar. O seguro é obrigatório para treinar — podes regularizar na secretaria. Se já pagaste, ignora esta mensagem. Obrigado! 🥋`;
 }
 
+/** Encomenda da loja por pagar: dados para transferência e referência. */
+export function buildOrderPaymentMessage(
+  name: string,
+  p: { reference: string; total: string; items: string; iban: string; recipient: string; revolut: string }
+): string {
+  const first = name.trim().split(" ")[0] || "tudo bem";
+  return `Olá ${first}! 👋 Aqui é da Kingdom Fight School. Recebemos a tua encomenda ${p.reference} (${p.items}) — total ${p.total}. Para confirmar, podes pagar por transferência: IBAN ${p.iban} (${p.recipient}) ou Revolut ${p.revolut}, com a referência ${p.reference} no descritivo. Também podes pagar na secretaria. Obrigado! 🥋`;
+}
+
+/** Encomenda pronta a levantar. */
+export function buildOrderReadyMessage(name: string, reference: string): string {
+  const first = name.trim().split(" ")[0] || "tudo bem";
+  return `Olá ${first}! 👋 A tua encomenda ${reference} já chegou e está pronta a levantar na secretaria da Kingdom Fight School. Até já! 🥋`;
+}
+
 /** Lembrete simpático antes do prazo da mensalidade (dia 8). */
 export function buildDueSoonMessage(studentFirstName: string, dueLabel: string): string {
   const name = studentFirstName.trim() || "tudo bem";

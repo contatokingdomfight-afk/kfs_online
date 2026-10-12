@@ -10,6 +10,7 @@ import { PRODUCT_CATEGORIES, type ProductCategory, PAYMENT_METHODS, type RetailP
 import { recordStockMovement } from "@/lib/retail/inventory";
 import { createRetailSale } from "@/lib/retail/sales";
 import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
+import { isOwnProductImageUrl, parseProductImages, productImagePath, type ProductImage } from "@/lib/retail/product-images";
 
 export type ActionResult = { error?: string; success?: boolean; id?: string };
 
@@ -53,6 +54,7 @@ export async function createProduct(_prev: ActionResult | null, formData: FormDa
   const supplierId = (formData.get("supplierId") as string)?.trim() || null;
   const schoolId = (formData.get("schoolId") as string)?.trim() || null;
   const description = (formData.get("description") as string)?.trim() || null;
+  const allowPreorder = formData.get("allowPreorder") === "true";
   const variantSku = (formData.get("variantSku") as string)?.trim() || sku;
   const size = (formData.get("size") as string)?.trim() || null;
   const color = (formData.get("color") as string)?.trim() || null;
@@ -73,6 +75,7 @@ export async function createProduct(_prev: ActionResult | null, formData: FormDa
     supplierId,
     schoolId,
     description,
+    allowPreorder,
     isActive: true,
   });
   if (pErr) return { error: pErr.message };
@@ -129,6 +132,27 @@ export async function addProductVariant(_prev: ActionResult | null, formData: Fo
   return { success: true, id };
 }
 
+/** Guarda a lista de fotos do produto (ordem = principal primeiro) e apaga do bucket as que saíram. */
+export async function saveProductImages(productId: string, images: ProductImage[]): Promise<ActionResult> {
+  const dbUser = await requireAdmin("admin:financeiro:write");
+  if (!dbUser) return { error: "Não autorizado." };
+  const clean = parseProductImages(images).filter((i) => isOwnProductImageUrl(i.url));
+  const supabase = createAdminClient();
+  const { data: before } = await supabase.from("Product").select("images").eq("id", productId).maybeSingle();
+  if (!before) return { error: "Produto não encontrado." };
+  const { error } = await supabase.from("Product").update({ images: clean, updatedAt: new Date().toISOString() }).eq("id", productId);
+  if (error) return { error: error.message };
+  const kept = new Set(clean.map((i) => i.url));
+  const removed = parseProductImages((before as { images?: unknown }).images)
+    .filter((i) => !kept.has(i.url))
+    .map((i) => productImagePath(i.url))
+    .filter((p): p is string => Boolean(p));
+  if (removed.length) await supabase.storage.from("product-images").remove(removed);
+  revalidatePath("/admin/loja/produtos");
+  revalidatePath("/dashboard/loja");
+  return { success: true };
+}
+
 export async function toggleProductActive(formData: FormData) {
   const dbUser = await requireAdmin("admin:financeiro:write");
   if (!dbUser) redirect("/dashboard");
@@ -152,6 +176,7 @@ export async function updateProduct(_prev: ActionResult | null, formData: FormDa
   const supplierId = (formData.get("supplierId") as string)?.trim() || null;
   const schoolId = (formData.get("schoolId") as string)?.trim() || null;
   const description = (formData.get("description") as string)?.trim() || null;
+  const allowPreorder = formData.get("allowPreorder") === "true";
 
   if (!id || !name || !sku) return { error: "Nome e SKU são obrigatórios." };
   if (!PRODUCT_CATEGORIES.includes(category)) return { error: "Categoria inválida." };
@@ -169,6 +194,7 @@ export async function updateProduct(_prev: ActionResult | null, formData: FormDa
       supplierId,
       schoolId,
       description,
+      allowPreorder,
       updatedAt: new Date().toISOString(),
     })
     .eq("id", id);

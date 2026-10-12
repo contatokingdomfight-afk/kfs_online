@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Dumbbell, Package, Shirt, ShoppingBag, Store, Tag } from "lucide-react";
+import { ChevronRight, Dumbbell, Package, Shirt, ShoppingBag, Store, Tag } from "lucide-react";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { requirePlan } from "@/lib/require-plan";
@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS_PT, type ProductCategory } from "@/lib/retail/constants";
+import { parseProductImages } from "@/lib/retail/product-images";
+import { loadOrders, orderReference, ORDER_STATUS_LABEL_EN, ORDER_STATUS_LABEL_PT, type RetailOrder } from "@/lib/retail/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +46,9 @@ type ShopProduct = {
   maxPrice: number;
   options: string[];
   inStock: boolean;
+  /** Pré-encomenda: mostra «Encomendar» em vez do estado do stock. */
+  preorder: boolean;
+  imageUrl: string | null;
 };
 
 type Props = { searchParams: Promise<{ cat?: string }> };
@@ -67,17 +72,19 @@ export default async function LojaPage({ searchParams }: Props) {
    * tamanhos/cores e se há stock na escola do aluno (sem quantidades).
    */
   let products: ShopProduct[] = [];
+  let myOrders: RetailOrder[] = [];
   const admin = getAdminClientOrNull().client;
   if (admin) {
+    if (studentId) myOrders = (await loadOrders(admin, { studentId, limit: 20 })).filter((o) => o.status !== "CANCELLED");
     const { data: rows } = await admin
       .from("Product")
-      .select("id, name, description, category, salePrice, schoolId")
+      .select("id, name, description, category, salePrice, schoolId, allowPreorder, images")
       .eq("isActive", true)
       .order("name", { ascending: true });
     const visible = (rows ?? []).filter((r) => {
       const ps = (r as { schoolId?: string | null }).schoolId ?? null;
       return ps == null || ps === schoolId;
-    }) as Array<{ id: string; name: string; description: string | null; category: ProductCategory; salePrice: number }>;
+    }) as Array<{ id: string; name: string; description: string | null; category: ProductCategory; salePrice: number; allowPreorder?: boolean; images?: unknown }>;
     const ids = visible.map((p) => p.id);
     const { data: variants } = ids.length
       ? await admin.from("ProductVariant").select("id, productId, size, color, priceOverride").in("productId", ids).eq("isActive", true)
@@ -102,6 +109,8 @@ export default async function LojaPage({ searchParams }: Props) {
         maxPrice: Math.max(...prices),
         options,
         inStock: vs.some((v) => (qtyByVariant.get(v.id as string) ?? 0) > 0),
+        preorder: Boolean(p.allowPreorder) && vs.length > 0,
+        imageUrl: parseProductImages(p.images)[0]?.url ?? null,
       };
     });
   }
@@ -117,6 +126,32 @@ export default async function LojaPage({ searchParams }: Props) {
         <h1 style={{ margin: 0, fontSize: "clamp(22px, 5vw, 28px)", fontWeight: 800, color: "var(--text-primary)" }}>{pt ? "Loja" : "Store"}</h1>
         <p style={{ margin: "4px 0 0", fontSize: 14, color: "var(--text-secondary)" }}>{t("storeDescription")}</p>
       </header>
+
+      {myOrders.length > 0 && (
+        <section aria-labelledby="my-orders-title" className="card" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+          <h2 id="my-orders-title" style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{pt ? "As minhas encomendas" : "My orders"}</h2>
+          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+            {myOrders.slice(0, 5).map((o) => {
+              const pieces = o.lines.reduce((a, l) => a + l.quantity, 0);
+              const tone = o.status === "PENDING_PAYMENT" ? "var(--danger)" : o.status === "READY" ? "var(--success)" : "var(--text-secondary)";
+              return (
+                <li key={o.id}>
+                  <Link href={`/dashboard/loja/encomendas/${o.id}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--bg)", textDecoration: "none", color: "var(--text-primary)" }}>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: "block", fontSize: 14, fontWeight: 700 }}>
+                        {orderReference(o.number)} · {pieces} {pt ? (pieces === 1 ? "peça" : "peças") : pieces === 1 ? "item" : "items"}
+                      </span>
+                      <span style={{ display: "block", fontSize: 12, color: "var(--text-secondary)" }}>{euro(o.totalAmount)}</span>
+                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: tone, whiteSpace: "nowrap" }}>{(pt ? ORDER_STATUS_LABEL_PT : ORDER_STATUS_LABEL_EN)[o.status]}</span>
+                    <ChevronRight size={16} aria-hidden style={{ color: "var(--text-secondary)" }} />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {/* Como comprar */}
       <div className="card" style={{ padding: 14, display: "flex", alignItems: "center", gap: 12 }}>
@@ -192,8 +227,13 @@ export default async function LojaPage({ searchParams }: Props) {
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 220px), 1fr))", gap: 14 }}>
             {shown.map((p) => (
               <li key={p.id} className="card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                <div style={{ position: "relative", height: 130, background: CATEGORY_STYLE[p.category].bg, color: CATEGORY_STYLE[p.category].fg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <CategoryIcon category={p.category} size={46} />
+                <div style={{ position: "relative", height: p.imageUrl ? 200 : 130, background: p.imageUrl ? "#fff" : CATEGORY_STYLE[p.category].bg, color: CATEGORY_STYLE[p.category].fg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {p.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- foto do bucket público, já reduzida no envio
+                    <img src={p.imageUrl} alt={p.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  ) : (
+                    <CategoryIcon category={p.category} size={46} />
+                  )}
                   <span
                     style={{
                       position: "absolute",
@@ -232,10 +272,20 @@ export default async function LojaPage({ searchParams }: Props) {
                       {p.options.length > 6 ? <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>+{p.options.length - 6}</span> : null}
                     </div>
                   )}
-                  <span style={{ marginTop: "auto", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: p.inStock ? "var(--success)" : "var(--text-secondary)" }}>
-                    <span style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: p.inStock ? "var(--success)" : "var(--border)" }} />
-                    {p.inStock ? (pt ? "Disponível na secretaria" : "Available at the front desk") : pt ? "Esgotado de momento" : "Out of stock"}
-                  </span>
+                  {p.preorder ? (
+                    <Link
+                      href={`/dashboard/loja/encomendar/${p.id}`}
+                      className="btn btn-primary"
+                      style={{ marginTop: "auto", minHeight: 42, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, textDecoration: "none" }}
+                    >
+                      {pt ? "Encomendar" : "Order"}
+                    </Link>
+                  ) : (
+                    <span style={{ marginTop: "auto", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: p.inStock ? "var(--success)" : "var(--text-secondary)" }}>
+                      <span style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: p.inStock ? "var(--success)" : "var(--border)" }} />
+                      {p.inStock ? (pt ? "Disponível na secretaria" : "Available at the front desk") : pt ? "Esgotado de momento" : "Out of stock"}
+                    </span>
+                  )}
                 </div>
               </li>
             ))}

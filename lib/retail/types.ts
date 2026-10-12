@@ -1,4 +1,5 @@
 import type { ProductCategory } from "@/lib/retail/constants";
+import type { ProductImage } from "@/lib/retail/product-images";
 
 export type ProductSupplierRow = {
   id: string;
@@ -17,6 +18,10 @@ export type ProductRow = {
   schoolId: string | null;
   isActive: boolean;
   description: string | null;
+  /** Aparece «Encomendar» na loja do aluno (pré-encomenda). */
+  allowPreorder: boolean;
+  /** Fotos (a primeira é a principal). */
+  images: ProductImage[];
 };
 
 export type ProductVariantRow = {
