@@ -40,7 +40,7 @@ function addDaysYmd(ymd: string, days: number): string {
 }
 
 /** Slot com ocorrência concreta (recorrentes incluídos). */
-export type LessonSlot = { id: string; occurrenceDate: string; label: string };
+export type LessonSlot = { id: string; occurrenceDate: string; label: string; startTime: string; endTime: string };
 
 export default async function AulaExperimentalPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -61,6 +61,8 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
     referrerStudentId = referrer?.id ?? null;
   }
   const today = calendarDateLisbon(new Date());
+  /** Hora actual em Lisboa (HH:MM) — esconde as aulas de hoje que já começaram. */
+  const nowHm = new Date().toLocaleTimeString("en-GB", { timeZone: "Europe/Lisbon", hour: "2-digit", minute: "2-digit", hour12: false });
   const rangeEnd = addDaysYmd(today, 56);
 
   const [modalities, schoolsRes, lessonsRes, publicPlans] = await Promise.all([
@@ -111,12 +113,15 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
     );
     const expanded = expandLessonsForDateRange(defs, cancellations, today, rangeEnd);
     for (const occ of expanded) {
+      if (occ.occurrenceDate === today && occ.startTime <= nowHm) continue;
       const mod = occ.modality ?? "OTHER";
       if (!lessonsBySchoolId[school.id][mod]) lessonsBySchoolId[school.id][mod] = [];
       lessonsBySchoolId[school.id][mod].push({
         id: occ.id,
         occurrenceDate: occ.occurrenceDate,
         label: `${formatLessonDate(occ.occurrenceDate)} · ${occ.startTime}–${occ.endTime}`,
+        startTime: occ.startTime,
+        endTime: occ.endTime,
       });
     }
   }

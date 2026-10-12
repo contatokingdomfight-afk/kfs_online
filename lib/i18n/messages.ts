@@ -1354,7 +1354,7 @@ export const messages = {
 
     // Aula experimental (formulário público)
     trialPageTitle: "Aula experimental",
-    trialPageIntro: "Escolhe o local, depois a modalidade e a data. Entraremos em contacto para confirmar a tua vaga.",
+    trialPageIntro: "Marca a tua primeira aula em 3 passos: modalidade, dia e hora, e os teus dados.",
     trialPageBack: "← Voltar",
     trialFormSchool: "Local / escola",
     trialFormSchoolChoose: "— Escolhe um local —",
@@ -2707,7 +2707,7 @@ export const messages = {
 
     // Trial class (public form)
     trialPageTitle: "Trial class",
-    trialPageIntro: "Choose the location, then the modality and date. We'll get in touch to confirm your spot.",
+    trialPageIntro: "Book your first class in 3 steps: modality, day and time, and your details.",
     trialPageBack: "← Back",
     trialFormSchool: "Location / school",
     trialFormSchoolChoose: "— Choose a location —",
