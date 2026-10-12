@@ -317,12 +317,25 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    /** `Student` embutido na mesma query poupa uma ida-e-volta ao Supabase por navegação. */
-    const { data: dbUser } = await supabase
+    /**
+     * `Student` embutido na mesma query poupa uma ida-e-volta ao Supabase por navegação.
+     * O nome da FK é obrigatório: Student tem duas FKs para User (userId e
+     * physicalDocumentsFiledByUserId) e, sem ele, o PostgREST recusa o embed — dbUser vinha
+     * null e o gate inteiro (onboarding/adesão/pagamento) ficava desligado sem aviso.
+     */
+    const { data: dbUser, error: dbUserError } = await supabase
       .from("User")
-      .select("id, role, Student(id, planId, adminGrantedFullAccess)")
+      .select("id, role, Student!Student_userId_fkey(id, planId, adminGrantedFullAccess)")
       .eq("authUserId", user.id)
       .maybeSingle();
+
+    if (dbUserError) {
+      Sentry.captureMessage("middleware: falha a ler User/Student (gate do aluno ignorado)", {
+        level: "error",
+        tags: { pathname },
+        extra: { message: dbUserError.message, code: dbUserError.code ?? null },
+      });
+    }
 
     if (!dbUser) {
       return response;
