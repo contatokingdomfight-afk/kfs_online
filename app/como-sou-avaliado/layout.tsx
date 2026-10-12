@@ -10,18 +10,12 @@ import type { SidebarLink } from "@/components/Sidebar";
 import { getAdminShellNav } from "@/lib/admin-nav-areas";
 import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
 import { canAccessAdminPathname } from "@/lib/permissions/paths";
-import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
 import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
-import { getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
+import { getCoachMobileBottomNav, getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
 import { EvaluationDocsTabs } from "@/components/evaluation-docs/EvaluationDocsTabs";
 import { NotificationBell } from "@/components/NotificationBell";
 import { buildStudentMobileBottomNav, getStudentNavAreasForCurrentUser } from "@/lib/dashboard-student-mobile-nav";
 import { buildStudentSidebarLinks } from "@/lib/dashboard-student-sidebar-links";
-import {
-  buildShellMobileBottomNav,
-  dedupeSidebarFlatLinks,
-  flattenSidebarLinks,
-} from "@/lib/shell-mobile-bottom-nav";
 import { CoachNotificationBell } from "@/components/CoachNotificationBell";
 import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 
@@ -84,13 +78,9 @@ export default async function ComoSouAvaliadoLayout({
       redirect("/coach");
     }
     sidebarTitle = t("coachTitle");
-    const full = getCoachShellSidebarLinks(t, {
-      showAdminEntry: dbUser.role === "ADMIN",
-      coachStudentId: coachStudentId || null,
-    });
-    sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
-    const flatCh = dedupeSidebarFlatLinks(flattenSidebarLinks(sidebarLinks));
-    mobileBottomNav = buildShellMobileBottomNav("coach", flatCh, locale === "pt" ? "Mais" : "More");
+    const navOptions = { showAdminEntry: dbUser.role === "ADMIN", coachStudentId: coachStudentId || null };
+    sidebarLinks = getCoachShellSidebarLinks(t, navOptions, access);
+    mobileBottomNav = getCoachMobileBottomNav(t, navOptions, access);
     mainShellClass = "coach-main";
     headerAvatar = {
       href: "/coach/configuracoes",

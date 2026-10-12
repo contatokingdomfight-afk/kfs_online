@@ -99,7 +99,7 @@ export function canAccessAdminPathname(
     return access.codes.size > 0;
   }
   /* Páginas das áreas do menu (/admin/area/…): só listam atalhos já filtrados por permissão. */
-  if (p.startsWith("/admin/area/")) {
+  if (p.startsWith("/admin/area/") || p.startsWith("/coach/area/")) {
     return access.codes.size > 0;
   }
   if (p === "/coach" || p === "/coach/") {

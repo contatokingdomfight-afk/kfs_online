@@ -30,6 +30,7 @@ export function isSchoolAssistantCoachPathAllowed(pathname: string): boolean {
   const path = (pathname.split("?")[0] ?? "").replace(/\/$/, "") || "/";
   if (path === "/coach") return true;
   if (path.startsWith("/coach/aula")) return true;
+  if (path === "/coach/area/aulas" || path === "/coach/area/conta") return true;
   if (path.startsWith("/coach/agenda")) return true;
   if (path.startsWith("/coach/eventos")) return true;
   if (path.startsWith("/coach/arbitragem")) return true;

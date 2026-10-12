@@ -11,15 +11,9 @@ import { CoachNotificationBell } from "@/components/CoachNotificationBell";
 import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
 import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
 import { canAccessAdminPathname } from "@/lib/permissions/paths";
-import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
-import { getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
+import { getCoachMobileBottomNav, getCoachShellSidebarLinks } from "@/lib/coach-sidebar-links";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveSchoolAssistantForUserId, isSchoolAssistantCoachPathAllowed } from "@/lib/school-assistant-coach";
-import {
-  buildShellMobileBottomNav,
-  dedupeSidebarFlatLinks,
-  flattenSidebarLinks,
-} from "@/lib/shell-mobile-bottom-nav";
 
 export default async function CoachLayout({
   children,
@@ -59,15 +53,9 @@ export default async function CoachLayout({
   }
 
   const t = getTranslations(locale as "pt" | "en");
-  const fullCoachNav = getCoachShellSidebarLinks(t, {
-    showAdminEntry: dbUser.role === "ADMIN",
-    coachStudentId: coachStudentId || null,
-    isSchoolAssistant,
-  });
-  const coachLinks =
-    access.kind === "granted" ? filterAdminLinksForAccess(fullCoachNav, access) : fullCoachNav;
-  const flatCoach = dedupeSidebarFlatLinks(flattenSidebarLinks(coachLinks));
-  const mobileBottomNav = buildShellMobileBottomNav("coach", flatCoach, locale === "pt" ? "Mais" : "More");
+  const navOptions = { showAdminEntry: dbUser.role === "ADMIN", coachStudentId: coachStudentId || null, isSchoolAssistant };
+  const coachLinks = getCoachShellSidebarLinks(t, navOptions, access);
+  const mobileBottomNav = getCoachMobileBottomNav(t, navOptions, access);
   const showViewAsBanner = dbUser.role === "ADMIN";
 
   return (
