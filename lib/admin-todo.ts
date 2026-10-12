@@ -11,6 +11,7 @@ import {
   buildChoosePlanMessage,
   buildDocumentsPendingMessage,
   buildDueSoonMessage,
+  buildFeesOverdueMessage,
   buildMissYouMessage,
   buildPaymentOverdueMessage,
   buildTrialFollowUpMessage,
@@ -93,7 +94,7 @@ export async function loadDoneKeys(supabase: SupabaseClient): Promise<Set<string
   return new Set(((data ?? []) as { kind: string; doneKey: string }[]).map((r) => `${r.kind}|${r.doneKey}`));
 }
 
-/** Os 6 alertas do «A tratar hoje», já sem os itens marcados como «Feito». */
+/** Os alertas do «A tratar hoje», já sem os itens marcados como «Feito». */
 export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string | null): Promise<AdminTodoGroup[]> {
   const today = calendarDateLisbon(new Date());
   const origin = getPublicOrigin();
@@ -184,6 +185,72 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
   const lateTotal = pagamentos.reduce((acc, it) => acc + (late.get(it.studentId!)?.total ?? 0), 0);
+
+  // --- Seguros e matrículas em atraso (alunos não inativos; quem está a treinar primeiro) ---
+  const feeStudents = students.filter((s) => s.status === "ATIVO" || s.status === "INADIMPLENTE");
+  const fees = new Map<string, { total: number; insuranceYears: string[]; enrollment: boolean }>();
+  for (const part of chunks(feeStudents.map((s) => s.id), 200)) {
+    const { data } = await supabase
+      .from("Payment")
+      .select("studentId, amount, paymentType, referenceYear")
+      .eq("status", "LATE")
+      .in("paymentType", ["INSURANCE", "ENROLLMENT"])
+      .in("studentId", part);
+    for (const p of (data ?? []) as { studentId: string; amount: number | string; paymentType: string; referenceYear: string | number | null }[]) {
+      const cur = fees.get(p.studentId) ?? { total: 0, insuranceYears: [], enrollment: false };
+      cur.total += Number(p.amount) || 0;
+      if (p.paymentType === "INSURANCE") cur.insuranceYears.push(p.referenceYear != null ? String(p.referenceYear) : "");
+      else cur.enrollment = true;
+      fees.set(p.studentId, cur);
+    }
+  }
+  const feeTrainedRecently = new Set<string>();
+  for (const part of chunks([...fees.keys()], 200)) {
+    const { data } = await supabase
+      .from("Attendance")
+      .select("studentId")
+      .in("studentId", part)
+      .eq("status", "CONFIRMED")
+      .gte("occurrenceDate", addDaysYmd(today, -30))
+      .lte("occurrenceDate", today);
+    for (const a of (data ?? []) as { studentId: string }[]) feeTrainedRecently.add(a.studentId);
+  }
+  const seguros: AdminTodoItem[] = feeStudents
+    .filter((s) => fees.has(s.id))
+    .map((s) => {
+      const f = fees.get(s.id)!;
+      const years = [...new Set(f.insuranceYears.filter(Boolean))].sort();
+      const parts = [
+        f.insuranceYears.length ? (years.length ? `Seguro ${years.join(", ")}` : "Seguro") : null,
+        f.enrollment ? "Matrícula" : null,
+      ].filter(Boolean) as string[];
+      const trained = feeTrainedRecently.has(s.id);
+      const what =
+        f.insuranceYears.length && f.enrollment
+          ? `o seguro desportivo e a matrícula (${f.total.toFixed(0)} €)`
+          : f.insuranceYears.length
+            ? `o seguro desportivo${years.length ? ` de ${years.join(" e ")}` : ""} (${f.total.toFixed(0)} €)`
+            : `a matrícula (${f.total.toFixed(0)} €)`;
+      return {
+        kind: "seguros" as const,
+        key: todoDoneKey("seguros", { id: s.id, ref: parts.join("+"), today }),
+        studentId: s.id,
+        name: nameOf(s),
+        cells: [
+          { text: parts.join(" + ") },
+          { text: `${f.total.toFixed(0)} €` },
+          { text: trained ? "está a treinar" : "sem treinos em 30 dias", tone: trained ? ("red" as const) : undefined },
+        ],
+        // Quem treinou nos últimos 30 dias vem primeiro; depois o valor.
+        urgency: (trained ? 1_000_000 : 0) + f.total,
+        whatsappUrl: wa(s.id, buildFeesOverdueMessage(firstName(nameOf(s)), what)),
+        href: `/admin/alunos/${s.id}/plano-seguro`,
+      };
+    })
+    .filter(notDone)
+    .sort((a, b) => b.urgency - a.urgency);
+  const feesTotal = seguros.reduce((acc, it) => acc + (fees.get(it.studentId!)?.total ?? 0), 0);
+  const feesTraining = seguros.filter((it) => feeTrainedRecently.has(it.studentId!)).length;
 
   // --- Em risco de sair: ativos com plano sem treinar há 14+ dias ---
   const lastTraining = new Map<string, string>();
@@ -486,6 +553,12 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
       summary: pagamentos.length ? `${lateTotal.toFixed(0)} € em mensalidades em atraso` : "",
       info: "Alunos com mensalidades marcadas como em atraso (o mesmo critério da inadimplência). Volta a aparecer na semana seguinte se continuar por pagar.",
       columns: ["Aluno", "Plano", "Valor", "Em atraso", "Meses", ""],
+    },
+    seguros: {
+      kind: "seguros", tone: "red", title: "Seguros e matrículas em atraso", items: seguros,
+      summary: seguros.length ? `${feesTotal.toFixed(0)} € · ${feesTraining} a treinar sem seguro pago` : "",
+      info: "Alunos ativos ou inadimplentes com o seguro desportivo ou a matrícula em atraso. Primeiro quem treinou nos últimos 30 dias (está a treinar sem seguro pago). Ao marcar «Feito», volta na semana seguinte se continuar por pagar.",
+      columns: ["Aluno", "Falta", "Valor", "Treinos", ""],
     },
     vencer: {
       kind: "vencer", tone: "amber", title: "Mensalidades a vencer", items: vencer,

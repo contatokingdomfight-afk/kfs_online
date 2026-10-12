@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 const ACTION_LABEL: Record<string, string> = { done: "feito", contactado: "contactado", lembrete: "lembrete enviado", pedido: "avaliação pedida", "parabéns": "parabéns enviados", "coaches avisados": "coaches avisados" };
 const KIND_TITLE: Record<AdminTodoKind, string> = {
   pagamentos: "Pagamentos",
+  seguros: "Seguro / matrícula",
   vencer: "Mensalidade a vencer",
   semplano: "Sem plano",
   exame: "Apto para exame",
@@ -77,14 +78,14 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
 /** Ação em lote do alerta (no cabeçalho). */
 function BulkControl({ g, schoolId }: { g: AdminTodoGroup; schoolId: string | null }) {
   if (g.items.length === 0) return null;
-  if (g.kind === "pagamentos" || g.kind === "vencer" || g.kind === "risco" || g.kind === "semplano" || g.kind === "experimentais" || g.kind === "aniversarios") {
+  if (g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "vencer" || g.kind === "risco" || g.kind === "semplano" || g.kind === "experimentais" || g.kind === "aniversarios") {
     const withPhone = g.items.filter((it) => it.whatsappUrl);
     const missing = g.items.length - withPhone.length;
     return (
       <span className="todo-bulk-stack">
         <WhatsAppSequence
           items={withPhone.map((it) => ({ kind: it.kind, doneKey: it.key, studentId: it.studentId, label: it.name, url: it.whatsappUrl! }))}
-          doneAction={g.kind === "pagamentos" || g.kind === "vencer" ? "lembrete" : g.kind === "aniversarios" ? "parabéns" : "contactado"}
+          doneAction={g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "vencer" ? "lembrete" : g.kind === "aniversarios" ? "parabéns" : "contactado"}
         />
         {missing > 0 ? <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{missing} sem telefone</span> : null}
       </span>

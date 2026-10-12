@@ -30,6 +30,8 @@ type Props = {
   canEvaluate?: boolean;
   monthlyLimit?: { used: number; limit: number; remaining: number } | null;
   isCrossModality?: boolean;
+  /** Seguro e/ou matrícula em atraso — aviso para o coach lembrar o aluno. */
+  feesDue?: string | null;
 };
 
 export function AttendanceRow({
@@ -53,6 +55,7 @@ export function AttendanceRow({
   canEvaluate = true,
   monthlyLimit,
   isCrossModality = false,
+  feesDue = null,
 }: Props) {
   const router = useRouter();
   const [statusState, statusAction] = useActionState(setAttendanceStatusFromForm, null as { error?: string } | null);
@@ -135,6 +138,15 @@ export function AttendanceRow({
               </span>
             )}
             <span className={`coach-attendance-status ${statusClass}`}>{statusLabel}</span>
+            {feesDue && (
+              <span
+                className="coach-attendance-tag"
+                title="Lembra o aluno de regularizar na secretaria. Não bloqueia o check-in."
+                style={{ backgroundColor: "rgba(250,204,21,0.16)", border: "1px solid var(--warning)", color: "var(--text-primary)", fontWeight: 700 }}
+              >
+                🛡️ {feesDue}
+              </span>
+            )}
             {monthlyLimit && (
               <span
                 className="coach-attendance-tag"

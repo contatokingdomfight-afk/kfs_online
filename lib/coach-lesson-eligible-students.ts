@@ -34,6 +34,8 @@ export type CoachLessonStudentRow = {
   monthlyLimit: { used: number; limit: number; remaining: number } | null;
   /** true = "check-in avulso" (aluno de outra modalidade/plano, marcado manualmente). */
   isCrossModality: boolean;
+  /** Seguro e/ou matrícula em atraso (ex.: «Seguro por pagar») — só aviso, não bloqueia. */
+  feesDue: string | null;
 };
 
 export type CoachLessonContext = {
@@ -318,6 +320,28 @@ export async function loadCoachLessonRoster(
   const eligibleStudents = students.filter((s) => eligibleIds.includes(s.id));
   const userIds = [...new Set(eligibleStudents.map((s) => s.userId))];
 
+  // Seguro / matrícula em atraso: aviso para o coach lembrar o aluno (não bloqueia o check-in).
+  const lateFeesByStudent = new Map<string, Set<string>>();
+  {
+    const { data: lateFees } = await supabase
+      .from("Payment")
+      .select("studentId, paymentType")
+      .eq("status", "LATE")
+      .in("paymentType", ["INSURANCE", "ENROLLMENT"])
+      .in("studentId", eligibleIds);
+    for (const p of (lateFees ?? []) as { studentId: string; paymentType: string }[]) {
+      const set = lateFeesByStudent.get(p.studentId) ?? new Set<string>();
+      set.add(p.paymentType);
+      lateFeesByStudent.set(p.studentId, set);
+    }
+  }
+  const feesDueLabel = (id: string): string | null => {
+    const set = lateFeesByStudent.get(id);
+    if (!set) return null;
+    if (set.has("INSURANCE") && set.has("ENROLLMENT")) return "Seguro e matrícula por pagar";
+    return set.has("INSURANCE") ? "Seguro por pagar" : "Matrícula por pagar";
+  };
+
   const monthlyCapStudentIds = eligibleStudents
     .filter((s) => (planForStudent(s)?.max_check_ins_per_month ?? null) !== null)
     .map((s) => s.id);
@@ -480,6 +504,7 @@ export async function loadCoachLessonRoster(
       rpeSource: att?.rpe == null ? null : att?.rpeSource === "COACH" ? "COACH" : "STUDENT",
       monthlyLimit: monthlyLimitByStudent.get(s.id) ?? null,
       isCrossModality: Boolean(att?.isCrossModality),
+      feesDue: feesDueLabel(s.id),
     };
   });
 

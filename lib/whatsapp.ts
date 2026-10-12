@@ -57,6 +57,12 @@ export function buildTrialFollowUpMessage(name: string, modalityLabel: string, p
   return `Olá ${firstName}! 👋 Obrigado por teres experimentado ${modalityLabel} na Kingdom Fight School. Gostaste? Se quiseres continuar, vê aqui os planos: ${plansUrl}. Qualquer dúvida, é só responder por aqui. 🥋`;
 }
 
+/** Seguro desportivo e/ou matrícula por pagar (`whatLabel`: ex. «o seguro desportivo de 2026 (25 €)»). */
+export function buildFeesOverdueMessage(studentFirstName: string, whatLabel: string): string {
+  const name = studentFirstName.trim() || "tudo bem";
+  return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Reparámos que ${whatLabel} ainda está por pagar. O seguro é obrigatório para treinar — podes regularizar na secretaria. Se já pagaste, ignora esta mensagem. Obrigado! 🥋`;
+}
+
 /** Lembrete simpático antes do prazo da mensalidade (dia 8). */
 export function buildDueSoonMessage(studentFirstName: string, dueLabel: string): string {
   const name = studentFirstName.trim() || "tudo bem";
