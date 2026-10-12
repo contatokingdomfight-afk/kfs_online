@@ -307,6 +307,8 @@ export function ResponsiveShell({
                 textAlign: "left",
                 lineHeight: 1.2,
                 alignSelf: "center",
+                // Centra a sigla com o octógono do emblema (a coroa sobe o centro da caixa).
+                transform: "translateY(0.25em)",
               }}
             >
               {headerTitle}

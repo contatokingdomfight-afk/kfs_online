@@ -65,7 +65,10 @@ export function HomeHeader({
             height={BRAND_EMBLEM_HEADER_HEIGHT}
             style={{ height: "clamp(40px, 10vw, 48px)", width: "auto", display: "block" }}
           />
-          <span className="text-xl font-bold text-[var(--text-primary)]">KFS</span>
+          {/* translateY: centra a sigla com o octógono (a coroa sobe o centro da caixa do emblema). */}
+          <span className="text-xl font-bold text-[var(--text-primary)]" style={{ transform: "translateY(0.25em)" }}>
+            KFS
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label={navAriaLabel}>
