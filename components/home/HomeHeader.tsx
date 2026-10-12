@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Swords, Timer, Scale, LogIn, X, Menu } from "lucide-react";
+import { BRAND_EMBLEM_HEADER, BRAND_EMBLEM_HEADER_HEIGHT, BRAND_EMBLEM_HEADER_WIDTH } from "@/lib/brand";
 
 type Props = {
   ctaLabel: string;
@@ -54,9 +55,18 @@ export function HomeHeader({
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur-md">
       <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:pr-[max(72px,env(safe-area-inset-right))]">
-        <span className="truncate text-lg font-bold text-[var(--text-primary)]">
-          Kingdom Fight School
-        </span>
+        <Link href="/" aria-label="Kingdom Fight School" className="flex shrink-0 items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático, sem otimização */}
+          <img
+            src={BRAND_EMBLEM_HEADER}
+            alt=""
+            aria-hidden
+            width={BRAND_EMBLEM_HEADER_WIDTH}
+            height={BRAND_EMBLEM_HEADER_HEIGHT}
+            style={{ height: "clamp(40px, 10vw, 48px)", width: "auto", display: "block" }}
+          />
+          <span className="text-xl font-bold text-[var(--text-primary)]">KFS</span>
+        </Link>
 
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label={navAriaLabel}>
           {sectionLinks.map((item) => (

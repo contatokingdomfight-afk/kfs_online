@@ -33,10 +33,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icons/kfs-emblem-192.png?v=2", sizes: "192x192", type: "image/png" },
-      { url: "/icons/kfs-emblem-512.png?v=2", sizes: "512x512", type: "image/png" },
+      { url: "/icons/kfs-emblem-192.png?v=3", sizes: "192x192", type: "image/png" },
+      { url: "/icons/kfs-emblem-512.png?v=3", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/icons/kfs-emblem-180.png?v=2", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/icons/kfs-emblem-180.png?v=3", sizes: "180x180", type: "image/png" }],
   },
 };
 
@@ -66,7 +66,7 @@ export default async function RootLayout({
         <meta name="theme-color" content={BRAND_ICON_BG} media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="apple-touch-icon" href="/icons/kfs-emblem-180.png?v=2" />
+        <link rel="apple-touch-icon" href="/icons/kfs-emblem-180.png?v=3" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var s=window.matchMedia('(display-mode: standalone)').matches||window.matchMedia('(display-mode: fullscreen)').matches||window.navigator.standalone; if(s){document.documentElement.style.backgroundColor='${BRAND_ICON_BG}';document.body&&(document.body.style.backgroundColor='${BRAND_ICON_BG}');}}catch(e){}})();`,
