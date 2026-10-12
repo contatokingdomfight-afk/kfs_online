@@ -34,7 +34,7 @@ const ICON_SIZE = 18;
  * Barra lateral principal da área Coach (mesma lista usada no layout e em ecrãs de avaliação).
  *
  * Ficheiro `.tsx` (não `.ts`): os ícones têm de ser resolvidos aqui, em JSX — ver nota em
- * lib/admin-sidebar-links.tsx sobre a fronteira Server → Client com `<ResponsiveShell>`.
+ * lib/admin-nav-areas.tsx sobre a fronteira Server → Client com `<ResponsiveShell>`.
  */
 export function getCoachShellSidebarLinks(
   t: TFn,

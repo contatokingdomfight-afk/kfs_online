@@ -20,6 +20,9 @@ import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachC
 import { CompetitionAthleteControls } from "@/components/CompetitionAthleteControls";
 import { StudentContactDataSection } from "@/components/students/StudentContactDataSection";
 import Link from "next/link";
+import { CheckCircle2, ChevronRight, Dumbbell, FileText, Settings2, Shield, Wallet } from "lucide-react";
+import { loadStudentAdminSummary } from "@/lib/admin-student-ficha";
+import { buildMissYouMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const GENERAL_LAST_N = 10;
 
@@ -36,7 +39,7 @@ export default async function AdminAlunoOverviewPage({ params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, primaryModality, competitionAthlete")
+    .select("id, userId, status, primaryModality, competitionAthlete, planId")
     .eq("id", studentId)
     .single();
 
@@ -143,9 +146,85 @@ export default async function AdminAlunoOverviewPage({ params }: Props) {
     .maybeSingle();
   const assistantActive = Boolean(assistRow?.id && assistRow.revokedAt == null);
 
+  const summary = await loadStudentAdminSummary(supabase, studentId, (student as { planId?: string | null }).planId ?? null);
+  const base = `/admin/alunos/${studentId}`;
+  const firstName = (user?.name ?? "").split(" ")[0] ?? "";
+  const eur = (n: number) => `${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2).replace(".", ",")} €`;
+  type Attention = { icon: React.ReactNode; text: string; action: string; href: string; external?: boolean };
+  const attention: Attention[] = [];
+  if (summary.tuition.lateTotal > 0)
+    attention.push({ icon: <Wallet size={18} color="#f87171" aria-hidden />, text: `Mensalidade: ${summary.tuition.detail}`, action: "Registar pagamento", href: `/admin/financeiro/novo?studentId=${studentId}` });
+  if (summary.fees.lateTotal > 0)
+    attention.push({ icon: <Shield size={18} color="#eab308" aria-hidden />, text: `${summary.fees.title}: ${summary.fees.detail}`, action: "Ver", href: `${base}/plano-seguro` });
+  if (summary.documents.missing.length)
+    attention.push({ icon: <FileText size={18} color="#eab308" aria-hidden />, text: `Documentos: ${summary.documents.detail}`, action: "Ver", href: `${base}/contrato` });
+  if (student.status === "ATIVO" && summary.training.tone === "red") {
+    const wa = studentProfile?.phone ? buildWhatsAppUrl(studentProfile.phone, buildMissYouMessage(firstName)) : null;
+    attention.push({ icon: <Dumbbell size={18} color="#f87171" aria-hidden />, text: `Sem treinar: último treino ${summary.training.detail}`, action: wa ? "WhatsApp" : "Ver", href: wa ?? `${base}/performance`, external: Boolean(wa) });
+  }
+  const sectionTitle: React.CSSProperties = { margin: "0 0 10px", fontSize: 13, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--text-secondary)" };
+  const row: React.CSSProperties = { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--bg)", fontSize: 14 };
+  const linkStyle: React.CSSProperties = { color: "var(--primary)", fontWeight: 700, fontSize: 13, textDecoration: "none", whiteSpace: "nowrap" };
+
   return (
     <>
-      <StudentContactDataSection studentId={studentId} />
+      <section style={{ marginTop: 16 }}>
+        <h2 style={sectionTitle}>Precisa de atenção</h2>
+        {attention.length === 0 ? (
+          <div style={{ ...row, color: "var(--text-secondary)" }}>
+            <CheckCircle2 size={18} color="#22c55e" aria-hidden /> Tudo em dia.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {attention.map((a) => (
+              <div key={a.text} style={row}>
+                {a.icon}
+                <span style={{ flex: 1, minWidth: 0 }}>{a.text}</span>
+                {a.external ? (
+                  <a href={a.href} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+                    {a.action}
+                  </a>
+                ) : (
+                  <Link href={a.href} style={linkStyle}>
+                    {a.action}
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section style={{ marginTop: 18 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+          <h2 style={sectionTitle}>Últimos pagamentos</h2>
+          <Link href={`${base}/plano-seguro`} style={linkStyle}>
+            Ver todos
+          </Link>
+        </div>
+        {summary.recentPayments.length === 0 ? (
+          <div style={{ ...row, color: "var(--text-secondary)" }}>Sem pagamentos registados.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {summary.recentPayments.map((p) => (
+              <div key={p.id} style={row}>
+                <span style={{ flex: 1, minWidth: 0 }}>{p.label}</span>
+                <strong style={{ color: p.status === "PAID" ? "#22c55e" : p.status === "LATE" ? "#f87171" : "var(--text-secondary)", fontSize: 13 }}>
+                  {eur(p.amount)} {p.status === "PAID" ? "pago" : p.status === "LATE" ? "por pagar" : p.status.toLowerCase()}
+                </strong>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section style={{ marginTop: 18 }}>
+        <h2 style={sectionTitle}>Contacto</h2>
+        <div style={{ ...row, flexWrap: "wrap" }}>
+          <span style={{ flex: 1, minWidth: 0 }}>{studentProfile?.phone ?? "Sem telefone"}</span>
+          {studentProfile?.emergencyContact ? <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Emergência: {studentProfile.emergencyContact}</span> : null}
+        </div>
+      </section>
 
       <div
         style={{
@@ -186,17 +265,6 @@ export default async function AdminAlunoOverviewPage({ params }: Props) {
         </Link>
       </div>
 
-      <SchoolAssistantCoachControls
-        studentId={studentId}
-        assistantActive={assistantActive}
-        targetUserRole={user?.role}
-        studentStatus={student.status}
-      />
-
-      <CompetitionAthleteControls
-        studentId={studentId}
-        active={Boolean((student as { competitionAthlete?: boolean }).competitionAthlete)}
-      />
 
       <section
         className="card"
@@ -263,6 +331,29 @@ export default async function AdminAlunoOverviewPage({ params }: Props) {
           </div>
         )}
       </section>
+
+      <details className="card" style={{ marginTop: 16, padding: "14px 16px" }}>
+        <summary style={{ cursor: "pointer", fontSize: 15, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+          <ChevronRight size={16} aria-hidden style={{ color: "var(--text-secondary)" }} /> Dados pessoais
+        </summary>
+        <StudentContactDataSection studentId={studentId} />
+      </details>
+
+      <details className="card" style={{ marginTop: 12, padding: "14px 16px" }}>
+        <summary style={{ cursor: "pointer", fontSize: 15, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+          <Settings2 size={16} aria-hidden style={{ color: "var(--text-secondary)" }} /> Mais opções (assistente, atleta de competição)
+        </summary>
+        <SchoolAssistantCoachControls
+          studentId={studentId}
+          assistantActive={assistantActive}
+          targetUserRole={user?.role}
+          studentStatus={student.status}
+        />
+        <CompetitionAthleteControls
+          studentId={studentId}
+          active={Boolean((student as { competitionAthlete?: boolean }).competitionAthlete)}
+        />
+      </details>
     </>
   );
 }

@@ -16,13 +16,13 @@ export function AdminAlunoTabs({ studentId }: Props) {
   const base = `/admin/alunos/${studentId}`;
 
   const tabs = [
-    { href: base, label: "Visão geral", exact: true as const },
-    { href: `${base}/plano-seguro`, label: "Plano e seguro" },
-    { href: `${base}/contrato`, label: "Documentos de adesão" },
+    { href: base, label: "Resumo", exact: true as const },
+    { href: `${base}/plano-seguro`, label: "Plano e pagamentos" },
+    { href: `${base}/contrato`, label: "Documentos" },
     { href: `${base}/avaliacao-fisica`, label: "Avaliação física" },
     { href: `${base}/avaliacoes`, label: "Avaliações" },
     { href: `${base}/performance`, label: "Performance" },
-    { href: `${base}/editar`, label: "Editar dados" },
+    { href: `${base}/editar`, label: "Dados" },
   ];
 
   return (

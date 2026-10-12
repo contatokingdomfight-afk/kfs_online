@@ -36,6 +36,8 @@ export type MobileAppBottomNavItem = {
   icon: MobileNavIconId;
   prefetch?: boolean;
   groupActiveHrefs?: string[];
+  /** O próprio href só conta se for exacto (ex.: /admin, prefixo de todas as páginas do admin). */
+  exactHref?: boolean;
 };
 
 export type MobileAppBottomNavConfig = {
@@ -59,6 +61,7 @@ function pathMatchesItem(activePath: string, item: MobileAppBottomNavItem): bool
   const sameBase = (base: string) =>
     activePath === base || activePath.startsWith(`${base}/`) || activePath.startsWith(`${base}?`);
   const group = item.groupActiveHrefs;
+  if (item.exactHref && activePath === item.href) return true;
   if (group?.length) {
     return group.some((h) => sameBase(h));
   }

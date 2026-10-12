@@ -13,7 +13,6 @@ import { AdminSchoolFilter } from "../AdminSchoolFilter";
 import { getCachedSchools, getCachedModalityRefs } from "@/lib/cached-reference-data";
 import { hasAllV1AdminPermissions } from "@/lib/permissions/resolve";
 import { isGranularRestrictedDashboard } from "@/lib/permissions/paths";
-import { AdminTodoSummary } from "./AdminTodoSummary";
 
 const VALID_PERIOD = /^\d+[dm]$/;
 
@@ -43,23 +42,17 @@ export default async function AdminMetricsDashboardPage({ searchParams }: { sear
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px, 5vw, 24px)", minWidth: 0, overflowX: "hidden" }}>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "clamp(12px, 3vw, 16px)", justifyContent: "space-between" }}>
         <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          {t("navDashboard")}
+          Relatórios
         </h1>
         <AdminSchoolFilter schools={schools} currentSchoolId={schoolId} />
       </div>
-
-      {fullDashboard ? (
-        <Suspense fallback={<div className="card" style={{ minHeight: 160 }} aria-busy="true" />}>
-          <AdminTodoSummary client={result.client} schoolId={schoolId} />
-        </Suspense>
-      ) : null}
 
       <Suspense fallback={<AdminMetricsDashboardSkeleton />}>
         <AdminMetricsDashboardContent client={result.client} schoolId={schoolId} access={access} />
       </Suspense>
 
       {fullDashboard ? (
-        <h2 style={{ margin: "8px 0 -8px", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 800, color: "var(--text-primary)" }}>Relatórios</h2>
+        <h2 style={{ margin: "8px 0 -8px", fontSize: "clamp(18px, 4.5vw, 20px)", fontWeight: 800, color: "var(--text-primary)" }}>Por período</h2>
       ) : null}
 
       <AdminDashboardPeriodFilter

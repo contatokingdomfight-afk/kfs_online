@@ -13,7 +13,7 @@ export type SidebarLink = {
   children?: SidebarLink[];
   /** Sem `children`: considerar activo se `activeHref` for igual a algum destes prefixos (exact ou sub-rota). */
   groupActiveHrefs?: string[];
-  /** Ícone opcional (já resolvido como elemento — ver nota em lib/admin-sidebar-links.tsx) mostrado antes do label. */
+  /** Ícone opcional (já resolvido como elemento — ver nota em lib/admin-nav-areas.tsx) mostrado antes do label. */
   icon?: ReactNode;
   /**
    * Nome da secção a que este link pertence (ex.: "Pessoas", "Académico"). Links consecutivos
@@ -22,6 +22,8 @@ export type SidebarLink = {
   section?: string;
   /** Com `children`: só mostra os filhos quando o item está activo (navegação do aluno por áreas). */
   collapseChildren?: boolean;
+  /** O próprio item só conta como activo no href exacto (ex.: «Hoje» = /admin, que é prefixo de tudo). */
+  exactMatch?: boolean;
 };
 
 function hrefPath(href: string): string {
@@ -139,7 +141,8 @@ export function Sidebar({
             if (!activeHref) return false;
             if (hasChildren) {
               if (item.collapseChildren) {
-                return matchesPrefix(activeHref, hrefPath(item.href)) || bestChildIndex(item.children!, activeHref) >= 0;
+                const selfMatch = item.exactMatch ? activeHref === hrefPath(item.href) : matchesPrefix(activeHref, hrefPath(item.href));
+                return selfMatch || bestChildIndex(item.children!, activeHref) >= 0;
               }
               return (
                 activeHref === item.href ||

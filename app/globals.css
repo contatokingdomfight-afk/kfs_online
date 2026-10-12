@@ -1925,3 +1925,10 @@ html:has([data-dashboard]) body::-webkit-scrollbar {
   .todo-cell-label { display: inline; color: var(--text-secondary); font-weight: 600; }
   .todo-actions { justify-content: flex-start; margin-top: 6px; }
 }
+
+/* Admin: só no telemóvel/tablet (no computador o «Procurar» está no menu lateral). */
+@media (min-width: 1024px) {
+  .admin-mobile-only {
+    display: none;
+  }
+}

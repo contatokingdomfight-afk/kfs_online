@@ -8,7 +8,7 @@ const ICON_SIZE = 20;
 
 /**
  * Ícones das áreas, já como elementos (não referências de componente): a lista atravessa a
- * fronteira Server → Client em `<ResponsiveShell>` — ver nota em lib/admin-sidebar-links.tsx.
+ * fronteira Server → Client em `<ResponsiveShell>` — ver nota em lib/admin-nav-areas.tsx.
  */
 function areaIcon(id: StudentNavAreaId) {
   switch (id) {

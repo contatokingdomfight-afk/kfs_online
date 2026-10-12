@@ -8,7 +8,7 @@ import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import type { MobileAppBottomNavConfig } from "@/components/MobileAppBottomNav";
 import type { SidebarLink } from "@/components/Sidebar";
-import { getAdminBackofficeSidebarLinks } from "@/lib/admin-sidebar-links";
+import { getAdminShellNav } from "@/lib/admin-nav-areas";
 import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
 import { canAccessAdminPathname } from "@/lib/permissions/paths";
 import { filterAdminLinksForAccess } from "@/lib/permissions/filter-nav";
@@ -67,10 +67,9 @@ export default async function SistemaPontuacaoLayout({
         <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
       </div>
     );
-    const full = getAdminBackofficeSidebarLinks(t);
-    sidebarLinks = access.kind === "granted" ? filterAdminLinksForAccess(full, access) : full;
-    const flatAd = dedupeSidebarFlatLinks(flattenSidebarLinks(sidebarLinks));
-    mobileBottomNav = buildShellMobileBottomNav("admin", flatAd, locale === "pt" ? "Mais" : "More");
+    const adminNav = getAdminShellNav(t, access);
+    sidebarLinks = adminNav.sidebarLinks;
+    mobileBottomNav = adminNav.mobileBottomNav;
     mainShellClass = "admin-main";
     headerAvatar = {
       href: "/admin/configuracoes",

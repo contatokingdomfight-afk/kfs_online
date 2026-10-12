@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { MessageCircle, FileText } from "lucide-react";
+import { MessageCircle, Pencil, Wallet } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { getFamilyContext } from "@/lib/family-group";
 import { computeFamilyGroupMonthlyTuition, type FamilyPricingBreakdown } from "@/lib/family-tuition";
-import { buildDocumentsPendingMessage, buildPaymentOverdueMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
-import { getInsuranceSettings, isMembershipAgreementCurrent } from "@/lib/insurance-settings";
-import { isEnrollmentFormCurrent } from "@/lib/enrollment-form";
+import { buildDocumentsPendingMessage, buildFeesOverdueMessage, buildPaymentOverdueMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
+import { loadStudentAdminSummary, type SummaryTone } from "@/lib/admin-student-ficha";
+import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getPublicOrigin } from "@/lib/site-public-url";
 import { AdminAlunoTabs } from "./AdminAlunoTabs";
 
@@ -37,7 +37,7 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status")
+    .select("id, userId, status, planId, primaryModality")
     .eq("id", studentId)
     .single();
 
@@ -59,32 +59,37 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
     .eq("studentId", studentId)
     .maybeSingle();
 
-  const overdueWhatsAppUrl =
-    student.status === "INADIMPLENTE" && studentProfile?.phone
-      ? buildWhatsAppUrl(studentProfile.phone, buildPaymentOverdueMessage((user?.name ?? "").split(" ")[0] ?? ""))
-      : null;
-
-  const [settings, { data: agreement }, { data: waiver }, { data: enrollmentForm }] = await Promise.all([
-    getInsuranceSettings(supabase),
-    supabase.from("StudentMembershipAgreement").select("agreementSigned, agreementVersion").eq("studentId", studentId).maybeSingle(),
-    supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", studentId).maybeSingle(),
-    supabase.from("StudentEnrollmentForm").select("formCompleted, formVersion").eq("studentId", studentId).maybeSingle(),
-  ]);
-  const hasPendingDocuments =
-    !isMembershipAgreementCurrent(agreement, settings.membershipAgreementVersion) ||
-    !Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned) ||
-    !isEnrollmentFormCurrent(enrollmentForm, settings.enrollmentFormVersion);
-
-  // Sem restrição de estado: documentos pendentes são relevantes independentemente de o aluno
-  // estar Ativo, Inadimplente ou Inativo (ao contrário do lembrete de pagamento, específico de
-  // Inadimplente).
-  const documentsPendingWhatsAppUrl =
-    hasPendingDocuments && studentProfile?.phone
-      ? buildWhatsAppUrl(
-          studentProfile.phone,
-          buildDocumentsPendingMessage((user?.name ?? "").split(" ")[0] ?? "", `${getPublicOrigin()}/adesao`)
-        )
-      : null;
+  const summary = await loadStudentAdminSummary(supabase, studentId, (student as { planId?: string | null }).planId ?? null);
+  const firstName = (user?.name ?? "").split(" ")[0] ?? "";
+  const phone = studentProfile?.phone ?? null;
+  // Um só WhatsApp, com a mensagem do que for mais urgente.
+  const whatsappUrl = phone
+    ? buildWhatsAppUrl(
+        phone,
+        summary.tuition.lateTotal > 0
+          ? buildPaymentOverdueMessage(firstName)
+          : summary.fees.lateTotal > 0
+            ? buildFeesOverdueMessage(firstName, summary.fees.detail.replace(/ ·.*/, "").replace(/^seguro/, "o seguro desportivo").replace(/^matrícula/, "a matrícula").replace(" por pagar", "") + ` (${summary.fees.lateTotal.toFixed(0)} €)`)
+            : summary.documents.missing.length
+              ? buildDocumentsPendingMessage(firstName, `${getPublicOrigin()}/adesao`)
+              : `Olá ${firstName}! 👋 Aqui é da Kingdom Fight School.`
+      )
+    : null;
+  const modality = (student as { primaryModality?: string | null }).primaryModality;
+  const initials = (user?.name ?? "?").trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? "").join("");
+  const base = `/admin/alunos/${studentId}`;
+  const cards: { title: string; detail: string; tone: SummaryTone; href: string }[] = [
+    { title: summary.tuition.title, detail: summary.tuition.detail, tone: summary.tuition.tone, href: `${base}/plano-seguro` },
+    { title: summary.fees.title, detail: summary.fees.detail, tone: summary.fees.tone, href: `${base}/plano-seguro` },
+    { title: "Documentos", detail: summary.documents.detail, tone: summary.documents.tone, href: `${base}/contrato` },
+    { title: "Último treino", detail: summary.training.detail, tone: summary.training.tone, href: `${base}/performance` },
+  ];
+  const TONE: Record<SummaryTone, { bg: string; border: string; fg: string }> = {
+    red: { bg: "rgba(248,113,113,0.12)", border: "rgba(248,113,113,0.45)", fg: "#f87171" },
+    amber: { bg: "rgba(250,204,21,0.12)", border: "rgba(250,204,21,0.45)", fg: "#eab308" },
+    green: { bg: "rgba(74,222,128,0.10)", border: "rgba(74,222,128,0.4)", fg: "#22c55e" },
+    neutral: { bg: "var(--bg-secondary)", border: "var(--border)", fg: "var(--text-secondary)" },
+  };
 
   const familyCtx = await getFamilyContext(supabase, studentId);
   let familyPricing: FamilyPricingBreakdown | null = null;
@@ -114,65 +119,40 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
           ← Voltar
         </Link>
       </div>
-      <h1 style={{ margin: "0 0 4px 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
-        {user?.name || "Aluno"}
-      </h1>
-      <p style={{ margin: "0 0 8px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
-        {user?.email}
-      </p>
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 4 }}>
-        <span
-          style={{
-            fontSize: "clamp(12px, 3vw, 14px)",
-            padding: "2px 8px",
-            borderRadius: "var(--radius-md)",
-            backgroundColor: student.status === "INADIMPLENTE" ? "var(--danger)" : "var(--bg)",
-            color: student.status === "INADIMPLENTE" ? "#fff" : "var(--text-secondary)",
-            fontWeight: 600,
-          }}
-        >
-          {STATUS_LABEL[student.status] ?? student.status}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+        <span aria-hidden style={{ width: 48, height: 48, flexShrink: 0, borderRadius: 24, background: "var(--bg-secondary)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>
+          {initials}
         </span>
-        {overdueWhatsAppUrl ? (
-          <a
-            href={overdueWhatsAppUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-secondary"
-            title="Lembrar pagamento em atraso (WhatsApp)"
-            aria-label="Lembrar pagamento em atraso (WhatsApp)"
-            style={{
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 12px",
-              fontSize: "clamp(13px, 3.2vw, 14px)",
-            }}
-          >
-            <MessageCircle size={14} aria-hidden /> WhatsApp
+        <div style={{ minWidth: 0 }}>
+          <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 800, color: "var(--text-primary)" }}>{user?.name || "Aluno"}</h1>
+          <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
+            {[modality ? MODALITY_LABELS[modality] ?? modality : null, summary.planName ?? "sem plano"].filter(Boolean).join(" · ")} ·{" "}
+            <strong style={{ color: student.status === "ATIVO" ? "var(--success)" : student.status === "INADIMPLENTE" ? "var(--danger)" : "var(--text-secondary)" }}>
+              {STATUS_LABEL[student.status] ?? student.status}
+            </strong>
+          </p>
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: 8, marginBottom: 12 }}>
+        {cards.map((c) => (
+          <Link key={c.title + c.href} href={c.href} style={{ padding: "10px 12px", borderRadius: 12, background: TONE[c.tone].bg, border: `1px solid ${TONE[c.tone].border}`, textDecoration: "none", color: "var(--text-primary)" }}>
+            <span style={{ display: "block", fontSize: 13, fontWeight: 800, color: TONE[c.tone].fg }}>{c.title}</span>
+            <span style={{ display: "block", fontSize: 12.5, marginTop: 2, lineHeight: 1.35 }}>{c.detail}</span>
+          </Link>
+        ))}
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
+        {whatsappUrl ? (
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 42 }}>
+            <MessageCircle size={16} aria-hidden /> WhatsApp
           </a>
         ) : null}
-        {documentsPendingWhatsAppUrl ? (
-          <a
-            href={documentsPendingWhatsAppUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-secondary"
-            title="Lembrar documentos de adesão pendentes (WhatsApp)"
-            aria-label="Lembrar documentos de adesão pendentes (WhatsApp)"
-            style={{
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 12px",
-              fontSize: "clamp(13px, 3.2vw, 14px)",
-            }}
-          >
-            <FileText size={14} aria-hidden /> WhatsApp
-          </a>
-        ) : null}
+        <Link href={`/admin/financeiro/novo?studentId=${studentId}`} className="btn btn-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 42 }}>
+          <Wallet size={16} aria-hidden /> Registar pagamento
+        </Link>
+        <Link href={`${base}/editar`} className="btn btn-secondary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 42 }}>
+          <Pencil size={16} aria-hidden /> Editar
+        </Link>
       </div>
       {familyCtx ? (
         <div style={{ marginTop: 8, marginBottom: 4, display: "flex", flexDirection: "column", gap: 6 }}>
