@@ -450,8 +450,8 @@ export async function createVariantsBatch(_prev: ActionResult | null, formData: 
   if (!product) return { error: "Produto não encontrado." };
   const productSku = (product as { sku: string }).sku;
 
-  const { data: existing } = await supabase.from("ProductVariant").select("sku, size, color, fit").eq("productId", productId);
-  const have = new Set((existing ?? []).map((v) => comboKey(v as { fit: string | null; size: string | null; color: string | null })));
+  const { data: existing } = await supabase.from("ProductVariant").select("sku, size, color, fit, isActive").eq("productId", productId);
+  const have = new Set((existing ?? []).filter((v) => (v as { isActive: boolean }).isActive).map((v) => comboKey(v as { fit: string | null; size: string | null; color: string | null })));
   const usedSkus = new Set<string>((existing ?? []).map((v) => (v as { sku: string }).sku));
 
   const rows: Record<string, unknown>[] = [];
@@ -476,6 +476,33 @@ export async function createVariantsBatch(_prev: ActionResult | null, formData: 
 
   const { error } = await supabase.from("ProductVariant").insert(rows);
   if (error) return { error: error.message };
+  revalidatePath("/admin/loja/produtos");
+  revalidatePath("/dashboard/loja");
+  return { success: true };
+}
+
+/** Remove uma variante. Se já teve vendas, encomendas ou movimentos de stock, só a desativa (para não perder o histórico). */
+export async function deleteProductVariant(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const dbUser = await requireAdmin("admin:financeiro:write");
+  if (!dbUser) return { error: "Não autorizado." };
+  const id = (formData.get("variantId") as string)?.trim();
+  if (!id) return { error: "Variante em falta." };
+
+  const supabase = createAdminClient();
+  const used = await Promise.all(
+    ["RetailOrderLine", "RetailSaleLine", "StockMovement"].map((t) =>
+      supabase.from(t).select("id", { count: "exact", head: true }).eq("variantId", id)
+    )
+  );
+  const hasHistory = used.some((r) => (r.count ?? 0) > 0);
+
+  if (hasHistory) {
+    const { error } = await supabase.from("ProductVariant").update({ isActive: false }).eq("id", id);
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await supabase.from("ProductVariant").delete().eq("id", id);
+    if (error) return { error: error.message };
+  }
   revalidatePath("/admin/loja/produtos");
   revalidatePath("/dashboard/loja");
   return { success: true };

@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import {
   createProduct,
   addProductVariant,
+  deleteProductVariant,
   createSupplier,
   updateProduct,
   updateSupplier,
@@ -567,16 +568,32 @@ function RemoveProductButton({ product }: { product: ProductRow }) {
 
 function VariantList({ productId, variants }: { productId: string; variants: ProductVariantRow[] }) {
   const [state, action] = useActionState(addProductVariant, null as ActionResult | null);
+  const [delState, delAction] = useActionState(deleteProductVariant, null as ActionResult | null);
   const activeVariants = variants.filter((v) => v.isActive);
 
   return (
     <div style={{ marginTop: 10 }}>
       <BatchVariantsForm productId={productId} variants={variants} />
+      {delState?.error && <p style={{ color: "var(--error)", fontSize: 12, margin: "0 0 6px" }}>{delState.error}</p>}
       <ul style={{ margin: "0 0 10px", paddingLeft: 16, fontSize: 13 }}>
         {activeVariants.map((v) => (
           <li key={v.id}>
             {variantLabel(v)} — {v.sku}
             {v.priceOverride != null ? ` (${v.priceOverride.toFixed(2)} €)` : ""}
+            <form action={delAction} style={{ display: "inline", marginLeft: 8 }}>
+              <input type="hidden" name="variantId" value={v.id} />
+              <button
+                type="submit"
+                aria-label={`Apagar variante ${variantLabel(v)}`}
+                title="Apagar variante"
+                onClick={(e) => {
+                  if (!confirm(`Apagar a variante «${variantLabel(v)}» (${v.sku})?`)) e.preventDefault();
+                }}
+                style={{ background: "none", border: "none", color: "var(--error)", cursor: "pointer", fontSize: 13, padding: "0 4px" }}
+              >
+                ✕
+              </button>
+            </form>
           </li>
         ))}
       </ul>

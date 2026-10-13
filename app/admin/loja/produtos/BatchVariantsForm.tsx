@@ -34,7 +34,7 @@ export function BatchVariantsForm({ productId, variants }: { productId: string; 
     [groups, colors]
   );
   const combos = useMemo(() => buildCombos(batch), [batch]);
-  const have = useMemo(() => new Set(variants.map((v) => comboKey(v))), [variants]);
+  const have = useMemo(() => new Set(variants.filter((v) => v.isActive).map((v) => comboKey(v))), [variants]);
   const fresh = combos.filter((c) => !have.has(comboKey(c))).length;
 
   const update = (id: number, patch: Partial<Group>) => setGroups((gs) => gs.map((g) => (g.id === id ? { ...g, ...patch } : g)));
