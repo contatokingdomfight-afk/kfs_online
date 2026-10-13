@@ -15,6 +15,7 @@ const MAIS_PATHS = [
 
 const TABS: { href: string; label: string; exact?: boolean; paths?: string[] }[] = [
   { href: "/admin/financeiro", label: "Receber", exact: true },
+  { href: "/admin/financeiro/mensalidades", label: "Mensalidades" },
   { href: "/admin/financeiro/despesas", label: "Despesas" },
   { href: "/admin/financeiro/movimentos", label: "Movimentos" },
   { href: "/admin/financeiro/relatorio", label: "Relatórios" },

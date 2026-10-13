@@ -135,6 +135,7 @@ export function getAdminNavAreas(t: (key: MessageKey) => string): AdminNavArea[]
       mobileIcon: "credit",
       items: [
         { label: t("navFinance"), href: "/admin/financeiro", icon: <CreditCard size={I} aria-hidden />, hint: "Receber mensalidades, seguros e matrículas", keywords: "pagamento mensalidade cobrar financeiro receber recebido" },
+        { label: "Mensalidades em falta", href: "/admin/financeiro/mensalidades", icon: <CreditCard size={I} aria-hidden />, hint: "Quem falta pagar este mês e o mês passado", keywords: "mensalidade falta atraso devedores pagar mes passado" },
         { label: "Despesas", href: "/admin/financeiro/despesas", icon: <Receipt size={I} aria-hidden />, hint: "Lançar despesas e repetir as fixas", keywords: "despesa renda luz custo gasto" },
         { label: "Movimentos", href: "/admin/financeiro/movimentos", icon: <Wallet size={I} aria-hidden />, hint: "Pagamentos, receitas, caixa e depósitos", keywords: "movimentos caixa especie deposito receita pagamentos" },
         { label: "Relatório financeiro", href: "/admin/financeiro/relatorio", icon: <TrendingUp size={I} aria-hidden />, keywords: "relatorio receita despesas" },

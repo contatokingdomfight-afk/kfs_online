@@ -23,6 +23,8 @@ export type PorReceberItem = {
   /** Registo em atraso existente (marca como pago); null = mensalidade do mês ainda sem registo. */
   paymentId: string | null;
   referenceMonth: string | null;
+  /** Link de WhatsApp com lembrete de pagamento (opcional). */
+  reminderUrl?: string | null;
 };
 
 const METHOD_SHORT: Record<FinancePaymentMethod, string> = {
@@ -55,7 +57,17 @@ type Done = { item: PorReceberItem; amount: number; method: FinancePaymentMethod
 /** Grupos longos (ex.: seguros) mostram as primeiras linhas e «Mostrar todos». */
 const COLLAPSE_AFTER = 6;
 
-export function PorReceberList({ items }: { items: PorReceberItem[] }) {
+export function PorReceberList({
+  items,
+  showFilters = true,
+  groupTitles,
+  emptyText = "Está tudo recebido neste mês.",
+}: {
+  items: PorReceberItem[];
+  showFilters?: boolean;
+  groupTitles?: Partial<Record<PorReceberItem["group"], string>>;
+  emptyText?: string;
+}) {
   const [done, setDone] = useState<Done[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<FilterId>("all");
@@ -65,7 +77,7 @@ export function PorReceberList({ items }: { items: PorReceberItem[] }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <div role="group" aria-label="Filtrar por tipo" style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+      {showFilters ? <div role="group" aria-label="Filtrar por tipo" style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
         {FILTERS.map((f) => {
           const list = f.id === "all" ? pendingItems : pendingItems.filter((i) => i.kind === f.id);
           if (f.id !== "all" && list.length === 0) return null;
@@ -98,7 +110,7 @@ export function PorReceberList({ items }: { items: PorReceberItem[] }) {
             </button>
           );
         })}
-      </div>
+      </div> : null}
       {done.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
           {done.map((d) => (
@@ -108,7 +120,7 @@ export function PorReceberList({ items }: { items: PorReceberItem[] }) {
       )}
       {visible.length === 0 ? (
         <p style={{ margin: "8px 0", color: "var(--text-secondary)", fontSize: 15 }}>
-          {filter === "all" ? "Está tudo recebido neste mês." : "Nada por receber neste tipo."}
+          {filter === "all" ? emptyText : "Nada por receber neste tipo."}
         </p>
       ) : (
         (["month", "older", "fees", "orders"] as const).map((g) => {
@@ -120,7 +132,7 @@ export function PorReceberList({ items }: { items: PorReceberItem[] }) {
           return (
             <div key={g} style={{ marginTop: 6 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 0.4, padding: "6px 0" }}>
-                {GROUP_TITLE[g]} · {rows.length} · {eur(groupTotal)}
+                {groupTitles?.[g] ?? GROUP_TITLE[g]} · {rows.length} · {eur(groupTotal)}
               </div>
               {shown.map((it) => (
                 <PendingRow key={it.key} item={it} onDone={(amount, method) => setDone((d) => [{ item: it, amount, method }, ...d])} />
@@ -221,6 +233,17 @@ function PendingRow({ item, onDone }: { item: PorReceberItem; onDone: (amount: n
                 Ver encomenda
               </Link>
             )}
+            {item.reminderUrl ? (
+              <a
+                href={item.reminderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`Enviar lembrete a ${item.name} por WhatsApp`}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--text-secondary)" }}
+              >
+                <MessageCircle size={14} aria-hidden /> Lembrar
+              </a>
+            ) : null}
             {item.kind === "TUITION" ? (
               <Link href={novoHref} style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                 Vários meses
