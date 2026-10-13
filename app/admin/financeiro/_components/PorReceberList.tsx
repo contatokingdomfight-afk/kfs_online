@@ -9,7 +9,11 @@ import { buildPaymentReceiptMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
 export type PorReceberItem = {
   key: string;
-  group: "month" | "older" | "fees";
+  group: "month" | "older" | "fees" | "orders";
+  kind: "TUITION" | "INSURANCE" | "ENROLLMENT" | "ORDER";
+  /** Encomenda da loja por pagar. */
+  orderId: string | null;
+  /** Vazio em encomendas de quem não tem conta. */
   studentId: string;
   name: string;
   phone: string | null;
@@ -32,7 +36,17 @@ const GROUP_TITLE: Record<PorReceberItem["group"], string> = {
   month: "Mensalidades do mês",
   older: "Mensalidades de meses anteriores",
   fees: "Seguros e matrículas",
+  orders: "Encomendas da loja",
 };
+
+const FILTERS = [
+  { id: "all", label: "Todos" },
+  { id: "TUITION", label: "Mensalidades" },
+  { id: "INSURANCE", label: "Seguros" },
+  { id: "ENROLLMENT", label: "Matrículas" },
+  { id: "ORDER", label: "Loja" },
+] as const;
+type FilterId = (typeof FILTERS)[number]["id"];
 
 const eur = (n: number) => n.toLocaleString("pt-PT", { style: "currency", currency: "EUR" });
 
@@ -44,11 +58,47 @@ const COLLAPSE_AFTER = 6;
 export function PorReceberList({ items }: { items: PorReceberItem[] }) {
   const [done, setDone] = useState<Done[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [filter, setFilter] = useState<FilterId>("all");
   const doneKeys = new Set(done.map((d) => d.item.key));
-  const visible = items.filter((i) => !doneKeys.has(i.key));
+  const pendingItems = items.filter((i) => !doneKeys.has(i.key));
+  const visible = filter === "all" ? pendingItems : pendingItems.filter((i) => i.kind === filter);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <div role="group" aria-label="Filtrar por tipo" style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+        {FILTERS.map((f) => {
+          const list = f.id === "all" ? pendingItems : pendingItems.filter((i) => i.kind === f.id);
+          if (f.id !== "all" && list.length === 0) return null;
+          const active = filter === f.id;
+          const total = list.reduce((a, i) => a + i.amount, 0);
+          return (
+            <button
+              key={f.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setFilter(f.id)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 600,
+                padding: "6px 12px",
+                borderRadius: 999,
+                cursor: "pointer",
+                border: `1px solid ${active ? "var(--primary)" : "var(--border)"}`,
+                background: active ? "var(--primary)" : "var(--bg-secondary)",
+                color: active ? "#fff" : "var(--text-primary)",
+              }}
+            >
+              {f.label}
+              <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.85 }}>
+                {list.length} · {eur(total)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
       {done.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
           {done.map((d) => (
@@ -57,9 +107,11 @@ export function PorReceberList({ items }: { items: PorReceberItem[] }) {
         </div>
       )}
       {visible.length === 0 ? (
-        <p style={{ margin: "8px 0", color: "var(--text-secondary)", fontSize: 15 }}>Está tudo recebido neste mês.</p>
+        <p style={{ margin: "8px 0", color: "var(--text-secondary)", fontSize: 15 }}>
+          {filter === "all" ? "Está tudo recebido neste mês." : "Nada por receber neste tipo."}
+        </p>
       ) : (
-        (["month", "older", "fees"] as const).map((g) => {
+        (["month", "older", "fees", "orders"] as const).map((g) => {
           const rows = visible.filter((i) => i.group === g);
           if (!rows.length) return null;
           const collapsible = g !== "month" && rows.length > COLLAPSE_AFTER + 2;
@@ -109,6 +161,7 @@ function PendingRow({ item, onDone }: { item: PorReceberItem; onDone: (amount: n
         paymentId: item.paymentId,
         studentId: item.studentId,
         referenceMonth: item.referenceMonth,
+        orderId: item.orderId,
         amount,
         paymentMethod: method,
       });
@@ -122,7 +175,10 @@ function PendingRow({ item, onDone }: { item: PorReceberItem; onDone: (amount: n
   return (
     <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 12px", padding: "10px 0", borderTop: "1px solid var(--border)" }}>
       <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-        <Link href={`/admin/alunos/${item.studentId}`} style={{ fontWeight: 700, color: "var(--text-primary)", textDecoration: "none" }}>
+        <Link
+          href={item.studentId ? `/admin/alunos/${item.studentId}` : "/admin/loja/encomendas"}
+          style={{ fontWeight: 700, color: "var(--text-primary)", textDecoration: "none" }}
+        >
           {item.name}
         </Link>
         <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
@@ -148,18 +204,24 @@ function PendingRow({ item, onDone }: { item: PorReceberItem; onDone: (amount: n
             <button type="button" className="btn btn-primary" onClick={() => setStep("method")} style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 38 }}>
               <Check size={16} aria-hidden /> Recebido
             </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                setCustom(true);
-                setStep("method");
-              }}
-              style={{ minHeight: 38 }}
-            >
-              Outro valor
-            </button>
-            {item.group !== "fees" ? (
+            {item.kind !== "ORDER" ? (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setCustom(true);
+                  setStep("method");
+                }}
+                style={{ minHeight: 38 }}
+              >
+                Outro valor
+              </button>
+            ) : (
+              <Link href="/admin/loja/encomendas" style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                Ver encomenda
+              </Link>
+            )}
+            {item.kind === "TUITION" ? (
               <Link href={novoHref} style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                 Vários meses
               </Link>

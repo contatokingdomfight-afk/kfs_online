@@ -20,6 +20,7 @@ import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/retail/constants
 import { parseFinancePaymentMethodRequired } from "@/lib/finance-payment-method";
 import { parseDecimalAmount } from "@/lib/parse-decimal-amount";
 import { grantReferralRewardIfEligible } from "@/lib/referral-rewards";
+import { confirmOrderPayment } from "@/app/admin/loja/encomendas/actions";
 import {
   tuitionStartMonthFromCreatedAt,
   isTuitionMonthBeforeEnrollment,
@@ -178,6 +179,7 @@ export type QuickReceiveResult = { error?: string; success?: boolean };
  * ou regista a mensalidade do mês de quem ainda não tem registo (`studentId` + mês).
  */
 export async function quickReceivePayment(input: {
+  orderId?: string | null;
   paymentId?: string | null;
   studentId?: string | null;
   referenceMonth?: string | null;
@@ -193,6 +195,19 @@ export async function quickReceivePayment(input: {
   if (!Number.isFinite(amount) || amount < 0) return { error: "Valor inválido." };
   const parsedMethod = parseFinancePaymentMethodRequired(input.paymentMethod);
   if ("error" in parsedMethod) return { error: parsedMethod.error };
+
+  if (input.orderId) {
+    // Encomenda da loja: mesmo fluxo de Loja → Encomendas (cria a venda e marca como paga).
+    const fd = new FormData();
+    fd.set("orderId", input.orderId);
+    fd.set("paymentMethod", parsedMethod.method);
+    await confirmOrderPayment(fd);
+    const supabase = createAdminClient();
+    const { data: order } = await supabase.from("RetailOrder").select("status").eq("id", input.orderId).maybeSingle();
+    if ((order as { status?: string } | null)?.status !== "PAID") return { error: "Não foi possível confirmar o pagamento desta encomenda." };
+    revalidatePath("/admin/financeiro", "layout");
+    return { success: true };
+  }
 
   if (input.paymentId) {
     const fd = new FormData();

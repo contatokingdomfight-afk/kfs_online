@@ -11,6 +11,7 @@ import { monthLabelPt } from "@/lib/admin-student-ficha";
 import { MonthSelector } from "./_components/MonthSelector";
 import { PorReceberList, type PorReceberItem } from "./_components/PorReceberList";
 import { FindStudentToPay } from "./_components/FindStudentToPay";
+import { loadOrders, orderReference } from "@/lib/retail/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ export default async function AdminFinanceiroReceberPage({ searchParams }: { sea
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const [overview, renewals, lateRows] = await Promise.all([
+  const [overview, renewals, lateRows, pendingOrders] = await Promise.all([
     getFinanceiroOverview(supabase, referenceMonth),
     getRenewalsPending(supabase, referenceMonth),
     fetchAllPages<LateRow>((from, to) =>
@@ -54,6 +55,7 @@ export default async function AdminFinanceiroReceberPage({ searchParams }: { sea
         .order("id")
         .range(from, to)
     ),
+    loadOrders(supabase, { statuses: ["PENDING_PAYMENT"] }),
   ]);
 
   const items: PorReceberItem[] = [];
@@ -70,6 +72,8 @@ export default async function AdminFinanceiroReceberPage({ searchParams }: { sea
     items.push({
       key: late ? late.id : `new-${r.studentId}`,
       group: "month",
+      kind: "TUITION",
+      orderId: null,
       studentId: r.studentId,
       name: r.studentName,
       phone: null,
@@ -89,6 +93,8 @@ export default async function AdminFinanceiroReceberPage({ searchParams }: { sea
     items.push({
       key: r.id,
       group: !isTuition ? "fees" : ref === referenceMonth ? "month" : "older",
+      kind: r.paymentType === "INSURANCE" ? "INSURANCE" : r.paymentType === "ENROLLMENT" ? "ENROLLMENT" : "TUITION",
+      orderId: null,
       studentId: r.studentId,
       name: "",
       phone: null,
@@ -104,8 +110,28 @@ export default async function AdminFinanceiroReceberPage({ searchParams }: { sea
     });
   }
 
+  // 3) Encomendas da loja por pagar (pré-encomendas).
+  for (const o of pendingOrders) {
+    const pieces = o.lines.reduce((a, l) => a + l.quantity, 0);
+    const products = [...new Set(o.lines.map((l) => l.productName))].join(", ");
+    items.push({
+      key: `order-${o.id}`,
+      group: "orders",
+      kind: "ORDER",
+      studentId: o.studentId ?? "",
+      name: o.customerName ?? "",
+      phone: o.customerPhone ?? null,
+      what: `Encomenda ${orderReference(o.number)}`,
+      detail: `${pieces} ${pieces === 1 ? "peça" : "peças"} · ${products}`,
+      amount: Number(o.totalAmount) || 0,
+      paymentId: null,
+      referenceMonth: null,
+      orderId: o.id,
+    });
+  }
+
   // Nomes e telefones
-  const studentIds = [...new Set(items.map((i) => i.studentId))];
+  const studentIds = [...new Set(items.map((i) => i.studentId).filter(Boolean))];
   const [students, profiles] = await Promise.all([
     inChunks(studentIds, async (ids) => (await supabase.from("Student").select("id, userId, status").in("id", ids)).data ?? []),
     inChunks(studentIds, async (ids) => (await supabase.from("StudentProfile").select("studentId, phone").in("studentId", ids)).data ?? []),
@@ -119,16 +145,16 @@ export default async function AdminFinanceiroReceberPage({ searchParams }: { sea
   const statusOf = new Map(students.map((s) => [s.id, (s as { status?: string }).status ?? ""]));
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
-    if (it.paymentId && !(it.group === "month" && it.referenceMonth === referenceMonth) && !["ATIVO", "INADIMPLENTE"].includes(statusOf.get(it.studentId) ?? "")) {
+    if (it.kind !== "ORDER" && it.paymentId && !(it.group === "month" && it.referenceMonth === referenceMonth) && !["ATIVO", "INADIMPLENTE"].includes(statusOf.get(it.studentId) ?? "")) {
       items.splice(i, 1);
     }
   }
   for (const it of items) {
     const u = userOfStudent.get(it.studentId);
     if (!it.name) it.name = u?.name || u?.email || "—";
-    it.phone = phoneOf.get(it.studentId) ?? null;
+    it.phone = phoneOf.get(it.studentId) ?? it.phone ?? null;
   }
-  const order = { month: 0, older: 1, fees: 2 } as const;
+  const order = { month: 0, older: 1, fees: 2, orders: 3 } as const;
   items.sort((a, b) => order[a.group] - order[b.group] || a.name.localeCompare(b.name, "pt", { sensitivity: "base" }));
 
   const toReceive = items.reduce((a, i) => a + i.amount, 0);
@@ -167,7 +193,7 @@ export default async function AdminFinanceiroReceberPage({ searchParams }: { sea
         </div>
         <PorReceberList items={items} />
         <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>
-          «Recebido» regista o valor indicado com a forma de pagamento escolhida. Para outro valor, usa «Outro valor»; para vários meses de uma vez, «Vários meses».
+          «Recebido» regista o valor indicado com a forma de pagamento escolhida (nas encomendas, confirma o pagamento como em Loja → Encomendas). Para outro valor, usa «Outro valor»; para vários meses de uma vez, «Vários meses».
         </p>
       </section>
     </div>
