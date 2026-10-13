@@ -118,8 +118,8 @@ export default async function ComoSouAvaliadoLayout({
         initialLocale={locale}
         headerTitle="KFS"
         headerExtra={headerExtra}
-        headerExtrasDesktopOnly={<ViewAsSwitcher />}
-        mobileBottomNavSheetLead={<ViewAsSwitcher />}
+        headerExtrasDesktopOnly={dbUser.role === "ADMIN" ? <ViewAsSwitcher /> : undefined}
+        mobileBottomNavSheetLead={dbUser.role === "ADMIN" ? <ViewAsSwitcher /> : undefined}
         headerAvatar={headerAvatar}
         mainClassName={mainShellClass}
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}

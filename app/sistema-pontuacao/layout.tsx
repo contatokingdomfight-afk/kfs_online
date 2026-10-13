@@ -118,8 +118,8 @@ export default async function SistemaPontuacaoLayout({
         initialLocale={locale}
         headerTitle="KFS"
         headerExtra={headerExtra}
-        headerExtrasDesktopOnly={<ViewAsSwitcher />}
-        mobileBottomNavSheetLead={<ViewAsSwitcher />}
+        headerExtrasDesktopOnly={dbUser.role === "ADMIN" ? <ViewAsSwitcher /> : undefined}
+        mobileBottomNavSheetLead={dbUser.role === "ADMIN" ? <ViewAsSwitcher /> : undefined}
         headerAvatar={headerAvatar}
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
         mainClassName={mainShellClass}
