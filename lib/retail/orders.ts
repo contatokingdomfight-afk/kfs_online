@@ -40,6 +40,7 @@ export type OrderLine = {
   productName: string;
   size: string | null;
   color: string | null;
+  fit?: string | null;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
@@ -87,8 +88,8 @@ type OrderRow = Omit<RetailOrder, "lines" | "totalAmount" | "number" | "subtotal
   discountAmount: number | string | null;
 };
 
-export function lineLabel(l: Pick<OrderLine, "size" | "color">): string {
-  return [l.color, l.size].filter(Boolean).join(" · ") || "Único";
+export function lineLabel(l: Pick<OrderLine, "size" | "color" | "fit">): string {
+  return [l.fit, l.color, l.size].filter(Boolean).join(" · ") || "Único";
 }
 
 /** Carrega encomendas (com linhas, produto e variante). */
@@ -112,9 +113,9 @@ export async function loadOrders(
 
   const variantIds = [...new Set(lines.map((l) => l.variantId))];
   const { data: variants } = variantIds.length
-    ? await supabase.from("ProductVariant").select("id, productId, size, color").in("id", variantIds)
+    ? await supabase.from("ProductVariant").select("id, productId, size, color, fit").in("id", variantIds)
     : { data: [] };
-  const variantById = new Map(((variants ?? []) as { id: string; productId: string; size: string | null; color: string | null }[]).map((v) => [v.id, v]));
+  const variantById = new Map(((variants ?? []) as { id: string; productId: string; size: string | null; color: string | null; fit: string | null }[]).map((v) => [v.id, v]));
   const productIds = [...new Set([...variantById.values()].map((v) => v.productId))];
   const { data: products } = productIds.length ? await supabase.from("Product").select("id, name, images").in("id", productIds) : { data: [] };
   const productName = new Map(((products ?? []) as { id: string; name: string }[]).map((p) => [p.id, p.name]));
@@ -137,6 +138,7 @@ export async function loadOrders(
           productName: v ? productName.get(v.productId) ?? "Produto" : "Produto",
           size: v?.size ?? null,
           color: v?.color ?? null,
+          fit: v?.fit ?? null,
           quantity: l.quantity,
           unitPrice: Number(l.unitPrice),
           lineTotal: Number(l.lineTotal),
@@ -147,7 +149,7 @@ export async function loadOrders(
   }));
 }
 
-export type PreorderVariant = { id: string; size: string | null; color: string | null; price: number };
+export type PreorderVariant = { id: string; size: string | null; color: string | null; fit: string | null; price: number };
 export type PreorderProduct = { id: string; name: string; description: string | null; schoolId: string | null; images: ProductImage[]; variants: PreorderVariant[] };
 
 /** Produtos ativos com pré-encomenda e as suas variantes ativas (preço efetivo). */
@@ -161,10 +163,10 @@ export async function loadPreorderProducts(supabase: SupabaseClient, opts: { pro
   if (products.length === 0) return [];
   const { data: vRows } = await supabase
     .from("ProductVariant")
-    .select("id, productId, size, color, priceOverride")
+    .select("id, productId, size, color, fit, priceOverride")
     .in("productId", products.map((p) => p.id))
     .eq("isActive", true);
-  const variants = (vRows ?? []) as { id: string; productId: string; size: string | null; color: string | null; priceOverride: number | string | null }[];
+  const variants = (vRows ?? []) as { id: string; productId: string; size: string | null; color: string | null; fit: string | null; priceOverride: number | string | null }[];
   return products.map((p) => ({
     id: p.id,
     name: p.name,
@@ -173,7 +175,7 @@ export async function loadPreorderProducts(supabase: SupabaseClient, opts: { pro
     images: parseProductImages(p.images),
     variants: variants
       .filter((v) => v.productId === p.id)
-      .map((v) => ({ id: v.id, size: v.size, color: v.color, price: Number(v.priceOverride ?? p.salePrice) })),
+      .map((v) => ({ id: v.id, size: v.size, color: v.color, fit: v.fit ?? null, price: Number(v.priceOverride ?? p.salePrice) })),
   }));
 }
 
@@ -265,8 +267,9 @@ export function supplierSummary(orders: RetailOrder[]): { product: string; color
   for (const o of orders) {
     if (o.status !== "PAID") continue;
     for (const l of o.lines) {
-      const key = `${l.productName}|${l.color ?? ""}`;
-      const g = groups.get(key) ?? { product: l.productName, color: l.color, sizes: new Map() };
+      const productLabel = l.fit ? `${l.productName} — ${l.fit}` : l.productName;
+      const key = `${productLabel}|${l.color ?? ""}`;
+      const g = groups.get(key) ?? { product: productLabel, color: l.color, sizes: new Map() };
       const size = l.size ?? "Único";
       g.sizes.set(size, (g.sizes.get(size) ?? 0) + l.quantity);
       groups.set(key, g);

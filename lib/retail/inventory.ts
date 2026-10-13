@@ -135,7 +135,7 @@ export async function listLowStock(
   const [{ data: variants }, { data: schools }] = await Promise.all([
     supabase
       .from("ProductVariant")
-      .select("id, productId, sku, size, color, priceOverride, isActive")
+      .select("id, productId, sku, size, color, fit, priceOverride, isActive")
       .in("id", variantIds),
     supabase.from("School").select("id, name").in("id", schoolIds),
   ]);
@@ -158,6 +158,7 @@ export async function listLowStock(
       sku: string;
       size: string | null;
       color: string | null;
+      fit: string | null;
       priceOverride: number | null;
       isActive: boolean;
     };
@@ -169,6 +170,7 @@ export async function listLowStock(
       sku: v.sku,
       size: v.size,
       color: v.color,
+      fit: v.fit ?? null,
       priceOverride: v.priceOverride != null ? Number(v.priceOverride) : null,
       isActive: v.isActive,
       productName: p.name,

@@ -10,6 +10,7 @@ import { PRODUCT_CATEGORIES, type ProductCategory, PAYMENT_METHODS, type RetailP
 import { recordStockMovement } from "@/lib/retail/inventory";
 import { createRetailSale } from "@/lib/retail/sales";
 import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
+import { buildCombos, comboKey, makeSku, type BatchInput } from "@/lib/retail/variant-batch";
 import { isOwnProductImageUrl, parseProductImages, productImagePath, type ProductImage } from "@/lib/retail/product-images";
 
 export type ActionResult = { error?: string; success?: boolean; id?: string };
@@ -106,6 +107,7 @@ export async function addProductVariant(_prev: ActionResult | null, formData: Fo
   const sku = (formData.get("sku") as string)?.trim();
   const size = (formData.get("size") as string)?.trim() || null;
   const color = (formData.get("color") as string)?.trim() || null;
+  const fit = (formData.get("fit") as string)?.trim() || null;
   const priceOverrideStr = (formData.get("priceOverride") as string)?.trim();
   if (!productId || !sku) return { error: "Produto e SKU são obrigatórios." };
 
@@ -124,6 +126,7 @@ export async function addProductVariant(_prev: ActionResult | null, formData: Fo
     sku,
     size,
     color,
+    fit,
     priceOverride: priceOverride != null ? priceOverride.toFixed(2) : null,
     isActive: true,
   });
@@ -414,4 +417,66 @@ export async function searchVariantsAction(query: string) {
   const supabase = createAdminClient();
   const variants = await searchVariantsForSale(supabase, query);
   return { variants };
+}
+
+/** Cria de uma vez as variantes versão × tamanho × cor de um produto (ignora as que já existem). */
+export async function createVariantsBatch(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const dbUser = await requireAdmin("admin:financeiro:write");
+  if (!dbUser) return { error: "Não autorizado." };
+
+  const productId = (formData.get("productId") as string)?.trim();
+  if (!productId) return { error: "Produto em falta." };
+
+  let input: BatchInput;
+  try {
+    const raw = JSON.parse(String(formData.get("batch") ?? "")) as BatchInput;
+    input = {
+      colors: (raw.colors ?? []).map((c) => String(c).trim()).filter(Boolean),
+      groups: (raw.groups ?? []).map((g) => ({
+        fit: String(g.fit ?? "").trim(),
+        sizes: (g.sizes ?? []).map((s) => String(s).trim()).filter(Boolean),
+        price: g.price != null && Number.isFinite(Number(g.price)) && Number(g.price) >= 0 ? Number(g.price) : null,
+      })),
+    };
+  } catch {
+    return { error: "Dados inválidos." };
+  }
+  const combos = buildCombos(input);
+  if (combos.length === 0) return { error: "Nada para criar." };
+  if (combos.length > 200) return { error: "Demasiadas variantes de uma vez (máx. 200)." };
+
+  const supabase = createAdminClient();
+  const { data: product } = await supabase.from("Product").select("sku").eq("id", productId).maybeSingle();
+  if (!product) return { error: "Produto não encontrado." };
+  const productSku = (product as { sku: string }).sku;
+
+  const { data: existing } = await supabase.from("ProductVariant").select("sku, size, color, fit").eq("productId", productId);
+  const have = new Set((existing ?? []).map((v) => comboKey(v as { fit: string | null; size: string | null; color: string | null })));
+  const usedSkus = new Set<string>((existing ?? []).map((v) => (v as { sku: string }).sku));
+
+  const rows: Record<string, unknown>[] = [];
+  for (const c of combos) {
+    if (have.has(comboKey(c))) continue;
+    const base = makeSku(productSku, c);
+    let sku = base;
+    for (let i = 2; usedSkus.has(sku); i++) sku = `${base}-${i}`;
+    usedSkus.add(sku);
+    rows.push({
+      id: crypto.randomUUID(),
+      productId,
+      sku,
+      size: c.size,
+      color: c.color,
+      fit: c.fit,
+      priceOverride: c.price != null ? c.price.toFixed(2) : null,
+      isActive: true,
+    });
+  }
+  if (rows.length === 0) return { error: "Todas essas variantes já existem." };
+
+  const { error } = await supabase.from("ProductVariant").insert(rows);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/loja/produtos");
+  revalidatePath("/dashboard/loja");
+  return { success: true };
 }

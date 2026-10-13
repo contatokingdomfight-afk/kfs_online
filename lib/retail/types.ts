@@ -30,6 +30,8 @@ export type ProductVariantRow = {
   sku: string;
   size: string | null;
   color: string | null;
+  /** Versão: Masculino, Feminino, Infantil… (null = única). */
+  fit?: string | null;
   priceOverride: number | null;
   isActive: boolean;
 };

@@ -71,14 +71,22 @@ export function OrderBuilder({
   const [state, formAction] = useActionState(action, null as Result);
   const [productId, setProductId] = useState(products[0]?.id ?? "");
   const product = products.find((p) => p.id === productId) ?? products[0];
-  const colors = useMemo(() => [...new Set((product?.variants ?? []).map((v) => v.color ?? ""))], [product]);
+  const fits = useMemo(() => [...new Set((product?.variants ?? []).map((v) => v.fit ?? ""))], [product]);
+  const [fit, setFit] = useState(fits.length === 1 ? fits[0] : "");
+  const needsFit = fits.length > 1;
+  /** Variantes da versão escolhida (ou todas, se o produto só tem uma versão). */
+  const pool = useMemo(
+    () => (product?.variants ?? []).filter((v) => !needsFit || (v.fit ?? "") === fit),
+    [product, needsFit, fit]
+  );
+  const colors = useMemo(() => [...new Set(pool.map((v) => v.color ?? ""))], [pool]);
   const [color, setColor] = useState(colors.length === 1 ? colors[0] : "");
   const sizes = useMemo(
     () =>
-      [...new Set((product?.variants ?? []).filter((v) => (v.color ?? "") === color || colors.length <= 1).map((v) => v.size ?? ""))].sort(
+      [...new Set(pool.filter((v) => (v.color ?? "") === color || colors.length <= 1).map((v) => v.size ?? ""))].sort(
         (a, b) => sizeRank(a) - sizeRank(b) || a.localeCompare(b)
       ),
-    [product, color, colors.length]
+    [pool, color, colors.length]
   );
   const [size, setSize] = useState("");
   const [qty, setQty] = useState(1);
@@ -103,7 +111,7 @@ export function OrderBuilder({
     }
   }, [state]);
 
-  const variant = product?.variants.find((v) => (v.color ?? "") === (colors.length <= 1 ? colors[0] ?? "" : color) && (v.size ?? "") === size);
+  const variant = pool.find((v) => (v.color ?? "") === (colors.length <= 1 ? colors[0] ?? "" : color) && (v.size ?? "") === size);
   const needsColor = colors.length > 1 && colors.some(Boolean);
   const needsSize = sizes.length > 1 || (sizes.length === 1 && sizes[0] !== "");
 
@@ -132,14 +140,17 @@ export function OrderBuilder({
     setProductId(id);
     setPickedImage(null);
     const p = products.find((x) => x.id === id);
-    const cs = [...new Set((p?.variants ?? []).map((v) => v.color ?? ""))];
+    const fs = [...new Set((p?.variants ?? []).map((v) => v.fit ?? ""))];
+    setFit(fs.length === 1 ? fs[0] : "");
+    const cs = fs.length > 1 ? [] : [...new Set((p?.variants ?? []).map((v) => v.color ?? ""))];
     setColor(cs.length === 1 ? cs[0] : "");
     setSize("");
   }
 
   function addLine() {
+    if (needsFit && !fit) return setHint("Escolhe a versão.");
     const sizeValue = needsSize ? size : sizes[0] ?? "";
-    const v = product?.variants.find((x) => (x.color ?? "") === (needsColor ? color : colors[0] ?? "") && (x.size ?? "") === sizeValue);
+    const v = pool.find((x) => (x.color ?? "") === (needsColor ? color : colors[0] ?? "") && (x.size ?? "") === sizeValue);
     if (needsColor && !color) return setHint("Escolhe a cor.");
     if (needsSize && !size) return setHint("Escolhe o tamanho.");
     if (!v) return setHint("Esta combinação não está disponível.");
@@ -203,6 +214,31 @@ export function OrderBuilder({
               ))}
             </select>
           </label>
+        )}
+
+        {needsFit && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={label}>Versão</span>
+            <div role="radiogroup" aria-label="Versão" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {fits.map((f) => (
+                <button
+                  key={f || "-"}
+                  type="button"
+                  role="radio"
+                  aria-checked={f === fit}
+                  onClick={() => {
+                    setFit(f);
+                    setSize("");
+                    const cs = [...new Set((product?.variants ?? []).filter((v) => (v.fit ?? "") === f).map((v) => v.color ?? ""))];
+                    setColor(cs.length === 1 ? cs[0] : "");
+                  }}
+                  style={chip(f === fit)}
+                >
+                  {f || "Única"}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {needsColor && (
@@ -275,7 +311,7 @@ export function OrderBuilder({
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: "block", fontSize: 14, fontWeight: 700 }}>
                       {l.quantity > 1 ? `${l.quantity}× ` : ""}
-                      {v?.productName} · {[v?.color, v?.size].filter(Boolean).join(" · ") || "Único"}
+                      {v?.productName} · {[v?.fit, v?.color, v?.size].filter(Boolean).join(" · ") || "Único"}
                     </span>
                     <span style={{ display: "block", fontSize: 12, color: "var(--text-secondary)" }}>{l.recipientNote ? `para: ${l.recipientNote}` : "para mim"}</span>
                   </span>

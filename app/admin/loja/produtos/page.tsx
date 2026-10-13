@@ -36,7 +36,7 @@ export default async function AdminLojaProdutosPage({
     listProducts(supabase),
     listSuppliers(supabase),
     supabase.from("School").select("id, name").eq("isActive", true).order("name"),
-    supabase.from("ProductVariant").select("id, productId, sku, size, color, priceOverride, isActive"),
+    supabase.from("ProductVariant").select("id, productId, sku, size, color, fit, priceOverride, isActive"),
   ]);
 
   const variantsByProduct: Record<string, ProductVariantRow[]> = {};
@@ -49,6 +49,7 @@ export default async function AdminLojaProdutosPage({
       sku: (v as { sku: string }).sku,
       size: (v as { size?: string | null }).size ?? null,
       color: (v as { color?: string | null }).color ?? null,
+      fit: (v as { fit?: string | null }).fit ?? null,
       priceOverride: (v as { priceOverride?: number | null }).priceOverride != null
         ? Number((v as { priceOverride: number }).priceOverride)
         : null,

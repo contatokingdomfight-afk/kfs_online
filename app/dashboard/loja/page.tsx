@@ -87,8 +87,8 @@ export default async function LojaPage({ searchParams }: Props) {
     }) as Array<{ id: string; name: string; description: string | null; category: ProductCategory; salePrice: number; allowPreorder?: boolean; images?: unknown }>;
     const ids = visible.map((p) => p.id);
     const { data: variants } = ids.length
-      ? await admin.from("ProductVariant").select("id, productId, size, color, priceOverride").in("productId", ids).eq("isActive", true)
-      : { data: [] as { id: string; productId: string; size: string | null; color: string | null; priceOverride: number | null }[] };
+      ? await admin.from("ProductVariant").select("id, productId, size, color, fit, priceOverride").in("productId", ids).eq("isActive", true)
+      : { data: [] as { id: string; productId: string; size: string | null; color: string | null; fit: string | null; priceOverride: number | null }[] };
     const variantIds = (variants ?? []).map((v) => v.id as string);
     const { data: balances } =
       variantIds.length && schoolId
@@ -99,7 +99,7 @@ export default async function LojaPage({ searchParams }: Props) {
     products = visible.map((p) => {
       const vs = (variants ?? []).filter((v) => v.productId === p.id);
       const prices = vs.length ? vs.map((v) => Number(v.priceOverride ?? p.salePrice)) : [Number(p.salePrice)];
-      const options = [...new Set(vs.map((v) => [v.size, v.color].filter(Boolean).join(" / ")).filter(Boolean))];
+      const options = [...new Set(vs.map((v) => [v.fit, v.size, v.color].filter(Boolean).join(" / ")).filter(Boolean))];
       return {
         id: p.id,
         name: p.name,

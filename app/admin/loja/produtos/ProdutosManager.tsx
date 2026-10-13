@@ -17,6 +17,7 @@ import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS_PT } from "@/lib/retail/constants";
 import type { ProductRow, ProductSupplierRow, ProductVariantRow } from "@/lib/retail/types";
 import { ProductImagesEditor } from "./ProductImagesEditor";
+import { BatchVariantsForm } from "./BatchVariantsForm";
 import { variantLabel } from "@/lib/retail/catalog";
 import styles from "./ProdutosTabs.module.css";
 
@@ -570,6 +571,7 @@ function VariantList({ productId, variants }: { productId: string; variants: Pro
 
   return (
     <div style={{ marginTop: 10 }}>
+      <BatchVariantsForm productId={productId} variants={variants} />
       <ul style={{ margin: "0 0 10px", paddingLeft: 16, fontSize: 13 }}>
         {activeVariants.map((v) => (
           <li key={v.id}>

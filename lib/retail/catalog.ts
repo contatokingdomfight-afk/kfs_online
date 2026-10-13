@@ -8,7 +8,7 @@ function effectivePrice(variant: ProductVariantRow, product: ProductRow): number
 }
 
 function variantLabel(variant: ProductVariantRow): string {
-  const parts = [variant.size, variant.color].filter(Boolean);
+  const parts = [variant.fit, variant.size, variant.color].filter(Boolean);
   return parts.length ? parts.join(" / ") : "Único";
 }
 
@@ -63,7 +63,7 @@ export async function getProductWithVariants(
 
   const { data: variants } = await supabase
     .from("ProductVariant")
-    .select("id, productId, sku, size, color, priceOverride, isActive")
+    .select("id, productId, sku, size, color, fit, priceOverride, isActive")
     .eq("productId", productId)
     .order("sku", { ascending: true });
 
@@ -101,6 +101,7 @@ export async function getProductWithVariants(
       sku: (v as { sku: string }).sku,
       size: (v as { size?: string | null }).size ?? null,
       color: (v as { color?: string | null }).color ?? null,
+      fit: (v as { fit?: string | null }).fit ?? null,
       priceOverride: (v as { priceOverride?: number | null }).priceOverride != null
         ? Number((v as { priceOverride: number }).priceOverride)
         : null,
@@ -125,7 +126,7 @@ export async function searchVariantsForSale(
   const productIds = products.map((p) => (p as { id: string }).id);
   const { data: variants } = await supabase
     .from("ProductVariant")
-    .select("id, productId, sku, size, color, priceOverride, isActive")
+    .select("id, productId, sku, size, color, fit, priceOverride, isActive")
     .in("productId", productIds)
     .eq("isActive", true);
 
