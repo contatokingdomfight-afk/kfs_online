@@ -69,6 +69,35 @@ export default async function MinhaEncomendaPage({ params, searchParams }: { par
         </p>
       </header>
 
+      <section className="card" aria-label="Estado da encomenda" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+        {cancelled ? (
+          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>Esta encomenda foi cancelada.</p>
+        ) : (
+          ORDER_FLOW.map((s, i) => {
+            const done = i < nowIdx;
+            const now = i === nowIdx;
+            return (
+              <div key={s} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: done || now ? "var(--text-primary)" : "var(--text-secondary)", fontWeight: now ? 800 : 500 }}>
+                {done ? (
+                  <CheckCircle2 size={20} color="var(--success)" aria-hidden />
+                ) : now ? (
+                  <Clock size={20} color="var(--warning)" aria-hidden />
+                ) : (
+                  <Circle size={20} aria-hidden />
+                )}
+                {s === "PAID" && now ? "À espera do pagamento" : STEP_LABEL[s]}
+              </div>
+            );
+          })
+        )}
+        {!cancelled && order.status !== "DELIVERED" && (
+          <p style={{ margin: "4px 0 0", display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: "var(--text-secondary)" }}>
+            <Bell size={15} aria-hidden />
+            Avisamos-te no sino quando estiver pronta a levantar.
+          </p>
+        )}
+      </section>
+
       <section className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
         {order.lines.map((l) => (
           <div key={l.id} style={{ display: "flex", gap: 10, fontSize: 14, alignItems: "center" }}>
@@ -124,35 +153,6 @@ export default async function MinhaEncomendaPage({ params, searchParams }: { par
           </div>
         </section>
       )}
-
-      <section className="card" aria-label="Estado da encomenda" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-        {cancelled ? (
-          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>Esta encomenda foi cancelada.</p>
-        ) : (
-          ORDER_FLOW.map((s, i) => {
-            const done = i < nowIdx;
-            const now = i === nowIdx;
-            return (
-              <div key={s} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: done || now ? "var(--text-primary)" : "var(--text-secondary)", fontWeight: now ? 800 : 500 }}>
-                {done ? (
-                  <CheckCircle2 size={20} color="var(--success)" aria-hidden />
-                ) : now ? (
-                  <Clock size={20} color="var(--warning)" aria-hidden />
-                ) : (
-                  <Circle size={20} aria-hidden />
-                )}
-                {s === "PAID" && now ? "À espera do pagamento" : STEP_LABEL[s]}
-              </div>
-            );
-          })
-        )}
-        {!cancelled && order.status !== "DELIVERED" && (
-          <p style={{ margin: "4px 0 0", display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: "var(--text-secondary)" }}>
-            <Bell size={15} aria-hidden />
-            Avisamos-te no sino quando estiver pronta a levantar.
-          </p>
-        )}
-      </section>
 
       {order.status === "PENDING_PAYMENT" && (
         <form action={cancelMyOrder}>

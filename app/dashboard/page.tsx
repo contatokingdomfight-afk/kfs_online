@@ -39,6 +39,7 @@ import { getMembershipDocumentsStatus } from "@/lib/membership-documents-status"
 import { PendingAdesaoCard } from "./PendingAdesaoCard";
 import { TrainingLoadAlert } from "./TrainingLoadAlert";
 import { HomeRpePrompt } from "./HomeRpePrompt";
+import { HomeOrderStatus } from "./HomeOrderStatus";
 import { HomeWellnessPrompt } from "./HomeWellnessPrompt";
 import { PendingAdesaoClickGuard } from "./PendingAdesaoClickGuard";
 
@@ -345,6 +346,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </h1>
         <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--text-secondary)", textTransform: "capitalize" }}>{todayLabel}</p>
       </header>
+      {studentId && (
+        <Suspense fallback={null}>
+          <HomeOrderStatus studentId={studentId} />
+        </Suspense>
+      )}
       {studentId && hasPlan && effectiveHasCheckIn && (
         <Suspense fallback={null}>
           <HomeRpePrompt studentId={studentId} locale={locale as "pt" | "en"} />

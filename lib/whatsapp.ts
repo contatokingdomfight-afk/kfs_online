@@ -72,10 +72,26 @@ export function buildFeesOverdueMessage(studentFirstName: string, whatLabel: str
 /** Encomenda da loja por pagar: dados para transferência e referência. */
 export function buildOrderPaymentMessage(
   name: string,
-  p: { reference: string; total: string; items: string; iban: string; recipient: string; revolut: string }
+  p: { reference: string; total: string; items: string; iban: string; recipient: string; revolut: string; descriptor?: string }
 ): string {
   const first = name.trim().split(" ")[0] || "tudo bem";
-  return `Olá ${first}! 👋 Aqui é da Kingdom Fight School. Recebemos a tua encomenda ${p.reference} (${p.items}) — total ${p.total}. Para confirmar, podes pagar por transferência: IBAN ${p.iban} (${p.recipient}) ou Revolut ${p.revolut}, com a referência ${p.reference} no descritivo. Também podes pagar na secretaria. Obrigado! 🥋`;
+  return [
+    `Olá ${first}! 👋`,
+    "",
+    `Recebemos a tua encomenda ${p.reference}! 🥋`,
+    p.items,
+    `Total: ${p.total}`,
+    "",
+    "Para confirmá-la, podes pagar por:",
+    `• Transferência IBAN ${p.iban} (${p.recipient})`,
+    `• Revolut ${p.revolut}`,
+    `• Numerário na secretaria`,
+    "",
+    `Usa «${p.descriptor?.trim() || p.reference}» no descritivo.`,
+    "",
+    "Obrigado!",
+    "Qualquer dúvida, estamos à disposição. 👊",
+  ].join("\n");
 }
 
 /** Encomenda pronta a levantar. */

@@ -51,6 +51,7 @@ function OrderActions({ o, c }: { o: RetailOrder; c: Customer }) {
         c.phone,
         buildOrderPaymentMessage(c.name, {
           reference: orderReference(o.number),
+          descriptor: [...new Set(o.lines.map((l) => l.productName))].join(", "),
           total: euro(o.totalAmount),
           items,
           iban: SCHOOL_PAYMENT_DETAILS.iban,
