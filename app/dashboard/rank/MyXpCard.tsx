@@ -31,7 +31,13 @@ export function MyXpCard({ summary, me, totalRanked, modality, modalityNames, ru
             <span className="ml-1 text-base font-semibold text-[var(--text-secondary)]">{modality ? "XP" : "/ 1000"}</span>
           </p>
         </div>
-        {me && (
+        {me && me.rank === 0 && (
+          <p className="m-0 text-right text-sm text-[var(--text-secondary)]">
+            <span className="block text-base font-bold text-[var(--primary)]">Fora do ranking</span>
+            conta de administrador
+          </p>
+        )}
+        {me && me.rank > 0 && (
           <p className="m-0 text-right text-sm text-[var(--text-secondary)]">
             <span className="block text-2xl font-bold text-[var(--primary)]">#{me.rank}</span>
             de {totalRanked}

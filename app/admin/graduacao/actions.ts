@@ -190,3 +190,74 @@ export async function setGraduationComponents(modalityCode: string, components: 
   revalidatePath(`/admin/graduacao/${modalityCode}`);
   return { success: true };
 }
+
+/**
+ * Atalho na ficha do aluno: atribui à mão o grau que o aluno já tinha noutra escola (ou limpa-o).
+ * `awardedDate` é a data real do grau (AAAA-MM-DD): o tempo de treino conta a partir dela.
+ * Alunos com grau obtido em exame aqui não são alterados.
+ */
+export async function setStudentGrade(input: {
+  studentId: string;
+  modalityCode: string;
+  gradeId: string | null;
+  awardedDate: string;
+  origin: string;
+}): Promise<{ error?: string; success?: boolean }> {
+  const auth = await authorize();
+  if ("error" in auth) return { error: auth.error };
+  const result = getAdminClientOrNull();
+  if (!result.client) return { error: "Configuração Supabase em falta." };
+  const supabase = result.client;
+
+  const { studentId, modalityCode, gradeId } = input;
+  if (!studentId || !modalityCode) return { error: "Dados em falta." };
+
+  const { data: exam } = await supabase
+    .from("StudentGrade")
+    .select("id")
+    .eq("studentId", studentId)
+    .eq("modalityCode", modalityCode)
+    .eq("source", "EXAM")
+    .limit(1);
+  if ((exam ?? []).length > 0) return { error: "Este aluno já tem um grau obtido em exame nesta modalidade." };
+
+  let when: Date | null = null;
+  let template: Awaited<ReturnType<typeof loadGraduationTemplate>> = null;
+  if (gradeId) {
+    template = await loadGraduationTemplate(supabase, modalityCode);
+    if (!template || !template.grades.some((g) => g.id === gradeId)) return { error: "Grau inválido para esta modalidade." };
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input.awardedDate.trim());
+    when = m ? new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0)) : null;
+    if (!when || Number.isNaN(when.getTime())) return { error: "Data inválida." };
+    if (when.getTime() > Date.now()) return { error: "A data do grau não pode ser no futuro." };
+  }
+
+  const { error: delErr } = await supabase
+    .from("StudentGrade")
+    .delete()
+    .eq("studentId", studentId)
+    .eq("modalityCode", modalityCode)
+    .in("source", ["MIGRATION", "MANUAL"]);
+  if (delErr) return { error: "Não foi possível atualizar o grau." };
+
+  if (gradeId && when) {
+    const origin = input.origin.trim().slice(0, 200);
+    const { error } = await supabase.from("StudentGrade").insert({
+      studentId,
+      modalityCode,
+      gradeId,
+      source: "MANUAL",
+      awardedAt: when.toISOString(),
+      awardedByUserId: auth.userId,
+      notes: origin ? `Grau de outra escola: ${origin}` : "Grau atribuído manualmente (outra escola)",
+    });
+    if (error) {
+      console.error("setStudentGrade insert:", error);
+      return { error: "Não foi possível gravar o grau." };
+    }
+  }
+
+  revalidatePath(`/admin/alunos/${studentId}`);
+  revalidatePath("/dashboard/graduacao");
+  return { success: true };
+}

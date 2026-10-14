@@ -244,9 +244,10 @@ export async function DashboardBelowFold({
     if (hasPerformanceTracking && schoolId) {
       const board = await getLeaderboardV2(supabase, { schoolId, modality: null, ageBucket: null, periodStart: null }, 200).catch(() => null);
       const me = board?.rows.find((r) => r.is_current_user) ?? null;
-      if (me) {
+      // rank 0 = conta de admin, fora do ranking.
+      if (me && me.rank > 0) {
         rankPosition = me.rank;
-        rankTotal = Math.max(board?.rows.length ?? 0, me.rank);
+        rankTotal = Math.max(board?.rows.filter((r) => r.rank > 0).length ?? 0, me.rank);
       }
     }
   }

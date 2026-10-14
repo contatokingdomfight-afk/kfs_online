@@ -99,10 +99,12 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
       ? await getEvolutionLeaderboard(supabase, leaderboardFilters, periodStart, calendarDateLisbon(new Date()), 100)
       : null;
 
-  const rows = xpResult?.rows ?? [];
+  const allRows = xpResult?.rows ?? [];
+  // Contas de admin vêm com rank 0 (fora do ranking): têm pontuação, mas não entram na lista nem nas posições.
+  const rows = allRows.filter((r) => r.rank > 0);
   const error = xpResult?.error ?? evolutionResult?.error ?? null;
   const displayGrades = rows.length ? await loadDisplayGrades(rows.map((r) => r.student_id)) : new Map();
-  const me = rows.find((r) => r.is_current_user) ?? null;
+  const me = allRows.find((r) => r.is_current_user) ?? null;
   // A RPC inclui sempre o aluno; se ficou fora do top, não conta para o total listado.
   const totalRanked = me && me.rank > rows.length ? me.rank : rows.length;
   const evolutionRows = evolutionResult?.rows ?? [];

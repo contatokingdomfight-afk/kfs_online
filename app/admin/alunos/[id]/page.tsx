@@ -20,6 +20,7 @@ import { SchoolAssistantCoachControls } from "@/components/SchoolAssistantCoachC
 import { CompetitionAthleteControls } from "@/components/CompetitionAthleteControls";
 import { StudentContactDataSection } from "@/components/students/StudentContactDataSection";
 import Link from "next/link";
+import { StudentGradeAssign } from "./StudentGradeAssign";
 import { CheckCircle2, ChevronRight, Dumbbell, FileText, Settings2, Shield, Wallet } from "lucide-react";
 import { loadStudentAdminSummary } from "@/lib/admin-student-ficha";
 import { buildMissYouMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -217,6 +218,8 @@ export default async function AdminAlunoOverviewPage({ params }: Props) {
           </div>
         )}
       </section>
+
+      <StudentGradeAssign supabase={supabase} studentId={studentId} />
 
       <section style={{ marginTop: 18 }}>
         <h2 style={sectionTitle}>Contacto</h2>
