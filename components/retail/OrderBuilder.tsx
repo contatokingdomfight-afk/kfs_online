@@ -21,6 +21,9 @@ function euro(n: number): string {
 }
 
 const chip = (on: boolean): React.CSSProperties => ({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
   minWidth: 46,
   minHeight: 40,
   padding: "0 12px",
@@ -355,7 +358,7 @@ export function OrderBuilder({
             setStep("cart");
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          style={{ position: "sticky", bottom: "calc(12px + env(safe-area-inset-bottom, 0px))", zIndex: 5, minHeight: 52, fontSize: 16, fontWeight: 800, boxShadow: "0 6px 20px rgba(0,0,0,0.35)" }}
+          style={{ minHeight: 52, fontSize: 16, fontWeight: 800 }}
         >
           Ver encomenda · {lines.reduce((a, l) => a + l.quantity, 0)} {lines.reduce((a, l) => a + l.quantity, 0) === 1 ? "peça" : "peças"} · {euro(total)}
         </button>
