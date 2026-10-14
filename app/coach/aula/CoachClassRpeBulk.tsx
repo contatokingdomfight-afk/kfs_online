@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Gauge } from "lucide-react";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { setCoachRpeFromForm } from "./actions";
 
 function RpeButton({ n }: { n: number }) {
@@ -41,6 +42,7 @@ export function CoachClassRpeBulk({
       action={action}
       style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14, marginBottom: 16, borderRadius: 14, border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
     >
+      <FormLoadingModal message="A guardar a nota de esforço…" />
       <input type="hidden" name="lessonId" value={lessonId} />
       <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
       {attendanceIds.map((id) => (

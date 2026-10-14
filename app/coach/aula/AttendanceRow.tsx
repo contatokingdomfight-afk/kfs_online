@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { setAttendanceStatusFromForm, coachCheckInStudentFromForm, setCoachRpeFromForm } from "./actions";
 import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 
 type WellnessZone = "GREEN" | "YELLOW" | "RED";
@@ -188,6 +189,7 @@ export function AttendanceRow({
               </span>
               {coachCanSetRpe && attendanceId ? (
                 <form action={rpeAction} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <FormLoadingModal message="A guardar a nota de esforço…" />
                   <input type="hidden" name="lessonId" value={lessonId} readOnly />
                   <input type="hidden" name="occurrenceDate" value={occurrenceDate} readOnly />
                   <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
