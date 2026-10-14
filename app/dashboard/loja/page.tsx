@@ -234,6 +234,9 @@ export default async function LojaPage({ searchParams }: Props) {
                   ) : (
                     <CategoryIcon category={p.category} size={46} />
                   )}
+                  {p.preorder ? (
+                    <Link href={`/dashboard/loja/encomendar/${p.id}`} aria-label={`${pt ? "Encomendar" : "Order"} ${p.name}`} style={{ position: "absolute", inset: 0 }} />
+                  ) : null}
                   <span
                     style={{
                       position: "absolute",

@@ -8,6 +8,7 @@ import { CopyTextButton } from "@/components/ui/CopyTextButton";
 import { lineLabel, loadOrders, ORDER_FLOW, ORDER_STATUS_LABEL_PT, orderReference, type OrderStatus } from "@/lib/retail/orders";
 import { cancelMyOrder } from "../../actions";
 import { ProofUploadForm } from "./ProofUploadForm";
+import { ClearSavedCart } from "@/components/retail/ClearSavedCart";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,7 @@ export default async function MinhaEncomendaPage({ params, searchParams }: { par
         Loja
       </Link>
 
+      {nova === "1" && <ClearSavedCart />}
       {nova === "1" && (
         <div role="status" style={{ padding: "12px 14px", borderRadius: 12, background: "rgba(74,222,128,0.12)", border: "1px solid var(--success)", fontSize: 14, fontWeight: 700 }}>
           Encomenda enviada! Falta só o pagamento para a confirmarmos.

@@ -57,6 +57,7 @@ export function OrderBuilder({
   extraFields,
   promotions = [],
   checkCoupon,
+  storageKey,
 }: {
   products: PreorderProduct[];
   action: (prev: Result, formData: FormData) => Promise<Result>;
@@ -67,6 +68,8 @@ export function OrderBuilder({
   promotions?: PromotionRule[];
   /** Valida o cupão no servidor; sem isto não aparece o campo do cupão. */
   checkCoupon?: (code: string) => Promise<{ coupon?: CouponRule; error?: string }>;
+  /** Guarda o carrinho no telemóvel (para não se perder ao sair sem querer). Sem isto, não guarda. */
+  storageKey?: string;
 }) {
   const [state, formAction] = useActionState(action, null as Result);
   const [productId, setProductId] = useState(products[0]?.id ?? "");
@@ -100,11 +103,50 @@ export function OrderBuilder({
   const [coupon, setCoupon] = useState<CouponRule | null>(null);
   const [couponMsg, setCouponMsg] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  /** Passo 1 = escolher peças; passo 2 = ver a encomenda e enviar. */
+  const [step, setStep] = useState<"pick" | "cart">("pick");
+  const [added, setAdded] = useState(false);
+  const cartLoaded = useRef(false);
+
+  // Recupera o carrinho guardado (só peças que ainda existem).
+  useEffect(() => {
+    if (!storageKey) {
+      cartLoaded.current = true;
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      const known = new Set(products.flatMap((pr) => pr.variants.map((v) => v.id)));
+      const productOf = new Map(products.flatMap((pr) => pr.variants.map((v) => [v.id, pr.id] as const)));
+      const saved = raw ? (JSON.parse(raw) as { variantId: string; quantity: number; recipientNote?: string }[]) : [];
+      const restored = saved
+        .filter((l) => known.has(l.variantId) && Number.isInteger(l.quantity) && l.quantity > 0)
+        .map((l) => ({ key: crypto.randomUUID(), productId: productOf.get(l.variantId) ?? "", variantId: l.variantId, quantity: Math.min(20, l.quantity), recipientNote: l.recipientNote ?? "" }));
+      if (restored.length) setLines(restored);
+    } catch {
+      /* sem armazenamento: segue sem carrinho guardado */
+    }
+    cartLoaded.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só no arranque
+  }, []);
+
+  useEffect(() => {
+    if (!storageKey || !cartLoaded.current) return;
+    try {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify(lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity, recipientNote: l.recipientNote })))
+      );
+    } catch {
+      /* ignora */
+    }
+  }, [lines, storageKey]);
 
   // Encomenda registada (admin): limpa o formulário para a próxima.
   useEffect(() => {
     if (state?.success) {
       setLines([]);
+      setStep("pick");
       setCoupon(null);
       setCouponInput("");
       formRef.current?.reset();
@@ -156,6 +198,8 @@ export function OrderBuilder({
     if (!v) return setHint("Esta combinação não está disponível.");
     setHint(null);
     setLines((ls) => [...ls, { key: crypto.randomUUID(), productId: product!.id, variantId: v.id, quantity: qty, recipientNote: note.trim() }]);
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 2200);
     setQty(1);
     setNote("");
     setSize("");
@@ -170,7 +214,7 @@ export function OrderBuilder({
 
       {extraFields}
 
-      <section className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+      <section className="card" style={{ padding: 16, display: step === "pick" ? "flex" : "none", flexDirection: "column", gap: 14 }}>
         {product.images.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {/* eslint-disable-next-line @next/next/no-img-element -- foto do bucket público */}
@@ -296,12 +340,43 @@ export function OrderBuilder({
         <button type="button" className="btn btn-secondary" onClick={addLine} style={{ minHeight: 46, fontWeight: 700 }}>
           Adicionar à encomenda{variant ? ` · ${euro(variant.price * qty)}` : ""}
         </button>
+        {added && (
+          <p role="status" style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--success)" }}>
+            Adicionado à encomenda. Podes escolher mais peças ou ver a encomenda.
+          </p>
+        )}
       </section>
 
-      <section className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-        <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>A encomenda</h2>
+      {step === "pick" && lines.length > 0 && (
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => {
+            setStep("cart");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          style={{ position: "sticky", bottom: "calc(12px + env(safe-area-inset-bottom, 0px))", zIndex: 5, minHeight: 52, fontSize: 16, fontWeight: 800, boxShadow: "0 6px 20px rgba(0,0,0,0.35)" }}
+        >
+          Ver encomenda · {lines.reduce((a, l) => a + l.quantity, 0)} {lines.reduce((a, l) => a + l.quantity, 0) === 1 ? "peça" : "peças"} · {euro(total)}
+        </button>
+      )}
+
+      <section className="card" style={{ padding: 16, display: step === "cart" ? "flex" : "none", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>A tua encomenda</h2>
+          <button
+            type="button"
+            onClick={() => {
+              setStep("pick");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            style={{ ...chip(false), minHeight: 36, fontSize: 13 }}
+          >
+            ← Continuar a escolher
+          </button>
+        </div>
         {lines.length === 0 ? (
-          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>Ainda sem peças. Escolhe acima e carrega em «Adicionar à encomenda».</p>
+          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>Ainda sem peças. Volta atrás e carrega em «Adicionar à encomenda».</p>
         ) : (
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
             {lines.map((l) => {

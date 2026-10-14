@@ -47,6 +47,7 @@ export default async function EncomendarPage({ params }: { params: Promise<{ pro
       {product.description ? <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>{product.description}</p> : null}
 
       <OrderBuilder
+        storageKey={`kfs-loja-carrinho-${product.id}`}
         products={[product]}
         action={createMyOrder}
         submitLabel="Enviar encomenda"
