@@ -6,6 +6,7 @@
 export type AdminTodoKind =
   | "pagamentos"
   | "seguros"
+  | "encomendas"
   | "vencer"
   | "risco"
   | "semplano"
@@ -16,7 +17,7 @@ export type AdminTodoKind =
   | "experimentais"
   | "aniversarios";
 
-export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "vencer", "risco", "semplano", "carga", "adesao", "fisicas", "exame", "experimentais", "aniversarios"];
+export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "risco", "semplano", "carga", "adesao", "fisicas", "exame", "experimentais", "aniversarios"];
 
 /** Prazo da mensalidade: dia 8 do mês de referência (ver lib/lisbon-payment-dates.ts). */
 export const TUITION_DUE_DAY = 8;
@@ -119,6 +120,7 @@ export function todoDoneKey(kind: AdminTodoKind, parts: { id: string; ref?: stri
   switch (kind) {
     case "pagamentos":
     case "seguros":
+    case "encomendas":
     case "adesao":
       return `${parts.id}:${parts.ref ?? ""}:${weekKey(parts.today)}`;
     case "aniversarios":

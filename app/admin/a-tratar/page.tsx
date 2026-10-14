@@ -7,6 +7,7 @@ import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { loadAdminTodo, type AdminTodoGroup, type AdminTodoItem } from "@/lib/admin-todo";
 import { ADMIN_TODO_ORDER, type AdminTodoKind } from "@/lib/admin-todo-rules";
 import { BulkTodoButton, TodoActionButton, WhatsAppSequence } from "./TodoButtons";
+import { confirmOrderPayment } from "@/app/admin/loja/encomendas/actions";
 import { TONE_COLOR, todoIcon } from "./todo-ui";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ const ACTION_LABEL: Record<string, string> = { done: "feito", contactado: "conta
 const KIND_TITLE: Record<AdminTodoKind, string> = {
   pagamentos: "Pagamentos",
   seguros: "Seguro / matrícula",
+  encomendas: "Encomenda",
   vencer: "Mensalidade a vencer",
   semplano: "Sem plano",
   exame: "Apto para exame",
@@ -41,6 +43,24 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
   ) : null;
 
   let primary: ReactNode = waLink;
+  if (item.kind === "encomendas" && item.orderId)
+    primary = (
+      <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
+        {waLink}
+        <form action={confirmOrderPayment} style={{ display: "inline-flex", gap: 6 }}>
+          <input type="hidden" name="orderId" value={item.orderId} />
+          <select name="paymentMethod" defaultValue="TRANSFER" aria-label="Forma de pagamento" className="input" style={{ minHeight: 36, width: "auto", fontSize: 13 }}>
+            <option value="TRANSFER">Transferência / Revolut</option>
+            <option value="MBWAY">MBWay</option>
+            <option value="CASH">Dinheiro</option>
+            <option value="DEPOSIT">Depósito</option>
+          </select>
+          <button type="submit" style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg)", fontSize: 13, fontWeight: 800, color: "var(--text-primary)", cursor: "pointer", whiteSpace: "nowrap" }}>
+            Recebido
+          </button>
+        </form>
+      </span>
+    );
   if (item.kind === "adesao") primary = <TodoActionButton action="remind" item={fields} label="Lembrar" variant="primary" />;
   if (item.kind === "fisicas")
     primary = item.requested ? (
@@ -78,14 +98,14 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
 /** Ação em lote do alerta (no cabeçalho). */
 function BulkControl({ g, schoolId }: { g: AdminTodoGroup; schoolId: string | null }) {
   if (g.items.length === 0) return null;
-  if (g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "vencer" || g.kind === "risco" || g.kind === "semplano" || g.kind === "experimentais" || g.kind === "aniversarios") {
+  if (g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "encomendas" || g.kind === "vencer" || g.kind === "risco" || g.kind === "semplano" || g.kind === "experimentais" || g.kind === "aniversarios") {
     const withPhone = g.items.filter((it) => it.whatsappUrl);
     const missing = g.items.length - withPhone.length;
     return (
       <span className="todo-bulk-stack">
         <WhatsAppSequence
           items={withPhone.map((it) => ({ kind: it.kind, doneKey: it.key, studentId: it.studentId, label: it.name, url: it.whatsappUrl! }))}
-          doneAction={g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "vencer" ? "lembrete" : g.kind === "aniversarios" ? "parabéns" : "contactado"}
+          doneAction={g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "encomendas" || g.kind === "vencer" ? "lembrete" : g.kind === "aniversarios" ? "parabéns" : "contactado"}
         />
         {missing > 0 ? <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{missing} sem telefone</span> : null}
       </span>

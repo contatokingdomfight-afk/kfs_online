@@ -13,12 +13,15 @@ import {
   buildDueSoonMessage,
   buildFeesOverdueMessage,
   buildMissYouMessage,
+  buildOrderPaymentMessage,
   buildPaymentOverdueMessage,
   buildTrialFollowUpMessage,
   buildWhatsAppUrl,
 } from "@/lib/whatsapp";
 import { computeTrainingLoad } from "@/lib/training-load";
 import { loadTrainingSessions } from "@/lib/training-load.server";
+import { SCHOOL_PAYMENT_DETAILS } from "@/lib/enrollment-form";
+import { lineLabel, loadOrders, orderReference } from "@/lib/retail/orders";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
 import {
   ADMIN_TODO_ORDER,
@@ -53,6 +56,8 @@ export type AdminTodoItem = {
   href: string | null;
   /** Já há um pedido de avaliação física pendente. */
   requested?: boolean;
+  /** Encomendas da loja: id da encomenda (para «Recebido»). */
+  orderId?: string;
 };
 
 export type AdminTodoGroup = {
@@ -251,6 +256,62 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .sort((a, b) => b.urgency - a.urgency);
   const feesTotal = seguros.reduce((acc, it) => acc + (fees.get(it.studentId!)?.total ?? 0), 0);
   const feesTraining = seguros.filter((it) => feeTrainedRecently.has(it.studentId!)).length;
+
+  // --- Encomendas da loja por pagar ---
+  const orderRows = (await loadOrders(supabase, { statuses: ["PENDING_PAYMENT"], limit: 100 })).filter(
+    (o) => !schoolId || !o.schoolId || o.schoolId === schoolId
+  );
+  const orderStudentIds = [...new Set(orderRows.map((o) => o.studentId).filter((x): x is string => Boolean(x)))];
+  const orderCustomer = new Map<string, { name: string; phone: string | null }>();
+  if (orderStudentIds.length) {
+    const { data: sRows } = await supabase.from("Student").select("id, userId").in("id", orderStudentIds);
+    const uIds = [...new Set(((sRows ?? []) as { userId: string }[]).map((r) => r.userId))];
+    const [{ data: uRows }, { data: pRows }] = await Promise.all([
+      supabase.from("User").select("id, name, email").in("id", uIds),
+      supabase.from("StudentProfile").select("studentId, phone").in("studentId", orderStudentIds),
+    ]);
+    const uName = new Map(((uRows ?? []) as { id: string; name: string | null; email: string | null }[]).map((u) => [u.id, u.name?.trim() || u.email || "—"]));
+    const phoneOf = new Map(((pRows ?? []) as { studentId: string; phone: string | null }[]).map((r) => [r.studentId, r.phone]));
+    for (const r of (sRows ?? []) as { id: string; userId: string }[]) {
+      orderCustomer.set(r.id, { name: uName.get(r.userId) ?? "—", phone: phoneOf.get(r.id) ?? null });
+    }
+  }
+  const encomendas: AdminTodoItem[] = orderRows
+    .map((o) => {
+      const c = o.studentId ? orderCustomer.get(o.studentId) : null;
+      const name = c?.name ?? o.customerName ?? "Cliente";
+      const phone = c?.phone ?? o.customerPhone ?? null;
+      const days = Math.max(0, daysBetween(o.createdAt.slice(0, 10), today));
+      const items = o.lines.map((l) => `${l.quantity}× ${l.productName} ${lineLabel(l)}`).join(", ");
+      const total = `${o.totalAmount % 1 === 0 ? o.totalAmount.toFixed(0) : o.totalAmount.toFixed(2).replace(".", ",")} €`;
+      const msg = buildOrderPaymentMessage(name, {
+        reference: orderReference(o.number),
+        descriptor: [...new Set(o.lines.map((l) => l.productName))].join(", "),
+        total,
+        items,
+        iban: SCHOOL_PAYMENT_DETAILS.iban,
+        recipient: SCHOOL_PAYMENT_DETAILS.recipientName,
+        revolut: SCHOOL_PAYMENT_DETAILS.revolutTag,
+      });
+      return {
+        kind: "encomendas" as const,
+        key: todoDoneKey("encomendas", { id: o.id, ref: null, today }),
+        studentId: o.studentId,
+        name,
+        cells: [
+          { text: `${orderReference(o.number)} · ${items}` },
+          { text: total },
+          { text: days === 0 ? "hoje" : `há ${days} ${dayWord(days)}`, tone: days >= 7 ? ("red" as const) : undefined },
+        ],
+        urgency: days,
+        whatsappUrl: phone ? buildWhatsAppUrl(phone, msg) : null,
+        href: "/admin/loja/encomendas",
+        orderId: o.id,
+      };
+    })
+    .filter(notDone)
+    .sort((a, b) => b.urgency - a.urgency);
+  const ordersTotal = orderRows.reduce((acc, o) => (encomendas.some((e) => e.orderId === o.id) ? acc + o.totalAmount : acc), 0);
 
   // --- Em risco de sair: ativos com plano sem treinar há 14+ dias ---
   const lastTraining = new Map<string, string>();
@@ -559,6 +620,12 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
       summary: seguros.length ? `${feesTotal.toFixed(0)} € · ${feesTraining} a treinar sem seguro pago` : "",
       info: "Alunos ativos ou inadimplentes com o seguro desportivo ou a matrícula em atraso. Primeiro quem treinou nos últimos 30 dias (está a treinar sem seguro pago). Ao marcar «Feito», volta na semana seguinte se continuar por pagar.",
       columns: ["Aluno", "Falta", "Valor", "Treinos", ""],
+    },
+    encomendas: {
+      kind: "encomendas", tone: "amber", title: "Encomendas por pagar", items: encomendas,
+      summary: encomendas.length ? `${ordersTotal.toFixed(0)} € por receber · a mais antiga: há ${encomendas[0].urgency} ${dayWord(encomendas[0].urgency)}` : "",
+      info: "Encomendas da loja ainda por pagar (pré-encomendas dos alunos e dos amigos). Confirma o pagamento aqui ou envia o lembrete por WhatsApp. Sai da lista quando é paga ou cancelada.",
+      columns: ["Cliente", "Encomenda", "Valor", "Feita", ""],
     },
     vencer: {
       kind: "vencer", tone: "amber", title: "Mensalidades a vencer", items: vencer,
