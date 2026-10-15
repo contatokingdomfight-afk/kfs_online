@@ -39,6 +39,7 @@ const publicPaths = [
   "/mma-sintra",
   "/robots.txt",
   "/sitemap.xml",
+  "/diagnostico-sessao",
 ];
 
 /** Aluno sem plano: onboarding, escolher plano, adesão, callback OAuth e free tier. */
