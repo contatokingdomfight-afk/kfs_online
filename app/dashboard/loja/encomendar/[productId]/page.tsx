@@ -19,11 +19,10 @@ export default async function EncomendarPage({ params }: { params: Promise<{ pro
   const studentId = await getCurrentStudentId();
   const { data: student } = studentId ? await admin.from("Student").select("schoolId").eq("id", studentId).maybeSingle() : { data: null };
   const schoolId = (student as { schoolId?: string | null } | null)?.schoolId ?? null;
-  const [product] = await loadPreorderProducts(admin, { productId, schoolId });
-  if (!product || product.variants.length === 0) notFound();
-  const promotions = (await loadActivePromotions(admin)).filter((p) => p.productId == null || p.productId === product.id);
-  const prices = product.variants.map((v) => v.price);
-  const minPrice = Math.min(...prices);
+  const products = (await loadPreorderProducts(admin, { schoolId })).filter((p) => p.variants.length > 0);
+  const product = products.find((p) => p.id === productId);
+  if (!product) notFound();
+  const promotions = await loadActivePromotions(admin);
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: 16, paddingBottom: 24 }}>
@@ -32,23 +31,21 @@ export default async function EncomendarPage({ params }: { params: Promise<{ pro
         Loja
       </Link>
       <header style={{ display: "flex", gap: 14, alignItems: "center" }}>
-        {product.images.length === 0 && (
-          <span aria-hidden style={{ width: 64, height: 64, flexShrink: 0, borderRadius: 16, background: "linear-gradient(135deg, #0c2340 0%, #1e3a8a 100%)", color: "#93c5fd", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Shirt size={32} />
-          </span>
-        )}
+        <span aria-hidden style={{ width: 52, height: 52, flexShrink: 0, borderRadius: 16, background: "linear-gradient(135deg, #0c2340 0%, #1e3a8a 100%)", color: "#93c5fd", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Shirt size={26} />
+        </span>
         <div style={{ minWidth: 0 }}>
-          <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 800 }}>{product.name}</h1>
+          <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 800 }}>Pré-encomenda</h1>
           <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
-            {prices.every((p) => p === minPrice) ? `${minPrice.toFixed(0)} €` : `desde ${minPrice.toFixed(0)} €`} · pré-encomenda
+            {products.length > 1 ? "Escolhe as peças e junta tudo numa só encomenda." : product.name}
           </p>
         </div>
       </header>
-      {product.description ? <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>{product.description}</p> : null}
 
       <OrderBuilder
-        storageKey={`kfs-loja-carrinho-${product.id}`}
-        products={[product]}
+        storageKey="kfs-loja-carrinho"
+        products={products}
+        initialProductId={product.id}
         action={createMyOrder}
         submitLabel="Enviar encomenda"
         promotions={promotions}

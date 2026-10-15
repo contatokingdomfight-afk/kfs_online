@@ -7,6 +7,8 @@ export type RankBoardEntry = {
   isMe: boolean;
   /** O nome é a alcunha do aluno (mostra-se inteira, sem cortar ao primeiro nome). */
   isNickname?: boolean;
+  /** Variação de posição desde o início da semana (positivo = subiu). */
+  delta?: number | null;
   /** Valor principal (pontos, XP ou evolução), já formatado. */
   value: string;
   valueColor?: string;
@@ -164,7 +166,15 @@ export function RankBoard({ entries, youLabel, footer }: { entries: RankBoardEnt
                 boxShadow: e.isMe ? "inset 3px 0 0 var(--primary)" : undefined,
               }}
             >
-              <span style={{ minWidth: 28, fontSize: 14, fontWeight: 800, color: "var(--text-secondary)", textAlign: "center" }}>{e.rank}</span>
+              <span style={{ minWidth: 28, fontSize: 14, fontWeight: 800, color: "var(--text-secondary)", textAlign: "center" }}>
+                {e.rank}
+                {e.delta ? (
+                  <span aria-label={e.delta > 0 ? `Subiu ${e.delta}` : `Desceu ${Math.abs(e.delta)}`} style={{ display: "block", fontSize: 10, fontWeight: 800, color: e.delta > 0 ? "var(--success)" : "var(--danger)" }}>
+                    {e.delta > 0 ? "▲" : "▼"}
+                    {Math.abs(e.delta)}
+                  </span>
+                ) : null}
+              </span>
               <Avatar name={e.name} size={36} ring={e.isMe ? "var(--primary)" : undefined} />
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

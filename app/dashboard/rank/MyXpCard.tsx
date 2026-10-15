@@ -4,6 +4,9 @@ import type { LeaderboardV2Row } from "@/lib/leaderboard";
 type Props = {
   summary: XpSummary;
   me: LeaderboardV2Row | null;
+  /** Variação desde o início da semana (positivo = subiu) e texto pronto. */
+  rankDelta?: number | null;
+  rankDeltaText?: string | null;
   totalRanked: number;
   modality: string | null;
   modalityNames: Map<string, string>;
@@ -13,7 +16,7 @@ type Props = {
 };
 
 /** Cartão "O teu XP": posição, pontuação/XP, XP por modalidade e por fonte, e como funciona. */
-export function MyXpCard({ summary, me, totalRanked, modality, modalityNames, rules, periodLabel, locale }: Props) {
+export function MyXpCard({ summary, me, totalRanked, modality, modalityNames, rules, periodLabel, locale, rankDelta = null, rankDeltaText = null }: Props) {
   const fmt = (n: number) => n.toLocaleString(locale === "en" ? "en-GB" : "pt-PT");
   const nameOf = (code: string) => modalityNames.get(code) ?? code;
   const maxSource = Math.max(1, ...summary.bySource.map((s) => s.xp));
@@ -41,6 +44,12 @@ export function MyXpCard({ summary, me, totalRanked, modality, modalityNames, ru
           <p className="m-0 text-right text-sm text-[var(--text-secondary)]">
             <span className="block text-2xl font-bold text-[var(--primary)]">#{me.rank}</span>
             de {totalRanked}
+            {rankDeltaText ? (
+              <span className="mt-1 block text-xs font-bold" style={{ color: rankDelta != null && rankDelta > 0 ? "var(--success)" : rankDelta != null && rankDelta < 0 ? "var(--danger)" : "var(--text-secondary)" }}>
+                {rankDelta != null && rankDelta > 0 ? "▲ " : rankDelta != null && rankDelta < 0 ? "▼ " : "= "}
+                {rankDeltaText}
+              </span>
+            ) : null}
           </p>
         )}
       </div>

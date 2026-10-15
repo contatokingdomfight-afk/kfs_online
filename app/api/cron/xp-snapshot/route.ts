@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authorizeCronRequest } from "@/lib/cron/authorize-cron";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
+import { ensureWeeklyRankSnapshot } from "@/lib/rank-snapshot";
 
 const BATCH = 500;
 
@@ -27,9 +28,17 @@ export async function GET(request: NextRequest) {
     .select("id, xp, student:Student!inner(status)")
     .eq("student.status", "ATIVO");
 
+  // Histórico do ranking: cria o registo da semana (segunda-feira) se ainda não existir.
+  let rank: { weekStart: string; schools: number; rows: number } | null = null;
+  try {
+    rank = await ensureWeeklyRankSnapshot(supabase);
+  } catch (e) {
+    console.error("[xp-snapshot] rank snapshot", e);
+  }
+
   const list = (rows ?? []) as { id: string; xp: number | null }[];
   if (list.length === 0) {
-    return NextResponse.json({ ok: true, count: 0 });
+    return NextResponse.json({ ok: true, count: 0, rank });
   }
 
   let count = 0;
@@ -47,5 +56,5 @@ export async function GET(request: NextRequest) {
     else console.error("[xp-snapshot] upsert", error);
   }
 
-  return NextResponse.json({ ok: true, count });
+  return NextResponse.json({ ok: true, count, rank });
 }

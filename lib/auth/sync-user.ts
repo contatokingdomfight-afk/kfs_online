@@ -150,13 +150,19 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     console.log("[syncUser] Student encontrado:", student.id);
   }
 
-  // Não incluir avatarUrl aqui: a coluna pode não existir em todas as BD (Prisma User sem avatarUrl).
-  // O perfil volta a ler avatar noutras queries quando a coluna existir.
-  const { data: user, error: userFetchErr } = await supabase
+  // avatarUrl vem na mesma consulta (o cabeçalho e a Conta mostram a foto). Se a coluna não existir
+  // nesta BD (erro 42703), repete sem ela para nunca bloquear o login.
+  const base = "id, authUserId, email, name, role, createdAt";
+  let { data: user, error: userFetchErr } = (await supabase
     .from("User")
-    .select("id, authUserId, email, name, role, createdAt")
+    .select(`${base}, avatarUrl`)
     .eq("id", userId)
-    .single();
+    .single()) as { data: any; error: { code?: string; message?: string } | null }; // eslint-disable-line @typescript-eslint/no-explicit-any -- cliente sem tipos gerados
+  if (userFetchErr && (userFetchErr.code === "42703" || /avatarUrl/i.test(userFetchErr.message ?? ""))) {
+    const retry = await supabase.from("User").select(base).eq("id", userId).single();
+    user = retry.data;
+    userFetchErr = retry.error as typeof userFetchErr;
+  }
 
   if (userFetchErr) {
     console.error("[syncUser] erro ao buscar User final:", userFetchErr);

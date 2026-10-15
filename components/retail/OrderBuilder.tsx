@@ -61,6 +61,7 @@ export function OrderBuilder({
   promotions = [],
   checkCoupon,
   storageKey,
+  initialProductId,
 }: {
   products: PreorderProduct[];
   action: (prev: Result, formData: FormData) => Promise<Result>;
@@ -73,9 +74,11 @@ export function OrderBuilder({
   checkCoupon?: (code: string) => Promise<{ coupon?: CouponRule; error?: string }>;
   /** Guarda o carrinho no telemóvel (para não se perder ao sair sem querer). Sem isto, não guarda. */
   storageKey?: string;
+  /** Produto mostrado ao abrir (senão o primeiro). */
+  initialProductId?: string;
 }) {
   const [state, formAction] = useActionState(action, null as Result);
-  const [productId, setProductId] = useState(products[0]?.id ?? "");
+  const [productId, setProductId] = useState(products.find((x) => x.id === initialProductId)?.id ?? products[0]?.id ?? "");
   const product = products.find((p) => p.id === productId) ?? products[0];
   const fits = useMemo(() => [...new Set((product?.variants ?? []).map((v) => v.fit ?? ""))], [product]);
   const [fit, setFit] = useState(fits.length === 1 ? fits[0] : "");
@@ -262,6 +265,10 @@ export function OrderBuilder({
             </select>
           </label>
         )}
+
+        {product.description ? (
+          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>{product.description}</p>
+        ) : null}
 
         {needsFit && (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>

@@ -24,6 +24,8 @@ import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { RankFiltersForm } from "./RankFiltersForm";
 import { RankBoard, type RankBoardEntry } from "./RankBoard";
 import { loadRankNicknames } from "@/lib/leaderboard-nicknames";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { loadWeekStartRanks, rankDelta, rankDeltaLabel } from "@/lib/rank-snapshot";
 
 export const dynamic = "force-dynamic";
 
@@ -112,6 +114,13 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
   const nicknames = await loadRankNicknames([...rows.map((r) => r.student_id), ...evolutionRows.map((r) => r.student_id)]);
   const excludedCount = evolutionResult?.excludedCount ?? 0;
 
+  // Variação de posição desde o início da semana (só no ranking geral da escola, sem filtros).
+  const generalBoard = mode === "XP" && !modality && !ageBucket && !periodStart;
+  const adminForRank = generalBoard ? getAdminClientOrNull().client : null;
+  const weekStartRanks = adminForRank ? await loadWeekStartRanks(adminForRank, resolvedSchoolId).catch(() => new Map<string, number>()) : new Map<string, number>();
+  const deltaOf = (studentId: string, currentRank: number) => (weekStartRanks.size ? rankDelta(weekStartRanks.get(studentId), currentRank) : null);
+  const myDelta = me ? deltaOf(me.student_id, me.rank) : null;
+
   const filterMessages = {
     filtersToggle: t("rankFiltersToggle"),
     filterSchool: t("rankFilterSchool"),
@@ -149,6 +158,7 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
       name: nicknames.get(row.student_id) ?? (row.display_name || "—"),
       isNickname: nicknames.has(row.student_id),
       isMe: row.is_current_user,
+      delta: deltaOf(row.student_id, row.rank),
       value: modality ? `${nf(row.score)} XP` : `${nf(row.score)} pts`,
       valueHint: modality ? undefined : `${nf(row.xp)} XP`,
       belt: (
@@ -197,6 +207,8 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
           rules={xpRules}
           periodLabel={periodLabel}
           locale={locale}
+          rankDelta={myDelta}
+          rankDeltaText={rankDeltaLabel(myDelta)}
         />
       )}
 
