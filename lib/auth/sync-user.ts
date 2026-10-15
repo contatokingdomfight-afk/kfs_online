@@ -157,7 +157,7 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     .from("User")
     .select(`${base}, avatarUrl`)
     .eq("id", userId)
-    .single()) as { data: any; error: { code?: string; message?: string } | null }; // eslint-disable-line @typescript-eslint/no-explicit-any -- cliente sem tipos gerados
+    .single()) as { data: any; error: { code?: string; message?: string } | null };
   if (userFetchErr && (userFetchErr.code === "42703" || /avatarUrl/i.test(userFetchErr.message ?? ""))) {
     const retry = await supabase.from("User").select(base).eq("id", userId).single();
     user = retry.data;
