@@ -210,7 +210,7 @@ export function AttendanceRow({
                     ))}
                   </select>
                   <button type="submit" className="btn btn-secondary" style={{ minHeight: 32, padding: "2px 10px", fontSize: 13 }}>
-                    {rpe == null ? "Dar" : "Acertar"}
+                    {rpe == null ? "Dar" : "Alterar"}
                   </button>
                 </form>
               ) : null}

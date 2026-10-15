@@ -58,7 +58,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Utilizador não encontrado." }, { status: 404 });
   }
 
-  const { error: updateErr } = await supabase.from("User").update({ avatarUrl: publicUrl }).eq("id", dbUser.id);
+  const versionedUrl = `${publicUrl}?v=${Date.now()}`;
+  const { error: updateErr } = await supabase.from("User").update({ avatarUrl: versionedUrl }).eq("id", dbUser.id);
   if (updateErr) {
     console.error("avatar upload user update:", updateErr);
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
@@ -69,5 +70,5 @@ export async function POST(request: Request) {
   revalidatePath("/coach", "layout");
   revalidatePath("/coach/configuracoes");
 
-  return NextResponse.json({ url: publicUrl });
+  return NextResponse.json({ url: versionedUrl });
 }

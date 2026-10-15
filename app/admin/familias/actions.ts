@@ -267,6 +267,39 @@ export async function deactivateFamilyGroup(
   return {};
 }
 
+/**
+ * Apaga o grupo familiar de vez (em vez de só o desativar). Se ainda estiver ativo, desativa-o primeiro
+ * (os membros voltam à cobrança individual). Os pagamentos já feitos ficam no histórico, sem grupo.
+ */
+export async function deleteFamilyGroup(
+  _prev: FamilyActionResult | null,
+  formData: FormData
+): Promise<FamilyActionResult> {
+  if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
+
+  const groupId = (formData.get("groupId") as string)?.trim();
+  if (!groupId) return { error: "Grupo inválido." };
+
+  const supabase = createAdminClient();
+  const { data: group } = await supabase.from("FamilyGroup").select("id, isActive").eq("id", groupId).maybeSingle();
+  if (!group) return { error: "Grupo não encontrado." };
+
+  const { data: members } = await supabase.from("FamilyGroupMember").select("studentId").eq("familyGroupId", groupId);
+
+  if ((group as { isActive: boolean }).isActive) {
+    const result = await deactivateFamilyGroupAndRebill(supabase, groupId);
+    if (result.error) return { error: result.error };
+  }
+
+  const { error } = await supabase.from("FamilyGroup").delete().eq("id", groupId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/familias");
+  revalidatePath("/admin/financeiro");
+  for (const m of members ?? []) revalidatePath(`/admin/alunos/${(m as { studentId: string }).studentId}`);
+  redirect("/admin/familias");
+}
+
 export async function getStudentFamilyBadge(
   studentId: string
 ): Promise<{ role: "TITULAR" | "MEMBER"; groupId: string; groupName: string | null } | null> {

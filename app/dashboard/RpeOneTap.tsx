@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { CheckCircle2 } from "lucide-react";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { submitRpeAction, type RpeFormState } from "./bem-estar/actions";
 
 type Props = { attendanceId: string; subtitle: string; minutes: number; xpReward: number; locale: "pt" | "en" };
@@ -59,6 +60,7 @@ export function RpeOneTap({ attendanceId, subtitle, minutes, xpReward, locale }:
 
   return (
     <form action={action} style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, borderRadius: 18, border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
+      <FormLoadingModal message={pt ? "A guardar a tua nota…" : "Saving your rating…"} />
       <input type="hidden" name="attendanceId" value={attendanceId} />
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
         <span style={{ flex: 1, minWidth: 0 }}>

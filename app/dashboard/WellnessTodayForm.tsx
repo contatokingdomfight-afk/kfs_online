@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { HeartPulse } from "lucide-react";
+import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { QuickWellnessQuestions } from "@/components/QuickWellnessQuestions";
 import { saveQuickWellnessAction, type QuickWellnessState } from "./wellness-actions";
 
@@ -51,6 +52,7 @@ export function WellnessTodayForm({
 
   return (
     <form action={action} style={{ display: "flex", flexDirection: "column", gap: 14, padding: 16, borderRadius: 18, border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
+      <FormLoadingModal message={pt ? "A guardar…" : "Saving…"} />
       <input type="hidden" name="lessonId" value={lessonId} />
       <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

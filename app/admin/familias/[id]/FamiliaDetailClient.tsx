@@ -6,6 +6,7 @@ import {
   addFamilyMember,
   removeFamilyMember,
   deactivateFamilyGroup,
+  deleteFamilyGroup,
   updateFamilyGroupDiscount,
   updateMemberReferencePlan,
   searchStudentsForFamily,
@@ -63,6 +64,7 @@ export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }:
   const [addState, addAction] = useActionState(addFamilyMember, null as FamilyActionResult | null);
   const [removeState, removeAction] = useActionState(removeFamilyMember, null as FamilyActionResult | null);
   const [deactState, deactAction] = useActionState(deactivateFamilyGroup, null as FamilyActionResult | null);
+  const [deleteState, deleteAction] = useActionState(deleteFamilyGroup, null as FamilyActionResult | null);
   const [discountState, discountAction] = useActionState(updateFamilyGroupDiscount, null as FamilyActionResult | null);
 
   const [query, setQuery] = useState("");
@@ -89,7 +91,7 @@ export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }:
     });
   }
 
-  const errorMsg = addState?.error || removeState?.error || deactState?.error || discountState?.error;
+  const errorMsg = addState?.error || removeState?.error || deactState?.error || deleteState?.error || discountState?.error;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -258,6 +260,19 @@ export function FamiliaDetailClient({ detail, breakdown, referencePlanOptions }:
           </button>
         </form>
       )}
+
+      <form
+        action={deleteAction}
+        onSubmit={(e) => {
+          if (!confirm("Apagar este grupo familiar de vez? Os membros voltam à cobrança individual e os pagamentos já feitos ficam no histórico. Não se pode desfazer.")) e.preventDefault();
+        }}
+      >
+        <FormLoadingModal message="A apagar o grupo…" />
+        <input type="hidden" name="groupId" value={group.id} />
+        <button type="submit" className="btn btn-secondary" style={{ color: "var(--danger)", borderColor: "var(--danger)" }}>
+          Apagar grupo
+        </button>
+      </form>
     </div>
   );
 }
