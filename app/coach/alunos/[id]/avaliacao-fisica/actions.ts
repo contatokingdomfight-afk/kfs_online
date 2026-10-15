@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import { notifyStudentOfNewPhysicalAssessment } from "@/lib/notifications/in-app";
 import { fulfillPendingPhysicalAssessmentRequests } from "@/lib/physical-assessment-request-helpers";
+import { ageOnDate, BODY_FAT_METHOD_JP3, computeBodyFatPct, parseSkinfoldMm } from "@/lib/body-fat";
 
 const MONTHS_UNTIL_NEXT = 6;
 
@@ -122,7 +123,31 @@ export async function savePhysicalAssessment(
     nextDueAtStr = nextDue.toISOString().slice(0, 10);
   }
 
+  // Adipometria: % de gordura (Jackson-Pollock 3 pregas) com o sexo das tabelas e a idade na data da avaliação.
+  const skin = {
+    chest: parseSkinfoldMm(formData.get("skinChestMm") as string),
+    abdomen: parseSkinfoldMm(formData.get("skinAbdomenMm") as string),
+    thigh: parseSkinfoldMm(formData.get("skinThighMm") as string),
+    triceps: parseSkinfoldMm(formData.get("skinTricepsMm") as string),
+    suprailiac: parseSkinfoldMm(formData.get("skinSuprailiacMm") as string),
+  };
+  const refSex = (formData.get("referenceSex") as string)?.trim();
+  let bodyFatPct: number | null = null;
+  if (refSex === "M" || refSex === "F") {
+    const { data: prof } = await supabase.from("StudentProfile").select("dateOfBirth").eq("studentId", studentId).maybeSingle();
+    const dob = (prof as { dateOfBirth?: string | null } | null)?.dateOfBirth;
+    const age = dob ? ageOnDate(String(dob).slice(0, 10), assessedAt.toISOString().slice(0, 10)) : null;
+    if (age != null) bodyFatPct = computeBodyFatPct(refSex, age, skin);
+  }
+
   const formDataJson: PhysicalAssessmentFormData = {
+    skinChestMm: skin.chest,
+    skinAbdomenMm: skin.abdomen,
+    skinThighMm: skin.thigh,
+    skinTricepsMm: skin.triceps,
+    skinSuprailiacMm: skin.suprailiac,
+    bodyFatPct,
+    bodyFatMethod: bodyFatPct != null ? BODY_FAT_METHOD_JP3 : null,
     objectives: formData.getAll("objectives") as string[],
     objectiveOther: (formData.get("objectiveOther") as string)?.trim() || undefined,
     medicalConditions: formData.getAll("medicalConditions") as string[],

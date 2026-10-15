@@ -79,6 +79,14 @@ export type PhysicalAssessmentFormData = {
   circThighRightCm?: number | null;
   circCalfLeftCm?: number | null;
   circCalfRightCm?: number | null;
+  /** Adipometria: pregas cutâneas (mm) e % de gordura calculado ao guardar (Jackson-Pollock 3 pregas). */
+  skinChestMm?: number | null;
+  skinAbdomenMm?: number | null;
+  skinThighMm?: number | null;
+  skinTricepsMm?: number | null;
+  skinSuprailiacMm?: number | null;
+  bodyFatPct?: number | null;
+  bodyFatMethod?: string | null;
   /** Tamanho do calçado (ex.: BR 40); livre para evitar ambiguidade BR/EU no MVP */
   shoeSizeBr?: string | null;
   /** Comprimento do pé medido (opcional), cm */

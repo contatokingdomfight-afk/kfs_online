@@ -143,6 +143,7 @@ export function CoachAulaRosterPanel({
               rpe={s.rpe}
               rpeRecordedAt={s.rpeRecordedAt}
               rpeSource={s.rpeSource}
+              coachRpe={s.coachRpe}
               monthlyLimit={s.monthlyLimit}
               isCrossModality={s.isCrossModality}
               feesDue={s.feesDue}

@@ -28,6 +28,8 @@ type Props = {
   rpe: number | null;
   rpeRecordedAt: string | null;
   rpeSource?: "STUDENT" | "COACH" | null;
+  /** Nota do professor guardada à parte (compara com a do aluno). */
+  coachRpe?: number | null;
   canEvaluate?: boolean;
   monthlyLimit?: { used: number; limit: number; remaining: number } | null;
   isCrossModality?: boolean;
@@ -53,6 +55,7 @@ export function AttendanceRow({
   rpe,
   rpeRecordedAt,
   rpeSource = null,
+  coachRpe = null,
   canEvaluate = true,
   monthlyLimit,
   isCrossModality = false,
@@ -63,7 +66,9 @@ export function AttendanceRow({
   const [checkInState, checkInAction] = useActionState(coachCheckInStudentFromForm, null as { error?: string } | null);
   const [rpeState, rpeAction] = useActionState(setCoachRpeFromForm, null as { error?: string; updated?: number } | null);
   // O coach pode dar/acertar o esforço de quem esteve presente, desde que não tenha sido o aluno a dá-lo.
-  const coachCanSetRpe = status === "CONFIRMED" && Boolean(attendanceId) && rpeSource !== "STUDENT";
+  // O professor pode dar a sua nota mesmo depois de o aluno responder: fica guardada à parte (a do aluno é a que conta).
+  const coachCanSetRpe = status === "CONFIRMED" && Boolean(attendanceId);
+  const coachRpeValue = coachRpe ?? (rpeSource === "COACH" ? rpe : null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showSuccessConfirm, setShowSuccessConfirm] = useState(false);
 
@@ -175,6 +180,12 @@ export function AttendanceRow({
                   <>
                     <strong>{rpe}</strong>
                     <span className="coach-attendance-rpe-time"> ({rpeSource === "COACH" ? "coach" : "aluno"})</span>
+                    {rpeSource === "STUDENT" && coachRpe != null && coachRpe !== rpe ? (
+                      <span className="coach-attendance-rpe-time" title="Nota que deste a este aluno nesta aula" style={{ fontWeight: 700 }}>
+                        {" "}
+                        · tu: {coachRpe}
+                      </span>
+                    ) : null}
                     {rpeRecordedAt && rpeSource !== "COACH" ? (
                       <span className="coach-attendance-rpe-time">
                         {" "}
@@ -195,7 +206,7 @@ export function AttendanceRow({
                   <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
                   <select
                     name="rpe"
-                    defaultValue={rpe ?? ""}
+                    defaultValue={coachRpeValue ?? ""}
                     aria-label={`Esforço de ${label}`}
                     className="input"
                     style={{ width: 70, minHeight: 32, padding: "2px 6px", fontSize: 13 }}
@@ -210,7 +221,7 @@ export function AttendanceRow({
                     ))}
                   </select>
                   <button type="submit" className="btn btn-secondary" style={{ minHeight: 32, padding: "2px 10px", fontSize: 13 }}>
-                    {rpe == null ? "Dar" : "Alterar"}
+                    {coachRpeValue == null ? "Dar" : "Alterar"}
                   </button>
                 </form>
               ) : null}

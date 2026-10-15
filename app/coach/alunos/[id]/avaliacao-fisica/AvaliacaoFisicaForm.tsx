@@ -883,6 +883,36 @@ export function AvaliacaoFisicaForm({
         </div>
       </fieldset>
 
+      {/* Adipometria (pregas cutâneas) */}
+      <fieldset className="rounded-xl bg-bg-secondary border border-border p-4 md:p-6">
+        <legend className="text-base font-semibold text-text-primary">6.5 Adipometria (opcional)</legend>
+        <p className="text-sm text-text-secondary mt-2 mb-0 max-w-3xl">
+          Pregas cutâneas em mm. O % de gordura é calculado ao guardar (Jackson-Pollock de 3 pregas), com o <strong>sexo
+          indicado em «Sexo para tabelas»</strong> e a idade do aluno. Homens: peitoral, abdominal e coxa. Mulheres:
+          tricipital, suprailíaca e coxa.
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-3 mt-3 max-w-4xl">
+          {[
+            ["skinChestMm", "Peitoral (mm)", fd.skinChestMm],
+            ["skinAbdomenMm", "Abdominal (mm)", fd.skinAbdomenMm],
+            ["skinThighMm", "Coxa (mm)", fd.skinThighMm],
+            ["skinTricepsMm", "Tricipital (mm)", fd.skinTricepsMm],
+            ["skinSuprailiacMm", "Suprailíaca (mm)", fd.skinSuprailiacMm],
+          ].map(([name, label, value]) => (
+            <label key={name as string} className="flex flex-col gap-1.5 text-sm min-w-0">
+              <span>{label as string}</span>
+              <input type="number" name={name as string} min={1} max={80} step={0.5} defaultValue={(value as number | null | undefined) ?? ""} className="input w-full max-w-[7.5rem]" />
+            </label>
+          ))}
+        </div>
+        {fd.bodyFatPct != null ? (
+          <p className="text-sm mt-3 mb-0">
+            Último cálculo: <strong>{fd.bodyFatPct.toLocaleString("pt-PT")} % de gordura</strong>
+            {fd.bodyFatMethod ? <span className="text-text-secondary"> ({fd.bodyFatMethod})</span> : null}
+          </p>
+        ) : null}
+      </fieldset>
+
       {/* 7. Testes */}
       <fieldset
         className="rounded-xl bg-bg-secondary border border-border p-4 md:p-6"

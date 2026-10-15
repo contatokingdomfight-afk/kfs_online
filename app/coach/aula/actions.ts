@@ -429,15 +429,31 @@ export async function setCoachRpeFromForm(
   const access = await assertCoachCanManageLesson(supabase, dbUser, lessonId);
   if (access.error) return { error: access.error };
 
-  const { data, error } = await supabase
+  const ids = attendanceIds.slice(0, 200);
+
+  // 1) A nota do professor fica sempre guardada à parte (permite compará-la com a do aluno).
+  const { data: coachRows, error: coachErr } = await supabase
     .from("Attendance")
-    .update({ rpe, rpeRecordedAt: new Date().toISOString(), rpeSource: "COACH" })
-    .in("id", attendanceIds.slice(0, 200))
+    .update({ coachRpe: rpe })
+    .in("id", ids)
     .eq("lessonId", lessonId)
     .eq("occurrenceDate", occurrenceDate)
     .eq("status", "CONFIRMED")
-    .or("rpe.is.null,rpeSource.eq.COACH")
     .select("id");
+  if (coachErr) {
+    console.error("setCoachRpeFromForm coachRpe error:", coachErr);
+    return { error: coachErr.message };
+  }
+
+  // 2) A nota que conta (carga de treino, XP) só é preenchida/ajustada se o aluno ainda não deu a sua.
+  const { error } = await supabase
+    .from("Attendance")
+    .update({ rpe, rpeRecordedAt: new Date().toISOString(), rpeSource: "COACH" })
+    .in("id", ids)
+    .eq("lessonId", lessonId)
+    .eq("occurrenceDate", occurrenceDate)
+    .eq("status", "CONFIRMED")
+    .or("rpe.is.null,rpeSource.eq.COACH");
   if (error) {
     console.error("setCoachRpeFromForm error:", error);
     return { error: error.message };
@@ -445,5 +461,5 @@ export async function setCoachRpeFromForm(
 
   revalidatePath("/coach/aula");
   revalidatePath("/coach/carga");
-  return { updated: (data ?? []).length };
+  return { updated: (coachRows ?? []).length };
 }
