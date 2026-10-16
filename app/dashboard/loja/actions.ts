@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
+import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ALLOWED_PAYMENT_PROOF_TYPES, MAX_PAYMENT_PROOF_BYTES } from "@/lib/enrollment-form";
 import { createRetailOrder, type OrderLineInput } from "@/lib/retail/orders";
@@ -50,13 +51,17 @@ export async function createMyOrder(_prev: OrderActionResult | null, formData: F
   redirect(`/dashboard/loja/encomendas/${result.id}?nova=1`);
 }
 
+/** Encomenda do próprio: do aluno (studentId) ou de quem a criou na loja pública (createdByUserId). */
 async function ownOrder(orderId: string) {
-  const studentId = await getCurrentStudentId();
-  if (!studentId || !orderId) return null;
+  if (!orderId) return null;
+  const [studentId, dbUser] = await Promise.all([getCurrentStudentId(), getCurrentDbUser()]);
+  if (!studentId && !dbUser) return null;
   const supabase = createAdminClient();
-  const { data } = await supabase.from("RetailOrder").select("id, status, studentId, proofPath").eq("id", orderId).maybeSingle();
-  const row = data as { id: string; status: string; studentId: string | null; proofPath: string | null } | null;
-  if (!row || row.studentId !== studentId) return null;
+  const { data } = await supabase.from("RetailOrder").select("id, status, studentId, createdByUserId, proofPath").eq("id", orderId).maybeSingle();
+  const row = data as { id: string; status: string; studentId: string | null; createdByUserId: string | null; proofPath: string | null } | null;
+  if (!row) return null;
+  const mine = (studentId != null && row.studentId === studentId) || (dbUser != null && row.createdByUserId === dbUser.id);
+  if (!mine) return null;
   return { supabase, row, studentId };
 }
 
@@ -81,6 +86,7 @@ export async function uploadOrderProof(_prev: OrderActionResult | null, formData
     .update({ proofPath: path, proofFileName: file.name.slice(0, 120), proofUploadedAt: now, updatedAt: now })
     .eq("id", own.row.id);
   revalidatePath(`/dashboard/loja/encomendas/${own.row.id}`);
+  revalidatePath(`/loja/encomendas/${own.row.id}`);
   revalidatePath("/admin/loja/encomendas");
   return { success: true };
 }
@@ -93,5 +99,6 @@ export async function cancelMyOrder(formData: FormData): Promise<void> {
   await own.supabase.from("RetailOrder").update({ status: "CANCELLED", cancelledAt: now, updatedAt: now }).eq("id", own.row.id);
   revalidatePath("/dashboard/loja");
   revalidatePath(`/dashboard/loja/encomendas/${own.row.id}`);
+  revalidatePath(`/loja/encomendas/${own.row.id}`);
   revalidatePath("/admin/loja/encomendas");
 }

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Loja pública</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--tx:#fff;--tx2:#a1a1aa;--pr:#c1121f;--bd:#27272a;--ok:#22c55e;--warn:#facc15;--r:12px;--font:"Inter",system-ui,sans-serif}
+  *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:#050505;color:var(--tx)}
+  .meta{max-width:1100px;margin:0 auto;padding:24px 20px 8px}
+  .badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase}
+  h1{font-size:22px;margin:12px 0 6px}.meta p{font-size:13.5px;color:var(--tx2);max-width:680px;line-height:1.6;margin:0}
+  .tabs{display:flex;gap:8px;margin:18px 0 0;flex-wrap:wrap}
+  .tabs button{background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer}
+  .tabs button.on{background:var(--pr);border-color:var(--pr);color:#fff}
+  .stage{max-width:1100px;margin:16px auto 60px;padding:0 20px}
+  .screen{display:none;background:var(--bg);border:1px solid var(--bd);border-radius:16px;overflow:hidden}.screen.on{display:block}
+  .note{font-size:12.5px;color:var(--tx2);margin:10px 4px 0;line-height:1.5}.note b{color:var(--warn)}
+  /* topbar público */
+  .top{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--bd);background:#0f0f0f}
+  .logo{font-weight:800;letter-spacing:.5px}.logo span{color:var(--pr)}
+  .nav{display:flex;gap:16px;font-size:13px;color:var(--tx2);margin-left:18px}.nav .a{color:#fff}
+  .sp{flex:1}.btn{border:1px solid var(--bd);background:transparent;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer}
+  .btn.p{background:var(--pr);border-color:var(--pr);font-weight:600}
+  .hero{padding:34px 22px;background:linear-gradient(135deg,#2a1215,#0b0b0b 70%);border-bottom:1px solid var(--bd)}
+  .hero h2{margin:0 0 6px;font-size:26px}.hero p{margin:0;color:var(--tx2);font-size:14px;max-width:520px}
+  .chips{display:flex;gap:8px;padding:16px 22px 0;flex-wrap:wrap}.chip{padding:6px 14px;border-radius:20px;border:1px solid var(--bd);font-size:12.5px;color:var(--tx2)}.chip.on{background:#fff;color:#000;border-color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;padding:16px 22px 26px}
+  .card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+  .img{height:150px;display:flex;align-items:center;justify-content:center;font-size:34px}
+  .c1{background:linear-gradient(135deg,#2a1215,#7f1d1d)}.c2{background:linear-gradient(135deg,#0c2340,#1e3a8a)}.c3{background:linear-gradient(135deg,#3a300a,#854d0e)}.c4{background:linear-gradient(135deg,#0f2a1a,#166534)}
+  .body{padding:12px}.name{font-size:14px;font-weight:600}.pr{font-size:13px;color:var(--tx2);margin-top:3px}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:8px}
+  .ok{background:rgba(34,197,94,.15);color:var(--ok)}.pre{background:rgba(250,204,21,.15);color:var(--warn)}
+  .foot{padding:18px 22px;border-top:1px solid var(--bd);font-size:12px;color:var(--tx2);display:flex;gap:18px;flex-wrap:wrap}
+  /* detalhe */
+  .det{display:grid;grid-template-columns:1fr 1fr;gap:26px;padding:24px 22px}
+  @media(max-width:720px){.det{grid-template-columns:1fr}}
+  .det .img{height:320px;border-radius:var(--r);font-size:60px}
+  .det h3{margin:0 0 6px;font-size:22px}.price{font-size:22px;font-weight:700;margin:8px 0}
+  .lbl{font-size:12px;color:var(--tx2);margin:14px 0 6px}.opts{display:flex;gap:8px;flex-wrap:wrap}.opt{padding:7px 13px;border:1px solid var(--bd);border-radius:8px;font-size:13px}.opt.on{border-color:var(--pr);background:rgba(193,18,31,.12)}
+  .cta{width:100%;margin-top:18px;padding:13px;font-size:14px}
+  .box{margin-top:14px;padding:12px 14px;border:1px dashed var(--bd);border-radius:10px;font-size:12.5px;color:var(--tx2);line-height:1.55}
+  .box b{color:#fff}
+  /* login/encomenda */
+  .pane{max-width:460px;margin:30px auto;padding:0 22px 30px}
+  .pane h3{margin:0 0 6px}.pane p{color:var(--tx2);font-size:13.5px;line-height:1.55}
+  .field{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:11px;color:#fff;margin-top:10px;font-size:13px}
+  .sum{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin:16px 0;font-size:13px}
+  .sum div{display:flex;justify-content:space-between;padding:4px 0}.iban{font-family:monospace;color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="meta">
+  <span class="badge">Mockup · Fase 1</span>
+  <h1>Loja pública Kingdom</h1>
+  <p>Qualquer pessoa vê o catálogo e os produtos sem conta. Para encomendar é preciso entrar/criar conta; o pagamento continua por IBAN/secretaria e o admin confirma (fluxo atual).</p>
+  <div class="tabs">
+    <button class="on" data-s="s1">1 · Catálogo (visitante)</button>
+    <button data-s="s2">2 · Produto (visitante)</button>
+    <button data-s="s3">3 · Entrar para encomendar</button>
+    <button data-s="s4">4 · Encomenda (com login)</button>
+  </div>
+</div>
+<div class="stage">
+
+<div class="screen on" id="s1">
+  <div class="top"><div class="logo">KINGDOM<span>.</span></div><div class="nav"><span class="a">Loja</span><span>Modalidades</span><span>Aula experimental</span></div><div class="sp"></div><button class="btn">Entrar</button><button class="btn p">Criar conta</button></div>
+  <div class="hero"><h2>Loja Kingdom Fight School</h2><p>Equipamento, vestuário e acessórios. Levantamento na escola, em Sintra.</p></div>
+  <div class="chips"><span class="chip on">Tudo</span><span class="chip">Equipamento</span><span class="chip">Vestuário</span><span class="chip">Acessórios</span><span class="chip">Consumíveis</span></div>
+  <div class="grid">
+    <div class="card"><div class="img c2">👕</div><div class="body"><div class="name">T-shirt Kingdom</div><div class="pr">€20</div><span class="tag ok">Em stock</span></div></div>
+    <div class="card"><div class="img c1">🥊</div><div class="body"><div class="name">Luvas de treino</div><div class="pr">€45 – €60</div><span class="tag pre">Pré-encomenda</span></div></div>
+    <div class="card"><div class="img c3">🩳</div><div class="body"><div class="name">Calções Muay Thai</div><div class="pr">€35</div><span class="tag ok">Em stock</span></div></div>
+    <div class="card"><div class="img c4">🧴</div><div class="body"><div class="name">Pomada de recuperação</div><div class="pr">€12</div><span class="tag ok">Em stock</span></div></div>
+  </div>
+  <div class="foot"><span>Levantamento na escola</span><span>Pagamento por transferência / secretaria</span><span>Termos · Privacidade</span></div>
+</div>
+
+<div class="screen" id="s2">
+  <div class="top"><div class="logo">KINGDOM<span>.</span></div><div class="nav"><span class="a">Loja</span><span>Modalidades</span></div><div class="sp"></div><button class="btn">Entrar</button><button class="btn p">Criar conta</button></div>
+  <div class="det">
+    <div class="img c1">🥊</div>
+    <div>
+      <h3>Luvas de treino</h3><div class="price">€45 – €60</div>
+      <p style="color:var(--tx2);font-size:13.5px;line-height:1.6;margin:0">Luvas em pele sintética, ideais para saco e sparring leve.</p>
+      <div class="lbl">Tamanho</div><div class="opts"><span class="opt">10 oz</span><span class="opt on">12 oz</span><span class="opt">14 oz</span></div>
+      <div class="lbl">Cor</div><div class="opts"><span class="opt on">Preto</span><span class="opt">Vermelho</span></div>
+      <button class="btn p cta">Entrar para encomendar</button>
+      <div class="box"><b>Sem conta?</b> Cria uma em 1 minuto. Depois voltas automaticamente a este produto. Pagas por transferência e levantas na escola.</div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s3">
+  <div class="top"><div class="logo">KINGDOM<span>.</span></div><div class="sp"></div></div>
+  <div class="pane">
+    <h3>Entra para continuar a encomenda</h3>
+    <p>Luvas de treino · 12 oz · Preto. O artigo fica guardado enquanto entras.</p>
+    <input class="field" placeholder="Email"><input class="field" placeholder="Palavra-passe" type="password">
+    <button class="btn p cta">Entrar</button>
+    <button class="btn cta" style="margin-top:8px">Continuar com Google</button>
+    <p style="text-align:center;margin-top:14px">Ainda não tens conta? <u>Criar conta</u></p>
+  </div>
+  <div class="note" style="padding:0 22px 18px"><b>Nota:</b> usa o fluxo atual de sign-in com <code>?next=/loja/…</code>. Quem cria conta e não é aluno (sem plano) pode encomendar na mesma — ver pergunta abaixo.</div>
+</div>
+
+<div class="screen" id="s4">
+  <div class="top"><div class="logo">KINGDOM<span>.</span></div><div class="nav"><span class="a">Loja</span></div><div class="sp"></div><span style="font-size:13px;color:var(--tx2)">Olá, Rita</span></div>
+  <div class="pane">
+    <h3>Confirmar encomenda</h3>
+    <div class="sum"><div><span>Luvas de treino · 12 oz · Preto</span><b>€45</b></div><div><span>Quantidade</span><span>1</span></div><div style="border-top:1px solid var(--bd);margin-top:6px;padding-top:8px"><b>Total</b><b>€45</b></div></div>
+    <p>Levantamento: <b>Kingdom Sintra</b></p>
+    <p>Pagamento por transferência para <span class="iban">PT50 0000 0000 0000 0000 0000 0</span> ou na secretaria. A encomenda fica <b>pendente</b> até o admin confirmar.</p>
+    <button class="btn p cta">Confirmar encomenda</button>
+  </div>
+</div>
+
+<div class="note"><b>Fora do âmbito desta fase:</b> pagamento online (cartão/MB Way), envio por correio, carrinho com vários artigos — podem vir depois.</div>
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button,.screen').forEach(e=>e.classList.remove('on'));
+  b.classList.add('on');document.getElementById(b.dataset.s).classList.add('on');
+});
+</script>
+</body>
+</html>
