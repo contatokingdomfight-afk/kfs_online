@@ -23,7 +23,7 @@ import {
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { RankFiltersForm } from "./RankFiltersForm";
 import { RankBoard, type RankBoardEntry } from "./RankBoard";
-import { loadRankNicknames } from "@/lib/leaderboard-nicknames";
+import { loadRankAvatars, loadRankNicknames } from "@/lib/leaderboard-nicknames";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { loadWeekStartRanks, rankDelta, rankDeltaLabel } from "@/lib/rank-snapshot";
 
@@ -111,7 +111,8 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
   const totalRanked = me && me.rank > rows.length ? me.rank : rows.length;
   const evolutionRows = evolutionResult?.rows ?? [];
   // Alcunha (se o aluno definiu uma) em vez do nome.
-  const nicknames = await loadRankNicknames([...rows.map((r) => r.student_id), ...evolutionRows.map((r) => r.student_id)]);
+  const rankedIds = [...rows.map((r) => r.student_id), ...evolutionRows.map((r) => r.student_id)];
+  const [nicknames, avatars] = await Promise.all([loadRankNicknames(rankedIds), loadRankAvatars(rankedIds)]);
   const excludedCount = evolutionResult?.excludedCount ?? 0;
 
   // Variação de posição desde o início da semana (só no ranking geral da escola, sem filtros).
@@ -156,6 +157,7 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
       id: row.student_id,
       rank: row.rank,
       name: nicknames.get(row.student_id) ?? (row.display_name || "—"),
+      avatarUrl: avatars.get(row.student_id) ?? null,
       isNickname: nicknames.has(row.student_id),
       isMe: row.is_current_user,
       delta: deltaOf(row.student_id, row.rank),
@@ -173,6 +175,7 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
     id: row.student_id,
     rank: row.rank,
     name: nicknames.get(row.student_id) ?? (row.display_name || "—"),
+    avatarUrl: avatars.get(row.student_id) ?? null,
     isNickname: nicknames.has(row.student_id),
     isMe: row.is_current_user,
     value: `${row.delta > 0 ? "+" : ""}${nf(row.delta)}`,

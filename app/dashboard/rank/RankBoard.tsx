@@ -4,6 +4,8 @@ export type RankBoardEntry = {
   id: string;
   rank: number;
   name: string;
+  /** Foto de perfil; sem ela mostram-se as iniciais. */
+  avatarUrl?: string | null;
   isMe: boolean;
   /** O nome é a alcunha do aluno (mostra-se inteira, sem cortar ao primeiro nome). */
   isNickname?: boolean;
@@ -32,7 +34,7 @@ function initialsOf(name: string): string {
   );
 }
 
-function Avatar({ name, size, ring }: { name: string; size: number; ring?: string }) {
+function Avatar({ name, size, ring, src }: { name: string; size: number; ring?: string; src?: string | null }) {
   return (
     <span
       aria-hidden
@@ -50,9 +52,15 @@ function Avatar({ name, size, ring }: { name: string; size: number; ring?: strin
         fontWeight: 800,
         color: "var(--text-primary)",
         boxSizing: "border-box",
+        overflow: "hidden",
       }}
     >
-      {initialsOf(name)}
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="" width={size} height={size} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      ) : (
+        initialsOf(name)
+      )}
     </span>
   );
 }
@@ -88,7 +96,7 @@ export function RankBoard({ entries, youLabel, footer }: { entries: RankBoardEnt
             const color = MEDAL_COLORS[e.rank];
             return (
               <div key={e.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 0, textAlign: "center" }}>
-                <Avatar name={e.name} size={first ? 68 : 54} ring={color} />
+                <Avatar name={e.name} src={e.avatarUrl} size={first ? 68 : 54} ring={color} />
                 <span
                   style={{
                     fontSize: first ? 15 : 13,
@@ -175,7 +183,7 @@ export function RankBoard({ entries, youLabel, footer }: { entries: RankBoardEnt
                   </span>
                 ) : null}
               </span>
-              <Avatar name={e.name} size={36} ring={e.isMe ? "var(--primary)" : undefined} />
+              <Avatar name={e.name} src={e.avatarUrl} size={36} ring={e.isMe ? "var(--primary)" : undefined} />
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {e.name || "—"}
