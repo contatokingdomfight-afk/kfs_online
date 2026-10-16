@@ -22,7 +22,7 @@ export default async function AcademyMeusCursosPage() {
   if (!user) redirect(`/sign-in?next=${encodeURIComponent("/academy/meus-cursos")}`);
   const admin = getAdminClientOrNull().client;
   const studentId = await getCurrentStudentId();
-  const courses = admin ? await loadPublicCourses(admin) : [];
+  const courses = admin ? await loadPublicCourses(admin, { includeHidden: true }) : [];
   const access = admin ? await loadAcademyAccess(admin, user.id, studentId) : { purchased: new Set<string>(), pass: false, digitalPlan: false };
   const mine = courses.flatMap((c) => {
     const reason = courseAccessReason(c, access);

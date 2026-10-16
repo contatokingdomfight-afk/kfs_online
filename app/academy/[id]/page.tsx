@@ -33,13 +33,14 @@ export default async function AcademyCursoPage({ params, searchParams }: Props) 
   const [{ id }, { pago }] = await Promise.all([params, searchParams]);
   const admin = getAdminClientOrNull().client;
   if (!admin) notFound();
-  const [course] = await loadPublicCourses(admin, { courseId: id });
+  const [course] = await loadPublicCourses(admin, { courseId: id, includeHidden: true });
   if (!course) notFound();
 
   const user = await getCurrentDbUser();
   const studentId = user ? await getCurrentStudentId() : null;
   const access = await loadAcademyAccess(admin, user?.id ?? null, studentId);
   const reason = courseAccessReason(course, access);
+  if (!course.show_in_academy && !reason) notFound();
   const here = `/academy/${id}`;
 
   const { data: mods } = await admin

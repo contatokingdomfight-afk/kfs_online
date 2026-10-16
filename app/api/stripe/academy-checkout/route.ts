@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.type === "course" && body.courseId) {
-      const [course] = await loadPublicCourses(admin, { courseId: body.courseId });
+      const [course] = await loadPublicCourses(admin, { courseId: body.courseId, includeHidden: true });
       if (!course || !canBuyCourse(course)) return NextResponse.json({ error: "Este curso não está disponível para compra." }, { status: 400 });
       if ((await loadPurchasedCourseIds(admin, user.id)).has(course.id)) return NextResponse.json({ error: "Já tens acesso a este curso." }, { status: 400 });
       const session = await stripe.checkout.sessions.create({

@@ -18,15 +18,16 @@ export type AcademyCourse = {
   available_for_purchase: boolean | null;
   included_in_digital_plan: boolean;
   in_pass: boolean;
+  show_in_academy: boolean;
   video_url: string | null;
   creator_student_id: string | null;
 };
 
 const COURSE_COLUMNS =
-  "id, name, description, category, modality, level, price, available_for_purchase, included_in_digital_plan, in_pass, video_url, creator_student_id";
+  "id, name, description, category, modality, level, price, available_for_purchase, included_in_digital_plan, in_pass, show_in_academy, video_url, creator_student_id";
 
-/** Cursos visíveis ao público: ativos e aprovados pelo admin. */
-export async function loadPublicCourses(admin: SupabaseClient, opts: { courseId?: string } = {}): Promise<AcademyCourse[]> {
+/** Cursos públicos: ativos, aprovados e com «mostrar na Academy» ligado (`includeHidden` para checkout e acessos já existentes). */
+export async function loadPublicCourses(admin: SupabaseClient, opts: { courseId?: string; includeHidden?: boolean } = {}): Promise<AcademyCourse[]> {
   let q = admin
     .from("Course")
     .select(COURSE_COLUMNS)
@@ -34,6 +35,7 @@ export async function loadPublicCourses(admin: SupabaseClient, opts: { courseId?
     .eq("review_status", "PUBLISHED")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
+  if (!opts.includeHidden) q = q.eq("show_in_academy", true);
   if (opts.courseId) q = q.eq("id", opts.courseId);
   const { data, error } = await q;
   if (error) console.error("[academy] loadPublicCourses falhou (migração 20261016160000 aplicada?):", error.message);

@@ -52,6 +52,7 @@ export async function createCourse(
     is_active: isActive,
     available_for_purchase: availableForPurchase,
     in_pass: formData.get("in_pass") === "on",
+    show_in_academy: formData.get("show_in_academy") === "on",
     ...(isActive ? { review_status: "PUBLISHED" } : {}),
     price: priceNum,
   });
@@ -110,6 +111,7 @@ export async function updateCourse(
       is_active: isActive,
       available_for_purchase: availableForPurchase,
       in_pass: formData.get("in_pass") === "on",
+      show_in_academy: formData.get("show_in_academy") === "on",
       ...(isActive ? { review_status: "PUBLISHED" } : {}),
       price: priceNum,
     })
