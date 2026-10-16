@@ -106,6 +106,16 @@ export function buildDueSoonMessage(studentFirstName: string, dueLabel: string):
   return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Só para lembrar que a mensalidade deste mês vence ${dueLabel}. Se já pagaste, ignora esta mensagem. Obrigado! 🥋`;
 }
 
+/** Kingdom Week: aviso quando o aluno chega à última aula do mês (ou já a esgotou). */
+export function buildWeekLimitMessage(studentFirstName: string, used: number, limit: number): string {
+  const name = studentFirstName.trim() || "tudo bem";
+  if (used >= limit) {
+    return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Já usaste as ${limit} aulas do teu plano Kingdom Week deste mês. Se quiseres continuar a treinar, podes juntar um pacote de aulas extra — é só responder por aqui e tratamos disso. O plano renova no início do próximo mês. 🥋`;
+  }
+  const left = limit - used;
+  return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Estás na ${used}.ª aula do mês do teu plano Kingdom Week e ${left === 1 ? "ainda tens 1 aula" : `ainda tens ${left} aulas`} até ao fim do mês (${limit} no total). Se quiseres treinar mais, podemos juntar aulas extra — é só responder por aqui. Bons treinos! 🥋`;
+}
+
 /** Para quem criou conta mas ainda não escolheu plano. */
 export function buildChoosePlanMessage(studentFirstName: string, plansUrl: string): string {
   const name = studentFirstName.trim() || "tudo bem";

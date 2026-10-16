@@ -8,6 +8,7 @@ export type AdminTodoKind =
   | "seguros"
   | "encomendas"
   | "vencer"
+  | "semana"
   | "risco"
   | "semplano"
   | "carga"
@@ -17,7 +18,7 @@ export type AdminTodoKind =
   | "experimentais"
   | "aniversarios";
 
-export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "risco", "semplano", "carga", "adesao", "fisicas", "exame", "experimentais", "aniversarios"];
+export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "semana", "risco", "semplano", "carga", "adesao", "fisicas", "exame", "experimentais", "aniversarios"];
 
 /** Prazo da mensalidade: dia 8 do mês de referência (ver lib/lisbon-payment-dates.ts). */
 export const TUITION_DUE_DAY = 8;

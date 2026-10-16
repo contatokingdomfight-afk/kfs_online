@@ -16,12 +16,14 @@ import {
   buildOrderPaymentMessage,
   buildPaymentOverdueMessage,
   buildTrialFollowUpMessage,
+  buildWeekLimitMessage,
   buildWhatsAppUrl,
 } from "@/lib/whatsapp";
 import { computeTrainingLoad } from "@/lib/training-load";
 import { loadTrainingSessions } from "@/lib/training-load.server";
 import { SCHOOL_PAYMENT_DETAILS } from "@/lib/enrollment-form";
 import { lineLabel, loadOrders, orderReference } from "@/lib/retail/orders";
+import { KINGDOM_WEEK_MONTHLY_CAP } from "@/lib/drop-in-sessions-pricing";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
 import {
   ADMIN_TODO_ORDER,
@@ -137,9 +139,13 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
   };
   const notDone = (it: AdminTodoItem) => !done.has(`${it.kind}|${it.key}`);
   const planNames = new Map<string, string>();
+  const planMonthlyCap = new Map<string, number>();
   {
-    const { data } = await supabase.from("Plan").select("id, name");
-    for (const p of (data ?? []) as { id: string; name: string }[]) planNames.set(p.id, p.name);
+    const { data } = await supabase.from("Plan").select("id, name, max_check_ins_per_month");
+    for (const p of (data ?? []) as { id: string; name: string; max_check_ins_per_month: number | null }[]) {
+      planNames.set(p.id, p.name);
+      if (p.max_check_ins_per_month != null) planMonthlyCap.set(p.id, p.max_check_ins_per_month);
+    }
   }
 
   // --- Pagamentos em atraso (mensalidades, como a inadimplência do painel) ---
@@ -535,6 +541,44 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
 
+  // --- Kingdom Week (5 aulas/mês): na 4.ª aula (ou já esgotado) avisar por WhatsApp ---
+  const weekStudents = active.filter((s) => s.planId && planMonthlyCap.get(s.planId) === KINGDOM_WEEK_MONTHLY_CAP);
+  const month = today.slice(0, 7);
+  const weekUsed = new Map<string, number>();
+  const weekExtra = new Map<string, number>();
+  for (const part of chunks(weekStudents.map((s) => s.id), 100)) {
+    const [{ data: att }, { data: extra }] = await Promise.all([
+      supabase.from("Attendance").select("studentId").in("studentId", part).eq("status", "CONFIRMED").gte("occurrenceDate", `${month}-01`).lte("occurrenceDate", today),
+      supabase.from("StudentExtraSessions").select("studentId, quantity").in("studentId", part).eq("referenceMonth", month),
+    ]);
+    for (const a of (att ?? []) as { studentId: string }[]) weekUsed.set(a.studentId, (weekUsed.get(a.studentId) ?? 0) + 1);
+    for (const e of (extra ?? []) as { studentId: string; quantity: number | null }[]) weekExtra.set(e.studentId, (weekExtra.get(e.studentId) ?? 0) + (e.quantity ?? 0));
+  }
+  const semana: AdminTodoItem[] = weekStudents
+    .map((s) => {
+      const used = weekUsed.get(s.id) ?? 0;
+      const limit = KINGDOM_WEEK_MONTHLY_CAP + (weekExtra.get(s.id) ?? 0);
+      if (used < limit - 1) return null;
+      const exhausted = used >= limit;
+      return {
+        kind: "semana" as const,
+        key: todoDoneKey("semana", { id: s.id, ref: `${month}:${used}`, today }),
+        studentId: s.id,
+        name: nameOf(s),
+        cells: [
+          { text: `${used} de ${limit} aulas`, tone: exhausted ? ("red" as const) : ("amber" as const) },
+          { text: exhausted ? "esgotado" : `falta ${limit - used}` },
+          { text: monthLabel(month) },
+        ],
+        urgency: used,
+        whatsappUrl: wa(s.id, buildWeekLimitMessage(firstName(nameOf(s)), used, limit)),
+        href: `/admin/alunos/${s.id}`,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
+    .filter(notDone)
+    .sort((a, b) => b.urgency - a.urgency);
+
   // --- Registados sem plano (contas dos últimos 60 dias) ---
   const semplano: AdminTodoItem[] = noPlan
     .map((s) => {
@@ -632,6 +676,12 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
       summary: vencer.length ? "Vencem nos próximos 3 dias (prazo: dia 8)" : "",
       info: "Mensalidades do mês ainda por pagar a 3 dias ou menos do prazo (dia 8). Um lembrete antes evita atrasos.",
       columns: ["Aluno", "Plano", "Valor", "Prazo", ""],
+    },
+    semana: {
+      kind: "semana", tone: "amber", title: "Kingdom Week no limite", items: semana,
+      summary: semana.length ? "Na última aula do mês (ou já esgotaram)" : "",
+      info: "Alunos do plano Kingdom Week (5 aulas/mês) que já fizeram a 4.ª aula do mês ou esgotaram o limite. Avisa por WhatsApp e, se quiserem treinar mais, concede aulas extra na ficha. Volta a aparecer se fizerem mais uma aula.",
+      columns: ["Aluno", "Aulas", "Estado", "Mês", ""],
     },
     semplano: {
       kind: "semplano", tone: "blue", title: "Registados sem plano", items: semplano,

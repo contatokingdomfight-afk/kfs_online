@@ -32,11 +32,8 @@ if (lint.ok) {
   console.log(`✓ sem erros (${lint.secs}s)`);
 } else {
   failed = true;
-  console.log(`✗ com erros (${lint.secs}s)
-`);
-  console.log(lint.output.split("
-").filter((l) => l.trim()).slice(0, 40).join("
-"));
+  console.log(`✗ com erros (${lint.secs}s)\n`);
+  console.log(lint.output.split("\n").filter((l) => l.trim()).slice(0, 40).join("\n"));
 }
 
 const tests = run("3/3 A correr os testes (Vitest)", "npx vitest run");

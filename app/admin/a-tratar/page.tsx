@@ -18,6 +18,7 @@ const KIND_TITLE: Record<AdminTodoKind, string> = {
   seguros: "Seguro / matrícula",
   encomendas: "Encomenda",
   vencer: "Mensalidade a vencer",
+  semana: "Kingdom Week",
   semplano: "Sem plano",
   exame: "Apto para exame",
   aniversarios: "Aniversário",
@@ -89,7 +90,7 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
         action="done"
         item={fields}
         label="Feito"
-        doneAction={item.kind === "risco" || item.kind === "experimentais" || item.kind === "semplano" ? "contactado" : item.kind === "aniversarios" ? "parabéns" : "done"}
+        doneAction={item.kind === "risco" || item.kind === "experimentais" || item.kind === "semplano" || item.kind === "semana" ? "contactado" : item.kind === "aniversarios" ? "parabéns" : "done"}
       />
     </span>
   );
@@ -98,7 +99,7 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
 /** Ação em lote do alerta (no cabeçalho). */
 function BulkControl({ g, schoolId }: { g: AdminTodoGroup; schoolId: string | null }) {
   if (g.items.length === 0) return null;
-  if (g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "encomendas" || g.kind === "vencer" || g.kind === "risco" || g.kind === "semplano" || g.kind === "experimentais" || g.kind === "aniversarios") {
+  if (g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "encomendas" || g.kind === "vencer" || g.kind === "semana" || g.kind === "risco" || g.kind === "semplano" || g.kind === "experimentais" || g.kind === "aniversarios") {
     const withPhone = g.items.filter((it) => it.whatsappUrl);
     const missing = g.items.length - withPhone.length;
     return (
