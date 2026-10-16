@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies, getThemeFromCookies } from "@/lib/theme-locale-server";
@@ -79,7 +80,7 @@ export default async function ContaPage() {
 
   const [{ data: student }, docs, family, assistant, { count: unread }] = await Promise.all([
     supabase.from("Student").select("planId").eq("id", studentId).maybeSingle(),
-    getMembershipDocumentsStatus(supabase, studentId),
+    getMembershipDocumentsStatus(getAdminClientOrNull().client ?? supabase, studentId),
     getFamilyHubForStudent(supabase, studentId).catch(() => null),
     dbUser.role === "ALUNO" ? getActiveSchoolAssistantForUserId(supabase, dbUser.id).catch(() => null) : Promise.resolve(null),
     supabase.from("Notification").select("id", { count: "exact", head: true }).eq("studentId", studentId).is("read_at", null),

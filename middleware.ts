@@ -328,7 +328,7 @@ export async function middleware(request: NextRequest) {
      */
     const { data: dbUser, error: dbUserError } = await supabase
       .from("User")
-      .select("id, role, Student!Student_userId_fkey(id, planId, adminGrantedFullAccess)")
+      .select("id, role, Student!Student_userId_fkey(id, planId, adminGrantedFullAccess, physicalDocumentsFiledAt)")
       .eq("authUserId", user.id)
       .maybeSingle();
 
@@ -358,7 +358,7 @@ export async function middleware(request: NextRequest) {
 
     const studentRows = (dbUser as { Student?: unknown }).Student;
     const student = (Array.isArray(studentRows) ? studentRows[0] : studentRows) as
-      | { id: string; planId: string | null; adminGrantedFullAccess: boolean }
+      | { id: string; planId: string | null; adminGrantedFullAccess: boolean; physicalDocumentsFiledAt?: string | null }
       | null
       | undefined;
 
@@ -434,7 +434,8 @@ export async function middleware(request: NextRequest) {
         // Comprovativo incluído de propósito: são os mesmos 3 documentos que o admin vê em
         // /admin/alunos/[id]/contrato — sem isto, um aluno podia ter waiver+contrato assinados
         // mas nunca ter preenchido o comprovativo e ainda assim passar no gate.
-        documentsSigned = waiverSigned && agreementCurrent && formCurrent;
+        // Papel arquivado pelo admin conta como os 3 documentos concluídos.
+        documentsSigned = Boolean(student.physicalDocumentsFiledAt) || (waiverSigned && agreementCurrent && formCurrent);
 
         // hasAccess (gate de pagamento de mensalidade) só se aplica a quem tem plano —
         // aluno sem plano paga por sessão avulsa (lib/extra-sessions-grant.ts), fora deste gate.

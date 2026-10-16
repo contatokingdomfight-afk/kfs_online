@@ -6,6 +6,7 @@ import { isEnrollmentFormCurrent } from "@/lib/enrollment-form";
  * Estado dos documentos de adesão do aluno — mesmos 3 documentos que o gate do middleware
  * (comprovativo na versão actual, contrato na versão actual e termo de responsabilidade).
  * Os dois últimos são assinados juntos no passo 2 de /adesao.
+ * Documentos em papel já arquivados pelo admin (Student.physicalDocumentsFiledAt) contam como concluídos.
  */
 export type MembershipDocumentsStatus = {
   /** Passo 1 de /adesao. */
@@ -19,7 +20,7 @@ export async function getMembershipDocumentsStatus(
   supabase: SupabaseClient,
   studentId: string
 ): Promise<MembershipDocumentsStatus> {
-  const [settings, { data: agreement }, { data: waiver }, { data: enrollmentForm }] = await Promise.all([
+  const [settings, { data: agreement }, { data: waiver }, { data: enrollmentForm }, { data: studentRow }] = await Promise.all([
     getInsuranceSettings(supabase),
     supabase
       .from("StudentMembershipAgreement")
@@ -28,7 +29,12 @@ export async function getMembershipDocumentsStatus(
       .maybeSingle(),
     supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", studentId).maybeSingle(),
     supabase.from("StudentEnrollmentForm").select("formCompleted, formVersion").eq("studentId", studentId).maybeSingle(),
+    supabase.from("Student").select("physicalDocumentsFiledAt").eq("id", studentId).maybeSingle(),
   ]);
+
+  if ((studentRow as { physicalDocumentsFiledAt?: string | null } | null)?.physicalDocumentsFiledAt) {
+    return { enrollmentFormDone: true, agreementAndWaiverDone: true, allDone: true };
+  }
 
   const enrollmentFormDone = isEnrollmentFormCurrent(
     enrollmentForm as { formCompleted?: boolean; formVersion?: string | null } | null,

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -77,6 +78,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   if (!dbUser) return null;
 
   const studentId = await getCurrentStudentId();
+  /** Dados do próprio aluno (plano, documentos) lidos pelo servidor por studentId — não dependem da sessão/RLS. */
+  const studentReader = getAdminClientOrNull().client ?? supabase;
   const planAccess = await getCachedPlanAccess(studentId);
   const { hasCheckIn, allowedModalities } = planAccess;
 
@@ -89,7 +92,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   let studentPrimaryModality: string | null = null;
   let hasPlan = false;
   if (studentId) {
-    const { data: student } = await supabase.from("Student").select("schoolId, primaryModality, planId").eq("id", studentId).single();
+    const { data: student } = await studentReader.from("Student").select("schoolId, primaryModality, planId").eq("id", studentId).single();
     studentSchoolId = student?.schoolId ?? null;
     studentPrimaryModality = normalizeModalityCode((student as { primaryModality?: string } | null)?.primaryModality ?? null);
     hasPlan = !!student?.planId;
@@ -326,7 +329,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
    * para /adesao. Aqui mostra-se o cartão com o que falta e os cliques do conteúdo vão para lá.
    */
   const adesaoStatus =
-    dbUser.role === "ALUNO" && studentId ? await getMembershipDocumentsStatus(supabase, studentId) : null;
+    dbUser.role === "ALUNO" && studentId ? await getMembershipDocumentsStatus(studentReader, studentId) : null;
   const pendingAdesao = adesaoStatus != null && !adesaoStatus.allDone;
 
   const firstName = (dbUser.name ?? "").trim().split(/\s+/)[0] ?? "";
