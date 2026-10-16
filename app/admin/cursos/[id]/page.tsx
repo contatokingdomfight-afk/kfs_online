@@ -24,7 +24,7 @@ export default async function AdminCursosEditarPage({ params }: Props) {
   const supabase = result.client;
 
   const [courseResult, modulesResult, coCreatorsResult, modalities] = await Promise.all([
-    supabase.from("Course").select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase, creator_student_id, coach_revenue_pct").eq("id", courseId).single(),
+    supabase.from("Course").select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase, in_pass, creator_student_id, coach_revenue_pct").eq("id", courseId).single(),
     supabase.from("CourseModule").select("id, name, description, video_url, sort_order, status").eq("course_id", courseId).order("sort_order", { ascending: true }),
     supabase.from("CourseCreator").select("id, student_id, revenue_pct").eq("course_id", courseId),
     getCachedModalityRefs(supabase),
@@ -182,6 +182,7 @@ export default async function AdminCursosEditarPage({ params }: Props) {
             modality: course.modality,
             level: course.level,
             included_in_digital_plan: course.included_in_digital_plan,
+            in_pass: (course as { in_pass?: boolean }).in_pass ?? false,
             sort_order: course.sort_order,
             is_active: course.is_active,
             price: course.price,

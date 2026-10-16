@@ -11,6 +11,7 @@ type Course = {
   modality: string | null;
   level: string | null;
   included_in_digital_plan: boolean | null;
+  in_pass?: boolean | null;
   sort_order: number | null;
   is_active: boolean | null;
   price: number | null;
@@ -70,6 +71,7 @@ export function CollapsibleCourseDetails({ course, modalities }: Props) {
             initialIsActive={course.is_active ?? true}
             initialPrice={course.price != null ? Number(course.price) : null}
             initialAvailableForPurchase={course.available_for_purchase ?? false}
+            initialInPass={course.in_pass ?? false}
             initialLevel={course.level}
             modalities={modalities}
           />

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { PublicQuickNav } from "@/components/PublicQuickNav";
 
-export function LojaHeader({ loggedIn, crumb }: { loggedIn: boolean; crumb?: string }) {
+export function LojaHeader({ loggedIn, crumb, section = "loja" }: { loggedIn: boolean; crumb?: string; section?: "loja" | "academy" }) {
+  const root = section === "academy" ? { href: "/academy", label: "Kingdom Academy" } : { href: "/loja", label: "Loja" };
   return (
     <header className="border-b border-[var(--border)] bg-[var(--bg)]">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-4 sm:px-6 lg:px-8">
@@ -9,8 +10,8 @@ export function LojaHeader({ loggedIn, crumb }: { loggedIn: boolean; crumb?: str
           ← Kingdom Fight School
         </Link>
         <span className="text-[var(--text-secondary)]" aria-hidden>/</span>
-        <Link href="/loja" className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)]">
-          Loja
+        <Link href={root.href} className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)]">
+          {root.label}
         </Link>
         {crumb ? (
           <>
@@ -19,7 +20,7 @@ export function LojaHeader({ loggedIn, crumb }: { loggedIn: boolean; crumb?: str
           </>
         ) : null}
         <span className="flex-1" />
-        {loggedIn ? (
+        {loggedIn && section === "loja" ? (
           <Link href="/loja/encomendas" className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--primary)]">
             As minhas encomendas
           </Link>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Biblioteca pública</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--tx:#fff;--tx2:#a1a1aa;--pr:#c1121f;--bd:#27272a;--ok:#22c55e;--warn:#facc15;--r:12px;--font:"Inter",system-ui,sans-serif}
+  *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:#050505;color:var(--tx)}
+  .meta{max-width:1100px;margin:0 auto;padding:24px 20px 8px}
+  .badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase}
+  h1{font-size:22px;margin:12px 0 6px}.meta p{font-size:13.5px;color:var(--tx2);max-width:720px;line-height:1.6;margin:0}
+  .tabs{display:flex;gap:8px;margin:18px 0 0;flex-wrap:wrap}
+  .tabs button{background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer}
+  .tabs button.on{background:var(--pr);border-color:var(--pr);color:#fff}
+  .stage{max-width:1100px;margin:16px auto 60px;padding:0 20px}
+  .screen{display:none;background:var(--bg);border:1px solid var(--bd);border-radius:16px;overflow:hidden}.screen.on{display:block}
+  .note{font-size:12.5px;color:var(--tx2);margin:10px 4px 0;line-height:1.55}.note b{color:var(--warn)}
+  .top{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--bd);background:#0f0f0f}
+  .logo{font-weight:800}.logo span{color:var(--pr)}.nav{display:flex;gap:16px;font-size:13px;color:var(--tx2);margin-left:18px}.nav .a{color:#fff}
+  .sp{flex:1}.btn{border:1px solid var(--bd);background:transparent;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer}
+  .btn.p{background:var(--pr);border-color:var(--pr);font-weight:600}.btn.w{width:100%;padding:12px;margin-top:12px}
+  .hero{padding:34px 22px;background:linear-gradient(135deg,#0c2340,#0b0b0b 70%);border-bottom:1px solid var(--bd)}
+  .hero h2{margin:0 0 6px;font-size:26px}.hero p{margin:0;color:var(--tx2);font-size:14px;max-width:560px}
+  .banner{margin:16px 22px 0;padding:12px 16px;border-radius:10px;background:rgba(34,197,94,.1);border:1px solid var(--ok);font-size:13px}
+  .chips{display:flex;gap:8px;padding:16px 22px 0;flex-wrap:wrap}.chip{padding:6px 14px;border-radius:20px;border:1px solid var(--bd);font-size:12.5px;color:var(--tx2)}.chip.on{background:#fff;color:#000;border-color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding:16px 22px 26px}
+  .card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+  .th{height:130px;display:flex;align-items:center;justify-content:center;font-size:34px;position:relative}
+  .c1{background:linear-gradient(135deg,#2a1215,#7f1d1d)}.c2{background:linear-gradient(135deg,#0c2340,#1e3a8a)}.c3{background:linear-gradient(135deg,#3a300a,#854d0e)}.c4{background:linear-gradient(135deg,#0f2a1a,#166534)}
+  .dur{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.7);font-size:11px;padding:2px 7px;border-radius:6px}
+  .body{padding:12px}.name{font-size:14px;font-weight:600}.by{font-size:12px;color:var(--tx2);margin-top:3px}
+  .row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px}.price{font-weight:800}
+  .tag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px}.free{background:rgba(34,197,94,.15);color:var(--ok)}.sub{background:rgba(250,204,21,.15);color:var(--warn)}
+  .det{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;padding:24px 22px}
+  @media(max-width:760px){.det{grid-template-columns:1fr}}
+  .player{height:240px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:48px}
+  h3{margin:0 0 6px;font-size:21px}.mod{padding:10px 12px;border:1px solid var(--bd);border-radius:8px;margin-top:8px;font-size:13px;display:flex;justify-content:space-between}
+  .lock{color:var(--tx2)}.prev{color:var(--ok)}
+  .buy{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;align-self:start}
+  .big{font-size:24px;font-weight:800}.mut{font-size:12.5px;color:var(--tx2);line-height:1.5;margin-top:8px}
+  .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;padding:24px 22px}
+  .plan{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:18px}.plan.hl{border:2px solid var(--pr)}
+  .plan h4{margin:0 0 4px;font-size:15px}.plan ul{padding-left:18px;margin:12px 0 0;font-size:13px;color:var(--tx2);line-height:1.8}
+  .tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th,.tbl td{padding:10px 12px;border-bottom:1px solid var(--bd);text-align:left}.tbl th{color:var(--tx2);font-weight:600}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:20px 22px 0}.kpi{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px}.kpi b{display:block;font-size:20px;margin-top:4px}
+  .pad{padding:20px 22px}.drop{border:2px dashed var(--bd);border-radius:var(--r);padding:26px;text-align:center;color:var(--tx2);font-size:13px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="meta">
+  <span class="badge">Mockup · Fase 2</span>
+  <h1>Biblioteca pública (escola online)</h1>
+  <p>Qualquer pessoa vê o catálogo e os trailers sem conta. Alunos Kingdom com plano ativo têm acesso incluído. Outros compram um curso avulso ou subscrevem um passe. Professores publicam os seus próprios cursos e recebem uma parte das vendas.</p>
+  <div class="tabs">
+    <button class="on" data-s="s1">1 · Catálogo</button>
+    <button data-s="s2">2 · Página do curso</button>
+    <button data-s="s3">3 · Modelos de assinatura</button>
+    <button data-s="s4">4 · Painel do professor</button>
+  </div>
+</div>
+<div class="stage">
+
+<div class="screen on" id="s1">
+  <div class="top"><div class="logo">KINGDOM<span>.</span></div><div class="nav"><span>Loja</span><span class="a">Escola online</span><span>Modalidades</span></div><div class="sp"></div><button class="btn">Entrar</button><button class="btn p">Criar conta</button></div>
+  <div class="hero"><h2>Kingdom Academy</h2><p>Aprende com os professores da Kingdom: técnica, preparação física e mentalidade. Vê os trailers grátis, sem conta.</p></div>
+  <div class="banner">🥋 <b>És aluno Kingdom?</b> Os cursos incluídos no teu plano são grátis. <u>Entrar para ver o teu acesso</u></div>
+  <div class="chips"><span class="chip on">Tudo</span><span class="chip">Muay Thai</span><span class="chip">Boxe</span><span class="chip">Jiu-Jitsu</span><span class="chip">MMA</span><span class="chip">Preparação física</span><span class="chip">Iniciante</span></div>
+  <div class="grid">
+    <div class="card"><div class="th c1">🥊<span class="dur">4h 20</span></div><div class="body"><div class="name">Fundamentos de Muay Thai</div><div class="by">Prof. Rui Alves</div><div class="row"><span class="tag free">Incluído para alunos</span><span class="price">€39</span></div></div></div>
+    <div class="card"><div class="th c2">🥋<span class="dur">6h 05</span></div><div class="body"><div class="name">Jiu-Jitsu: guarda fechada</div><div class="by">Prof. Marta Silva</div><div class="row"><span class="tag sub">Passe ou avulso</span><span class="price">€49</span></div></div></div>
+    <div class="card"><div class="th c3">🏃<span class="dur">2h 40</span></div><div class="body"><div class="name">Condicionamento para lutadores</div><div class="by">Prof. Diogo Pinto</div><div class="row"><span class="tag free">Incluído para alunos</span><span class="price">€25</span></div></div></div>
+    <div class="card"><div class="th c4">🧠<span class="dur">1h 15</span></div><div class="body"><div class="name">Mentalidade de competição</div><div class="by">Kingdom Fight School</div><div class="row"><span class="tag free">Grátis</span><span class="price">€0</span></div></div></div>
+  </div>
+</div>
+
+<div class="screen" id="s2">
+  <div class="top"><div class="logo">KINGDOM<span>.</span></div><div class="nav"><span>Loja</span><span class="a">Escola online</span></div><div class="sp"></div><button class="btn">Entrar</button><button class="btn p">Criar conta</button></div>
+  <div class="det">
+    <div>
+      <div class="player c2">▶</div>
+      <h3 style="margin-top:14px">Jiu-Jitsu: guarda fechada</h3>
+      <div class="by" style="color:var(--tx2);font-size:13px">Prof. Marta Silva · 6h 05 · 24 aulas · Nível iniciante/intermédio</div>
+      <p class="mut">Controlo, raspagens e finalizações a partir da guarda fechada, em aulas curtas e progressivas.</p>
+      <div class="mod"><span>1 · Postura e controlo</span><span class="prev">▶ Pré-visualização grátis</span></div>
+      <div class="mod"><span>2 · Raspagens básicas</span><span class="lock">🔒</span></div>
+      <div class="mod"><span>3 · Finalizações</span><span class="lock">🔒</span></div>
+    </div>
+    <div class="buy">
+      <div class="big">€49</div><div class="mut" style="margin-top:2px">Pagamento único · acesso para sempre</div>
+      <button class="btn p w">Comprar curso</button>
+      <button class="btn w">Ou subscrever o Passe (€12/mês)</button>
+      <div class="mut">Para comprar e para ver as aulas é preciso ter conta e fazer login (só os trailers são públicos).<br>🥋 <b style="color:#fff">Alunos Kingdom com plano ativo:</b> acesso incluído, sem pagar.</div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s3">
+  <div class="pad"><h3>Como funciona o acesso</h3><p class="mut" style="margin-top:0">Três formas de ter acesso, para os alunos Kingdom e para o público.</p></div>
+  <div class="plans" style="padding-top:0">
+    <div class="plan"><h4>Aluno Kingdom</h4><div class="big">Incluído</div><div class="mut">Plano presencial ativo</div><ul><li>Cursos marcados «Incluído»</li><li>Novos cursos entram automaticamente</li><li>Cursos premium: desconto</li></ul></div>
+    <div class="plan"><h4>Curso avulso</h4><div class="big">€25 – €60</div><div class="mut">Pagamento único</div><ul><li>Acesso vitalício ao curso</li><li>Sem subscrição</li><li>Ideal para quem quer um tema</li></ul></div>
+    <div class="plan hl"><h4>Passe Kingdom Academy</h4><div class="big">€12/mês</div><div class="mut">ou €99/ano · cancela quando quiseres</div><ul><li>Todos os cursos do Passe</li><li>Novos cursos incluídos</li><li>Cursos premium à parte</li></ul></div>
+  </div>
+  <div class="pad" style="padding-top:0"><div class="note" style="margin:0"><b>A decidir:</b> preços do Passe, se o ano tem desconto, e que cursos ficam «premium» (só avulso). A subscrição usaria o Stripe que já existe no projeto (complemento da biblioteca).</div></div>
+</div>
+
+<div class="screen" id="s4">
+  <div class="top"><div class="logo">KINGDOM<span>.</span> <span style="font-weight:400;color:var(--tx2);font-size:12px">Professor</span></div><div class="sp"></div><button class="btn p">+ Novo curso</button></div>
+  <div class="kpis"><div class="kpi">Vendas no mês<b>€312</b></div><div class="kpi">Alunos online<b>41</b></div><div class="kpi">A receber (60%)<b>€187</b></div><div class="kpi">Cursos<b>3 publicados</b></div></div>
+  <div class="pad">
+    <table class="tbl"><tr><th>Curso</th><th>Estado</th><th>Preço</th><th>Vendas</th></tr>
+      <tr><td>Jiu-Jitsu: guarda fechada</td><td><span class="tag free">Publicado</span></td><td>€49</td><td>18</td></tr>
+      <tr><td>Defesa de quedas</td><td><span class="tag sub">Em revisão</span></td><td>€35</td><td>—</td></tr>
+      <tr><td>Raspagens avançadas</td><td><span class="tag">Rascunho</span></td><td>€45</td><td>—</td></tr>
+    </table>
+    <div class="drop">⬆ Arrasta os vídeos das aulas (até 2 GB cada) · o Kingdom trata do alojamento e da proteção do vídeo</div>
+    <div class="note"><b>Fluxo:</b> professor envia → admin Kingdom revê e publica → vendas entram → repartição configurável (ex.: 60% professor / 40% escola) e pagamento mensal.</div>
+  </div>
+</div>
+
+<div class="note"><b>Fora do âmbito:</b> certificados, comentários/fórum e legendas automáticas podem vir depois.</div>
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button,.screen').forEach(e=>e.classList.remove('on'));
+  b.classList.add('on');document.getElementById(b.dataset.s).classList.add('on');
+});
+</script>
+</body>
+</html>

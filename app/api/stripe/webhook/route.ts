@@ -6,6 +6,7 @@ import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending
 import { grantReferralRewardIfEligible } from "@/lib/referral-rewards";
 import { stripe, STRIPE_WEBHOOK_SECRET } from "@/lib/stripe/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { recordAcademyCoursePurchase, upsertAcademyPass } from "@/lib/academy/webhook";
 
 export async function POST(request: NextRequest) {
   if (!stripe || !STRIPE_WEBHOOK_SECRET) {
@@ -49,6 +50,10 @@ export async function POST(request: NextRequest) {
       case "customer.subscription.updated":
       case "customer.subscription.created": {
         const sub = event.data.object as Stripe.Subscription;
+        if (sub.metadata?.subscriptionRole === "academy_pass") {
+          await upsertAcademyPass(supabase, sub);
+          break;
+        }
         const studentId = sub.metadata?.studentId;
         if (!studentId) break;
         const priceId = sub.items?.data?.[0]?.price?.id;
@@ -107,6 +112,10 @@ export async function POST(request: NextRequest) {
       }
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
+        if (sub.metadata?.subscriptionRole === "academy_pass") {
+          await upsertAcademyPass(supabase, sub);
+          break;
+        }
         const studentId = sub.metadata?.studentId;
         if (!studentId) break;
         const addonPriceEnv = process.env.STRIPE_DIGITAL_LIBRARY_ADDON_PRICE_ID?.trim();
@@ -141,6 +150,13 @@ export async function POST(request: NextRequest) {
         await syncStudentPaymentStatus(supabase, studentId);
         break;
       }
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.kind === "academy_course" && session.payment_status === "paid") {
+          await recordAcademyCoursePurchase(supabase, session);
+        }
+        break;
+      }
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
         // subscription_create = primeiro pagamento; subscription_cycle = ciclos seguintes
@@ -150,6 +166,10 @@ export async function POST(request: NextRequest) {
         const subId = typeof (invoice as any).subscription === "string" ? (invoice as any).subscription : (invoice as any).subscription?.id;
         if (!subId) break;
         const sub = await stripe!.subscriptions.retrieve(subId);
+        if (sub.metadata?.subscriptionRole === "academy_pass") {
+          await upsertAcademyPass(supabase, sub);
+          break;
+        }
         if (sub.metadata?.subscriptionRole === "digital_library_addon") {
           break;
         }

@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 const LABELS = {
-  pt: { plans: "Planos", shop: "Loja", schedule: "Horários", faq: "FAQ", signIn: "Entrar", trial: "Aula Experimental" },
-  en: { plans: "Plans", shop: "Shop", schedule: "Schedule", faq: "FAQ", signIn: "Sign in", trial: "Trial Class" },
+  pt: { plans: "Planos", shop: "Loja", academy: "Academy", schedule: "Horários", faq: "FAQ", signIn: "Entrar", trial: "Aula Experimental" },
+  en: { plans: "Plans", shop: "Shop", academy: "Academy", schedule: "Schedule", faq: "FAQ", signIn: "Sign in", trial: "Trial Class" },
 } as const;
 
 const linkClass =
@@ -25,6 +25,9 @@ export function PublicQuickNav({ locale }: { locale: "pt" | "en" }) {
       </Link>
       <Link href="/#horarios" className={linkClass}>
         {t.schedule}
+      </Link>
+      <Link href="/academy" className={linkClass}>
+        {t.academy}
       </Link>
       <Link href="/loja" className={linkClass}>
         {t.shop}

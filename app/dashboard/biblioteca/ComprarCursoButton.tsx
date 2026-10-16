@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
-import { purchaseCourse } from "./actions";
 
 type Props = { courseId: string; courseName: string; price: number; initialLocale: Locale };
 
@@ -12,7 +10,6 @@ export function ComprarCursoButton({ courseId, courseName, price, initialLocale 
   const t = getTranslations(initialLocale);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   async function handleClick() {
     const msg = t("buyConfirm").replace("{name}", courseName).replace("{price}", price.toFixed(0));
@@ -20,14 +17,22 @@ export function ComprarCursoButton({ courseId, courseName, price, initialLocale 
     if (!ok) return;
     setError(null);
     setPending(true);
-    const result = await purchaseCourse(courseId);
-    if (result?.error) {
-      setError(result.error);
-      setPending(false);
-    } else {
-      router.refresh();
-      setPending(false);
+    try {
+      const res = await fetch("/api/stripe/academy-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "course", courseId }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setError(data.error ?? "Não foi possível iniciar o pagamento.");
+    } catch {
+      setError("Erro de rede. Tenta outra vez.");
     }
+    setPending(false);
   }
 
   return (

@@ -33,6 +33,7 @@ const publicPaths = [
   "/privacidade",
   "/modalidades",
   "/loja",
+  "/academy",
   "/muay-thai-sintra",
   "/boxe-sintra",
   "/kickboxing-sintra",

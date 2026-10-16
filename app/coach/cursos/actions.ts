@@ -65,7 +65,9 @@ export async function createCoachCourse(
     available_for_purchase: availableForPurchase,
     price: priceNum,
     creator_student_id: student.id,
-    coach_revenue_pct: 65,
+    coach_revenue_pct: 60,
+    review_status: "IN_REVIEW",
+    submitted_at: new Date().toISOString(),
   });
 
   if (error) return { error: error.message };

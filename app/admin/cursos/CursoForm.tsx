@@ -30,6 +30,7 @@ type Props = {
   initialIsActive?: boolean;
   initialPrice?: number | null;
   initialAvailableForPurchase?: boolean;
+  initialInPass?: boolean;
   initialLevel?: string | null;
   /** Modalidades cadastradas (Admin → Modalidades). Se não for passado, usa lista mínima. */
   modalities?: ModalityOption[];
@@ -46,6 +47,7 @@ export function CursoForm({
   initialIsActive = true,
   initialPrice = null,
   initialAvailableForPurchase = false,
+  initialInPass = false,
   initialLevel = null,
   modalities: modalitiesProp,
 }: Props) {
@@ -183,6 +185,12 @@ export function CursoForm({
         />
         <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
           Incluído no plano digital (alunos com plano que inclui digital têm acesso)
+        </span>
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <input type="checkbox" name="in_pass" defaultChecked={initialInPass} value="on" />
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
+          Incluído no Passe Kingdom Academy (subscritores têm acesso)
         </span>
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
