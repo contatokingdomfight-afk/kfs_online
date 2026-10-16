@@ -35,7 +35,8 @@ export async function loadPublicCourses(admin: SupabaseClient, opts: { courseId?
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
   if (opts.courseId) q = q.eq("id", opts.courseId);
-  const { data } = await q;
+  const { data, error } = await q;
+  if (error) console.error("[academy] loadPublicCourses falhou (migração 20261016160000 aplicada?):", error.message);
   return ((data ?? []) as Array<Omit<AcademyCourse, "price"> & { price: number | string | null }>).map((c) => ({
     ...c,
     price: c.price != null ? Number(c.price) : null,
