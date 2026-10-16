@@ -23,12 +23,20 @@ export default async function AdminCursosEditarPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const [courseResult, modulesResult, coCreatorsResult, modalities] = await Promise.all([
+  const [fullCourseResult, modulesResult, coCreatorsResult, modalities] = await Promise.all([
     supabase.from("Course").select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase, in_pass, show_in_academy, creator_student_id, coach_revenue_pct").eq("id", courseId).single(),
     supabase.from("CourseModule").select("id, name, description, video_url, sort_order, status").eq("course_id", courseId).order("sort_order", { ascending: true }),
     supabase.from("CourseCreator").select("id, student_id, revenue_pct").eq("course_id", courseId),
     getCachedModalityRefs(supabase),
   ]);
+  // Se a API ainda não conhece as colunas novas (cache de esquema), lê sem elas em vez de esconder o curso.
+  const courseResult = fullCourseResult.error
+    ? await supabase
+        .from("Course")
+        .select("id, name, description, category, modality, level, included_in_digital_plan, video_url, sort_order, is_active, price, available_for_purchase, creator_student_id, coach_revenue_pct")
+        .eq("id", courseId)
+        .single()
+    : fullCourseResult;
   const { data: course } = courseResult;
   const { data: modules } = modulesResult;
   const { data: coCreatorsRaw } = coCreatorsResult;
@@ -86,6 +94,9 @@ export default async function AdminCursosEditarPage({ params }: Props) {
     return (
       <div>
         <p style={{ color: "var(--text-secondary)", marginBottom: 16 }}>Curso não encontrado.</p>
+        {courseResult.error ? (
+          <p style={{ color: "var(--danger)", fontSize: 13, marginBottom: 16 }}>Erro ao ler o curso: {courseResult.error.message}</p>
+        ) : null}
         <Link href="/admin/cursos" className="btn btn-secondary" style={{ textDecoration: "none" }}>
           ← Voltar
         </Link>
