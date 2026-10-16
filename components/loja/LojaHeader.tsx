@@ -20,9 +20,9 @@ export function LojaHeader({ loggedIn, crumb, section = "loja" }: { loggedIn: bo
           </>
         ) : null}
         <span className="flex-1" />
-        {loggedIn && section === "loja" ? (
-          <Link href="/loja/encomendas" className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--primary)]">
-            As minhas encomendas
+        {loggedIn ? (
+          <Link href={section === "academy" ? "/academy/meus-cursos" : "/loja/encomendas"} className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--primary)]">
+            {section === "academy" ? "Meus cursos" : "As minhas encomendas"}
           </Link>
         ) : null}
       </div>
