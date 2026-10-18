@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AcceptTrialButton } from "@/app/admin/experimentais/AcceptTrialButton";
 import { ChevronLeft, MessageCircle } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
@@ -26,6 +27,7 @@ const KIND_TITLE: Record<AdminTodoKind, string> = {
   carga: "Carga alta",
   adesao: "Adesão",
   fisicas: "Avaliação física",
+  confirmar: "Confirmação de experimental",
   experimentais: "Experimental",
 };
 
@@ -62,6 +64,13 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
         </form>
       </span>
     );
+  if (item.kind === "confirmar")
+    primary = (
+      <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
+        {!item.accepted && item.trialId ? <AcceptTrialButton trialId={item.trialId} /> : null}
+        {waLink}
+      </span>
+    );
   if (item.kind === "adesao") primary = <TodoActionButton action="remind" item={fields} label="Lembrar" variant="primary" />;
   if (item.kind === "fisicas")
     primary = item.requested ? (
@@ -89,8 +98,8 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
       <TodoActionButton
         action="done"
         item={fields}
-        label="Feito"
-        doneAction={item.kind === "risco" || item.kind === "experimentais" || item.kind === "semplano" || item.kind === "semana" ? "contactado" : item.kind === "aniversarios" ? "parabéns" : "done"}
+        label={item.kind === "confirmar" ? "Confirmado" : "Feito"}
+        doneAction={item.kind === "confirmar" ? "confirmado" : item.kind === "risco" || item.kind === "experimentais" || item.kind === "semplano" || item.kind === "semana" ? "contactado" : item.kind === "aniversarios" ? "parabéns" : "done"}
       />
     </span>
   );
@@ -99,14 +108,14 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
 /** Ação em lote do alerta (no cabeçalho). */
 function BulkControl({ g, schoolId }: { g: AdminTodoGroup; schoolId: string | null }) {
   if (g.items.length === 0) return null;
-  if (g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "encomendas" || g.kind === "vencer" || g.kind === "semana" || g.kind === "risco" || g.kind === "semplano" || g.kind === "experimentais" || g.kind === "aniversarios") {
+  if (g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "encomendas" || g.kind === "vencer" || g.kind === "semana" || g.kind === "risco" || g.kind === "semplano" || g.kind === "confirmar" || g.kind === "experimentais" || g.kind === "aniversarios") {
     const withPhone = g.items.filter((it) => it.whatsappUrl);
     const missing = g.items.length - withPhone.length;
     return (
       <span className="todo-bulk-stack">
         <WhatsAppSequence
           items={withPhone.map((it) => ({ kind: it.kind, doneKey: it.key, studentId: it.studentId, label: it.name, url: it.whatsappUrl! }))}
-          doneAction={g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "encomendas" || g.kind === "vencer" ? "lembrete" : g.kind === "aniversarios" ? "parabéns" : "contactado"}
+          doneAction={g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "encomendas" || g.kind === "vencer" ? "lembrete" : g.kind === "aniversarios" ? "parabéns" : g.kind === "confirmar" ? "confirmado" : "contactado"}
         />
         {missing > 0 ? <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{missing} sem telefone</span> : null}
       </span>

@@ -15,10 +15,11 @@ export type AdminTodoKind =
   | "adesao"
   | "fisicas"
   | "exame"
+  | "confirmar"
   | "experimentais"
   | "aniversarios";
 
-export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "semana", "risco", "semplano", "carga", "adesao", "fisicas", "exame", "experimentais", "aniversarios"];
+export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "semana", "risco", "semplano", "carga", "adesao", "fisicas", "exame", "confirmar", "experimentais", "aniversarios"];
 
 /** Prazo da mensalidade: dia 8 do mês de referência (ver lib/lisbon-payment-dates.ts). */
 export const TUITION_DUE_DAY = 8;
@@ -33,6 +34,8 @@ export const RISK_DAYS = 14;
 export const PHYSICAL_DUE_WITHIN_DAYS = 30;
 /** Experimentais feitas há no máximo este nº de dias e ainda não convertidas. */
 export const TRIAL_WINDOW_DAYS = 14;
+/** Experimentais por confirmar: aulas de hoje até daqui a N dias. */
+export const TRIAL_CONFIRM_DAYS = 2;
 
 export function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);

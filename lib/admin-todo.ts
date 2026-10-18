@@ -16,6 +16,7 @@ import {
   buildOrderPaymentMessage,
   buildPaymentOverdueMessage,
   buildTrialFollowUpMessage,
+  buildTrialConfirmationMessage,
   buildWeekLimitMessage,
   buildWhatsAppUrl,
 } from "@/lib/whatsapp";
@@ -37,6 +38,7 @@ import {
   daysBetween,
   physicalDue,
   todoDoneKey,
+  TRIAL_CONFIRM_DAYS,
   trialToConvert,
   type AdminTodoKind,
 } from "@/lib/admin-todo-rules";
@@ -60,6 +62,9 @@ export type AdminTodoItem = {
   requested?: boolean;
   /** Encomendas da loja: id da encomenda (para «Recebido»). */
   orderId?: string;
+  /** Experimentais por confirmar: id da inscrição e se o pedido já foi aceite. */
+  trialId?: string;
+  accepted?: boolean;
 };
 
 export type AdminTodoGroup = {
@@ -487,6 +492,54 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
 
+  // --- Experimentais por confirmar (hoje e próximos dias) ---
+  const { data: upcomingTrials } = await supabase
+    .from("TrialClass")
+    .select("id, name, contact, modality, lessonDate, lessonId, acceptedAt, convertedToStudent")
+    .gte("lessonDate", today)
+    .lte("lessonDate", addDaysYmd(today, TRIAL_CONFIRM_DAYS));
+  const upcoming = ((upcomingTrials ?? []) as { id: string; name: string; contact: string | null; modality: string | null; lessonDate: string | null; lessonId: string | null; acceptedAt: string | null; convertedToStudent: boolean | null }[]).filter(
+    (t) => !t.convertedToStudent && t.lessonDate
+  );
+  const trialLessonIds = [...new Set(upcoming.map((t) => t.lessonId).filter((x): x is string => Boolean(x)))];
+  const { data: trialLessons } = trialLessonIds.length
+    ? await supabase.from("Lesson").select("id, startTime").in("id", trialLessonIds)
+    : { data: [] as { id: string; startTime: string | null }[] };
+  const trialTime = new Map(((trialLessons ?? []) as { id: string; startTime: string | null }[]).map((l) => [l.id, (l.startTime ?? "").slice(0, 5)]));
+  const confirmar: AdminTodoItem[] = upcoming
+    .map((t) => {
+      const date = (t.lessonDate as string).slice(0, 10);
+      const daysAhead = daysBetween(today, date);
+      const time = t.lessonId ? trialTime.get(t.lessonId) ?? "" : "";
+      const modality = t.modality ? MODALITY_LABELS[t.modality] ?? t.modality : "a aula";
+      const dayLabel =
+        daysAhead === 0
+          ? "hoje"
+          : daysAhead === 1
+            ? "amanhã"
+            : new Date(`${date}T12:00:00Z`).toLocaleDateString("pt-PT", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/Lisbon" });
+      const accepted = Boolean(t.acceptedAt);
+      return {
+        kind: "confirmar" as const,
+        key: todoDoneKey("confirmar", { id: t.id, ref: date, today }),
+        studentId: null,
+        name: t.name || "—",
+        cells: [
+          { text: modality },
+          { text: time ? `${dayLabel} · ${time}` : dayLabel, tone: daysAhead === 0 ? ("red" as const) : undefined },
+          { text: accepted ? "Aceite" : "Pedido por aceitar", tone: accepted ? ("green" as const) : ("amber" as const) },
+          { text: t.contact || "sem contacto", tone: t.contact ? undefined : ("amber" as const) },
+        ],
+        urgency: TRIAL_CONFIRM_DAYS - daysAhead,
+        whatsappUrl: t.contact ? buildWhatsAppUrl(t.contact, buildTrialConfirmationMessage(t.name || "", modality, time || "à hora marcada", dayLabel === "amanhã" ? "amanhã" : dayLabel)) : null,
+        href: "/admin/experimentais",
+        trialId: t.id,
+        accepted,
+      };
+    })
+    .filter(notDone)
+    .sort((a, b) => b.urgency - a.urgency);
+
   // --- Experimentais por converter ---
   const { data: trials } = await supabase
     .from("TrialClass")
@@ -724,6 +777,12 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
       summary: fisicas.length ? "Vencem nos próximos 30 dias ou já venceram" : "",
       info: "A avaliação física renova a cada 6 meses. Aparecem os alunos ativos cuja próxima avaliação vence nos próximos 30 dias ou já passou.",
       columns: ["Aluno", "Última", "Vencimento", "Pedido", ""],
+    },
+    confirmar: {
+      kind: "confirmar", tone: "amber", title: "Experimentais por confirmar", items: confirmar,
+      summary: confirmar.length ? "Aulas experimentais de hoje e dos próximos 2 dias" : "",
+      info: "Aulas experimentais marcadas para hoje e para os próximos 2 dias. Aceita o pedido, se ainda não estiver aceite, e confirma a presença por WhatsApp com a mensagem padrão.",
+      columns: ["Nome", "Aula", "Quando", "Estado", "Contacto", ""],
     },
     experimentais: {
       kind: "experimentais", tone: "blue", title: "Experimentais por converter", items: experimentais,

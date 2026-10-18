@@ -97,6 +97,8 @@ export async function acceptTrialRequest(
     .eq("id", trialId);
 
   if (updateError) return { error: updateError.message };
+  revalidatePath("/admin/a-tratar");
+  revalidatePath("/admin");
 
   const recipientEmail = extractEmailFromContact(String(trial.contact ?? ""));
   if (recipientEmail) {

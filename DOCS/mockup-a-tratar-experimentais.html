@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Experimentais no A tratar</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--tx:#fff;--tx2:#a1a1aa;--pr:#c1121f;--bd:#27272a;--ok:#22c55e;--warn:#facc15;--blue:#60a5fa;--font:"Inter",system-ui,sans-serif}
+  *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:#050505;color:var(--tx)}
+  .wrap{max-width:900px;margin:0 auto;padding:24px 16px 60px}
+  .badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase}
+  h1{font-size:22px;margin:12px 0 6px}.lead{font-size:13.5px;color:var(--tx2);line-height:1.6;margin:0 0 20px;max-width:700px}
+  .group{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;margin-bottom:16px;overflow:hidden}
+  .gh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--bd)}
+  .dot{width:10px;height:10px;border-radius:5px}.gh h2{margin:0;font-size:15px}.cnt{margin-left:auto;font-size:12px;color:var(--tx2)}
+  .sum{font-size:12px;color:var(--tx2);padding:8px 16px 0}
+  .row{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr auto;gap:10px;align-items:center;padding:12px 16px;border-top:1px solid var(--bd);font-size:13.5px}
+  .row:first-of-type{border-top:0}.hd{color:var(--tx2);font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;padding-top:12px;padding-bottom:6px}
+  .name{font-weight:700}.mut{color:var(--tx2);font-size:12px}
+  .chip{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+  .pend{background:rgba(250,204,21,.15);color:var(--warn)}.acc{background:rgba(34,197,94,.15);color:var(--ok)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .b{border:1px solid var(--bd);background:transparent;color:#fff;padding:7px 10px;border-radius:8px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+  .b.wa{background:#16a34a;border-color:#16a34a;font-weight:700}.b.p{background:var(--pr);border-color:var(--pr);font-weight:700}
+  .msg{margin:0 16px 14px;padding:10px 12px;border-radius:10px;background:#0f1a12;border:1px solid #1f3d27;font-size:12.5px;color:#cfe9d6;line-height:1.5}
+  .note{font-size:12.5px;color:var(--tx2);line-height:1.6;margin-top:18px}.note b{color:var(--warn)}
+  @media(max-width:640px){.row{grid-template-columns:1fr;gap:6px}.hd{display:none}.acts{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Mockup</span>
+  <h1>Admin · A tratar → Experimentais</h1>
+  <p class="lead">Dois grupos lado a lado no «A tratar». <b style="color:#fff">Antes da aula</b>: aceitar o pedido e confirmar a presença por WhatsApp com a mensagem padrão. <b style="color:#fff">Depois da aula</b>: o seguimento que já existe, com o link dos planos.</p>
+
+  <section class="group">
+    <div class="gh"><span class="dot" style="background:var(--warn)"></span><h2>Experimentais por confirmar</h2><span class="cnt">3</span></div>
+    <div class="sum">Aulas experimentais de hoje e dos próximos 2 dias</div>
+    <div class="row hd"><span>Nome</span><span>Aula</span><span>Quando</span><span>Estado</span><span></span></div>
+    <div class="row"><span><span class="name">Rita Almeida</span><br><span class="mut">912 345 678</span></span><span>Muay Thai</span><span>hoje · 19:00</span><span><span class="chip pend">Pedido por aceitar</span></span><span class="acts"><button class="b p">Aceitar</button><button class="b wa">WhatsApp</button><button class="b">Confirmado ✓</button></span></div>
+    <div class="row"><span><span class="name">João Martins</span><br><span class="mut">936 111 222</span></span><span>Jiu-Jitsu</span><span>amanhã · 20:00</span><span><span class="chip acc">Aceite</span></span><span class="acts"><button class="b wa">WhatsApp</button><button class="b">Confirmado ✓</button></span></div>
+    <div class="msg">💬 Mensagem que abre no WhatsApp: «Olá João! Passando para confirmar a tua aula experimental de Jiu-Jitsu no dia ter., 20 out. às 20:00 na Kingdom Fight School. 🥋»</div>
+    <div class="row"><span><span class="name">Marta Silva</span><br><span class="mut" style="color:var(--warn)">sem contacto</span></span><span>Boxe</span><span>qua., 21 out. · 18:30</span><span><span class="chip acc">Aceite</span></span><span class="acts"><button class="b">Confirmado ✓</button></span></div>
+  </section>
+
+  <section class="group">
+    <div class="gh"><span class="dot" style="background:var(--blue)"></span><h2>Experimentais por converter</h2><span class="cnt">2</span><span class="mut" style="margin-left:8px">(já existe)</span></div>
+    <div class="sum">Fizeram aula experimental nos últimos 14 dias</div>
+    <div class="row hd"><span>Nome</span><span>Aula</span><span>Quando</span><span>Contacto</span><span></span></div>
+    <div class="row"><span class="name">Pedro Costa</span><span>Muay Thai</span><span>há 2 dias</span><span>915 000 111</span><span class="acts"><button class="b wa">WhatsApp</button><button class="b">Contactado ✓</button></span></div>
+    <div class="row"><span class="name">Ana Lopes</span><span>Kickboxing</span><span>ontem</span><span>934 555 666</span><span class="acts"><button class="b wa">WhatsApp</button><button class="b">Contactado ✓</button></span></div>
+  </section>
+
+  <p class="note"><b>Como funciona:</b> «Aceitar» aceita o pedido (o mesmo botão de /admin/experimentais). «Confirmado ✓» tira a pessoa da lista para esse dia. Quem não tiver contacto aparece com aviso e sem botão de WhatsApp. Depois da aula, a pessoa passa automaticamente para «por converter».</p>
+</div>
+</body>
+</html>
