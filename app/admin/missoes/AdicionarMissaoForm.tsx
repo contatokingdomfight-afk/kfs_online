@@ -3,26 +3,6 @@
 import { useActionState } from "react";
 import { createMission } from "./actions";
 
-const BELT_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "Qualquer faixa" },
-  { value: "0", label: "Branca" },
-  { value: "1", label: "Branca/amarela" },
-  { value: "2", label: "Amarela" },
-  { value: "3", label: "Amarela/verde" },
-  { value: "4", label: "Verde" },
-  { value: "5", label: "Verde/azul" },
-  { value: "6", label: "Azul" },
-  { value: "7", label: "Azul/vermelha" },
-  { value: "8", label: "Vermelha" },
-  { value: "9", label: "Vermelha/preta" },
-  { value: "10", label: "Preta" },
-  { value: "11", label: "Preta/Dourado" },
-  { value: "12", label: "Dourado 1" },
-  { value: "13", label: "Dourado 2" },
-  { value: "14", label: "Dourado 3" },
-  { value: "15", label: "Dourado 4" },
-];
-
 export function AdicionarMissaoForm({
   modalityOptions,
 }: {
@@ -77,14 +57,8 @@ export function AdicionarMissaoForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">Faixa (cor)</label>
-          <select name="beltIndex" className="input w-full">
-            {BELT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+          <label className="block text-sm font-medium text-text-secondary mb-1">Nível mínimo</label>
+          <input type="number" name="minLevel" min={1} step={1} placeholder="Qualquer nível" className="input w-full" />
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

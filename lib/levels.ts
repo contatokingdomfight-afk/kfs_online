@@ -37,3 +37,9 @@ export function levelFromXp(xpRaw: number): LevelInfo {
   const nextLevelAt = xpForLevel(level + 1);
   return { level, xp, xpIntoLevel: xp - start, xpForNext: nextLevelAt - start, nextLevelAt };
 }
+
+/** Conversão da antiga «faixa mínima» das missões (índice de faixa) para nível mínimo. */
+export function beltIndexToMinLevel(beltIndex: number): number {
+  const map = [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 15, 20];
+  return beltIndex < map.length ? map[Math.max(0, beltIndex)] : 20 + 5 * (beltIndex - 12);
+}

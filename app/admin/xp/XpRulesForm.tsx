@@ -2,7 +2,7 @@
 
 import { useState, useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { XP_SOURCE_META, XP_SOURCES, type XpSource } from "@/lib/xp-rules";
+import { XP_RULE_SOURCES, XP_SOURCE_META, type XpSource } from "@/lib/xp-rules";
 import { saveXpRules } from "./actions";
 
 function Submit() {
@@ -17,12 +17,12 @@ function Submit() {
 export function XpRulesForm({ rules }: { rules: Record<XpSource, number> }) {
   const [state, action] = useActionState(saveXpRules, null);
   const [values, setValues] = useState<Record<XpSource, string>>(
-    () => Object.fromEntries(XP_SOURCES.map((s) => [s, String(rules[s])])) as Record<XpSource, string>
+    () => Object.fromEntries(XP_RULE_SOURCES.map((s) => [s, String(rules[s])])) as Record<XpSource, string>
   );
 
   return (
     <form action={action} className="card" style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-      {XP_SOURCES.map((s) => {
+      {XP_RULE_SOURCES.map((s) => {
         const n = Number(values[s]);
         return (
           <div key={s} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>

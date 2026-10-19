@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { AdicionarMissaoForm } from "./AdicionarMissaoForm";
 import { DeleteMissionButton } from "./DeleteMissionButton";
 import { SeedMissionsForm } from "./SeedMissionsForm";
-import { getBeltName } from "@/lib/belts";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +22,8 @@ export default async function AdminMissoesPage() {
     .select("code, name")
     .order("sortOrder", { ascending: true });
 
-  const selectCols = "id, name, description, modality, beltIndex, xpReward, sortOrder, isActive";
-  let missions: { id: string; name: string; description: string | null; modality: string | null; beltIndex: number | null; xpReward: number; sortOrder: number; isActive: boolean }[] | null = null;
+  const selectCols = "id, name, description, modality, beltIndex, minLevel, xpReward, sortOrder, isActive";
+  let missions: { id: string; name: string; description: string | null; modality: string | null; beltIndex: number | null; minLevel?: number | null; xpReward: number; sortOrder: number; isActive: boolean }[] | null = null;
   let missionsError: { message: string } | null = null;
   let tableUsed: string = "MissionTemplate";
 
@@ -65,17 +64,18 @@ export default async function AdminMissoesPage() {
   const totalCount = countRes.count ?? null;
   const countError = countRes.error;
 
-  // Agrupar por faixa: null = "Qualquer faixa", depois por beltIndex 0, 1, 2, ...
+  // Agrupar por nível mínimo: null = "Qualquer nível", depois por nível 1, 2, 3, ... (níveis numéricos, lib/levels.ts)
   const byBelt = new Map<string, typeof list>();
   const KEY_ANY = "__qualquer__";
   for (const m of list) {
-    const key = m.beltIndex == null ? KEY_ANY : String(m.beltIndex);
+    const key = m.minLevel == null ? KEY_ANY : String(m.minLevel);
     if (!byBelt.has(key)) byBelt.set(key, []);
     byBelt.get(key)!.push(m);
   }
-  const beltOrder = [KEY_ANY, ...Array.from({ length: 20 }, (_, i) => String(i))];
-  const orderedBeltKeys = beltOrder.filter((k) => byBelt.has(k));
-  const beltLabel = (key: string) => (key === KEY_ANY ? "Qualquer faixa" : getBeltName(parseInt(key, 10)));
+  const orderedBeltKeys = [KEY_ANY, ...[...byBelt.keys()].filter((k) => k !== KEY_ANY).sort((a, b) => Number(a) - Number(b))].filter((k) => byBelt.has(k));
+  const beltLabel = (key: string) => (key === KEY_ANY ? "Qualquer nível" : `Nível ${key} em diante`);
+  const activeCount = list.filter((m) => m.isActive).length;
+  const anyCount = byBelt.get(KEY_ANY)?.length ?? 0;
 
   return (
     <div className="max-w-[min(640px,100%)] mx-auto p-4">
@@ -87,8 +87,8 @@ export default async function AdminMissoesPage() {
       </div>
 
       <p className="text-sm text-text-secondary mb-6">
-        Missões padronizadas para todas as modalidades e, opcionalmente, por modalidade e por faixa (cor).
-        O atleta vê apenas as missões que se aplicam à sua faixa e modalidade. As missões de dimensão
+        Missões padronizadas para todas as modalidades e, opcionalmente, por modalidade e por nível mínimo.
+        O atleta vê apenas as missões do seu nível (numérico, pelo XP oficial) e modalidade. As missões de dimensão
         (ex.: &quot;Subir Técnico para 5&quot;) são geradas automaticamente a partir das avaliações.
       </p>
 
@@ -98,7 +98,20 @@ export default async function AdminMissoesPage() {
         <AdicionarMissaoForm modalityOptions={modalityOptions} />
       </div>
 
-      <h2 className="text-base font-semibold text-text-primary mb-3">Todas as missões (por faixa)</h2>
+      <h2 className="text-base font-semibold text-text-primary mb-3">Todas as missões (por nível)</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+        {[
+          { n: activeCount, l: "missões ativas" },
+          { n: anyCount, l: "qualquer nível" },
+          { n: list.length - anyCount, l: "com nível mínimo" },
+          { n: orderedBeltKeys.filter((k) => k !== KEY_ANY).length, l: "níveis com missões" },
+        ].map((x) => (
+          <div key={x.l} className="rounded-lg border border-border bg-bg-secondary p-3 text-center">
+            <div className="text-xl font-bold text-text-primary">{x.n}</div>
+            <div className="text-xs text-text-secondary">{x.l}</div>
+          </div>
+        ))}
+      </div>
 
       <details className="mb-4 rounded-lg border border-border bg-bg-secondary p-3 text-sm">
         <summary className="cursor-pointer font-medium text-text-primary">Validar tabela no banco (diagnóstico)</summary>
@@ -153,9 +166,9 @@ export default async function AdminMissoesPage() {
                               {m.modality}
                             </span>
                           )}
-                          {m.beltIndex != null && (
+                          {m.minLevel != null && (
                             <span className="text-xs px-2 py-0.5 rounded bg-bg border border-border text-text-secondary">
-                              {getBeltName(m.beltIndex)}
+                              Nível {m.minLevel}+
                             </span>
                           )}
                         </div>

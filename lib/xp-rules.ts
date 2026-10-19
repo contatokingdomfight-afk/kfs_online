@@ -15,8 +15,12 @@ export const XP_SOURCES = [
   "EFFORT_RATING",
   "TRIBE_POST",
   "WELLNESS_CHECKIN",
+  "MISSION",
 ] as const;
 export type XpSource = (typeof XP_SOURCES)[number];
+
+/** Fontes com valor fixo editável em Admin → Regras de XP (as missões têm o XP definido em cada missão). */
+export const XP_RULE_SOURCES = XP_SOURCES.filter((s) => s !== "MISSION");
 
 export const XP_SOURCE_META: Record<XpSource, { label: string; rule: (xp: number) => string; emoji: string }> = {
   ATTENDANCE: { label: "Presenças", emoji: "🥋", rule: (xp) => `${xp} XP por treino com presença confirmada` },
@@ -29,6 +33,7 @@ export const XP_SOURCE_META: Record<XpSource, { label: string; rule: (xp: number
   EFFORT_RATING: { label: "Notas de esforço", emoji: "⚡", rule: (xp) => `${xp} XP por treino em que o aluno dá a nota de esforço (RPE)` },
   TRIBE_POST: { label: "Fotos na Tribo", emoji: "📸", rule: (xp) => `${xp} XP por publicação com foto na Tribo (máx. 1 por dia)` },
   WELLNESS_CHECKIN: { label: "Registos de bem-estar", emoji: "😴", rule: (xp) => `${xp} XP por registo de sono, stress e fadiga (máx. 1 por dia)` },
+  MISSION: { label: "Missões", emoji: "🎯", rule: () => "XP definido em cada missão (Admin → Missões)" },
 };
 
 export const DEFAULT_XP_RULES: Record<XpSource, number> = {
@@ -42,6 +47,7 @@ export const DEFAULT_XP_RULES: Record<XpSource, number> = {
   EFFORT_RATING: 5,
   TRIBE_POST: 15,
   WELLNESS_CHECKIN: 5,
+  MISSION: 0,
 };
 
 export function isXpSource(v: string): v is XpSource {
@@ -84,7 +90,7 @@ export function summarizeXp(rows: XpSummaryRow[]): XpSummary {
 /** Normaliza o formulário de regras: inteiros entre 0 e 10000; fontes desconhecidas são ignoradas. */
 export function parseXpRulesInput(input: Record<string, unknown>): { ok: true; rules: Record<XpSource, number> } | { ok: false; error: string } {
   const rules = { ...DEFAULT_XP_RULES };
-  for (const source of XP_SOURCES) {
+  for (const source of XP_RULE_SOURCES) {
     const raw = input[source];
     const n = typeof raw === "number" ? raw : Number(String(raw ?? "").trim());
     if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0 || n > 10000) {

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getBeltIndexFromXp } from "@/lib/belts";
+import { loadStudentLevel } from "@/lib/student-xp-total";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 
 export type MissionTemplateRow = {
@@ -8,13 +8,16 @@ export type MissionTemplateRow = {
   description: string | null;
   modality: string | null;
   beltIndex: number | null;
+  /** Nível mínimo (níveis numéricos de lib/levels.ts); null = qualquer nível. */
+  minLevel: number | null;
   xpReward: number;
   sortOrder: number;
   isActive: boolean;
 };
 
 /**
- * Missões de modelo que se aplicam a um atleta: mesma faixa (ou qualquer) e mesma modalidade (ou todas).
+ * Missões de modelo que se aplicam a um atleta: nível mínimo atingido (ou qualquer) e mesma modalidade (ou todas).
+ * O nível é o numérico, calculado a partir do XP oficial do aluno.
  */
 export async function getApplicableMissionTemplates(
   supabase: SupabaseClient,
@@ -24,11 +27,13 @@ export async function getApplicableMissionTemplates(
   /** Preferir índice após `syncAthleteDisplayBelt`; se omitido, usa-se só o XP. */
   displayBeltIndex?: number
 ): Promise<MissionTemplateRow[]> {
-  const beltIndex = displayBeltIndex ?? getBeltIndexFromXp(athleteXp);
+  const { data: athleteRow } = await supabase.from("Athlete").select("studentId").eq("id", athleteId).maybeSingle();
+  const studentId = (athleteRow as { studentId?: string | null } | null)?.studentId ?? null;
+  const level = studentId ? (await loadStudentLevel(supabase, studentId)).level : 1;
 
   const { data: templates } = await supabase
     .from("MissionTemplate")
-    .select("id, name, description, modality, beltIndex, xpReward, sortOrder, isActive")
+    .select("id, name, description, modality, beltIndex, minLevel, xpReward, sortOrder, isActive")
     .eq("isActive", true)
     .order("sortOrder", { ascending: true });
 
@@ -46,8 +51,8 @@ export async function getApplicableMissionTemplates(
       if (completedIds.has(t.id)) return false;
       // primaryModality null ou "ALL" = todas as modalidades (ex.: plano Presencial MMA) → não filtrar por modalidade
       if (t.modality != null && primaryModality != null && primaryModality !== "ALL" && t.modality !== primaryModality) return false;
-      // beltIndex no template = faixa mínima (ex.: 4 = Verde ou superior)
-      if (t.beltIndex != null && beltIndex < t.beltIndex) return false;
+      // minLevel no template = nível mínimo (ex.: 5 = nível 5 ou superior)
+      if (t.minLevel != null && level < t.minLevel) return false;
       return true;
     })
     .map((t) => ({
@@ -56,6 +61,7 @@ export async function getApplicableMissionTemplates(
       description: t.description ?? null,
       modality: t.modality ?? null,
       beltIndex: t.beltIndex ?? null,
+      minLevel: t.minLevel ?? null,
       xpReward: t.xpReward ?? 50,
       sortOrder: t.sortOrder ?? 0,
       isActive: t.isActive ?? true,

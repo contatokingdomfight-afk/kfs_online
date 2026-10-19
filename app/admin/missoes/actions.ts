@@ -6,6 +6,7 @@ import { adminPermissionError } from "@/lib/permissions/assert";
 import { blockProductionSeed } from "@/lib/auth/guard-production-seed";
 import { revalidatePath } from "next/cache";
 import { SEED_MISSIONS } from "./seed-missions-data";
+import { beltIndexToMinLevel } from "@/lib/levels";
 
 const MISSION_TABLE = "MissionTemplate";
 
@@ -47,6 +48,7 @@ export async function seedMissionsFromDoc(): Promise<SeedMissionsResult> {
       description: m.description,
       modality: m.modality,
       beltIndex: m.beltIndex,
+      minLevel: m.beltIndex == null ? null : beltIndexToMinLevel(m.beltIndex),
       xpReward: m.xpReward,
       sortOrder: i,
       isActive: true,
@@ -85,12 +87,12 @@ export async function createMission(
 
   const description = (formData.get("description") as string)?.trim() || null;
   const modality = (formData.get("modality") as string)?.trim() || null;
-  const beltIndexRaw = formData.get("beltIndex") as string | null;
-  const beltIndex = beltIndexRaw === "" || beltIndexRaw === null ? null : parseInt(String(beltIndexRaw), 10);
+  const minLevelRaw = String(formData.get("minLevel") ?? "").trim();
+  const minLevel = minLevelRaw === "" ? null : parseInt(minLevelRaw, 10);
   const xpReward = Math.max(0, parseInt(String(formData.get("xpReward") ?? 50), 10) || 50);
   const sortOrder = parseInt(String(formData.get("sortOrder") ?? 0), 10) || 0;
 
-  if (beltIndex != null && (Number.isNaN(beltIndex) || beltIndex < 0)) return { error: "Faixa inválida." };
+  if (minLevel != null && (Number.isNaN(minLevel) || minLevel < 1)) return { error: "Nível mínimo inválido (1 ou mais, ou vazio para qualquer nível)." };
 
   let supabase;
   try {
@@ -102,7 +104,8 @@ export async function createMission(
     name,
     description,
     modality,
-    beltIndex,
+    beltIndex: null,
+    minLevel,
     xpReward,
     sortOrder,
     isActive: true,
