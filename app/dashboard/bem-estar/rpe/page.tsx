@@ -57,8 +57,8 @@ export default async function RpePage() {
   const pageTitle = loc === "pt" ? "Esforço percebido (RPE)" : "Perceived effort (RPE)";
   const pageIntro =
     loc === "pt"
-      ? "Após o treino, classifica o esforço de 1 (muito leve) a 10 (máximo). Usa as aulas recentes abaixo."
-      : "After training, rate effort from 1 (very light) to 10 (maximum). Use the recent classes below.";
+      ? "RPE é o esforço percebido: quão pesado foi o treino para ti, de 1 (muito leve) a 10 (máximo) — não a dureza da aula em geral. Usa as aulas recentes abaixo."
+      : "RPE is perceived effort: how hard the session felt for you, from 1 (very light) to 10 (maximum) — not how hard the class was in general. Use the recent classes below.";
 
   return (
     <>
@@ -130,6 +130,7 @@ export default async function RpePage() {
               occurrenceDate={occ}
               minutes={minutesByLesson.get(a.lessonId) ?? 60}
               loadLabel={loc === "pt" ? "Carga" : "Load"}
+              pt={loc === "pt"}
               saveLabel={loc === "pt" ? "Guardar RPE" : "Save RPE"}
               savingLabel={loc === "pt" ? "A guardar…" : "Saving…"}
               weightLabel={loc === "pt" ? "Peso (kg)" : "Weight (kg)"}

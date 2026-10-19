@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { CheckCircle2 } from "lucide-react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { submitRpeAction, type RpeFormState } from "./bem-estar/actions";
+import { RPE_PERSONAL_HINT } from "@/lib/rpe-labels";
 
 type Props = { attendanceId: string; subtitle: string; minutes: number; xpReward: number; locale: "pt" | "en" };
 
@@ -81,6 +82,9 @@ export function RpeOneTap({ attendanceId, subtitle, minutes, xpReward, locale }:
         <span>{pt ? "Duro" : "Hard"}</span>
         <span>{pt ? "Máximo" : "Max"}</span>
       </div>
+      <span style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
+        {pt ? RPE_PERSONAL_HINT.pt : RPE_PERSONAL_HINT.en} {pt ? "Esforço percebido (RPE), de 1 a 10." : "Perceived effort (RPE), 1 to 10."}
+      </span>
       {state?.error ? <span style={{ fontSize: 13, color: "var(--danger)" }}>{state.error}</span> : null}
     </form>
   );
