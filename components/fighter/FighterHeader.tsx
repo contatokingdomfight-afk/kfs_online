@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { getBeltName } from "@/lib/belts";
 
 type Props = {
   backHref: string;
@@ -20,11 +19,9 @@ export function FighterHeader({
   backHref,
   backLabel = "Voltar",
   level = 1,
-  rankIndex = 0,
   xpCurrent = 0,
   xpNext = 1000,
 }: Props) {
-  const beltName = getBeltName(rankIndex ?? 0);
   const xpPercent = xpNext > 0 ? Math.min(100, ((xpCurrent ?? 0) / xpNext) * 100) : 0;
 
   return (
@@ -43,14 +40,8 @@ export function FighterHeader({
             Perfil do Atleta
           </h1>
           <div className="flex items-center gap-2">
-            <span
-              className="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 rounded-lg bg-primary text-white text-sm font-bold"
-              title="Nível"
-            >
-              {level}
-            </span>
-            <span className="text-sm font-semibold text-primary border border-primary/50 rounded-lg px-2 py-1">
-              {beltName}
+            <span className="inline-flex items-center h-8 px-3 rounded-lg bg-primary text-white text-sm font-bold" title="Nível geral (XP)">
+              Nível {level}
             </span>
           </div>
         </div>

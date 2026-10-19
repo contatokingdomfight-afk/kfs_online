@@ -151,7 +151,7 @@ export default async function CoachPublicProfilePage({ params }: Props) {
           <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "var(--text-primary)" }}>{data.name}</h1>
 
           {data.beltName ? (
-            <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 600, color: "var(--primary)" }}>Faixa {data.beltName}</p>
+            <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 600, color: "var(--primary)" }}>{data.beltName}</p>
           ) : null}
 
           {data.yearsExperience ? (

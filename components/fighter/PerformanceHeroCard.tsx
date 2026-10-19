@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { getBeltName } from "@/lib/belts";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import type { GraduationSummary } from "@/components/graduation/GraduationSummaryCard";
 
@@ -29,14 +28,12 @@ export function PerformanceHeroCard({
   overallScore,
   maxScore = 10,
   level = 1,
-  rankIndex = 0,
   xpCurrent = 0,
   xpNext = 1000,
   primaryModalityLabel,
   xpBarNote,
   graduation,
 }: Props) {
-  const beltName = getBeltName(rankIndex ?? 0);
   const normalized = Math.min(maxScore, Math.max(0, overallScore));
   const percent = maxScore > 0 ? (normalized / maxScore) * 100 : 0;
   const xpPercent = xpNext > 0 ? Math.min(100, ((xpCurrent ?? 0) / xpNext) * 100) : 0;
@@ -91,14 +88,8 @@ export function PerformanceHeroCard({
               {graduation ? <GraduationHeroBlock graduation={graduation} primaryModalityLabel={primaryModalityLabel} /> : (
               <>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 rounded-lg bg-primary text-white text-sm font-bold"
-                    title="Nível"
-                  >
-                    {level}
-                  </span>
-                  <span className="text-sm font-semibold text-primary border border-primary/50 rounded-lg px-2 py-1">
-                    {beltName}
+                  <span className="inline-flex items-center h-8 px-3 rounded-lg bg-primary text-white text-sm font-bold" title="Nível geral (XP)">
+                    Nível {level}
                   </span>
                   {primaryModalityLabel && (
                     <span className="text-xs text-text-secondary border border-border rounded-lg px-2 py-1">

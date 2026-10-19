@@ -13,6 +13,8 @@ export const XP_SOURCES = [
   "EXAM_PASSED",
   "EXAM_TAKEN",
   "EFFORT_RATING",
+  "TRIBE_POST",
+  "WELLNESS_CHECKIN",
 ] as const;
 export type XpSource = (typeof XP_SOURCES)[number];
 
@@ -25,6 +27,8 @@ export const XP_SOURCE_META: Record<XpSource, { label: string; rule: (xp: number
   EXAM_PASSED: { label: "Exames aprovados", emoji: "🏅", rule: (xp) => `${xp} XP × número do grau obtido` },
   EXAM_TAKEN: { label: "Exames realizados", emoji: "📝", rule: (xp) => `${xp} XP por exame sem aprovação` },
   EFFORT_RATING: { label: "Notas de esforço", emoji: "⚡", rule: (xp) => `${xp} XP por treino em que o aluno dá a nota de esforço (RPE)` },
+  TRIBE_POST: { label: "Fotos na Tribo", emoji: "📸", rule: (xp) => `${xp} XP por publicação com foto na Tribo (máx. 1 por dia)` },
+  WELLNESS_CHECKIN: { label: "Registos de bem-estar", emoji: "😴", rule: (xp) => `${xp} XP por registo de sono, stress e fadiga (máx. 1 por dia)` },
 };
 
 export const DEFAULT_XP_RULES: Record<XpSource, number> = {
@@ -36,6 +40,8 @@ export const DEFAULT_XP_RULES: Record<XpSource, number> = {
   EXAM_PASSED: 100,
   EXAM_TAKEN: 25,
   EFFORT_RATING: 5,
+  TRIBE_POST: 15,
+  WELLNESS_CHECKIN: 5,
 };
 
 export function isXpSource(v: string): v is XpSource {

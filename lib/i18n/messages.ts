@@ -1910,7 +1910,7 @@ export const messages = {
     weekThemeTitle: "Week theme",
     weekThemeDescription: "Study the theory before class and make the most of your time on the mat.",
     myStats: "My stats",
-    currentBelt: "Current belt",
+    currentBelt: "Current level",
     forNextLevel: "for next level",
     totalPresences: "Total attendances",
     thisMonth: "This month",

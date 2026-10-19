@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Níveis numéricos</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--tx:#fff;--tx2:#a1a1aa;--pr:#c1121f;--bd:#27272a;--ok:#22c55e;--warn:#facc15;--font:"Inter",system-ui,sans-serif}
+  *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:#050505;color:var(--tx)}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 60px}
+  .badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase}
+  h1{font-size:22px;margin:12px 0 6px}h2{font-size:16px;margin:28px 0 10px}.lead{font-size:13.5px;color:var(--tx2);line-height:1.6;margin:0;max-width:720px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .card{background:var(--bg2);border:1px solid var(--bd);border-radius:16px;padding:18px}
+  .cap{font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+  .hero{display:flex;gap:18px;align-items:center}
+  .lvl{width:92px;height:92px;border-radius:50%;border:5px solid var(--pr);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+  .lvl b{font-size:34px;line-height:1}.lvl span{font-size:10px;color:var(--tx2);font-weight:700;letter-spacing:.5px}
+  .bar{height:10px;border-radius:5px;background:#27272a;overflow:hidden;margin:8px 0 4px}.bar i{display:block;height:100%;background:var(--pr)}
+  .mut{font-size:12.5px;color:var(--tx2)}.big{font-size:18px;font-weight:800}
+  .belt{display:inline-flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;border:1px solid var(--bd);font-size:13px;font-weight:700}
+  .sw{width:28px;height:10px;border-radius:3px;background:linear-gradient(90deg,#f5f5f5 50%,#d4a017 50%)}
+  table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:8px 10px;border-bottom:1px solid var(--bd);text-align:left}th{color:var(--tx2);font-weight:600}
+  .new{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:8px;background:rgba(34,197,94,.15);color:var(--ok);margin-left:6px}
+  .rk{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd);font-size:14px}.rk:last-child{border:0}
+  .av{width:34px;height:34px;border-radius:50%;background:#27272a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+  .pill{font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;background:rgba(193,18,31,.15);color:#ff6b73}
+  .note{font-size:12.5px;color:var(--tx2);line-height:1.6;margin-top:16px}.note b{color:var(--warn)}
+  ul.places{margin:0;padding-left:18px;font-size:13px;line-height:1.9;color:var(--tx2)}ul.places b{color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Mockup</span>
+  <h1>Níveis numéricos infinitos</h1>
+  <p class="lead">O nível sai só do XP total: o nível 1 começa em 0 XP e cada nível custa mais 50 XP do que o anterior (250, 300, 350…). Não há limite nem tempo mínimo. As cores ficam só na graduação oficial de cada modalidade.</p>
+
+  <h2>Cartão do atleta</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="cap">Todas as modalidades (nível geral)</div>
+      <div class="hero">
+        <div class="lvl"><b>3</b><span>NÍVEL</span></div>
+        <div style="flex:1">
+          <div class="big">Nível 3</div>
+          <div class="mut">750 XP no total</div>
+          <div class="bar"><i style="width:57%"></i></div>
+          <div class="mut">200 / 350 XP para o nível 4</div>
+        </div>
+      </div>
+      <p class="note" style="margin-top:12px">Sem cor nem nome de faixa: é a evolução na plataforma, não uma graduação.</p>
+    </div>
+    <div class="card">
+      <div class="cap">Muay Thai (graduação publicada)</div>
+      <div class="hero">
+        <div class="lvl" style="border-color:#d4a017"><b>2</b><span>GRAU</span></div>
+        <div style="flex:1">
+          <span class="belt"><span class="sw"></span>Kruang branco-amarelo</span>
+          <div class="mut" style="margin-top:8px">Progresso para o exame</div>
+          <div class="bar"><i style="width:70%;background:#d4a017"></i></div>
+          <div class="mut">Presenças 28/40 · média 7,8 · nível geral 3</div>
+        </div>
+      </div>
+      <p class="note" style="margin-top:12px">Igual ao que já existe: cores e graus só aqui.</p>
+    </div>
+  </div>
+
+  <h2>Ranking</h2>
+  <div class="card">
+    <div class="rk"><span style="width:22px;color:var(--tx2)">1</span><span class="av">RA</span><span style="flex:1;font-weight:700">Rita Almeida</span><span class="pill">Nv 3</span><span class="mut">750 XP</span></div>
+    <div class="rk"><span style="width:22px;color:var(--tx2)">2</span><span class="av">JM</span><span style="flex:1;font-weight:700">João Martins</span><span class="pill">Nv 3</span><span class="mut">685 XP</span></div>
+    <div class="rk"><span style="width:22px;color:var(--tx2)">3</span><span class="av">PC</span><span style="flex:1;font-weight:700">Pedro Costa</span><span class="pill">Nv 2</span><span class="mut">485 XP</span></div>
+  </div>
+
+  <h2>Como se ganha XP</h2>
+  <div class="card">
+    <table>
+      <tr><th>Missão</th><th>XP (editável no admin)</th><th>Limite</th></tr>
+      <tr><td>🥋 Presença confirmada no treino</td><td>já existe</td><td>—</td></tr>
+      <tr><td>⚡ Nota de esforço da aula (RPE)</td><td>já existe</td><td>1 por treino</td></tr>
+      <tr><td>📺 Aula da biblioteca concluída</td><td>já existe</td><td>—</td></tr>
+      <tr><td>🎓 Curso concluído</td><td>já existe</td><td>—</td></tr>
+      <tr><td>📈 Avaliação de performance · 💪 física · 🏅 exames</td><td>já existe</td><td>—</td></tr>
+      <tr><td>📸 Publicação com foto na Tribo <span class="new">NOVO</span></td><td>15 XP</td><td>1 por dia</td></tr>
+      <tr><td>😴 Registo de bem-estar (sono, energia, dores) <span class="new">NOVO</span></td><td>5 XP</td><td>1 por dia</td></tr>
+    </table>
+  </div>
+
+  <h2>Tabela de níveis (até onde for preciso)</h2>
+  <div class="card">
+    <table>
+      <tr><th>Nível</th><th>XP total</th><th>Custo do nível</th></tr>
+      <tr><td>1</td><td>0</td><td>—</td></tr>
+      <tr><td>2</td><td>250</td><td>250</td></tr>
+      <tr><td>3</td><td>550</td><td>300</td></tr>
+      <tr><td>5</td><td>1 300</td><td>400</td></tr>
+      <tr><td>10</td><td>4 050</td><td>650</td></tr>
+      <tr><td>20</td><td>13 300</td><td>1 150</td></tr>
+      <tr><td>50</td><td>71 050</td><td>2 650</td></tr>
+      <tr><td>…</td><td colspan="2" class="mut">sem fim</td></tr>
+    </table>
+  </div>
+
+  <h2>Onde muda (tudo com o mesmo cálculo)</h2>
+  <div class="card">
+    <ul class="places">
+      <li><b>Aluno:</b> início, Evolução, Performance (e a página «faixa» passa a «nível») e Ranking</li>
+      <li><b>Coach:</b> performance do aluno e perfil público do coach</li>
+      <li><b>Admin:</b> ficha do aluno, Missões e regras de XP (com as 2 missões novas)</li>
+      <li><b>Cartão de lutador</b> e mensagens «O que há de novo / próxima missão»</li>
+    </ul>
+  </div>
+
+  <p class="note"><b>Notas:</b> o XP que cada pessoa já tem mantém-se; muda só a forma de o transformar em nível. As publicações e registos de bem-estar antigos não dão XP retroativo (a não ser que queiras). A graduação oficial por modalidade, com exame e cores, não muda.</p>
+</div>
+</body>
+</html>

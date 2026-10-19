@@ -3,7 +3,6 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRankInfoForStudent } from "@/lib/get-rank-info";
 import { computeBadgeStats, getBadgeDefinition } from "@/lib/gamification";
-import { getBeltName } from "@/lib/belts";
 import { displayGradeLabel, loadDisplayGrade } from "@/lib/graduation/display-grade";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 
@@ -101,9 +100,11 @@ export async function getFighterCardData(
       studentId,
       name: (user as { name?: string | null } | null)?.name?.trim() || "Aluno Kingdom",
       avatarUrl: (user as { avatarUrl?: string | null } | null)?.avatarUrl ?? null,
-      // Grau de graduação quando publicado; senão a faixa antiga por XP.
-      beltName: grade ? displayGradeLabel(grade) : getBeltName(rankInfo?.displayBeltIndex ?? 0),
-      ...(grade ? { beltColors: grade.colors, beltLabel: grade.gradeName ? `Grau ${grade.gradeName}` : "Sem graduação" } : {}),
+      // Grau de graduação quando publicado; senão o nível geral numérico (lib/levels.ts).
+      beltName: grade ? displayGradeLabel(grade) : `Nível ${rankInfo?.rankInfo.level ?? 1}`,
+      ...(grade
+        ? { beltColors: grade.colors, beltLabel: grade.gradeName ? `Grau ${grade.gradeName}` : "Sem graduação" }
+        : { beltColors: ["#c1121f"], beltLabel: `Nível ${rankInfo?.rankInfo.level ?? 1}` }),
       primaryModalityLabel: primaryModality ? (MODALITY_LABELS[primaryModality] ?? primaryModality) : null,
       xp: rankInfo?.xp ?? 0,
       totalClasses: stats.totalClasses,

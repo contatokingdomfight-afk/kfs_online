@@ -173,7 +173,7 @@ export default async function EvolucaoPage() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                    {pt ? "Nível" : "Level"} {rank.level} · {rank.rankName}
+                    {pt ? "Nível geral" : "Overall level"} {rank.level}
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 800 }}>
                     {rank.xpCurrent} <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>/ {rank.xpNext} XP</span>

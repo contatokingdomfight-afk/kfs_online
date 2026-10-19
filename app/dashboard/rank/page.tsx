@@ -12,7 +12,7 @@ import { MyXpCard } from "./MyXpCard";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { displayGradeLabel, loadDisplayGrades } from "@/lib/graduation/display-grade";
 import { getEvolutionLeaderboard } from "@/lib/leaderboard-evolution";
-import { getBeltIndexFromXp, getBeltName } from "@/lib/belts";
+import { levelFromXp } from "@/lib/levels";
 import {
   parseRankAgeParam,
   parseRankModalityParam,
@@ -150,9 +150,9 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
 
   const nf = (n: number) => n.toLocaleString(locale === "en" ? "en-GB" : "pt-PT");
   const xpEntries: RankBoardEntry[] = rows.map((row) => {
-    // Grau de graduação (modalidade publicada); senão a faixa antiga por XP.
+    // Grau de graduação (modalidade publicada); senão o nível geral numérico (lib/levels.ts).
     const grade = displayGrades.get(row.student_id);
-    const beltLabel = grade ? displayGradeLabel(grade) : getBeltName(getBeltIndexFromXp(row.legacy_xp));
+    const beltLabel = grade ? displayGradeLabel(grade) : `Nível ${levelFromXp(row.xp).level}`;
     return {
       id: row.student_id,
       rank: row.rank,

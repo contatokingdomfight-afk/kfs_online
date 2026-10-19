@@ -13,7 +13,7 @@ import { getCriterionToCategory, getCriterionToDimensionCode } from "@/lib/evalu
 import { loadAllEvaluationConfigs } from "@/lib/load-evaluation-config";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
-import { getWarriorBeltBarFromAthleteState } from "@/lib/athlete-warrior-stats";
+import { loadStudentLevel } from "@/lib/student-xp-total";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
@@ -251,10 +251,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
   if (athlete) {
     const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
     const xpTotal = synced?.xp ?? (athlete.xp ?? 0);
-    const dIdx = synced?.displayBeltIndex ?? (athlete.displayBeltIndex ?? 0);
-    const lastP = synced?.lastBeltPromotionAt ?? athlete.lastBeltPromotionAt;
-    const created = synced?.createdAt ?? athlete.createdAt;
-    const bar = getWarriorBeltBarFromAthleteState(xpTotal, dIdx, lastP, created);
+    const lv = await loadStudentLevel(supabase, studentId);
     const { count: totalPresences } = await supabase
       .from("Attendance")
       .select("*", { count: "exact", head: true })
@@ -262,9 +259,9 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
       .eq("status", "CONFIRMED")
       .eq("countsForGamification", true);
     athleteStats = {
-      currentBelt: bar.currentBelt,
-      currentXP: bar.currentXP,
-      nextLevelXP: bar.nextLevelXP,
+      currentBelt: `${lv.level}`,
+      currentXP: lv.xpIntoLevel,
+      nextLevelXP: lv.xpForNext,
       totalPresences: totalPresences || 0,
     };
     const xpForMissions = xpTotal;
@@ -289,7 +286,7 @@ export async function DashboardRestContent({ studentId, locale, hasPerformanceTr
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "clamp(16px, 4vw, 20px)" }}>
               <div>
                 <p style={{ margin: "0 0 4px 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>{t("currentBelt")}</p>
-                <p style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: "var(--primary)" }}>{athleteStats.currentBelt ? t(("belt_" + athleteStats.currentBelt) as "belt_WHITE") : "—"}</p>
+                <p style={{ margin: 0, fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, color: "var(--primary)" }}>{athleteStats.currentBelt ?? "—"}</p>
               </div>
               <div>
                 <p style={{ margin: "0 0 4px 0", fontSize: "clamp(12px, 3vw, 14px)", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>XP</p>

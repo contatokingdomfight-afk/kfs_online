@@ -13,10 +13,8 @@ import { MissionCard, type Mission } from "./MissionCard";
 import { CoachFeedback } from "./CoachFeedback";
 import type { DimensionDetail } from "@/lib/performance-detail-structure";
 import type { RadarAxis } from "./RadarStatsDynamic";
-import { getRankNameForIndex } from "@/lib/xp-missions";
 import { buildMissionsFromScores } from "@/lib/fighter-missions";
 import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
-import { beltIdFromRankName, BELT_DISPLAY } from "@/components/belt-progression/belt-progression-data";
 import type { AchievementWithStatus } from "@/lib/achievements";
 import { ImproveLibraryLink } from "@/components/improve/ImproveLibraryLink";
 import { EvaluationResultsDashboard } from "@/components/evaluation-results";
@@ -467,27 +465,27 @@ export function PerformanceFighterDashboard({
 
       {/* Com graduação publicada, o grau e o progresso aparecem no cartão principal (hero). */}
 
-      {/* Progressão de Níveis e XP — resumo; detalhe completo em /dashboard/performance/faixa */}
+      {/* Nível geral (numérico, lib/levels.ts) — detalhe do XP por missão no Ranking */}
       {!graduationSummary && xpCurrent != null && xpNext != null && rankIndex != null && (
         <Link
-          href="/dashboard/performance/faixa"
+          href="/dashboard/rank"
           className="block rounded-2xl bg-bg-secondary border border-border p-4 shadow-md hover:border-primary/40 transition-colors no-underline text-inherit"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-2xl" aria-hidden>
-                {BELT_DISPLAY[beltIdFromRankName(getRankNameForIndex(rankIndex))].emoji}
+              <span className="inline-flex items-center justify-center min-w-[2.5rem] h-10 px-2 rounded-xl bg-primary text-white text-lg font-bold" aria-hidden>
+                {level ?? 1}
               </span>
               <div>
                 <h2 className="text-base font-bold text-text-primary">
-                  Faixa: {BELT_DISPLAY[beltIdFromRankName(getRankNameForIndex(rankIndex))].label}
+                  Nível {level ?? 1}
                 </h2>
                 <p className="text-sm text-text-secondary">
                   {xpCurrent} / {xpNext} XP
                 </p>
               </div>
             </div>
-            <span className="text-sm font-medium text-primary">Ver progressão →</span>
+            <span className="text-sm font-medium text-primary">Como ganhar XP →</span>
           </div>
         </Link>
       )}

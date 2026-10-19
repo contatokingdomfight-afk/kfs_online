@@ -19,7 +19,8 @@ import {
   getDetailOrder,
   groupDetailByGeneralDimension,
 } from "@/lib/performance-detail-from-config";
-import { getRankFromAthleteState, type BeltTimeGateInfo } from "@/lib/xp-missions";
+import type { BeltTimeGateInfo } from "@/lib/xp-missions";
+import { loadStudentLevel } from "@/lib/student-xp-total";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
 import { getApplicableMissionTemplates } from "@/lib/missions";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
@@ -99,22 +100,11 @@ export async function PerformanceContent({ studentId }: Props) {
   const { data: athlete } = await supabase.from("Athlete").select("id, xp, createdAt").eq("studentId", studentId).single();
 
   if (athlete) {
+    // Missões continuam ligadas ao estado antigo do atleta (índice de faixa por XP legado).
     const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
-    if (synced) {
-      const rank = getRankFromAthleteState(
-        synced.xp,
-        synced.displayBeltIndex,
-        synced.lastBeltPromotionAt,
-        synced.createdAt
-      );
-      rankInfo = {
-        level: rank.level,
-        rankIndex: rank.rankIndex,
-        xpCurrent: rank.xpCurrent,
-        xpNext: rank.xpNext,
-        beltTimeGate: rank.beltTimeGate,
-      };
-    }
+    // Nível geral numérico a partir do XP total oficial (lib/levels.ts).
+    const lv = await loadStudentLevel(supabase, studentId);
+    rankInfo = { level: lv.level, rankIndex: lv.level - 1, xpCurrent: lv.xpIntoLevel, xpNext: lv.xpForNext };
 
     const primaryModality = (student.primaryModality as string | null) ?? null;
     primaryModalityLabel = primaryModality ? (modalityLabels.get(primaryModality) ?? MODALITY_LABELS[primaryModality] ?? primaryModality) : "Todas as modalidades";

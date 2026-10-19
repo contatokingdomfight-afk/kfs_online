@@ -2,7 +2,6 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRankInfoForStudent } from "@/lib/get-rank-info";
-import { getBeltName } from "@/lib/belts";
 import { loadDisplayGrade } from "@/lib/graduation/display-grade";
 
 export type CoachTestimonialPublic = {
@@ -165,7 +164,7 @@ export async function getCoachPublicProfileData(
       facebookUrl: (coach as { facebookUrl?: string | null }).facebookUrl ?? null,
       schoolNames: (schools ?? []).map((s) => s.name as string),
       // Grau de graduação quando publicado (sem grau = não mostra); senão a faixa antiga por XP.
-      beltName: grade ? grade.gradeName : rankInfo ? getBeltName(rankInfo.displayBeltIndex) : null,
+      beltName: grade ? `Faixa ${grade.gradeName}` : rankInfo ? `Nível ${rankInfo.rankInfo.level}` : null,
       currentStudentCount: currentStudents.count ?? 0,
       lessonsTaughtCount,
       testimonials,

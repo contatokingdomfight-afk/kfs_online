@@ -7,6 +7,7 @@ import { getWeekThemeDaysForWeek } from "@/lib/week-theme-days";
 import { getMonthThemesForMonth } from "@/lib/month-theme";
 import { normalizeModalityCode } from "@/lib/modality-normalize";
 import { syncAthleteDisplayBelt } from "@/lib/sync-athlete-display-belt";
+import { loadStudentLevel } from "@/lib/student-xp-total";
 import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback";
 import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
 import { getWhatIsNewNextMission } from "@/lib/whatisnew-next-mission.server";
@@ -254,11 +255,17 @@ export async function DashboardBelowFold({
   const streakWeeks = weeksInARow(confirmedDates, todayYmd);
   const weekMarks = weekDayMarks(todayYmd, confirmedDates, goingDates, locale as "pt" | "en");
   let xpTotalForHome: number | null = null;
+  let levelForHome: number | null = null;
 
   if (athlete) {
     const synced = await syncAthleteDisplayBelt(supabase, athlete.id);
     const xpTotal = synced?.xp ?? (athlete.xp ?? 0);
-    xpTotalForHome = xpTotal;
+    // XP e nível oficiais (regras do admin, lib/levels.ts); o XP legado só alimenta as missões.
+    if (studentId) {
+      const lv = await loadStudentLevel(supabase, studentId);
+      xpTotalForHome = lv.xp;
+      levelForHome = lv.level;
+    }
     const dIdx = synced?.displayBeltIndex ?? (athlete.displayBeltIndex ?? 0);
 
     const xpForMissions = xpTotal;
@@ -395,7 +402,7 @@ export async function DashboardBelowFold({
         hasPerformanceTracking={hasPerformanceTracking}
         streakWeeks={streakWeeks}
         xp={xpTotalForHome}
-        level={null}
+        level={levelForHome}
         rank={rankPosition}
         rankTotal={rankTotal}
         week={weekMarks}
