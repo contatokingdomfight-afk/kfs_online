@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Reconciliação Revolut</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--tx:#fff;--tx2:#a1a1aa;--pr:#c1121f;--bd:#27272a;--ok:#22c55e;--warn:#facc15;--blue:#60a5fa;--font:"Inter",system-ui,sans-serif}
+  *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:#050505;color:var(--tx)}
+  .wrap{max-width:960px;margin:0 auto;padding:24px 16px 60px}
+  .badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase}
+  h1{font-size:22px;margin:12px 0 6px}h2{font-size:16px;margin:28px 0 10px}.lead{font-size:13.5px;color:var(--tx2);line-height:1.6;margin:0;max-width:760px}
+  .tabs{display:flex;gap:8px;margin:18px 0 0;flex-wrap:wrap}.tabs button{background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer}.tabs button.on{background:var(--pr);border-color:var(--pr);color:#fff}
+  .screen{display:none;margin-top:16px}.screen.on{display:block}
+  .card{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:12px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}.kpi{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:12px}.kpi b{display:block;font-size:20px;margin-top:4px}.kpi span{font-size:12px;color:var(--tx2)}
+  table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:9px 10px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:middle}th{color:var(--tx2);font-weight:600;font-size:12px}
+  .chip{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:9px;white-space:nowrap}
+  .auto{background:rgba(34,197,94,.15);color:var(--ok)}.sug{background:rgba(250,204,21,.15);color:var(--warn)}.none{background:rgba(161,161,170,.15);color:var(--tx2)}
+  .b{border:1px solid var(--bd);background:transparent;color:#fff;padding:6px 10px;border-radius:8px;font-size:12.5px;cursor:pointer;white-space:nowrap}.b.p{background:var(--pr);border-color:var(--pr);font-weight:700}
+  select{background:#0f0f0f;border:1px solid var(--bd);color:#fff;border-radius:8px;padding:6px 8px;font-size:12.5px}
+  .mut{color:var(--tx2);font-size:12px}.note{font-size:12.5px;color:var(--tx2);line-height:1.6}.note b{color:var(--warn)}
+  .ref{font-family:ui-monospace,monospace;font-size:20px;font-weight:800;letter-spacing:1px;color:var(--warn)}
+  .phone{max-width:380px;background:var(--bg);border:1px solid var(--bd);border-radius:18px;padding:16px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;margin-top:8px;font-size:13px}
+  .flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.step{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:12px;font-size:13px;line-height:1.5}.step b{display:block;color:var(--warn);font-size:12px;margin-bottom:4px}
+  @media(max-width:640px){table{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Mockup</span>
+  <h1>Confirmação automática das transferências Revolut</h1>
+  <p class="lead">A plataforma lê as transferências que entram na conta Revolut Business e marca as mensalidades (e encomendas da loja) como pagas, sem confirmação manual e sem comissões. O que não for certo fica para o admin decidir com um clique.</p>
+
+  <div class="tabs">
+    <button class="on" data-s="s1">1 · Como funciona</button>
+    <button data-s="s2">2 · Admin: Financeiro → Revolut</button>
+    <button data-s="s3">3 · Aluno: como pagar</button>
+  </div>
+
+  <div class="screen on" id="s1">
+    <div class="flow">
+      <div class="step"><b>1. O aluno transfere</b>Para a conta Revolut da escola, como hoje. Idealmente com a referência dele (ex.: KFS-0123).</div>
+      <div class="step"><b>2. A Revolut avisa</b>Cada transferência recebida chega à plataforma (aviso automático da Revolut + verificação de hora a hora como segurança).</div>
+      <div class="step"><b>3. A plataforma cruza</b>Referência KFS → certo. Sem referência: nome de quem paga + valor + mês em aberto.</div>
+      <div class="step"><b>4. Fica pago</b>Mensalidade paga, aluno desbloqueado, receita no Financeiro. Dúvidas vão para o «A tratar».</div>
+    </div>
+    <h2>Regras de correspondência</h2>
+    <div class="card">
+      <table>
+        <tr><th>Situação</th><th>Resultado</th></tr>
+        <tr><td>Descritivo tem a referência do aluno (KFS-0123) e o valor bate certo</td><td><span class="chip auto">Automático</span></td></tr>
+        <tr><td>Nome de quem paga = nome do aluno (ou do titular da família) e valor = mensalidade em aberto</td><td><span class="chip auto">Automático</span></td></tr>
+        <tr><td>Nome parecido, ou valor certo mas há mais de um aluno possível</td><td><span class="chip sug">Sugestão: o admin confirma</span></td></tr>
+        <tr><td>Nada bate certo (ex.: pagamento de outra coisa)</td><td><span class="chip none">Por associar ou ignorar</span></td></tr>
+        <tr><td>Descritivo com referência de encomenda da loja (KFS-E-0045)</td><td><span class="chip auto">Encomenda paga</span></td></tr>
+      </table>
+      <p class="note" style="margin-top:10px">Depois de associares uma vez um pagador a um aluno (ex.: «Maria Couto» paga pelo Gustavo), a plataforma lembra-se e da próxima vez é automático.</p>
+    </div>
+  </div>
+
+  <div class="screen" id="s2">
+    <div class="kpis">
+      <div class="kpi"><span>Recebido este mês</span><b>€2 365</b></div>
+      <div class="kpi"><span>Confirmado automático</span><b>38</b></div>
+      <div class="kpi"><span>Sugestões por confirmar</span><b style="color:var(--warn)">3</b></div>
+      <div class="kpi"><span>Por associar</span><b>2</b></div>
+    </div>
+    <div class="card">
+      <table>
+        <tr><th>Data</th><th>De</th><th>Descritivo</th><th>Valor</th><th>Correspondência</th><th></th></tr>
+        <tr><td>19/10</td><td>RITA ALMEIDA</td><td>KFS-0123 mensalidade</td><td>55,00 €</td><td><span class="chip auto">Rita Almeida · Out.</span></td><td class="mut">pago ✓</td></tr>
+        <tr><td>19/10</td><td>JOAO P MARTINS</td><td>mensalidade</td><td>55,00 €</td><td><span class="chip auto">João Martins · Out.</span></td><td class="mut">pago ✓</td></tr>
+        <tr><td>18/10</td><td>MARIA COUTO</td><td>mensalidade gustavo</td><td>80,00 €</td><td><span class="chip sug">Gustavo Couto · Out.?</span></td><td><button class="b p">Confirmar</button></td></tr>
+        <tr><td>18/10</td><td>PEDRO C.</td><td>Mensalidade</td><td>55,00 €</td><td><span class="chip sug">Pedro Costa ou Pedro Cunha?</span></td><td><select><option>Escolher aluno…</option><option>Pedro Costa</option><option>Pedro Cunha</option></select></td></tr>
+        <tr><td>17/10</td><td>ANA LOPES</td><td>KFS-E-0045</td><td>35,00 €</td><td><span class="chip auto">Encomenda KFS-E-0045</span></td><td class="mut">paga ✓</td></tr>
+        <tr><td>17/10</td><td>FORNECEDOR LDA</td><td>reembolso</td><td>120,00 €</td><td><span class="chip none">Sem correspondência</span></td><td><button class="b">Ignorar</button></td></tr>
+      </table>
+    </div>
+    <p class="note"><b>Segurança:</b> a plataforma só <b>lê</b> movimentos da conta. Não consegue fazer pagamentos nem transferências. A ligação à Revolut é feita uma vez por ti, nas definições da Revolut Business.</p>
+  </div>
+
+  <div class="screen" id="s3">
+    <div class="phone">
+      <div style="font-weight:800;font-size:16px">Pagar mensalidade de outubro</div>
+      <div class="mut" style="margin-top:4px">55,00 € · até dia 8</div>
+      <div class="row"><span class="mut">IBAN</span><span>PT50 …… 0000 <span class="mut">copiar</span></span></div>
+      <div class="row"><span class="mut">Revolut</span><span>@kingdomfight <span class="mut">copiar</span></span></div>
+      <div class="row" style="flex-direction:column;align-items:flex-start;gap:4px;border-color:var(--warn)"><span class="mut">Descritivo (importante)</span><span class="ref">KFS-0123</span><span class="mut">Com esta referência o pagamento fica confirmado sozinho, normalmente em minutos.</span></div>
+    </div>
+    <p class="note" style="margin-top:12px">A referência é fixa por aluno, sempre a mesma todos os meses. Aparece em Conta → Pagamentos e na mensagem de lembrete do WhatsApp.</p>
+  </div>
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button,.screen').forEach(e=>e.classList.remove('on'));b.classList.add('on');document.getElementById(b.dataset.s).classList.add('on');});
+</script>
+</body>
+</html>

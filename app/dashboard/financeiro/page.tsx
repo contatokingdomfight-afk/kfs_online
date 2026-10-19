@@ -8,6 +8,8 @@ import { StudentOnboardingFeesNotice } from "@/components/StudentOnboardingFeesN
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
 import { SchoolPaymentPendingModal } from "./SchoolPaymentPendingModal";
 import { SchoolTransferPaymentCard } from "@/components/payments/SchoolTransferPaymentCard";
+import { studentPaymentReference } from "@/lib/revolut/match";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getFamilyContext } from "@/lib/family-context";
 import { resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
 import { studentHasPaymentUnlock } from "@/lib/family-payment-gate";
@@ -149,6 +151,12 @@ export default async function DashboardFinanceiroPage({
     showInsurance: onboardingFees?.showInsurance ?? false,
   };
 
+  // Referência fixa do aluno para o descritivo (confirmação automática das transferências Revolut).
+  const { data: codeRow } = studentId
+    ? await (getAdminClientOrNull().client ?? supabase).from("Student").select("paymentCode").eq("id", studentId).maybeSingle()
+    : { data: null };
+  const paymentReference = studentPaymentReference((codeRow as { paymentCode?: number | null } | null)?.paymentCode ?? null);
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <Suspense fallback={null}>
@@ -225,7 +233,7 @@ export default async function DashboardFinanceiroPage({
             ? "Card subscriptions are not available yet. Pay at the school office or by bank transfer using the details below."
             : "A subscrição por cartão ainda não está disponível. Paga na secretaria ou por transferência bancária com os dados abaixo."}
         </p>
-        <SchoolTransferPaymentCard locale={locale === "en" ? "en" : "pt"} />
+        <SchoolTransferPaymentCard locale={locale === "en" ? "en" : "pt"} paymentReference={paymentReference} />
       </section>
 
       {/* Pagamento por cartão (em breve) */}

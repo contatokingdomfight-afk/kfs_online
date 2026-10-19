@@ -3,9 +3,11 @@ import { CopyTextButton } from "@/components/ui/CopyTextButton";
 
 type Props = {
   locale?: "pt" | "en";
+  /** Referência fixa do aluno (ex.: KFS-0123) para o descritivo: confirma o pagamento sozinho. */
+  paymentReference?: string | null;
 };
 
-export function SchoolTransferPaymentCard({ locale = "pt" }: Props) {
+export function SchoolTransferPaymentCard({ locale = "pt", paymentReference = null }: Props) {
   const pt = locale === "pt";
 
   const rows = [
@@ -16,6 +18,9 @@ export function SchoolTransferPaymentCard({ locale = "pt" }: Props) {
     { label: pt ? "Telefone" : "Phone", value: GYM_ENROLLMENT_INFO.phone },
     { label: "E-mail", value: GYM_ENROLLMENT_INFO.email },
     { label: "IBAN", value: SCHOOL_TRANSFER_IBAN, copy: true },
+    ...(paymentReference
+      ? [{ label: pt ? "Descritivo (importante)" : "Reference (important)", value: paymentReference, copy: true }]
+      : []),
   ];
 
   return (
@@ -31,7 +36,9 @@ export function SchoolTransferPaymentCard({ locale = "pt" }: Props) {
     >
       <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.55 }}>
         {pt
-          ? "Para pagar por transferência, utiliza os dados abaixo. Também podes pagar em dinheiro na secretaria."
+          ? paymentReference
+            ? `Para pagar por transferência, usa os dados abaixo e escreve ${paymentReference} no descritivo: assim o pagamento fica confirmado sozinho. Também podes pagar na secretaria.`
+            : "Para pagar por transferência, utiliza os dados abaixo. Também podes pagar em dinheiro na secretaria."
           : "Use the details below for bank transfer. You can also pay cash at the school office."}
       </p>
       {rows.map((row) => (

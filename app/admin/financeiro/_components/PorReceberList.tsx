@@ -7,25 +7,8 @@ import { quickReceivePayment } from "../actions";
 import { FINANCE_PAYMENT_METHODS, type FinancePaymentMethod } from "@/lib/finance-payment-method";
 import { buildPaymentReceiptMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
-export type PorReceberItem = {
-  key: string;
-  group: "month" | "older" | "fees" | "orders";
-  kind: "TUITION" | "INSURANCE" | "ENROLLMENT" | "ORDER";
-  /** Encomenda da loja por pagar. */
-  orderId: string | null;
-  /** Vazio em encomendas de quem não tem conta. */
-  studentId: string;
-  name: string;
-  phone: string | null;
-  what: string;
-  detail: string | null;
-  amount: number;
-  /** Registo em atraso existente (marca como pago); null = mensalidade do mês ainda sem registo. */
-  paymentId: string | null;
-  referenceMonth: string | null;
-  /** Link de WhatsApp com lembrete de pagamento (opcional). */
-  reminderUrl?: string | null;
-};
+export type { PorReceberItem } from "@/lib/finance/por-receber";
+import type { PorReceberItem } from "@/lib/finance/por-receber";
 
 const METHOD_SHORT: Record<FinancePaymentMethod, string> = {
   CASH: "Espécie",

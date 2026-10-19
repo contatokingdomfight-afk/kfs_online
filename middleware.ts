@@ -60,7 +60,7 @@ function isPublicBrowserPath(pathname: string) {
 }
 
 function isPublicApiPath(pathname: string) {
-  return pathname === "/api/stripe/webhook" || pathname.startsWith("/api/cron/");
+  return pathname === "/api/stripe/webhook" || pathname === "/api/revolut/webhook" || pathname.startsWith("/api/cron/");
 }
 
 function isStudentAllowedWithoutPlan(pathname: string) {
