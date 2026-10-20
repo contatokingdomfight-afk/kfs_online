@@ -193,6 +193,12 @@ Resultado de uma auditoria de UX à área não logada (1 out. 2026), com postura
 
 ---
 
+## 18. Backlog — pagamentos online e confirmação automática (Revolut)
+
+Pausado a 20 out. 2026 (Revolut Business API no plano de 30 €/mês; conta de comerciante em análise). Estado, passos para retomar e decisões em [`BACKLOG_Pagamentos_Revolut.md`](BACKLOG_Pagamentos_Revolut.md).
+
+---
+
 ## Referências
 
 - Contexto técnico detalhado: [`memory.md`](memory.md)  

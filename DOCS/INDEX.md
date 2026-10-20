@@ -38,6 +38,7 @@ Ficheiros antigos removidos ou substituídos: **histórico no Git**. Stack atual
 | [`NOTIFICACOES_IN_APP_E_EVENTOS.md`](NOTIFICACOES_IN_APP_E_EVENTOS.md) | Centrais de notificações (aluno / coach / admin), gatilhos de eventos, rotas e permissões |
 | [`memory.md`](memory.md) | Índice de contexto: arquitetura, entregas recentes, comandos, pendências |
 | [`ROADMAP_Plataforma_KFS.md`](ROADMAP_Plataforma_KFS.md) | Roadmap por área (aluno, admin, coach, BD, deploy) |
+| [`BACKLOG_Pagamentos_Revolut.md`](BACKLOG_Pagamentos_Revolut.md) | Pagamentos online e confirmação automática de transferências (Revolut): estado, passos para retomar |
 | [`Especificacao_Plataforma_Kingdom_Digital.md`](Especificacao_Plataforma_Kingdom_Digital.md) | Especificação geral da plataforma (inclui secção Tribo / comunidade) |
 | [`TRIBO_MVP.md`](TRIBO_MVP.md) | Tribo (comunidade): MVP **em curso** — feed, media, RLS, moderação |
 | [`FIGHTER_CARD_MVP.md`](FIGHTER_CARD_MVP.md) | Cartão de conquista partilhável (crescimento): **feito e em produção** |
