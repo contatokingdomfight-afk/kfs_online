@@ -2,6 +2,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import Link from "next/link";
 import { Suspense } from "react";
 import { AdminMetricsDashboardSkeleton } from "./AdminMetricsDashboardSkeleton";
 import { AdminMetricsDashboardContent } from "./AdminMetricsDashboardContent";
@@ -46,6 +47,17 @@ export default async function AdminMetricsDashboardPage({ searchParams }: { sear
         </h1>
         <AdminSchoolFilter schools={schools} currentSchoolId={schoolId} />
       </div>
+
+      {fullDashboard ? (
+        <nav aria-label="Relatórios" style={{ display: "flex", gap: 6, overflowX: "auto" }}>
+          <span className="btn btn-primary" style={{ flexShrink: 0 }}>
+            Escola
+          </span>
+          <Link href="/admin/dashboard/loja-academy" className="btn" style={{ textDecoration: "none", flexShrink: 0 }}>
+            Loja &amp; Academy
+          </Link>
+        </nav>
+      ) : null}
 
       <Suspense fallback={<AdminMetricsDashboardSkeleton />}>
         <AdminMetricsDashboardContent client={result.client} schoolId={schoolId} access={access} />

@@ -19,6 +19,7 @@ import { TodayTrialClassesHighlight } from "@/components/TodayTrialClassesHighli
 import { AdminSchoolFilter } from "./AdminSchoolFilter";
 import { AdminTodoSummary } from "./dashboard/AdminTodoSummary";
 import { AdminHojeToday } from "./AdminHojeToday";
+import { ShopAcademyTodayCard } from "./ShopAcademyTodayCard";
 
 export const dynamic = "force-dynamic";
 
@@ -120,6 +121,12 @@ export default async function AdminHojePage({ searchParams }: { searchParams: Se
           <AdminHojeToday client={client} schoolId={schoolId} />
         </Suspense>
       )}
+
+      {full && can("/admin/dashboard") ? (
+        <Suspense fallback={null}>
+          <ShopAcademyTodayCard client={client} schoolId={schoolId} />
+        </Suspense>
+      ) : null}
 
       {stats && (
         <section aria-label="Este mês" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: 10 }}>

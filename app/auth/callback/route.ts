@@ -68,6 +68,7 @@ export async function GET(request: Request) {
         user_metadata: { ...sessionUser.user_metadata, [SHOP_ONLY_METADATA_KEY]: true },
       });
       if (metaErr) console.error("[auth/callback] marcar conta só-loja falhou:", metaErr.message);
+      else sessionUser.user_metadata = { ...sessionUser.user_metadata, [SHOP_ONLY_METADATA_KEY]: true };
     }
     try {
       await syncUser(sessionUser);

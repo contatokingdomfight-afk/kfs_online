@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Métricas Loja &amp; Academy</title>
+<style>
+  :root {
+    --bg:#0b0b0b; --bg2:#141414; --text:#fff; --muted:#a1a1aa; --primary:#c1121f;
+    --success:#22c55e; --warning:#facc15; --danger:#e11d48; --border:#27272a;
+    --font:"Inter",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+  .badge{display:inline-flex;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase;letter-spacing:.5px}
+  h1.meta{font-size:22px;margin:12px 0 6px} p.meta{font-size:13.5px;color:var(--muted);max-width:640px;line-height:1.6;margin:0}
+  .switcher{display:flex;gap:8px;margin:20px 0 14px;flex-wrap:wrap}
+  .sw{font:600 13px var(--font);padding:9px 18px;border-radius:999px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer}
+  .sw.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .frame{border:1px solid var(--border);border-radius:16px;overflow:hidden}
+  .bar{display:flex;gap:8px;align-items:center;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;background:#3a3a3a}
+  .screen{padding:20px;display:none;flex-direction:column;gap:16px}
+  .screen.on{display:flex}
+  h2{margin:0;font-size:20px;font-weight:800}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+  .kpi .v{font-size:24px;font-weight:800}
+  .kpi .l{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .up{color:var(--success);font-size:12px;font-weight:700}
+  .down{color:var(--danger);font-size:12px;font-weight:700}
+  .tabs{display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--border);padding-bottom:10px}
+  .tab{flex-shrink:0;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;color:var(--muted);border:1px solid var(--border)}
+  .tab.on{background:#fff;color:#000;border-color:#fff}
+  h3{margin:0 0 10px;font-size:14px;font-weight:800}
+  .cols{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+  .row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13.5px}
+  .row:first-of-type{border-top:0}
+  .row span:last-child{font-weight:700;white-space:nowrap}
+  .muted{color:var(--muted)}
+  .bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:8px}
+  .bars div{flex:1;background:linear-gradient(180deg,var(--primary),#7a0c14);border-radius:6px 6px 0 0;position:relative}
+  .bars div i{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-style:normal;font-size:10.5px;color:var(--muted)}
+  .prog{height:6px;border-radius:99px;background:#27272a;overflow:hidden;margin-top:4px}
+  .prog b{display:block;height:100%;background:var(--success)}
+  .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(250,204,21,.15);color:var(--warning)}
+  .todo{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--border);font-size:13.5px}
+  .todo:first-of-type{border-top:0}
+  .note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Mockup · não é o app real</span>
+  <h1 class="meta">Métricas da Loja &amp; Academy</h1>
+  <p class="meta">Novo separador «Loja &amp; Academy» em Relatórios (3 sub-secções) e um cartão novo na página «Hoje». Os valores são fictícios. Estas contas não entram nas métricas de alunos.</p>
+
+  <div class="switcher">
+    <button class="sw on" data-s="hoje">Página «Hoje» (cartão novo)</button>
+    <button class="sw" data-s="loja">Relatórios → Loja</button>
+    <button class="sw" data-s="academy">Relatórios → Academy</button>
+    <button class="sw" data-s="cursos">Relatórios → Cursos</button>
+  </div>
+
+  <div class="frame">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span id="url">/admin</span></div>
+
+    <!-- HOJE -->
+    <section class="screen on" id="hoje">
+      <h2>Olá, Oseias</h2>
+      <div class="grid">
+        <div class="card kpi"><div class="v">48</div><div class="l">alunos ativos</div></div>
+        <div class="card kpi"><div class="v">3 120 €</div><div class="l">recebido este mês · faltam 640 €</div></div>
+        <div class="card kpi" style="outline:2px dashed var(--primary);outline-offset:2px">
+          <div class="v">1 085 €</div>
+          <div class="l">Loja &amp; Academy este mês · <span class="up">▲ 22%</span></div>
+          <div class="note">Loja 640 € · Cursos 285 € · Passes 160 €</div>
+        </div>
+        <div class="card kpi"><div class="v">Relatórios →</div><div class="l">KPIs, alunos, dinheiro e treino</div></div>
+      </div>
+      <p class="note">O cartão tracejado é o novo. Clica e abre «Relatórios → Loja &amp; Academy».</p>
+    </section>
+
+    <!-- LOJA -->
+    <section class="screen" id="loja">
+      <h2>Relatórios</h2>
+      <div class="tabs"><span class="tab">Resumo</span><span class="tab">Alunos</span><span class="tab">Dinheiro</span><span class="tab">Treino</span><span class="tab on">Loja &amp; Academy</span></div>
+      <div class="tabs" style="border:0;padding:0"><span class="tab on">Loja</span><span class="tab">Academy</span><span class="tab">Cursos</span><span class="tab" style="margin-left:auto">Este mês ▾</span></div>
+      <div class="grid">
+        <div class="card kpi"><div class="v">640 €</div><div class="l">receita da loja <span class="up">▲ 14%</span></div></div>
+        <div class="card kpi"><div class="v">23</div><div class="l">vendas <span class="up">▲ 4</span></div></div>
+        <div class="card kpi"><div class="v">27,80 €</div><div class="l">ticket médio</div></div>
+        <div class="card kpi"><div class="v">5</div><div class="l">encomendas por tratar</div></div>
+      </div>
+      <div class="cols">
+        <div class="card"><h3>Receita por mês</h3>
+          <div class="bars" style="margin-bottom:22px"><div style="height:40%"><i>Mai</i></div><div style="height:55%"><i>Jun</i></div><div style="height:35%"><i>Jul</i></div><div style="height:70%"><i>Ago</i></div><div style="height:60%"><i>Set</i></div><div style="height:85%"><i>Out</i></div></div>
+        </div>
+        <div class="card"><h3>Por tratar</h3>
+          <div class="todo"><span>Aguardam pagamento</span><span class="pill">2</span></div>
+          <div class="todo"><span>A encomendar ao fornecedor</span><span class="pill">2</span></div>
+          <div class="todo"><span>Prontas para entregar</span><span class="pill">1</span></div>
+        </div>
+      </div>
+      <div class="card"><h3>Produtos mais vendidos</h3>
+        <div class="row"><span>T-shirt Kingdom (preta)</span><span>9 un · 180 €</span></div>
+        <div class="row"><span>Luvas de Boxe 12oz</span><span>4 un · 220 €</span></div>
+        <div class="row"><span>Caneleiras</span><span>3 un · 105 €</span></div>
+      </div>
+    </section>
+
+    <!-- ACADEMY -->
+    <section class="screen" id="academy">
+      <h2>Relatórios</h2>
+      <div class="tabs"><span class="tab">Resumo</span><span class="tab">Alunos</span><span class="tab">Dinheiro</span><span class="tab">Treino</span><span class="tab on">Loja &amp; Academy</span></div>
+      <div class="tabs" style="border:0;padding:0"><span class="tab">Loja</span><span class="tab on">Academy</span><span class="tab">Cursos</span><span class="tab" style="margin-left:auto">Este mês ▾</span></div>
+      <div class="grid">
+        <div class="card kpi"><div class="v">445 €</div><div class="l">receita da Academy <span class="up">▲ 31%</span></div></div>
+        <div class="card kpi"><div class="v">14</div><div class="l">passes ativos</div></div>
+        <div class="card kpi"><div class="v">+3 / −1</div><div class="l">novos / cancelados no mês</div></div>
+        <div class="card kpi"><div class="v">168 €</div><div class="l">receita recorrente mensal</div></div>
+      </div>
+      <div class="cols">
+        <div class="card"><h3>Origem da receita</h3>
+          <div class="row"><span>Cursos avulsos (9 compras)</span><span>285 €</span></div>
+          <div class="row"><span>Passe mensal (10)</span><span>120 €</span></div>
+          <div class="row"><span>Passe anual (4)</span><span>40 € <span class="muted">/mês equiv.</span></span></div>
+        </div>
+        <div class="card"><h3>Compradores</h3>
+          <div class="row"><span>Contas só-loja (novas)</span><span>7</span></div>
+          <div class="row"><span>Alunos da escola</span><span>2</span></div>
+          <div class="note">Contas só-loja não contam como alunos.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CURSOS -->
+    <section class="screen" id="cursos">
+      <h2>Relatórios</h2>
+      <div class="tabs"><span class="tab">Resumo</span><span class="tab">Alunos</span><span class="tab">Dinheiro</span><span class="tab">Treino</span><span class="tab on">Loja &amp; Academy</span></div>
+      <div class="tabs" style="border:0;padding:0"><span class="tab">Loja</span><span class="tab">Academy</span><span class="tab on">Cursos</span><span class="tab" style="margin-left:auto">Este mês ▾</span></div>
+      <div class="grid">
+        <div class="card kpi"><div class="v">4</div><div class="l">cursos publicados</div></div>
+        <div class="card kpi"><div class="v">9</div><div class="l">vendas no mês</div></div>
+        <div class="card kpi"><div class="v">62%</div><div class="l">conclusão média</div></div>
+        <div class="card kpi"><div class="v">96 €</div><div class="l">comissões a pagar a professores</div></div>
+      </div>
+      <div class="card"><h3>Por curso</h3>
+        <div class="row"><span><b>Fundamentos com Combate</b><br><span class="muted">30 € · 6 vendas no mês</span></span><span>180 €</span></div>
+        <div style="padding:0 0 8px"><span class="note">Conclusão 71%</span><div class="prog"><b style="width:71%"></b></div></div>
+        <div class="row"><span><b>Preparação Física Base</b><br><span class="muted">25 € · 3 vendas no mês</span></span><span>75 €</span></div>
+        <div style="padding:0 0 8px"><span class="note">Conclusão 48%</span><div class="prog"><b style="width:48%"></b></div></div>
+        <div class="row"><span><b>Mentalidade de Atleta</b><br><span class="muted">Incluído no Passe · 0 avulsas</span></span><span>—</span></div>
+        <div style="padding:0"><span class="note">Conclusão 55%</span><div class="prog"><b style="width:55%"></b></div></div>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+  const urls={hoje:"/admin",loja:"/admin/dashboard?tab=loja",academy:"/admin/dashboard?tab=academy",cursos:"/admin/dashboard?tab=cursos"};
+  document.querySelectorAll(".sw").forEach(b=>b.onclick=()=>{
+    document.querySelectorAll(".sw,.screen").forEach(e=>e.classList.remove("on"));
+    b.classList.add("on");document.getElementById(b.dataset.s).classList.add("on");
+    document.getElementById("url").textContent=urls[b.dataset.s];
+  });
+</script>
+</body>
+</html>

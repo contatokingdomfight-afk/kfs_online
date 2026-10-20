@@ -1,5 +1,6 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { isShopOnlyUser } from "@/lib/auth/shop-only";
 
 /**
  * Sincroniza o utilizador do Supabase Auth com a tabela User (e cria Student se não existir).
@@ -108,7 +109,10 @@ export async function syncUser(supabaseUser: SupabaseUser) {
     console.error("[syncUser] erro ao procurar Student:", studentFindErr);
   }
 
-  if (!student) {
+  // Conta «só loja» (Academy/Loja): não é aluno, por isso não entra nas métricas de alunos/presenças.
+  if (!student && isShopOnlyUser(supabaseUser)) {
+    console.log("[syncUser] conta só-loja — sem Student");
+  } else if (!student) {
     console.log("[syncUser] sem Student — a procurar escola ativa para criar");
     const { data: defaultSchool, error: schoolErr } = await supabase
       .from("School")
