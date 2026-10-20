@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { syncUser } from "@/lib/auth/sync-user";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isShopNextPath, isShopOnlyUser, SHOP_ONLY_METADATA_KEY } from "@/lib/auth/shop-only";
 import { formatErrorForQueryParam } from "@/lib/auth/format-error-for-query-param";
 import {
   REMEMBER_DEVICE_COOKIE_NAME,
@@ -59,6 +61,14 @@ export async function GET(request: Request) {
 
   const sessionUser = data.session?.user;
   if (sessionUser) {
+    // Google a partir da Academy/Loja: conta nova → «só loja» (o email/senha marca-se no sign-up).
+    const isNewAccount = Date.now() - new Date(sessionUser.created_at).getTime() < 5 * 60_000;
+    if (isShopNextPath(next) && isNewAccount && !isShopOnlyUser(sessionUser)) {
+      const { error: metaErr } = await createAdminClient().auth.admin.updateUserById(sessionUser.id, {
+        user_metadata: { ...sessionUser.user_metadata, [SHOP_ONLY_METADATA_KEY]: true },
+      });
+      if (metaErr) console.error("[auth/callback] marcar conta só-loja falhou:", metaErr.message);
+    }
     try {
       await syncUser(sessionUser);
     } catch (e) {

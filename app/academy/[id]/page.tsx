@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
-import { canBuyCourse, courseAccessReason, loadAcademyAccess, loadPublicCourses } from "@/lib/academy/access";
+import { canBuyCourse, courseAccessReason, loadAcademyAccess, loadCourseThumbnails, loadPublicCourses } from "@/lib/academy/access";
 import { AcademyCheckoutButton } from "@/components/academy/CheckoutButton";
 import { LojaHeader } from "@/components/loja/LojaHeader";
 import { PublicSiteFooter } from "@/components/PublicSiteFooter";
@@ -42,6 +42,7 @@ export default async function AcademyCursoPage({ params, searchParams }: Props) 
   const reason = courseAccessReason(course, access);
   if (!course.show_in_academy && !reason) notFound();
   const here = `/academy/${id}`;
+  const thumb = (await loadCourseThumbnails(admin, [course]))[course.id];
 
   const { data: mods } = await admin
     .from("CourseModule")
@@ -80,6 +81,12 @@ export default async function AcademyCursoPage({ params, searchParams }: Props) 
         {pago === "1" && !reason ? (
           <div role="status" style={{ padding: "12px 14px", borderRadius: 12, background: "rgba(250,204,21,0.14)", border: "1px solid var(--warning)", fontSize: 14 }}>
             Pagamento recebido! O acesso fica ativo em instantes. Atualiza a página se ainda não vires as aulas.
+          </div>
+        ) : null}
+        {thumb ? (
+          <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", maxHeight: 340, borderRadius: 16, overflow: "hidden", background: "var(--surface-2, #111)" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- miniatura externa do YouTube */}
+            <img src={thumb} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           </div>
         ) : null}
         <header>

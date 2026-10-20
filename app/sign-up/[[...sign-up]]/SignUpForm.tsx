@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { persistRememberDeviceChoice } from "@/lib/auth/remember-device";
+import { isShopNextPath, SHOP_ONLY_METADATA_KEY } from "@/lib/auth/shop-only";
 import { buildAuthCallbackUrl } from "@/lib/auth/oauth-callback-url";
 import { openOAuthAuthorizeUrl } from "@/lib/capacitor-open-oauth";
 import { translateAuthErrorMessage } from "@/lib/auth/auth-error-messages";
@@ -64,7 +65,7 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
       email,
       password,
       options: {
-        data: { full_name: name.trim() || undefined },
+        data: { full_name: name.trim() || undefined, ...(isShopNextPath(initialNext) ? { [SHOP_ONLY_METADATA_KEY]: true } : {}) },
         // Vai parar a `{{ .RedirectTo }}` no template de confirmação — ver app/auth/confirm/route.ts
         // (não usa /auth/callback aqui de propósito: PKCE exige o code-verifier no mesmo browser que
         // pediu o signup, o que falha quando o link é aberto noutro contexto, ex.: Mail do iPhone).

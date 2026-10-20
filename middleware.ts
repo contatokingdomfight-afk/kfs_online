@@ -7,6 +7,7 @@ import {
   resolveSupabaseCookieOptions,
 } from "@/lib/supabase/cookie-options";
 import { edgeCacheDelete, edgeCacheGet, edgeCacheSet } from "@/lib/edge-ttl-cache";
+import { isShopOnlyAllowedApi, isShopOnlyUser } from "@/lib/auth/shop-only";
 import { STUDENT_GATE_REFRESH_COOKIE, studentGateCacheKey } from "@/lib/student-gate-cache";
 
 /** TTL do cache do "gate" do aluno (onboarding/termo/contrato/pagamento) — ver DOCS do plano de custo. */
@@ -354,6 +355,18 @@ export async function middleware(request: NextRequest) {
 
     if (dbUser.role !== "ALUNO") {
       return response;
+    }
+
+    // Conta «só loja» (registou-se a comprar na Academy/Loja): só áreas públicas e checkout.
+    if (isShopOnlyUser(user)) {
+      if (isPublicBrowserPath(pathname) || isShopOnlyAllowedApi(pathname)) return response;
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Não autorizado." }, { status: 403 });
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = "/academy";
+      url.search = "";
+      return redirectPreservingCookies(response, url);
     }
 
     const studentRows = (dbUser as { Student?: unknown }).Student;

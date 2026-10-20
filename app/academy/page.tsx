@@ -4,7 +4,7 @@ import { Brain, Gauge, Swords } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
-import { canBuyCourse, courseAccessReason, loadAcademyAccess, loadPublicCourses, type AcademyCourse } from "@/lib/academy/access";
+import { canBuyCourse, courseAccessReason, loadAcademyAccess, loadCourseThumbnails, loadPublicCourses, type AcademyCourse } from "@/lib/academy/access";
 import { LojaHeader } from "@/components/loja/LojaHeader";
 import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 
@@ -27,11 +27,16 @@ function euro(n: number): string {
   return `€${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2).replace(".", ",")}`;
 }
 
-function Cover({ c }: { c: AcademyCourse }) {
+function Cover({ c, thumb }: { c: AcademyCourse; thumb?: string | null }) {
   const Icon = c.category === "MINDSET" ? Brain : c.category === "PERFORMANCE" ? Gauge : Swords;
   return (
-    <div style={{ height: 130, background: COVER[c.category] ?? COVER.TECHNIQUE, color: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <Icon size={42} aria-hidden />
+    <div style={{ position: "relative", height: 130, background: COVER[c.category] ?? COVER.TECHNIQUE, color: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {thumb ? (
+        // eslint-disable-next-line @next/next/no-img-element -- miniatura externa do YouTube
+        <img src={thumb} alt="" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      ) : (
+        <Icon size={42} aria-hidden />
+      )}
     </div>
   );
 }
@@ -42,6 +47,7 @@ export default async function AcademyPage({ searchParams }: { searchParams: Prom
   const user = await getCurrentDbUser();
   const studentId = user ? await getCurrentStudentId() : null;
   const courses = admin ? await loadPublicCourses(admin) : [];
+  const thumbs = admin ? await loadCourseThumbnails(admin, courses) : {};
   const access = admin ? await loadAcademyAccess(admin, user?.id ?? null, studentId) : { purchased: new Set<string>(), pass: false, digitalPlan: false };
   const activeCat = cat && CATEGORY_LABEL[cat] ? cat : null;
   const shown = activeCat ? courses.filter((c) => c.category === activeCat) : courses;
@@ -114,7 +120,7 @@ export default async function AcademyPage({ searchParams }: { searchParams: Prom
               return (
                 <li key={c.id} className="card" style={{ padding: 0, overflow: "hidden" }}>
                   <Link href={`/academy/${c.id}`} style={{ color: "inherit", textDecoration: "none", display: "flex", flexDirection: "column" }}>
-                    <Cover c={c} />
+                    <Cover c={c} thumb={thumbs[c.id]} />
                     <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
                       <span style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>{c.name}</span>
                       <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>

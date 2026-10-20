@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { extractYouTubeVideoId } from "@/lib/youtube-embed";
 
 /** Preços do Passe Kingdom Academy (EUR). Ajustar aqui; o Stripe recebe-os por checkout (sem produtos pré-criados). */
 export const ACADEMY_PASS_PRICES = { month: 12, year: 99 } as const;
@@ -43,6 +44,33 @@ export async function loadPublicCourses(admin: SupabaseClient, opts: { courseId?
     ...c,
     price: c.price != null ? Number(c.price) : null,
   }));
+}
+
+/** Capa de cada curso: miniatura do primeiro vídeo YouTube (curso → módulos → aulas), como na biblioteca do aluno. */
+export async function loadCourseThumbnails(admin: SupabaseClient, courses: Pick<AcademyCourse, "id" | "video_url">[]): Promise<Record<string, string | null>> {
+  const out: Record<string, string | null> = {};
+  if (courses.length === 0) return out;
+  const ids = courses.map((c) => c.id);
+  const { data: mods } = await admin
+    .from("CourseModule")
+    .select("id, course_id, video_url, sort_order")
+    .in("course_id", ids)
+    .eq("status", "PUBLISHED")
+    .order("sort_order", { ascending: true });
+  const modules = (mods ?? []) as { id: string; course_id: string; video_url: string | null; sort_order: number }[];
+  const moduleIds = modules.map((m) => m.id);
+  const { data: us } = moduleIds.length
+    ? await admin.from("CourseUnit").select("module_id, video_url, sort_order").in("module_id", moduleIds).eq("status", "PUBLISHED").order("sort_order", { ascending: true })
+    : { data: [] };
+  const units = (us ?? []) as { module_id: string; video_url: string | null }[];
+  for (const c of courses) {
+    const mine = modules.filter((m) => m.course_id === c.id);
+    const mineIds = new Set(mine.map((m) => m.id));
+    const urls = [c.video_url, ...mine.map((m) => m.video_url), ...units.filter((u) => mineIds.has(u.module_id)).map((u) => u.video_url)];
+    const id = urls.map((v) => (v ? extractYouTubeVideoId(v) : null)).find(Boolean);
+    out[c.id] = id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
+  }
+  return out;
 }
 
 export async function hasActiveAcademyPass(admin: SupabaseClient, userId: string): Promise<boolean> {
