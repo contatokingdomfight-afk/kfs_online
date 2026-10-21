@@ -99,7 +99,7 @@ export function StudentExtraSessionsSection({
             type="month"
             defaultValue={currentReferenceMonth}
             className="input"
-            style={{ width: 140 }}
+            style={{ width: 180 }}
           />
         </div>
         <div>
@@ -125,7 +125,7 @@ export function StudentExtraSessionsSection({
             readOnly
             value={formatDropInPriceEur(quote.amountEur)}
             className="input"
-            style={{ width: 100, background: "var(--surface-secondary, #f5f5f5)" }}
+            style={{ width: 100, opacity: 0.75, cursor: "not-allowed" }}
           />
         </div>
         <div style={{ flex: "1 1 180px", fontSize: 13, color: "var(--text-secondary)", paddingBottom: 8 }}>
