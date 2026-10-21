@@ -8,6 +8,13 @@ export async function searchStudentIdsByQuery(supabase: SupabaseClient, query: s
   const safe = query.trim().replace(/%/g, "").replace(/_/g, "");
   if (safe.length < 2) return [];
   const like = `%${safe}%`;
+  // Referência de pagamento (KFS-0143 ou só 0143): vai direto ao aluno.
+  const codeMatch = safe.match(/^(?:kfs[\s-]*)?(\d{3,6})$/i);
+  const codeStudentIds: string[] = [];
+  if (codeMatch) {
+    const { data: byCode } = await supabase.from("Student").select("id").eq("paymentCode", Number(codeMatch[1])).limit(1);
+    codeStudentIds.push(...((byCode ?? []) as { id: string }[]).map((r) => r.id));
+  }
 
   const [{ data: byName }, { data: byEmail }, { data: byPhone }] = await Promise.all([
     supabase.from("User").select("id").ilike("name", like).limit(30),
@@ -27,6 +34,7 @@ export async function searchStudentIdsByQuery(supabase: SupabaseClient, query: s
     : { data: [] as { id: string }[] };
 
   const studentIdSet = new Set<string>([
+    ...codeStudentIds,
     ...(studentsByUser ?? []).map((s) => s.id),
     ...phoneStudentIds,
   ]);

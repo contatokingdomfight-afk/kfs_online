@@ -11,6 +11,8 @@ import { loadStudentAdminSummary, type SummaryTone } from "@/lib/admin-student-f
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { getPublicOrigin } from "@/lib/site-public-url";
 import { AdminAlunoTabs } from "./AdminAlunoTabs";
+import { CopyTextButton } from "@/components/ui/CopyTextButton";
+import { studentPaymentReference } from "@/lib/revolut/match";
 
 const formatEur = (n: number) => `€${n.toFixed(2).replace(".", ",")}`;
 
@@ -37,7 +39,7 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality")
+    .select("id, userId, status, planId, primaryModality, paymentCode")
     .eq("id", studentId)
     .single();
 
@@ -61,6 +63,7 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
 
   const summary = await loadStudentAdminSummary(supabase, studentId, (student as { planId?: string | null }).planId ?? null);
   const firstName = (user?.name ?? "").split(" ")[0] ?? "";
+  const paymentRef = studentPaymentReference((student as { paymentCode?: number | null }).paymentCode ?? null);
   const phone = studentProfile?.phone ?? null;
   // Um só WhatsApp, com a mensagem do que for mais urgente.
   const whatsappUrl = phone
@@ -125,6 +128,12 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
         </span>
         <div style={{ minWidth: 0 }}>
           <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 800, color: "var(--text-primary)" }}>{user?.name || "Aluno"}</h1>
+          {paymentRef ? (
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6 }}>
+              Referência de pagamento: <strong style={{ color: "var(--text-primary)", letterSpacing: 0.5 }}>{paymentRef}</strong>
+              <CopyTextButton text={paymentRef} />
+            </p>
+          ) : null}
           <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
             {[modality ? MODALITY_LABELS[modality] ?? modality : null, summary.planName ?? "sem plano"].filter(Boolean).join(" · ")} ·{" "}
             <strong style={{ color: student.status === "ATIVO" ? "var(--success)" : student.status === "INADIMPLENTE" ? "var(--danger)" : "var(--text-secondary)" }}>

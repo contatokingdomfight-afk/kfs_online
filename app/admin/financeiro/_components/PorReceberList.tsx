@@ -176,6 +176,7 @@ function PendingRow({ item, onDone }: { item: PorReceberItem; onDone: (amount: n
         >
           {item.name}
         </Link>
+        {item.paymentRef ? <span style={{ marginLeft: 8, fontSize: 11, color: "var(--text-secondary)", fontWeight: 600 }}>{item.paymentRef}</span> : null}
         <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
           {item.what}
           {item.detail ? ` · ${item.detail}` : ""}

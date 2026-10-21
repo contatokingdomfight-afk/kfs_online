@@ -8,6 +8,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { AlunosFiltersPanel } from "@/components/AlunosFiltersPanel";
+import { studentPaymentReference } from "@/lib/revolut/match";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { computeInsuranceStatus, INSURANCE_STATUS_LABEL } from "@/lib/insurance-settings";
 import { formatInTimeZone } from "date-fns-tz";
@@ -66,7 +67,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
 
   const [{ data: schools }, { data: studentsData }, { data: plansData }, modalitiesForFilter, latePayments, recentAttendance] = await Promise.all([
     supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
-    supabase.from("Student").select("id, userId, status, primaryModality, schoolId, planId, createdAt, registrationMode, syntheticLoginEmail").order("createdAt", { ascending: false }),
+    supabase.from("Student").select("id, userId, status, primaryModality, schoolId, planId, createdAt, registrationMode, syntheticLoginEmail, paymentCode").order("createdAt", { ascending: false }),
     supabase.from("Plan").select("id, name").eq("isActive", true).order("name", { ascending: true }),
     getCachedModalityRefs(supabase),
     fetchAllPages<{ studentId: string; amount: number | string; paymentType: string; referenceMonth: string | null }>((from, to) =>
@@ -183,7 +184,14 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
       const name = (u?.name ?? "").toLowerCase();
       const email = (u?.email ?? "").toLowerCase();
       const phone = (p?.phone ?? "").replace(/\s/g, "");
-      return name.includes(searchQuery) || email.includes(searchQuery) || (qNorm && phone.includes(qNorm));
+      const code = studentPaymentReference((s as { paymentCode?: number | null }).paymentCode ?? null)?.toLowerCase() ?? "";
+      const codeDigits = code.replace(/\D/g, "");
+      return (
+        name.includes(searchQuery) ||
+        email.includes(searchQuery) ||
+        (qNorm && phone.includes(qNorm)) ||
+        (code !== "" && (code.includes(searchQuery) || (/^\d{3,6}$/.test(qNorm) && codeDigits === qNorm.padStart(4, "0"))))
+      );
     });
   }
 
