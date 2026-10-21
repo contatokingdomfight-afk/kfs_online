@@ -51,6 +51,7 @@ export async function grantExtraSessions(
     referenceMonth,
     paymentMethod: methodResult.method,
     note,
+    allowCustomAmount: true,
   });
   if (result.error) return result;
 

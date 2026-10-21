@@ -44,6 +44,10 @@ export function StudentExtraSessionsSection({
   const [quantity, setQuantity] = useState(mode === "plan_cap" ? KINGDOM_WEEK_EXHAUSTED_BUNDLE_QUANTITY : 1);
 
   const quote = useMemo(() => calculateDropInPrice(quantity, pricingContext), [quantity, pricingContext]);
+  const [customAmount, setCustomAmount] = useState<string | null>(null);
+  const amountValue = customAmount ?? formatDropInPriceEur(quote.amountEur);
+  const customNum = parseFloat(amountValue.replace(",", "."));
+  const isDiscounted = customAmount !== null && !Number.isNaN(customNum) && Math.abs(customNum - quote.amountEur) > 0.005;
 
   useEffect(() => {
     if (state?.success) router.refresh();
@@ -110,7 +114,10 @@ export function StudentExtraSessionsSection({
             min="1"
             step="1"
             value={quantity}
-            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
+            onChange={(e) => {
+              setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1));
+              setCustomAmount(null);
+            }}
             className="input"
             style={{ width: 90 }}
           />
@@ -122,14 +129,25 @@ export function StudentExtraSessionsSection({
             type="number"
             min="0"
             step="0.01"
-            readOnly
-            value={formatDropInPriceEur(quote.amountEur)}
+            value={amountValue}
+            onChange={(e) => setCustomAmount(e.target.value)}
             className="input"
-            style={{ width: 100, opacity: 0.75, cursor: "not-allowed" }}
+            style={{ width: 100 }}
           />
         </div>
         <div style={{ flex: "1 1 180px", fontSize: 13, color: "var(--text-secondary)", paddingBottom: 8 }}>
-          {quote.discountPercent > 0 ? (
+          {isDiscounted ? (
+            <>
+              <strong style={{ color: "var(--success)" }}>Desconto manual</strong>
+              <span style={{ display: "block", marginTop: 4 }}>
+                Tabela €{formatDropInPriceEur(quote.amountEur)} →{" "}
+                {customNum > 0 ? `€${formatDropInPriceEur(customNum)}` : "oferta (€0)"}
+              </span>
+              <button type="button" className="btn" style={{ fontSize: 12, marginTop: 6 }} onClick={() => setCustomAmount(null)}>
+                Repor valor da tabela
+              </button>
+            </>
+          ) : quote.discountPercent > 0 ? (
             <>
               <span style={{ textDecoration: "line-through", marginRight: 8 }}>€{formatDropInPriceEur(quote.listPriceEur)}</span>
               <strong style={{ color: "var(--success)" }}>−{quote.discountPercent}%</strong>

@@ -15,6 +15,8 @@ export type ExecuteExtraSessionsGrantParams = {
   referenceMonth: string;
   paymentMethod: FinancePaymentMethod;
   note?: string | null;
+  /** Permite cobrar um valor diferente da tabela (desconto / oferta). */
+  allowCustomAmount?: boolean;
 };
 
 export type ExecuteExtraSessionsGrantResult = { error?: string; success?: boolean };
@@ -33,13 +35,18 @@ export async function executeExtraSessionsGrant(
   const pricingCtx = await getDropInPricingContext(supabase, studentId, referenceMonth);
   const quote = calculateDropInPrice(quantity, pricingCtx);
 
-  if (!amountsMatchForDropIn(quote.amountEur, amount)) {
+  const matchesTable = amountsMatchForDropIn(quote.amountEur, amount);
+  if (!matchesTable && !params.allowCustomAmount) {
     return {
       error: `Valor incorreto. Para ${quote.quantity} aula(s) o total esperado é €${quote.amountEur.toFixed(2)}.`,
     };
   }
+  const finalAmount = matchesTable ? quote.amountEur : amount;
 
-  if (!note && quote.bundleApplied) {
+  if (!matchesTable) {
+    const discountNote = `Desconto: tabela €${quote.amountEur.toFixed(2)} → €${finalAmount.toFixed(2)}`;
+    note = note ? `${note} (${discountNote})` : discountNote;
+  } else if (!note && quote.bundleApplied) {
     note = quote.summaryLabel;
   }
 
@@ -47,7 +54,7 @@ export async function executeExtraSessionsGrant(
   const { error: paymentError } = await supabase.from("Payment").insert({
     id: paymentId,
     studentId,
-    amount: quote.amountEur.toFixed(2),
+    amount: finalAmount.toFixed(2),
     status: "PAID",
     paymentType: "EXTRA_SESSION",
     referenceMonth,
