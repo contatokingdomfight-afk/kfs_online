@@ -10,6 +10,8 @@ import { lineLabel, loadOrders, ORDER_FLOW, ORDER_STATUS_LABEL_PT, orderReferenc
 import { cancelMyOrder } from "@/app/dashboard/loja/actions";
 import { ProofUploadForm } from "@/app/dashboard/loja/encomendas/[id]/ProofUploadForm";
 import { ClearSavedCart } from "@/components/retail/ClearSavedCart";
+import { PayOnlineButton } from "@/components/retail/PayOnlineButton";
+import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
 
 function euro(n: number): string {
   return `${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2).replace(".", ",")} €`;
@@ -37,7 +39,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
 }
 
 /** Detalhe da encomenda do próprio (aluno ou cliente da loja pública). `basePath` define para onde volta o link «Loja». */
-export async function OrderDetailView({ id, nova, basePath }: { id: string; nova?: string; basePath: "/dashboard/loja" | "/loja" }) {
+export async function OrderDetailView({ id, nova, pago, basePath }: { id: string; nova?: string; pago?: string; basePath: "/dashboard/loja" | "/loja" }) {
   const admin = getAdminClientOrNull().client;
   const [studentId, dbUser] = await Promise.all([getCurrentStudentId(), getCurrentDbUser()]);
   if (!admin || (!studentId && !dbUser)) notFound();
@@ -46,6 +48,7 @@ export async function OrderDetailView({ id, nova, basePath }: { id: string; nova
   const { data: owner } = await admin.from("RetailOrder").select("createdByUserId").eq("id", id).maybeSingle();
   const mine = (studentId != null && order.studentId === studentId) || (dbUser != null && (owner as { createdByUserId: string | null } | null)?.createdByUserId === dbUser.id);
   if (!mine) notFound();
+  const canPayOnline = dbUser != null && (owner as { createdByUserId: string | null } | null)?.createdByUserId === dbUser.id;
 
   const ref = orderReference(order.number);
   const cancelled = order.status === "CANCELLED";
@@ -135,6 +138,17 @@ export async function OrderDetailView({ id, nova, basePath }: { id: string; nova
       {order.status === "PENDING_PAYMENT" && (
         <section className="card" aria-labelledby="pay-title" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12, border: "2px solid var(--primary)" }}>
           <h2 id="pay-title" style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>Como pagar</h2>
+          {pago === "1" && (
+            <p role="status" style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
+              Se acabaste de pagar online, a confirmação chega em instantes. Atualiza a página daqui a pouco.
+            </p>
+          )}
+          {revolutMerchantConfigured && canPayOnline && (
+            <>
+              <PayOnlineButton orderId={order.id} />
+              <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", textAlign: "center" }}>ou paga por transferência / na secretaria:</p>
+            </>
+          )}
           <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 14, fontWeight: 700 }}>
             <Landmark size={18} aria-hidden style={{ color: "var(--primary)" }} />
             Transferência ou Revolut

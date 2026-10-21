@@ -5,7 +5,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseFinancePaymentMethod } from "@/lib/finance-payment-method";
-import { createRetailSale } from "@/lib/retail/sales";
+import { markRetailOrderPaid } from "@/lib/retail/mark-paid";
 import { createRetailOrder, loadOrders, orderReference, type OrderLineInput } from "@/lib/retail/orders";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { getDefaultOnboardingSchoolId } from "@/lib/onboarding-default-school";
@@ -73,26 +73,7 @@ export async function confirmOrderPayment(formData: FormData): Promise<void> {
 
   const schoolId = order.schoolId ?? (await defaultSchoolId(supabase));
   if (!schoolId) return;
-  const sale = await createRetailSale(supabase, {
-    schoolId,
-    paymentMethod: method,
-    lines: order.lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity, unitPrice: l.unitPrice })),
-    studentId: order.studentId,
-    registeredByUserId: user.id,
-    notes: `Encomenda ${orderReference(order.number)}${order.discountLabel ? ` · ${order.discountLabel}` : ""}`,
-    skipStock: true,
-    discountAmount: order.discountAmount,
-  });
-  if (sale.error) {
-    console.error("[confirmOrderPayment]", sale.error);
-    return;
-  }
-  const now = new Date().toISOString();
-  await supabase
-    .from("RetailOrder")
-    .update({ status: "PAID", paymentMethod: method, paidAt: now, paidConfirmedByUserId: user.id, saleId: sale.saleId, updatedAt: now })
-    .eq("id", orderId)
-    .eq("status", "PENDING_PAYMENT");
+  await markRetailOrderPaid(supabase, order, { method, schoolId, registeredByUserId: user.id, confirmedByUserId: user.id });
   refresh(orderId);
 }
 
