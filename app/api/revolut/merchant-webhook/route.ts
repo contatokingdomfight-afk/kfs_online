@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: owner } = await admin.from("RetailOrder").select("createdByUserId").eq("id", orderId).maybeSingle();
-    const registeredBy = (owner as { createdByUserId: string | null } | null)?.createdByUserId;
+    const { data: stu } = order.studentId ? await admin.from("Student").select("userId").eq("id", order.studentId).maybeSingle() : { data: null };
+    const registeredBy = (owner as { createdByUserId: string | null } | null)?.createdByUserId ?? (stu as { userId: string | null } | null)?.userId;
     let schoolId = order.schoolId;
     if (!schoolId) {
       const { data } = await admin.from("School").select("id, name").eq("isActive", true);

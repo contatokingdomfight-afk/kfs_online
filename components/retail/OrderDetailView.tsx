@@ -48,7 +48,7 @@ export async function OrderDetailView({ id, nova, pago, basePath }: { id: string
   const { data: owner } = await admin.from("RetailOrder").select("createdByUserId").eq("id", id).maybeSingle();
   const mine = (studentId != null && order.studentId === studentId) || (dbUser != null && (owner as { createdByUserId: string | null } | null)?.createdByUserId === dbUser.id);
   if (!mine) notFound();
-  const canPayOnline = dbUser != null && (owner as { createdByUserId: string | null } | null)?.createdByUserId === dbUser.id;
+  const canPayOnline = mine && dbUser != null;
 
   const ref = orderReference(order.number);
   const cancelled = order.status === "CANCELLED";

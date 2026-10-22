@@ -20,9 +20,12 @@ export async function POST(request: NextRequest) {
   if (!orderId) return NextResponse.json({ error: "Pedido inválido." }, { status: 400 });
 
   const [order] = await loadOrders(admin, { ids: [orderId] });
+  if (!order) return NextResponse.json({ error: "Encomenda não encontrada." }, { status: 404 });
+  // Dona da encomenda: quem a criou ou a conta do aluno a que pertence.
   const { data: owner } = await admin.from("RetailOrder").select("createdByUserId").eq("id", orderId).maybeSingle();
-  const mine = (owner as { createdByUserId: string | null } | null)?.createdByUserId === user.id;
-  if (!order || !mine) return NextResponse.json({ error: "Encomenda não encontrada." }, { status: 404 });
+  const { data: stu } = order.studentId ? await admin.from("Student").select("userId").eq("id", order.studentId).maybeSingle() : { data: null };
+  const mine = (owner as { createdByUserId: string | null } | null)?.createdByUserId === user.id || (stu as { userId: string | null } | null)?.userId === user.id;
+  if (!mine) return NextResponse.json({ error: "Encomenda não encontrada." }, { status: 404 });
   if (order.status !== "PENDING_PAYMENT") return NextResponse.json({ error: "Esta encomenda já não está por pagar." }, { status: 400 });
   if (order.totalAmount <= 0) return NextResponse.json({ error: "Valor inválido." }, { status: 400 });
 

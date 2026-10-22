@@ -36,12 +36,13 @@ export async function createMyOrder(_prev: OrderActionResult | null, formData: F
   const studentId = await getCurrentStudentId();
   if (!studentId) return { error: "Sessão expirada. Entra outra vez." };
   const supabase = createAdminClient();
-  const { data: student } = await supabase.from("Student").select("schoolId").eq("id", studentId).maybeSingle();
+  const [{ data: student }, dbUser] = await Promise.all([supabase.from("Student").select("schoolId").eq("id", studentId).maybeSingle(), getCurrentDbUser()]);
 
   const result = await createRetailOrder(supabase, {
     lines: parseLines(formData.get("lines")),
     schoolId: (student as { schoolId?: string | null } | null)?.schoolId ?? null,
     studentId,
+    createdByUserId: dbUser?.id ?? null,
     notes: (formData.get("notes") as string | null) ?? null,
     couponCode: (formData.get("couponCode") as string | null) ?? null,
   });
