@@ -6,8 +6,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  */
 const API_VERSION = "2026-08-17";
 
-// Com REVOLUT_MERCHANT_ENV=sandbox usam-se as variáveis com sufixo _SANDBOX (as de produção ficam intactas).
-const SANDBOX = process.env.REVOLUT_MERCHANT_ENV?.trim() === "sandbox";
+// Automático: só o deploy de produção da Vercel usa as chaves reais; Preview, desenvolvimento e local usam as
+// variáveis com sufixo _SANDBOX. Não há interruptor manual (um valor esquecido não pode ligar o ambiente errado).
+const SANDBOX = process.env.VERCEL_ENV !== "production";
 const pick = (name: string) => (SANDBOX ? process.env[`${name}_SANDBOX`] : process.env[name])?.trim() ?? "";
 const SECRET_KEY = pick("REVOLUT_MERCHANT_SECRET_KEY");
 const WEBHOOK_SECRET = pick("REVOLUT_MERCHANT_WEBHOOK_SECRET");
