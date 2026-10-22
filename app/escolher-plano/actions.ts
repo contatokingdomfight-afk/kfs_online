@@ -7,6 +7,7 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
+import { isPlanExcludedFromSelfService } from "@/lib/kingdom-plans-constants";
 
 export type SelectPlanPayAtSchoolResult = { error?: string };
 
@@ -44,7 +45,7 @@ export async function selectPlanPayAtSchool(
     .eq("isActive", true)
     .maybeSingle();
 
-  if (!plan) return { error: "Plano indisponível." };
+  if (!plan || isPlanExcludedFromSelfService(plan.id, plan.name)) return { error: "Plano indisponível." };
 
   const allowedSchools = new Set([student.schoolId, "default-school-001"]);
   if (!allowedSchools.has(plan.schoolId)) {
