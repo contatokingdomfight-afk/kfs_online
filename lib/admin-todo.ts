@@ -384,13 +384,13 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
 
-  // --- Carga de treino alta (> 1,5× o normal) ---
+  // --- Carga de treino alta (> 2× o normal; a zona «alta» do aluno continua em 1,5×, aqui a régua é mais alta para não alertar por treinos técnicos) ---
   const trainedIds = active.filter((s) => (lastTraining.get(s.id) ?? "") >= addDaysYmd(today, -7)).map((s) => s.id);
   const sessions = await loadTrainingSessions(supabase, trainedIds, today);
   const carga: AdminTodoItem[] = active
     .filter((s) => trainedIds.includes(s.id))
     .map((s) => ({ s, load: computeTrainingLoad(sessions.get(s.id) ?? [], today) }))
-    .filter(({ load }) => load.zone === "high" && load.ratio != null)
+    .filter(({ load }) => load.ratio != null && load.ratio > 2)
     .map(({ s, load }) => ({
       kind: "carga" as const,
       key: todoDoneKey("carga", { id: s.id, today }),
@@ -762,8 +762,8 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     },
     carga: {
       kind: "carga", tone: "amber", title: "Carga de treino alta", items: carga,
-      summary: carga.length ? "Mais de 1,5× o normal nos últimos 7 dias" : "",
-      info: "Esforço (RPE) × minutos dos últimos 7 dias comparado com a média das 4 semanas anteriores. Acima de 1,5× o risco de lesão aumenta.",
+      summary: carga.length ? "Mais do dobro do normal nos últimos 7 dias" : "",
+      info: "Esforço (RPE) × minutos dos últimos 7 dias comparado com a média das 4 semanas anteriores. Só alerta acima de 2×; o aluno vê o aviso a partir de 1,5×.",
       columns: ["Aluno", "Modalidade", "Rácio", "Treinos", ""],
     },
     adesao: {

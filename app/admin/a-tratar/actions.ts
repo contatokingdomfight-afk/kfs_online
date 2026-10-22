@@ -174,7 +174,7 @@ export async function bulkTodoAction(_prev: TodoActionState, formData: FormData)
           coachUserId: c.userId,
           type: "GENERAL",
           title: list.length === 1 ? "1 aluno com carga de treino alta" : `${list.length} alunos com carga de treino alta`,
-          body: `${names}: mais de 1,5× o normal esta semana. Sugestão: técnica e drills, sem sparring, até baixar.`,
+          body: `${names}: mais do dobro do normal esta semana. Sugestão: técnica e drills, sem sparring, até baixar.`,
           href: "/coach/carga",
         });
       }

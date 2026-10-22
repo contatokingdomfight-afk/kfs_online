@@ -53,6 +53,12 @@ describe("computeTrainingLoad", () => {
     expect(r.acute).toBe(600);
   });
 
+  it("com poucos treinos com nota na base (< 3), não há rácio", () => {
+    const r = computeTrainingLoad(sessions([-1, -9, -20]), today);
+    expect(r.ratio).toBeNull();
+    expect(r.zone).toBe("insufficient");
+  });
+
   it("com 3 semanas de histórico, a média usa só essas semanas (não divide por 4)", () => {
     // 1.º treino há 28 dias → 3 semanas antes da actual; 1 treino por semana.
     const s = sessions([-2, -9, -16, -27]);

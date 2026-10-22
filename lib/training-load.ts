@@ -34,6 +34,9 @@ export type TrainingLoadSummary = {
 /** Mínimo de histórico antes da semana actual para haver rácio (2 semanas + a actual = 3). */
 export const MIN_HISTORY_DAYS = 14;
 
+/** Mínimo de treinos com nota na base; com menos, a média é ruído e inflaciona o rácio. */
+export const MIN_BASE_SESSIONS = 3;
+
 export const ZONE_LIMITS = { low: 0.8, ideal: 1.3, caution: 1.5 } as const;
 
 export function addDays(ymd: string, delta: number): string {
@@ -89,7 +92,10 @@ export function computeTrainingLoad(sessions: TrainingSession[], today: string):
   let chronic: number | null = null;
   if (historyDays >= MIN_HISTORY_DAYS) {
     const weeks = Math.min(4, Math.ceil(historyDays / 7));
-    chronic = sumBetween(addDays(acuteStart, -7 * weeks), addDays(acuteStart, -1)) / weeks;
+    const baseFrom = addDays(acuteStart, -7 * weeks);
+    const baseTo = addDays(acuteStart, -1);
+    const baseSessions = rated.filter((s) => s.date >= baseFrom && s.date <= baseTo).length;
+    if (baseSessions >= MIN_BASE_SESSIONS) chronic = sumBetween(baseFrom, baseTo) / weeks;
   }
   const ratio = chronic != null && chronic > 0 ? Math.round((acute / chronic) * 100) / 100 : null;
 
