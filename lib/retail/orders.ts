@@ -65,6 +65,8 @@ export type RetailOrder = {
   couponCode: string | null;
   paymentMethod: string | null;
   paidAt: string | null;
+  /** Quem confirmou à mão (null numa encomenda paga = pagamento online pelo webhook). */
+  paidConfirmedByUserId: string | null;
   saleId: string | null;
   orderedAt: string | null;
   readyAt: string | null;
@@ -79,7 +81,7 @@ export type RetailOrder = {
 };
 
 const ORDER_COLUMNS =
-  'id, number, schoolId, studentId, customerName, customerPhone, status, totalAmount, subtotalAmount, discountAmount, discountLabel, couponCode, paymentMethod, paidAt, saleId, orderedAt, readyAt, deliveredAt, cancelledAt, proofPath, proofFileName, proofUploadedAt, notes, createdAt';
+  'id, number, schoolId, studentId, customerName, customerPhone, status, totalAmount, subtotalAmount, discountAmount, discountLabel, couponCode, paymentMethod, paidAt, paidConfirmedByUserId, saleId, orderedAt, readyAt, deliveredAt, cancelledAt, proofPath, proofFileName, proofUploadedAt, notes, createdAt';
 
 type OrderRow = Omit<RetailOrder, "lines" | "totalAmount" | "number" | "subtotalAmount" | "discountAmount"> & {
   totalAmount: number | string;

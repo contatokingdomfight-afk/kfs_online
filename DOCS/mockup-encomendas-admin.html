@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Encomendas da loja (admin)</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--bg3:#1c1c1f;--text:#fff;--muted:#a1a1aa;--primary:#c1121f;--success:#22c55e;--warning:#facc15;--danger:#e11d48;--border:#27272a;--font:"Inter",system-ui,-apple-system,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:#050505;color:var(--text);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1500px;margin:0 auto;padding:24px 20px 60px}
+  .badge{display:inline-flex;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase;letter-spacing:.5px}
+  h1.meta{font-size:22px;margin:12px 0 6px}
+  p.meta{font-size:13.5px;color:var(--muted);max-width:820px;line-height:1.6;margin:0}
+  ul.meta{font-size:13px;color:var(--muted);line-height:1.7;margin:10px 0 0;padding-left:18px;max-width:900px}
+  ul.meta b{color:#fff}
+  .switcher{display:flex;gap:8px;margin:20px 0 14px;flex-wrap:wrap}
+  .sw{font:600 13px var(--font);padding:9px 18px;border-radius:999px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer}
+  .sw.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .side{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:24px;align-items:start}
+  @media (max-width:1000px){.side{grid-template-columns:1fr}}
+  .label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .frame{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--bg)}
+  .phone{border-radius:34px;border:8px solid #1f1f22}
+  .bar{display:flex;gap:8px;align-items:center;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;background:#3a3a3a}
+  .screen{padding:22px;display:flex;flex-direction:column;gap:16px}
+  .phone .screen{padding:14px 12px;gap:14px}
+  .view{display:none}.view.on{display:block}
+
+  .back{color:var(--muted);font-size:13px}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+  h2{margin:4px 0 0;font-size:22px;font-weight:800}
+  .sub{font-size:13px;color:var(--muted);margin-top:4px}
+  .btn{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:#fff;font:700 13px var(--font);white-space:nowrap}
+  .btn.p{background:var(--primary);border-color:var(--primary)}
+  .btn.ghost{background:transparent}
+  .btn.sm{min-height:32px;padding:0 10px;font-size:12px}
+
+  /* funil */
+  .pipe{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .stage{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;cursor:pointer}
+  .stage.on{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset;background:#1a0b0d}
+  .stage .n{font-size:26px;font-weight:800;line-height:1.1}
+  .stage .t{font-size:13px;font-weight:700;margin-top:2px}
+  .stage .h{font-size:12px;color:var(--muted);margin-top:4px}
+  .stage .act{position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;background:rgba(250,204,21,.14);color:var(--warning)}
+  .phone .pipe{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .phone .stage{padding:10px 12px}.phone .stage .n{font-size:22px}
+  .hist{display:flex;gap:14px;font-size:12.5px;color:var(--muted)}
+  .hist span{text-decoration:underline;text-underline-offset:3px}
+
+  .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .search{flex:1;min-width:200px;min-height:40px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);display:flex;align-items:center;padding:0 12px;font-size:13px;gap:8px}
+  .chipf{font-size:12px;font-weight:700;padding:7px 12px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+  .chipf.on{background:#fff;color:#000;border-color:#fff}
+
+  .supplier{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+  .supplier .top{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+  .supplier h3{margin:0;font-size:15px}
+  .sizes{display:flex;gap:8px;flex-wrap:wrap}
+  .sz{min-width:58px;text-align:center;padding:6px 0;border-radius:10px;border:1px solid var(--border);background:var(--bg)}
+  .sz b{display:block;font-size:18px}.sz small{font-size:11px;color:var(--muted)}
+  details.sup summary{cursor:pointer;font-size:13px;font-weight:700;list-style:none}
+
+  .list{display:flex;flex-direction:column;gap:10px}
+  .order{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px}
+  .phone .order{grid-template-columns:1fr;padding:12px}
+  .ref{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.3px}
+  .who{font-size:15px;font-weight:800;margin-top:2px}
+  .meta2{font-size:12px;color:var(--muted);margin-top:2px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .chip{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+  .chip.ok{color:var(--success);border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}
+  .chip.warn{color:var(--warning);border-color:rgba(250,204,21,.35);background:rgba(250,204,21,.08)}
+  .chip.info{color:#93c5fd;border-color:rgba(147,197,253,.35);background:rgba(147,197,253,.08)}
+  .items{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+  .it{display:flex;gap:8px;align-items:center;font-size:13.5px}
+  .thumb{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#2a2a2e,#3a3a40);flex-shrink:0}
+  .right{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:10px;min-width:210px}
+  .phone .right{align-items:stretch;min-width:0}
+  .total{font-size:20px;font-weight:800}
+  .phone .total{font-size:18px}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .phone .acts{justify-content:stretch}.phone .acts .btn.p{flex:1;justify-content:center}
+  .confirm{display:flex;gap:6px}
+  .sel{min-height:32px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font:600 12px var(--font);padding:0 8px;display:inline-flex;align-items:center}
+  .note{font-size:11.5px;color:var(--muted);text-align:right}
+  .phone .note{text-align:left}
+  .fab{position:sticky;bottom:0;padding:10px 0 2px;background:linear-gradient(transparent,var(--bg) 30%)}
+  .fab .btn{width:100%;justify-content:center;min-height:46px}
+  .ann{border-left:3px solid var(--warning);padding:6px 10px;font-size:12px;color:var(--warning);background:rgba(250,204,21,.06);border-radius:0 8px 8px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Mockup · Admin → Loja → Encomendas</span>
+  <h1 class="meta">Encomendas da loja — nova organização</h1>
+  <p class="meta">Problema hoje: a página abre em «Por pagar», as pagas ficam escondidas num separador, o resumo do fornecedor aparece sempre no topo, os pagamentos online da Revolut não se distinguem dos confirmados à mão e «Nova encomenda» está no fim da página.</p>
+  <ul class="meta">
+    <li><b>Funil no topo</b> com os 4 passos ativos (quantas e quanto €). Cada cartão é um filtro. O passo que pede ação tua tem um aviso. Entregues/Canceladas passam a «Histórico».</li>
+    <li><b>Pesquisa</b> por nome ou referência (KFS-ENC-…) e filtro rápido «Online / À mão / Com comprovativo».</li>
+    <li><b>Etiquetas claras</b>: «Pago online · Revolut», «Confirmado à mão», «Comprovativo enviado», «À espera há 5 dias».</li>
+    <li><b>Uma ação principal por encomenda</b> (o próximo passo), à direita; WhatsApp e cancelar ficam em botões secundários.</li>
+    <li><b>Resumo do fornecedor</b> só no passo «Pagas · a encomendar», onde faz sentido.</li>
+    <li><b>«+ Nova encomenda»</b> sobe para o cabeçalho (no telemóvel, botão fixo em baixo).</li>
+  </ul>
+
+  <div class="switcher">
+    <button class="sw on" data-v="paid">Passo «Pagas · a encomendar»</button>
+    <button class="sw" data-v="pending">Passo «Por pagar»</button>
+  </div>
+
+  <!-- ===================== PAGAS ===================== -->
+  <div class="view on" id="v-paid">
+    <div class="side">
+      <div>
+        <div class="label">Desktop</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/admin/loja/encomendas?estado=PAID</div>
+          <div class="screen">
+            <div class="head">
+              <div><div class="back">← Loja</div><h2>Encomendas</h2><div class="sub">Pré-encomendas da loja · pagamentos online confirmam-se sozinhos</div></div>
+              <span class="btn p">+ Nova encomenda</span>
+            </div>
+            <div class="pipe">
+              <div class="stage"><div class="n">2</div><div class="t">Por pagar</div><div class="h">70 € · 1 com comprovativo</div><span class="act">1 a confirmar</span></div>
+              <div class="stage on"><div class="n">3</div><div class="t">Pagas · a encomendar</div><div class="h">37 € · 2 online</div><span class="act">encomendar</span></div>
+              <div class="stage"><div class="n">0</div><div class="t">No fornecedor</div><div class="h">à espera de chegar</div></div>
+              <div class="stage"><div class="n">1</div><div class="t">Prontas a levantar</div><div class="h">35 € · avisar aluno</div></div>
+            </div>
+            <div class="hist">Histórico: <span>Entregues · 4</span><span>Canceladas · 1</span></div>
+            <div class="tools">
+              <div class="search">🔍 Procurar por nome ou KFS-ENC-…</div>
+              <span class="chipf on">Todas</span><span class="chipf">Online</span><span class="chipf">À mão</span>
+            </div>
+            <div class="supplier">
+              <div class="top"><h3>Para encomendar ao fornecedor · 3 peças</h3><span class="btn p sm">Já encomendei estas 3</span></div>
+              <div><div style="font-size:13px;font-weight:700;margin-bottom:6px">Rashguard de manga curta · Preto/Vermelho</div>
+                <div class="sizes"><div class="sz"><b>1</b><small>M</small></div><div class="sz"><b>0</b><small>L</small></div></div></div>
+              <div><div style="font-size:13px;font-weight:700;margin-bottom:6px">TESTE pagamento online · Único</div>
+                <div class="sizes"><div class="sz"><b>2</b><small>Único</small></div></div></div>
+            </div>
+            <div class="list">
+              <div class="order">
+                <div>
+                  <div class="ref">KFS-ENC-0012 · 22 out, 17:11</div>
+                  <div class="who">Bruno Soares</div>
+                  <div class="meta2">aluno · app · 912 345 678</div>
+                  <div class="chips"><span class="chip ok">✓ Pago online · Revolut (Apple Pay)</span></div>
+                  <div class="items"><div class="it"><span class="thumb"></span>1× Rashguard de manga curta · <b>Masculino · Preto/Vermelho · M</b></div></div>
+                </div>
+                <div class="right"><div class="total">35 €</div>
+                  <div class="acts"><span class="btn ghost sm">Cancelar</span><span class="btn sm">Chegou · marcar pronta</span></div></div>
+              </div>
+              <div class="order">
+                <div>
+                  <div class="ref">KFS-ENC-0016 · hoje, 14:05</div>
+                  <div class="who">Daniel</div>
+                  <div class="meta2">aluno · app · sem telefone</div>
+                  <div class="chips"><span class="chip ok">✓ Pago online · Revolut</span></div>
+                  <div class="items"><div class="it"><span class="thumb"></span>1× TESTE pagamento online · <b>Único</b></div></div>
+                </div>
+                <div class="right"><div class="total">1 €</div>
+                  <div class="acts"><span class="btn ghost sm">Cancelar</span><span class="btn sm">Chegou · marcar pronta</span></div></div>
+              </div>
+              <div class="order">
+                <div>
+                  <div class="ref">KFS-ENC-0009 · 18 out</div>
+                  <div class="who">Ana Ribeiro</div>
+                  <div class="meta2">sem conta · 934 000 111</div>
+                  <div class="chips"><span class="chip info">Confirmado à mão · MBWay</span></div>
+                  <div class="items"><div class="it"><span class="thumb"></span>1× TESTE pagamento online · <b>Único</b></div></div>
+                </div>
+                <div class="right"><div class="total">1 €</div>
+                  <div class="acts"><span class="btn ghost sm">Cancelar</span><span class="btn sm">Chegou · marcar pronta</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="label">Telemóvel</div>
+        <div class="frame phone">
+          <div class="screen">
+            <div><div class="back">← Loja</div><h2>Encomendas</h2></div>
+            <div class="pipe">
+              <div class="stage"><div class="n">2</div><div class="t">Por pagar</div><div class="h">70 €</div><span class="act">1</span></div>
+              <div class="stage on"><div class="n">3</div><div class="t">Pagas</div><div class="h">37 € · a encomendar</div></div>
+              <div class="stage"><div class="n">0</div><div class="t">No fornecedor</div><div class="h">—</div></div>
+              <div class="stage"><div class="n">1</div><div class="t">Prontas</div><div class="h">35 €</div></div>
+            </div>
+            <div class="search">🔍 Nome ou KFS-ENC-…</div>
+            <div class="supplier">
+              <details class="sup" open><summary>▾ Para o fornecedor · 3 peças</summary>
+                <div style="margin-top:10px;font-size:12.5px;font-weight:700">Rashguard · Preto/Vermelho</div>
+                <div class="sizes" style="margin-top:6px"><div class="sz"><b>1</b><small>M</small></div></div>
+                <div style="margin-top:10px;font-size:12.5px;font-weight:700">TESTE pagamento · Único</div>
+                <div class="sizes" style="margin-top:6px"><div class="sz"><b>2</b><small>Único</small></div></div>
+              </details>
+              <span class="btn p sm" style="justify-content:center">Já encomendei estas 3</span>
+            </div>
+            <div class="list">
+              <div class="order">
+                <div>
+                  <div class="ref">KFS-ENC-0012 · 22 out</div>
+                  <div class="who">Bruno Soares</div>
+                  <div class="chips"><span class="chip ok">✓ Online · Revolut</span></div>
+                  <div class="items"><div class="it"><span class="thumb"></span>Rashguard · <b>M</b></div></div>
+                </div>
+                <div class="right"><div class="total">35 €</div>
+                  <div class="acts"><span class="btn sm" style="flex:1;justify-content:center">Chegou · pronta</span><span class="btn ghost sm">⋯</span></div></div>
+              </div>
+              <div class="order">
+                <div>
+                  <div class="ref">KFS-ENC-0016 · hoje</div>
+                  <div class="who">Daniel</div>
+                  <div class="chips"><span class="chip ok">✓ Online · Revolut</span></div>
+                </div>
+                <div class="right"><div class="total">1 €</div></div>
+              </div>
+            </div>
+            <div class="fab"><span class="btn p">+ Nova encomenda</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== POR PAGAR ===================== -->
+  <div class="view" id="v-pending">
+    <div class="side">
+      <div>
+        <div class="label">Desktop</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/admin/loja/encomendas</div>
+          <div class="screen">
+            <div class="head">
+              <div><div class="back">← Loja</div><h2>Encomendas</h2><div class="sub">Pré-encomendas da loja · pagamentos online confirmam-se sozinhos</div></div>
+              <span class="btn p">+ Nova encomenda</span>
+            </div>
+            <div class="pipe">
+              <div class="stage on"><div class="n">2</div><div class="t">Por pagar</div><div class="h">70 € · 1 com comprovativo</div><span class="act">1 a confirmar</span></div>
+              <div class="stage"><div class="n">3</div><div class="t">Pagas · a encomendar</div><div class="h">37 € · 2 online</div><span class="act">encomendar</span></div>
+              <div class="stage"><div class="n">0</div><div class="t">No fornecedor</div><div class="h">à espera de chegar</div></div>
+              <div class="stage"><div class="n">1</div><div class="t">Prontas a levantar</div><div class="h">35 € · avisar aluno</div></div>
+            </div>
+            <div class="tools">
+              <div class="search">🔍 Procurar por nome ou KFS-ENC-…</div>
+              <span class="chipf on">Todas</span><span class="chipf">Com comprovativo</span>
+            </div>
+            <div class="ann">Encomendas com comprovativo aparecem primeiro. As pagas online saem daqui sozinhas.</div>
+            <div class="list">
+              <div class="order">
+                <div>
+                  <div class="ref">KFS-ENC-0014 · 21 out</div>
+                  <div class="who">Marta Lopes</div>
+                  <div class="meta2">aluno · app · 915 222 333</div>
+                  <div class="chips"><span class="chip info">📎 Comprovativo enviado</span><span class="btn ghost sm" style="min-height:24px">Ver comprovativo</span></div>
+                  <div class="items"><div class="it"><span class="thumb"></span>1× Rashguard de manga curta · <b>Feminino · S</b></div></div>
+                </div>
+                <div class="right"><div class="total">35 €</div>
+                  <div class="confirm"><span class="sel">Transferência ▾</span><span class="btn p sm">Confirmar pagamento</span></div>
+                  <div class="acts"><span class="btn ghost sm">Cancelar</span></div></div>
+              </div>
+              <div class="order">
+                <div>
+                  <div class="ref">KFS-ENC-0015 · 23 out</div>
+                  <div class="who">Kingdom Demo</div>
+                  <div class="meta2">aluno · app · 910 000 000</div>
+                  <div class="chips"><span class="chip warn">⏳ À espera há 5 dias</span><span class="chip">Abriu pagamento online, não concluiu</span></div>
+                  <div class="items"><div class="it"><span class="thumb"></span>1× Rashguard de manga curta · <b>Masculino · L</b></div></div>
+                </div>
+                <div class="right"><div class="total">35 €</div>
+                  <div class="acts"><span class="btn sm">💬 Lembrar por WhatsApp</span><span class="btn ghost sm">Confirmar à mão ▾</span><span class="btn ghost sm">Cancelar</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="label">Telemóvel</div>
+        <div class="frame phone">
+          <div class="screen">
+            <div><div class="back">← Loja</div><h2>Encomendas</h2></div>
+            <div class="pipe">
+              <div class="stage on"><div class="n">2</div><div class="t">Por pagar</div><div class="h">70 €</div><span class="act">1</span></div>
+              <div class="stage"><div class="n">3</div><div class="t">Pagas</div><div class="h">37 €</div></div>
+              <div class="stage"><div class="n">0</div><div class="t">No fornecedor</div><div class="h">—</div></div>
+              <div class="stage"><div class="n">1</div><div class="t">Prontas</div><div class="h">35 €</div></div>
+            </div>
+            <div class="search">🔍 Nome ou KFS-ENC-…</div>
+            <div class="list">
+              <div class="order">
+                <div>
+                  <div class="ref">KFS-ENC-0014 · 21 out</div>
+                  <div class="who">Marta Lopes</div>
+                  <div class="chips"><span class="chip info">📎 Comprovativo</span></div>
+                  <div class="items"><div class="it"><span class="thumb"></span>Rashguard · <b>S</b></div></div>
+                </div>
+                <div class="right"><div class="total">35 €</div>
+                  <div class="confirm"><span class="sel">Transf. ▾</span><span class="btn p sm" style="flex:1;justify-content:center">Confirmar</span></div></div>
+              </div>
+              <div class="order">
+                <div>
+                  <div class="ref">KFS-ENC-0015 · 23 out</div>
+                  <div class="who">Kingdom Demo</div>
+                  <div class="chips"><span class="chip warn">⏳ há 5 dias</span></div>
+                </div>
+                <div class="right"><div class="total">35 €</div>
+                  <div class="acts"><span class="btn sm" style="flex:1;justify-content:center">💬 Lembrar</span><span class="btn ghost sm">⋯</span></div></div>
+              </div>
+            </div>
+            <div class="fab"><span class="btn p">+ Nova encomenda</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b));
+    document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+b.dataset.v));
+  });
+</script>
+</body>
+</html>
