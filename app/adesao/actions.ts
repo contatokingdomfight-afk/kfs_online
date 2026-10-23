@@ -10,6 +10,11 @@ import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import { isEnrollmentFormCurrent } from "@/lib/enrollment-form";
 import { invalidateStudentGateCache } from "@/lib/student-gate-cache";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
+import { resolveAutoPayPayer } from "@/lib/autopay/service";
+import { createTuitionCheckout } from "@/lib/tuition-checkout/service";
 
 export type SignAdesaoDocumentsResult = { error?: string; planId?: string | null };
 
@@ -160,7 +165,39 @@ export async function signAdesaoDocuments(
   revalidatePath("/dashboard/perfil");
   revalidatePath("/dashboard/documentos-adesao");
   revalidatePath("/dashboard/financeiro");
+  // Escolheu pagar online: vai já à página da Revolut pagar inscrição + seguro + 1.ª mensalidade.
+  // Se falhar (ou fechar sem pagar), a adesão fica guardada e paga depois em Plano e pagamentos.
+  if (result.planId) {
+    const checkoutUrl = await adesaoRevolutCheckoutUrl(studentId);
+    if (checkoutUrl) redirect(checkoutUrl);
+  }
   // Sem plano (aula avulsa): paga por sessão, não por mensalidade — não faz sentido
   // mandar para o gate de pagamento de mensalidade.
   redirect(result.planId ? "/dashboard/financeiro?pagamento_escola=1" : "/dashboard");
+}
+
+/** Link Revolut para os pagamentos da adesão, quando o aluno escolheu «Pagamento online». Null = segue o fluxo normal. */
+async function adesaoRevolutCheckoutUrl(studentId: string): Promise<string | null> {
+  if (!revolutMerchantConfigured) return null;
+  const admin = getAdminClientOrNull().client;
+  if (!admin) return null;
+  try {
+    const { data: form } = await admin.from("StudentEnrollmentForm").select("paymentMethod").eq("studentId", studentId).maybeSingle();
+    if ((form as { paymentMethod?: string | null } | null)?.paymentMethod !== "REVOLUT") return null;
+    const payer = await resolveAutoPayPayer(admin, studentId);
+    const dbUser = await getCurrentDbUser();
+    const h = await headers();
+    const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host") ?? "www.kingdomfight.com"}`;
+    const res = await createTuitionCheckout(admin, {
+      payerStudentId: payer.isFamilyMember ? studentId : payer.payerStudentId,
+      createdByUserId: dbUser?.id ?? null,
+      email: dbUser?.email ?? null,
+      returnUrl: `${origin}/dashboard/financeiro?pago=1&adesao=1`,
+      description: "Adesão · Kingdom Fight School",
+    });
+    return res.url ?? null;
+  } catch (e) {
+    console.error("[adesao revolut]", e);
+    return null;
+  }
 }

@@ -173,7 +173,7 @@ export default async function DashboardFinanceiroPage({
     <div className="max-w-2xl mx-auto space-y-6">
       <Suspense fallback={null}>
         <SchoolPaymentPendingModal
-          showGate={awaitingSchoolPayment}
+          showGate={awaitingSchoolPayment && sp.pago !== "1"}
           planName={plan?.name ?? "—"}
           fees={modalFees}
           locale={loc}
@@ -193,7 +193,7 @@ export default async function DashboardFinanceiroPage({
         </p>
       </header>
 
-      {awaitingSchoolPayment && (
+      {awaitingSchoolPayment && sp.pago !== "1" && (
         <div
           role="status"
           className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-text-primary"

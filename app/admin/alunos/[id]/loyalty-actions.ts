@@ -58,18 +58,19 @@ export async function adminCreatePaymentLinkAction(formData: FormData): Promise<
   const studentId = String(formData.get("studentId") ?? "");
   const supabase = createAdminClient();
   const payer = await resolveAutoPayPayer(supabase, studentId);
-  const { data: st } = await supabase.from("Student").select("userId").eq("id", payer.payerStudentId).maybeSingle();
+  const payingId = payer.isFamilyMember ? studentId : payer.payerStudentId;
+  const { data: st } = await supabase.from("Student").select("userId").eq("id", payingId).maybeSingle();
   const userId = (st as { userId?: string } | null)?.userId;
   const { data: user } = userId ? await supabase.from("User").select("email").eq("id", userId).maybeSingle() : { data: null };
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host") ?? "www.kingdomfight.com"}`;
   try {
     const res = await createTuitionCheckout(supabase, {
-      payerStudentId: payer.payerStudentId,
+      payerStudentId: payingId,
       createdByUserId: u.id,
       email: (user as { email?: string | null } | null)?.email ?? null,
       returnUrl: `${origin}/dashboard/financeiro?pago=1`,
-      description: "Mensalidades · Kingdom Fight School",
+      description: "Pagamentos · Kingdom Fight School",
     });
     if (res.error) console.error("[payment link admin]", res.error);
   } catch (e) {

@@ -30,6 +30,8 @@ type Props = {
     prevState: SaveEnrollmentFormResult | null,
     formData: FormData
   ) => Promise<SaveEnrollmentFormResult>;
+  /** Mostra «Pagamento online (Revolut)» (só na adesão do próprio aluno, com a Revolut configurada). */
+  revolutAvailable?: boolean;
 };
 
 const STEP_LABELS = ["Os teus dados", "Plano e pagamento", "Seguro e saúde", "Consentimentos"];
@@ -79,15 +81,33 @@ function StepProgress({ step }: { step: number }) {
   );
 }
 
-export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props) {
+export function ComprovativoForm({ prefill, action = saveEnrollmentForm, revolutAvailable = false }: Props) {
   const [state, formAction] = useActionState(action, null as SaveEnrollmentFormResult | null);
   const e = prefill.existing;
-  const initialPayment =
+  const initialPayment: PaymentMethodValue =
     e.paymentMethod === "CASH" || e.paymentMethod === "TRANSFER"
       ? e.paymentMethod
-      : e.paymentMethod === "DEBIT_DIRECT"
-        ? "TRANSFER"
-        : "CASH";
+      : e.paymentMethod === "REVOLUT" && revolutAvailable
+        ? "REVOLUT"
+        : e.paymentMethod === "DEBIT_DIRECT"
+          ? "TRANSFER"
+          : revolutAvailable
+            ? "REVOLUT"
+            : "CASH";
+  // Revolut primeiro (recomendado) quando disponível; o admin a preencher pelo aluno não a vê.
+  const methodOptions = [
+    ...(revolutAvailable ? PAYMENT_METHOD_OPTIONS.filter((o) => o.value === "REVOLUT") : []),
+    ...PAYMENT_METHOD_OPTIONS.filter((o) => o.value !== "REVOLUT"),
+  ];
+  const METHOD_HINT: Record<string, string> = {
+    REVOLUT: "Cartão, Apple Pay, Google Pay ou conta Revolut. Pagas ao concluir a adesão e fica confirmado na hora — sem comprovativo.",
+    TRANSFER: "IBAN e comprovativo (confirmado pela secretaria).",
+    CASH: "Pagas na secretaria, no primeiro treino.",
+  };
+  const totalToday =
+    (prefill.showEnrollment ? prefill.enrollmentAmount : 0) +
+    prefill.monthlyAmount +
+    (prefill.showInsurance && !ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? Number(prefill.insuranceAmount) || 0 : 0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodValue>(initialPayment);
   const [consents, setConsents] = useState({
     consentPhoto: e.consentPhoto ?? true,
@@ -239,27 +259,41 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props
               <li>Seguro: {formatDecimalAmountInput(prefill.insuranceAmount)} €</li>
             ) : null}
           </ul>
+          <p style={{ margin: "10px 0 0", fontWeight: 700 }}>A pagar na adesão: {totalToday.toFixed(2)} €</p>
         </section>
 
         <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", display: "flex", flexDirection: "column", gap: 14 }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Forma de pagamento</h2>
-          <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.55 }}>
-            Por enquanto aceitamos apenas dinheiro em espécie na secretaria ou transferência bancária.
-          </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {PAYMENT_METHOD_OPTIONS.map((opt) => (
-              <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, cursor: "pointer" }}>
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value={opt.value}
-                  checked={paymentMethod === opt.value}
-                  onChange={() => setPaymentMethod(opt.value)}
-                  required
-                />
-                {opt.label}
-              </label>
-            ))}
+            {methodOptions.map((opt) => {
+              const on = paymentMethod === opt.value;
+              return (
+                <label
+                  key={opt.value}
+                  style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, cursor: "pointer", padding: "10px 12px", borderRadius: 12, border: `1px solid ${on ? "var(--primary)" : "var(--border)"}`, background: on ? "color-mix(in srgb, var(--primary) 8%, var(--bg))" : "var(--bg)" }}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={opt.value}
+                    checked={on}
+                    onChange={() => setPaymentMethod(opt.value)}
+                    required
+                    style={{ marginTop: 3 }}
+                  />
+                  <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <span style={{ fontWeight: 700 }}>
+                      {opt.value === "REVOLUT" ? "💳 " : ""}
+                      {opt.label}
+                      {opt.value === "REVOLUT" ? (
+                        <span style={{ marginLeft: 8, fontSize: 10.5, fontWeight: 800, padding: "2px 8px", borderRadius: 999, color: "var(--success)", background: "color-mix(in srgb, var(--success) 12%, transparent)" }}>RECOMENDADO</span>
+                      ) : null}
+                    </span>
+                    <span style={{ fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.45 }}>{METHOD_HINT[opt.value]}</span>
+                  </span>
+                </label>
+              );
+            })}
           </div>
           {paymentMethod === "TRANSFER" ? (
             <div
@@ -299,7 +333,7 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm }: Props
             </div>
           ) : null}
 
-          <div>
+          <div style={{ display: paymentMethod === "REVOLUT" ? "none" : undefined }}>
             <label htmlFor="paymentProof" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
               <CreditCard size={15} aria-hidden />
               Comprovativo de pagamento {paymentMethod === "TRANSFER" ? "" : "(opcional)"}

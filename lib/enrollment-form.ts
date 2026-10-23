@@ -33,6 +33,8 @@ export const ALLOWED_PAYMENT_PROOF_TYPES = new Set(["image/jpeg", "image/png", "
 export const PAYMENT_METHOD_OPTIONS = [
   { value: "CASH", label: "Dinheiro em espécie" },
   { value: "TRANSFER", label: "Transferência bancária" },
+  /** Pago ao concluir a adesão, na página segura da Revolut (confirmado sozinho, sem comprovativo). */
+  { value: "REVOLUT", label: "Pagamento online (Revolut)" },
 ] as const;
 
 export type PaymentMethodValue = (typeof PAYMENT_METHOD_OPTIONS)[number]["value"];

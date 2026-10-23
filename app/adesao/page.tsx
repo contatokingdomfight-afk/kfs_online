@@ -8,6 +8,7 @@ import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import { isEnrollmentFormCurrent, loadEnrollmentFormPrefill } from "@/lib/enrollment-form";
 import { AdesaoSigningForm } from "./AdesaoSigningForm";
 import { ComprovativoForm } from "./ComprovativoForm";
+import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
 import { AdesaoStepIndicator } from "./AdesaoStepIndicator";
 
 type Props = {
@@ -84,7 +85,7 @@ export default async function AdesaoPage({ searchParams }: Props) {
         <AdesaoStepIndicator step={step} />
 
         {step === 1 && prefill ? (
-          <ComprovativoForm prefill={prefill} />
+          <ComprovativoForm prefill={prefill} revolutAvailable={revolutMerchantConfigured} />
         ) : prefill ? (
           <AdesaoSigningForm isMinor={isMinor} planName={prefill.planName} modalityLabel={prefill.modalityLabel} />
         ) : null}

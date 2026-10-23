@@ -83,7 +83,7 @@ export async function applyEnrollmentFormSubmission(
   if (!emergencyContactPhone || emergencyContactPhone.length < 9) {
     return { error: "Indica o telefone do contacto de emergência." };
   }
-  if (paymentMethod !== "CASH" && paymentMethod !== "TRANSFER") {
+  if (paymentMethod !== "CASH" && paymentMethod !== "TRANSFER" && paymentMethod !== "REVOLUT") {
     return { error: "Escolhe a forma de pagamento." };
   }
 

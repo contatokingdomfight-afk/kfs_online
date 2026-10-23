@@ -162,9 +162,10 @@ export async function StudentLatePaymentsSection({ studentId, justPaid }: { stud
   const admin = getAdminClientOrNull().client;
   if (!admin || !revolutMerchantConfigured) return null;
   const payer = await resolveAutoPayPayer(admin, studentId);
-  if (payer.isFamilyMember) return null;
-  const late = await listLatePayments(admin, payer.payerStudentId);
+  // Membro de um grupo: só as taxas dele (inscrição/seguro); a mensalidade é do titular.
+  const late = await listLatePayments(admin, payer.isFamilyMember ? studentId : payer.payerStudentId);
   if (!late.length) {
+    if (payer.isFamilyMember) return null;
     const paidMsg = justPaid ? (
       <p role="status" style={{ margin: 0, padding: "12px 14px", borderRadius: 12, border: "1px solid var(--success)", background: "color-mix(in srgb, var(--success) 10%, transparent)", fontSize: 14, fontWeight: 700 }}>
         Pagamento recebido. Obrigado!

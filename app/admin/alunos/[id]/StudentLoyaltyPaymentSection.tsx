@@ -23,12 +23,12 @@ const btn: React.CSSProperties = { minHeight: 36, padding: "0 12px", borderRadiu
 /** Ficha do aluno: fidelização (estado, ativar, terminar com o valor de saída) e link de pagamento Revolut das mensalidades em atraso. */
 export async function StudentLoyaltyPaymentSection({ supabase, studentId, phone, firstName, sectionTitle, row }: { supabase: SupabaseClient; studentId: string; phone: string | null; firstName: string; sectionTitle: React.CSSProperties; row: React.CSSProperties }) {
   const payer = await resolveAutoPayPayer(supabase, studentId);
-  if (payer.isFamilyMember) return null; // a ficha do titular mostra a fidelização e os pagamentos do grupo
-
+  // Membro de um grupo: a fidelização e a mensalidade estão no titular; aqui só as taxas dele (inscrição/seguro).
+  const payingId = payer.isFamilyMember ? studentId : payer.payerStudentId;
   const [discount, commitment, late] = await Promise.all([
-    payerLoyaltyMonthlyDiscount(supabase, payer.payerStudentId, payer.familyGroupId),
-    loadActiveLoyalty(supabase, payer.payerStudentId),
-    listLatePayments(supabase, payer.payerStudentId),
+    payer.isFamilyMember ? Promise.resolve(0) : payerLoyaltyMonthlyDiscount(supabase, payer.payerStudentId, payer.familyGroupId),
+    payer.isFamilyMember ? Promise.resolve(null) : loadActiveLoyalty(supabase, payer.payerStudentId),
+    listLatePayments(supabase, payingId),
   ]);
   const penalty = commitment ? await loyaltyExitPenalty(supabase, commitment, payer.familyGroupId) : null;
   const current = currentReferenceMonthLisbon(new Date());
@@ -37,7 +37,7 @@ export async function StudentLoyaltyPaymentSection({ supabase, studentId, phone,
   const { data: openLinks, error: linkErr } = await supabase
     .from("PaymentCheckout")
     .select("checkoutUrl, amount, createdAt, environment")
-    .eq("studentId", payer.payerStudentId)
+    .eq("studentId", payingId)
     .eq("state", "PENDING")
     .order("createdAt", { ascending: false })
     .limit(1);
@@ -45,7 +45,7 @@ export async function StudentLoyaltyPaymentSection({ supabase, studentId, phone,
   const lateTotal = late.reduce((t, p) => t + p.amount, 0);
   const waUrl =
     link?.checkoutUrl && phone
-      ? buildWhatsAppUrl(phone, `Olá ${firstName}! Aqui está o link para pagares ${euro(Number(link.amount))} de mensalidade(s) na Kingdom Fight School (cartão, Apple Pay ou Revolut): ${link.checkoutUrl}\nFica pago na hora, não precisas de enviar comprovativo. Obrigado! 🥊`)
+      ? buildWhatsAppUrl(phone, `Olá ${firstName}! Aqui está o link para pagares ${euro(Number(link.amount))} na Kingdom Fight School (cartão, Apple Pay ou Revolut): ${link.checkoutUrl}\nFica pago na hora, não precisas de enviar comprovativo. Obrigado! 🥊`)
       : null;
 
   return (

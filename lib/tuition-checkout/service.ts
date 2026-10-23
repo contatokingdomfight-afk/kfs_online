@@ -7,6 +7,8 @@ import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { addMonthsToReferenceMonth } from "@/lib/reference-month";
 import { resolveFamilyGroupTitularSuggestedAmount, resolvePlanMonthlyTuition } from "@/lib/family-tuition";
 import { individualLoyaltyDiscount } from "@/lib/loyalty/service";
+import { renewStudentInsuranceCoverage } from "@/lib/renew-student-insurance-coverage";
+import { grantReferralRewardIfEligible } from "@/lib/referral-rewards";
 
 /**
  * Pagar mensalidades em atraso pela Revolut (página segura, como na loja):
@@ -16,7 +18,8 @@ import { individualLoyaltyDiscount } from "@/lib/loyalty/service";
  */
 
 export const CHECKOUT_REFERENCE_PREFIX = "pc:";
-const PAYABLE_TYPES = ["TUITION", "LOYALTY_EXIT"] as const;
+// Mensalidades, saída da fidelização e as taxas da adesão (inscrição e seguro).
+const PAYABLE_TYPES = ["TUITION", "LOYALTY_EXIT", "ENROLLMENT", "INSURANCE"] as const;
 
 export type LatePayment = { id: string; paymentType: string; referenceMonth: string | null; amount: number };
 
@@ -35,6 +38,8 @@ export async function listLatePayments(supabase: SupabaseClient, payerStudentId:
 
 export function latePaymentLabel(p: LatePayment): string {
   if (p.paymentType === "LOYALTY_EXIT") return "Saída da fidelização";
+  if (p.paymentType === "ENROLLMENT") return "Inscrição";
+  if (p.paymentType === "INSURANCE") return "Seguro desportivo";
   if (!p.referenceMonth) return "Mensalidade";
   const [y, m] = p.referenceMonth.split("-").map(Number);
   const month = new Date(Date.UTC(y, m - 1, 15)).toLocaleDateString("pt-PT", { month: "long", year: "numeric", timeZone: "UTC" });
@@ -144,8 +149,8 @@ export async function createAdvanceTuitionCheckout(
 
 /** Webhook: ordem concluída com referência `pc:` → marca os pagamentos como pagos (idempotente). */
 export async function markTuitionCheckoutPaid(supabase: SupabaseClient, checkoutId: string, order: MerchantOrder): Promise<boolean> {
-  const { data } = await supabase.from("PaymentCheckout").select("id, studentId, paymentIds, amount, state").eq("id", checkoutId).maybeSingle();
-  const c = data as { id: string; studentId: string; paymentIds: string[]; amount: number | string; state: string } | null;
+  const { data } = await supabase.from("PaymentCheckout").select("id, studentId, paymentIds, amount, state, createdByUserId").eq("id", checkoutId).maybeSingle();
+  const c = data as { id: string; studentId: string; paymentIds: string[]; amount: number | string; state: string; createdByUserId: string | null } | null;
   if (!c || c.state === "PAID") return true;
   if (order.currency !== "EUR" || order.amount !== Math.round(Number(c.amount) * 100)) {
     console.error("[tuition-checkout] valor não corresponde", { checkoutId, paid: order.amount, expected: c.amount });
@@ -191,8 +196,19 @@ export async function markTuitionCheckoutPaid(supabase: SupabaseClient, checkout
         console.error("[tuition-checkout] registar mensalidade", res.error);
         return false;
       }
+      await grantReferralRewardIfEligible(supabase, p.studentId).catch(() => undefined);
     } else {
       await supabase.from("Payment").update({ status: "PAID", paymentMethod: "TRANSFER" }).eq("id", p.id);
+      // Mesmos efeitos da confirmação manual no Financeiro.
+      if (p.paymentType === "ENROLLMENT") {
+        await supabase.from("Student").update({ enrollmentFeeWaived: false }).eq("id", p.studentId);
+      } else if (p.paymentType === "INSURANCE") {
+        const actor = c.createdByUserId ?? ((await supabase.from("Student").select("userId").eq("id", p.studentId).maybeSingle()).data as { userId?: string } | null)?.userId;
+        if (actor) {
+          const renew = await renewStudentInsuranceCoverage(supabase, p.studentId, actor);
+          if (renew.error) console.error("[tuition-checkout] renovar seguro", renew.error);
+        }
+      }
     }
   }
   await supabase.from("PaymentCheckout").update({ state: "PAID", paidAt: new Date().toISOString() }).eq("id", c.id);

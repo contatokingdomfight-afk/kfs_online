@@ -17,11 +17,13 @@ export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as { paymentIds?: unknown; advance?: unknown };
   const paymentIds = Array.isArray(body.paymentIds) ? body.paymentIds.map(String).slice(0, 24) : undefined;
   const payer = await resolveAutoPayPayer(admin, studentId);
-  if (payer.isFamilyMember) return NextResponse.json({ error: "A mensalidade do teu grupo familiar é paga pelo titular." }, { status: 403 });
+  // Membro de um grupo: a mensalidade é do titular, mas a inscrição e o seguro são dele próprio.
+  const payerId = payer.isFamilyMember ? studentId : payer.payerStudentId;
 
   try {
     // Pagar adiantado a próxima mensalidade (sem atrasos): mês e valor calculados no servidor.
     if (body.advance === true) {
+      if (payer.isFamilyMember) return NextResponse.json({ error: "A mensalidade do teu grupo familiar é paga pelo titular." }, { status: 403 });
       const adv = await createAdvanceTuitionCheckout(admin, {
         payerStudentId: payer.payerStudentId,
         familyGroupId: payer.familyGroupId,
@@ -33,12 +35,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ url: adv.url });
     }
     const res = await createTuitionCheckout(admin, {
-      payerStudentId: payer.payerStudentId,
+      payerStudentId: payerId,
       paymentIds,
       createdByUserId: user.id,
       email: user.email ?? null,
       returnUrl: `${request.nextUrl.origin}/dashboard/financeiro?pago=1`,
-      description: "Mensalidades · Kingdom Fight School",
+      description: "Pagamentos · Kingdom Fight School",
     });
     if (res.error || !res.url) return NextResponse.json({ error: res.error ?? "Não foi possível iniciar o pagamento." }, { status: 400 });
     return NextResponse.json({ url: res.url });
