@@ -15,6 +15,7 @@ import {
 } from "@/lib/kingdom-plans-constants";
 import { getFamilyContext, type FamilyGroupRole } from "@/lib/family-context";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
+import { loadActiveLoyalty, loadPlanLoyaltyDiscounts, loyaltyCoversMonth } from "@/lib/loyalty/service";
 
 /** Valor mensal por pessoa no plano família (fallback quando não há plano de referência). */
 export function familyMonthlyTuitionPerPerson(): number {
@@ -51,6 +52,8 @@ export type FamilyPricingBreakdown = {
   discountAmount: number;
   finalMonthlyAmount: number;
   membersMissingReferencePlan: string[];
+  /** Desconto de fidelização já descontado dos preços de referência (soma dos membros). */
+  loyaltyDiscountTotal?: number;
 };
 
 function round2(n: number): number {
@@ -80,11 +83,13 @@ export function computeFamilyPricingFromMembers(
 /** Soma dos preços de referência dos membros do grupo, com desconto do grupo aplicado. */
 export async function computeFamilyGroupMonthlyTuition(
   supabase: SupabaseClient,
-  groupId: string
+  groupId: string,
+  /** Mês (AAAA-MM) para a fidelização do titular; por omissão o mês atual. */
+  month?: string
 ): Promise<FamilyPricingBreakdown | { error: string }> {
   const { data: group } = await supabase
     .from("FamilyGroup")
-    .select("id, discountPercent")
+    .select("id, discountPercent, billingStudentId")
     .eq("id", groupId)
     .maybeSingle();
   if (!group) return { error: "Grupo familiar não encontrado." };
@@ -119,16 +124,32 @@ export async function computeFamilyGroupMonthlyTuition(
     };
   });
 
+  // Fidelização do titular: cada membro tem o desconto do seu plano de referência; depois soma-se (e aplica-se o desconto do grupo).
+  let loyaltyDiscountTotal = 0;
+  const titularId = (group as { billingStudentId?: string | null }).billingStudentId;
+  if (titularId) {
+    const commitment = await loadActiveLoyalty(supabase, titularId);
+    if (loyaltyCoversMonth(commitment, month ?? currentReferenceMonthLisbon(new Date()))) {
+      const discounts = await loadPlanLoyaltyDiscounts(supabase, planIds);
+      for (const m of memberInfos) {
+        const d = m.referencePlanId ? Math.min(discounts.get(m.referencePlanId) ?? 0, m.referencePrice) : 0;
+        m.referencePrice = round2(m.referencePrice - d);
+        loyaltyDiscountTotal += d;
+      }
+    }
+  }
+
   const discountPercent = Number((group as { discountPercent?: number }).discountPercent ?? 0);
-  return { groupId, ...computeFamilyPricingFromMembers(memberInfos, discountPercent) };
+  return { groupId, ...computeFamilyPricingFromMembers(memberInfos, discountPercent), loyaltyDiscountTotal: round2(loyaltyDiscountTotal) };
 }
 
 /** Atalho: só o valor final sugerido para o pagamento do titular. */
 export async function resolveFamilyGroupTitularSuggestedAmount(
   supabase: SupabaseClient,
-  groupId: string
+  groupId: string,
+  month?: string
 ): Promise<number> {
-  const result = await computeFamilyGroupMonthlyTuition(supabase, groupId);
+  const result = await computeFamilyGroupMonthlyTuition(supabase, groupId, month);
   if ("error" in result) return 0;
   return result.finalMonthlyAmount;
 }

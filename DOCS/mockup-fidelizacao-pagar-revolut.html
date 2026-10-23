@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Fidelização e pagar com Revolut</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--bg3:#1c1c1f;--text:#fff;--muted:#a1a1aa;--primary:#c1121f;--success:#22c55e;--warning:#facc15;--danger:#e11d48;--info:#60a5fa;--gold:#f5c542;--border:#27272a;--font:"Inter",system-ui,-apple-system,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:#050505;color:var(--text);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1500px;margin:0 auto;padding:24px 20px 60px}
+  .badge{display:inline-flex;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase;letter-spacing:.5px}
+  h1.meta{font-size:22px;margin:12px 0 6px}
+  p.meta{font-size:13.5px;color:var(--muted);max-width:900px;line-height:1.6;margin:0}
+  .switcher{display:flex;gap:8px;margin:20px 0 6px;flex-wrap:wrap}
+  .sw{font:600 13px var(--font);padding:9px 16px;border-radius:999px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer}
+  .sw.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .explain{font-size:13px;color:var(--muted);margin:10px 0 16px;max-width:1000px;line-height:1.6;border-left:3px solid var(--primary);padding:4px 12px}
+  .explain b{color:#fff}
+  .side{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:24px;align-items:start}
+  @media (max-width:1000px){.side{grid-template-columns:1fr}}
+  .label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .frame{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--bg)}
+  .phone{border-radius:34px;border:8px solid #1f1f22}
+  .bar{display:flex;gap:8px;align-items:center;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;background:#3a3a3a}
+  .screen{padding:22px;display:flex;flex-direction:column;gap:14px}
+  .phone .screen{padding:14px 12px;gap:12px}
+  .view{display:none}.view.on{display:block}
+  h2{margin:0;font-size:21px;font-weight:800}
+  h3{margin:0;font-size:15px;font-weight:800}
+  .sub{font-size:13px;color:var(--muted);line-height:1.5}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .card.gold{border-color:rgba(245,197,66,.5);background:linear-gradient(160deg,#1f1a0b 0%,var(--bg2) 60%)}
+  .card.ok{border-color:rgba(34,197,94,.45);background:linear-gradient(160deg,#0b1d12 0%,var(--bg2) 60%)}
+  .card.bad{border-color:rgba(225,29,72,.5);background:linear-gradient(160deg,#1f0a10 0%,var(--bg2) 60%)}
+  .row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:#fff;font:700 14px var(--font);white-space:nowrap}
+  .btn.p{background:var(--primary);border-color:var(--primary)}
+  .btn.g{background:var(--gold);border-color:var(--gold);color:#111}
+  .btn.ghost{background:transparent;color:var(--muted)}
+  .btn.sm{min-height:34px;font-size:12.5px;padding:0 12px;border-radius:10px}
+  .btn.full{width:100%}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px}
+  .pill.gold{color:var(--gold);background:rgba(245,197,66,.1);border:1px solid rgba(245,197,66,.4)}
+  .pill.ok{color:var(--success);background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35)}
+  .pill.bad{color:#fb7185;background:rgba(225,29,72,.1);border:1px solid rgba(225,29,72,.4)}
+  .pill.muted{color:var(--muted);border:1px solid var(--border)}
+  .opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .phone .opts{grid-template-columns:1fr}
+  .opt{border:1px solid var(--border);border-radius:14px;padding:12px 14px;background:var(--bg);display:flex;flex-direction:column;gap:4px;position:relative}
+  .opt.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+  .opt .t{font-size:13px;font-weight:700;color:var(--muted)}
+  .opt .p{font-size:24px;font-weight:800}
+  .opt .p s{font-size:14px;color:var(--muted);font-weight:600;margin-left:6px}
+  .opt .s{font-size:12px;color:var(--success);font-weight:700}
+  .opt .tag{position:absolute;top:10px;right:10px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;background:rgba(245,197,66,.15);color:var(--gold)}
+  .phone .opt{flex-direction:row;align-items:center;justify-content:space-between}
+  .kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .phone .kv{grid-template-columns:1fr 1fr}
+  .kv div{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+  .kv small{display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+  .kv b{display:block;font-size:15px;margin-top:3px}
+  .progress{height:8px;border-radius:999px;background:var(--bg3);overflow:hidden}
+  .progress span{display:block;height:100%;background:var(--gold)}
+  .terms{font-size:12.5px;color:var(--muted);line-height:1.6;border:1px dashed var(--border);border-radius:12px;padding:10px 12px}
+  .terms b{color:#fff}
+  .check{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+  .check span.box{width:16px;height:16px;border-radius:4px;background:var(--gold);flex-shrink:0;margin-top:2px}
+  .late{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg);font-size:13.5px}
+  .late .box{width:16px;height:16px;border-radius:4px;border:1px solid var(--muted);display:inline-block;margin-right:8px;vertical-align:middle}
+  .late .box.on{background:var(--primary);border-color:var(--primary)}
+  .link{display:flex;gap:8px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:8px 10px;background:var(--bg);font-size:12.5px;color:var(--muted);overflow:hidden}
+  .link span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sectionT{margin:0 0 4px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .rowA{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--bg);font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px 6px;border-bottom:1px solid var(--border)}
+  td{padding:10px 6px;border-bottom:1px solid var(--border)}
+  .inp{display:inline-flex;align-items:center;min-height:34px;border-radius:9px;border:1px solid var(--border);background:var(--bg);padding:0 10px;font-size:13px;font-weight:700}
+  .open{border:1px solid rgba(250,204,21,.35);background:rgba(250,204,21,.05);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.7;margin-top:22px}
+  .open b{color:var(--warning)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Mockup · Fidelização + Pagar com Revolut</span>
+  <h1 class="meta">Fidelização com desconto e pagamento da mensalidade pela Revolut</h1>
+  <p class="meta"><b style="color:#fff">Fidelização:</b> o aluno compromete-se 6 ou 12 meses e a mensalidade desce (ex.: Kingdom Full 55 € → 50 €). O desconto entra sozinho nas mensalidades geradas e no pagamento automático. <b style="color:#fff">Pagar com Revolut:</b> o aluno paga a(s) mensalidade(s) em atraso de uma vez pela página da Revolut; o admin pode gerar o mesmo link na ficha e enviá-lo por WhatsApp.</p>
+
+  <div class="switcher">
+    <button class="sw on" data-v="a">1 · Aluno: oferta de fidelização</button>
+    <button class="sw" data-v="b">2 · Aluno: fidelizado</button>
+    <button class="sw" data-v="c">3 · Aluno: pagar em atraso</button>
+    <button class="sw" data-v="d">4 · Admin: ficha do aluno</button>
+    <button class="sw" data-v="e">5 · Admin: preços nos Planos</button>
+  </div>
+
+  <!-- 1 -->
+  <div class="view on" id="v-a">
+    <p class="explain">Em <b>Plano e pagamentos</b>, logo a seguir ao plano, aparece a oferta com as opções e quanto o aluno poupa. Escolher → confirmar os termos → a partir da <b>próxima mensalidade</b> já paga o valor com desconto.</p>
+    <div class="side">
+      <div><div class="label">Desktop</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/dashboard/financeiro</div>
+          <div class="screen">
+            <h2>Plano e pagamentos</h2>
+            <div class="card"><div class="row"><div><div class="sub">O meu plano</div><h3 style="font-size:17px">Kingdom Full · Muay Thai</h3></div><div style="text-align:right"><div style="font-size:24px;font-weight:800">55 €</div><div class="sub">por mês</div></div></div></div>
+            <div class="card gold">
+              <div class="row"><h3 style="font-size:17px">🏅 Fidelização Kingdom</h3><span class="pill gold">Paga menos</span></div>
+              <div class="sub">Compromete-te a treinar connosco e a mensalidade desce já a partir do próximo mês.</div>
+              <div class="opts">
+                <div class="opt"><span class="t">Sem fidelização</span><span class="p">55 €</span><span class="sub" style="font-size:12px">mês a mês</span></div>
+                <div class="opt"><span class="t">6 meses</span><span class="p">52 €<s>55 €</s></span><span class="s">Poupas 18 €</span></div>
+                <div class="opt sel"><span class="tag">MELHOR</span><span class="t">12 meses</span><span class="p">50 €<s>55 €</s></span><span class="s">Poupas 60 €</span></div>
+              </div>
+              <div class="terms"><b>Como funciona:</b> pagas 50 €/mês durante 12 meses (nov 2026 → out 2027). No fim podes renovar ou voltar ao mês a mês. Se saíres antes, pagas o desconto já recebido (5 € × meses usados).</div>
+              <div class="check"><span class="box"></span>Li e aceito a fidelização de 12 meses.</div>
+              <div class="row"><span class="btn g">Fidelizar 12 meses · 50 €/mês</span><span class="sub">Junta com o pagamento automático e esquece.</span></div>
+            </div>
+          </div></div></div>
+      <div><div class="label">Telemóvel</div>
+        <div class="frame phone"><div class="screen">
+          <h2>Plano e pagamentos</h2>
+          <div class="card"><div class="row"><h3>Kingdom Full</h3><b style="font-size:20px">55 €</b></div></div>
+          <div class="card gold">
+            <h3>🏅 Fidelização Kingdom</h3>
+            <div class="sub">A mensalidade desce já no próximo mês.</div>
+            <div class="opts">
+              <div class="opt"><span class="t">6 meses</span><span><b>52 €</b> <span class="s">−18 €</span></span></div>
+              <div class="opt sel"><span class="t">12 meses</span><span><b>50 €</b> <span class="s">−60 €</span></span></div>
+            </div>
+            <span class="btn g full">Fidelizar · 50 €/mês</span>
+            <span class="sub" style="font-size:12px">Sair antes: pagas o desconto recebido.</span>
+          </div>
+        </div></div></div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="view" id="v-b">
+    <p class="explain">Depois de fidelizado: o cartão mostra o <b>valor com desconto</b>, até quando, quanto já poupou e a barra de progresso. Um mês antes do fim aparece «Renovar».</p>
+    <div class="side">
+      <div><div class="label">Desktop</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/dashboard/financeiro</div>
+          <div class="screen">
+            <h2>Plano e pagamentos</h2>
+            <div class="card gold">
+              <div class="row"><h3 style="font-size:17px">🏅 Fidelizado · 12 meses</h3><span class="pill gold">50 €/mês</span></div>
+              <div class="kv"><div><small>Mensalidade</small><b>50 € <span style="color:var(--muted);font-weight:500;font-size:12px"><s>55 €</s></span></b></div><div><small>Até</small><b>out 2027</b></div><div><small>Já poupaste</small><b style="color:var(--success)">15 €</b></div></div>
+              <div><div class="row" style="margin-bottom:6px"><span class="sub">3 de 12 meses</span><span class="sub">faltam 9</span></div><div class="progress"><span style="width:25%"></span></div></div>
+            </div>
+            <div class="card ok"><div class="row"><h3>⚡ Pagamento automático</h3><span class="pill ok">● Ativo · 50 €</span></div><div class="sub">O valor do automático já é o da fidelização.</div></div>
+          </div></div></div>
+      <div><div class="label">Telemóvel · perto do fim</div>
+        <div class="frame phone"><div class="screen">
+          <div class="card gold">
+            <div class="row"><h3>🏅 Fidelização</h3><span class="pill gold">acaba em out</span></div>
+            <div class="progress"><span style="width:92%"></span></div>
+            <div class="sub">Já poupaste 55 €. Renova mais 12 meses e mantém os 50 €/mês.</div>
+            <span class="btn g full">Renovar 12 meses</span>
+            <span class="btn ghost sm full">Voltar ao mês a mês (55 €)</span>
+          </div>
+        </div></div></div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="view" id="v-c">
+    <p class="explain">Com mensalidades em atraso, aparece no topo <b>«Pagar agora com Revolut»</b>: o aluno escolhe o(s) mês(es) (todos marcados por omissão), vai à página segura da Revolut e, quando paga, os meses ficam <b>pagos sozinhos</b> (webhook) — sem comprovativo.</p>
+    <div class="side">
+      <div><div class="label">Desktop</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/dashboard/financeiro</div>
+          <div class="screen">
+            <h2>Plano e pagamentos</h2>
+            <div class="card bad">
+              <div class="row"><h3 style="font-size:17px">Tens 2 mensalidades por pagar</h3><span class="pill bad">110 €</span></div>
+              <div class="late"><span><span class="box on"></span>Setembro 2026</span><b>55 €</b></div>
+              <div class="late"><span><span class="box on"></span>Outubro 2026</span><b>55 €</b></div>
+              <div class="row"><span class="btn p">💳 Pagar 110 € com Revolut</span><span class="sub">Cartão, Apple/Google Pay ou Revolut · fica pago na hora</span></div>
+              <div class="sub" style="font-size:12px">Preferes transferência? Os dados estão mais abaixo.</div>
+            </div>
+          </div></div></div>
+      <div><div class="label">Telemóvel</div>
+        <div class="frame phone"><div class="screen">
+          <div class="card bad">
+            <h3>2 mensalidades por pagar</h3>
+            <div class="late"><span><span class="box on"></span>Setembro</span><b>55 €</b></div>
+            <div class="late"><span><span class="box on"></span>Outubro</span><b>55 €</b></div>
+            <span class="btn p full">💳 Pagar 110 €</span>
+          </div>
+        </div></div></div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="view" id="v-d">
+    <p class="explain">Na <b>ficha do aluno</b> (admin): bloco <b>Fidelização</b> (estado, até quando, ativar/cancelar pelo admin) e <b>Link de pagamento Revolut</b> para as mensalidades em atraso — copiar ou enviar por WhatsApp já com a mensagem.</p>
+    <div class="side">
+      <div><div class="label">Desktop · ficha do aluno</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/admin/alunos/…</div>
+          <div class="screen">
+            <div><h2>Bruno Soares</h2><div class="sub">Kingdom Full · Muay Thai · KFS-0118</div></div>
+            <div><div class="sectionT">Fidelização</div>
+              <div class="rowA" style="justify-content:space-between;flex-wrap:wrap"><span>🏅 <b>12 meses</b> · 50 €/mês (−5 €) · nov 2026 → out 2027 · 3/12</span><span style="display:flex;gap:6px"><span class="btn sm">Alterar</span><span class="btn ghost sm">Terminar</span></span></div>
+            </div>
+            <div><div class="sectionT">Mensalidades em atraso · 110 €</div>
+              <div class="rowA" style="flex-direction:column;align-items:stretch;gap:10px">
+                <div class="row"><span>Setembro + Outubro</span><b>110 €</b></div>
+                <div class="link"><span>checkout.revolut.com/payment-link/0adc0e3c-ab44-…</span><span class="btn sm">Copiar</span></div>
+                <div class="row"><span class="btn sm">💬 Enviar por WhatsApp</span><span class="sub" style="font-size:12px">Fica pago sozinho quando o aluno pagar.</span></div>
+              </div>
+            </div>
+          </div></div></div>
+      <div><div class="label">Telemóvel · sem fidelização</div>
+        <div class="frame phone"><div class="screen">
+          <div class="sectionT">Fidelização</div>
+          <div class="rowA" style="flex-direction:column;align-items:stretch;gap:8px"><span class="sub">Sem fidelização · 55 €/mês</span>
+            <div class="row"><span class="inp">12 meses ▾</span><span class="btn g sm">Fidelizar · 50 €</span></div></div>
+          <div class="sectionT">Em atraso · 55 €</div>
+          <span class="btn p full">💳 Gerar link de pagamento</span>
+        </div></div></div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="view" id="v-e">
+    <p class="explain">Em <b>Admin → Planos</b>, cada plano ganha os preços com fidelização (6 e 12 meses). Deixar vazio = sem essa opção para esse plano.</p>
+    <div class="side">
+      <div><div class="label">Desktop · Planos</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/admin/planos</div>
+          <div class="screen">
+            <h2>Planos</h2>
+            <table>
+              <tr><th>Plano</th><th>Mês a mês</th><th>Fidelização 6 meses</th><th>Fidelização 12 meses</th><th>Fidelizados</th></tr>
+              <tr><td>Kingdom Full</td><td>55 €</td><td><span class="inp">52 €</span></td><td><span class="inp">50 €</span></td><td>8</td></tr>
+              <tr><td>Kingdom Week</td><td>25 €</td><td><span class="inp">—</span></td><td><span class="inp">22 €</span></td><td>2</td></tr>
+              <tr><td>Kingdom Kids</td><td>40 €</td><td><span class="inp">38 €</span></td><td><span class="inp">36 €</span></td><td>5</td></tr>
+            </table>
+          </div></div></div>
+      <div><div class="label">Telemóvel · editar plano</div>
+        <div class="frame phone"><div class="screen">
+          <h3>Kingdom Full</h3>
+          <div class="rowA" style="justify-content:space-between">Mês a mês <span class="inp">55 €</span></div>
+          <div class="rowA" style="justify-content:space-between">Fidelização 6 meses <span class="inp">52 €</span></div>
+          <div class="rowA" style="justify-content:space-between">Fidelização 12 meses <span class="inp">50 €</span></div>
+          <span class="btn p full">Guardar</span>
+        </div></div></div>
+    </div>
+  </div>
+
+  <div class="open">
+    <b>Decisões para escolheres:</b><br>
+    1. <b>Durações</b> — 6 e 12 meses (proposta), ou só 12?<br>
+    2. <b>Preços</b> — definidos por plano no admin (proposta: Full 52/50 €), ou um desconto igual para todos (ex.: −5 €)?<br>
+    3. <b>Sair antes do fim</b> — paga o desconto já recebido (proposta), paga os meses que faltam, ou sem penalização?<br>
+    4. <b>Grupo familiar</b> — a fidelização aplica-se ao titular (desconto no total do grupo) ou fica de fora?<br>
+    5. <b>No fim</b> — volta ao mês a mês sozinho com aviso 1 mês antes (proposta), ou renova sozinha?
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b));
+    document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+b.dataset.v));
+  });
+</script>
+</body>
+</html>

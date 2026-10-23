@@ -7,6 +7,7 @@ import {
 import { hasPendingOnboardingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { getFamilyContext } from "@/lib/family-group";
 import { resolvePlanMonthlyTuition, resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
+import { individualLoyaltyDiscount } from "@/lib/loyalty/service";
 import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
 
 export type StudentPaymentRow = {
@@ -127,10 +128,14 @@ export async function loadStudentPaymentRows(
       isTuitionMonthBeforeEnrollment(referenceMonth, tuitionStartMonth);
 
     const priceMonthly = familyCtx?.isTitular
-      ? await resolveFamilyGroupTitularSuggestedAmount(supabase, familyCtx.group.id)
+      ? await resolveFamilyGroupTitularSuggestedAmount(supabase, familyCtx.group.id, referenceMonth)
       : familyCtx
         ? 0
-        : resolvePlanMonthlyTuition(effectivePlanId, Number(plan?.priceMonthly ?? 0));
+        : Math.max(
+            0,
+            resolvePlanMonthlyTuition(effectivePlanId, Number(plan?.priceMonthly ?? 0)) -
+              (await individualLoyaltyDiscount(supabase, s.id, effectivePlanId ?? null, referenceMonth))
+          );
 
     rows.push({
       studentId: s.id,

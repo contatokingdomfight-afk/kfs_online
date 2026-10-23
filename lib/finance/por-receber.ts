@@ -48,7 +48,7 @@ export async function loadPorReceberItems(supabase: SupabaseClient, referenceMon
         .select("id, studentId, amount, paymentType, referenceMonth, referenceYear, familyGroupId")
         .eq("status", "LATE")
         .is("stripeInvoiceId", null)
-        .in("paymentType", ["TUITION", "INSURANCE", "ENROLLMENT"])
+        .in("paymentType", ["TUITION", "INSURANCE", "ENROLLMENT", "LOYALTY_EXIT"])
         .order("id")
         .range(from, to)
     ),
@@ -90,7 +90,8 @@ export async function loadPorReceberItems(supabase: SupabaseClient, referenceMon
     items.push({
       key: r.id,
       group: !isTuition ? "fees" : ref === referenceMonth ? "month" : "older",
-      kind: r.paymentType === "INSURANCE" ? "INSURANCE" : r.paymentType === "ENROLLMENT" ? "ENROLLMENT" : "TUITION",
+      // Saída da fidelização entra como «taxa» (como a matrícula): pagamento único, sem meses.
+      kind: r.paymentType === "INSURANCE" ? "INSURANCE" : r.paymentType === "ENROLLMENT" || r.paymentType === "LOYALTY_EXIT" ? "ENROLLMENT" : "TUITION",
       orderId: null,
       studentId: r.studentId,
       name: "",
@@ -99,7 +100,9 @@ export async function loadPorReceberItems(supabase: SupabaseClient, referenceMon
         ? `${r.familyGroupId ? "Mensalidade família" : "Mensalidade"} · ${ref ? monthLabelPt(ref) : "sem mês"}`
         : r.paymentType === "INSURANCE"
           ? `Seguro${r.referenceYear != null ? ` ${r.referenceYear}` : ""}`
-          : "Matrícula",
+          : r.paymentType === "LOYALTY_EXIT"
+            ? "Saída da fidelização"
+            : "Matrícula",
       detail: null,
       amount: Number(r.amount) || 0,
       paymentId: r.id,

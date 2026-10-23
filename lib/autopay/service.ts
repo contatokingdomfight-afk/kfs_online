@@ -6,6 +6,7 @@ import { registerTuitionPaymentCore } from "@/lib/finance/register-tuition-core"
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { addMonthsToReferenceMonth } from "@/lib/reference-month";
 import { createInAppNotification } from "@/lib/notifications/in-app";
+import { individualLoyaltyDiscount } from "@/lib/loyalty/service";
 import {
   cancelMerchantSubscription,
   changeMerchantSubscriptionPlan,
@@ -95,7 +96,10 @@ export async function expectedMonthlyAmount(supabase: SupabaseClient, payerStude
   if (!planId) return 0;
   const { data: plan } = await supabase.from("Plan").select("id, priceMonthly").eq("id", planId).maybeSingle();
   if (!plan) return 0;
-  return resolvePlanMonthlyTuition((plan as { id: string }).id, Number((plan as { priceMonthly: number | string }).priceMonthly ?? 0));
+  const base = resolvePlanMonthlyTuition((plan as { id: string }).id, Number((plan as { priceMonthly: number | string }).priceMonthly ?? 0));
+  // Fidelização: o automático passa a cobrar o valor com desconto (o cron diário aplica-o a partir do ciclo seguinte).
+  const discount = await individualLoyaltyDiscount(supabase, payerStudentId, planId, currentReferenceMonthLisbon(new Date()));
+  return Math.max(0, base - discount);
 }
 
 /** Plano Revolut para um valor mensal (um por valor e ambiente; criado na primeira vez). */

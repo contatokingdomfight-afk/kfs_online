@@ -4,6 +4,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { PlanForm } from "../PlanForm";
 import { PlanPriceForm } from "../PlanPriceForm";
+import { loadPlanLoyaltyDiscounts } from "@/lib/loyalty/service";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -15,6 +16,8 @@ export default async function AdminPlanosEditarPage({ params }: Props) {
 
   const { id: planId } = await params;
   const supabase = await createClient();
+  // Desconto de fidelização lido à parte (não parte a página se a migração ainda não estiver aplicada).
+  const loyaltyDiscount = (await loadPlanLoyaltyDiscounts(supabase, [planId])).get(planId) || null;
 
   const { data: plan, error: planError } = await supabase
     .from("Plan")
@@ -87,6 +90,7 @@ export default async function AdminPlanosEditarPage({ params }: Props) {
         initialIncludesCheckIn={plan.includes_check_in ?? true}
         initialMaxCheckInsPerDay={plan.max_check_ins_per_day ?? null}
         initialMaxCheckInsPerMonth={plan.max_check_ins_per_month ?? null}
+        initialLoyaltyMonthlyDiscount={loyaltyDiscount}
         initialIncludesExclusiveBenefits={plan.includes_exclusive_benefits ?? false}
       />
       {planPrices && planPrices.length > 0 && (

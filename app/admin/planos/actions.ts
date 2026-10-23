@@ -35,6 +35,8 @@ export async function createPlan(
   const maxCheckInsPerMonthStr = (formData.get("max_check_ins_per_month") as string)?.trim();
   const maxCheckInsPerMonth = maxCheckInsPerMonthStr === "" ? null : parseInt(maxCheckInsPerMonthStr, 10);
   const includesExclusiveBenefits = formData.get("includes_exclusive_benefits") === "on" || formData.get("includes_exclusive_benefits") === "true";
+  const loyaltyStr = (formData.get("loyalty_monthly_discount") as string)?.trim().replace(",", ".");
+  const loyaltyMonthlyDiscount = loyaltyStr ? parseFloat(loyaltyStr) : null;
 
   if (!name) return { error: "Nome do plano é obrigatório." };
   if (!schoolId) return { error: "Escola é obrigatória." };
@@ -45,6 +47,9 @@ export async function createPlan(
   }
   if (maxCheckInsPerMonth !== null && (isNaN(maxCheckInsPerMonth) || maxCheckInsPerMonth < 1)) {
     return { error: "Limite mensal de check-ins deve ser um número ≥ 1, ou vazio para sem limite." };
+  }
+  if (loyaltyMonthlyDiscount !== null && (isNaN(loyaltyMonthlyDiscount) || loyaltyMonthlyDiscount < 0 || loyaltyMonthlyDiscount >= price)) {
+    return { error: "Desconto de fidelização deve ser um valor ≥ 0 e menor que a mensalidade, ou vazio." };
   }
 
   const supabase = createAdminClient();
@@ -73,6 +78,11 @@ export async function createPlan(
   if (error) {
     console.error("createPlan error:", error);
     return { error: error.message };
+  }
+  // Coluna da fidelização à parte: se a migração ainda não existir, o plano é criado na mesma.
+  {
+    const { error: loyaltyErr } = await supabase.from("Plan").update({ loyaltyMonthlyDiscount }).eq("id", id);
+    if (loyaltyErr) console.error("createPlan loyaltyMonthlyDiscount:", loyaltyErr.message);
   }
 
   revalidatePath("/admin/planos");
@@ -106,6 +116,8 @@ export async function updatePlan(
   const maxCheckInsPerMonthStr = (formData.get("max_check_ins_per_month") as string)?.trim();
   const maxCheckInsPerMonth = maxCheckInsPerMonthStr === "" ? null : parseInt(maxCheckInsPerMonthStr, 10);
   const includesExclusiveBenefits = formData.get("includes_exclusive_benefits") === "on" || formData.get("includes_exclusive_benefits") === "true";
+  const loyaltyStr = (formData.get("loyalty_monthly_discount") as string)?.trim().replace(",", ".");
+  const loyaltyMonthlyDiscount = loyaltyStr ? parseFloat(loyaltyStr) : null;
 
   if (!name) return { error: "Nome do plano é obrigatório." };
   const price = priceStr ? parseFloat(priceStr) : 0;
@@ -115,6 +127,9 @@ export async function updatePlan(
   }
   if (maxCheckInsPerMonth !== null && (isNaN(maxCheckInsPerMonth) || maxCheckInsPerMonth < 1)) {
     return { error: "Limite mensal de check-ins deve ser um número ≥ 1, ou vazio para sem limite." };
+  }
+  if (loyaltyMonthlyDiscount !== null && (isNaN(loyaltyMonthlyDiscount) || loyaltyMonthlyDiscount < 0 || loyaltyMonthlyDiscount >= price)) {
+    return { error: "Desconto de fidelização deve ser um valor ≥ 0 e menor que a mensalidade, ou vazio." };
   }
 
   const supabase = createAdminClient();
@@ -138,6 +153,10 @@ export async function updatePlan(
     .eq("id", planId);
 
   if (error) return { error: error.message };
+  {
+    const { error: loyaltyErr } = await supabase.from("Plan").update({ loyaltyMonthlyDiscount }).eq("id", planId);
+    if (loyaltyErr) return { error: "Plano guardado, mas o desconto de fidelização não (falta aplicar a migração?)." };
+  }
 
   revalidatePath("/admin/planos");
   revalidatePath(`/admin/planos/${planId}`);

@@ -20,6 +20,7 @@ import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { PlanSummaryCard, type PlanSummary } from "./PlanSummaryCard";
 import { AutoPaySection } from "@/components/autopay/AutoPaySection";
+import { StudentLatePaymentsSection, StudentLoyaltySection } from "@/components/payments/StudentLoyaltyAndLate";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ function formatRefMonth(ref: string, locale: string): string {
 export default async function DashboardFinanceiroPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pagamento_escola?: string; inscricao?: string; autopay?: string }>;
+  searchParams: Promise<{ pagamento_escola?: string; inscricao?: string; autopay?: string; pago?: string }>;
 }) {
   const sp = await searchParams;
   const supabase = await createClient();
@@ -234,6 +235,10 @@ export default async function DashboardFinanceiroPage({
         </section>
       )}
 
+      {/* Pagamentos em atraso → pagar já com Revolut */}
+      {studentId ? <StudentLatePaymentsSection studentId={studentId} justPaid={sp.pago === "1"} /> : null}
+      {/* Fidelização (6 meses com desconto) */}
+      {studentId ? <StudentLoyaltySection studentId={studentId} /> : null}
       {/* Pagamento automático (Subscrições Revolut) */}
       {studentId ? <AutoPaySection studentId={studentId} justReturned={sp.autopay === "1"} /> : null}
       {/* Pagamento por transferência / espécie */}
@@ -281,6 +286,10 @@ export default async function DashboardFinanceiroPage({
                   ? locale === "en"
                     ? "Enrollment fee"
                     : "Matrícula"
+                  : p.paymentType === "LOYALTY_EXIT"
+                    ? locale === "en"
+                      ? "Loyalty early exit"
+                      : "Saída da fidelização"
                   : p.paymentType === "INSURANCE"
                     ? `${locale === "en" ? "Insurance" : "Seguro"} ${p.referenceYear ?? ""}`
                     : p.referenceMonth

@@ -5,6 +5,7 @@ import { loadOrders } from "@/lib/retail/orders";
 import { markRetailOrderPaid } from "@/lib/retail/mark-paid";
 import { getMerchantOrder, verifyMerchantWebhook } from "@/lib/revolut/merchant";
 import { loadAutoPayBy, syncAutoPaySafe } from "@/lib/autopay/service";
+import { CHECKOUT_REFERENCE_PREFIX, markTuitionCheckoutPaid } from "@/lib/tuition-checkout/service";
 
 /**
  * Webhook da Revolut Merchant API. Valida a assinatura, volta a ler a ordem na Revolut
@@ -41,6 +42,11 @@ export async function POST(request: NextRequest) {
     // Reembolsos também geram ORDER_COMPLETED: só ordens de pagamento concluídas.
     if (mo.state !== "completed" || (mo.type && mo.type !== "payment")) return NextResponse.json({ ok: true });
     const orderId = mo.merchant_order_data?.reference;
+    // Mensalidades em atraso pagas online (aluno ou link enviado pelo admin).
+    if (orderId?.startsWith(CHECKOUT_REFERENCE_PREFIX)) {
+      const ok = await markTuitionCheckoutPaid(admin, orderId.slice(CHECKOUT_REFERENCE_PREFIX.length), mo);
+      return ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: "Could not mark tuition paid" }, { status: 500 });
+    }
     if (!orderId) {
       // Sem referência de encomenda: adesão ou cobrança mensal de um pagamento automático.
       const rows = [...(await loadAutoPayBy(admin, "setupOrderId", mo.id)), ...(mo.customer?.id ? await loadAutoPayBy(admin, "revolutCustomerId", mo.customer.id) : [])];

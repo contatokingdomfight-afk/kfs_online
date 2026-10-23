@@ -11,6 +11,7 @@ import {
 import { startGracePeriodOnLatePayment } from "@/lib/payment-grace";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { resolvePlanMonthlyTuition, resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
+import { loadActiveLoyaltyIndex, loadPlanLoyaltyDiscounts, loyaltyCoversMonth } from "@/lib/loyalty/service";
 import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
 
 export type RenewalPending = {
@@ -103,14 +104,21 @@ export async function getRenewalsPending(
   const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
 
+  // Fidelização: desconto do plano nas mensalidades dos alunos fidelizados (família: aplicado no total do grupo).
+  const [loyalty, loyaltyDiscount] = await Promise.all([loadActiveLoyaltyIndex(supabase), loadPlanLoyaltyDiscounts(supabase, planIds)]);
+
   const result: RenewalPending[] = [];
   for (const s of withPlan) {
     const plan = planById.get(s.planId)!;
     const user = userById.get(s.userId);
     const family = familyByStudent.get(s.id);
     const priceMonthly = family
-      ? await resolveFamilyGroupTitularSuggestedAmount(supabase, family.familyGroupId)
-      : resolvePlanMonthlyTuition(plan.id, Number(plan.priceMonthly ?? 0));
+      ? await resolveFamilyGroupTitularSuggestedAmount(supabase, family.familyGroupId, referenceMonth)
+      : Math.max(
+          0,
+          resolvePlanMonthlyTuition(plan.id, Number(plan.priceMonthly ?? 0)) -
+            (loyaltyCoversMonth(loyalty.get(s.id) ?? null, referenceMonth) ? loyaltyDiscount.get(plan.id) ?? 0 : 0)
+        );
     result.push({
       studentId: s.id,
       studentName: user?.name ?? user?.email ?? "—",

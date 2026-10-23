@@ -31,6 +31,7 @@ type Props = {
   initialIncludesCheckIn?: boolean;
   initialMaxCheckInsPerDay?: number | null;
   initialMaxCheckInsPerMonth?: number | null;
+  initialLoyaltyMonthlyDiscount?: number | null;
   initialIncludesExclusiveBenefits?: boolean;
 };
 
@@ -48,6 +49,7 @@ export function PlanForm({
   initialIncludesCheckIn = true,
   initialMaxCheckInsPerDay = null,
   initialMaxCheckInsPerMonth = null,
+  initialLoyaltyMonthlyDiscount = null,
   initialIncludesExclusiveBenefits = false,
 }: Props) {
   const action = planId ? updatePlan : createPlan;
@@ -238,6 +240,23 @@ export function PlanForm({
         />
         <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
           Ex.: Kingdom Week = 5. O check-in é bloqueado ao atingir o limite no mês; a secretaria pode conceder aulas extra na ficha do aluno.
+        </span>
+      </label>
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>
+          Desconto mensal com fidelização (6 meses)
+        </span>
+        <input
+          type="number"
+          name="loyalty_monthly_discount"
+          defaultValue={initialLoyaltyMonthlyDiscount ?? ""}
+          className="input"
+          placeholder="Vazio = este plano não tem fidelização"
+          min={0}
+          step="0.5"
+        />
+        <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
+          Ex.: plano de 55 € → 5 (fica 50 €); plano de 80 € → 10. Os alunos veem a oferta em Plano e pagamentos; renova sozinha a cada 6 meses.
         </span>
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
