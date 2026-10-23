@@ -329,7 +329,7 @@ export async function middleware(request: NextRequest) {
      */
     const { data: dbUser, error: dbUserError } = await supabase
       .from("User")
-      .select("id, role, Student!Student_userId_fkey(id, planId, adminGrantedFullAccess, physicalDocumentsFiledAt)")
+      .select("id, role, Student!Student_userId_fkey(id, planId, adminGrantedFullAccess, physicalDocumentsFiledAt, syntheticLoginEmail)")
       .eq("authUserId", user.id)
       .maybeSingle();
 
@@ -371,7 +371,7 @@ export async function middleware(request: NextRequest) {
 
     const studentRows = (dbUser as { Student?: unknown }).Student;
     const student = (Array.isArray(studentRows) ? studentRows[0] : studentRows) as
-      | { id: string; planId: string | null; adminGrantedFullAccess: boolean; physicalDocumentsFiledAt?: string | null }
+      | { id: string; planId: string | null; adminGrantedFullAccess: boolean; physicalDocumentsFiledAt?: string | null; syntheticLoginEmail?: boolean | null }
       | null
       | undefined;
 
@@ -554,7 +554,10 @@ export async function middleware(request: NextRequest) {
      * app/adesao/page.tsx, enrollment-actions.ts, actions.ts), por isso esta página nunca
      * manda este aluno de volta para /escolher-plano nem para /dashboard.
      */
-    if (!student.planId && onboardingDone && !documentsSigned) {
+    // Só a aula avulsa criada pela secretaria (login com email gerado) vai direto à adesão sem plano.
+    // Quem se regista sozinho escolhe primeiro o plano (cai no /escolher-plano mais abaixo) e só
+    // depois assina — senão a adesão aparecia como «Aula avulsa» com mensalidade 0 €.
+    if (!student.planId && student.syntheticLoginEmail && onboardingDone && !documentsSigned) {
       if (
         isAdesaoPath(pathname) ||
         pathname.startsWith("/api/adesao/") ||

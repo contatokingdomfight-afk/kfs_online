@@ -248,13 +248,13 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm, revolut
           <Field label="Data de início">
             <input id="membershipStartDate" name="membershipStartDate" type="date" required className="input w-full" defaultValue={prefill.membershipStartDate} />
           </Field>
-          <p style={{ margin: "10px 0 0", color: "var(--text-secondary)", fontSize: 13 }}>
+          <p style={{ margin: "10px 0 0", color: "var(--text-secondary)", fontSize: 13, display: prefill.noMonthlyPlan ? "none" : undefined }}>
             Período inicial: 1 mês. Renovação automática por períodos sucessivos de 1 mês, salvo denúncia nos termos das
             Condições Gerais de Adesão.
           </p>
           <ul style={{ margin: "14px 0 0", paddingLeft: 18, color: "var(--text-secondary)", lineHeight: 1.7 }}>
             {prefill.showEnrollment ? <li>Inscrição: {prefill.enrollmentAmount.toFixed(2)} €</li> : null}
-            <li>Mensalidade: {prefill.monthlyAmount.toFixed(2)} €</li>
+            {prefill.noMonthlyPlan ? null : <li>Mensalidade: {prefill.monthlyAmount.toFixed(2)} €</li>}
             {prefill.showInsurance && !ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? (
               <li>Seguro: {formatDecimalAmountInput(prefill.insuranceAmount)} €</li>
             ) : null}

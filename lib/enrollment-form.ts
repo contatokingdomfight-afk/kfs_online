@@ -85,6 +85,8 @@ export type EnrollmentFormPrefill = {
   dateOfBirth: string;
   phone: string;
   planName: string;
+  /** Sem plano mensal (aula avulsa da secretaria): sem mensalidade nem renovação. */
+  noMonthlyPlan?: boolean;
   primaryModality: string | null;
   modalityScope: string | null;
   modalityLabel: string | null;
@@ -149,6 +151,7 @@ export async function loadEnrollmentFormPrefill(
     dateOfBirth,
     phone: (profile as { phone?: string | null } | null)?.phone ?? "",
     planName: planId ? (plan as { name?: string } | null)?.name ?? "Plano" : "Aula avulsa (sem plano mensal)",
+    noMonthlyPlan: !planId,
     primaryModality,
     modalityScope: planId ? (plan as { modalityScope?: string | null } | null)?.modalityScope ?? null : null,
     modalityLabel,

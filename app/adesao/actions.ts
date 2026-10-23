@@ -167,10 +167,9 @@ export async function signAdesaoDocuments(
   revalidatePath("/dashboard/financeiro");
   // Escolheu pagar online: vai já à página da Revolut pagar inscrição + seguro + 1.ª mensalidade.
   // Se falhar (ou fechar sem pagar), a adesão fica guardada e paga depois em Plano e pagamentos.
-  if (result.planId) {
-    const checkoutUrl = await adesaoRevolutCheckoutUrl(studentId);
-    if (checkoutUrl) redirect(checkoutUrl);
-  }
+  // Com ou sem plano: se houver algo a pagar da adesão (ex.: inscrição da aula avulsa), segue para a Revolut.
+  const checkoutUrl = await adesaoRevolutCheckoutUrl(studentId);
+  if (checkoutUrl) redirect(checkoutUrl);
   // Sem plano (aula avulsa): paga por sessão, não por mensalidade — não faz sentido
   // mandar para o gate de pagamento de mensalidade.
   redirect(result.planId ? "/dashboard/financeiro?pagamento_escola=1" : "/dashboard");

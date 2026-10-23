@@ -29,7 +29,7 @@ export default async function AdesaoPage({ searchParams }: Props) {
   const passoParam = params.passo === "2" ? 2 : 1;
 
   const [{ data: student }, { data: agreement }, { data: enrollmentForm }, { data: waiver }] = await Promise.all([
-    supabase.from("Student").select("planId, primaryModality, userId").eq("id", studentId).maybeSingle(),
+    supabase.from("Student").select("planId, primaryModality, userId, syntheticLoginEmail").eq("id", studentId).maybeSingle(),
     supabase
       .from("StudentMembershipAgreement")
       .select("agreementSigned, agreementVersion")
@@ -46,6 +46,10 @@ export default async function AdesaoPage({ searchParams }: Props) {
   if (agreementCurrent && waiverSigned) {
     redirect("/dashboard/documentos-adesao");
   }
+
+  // Sem plano e sem ser aula avulsa da secretaria: primeiro escolhe o plano, depois a adesão.
+  const st = student as { planId?: string | null; syntheticLoginEmail?: boolean | null } | null;
+  if (!st?.planId && !st?.syntheticLoginEmail) redirect("/escolher-plano");
 
   const userId = (student as { userId?: string } | null)?.userId;
   const prefill = userId ? await loadEnrollmentFormPrefill(supabase, studentId, userId) : null;
