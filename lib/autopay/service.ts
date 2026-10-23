@@ -21,7 +21,7 @@ import {
   revolutMerchantEnv,
   type MerchantOrder,
 } from "@/lib/revolut/merchant";
-import { billingDayFrom, nextChargeAfter, sameLisbonDay } from "./billing-day";
+import { billingDayFrom, chargeInstant, nextChargeAfter, sameLisbonDay } from "./billing-day";
 
 /**
  * Pagamento automático da mensalidade (Subscrições Revolut).
@@ -165,6 +165,8 @@ export async function startAutoPay(
   if (payer.isFamilyMember) return { error: "O pagamento automático do teu grupo familiar é ativado pelo titular do grupo." };
   const amount = await expectedMonthlyAmount(supabase, payer.payerStudentId, payer.familyGroupId);
   if (!(amount > 0)) return { error: "Não tens um plano com mensalidade. Fala com a secretaria." };
+  // A Revolut exige email no cliente da subscrição.
+  if (!input.email) return { error: "A tua conta não tem email. Fala com a secretaria para o acrescentar." };
 
   const existing = await loadAutoPayForStudent(supabase, payer.payerStudentId);
   if (existing && existing.state === "ACTIVE" && existing.environment === revolutMerchantEnv) return { error: "O pagamento automático já está ativo." };
@@ -398,7 +400,11 @@ export async function setAutoPayBillingDay(supabase: SupabaseClient, row: AutoPa
   if (!Number.isInteger(billingDay) || billingDay < 1 || billingDay > 31) return { error: "Dia inválido (1 a 31)." };
   const patch: Record<string, unknown> = { billingDay, updatedAt: new Date().toISOString() };
   if (row.state === "ACTIVE" && row.revolutSubscriptionId && row.environment === revolutMerchantEnv) {
-    const next = nextChargeAfter(billingDay);
+    // Mantém o mês da cobrança já prevista e só muda o dia (ex.: 23 nov → dia 31 = 30 nov), para não cobrar duas vezes no mesmo mês.
+    const planned = row.nextChargeAt ? new Date(row.nextChargeAt) : null;
+    const [py, pm] = planned ? planned.toLocaleDateString("en-CA", { timeZone: "Europe/Lisbon" }).split("-").map(Number) : [0, 0];
+    const sameMonth = planned ? chargeInstant(billingDay, py, pm) : null;
+    const next = sameMonth && sameMonth.getTime() > Date.now() ? sameMonth : nextChargeAfter(billingDay);
     try {
       await changeMerchantSubscriptionRenewalDate(row.revolutSubscriptionId, next);
       patch.nextChargeAt = next.toISOString();
