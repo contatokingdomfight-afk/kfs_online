@@ -3,7 +3,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getDefaultOnboardingSchoolId } from "@/lib/onboarding-default-school";
 import { loadOrders } from "@/lib/retail/orders";
 import { markRetailOrderPaid } from "@/lib/retail/mark-paid";
-import { getMerchantOrder, verifyMerchantWebhook } from "@/lib/revolut/merchant";
+import { getMerchantOrder, revolutMerchantEnv, verifyMerchantWebhook, webhookSecretFingerprint } from "@/lib/revolut/merchant";
 import { loadAutoPayBy, syncAutoPaySafe } from "@/lib/autopay/service";
 import { CHECKOUT_REFERENCE_PREFIX, markTuitionCheckoutPaid } from "@/lib/tuition-checkout/service";
 
@@ -13,6 +13,11 @@ import { CHECKOUT_REFERENCE_PREFIX, markTuitionCheckoutPaid } from "@/lib/tuitio
  * Também trata o pagamento automático da mensalidade: eventos SUBSCRIPTION_* e as ordens de cada
  * cobrança mensal (sem referência de encomenda) sincronizam a subscrição do aluno.
  */
+/** Diagnóstico da configuração (sem segredos): ambiente, se o segredo existe e a impressão digital dele. */
+export async function GET() {
+  return NextResponse.json({ env: revolutMerchantEnv, vercelEnv: process.env.VERCEL_ENV ?? null, webhookSecretSet: webhookSecretFingerprint() !== null, fingerprint: webhookSecretFingerprint() });
+}
+
 export async function POST(request: NextRequest) {
   const raw = await request.text();
   if (!verifyMerchantWebhook(raw, request.headers.get("revolut-signature"), request.headers.get("revolut-request-timestamp"))) {

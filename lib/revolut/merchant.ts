@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 /**
  * Revolut Merchant API (pagamentos online e subscrições). Independente da Business API de leitura (lib/revolut/*).
@@ -16,6 +16,10 @@ const BASE_URL = SANDBOX ? "https://sandbox-merchant.revolut.com" : "https://mer
 
 export const revolutMerchantConfigured = SECRET_KEY.length > 0;
 export const revolutMerchantWebhookConfigured = WEBHOOK_SECRET.length > 0;
+/** Diagnóstico sem revelar o segredo: início do SHA-256 do segredo do webhook em uso (para comparar com o .env). */
+export function webhookSecretFingerprint(): string | null {
+  return WEBHOOK_SECRET ? createHash("sha256").update(WEBHOOK_SECRET).digest("hex").slice(0, 10) : null;
+}
 /** Ambiente das chaves em uso (guardado com planos/subscrições para não misturar sandbox e produção). */
 export const revolutMerchantEnv: "sandbox" | "prod" = SANDBOX ? "sandbox" : "prod";
 
