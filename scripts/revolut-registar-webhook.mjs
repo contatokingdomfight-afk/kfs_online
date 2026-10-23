@@ -34,7 +34,7 @@ if (existing.ok) {
     console.log(`Já existe um webhook para ${url} (id ${dup.id}).`);
     const missing = EVENTS.filter((e) => !(dup.events ?? []).includes(e));
     if (missing.length) {
-      const upd = await fetch(`${base}/api/webhooks/${dup.id}`, { method: "PATCH", headers, body: JSON.stringify({ events: [...new Set([...(dup.events ?? []), ...EVENTS])] }) });
+      const upd = await fetch(`${base}/api/webhooks/${dup.id}`, { method: "PATCH", headers, body: JSON.stringify({ url, events: [...new Set([...(dup.events ?? []), ...EVENTS])] }) });
       console.log(upd.ok ? `Eventos acrescentados: ${missing.join(", ")}` : `Erro ao acrescentar eventos ${upd.status}: ${await upd.text()}`);
     } else {
       console.log("Já tem todos os eventos.");
