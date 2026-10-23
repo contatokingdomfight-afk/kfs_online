@@ -21,6 +21,7 @@ import { CompetitionAthleteControls } from "@/components/CompetitionAthleteContr
 import { StudentContactDataSection } from "@/components/students/StudentContactDataSection";
 import Link from "next/link";
 import { StudentGradeAssign } from "./StudentGradeAssign";
+import { StudentAutoPaySection } from "./StudentAutoPaySection";
 import { CheckCircle2, ChevronRight, Dumbbell, FileText, Settings2, Shield, Wallet } from "lucide-react";
 import { loadStudentAdminSummary } from "@/lib/admin-student-ficha";
 import { buildMissYouMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -218,6 +219,8 @@ export default async function AdminAlunoOverviewPage({ params }: Props) {
           </div>
         )}
       </section>
+
+      <StudentAutoPaySection supabase={supabase} studentId={studentId} sectionTitle={sectionTitle} row={row} />
 
       <StudentGradeAssign supabase={supabase} studentId={studentId} />
 

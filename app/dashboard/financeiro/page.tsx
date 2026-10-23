@@ -19,6 +19,7 @@ import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { PlanSummaryCard, type PlanSummary } from "./PlanSummaryCard";
+import { AutoPaySection } from "@/components/autopay/AutoPaySection";
 
 export const dynamic = "force-dynamic";
 
@@ -32,9 +33,9 @@ function formatRefMonth(ref: string, locale: string): string {
 export default async function DashboardFinanceiroPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pagamento_escola?: string; inscricao?: string }>;
+  searchParams: Promise<{ pagamento_escola?: string; inscricao?: string; autopay?: string }>;
 }) {
-  await searchParams;
+  const sp = await searchParams;
   const supabase = await createClient();
   const studentId = await getCurrentStudentId();
   const locale = await getLocaleFromCookies();
@@ -53,6 +54,7 @@ export default async function DashboardFinanceiroPage({
   let awaitingSchoolPayment = false;
   let pendingIndividualFees = false;
   let familyRole: "TITULAR" | "MEMBER" | null = null;
+  const autoPaidIds = new Set<string>();
   let onboardingFees = null;
   let planSummary: PlanSummary | null = null;
 
@@ -105,6 +107,15 @@ export default async function DashboardFinanceiroPage({
       status: p.status,
       createdAt: String(p.createdAt),
     }));
+    // Mensalidades pagas pelo pagamento automático (coluna nova: ignora o erro se a migração ainda não existir).
+    if (payments.length) {
+      const { data: autoRows, error: autoErr } = await (getAdminClientOrNull().client ?? supabase)
+        .from("Payment")
+        .select("id")
+        .in("id", payments.map((p) => p.id))
+        .not("revolutOrderId", "is", null);
+      if (!autoErr) for (const r of (autoRows ?? []) as { id: string }[]) autoPaidIds.add(r.id);
+    }
 
     const hasPendingPayments = payments.length > 0 && !payments.some((p) => p.status === "PAID");
     pendingIndividualFees = hasPendingPayments;
@@ -223,6 +234,8 @@ export default async function DashboardFinanceiroPage({
         </section>
       )}
 
+      {/* Pagamento automático (Subscrições Revolut) */}
+      {studentId ? <AutoPaySection studentId={studentId} justReturned={sp.autopay === "1"} /> : null}
       {/* Pagamento por transferência / espécie */}
       <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
         <h2 className="text-base font-bold text-text-primary">
@@ -230,39 +243,11 @@ export default async function DashboardFinanceiroPage({
         </h2>
         <p className="text-sm text-text-secondary">
           {locale === "en"
-            ? "Card subscriptions are not available yet. Pay at the school office or by bank transfer using the details below."
-            : "A subscrição por cartão ainda não está disponível. Paga na secretaria ou por transferência bancária com os dados abaixo."}
+            ? "Prefer to pay each month yourself? Pay at the school office or by bank transfer using the details below."
+            : "Preferes pagar tu todos os meses? Paga na secretaria ou por transferência bancária com os dados abaixo."}
         </p>
         <SchoolTransferPaymentCard locale={locale === "en" ? "en" : "pt"} paymentReference={paymentReference} />
       </section>
-
-      {/* Pagamento por cartão (em breve) */}
-      {!familyRole ? (
-        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-          <h2 className="text-base font-bold text-text-primary mb-2">
-            {locale === "en" ? "Card payment" : "Pagamento por cartão"}
-          </h2>
-          <p className="text-sm text-text-secondary">
-            {locale === "en"
-              ? "Online card subscription will be available soon. For now, use transfer or cash."
-              : "A subscrição online com cartão estará disponível em breve. Por agora, utiliza transferência ou pagamento em espécie."}
-          </p>
-        </section>
-      ) : (
-        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
-          <h2 className="text-base font-bold text-text-primary mb-2">
-            {locale === "en" ? "Card payment" : "Pagamento por cartão"}
-          </h2>
-          <p className="text-sm text-text-secondary">
-            {familyRole === "MEMBER"
-              ? t("financeFamilyMemberCardNote")
-              : locale === "en"
-                ? "Family plan billing is handled by the school office, not self-service card checkout. Contact us to arrange payment."
-                : "A mensalidade do plano família é gerida pela secretaria, não por assinatura individual com cartão. Fala connosco para tratar do pagamento."}
-          </p>
-        </section>
-      )}
-
       {/* Forma de pagamento e comprovante (informação) */}
       <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
         <h2 className="text-base font-bold text-text-primary">{t("paymentProofLabel")}</h2>
@@ -306,7 +291,10 @@ export default async function DashboardFinanceiroPage({
                 key={p.id}
                 className="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-border last:border-0"
               >
-                <span className="text-text-primary font-medium capitalize">{label}</span>
+                <span className="text-text-primary font-medium">
+                  <span className="capitalize">{label}</span>
+                  {autoPaidIds.has(p.id) ? <span className="text-text-secondary font-normal text-xs"> · ⚡ {locale === "en" ? "charged automatically" : "cobrado automaticamente"}</span> : null}
+                </span>
                 <span className="text-text-primary">€{p.amount.toFixed(2)}</span>
                 <span
                   className={`text-xs font-medium px-2 py-0.5 rounded ${

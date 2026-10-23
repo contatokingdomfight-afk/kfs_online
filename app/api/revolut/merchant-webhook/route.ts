@@ -4,10 +4,13 @@ import { getDefaultOnboardingSchoolId } from "@/lib/onboarding-default-school";
 import { loadOrders } from "@/lib/retail/orders";
 import { markRetailOrderPaid } from "@/lib/retail/mark-paid";
 import { getMerchantOrder, verifyMerchantWebhook } from "@/lib/revolut/merchant";
+import { loadAutoPayBy, syncAutoPaySafe } from "@/lib/autopay/service";
 
 /**
  * Webhook da Revolut Merchant API. Valida a assinatura, volta a ler a ordem na Revolut
  * (não confiamos só no corpo) e marca a encomenda como paga.
+ * Também trata o pagamento automático da mensalidade: eventos SUBSCRIPTION_* e as ordens de cada
+ * cobrança mensal (sem referência de encomenda) sincronizam a subscrição do aluno.
  */
 export async function POST(request: NextRequest) {
   const raw = await request.text();
@@ -15,24 +18,40 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  let event: { event?: string; order_id?: string };
+  let event: { event?: string; order_id?: string; subscription_id?: string };
   try {
     event = JSON.parse(raw);
   } catch {
     return NextResponse.json({ error: "Bad payload" }, { status: 400 });
   }
-  // Só interessa o pagamento concluído; os restantes eventos são aceites e ignorados.
-  if (event.event !== "ORDER_COMPLETED" || !event.order_id) return NextResponse.json({ ok: true });
-
   const admin = getAdminClientOrNull().client;
   if (!admin) return NextResponse.json({ error: "Server config missing" }, { status: 500 });
+
+  // Pagamento automático: o evento só diz «mudou»; o estado real vem da Revolut (syncAutoPay).
+  if (event.event?.startsWith("SUBSCRIPTION_") && event.subscription_id) {
+    for (const row of await loadAutoPayBy(admin, "revolutSubscriptionId", event.subscription_id)) await syncAutoPaySafe(admin, row);
+    return NextResponse.json({ ok: true });
+  }
+
+  // Só interessa o pagamento concluído; os restantes eventos são aceites e ignorados.
+  if (event.event !== "ORDER_COMPLETED" || !event.order_id) return NextResponse.json({ ok: true });
 
   try {
     const mo = await getMerchantOrder(event.order_id);
     // Reembolsos também geram ORDER_COMPLETED: só ordens de pagamento concluídas.
     if (mo.state !== "completed" || (mo.type && mo.type !== "payment")) return NextResponse.json({ ok: true });
     const orderId = mo.merchant_order_data?.reference;
-    if (!orderId) return NextResponse.json({ ok: true });
+    if (!orderId) {
+      // Sem referência de encomenda: adesão ou cobrança mensal de um pagamento automático.
+      const rows = [...(await loadAutoPayBy(admin, "setupOrderId", mo.id)), ...(mo.customer?.id ? await loadAutoPayBy(admin, "revolutCustomerId", mo.customer.id) : [])];
+      const seen = new Set<string>();
+      for (const row of rows) {
+        if (seen.has(row.id)) continue;
+        seen.add(row.id);
+        await syncAutoPaySafe(admin, row);
+      }
+      return NextResponse.json({ ok: true });
+    }
 
     const [order] = await loadOrders(admin, { ids: [orderId] });
     if (!order || order.status !== "PENDING_PAYMENT") return NextResponse.json({ ok: true });

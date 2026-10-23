@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Pagamento automático da mensalidade (Revolut)</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--bg3:#1c1c1f;--text:#fff;--muted:#a1a1aa;--primary:#c1121f;--success:#22c55e;--warning:#facc15;--danger:#e11d48;--info:#60a5fa;--border:#27272a;--font:"Inter",system-ui,-apple-system,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:#050505;color:var(--text);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1500px;margin:0 auto;padding:24px 20px 60px}
+  .badge{display:inline-flex;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase;letter-spacing:.5px}
+  h1.meta{font-size:22px;margin:12px 0 6px}
+  p.meta{font-size:13.5px;color:var(--muted);max-width:900px;line-height:1.6;margin:0}
+  .switcher{display:flex;gap:8px;margin:20px 0 6px;flex-wrap:wrap}
+  .sw{font:600 13px var(--font);padding:9px 16px;border-radius:999px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer}
+  .sw.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .explain{font-size:13px;color:var(--muted);margin:10px 0 16px;max-width:1000px;line-height:1.6;border-left:3px solid var(--primary);padding:4px 12px}
+  .explain b{color:#fff}
+  .side{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:24px;align-items:start}
+  @media (max-width:1000px){.side{grid-template-columns:1fr}}
+  .label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .frame{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--bg)}
+  .phone{border-radius:34px;border:8px solid #1f1f22}
+  .bar{display:flex;gap:8px;align-items:center;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;background:#3a3a3a}
+  .screen{padding:22px;display:flex;flex-direction:column;gap:14px}
+  .phone .screen{padding:14px 12px;gap:12px}
+  .view{display:none}.view.on{display:block}
+
+  h2{margin:0;font-size:21px;font-weight:800}
+  h3{margin:0;font-size:15px;font-weight:800}
+  .sub{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .card.hero{border-color:rgba(193,18,31,.55);background:linear-gradient(160deg,#1d0b0e 0%,var(--bg2) 60%)}
+  .card.ok{border-color:rgba(34,197,94,.45);background:linear-gradient(160deg,#0b1d12 0%,var(--bg2) 60%)}
+  .card.bad{border-color:rgba(225,29,72,.55);background:linear-gradient(160deg,#1f0a10 0%,var(--bg2) 60%)}
+  .row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:#fff;font:700 14px var(--font);white-space:nowrap}
+  .btn.p{background:var(--primary);border-color:var(--primary)}
+  .btn.ghost{background:transparent;color:var(--muted)}
+  .btn.sm{min-height:34px;font-size:12.5px;padding:0 12px;border-radius:10px}
+  .btn.full{width:100%}
+  .ticks{display:flex;flex-direction:column;gap:7px;font-size:13.5px}
+  .ticks div::before{content:"✓";color:var(--success);font-weight:800;margin-right:8px}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px}
+  .pill.ok{color:var(--success);background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35)}
+  .pill.bad{color:#fb7185;background:rgba(225,29,72,.1);border:1px solid rgba(225,29,72,.4)}
+  .pill.warn{color:var(--warning);background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.35)}
+  .pill.info{color:var(--info);background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.35)}
+  .pill.muted{color:var(--muted);border:1px solid var(--border)}
+  .kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .phone .kv{grid-template-columns:1fr 1fr}
+  .kv div{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+  .kv small{display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+  .kv b{display:block;font-size:15px;margin-top:3px}
+  .plan{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .plan .price{font-size:24px;font-weight:800}
+  .muted{color:var(--muted)}
+  .small{font-size:12px;color:var(--muted);line-height:1.5}
+  .collapse{border:1px dashed var(--border);border-radius:14px;padding:12px 14px;font-size:13.5px;color:var(--muted);display:flex;justify-content:space-between}
+  .pay{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--border);font-size:13.5px}
+  .pay:first-of-type{border-top:0}
+  .modal-bg{background:rgba(0,0,0,.6);border-radius:14px;padding:30px 16px;display:flex;justify-content:center}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:18px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:12px}
+  .rev{background:#f7f7f8;color:#111;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px}
+  .rev .fld{background:#e9e9ec;border-radius:12px;padding:12px 14px;font-size:13px;color:#555}
+  .rev .pbtn{background:#191c1f;color:#fff;border-radius:999px;text-align:center;padding:12px;font-weight:700}
+  .steps{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .steps b{color:#fff}
+  .arrow{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px 6px;border-bottom:1px solid var(--border)}
+  td{padding:10px 6px;border-bottom:1px solid var(--border)}
+  .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .kpis div{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+  .kpis b{font-size:22px;display:block}
+  .kpis small{font-size:12px;color:var(--muted)}
+  .phone .kpis{grid-template-columns:1fr 1fr}
+  .tabs{display:flex;gap:6px;overflow:hidden}
+  .tab{flex-shrink:0;padding:7px 12px;border-radius:999px;font-size:12.5px;font-weight:700;color:var(--muted);border:1px solid var(--border)}
+  .tab.on{background:#fff;color:#000;border-color:#fff}
+  .open{border:1px solid rgba(250,204,21,.35);background:rgba(250,204,21,.05);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.6}
+  .open b{color:var(--warning)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Mockup · Pagamento automático da mensalidade</span>
+  <h1 class="meta">Mensalidade cobrada automaticamente (Subscrições Revolut)</h1>
+  <p class="meta">O aluno adere uma vez numa página segura da Revolut (cartão, Apple/Google Pay ou conta Revolut). A partir daí a Revolut cobra a mensalidade todos os meses e a plataforma marca-a como paga sozinha. Transferência e secretaria continuam disponíveis. Plano família continua a ser gerido pela secretaria.</p>
+
+  <div class="switcher">
+    <button class="sw on" data-v="a">1 · Aluno sem automático</button>
+    <button class="sw" data-v="b">2 · Adesão</button>
+    <button class="sw" data-v="c">3 · Automático ativo</button>
+    <button class="sw" data-v="d">4 · Cobrança falhou</button>
+    <button class="sw" data-v="e">5 · Admin</button>
+  </div>
+
+  <!-- ================= 1 ================= -->
+  <div class="view on" id="v-a">
+    <p class="explain">Em <b>Conta → Plano e pagamentos</b>, o cartão «Pagamento por cartão — em breve» é substituído por <b>Pagamento automático</b>, em destaque logo a seguir ao plano. Os dados de transferência passam para baixo, recolhidos em «Prefiro pagar por transferência».</p>
+    <div class="side">
+      <div><div class="label">Desktop</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/dashboard/financeiro</div>
+          <div class="screen">
+            <div><h2>Plano e pagamentos</h2><div class="sub">O teu plano, a forma de pagamento e o histórico.</div></div>
+            <div class="card"><div class="plan"><div><div class="small">O meu plano</div><h3 style="font-size:17px;margin-top:2px">Kingdom Week · Muay Thai</h3><div class="small">5 aulas por mês</div></div><div style="text-align:right"><div class="price">25 €</div><div class="small">por mês</div></div></div>
+              <div class="row"><span class="pill warn">Outubro por pagar · 25 €</span><span class="small">Ref. KFS-0142</span></div></div>
+            <div class="card hero">
+              <div class="row"><h3 style="font-size:17px">⚡ Pagamento automático</h3><span class="pill muted">Recomendado</span></div>
+              <div class="sub" style="margin:0">Ativa uma vez e esquece: a mensalidade é cobrada sozinha todos os meses.</div>
+              <div class="ticks"><div>Nunca mais te esqueces de pagar nem envias comprovativos</div><div>Cartão, Apple Pay, Google Pay ou conta Revolut</div><div>Pagamento seguro feito pela Revolut — não guardamos o teu cartão</div><div>Cancelas quando quiseres, aqui mesmo</div></div>
+              <div class="row"><span class="btn p">Ativar pagamento automático · 25 €/mês</span><span class="small">A 1.ª cobrança paga já outubro.</span></div>
+            </div>
+            <div class="collapse"><span>Prefiro pagar por transferência ou na secretaria</span><span>▾</span></div>
+            <div class="card"><h3>Últimos pagamentos</h3>
+              <div class="pay"><span>Setembro · transferência</span><span class="pill ok">Pago · 25 €</span></div>
+              <div class="pay"><span>Agosto · secretaria</span><span class="pill ok">Pago · 25 €</span></div></div>
+          </div></div></div>
+      <div><div class="label">Telemóvel</div>
+        <div class="frame phone"><div class="screen">
+          <h2>Plano e pagamentos</h2>
+          <div class="card"><div class="plan"><div><h3>Kingdom Week</h3><div class="small">Muay Thai · 5 aulas/mês</div></div><div class="price" style="font-size:20px">25 €</div></div><span class="pill warn" style="align-self:flex-start">Outubro por pagar</span></div>
+          <div class="card hero">
+            <h3>⚡ Pagamento automático</h3>
+            <div class="sub" style="margin:0">Ativa uma vez — a mensalidade é cobrada sozinha todos os meses.</div>
+            <div class="ticks" style="font-size:13px"><div>Sem esquecimentos nem comprovativos</div><div>Cartão, Apple/Google Pay ou Revolut</div><div>Cancelas quando quiseres</div></div>
+            <span class="btn p full">Ativar · 25 €/mês</span>
+          </div>
+          <div class="collapse"><span>Pagar por transferência</span><span>▾</span></div>
+        </div></div></div>
+    </div>
+  </div>
+
+  <!-- ================= 2 ================= -->
+  <div class="view" id="v-b">
+    <p class="explain"><b>Confirmação</b> (o que vai acontecer) → <b>página segura da Revolut</b> (mesma de hoje na loja, agora com «guardar para cobranças futuras») → regresso ao app com <b>«Pagamento automático ativo»</b>. O valor vem sempre do plano do aluno; o aluno não escreve valores.</p>
+    <div class="side">
+      <div><div class="label">Desktop · confirmação e página Revolut</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; confirmação → checkout.revolut.com</div>
+          <div class="screen">
+            <div class="steps"><b>1. Confirmar</b><span class="arrow">→</span><span>2. Pagar na Revolut</span><span class="arrow">→</span><span>3. Ativo</span></div>
+            <div class="modal-bg"><div class="modal">
+              <h3 style="font-size:17px">Ativar pagamento automático</h3>
+              <div class="kv" style="grid-template-columns:1fr 1fr"><div><small>Plano</small><b>Kingdom Week</b></div><div><small>Valor mensal</small><b>25 €</b></div><div><small>Hoje</small><b>25 € · outubro</b></div><div><small>Próximas cobranças</small><b>dia 23 de cada mês</b></div></div>
+              <div class="small">Vais para uma página segura da Revolut. A Revolut guarda o teu cartão — a Kingdom Fight nunca o vê. Avisamos-te antes de cada cobrança e podes cancelar em Plano e pagamentos.</div>
+              <label class="small" style="display:flex;gap:8px;align-items:flex-start;color:#fff"><span style="width:16px;height:16px;border:1px solid var(--muted);border-radius:4px;flex-shrink:0;margin-top:1px;background:var(--primary)"></span>Autorizo a Kingdom Fight School a cobrar 25 €/mês até cancelar.</label>
+              <div class="row"><span class="btn ghost sm">Agora não</span><span class="btn p">Continuar para a Revolut</span></div>
+            </div></div>
+            <div class="rev"><div style="font-weight:800;font-size:16px">Pagar € 25 a Epicentro de Honra</div><div style="font-size:12.5px;color:#666">Mensalidade Kingdom Week · cobrança mensal</div>
+              <div class="fld">Número do cartão · MM/AA · CVV</div><div class="fld">✓ Guardar para pagamentos futuros a Epicentro de Honra</div><div class="pbtn">Pagar € 25 e ativar</div></div>
+          </div></div></div>
+      <div><div class="label">Telemóvel · regresso ao app</div>
+        <div class="frame phone"><div class="screen">
+          <h2>Plano e pagamentos</h2>
+          <div class="card ok">
+            <div style="font-size:30px">✅</div>
+            <h3 style="font-size:17px">Pagamento automático ativo</h3>
+            <div class="sub" style="margin:0">Outubro está pago. A próxima mensalidade (25 €) é cobrada a <b style="color:#fff">23 de novembro</b>.</div>
+            <span class="btn full">Ver plano e pagamentos</span>
+          </div>
+          <div class="small">Se a confirmação demorar uns segundos, atualiza a página — a Revolut avisa-nos logo a seguir ao pagamento.</div>
+        </div></div></div>
+    </div>
+  </div>
+
+  <!-- ================= 3 ================= -->
+  <div class="view" id="v-c">
+    <p class="explain">Com o automático ativo, o cartão passa a <b>estado</b>: método, próxima cobrança e ações (<b>mudar cartão</b>, <b>cancelar</b>). No histórico, cada mês mostra «Cobrado automaticamente».</p>
+    <div class="side">
+      <div><div class="label">Desktop</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/dashboard/financeiro</div>
+          <div class="screen">
+            <h2>Plano e pagamentos</h2>
+            <div class="card"><div class="plan"><div><div class="small">O meu plano</div><h3 style="font-size:17px">Kingdom Week · Muay Thai</h3></div><div style="text-align:right"><div class="price">25 €</div><div class="small">por mês</div></div></div><span class="pill ok" style="align-self:flex-start">Mensalidade em dia</span></div>
+            <div class="card ok">
+              <div class="row"><h3 style="font-size:17px">⚡ Pagamento automático</h3><span class="pill ok">● Ativo</span></div>
+              <div class="kv"><div><small>Método</small><b>Visa •••• 4242</b></div><div><small>Próxima cobrança</small><b>23 nov · 25 €</b></div><div><small>Ativo desde</small><b>23 out 2026</b></div></div>
+              <div class="row"><span class="small">Mudar de plano na secretaria atualiza o valor automaticamente.</span><span style="display:flex;gap:8px"><span class="btn sm">Mudar cartão</span><span class="btn ghost sm">Cancelar automático</span></span></div>
+            </div>
+            <div class="card"><h3>Últimos pagamentos</h3>
+              <div class="pay"><span>Outubro · <span class="muted">cobrado automaticamente</span></span><span class="pill ok">Pago · 25 €</span></div>
+              <div class="pay"><span>Setembro · transferência</span><span class="pill ok">Pago · 25 €</span></div></div>
+          </div></div></div>
+      <div><div class="label">Telemóvel · cancelar</div>
+        <div class="frame phone"><div class="screen">
+          <div class="card ok">
+            <div class="row"><h3>⚡ Pagamento automático</h3><span class="pill ok">Ativo</span></div>
+            <div class="kv"><div><small>Método</small><b>Visa ••4242</b></div><div><small>Próxima</small><b>23 nov</b></div></div>
+            <span class="btn full sm">Mudar cartão</span>
+          </div>
+          <div class="modal" style="max-width:none">
+            <h3>Cancelar o pagamento automático?</h3>
+            <div class="small">Outubro já está pago. A partir de novembro voltas a pagar por transferência ou na secretaria. O teu plano não muda.</div>
+            <span class="btn full" style="border-color:var(--danger);color:#fb7185">Sim, cancelar</span>
+            <span class="btn ghost full sm">Manter ativo</span>
+          </div>
+        </div></div></div>
+    </div>
+  </div>
+
+  <!-- ================= 4 ================= -->
+  <div class="view" id="v-d">
+    <p class="explain">Se a Revolut não conseguir cobrar (cartão expirado, sem saldo), o aluno vê um <b>aviso no topo</b> e recebe <b>notificação no sino</b>; a mensalidade aparece em <b>«Por receber»</b> no admin. A Revolut volta a tentar; o aluno pode também atualizar o cartão ou pagar por transferência.</p>
+    <div class="side">
+      <div><div class="label">Desktop</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/dashboard/financeiro</div>
+          <div class="screen">
+            <h2>Plano e pagamentos</h2>
+            <div class="card bad">
+              <div class="row"><h3 style="font-size:17px">⚠️ Não conseguimos cobrar novembro</h3><span class="pill bad">Cobrança falhou</span></div>
+              <div class="sub" style="margin:0">O banco recusou o pagamento de 25 € (cartão expirado). Atualiza o cartão e tentamos de novo — ou paga por transferência.</div>
+              <div class="row"><span style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn p">Atualizar cartão e pagar 25 €</span><span class="btn">Pagar por transferência</span></span><span class="small">A Revolut volta a tentar automaticamente.</span></div>
+            </div>
+            <div class="card"><h3>Últimos pagamentos</h3>
+              <div class="pay"><span>Novembro · cobrança automática</span><span class="pill bad">Falhou · 25 €</span></div>
+              <div class="pay"><span>Outubro · cobrado automaticamente</span><span class="pill ok">Pago · 25 €</span></div></div>
+          </div></div></div>
+      <div><div class="label">Telemóvel · notificação</div>
+        <div class="frame phone"><div class="screen">
+          <div class="card" style="gap:6px"><div class="small">🔔 Agora</div><b style="font-size:14px">Não conseguimos cobrar a mensalidade de novembro</b><div class="small">Toca para atualizar o cartão.</div></div>
+          <div class="card bad"><h3>⚠️ Novembro por pagar</h3><div class="sub" style="margin:0">Cartão expirado.</div><span class="btn p full">Atualizar cartão</span><span class="btn full sm">Pagar por transferência</span></div>
+        </div></div></div>
+    </div>
+  </div>
+
+  <!-- ================= 5 ================= -->
+  <div class="view" id="v-e">
+    <p class="explain">No admin: <b>Financeiro → Mensalidades</b> ganha um indicador de quantos alunos estão em automático e um filtro; na <b>ficha do aluno</b> aparece a etiqueta «Pagamento automático» com o estado. Pagamentos cobrados entram sozinhos como pagos (forma: «Automático · Revolut»). Cobranças falhadas aparecem em «Por receber» e em «A tratar hoje».</p>
+    <div class="side">
+      <div><div class="label">Desktop · Financeiro → Mensalidades</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/admin/financeiro/mensalidades</div>
+          <div class="screen">
+            <h2>Mensalidades · outubro</h2>
+            <div class="kpis"><div><b>12 / 45</b><small>alunos em pagamento automático</small></div><div><b>310 €</b><small>cobrados automaticamente este mês</small></div><div><b style="color:#fb7185">1</b><small>cobrança falhada · a tratar</small></div></div>
+            <div class="tabs"><span class="tab">Todos</span><span class="tab on">⚡ Automático</span><span class="tab">Por transferência</span><span class="tab">Em atraso</span></div>
+            <table>
+              <tr><th>Aluno</th><th>Plano</th><th>Outubro</th><th>Pagamento</th></tr>
+              <tr><td>Bruno Soares</td><td>Kingdom Full</td><td><span class="pill ok">Pago · 55 €</span></td><td><span class="pill info">⚡ Automático · Visa ••4242</span></td></tr>
+              <tr><td>Marta Lopes</td><td>Kingdom Week</td><td><span class="pill ok">Pago · 25 €</span></td><td><span class="pill info">⚡ Automático · Revolut</span></td></tr>
+              <tr><td>João Pires</td><td>Kingdom Full</td><td><span class="pill bad">Falhou · 55 €</span></td><td><span class="pill bad">⚡ Cartão expirado</span></td></tr>
+            </table>
+          </div></div></div>
+      <div><div class="label">Telemóvel · ficha do aluno</div>
+        <div class="frame phone"><div class="screen">
+          <div><div class="small">← Alunos</div><h2 style="margin-top:4px">Bruno Soares</h2><div class="small">Kingdom Full · Muay Thai · KFS-0118</div></div>
+          <div class="card"><div class="row"><h3>Pagamento</h3><span class="pill info">⚡ Automático</span></div>
+            <div class="kv"><div><small>Método</small><b>Visa ••4242</b></div><div><small>Próxima</small><b>23 nov · 55 €</b></div></div>
+            <div class="small">Ativado pelo aluno a 23 out. Só o aluno pode mudar o cartão; o admin pode cancelar o automático.</div>
+            <span class="btn ghost full sm">Cancelar automático deste aluno</span></div>
+        </div></div></div>
+    </div>
+  </div>
+
+  <div class="open" style="margin-top:22px">
+    <b>Decisões em aberto (para escolheres):</b><br>
+    1. <b>Dia da cobrança</b> — DECIDIDO: o dia da 1.ª cobrança (ex.: 23), o último dia nos meses mais curtos; o admin pode mudar.<br>
+    2. <b>Quem pode ativar</b> — todos os alunos com plano individual (família continua na secretaria) — ou só alguns planos no início.<br>
+    3. <b>Aviso antes de cobrar</b> — notificação no sino 3 dias antes (boa prática para cobranças recorrentes).<br>
+    4. <b>Teste</b> — Sandbox primeiro; depois em produção com o plano interno de 2 € e o aluno de teste.
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b));
+    document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+b.dataset.v));
+  });
+</script>
+</body>
+</html>

@@ -152,8 +152,22 @@ export default async function AdminFinanceiroMensalidadesPage({ searchParams }: 
     </div>
   );
 
+  // Pagamento automático (Subscrições Revolut): quantos pagadores e quantas cobranças falharam.
+  const { data: autoPayRows, error: autoPayErr } = await supabase.from("AutoPay").select("state, amount").in("state", ["ACTIVE", "OVERDUE"]);
+  const autoActive = autoPayErr ? [] : ((autoPayRows ?? []) as { state: string; amount: number | string }[]).filter((r) => r.state === "ACTIVE");
+  const autoOverdue = autoPayErr ? 0 : ((autoPayRows ?? []) as { state: string }[]).filter((r) => r.state === "OVERDUE").length;
+  const autoMonthly = autoActive.reduce((t, r) => t + Number(r.amount), 0);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {autoActive.length || autoOverdue ? (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", alignItems: "center", padding: "10px 14px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--bg-secondary)", fontSize: 13.5 }}>
+          <strong>⚡ {autoActive.length} em pagamento automático</strong>
+          <span style={{ color: "var(--text-secondary)" }}>{autoMonthly % 1 === 0 ? autoMonthly.toFixed(0) : autoMonthly.toFixed(2).replace(".", ",")} €/mês cobrados sozinhos</span>
+          {autoOverdue ? <strong style={{ color: "var(--danger)" }}>{autoOverdue} cobrança{autoOverdue === 1 ? "" : "s"} falhada{autoOverdue === 1 ? "" : "s"}</strong> : null}
+          <span style={{ color: "var(--text-secondary)", fontSize: 12.5 }}>Até ao dia de cobrança de cada um, a mensalidade aparece em falta aqui; depois fica paga sozinha.</span>
+        </div>
+      ) : null}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 12px" }}>
         <h2 style={{ margin: 0, fontSize: "clamp(17px, 4.2vw, 19px)", fontWeight: 600 }}>Mensalidades em falta</h2>
         <Suspense fallback={null}>

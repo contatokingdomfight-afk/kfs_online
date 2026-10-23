@@ -129,6 +129,20 @@ export async function clearGraceOnPaidPayment(supabase: SupabaseClient, studentI
 }
 
 /** Suspende alunos com plano cujo prazo (15 dias corridos após o dia 8) já passou. */
+/** Pagadores com pagamento automático ativo + membros dos respetivos grupos familiares. */
+async function studentsWithActiveAutoPay(supabase: SupabaseClient): Promise<Set<string>> {
+  const { data, error } = await supabase.from("AutoPay").select("studentId, familyGroupId").eq("state", "ACTIVE");
+  if (error) return new Set(); // tabela ainda inexistente (migração por aplicar): comportamento antigo
+  const rows = (data ?? []) as { studentId: string; familyGroupId: string | null }[];
+  const ids = new Set(rows.map((r) => r.studentId));
+  const groupIds = rows.map((r) => r.familyGroupId).filter((g): g is string => !!g);
+  if (groupIds.length) {
+    const { data: members } = await supabase.from("FamilyGroupMember").select("studentId").in("familyGroupId", groupIds);
+    for (const m of (members ?? []) as { studentId: string }[]) ids.add(m.studentId);
+  }
+  return ids;
+}
+
 export async function suspendStudentsPastGrace(
   supabase: SupabaseClient
 ): Promise<{ suspended: number; errors: string[] }> {
@@ -144,12 +158,15 @@ export async function suspendStudentsPastGrace(
   const errors: string[] = [];
   let suspended = 0;
 
-  const list = (rows ?? []) as {
+  // Pagamento automático ativo: a mensalidade é cobrada no dia de cobrança do aluno (pode ser depois do prazo),
+  // por isso não suspende o pagador nem os membros do grupo familiar dele.
+  const autoPayExempt = await studentsWithActiveAutoPay(supabase);
+  const list = ((rows ?? []) as {
     id: string;
     planId: string;
     stripeSubscriptionId: string | null;
     paymentGraceEndsAt: string;
-  }[];
+  }[]).filter((r) => !autoPayExempt.has(r.id));
 
   const BATCH = 15;
   for (let i = 0; i < list.length; i += BATCH) {
