@@ -2,10 +2,11 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
 import { expectedMonthlyAmount, resolveAutoPayPayer } from "@/lib/autopay/service";
 import { LOYALTY_MONTHS, loadActiveLoyalty, payerLoyaltyMonthlyDiscount } from "@/lib/loyalty/service";
-import { latePaymentLabel, listLatePayments } from "@/lib/tuition-checkout/service";
+import { advanceMonthAmount, latePaymentLabel, listLatePayments, nextAdvanceMonth } from "@/lib/tuition-checkout/service";
+import { loadAutoPayForStudent } from "@/lib/autopay/service";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { addMonthsToReferenceMonth } from "@/lib/reference-month";
-import { LatePaymentsPayForm, LoyaltyAcceptButton } from "./StudentPaymentActions";
+import { AdvancePayButton, LatePaymentsPayForm, LoyaltyAcceptButton } from "./StudentPaymentActions";
 
 const GOLD = "#f5c542";
 
@@ -126,7 +127,7 @@ export async function StudentLoyaltySection({ studentId }: { studentId: string }
   const end = addMonthsToReferenceMonth(start, LOYALTY_MONTHS - 1);
   const newAmount = Math.max(0, amountNow - effectiveDiscount);
   return (
-    <section style={goldCard} aria-labelledby="loyalty-title">
+    <section id="fidelizacao" style={{ ...goldCard, scrollMarginTop: 80 }} aria-labelledby="loyalty-title">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <h2 id="loyalty-title" style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>
           🏅 Fidelização Kingdom
@@ -164,11 +165,37 @@ export async function StudentLatePaymentsSection({ studentId, justPaid }: { stud
   if (payer.isFamilyMember) return null;
   const late = await listLatePayments(admin, payer.payerStudentId);
   if (!late.length) {
-    return justPaid ? (
+    const paidMsg = justPaid ? (
       <p role="status" style={{ margin: 0, padding: "12px 14px", borderRadius: 12, border: "1px solid var(--success)", background: "color-mix(in srgb, var(--success) 10%, transparent)", fontSize: 14, fontWeight: 700 }}>
         Pagamento recebido. Obrigado!
       </p>
     ) : null;
+    // Com o pagamento automático ativo não há nada para pagar à mão.
+    const autopay = await loadAutoPayForStudent(admin, payer.payerStudentId);
+    if (autopay?.state === "ACTIVE") return paidMsg;
+    const month = await nextAdvanceMonth(admin, payer.payerStudentId);
+    const amount = await advanceMonthAmount(admin, payer.payerStudentId, payer.familyGroupId, month);
+    if (!(amount > 0)) return paidMsg;
+    const loyalty = await loadActiveLoyalty(admin, payer.payerStudentId);
+    const withLoyalty = !!loyalty && month >= loyalty.startMonth;
+    return (
+      <>
+        {paidMsg}
+        <section aria-labelledby="advance-title" style={{ borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", gap: 10, border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <h2 id="advance-title" style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>
+              Mensalidade de <span style={{ textTransform: "capitalize" }}>{monthShort(month)}</span>
+            </h2>
+            <span style={{ fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 999, color: "var(--success)", border: "1px solid color-mix(in srgb, var(--success) 40%, transparent)" }}>Tudo em dia</span>
+          </div>
+          <p style={{ margin: 0, fontSize: 13.5, color: "var(--text-secondary)" }}>
+            Não tens nada em atraso. Podes pagar já a próxima mensalidade{payer.familyGroupId ? " do grupo familiar" : ""}
+            {withLoyalty ? " (já com o desconto da fidelização)" : ""}.
+          </p>
+          <AdvancePayButton label={`💳 Pagar ${monthShort(month)} · ${euro(amount)} com Revolut`} />
+        </section>
+      </>
+    );
   }
   const total = late.reduce((t, p) => t + p.amount, 0);
   return (
@@ -185,5 +212,34 @@ export async function StudentLatePaymentsSection({ studentId, justPaid }: { stud
       {justPaid ? <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>Se acabaste de pagar, a confirmação chega em instantes. Atualiza a página daqui a pouco.</p> : null}
       <LatePaymentsPayForm items={late.map((p) => ({ id: p.id, label: latePaymentLabel(p), amount: p.amount }))} />
     </section>
+  );
+}
+
+/** Atalho junto ao plano: «Com fidelização pagas X €» → leva ao cartão da fidelização. */
+export async function StudentLoyaltyShortcut({ studentId }: { studentId: string }) {
+  const admin = getAdminClientOrNull().client;
+  if (!admin) return null;
+  const payer = await resolveAutoPayPayer(admin, studentId);
+  if (payer.isFamilyMember) return null;
+  if (await loadActiveLoyalty(admin, payer.payerStudentId)) return null;
+  const discount = await payerLoyaltyMonthlyDiscount(admin, payer.payerStudentId, payer.familyGroupId);
+  if (!(discount > 0)) return null;
+  let groupFactor = 1;
+  if (payer.familyGroupId) {
+    const { data: g } = await admin.from("FamilyGroup").select("discountPercent").eq("id", payer.familyGroupId).maybeSingle();
+    groupFactor = 1 - Number((g as { discountPercent?: number } | null)?.discountPercent ?? 0) / 100;
+  }
+  const now = await expectedMonthlyAmount(admin, payer.payerStudentId, payer.familyGroupId);
+  const withLoyalty = Math.max(0, Math.round((now - discount * groupFactor) * 100) / 100);
+  return (
+    <a
+      href="#fidelizacao"
+      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "12px 14px", borderRadius: 14, textDecoration: "none", color: "var(--text-primary)", border: `1px solid color-mix(in srgb, ${GOLD} 50%, transparent)`, background: `color-mix(in srgb, ${GOLD} 8%, var(--bg-secondary))`, fontSize: 14 }}
+    >
+      <span>
+        🏅 Com fidelização pagas <strong>{euro(withLoyalty)}/mês</strong> <s style={{ color: "var(--text-secondary)" }}>{euro(now)}</s>
+      </span>
+      <strong style={{ color: GOLD, whiteSpace: "nowrap" }}>Fidelizar ↓</strong>
+    </a>
   );
 }

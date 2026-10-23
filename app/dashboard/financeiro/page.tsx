@@ -20,7 +20,7 @@ import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { PlanSummaryCard, type PlanSummary } from "./PlanSummaryCard";
 import { AutoPaySection } from "@/components/autopay/AutoPaySection";
-import { StudentLatePaymentsSection, StudentLoyaltySection } from "@/components/payments/StudentLoyaltyAndLate";
+import { StudentLatePaymentsSection, StudentLoyaltySection, StudentLoyaltyShortcut } from "@/components/payments/StudentLoyaltyAndLate";
 
 export const dynamic = "force-dynamic";
 
@@ -224,7 +224,10 @@ export default async function DashboardFinanceiroPage({
 
       {/* O meu plano */}
       {planSummary ? (
-        <PlanSummaryCard plan={planSummary} locale={loc} />
+        <>
+          <PlanSummaryCard plan={planSummary} locale={loc} />
+          {studentId ? <StudentLoyaltyShortcut studentId={studentId} /> : null}
+        </>
       ) : (
         <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md">
           <h2 className="text-base font-bold text-text-primary mb-3">{t("financePlanSection")}</h2>

@@ -3,6 +3,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { registerTuitionPaymentCore } from "@/lib/finance/register-tuition-core";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { createMerchantOrder, revolutMerchantEnv, type MerchantOrder } from "@/lib/revolut/merchant";
+import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
+import { addMonthsToReferenceMonth } from "@/lib/reference-month";
+import { resolveFamilyGroupTitularSuggestedAmount, resolvePlanMonthlyTuition } from "@/lib/family-tuition";
+import { individualLoyaltyDiscount } from "@/lib/loyalty/service";
 
 /**
  * Pagar mensalidades em atraso pela Revolut (página segura, como na loja):
@@ -50,6 +54,15 @@ export async function createTuitionCheckout(
   const ids = chosen.map((p) => p.id).sort();
   const amount = Math.round(chosen.reduce((t, p) => t + p.amount, 0) * 100) / 100;
 
+  return openCheckout(supabase, { ...input, ids, amount });
+}
+
+/** Reaproveita a ordem aberta para o mesmo conjunto (7 dias) ou cria uma nova na Revolut. */
+async function openCheckout(
+  supabase: SupabaseClient,
+  input: { payerStudentId: string; ids: string[]; amount: number; createdByUserId: string | null; email: string | null; returnUrl: string; description: string }
+): Promise<CheckoutResult> {
+  const { ids, amount } = input;
   // Mesmo conjunto ainda por pagar: reaproveita o link (evita várias ordens abertas para o mesmo).
   const { data: open } = await supabase
     .from("PaymentCheckout")
@@ -91,6 +104,44 @@ export async function createTuitionCheckout(
   return { url: order.checkout_url, amount };
 }
 
+// ---------- Pagar adiantado (a mensalidade do mês seguinte, antes de ser gerada) ----------
+
+/** Prefixo dos itens de um checkout que pagam um mês ainda sem registo de mensalidade. */
+const ADVANCE_PREFIX = "month:";
+
+/** Próximo mês por pagar a partir do mês atual (o atual, se ainda não existir mensalidade; senão o seguinte sem PAID). */
+export async function nextAdvanceMonth(supabase: SupabaseClient, payerStudentId: string): Promise<string> {
+  let month = currentReferenceMonthLisbon(new Date());
+  const { data } = await supabase.from("Payment").select("referenceMonth, status").eq("studentId", payerStudentId).eq("paymentType", "TUITION").gte("referenceMonth", month);
+  const existing = new Map(((data ?? []) as { referenceMonth: string; status: string }[]).map((p) => [p.referenceMonth, p.status]));
+  for (let i = 0; i < 24 && existing.has(month); i++) month = addMonthsToReferenceMonth(month, 1);
+  return month;
+}
+
+/** Valor da mensalidade desse mês: total do grupo (titular) ou plano − desconto de fidelização. */
+export async function advanceMonthAmount(supabase: SupabaseClient, payerStudentId: string, familyGroupId: string | null, month: string): Promise<number> {
+  if (familyGroupId) return resolveFamilyGroupTitularSuggestedAmount(supabase, familyGroupId, month);
+  const { data: st } = await supabase.from("Student").select("planId").eq("id", payerStudentId).maybeSingle();
+  const planId = (st as { planId?: string | null } | null)?.planId ?? null;
+  if (!planId) return 0;
+  const { data: plan } = await supabase.from("Plan").select("id, priceMonthly").eq("id", planId).maybeSingle();
+  if (!plan) return 0;
+  const base = resolvePlanMonthlyTuition(planId, Number((plan as { priceMonthly: number | string }).priceMonthly ?? 0));
+  return Math.max(0, Math.round((base - (await individualLoyaltyDiscount(supabase, payerStudentId, planId, month))) * 100) / 100);
+}
+
+/** Checkout para pagar adiantado o próximo mês. O valor e o mês são sempre calculados aqui (nunca vêm do cliente). */
+export async function createAdvanceTuitionCheckout(
+  supabase: SupabaseClient,
+  input: { payerStudentId: string; familyGroupId: string | null; createdByUserId: string | null; email: string | null; returnUrl: string }
+): Promise<CheckoutResult & { month?: string }> {
+  const month = await nextAdvanceMonth(supabase, input.payerStudentId);
+  const amount = await advanceMonthAmount(supabase, input.payerStudentId, input.familyGroupId, month);
+  if (!(amount > 0)) return { error: "Não tens um plano com mensalidade. Fala com a secretaria." };
+  const res = await openCheckout(supabase, { ...input, ids: [`${ADVANCE_PREFIX}${month}`], amount, description: `Mensalidade ${month} · Kingdom Fight School` });
+  return { ...res, month };
+}
+
 /** Webhook: ordem concluída com referência `pc:` → marca os pagamentos como pagos (idempotente). */
 export async function markTuitionCheckoutPaid(supabase: SupabaseClient, checkoutId: string, order: MerchantOrder): Promise<boolean> {
   const { data } = await supabase.from("PaymentCheckout").select("id, studentId, paymentIds, amount, state").eq("id", checkoutId).maybeSingle();
@@ -101,7 +152,30 @@ export async function markTuitionCheckoutPaid(supabase: SupabaseClient, checkout
     return true;
   }
 
-  const { data: rows } = await supabase.from("Payment").select("id, studentId, paymentType, referenceMonth, amount, status").in("id", c.paymentIds);
+  // Meses pagos adiantados (ainda sem registo): regista a mensalidade com o valor cobrado.
+  const advance = c.paymentIds.filter((x) => x.startsWith(ADVANCE_PREFIX)).map((x) => x.slice(ADVANCE_PREFIX.length));
+  for (const month of advance) {
+    const { data: already } = await supabase.from("Payment").select("id").eq("studentId", c.studentId).eq("paymentType", "TUITION").eq("referenceMonth", month).eq("status", "PAID").maybeSingle();
+    if (already) {
+      console.error("[tuition-checkout] mês adiantado já estava pago", { checkoutId, month });
+      continue;
+    }
+    const res = await registerTuitionPaymentCore(supabase, {
+      studentId: c.studentId,
+      amount: Math.round((Number(c.amount) / advance.length) * 100) / 100,
+      referenceMonth: month,
+      status: "PAID",
+      tuitionMonths: 1,
+      paymentMethod: "TRANSFER",
+    });
+    if (res.error) {
+      console.error("[tuition-checkout] registar mês adiantado", res.error);
+      return false;
+    }
+  }
+
+  const paymentIds = c.paymentIds.filter((x) => !x.startsWith(ADVANCE_PREFIX));
+  const { data: rows } = paymentIds.length ? await supabase.from("Payment").select("id, studentId, paymentType, referenceMonth, amount, status").in("id", paymentIds) : { data: [] };
   for (const p of (rows ?? []) as { id: string; studentId: string; paymentType: string; referenceMonth: string | null; amount: number | string; status: string }[]) {
     if (p.status === "PAID") continue;
     if (p.paymentType === "TUITION" && p.referenceMonth) {

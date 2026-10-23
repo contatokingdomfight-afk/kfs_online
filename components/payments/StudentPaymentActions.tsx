@@ -109,3 +109,34 @@ export function LoyaltyAcceptButton({ label, consentText }: { label: string; con
     </div>
   );
 }
+
+/** Pagar adiantado a próxima mensalidade (mês e valor calculados no servidor). */
+export function AdvancePayButton({ label }: { label: string }) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function pay() {
+    setError(null);
+    setPending(true);
+    const res = await post("/api/tuition-checkout", { advance: true });
+    if (res.url) {
+      window.location.href = res.url;
+      return;
+    }
+    setError(res.error ?? "Não foi possível iniciar o pagamento.");
+    setPending(false);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <button type="button" className="btn btn-primary" style={{ ...btn, width: "100%" }} onClick={pay} disabled={pending}>
+        {pending ? "A abrir a Revolut…" : label}
+      </button>
+      {error ? (
+        <span role="alert" style={{ fontSize: 13, color: "var(--danger)" }}>
+          {error}
+        </span>
+      ) : null}
+    </div>
+  );
+}
