@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Loja e Vendas (admin)</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--bg3:#1c1c1f;--text:#fff;--muted:#a1a1aa;--primary:#c1121f;--success:#22c55e;--warning:#facc15;--danger:#e11d48;--info:#60a5fa;--border:#27272a;--font:"Inter",system-ui,-apple-system,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:#050505;color:var(--text);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1500px;margin:0 auto;padding:24px 20px 60px}
+  .badge{display:inline-flex;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase;letter-spacing:.5px}
+  h1.meta{font-size:22px;margin:12px 0 6px}
+  p.meta{font-size:13.5px;color:var(--muted);max-width:900px;line-height:1.6;margin:0}
+  ul.meta{font-size:13px;color:var(--muted);line-height:1.7;margin:10px 0 0;padding-left:18px;max-width:1000px}
+  ul.meta b{color:#fff}
+  .switcher{display:flex;gap:8px;margin:20px 0 14px;flex-wrap:wrap}
+  .sw{font:600 13px var(--font);padding:9px 18px;border-radius:999px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer}
+  .sw.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .side{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:24px;align-items:start}
+  @media (max-width:1000px){.side{grid-template-columns:1fr}}
+  .label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .frame{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--bg)}
+  .phone{border-radius:34px;border:8px solid #1f1f22}
+  .bar{display:flex;gap:8px;align-items:center;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;background:#3a3a3a}
+  .screen{padding:22px;display:flex;flex-direction:column;gap:16px}
+  .phone .screen{padding:14px 12px;gap:12px}
+  .view{display:none}.view.on{display:block}
+
+  .back{color:var(--muted);font-size:13px}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+  h2{margin:4px 0 0;font-size:22px;font-weight:800}
+  h3{margin:0;font-size:15px;font-weight:800}
+  .sub{font-size:13px;color:var(--muted);margin-top:4px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:#fff;font:700 13px var(--font);white-space:nowrap}
+  .btn.p{background:var(--primary);border-color:var(--primary)}
+  .btn.sm{min-height:32px;padding:0 10px;font-size:12px}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px}
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .phone .kpis{grid-template-columns:1fr 1fr;gap:8px}
+  .kpi .v{font-size:24px;font-weight:800;line-height:1.1}
+  .phone .kpi .v{font-size:20px}
+  .kpi .l{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .up{color:var(--success);font-size:12px;font-weight:700}
+  .warn{color:var(--warning);font-size:12px;font-weight:700}
+  .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .phone .tiles{grid-template-columns:1fr 1fr;gap:8px}
+  .tile{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;position:relative}
+  .tile .ic{font-size:18px}
+  .tile b{font-size:14px}
+  .tile small{font-size:12px;color:var(--muted)}
+  .tile .flag{position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;background:rgba(250,204,21,.14);color:var(--warning)}
+  .tile.pos{border-color:var(--primary);background:linear-gradient(160deg,#1d0b0e 0%,var(--bg2) 70%)}
+  .split{display:flex;height:8px;border-radius:999px;overflow:hidden;background:var(--bg3)}
+  .split span{display:block;height:100%}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap;margin-top:8px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .search{flex:1;min-width:180px;min-height:40px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);display:flex;align-items:center;padding:0 12px;font-size:13px;gap:8px}
+  .chipf{font-size:12px;font-weight:700;padding:7px 12px;border-radius:999px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+  .chipf.on{background:#fff;color:#000;border-color:#fff}
+  .month{min-height:40px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);display:inline-flex;align-items:center;padding:0 12px;font-size:13px;font-weight:700;gap:8px}
+  .day{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin:6px 0 -6px;display:flex;justify-content:space-between}
+  .sale{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:12px;align-items:center}
+  .phone .sale{grid-template-columns:minmax(0,1fr) auto;padding:12px}
+  .phone .sale .time{display:none}
+  .sale.open{border-color:#3f3f46;background:#18181b}
+  .time{font-size:13px;color:var(--muted);font-weight:700}
+  .who{font-size:14.5px;font-weight:800}
+  .items{font-size:13px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:8px}
+  .thumb{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#2a2a2e,#3a3a40);flex-shrink:0}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .chip{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+  .chip.ok{color:var(--success);border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}
+  .chip.info{color:var(--info);border-color:rgba(96,165,250,.35);background:rgba(96,165,250,.08)}
+  .chip.red{color:#ff8a92;border-color:rgba(193,18,31,.45);background:rgba(193,18,31,.1)}
+  .amt{text-align:right}
+  .amt b{font-size:17px;display:block}
+  .amt small{font-size:11.5px;color:var(--muted)}
+  .detail{grid-column:1/-1;border-top:1px solid var(--border);padding-top:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;font-size:13px}
+  .phone .detail{grid-template-columns:1fr}
+  .detail div small{display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+  .detail .lines{grid-column:1/-1}
+  .line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border)}
+  .link{color:#ff6b73;font-weight:700;font-size:12.5px}
+  .fab{position:sticky;bottom:0;padding:10px 0 2px;background:linear-gradient(transparent,var(--bg) 30%)}
+  .fab .btn{width:100%;min-height:46px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Mockup · Admin → Loja e Vendas</span>
+  <h1 class="meta">Loja e Vendas — nova organização</h1>
+  <p class="meta">Hoje: a página «Loja presencial» é uma grelha de botões iguais + dois números; «Vendas» é uma tabela com data, total e «Transferência bancária» — não se vê quem comprou, o quê, nem se veio de uma encomenda paga online.</p>
+  <ul class="meta">
+    <li><b>Loja</b> (deixa de ser só «presencial»): números do mês com tendência, divisão <b>Balcão / Encomendas / Online</b>, e atalhos com contadores e avisos (encomendas por pagar, a encomendar, stock baixo).</li>
+    <li><b>Vendas</b>: mês, pesquisa e filtros (Balcão · Encomendas · Online); vendas agrupadas por dia com <b>cliente, artigos e origem</b>; o detalhe abre na própria linha em vez de um quadro no topo.</li>
+    <li>Etiquetas: «Encomenda KFS-ENC-0012» (liga à encomenda), «Online · Revolut», «Balcão», forma de pagamento.</li>
+    <li>Telemóvel: cartões compactos e botão fixo «Registar venda».</li>
+  </ul>
+
+  <div class="switcher">
+    <button class="sw on" data-v="hub">Loja (painel)</button>
+    <button class="sw" data-v="sales">Vendas</button>
+  </div>
+
+  <!-- ============ LOJA ============ -->
+  <div class="view on" id="v-hub">
+    <div class="side">
+      <div><div class="label">Desktop</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/admin/loja</div>
+          <div class="screen">
+            <div class="head">
+              <div><div class="back">← Admin</div><h2>Loja</h2><div class="sub">Balcão, encomendas e loja online · outubro</div></div>
+              <span class="btn p">+ Registar venda (balcão)</span>
+            </div>
+            <div class="kpis">
+              <div class="card kpi"><div class="v">107 €</div><div class="l">Vendas do mês</div><div class="up">▲ +72 € vs setembro</div></div>
+              <div class="card kpi"><div class="v">5</div><div class="l">Vendas · ticket médio 21 €</div></div>
+              <div class="card kpi"><div class="v">8</div><div class="l">Encomendas por pagar</div><div class="warn">280 € em aberto</div></div>
+              <div class="card kpi"><div class="v">0</div><div class="l">Alertas de stock baixo</div></div>
+            </div>
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3>De onde vieram as vendas</h3><span class="sub" style="margin:0">outubro</span></div>
+              <div class="split"><span style="width:33%;background:#a1a1aa"></span><span style="width:34%;background:var(--info)"></span><span style="width:33%;background:var(--success)"></span></div>
+              <div class="legend"><span><i style="background:#a1a1aa"></i>Balcão · 35 € (1)</span><span><i style="background:var(--info)"></i>Encomendas pagas à mão · 37 € (2)</span><span><i style="background:var(--success)"></i>Online · Revolut · 35 € (2)</span></div>
+            </div>
+            <div class="tiles">
+              <div class="tile"><span class="ic">📦</span><b>Encomendas</b><small>8 por pagar · 3 a encomendar · 1 pronta</small><span class="flag">tratar</span></div>
+              <div class="tile"><span class="ic">🧾</span><b>Vendas</b><small>Histórico, filtros e detalhe</small></div>
+              <div class="tile"><span class="ic">👕</span><b>Produtos</b><small>12 ativos · 4 em pré-encomenda</small></div>
+              <div class="tile"><span class="ic">📊</span><b>Stock</b><small>Sem alertas</small></div>
+              <div class="tile"><span class="ic">🏷️</span><b>Promoções e cupões</b><small>1 cupão ativo</small></div>
+              <div class="tile"><span class="ic">🌐</span><b>Loja online</b><small>Ver /loja como cliente ↗</small></div>
+            </div>
+            <div class="card" style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><h3>Últimas vendas</h3><span class="link">Ver todas →</span></div>
+              <div class="sale" style="grid-template-columns:54px minmax(0,1fr) auto;background:var(--bg)"><span class="time">14:29</span><div><div class="who">Oseias Beu</div><div class="chips" style="margin-top:4px"><span class="chip info">Encomenda KFS-ENC-0013</span><span class="chip ok">Online · Revolut</span></div></div><div class="amt"><b>1 €</b><small>hoje</small></div></div>
+              <div class="sale" style="grid-template-columns:54px minmax(0,1fr) auto;background:var(--bg)"><span class="time">05:23</span><div><div class="who">Matheus Antonio</div><div class="chips" style="margin-top:4px"><span class="chip info">Encomenda KFS-ENC-0014</span><span class="chip">Transferência</span></div></div><div class="amt"><b>35 €</b><small>hoje</small></div></div>
+              <div class="sale" style="grid-template-columns:54px minmax(0,1fr) auto;background:var(--bg)"><span class="time">17:12</span><div><div class="who">Bruno Soares</div><div class="chips" style="margin-top:4px"><span class="chip info">Encomenda KFS-ENC-0012</span><span class="chip ok">Online · Apple Pay</span></div></div><div class="amt"><b>35 €</b><small>22 out</small></div></div>
+            </div>
+          </div></div></div>
+      <div><div class="label">Telemóvel</div>
+        <div class="frame phone"><div class="screen">
+          <div><div class="back">← Admin</div><h2>Loja</h2><div class="sub">outubro</div></div>
+          <div class="kpis">
+            <div class="card kpi"><div class="v">107 €</div><div class="l">Vendas do mês</div><div class="up">▲ +72 €</div></div>
+            <div class="card kpi"><div class="v">8</div><div class="l">Por pagar</div><div class="warn">280 €</div></div>
+          </div>
+          <div class="card"><div class="split"><span style="width:33%;background:#a1a1aa"></span><span style="width:34%;background:var(--info)"></span><span style="width:33%;background:var(--success)"></span></div>
+            <div class="legend"><span><i style="background:#a1a1aa"></i>Balcão</span><span><i style="background:var(--info)"></i>Encomendas</span><span><i style="background:var(--success)"></i>Online</span></div></div>
+          <div class="tiles">
+            <div class="tile"><span class="ic">📦</span><b>Encomendas</b><small>8 por pagar</small><span class="flag">!</span></div>
+            <div class="tile"><span class="ic">🧾</span><b>Vendas</b><small>5 este mês</small></div>
+            <div class="tile"><span class="ic">👕</span><b>Produtos</b><small>12 ativos</small></div>
+            <div class="tile"><span class="ic">📊</span><b>Stock</b><small>Sem alertas</small></div>
+          </div>
+          <div class="sale" style="grid-template-columns:minmax(0,1fr) auto"><div><div class="who">Bruno Soares</div><div class="chips" style="margin-top:4px"><span class="chip ok">Online</span></div></div><div class="amt"><b>35 €</b><small>22 out</small></div></div>
+          <div class="fab"><span class="btn p">+ Registar venda</span></div>
+        </div></div></div>
+    </div>
+  </div>
+
+  <!-- ============ VENDAS ============ -->
+  <div class="view" id="v-sales">
+    <div class="side">
+      <div><div class="label">Desktop</div>
+        <div class="frame"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp; kingdomfight.com/admin/loja/vendas</div>
+          <div class="screen">
+            <div class="head">
+              <div><div class="back">← Loja</div><h2>Vendas</h2></div>
+              <span class="btn p">+ Nova venda</span>
+            </div>
+            <div class="tools">
+              <span class="month">◀ outubro 2026 ▶</span>
+              <div class="search">🔍 Procurar cliente, artigo ou KFS-ENC-…</div>
+            </div>
+            <div class="tools">
+              <span class="chipf on">Todas · 5</span><span class="chipf">Balcão · 1</span><span class="chipf">Encomendas · 4</span><span class="chipf">Online · 2</span>
+              <span style="margin-left:auto;font-size:13px;color:var(--muted)"><b style="color:#fff">107 €</b> · 5 vendas · ticket médio 21 €</span>
+            </div>
+            <div class="day"><span>Hoje · 23 out</span><span>37 €</span></div>
+            <div class="sale">
+              <span class="time">14:29</span>
+              <div><div class="who">Oseias Beu</div><div class="items"><span class="thumb"></span>1× TESTE pagamento online · Único</div>
+                <div class="chips"><span class="chip info">Encomenda KFS-ENC-0013</span><span class="chip ok">Online · Revolut</span></div></div>
+              <div class="amt"><b>1 €</b><small>Ver ▾</small></div>
+            </div>
+            <div class="sale open">
+              <span class="time">05:23</span>
+              <div><div class="who">Matheus Antonio</div><div class="items"><span class="thumb"></span>1× Rashguard de manga curta · L · Preto/Vermelho</div>
+                <div class="chips"><span class="chip info">Encomenda KFS-ENC-0014</span><span class="chip">Confirmado à mão · Transferência</span></div></div>
+              <div class="amt"><b>35 €</b><small>Fechar ▴</small></div>
+              <div class="detail">
+                <div><small>Data</small>23/10/2026, 05:23</div>
+                <div><small>Escola</small>Kingdom Fight School · Sede</div>
+                <div><small>Registada por</small>Oseias Beu (admin)</div>
+                <div class="lines"><small style="display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px">Artigos</small>
+                  <div class="line"><span>Rashguard de manga curta (L / Preto/Vermelho) × 1</span><b>35,00 €</b></div>
+                  <div class="line" style="border:0"><span>Total</span><b>35,00 €</b></div></div>
+                <div class="lines" style="display:flex;gap:8px"><span class="btn sm">Abrir encomenda KFS-ENC-0014</span><span class="btn sm">Abrir ficha do aluno</span></div>
+              </div>
+            </div>
+            <div class="day"><span>22 out</span><span>35 €</span></div>
+            <div class="sale">
+              <span class="time">17:12</span>
+              <div><div class="who">Bruno Soares</div><div class="items"><span class="thumb"></span>1× Rashguard de manga curta · M</div>
+                <div class="chips"><span class="chip info">Encomenda KFS-ENC-0012</span><span class="chip ok">Online · Apple Pay</span></div></div>
+              <div class="amt"><b>35 €</b><small>Ver ▾</small></div>
+            </div>
+            <div class="day"><span>16 out</span><span>35 €</span></div>
+            <div class="sale">
+              <span class="time">06:10</span>
+              <div><div class="who">Venda ao balcão</div><div class="items"><span class="thumb"></span>1× Rashguard de manga curta · S</div>
+                <div class="chips"><span class="chip">Balcão</span><span class="chip">MBWay</span></div></div>
+              <div class="amt"><b>35 €</b><small>Ver ▾</small></div>
+            </div>
+          </div></div></div>
+      <div><div class="label">Telemóvel</div>
+        <div class="frame phone"><div class="screen">
+          <div><div class="back">← Loja</div><h2>Vendas</h2></div>
+          <div class="tools"><span class="month" style="flex:1;justify-content:space-between">◀ outubro ▶</span></div>
+          <div class="search">🔍 Cliente ou KFS-ENC-…</div>
+          <div class="tools" style="flex-wrap:nowrap;overflow:hidden"><span class="chipf on">Todas</span><span class="chipf">Balcão</span><span class="chipf">Encomendas</span><span class="chipf">Online</span></div>
+          <div style="font-size:12.5px;color:var(--muted)"><b style="color:#fff">107 €</b> · 5 vendas</div>
+          <div class="day"><span>Hoje</span><span>37 €</span></div>
+          <div class="sale"><div><div class="who">Oseias Beu</div><div class="items">TESTE pagamento · 14:29</div><div class="chips"><span class="chip ok">Online</span></div></div><div class="amt"><b>1 €</b></div></div>
+          <div class="sale"><div><div class="who">Matheus Antonio</div><div class="items">Rashguard · L · 05:23</div><div class="chips"><span class="chip info">KFS-ENC-0014</span></div></div><div class="amt"><b>35 €</b></div></div>
+          <div class="day"><span>22 out</span><span>35 €</span></div>
+          <div class="sale"><div><div class="who">Bruno Soares</div><div class="items">Rashguard · M · 17:12</div><div class="chips"><span class="chip ok">Apple Pay</span></div></div><div class="amt"><b>35 €</b></div></div>
+          <div class="fab"><span class="btn p">+ Nova venda</span></div>
+        </div></div></div>
+    </div>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b));
+    document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+b.dataset.v));
+  });
+</script>
+</body>
+</html>
