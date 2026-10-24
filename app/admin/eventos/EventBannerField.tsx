@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { shrinkImage } from "@/lib/images/shrink-image";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
 
 type Props = {
@@ -28,7 +29,7 @@ export function EventBannerField({ initialBannerUrl }: Props) {
     setUploading(true);
     try {
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", await shrinkImage(file, 1920));
       const res = await fetch("/api/admin/eventos/banner", { method: "POST", body: fd });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok) {

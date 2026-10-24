@@ -79,6 +79,7 @@ export async function createTribePostAction(formData: FormData): Promise<{ error
     const { error: upErr } = await supabase.storage.from("tribe-media").upload(path, file, {
       upsert: false,
       contentType: file.type,
+      cacheControl: "31536000",
     });
     if (upErr) {
       console.error("[createTribePostAction] upload", upErr);

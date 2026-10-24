@@ -60,3 +60,6 @@ scripts/tmp-*.jsonl*
 # WeoInvoice: registo local das facturas emitidas pelo script (dados pessoais)
 scripts/faturacao/registo-faturas.json
 scripts/faturacao/debug-ultima-resposta.html
+
+# Backups locais do recomprimir-imagens.mjs
+scripts/storage/backup-*/

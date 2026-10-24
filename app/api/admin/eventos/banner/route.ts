@@ -38,6 +38,7 @@ export async function POST(request: Request) {
   const { error: upErr } = await supabase.storage.from("event-banners").upload(path, file, {
     upsert: false,
     contentType: file.type,
+    cacheControl: "31536000",
   });
 
   if (upErr) {

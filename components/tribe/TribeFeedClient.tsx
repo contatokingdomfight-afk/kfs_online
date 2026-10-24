@@ -14,6 +14,7 @@ import {
   toggleTribeLikeAction,
 } from "@/app/dashboard/tribo/actions";
 import type { TribeVisibility } from "@/app/dashboard/tribo/actions";
+import { shrinkImage } from "@/lib/images/shrink-image";
 import { TRIBE_IMAGE_MIMES, TRIBE_MAX_MEDIA_BYTES, TRIBE_MAX_MEDIA_FILES } from "@/lib/tribe/constants";
 
 type CommentRow = {
@@ -249,7 +250,7 @@ function PostCard({
         >
           {post.author.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- URLs dinâmicas Supabase Storage
-            <img src={post.author.avatarUrl} alt="" width={44} height={44} className="object-cover w-full h-full" />
+            <img src={post.author.avatarUrl} alt="" width={44} height={44} loading="lazy" className="object-cover w-full h-full" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ color: "var(--primary)" }}>
               {(post.author.name ?? "?").slice(0, 1).toUpperCase()}
@@ -558,15 +559,16 @@ export function TribeFeedClient({
                       accept="image/jpeg,image/png,image/webp,image/gif"
                       multiple
                       className="mt-2 block w-full text-sm"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const picked = Array.from(e.target.files ?? []);
                         const accepted: File[] = [];
                         const notes: string[] = [];
-                        for (const f of picked) {
-                          if (!TRIBE_IMAGE_MIMES.has(f.type)) {
-                            notes.push(`${f.name} — ${t("tribeFileErrorType")}`);
+                        for (const original of picked) {
+                          if (!TRIBE_IMAGE_MIMES.has(original.type)) {
+                            notes.push(`${original.name} — ${t("tribeFileErrorType")}`);
                             continue;
                           }
+                          const f = await shrinkImage(original);
                           if (f.size > TRIBE_MAX_MEDIA_BYTES) {
                             notes.push(`${f.name} — ${t("tribeFileErrorSize")}`);
                             continue;

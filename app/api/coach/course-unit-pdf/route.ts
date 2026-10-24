@@ -44,6 +44,7 @@ export async function POST(request: Request) {
   const { error: upErr } = await supabase.storage.from("course-materials").upload(path, file, {
     upsert: false,
     contentType: "application/pdf",
+    cacheControl: "31536000",
   });
 
   if (upErr) {
