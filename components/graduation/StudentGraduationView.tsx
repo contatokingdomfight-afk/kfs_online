@@ -133,7 +133,7 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
                     ? "Já fizeste o exame — aguarda o resultado."
                     : graduation.convocation
                       ? "Já tens exame marcado."
-                      : "A academia vai convocar-te para o próximo exame de graduação."}
+                      : "Ainda não há dias de exame abertos — vais ser avisado quando abrirem para escolheres o teu dia."}
                 </p>
               )}
             </div>

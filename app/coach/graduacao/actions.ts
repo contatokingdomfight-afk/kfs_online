@@ -440,6 +440,12 @@ export async function setManualReadiness(input: {
     if (!reason) return { error: "Indica o motivo (o aluno vai vê-lo)." };
     const validUntil = input.validUntil.trim() || null;
     if (validUntil && !/^\d{4}-\d{2}-\d{2}$/.test(validUntil)) return { error: "Data inválida." };
+    const { data: previous } = await supabase
+      .from("StudentGraduationReadiness")
+      .select("status")
+      .eq("studentId", studentId)
+      .eq("modalityCode", modalityCode)
+      .maybeSingle();
     const { error } = await supabase.from("StudentGraduationReadiness").upsert(
       { studentId, modalityCode, status, reason, validUntil, setByUserId: auth.userId, updatedAt: new Date().toISOString() },
       { onConflict: "studentId,modalityCode" }
@@ -447,6 +453,26 @@ export async function setManualReadiness(input: {
     if (error) {
       console.error("setManualReadiness:", error);
       return { error: "Não foi possível guardar." };
+    }
+    // Passou a «Pronto»: avisa o aluno para escolher o dia do exame.
+    if (status === "READY" && previous?.status !== "READY") {
+      const { count: openAgendas } = await supabase
+        .from("GraduationExamEvent")
+        .select("id", { count: "exact", head: true })
+        .eq("modalityCode", modalityCode)
+        .eq("status", "SCHEDULED")
+        .eq("selfBooking", true)
+        .gt("endsAt", new Date().toISOString());
+      await createInAppNotification(supabase, {
+        studentId,
+        type: "GRADUATION",
+        title: "Estás apto para o exame de graduação",
+        body:
+          (openAgendas ?? 0) > 0
+            ? `O coach validou que estás pronto: «${reason}». Escolhe o dia e o horário do teu exame.`
+            : `O coach validou que estás pronto: «${reason}». Vais ser avisado quando abrirem dias de exame.`,
+        href: (openAgendas ?? 0) > 0 ? `/dashboard/graduacao/agendar?m=${encodeURIComponent(modalityCode)}` : "/dashboard/graduacao",
+      });
     }
   }
   revalidatePath("/admin/graduacao");

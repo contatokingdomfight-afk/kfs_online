@@ -38,7 +38,8 @@ export function ConvocationPanel({
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(options.filter((o) => o.ready && !o.otherConvocation).map((o) => o.studentId))
+    // Convocar à mão é a exceção (os aptos marcam na app): nada vem pré-selecionado.
+    () => new Set()
   );
   const [query, setQuery] = useState("");
   const [showNotReady, setShowNotReady] = useState(false);
@@ -180,9 +181,9 @@ export function ConvocationPanel({
 
   return (
     <section style={{ marginTop: "var(--space-6)" }}>
-      <h2 style={{ margin: "0 0 4px", fontSize: "var(--text-base)", fontWeight: 700 }}>Convocar alunos</h2>
+      <h2 style={{ margin: "0 0 4px", fontSize: "var(--text-base)", fontWeight: 700 }}>Convocar à mão <span style={{ fontWeight: 400, color: "var(--text-secondary)" }}>(exceção)</span></h2>
       <p style={{ margin: "0 0 var(--space-3)", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-        Os alunos aptos já estão selecionados. Cada aluno é convocado para o seu próximo grau e recebe uma notificação.
+        Normalmente os alunos aptos escolhem o dia e o horário na app. Usa isto só para exceções (ex.: aluno sem app) — cada aluno é convocado para o seu próximo grau e recebe uma notificação.
       </p>
 
       {options.length === 0 ? (

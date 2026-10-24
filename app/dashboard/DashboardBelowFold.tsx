@@ -12,6 +12,8 @@ import { resolveCoachFeedbackForStudentView } from "@/lib/resolve-coach-feedback
 import { FALLBACK_COACH_ENCOURAGEMENT } from "@/lib/coach-feedback-defaults";
 import { getWhatIsNewNextMission } from "@/lib/whatisnew-next-mission.server";
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { Award, ChevronRight } from "lucide-react";
 import { HomeProgressPanel } from "./HomeProgressPanel";
 import { HomeTribePreview } from "./HomeTribePreview";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -380,13 +382,18 @@ export async function DashboardBelowFold({
 
   // Graduação publicada na modalidade principal substitui a faixa/XP antigos no painel.
   const graduationAdmin = getAdminClientOrNull().client;
-  const [primaryGraduation] =
+  const graduations =
     studentId && graduationAdmin && hasPerformanceTracking
       ? await loadStudentGraduations(graduationAdmin, studentId).catch((err) => {
           console.error("loadStudentGraduations (dashboard):", err);
           return [];
         })
       : [];
+  const primaryGraduation = graduations[0];
+  // Apto e com dias de exame abertos, mas ainda sem marcação: convida a escolher o dia.
+  const bookableGraduation = graduations.find(
+    (g) => g.progress.isReadyForExam && g.progress.next && g.openAgendaCount > 0 && !g.convocation && !g.awaitingResult
+  );
 
   const noMissionsMessage = !athlete ? t("dashboardNoMissionsNoAthlete") : t("dashboardNoMissions");
 
@@ -396,6 +403,34 @@ export async function DashboardBelowFold({
 
   return (
     <>
+      {bookableGraduation && (
+        <Link
+          href={`/dashboard/graduacao/agendar?m=${encodeURIComponent(bookableGraduation.modalityCode)}`}
+          className="card"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "12px 14px",
+            textDecoration: "none",
+            color: "var(--text-primary)",
+            border: "2px solid var(--success)",
+          }}
+        >
+          <Award size={22} aria-hidden style={{ flexShrink: 0, color: "var(--success)" }} />
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <strong style={{ display: "block", fontSize: 14 }}>
+              {locale === "en" ? "You're ready for your exam" : "Estás apto para o exame"}
+              {bookableGraduation.progress.next ? ` — ${bookableGraduation.progress.next.name}` : ""}
+            </strong>
+            <span style={{ display: "block", fontSize: 12, color: "var(--text-secondary)" }}>
+              {locale === "en" ? "Choose your exam day and time" : "Escolhe o dia e o horário do teu exame"}
+            </span>
+          </span>
+          <ChevronRight size={18} aria-hidden style={{ color: "var(--text-secondary)" }} />
+        </Link>
+      )}
+
       <HomeProgressPanel
         locale={locale as "pt" | "en"}
         hasCheckIn={hasCheckIn}
