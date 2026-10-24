@@ -52,10 +52,23 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
     plansQuery = plansQuery.in("schoolId", schoolIds);
   }
 
-  const [plansRes, modalityRefs] = await Promise.all([
+  const [plansRes, modalityRefs, { data: weeklyLessons }] = await Promise.all([
     plansQuery.order("priceMonthly", { ascending: true }),
     getCachedModalityRefs(supabase),
+    supabase.from("Lesson").select("modality, weekday").eq("isOneOff", false).not("weekday", "is", null),
   ]);
+  // Só modalidades com aulas na agenda semanal. MMA fica de fora: hoje é só o treino de competição de sábado.
+  const scheduled = new Set(
+    ((weeklyLessons ?? []) as { modality: string; weekday: number }[]).filter((l) => !(l.modality === "MMA" && l.weekday === 6)).map((l) => l.modality)
+  );
+  const isKidsCode = (code: string) => /KIDS$/i.test(code);
+  const scheduledRefs = scheduled.size ? modalityRefs.filter((m) => scheduled.has(m.code)) : modalityRefs;
+  /** Plano Kids → modalidades Kids; restantes planos → modalidades de adultos. */
+  const modalityOptionsFor = (planName: string) => {
+    const kidsPlan = /kids/i.test(planName);
+    const list = scheduledRefs.filter((m) => isKidsCode(m.code) === kidsPlan);
+    return list.length ? list : scheduledRefs;
+  };
   const plans =
     plansRes.data?.filter((p) => !isPlanExcludedFromSelfService(p.id, p.name)) ?? null;
 
@@ -125,7 +138,7 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
               perMonth={t("perMonth")}
               choosePlanSelect={t("choosePlanSelect")}
               choosePlanModalityLabel={t("choosePlanModalityLabel")}
-              modalityOptions={modalityRefs}
+              modalityOptions={modalityOptionsFor(plan.name)}
               fees={{
                 tuition: Number(plan.priceMonthly),
                 enrollment: onboardingFees?.enrollmentAmount ?? 0,
