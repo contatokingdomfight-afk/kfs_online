@@ -8,7 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Kingdom Fight School",
     short_name: "KFS",
     description: "Plataforma de gestão e ensino da Kingdom Fight School",
-    start_url: "/",
+    /** Abre direto no dashboard (sem sessão → login): a home «/» é dinâmica e gastava CPU da Vercel em cada abertura. `id` mantém-se "/" para não duplicar instalações. */
+    start_url: "/dashboard",
     scope: "/",
     display: "fullscreen",
     orientation: "portrait-primary",
