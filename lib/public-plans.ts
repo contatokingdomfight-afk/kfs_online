@@ -48,7 +48,7 @@ async function fetchPublicPlans(): Promise<PublicPlan[]> {
 /** Planos activos para a homepage e outras páginas públicas. */
 export async function loadPublicPlans(): Promise<PublicPlan[]> {
   return unstable_cache(fetchPublicPlans, ["public-plans-v1"], {
-    revalidate: 300,
+    revalidate: 3600,
     tags: [CACHE_TAG],
   })();
 }

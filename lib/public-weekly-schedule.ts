@@ -99,7 +99,7 @@ async function fetchPublicWeeklySchedule(): Promise<PublicSchoolSchedule[]> {
 /** Grade semanal recorrente (Lesson.weekday) — mesma fonte que Admin → Turmas. */
 export async function loadPublicWeeklySchedule(): Promise<PublicSchoolSchedule[]> {
   return unstable_cache(fetchPublicWeeklySchedule, ["public-weekly-schedule-v1"], {
-    revalidate: 300,
+    revalidate: 3600,
     tags: ["public-weekly-schedule"],
   })();
 }

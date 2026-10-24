@@ -50,7 +50,7 @@ async function fetchPublicTribePhotos(): Promise<PublicTribePhoto[]> {
 
 export async function loadPublicTribePhotos(): Promise<PublicTribePhoto[]> {
   return unstable_cache(fetchPublicTribePhotos, ["public-tribe-photos-v1"], {
-    revalidate: 300,
+    revalidate: 3600,
     tags: ["public-tribe-photos"],
   })();
 }

@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   enabled: process.env.NODE_ENV === "production" && Boolean(process.env.SENTRY_DSN),
-  tracesSampleRate: 0.1,
+  tracesSampleRate: 0, // só erros: os traces gastavam CPU da Vercel (Hobby)
   beforeSend(event) {
     const message = event.exception?.values?.[0]?.value ?? "";
     if (message.includes("Failed to parse body as FormData")) {
