@@ -69,8 +69,17 @@ export async function bookExamSlot(eventId: string, slotIso: string): Promise<Bo
     // Convocado pelo coach sem horário: pode escolher; trocar só até 48 h antes.
     if (here.slotStartsAt && !canSelfChange(here.startsAt)) return { error: "Já não podes trocar de horário (menos de 48 h). Fala com o coach." };
   } else if (elsewhere) {
-    if (!elsewhere.bookedByStudent) return { error: "Já estás convocado para outro dia de exame. Fala com o coach para mudar." };
-    if (!canSelfChange(elsewhere.startsAt)) return { error: "Já não podes trocar de dia (menos de 48 h). Fala com o coach." };
+    // Convocado sem horário escolhido: pode escolher outro dia. Com horário: só o que marcou ele próprio,
+    // e até 48 h antes.
+    if (elsewhere.slotStartsAt) {
+      if (!elsewhere.bookedByStudent) return { error: "O coach já te marcou um horário noutro dia. Fala com ele para mudar." };
+      if (!canSelfChange(elsewhere.startsAt)) return { error: "Já não podes trocar de dia (menos de 48 h). Fala com o coach." };
+    }
+    const { count: scored } = await supabase
+      .from("GraduationExamScore")
+      .select("candidateId", { count: "exact", head: true })
+      .eq("candidateId", elsewhere.id);
+    if ((scored ?? 0) > 0) return { error: "O teu exame já começou noutro dia. Fala com o coach." };
   } else if (!graduation.progress.isReadyForExam) {
     return { error: "Ainda não cumpres os requisitos para o exame." };
   }

@@ -309,7 +309,7 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
         </>
       )}
 
-      <div style={{ position: "sticky", bottom: "calc(var(--space-3) + env(safe-area-inset-bottom, 0px))", marginTop: "var(--space-5)", paddingRight: 72, zIndex: 20 }}>
+      <div className="sticky-action-bar" style={{ marginTop: "var(--space-5)" }}>
         <div className="card" style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.35)", padding: "var(--space-3)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
             <span style={{ flex: 1, minWidth: 120, fontSize: "var(--text-sm)", fontWeight: 600 }} role="status" aria-live="polite">

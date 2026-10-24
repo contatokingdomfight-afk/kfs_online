@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Search } from "lucide-react";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
@@ -62,17 +63,20 @@ export function ConvocationPanel({
       return next;
     });
 
+  const [confirming, setConfirming] = useState(false);
+  const chosen = options.filter((o) => selected.has(o.studentId));
+  const notReadyCount = chosen.filter((o) => !o.ready).length;
+
   const convoke = () => {
-    const ids = [...selected].filter((id) => options.some((o) => o.studentId === id));
-    const notReadyCount = ids.filter((id) => !options.find((o) => o.studentId === id)?.ready).length;
-    if (
-      notReadyCount > 0 &&
-      !window.confirm(`${notReadyCount} ${notReadyCount === 1 ? "aluno ainda não cumpre" : "alunos ainda não cumprem"} todos os requisitos. Convocar mesmo assim?`)
-    )
-      return;
     setMessage(null);
+    setConfirming(true);
+  };
+
+  const confirmConvoke = () => {
+    const ids = chosen.map((o) => o.studentId);
     start(async () => {
       const res = await convokeStudents(eventId, ids);
+      setConfirming(false);
       if (res.error) setMessage({ kind: "error", text: res.error });
       else {
         setMessage({ kind: "success", text: res.convoked === 1 ? "1 aluno convocado e notificado." : `${res.convoked} alunos convocados e notificados.` });
@@ -225,7 +229,7 @@ export function ConvocationPanel({
             </div>
           )}
 
-          <div style={{ position: "sticky", bottom: "calc(var(--space-3) + env(safe-area-inset-bottom, 0px))", marginTop: "var(--space-4)", paddingRight: 72, zIndex: 20 }}>
+          <div className="sticky-action-bar" style={{ marginTop: "var(--space-4)" }}>
             <div className="card" style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap", boxShadow: "0 8px 30px rgba(0,0,0,0.35)" }}>
               <span role="status" aria-live="polite" style={{ flex: 1, minWidth: 140, fontSize: "var(--text-sm)", color: message?.kind === "error" ? "var(--danger)" : undefined }}>
                 {message?.text ?? `${selected.size} ${selected.size === 1 ? "aluno selecionado" : "alunos selecionados"}`}
@@ -237,6 +241,78 @@ export function ConvocationPanel({
           </div>
         </>
       )}
+
+      {confirming &&
+        createPortal(
+        <div
+          role="presentation"
+          onClick={() => !pending && setConfirming(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 30000,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            padding: "var(--space-3)",
+            paddingBottom: "max(var(--space-3), env(safe-area-inset-bottom, 0px))",
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-convocar"
+            onClick={(e) => e.stopPropagation()}
+            className="card"
+            style={{ width: "min(480px, 100%)", maxHeight: "80vh", display: "flex", flexDirection: "column", gap: "var(--space-3)", margin: "auto 0" }}
+          >
+            <h3 id="confirm-convocar" style={{ margin: 0, fontSize: "var(--text-lg)", fontWeight: 700 }}>
+              Convocar {chosen.length} {chosen.length === 1 ? "aluno" : "alunos"}?
+            </h3>
+            <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+              Cada aluno é convocado para o seu próximo grau e recebe uma notificação.
+            </p>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+              {chosen.map((o) => (
+                <li
+                  key={o.studentId}
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "1px solid var(--border)", fontSize: "var(--text-sm)" }}
+                >
+                  <BeltSwatch colors={o.nextColors} width={24} height={9} />
+                  <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <strong>{o.name}</strong> <span style={{ color: "var(--text-secondary)" }}>→ {o.nextName}</span>
+                  </span>
+                  {!o.ready && <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--warning)", whiteSpace: "nowrap" }}>Não apto</span>}
+                </li>
+              ))}
+            </ul>
+            {notReadyCount > 0 && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "var(--text-sm)",
+                  padding: "8px 10px",
+                  borderRadius: 10,
+                  background: "color-mix(in srgb, var(--warning) 10%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--warning) 35%, transparent)",
+                }}
+              >
+                {notReadyCount === 1 ? "1 aluno ainda não cumpre" : `${notReadyCount} alunos ainda não cumprem`} todos os requisitos. Vão ser convocados mesmo assim.
+              </p>
+            )}
+            <div style={{ display: "flex", gap: "var(--space-2)", justifyContent: "flex-end", flexWrap: "wrap" }}>
+              <button type="button" className="btn btn-secondary" disabled={pending} onClick={() => setConfirming(false)}>
+                Cancelar
+              </button>
+              <button type="button" className="btn btn-primary" disabled={pending} onClick={confirmConvoke}>
+                {pending ? "A convocar…" : `Convocar ${chosen.length}`}
+              </button>
+            </div>
+          </div>
+        </div>,
+          document.body
+        )}
     </section>
   );
 }

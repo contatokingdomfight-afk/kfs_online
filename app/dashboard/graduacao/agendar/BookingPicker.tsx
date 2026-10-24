@@ -66,13 +66,17 @@ export function BookingPicker({
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [changing, setChanging] = useState(false);
-  const [eventId, setEventId] = useState(myBooking?.eventId ?? events[0]?.id ?? "");
+  // Começa no dia da marcação atual, se ainda aceitar marcações; senão no primeiro dia aberto.
+  const [eventId, setEventId] = useState(() => {
+    const hasOpen = (e?: BookingEvent) => !!e && e.slots.some((s) => s.open);
+    const current = events.find((e) => e.id === myBooking?.eventId);
+    return (hasOpen(current) ? current : events.find((e) => hasOpen(e)) ?? current ?? events[0])?.id ?? "";
+  });
   const [slot, setSlot] = useState<string | null>(null);
 
   const bookedEvent = myBooking ? events.find((e) => e.id === myBooking.eventId) ?? null : null;
   const event = events.find((e) => e.id === eventId) ?? events[0];
-  // Convocado pelo coach sem horário: só pode escolher dentro desse dia.
-  const lockedToEvent = !!myBooking && !myBooking.bookedByStudent;
+
   const selectable = canBook || !!myBooking;
 
   const confirm = () => {
@@ -154,7 +158,7 @@ export function BookingPicker({
     );
   }
 
-  const visibleEvents = lockedToEvent ? events.filter((e) => e.id === myBooking!.eventId) : events;
+  const visibleEvents = events;
 
   return (
     <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
@@ -164,6 +168,7 @@ export function BookingPicker({
         </h2>
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {visibleEvents.map((e) => {
+            const open = e.slots.some((s) => s.open);
             const free = e.slots.filter((s) => s.open).reduce((n, s) => n + s.free, 0);
             const active = e.id === event?.id;
             return (
@@ -192,7 +197,7 @@ export function BookingPicker({
                     <span className="block truncate text-xs text-text-secondary">{e.location ?? e.title}</span>
                   </span>
                   <span className="shrink-0 rounded-full bg-bg-secondary px-2 py-0.5 text-xs font-bold text-text-secondary">
-                    {selectable ? (free > 0 ? `${free} ${free === 1 ? "vaga" : "vagas"}` : "Esgotado") : <Lock size={12} aria-label="Bloqueado" />}
+                    {selectable ? (!open ? "Marcações fechadas" : free > 0 ? `${free} ${free === 1 ? "vaga" : "vagas"}` : "Esgotado") : <Lock size={12} aria-label="Bloqueado" />}
                   </span>
                 </button>
               </li>
