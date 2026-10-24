@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Apto manual e salto de grau</title>
+<style>
+  :root {
+    --bg: #0b0b0b; --bg-secondary: #141414; --bg-elevated: #1a1a1a;
+    --text-primary: #fff; --text-secondary: #a1a1aa; --primary: #c1121f;
+    --success: #22c55e; --warning: #facc15; --border: #27272a;
+    --font: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+  .meta { max-width: 1240px; margin: 0 auto; padding: 28px 16px 0; }
+  .badge { display: inline-flex; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: rgba(193,18,31,.15); color: #ff6b73; text-transform: uppercase; letter-spacing: .5px; }
+  .meta h1 { font-size: 22px; margin: 12px 0 6px; }
+  .meta p, .meta li { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
+  .meta p { max-width: 780px; margin: 0; } .meta ul { margin: 8px 0 0; padding-left: 18px; }
+  .switcher { max-width: 1240px; margin: 20px auto 0; padding: 0 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .sw { font: 600 13px var(--font); padding: 9px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; }
+  .sw.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .stage { max-width: 1240px; margin: 16px auto 60px; padding: 0 16px; display: flex; gap: 24px; align-items: flex-start; }
+  .col-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+  .desk-wrap { flex: 1; min-width: 0; } .phone-wrap { width: 375px; flex-shrink: 0; }
+  @media (max-width: 1000px) { .stage { flex-direction: column; } .phone-wrap { width: 100%; max-width: 375px; } .desk-wrap { width: 100%; } }
+  .browser { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--bg); }
+  .bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #3a3a3a; }
+  .url { flex: 1; font: 12px Consolas, monospace; color: var(--text-secondary); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; margin-left: 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .phone { border: 10px solid #222; border-radius: 36px; overflow: hidden; background: var(--bg); height: 780px; display: flex; flex-direction: column; }
+  .phone .scroll { flex: 1; overflow-y: auto; }
+  .phone .notch { height: 26px; display: flex; justify-content: center; align-items: center; } .phone .notch span { width: 90px; height: 6px; border-radius: 4px; background: #222; }
+  .desk .app { padding: 24px 28px 32px; min-height: 660px; } .phone .app { padding: 14px 14px 24px; }
+
+  .crumb { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  h2 { font-size: 22px; margin: 0 0 4px; } .phone h2 { font-size: 19px; }
+  .sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 18px; line-height: 1.5; }
+  .card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .card h3 { font-size: 14px; margin: 0 0 10px; }
+  .muted { color: var(--text-secondary); font-size: 12.5px; }
+  .belt { width: 40px; height: 12px; border-radius: 3px; flex-shrink: 0; display: inline-block; vertical-align: middle; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .ok { background: rgba(34,197,94,.14); color: #4ade80; } .warn { background: rgba(250,204,21,.14); color: #fde047; }
+  .red { background: rgba(193,18,31,.18); color: #ff6b73; } .grey { background: #222; color: var(--text-secondary); }
+  .btn { font: 600 13px var(--font); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-elevated); color: #fff; cursor: pointer; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); } .btn.block { width: 100%; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; } .between { justify-content: space-between; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } .phone .two { grid-template-columns: 1fr; }
+  .req { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 6px 0; border-bottom: 1px dashed var(--border); } .req:last-child { border: 0; }
+  .ok-t { color: #4ade80; } .bad-t { color: #ff6b73; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .seg button { font: 600 12.5px var(--font); padding: 9px 4px; background: var(--bg); color: var(--text-secondary); border: 0; border-right: 1px solid var(--border); cursor: pointer; }
+  .seg button:last-child { border-right: 0; }
+  .seg button.on-auto { background: var(--bg-elevated); color: #fff; }
+  .seg button.on-ready { background: rgba(34,197,94,.18); color: #4ade80; }
+  .seg button.on-block { background: rgba(193,18,31,.22); color: #ff6b73; }
+  .field { margin: 12px 0 0; } .field label { display: block; font-size: 11.5px; color: var(--text-secondary); margin-bottom: 5px; font-weight: 600; }
+  .input { width: 100%; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: #fff; font: 13px var(--font); min-height: 38px; }
+  .note { font-size: 12px; color: var(--text-secondary); border-radius: 10px; padding: 10px 12px; margin-top: 10px; line-height: 1.5; }
+  .note.y { background: rgba(250,204,21,.06); border: 1px solid rgba(250,204,21,.25); }
+  .note.r { background: rgba(193,18,31,.07); border: 1px solid rgba(193,18,31,.35); color: #fca5a5; }
+  .note.g { background: rgba(34,197,94,.06); border: 1px solid rgba(34,197,94,.3); }
+  .stu { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .stu:last-child { border: 0; } .stu .info { flex: 1; min-width: 0; } .stu b { font-size: 13.5px; }
+  .chk { width: 18px; height: 18px; border-radius: 5px; border: 1px solid var(--border); flex-shrink: 0; margin-top: 2px; display: grid; place-items: center; font-size: 12px; }
+  .chk.on { background: var(--primary); border-color: var(--primary); }
+  .grades { display: flex; flex-direction: column; gap: 6px; }
+  .gopt { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); font-size: 13px; cursor: pointer; }
+  .gopt.sel { border-color: var(--primary); background: rgba(193,18,31,.08); }
+  .gopt .tag { margin-left: auto; }
+  .radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
+  .gopt.sel .radio { border-color: var(--primary); background: radial-gradient(var(--primary) 45%, transparent 50%); }
+  .timeline { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .tl { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .hero { text-align: center; padding: 22px 16px; }
+  .hero .big { font-size: 26px; font-weight: 800; margin: 10px 0 4px; }
+  .link { color: #ff6b73; font-size: 12px; font-weight: 600; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="meta">
+  <span class="badge">Mockup · Graduação</span>
+  <h1>«Apto / Não apto» manual + exame para um grau acima</h1>
+  <p><b>1. Prontidão manual</b> — por aluno e modalidade: <b>Automático</b> (como hoje, pelos requisitos), <b>Pronto</b> (abre a agenda mesmo sem cumprir tudo) ou <b>Ainda não</b> (fecha a agenda mesmo cumprindo os números). O motivo é obrigatório e o aluno vê-o.</p>
+  <p style="margin-top:8px"><b>2. Salto de grau</b> — ao convocar, o coach/admin escolhe o grau-alvo (por defeito o próximo). A folha de avaliação é a do grau-alvo (já é cumulativa). Aprovado → recebe o grau-alvo; os intermédios ficam registados como «obtidos por salto».</p>
+  <ul>
+    <li>Requisitos do salto: o admin pode <b>dispensar</b> os requisitos do grau-alvo (presenças/tempo), com motivo registado.</li>
+    <li>Só <b>ADMIN</b> pode fazer salto de grau e prontidão manual; o coach vê o estado e o motivo.</li>
+  </ul>
+</div>
+<div class="switcher" id="sw"></div>
+<div class="stage">
+  <div class="desk-wrap">
+    <div class="col-label">Desktop</div>
+    <div class="browser desk"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url" id="url-d"></span></div><div class="app" id="desk"></div></div>
+  </div>
+  <div class="phone-wrap">
+    <div class="col-label">Telemóvel</div>
+    <div class="phone"><div class="notch"><span></span></div><div class="scroll"><div class="app" id="phone"></div></div></div>
+  </div>
+</div>
+
+<script>
+const C = { branco: '#e5e7eb', amarelo: '#eab308', laranja: '#f97316', verde: '#16a34a', azul: '#2563eb' };
+const belt = (c) => `<span class="belt" style="background:${c}"></span>`;
+const header = (crumb, title, sub) => `<div class="crumb">${crumb}</div><h2>${title}</h2><p class="sub">${sub}</p>`;
+const st = { mode: 'block', target: 2 };
+
+/* ---------- 1. Admin: prontidão na ficha do aluno ---------- */
+const readinessAdmin = () => `
+  ${header('Admin › Alunos › Ana Silva › Graduação', 'Ana Silva · Muay Thai', 'Atual: Branco · próximo grau: Amarelo')}
+  <div class="two">
+    <div class="card">
+      <h3>Requisitos automáticos</h3>
+      <div class="req"><span>Presenças</span><span class="ok-t">31 / 24 ✓</span></div>
+      <div class="req"><span>Tempo de treino</span><span class="ok-t">4 / 3 meses ✓</span></div>
+      <div class="req"><span>Média de performance</span><span class="ok-t">2,8 / 2 ✓</span></div>
+      <div class="req"><span>Curso «Regras do Muay Thai»</span><span class="ok-t">Concluído ✓</span></div>
+      <div class="row between" style="margin-top:10px"><span class="muted">Pelos números:</span><span class="pill ok">✓ Apto</span></div>
+    </div>
+    <div class="card">
+      <h3>Decisão do coach / admin</h3>
+      <div class="seg">
+        <button class="${st.mode === 'auto' ? 'on-auto' : ''}" data-mode="auto">Automático</button>
+        <button class="${st.mode === 'ready' ? 'on-ready' : ''}" data-mode="ready">✓ Pronto</button>
+        <button class="${st.mode === 'block' ? 'on-block' : ''}" data-mode="block">✕ Ainda não</button>
+      </div>
+      ${st.mode === 'auto' ? `
+        <div class="note y">Segue os requisitos. Neste momento: <b>apta</b> — pode marcar exame.</div>` : `
+        <div class="field"><label>Motivo (o aluno vê)</label>
+          <div class="input">${st.mode === 'block' ? 'Precisa de trabalhar a guarda alta e o teep de defesa antes do exame.' : 'Treina connosco noutra filial; validado pelo coach Ricardo.'}</div></div>
+        <div class="field"><label>Válido até <span style="font-weight:400">(opcional — depois volta a Automático)</span></label><div class="input">30/11/2026</div></div>
+        <div class="note ${st.mode === 'block' ? 'r' : 'g'}">${st.mode === 'block'
+          ? '<b>Agenda fechada</b> para a Ana, mesmo cumprindo os números. Se já tiver marcação, mantém-se — remove-a no dia de exame se for preciso.'
+          : '<b>Agenda aberta</b> para a Ana, mesmo sem cumprir todos os requisitos.'}</div>`}
+      <button class="btn primary block" style="margin-top:12px">Guardar</button>
+      <div class="muted" style="margin-top:8px">Última alteração: Coach Ricardo · 20/10/2026</div>
+    </div>
+  </div>`;
+
+/* ---------- 2. Aluno: vê a decisão ---------- */
+const readinessStudent = () => `
+  ${header('Graduação › Muay Thai', 'A minha graduação', '')}
+  <div class="card">
+    <div class="row">${belt(C.amarelo)}<div><b>Próximo grau: Amarelo</b><div class="muted">atual: Branco</div></div></div>
+    ${st.mode === 'ready' ? `
+      <div class="note g"><b>O coach validou que estás pronto para o exame.</b><br>«Treina connosco noutra filial; validado pelo coach Ricardo.»</div>
+      <button class="btn primary block" style="margin-top:12px">📅 Agendar exame</button>` : `
+      <div class="note r"><b>O coach pediu mais algum tempo antes do exame.</b><br>«Precisa de trabalhar a guarda alta e o teep de defesa antes do exame.»<br><span style="color:var(--text-secondary)">Revisto até 30 nov.</span></div>
+      <div style="margin-top:12px">
+        <div class="req"><span>Presenças</span><span class="ok-t">31 / 24 ✓</span></div>
+        <div class="req"><span>Tempo de treino</span><span class="ok-t">4 / 3 meses ✓</span></div>
+        <div class="req"><span>Avaliação do coach</span><span class="bad-t">Ainda não</span></div>
+      </div>`}
+  </div>
+  <div class="row" style="justify-content:center"><span class="link" data-mode="${st.mode === 'ready' ? 'block' : 'ready'}">ver o outro caso («${st.mode === 'ready' ? 'Ainda não' : 'Pronto'}») →</span></div>`;
+
+/* ---------- 3. Convocatória com prontidão + grau-alvo ---------- */
+const convocation = () => `
+  ${header('Coach › Graduação › Muay Thai · Sáb 08 Nov', 'Convocar alunos', 'Aptos primeiro. A decisão manual aparece ao lado dos números.')}
+  <div class="card">
+    <div class="stu"><span class="chk on">✓</span><div class="info">
+      <div class="row between"><b>Rui Lopes</b><span class="pill ok">✓ Apto</span></div>
+      <div class="muted">${belt(C.branco)} Branco → ${belt(C.amarelo)} Amarelo</div></div></div>
+    <div class="stu"><span class="chk on">✓</span><div class="info">
+      <div class="row between"><b>Pedro Alves</b><span class="pill warn">⬆ Salto: Laranja</span></div>
+      <div class="muted">${belt(C.branco)} Branco → ${belt(C.laranja)} Laranja (salta Amarelo) · requisitos dispensados</div>
+      <span class="link" data-go="jump">Alterar grau-alvo</span></div></div>
+    <div class="stu"><span class="chk on">✓</span><div class="info">
+      <div class="row between"><b>Marta Costa</b><span class="pill ok">✓ Pronto (coach)</span></div>
+      <div class="muted">${belt(C.amarelo)} Amarelo → ${belt(C.laranja)} Laranja · faltam 4 presenças — «validado pelo coach Ricardo»</div></div></div>
+    <div class="stu"><span class="chk"></span><div class="info">
+      <div class="row between"><b>Ana Silva</b><span class="pill red">✕ Ainda não (coach)</span></div>
+      <div class="muted">Cumpre os números, mas: «Precisa de trabalhar a guarda alta…»</div></div></div>
+    <div class="stu"><span class="chk"></span><div class="info">
+      <div class="row between"><b>Bruno Dias</b><span class="pill grey">Não apto</span></div>
+      <div class="muted">Faltam 9 presenças · 1 mês de treino</div></div></div>
+  </div>
+  <button class="btn primary block">Convocar 3 alunos</button>`;
+
+/* ---------- 4. Escolher grau-alvo (salto) ---------- */
+const grades = [['Amarelo', C.amarelo, 'Próximo', 'ok'], ['Laranja', C.laranja, 'Salta 1', 'warn'], ['Verde', C.verde, 'Salta 2', 'warn'], ['Azul', C.azul, 'Salta 3', 'warn']];
+const req = [
+  [['Presenças', '38 / 24', 1], ['Tempo de treino', '5 / 3 meses', 1]],
+  [['Presenças', '38 / 48', 0], ['Tempo de treino', '5 / 6 meses', 0]],
+  [['Presenças', '38 / 72', 0], ['Tempo de treino', '5 / 9 meses', 0]],
+  [['Presenças', '38 / 96', 0], ['Tempo de treino', '5 / 12 meses', 0]],
+];
+const jump = () => `
+  ${header('Coach › Graduação › Convocar', 'Pedro Alves · grau-alvo', 'Atual: Branco. Escolhe para que grau vai ser avaliado.')}
+  <div class="two">
+    <div class="card"><h3>Grau-alvo</h3>
+      <div class="grades">${grades.map(([n, c, t, k], i) => `
+        <div class="gopt ${st.target === i + 1 ? 'sel' : ''}" data-target="${i + 1}"><span class="radio"></span>${belt(c)} ${n}<span class="pill ${k} tag">${t}</span></div>`).join('')}
+      </div>
+      <div class="note y">A folha de avaliação será a de <b>${grades[st.target - 1][0]}</b>: itens novos de ${grades[st.target - 1][0]} 1 a 1 + ${st.target > 1 ? `os de ${grades[st.target - 2][0]} 1 a 1 + revisão por eixo dos anteriores` : 'revisão do Branco'}. É mais longa.</div>
+    </div>
+    <div class="card"><h3>Requisitos de ${grades[st.target - 1][0]}</h3>
+      ${req[st.target - 1].map(([l, v, ok]) => `<div class="req"><span>${l}</span><span class="${ok ? 'ok-t' : 'bad-t'}">${v} ${ok ? '✓' : '✕'}</span></div>`).join('')}
+      ${st.target > 1 ? `
+        <div class="toggle" style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:13px"><span class="chk on">✓</span><div><b>Dispensar requisitos do grau-alvo</b><div class="muted">Só admin. Fica registado no histórico do aluno.</div></div></div>
+        <div class="field"><label>Motivo do salto (obrigatório)</label><div class="input">Vem de outra academia com 3 anos de Muay Thai; nível técnico acima de Amarelo.</div></div>` : ''}
+      <button class="btn primary block" style="margin-top:12px" data-go="conv">Guardar grau-alvo</button>
+    </div>
+  </div>`;
+
+/* ---------- 5. Resultado: aprovado com salto ---------- */
+const result = () => `
+  ${header('Graduação › Muay Thai › Exame', 'Resultado do exame', '')}
+  <div class="card hero">
+    <span class="pill ok">Aprovado</span>
+    <div class="big">Agora és Laranja 🎉</div>
+    <div class="muted">Exame de graduação · sáb 08 nov · avaliador: Coach Ricardo</div>
+    <div style="margin-top:12px">${belt(C.laranja)}</div>
+  </div>
+  <div class="card"><h3>Percurso</h3>
+    <div class="timeline">
+      <div class="tl">${belt(C.branco)} Branco <span class="muted" style="margin-left:auto">desde mar 2026</span></div>
+      <div class="tl">${belt(C.amarelo)} Amarelo <span class="pill grey" style="margin-left:auto">Obtido por salto · 08 nov</span></div>
+      <div class="tl">${belt(C.laranja)} <b>Laranja</b> <span class="pill ok" style="margin-left:auto">Exame · 08 nov</span></div>
+    </div>
+  </div>
+  <div class="two">
+    <div class="card"><h3>Notas por eixo</h3>
+      <div class="req"><span>Técnico</span><span class="ok-t">3,8</span></div>
+      <div class="req"><span>Tático</span><span class="ok-t">3,4</span></div>
+      <div class="req"><span>Teórico</span><span class="ok-t">4,1</span></div>
+      <div class="req"><span>Físico</span><span class="ok-t">3,6</span></div>
+    </div>
+    <div class="card"><h3>Ranking / XP</h3>
+      <div class="muted">XP do exame conta <b>uma vez</b> (pelo grau-alvo). Os graus obtidos por salto não dão XP extra.</div>
+    </div>
+  </div>`;
+
+const screens = {
+  admin: ['Admin · prontidão manual', '/admin/alunos/…/graduacao', readinessAdmin],
+  student: ['Aluno · vê a decisão', '/dashboard/graduacao', readinessStudent],
+  conv: ['Coach · convocar', '/coach/graduacao/…', convocation],
+  jump: ['Admin · salto de grau', '/coach/graduacao/…/convocar', jump],
+  result: ['Aluno · aprovado com salto', '/dashboard/graduacao/exame/…', result],
+};
+let cur = 'admin';
+function render() {
+  const [, url, fn] = screens[cur];
+  document.getElementById('sw').innerHTML = Object.entries(screens).map(([k, [l]]) => `<button class="sw ${k === cur ? 'active' : ''}" data-go="${k}">${l}</button>`).join('');
+  document.getElementById('url-d').textContent = 'kingdomfight.com' + url;
+  document.getElementById('desk').innerHTML = fn();
+  document.getElementById('phone').innerHTML = fn();
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-go],[data-mode],[data-target]');
+  if (!t) return;
+  if (t.dataset.go) cur = t.dataset.go;
+  if (t.dataset.mode) st.mode = t.dataset.mode;
+  if (t.dataset.target) st.target = +t.dataset.target;
+  render();
+});
+render();
+</script>
+</body>
+</html>

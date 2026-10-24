@@ -21,6 +21,8 @@ export type ConvocationOption = {
   pendingChecks: string[];
   pendingRequirements: { id: string; label: string }[];
   otherConvocation: string | null;
+  /** Decisão manual do admin em vigor. */
+  manual: { status: "READY" | "NOT_READY"; reason: string } | null;
 };
 
 export function ConvocationPanel({ eventId, options }: { eventId: string; options: ConvocationOption[] }) {
@@ -110,6 +112,18 @@ export function ConvocationPanel({ eventId, options }: { eventId: string; option
               {o.currentName ?? "Sem graduação"} → <BeltSwatch colors={o.nextColors} width={22} height={8} />
               <strong style={{ color: "var(--text-primary)" }}>{o.nextName}</strong>
             </span>
+            {o.manual && (
+              <span
+                style={{
+                  display: "block",
+                  marginTop: 4,
+                  fontSize: "var(--text-xs)",
+                  color: o.manual.status === "READY" ? "var(--success)" : "var(--danger)",
+                }}
+              >
+                {o.manual.status === "READY" ? "✓ Pronto (decisão do coach)" : "✕ Ainda não (decisão do coach)"} — «{o.manual.reason}»
+              </span>
+            )}
             {o.otherConvocation && (
               <span style={{ display: "block", marginTop: 4, fontSize: "var(--text-xs)", color: "var(--warning)" }}>
                 Já convocado para: {o.otherConvocation}

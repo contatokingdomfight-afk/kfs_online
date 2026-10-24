@@ -5,6 +5,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { loadStudentGraduations } from "@/lib/graduation/load-student-progress";
 import { StudentGraduationView } from "@/components/graduation/StudentGraduationView";
+import { ManualReadinessForm } from "./ManualReadinessForm";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,22 @@ export default async function AdminGraduacaoAlunoPreviewPage({
 
   const selected = studentId ? options.find((o) => o.id === studentId) ?? null : null;
   const [graduation] = selected ? await loadStudentGraduations(supabase, selected.id, { previewModalityCode: modalityCode }) : [];
+
+  // Decisão manual (guardada, mesmo que já expirada) e quem a fez.
+  const { data: manual } = selected
+    ? await supabase
+        .from("StudentGraduationReadiness")
+        .select("status, reason, validUntil, setByUserId, updatedAt")
+        .eq("studentId", selected.id)
+        .eq("modalityCode", modalityCode)
+        .maybeSingle()
+    : { data: null };
+  const { data: setBy } = manual?.setByUserId
+    ? await supabase.from("User").select("name").eq("id", manual.setByUserId).maybeSingle()
+    : { data: null };
+  const lastChange = manual
+    ? `Última alteração: ${setBy?.name ?? "—"} · ${new Date(manual.updatedAt).toLocaleDateString("pt-PT", { timeZone: "Europe/Lisbon" })}`
+    : null;
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)" }}>
@@ -90,6 +107,17 @@ export default async function AdminGraduacaoAlunoPreviewPage({
           Ver
         </button>
       </form>
+
+      {selected && graduation?.progress.next && (
+        <ManualReadinessForm
+          key={selected.id}
+          studentId={selected.id}
+          modalityCode={modalityCode}
+          initial={manual ? { status: manual.status, reason: manual.reason, validUntil: manual.validUntil ?? null } : null}
+          autoReady={graduation.progress.checks.filter((c) => c.key !== "coach").every((c) => c.status === "done")}
+          lastChange={lastChange}
+        />
+      )}
 
       {selected && (
         <div style={{ marginTop: "var(--space-5)" }}>

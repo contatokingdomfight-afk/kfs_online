@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { graduationExamActionAuth } from "@/lib/graduation/exam-auth";
+import { graduationAdminActionAuth, graduationExamActionAuth } from "@/lib/graduation/exam-auth";
+import { loadGraduationTemplate } from "@/lib/graduation/load-template";
 import { computeExamResult, EXAM_SCORE_MAX, EXAM_SCORE_MIN, sheetEntries } from "@/lib/graduation/exam";
 import { loadCandidateScoringContext, loadCandidateSheet, loadExamEventRow, toScoreInput } from "@/lib/graduation/load-exam";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
@@ -316,7 +317,33 @@ export async function decideCandidate(
 
   const now = new Date().toISOString();
   let studentGradeId: string | null = null;
+  let skippedIds: string[] = [];
   if (decision === "PASSED") {
+    // Salto de grau: os graus entre o atual e o grau-alvo ficam registados como «obtidos por salto»,
+    // um pouco antes do grau-alvo para este continuar a ser o mais recente.
+    const skipped = await skippedGradesFor(supabase, data.candidate.studentId, data.event.modalityCode, data.sheet.targetGrade.id);
+    if (skipped.length > 0) {
+      const base = new Date(now).getTime();
+      const { data: rows, error: skipErr } = await supabase
+        .from("StudentGrade")
+        .insert(
+          skipped.map((gradeId, i) => ({
+            studentId: data.candidate.studentId,
+            modalityCode: data.event.modalityCode,
+            gradeId,
+            source: "SKIPPED",
+            awardedAt: new Date(base - (skipped.length - i) * 1000).toISOString(),
+            awardedByUserId: auth.userId,
+            notes: `Obtido por salto — ${data.event.title}`,
+          }))
+        )
+        .select("id");
+      if (skipErr) {
+        console.error("decideCandidate skipped:", skipErr);
+        return { error: "Não foi possível atribuir os graus intermédios." };
+      }
+      skippedIds = (rows ?? []).map((r) => r.id as string);
+    }
     const { data: grade, error: gradeErr } = await supabase
       .from("StudentGrade")
       .insert({
@@ -332,6 +359,7 @@ export async function decideCandidate(
       .single();
     if (gradeErr || !grade) {
       console.error("decideCandidate grade:", gradeErr);
+      if (skippedIds.length) await supabase.from("StudentGrade").delete().in("id", skippedIds);
       return { error: "Não foi possível atribuir o grau." };
     }
     studentGradeId = grade.id;
@@ -351,7 +379,7 @@ export async function decideCandidate(
     .eq("status", "CONVOKED");
   if (error) {
     console.error("decideCandidate:", error);
-    if (studentGradeId) await supabase.from("StudentGrade").delete().eq("id", studentGradeId);
+    if (studentGradeId) await supabase.from("StudentGrade").delete().in("id", [studentGradeId, ...skippedIds]);
     return { error: "Não foi possível gravar o resultado." };
   }
 
@@ -370,5 +398,104 @@ export async function decideCandidate(
   }
 
   revalidatePath(`/coach/graduacao/${data.event.id}`);
+  return { success: true };
+}
+
+type AdminClient = NonNullable<ReturnType<typeof client>>;
+
+/** Índice do grau atual do aluno no template (-1 = sem graduação). */
+async function currentGradeIndex(supabase: AdminClient, studentId: string, modalityCode: string, gradeIds: string[]): Promise<number> {
+  const { data } = await supabase
+    .from("StudentGrade")
+    .select("gradeId")
+    .eq("studentId", studentId)
+    .eq("modalityCode", modalityCode)
+    .order("awardedAt", { ascending: false })
+    .limit(1);
+  const latest = data?.[0]?.gradeId as string | undefined;
+  return latest ? gradeIds.indexOf(latest) : -1;
+}
+
+/** Graus entre o atual e o grau-alvo (exclusive), por ordem. Vazio quando não há salto. */
+async function skippedGradesFor(supabase: AdminClient, studentId: string, modalityCode: string, targetGradeId: string): Promise<string[]> {
+  const template = await loadGraduationTemplate(supabase, modalityCode);
+  if (!template) return [];
+  const ids = template.grades.map((g) => g.id);
+  const targetIndex = ids.indexOf(targetGradeId);
+  const current = await currentGradeIndex(supabase, studentId, modalityCode, ids);
+  return targetIndex > current + 1 ? ids.slice(current + 1, targetIndex) : [];
+}
+
+/** Admin: muda o grau-alvo de um convocado (salto de grau; requisitos do grau-alvo dispensados). */
+export async function setCandidateTargetGrade(candidateId: string, gradeId: string, reason: string): Promise<ActionResult> {
+  const auth = await graduationAdminActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+
+  const { data: c } = await supabase.from("GraduationExamCandidate").select("eventId, studentId, status").eq("id", candidateId).maybeSingle();
+  if (!c) return { error: "Convocatória não encontrada." };
+  if (c.status !== "CONVOKED") return { error: "Este aluno já tem resultado." };
+  const { count } = await supabase.from("GraduationExamScore").select("candidateId", { count: "exact", head: true }).eq("candidateId", candidateId);
+  if ((count ?? 0) > 0) return { error: "O exame já tem notas — já não é possível mudar o grau-alvo." };
+
+  const event = await loadExamEventRow(supabase, c.eventId);
+  if (!event || event.status !== "SCHEDULED") return { error: "Este exame já não pode ser alterado." };
+  const template = await loadGraduationTemplate(supabase, event.modalityCode);
+  if (!template) return { error: "A modalidade não tem graduação configurada." };
+  const ids = template.grades.map((g) => g.id);
+  const targetIndex = ids.indexOf(gradeId);
+  const nextIndex = (await currentGradeIndex(supabase, c.studentId, event.modalityCode, ids)) + 1;
+  if (targetIndex < nextIndex) return { error: "O grau-alvo tem de ser o próximo grau ou acima." };
+
+  const isSkip = targetIndex > nextIndex;
+  const why = reason.trim().slice(0, 500);
+  if (isSkip && !why) return { error: "Indica o motivo do salto de grau." };
+
+  const { error } = await supabase
+    .from("GraduationExamCandidate")
+    .update({ gradeId, skipReason: isSkip ? why : null })
+    .eq("id", candidateId)
+    .eq("status", "CONVOKED");
+  if (error) return { error: "Não foi possível mudar o grau-alvo." };
+  revalidatePath(`/coach/graduacao/${c.eventId}`);
+  return { success: true };
+}
+
+/** Admin: prontidão manual (status null = volta a automático). */
+export async function setManualReadiness(input: {
+  studentId: string;
+  modalityCode: string;
+  status: "READY" | "NOT_READY" | null;
+  reason: string;
+  validUntil: string;
+}): Promise<ActionResult> {
+  const auth = await graduationAdminActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+  const { studentId, modalityCode, status } = input;
+  if (!studentId || !modalityCode) return { error: "Dados em falta." };
+
+  if (status === null) {
+    const { error } = await supabase.from("StudentGraduationReadiness").delete().eq("studentId", studentId).eq("modalityCode", modalityCode);
+    if (error) return { error: "Não foi possível guardar." };
+  } else {
+    if (status !== "READY" && status !== "NOT_READY") return { error: "Estado inválido." };
+    const reason = input.reason.trim().slice(0, 500);
+    if (!reason) return { error: "Indica o motivo (o aluno vai vê-lo)." };
+    const validUntil = input.validUntil.trim() || null;
+    if (validUntil && !/^\d{4}-\d{2}-\d{2}$/.test(validUntil)) return { error: "Data inválida." };
+    const { error } = await supabase.from("StudentGraduationReadiness").upsert(
+      { studentId, modalityCode, status, reason, validUntil, setByUserId: auth.userId, updatedAt: new Date().toISOString() },
+      { onConflict: "studentId,modalityCode" }
+    );
+    if (error) {
+      console.error("setManualReadiness:", error);
+      return { error: "Não foi possível guardar." };
+    }
+  }
+  revalidatePath("/admin/graduacao");
+  revalidatePath("/coach/graduacao");
   return { success: true };
 }

@@ -2,7 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadGraduationTemplate } from "./load-template";
-import { averageEvaluationScores, computeStudentProgress, type StudentProgress } from "./progress";
+import { averageEvaluationScores, computeStudentProgress, type ManualReadiness, type StudentProgress } from "./progress";
 import { fetchAllPages, inChunks } from "./queries";
 import type { GraduationTemplateDraft } from "./template";
 
@@ -35,6 +35,14 @@ export async function loadModalityReadiness(
 ): Promise<ModalityReadiness | null> {
   const template = await loadGraduationTemplate(supabase, modalityCode);
   if (!template || template.grades.length === 0) return null;
+
+  const { data: manualRows } = await supabase
+    .from("StudentGraduationReadiness")
+    .select("studentId, status, reason, validUntil")
+    .eq("modalityCode", modalityCode);
+  const manualByStudent = new Map<string, ManualReadiness>(
+    (manualRows ?? []).map((r) => [r.studentId as string, { status: r.status, reason: r.reason, validUntil: r.validUntil ?? null }])
+  );
 
   const [students, lessons, gradeRows] = await Promise.all([
     fetchAllPages<{ id: string; userId: string; primaryModality: string | null }>((from, to) =>
@@ -205,6 +213,7 @@ export async function loadModalityReadiness(
         courseNames,
         fulfilledRequirementIds: fulfilledSet,
         lastFailedExamAt: lastFailed ?? null,
+        manualReadiness: manualByStudent.get(s.id) ?? null,
         now,
       }),
     };

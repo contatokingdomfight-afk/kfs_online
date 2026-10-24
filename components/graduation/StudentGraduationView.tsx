@@ -66,6 +66,8 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
   const { progress } = graduation;
   const next = progress.next!;
   const total = progress.checks.length;
+  // Apto só por decisão do coach (não cumpre ainda todos os requisitos).
+  const manualReady = progress.manualReadiness?.status === "READY" && progress.doneCount < total;
 
   return (
     <>
@@ -86,6 +88,19 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
         </div>
         {next.objective && <p className="mb-0 mt-3 text-sm leading-relaxed text-text-primary">{next.objective}</p>}
 
+        {progress.manualReadiness?.status === "NOT_READY" && (
+          <div
+            className="mt-4 rounded-xl border p-3"
+            style={{ borderColor: "color-mix(in srgb, var(--danger) 45%, transparent)", background: "color-mix(in srgb, var(--danger) 8%, transparent)" }}
+          >
+            <p className="m-0 text-sm font-bold text-text-primary">O coach pediu mais algum tempo antes do exame.</p>
+            <p className="m-0 mt-0.5 text-sm text-text-primary">«{progress.manualReadiness.reason}»</p>
+            {progress.manualReadiness.validUntil && (
+              <p className="m-0 mt-1 text-xs text-text-secondary">Revisto até {formatDate(`${progress.manualReadiness.validUntil}T12:00:00Z`)}.</p>
+            )}
+          </div>
+        )}
+
         {progress.isReadyForExam ? (
           <div
             className="mt-4 flex gap-3 rounded-xl border p-3"
@@ -96,10 +111,13 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
           >
             <PartyPopper size={20} aria-hidden className="mt-0.5 shrink-0 text-success" />
             <div>
-              <p className="m-0 text-sm font-bold text-text-primary">Estás apto para o exame!</p>
+              <p className="m-0 text-sm font-bold text-text-primary">
+                {manualReady ? "O coach validou que estás pronto para o exame!" : "Estás apto para o exame!"}
+              </p>
+              {manualReady && <p className="m-0 mt-0.5 text-sm text-text-primary">«{progress.manualReadiness!.reason}»</p>}
               {graduation.openAgendaCount > 0 && !graduation.convocation ? (
                 <>
-                  <p className="m-0 mt-0.5 text-sm text-text-secondary">Cumpriste todos os requisitos. Já podes marcar o teu exame.</p>
+                  <p className="m-0 mt-0.5 text-sm text-text-secondary">{manualReady ? "" : "Cumpriste todos os requisitos. "}Já podes marcar o teu exame.</p>
                   <Link
                     href={`/dashboard/graduacao/agendar?m=${encodeURIComponent(graduation.modalityCode)}`}
                     className="btn btn-primary mt-3 inline-flex items-center gap-1 no-underline"
@@ -109,7 +127,8 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
                 </>
               ) : (
                 <p className="m-0 mt-0.5 text-sm text-text-secondary">
-                  Cumpriste todos os requisitos. {graduation.convocation ? "Já tens exame marcado." : "A academia vai convocar-te para o próximo exame de graduação."}
+                  {manualReady ? "" : "Cumpriste todos os requisitos. "}
+                  {graduation.convocation ? "Já tens exame marcado." : "A academia vai convocar-te para o próximo exame de graduação."}
                 </p>
               )}
             </div>

@@ -21,3 +21,12 @@ export async function graduationExamActionAuth(): Promise<{ userId: string } | {
   if (permErr) return { error: permErr };
   return { userId: dbUser.id };
 }
+
+/** Decisões só do admin (prontidão manual, salto de grau). */
+export async function graduationAdminActionAuth(): Promise<{ userId: string } | { error: string }> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Só o admin pode fazer isto." };
+  const permErr = await adminPermissionError("admin:alunos:write");
+  if (permErr) return { error: permErr };
+  return { userId: dbUser.id };
+}

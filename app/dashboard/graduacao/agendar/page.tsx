@@ -133,7 +133,9 @@ export default async function AgendarExamePage({ searchParams }: { searchParams:
             {pendingChecks.map((c) => (
               <li key={c.key} className="flex justify-between gap-3 border-b border-dashed border-border py-1.5 text-sm last:border-0">
                 <span className="text-text-primary">{c.label}</span>
-                <span className="text-right text-text-secondary">{c.detail}</span>
+                <span className="text-right text-text-secondary">
+                  {c.key === "coach" && progress.manualReadiness ? `Ainda não — «${progress.manualReadiness.reason}»` : c.detail}
+                </span>
               </li>
             ))}
           </ul>

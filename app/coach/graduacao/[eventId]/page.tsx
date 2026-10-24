@@ -11,6 +11,7 @@ import { ExamStatusChip, formatExamDate } from "@/components/graduation/ExamStat
 import { ConvocationPanel, type ConvocationOption } from "./ConvocationPanel";
 import { EventActions, RemoveCandidateButton } from "./EventActions";
 import { CandidateSlotSelect, RemindReadyButton } from "./SlotControls";
+import { TargetGradeControl, type TargetGradeOption } from "./TargetGradeControl";
 import { buildExamSlots, countBySlot, slotKey } from "@/lib/graduation/exam-slots";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ function formatTime(iso: string): string {
 }
 
 export default async function ExamEventPage({ params }: { params: Promise<{ eventId: string }> }) {
-  const { userId } = await requireGraduationExamPage();
+  const { userId, role } = await requireGraduationExamPage();
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
@@ -47,11 +48,21 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
       doneCount: s.progress.doneCount,
       total: s.progress.checks.length,
       pendingChecks: s.progress.checks
-        .filter((c) => c.status === "pending" && !c.key.startsWith("requirement:"))
+        .filter((c) => c.status === "pending" && !c.key.startsWith("requirement:") && c.key !== "coach")
         .map((c) => `${c.label} (${c.detail})`),
       pendingRequirements: s.pendingRequirements,
       otherConvocation: s.activeConvocation && s.activeConvocation.eventId !== eventId ? s.activeConvocation.title : null,
+      manual: s.progress.manualReadiness ? { status: s.progress.manualReadiness.status, reason: s.progress.manualReadiness.reason } : null,
     }));
+
+  // Salto de grau (só admin): graus possíveis por convocado = do próximo grau para cima.
+  const grades = detail.template?.grades ?? [];
+  const nextIdByStudent = new Map((readiness?.students ?? []).map((s) => [s.studentId, s.progress.next?.id ?? null]));
+  const targetOptionsFor = (studentId: string): TargetGradeOption[] => {
+    const nextId = nextIdByStudent.get(studentId);
+    const from = nextId ? grades.findIndex((g) => g.id === nextId) : -1;
+    return from < 0 ? [] : grades.slice(from).map((g) => ({ id: g.id, name: g.name, colors: g.colors }));
+  };
 
   const pending = candidates.filter((c) => c.status === "CONVOKED").length;
 
@@ -159,6 +170,7 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
                     </div>
                     <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
                       Para {c.gradeName}
+                      {c.skipReason && <span style={{ color: "var(--warning)", fontWeight: 700 }}> · ⬆ salto de grau — «{c.skipReason}»</span>}
                       {!decided && total > 0 && ` · as tuas notas: ${c.myScoredCount}/${total}`}
                       {!decided && c.result && c.result.examinerCount > 1 && ` · ${c.result.examinerCount} avaliadores`}
                       {!decided && c.result?.isComplete && (c.result.passed ? " · cumpre o critério" : " · não cumpre o critério")}
@@ -183,6 +195,15 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
                     </Link>
                     {!decided && isOpen && c.myScoredCount === 0 && <RemoveCandidateButton candidateId={c.id} name={c.studentName} />}
                   </div>
+                  {role === "ADMIN" && !decided && isOpen && c.myScoredCount === 0 && (
+                    <TargetGradeControl
+                      candidateId={c.id}
+                      studentName={c.studentName}
+                      currentTargetId={c.gradeId}
+                      currentReason={c.skipReason}
+                      options={targetOptionsFor(c.studentId)}
+                    />
+                  )}
                 </li>
               );
             })}

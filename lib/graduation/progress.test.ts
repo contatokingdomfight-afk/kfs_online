@@ -152,6 +152,21 @@ describe("computeStudentProgress", () => {
     expect(allowed.isReadyForExam).toBe(true);
   });
 
+  it("applies the admin's manual readiness while it is valid", () => {
+    const ready = { attendanceDates: attendances(3, 4), lastPhysicalAssessmentAt: NOW };
+    const blocked = computeStudentProgress(input({ ...ready, manualReadiness: { status: "NOT_READY", reason: "Guarda", validUntil: null } }));
+    expect(blocked.isReadyForExam).toBe(false);
+    expect(blocked.checks.at(-1)).toMatchObject({ key: "coach", status: "pending" });
+    expect(blocked.manualReadiness?.reason).toBe("Guarda");
+
+    const forced = computeStudentProgress(input({ manualReadiness: { status: "READY", reason: "Validado", validUntil: "2026-10-31" } }));
+    expect(forced.isReadyForExam).toBe(true);
+
+    const expired = computeStudentProgress(input({ manualReadiness: { status: "READY", reason: "Validado", validUntil: "2026-10-01" } }));
+    expect(expired.isReadyForExam).toBe(false);
+    expect(expired.manualReadiness).toBeNull();
+  });
+
   it("has no next grade at the top of the template", () => {
     const p = computeStudentProgress(input({ currentGradeIndex: 9, lastAwardedAt: NOW }));
     expect(p.current?.name).toBe("Preto/Prata/Branco/Vermelho");

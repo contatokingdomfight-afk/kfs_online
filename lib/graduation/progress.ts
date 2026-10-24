@@ -7,6 +7,8 @@
  * - Tempo: conta meses com pelo menos N presenças confirmadas na modalidade. Exige-se o mínimo
  *   do grau desde a última graduação E o acumulado (soma dos mínimos até ao grau) desde sempre.
  * - O exame é cumulativo: avalia os itens do próximo grau e de todos os graus anteriores.
+ * - Prontidão manual do admin (enquanto válida) sobrepõe-se: READY fica apto mesmo sem cumprir
+ *   tudo; NOT_READY acrescenta o requisito "Avaliação do coach" por cumprir.
  */
 
 import { EXAM_RETAKE_MIN_MONTHS, retakeAvailableFrom } from "./exam";
@@ -21,7 +23,7 @@ import {
 export type ProgressCheckStatus = "done" | "pending";
 
 export type ProgressCheck = {
-  key: "retake" | "time" | "accumulated" | "attendances" | "performance" | "physical" | `course:${string}` | `requirement:${string}`;
+  key: "retake" | "time" | "accumulated" | "attendances" | "performance" | "physical" | "coach" | `course:${string}` | `requirement:${string}`;
   label: string;
   status: ProgressCheckStatus;
   /** Texto curto do estado atual (ex.: "2 de 3 meses"). */
@@ -56,8 +58,24 @@ export type StudentProgressInput = {
   fulfilledRequirementIds: Set<string>;
   /** Última reprovação no exame do próximo grau (aplica o intervalo mínimo antes de repetir). */
   lastFailedExamAt?: Date | null;
+  /** Decisão manual do admin (ignorada depois de validUntil). */
+  manualReadiness?: ManualReadiness | null;
   now: Date;
 };
+
+export type ManualReadiness = {
+  status: "READY" | "NOT_READY";
+  reason: string;
+  /** YYYY-MM-DD (inclusive); null = sem prazo. */
+  validUntil: string | null;
+};
+
+/** A decisão manual ainda vale (até ao fim do dia validUntil, hora de Lisboa ≈ UTC+1 no máximo). */
+export function isManualReadinessActive(r: ManualReadiness | null | undefined, now: Date): r is ManualReadiness {
+  if (!r) return false;
+  if (!r.validUntil) return true;
+  return now.getTime() < new Date(`${r.validUntil}T23:59:59Z`).getTime();
+}
 
 export type CumulativeGradeItems = {
   gradeId: string;
@@ -75,6 +93,8 @@ export type StudentProgress = {
   recommendedCourses: { courseId: string; name: string; completed: boolean }[];
   doneCount: number;
   isReadyForExam: boolean;
+  /** Decisão manual do admin em vigor (null = automático). */
+  manualReadiness: ManualReadiness | null;
   qualifyingMonthsTotal: number;
   qualifyingMonthsSinceLastGrade: number;
   /** Itens novos do próximo grau. */
@@ -129,6 +149,7 @@ export function computeStudentProgress(input: StudentProgressInput): StudentProg
       recommendedCourses: [],
       doneCount: 0,
       isReadyForExam: false,
+      manualReadiness: null,
       qualifyingMonthsTotal,
       qualifyingMonthsSinceLastGrade,
       newItems: [],
@@ -235,6 +256,11 @@ export function computeStudentProgress(input: StudentProgressInput): StudentProg
     });
   }
 
+  const manual = isManualReadinessActive(input.manualReadiness, input.now) ? input.manualReadiness : null;
+  if (manual?.status === "NOT_READY") {
+    checks.push({ key: "coach", label: "Avaliação do coach", status: "pending", detail: "Ainda não" });
+  }
+
   const doneCount = checks.filter((c) => c.status === "done").length;
 
   const reviewGrades: CumulativeGradeItems[] = grades
@@ -254,7 +280,8 @@ export function computeStudentProgress(input: StudentProgressInput): StudentProg
         completed: input.completedCourseIds.has(c.courseId),
       })),
     doneCount,
-    isReadyForExam: doneCount === checks.length,
+    isReadyForExam: manual?.status === "READY" || doneCount === checks.length,
+    manualReadiness: manual,
     qualifyingMonthsTotal,
     qualifyingMonthsSinceLastGrade,
     newItems: next.items,

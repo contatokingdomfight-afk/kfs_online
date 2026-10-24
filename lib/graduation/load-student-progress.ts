@@ -3,7 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadGraduationTemplate } from "./load-template";
 import { selectGraduationModalities } from "./modality-selection";
-import { averageEvaluationScores, computeStudentProgress, type StudentProgress } from "./progress";
+import { averageEvaluationScores, computeStudentProgress, type ManualReadiness, type StudentProgress } from "./progress";
 
 /** Últimas N avaliações de performance usadas na média (igual ao radar). */
 const PERFORMANCE_LAST_N = 10;
@@ -114,7 +114,7 @@ export async function loadStudentGraduations(
       });
   if (codes.length === 0) return [];
 
-  const [templatesFull, { data: athlete }, { data: physical }, { data: completions }, { data: fulfilled }, { data: candidates }, { data: openAgendas }] =
+  const [templatesFull, { data: athlete }, { data: physical }, { data: completions }, { data: fulfilled }, { data: candidates }, { data: openAgendas }, { data: manualRows }] =
     await Promise.all([
     Promise.all(codes.map((code) => loadGraduationTemplate(supabase, code))),
     supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle(),
@@ -139,7 +139,11 @@ export async function loadStudentGraduations(
       .eq("status", "SCHEDULED")
       .eq("selfBooking", true)
       .gt("endsAt", now.toISOString()),
+    supabase.from("StudentGraduationReadiness").select("modalityCode, status, reason, validUntil").eq("studentId", studentId),
   ]);
+  const manualByModality = new Map<string, ManualReadiness>(
+    (manualRows ?? []).map((r) => [r.modalityCode as string, { status: r.status, reason: r.reason, validUntil: r.validUntil ?? null }])
+  );
 
   const examEventIds = [...new Set((candidates ?? []).map((c) => c.eventId as string))];
   const { data: examEvents } = examEventIds.length
@@ -239,6 +243,7 @@ export async function loadStudentGraduations(
         courseNames,
         fulfilledRequirementIds,
         lastFailedExamAt: lastFailedExamAt ?? null,
+        manualReadiness: manualByModality.get(code) ?? null,
         now,
       }),
     });

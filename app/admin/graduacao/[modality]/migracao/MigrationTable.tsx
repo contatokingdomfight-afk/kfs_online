@@ -130,5 +130,5 @@ function isLocked(r: MigrationRow): boolean {
 }
 
 function sourceLabel(source: string): string {
-  return source === "EXAM" ? "exame" : source === "MIGRATION" ? "migração" : "atribuição manual";
+  return source === "EXAM" ? "exame" : source === "MIGRATION" ? "migração" : source === "SKIPPED" ? "salto de grau" : "atribuição manual";
 }

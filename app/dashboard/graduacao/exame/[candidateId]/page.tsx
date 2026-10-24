@@ -41,6 +41,23 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
   const result = candidate.result as ExamResult | null;
   const passed = candidate.status === "PASSED";
 
+  // Salto de grau: graus intermédios atribuídos no mesmo momento da aprovação.
+  let skippedNames: string[] = [];
+  if (passed && event && candidate.decidedAt) {
+    const decided = new Date(candidate.decidedAt).getTime();
+    const { data: skipped } = await supabase
+      .from("StudentGrade")
+      .select("gradeId")
+      .eq("studentId", studentId)
+      .eq("modalityCode", event.modalityCode)
+      .eq("source", "SKIPPED")
+      .gte("awardedAt", new Date(decided - 10 * 60_000).toISOString())
+      .lte("awardedAt", candidate.decidedAt)
+      .order("awardedAt", { ascending: true });
+    const nameById = new Map((template?.grades ?? []).map((g) => [g.id, g.name]));
+    skippedNames = (skipped ?? []).map((s) => nameById.get(s.gradeId as string) ?? "Grau");
+  }
+
   return (
     <div className="mx-auto w-full max-w-[680px] py-4 sm:py-6">
       <Link href="/dashboard/graduacao" className="mb-4 inline-block text-sm font-medium text-text-secondary no-underline hover:text-text-primary">
@@ -68,7 +85,7 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
           <p className="m-0 text-base font-bold text-text-primary">{passed ? `Parabéns, agora és ${grade?.name}!` : "Ainda não foi desta."}</p>
           <p className="m-0 mt-1 text-sm text-text-secondary">
             {passed
-              ? "O teu novo grau já aparece na tua graduação, com o próximo objetivo."
+              ? `${skippedNames.length ? `Saltaste ${skippedNames.length === 1 ? "um grau" : `${skippedNames.length} graus`}: ${skippedNames.join(", ")} ${skippedNames.length === 1 ? "fica registado" : "ficam registados"} como obtido por salto. ` : ""}O teu novo grau já aparece na tua graduação, com o próximo objetivo.`
               : candidate.decidedAt
                 ? `Usa as notas e o feedback para te preparares. Podes voltar a fazer o exame a partir de ${formatExamDate(
                     retakeAvailableFrom(new Date(candidate.decidedAt)).toISOString(),

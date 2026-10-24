@@ -41,6 +41,8 @@ export type ExamCandidateRow = {
   myScoredCount: number;
   slotStartsAt: string | null;
   bookedByStudent: boolean;
+  /** Preenchido = salto de grau decidido pelo admin. */
+  skipReason: string | null;
 };
 
 type ScoreRow = ExamScoreRowView & { candidateId: string };
@@ -83,7 +85,7 @@ export async function loadExamEventDetail(
     loadGraduationTemplate(supabase, event.modalityCode),
     supabase
       .from("GraduationExamCandidate")
-      .select("id, studentId, gradeId, status, feedback, decidedAt, result, slotStartsAt, bookedByStudent")
+      .select("id, studentId, gradeId, status, feedback, decidedAt, result, slotStartsAt, bookedByStudent, skipReason")
       .eq("eventId", eventId)
       .order("createdAt", { ascending: true }),
   ]);
@@ -123,6 +125,7 @@ export async function loadExamEventDetail(
       myScoredCount: mine.filter((s) => s.examinerUserId === examinerUserId && s.score != null).length,
       slotStartsAt: (c.slotStartsAt as string | null) ?? null,
       bookedByStudent: Boolean(c.bookedByStudent),
+      skipReason: (c.skipReason as string | null) ?? null,
     };
   });
 
