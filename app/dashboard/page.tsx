@@ -41,6 +41,7 @@ import { PendingAdesaoCard } from "./PendingAdesaoCard";
 import { TrainingLoadAlert } from "./TrainingLoadAlert";
 import { HomeRpePrompt } from "./HomeRpePrompt";
 import { HomeOrderStatus } from "./HomeOrderStatus";
+import { HomeExamStatus } from "./HomeExamStatus";
 import { HomeWellnessPrompt } from "./HomeWellnessPrompt";
 import { PendingAdesaoClickGuard } from "./PendingAdesaoClickGuard";
 
@@ -352,6 +353,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {studentId && (
         <Suspense fallback={null}>
           <HomeOrderStatus studentId={studentId} />
+        </Suspense>
+      )}
+      {studentId && hasPlan && (
+        <Suspense fallback={null}>
+          <HomeExamStatus studentId={studentId} />
         </Suspense>
       )}
       {studentId && hasPlan && effectiveHasCheckIn && (

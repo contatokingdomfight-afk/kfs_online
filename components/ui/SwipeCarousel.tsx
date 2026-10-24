@@ -69,6 +69,20 @@ export function SwipeCarousel({
     if (active > count - 1) setActive(Math.max(0, count - 1));
   }, [active, count]);
 
+  // A faixa acompanha a altura do painel visível (sem isto fica com a altura do painel mais alto
+  // e sobra um espaço vazio por baixo dos painéis curtos).
+  const [height, setHeight] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    const panel = scrollerRef.current?.children[active] as HTMLElement | undefined;
+    if (!panel) return;
+    // + pb-1.5 (6px) da faixa, para não cortar a sombra.
+    const update = () => setHeight(panel.offsetHeight + 6);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, [active, count]);
+
   if (count === 0) return null;
 
   return (
@@ -126,7 +140,8 @@ export function SwipeCarousel({
       <div
         ref={scrollerRef}
         onScroll={onScroll}
-        className="swipe-carousel-scroll -mx-4 flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-smooth px-4 pb-1.5 [scroll-padding-inline:1rem]"
+        className="swipe-carousel-scroll -mx-4 flex snap-x snap-mandatory items-start gap-3 overflow-x-auto overflow-y-hidden scroll-smooth px-4 pb-1.5 [scroll-padding-inline:1rem]"
+        style={{ height, transition: "height 200ms ease" }}
       >
         {panels.map((p, i) => (
           <div
