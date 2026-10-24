@@ -373,7 +373,7 @@ function ConvocationBanner({
       <p className={eyebrow} id="convocatoria" style={{ color: "var(--primary)" }}>
         Estás convocado
       </p>
-      <p className="m-0 mt-2 text-lg font-bold text-text-primary">Exame para {convocation.gradeName}</p>
+      <p className="m-0 mt-2 text-lg font-bold text-text-primary">{convocation.isPlacement ? "Exame de nivelamento" : `Exame para ${convocation.gradeName}`}</p>
       <p className="m-0 mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-secondary">
         <span className="inline-flex items-center gap-1">
           <CalendarDays size={14} aria-hidden /> {formatExamDate(convocation.slotStartsAt ?? convocation.scheduledAt)}
@@ -412,7 +412,13 @@ function ExamHistory({ entries }: { entries: StudentExamHistoryEntry[] }) {
                 <span className="block break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">{e.gradeName}</span>
                 <span className="block text-xs text-text-secondary">{formatExamDate(e.scheduledAt, false)}</span>
               </span>
-              <ExamStatusChip status={e.status} />
+              {e.isPlacement && e.status !== "ABSENT" ? (
+                <span className="whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold text-primary" style={{ background: "color-mix(in srgb, var(--primary) 14%, transparent)" }}>
+                  Nivelamento
+                </span>
+              ) : (
+                <ExamStatusChip status={e.status} />
+              )}
               {e.status !== "ABSENT" && <ChevronRight size={16} aria-hidden className="shrink-0 text-text-secondary" />}
             </>
           );

@@ -6,7 +6,7 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { retakeAvailableFrom, sheetEntries, type ExamResult } from "@/lib/graduation/exam";
 import { loadGraduationTemplate } from "@/lib/graduation/load-template";
-import { sheetForGrade } from "@/lib/graduation/load-exam";
+import { sheetForCandidate } from "@/lib/graduation/load-exam";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { ExamResultBreakdown, type ExamScoreRowView } from "@/components/graduation/ExamResultBreakdown";
 import { ExamStatusChip, formatExamDate } from "@/components/graduation/ExamStatusChip";
@@ -22,7 +22,7 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
   const { candidateId } = await params;
   const { data: candidate } = await supabase
     .from("GraduationExamCandidate")
-    .select("id, eventId, studentId, gradeId, status, feedback, result, decidedAt")
+    .select("id, eventId, studentId, gradeId, status, feedback, result, decidedAt, mode, placementStartGradeId, placementAwardedGradeId")
     .eq("id", candidateId)
     .maybeSingle();
   // Só o próprio aluno vê o seu exame, e só depois de decidido.
@@ -30,14 +30,15 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
 
   const [{ data: event }, { data: grade }, { data: scoreRows }] = await Promise.all([
     supabase.from("GraduationExamEvent").select("title, scheduledAt, modalityCode").eq("id", candidate.eventId).maybeSingle(),
-    supabase.from("GraduationGrade").select("name, colors").eq("id", candidate.gradeId).maybeSingle(),
+    supabase.from("GraduationGrade").select("name, colors").eq("id", (candidate.placementAwardedGradeId as string | null) ?? candidate.gradeId).maybeSingle(),
     supabase
       .from("GraduationExamScore")
       .select("scoreKey, examinerUserId, section, axis, label, isCritical, score, comment")
       .eq("candidateId", candidateId),
   ]);
   const template = event ? await loadGraduationTemplate(supabase, event.modalityCode) : null;
-  const sheet = template ? sheetForGrade(template, candidate.gradeId) : null;
+  const sheet = template ? sheetForCandidate(template, candidate) : null;
+  const isPlacement = candidate.mode === "PLACEMENT";
   const result = candidate.result as ExamResult | null;
   const passed = candidate.status === "PASSED";
 
@@ -50,7 +51,7 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
       .select("gradeId")
       .eq("studentId", studentId)
       .eq("modalityCode", event.modalityCode)
-      .eq("source", "SKIPPED")
+      .eq("source", isPlacement ? "PLACEMENT" : "SKIPPED")
       .gte("awardedAt", new Date(decided - 10 * 60_000).toISOString())
       .lte("awardedAt", candidate.decidedAt)
       .order("awardedAt", { ascending: true });
@@ -65,8 +66,8 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
       </Link>
 
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="m-0 text-2xl font-bold text-text-primary">Exame: {grade?.name ?? "Grau"}</h1>
-        <ExamStatusChip status={candidate.status} />
+        <h1 className="m-0 text-2xl font-bold text-text-primary">{isPlacement ? "Nivelamento" : `Exame: ${grade?.name ?? "Grau"}`}</h1>
+        {!isPlacement && <ExamStatusChip status={candidate.status} />}
       </div>
       <p className="m-0 mt-1 flex items-center gap-2 text-sm text-text-secondary">
         <BeltSwatch colors={(grade?.colors as string[] | null) ?? []} width={32} height={10} />
@@ -82,9 +83,21 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
       >
         {passed && <PartyPopper size={22} aria-hidden className="mt-0.5 shrink-0 text-success" />}
         <div>
-          <p className="m-0 text-base font-bold text-text-primary">{passed ? `Parabéns, agora és ${grade?.name}!` : "Ainda não foi desta."}</p>
+          <p className="m-0 text-base font-bold text-text-primary">
+            {isPlacement
+              ? passed
+                ? `Começas em ${grade?.name}!`
+                : "Ainda sem grau novo"
+              : passed
+                ? `Parabéns, agora és ${grade?.name}!`
+                : "Ainda não foi desta."}
+          </p>
           <p className="m-0 mt-1 text-sm text-text-secondary">
-            {passed
+            {isPlacement
+              ? passed
+                ? `${skippedNames.length ? `${skippedNames.join(", ")} ${skippedNames.length === 1 ? "fica registado" : "ficam registados"} como obtido por nivelamento. ` : ""}O teu grau já aparece na tua graduação, com o próximo objetivo.`
+                : "Usa as notas e o feedback para te preparares. Os requisitos do próximo exame contam a partir de agora."
+              : passed
               ? `${skippedNames.length ? `Saltaste ${skippedNames.length === 1 ? "um grau" : `${skippedNames.length} graus`}: ${skippedNames.join(", ")} ${skippedNames.length === 1 ? "fica registado" : "ficam registados"} como obtido por salto. ` : ""}O teu novo grau já aparece na tua graduação, com o próximo objetivo.`
               : candidate.decidedAt
                 ? `Usa as notas e o feedback para te preparares. Podes voltar a fazer o exame a partir de ${formatExamDate(

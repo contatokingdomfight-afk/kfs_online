@@ -121,7 +121,7 @@ export async function loadModalityReadiness(
     inChunks(
       ids,
       async (chunk) =>
-        (await supabase.from("GraduationExamCandidate").select("studentId, gradeId, status, decidedAt, eventId").in("studentId", chunk)).data ?? []
+        (await supabase.from("GraduationExamCandidate").select("studentId, gradeId, status, decidedAt, eventId, mode").in("studentId", chunk)).data ?? []
     ),
   ]);
 
@@ -186,7 +186,7 @@ export async function loadModalityReadiness(
     const evals = athleteId ? evalsByAthlete.get(athleteId) ?? [] : [];
     const studentCandidates = candidates.filter((c) => c.studentId === s.id && eventById.get(c.eventId)?.modalityCode === modalityCode);
     const lastFailed = studentCandidates
-      .filter((c) => c.status === "FAILED" && next && c.gradeId === next.id && c.decidedAt)
+      .filter((c) => c.status === "FAILED" && c.mode !== "PLACEMENT" && next && c.gradeId === next.id && c.decidedAt)
       .map((c) => new Date(c.decidedAt as string))
       .sort((a, b) => b.getTime() - a.getTime())[0];
     const active = studentCandidates.find((c) => c.status === "CONVOKED" && eventById.get(c.eventId)?.status === "SCHEDULED");

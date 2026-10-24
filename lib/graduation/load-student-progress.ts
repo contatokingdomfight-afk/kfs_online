@@ -28,6 +28,8 @@ export type StudentModalityGraduation = {
     slotStartsAt: string | null;
     /** O dia de exame aceita marcações/trocas pelo aluno. */
     selfBooking: boolean;
+    /** Exame de nivelamento. */
+    isPlacement: boolean;
   } | null;
   /** Dias de exame com marcação pelo aluno abertos nesta modalidade. */
   openAgendaCount: number;
@@ -42,6 +44,8 @@ export type StudentExamHistoryEntry = {
   gradeName: string;
   gradeColors: string[];
   status: "PASSED" | "FAILED" | "ABSENT";
+  /** Exame de nivelamento (gradeName = grau atribuído). */
+  isPlacement: boolean;
 };
 
 /**
@@ -129,7 +133,7 @@ export async function loadStudentGraduations(
     supabase.from("StudentGraduationRequirement").select("requirementId").eq("studentId", studentId),
     supabase
       .from("GraduationExamCandidate")
-      .select("id, eventId, gradeId, status, decidedAt, slotStartsAt, bookedByStudent")
+      .select("id, eventId, gradeId, status, decidedAt, slotStartsAt, bookedByStudent, mode, placementAwardedGradeId")
       .eq("studentId", studentId),
     // Dias de exame com marcação pelo aluno ainda por acontecer.
     supabase
@@ -193,7 +197,7 @@ export async function loadStudentGraduations(
       .filter((c) => c.event?.modalityCode === code);
     const convocationRow = modalityCandidates.find((c) => c.status === "CONVOKED" && c.event?.status === "SCHEDULED");
     const lastFailedExamAt = modalityCandidates
-      .filter((c) => c.status === "FAILED" && nextGrade && c.gradeId === nextGrade.id && c.decidedAt)
+      .filter((c) => c.status === "FAILED" && c.mode !== "PLACEMENT" && nextGrade && c.gradeId === nextGrade.id && c.decidedAt)
       .map((c) => new Date(c.decidedAt as string))
       .sort((a, b) => b.getTime() - a.getTime())[0];
     const examHistory: StudentExamHistoryEntry[] = modalityCandidates
@@ -202,8 +206,10 @@ export async function loadStudentGraduations(
         candidateId: c.id as string,
         eventTitle: c.event!.title,
         scheduledAt: c.event!.scheduledAt,
-        gradeName: gradeById.get(c.gradeId)?.name ?? "Grau",
-        gradeColors: gradeById.get(c.gradeId)?.colors ?? [],
+        gradeName:
+          c.mode === "PLACEMENT" && !c.placementAwardedGradeId ? "Sem grau novo" : gradeById.get((c.placementAwardedGradeId as string | null) ?? c.gradeId)?.name ?? "Grau",
+        gradeColors: gradeById.get((c.placementAwardedGradeId as string | null) ?? c.gradeId)?.colors ?? [],
+        isPlacement: c.mode === "PLACEMENT",
         status: c.status as StudentExamHistoryEntry["status"],
       }))
       .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt));
@@ -218,6 +224,7 @@ export async function loadStudentGraduations(
               gradeName: gradeById.get(convocationRow.gradeId)?.name ?? "Grau",
               slotStartsAt: (convocationRow.slotStartsAt as string | null) ?? null,
               selfBooking: Boolean(convocationRow.event.selfBooking),
+              isPlacement: convocationRow.mode === "PLACEMENT",
             }
           : null,
       openAgendaCount: (openAgendas ?? []).filter((e) => e.modalityCode === code).length,

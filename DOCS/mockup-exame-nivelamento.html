@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Exame de nivelamento</title>
+<style>
+  :root {
+    --bg: #0b0b0b; --bg-secondary: #141414; --bg-elevated: #1a1a1a;
+    --text-primary: #fff; --text-secondary: #a1a1aa; --primary: #c1121f;
+    --success: #22c55e; --warning: #facc15; --border: #27272a;
+    --font: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+  .meta { max-width: 1240px; margin: 0 auto; padding: 28px 16px 0; }
+  .badge { display: inline-flex; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: rgba(193,18,31,.15); color: #ff6b73; text-transform: uppercase; letter-spacing: .5px; }
+  .meta h1 { font-size: 22px; margin: 12px 0 6px; }
+  .meta p, .meta li { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
+  .meta p { max-width: 800px; margin: 0; } .meta ul { margin: 8px 0 0; padding-left: 18px; max-width: 800px; }
+  .switcher { max-width: 1240px; margin: 20px auto 0; padding: 0 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .sw { font: 600 13px var(--font); padding: 9px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; }
+  .sw.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .stage { max-width: 1240px; margin: 16px auto 60px; padding: 0 16px; display: flex; gap: 24px; align-items: flex-start; }
+  .col-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+  .desk-wrap { flex: 1; min-width: 0; } .phone-wrap { width: 375px; flex-shrink: 0; }
+  @media (max-width: 1000px) { .stage { flex-direction: column; } .phone-wrap { width: 100%; max-width: 375px; } .desk-wrap { width: 100%; } }
+  .browser { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--bg); }
+  .bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #3a3a3a; }
+  .url { flex: 1; font: 12px Consolas, monospace; color: var(--text-secondary); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; margin-left: 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .phone { border: 10px solid #222; border-radius: 36px; overflow: hidden; background: var(--bg); height: 800px; display: flex; flex-direction: column; }
+  .phone .scroll { flex: 1; overflow-y: auto; }
+  .phone .notch { height: 26px; display: flex; justify-content: center; align-items: center; } .phone .notch span { width: 90px; height: 6px; border-radius: 4px; background: #222; }
+  .desk .app { padding: 24px 28px 32px; min-height: 680px; } .phone .app { padding: 14px 14px 24px; }
+
+  .crumb { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  h2 { font-size: 22px; margin: 0 0 4px; } .phone h2 { font-size: 19px; }
+  .sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 18px; line-height: 1.5; }
+  .card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .card h3 { font-size: 14px; margin: 0 0 10px; }
+  .muted { color: var(--text-secondary); font-size: 12.5px; }
+  .belt { width: 36px; height: 11px; border-radius: 3px; flex-shrink: 0; display: inline-block; vertical-align: middle; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .ok { background: rgba(34,197,94,.14); color: #4ade80; } .warn { background: rgba(250,204,21,.14); color: #fde047; }
+  .red { background: rgba(193,18,31,.18); color: #ff6b73; } .grey { background: #222; color: var(--text-secondary); }
+  .blue { background: rgba(59,130,246,.16); color: #93c5fd; }
+  .btn { font: 600 13px var(--font); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-elevated); color: #fff; cursor: pointer; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); } .btn.block { width: 100%; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; } .between { justify-content: space-between; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } .phone .two { grid-template-columns: 1fr; }
+  .req { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 7px 0; border-bottom: 1px dashed var(--border); align-items: center; } .req:last-child { border: 0; }
+  .ok-t { color: #4ade80; } .bad-t { color: #ff6b73; }
+  .gopt { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); font-size: 13px; cursor: pointer; }
+  .gopt.sel { border-color: var(--primary); background: rgba(193,18,31,.08); }
+  .gopt .tag { margin-left: auto; }
+  .radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
+  .gopt.sel .radio { border-color: var(--primary); background: radial-gradient(var(--primary) 45%, transparent 50%); }
+  .stack { display: flex; flex-direction: column; gap: 6px; }
+  .field { margin: 12px 0 0; } .field label { display: block; font-size: 11.5px; color: var(--text-secondary); margin-bottom: 5px; font-weight: 600; }
+  .input { width: 100%; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: #fff; font: 13px var(--font); min-height: 38px; }
+  .note { font-size: 12px; color: var(--text-secondary); border-radius: 10px; padding: 10px 12px; margin-top: 10px; line-height: 1.5; }
+  .note.y { background: rgba(250,204,21,.06); border: 1px solid rgba(250,204,21,.25); }
+  .note.g { background: rgba(34,197,94,.06); border: 1px solid rgba(34,197,94,.3); }
+  .note.b { background: rgba(59,130,246,.06); border: 1px solid rgba(59,130,246,.3); }
+
+  /* folha grau a grau */
+  .steps { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .step { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); }
+  .step.done { border-color: rgba(34,197,94,.4); color: #4ade80; }
+  .step.cur { border-color: var(--primary); color: #fff; background: rgba(193,18,31,.12); }
+  .step.lock { opacity: .45; }
+  .item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .item:last-child { border: 0; }
+  .item .lbl { font-size: 13px; margin-bottom: 8px; display: flex; gap: 6px; align-items: center; }
+  .scores { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .sc { text-align: center; padding: 8px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font-weight: 700; font-size: 13px; color: var(--text-secondary); }
+  .sc.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .axis { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-secondary); margin: 14px 0 2px; }
+  .sticky { position: sticky; bottom: 0; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin-top: 10px; box-shadow: 0 -8px 24px rgba(0,0,0,.4); }
+  .axes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  .phone .axes { grid-template-columns: repeat(2, 1fr); }
+  .ax { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 11.5px; }
+  .ax b { display: block; font-size: 15px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  td, th { padding: 9px 6px; border-bottom: 1px solid var(--border); text-align: left; }
+  th { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .4px; }
+  .phone .hide-m { display: none; }
+  .hero { text-align: center; padding: 22px 16px; }
+  .hero .big { font-size: 26px; font-weight: 800; margin: 10px 0 4px; }
+  .tl { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 6px 0; }
+</style>
+</head>
+<body>
+<div class="meta">
+  <span class="badge">Mockup · Graduação</span>
+  <h1>Exame de nivelamento (aluno vindo de outra escola)</h1>
+  <p>Em vez de testar <i>um</i> grau, o avaliador vai <b>grau a grau</b> desde o primeiro e avança enquanto o aluno cumprir o critério. A plataforma propõe <b>o último grau cumprido</b> e o admin <b>confirma ou ajusta</b> o grau atribuído.</p>
+  <ul>
+    <li>Só o <b>admin</b> convoca para nivelamento; não exige requisitos (presenças/tempo) — o aluno é novo na plataforma.</li>
+    <li>Cada grau é avaliado com os seus itens 1 a 1; só se avança para o grau seguinte quando o atual está completo e cumprido. O avaliador pode <b>parar a qualquer momento</b>.</li>
+    <li>Sem «reprovação»: não ativa os 2 meses de intervalo nem dá o XP de «exame feito»; dá XP de «exame aprovado» se ficar com grau.</li>
+    <li>Graus abaixo do atribuído ficam registados como <b>«obtido por nivelamento»</b>.</li>
+  </ul>
+</div>
+<div class="switcher" id="sw"></div>
+<div class="stage">
+  <div class="desk-wrap">
+    <div class="col-label">Desktop</div>
+    <div class="browser desk"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url" id="url-d"></span></div><div class="app" id="desk"></div></div>
+  </div>
+  <div class="phone-wrap">
+    <div class="col-label">Telemóvel</div>
+    <div class="phone"><div class="notch"><span></span></div><div class="scroll"><div class="app" id="phone"></div></div></div>
+  </div>
+</div>
+
+<script>
+const G = [
+  ['Branco', '#e5e7eb'], ['Amarelo', '#eab308'], ['Laranja', '#f97316'], ['Verde', '#16a34a'], ['Azul', '#2563eb'],
+];
+const belt = (c) => `<span class="belt" style="background:${c}"></span>`;
+const header = (crumb, title, sub) => `<div class="crumb">${crumb}</div><h2>${title}</h2><p class="sub">${sub}</p>`;
+const st = { target: 'level', award: 1 };
+
+/* ---------- 1. Convocar: tipo de exame ---------- */
+const convoke = () => `
+  ${header('Coach › Graduação › Muay Thai · Sáb 08 Nov', 'Tiago Rocha · tipo de exame', 'Aluno novo (vem da Academia X). Atual: sem graduação.')}
+  <div class="two">
+    <div class="card"><h3>O que vai ser avaliado?</h3>
+      <div class="stack">
+        <div class="gopt ${st.target === 'level' ? 'sel' : ''}" data-target="level"><span class="radio"></span>🧭 <b>Nivelamento</b><span class="pill blue tag">Descobrir o grau</span></div>
+        <div class="gopt ${st.target === 'next' ? 'sel' : ''}" data-target="next"><span class="radio"></span>${belt(G[0][1])} Branco<span class="pill ok tag">Próximo</span></div>
+        <div class="gopt ${st.target === 'skip' ? 'sel' : ''}" data-target="skip"><span class="radio"></span>${belt(G[2][1])} Laranja<span class="pill warn tag">Salta 2</span></div>
+      </div>
+      ${st.target === 'level'
+        ? `<div class="note b">O avaliador começa no <b>Branco</b> e avança grau a grau enquanto o aluno cumprir o critério. No fim propões o grau a atribuir.</div>`
+        : st.target === 'skip'
+        ? `<div class="note y">Tudo ou nada: se não cumprir Laranja, reprova e fica sem grau.</div>`
+        : `<div class="note g">Exame normal do próximo grau.</div>`}
+    </div>
+    <div class="card"><h3>Detalhes</h3>
+      ${st.target === 'level' ? `
+        <div class="field" style="margin-top:0"><label>Até que grau avaliar, no máximo <span style="font-weight:400">(opcional)</span></label><div class="input">Verde</div></div>
+        <div class="field"><label>Motivo / historial (fica no registo)</label><div class="input">3 anos de Muay Thai na Academia X, graduado lá em «faixa laranja».</div></div>
+        <div class="note y">Requisitos (presenças, tempo, cursos) <b>não se aplicam</b> ao nivelamento.</div>` : `<div class="muted">—</div>`}
+      <button class="btn primary block" style="margin-top:14px" data-go="sheet">Guardar e abrir folha</button>
+    </div>
+  </div>`;
+
+/* ---------- 2. Folha de avaliação grau a grau ---------- */
+const items = {
+  'Técnico': [['Jab–direto com retorno à guarda', 4, true], ['Teep de defesa', 4, false], ['Joelhada no clinch', 3, false]],
+  'Tático': [['Gestão de distância', 3, false]],
+  'Teórico': [['Regras e cumprimento (Wai Kru)', 5, false]],
+  'Físico': [['3 × 3 min de saco sem quebra', 3, false]],
+};
+const sheet = () => `
+  ${header('Coach › Exame › Tiago Rocha', 'Nivelamento · Tiago Rocha', 'Avalia grau a grau. Podes parar quando quiseres.')}
+  <div class="steps">
+    <span class="step done">✓ ${belt(G[0][1])} Branco</span>
+    <span class="step done">✓ ${belt(G[1][1])} Amarelo</span>
+    <span class="step cur">${belt(G[2][1])} Laranja · a avaliar</span>
+    <span class="step lock">🔒 ${belt(G[3][1])} Verde</span>
+  </div>
+  <div class="card">
+    <div class="row between"><h3 style="margin:0">${belt(G[2][1])} Itens do Laranja</h3><span class="muted">6 / 18 avaliados</span></div>
+    ${Object.entries(items).map(([axis, list]) => `
+      <div class="axis">${axis}</div>
+      ${list.map(([l, s, crit]) => `
+        <div class="item"><div class="lbl">${crit ? '<span class="pill red">Crítico</span>' : ''}${l}</div>
+          <div class="scores">${[1,2,3,4,5].map(n => `<span class="sc ${n === s ? 'on' : ''}">${n}</span>`).join('')}</div></div>`).join('')}`).join('')}
+  </div>
+  <div class="sticky">
+    <div class="row between"><b style="font-size:13px">Laranja até agora</b><span class="pill warn">Incompleto</span></div>
+    <div class="axes">
+      <div class="ax">Técnico<b class="ok-t">3,7</b></div><div class="ax">Tático<b class="bad-t">2,8</b></div>
+      <div class="ax">Teórico<b class="ok-t">4,5</b></div><div class="ax">Físico<b class="ok-t">3,0</b></div>
+    </div>
+    <div class="muted" style="margin-top:6px">Mínimo por eixo: 3. Crítico: 3.</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" disabled style="flex:1;opacity:.4">Avançar para Verde →</button>
+      <button class="btn primary" style="flex:1" data-go="decide">Terminar avaliação</button>
+    </div>
+    <div class="muted" style="margin-top:6px;text-align:center">«Avançar» só fica ativo quando Laranja estiver completo e cumprido.</div>
+  </div>`;
+
+/* ---------- 3. Decisão do admin ---------- */
+const rows = [
+  ['Branco', '#e5e7eb', 'ok', 'Cumpre', '4,2 · 4,0 · 4,8 · 3,9'],
+  ['Amarelo', '#eab308', 'ok', 'Cumpre', '3,8 · 3,5 · 4,4 · 3,4'],
+  ['Laranja', '#f97316', 'red', 'Não cumpre (Tático 2,8)', '3,7 · 2,8 · 4,5 · 3,0'],
+  ['Verde', '#16a34a', 'grey', 'Não avaliado', '—'],
+];
+const decide = () => `
+  ${header('Coach › Exame › Tiago Rocha › Resultado', 'Resultado do nivelamento', 'A plataforma propõe o último grau em que o aluno cumpre o critério.')}
+  <div class="card">
+    <table>
+      <thead><tr><th>Grau</th><th>Resultado</th><th class="hide-m">Téc · Tát · Teó · Fís</th></tr></thead>
+      <tbody>${rows.map(([n, c, k, r, a]) => `<tr><td>${belt(c)} ${n}</td><td><span class="pill ${k}">${r}</span></td><td class="hide-m muted">${a}</td></tr>`).join('')}</tbody>
+    </table>
+    <div class="note g">Proposta: <b>${belt(G[1][1])} Amarelo</b> — cumpre Branco e Amarelo; em Laranja ficou abaixo no eixo Tático.</div>
+  </div>
+  <div class="two">
+    <div class="card"><h3>Grau a atribuir</h3>
+      <div class="stack">
+        <div class="gopt ${st.award === 0 ? 'sel' : ''}" data-award="0"><span class="radio"></span>${belt(G[0][1])} Branco</div>
+        <div class="gopt ${st.award === 1 ? 'sel' : ''}" data-award="1"><span class="radio"></span>${belt(G[1][1])} Amarelo<span class="pill ok tag">Proposta</span></div>
+        <div class="gopt ${st.award === 2 ? 'sel' : ''}" data-award="2"><span class="radio"></span>${belt(G[2][1])} Laranja<span class="pill warn tag">Acima da proposta</span></div>
+        <div class="gopt ${st.award === -1 ? 'sel' : ''}" data-award="-1"><span class="radio"></span>Sem graduação</div>
+      </div>
+      ${st.award !== 1 ? `<div class="field"><label>Motivo (diferente da proposta — obrigatório)</label><div class="input">${st.award === 2 ? 'Tático fraco só por nervosismo; nível de Laranja nos treinos.' : '…'}</div></div>` : ''}
+    </div>
+    <div class="card"><h3>Feedback ao aluno</h3>
+      <div class="input" style="min-height:90px">Boa base técnica. Para o Laranja, trabalhar a gestão de distância e as trocas de ritmo.</div>
+      <div class="note y">${st.award >= 0 ? `Fica com <b>${G[st.award][0]}</b>${st.award > 0 ? `; ${G.slice(0, st.award).map(g => g[0]).join(', ')} ${st.award === 1 ? 'fica registado' : 'ficam registados'} como «obtido por nivelamento»` : ''}. O próximo exame será para <b>${G[st.award + 1][0]}</b>.` : 'Fica sem graduação; o próximo exame será para Branco.'}</div>
+      <button class="btn primary block" style="margin-top:12px" data-go="student">Confirmar resultado</button>
+    </div>
+  </div>`;
+
+/* ---------- 4. Aluno vê o resultado ---------- */
+const student = () => {
+  const a = Math.max(st.award, 0);
+  return `
+  ${header('Graduação › Muay Thai › Exame', 'Resultado do nivelamento', '')}
+  <div class="card hero">
+    <span class="pill blue">Nivelamento</span>
+    <div class="big">Começas em ${G[a][0]} 🎉</div>
+    <div class="muted">Exame de graduação · sáb 08 nov · avaliador: Coach Ricardo</div>
+    <div style="margin-top:12px">${belt(G[a][1])}</div>
+  </div>
+  <div class="card"><h3>Percurso</h3>
+    ${G.slice(0, a + 1).map(([n, c], i) => `<div class="tl">${belt(c)} ${i === a ? `<b>${n}</b>` : n}<span class="pill ${i === a ? 'ok' : 'grey'}" style="margin-left:auto">${i === a ? 'Nivelamento · 08 nov' : 'Obtido por nivelamento'}</span></div>`).join('')}
+  </div>
+  <div class="two">
+    <div class="card"><h3>Feedback do coach</h3><div class="muted" style="line-height:1.6">Boa base técnica. Para o Laranja, trabalhar a gestão de distância e as trocas de ritmo.</div></div>
+    <div class="card"><h3>Próximo objetivo</h3><div class="row">${belt(G[a + 1][1])}<b>${G[a + 1][0]}</b></div><div class="muted" style="margin-top:6px">Os requisitos contam a partir de hoje.</div></div>
+  </div>`;
+};
+
+const screens = {
+  convoke: ['Admin · tipo de exame', '/coach/graduacao/…', convoke],
+  sheet: ['Coach · folha grau a grau', '/coach/graduacao/…/avaliar/…', sheet],
+  decide: ['Admin · decisão do grau', '/coach/graduacao/…/resultado/…', decide],
+  student: ['Aluno · resultado', '/dashboard/graduacao/exame/…', student],
+};
+let cur = 'convoke';
+function render() {
+  const [, url, fn] = screens[cur];
+  document.getElementById('sw').innerHTML = Object.entries(screens).map(([k, [l]]) => `<button class="sw ${k === cur ? 'active' : ''}" data-go="${k}">${l}</button>`).join('');
+  document.getElementById('url-d').textContent = 'kingdomfight.com' + url;
+  document.getElementById('desk').innerHTML = fn();
+  document.getElementById('phone').innerHTML = fn();
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-go],[data-target],[data-award]');
+  if (!t) return;
+  if (t.dataset.go) cur = t.dataset.go;
+  if (t.dataset.target) st.target = t.dataset.target;
+  if (t.dataset.award) st.award = +t.dataset.award;
+  render();
+});
+render();
+</script>
+</body>
+</html>

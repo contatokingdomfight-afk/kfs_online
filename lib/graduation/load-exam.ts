@@ -3,7 +3,44 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildExamSheet, computeExamResult, type ExamResult, type ExamScoreInput, type ExamSheet } from "./exam";
 import { loadGraduationTemplate } from "./load-template";
+import { computePlacementResult, placementLevelSheets, placementMaxIndex, placementSheet, type PlacementResult } from "./placement";
 import type { GraduationTemplateDraft } from "./template";
+
+/** Colunas do candidato que definem a ficha (exame normal ou nivelamento). */
+const CANDIDATE_SHEET_COLUMNS = "gradeId, mode, placementStartGradeId, placementMaxGradeId";
+
+type CandidateSheetRef = { gradeId: string; mode?: string | null; placementStartGradeId?: string | null };
+
+/** Índices (no template) do primeiro e do último grau avaliados num nivelamento; null se não for nivelamento. */
+function placementRange(template: GraduationTemplateDraft, c: CandidateSheetRef): { start: number; frontier: number } | null {
+  if (c.mode !== "PLACEMENT" || !c.placementStartGradeId) return null;
+  const ids = template.grades.map((g) => g.id);
+  const start = ids.indexOf(c.placementStartGradeId);
+  const frontier = ids.indexOf(c.gradeId);
+  return start >= 0 && frontier >= start ? { start, frontier } : null;
+}
+
+/** Ficha do candidato: a do grau-alvo, ou (nivelamento) todos os itens dos graus avaliados. */
+export function sheetForCandidate(template: GraduationTemplateDraft, c: CandidateSheetRef): ExamSheet | null {
+  if (c.mode === "PLACEMENT") {
+    const range = placementRange(template, c);
+    return range ? placementSheet(template.grades, range.start, range.frontier) : null;
+  }
+  return sheetForGrade(template, c.gradeId);
+}
+
+export type CandidatePlacement = {
+  startIndex: number;
+  frontierIndex: number;
+  maxIndex: number;
+  note: string | null;
+  decisionNote: string | null;
+  awardedGradeId: string | null;
+  /** Ficha de cada grau avaliado (do primeiro ao atual). */
+  levelSheets: ExamSheet[];
+  result: PlacementResult;
+  grades: { id: string; name: string; colors: string[] }[];
+};
 import type { ExamScoreRowView } from "@/components/graduation/ExamResultBreakdown";
 
 const SCORE_COLUMNS = "candidateId, examinerUserId, scoreKey, score, comment, section, axis, label, isCritical";
@@ -43,6 +80,11 @@ export type ExamCandidateRow = {
   bookedByStudent: boolean;
   /** Preenchido = salto de grau decidido pelo admin. */
   skipReason: string | null;
+  /** Nivelamento: gradeId é o último grau avaliado; awardedGradeName o grau atribuído (após a decisão). */
+  mode: "GRADE" | "PLACEMENT";
+  awardedGradeName: string | null;
+  placementMaxGradeId: string | null;
+  placementNote: string | null;
 };
 
 type ScoreRow = ExamScoreRowView & { candidateId: string };
@@ -85,7 +127,7 @@ export async function loadExamEventDetail(
     loadGraduationTemplate(supabase, event.modalityCode),
     supabase
       .from("GraduationExamCandidate")
-      .select("id, studentId, gradeId, status, feedback, decidedAt, result, slotStartsAt, bookedByStudent, skipReason")
+      .select("id, studentId, gradeId, status, feedback, decidedAt, result, slotStartsAt, bookedByStudent, skipReason, mode, placementStartGradeId, placementAwardedGradeId, placementMaxGradeId, placementNote")
       .eq("eventId", eventId)
       .order("createdAt", { ascending: true }),
   ]);
@@ -108,7 +150,7 @@ export async function loadExamEventDetail(
     const mine = scores.filter((s) => s.candidateId === c.id);
     let result = (c.result as ExamResult | null) ?? null;
     if (c.status === "CONVOKED" && template) {
-      const sheet = sheetForGrade(template, c.gradeId);
+      const sheet = sheetForCandidate(template, c);
       result = sheet ? computeExamResult(sheet, mine.map(toScoreInput)) : null;
     }
     return {
@@ -126,6 +168,10 @@ export async function loadExamEventDetail(
       slotStartsAt: (c.slotStartsAt as string | null) ?? null,
       bookedByStudent: Boolean(c.bookedByStudent),
       skipReason: (c.skipReason as string | null) ?? null,
+      mode: c.mode === "PLACEMENT" ? "PLACEMENT" : "GRADE",
+      awardedGradeName: c.placementAwardedGradeId ? gradeById.get(c.placementAwardedGradeId)?.name ?? null : null,
+      placementMaxGradeId: (c.placementMaxGradeId as string | null) ?? null,
+      placementNote: (c.placementNote as string | null) ?? null,
     };
   });
 
@@ -156,6 +202,8 @@ export type CandidateSheetData = {
   allScores: ScoreRow[];
   result: ExamResult;
   examinerNames: Map<string, string>;
+  /** Preenchido num exame de nivelamento. */
+  placement: CandidatePlacement | null;
 };
 
 export async function loadCandidateSheet(
@@ -165,15 +213,15 @@ export async function loadCandidateSheet(
 ): Promise<CandidateSheetData | null> {
   const { data: candidate } = await supabase
     .from("GraduationExamCandidate")
-    .select("id, eventId, studentId, gradeId, status, feedback, decidedAt, result")
+    .select(`id, eventId, studentId, status, feedback, decidedAt, result, placementNote, placementDecisionNote, placementAwardedGradeId, ${CANDIDATE_SHEET_COLUMNS}`)
     .eq("id", candidateId)
     .maybeSingle();
   if (!candidate) return null;
   const event = await loadExamEventRow(supabase, candidate.eventId);
   if (!event) return null;
   const template = await loadGraduationTemplate(supabase, event.modalityCode);
-  const sheet = template ? sheetForGrade(template, candidate.gradeId) : null;
-  if (!sheet) return null;
+  const sheet = template ? sheetForCandidate(template, candidate) : null;
+  if (!sheet || !template) return null;
 
   const [{ data: scoreRows }, names] = await Promise.all([
     supabase.from("GraduationExamScore").select(SCORE_COLUMNS).eq("candidateId", candidateId),
@@ -186,7 +234,23 @@ export async function loadCandidateSheet(
   const myScores: CandidateSheetData["myScores"] = {};
   for (const s of allScores) if (s.examinerUserId === examinerUserId) myScores[s.scoreKey] = { score: s.score, comment: s.comment };
 
+  const range = placementRange(template, candidate);
+  const placement: CandidatePlacement | null = range
+    ? {
+        startIndex: range.start,
+        frontierIndex: range.frontier,
+        maxIndex: placementMaxIndex(template.grades, (candidate.placementMaxGradeId as string | null) ?? null),
+        note: (candidate.placementNote as string | null) ?? null,
+        decisionNote: (candidate.placementDecisionNote as string | null) ?? null,
+        awardedGradeId: (candidate.placementAwardedGradeId as string | null) ?? null,
+        levelSheets: placementLevelSheets(template.grades, range.start, range.frontier),
+        result: computePlacementResult(template.grades, range.start, range.frontier, allScores.map(toScoreInput)),
+        grades: template.grades.map((g) => ({ id: g.id, name: g.name, colors: g.colors })),
+      }
+    : null;
+
   return {
+    placement,
     event,
     candidate: {
       id: candidate.id,
@@ -212,14 +276,14 @@ export async function loadCandidateScoringContext(
 ): Promise<{ candidateStatus: ExamCandidateStatus; eventStatus: ExamEventRow["status"]; sheet: ExamSheet } | null> {
   const { data: candidate } = await supabase
     .from("GraduationExamCandidate")
-    .select("eventId, gradeId, status")
+    .select(`eventId, status, ${CANDIDATE_SHEET_COLUMNS}`)
     .eq("id", candidateId)
     .maybeSingle();
   if (!candidate) return null;
   const { data: event } = await supabase.from("GraduationExamEvent").select("modalityCode, status").eq("id", candidate.eventId).maybeSingle();
   if (!event) return null;
   const template = await loadGraduationTemplate(supabase, event.modalityCode);
-  const sheet = template ? sheetForGrade(template, candidate.gradeId) : null;
+  const sheet = template ? sheetForCandidate(template, candidate) : null;
   if (!sheet) return null;
   return { candidateStatus: candidate.status as ExamCandidateStatus, eventStatus: event.status as ExamEventRow["status"], sheet };
 }

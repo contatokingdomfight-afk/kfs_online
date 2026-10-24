@@ -6,7 +6,7 @@ import { AlertTriangle, MessageSquareText, Star } from "lucide-react";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { computeExamResult, EXAM_SCORE_MAX, type ExamSheet, type ExamSheetEntry } from "@/lib/graduation/exam";
 import { GRADUATION_AXES, GRADUATION_AXIS_META, type GraduationAxis } from "@/lib/graduation/template";
-import { saveExamScores } from "../../../actions";
+import { advancePlacement, saveExamScores } from "../../../actions";
 
 type ScoreState = Record<string, { score: number | null; comment: string | null }>;
 
@@ -24,9 +24,11 @@ type Props = {
   studentName: string;
   sheet: ExamSheet;
   initialScores: ScoreState;
+  /** Nivelamento: ficha de cada grau avaliado (o último é o atual). */
+  placement?: { levelSheets: ExamSheet[]; nextGradeName: string | null } | null;
 };
 
-export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, initialScores }: Props) {
+export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, initialScores, placement = null }: Props) {
   const [scores, setScores] = useState<ScoreState>(initialScores);
   const [error, setError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "pending" | "saving" | "saved" | "error">("idle");
@@ -38,14 +40,17 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
   const inFlightRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // No nivelamento, a barra mostra o grau a ser avaliado agora.
+  const currentLevel = placement?.levelSheets[placement.levelSheets.length - 1] ?? null;
   const myResult = useMemo(
     () =>
       computeExamResult(
-        sheet,
+        currentLevel ?? sheet,
         Object.entries(scores).map(([key, v]) => ({ key, score: v.score, examinerUserId: "me" }))
       ),
-    [scores, sheet]
+    [scores, sheet, currentLevel]
   );
+  const [advancing, setAdvancing] = useState(false);
 
   const flush = useCallback(async (): Promise<boolean> => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -109,6 +114,22 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
     router.push(`/coach/graduacao/${eventId}/resultado/${candidateId}`);
   };
 
+  const advance = async () => {
+    for (let i = 0; i < 20 && (pendingRef.current.size > 0 || inFlightRef.current); i++) {
+      if (!(await flush()) && !inFlightRef.current) return;
+      if (inFlightRef.current) await new Promise((r) => setTimeout(r, 300));
+    }
+    setAdvancing(true);
+    const res = await advancePlacement(candidateId).catch(() => ({ error: "Sem ligação ao servidor." }) as { error?: string });
+    setAdvancing(false);
+    if (res.error) setError(res.error);
+    else {
+      setError(null);
+      router.refresh();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const grade = sheet.targetGrade;
   const prevByAxis = GRADUATION_AXES.map((axis) => ({ axis, entries: sheet.previousEntries.filter((e) => e.axis === axis) })).filter(
     (g) => g.entries.length > 0
@@ -121,9 +142,45 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
     <div>
       <header style={{ margin: "var(--space-4) 0 var(--space-4)" }}>
         <h1 style={{ margin: 0, fontSize: "var(--text-xl)", fontWeight: 700 }}>{studentName}</h1>
-        <p style={{ margin: "6px 0 0", display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-          Exame para <BeltSwatch colors={grade.colors} width={32} height={10} /> <strong style={{ color: "var(--text-primary)" }}>{grade.name}</strong>
-        </p>
+        {placement ? (
+          <>
+            <p style={{ margin: "6px 0 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+              🧭 Nivelamento — avalia grau a grau. Podes terminar quando quiseres.
+            </p>
+            <ol style={{ listStyle: "none", padding: 0, margin: "var(--space-3) 0 0", display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {placement.levelSheets.map((l, i) => {
+                const current = i === placement.levelSheets.length - 1;
+                return (
+                  <li
+                    key={l.targetGrade.id}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: "var(--text-xs)",
+                      padding: "4px 10px",
+                      borderRadius: 999,
+                      border: `1px solid ${current ? "var(--primary)" : "color-mix(in srgb, var(--success) 45%, transparent)"}`,
+                      color: current ? "var(--text-primary)" : "var(--success)",
+                    }}
+                  >
+                    {!current && "✓"} <BeltSwatch colors={l.targetGrade.colors} width={20} height={8} /> {l.targetGrade.name}
+                    {current && " · a avaliar"}
+                  </li>
+                );
+              })}
+              {placement.nextGradeName && (
+                <li style={{ fontSize: "var(--text-xs)", padding: "4px 10px", borderRadius: 999, border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                  🔒 {placement.nextGradeName}
+                </li>
+              )}
+            </ol>
+          </>
+        ) : (
+          <p style={{ margin: "6px 0 0", display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+            Exame para <BeltSwatch colors={grade.colors} width={32} height={10} /> <strong style={{ color: "var(--text-primary)" }}>{grade.name}</strong>
+          </p>
+        )}
         <details style={{ marginTop: "var(--space-3)" }}>
           <summary style={{ cursor: "pointer", fontSize: "var(--text-xs)", fontWeight: 600, color: "var(--text-secondary)" }}>Como pontuar</summary>
           <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.6 }}>
@@ -147,6 +204,34 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
         </p>
       )}
 
+      {placement &&
+        placement.levelSheets.map((level, i) => {
+          const current = i === placement.levelSheets.length - 1;
+          const byAxis = GRADUATION_AXES.map((axis) => ({ axis, entries: level.newEntries.filter((e) => e.axis === axis) })).filter((g) => g.entries.length > 0);
+          const body = byAxis.map(({ axis, entries }) => (
+            <AxisBlock key={`${level.targetGrade.id}-${axis}`} axis={axis}>
+              {entries.map((e) => (
+                <EntryRow key={e.key} entry={e} state={scores[e.key]} passMin={level.passMin} onScore={setScore} onComment={setComment} />
+              ))}
+            </AxisBlock>
+          ));
+          return current ? (
+            <div key={level.targetGrade.id}>
+              <SectionTitle title={`Itens de ${level.targetGrade.name}`} subtitle={`Grau a avaliar agora — mínimo ${formatScore(level.passMin)} por eixo`} />
+              {body}
+            </div>
+          ) : (
+            <details key={level.targetGrade.id} style={{ marginBottom: "var(--space-3)" }}>
+              <summary style={{ cursor: "pointer", fontSize: "var(--text-sm)", fontWeight: 700, padding: "var(--space-2) 0", color: "var(--success)" }}>
+                ✓ {level.targetGrade.name} — cumprido (tocar para rever as notas)
+              </summary>
+              {body}
+            </details>
+          );
+        })}
+
+      {!placement && (
+        <>
       <SectionTitle title={`Novo em ${grade.name}`} subtitle="Cada item avaliado individualmente" />
       {newByAxis.map(({ axis, entries }) => (
         <AxisBlock key={axis} axis={axis}>
@@ -221,11 +306,14 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
           </div>
         </>
       )}
+        </>
+      )}
 
       <div style={{ position: "sticky", bottom: "calc(var(--space-3) + env(safe-area-inset-bottom, 0px))", marginTop: "var(--space-5)", paddingRight: 72, zIndex: 20 }}>
         <div className="card" style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.35)", padding: "var(--space-3)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
             <span style={{ flex: 1, minWidth: 120, fontSize: "var(--text-sm)", fontWeight: 600 }} role="status" aria-live="polite">
+              {currentLevel && `${currentLevel.targetGrade.name}: `}
               {myResult.scoredCount}/{myResult.totalCount} avaliados
               <SaveStateLabel state={saveState} />
             </span>
@@ -234,8 +322,19 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
                 Tentar de novo
               </button>
             )}
+            {placement?.nextGradeName && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => void advance()}
+                disabled={!myResult.passed || advancing || saveState === "error"}
+                title={myResult.passed ? undefined : "Fica ativo quando o grau atual estiver completo e cumprido"}
+              >
+                {advancing ? "A avançar…" : `Avançar para ${placement.nextGradeName} →`}
+              </button>
+            )}
             <button type="button" className="btn btn-primary" onClick={() => void goToResult()} disabled={saveState === "error"}>
-              {myResult.isComplete ? "Ver resultado" : "Resultado"}
+              {placement ? "Terminar avaliação" : myResult.isComplete ? "Ver resultado" : "Resultado"}
             </button>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>

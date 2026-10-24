@@ -180,11 +180,18 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
                       )}
                     </div>
                     <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
-                      Para {c.gradeName}
+                      {c.mode === "PLACEMENT" ? (
+                        <span style={{ color: "var(--primary)", fontWeight: 700 }}>
+                          🧭 Nivelamento ·{" "}
+                          {decided ? (c.awardedGradeName ? `atribuído: ${c.awardedGradeName}` : "sem grau novo") : `a avaliar: ${c.gradeName}`}
+                        </span>
+                      ) : (
+                        <>Para {c.gradeName}</>
+                      )}
                       {c.skipReason && <span style={{ color: "var(--warning)", fontWeight: 700 }}> · ⬆ salto de grau — «{c.skipReason}»</span>}
                       {!decided && total > 0 && ` · as tuas notas: ${c.myScoredCount}/${total}`}
                       {!decided && c.result && c.result.examinerCount > 1 && ` · ${c.result.examinerCount} avaliadores`}
-                      {!decided && c.result?.isComplete && (c.result.passed ? " · cumpre o critério" : " · não cumpre o critério")}
+                      {!decided && c.mode !== "PLACEMENT" && c.result?.isComplete && (c.result.passed ? " · cumpre o critério" : " · não cumpre o critério")}
                     </p>
                   </div>
                   <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center", flexWrap: "wrap" }}>
@@ -213,6 +220,7 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
                       currentTargetId={c.gradeId}
                       currentReason={c.skipReason}
                       options={targetOptionsFor(c.studentId)}
+                      placement={c.mode === "PLACEMENT" ? { maxGradeId: c.placementMaxGradeId, note: c.placementNote } : null}
                     />
                   )}
                 </li>

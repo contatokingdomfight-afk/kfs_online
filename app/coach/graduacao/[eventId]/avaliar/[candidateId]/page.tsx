@@ -31,6 +31,15 @@ export default async function AvaliarCandidatoPage({ params }: { params: Promise
         studentName={data.candidate.studentName}
         sheet={data.sheet}
         initialScores={data.myScores}
+        placement={
+          data.placement
+            ? {
+                levelSheets: data.placement.levelSheets,
+                nextGradeName:
+                  data.placement.frontierIndex < data.placement.maxIndex ? data.placement.grades[data.placement.frontierIndex + 1]?.name ?? null : null,
+              }
+            : null
+        }
       />
     </div>
   );

@@ -311,6 +311,7 @@ export async function decideCandidate(
   const data = await loadCandidateSheet(supabase, candidateId, auth.userId);
   if (!data) return { error: "Ficha não encontrada." };
   if (data.candidate.status !== "CONVOKED") return { error: "Este aluno já tem resultado." };
+  if (data.placement && decision !== "ABSENT") return { error: "Num nivelamento, o grau é decidido pelo admin no resultado." };
   const result = computeExamResult(data.sheet, data.allScores.map(toScoreInput));
   if (decision === "PASSED" && !result.passed) return { error: "O aluno não cumpre o critério de aprovação." };
   if (decision === "FAILED" && result.scoredCount === 0) return { error: "Avalia o aluno antes de o reprovar (ou marca falta)." };
@@ -454,7 +455,7 @@ export async function setCandidateTargetGrade(candidateId: string, gradeId: stri
 
   const { error } = await supabase
     .from("GraduationExamCandidate")
-    .update({ gradeId, skipReason: isSkip ? why : null })
+    .update({ gradeId, skipReason: isSkip ? why : null, mode: "GRADE", placementStartGradeId: null, placementMaxGradeId: null, placementNote: null })
     .eq("id", candidateId)
     .eq("status", "CONVOKED");
   if (error) return { error: "Não foi possível mudar o grau-alvo." };
@@ -497,5 +498,169 @@ export async function setManualReadiness(input: {
   }
   revalidatePath("/admin/graduacao");
   revalidatePath("/coach/graduacao");
+  return { success: true };
+}
+
+/** Admin: transforma uma convocatória em exame de nivelamento (a partir do próximo grau do aluno). */
+export async function setCandidatePlacement(candidateId: string, maxGradeId: string | null, note: string): Promise<ActionResult> {
+  const auth = await graduationAdminActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+
+  const { data: c } = await supabase.from("GraduationExamCandidate").select("eventId, studentId, status").eq("id", candidateId).maybeSingle();
+  if (!c) return { error: "Convocatória não encontrada." };
+  if (c.status !== "CONVOKED") return { error: "Este aluno já tem resultado." };
+  const { count } = await supabase.from("GraduationExamScore").select("candidateId", { count: "exact", head: true }).eq("candidateId", candidateId);
+  if ((count ?? 0) > 0) return { error: "O exame já tem notas — já não é possível mudar o tipo de exame." };
+
+  const event = await loadExamEventRow(supabase, c.eventId);
+  if (!event || event.status !== "SCHEDULED") return { error: "Este exame já não pode ser alterado." };
+  const template = await loadGraduationTemplate(supabase, event.modalityCode);
+  if (!template) return { error: "A modalidade não tem graduação configurada." };
+  const ids = template.grades.map((g) => g.id);
+  const startIndex = (await currentGradeIndex(supabase, c.studentId, event.modalityCode, ids)) + 1;
+  const start = template.grades[startIndex];
+  if (!start) return { error: "O aluno já tem o grau máximo." };
+  const maxIndex = maxGradeId ? ids.indexOf(maxGradeId) : -1;
+  if (maxGradeId && maxIndex < startIndex) return { error: "O grau máximo tem de ser igual ou acima do primeiro grau avaliado." };
+
+  const { error } = await supabase
+    .from("GraduationExamCandidate")
+    .update({
+      mode: "PLACEMENT",
+      gradeId: start.id,
+      placementStartGradeId: start.id,
+      placementMaxGradeId: maxGradeId || null,
+      placementNote: note.trim().slice(0, 500) || null,
+      skipReason: null,
+    })
+    .eq("id", candidateId)
+    .eq("status", "CONVOKED");
+  if (error) {
+    console.error("setCandidatePlacement:", error);
+    return { error: "Não foi possível guardar o nivelamento." };
+  }
+  revalidatePath(`/coach/graduacao/${c.eventId}`);
+  return { success: true };
+}
+
+/** Nivelamento: passa ao grau seguinte quando o atual está completo e cumprido. */
+export async function advancePlacement(candidateId: string): Promise<ActionResult> {
+  const auth = await graduationExamActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+
+  const data = await loadCandidateSheet(supabase, candidateId, auth.userId);
+  const p = data?.placement;
+  if (!data || !p) return { error: "Nivelamento não encontrado." };
+  if (data.candidate.status !== "CONVOKED" || data.event.status !== "SCHEDULED") return { error: "Este exame já foi decidido." };
+  if (!p.result.frontierPassed) return { error: "Completa o grau atual e confirma que cumpre o critério antes de avançar." };
+  if (p.frontierIndex >= p.maxIndex) return { error: "Já chegaste ao grau máximo deste nivelamento." };
+  const next = p.grades[p.frontierIndex + 1];
+
+  const { error } = await supabase
+    .from("GraduationExamCandidate")
+    .update({ gradeId: next.id })
+    .eq("id", candidateId)
+    .eq("gradeId", p.grades[p.frontierIndex].id)
+    .eq("status", "CONVOKED");
+  if (error) return { error: "Não foi possível avançar." };
+  revalidatePath(`/coach/graduacao/${data.event.id}`);
+  return { success: true };
+}
+
+/** Admin: decide o grau atribuído num nivelamento (null = sem grau novo). */
+export async function decidePlacement(
+  candidateId: string,
+  awardGradeId: string | null,
+  feedback: string,
+  decisionNote: string
+): Promise<ActionResult> {
+  const auth = await graduationAdminActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+
+  const data = await loadCandidateSheet(supabase, candidateId, auth.userId);
+  const p = data?.placement;
+  if (!data || !p) return { error: "Nivelamento não encontrado." };
+  if (data.candidate.status !== "CONVOKED" || data.event.status !== "SCHEDULED") return { error: "Este aluno já tem resultado." };
+  if (data.result.scoredCount === 0) return { error: "Avalia o aluno antes de decidir (ou marca falta)." };
+
+  const awardIndex = awardGradeId ? p.grades.findIndex((g) => g.id === awardGradeId) : p.startIndex - 1;
+  if (awardGradeId && (awardIndex < p.startIndex || awardIndex > p.frontierIndex)) return { error: "Grau inválido para este nivelamento." };
+  const note = decisionNote.trim().slice(0, 500);
+  if (awardIndex !== p.result.proposedIndex && !note) return { error: "Indica o motivo para atribuir um grau diferente da proposta." };
+
+  const now = new Date().toISOString();
+  const base = new Date(now).getTime();
+  const awarded = awardIndex >= p.startIndex ? p.grades[awardIndex] : null;
+  let insertedIds: string[] = [];
+  let studentGradeId: string | null = null;
+  if (awarded) {
+    // Graus abaixo do atribuído: «obtido por nivelamento», um pouco antes para o atribuído ficar o mais recente.
+    const below = p.grades.slice(p.startIndex, awardIndex);
+    const rows = [
+      ...below.map((g, i) => ({
+        studentId: data.candidate.studentId,
+        modalityCode: data.event.modalityCode,
+        gradeId: g.id,
+        source: "PLACEMENT",
+        awardedAt: new Date(base - (below.length - i) * 1000).toISOString(),
+        awardedByUserId: auth.userId,
+        notes: `Obtido por nivelamento — ${data.event.title}`,
+      })),
+      {
+        studentId: data.candidate.studentId,
+        modalityCode: data.event.modalityCode,
+        gradeId: awarded.id,
+        source: "EXAM",
+        awardedAt: now,
+        awardedByUserId: auth.userId,
+        notes: `Nivelamento — ${data.event.title}`,
+      },
+    ];
+    const { data: inserted, error: gradeErr } = await supabase.from("StudentGrade").insert(rows).select("id, gradeId");
+    if (gradeErr || !inserted) {
+      console.error("decidePlacement grades:", gradeErr);
+      return { error: "Não foi possível atribuir o grau." };
+    }
+    insertedIds = inserted.map((r) => r.id as string);
+    studentGradeId = (inserted.find((r) => r.gradeId === awarded.id)?.id as string | undefined) ?? null;
+  }
+
+  const { error } = await supabase
+    .from("GraduationExamCandidate")
+    .update({
+      status: awarded ? "PASSED" : "FAILED",
+      feedback: feedback.trim() || null,
+      result: data.result,
+      decidedAt: now,
+      decidedByUserId: auth.userId,
+      studentGradeId,
+      placementAwardedGradeId: awarded?.id ?? null,
+      placementDecisionNote: note || null,
+    })
+    .eq("id", candidateId)
+    .eq("status", "CONVOKED");
+  if (error) {
+    console.error("decidePlacement:", error);
+    if (insertedIds.length) await supabase.from("StudentGrade").delete().in("id", insertedIds);
+    return { error: "Não foi possível gravar o resultado." };
+  }
+
+  await createInAppNotification(supabase, {
+    studentId: data.candidate.studentId,
+    type: "GRADUATION",
+    title: awarded ? `Nivelamento: começas em ${awarded.name}` : "Resultado do nivelamento",
+    body: awarded
+      ? `O teu nivelamento (${data.event.title}) está decidido. Vê as notas e o teu próximo objetivo.`
+      : "Vê as notas e o feedback do teu nivelamento e o teu próximo objetivo.",
+    href: `/dashboard/graduacao/exame/${candidateId}`,
+  });
+
+  revalidatePath(`/coach/graduacao/${data.event.id}`);
   return { success: true };
 }

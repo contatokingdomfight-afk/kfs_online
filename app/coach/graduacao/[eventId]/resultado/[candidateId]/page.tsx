@@ -5,15 +5,17 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { requireGraduationExamPage } from "@/lib/graduation/exam-auth";
 import { loadCandidateSheet } from "@/lib/graduation/load-exam";
 import { sheetEntries } from "@/lib/graduation/exam";
+import { GRADUATION_AXIS_META } from "@/lib/graduation/template";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { ExamResultBreakdown } from "@/components/graduation/ExamResultBreakdown";
 import { ExamStatusChip, formatExamDate } from "@/components/graduation/ExamStatusChip";
 import { DecisionForm } from "./DecisionForm";
+import { PlacementDecisionForm } from "./PlacementDecisionForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function ResultadoCandidatoPage({ params }: { params: Promise<{ eventId: string; candidateId: string }> }) {
-  const { userId } = await requireGraduationExamPage();
+  const { userId, role } = await requireGraduationExamPage();
   const supabase = getAdminClientOrNull();
   if (!supabase.client) return <AdminConfigMissing errorType={supabase.error} />;
 
@@ -25,6 +27,9 @@ export default async function ResultadoCandidatoPage({ params }: { params: Promi
   const decided = candidate.status !== "CONVOKED";
   const result = decided ? candidate.storedResult ?? data.result : data.result;
   const examinerList = [...data.examinerNames.values()];
+  const placement = data.placement;
+  const proposed = placement ? placement.grades[placement.result.proposedIndex] ?? null : null;
+  const awarded = placement?.awardedGradeId ? placement.grades.find((g) => g.id === placement.awardedGradeId) ?? null : null;
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)", paddingBottom: 96 }}>
@@ -38,8 +43,14 @@ export default async function ResultadoCandidatoPage({ params }: { params: Promi
           <ExamStatusChip status={candidate.status} />
         </div>
         <p style={{ margin: "6px 0 0", display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-sm)", color: "var(--text-secondary)", flexWrap: "wrap" }}>
-          Exame para <BeltSwatch colors={sheet.targetGrade.colors} width={32} height={10} />
-          <strong style={{ color: "var(--text-primary)" }}>{sheet.targetGrade.name}</strong>
+          {placement ? (
+            <strong style={{ color: "var(--primary)" }}>🧭 Nivelamento</strong>
+          ) : (
+            <>
+              Exame para <BeltSwatch colors={sheet.targetGrade.colors} width={32} height={10} />
+              <strong style={{ color: "var(--text-primary)" }}>{sheet.targetGrade.name}</strong>
+            </>
+          )}
           {decided && candidate.decidedAt && <span>· decidido a {formatExamDate(candidate.decidedAt, false)}</span>}
         </p>
         {examinerList.length > 0 && (
@@ -47,7 +58,61 @@ export default async function ResultadoCandidatoPage({ params }: { params: Promi
         )}
       </header>
 
-      {!decided && (
+      {placement && (
+        <section className="card" style={{ marginBottom: "var(--space-4)" }} aria-labelledby="niveis">
+          <h2 id="niveis" style={{ margin: "0 0 var(--space-2)", fontSize: "var(--text-base)", fontWeight: 700 }}>
+            Graus avaliados
+          </h2>
+          {placement.note && (
+            <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>Historial: {placement.note}</p>
+          )}
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {placement.result.levels.map((l) => {
+              const r = l.result;
+              const weak = r.axes.filter((a) => a.newPassed === false).map((a) => GRADUATION_AXIS_META[a.axis].label);
+              const label = !r.isComplete
+                ? `Incompleto (${r.scoredCount}/${r.totalCount})`
+                : r.passed
+                  ? "Cumpre"
+                  : `Não cumpre${weak.length ? ` (${weak.join(", ")})` : r.criticalFailures.length ? " (item fundamental)" : ""}`;
+              const color = !r.isComplete ? "var(--text-secondary)" : r.passed ? "var(--success)" : "var(--danger)";
+              return (
+                <li key={l.gradeId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)", fontSize: "var(--text-sm)", flexWrap: "wrap" }}>
+                  <BeltSwatch colors={l.colors} width={28} height={10} />
+                  <strong style={{ flex: "1 1 120px" }}>{l.gradeName}</strong>
+                  <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color }}>{label}</span>
+                  <span style={{ flexBasis: "100%", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
+                    {r.axes.map((a) => `${GRADUATION_AXIS_META[a.axis].label} ${a.newAvg != null ? a.newAvg.toLocaleString("pt-PT") : "–"}`).join(" · ")}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p style={{ margin: "var(--space-3) 0 0", fontSize: "var(--text-sm)" }}>
+            {decided ? (
+              <>
+                Atribuído: <strong>{awarded?.name ?? "sem grau novo"}</strong>
+                {placement.decisionNote && <span style={{ color: "var(--text-secondary)" }}> — «{placement.decisionNote}»</span>}
+              </>
+            ) : (
+              <>
+                Proposta: <strong>{proposed?.name ?? "sem grau novo"}</strong>{" "}
+                <span style={{ color: "var(--text-secondary)" }}>(último grau cumprido seguido)</span>
+                {event.status === "SCHEDULED" && (
+                  <>
+                    {" · "}
+                    <Link href={`/coach/graduacao/${eventId}/avaliar/${candidateId}`} style={{ color: "var(--primary)", fontWeight: 600 }}>
+                      Continuar a avaliar
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
+          </p>
+        </section>
+      )}
+
+      {!decided && !placement && (
         <div
           className="card"
           style={{
@@ -86,7 +151,22 @@ export default async function ResultadoCandidatoPage({ params }: { params: Promi
         <ExamResultBreakdown result={result} rows={data.allScores} examinerNames={data.examinerNames} keyOrder={sheetEntries(sheet).map((e) => e.key)} />
       )}
 
-      {!decided && event.status === "SCHEDULED" && (
+      {placement && !decided && event.status === "SCHEDULED" && role === "ADMIN" && (
+        <PlacementDecisionForm
+          candidateId={candidateId}
+          eventId={eventId}
+          options={placement.result.levels.map((l) => ({ id: l.gradeId, name: l.gradeName, colors: l.colors }))}
+          proposedId={proposed?.id ?? null}
+          hasScores={result.scoredCount > 0}
+        />
+      )}
+      {placement && !decided && event.status === "SCHEDULED" && role !== "ADMIN" && (
+        <p style={{ marginTop: "var(--space-5)", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+          Num nivelamento, o grau a atribuir é decidido pelo admin.
+        </p>
+      )}
+
+      {!placement && !decided && event.status === "SCHEDULED" && (
         <DecisionForm candidateId={candidateId} eventId={eventId} canPass={result.passed} hasScores={result.scoredCount > 0} gradeName={sheet.targetGrade.name} />
       )}
     </div>
