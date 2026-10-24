@@ -142,7 +142,16 @@ export default async function AgendarExamePage({ searchParams }: { searchParams:
         )}
       </section>
 
-      {fixedConvocation ? (
+      {graduation.awaitingResult && !mine ? (
+        <section className={card}>
+          <p className="m-0 font-semibold text-text-primary">Já fizeste o exame — aguarda o resultado.</p>
+          <p className="m-0 mt-1 text-sm text-text-secondary">
+            {graduation.awaitingResult.revealAt
+              ? `O resultado é revelado a ${formatExamDate(graduation.awaitingResult.revealAt)}.`
+              : "O resultado será revelado numa data a anunciar pela academia."}
+          </p>
+        </section>
+      ) : fixedConvocation ? (
         <section className={card}>
           <p className="m-0 font-semibold text-text-primary">Já estás convocado: {fixedConvocation.title}</p>
           <p className="m-0 mt-1 text-sm text-text-secondary">

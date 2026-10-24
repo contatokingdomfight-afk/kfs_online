@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Revelação de resultados</title>
+<style>
+  :root {
+    --bg: #0b0b0b; --bg-secondary: #141414; --bg-elevated: #1a1a1a;
+    --text-primary: #fff; --text-secondary: #a1a1aa; --primary: #c1121f;
+    --success: #22c55e; --warning: #facc15; --border: #27272a;
+    --font: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+  .meta { max-width: 1240px; margin: 0 auto; padding: 28px 16px 0; }
+  .badge { display: inline-flex; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: rgba(193,18,31,.15); color: #ff6b73; text-transform: uppercase; letter-spacing: .5px; }
+  .meta h1 { font-size: 22px; margin: 12px 0 6px; }
+  .meta p, .meta li { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
+  .meta p { max-width: 800px; margin: 0; } .meta ul { margin: 8px 0 0; padding-left: 18px; max-width: 800px; }
+  .switcher { max-width: 1240px; margin: 20px auto 0; padding: 0 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .sw { font: 600 13px var(--font); padding: 9px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; }
+  .sw.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .stage { max-width: 1240px; margin: 16px auto 60px; padding: 0 16px; display: flex; gap: 24px; align-items: flex-start; }
+  .col-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+  .desk-wrap { flex: 1; min-width: 0; } .phone-wrap { width: 375px; flex-shrink: 0; }
+  @media (max-width: 1000px) { .stage { flex-direction: column; } .phone-wrap { width: 100%; max-width: 375px; } .desk-wrap { width: 100%; } }
+  .browser { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--bg); }
+  .bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #3a3a3a; }
+  .url { flex: 1; font: 12px Consolas, monospace; color: var(--text-secondary); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; margin-left: 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .phone { border: 10px solid #222; border-radius: 36px; overflow: hidden; background: var(--bg); height: 760px; display: flex; flex-direction: column; }
+  .phone .scroll { flex: 1; overflow-y: auto; }
+  .phone .notch { height: 26px; display: flex; justify-content: center; align-items: center; } .phone .notch span { width: 90px; height: 6px; border-radius: 4px; background: #222; }
+  .desk .app { padding: 24px 28px 32px; min-height: 620px; } .phone .app { padding: 14px 14px 24px; }
+
+  .crumb { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  h2 { font-size: 22px; margin: 0 0 4px; } .phone h2 { font-size: 19px; }
+  .sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 18px; line-height: 1.5; }
+  .card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .card h3 { font-size: 14px; margin: 0 0 10px; }
+  .muted { color: var(--text-secondary); font-size: 12.5px; }
+  .belt { width: 36px; height: 11px; border-radius: 3px; flex-shrink: 0; display: inline-block; vertical-align: middle; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .ok { background: rgba(34,197,94,.14); color: #4ade80; } .warn { background: rgba(250,204,21,.14); color: #fde047; }
+  .red { background: rgba(193,18,31,.18); color: #ff6b73; } .grey { background: #222; color: var(--text-secondary); }
+  .btn { font: 600 13px var(--font); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-elevated); color: #fff; cursor: pointer; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); } .btn.block { width: 100%; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; } .between { justify-content: space-between; }
+  .field { margin: 12px 0 0; } .field label { display: block; font-size: 11.5px; color: var(--text-secondary); margin-bottom: 5px; font-weight: 600; }
+  .input { width: 100%; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: #fff; font: 13px var(--font); min-height: 38px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .note { font-size: 12px; color: var(--text-secondary); border-radius: 10px; padding: 10px 12px; margin-top: 10px; line-height: 1.5; }
+  .note.y { background: rgba(250,204,21,.06); border: 1px solid rgba(250,204,21,.25); }
+  .lock { border: 1px solid rgba(250,204,21,.35); background: rgba(250,204,21,.06); }
+  .cand { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; font-size: 13px; }
+  .cand:last-child { border: 0; } .cand b { flex: 1 1 140px; }
+  .hero { text-align: center; padding: 24px 16px; }
+  .hero .big { font-size: 24px; font-weight: 800; margin: 10px 0 4px; }
+  .hist { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .hist:last-child { border: 0; }
+</style>
+</head>
+<body>
+<div class="meta">
+  <span class="badge">Mockup · Graduação</span>
+  <h1>Resultados revelados numa data definida</h1>
+  <p>Cada <b>dia de exame</b> tem «Resultados visíveis a partir de…». O coach/admin decide normalmente, mas a decisão <b>só é aplicada nessa data</b>: grau, XP, ranking, notificação e página do resultado aparecem todos ao mesmo tempo. Sem data definida, ficam escondidos até alguém a pôr ou carregar em «Revelar agora».</p>
+  <ul>
+    <li>Até lá o aluno vê «Exame feito — resultado a [data]».</li>
+    <li>A data pode ser alterada até ao momento da revelação; depois de revelado, não se esconde de novo.</li>
+    <li>«Faltou» também só aparece na data, para ninguém deduzir nada pela diferença.</li>
+    <li>Na data, quem estiver na app vê o resultado ao abrir a página; a notificação é enviada no primeiro acesso à plataforma depois dessa hora (sem tarefa agendada).</li>
+  </ul>
+</div>
+<div class="switcher" id="sw"></div>
+<div class="stage">
+  <div class="desk-wrap">
+    <div class="col-label">Desktop</div>
+    <div class="browser desk"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url" id="url-d"></span></div><div class="app" id="desk"></div></div>
+  </div>
+  <div class="phone-wrap">
+    <div class="col-label">Telemóvel</div>
+    <div class="phone"><div class="notch"><span></span></div><div class="scroll"><div class="app" id="phone"></div></div></div>
+  </div>
+</div>
+
+<script>
+const belt = (c) => `<span class="belt" style="background:${c}"></span>`;
+const header = (crumb, title, sub) => `<div class="crumb">${crumb}</div><h2>${title}</h2><p class="sub">${sub}</p>`;
+
+const create = () => `
+  ${header('Coach › Graduação', 'Novo exame', 'Excerto do formulário — o resto fica como está.')}
+  <div class="card">
+    <div class="grid2">
+      <div class="field" style="margin-top:0"><label>Data</label><div class="input">08/11/2026</div></div>
+      <div class="field" style="margin-top:0"><label>Início – Fim</label><div class="input">10:00 – 13:00</div></div>
+    </div>
+    <div class="field"><label>Resultados visíveis a partir de</label>
+      <div class="grid2"><div class="input">15/11/2026</div><div class="input">18:00</div></div>
+    </div>
+    <div class="note y">Até lá, os alunos só veem «Exame feito». O grau, o XP e o ranking mudam todos nessa data. Deixa vazio para decidir mais tarde.</div>
+    <button class="btn primary block" style="margin-top:14px">Criar exame</button>
+  </div>`;
+
+const coach = () => `
+  ${header('Coach › Graduação', 'Exame de graduação — Muay Thai', 'Sáb 08 Nov · 10:00–13:00 · Tatami principal')}
+  <div class="card lock">
+    <div class="row between">
+      <b>🔒 Resultados escondidos dos alunos</b>
+      <span class="pill warn">Revela sáb 15 nov, 18:00</span>
+    </div>
+    <div class="muted" style="margin-top:6px">3 decididos por revelar · 1 ainda por decidir. O grau só é aplicado na data.</div>
+    <div class="row" style="margin-top:12px">
+      <div class="input" style="flex:1;min-width:140px">15/11/2026 · 18:00</div>
+      <button class="btn">Alterar data</button>
+      <button class="btn primary">Revelar agora</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Convocados (4)</h3>
+    <div class="cand"><b>Ana Silva</b><span class="pill ok">Aprovado</span><span class="pill grey">🔒 por revelar</span></div>
+    <div class="cand"><b>Rui Lopes</b><span class="pill red">Reprovado</span><span class="pill grey">🔒 por revelar</span></div>
+    <div class="cand"><b>Marta Costa</b><span class="pill warn">Faltou</span><span class="pill grey">🔒 por revelar</span></div>
+    <div class="cand"><b>Pedro Alves</b><span class="pill grey">Convocado</span><button class="btn">Avaliar</button></div>
+  </div>`;
+
+const studentWait = () => `
+  ${header('Graduação › Muay Thai', 'A minha graduação', '')}
+  <div class="card lock">
+    <div class="muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:11px">Exame feito</div>
+    <div style="font-size:18px;font-weight:800;margin-top:6px">Exame para ${belt('#eab308')} Amarelo</div>
+    <div class="muted" style="margin-top:4px">Sáb 08 nov · Tatami principal</div>
+    <div class="note y" style="margin-top:12px">🔒 O resultado é revelado a <b>sáb, 15 nov às 18:00</b>. Vais receber uma notificação.</div>
+  </div>
+  <div class="card">
+    <h3>Grau atual</h3>
+    <div class="row">${belt('#e5e7eb')}<b>Branco</b><span class="muted">desde mar 2026</span></div>
+  </div>
+  <div class="card"><h3>Os teus exames</h3>
+    <div class="hist">${belt('#eab308')} Amarelo · sáb 08 nov<span class="pill grey" style="margin-left:auto">🔒 Resultado a 15 nov</span></div>
+    <div class="hist">${belt('#e5e7eb')} Branco · mar 2026<span class="pill ok" style="margin-left:auto">Aprovado</span></div>
+  </div>`;
+
+const studentReveal = () => `
+  ${header('Notificação · sáb 15 nov, 18:00', 'Resultado do exame', '')}
+  <div class="card" style="border-color:rgba(34,197,94,.4)">
+    <div class="row"><span>🔔</span><b>Parabéns! Agora és Amarelo</b></div>
+    <div class="muted" style="margin-top:4px">Foste aprovado no Exame de graduação — Muay Thai. Vê as tuas notas.</div>
+  </div>
+  <div class="card hero">
+    <span class="pill ok">Aprovado</span>
+    <div class="big">Parabéns, agora és Amarelo!</div>
+    <div class="muted">As notas, o feedback e o novo grau aparecem a partir de agora.</div>
+    <div style="margin-top:12px">${belt('#eab308')}</div>
+  </div>`;
+
+const screens = {
+  create: ['Coach · data ao criar', '/coach/graduacao/novo', create],
+  coach: ['Coach · dia de exame', '/coach/graduacao/…', coach],
+  wait: ['Aluno · à espera', '/dashboard/graduacao', studentWait],
+  reveal: ['Aluno · na data', '/dashboard/graduacao/exame/…', studentReveal],
+};
+let cur = 'create';
+function render() {
+  const [, url, fn] = screens[cur];
+  document.getElementById('sw').innerHTML = Object.entries(screens).map(([k, [l]]) => `<button class="sw ${k === cur ? 'active' : ''}" data-go="${k}">${l}</button>`).join('');
+  document.getElementById('url-d').textContent = 'kingdomfight.com' + url;
+  document.getElementById('desk').innerHTML = fn();
+  document.getElementById('phone').innerHTML = fn();
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-go]');
+  if (!t) return;
+  cur = t.dataset.go;
+  render();
+});
+render();
+</script>
+</body>
+</html>

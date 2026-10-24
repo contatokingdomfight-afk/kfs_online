@@ -11,6 +11,8 @@ import { ExamStatusChip, formatExamDate } from "@/components/graduation/ExamStat
 import { ConvocationPanel, type ConvocationOption } from "./ConvocationPanel";
 import { EventActions, RemoveCandidateButton } from "./EventActions";
 import { CandidateSlotSelect, RemindReadyButton } from "./SlotControls";
+import { RevealControls } from "./RevealControls";
+import { revealDueResults } from "@/lib/graduation/reveal";
 import { TargetGradeControl, type TargetGradeOption } from "./TargetGradeControl";
 import { buildExamSlots, countBySlot, slotKey } from "@/lib/graduation/exam-slots";
 
@@ -27,6 +29,8 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
   const supabase = result.client;
 
   const { eventId } = await params;
+  // Revela os resultados cuja data já chegou antes de mostrar a página.
+  await revealDueResults(supabase, { eventId });
   const detail = await loadExamEventDetail(supabase, eventId, userId);
   if (!detail) notFound();
   const { event, candidates } = detail;
@@ -148,6 +152,13 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
         </section>
       )}
 
+      <RevealControls
+        eventId={event.id}
+        revealAt={event.resultsRevealAt}
+        hiddenCount={candidates.filter((c) => c.status !== "CONVOKED" && !c.revealed).length}
+        undecidedCount={pending}
+      />
+
       <section>
         <h2 style={{ margin: "0 0 var(--space-3)", fontSize: "var(--text-base)", fontWeight: 700 }}>
           Convocados <span style={{ fontWeight: 400, color: "var(--text-secondary)" }}>({candidates.length})</span>
@@ -169,6 +180,9 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
                       )}
                       <strong style={{ fontSize: "var(--text-sm)" }}>{c.studentName}</strong>
                       <ExamStatusChip status={c.status} />
+                      {decided && !c.revealed && (
+                        <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--text-secondary)" }}>🔒 por revelar</span>
+                      )}
                       {c.bookedByStudent && <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>marcou na app</span>}
                       {readinessHref && (
                         <Link

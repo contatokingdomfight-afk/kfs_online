@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, CalendarDays, Check, ChevronRight, Circle, Crown, MapPin, PartyPopper, Star } from "lucide-react";
+import { BookOpen, CalendarDays, Check, ChevronRight, Circle, Crown, MapPin, Lock, PartyPopper, Star } from "lucide-react";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { GRADUATION_AXIS_META, type GraduationItemDraft } from "@/lib/graduation/template";
 import { groupItemsByAxis, type ProgressCheck } from "@/lib/graduation/progress";
@@ -44,6 +44,7 @@ export function StudentGraduationView({ graduation }: { graduation: StudentModal
       </section>
 
       {graduation.convocation && <ConvocationBanner convocation={graduation.convocation} modalityCode={graduation.modalityCode} />}
+      {graduation.awaitingResult && <AwaitingResultBanner awaiting={graduation.awaitingResult} />}
 
       {next ? <NextGrade graduation={graduation} /> : <TopGrade />}
 
@@ -115,7 +116,7 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
                 {manualReady ? "O coach validou que estás pronto para o exame!" : "Estás apto para o exame!"}
               </p>
               {manualReady && <p className="m-0 mt-0.5 text-sm text-text-primary">«{progress.manualReadiness!.reason}»</p>}
-              {graduation.openAgendaCount > 0 && !graduation.convocation ? (
+              {graduation.openAgendaCount > 0 && !graduation.convocation && !graduation.awaitingResult ? (
                 <>
                   <p className="m-0 mt-0.5 text-sm text-text-secondary">{manualReady ? "" : "Cumpriste todos os requisitos. "}Já podes marcar o teu exame.</p>
                   <Link
@@ -128,7 +129,11 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
               ) : (
                 <p className="m-0 mt-0.5 text-sm text-text-secondary">
                   {manualReady ? "" : "Cumpriste todos os requisitos. "}
-                  {graduation.convocation ? "Já tens exame marcado." : "A academia vai convocar-te para o próximo exame de graduação."}
+                  {graduation.awaitingResult
+                    ? "Já fizeste o exame — aguarda o resultado."
+                    : graduation.convocation
+                      ? "Já tens exame marcado."
+                      : "A academia vai convocar-te para o próximo exame de graduação."}
                 </p>
               )}
             </div>
@@ -355,6 +360,42 @@ function TopGrade() {
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function AwaitingResultBanner({ awaiting }: { awaiting: NonNullable<StudentModalityGraduation["awaitingResult"]> }) {
+  return (
+    <section
+      className="mt-4 rounded-2xl border p-4 sm:p-5"
+      style={{ borderColor: "color-mix(in srgb, var(--warning) 40%, transparent)", background: "color-mix(in srgb, var(--warning) 6%, transparent)" }}
+      aria-labelledby="exame-feito"
+    >
+      <p className={eyebrow} id="exame-feito">
+        Exame feito
+      </p>
+      <p className="m-0 mt-2 flex flex-wrap items-center gap-2 text-lg font-bold text-text-primary">
+        {awaiting.isPlacement ? (
+          "Exame de nivelamento"
+        ) : (
+          <>
+            Exame para <BeltSwatch colors={awaiting.gradeColors} width={36} height={11} /> {awaiting.gradeName}
+          </>
+        )}
+      </p>
+      <p className="m-0 mt-1 text-sm text-text-secondary">{formatExamDate(awaiting.scheduledAt, false)}</p>
+      <p className="m-0 mt-3 flex items-start gap-2 text-sm text-text-primary">
+        <Lock size={16} aria-hidden className="mt-0.5 shrink-0 text-warning" />
+        <span>
+          {awaiting.revealAt ? (
+            <>
+              O resultado é revelado a <strong>{formatExamDate(awaiting.revealAt)}</strong>. Vais receber uma notificação.
+            </>
+          ) : (
+            "O resultado será revelado numa data a anunciar pela academia. Vais receber uma notificação."
+          )}
+        </span>
+      </p>
+    </section>
+  );
 }
 
 function ConvocationBanner({

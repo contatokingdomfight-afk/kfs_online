@@ -58,6 +58,9 @@ export async function bookExamSlot(eventId: string, slotIso: string): Promise<Bo
   const next = graduation?.progress.next;
   if (!graduation || !next) return { error: "Não tens exame disponível nesta modalidade." };
 
+  // Exame já feito com o resultado ainda escondido: espera pela revelação antes de marcar outro.
+  if (graduation.awaitingResult) return { error: "Já fizeste um exame — aguarda o resultado antes de marcar outro." };
+
   const existing = await activeBookings(supabase, studentId, event.modalityCode);
   const here = existing.find((b) => b.eventId === eventId);
   const elsewhere = existing.find((b) => b.eventId !== eventId);

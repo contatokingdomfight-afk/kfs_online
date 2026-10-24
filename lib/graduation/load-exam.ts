@@ -59,6 +59,8 @@ export type ExamEventRow = {
   slotMinutes: number | null;
   slotCapacity: number | null;
   selfBooking: boolean;
+  /** A partir de quando os resultados ficam visíveis aos alunos (null = escondidos). */
+  resultsRevealAt: string | null;
 };
 
 export type ExamCandidateStatus = "CONVOKED" | "PASSED" | "FAILED" | "ABSENT";
@@ -85,6 +87,8 @@ export type ExamCandidateRow = {
   awardedGradeName: string | null;
   placementMaxGradeId: string | null;
   placementNote: string | null;
+  /** Decidido e já visível ao aluno. */
+  revealed: boolean;
 };
 
 type ScoreRow = ExamScoreRowView & { candidateId: string };
@@ -92,7 +96,7 @@ type ScoreRow = ExamScoreRowView & { candidateId: string };
 export async function loadExamEventRow(supabase: SupabaseClient, eventId: string): Promise<ExamEventRow | null> {
   const { data: event } = await supabase
     .from("GraduationExamEvent")
-    .select("id, modalityCode, title, scheduledAt, location, notes, status, endsAt, slotMinutes, slotCapacity, selfBooking")
+    .select("id, modalityCode, title, scheduledAt, location, notes, status, endsAt, slotMinutes, slotCapacity, selfBooking, resultsRevealAt")
     .eq("id", eventId)
     .maybeSingle();
   if (!event) return null;
@@ -127,7 +131,7 @@ export async function loadExamEventDetail(
     loadGraduationTemplate(supabase, event.modalityCode),
     supabase
       .from("GraduationExamCandidate")
-      .select("id, studentId, gradeId, status, feedback, decidedAt, result, slotStartsAt, bookedByStudent, skipReason, mode, placementStartGradeId, placementAwardedGradeId, placementMaxGradeId, placementNote")
+      .select("id, studentId, gradeId, status, feedback, decidedAt, result, slotStartsAt, bookedByStudent, skipReason, mode, placementStartGradeId, placementAwardedGradeId, placementMaxGradeId, placementNote, revealedAt")
       .eq("eventId", eventId)
       .order("createdAt", { ascending: true }),
   ]);
@@ -172,6 +176,7 @@ export async function loadExamEventDetail(
       awardedGradeName: c.placementAwardedGradeId ? gradeById.get(c.placementAwardedGradeId)?.name ?? null : null,
       placementMaxGradeId: (c.placementMaxGradeId as string | null) ?? null,
       placementNote: (c.placementNote as string | null) ?? null,
+      revealed: Boolean(c.revealedAt),
     };
   });
 

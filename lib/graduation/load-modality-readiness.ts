@@ -121,7 +121,7 @@ export async function loadModalityReadiness(
     inChunks(
       ids,
       async (chunk) =>
-        (await supabase.from("GraduationExamCandidate").select("studentId, gradeId, status, decidedAt, eventId, mode").in("studentId", chunk)).data ?? []
+        (await supabase.from("GraduationExamCandidate").select("studentId, gradeId, status, decidedAt, eventId, mode, revealedAt").in("studentId", chunk)).data ?? []
     ),
   ]);
 
@@ -189,7 +189,10 @@ export async function loadModalityReadiness(
       .filter((c) => c.status === "FAILED" && c.mode !== "PLACEMENT" && next && c.gradeId === next.id && c.decidedAt)
       .map((c) => new Date(c.decidedAt as string))
       .sort((a, b) => b.getTime() - a.getTime())[0];
-    const active = studentCandidates.find((c) => c.status === "CONVOKED" && eventById.get(c.eventId)?.status === "SCHEDULED");
+    // Convocatória ativa, ou exame já feito com o resultado ainda por revelar (não convocar/avisar de novo).
+    const active = studentCandidates.find(
+      (c) => (c.status === "CONVOKED" && eventById.get(c.eventId)?.status === "SCHEDULED") || (c.status !== "CONVOKED" && !c.revealedAt)
+    );
     const activeEvent = active ? eventById.get(active.eventId) : undefined;
     const fulfilledSet = fulfilledByStudent.get(s.id) ?? new Set<string>();
 

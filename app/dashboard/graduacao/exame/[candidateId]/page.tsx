@@ -22,11 +22,11 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
   const { candidateId } = await params;
   const { data: candidate } = await supabase
     .from("GraduationExamCandidate")
-    .select("id, eventId, studentId, gradeId, status, feedback, result, decidedAt, mode, placementStartGradeId, placementAwardedGradeId")
+    .select("id, eventId, studentId, gradeId, status, feedback, result, decidedAt, mode, placementStartGradeId, placementAwardedGradeId, revealedAt")
     .eq("id", candidateId)
     .maybeSingle();
-  // Só o próprio aluno vê o seu exame, e só depois de decidido.
-  if (!candidate || candidate.studentId !== studentId || !["PASSED", "FAILED"].includes(candidate.status)) notFound();
+  // Só o próprio aluno vê o seu exame, e só depois de decidido e revelado (data do dia de exame).
+  if (!candidate || candidate.studentId !== studentId || !["PASSED", "FAILED"].includes(candidate.status) || !candidate.revealedAt) notFound();
 
   const [{ data: event }, { data: grade }, { data: scoreRows }] = await Promise.all([
     supabase.from("GraduationExamEvent").select("title, scheduledAt, modalityCode").eq("id", candidate.eventId).maybeSingle(),
@@ -44,16 +44,17 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
 
   // Salto de grau: graus intermédios atribuídos no mesmo momento da aprovação.
   let skippedNames: string[] = [];
-  if (passed && event && candidate.decidedAt) {
-    const decided = new Date(candidate.decidedAt).getTime();
+  if (passed && event && candidate.revealedAt) {
+    // Os graus são atribuídos no momento da revelação.
+    const revealed = new Date(candidate.revealedAt).getTime();
     const { data: skipped } = await supabase
       .from("StudentGrade")
       .select("gradeId")
       .eq("studentId", studentId)
       .eq("modalityCode", event.modalityCode)
       .eq("source", isPlacement ? "PLACEMENT" : "SKIPPED")
-      .gte("awardedAt", new Date(decided - 10 * 60_000).toISOString())
-      .lte("awardedAt", candidate.decidedAt)
+      .gte("awardedAt", new Date(revealed - 10 * 60_000).toISOString())
+      .lte("awardedAt", candidate.revealedAt)
       .order("awardedAt", { ascending: true });
     const nameById = new Map((template?.grades ?? []).map((g) => [g.id, g.name]));
     skippedNames = (skipped ?? []).map((s) => nameById.get(s.gradeId as string) ?? "Grau");

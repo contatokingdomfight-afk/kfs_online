@@ -1,3 +1,4 @@
+import { revealDueResults } from "@/lib/graduation/reveal";
 import Link from "next/link";
 import { CalendarDays, ChevronRight, MapPin, Plus, Users } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -13,6 +14,7 @@ export default async function CoachGraduacaoPage() {
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
+  await revealDueResults(supabase);
 
   const [{ data: events }, { data: modalities }, { data: candidates }] = await Promise.all([
     supabase

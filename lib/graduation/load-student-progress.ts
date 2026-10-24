@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadGraduationTemplate } from "./load-template";
+import { revealDueResults } from "./reveal";
 import { selectGraduationModalities } from "./modality-selection";
 import { averageEvaluationScores, computeStudentProgress, type ManualReadiness, type StudentProgress } from "./progress";
 
@@ -33,6 +34,8 @@ export type StudentModalityGraduation = {
   } | null;
   /** Dias de exame com marcação pelo aluno abertos nesta modalidade. */
   openAgendaCount: number;
+  /** Exame já feito com o resultado ainda escondido (até revealAt; null = sem data definida). */
+  awaitingResult: { title: string; scheduledAt: string; gradeName: string; gradeColors: string[]; revealAt: string | null; isPlacement: boolean } | null;
   /** Exames já decididos, do mais recente para o mais antigo. */
   examHistory: StudentExamHistoryEntry[];
 };
@@ -63,6 +66,8 @@ export async function loadStudentGraduations(
   } = {}
 ): Promise<StudentModalityGraduation[]> {
   const now = options.now ?? new Date();
+  // Aplica primeiro os resultados deste aluno cuja data de revelação já chegou.
+  if (!options.previewModalityCode) await revealDueResults(supabase, { studentId }, now);
   const preview = options.previewModalityCode ?? null;
   let templatesQuery = supabase.from("GraduationTemplate").select("modalityCode");
   templatesQuery = preview ? templatesQuery.eq("modalityCode", preview) : templatesQuery.eq("isPublished", true);
@@ -133,7 +138,7 @@ export async function loadStudentGraduations(
     supabase.from("StudentGraduationRequirement").select("requirementId").eq("studentId", studentId),
     supabase
       .from("GraduationExamCandidate")
-      .select("id, eventId, gradeId, status, decidedAt, slotStartsAt, bookedByStudent, mode, placementAwardedGradeId")
+      .select("id, eventId, gradeId, status, decidedAt, slotStartsAt, bookedByStudent, mode, placementAwardedGradeId, revealedAt")
       .eq("studentId", studentId),
     // Dias de exame com marcação pelo aluno ainda por acontecer.
     supabase
@@ -151,8 +156,8 @@ export async function loadStudentGraduations(
 
   const examEventIds = [...new Set((candidates ?? []).map((c) => c.eventId as string))];
   const { data: examEvents } = examEventIds.length
-    ? await supabase.from("GraduationExamEvent").select("id, modalityCode, title, scheduledAt, location, status, selfBooking").in("id", examEventIds)
-    : { data: [] as { id: string; modalityCode: string; title: string; scheduledAt: string; location: string | null; status: string; selfBooking: boolean }[] };
+    ? await supabase.from("GraduationExamEvent").select("id, modalityCode, title, scheduledAt, location, status, selfBooking, resultsRevealAt").in("id", examEventIds)
+    : { data: [] as { id: string; modalityCode: string; title: string; scheduledAt: string; location: string | null; status: string; selfBooking: boolean; resultsRevealAt: string | null }[] };
   const examEventById = new Map((examEvents ?? []).map((e) => [e.id, e]));
 
   const evaluationsByModality = new Map<string, { scores: Record<string, unknown> | null }[]>();
@@ -196,12 +201,14 @@ export async function loadStudentGraduations(
       .map((c) => ({ ...c, event: examEventById.get(c.eventId) }))
       .filter((c) => c.event?.modalityCode === code);
     const convocationRow = modalityCandidates.find((c) => c.status === "CONVOKED" && c.event?.status === "SCHEDULED");
+    // Exame decidido mas com o resultado ainda escondido (até à data de revelação).
+    const awaitingRow = modalityCandidates.find((c) => c.status !== "CONVOKED" && !c.revealedAt);
     const lastFailedExamAt = modalityCandidates
-      .filter((c) => c.status === "FAILED" && c.mode !== "PLACEMENT" && nextGrade && c.gradeId === nextGrade.id && c.decidedAt)
+      .filter((c) => c.status === "FAILED" && c.revealedAt && c.mode !== "PLACEMENT" && nextGrade && c.gradeId === nextGrade.id && c.decidedAt)
       .map((c) => new Date(c.decidedAt as string))
       .sort((a, b) => b.getTime() - a.getTime())[0];
     const examHistory: StudentExamHistoryEntry[] = modalityCandidates
-      .filter((c) => c.status === "PASSED" || c.status === "FAILED" || c.status === "ABSENT")
+      .filter((c) => (c.status === "PASSED" || c.status === "FAILED" || c.status === "ABSENT") && c.revealedAt)
       .map((c) => ({
         candidateId: c.id as string,
         eventTitle: c.event!.title,
@@ -228,6 +235,16 @@ export async function loadStudentGraduations(
             }
           : null,
       openAgendaCount: (openAgendas ?? []).filter((e) => e.modalityCode === code).length,
+      awaitingResult: awaitingRow && awaitingRow.event
+        ? {
+            title: awaitingRow.event.title,
+            scheduledAt: awaitingRow.event.scheduledAt,
+            gradeName: gradeById.get(awaitingRow.gradeId)?.name ?? "Grau",
+            gradeColors: gradeById.get(awaitingRow.gradeId)?.colors ?? [],
+            revealAt: (awaitingRow.event.resultsRevealAt as string | null) ?? null,
+            isPlacement: awaitingRow.mode === "PLACEMENT",
+          }
+        : null,
       examHistory,
       modalityCode: code,
       modalityName: modalityNames.get(code) ?? code,

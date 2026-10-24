@@ -10,6 +10,7 @@ import { loadCandidateScoringContext, loadCandidateSheet, loadExamEventRow, toSc
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { bookingErrorMessage, buildExamSlots } from "@/lib/graduation/exam-slots";
+import { isRevealDue, revealCandidate, revealDueResults, type PendingGrade } from "@/lib/graduation/reveal";
 
 export type ActionResult = { error?: string; success?: boolean };
 
@@ -64,6 +65,12 @@ export async function createExamEvent(_prev: ActionResult | null, formData: Form
     if (buildExamSlots({ scheduledAt, ...slots }).length === 0) return { error: "O período não chega para um horário completo." };
   }
 
+  // Data de revelação dos resultados (opcional; sem data ficam escondidos até ser definida).
+  const revealDate = String(formData.get("revealDate") ?? "").trim();
+  const revealTime = String(formData.get("revealTime") ?? "").trim() || "18:00";
+  if (revealDate && (!/^\d{4}-\d{2}-\d{2}$/.test(revealDate) || !/^\d{2}:\d{2}$/.test(revealTime))) return { error: "Data de revelação inválida." };
+  const resultsRevealAt = revealDate ? lisbonLocalToUtcIso(revealDate, revealTime) : null;
+
   const { data: modality } = await supabase.from("ModalityRef").select("name").eq("code", modalityCode).maybeSingle();
   const { data: created, error } = await supabase
     .from("GraduationExamEvent")
@@ -74,6 +81,7 @@ export async function createExamEvent(_prev: ActionResult | null, formData: Form
       location,
       notes,
       createdByUserId: auth.userId,
+      resultsRevealAt,
       ...(slots ?? {}),
     })
     .select("id")
@@ -316,54 +324,13 @@ export async function decideCandidate(
   if (decision === "PASSED" && !result.passed) return { error: "O aluno não cumpre o critério de aprovação." };
   if (decision === "FAILED" && result.scoredCount === 0) return { error: "Avalia o aluno antes de o reprovar (ou marca falta)." };
 
-  const now = new Date().toISOString();
-  let studentGradeId: string | null = null;
-  let skippedIds: string[] = [];
+  // A decisão fica guardada; os graus só são atribuídos na revelação (data do dia de exame).
+  const pendingGrades: PendingGrade[] = [];
   if (decision === "PASSED") {
-    // Salto de grau: os graus entre o atual e o grau-alvo ficam registados como «obtidos por salto»,
-    // um pouco antes do grau-alvo para este continuar a ser o mais recente.
+    // Salto de grau: os graus entre o atual e o grau-alvo ficam registados como «obtidos por salto».
     const skipped = await skippedGradesFor(supabase, data.candidate.studentId, data.event.modalityCode, data.sheet.targetGrade.id);
-    if (skipped.length > 0) {
-      const base = new Date(now).getTime();
-      const { data: rows, error: skipErr } = await supabase
-        .from("StudentGrade")
-        .insert(
-          skipped.map((gradeId, i) => ({
-            studentId: data.candidate.studentId,
-            modalityCode: data.event.modalityCode,
-            gradeId,
-            source: "SKIPPED",
-            awardedAt: new Date(base - (skipped.length - i) * 1000).toISOString(),
-            awardedByUserId: auth.userId,
-            notes: `Obtido por salto — ${data.event.title}`,
-          }))
-        )
-        .select("id");
-      if (skipErr) {
-        console.error("decideCandidate skipped:", skipErr);
-        return { error: "Não foi possível atribuir os graus intermédios." };
-      }
-      skippedIds = (rows ?? []).map((r) => r.id as string);
-    }
-    const { data: grade, error: gradeErr } = await supabase
-      .from("StudentGrade")
-      .insert({
-        studentId: data.candidate.studentId,
-        modalityCode: data.event.modalityCode,
-        gradeId: data.sheet.targetGrade.id,
-        source: "EXAM",
-        awardedAt: now,
-        awardedByUserId: auth.userId,
-        notes: data.event.title,
-      })
-      .select("id")
-      .single();
-    if (gradeErr || !grade) {
-      console.error("decideCandidate grade:", gradeErr);
-      if (skippedIds.length) await supabase.from("StudentGrade").delete().in("id", skippedIds);
-      return { error: "Não foi possível atribuir o grau." };
-    }
-    studentGradeId = grade.id;
+    pendingGrades.push(...skipped.map((gradeId) => ({ gradeId, source: "SKIPPED" as const, notes: `Obtido por salto — ${data.event.title}` })));
+    pendingGrades.push({ gradeId: data.sheet.targetGrade.id, source: "EXAM", notes: data.event.title });
   }
 
   const { error } = await supabase
@@ -372,32 +339,18 @@ export async function decideCandidate(
       status: decision,
       feedback: feedback.trim() || null,
       result: decision === "ABSENT" ? null : result,
-      decidedAt: now,
+      decidedAt: new Date().toISOString(),
       decidedByUserId: auth.userId,
-      studentGradeId,
+      pendingGrades: pendingGrades.length ? pendingGrades : null,
     })
     .eq("id", candidateId)
     .eq("status", "CONVOKED");
   if (error) {
     console.error("decideCandidate:", error);
-    if (studentGradeId) await supabase.from("StudentGrade").delete().in("id", [studentGradeId, ...skippedIds]);
     return { error: "Não foi possível gravar o resultado." };
   }
 
-  const gradeName = data.sheet.targetGrade.name;
-  if (decision !== "ABSENT") {
-    await createInAppNotification(supabase, {
-      studentId: data.candidate.studentId,
-      type: "GRADUATION",
-      title: decision === "PASSED" ? `Parabéns! Agora és ${gradeName}` : `Resultado do exame: ${gradeName}`,
-      body:
-        decision === "PASSED"
-          ? `Foste aprovado no ${data.event.title}. Vê as tuas notas e o próximo passo da tua jornada.`
-          : `Ainda não foi desta. Vê as notas e o feedback para te preparares para o próximo exame.`,
-      href: `/dashboard/graduacao/exame/${candidateId}`,
-    });
-  }
-
+  if (isRevealDue(data.event.resultsRevealAt)) await revealCandidate(supabase, candidateId);
   revalidatePath(`/coach/graduacao/${data.event.id}`);
   return { success: true };
 }
@@ -594,42 +547,17 @@ export async function decidePlacement(
   const note = decisionNote.trim().slice(0, 500);
   if (awardIndex !== p.result.proposedIndex && !note) return { error: "Indica o motivo para atribuir um grau diferente da proposta." };
 
-  const now = new Date().toISOString();
-  const base = new Date(now).getTime();
+  // A decisão fica guardada; os graus só são atribuídos na revelação (data do dia de exame).
   const awarded = awardIndex >= p.startIndex ? p.grades[awardIndex] : null;
-  let insertedIds: string[] = [];
-  let studentGradeId: string | null = null;
-  if (awarded) {
-    // Graus abaixo do atribuído: «obtido por nivelamento», um pouco antes para o atribuído ficar o mais recente.
-    const below = p.grades.slice(p.startIndex, awardIndex);
-    const rows = [
-      ...below.map((g, i) => ({
-        studentId: data.candidate.studentId,
-        modalityCode: data.event.modalityCode,
-        gradeId: g.id,
-        source: "PLACEMENT",
-        awardedAt: new Date(base - (below.length - i) * 1000).toISOString(),
-        awardedByUserId: auth.userId,
-        notes: `Obtido por nivelamento — ${data.event.title}`,
-      })),
-      {
-        studentId: data.candidate.studentId,
-        modalityCode: data.event.modalityCode,
-        gradeId: awarded.id,
-        source: "EXAM",
-        awardedAt: now,
-        awardedByUserId: auth.userId,
-        notes: `Nivelamento — ${data.event.title}`,
-      },
-    ];
-    const { data: inserted, error: gradeErr } = await supabase.from("StudentGrade").insert(rows).select("id, gradeId");
-    if (gradeErr || !inserted) {
-      console.error("decidePlacement grades:", gradeErr);
-      return { error: "Não foi possível atribuir o grau." };
-    }
-    insertedIds = inserted.map((r) => r.id as string);
-    studentGradeId = (inserted.find((r) => r.gradeId === awarded.id)?.id as string | undefined) ?? null;
-  }
+  const pendingGrades: PendingGrade[] = awarded
+    ? [
+        // Graus abaixo do atribuído: «obtido por nivelamento».
+        ...p.grades
+          .slice(p.startIndex, awardIndex)
+          .map((g) => ({ gradeId: g.id, source: "PLACEMENT" as const, notes: `Obtido por nivelamento — ${data.event.title}` })),
+        { gradeId: awarded.id, source: "EXAM", notes: `Nivelamento — ${data.event.title}` },
+      ]
+    : [];
 
   const { error } = await supabase
     .from("GraduationExamCandidate")
@@ -637,9 +565,9 @@ export async function decidePlacement(
       status: awarded ? "PASSED" : "FAILED",
       feedback: feedback.trim() || null,
       result: data.result,
-      decidedAt: now,
+      decidedAt: new Date().toISOString(),
       decidedByUserId: auth.userId,
-      studentGradeId,
+      pendingGrades: pendingGrades.length ? pendingGrades : null,
       placementAwardedGradeId: awarded?.id ?? null,
       placementDecisionNote: note || null,
     })
@@ -647,20 +575,42 @@ export async function decidePlacement(
     .eq("status", "CONVOKED");
   if (error) {
     console.error("decidePlacement:", error);
-    if (insertedIds.length) await supabase.from("StudentGrade").delete().in("id", insertedIds);
     return { error: "Não foi possível gravar o resultado." };
   }
 
-  await createInAppNotification(supabase, {
-    studentId: data.candidate.studentId,
-    type: "GRADUATION",
-    title: awarded ? `Nivelamento: começas em ${awarded.name}` : "Resultado do nivelamento",
-    body: awarded
-      ? `O teu nivelamento (${data.event.title}) está decidido. Vê as notas e o teu próximo objetivo.`
-      : "Vê as notas e o feedback do teu nivelamento e o teu próximo objetivo.",
-    href: `/dashboard/graduacao/exame/${candidateId}`,
-  });
-
+  if (isRevealDue(data.event.resultsRevealAt)) await revealCandidate(supabase, candidateId);
   revalidatePath(`/coach/graduacao/${data.event.id}`);
   return { success: true };
+}
+
+/** Coach/admin: define (ou limpa) a data de revelação dos resultados de um dia de exame. */
+export async function setResultsRevealAt(eventId: string, date: string, time: string): Promise<ActionResult> {
+  const auth = await graduationExamActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+  let revealAt: string | null = null;
+  if (date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return { error: "Indica a data e a hora." };
+    revealAt = lisbonLocalToUtcIso(date, time);
+  }
+  const { error } = await supabase.from("GraduationExamEvent").update({ resultsRevealAt: revealAt, updatedAt: new Date().toISOString() }).eq("id", eventId);
+  if (error) return { error: "Não foi possível guardar a data." };
+  if (isRevealDue(revealAt)) await revealDueResults(supabase, { eventId });
+  revalidatePath(`/coach/graduacao/${eventId}`);
+  return { success: true };
+}
+
+/** Coach/admin: revela já os resultados decididos de um dia de exame. */
+export async function revealResultsNow(eventId: string): Promise<ActionResult & { revealed?: number }> {
+  const auth = await graduationExamActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+  const now = new Date();
+  const { error } = await supabase.from("GraduationExamEvent").update({ resultsRevealAt: now.toISOString(), updatedAt: now.toISOString() }).eq("id", eventId);
+  if (error) return { error: "Não foi possível revelar." };
+  const revealed = await revealDueResults(supabase, { eventId }, now);
+  revalidatePath(`/coach/graduacao/${eventId}`);
+  return { success: true, revealed };
 }

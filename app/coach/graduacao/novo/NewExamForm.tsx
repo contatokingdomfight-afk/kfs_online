@@ -127,6 +127,18 @@ export function NewExamForm({ modalities }: { modalities: { code: string; name: 
         </>
       )}
       <div>
+        <label style={label} htmlFor="revealDate">
+          Resultados visíveis a partir de <span style={{ fontWeight: 400, color: "var(--text-secondary)" }}>(opcional)</span>
+        </label>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "var(--space-3)" }}>
+          <input id="revealDate" name="revealDate" type="date" className="input" aria-label="Data de revelação" />
+          <input id="revealTime" name="revealTime" type="time" className="input" defaultValue="18:00" aria-label="Hora de revelação" />
+        </div>
+        <span style={hint}>
+          Até lá, os alunos só veem «Exame feito». O grau, o XP e o ranking mudam todos nessa data. Deixa vazio para decidir mais tarde.
+        </span>
+      </div>
+      <div>
         <label style={label} htmlFor="location">
           Local <span style={{ fontWeight: 400, color: "var(--text-secondary)" }}>(opcional)</span>
         </label>

@@ -1,3 +1,4 @@
+import { revealDueResults } from "@/lib/graduation/reveal";
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeCronRequest } from "@/lib/cron/authorize-cron";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -16,6 +17,9 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminClient();
+
+  // Rede de segurança diária: revela os resultados de exames de graduação cuja data já passou.
+  await revealDueResults(supabase).catch((e) => console.error("revealDueResults:", e));
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
