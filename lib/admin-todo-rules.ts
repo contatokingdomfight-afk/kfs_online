@@ -14,12 +14,13 @@ export type AdminTodoKind =
   | "carga"
   | "adesao"
   | "fisicas"
+  | "performance"
   | "exame"
   | "confirmar"
   | "experimentais"
   | "aniversarios";
 
-export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "semana", "risco", "semplano", "carga", "adesao", "fisicas", "exame", "confirmar", "experimentais", "aniversarios"];
+export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "semana", "risco", "semplano", "carga", "adesao", "fisicas", "performance", "exame", "confirmar", "experimentais", "aniversarios"];
 
 /** Prazo da mensalidade: dia 8 do mês de referência (ver lib/lisbon-payment-dates.ts). */
 export const TUITION_DUE_DAY = 8;
@@ -32,6 +33,8 @@ export const NO_PLAN_WINDOW_DAYS = 60;
 export const RISK_DAYS = 14;
 /** Avaliações físicas que vencem até este nº de dias (ou já venceram) entram no alerta. */
 export const PHYSICAL_DUE_WITHIN_DAYS = 30;
+/** Performance (AthleteEvaluation): alunos a treinar sem avaliação há este nº de dias ou mais. */
+export const PERFORMANCE_STALE_DAYS = 30;
 /** Experimentais feitas há no máximo este nº de dias e ainda não convertidas. */
 export const TRIAL_WINDOW_DAYS = 14;
 /** Experimentais por confirmar: aulas de hoje até daqui a N dias. */
@@ -130,6 +133,7 @@ export function todoDoneKey(kind: AdminTodoKind, parts: { id: string; ref?: stri
     case "aniversarios":
       return `${parts.id}:${parts.today.slice(0, 4)}`;
     case "carga":
+    case "performance":
       return `${parts.id}:${weekKey(parts.today)}`;
     default:
       return `${parts.id}:${parts.ref ?? ""}`;

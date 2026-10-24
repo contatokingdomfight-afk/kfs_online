@@ -27,6 +27,7 @@ const KIND_TITLE: Record<AdminTodoKind, string> = {
   carga: "Carga alta",
   adesao: "Adesão",
   fisicas: "Avaliação física",
+  performance: "Performance por avaliar",
   confirmar: "Confirmação de experimental",
   experimentais: "Experimental",
 };
@@ -82,6 +83,12 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
     primary = (
       <Link href={item.href} style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg)", display: "inline-flex", alignItems: "center", fontSize: 13, fontWeight: 800, textDecoration: "none", color: "var(--text-primary)" }}>
         Convocar
+      </Link>
+    );
+  if (item.kind === "performance" && item.href)
+    primary = (
+      <Link href={item.href} style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg)", display: "inline-flex", alignItems: "center", fontSize: 13, fontWeight: 800, textDecoration: "none", color: "var(--text-primary)" }}>
+        Avaliar
       </Link>
     );
   if (item.kind === "carga" && item.href)

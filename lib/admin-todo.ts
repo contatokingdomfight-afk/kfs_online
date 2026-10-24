@@ -33,6 +33,7 @@ import {
   churnRisk,
   isTuitionOverdue,
   noPlanLead,
+  PERFORMANCE_STALE_DAYS,
   tuitionDueDate,
   tuitionDueSoon,
   daysBetween,
@@ -492,6 +493,59 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
 
+  // --- Performance por avaliar: a treinar nos últimos 30 dias e sem AthleteEvaluation há 30+ dias (ou nunca) ---
+  const staleSince = addDaysYmd(today, -PERFORMANCE_STALE_DAYS);
+  const evalCandidates = active.filter((s) => (lastTraining.get(s.id) ?? "") >= staleSince);
+  const athleteByStudent = new Map<string, string>();
+  const lastEvalByAthlete = new Map<string, string>();
+  for (const part of chunks(evalCandidates.map((s) => s.id), 200)) {
+    const { data } = await supabase.from("Athlete").select("id, studentId").in("studentId", part);
+    for (const a of (data ?? []) as { id: string; studentId: string }[]) athleteByStudent.set(a.studentId, a.id);
+  }
+  for (const part of chunks([...athleteByStudent.values()], 100)) {
+    for (let offset = 0; ; offset += 1000) {
+      const { data } = await supabase
+        .from("AthleteEvaluation")
+        .select("athleteId, created_at")
+        .in("athleteId", part)
+        .gte("created_at", `${since}T00:00:00Z`)
+        .range(offset, offset + 999);
+      const batch = (data ?? []) as { athleteId: string; created_at: string }[];
+      for (const e of batch) {
+        const d = String(e.created_at).slice(0, 10);
+        if (d > (lastEvalByAthlete.get(e.athleteId) ?? "")) lastEvalByAthlete.set(e.athleteId, d);
+      }
+      if (batch.length < 1000) break;
+    }
+  }
+  const performance: AdminTodoItem[] = evalCandidates
+    .map((s) => {
+      const athleteId = athleteByStudent.get(s.id);
+      const lastEval = athleteId ? lastEvalByAthlete.get(athleteId) ?? null : null;
+      const days = lastEval ? daysBetween(lastEval, today) : null;
+      if (days != null && days < PERFORMANCE_STALE_DAYS) return null;
+      const lastTrain = lastTraining.get(s.id)!;
+      const trainDays = daysBetween(lastTrain, today);
+      return {
+        kind: "performance" as const,
+        key: todoDoneKey("performance", { id: s.id, today }),
+        studentId: s.id,
+        name: nameOf(s),
+        cells: [
+          { text: s.primaryModality ? MODALITY_LABELS[s.primaryModality] ?? s.primaryModality : "—" },
+          // Só lemos 6 meses de avaliações: sem nenhuma nesse período = «nunca / há mais de 6 meses».
+          { text: days == null ? "nunca (ou há mais de 6 meses)" : `há ${days} ${dayWord(days)}`, tone: days == null || days >= 60 ? ("red" as const) : ("amber" as const) },
+          { text: trainDays === 0 ? "hoje" : `há ${trainDays} ${dayWord(trainDays)}` },
+        ],
+        urgency: days ?? 10_000,
+        whatsappUrl: null,
+        href: `/coach/alunos/${s.id}`,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
+    .filter(notDone)
+    .sort((a, b) => b.urgency - a.urgency);
+
   // --- Experimentais por confirmar (hoje e próximos dias) ---
   const { data: upcomingTrials } = await supabase
     .from("TrialClass")
@@ -777,6 +831,12 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
       summary: fisicas.length ? "Vencem nos próximos 30 dias ou já venceram" : "",
       info: "A avaliação física renova a cada 6 meses. Aparecem os alunos ativos cuja próxima avaliação vence nos próximos 30 dias ou já passou.",
       columns: ["Aluno", "Última", "Vencimento", "Pedido", ""],
+    },
+    performance: {
+      kind: "performance", tone: "blue", title: "Performance por avaliar", items: performance,
+      summary: performance.length ? `A treinar e sem avaliação de performance há ${PERFORMANCE_STALE_DAYS}+ dias` : "",
+      info: `Alunos ativos que treinaram nos últimos ${PERFORMANCE_STALE_DAYS} dias e cuja última avaliação de performance foi há ${PERFORMANCE_STALE_DAYS} dias ou mais (ou que nunca foram avaliados). Ao marcar «Feito», volta na semana seguinte se continuar por avaliar.`,
+      columns: ["Aluno", "Modalidade", "Última avaliação", "Último treino", ""],
     },
     confirmar: {
       kind: "confirmar", tone: "amber", title: "Experimentais por confirmar", items: confirmar,
