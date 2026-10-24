@@ -4,7 +4,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadGraduationTemplate } from "./load-template";
 import { revealDueResults } from "./reveal";
 import { selectGraduationModalities } from "./modality-selection";
-import { averageEvaluationScores, computeStudentProgress, type ManualReadiness, type StudentProgress } from "./progress";
+import { averageEvaluationScores, computeStudentProgress, type CumulativeGradeItems, type ManualReadiness, type StudentProgress } from "./progress";
+import type { GraduationGradeDraft, GraduationItemDraft } from "./template";
 
 /** Últimas N avaliações de performance usadas na média (igual ao radar). */
 const PERFORMANCE_LAST_N = 10;
@@ -35,6 +36,8 @@ export type StudentModalityGraduation = {
   /** Dias de exame com marcação pelo aluno abertos nesta modalidade. */
   openAgendaCount: number;
   /** Exame já feito com o resultado ainda escondido (até revealAt; null = sem data definida). */
+  /** Salto de grau: exame convocado para um grau acima do próximo (conteúdo a mostrar ao aluno). */
+  examTarget: { grade: GraduationGradeDraft; newItems: GraduationItemDraft[]; reviewGrades: CumulativeGradeItems[] } | null;
   awaitingResult: { title: string; scheduledAt: string; gradeName: string; gradeColors: string[]; revealAt: string | null; isPlacement: boolean } | null;
   /** Exames já decididos, do mais recente para o mais antigo. */
   examHistory: StudentExamHistoryEntry[];
@@ -235,6 +238,21 @@ export async function loadStudentGraduations(
             }
           : null,
       openAgendaCount: (openAgendas ?? []).filter((e) => e.modalityCode === code).length,
+      examTarget: (() => {
+        // Salto de grau: a convocatória ativa é para um grau acima do próximo — o conteúdo do exame é o desse grau.
+        if (!convocationRow || convocationRow.mode === "PLACEMENT" || !nextGrade) return null;
+        const targetIndex = template.grades.findIndex((g) => g.id === convocationRow.gradeId);
+        if (targetIndex <= currentGradeIndex + 1) return null;
+        const target = template.grades[targetIndex];
+        return {
+          grade: target,
+          newItems: target.items,
+          reviewGrades: template.grades
+            .slice(0, targetIndex)
+            .map((g) => ({ gradeId: g.id, gradeName: g.name, colors: g.colors, items: g.items }))
+            .reverse(),
+        };
+      })(),
       awaitingResult: awaitingRow && awaitingRow.event
         ? {
             title: awaitingRow.event.title,

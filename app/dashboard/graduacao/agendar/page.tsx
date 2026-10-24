@@ -40,7 +40,8 @@ export default async function AgendarExamePage({ searchParams }: { searchParams:
   }
 
   const { progress } = graduation;
-  const next = progress.next!;
+  // Grau do exame: o grau-alvo da convocatória (salto de grau) ou o próximo grau.
+  const next = graduation.examTarget?.grade ?? progress.next!;
   const now = new Date();
 
   const { data: eventRows } = await admin
@@ -112,7 +113,10 @@ export default async function AgendarExamePage({ searchParams }: { searchParams:
           <div className="flex min-w-0 items-center gap-3">
             <BeltSwatch colors={next.colors} width={44} height={14} />
             <div className="min-w-0">
-              <p className="m-0 break-words font-bold text-text-primary">Exame para {next.name}</p>
+              <p className="m-0 break-words font-bold text-text-primary">
+                {graduation.convocation?.isPlacement ? "Exame de nivelamento" : `Exame para ${next.name}`}
+                {graduation.examTarget && <span className="font-normal text-warning"> · salto de grau</span>}
+              </p>
               <p className="m-0 text-xs text-text-secondary">
                 {graduation.modalityName} · atual: {progress.current?.name ?? "sem graduação"}
               </p>

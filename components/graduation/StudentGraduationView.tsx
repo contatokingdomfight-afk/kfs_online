@@ -65,7 +65,9 @@ function Stat({ value, label, hint }: { value: string; label: string; hint?: str
 
 function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
   const { progress } = graduation;
-  const next = progress.next!;
+  // Salto de grau marcado: mostra o grau-alvo do exame (os requisitos do próximo grau não se aplicam).
+  const skipTarget = graduation.examTarget?.grade ?? null;
+  const next = skipTarget ?? progress.next!;
   const total = progress.checks.length;
   // Apto só por decisão do coach (não cumpre ainda todos os requisitos).
   const manualReady = progress.manualReadiness?.status === "READY" && progress.doneCount < total;
@@ -74,7 +76,7 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
     <>
       <section className={card} aria-labelledby="proximo-grau">
         <p className={eyebrow} id="proximo-grau">
-          Próximo grau
+          {skipTarget ? "O teu exame — salto de grau" : "Próximo grau"}
         </p>
         <div className="mt-3 flex items-center gap-4">
           <BeltSwatch colors={next.colors} width={88} height={22} />
@@ -89,7 +91,20 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
         </div>
         {next.objective && <p className="mb-0 mt-3 text-sm leading-relaxed text-text-primary">{next.objective}</p>}
 
-        {progress.manualReadiness?.status === "NOT_READY" && (
+        {skipTarget && (
+          <div
+            className="mt-4 rounded-xl border p-3"
+            style={{ borderColor: "color-mix(in srgb, var(--warning) 40%, transparent)", background: "color-mix(in srgb, var(--warning) 8%, transparent)" }}
+          >
+            <p className="m-0 text-sm font-bold text-text-primary">⬆ O teu exame marcado é para {skipTarget.name}.</p>
+            <p className="m-0 mt-0.5 text-sm text-text-secondary">
+              A academia decidiu que podes saltar diretamente para este grau. Se fores aprovado, os graus intermédios ficam registados como
+              obtidos por salto.
+            </p>
+          </div>
+        )}
+
+        {skipTarget ? null : progress.manualReadiness?.status === "NOT_READY" && (
           <div
             className="mt-4 rounded-xl border p-3"
             style={{ borderColor: "color-mix(in srgb, var(--danger) 45%, transparent)", background: "color-mix(in srgb, var(--danger) 8%, transparent)" }}
@@ -245,8 +260,10 @@ function ProgressBar({ value, label, thin }: { value: number; label: string; thi
 }
 
 function ExamContent({ graduation }: { graduation: StudentModalityGraduation }) {
-  const { progress } = graduation;
-  const next = progress.next!;
+  // Salto de grau: o conteúdo é o do grau-alvo do exame marcado, não o do próximo grau.
+  const target = graduation.examTarget;
+  const next = target?.grade ?? graduation.progress.next!;
+  const progress = target ? { newItems: target.newItems, reviewGrades: target.reviewGrades } : graduation.progress;
   const groups = groupItemsByAxis(progress.newItems);
   const reviewCount = progress.reviewGrades.reduce((s, g) => s + g.items.length, 0);
   const hasCritical = [...progress.newItems, ...progress.reviewGrades.flatMap((g) => g.items)].some((i) => i.isCritical);

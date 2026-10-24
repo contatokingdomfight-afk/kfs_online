@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Folha de avaliação</title>
+<style>
+  :root {
+    --bg: #0b0b0b; --bg-secondary: #141414; --bg-elevated: #1a1a1a;
+    --text-primary: #fff; --text-secondary: #a1a1aa; --primary: #c1121f;
+    --success: #22c55e; --warning: #facc15; --danger: #e11d48; --border: #27272a;
+    --font: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+  .meta { max-width: 1240px; margin: 0 auto; padding: 28px 16px 0; }
+  .badge { display: inline-flex; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: rgba(193,18,31,.15); color: #ff6b73; text-transform: uppercase; letter-spacing: .5px; }
+  .meta h1 { font-size: 22px; margin: 12px 0 6px; }
+  .meta p, .meta li { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
+  .meta ul { margin: 8px 0 0; padding-left: 18px; max-width: 860px; }
+  .stage { max-width: 1240px; margin: 20px auto 60px; padding: 0 16px; display: flex; gap: 24px; align-items: flex-start; }
+  .col-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+  .desk-wrap { flex: 1; min-width: 0; } .phone-wrap { width: 375px; flex-shrink: 0; }
+  @media (max-width: 1000px) { .stage { flex-direction: column; } .phone-wrap { width: 100%; max-width: 375px; } .desk-wrap { width: 100%; } }
+  .browser { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--bg); }
+  .bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #3a3a3a; }
+  .url { flex: 1; font: 12px Consolas, monospace; color: var(--text-secondary); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; margin-left: 8px; }
+  .viewport { position: relative; overflow-y: auto; }
+  .desk .viewport { height: 720px; }
+  .phone { border: 10px solid #222; border-radius: 36px; overflow: hidden; background: var(--bg); height: 800px; display: flex; flex-direction: column; }
+  .phone .notch { height: 26px; display: flex; justify-content: center; align-items: center; } .phone .notch span { width: 90px; height: 6px; border-radius: 4px; background: #222; }
+  .phone .viewport { flex: 1; }
+  .app { padding: 14px 14px 0; }
+  .desk .app { padding: 20px 28px 0; max-width: 820px; margin: 0 auto; }
+
+  .crumb { font-size: 12px; color: var(--text-secondary); }
+  h2 { font-size: 19px; margin: 4px 0 2px; }
+  .muted { color: var(--text-secondary); font-size: 12.5px; }
+  .belt { width: 32px; height: 10px; border-radius: 3px; display: inline-block; vertical-align: middle; }
+
+  /* separadores por secção/eixo, fixos no topo */
+  .tabs { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0 8px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); margin: 10px -14px 0; padding-left: 14px; padding-right: 14px; }
+  .desk .tabs { margin: 12px 0 0; padding-left: 0; padding-right: 0; }
+  .tab { flex-shrink: 0; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 7px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; white-space: nowrap; }
+  .tab.on { border-color: var(--text-primary); color: var(--text-primary); }
+  .tab .cnt { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: var(--bg); }
+  .tab.done .cnt { background: rgba(34,197,94,.18); color: #4ade80; }
+  .tab .ring { width: 14px; height: 14px; border-radius: 50%; }
+
+  .sec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 16px 0 8px; flex-wrap: wrap; }
+  .sec-head b { font-size: 15px; }
+  .quick { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+  .quick button { font: 700 12px var(--font); width: 30px; height: 30px; border-radius: 8px; border: 1px dashed var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; }
+
+  .item { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-secondary); margin-bottom: 8px; }
+  .phone .item { grid-template-columns: 1fr; }
+  .item.scored { border-color: rgba(34,197,94,.28); }
+  .item.low { border-color: rgba(225,29,72,.45); }
+  .item .lbl { font-size: 13.5px; font-weight: 600; display: flex; gap: 6px; align-items: center; }
+  .item .lbl small { font-weight: 500; color: var(--text-secondary); }
+  .star { color: var(--warning); }
+  .scores { display: grid; grid-template-columns: repeat(5, 44px); gap: 6px; }
+  .phone .scores { grid-template-columns: repeat(5, 1fr) 36px; }
+  .sc { height: 44px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text-secondary); font: 700 15px var(--font); cursor: pointer; }
+  .sc.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .sc.on.ok { background: #15803d; border-color: #15803d; }
+  .note { width: 36px; height: 44px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text-secondary); font-size: 15px; }
+  .desk .note { display: none; }
+  .hint { font-size: 11.5px; color: var(--text-secondary); grid-column: 1 / -1; margin-top: -2px; }
+  .hint.bad { color: #fb7185; }
+
+  /* barra fixa */
+  .footer { position: sticky; bottom: 0; z-index: 5; background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 10px 14px 12px; margin: 14px -14px 0; box-shadow: 0 -10px 24px rgba(0,0,0,.45); }
+  .desk .footer { margin: 14px 0 0; border: 1px solid var(--border); border-radius: 14px 14px 0 0; }
+  .prog { height: 6px; border-radius: 99px; background: var(--border); overflow: hidden; margin-bottom: 8px; }
+  .prog i { display: block; height: 100%; background: var(--primary); border-radius: 99px; }
+  .frow { display: flex; align-items: center; gap: 8px; }
+  .frow .count { flex: 1; font-size: 13px; font-weight: 700; }
+  .frow .count small { display: block; font-weight: 500; color: var(--text-secondary); font-size: 11.5px; }
+  .btn { font: 600 13px var(--font); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-elevated); color: #fff; cursor: pointer; white-space: nowrap; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); }
+  .axes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  .ax { background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 5px 7px; font-size: 10.5px; color: var(--text-secondary); }
+  .ax b { display: block; font-size: 14px; color: var(--text-primary); }
+  .ax.ok b { color: #4ade80; } .ax.bad b { color: #fb7185; }
+</style>
+</head>
+<body>
+<div class="meta">
+  <span class="badge">Mockup · Graduação</span>
+  <h1>Folha de avaliação — mais rápida e mais clara</h1>
+  <ul>
+    <li><b>Separadores fixos no topo</b> por eixo/secção, com contagem (ex.: Técnico 12/20) — salta direto para onde falta e vê-se o que está completo (verde).</li>
+    <li><b>«Preencher o resto com 3»</b> por secção: dá a nota a todos os itens ainda sem nota; depois só se ajustam as exceções. Num exame de 81 itens poupa muitos toques.</li>
+    <li><b>Linhas mais compactas</b>: no computador, nome e notas na mesma linha; no telemóvel, botões que ocupam a largura toda + botão 💬 para comentário (em vez do ícone solto).</li>
+    <li>Ao dar nota aparece o significado («3 · Suficiente»); <b>abaixo do mínimo fica a vermelho</b> («abaixo do mínimo 3»). Itens ★ fundamentais marcados.</li>
+    <li><b>Barra de baixo legível</b>: barra de progresso, «23 de 81 · faltam 58», médias por eixo com nome (em vez de «– · ant – · rev –») e botão <b>«Próximo por avaliar ↓»</b>; «Resultado» quando estiver tudo.</li>
+  </ul>
+</div>
+<div class="stage">
+  <div class="desk-wrap">
+    <div class="col-label">Desktop</div>
+    <div class="browser desk"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">kingdomfight.com/coach/graduacao/…/avaliar/…</span></div><div class="viewport"><div class="app" id="desk"></div></div></div>
+  </div>
+  <div class="phone-wrap">
+    <div class="col-label">Telemóvel</div>
+    <div class="phone"><div class="notch"><span></span></div><div class="viewport"><div class="app" id="phone"></div></div></div>
+  </div>
+</div>
+
+<script>
+const LABEL = { 1: 'Não executa', 2: 'Insuficiente', 3: 'Suficiente', 4: 'Bom', 5: 'Excelente' };
+const MIN = 3;
+const sections = [
+  { id: 'tec', name: 'Técnico', color: '#60a5fa', items: [['Guarda alta e base', true, 4], ['Jab–direto com retorno à guarda', false, 3], ['Teep de defesa', false, 2], ['Joelhada no clinch', false, null], ['Pontapé baixo (low kick)', false, null], ['Cotovelada horizontal', false, null]] },
+  { id: 'tat', name: 'Tático', color: '#f472b6', items: [['Gestão de distância', false, null], ['Leitura do adversário', false, null], ['Trocas de ritmo', false, null]] },
+  { id: 'teo', name: 'Teórico', color: '#a78bfa', items: [['Regras e cumprimento (Wai Kru)', false, 5], ['Origem do Muay Thai', false, 4]] },
+  { id: 'fis', name: 'Físico', color: '#4ade80', items: [['3 × 3 min de saco sem quebra', true, null], ['Flexibilidade de anca', false, null]] },
+];
+let active = 'tec';
+
+function all() { return sections.flatMap((s) => s.items); }
+function avg(s) { const v = s.items.map((i) => i[2]).filter((x) => x != null); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length) : null; }
+
+function render(root, phone) {
+  const total = all().length, done = all().filter((i) => i[2] != null).length;
+  root.innerHTML = `
+    <div class="crumb">← Exame de graduação — Muay Thai</div>
+    <h2>Ana Silva</h2>
+    <div class="muted">Exame para <span class="belt" style="background:#eab308"></span> <b style="color:#fff">Amarelo</b> · mínimo ${MIN} por eixo</div>
+    <div class="tabs">
+      ${sections.map((s) => {
+        const n = s.items.filter((i) => i[2] != null).length;
+        return `<button class="tab ${s.id === active ? 'on' : ''} ${n === s.items.length ? 'done' : ''}" data-tab="${s.id}">
+          <span class="ring" style="background:conic-gradient(${s.color} ${n / s.items.length * 360}deg, var(--border) 0)"></span>${s.name}<span class="cnt">${n}/${s.items.length}</span></button>`;
+      }).join('')}
+    </div>
+    ${sections.filter((s) => s.id === active).map((s) => `
+      <div class="sec-head"><b>${s.name}</b>
+        <span class="quick">Preencher o resto com ${[3, 4].map((n) => `<button data-fill="${s.id}:${n}">${n}</button>`).join('')}</span>
+      </div>
+      ${s.items.map((it, idx) => {
+        const v = it[2];
+        const low = v != null && v < MIN;
+        return `<div class="item ${v != null ? (low ? 'low' : 'scored') : ''}">
+          <div class="lbl">${it[1] ? '<span class="star">★</span>' : ''}${it[0]}</div>
+          <div class="scores">${[1, 2, 3, 4, 5].map((n) => `<button class="sc ${v === n ? 'on' + (n >= MIN ? ' ok' : '') : ''}" data-score="${s.id}:${idx}:${n}">${n}</button>`).join('')}${phone ? '<button class="note" title="Comentário">💬</button>' : ''}</div>
+          ${v != null ? `<div class="hint ${low ? 'bad' : ''}">${v} · ${LABEL[v]}${low ? ` — abaixo do mínimo ${MIN}` : ''}</div>` : ''}
+        </div>`;
+      }).join('')}
+    `).join('')}
+    <div class="footer">
+      <div class="prog"><i style="width:${done / total * 100}%"></i></div>
+      <div class="frow">
+        <span class="count">${done} de ${total} avaliados<small>${total - done ? `faltam ${total - done} · gravado ✓` : 'tudo avaliado · gravado ✓'}</small></span>
+        ${done < total ? '<button class="btn">Próximo ↓</button>' : ''}
+        <button class="btn primary">Resultado</button>
+      </div>
+      <div class="axes">${sections.map((s) => { const a = avg(s); return `<div class="ax ${a == null ? '' : a >= MIN ? 'ok' : 'bad'}">${s.name}<b>${a == null ? '–' : a.toFixed(1).replace('.', ',')}</b></div>`; }).join('')}</div>
+    </div>`;
+}
+function draw() { render(document.getElementById('desk'), false); render(document.getElementById('phone'), true); }
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab],[data-score],[data-fill]');
+  if (!t) return;
+  if (t.dataset.tab) active = t.dataset.tab;
+  if (t.dataset.score) { const [sid, i, n] = t.dataset.score.split(':'); const it = sections.find((s) => s.id === sid).items[+i]; it[2] = it[2] === +n ? null : +n; }
+  if (t.dataset.fill) { const [sid, n] = t.dataset.fill.split(':'); sections.find((s) => s.id === sid).items.forEach((it) => { if (it[2] == null) it[2] = +n; }); }
+  draw();
+});
+draw();
+</script>
+</body>
+</html>
