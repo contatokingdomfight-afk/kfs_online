@@ -64,6 +64,9 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
     return from < 0 ? [] : grades.slice(from).map((g) => ({ id: g.id, name: g.name, colors: g.colors }));
   };
 
+  // Atalho para a prontidão manual (só admin).
+  const readinessHref = role === "ADMIN" ? `/admin/graduacao/${encodeURIComponent(event.modalityCode)}/aluno?student=` : null;
+
   const pending = candidates.filter((c) => c.status === "CONVOKED").length;
 
   // Agenda com horários: ocupação por horário e convocados ordenados por hora.
@@ -167,6 +170,14 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
                       <strong style={{ fontSize: "var(--text-sm)" }}>{c.studentName}</strong>
                       <ExamStatusChip status={c.status} />
                       {c.bookedByStudent && <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>marcou na app</span>}
+                      {readinessHref && (
+                        <Link
+                          href={`${readinessHref}${encodeURIComponent(c.studentId)}`}
+                          style={{ fontSize: "var(--text-xs)", fontWeight: 600, color: "var(--primary)", textDecoration: "none" }}
+                        >
+                          Prontidão →
+                        </Link>
+                      )}
                     </div>
                     <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
                       Para {c.gradeName}
@@ -211,7 +222,7 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
         )}
       </section>
 
-      {isOpen && <ConvocationPanel eventId={event.id} options={options} />}
+      {isOpen && <ConvocationPanel eventId={event.id} options={options} readinessHref={readinessHref} />}
 
       <EventActions eventId={event.id} status={event.status} pendingCount={pending} />
     </div>

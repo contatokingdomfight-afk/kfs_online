@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Search } from "lucide-react";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
@@ -25,7 +26,16 @@ export type ConvocationOption = {
   manual: { status: "READY" | "NOT_READY"; reason: string } | null;
 };
 
-export function ConvocationPanel({ eventId, options }: { eventId: string; options: ConvocationOption[] }) {
+export function ConvocationPanel({
+  eventId,
+  options,
+  readinessHref,
+}: {
+  eventId: string;
+  options: ConvocationOption[];
+  /** Admin: base do link para a prontidão manual do aluno (acrescenta-se o studentId). */
+  readinessHref: string | null;
+}) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(options.filter((o) => o.ready && !o.otherConvocation).map((o) => o.studentId))
@@ -136,6 +146,14 @@ export function ConvocationPanel({ eventId, options }: { eventId: string; option
             )}
           </span>
         </label>
+        {readinessHref && (
+          <Link
+            href={`${readinessHref}${encodeURIComponent(o.studentId)}`}
+            style={{ display: "inline-block", marginTop: 6, marginLeft: 32, fontSize: "var(--text-xs)", fontWeight: 600, color: "var(--primary)", textDecoration: "none" }}
+          >
+            Prontidão →
+          </Link>
+        )}
         {o.pendingRequirements.length > 0 && (
           <div style={{ marginTop: 8, marginLeft: 32, display: "flex", flexDirection: "column", gap: 6 }}>
             {o.pendingRequirements.map((r) => (
