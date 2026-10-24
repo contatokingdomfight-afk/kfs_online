@@ -19,7 +19,18 @@ export type StudentModalityGraduation = {
   monthlyMinAttendances: number;
   progress: StudentProgress;
   /** Convocatória para um exame agendado desta modalidade. */
-  convocation: { title: string; scheduledAt: string; location: string | null; gradeName: string } | null;
+  convocation: {
+    title: string;
+    scheduledAt: string;
+    location: string | null;
+    gradeName: string;
+    /** Horário marcado (agenda com horários). */
+    slotStartsAt: string | null;
+    /** O dia de exame aceita marcações/trocas pelo aluno. */
+    selfBooking: boolean;
+  } | null;
+  /** Dias de exame com marcação pelo aluno abertos nesta modalidade. */
+  openAgendaCount: number;
   /** Exames já decididos, do mais recente para o mais antigo. */
   examHistory: StudentExamHistoryEntry[];
 };
@@ -103,7 +114,7 @@ export async function loadStudentGraduations(
       });
   if (codes.length === 0) return [];
 
-  const [templatesFull, { data: athlete }, { data: physical }, { data: completions }, { data: fulfilled }, { data: candidates }] =
+  const [templatesFull, { data: athlete }, { data: physical }, { data: completions }, { data: fulfilled }, { data: candidates }, { data: openAgendas }] =
     await Promise.all([
     Promise.all(codes.map((code) => loadGraduationTemplate(supabase, code))),
     supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle(),
@@ -118,14 +129,22 @@ export async function loadStudentGraduations(
     supabase.from("StudentGraduationRequirement").select("requirementId").eq("studentId", studentId),
     supabase
       .from("GraduationExamCandidate")
-      .select("id, eventId, gradeId, status, decidedAt")
+      .select("id, eventId, gradeId, status, decidedAt, slotStartsAt, bookedByStudent")
       .eq("studentId", studentId),
+    // Dias de exame com marcação pelo aluno ainda por acontecer.
+    supabase
+      .from("GraduationExamEvent")
+      .select("modalityCode")
+      .in("modalityCode", codes)
+      .eq("status", "SCHEDULED")
+      .eq("selfBooking", true)
+      .gt("endsAt", now.toISOString()),
   ]);
 
   const examEventIds = [...new Set((candidates ?? []).map((c) => c.eventId as string))];
   const { data: examEvents } = examEventIds.length
-    ? await supabase.from("GraduationExamEvent").select("id, modalityCode, title, scheduledAt, location, status").in("id", examEventIds)
-    : { data: [] as { id: string; modalityCode: string; title: string; scheduledAt: string; location: string | null; status: string }[] };
+    ? await supabase.from("GraduationExamEvent").select("id, modalityCode, title, scheduledAt, location, status, selfBooking").in("id", examEventIds)
+    : { data: [] as { id: string; modalityCode: string; title: string; scheduledAt: string; location: string | null; status: string; selfBooking: boolean }[] };
   const examEventById = new Map((examEvents ?? []).map((e) => [e.id, e]));
 
   const evaluationsByModality = new Map<string, { scores: Record<string, unknown> | null }[]>();
@@ -193,8 +212,11 @@ export async function loadStudentGraduations(
               scheduledAt: convocationRow.event.scheduledAt,
               location: convocationRow.event.location,
               gradeName: gradeById.get(convocationRow.gradeId)?.name ?? "Grau",
+              slotStartsAt: (convocationRow.slotStartsAt as string | null) ?? null,
+              selfBooking: Boolean(convocationRow.event.selfBooking),
             }
           : null,
+      openAgendaCount: (openAgendas ?? []).filter((e) => e.modalityCode === code).length,
       examHistory,
       modalityCode: code,
       modalityName: modalityNames.get(code) ?? code,

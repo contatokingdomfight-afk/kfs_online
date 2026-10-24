@@ -17,6 +17,11 @@ export type ExamEventRow = {
   location: string | null;
   notes: string | null;
   status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+  /** Agenda com horários (null = exame sem horários). */
+  endsAt: string | null;
+  slotMinutes: number | null;
+  slotCapacity: number | null;
+  selfBooking: boolean;
 };
 
 export type ExamCandidateStatus = "CONVOKED" | "PASSED" | "FAILED" | "ABSENT";
@@ -34,6 +39,8 @@ export type ExamCandidateRow = {
   result: ExamResult | null;
   /** Notas dadas pelo avaliador atual. */
   myScoredCount: number;
+  slotStartsAt: string | null;
+  bookedByStudent: boolean;
 };
 
 type ScoreRow = ExamScoreRowView & { candidateId: string };
@@ -41,7 +48,7 @@ type ScoreRow = ExamScoreRowView & { candidateId: string };
 export async function loadExamEventRow(supabase: SupabaseClient, eventId: string): Promise<ExamEventRow | null> {
   const { data: event } = await supabase
     .from("GraduationExamEvent")
-    .select("id, modalityCode, title, scheduledAt, location, notes, status")
+    .select("id, modalityCode, title, scheduledAt, location, notes, status, endsAt, slotMinutes, slotCapacity, selfBooking")
     .eq("id", eventId)
     .maybeSingle();
   if (!event) return null;
@@ -76,7 +83,7 @@ export async function loadExamEventDetail(
     loadGraduationTemplate(supabase, event.modalityCode),
     supabase
       .from("GraduationExamCandidate")
-      .select("id, studentId, gradeId, status, feedback, decidedAt, result")
+      .select("id, studentId, gradeId, status, feedback, decidedAt, result, slotStartsAt, bookedByStudent")
       .eq("eventId", eventId)
       .order("createdAt", { ascending: true }),
   ]);
@@ -114,6 +121,8 @@ export async function loadExamEventDetail(
       decidedAt: c.decidedAt,
       result,
       myScoredCount: mine.filter((s) => s.examinerUserId === examinerUserId && s.score != null).length,
+      slotStartsAt: (c.slotStartsAt as string | null) ?? null,
+      bookedByStudent: Boolean(c.bookedByStudent),
     };
   });
 

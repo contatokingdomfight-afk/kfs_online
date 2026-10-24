@@ -14,7 +14,7 @@ export function StudentGraduationView({ graduation }: { graduation: StudentModal
   const { current, next } = progress;
 
   return (
-    <div>
+    <div className="min-w-0 max-w-full">
       {/* Grau atual */}
       <section className={card} aria-labelledby="grau-atual">
         <p className={eyebrow} id="grau-atual">
@@ -23,8 +23,8 @@ export function StudentGraduationView({ graduation }: { graduation: StudentModal
         <div className="mt-3 flex items-center gap-4">
           <BeltSwatch colors={current?.colors ?? []} width={88} height={22} />
           <div className="min-w-0">
-            <p className="m-0 text-xl font-bold text-text-primary">{current ? current.name : "Sem graduação"}</p>
-            <p className="m-0 mt-0.5 text-sm text-text-secondary">
+            <p className="m-0 break-words text-xl font-bold text-text-primary [overflow-wrap:anywhere]">{current ? current.name : "Sem graduação"}</p>
+            <p className="m-0 mt-0.5 break-words text-sm text-text-secondary">
               {current
                 ? [current.motto && `“${current.motto}”`, graduation.lastAwardedAt && `desde ${formatDate(graduation.lastAwardedAt)}`]
                     .filter(Boolean)
@@ -43,7 +43,7 @@ export function StudentGraduationView({ graduation }: { graduation: StudentModal
         </div>
       </section>
 
-      {graduation.convocation && <ConvocationBanner convocation={graduation.convocation} />}
+      {graduation.convocation && <ConvocationBanner convocation={graduation.convocation} modalityCode={graduation.modalityCode} />}
 
       {next ? <NextGrade graduation={graduation} /> : <TopGrade />}
 
@@ -76,7 +76,7 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
         <div className="mt-3 flex items-center gap-4">
           <BeltSwatch colors={next.colors} width={88} height={22} />
           <div className="min-w-0">
-            <p className="m-0 text-xl font-bold text-text-primary">{next.name}</p>
+            <p className="m-0 break-words text-xl font-bold text-text-primary [overflow-wrap:anywhere]">{next.name}</p>
             {(next.subtitle || next.motto) && (
               <p className="m-0 mt-0.5 text-sm text-text-secondary">
                 {[next.subtitle, next.motto && `“${next.motto}”`].filter(Boolean).join(" · ")}
@@ -97,9 +97,21 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
             <PartyPopper size={20} aria-hidden className="mt-0.5 shrink-0 text-success" />
             <div>
               <p className="m-0 text-sm font-bold text-text-primary">Estás apto para o exame!</p>
-              <p className="m-0 mt-0.5 text-sm text-text-secondary">
-                Cumpriste todos os requisitos. A academia vai convocar-te para o próximo exame de graduação.
-              </p>
+              {graduation.openAgendaCount > 0 && !graduation.convocation ? (
+                <>
+                  <p className="m-0 mt-0.5 text-sm text-text-secondary">Cumpriste todos os requisitos. Já podes marcar o teu exame.</p>
+                  <Link
+                    href={`/dashboard/graduacao/agendar?m=${encodeURIComponent(graduation.modalityCode)}`}
+                    className="btn btn-primary mt-3 inline-flex items-center gap-1 no-underline"
+                  >
+                    <CalendarDays size={16} aria-hidden /> Agendar exame
+                  </Link>
+                </>
+              ) : (
+                <p className="m-0 mt-0.5 text-sm text-text-secondary">
+                  Cumpriste todos os requisitos. {graduation.convocation ? "Já tens exame marcado." : "A academia vai convocar-te para o próximo exame de graduação."}
+                </p>
+              )}
             </div>
           </div>
         ) : total > 0 ? (
@@ -263,7 +275,7 @@ function ExamContent({ graduation }: { graduation: StudentModalityGraduation }) 
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
                   <BeltSwatch colors={g.colors} width={36} height={10} />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-text-primary">{g.gradeName}</span>
+                    <span className="block break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">{g.gradeName}</span>
                     <span className="block text-xs text-text-secondary">
                       {i === 0 ? "Avaliado item a item" : "Avaliado em conjunto, por eixo"}
                     </span>
@@ -326,7 +338,13 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function ConvocationBanner({ convocation }: { convocation: NonNullable<StudentModalityGraduation["convocation"]> }) {
+function ConvocationBanner({
+  convocation,
+  modalityCode,
+}: {
+  convocation: NonNullable<StudentModalityGraduation["convocation"]>;
+  modalityCode: string;
+}) {
   return (
     <section
       className="mt-4 rounded-2xl border p-4 sm:p-5"
@@ -339,7 +357,7 @@ function ConvocationBanner({ convocation }: { convocation: NonNullable<StudentMo
       <p className="m-0 mt-2 text-lg font-bold text-text-primary">Exame para {convocation.gradeName}</p>
       <p className="m-0 mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-secondary">
         <span className="inline-flex items-center gap-1">
-          <CalendarDays size={14} aria-hidden /> {formatExamDate(convocation.scheduledAt)}
+          <CalendarDays size={14} aria-hidden /> {formatExamDate(convocation.slotStartsAt ?? convocation.scheduledAt)}
         </span>
         {convocation.location && (
           <span className="inline-flex items-center gap-1">
@@ -348,6 +366,14 @@ function ConvocationBanner({ convocation }: { convocation: NonNullable<StudentMo
         )}
       </p>
       <p className="m-0 mt-2 text-sm text-text-primary">Revê abaixo tudo o que vai ser avaliado. Boa preparação!</p>
+      {convocation.selfBooking && (
+        <Link
+          href={`/dashboard/graduacao/agendar?m=${encodeURIComponent(modalityCode)}`}
+          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-text-primary no-underline"
+        >
+          {convocation.slotStartsAt ? "Ver ou trocar horário" : "Escolher horário"} <ChevronRight size={14} aria-hidden />
+        </Link>
+      )}
     </section>
   );
 }
@@ -364,7 +390,7 @@ function ExamHistory({ entries }: { entries: StudentExamHistoryEntry[] }) {
             <>
               <BeltSwatch colors={e.gradeColors} width={36} height={10} />
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold text-text-primary">{e.gradeName}</span>
+                <span className="block break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">{e.gradeName}</span>
                 <span className="block text-xs text-text-secondary">{formatExamDate(e.scheduledAt, false)}</span>
               </span>
               <ExamStatusChip status={e.status} />

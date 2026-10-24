@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Agenda de exames</title>
+<style>
+  :root {
+    --bg: #0b0b0b; --bg-secondary: #141414; --bg-elevated: #1a1a1a;
+    --text-primary: #fff; --text-secondary: #a1a1aa; --primary: #c1121f;
+    --success: #22c55e; --warning: #facc15; --border: #27272a;
+    --font: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+
+  /* chrome de comparação */
+  .meta { max-width: 1240px; margin: 0 auto; padding: 28px 16px 0; }
+  .badge { display: inline-flex; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: rgba(193,18,31,.15); color: #ff6b73; text-transform: uppercase; letter-spacing: .5px; }
+  .meta h1 { font-size: 22px; margin: 12px 0 6px; }
+  .meta p { font-size: 13.5px; color: var(--text-secondary); max-width: 760px; line-height: 1.6; margin: 0; }
+  .meta ul { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin: 10px 0 0; padding-left: 18px; }
+  .switcher { max-width: 1240px; margin: 20px auto 0; padding: 0 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .sw { font: 600 13px var(--font); padding: 9px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; }
+  .sw.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .stage { max-width: 1240px; margin: 16px auto 60px; padding: 0 16px; display: flex; gap: 24px; align-items: flex-start; }
+  .col-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+  .desk-wrap { flex: 1; min-width: 0; }
+  .phone-wrap { width: 375px; flex-shrink: 0; }
+  @media (max-width: 1000px) { .stage { flex-direction: column; } .phone-wrap { width: 100%; max-width: 375px; } .desk-wrap { width: 100%; } }
+  .browser { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--bg); }
+  .bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #3a3a3a; }
+  .url { flex: 1; font: 12px Consolas, monospace; color: var(--text-secondary); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; margin-left: 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .phone { border: 10px solid #222; border-radius: 36px; overflow: hidden; background: var(--bg); height: 760px; display: flex; flex-direction: column; }
+  .phone .scroll { flex: 1; overflow-y: auto; }
+  .phone .notch { height: 26px; display: flex; justify-content: center; align-items: center; background: var(--bg); }
+  .phone .notch span { width: 90px; height: 6px; border-radius: 4px; background: #222; }
+  .desk .app { padding: 24px 28px 32px; min-height: 640px; }
+  .phone .app { padding: 14px 14px 24px; }
+
+  /* UI da app */
+  .crumb { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  h2 { font-size: 22px; margin: 0 0 4px; } .phone h2 { font-size: 19px; }
+  .sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 18px; line-height: 1.5; }
+  .card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .card h3 { font-size: 14px; margin: 0 0 10px; }
+  .grade-row { display: flex; align-items: center; gap: 12px; }
+  .belt { width: 44px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+  .muted { color: var(--text-secondary); font-size: 12.5px; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+  .pill.ok { background: rgba(34,197,94,.14); color: #4ade80; }
+  .pill.warn { background: rgba(250,204,21,.14); color: #fde047; }
+  .pill.red { background: rgba(193,18,31,.18); color: #ff6b73; }
+  .pill.grey { background: #222; color: var(--text-secondary); }
+  .btn { font: 600 13px var(--font); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-elevated); color: #fff; cursor: pointer; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); }
+  .btn.ghost { background: transparent; }
+  .btn.block { width: 100%; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .between { justify-content: space-between; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .phone .two { grid-template-columns: 1fr; }
+
+  .events { display: flex; flex-direction: column; gap: 8px; }
+  .ev { display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); cursor: pointer; }
+  .ev.sel { border-color: var(--primary); background: rgba(193,18,31,.07); }
+  .cal { width: 48px; text-align: center; border-radius: 10px; background: var(--bg-elevated); padding: 6px 0; flex-shrink: 0; }
+  .cal b { display: block; font-size: 18px; } .cal small { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; }
+  .ev .info { flex: 1; min-width: 0; } .ev .info div:first-child { font-weight: 600; font-size: 13.5px; }
+
+  .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .phone .slots { grid-template-columns: repeat(3, 1fr); }
+  .slot { border: 1px solid var(--border); border-radius: 10px; padding: 9px 4px; text-align: center; background: var(--bg); cursor: pointer; }
+  .slot b { display: block; font-size: 14px; } .slot small { font-size: 10.5px; color: var(--text-secondary); }
+  .slot.sel { border-color: var(--primary); background: var(--primary); } .slot.sel small { color: #fff; }
+  .slot.full { opacity: .35; cursor: not-allowed; text-decoration: line-through; }
+  .slot.few small { color: #fde047; }
+
+  .confirm { border: 1px solid rgba(34,197,94,.35); background: rgba(34,197,94,.06); }
+  .big-date { font-size: 26px; font-weight: 800; margin: 4px 0; } .phone .big-date { font-size: 22px; }
+  .req { display: flex; justify-content: space-between; font-size: 12.5px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .req:last-child { border: 0; }
+  .ok-t { color: #4ade80; } .bad-t { color: #ff6b73; }
+
+  .field { margin-bottom: 12px; } .field label { display: block; font-size: 11.5px; color: var(--text-secondary); margin-bottom: 5px; font-weight: 600; }
+  .input { width: 100%; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: #fff; font: 13px var(--font); }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .phone .grid3 { grid-template-columns: 1fr 1fr; }
+  .toggle { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
+  .sw-ui { width: 34px; height: 20px; border-radius: 999px; background: var(--primary); position: relative; flex-shrink: 0; }
+  .sw-ui::after { content: ""; position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+  .preview { font-size: 12px; color: var(--text-secondary); background: var(--bg); border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  td, th { padding: 9px 6px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .4px; }
+  .who { display: flex; flex-direction: column; gap: 3px; }
+  .phone .hide-m { display: none; }
+  .tag { font-size: 11px; color: var(--text-secondary); }
+  .note { font-size: 12px; color: var(--text-secondary); background: rgba(250,204,21,.06); border: 1px solid rgba(250,204,21,.25); border-radius: 10px; padding: 10px 12px; margin-top: 10px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="meta">
+  <span class="badge">Mockup · Graduação</span>
+  <h1>Agenda de exames de graduação</h1>
+  <p>O coach abre um <b>dia de exame</b> (ex.: sáb 10:00–13:00), o sistema divide-o em <b>horários de X min com N vagas</b>. Só os <b>alunos aptos</b> para o próximo grau veem os horários; a marcação fica <b>confirmada logo</b> (o aluno passa a «Convocado») e pode desmarcar/remarcar <b>até 48 h antes</b>.</p>
+  <ul>
+    <li>Reaproveita o que já existe: o dia de exame é um <code>GraduationExamEvent</code>; marcar = criar o <code>GraduationExamCandidate</code> com o horário escolhido.</li>
+    <li>O coach continua a poder convocar à mão e a avaliar na folha do telemóvel como hoje.</li>
+    <li>Notificação (WhatsApp/push) ao abrir a agenda para os aptos + lembrete 24 h antes — opcional, a decidir.</li>
+  </ul>
+</div>
+<div class="switcher" id="sw"></div>
+<div class="stage">
+  <div class="desk-wrap">
+    <div class="col-label">Desktop</div>
+    <div class="browser desk"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url" id="url-d"></span></div><div class="app" id="desk"></div></div>
+  </div>
+  <div class="phone-wrap">
+    <div class="col-label">Telemóvel</div>
+    <div class="phone"><div class="notch"><span></span></div><div class="scroll"><div class="app" id="phone"></div></div></div>
+  </div>
+</div>
+
+<script>
+const state = { ev: 0, slot: 4 };
+const events = [
+  { d: '08', m: 'Nov', t: 'Sábado · 10:00–13:00', loc: 'Tatami principal', free: 7, total: 12 },
+  { d: '22', m: 'Nov', t: 'Sábado · 10:00–12:00', loc: 'Tatami principal', free: 8, total: 8 },
+];
+const slots = [
+  ['10:00', 0], ['10:30', 0], ['11:00', 1], ['11:30', 2], ['12:00', 2], ['12:30', 2],
+];
+
+const header = (crumb, title, sub) => `<div class="crumb">${crumb}</div><h2>${title}</h2><p class="sub">${sub}</p>`;
+
+const gradeCard = () => `
+  <div class="card">
+    <div class="row between">
+      <div class="grade-row">
+        <div class="belt" style="background:#eab308"></div>
+        <div><div style="font-weight:700">Próximo grau: Amarelo</div><div class="muted">Muay Thai · atual: Branco</div></div>
+      </div>
+      <span class="pill ok">✓ Apto para exame</span>
+    </div>
+  </div>`;
+
+const pickScreen = () => `
+  ${header('Graduação › Muay Thai', 'Agendar exame', 'Escolhe o dia e o horário. A tua vaga fica reservada logo.')}
+  ${gradeCard()}
+  <div class="two">
+    <div class="card">
+      <h3>1 · Dia do exame</h3>
+      <div class="events">
+        ${events.map((e, i) => `
+          <div class="ev ${state.ev === i ? 'sel' : ''}" data-ev="${i}">
+            <div class="cal"><b>${e.d}</b><small>${e.m}</small></div>
+            <div class="info"><div>${e.t}</div><div class="muted">${e.loc}</div></div>
+            <span class="pill ${e.free < 4 ? 'warn' : 'grey'}">${e.free} vagas</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <h3>2 · Horário <span class="muted" style="font-weight:400">· 30 min · 2 alunos por horário</span></h3>
+      <div class="slots">
+        ${slots.map(([h, free], i) => `
+          <div class="slot ${free === 0 ? 'full' : ''} ${free === 1 ? 'few' : ''} ${state.slot === i ? 'sel' : ''}" data-slot="${free ? i : ''}">
+            <b>${h}</b><small>${free === 0 ? 'Esgotado' : free === 1 ? '1 vaga' : free + ' vagas'}</small>
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:14px" class="preview">📍 ${events[state.ev].loc} · chega 15 min antes, com equipamento completo (luvas, caneleiras, bucal).</div>
+      <button class="btn primary block" style="margin-top:12px" data-go="booked" ${state.slot == null ? 'disabled' : ''}>
+        Confirmar ${state.slot != null ? '· ' + events[state.ev].d + ' ' + events[state.ev].m + ', ' + slots[state.slot][0] : ''}
+      </button>
+      <div class="muted" style="margin-top:8px;text-align:center">Podes desmarcar ou trocar até 48 h antes.</div>
+    </div>
+  </div>`;
+
+const bookedScreen = () => `
+  ${header('Graduação › Muay Thai', 'Exame marcado', 'Estás convocado. Boa preparação!')}
+  <div class="card confirm">
+    <div class="row between"><span class="pill ok">✓ Confirmado</span><span class="muted">Exame para Amarelo</span></div>
+    <div class="big-date">Sáb, 08 Nov · ${slots[state.slot ?? 4][0]}</div>
+    <div class="muted">${events[state.ev].loc} · avaliador: Coach Ricardo</div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" data-go="pick">Trocar horário</button>
+      <button class="btn ghost">Desmarcar</button>
+      <button class="btn ghost">📅 Adicionar ao calendário</button>
+    </div>
+    <div class="muted" style="margin-top:10px">Desmarcar/trocar disponível até qui, 06 Nov às ${slots[state.slot ?? 4][0]}. Depois disso fala com o coach — se faltares conta como «Faltou».</div>
+  </div>
+  <div class="two">
+    <div class="card"><h3>O que vai ser avaliado</h3>
+      <div class="req"><span>Itens novos do Amarelo</span><span>32 itens</span></div>
+      <div class="req"><span>Revisão do Branco (1 a 1)</span><span>24 itens</span></div>
+      <div class="req"><span>Nota mínima por eixo</span><span>3 / 5</span></div>
+      <button class="btn block" style="margin-top:10px">Ver conteúdo do grau →</button>
+    </div>
+    <div class="card"><h3>Requisitos</h3>
+      <div class="req"><span>Presenças</span><span class="ok-t">31 / 24 ✓</span></div>
+      <div class="req"><span>Tempo de treino</span><span class="ok-t">4 / 3 meses ✓</span></div>
+      <div class="req"><span>Média de performance</span><span class="ok-t">2,8 / 2 ✓</span></div>
+    </div>
+  </div>`;
+
+const notAptScreen = () => `
+  ${header('Graduação › Muay Thai', 'Agendar exame', 'A agenda abre quando cumprires os requisitos do próximo grau.')}
+  <div class="card">
+    <div class="row between">
+      <div class="grade-row"><div class="belt" style="background:#eab308"></div><div><div style="font-weight:700">Próximo grau: Amarelo</div><div class="muted">Muay Thai · atual: Branco</div></div></div>
+      <span class="pill red">Ainda não apto</span>
+    </div>
+    <div style="margin-top:12px">
+      <div class="req"><span>Presenças</span><span class="bad-t">17 / 24 — faltam 7</span></div>
+      <div class="req"><span>Tempo de treino</span><span class="ok-t">3 / 3 meses ✓</span></div>
+      <div class="req"><span>Média de performance</span><span class="ok-t">2,4 / 2 ✓</span></div>
+    </div>
+  </div>
+  <div class="card"><h3>Próximos dias de exame</h3>
+    ${events.map(e => `<div class="ev" style="cursor:default;margin-bottom:8px"><div class="cal"><b>${e.d}</b><small>${e.m}</small></div><div class="info"><div>${e.t}</div><div class="muted">${e.loc}</div></div><span class="pill grey">🔒</span></div>`).join('')}
+    <div class="muted">Mantém o ritmo: com 2 treinos/semana ficas apto em ~4 semanas.</div>
+  </div>`;
+
+const coachCreate = () => `
+  ${header('Coach › Graduação › Exames', 'Novo dia de exame', 'Abre a agenda e os alunos aptos marcam o horário sozinhos.')}
+  <div class="two">
+    <div class="card">
+      <div class="field"><label>Modalidade</label><div class="input">Muay Thai</div></div>
+      <div class="grid3">
+        <div class="field"><label>Data</label><div class="input">08/11/2026</div></div>
+        <div class="field"><label>Início</label><div class="input">10:00</div></div>
+        <div class="field"><label>Fim</label><div class="input">13:00</div></div>
+        <div class="field"><label>Duração do horário</label><div class="input">30 min</div></div>
+        <div class="field"><label>Vagas por horário</label><div class="input">2</div></div>
+        <div class="field"><label>Graus</label><div class="input">Todos</div></div>
+      </div>
+      <div class="field"><label>Local</label><div class="input">Tatami principal</div></div>
+      <div class="toggle"><span class="sw-ui"></span><div><b>Marcação pelo aluno</b><div class="muted">Só alunos aptos · desmarcar até 48 h antes</div></div></div>
+    </div>
+    <div class="card">
+      <h3>Pré-visualização</h3>
+      <div class="slots">${['10:00','10:30','11:00','11:30','12:00','12:30'].map(h => `<div class="slot"><b>${h}</b><small>2 vagas</small></div>`).join('')}</div>
+      <div class="preview" style="margin-top:12px">6 horários · <b>12 vagas</b> · 9 alunos aptos em Muay Thai neste momento</div>
+      <div class="toggle" style="margin-top:10px"><span class="sw-ui"></span><div><b>Avisar os aptos</b><div class="muted">WhatsApp/notificação ao publicar</div></div></div>
+      <button class="btn primary block" style="margin-top:12px" data-go="coach">Publicar agenda</button>
+    </div>
+  </div>`;
+
+const bookings = [
+  ['10:00', [['Ana Silva', 'Amarelo'], ['João Reis', 'Laranja']]],
+  ['10:30', [['Marta Costa', 'Amarelo'], ['Rui Lopes', 'Amarelo']]],
+  ['11:00', [['Pedro Alves', 'Verde']]],
+  ['11:30', []], ['12:00', []], ['12:30', []],
+];
+const coachManage = () => `
+  ${header('Coach › Graduação › Exames', 'Muay Thai · Sáb 08 Nov', '10:00–13:00 · Tatami principal · marcação pelo aluno ativa')}
+  <div class="row" style="margin-bottom:14px">
+    <span class="pill ok">5 / 12 marcados</span><span class="pill grey">4 aptos ainda sem marcação</span>
+    <span style="flex:1"></span>
+    <button class="btn">+ Convocar aluno</button><button class="btn">Lembrar os aptos</button><button class="btn primary">Abrir folha de avaliação</button>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Horário</th><th>Alunos</th><th class="hide-m">Vagas</th></tr></thead>
+      <tbody>
+        ${bookings.map(([h, list]) => `<tr>
+          <td><b>${h}</b></td>
+          <td><div class="who">${list.length ? list.map(([n, g]) => `<div class="row between"><span>${n} <span class="tag">→ ${g}</span></span><span class="tag">✕</span></div>`).join('') : '<span class="muted">—</span>'}</div></td>
+          <td class="hide-m">${2 - list.length ? `<span class="pill grey">${2 - list.length} livre${2 - list.length > 1 ? 's' : ''}</span>` : '<span class="pill warn">Cheio</span>'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="card"><h3>Aptos sem marcação</h3>
+    ${['Carla Mendes → Amarelo', 'Tiago Rocha → Amarelo', 'Inês Faria → Laranja', 'Bruno Dias → Verde'].map(n => `<div class="req"><span>${n}</span><span class="tag">Convocar</span></div>`).join('')}
+  </div>`;
+
+const screens = {
+  pick: ['Aluno · escolher horário', '/dashboard/graduacao/muay-thai/agendar', pickScreen],
+  booked: ['Aluno · exame marcado', '/dashboard/graduacao/muay-thai/agendar', bookedScreen],
+  notapt: ['Aluno · ainda não apto', '/dashboard/graduacao/muay-thai/agendar', notAptScreen],
+  create: ['Coach · abrir agenda', '/coach/graduacao/exames/novo', coachCreate],
+  coach: ['Coach · marcações', '/coach/graduacao/exames/…', coachManage],
+};
+let cur = 'pick';
+function render() {
+  const [, url, fn] = screens[cur];
+  document.getElementById('sw').innerHTML = Object.entries(screens).map(([k, [l]]) => `<button class="sw ${k === cur ? 'active' : ''}" data-go="${k}">${l}</button>`).join('');
+  document.getElementById('url-d').textContent = 'kingdomfight.com' + url;
+  document.getElementById('desk').innerHTML = fn();
+  document.getElementById('phone').innerHTML = fn();
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-go],[data-ev],[data-slot]');
+  if (!t) return;
+  if (t.dataset.go) cur = t.dataset.go;
+  else if (t.dataset.ev) state.ev = +t.dataset.ev;
+  else if (t.dataset.slot) state.slot = +t.dataset.slot;
+  render();
+});
+render();
+</script>
+</body>
+</html>

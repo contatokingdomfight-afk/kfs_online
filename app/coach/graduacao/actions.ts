@@ -8,6 +8,7 @@ import { computeExamResult, EXAM_SCORE_MAX, EXAM_SCORE_MIN, sheetEntries } from 
 import { loadCandidateScoringContext, loadCandidateSheet, loadExamEventRow, toScoreInput } from "@/lib/graduation/load-exam";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
 import { createInAppNotification } from "@/lib/notifications/in-app";
+import { bookingErrorMessage, buildExamSlots } from "@/lib/graduation/exam-slots";
 
 export type ActionResult = { error?: string; success?: boolean };
 
@@ -46,6 +47,22 @@ export async function createExamEvent(_prev: ActionResult | null, formData: Form
 
   // Data/hora introduzidas em hora de Lisboa (a academia); guardadas em UTC.
   const scheduledAt = lisbonLocalToUtcIso(date, time);
+
+  // Agenda com horários (opcional): fim + duração + vagas por horário.
+  const withSlots = formData.get("withSlots") === "on";
+  let slots: { endsAt: string; slotMinutes: number; slotCapacity: number; selfBooking: boolean } | null = null;
+  if (withSlots) {
+    const endTime = String(formData.get("endTime") ?? "").trim();
+    const slotMinutes = Number(formData.get("slotMinutes"));
+    const slotCapacity = Number(formData.get("slotCapacity"));
+    if (!/^\d{2}:\d{2}$/.test(endTime)) return { error: "Indica a hora de fim." };
+    if (!Number.isInteger(slotMinutes) || slotMinutes < 5 || slotMinutes > 240) return { error: "Duração do horário entre 5 e 240 minutos." };
+    if (!Number.isInteger(slotCapacity) || slotCapacity < 1 || slotCapacity > 50) return { error: "Vagas por horário entre 1 e 50." };
+    const endsAt = lisbonLocalToUtcIso(date, endTime);
+    slots = { endsAt, slotMinutes, slotCapacity, selfBooking: formData.get("selfBooking") === "on" };
+    if (buildExamSlots({ scheduledAt, ...slots }).length === 0) return { error: "O período não chega para um horário completo." };
+  }
+
   const { data: modality } = await supabase.from("ModalityRef").select("name").eq("code", modalityCode).maybeSingle();
   const { data: created, error } = await supabase
     .from("GraduationExamEvent")
@@ -56,6 +73,7 @@ export async function createExamEvent(_prev: ActionResult | null, formData: Form
       location,
       notes,
       createdByUserId: auth.userId,
+      ...(slots ?? {}),
     })
     .select("id")
     .single();
@@ -63,6 +81,7 @@ export async function createExamEvent(_prev: ActionResult | null, formData: Form
     console.error("createExamEvent:", error);
     return { error: "Não foi possível criar o exame." };
   }
+  if (slots?.selfBooking && formData.get("notifyReady") === "on") await notifyReadyForBooking(supabase, created.id);
   revalidatePath("/coach/graduacao");
   redirect(`/coach/graduacao/${created.id}`);
 }
@@ -73,6 +92,65 @@ function lisbonLocalToUtcIso(date: string, time: string): string {
   const lisbon = new Date(asUtc.toLocaleString("en-US", { timeZone: "Europe/Lisbon" }));
   const utc = new Date(asUtc.toLocaleString("en-US", { timeZone: "UTC" }));
   return new Date(asUtc.getTime() - (lisbon.getTime() - utc.getTime())).toISOString();
+}
+
+/** Avisa (notificação na app) os alunos aptos sem convocatória de que a agenda está aberta. */
+async function notifyReadyForBooking(supabase: NonNullable<ReturnType<typeof client>>, eventId: string): Promise<number> {
+  const event = await loadExamEventRow(supabase, eventId);
+  if (!event || event.status !== "SCHEDULED" || !event.selfBooking) return 0;
+  const readiness = await loadModalityReadiness(supabase, event.modalityCode);
+  const targets = (readiness?.students ?? []).filter((s) => s.progress.isReadyForExam && s.progress.next && !s.activeConvocation);
+  await Promise.all(
+    targets.map((s) =>
+      createInAppNotification(supabase, {
+        studentId: s.studentId,
+        type: "GRADUATION",
+        title: `Marca o teu exame: ${s.progress.next!.name}`,
+        body: `${event.title} · ${formatWhen(event.scheduledAt)}${event.location ? ` · ${event.location}` : ""}. Escolhe o teu horário.`,
+        href: `/dashboard/graduacao/agendar?m=${encodeURIComponent(event.modalityCode)}`,
+      })
+    )
+  );
+  return targets.length;
+}
+
+export async function remindReadyStudents(eventId: string): Promise<ActionResult & { notified?: number }> {
+  const auth = await graduationExamActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+  const notified = await notifyReadyForBooking(supabase, eventId);
+  if (notified === 0) return { error: "Não há alunos aptos por avisar." };
+  return { success: true, notified };
+}
+
+/** Coach: põe um convocado num horário (pode ultrapassar as vagas) ou tira-o do horário. */
+export async function setCandidateSlot(candidateId: string, slotIso: string | null): Promise<ActionResult> {
+  const auth = await graduationExamActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+
+  const { data: c } = await supabase.from("GraduationExamCandidate").select("eventId, studentId, gradeId, status").eq("id", candidateId).maybeSingle();
+  if (!c) return { error: "Convocatória não encontrada." };
+  if (c.status !== "CONVOKED") return { error: "Este aluno já tem resultado." };
+
+  if (slotIso === null) {
+    const { error } = await supabase.from("GraduationExamCandidate").update({ slotStartsAt: null }).eq("id", candidateId);
+    if (error) return { error: "Não foi possível atualizar o horário." };
+  } else {
+    const { error } = await supabase.rpc("book_graduation_exam_slot", {
+      p_event_id: c.eventId,
+      p_student_id: c.studentId,
+      p_grade_id: c.gradeId,
+      p_slot_starts_at: slotIso,
+      p_booked_by_student: false,
+      p_ignore_capacity: true,
+    });
+    if (error) return { error: bookingErrorMessage(error.message) };
+  }
+  revalidatePath(`/coach/graduacao/${c.eventId}`);
+  return { success: true };
 }
 
 export async function setExamEventStatus(eventId: string, status: "COMPLETED" | "CANCELLED" | "SCHEDULED"): Promise<ActionResult> {

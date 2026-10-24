@@ -10,8 +10,14 @@ import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { ExamStatusChip, formatExamDate } from "@/components/graduation/ExamStatusChip";
 import { ConvocationPanel, type ConvocationOption } from "./ConvocationPanel";
 import { EventActions, RemoveCandidateButton } from "./EventActions";
+import { CandidateSlotSelect, RemindReadyButton } from "./SlotControls";
+import { buildExamSlots, countBySlot, slotKey } from "@/lib/graduation/exam-slots";
 
 export const dynamic = "force-dynamic";
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Lisbon" });
+}
 
 export default async function ExamEventPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { userId } = await requireGraduationExamPage();
@@ -49,6 +55,18 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
 
   const pending = candidates.filter((c) => c.status === "CONVOKED").length;
 
+  // Agenda com horários: ocupação por horário e convocados ordenados por hora.
+  const slots = buildExamSlots(event);
+  const occupancy = countBySlot(candidates);
+  const counts = Object.fromEntries(slots.map((s) => [s, occupancy.get(slotKey(s)) ?? 0]));
+  const capacity = event.slotCapacity ?? 0;
+  if (slots.length > 0) {
+    candidates.sort((a, b) => (a.slotStartsAt ? slotKey(a.slotStartsAt) : Infinity) - (b.slotStartsAt ? slotKey(b.slotStartsAt) : Infinity));
+  }
+  const readyWithoutBooking = (readiness?.students ?? []).filter(
+    (s) => s.progress.isReadyForExam && s.progress.next && !s.activeConvocation && !convokedHere.has(s.studentId)
+  ).length;
+
   return (
     <div style={{ maxWidth: "min(760px, 100%)", paddingBottom: 96 }}>
       <Link href="/coach/graduacao" style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", fontWeight: 500, textDecoration: "none" }}>
@@ -74,6 +92,48 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
         {event.notes && <p style={{ margin: "8px 0 0", fontSize: "var(--text-sm)", whiteSpace: "pre-line" }}>{event.notes}</p>}
       </header>
 
+      {slots.length > 0 && (
+        <section className="card" style={{ marginBottom: "var(--space-5)" }} aria-labelledby="horarios">
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "space-between" }}>
+            <h2 id="horarios" style={{ margin: 0, fontSize: "var(--text-base)", fontWeight: 700 }}>
+              Horários{" "}
+              <span style={{ fontWeight: 400, color: "var(--text-secondary)" }}>
+                · até {formatTime(event.endsAt!)} · {event.slotMinutes} min · {capacity} {capacity === 1 ? "vaga" : "vagas"} por horário
+              </span>
+            </h2>
+            {isOpen && event.selfBooking && <RemindReadyButton eventId={event.id} />}
+          </div>
+          <p style={{ margin: "6px 0 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+            {candidates.filter((c) => c.slotStartsAt).length} de {slots.length * capacity} vagas ocupadas
+            {event.selfBooking ? " · marcação pelo aluno ativa" : " · só o coach marca"}
+            {isOpen && event.selfBooking && readyWithoutBooking > 0 && ` · ${readyWithoutBooking} ${readyWithoutBooking === 1 ? "apto ainda sem marcação" : "aptos ainda sem marcação"}`}
+          </p>
+          <ul style={{ listStyle: "none", padding: 0, margin: "var(--space-3) 0 0", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(84px, 1fr))", gap: 8 }}>
+            {slots.map((s) => {
+              const n = counts[s];
+              const full = n >= capacity;
+              return (
+                <li
+                  key={s}
+                  style={{
+                    border: "1px solid var(--border)",
+                    borderRadius: 10,
+                    padding: "8px 4px",
+                    textAlign: "center",
+                    background: full ? "color-mix(in srgb, var(--warning) 10%, transparent)" : undefined,
+                  }}
+                >
+                  <strong style={{ display: "block", fontSize: "var(--text-sm)" }}>{formatTime(s)}</strong>
+                  <span style={{ fontSize: "var(--text-xs)", color: full ? "var(--warning)" : "var(--text-secondary)" }}>
+                    {n}/{capacity}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <section>
         <h2 style={{ margin: "0 0 var(--space-3)", fontSize: "var(--text-base)", fontWeight: 700 }}>
           Convocados <span style={{ fontWeight: 400, color: "var(--text-secondary)" }}>({candidates.length})</span>
@@ -90,8 +150,12 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
                   <BeltSwatch colors={c.gradeColors} width={40} height={12} title={c.gradeName} />
                   <div style={{ flex: "1 1 180px", minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      {slots.length > 0 && c.slotStartsAt && (
+                        <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--primary)" }}>{formatTime(c.slotStartsAt)}</span>
+                      )}
                       <strong style={{ fontSize: "var(--text-sm)" }}>{c.studentName}</strong>
                       <ExamStatusChip status={c.status} />
+                      {c.bookedByStudent && <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>marcou na app</span>}
                     </div>
                     <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
                       Para {c.gradeName}
@@ -100,7 +164,10 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
                       {!decided && c.result?.isComplete && (c.result.passed ? " · cumpre o critério" : " · não cumpre o critério")}
                     </p>
                   </div>
-                  <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
+                  <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center", flexWrap: "wrap" }}>
+                    {slots.length > 0 && !decided && isOpen && (
+                      <CandidateSlotSelect candidateId={c.id} value={c.slotStartsAt} slots={slots} counts={counts} capacity={capacity} />
+                    )}
                     {!decided && isOpen && (
                       <Link href={`/coach/graduacao/${event.id}/avaliar/${c.id}`} className="btn btn-primary" style={{ textDecoration: "none" }}>
                         Avaliar
