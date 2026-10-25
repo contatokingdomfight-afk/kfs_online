@@ -1946,3 +1946,95 @@ html:has([data-dashboard]) body::-webkit-scrollbar {
     padding-right: 72px;
   }
 }
+
+/* Folha de avaliação do exame de graduação (coach). */
+.exam-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 10px 0 8px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.exam-tabs::-webkit-scrollbar {
+  display: none;
+}
+.exam-tab {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.exam-tab-ring {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.exam-tab-count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg);
+}
+.exam-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  scroll-margin-top: 80px;
+}
+.exam-scores {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) 40px;
+  gap: 6px;
+}
+.exam-axes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+.exam-axis {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.exam-axis strong {
+  font-size: 15px;
+}
+@media (min-width: 768px) {
+  .exam-entry {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .exam-scores {
+    grid-template-columns: repeat(5, 44px) 40px;
+  }
+  .exam-axes {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

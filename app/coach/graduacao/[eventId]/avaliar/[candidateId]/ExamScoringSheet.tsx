@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, MessageSquareText, Star } from "lucide-react";
+import { AlertTriangle, ChevronDown, MessageSquareText, Star } from "lucide-react";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { computeExamResult, EXAM_SCORE_MAX, type ExamSheet, type ExamSheetEntry } from "@/lib/graduation/exam";
-import { GRADUATION_AXES, GRADUATION_AXIS_META, type GraduationAxis } from "@/lib/graduation/template";
+import { GRADUATION_AXES, GRADUATION_AXIS_META } from "@/lib/graduation/template";
 import { advancePlacement, saveExamScores } from "../../../actions";
 
 type ScoreState = Record<string, { score: number | null; comment: string | null }>;
@@ -18,6 +18,9 @@ const SCORE_LABELS: Record<number, string> = {
   5: "Excelente",
 };
 
+/** Notas para «Preencher o resto com…». */
+const FILL_SCORES = [3, 4];
+
 type Props = {
   eventId: string;
   candidateId: string;
@@ -27,6 +30,61 @@ type Props = {
   /** Nivelamento: ficha de cada grau avaliado (o último é o atual). */
   placement?: { levelSheets: ExamSheet[]; nextGradeName: string | null } | null;
 };
+
+/** Um separador da folha: um eixo dos itens novos, o grau anterior ou a revisão. */
+type Section = {
+  id: string;
+  label: string;
+  emoji?: string;
+  subtitle: string;
+  entries: ExamSheetEntry[];
+  /** Referência dos graus antigos por chave de revisão (só na secção de revisão). */
+  reference?: Record<string, { gradeName: string; labels: string[] }[]>;
+};
+
+function buildSections(sheet: ExamSheet, placement: Props["placement"]): Section[] {
+  const current = placement?.levelSheets[placement.levelSheets.length - 1] ?? null;
+  const base = current ?? sheet;
+  const axisSections: Section[] = GRADUATION_AXES.flatMap((axis) => {
+    const entries = base.newEntries.filter((e) => e.axis === axis);
+    if (entries.length === 0) return [];
+    const meta = GRADUATION_AXIS_META[axis];
+    return [{ id: `new-${axis}`, label: meta.label, emoji: meta.emoji, subtitle: `Novo em ${base.targetGrade.name} · ${meta.hint}`, entries }];
+  });
+  if (current) return axisSections;
+
+  const sections = [...axisSections];
+  if (sheet.previousGradeName && sheet.previousEntries.length > 0) {
+    sections.push({
+      id: "previous",
+      label: sheet.previousGradeName,
+      emoji: "↩️",
+      subtitle: `Grau anterior — cada item avaliado individualmente`,
+      entries: sheet.previousEntries,
+    });
+  }
+  const reviewEntries = [
+    ...sheet.reviewAxes.map((r) => ({
+      ...r.entry,
+      label: `Revisão ${GRADUATION_AXIS_META[r.entry.axis].label}`,
+      description: `${r.reference.reduce((s, g) => s + g.items.length, 0)} itens de ${r.reference.length} ${r.reference.length === 1 ? "grau" : "graus"} — uma nota para o conjunto`,
+    })),
+    ...sheet.reviewCriticalEntries.map((e) => ({ ...e, description: [e.gradeName, GRADUATION_AXIS_META[e.axis].label, e.description].filter(Boolean).join(" · ") })),
+  ];
+  if (reviewEntries.length > 0) {
+    sections.push({
+      id: "review",
+      label: "Revisão",
+      emoji: "📋",
+      subtitle: "Graus mais antigos: uma nota por eixo + itens fundamentais",
+      entries: reviewEntries,
+      reference: Object.fromEntries(
+        sheet.reviewAxes.map((r) => [r.entry.key, r.reference.map((g) => ({ gradeName: g.gradeName, labels: g.items.map((i) => i.label) }))])
+      ),
+    });
+  }
+  return sections;
+}
 
 export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, initialScores, placement = null }: Props) {
   const [scores, setScores] = useState<ScoreState>(initialScores);
@@ -42,15 +100,22 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
 
   // No nivelamento, a barra mostra o grau a ser avaliado agora.
   const currentLevel = placement?.levelSheets[placement.levelSheets.length - 1] ?? null;
+  const evaluated = currentLevel ?? sheet;
   const myResult = useMemo(
     () =>
       computeExamResult(
-        currentLevel ?? sheet,
+        evaluated,
         Object.entries(scores).map(([key, v]) => ({ key, score: v.score, examinerUserId: "me" }))
       ),
-    [scores, sheet, currentLevel]
+    [scores, evaluated]
   );
   const [advancing, setAdvancing] = useState(false);
+
+  const sections = useMemo(() => buildSections(sheet, placement), [sheet, placement]);
+  const [activeId, setActiveId] = useState(() => sections.find((s) => s.entries.some((e) => initialScores[e.key]?.score == null))?.id ?? sections[0]?.id);
+  const active = sections.find((s) => s.id === activeId) ?? sections[0];
+  const passMin = evaluated.passMin;
+  const topRef = useRef<HTMLDivElement>(null);
 
   const flush = useCallback(async (): Promise<boolean> => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -105,6 +170,40 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
     queue(key, next);
   };
 
+  /** Dá a mesma nota a todos os itens ainda sem nota da secção (depois ajustam-se as exceções). */
+  const fillRest = (section: Section, score: number) => {
+    const missing = section.entries.filter((e) => scores[e.key]?.score == null);
+    if (missing.length === 0) return;
+    const updates: ScoreState = {};
+    for (const e of missing) {
+      const value = { score, comment: scores[e.key]?.comment ?? null };
+      updates[e.key] = value;
+      pendingRef.current.set(e.key, value);
+    }
+    setScores((s) => ({ ...s, ...updates }));
+    setSaveState("pending");
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => void flush(), 300);
+  };
+
+  const selectSection = (id: string) => {
+    setActiveId(id);
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  /** Leva ao próximo item sem nota: nesta secção ou na seguinte que ainda tenha itens por avaliar. */
+  const goToNextMissing = () => {
+    const order = [...sections.slice(sections.indexOf(active)), ...sections.slice(0, sections.indexOf(active))];
+    for (const s of order) {
+      const missing = s.entries.find((e) => scores[e.key]?.score == null);
+      if (!missing) continue;
+      if (s.id !== active.id) setActiveId(s.id);
+      // Espera o separador desenhar antes de deslizar.
+      setTimeout(() => document.getElementById(`entry-${missing.key}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), s.id === active.id ? 0 : 60);
+      return;
+    }
+  };
+
   const goToResult = async () => {
     // Garante que tudo foi gravado antes de sair da ficha.
     for (let i = 0; i < 20 && (pendingRef.current.size > 0 || inFlightRef.current); i++) {
@@ -131,16 +230,12 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
   };
 
   const grade = sheet.targetGrade;
-  const prevByAxis = GRADUATION_AXES.map((axis) => ({ axis, entries: sheet.previousEntries.filter((e) => e.axis === axis) })).filter(
-    (g) => g.entries.length > 0
-  );
-  const newByAxis = GRADUATION_AXES.map((axis) => ({ axis, entries: sheet.newEntries.filter((e) => e.axis === axis) })).filter(
-    (g) => g.entries.length > 0
-  );
+  const missingCount = myResult.totalCount - myResult.scoredCount;
+  const doneLevels = placement ? placement.levelSheets.slice(0, -1) : [];
 
   return (
     <div>
-      <header style={{ margin: "var(--space-4) 0 var(--space-4)" }}>
+      <header style={{ margin: "var(--space-4) 0 var(--space-3)" }}>
         <h1 style={{ margin: 0, fontSize: "var(--text-xl)", fontWeight: 700 }}>{studentName}</h1>
         {placement ? (
           <>
@@ -177,8 +272,9 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
             </ol>
           </>
         ) : (
-          <p style={{ margin: "6px 0 0", display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+          <p style={{ margin: "6px 0 0", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
             Exame para <BeltSwatch colors={grade.colors} width={32} height={10} /> <strong style={{ color: "var(--text-primary)" }}>{grade.name}</strong>
+            <span>· mínimo {formatScore(sheet.passMin)} por eixo</span>
           </p>
         )}
         <details style={{ marginTop: "var(--space-3)" }}>
@@ -193,6 +289,7 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
               Para aprovar: média ≥ {formatScore(sheet.passMin)} nos itens novos, nos itens do grau anterior e na revisão de cada eixo; itens ★ precisam de ≥ {formatScore(sheet.passMin)}{" "}
               individualmente.
             </li>
+            <li>«Preencher o resto» dá a nota a todos os itens ainda sem nota do separador; depois ajusta só as exceções.</li>
             <li>Toca de novo numa nota para a apagar. As notas são gravadas automaticamente.</li>
           </ul>
         </details>
@@ -204,122 +301,136 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
         </p>
       )}
 
-      {placement &&
-        placement.levelSheets.map((level, i) => {
-          const current = i === placement.levelSheets.length - 1;
-          const byAxis = GRADUATION_AXES.map((axis) => ({ axis, entries: level.newEntries.filter((e) => e.axis === axis) })).filter((g) => g.entries.length > 0);
-          const body = byAxis.map(({ axis, entries }) => (
-            <AxisBlock key={`${level.targetGrade.id}-${axis}`} axis={axis}>
-              {entries.map((e) => (
-                <EntryRow key={e.key} entry={e} state={scores[e.key]} passMin={level.passMin} onScore={setScore} onComment={setComment} />
-              ))}
-            </AxisBlock>
-          ));
-          return current ? (
-            <div key={level.targetGrade.id}>
-              <SectionTitle title={`Itens de ${level.targetGrade.name}`} subtitle={`Grau a avaliar agora — mínimo ${formatScore(level.passMin)} por eixo`} />
-              {body}
-            </div>
-          ) : (
-            <details key={level.targetGrade.id} style={{ marginBottom: "var(--space-3)" }}>
-              <summary style={{ cursor: "pointer", fontSize: "var(--text-sm)", fontWeight: 700, padding: "var(--space-2) 0", color: "var(--success)" }}>
-                ✓ {level.targetGrade.name} — cumprido (tocar para rever as notas)
-              </summary>
-              {body}
-            </details>
-          );
-        })}
-
-      {!placement && (
-        <>
-      <SectionTitle title={`Novo em ${grade.name}`} subtitle="Cada item avaliado individualmente" />
-      {newByAxis.map(({ axis, entries }) => (
-        <AxisBlock key={axis} axis={axis}>
-          {entries.map((e) => (
-            <EntryRow key={e.key} entry={e} state={scores[e.key]} passMin={sheet.passMin} onScore={setScore} onComment={setComment} />
+      {doneLevels.map((level) => (
+        <details key={level.targetGrade.id} className="card" style={{ marginBottom: "var(--space-3)", padding: "var(--space-2) var(--space-3)" }}>
+          <summary style={{ cursor: "pointer", fontSize: "var(--text-sm)", fontWeight: 700, padding: "var(--space-1) 0", color: "var(--success)" }}>
+            ✓ {level.targetGrade.name} — cumprido (tocar para rever as notas)
+          </summary>
+          {level.newEntries.map((e) => (
+            <EntryRow key={e.key} entry={e} state={scores[e.key]} passMin={level.passMin} onScore={setScore} onComment={setComment} />
           ))}
-        </AxisBlock>
+        </details>
       ))}
 
-      {sheet.previousGradeName && prevByAxis.length > 0 && (
-        <>
-          <SectionTitle title={`Itens de ${sheet.previousGradeName}`} subtitle="Grau anterior — cada item avaliado individualmente" />
-          {prevByAxis.map(({ axis, entries }) => (
-            <AxisBlock key={`prev-${axis}`} axis={axis}>
-              {entries.map((e) => (
-                <EntryRow key={e.key} entry={e} state={scores[e.key]} passMin={sheet.passMin} onScore={setScore} onComment={setComment} />
-              ))}
-            </AxisBlock>
-          ))}
-        </>
-      )}
+      <div ref={topRef} style={{ scrollMarginTop: 72 }} />
+      <nav className="exam-tabs" aria-label="Partes do exame">
+        {sections.map((s) => {
+          const done = s.entries.filter((e) => scores[e.key]?.score != null).length;
+          const complete = done === s.entries.length;
+          const on = s.id === active.id;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => selectSection(s.id)}
+              aria-current={on ? "true" : undefined}
+              className="exam-tab"
+              style={{
+                borderColor: on ? "var(--text-primary)" : complete ? "color-mix(in srgb, var(--success) 45%, transparent)" : "var(--border)",
+                color: on ? "var(--text-primary)" : "var(--text-secondary)",
+              }}
+            >
+              <span
+                aria-hidden
+                className="exam-tab-ring"
+                style={{ background: `conic-gradient(${complete ? "var(--success)" : "var(--primary)"} ${(done / s.entries.length) * 360}deg, var(--border) 0)` }}
+              />
+              {s.emoji && <span aria-hidden>{s.emoji}</span>}
+              {s.label}
+              <span className="exam-tab-count" style={complete ? { color: "var(--success)", background: "color-mix(in srgb, var(--success) 15%, transparent)" } : undefined}>
+                {done}/{s.entries.length}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
 
-      {sheet.reviewAxes.length > 0 && (
-        <>
-          <SectionTitle title="Revisão dos graus mais antigos" subtitle={`Uma nota por eixo sobre tudo o que foi aprendido antes de ${sheet.previousGradeName ?? "o grau anterior"}`} />
-          {sheet.reviewAxes.map((r) => {
-            const count = r.reference.reduce((s, g) => s + g.items.length, 0);
-            return (
-              <AxisBlock key={r.entry.key} axis={r.entry.axis}>
-                <EntryRow
-                  entry={{ ...r.entry, label: `Revisão ${GRADUATION_AXIS_META[r.entry.axis].label}`, description: `${count} itens de ${r.reference.length} ${r.reference.length === 1 ? "grau" : "graus"}` }}
-                  state={scores[r.entry.key]}
-
-                  passMin={sheet.passMin}
-                  onScore={setScore}
-                  onComment={setComment}
-                />
-                <details style={{ marginTop: 4 }}>
+      {active && (
+        <section aria-label={active.label}>
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, flexWrap: "wrap", margin: "var(--space-4) 0 var(--space-3)" }}>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{ margin: 0, fontSize: "var(--text-base)", fontWeight: 700 }}>
+                {active.emoji && <span aria-hidden>{active.emoji} </span>}
+                {active.label}
+              </h2>
+              <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>{active.subtitle}</p>
+            </div>
+            {active.entries.some((e) => scores[e.key]?.score == null) && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
+                Preencher o resto com
+                {FILL_SCORES.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => fillRest(active, n)}
+                    aria-label={`Dar ${n} a todos os itens sem nota de ${active.label}`}
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 8,
+                      border: "1px dashed var(--border)",
+                      background: "transparent",
+                      color: "var(--text-primary)",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {active.entries.map((e) => (
+            <div key={e.key}>
+              <EntryRow entry={e} state={scores[e.key]} passMin={passMin} onScore={setScore} onComment={setComment} />
+              {active.reference?.[e.key] && (
+                <details style={{ margin: "-4px 0 var(--space-2)", padding: "0 var(--space-3)" }}>
                   <summary style={{ cursor: "pointer", fontSize: "var(--text-xs)", fontWeight: 600, color: "var(--text-secondary)", padding: "4px 0" }}>
                     Ver itens de referência
                   </summary>
-                  {r.reference.map((g) => (
-                    <div key={g.gradeName} style={{ marginTop: 8 }}>
-                      <p style={{ margin: 0, fontSize: "var(--text-xs)", fontWeight: 700 }}>{g.gradeName}</p>
-                      <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                        {g.items.map((i) => i.label).join(" · ")}
-                      </p>
-                    </div>
+                  {active.reference[e.key].map((g) => (
+                    <p key={g.gradeName} style={{ margin: "6px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                      <strong style={{ color: "var(--text-primary)" }}>{g.gradeName}:</strong> {g.labels.join(" · ")}
+                    </p>
                   ))}
                 </details>
-              </AxisBlock>
-            );
-          })}
-        </>
-      )}
-
-      {sheet.reviewCriticalEntries.length > 0 && (
-        <>
-          <SectionTitle title="Itens fundamentais dos graus mais antigos" subtitle="Avaliados individualmente" />
-          <div className="card" style={{ padding: "var(--space-2) var(--space-3)" }}>
-            {sheet.reviewCriticalEntries.map((e) => (
-              <EntryRow
-                key={e.key}
-                entry={{ ...e, description: [e.gradeName, GRADUATION_AXIS_META[e.axis].label].filter(Boolean).join(" · ") }}
-                state={scores[e.key]}
-               
-                passMin={sheet.passMin}
-                onScore={setScore}
-                onComment={setComment}
-              />
-            ))}
-          </div>
-        </>
-      )}
-        </>
+              )}
+            </div>
+          ))}
+        </section>
       )}
 
       <div className="sticky-action-bar" style={{ marginTop: "var(--space-5)" }}>
         <div className="card" style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.35)", padding: "var(--space-3)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
-            <span style={{ flex: 1, minWidth: 120, fontSize: "var(--text-sm)", fontWeight: 600 }} role="status" aria-live="polite">
+          <div style={{ height: 6, borderRadius: 99, background: "var(--border)", overflow: "hidden", marginBottom: 8 }} aria-hidden>
+            <div
+              style={{
+                height: "100%",
+                width: `${myResult.totalCount ? (myResult.scoredCount / myResult.totalCount) * 100 : 0}%`,
+                background: missingCount === 0 ? "var(--success)" : "var(--primary)",
+                borderRadius: 99,
+                transition: "width 200ms ease",
+              }}
+            />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
+            <span style={{ flex: "1 1 140px", minWidth: 0, fontSize: "var(--text-sm)", fontWeight: 700 }} role="status" aria-live="polite">
               {currentLevel && `${currentLevel.targetGrade.name}: `}
-              {myResult.scoredCount}/{myResult.totalCount} avaliados
-              <SaveStateLabel state={saveState} />
+              {myResult.scoredCount} de {myResult.totalCount} avaliados
+              <span style={{ display: "block", fontSize: "var(--text-xs)", fontWeight: 400, color: "var(--text-secondary)" }}>
+                {missingCount > 0 ? `faltam ${missingCount}` : "tudo avaliado"}
+                <SaveStateLabel state={saveState} />
+              </span>
             </span>
             {saveState === "error" && (
               <button type="button" className="btn btn-secondary" onClick={() => void flush()}>
                 Tentar de novo
+              </button>
+            )}
+            {missingCount > 0 && (
+              <button type="button" className="btn btn-secondary" onClick={goToNextMissing} style={{ gap: 4 }}>
+                Próximo <ChevronDown size={14} aria-hidden />
               </button>
             )}
             {placement?.nextGradeName && (
@@ -334,27 +445,34 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
               </button>
             )}
             <button type="button" className="btn btn-primary" onClick={() => void goToResult()} disabled={saveState === "error"}>
-              {placement ? "Terminar avaliação" : myResult.isComplete ? "Ver resultado" : "Resultado"}
+              {placement ? "Terminar" : "Resultado"}
             </button>
           </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+          <div className="exam-axes">
             {myResult.axes.map((a) => {
-              // Sem notas ainda = neutro (não "reprovado").
-              const failed =
-                (a.newPassed === false && a.newAvg != null) ||
-                (a.prevPassed === false && a.prevAvg != null) ||
-                (a.reviewPassed === false && a.reviewScore != null);
-              const unknown =
-                (a.newCount > 0 && a.newAvg == null) ||
-                ((a.prevCount ?? 0) > 0 && a.prevAvg == null) ||
-                (a.reviewPassed !== null && a.reviewScore == null);
-              const color = failed ? "var(--danger)" : unknown ? "var(--text-secondary)" : "var(--success)";
+              const parts = [
+                a.newCount > 0 ? { label: "novo", value: a.newAvg, passed: a.newPassed } : null,
+                (a.prevCount ?? 0) > 0 ? { label: "anterior", value: a.prevAvg ?? null, passed: a.prevPassed ?? null } : null,
+                a.reviewPassed !== null ? { label: "revisão", value: a.reviewScore, passed: a.reviewPassed } : null,
+              ].filter((p): p is { label: string; value: number | null; passed: boolean | null } => p != null);
+              const main = parts[0];
+              const tone = (p: { value: number | null; passed: boolean | null }) =>
+                p.value == null ? "var(--text-secondary)" : p.passed === false ? "var(--danger)" : "var(--success)";
               return (
-                <span key={a.axis} style={{ fontSize: "var(--text-xs)", padding: "2px 8px", borderRadius: 999, border: `1px solid ${color}`, color }}>
-                  {GRADUATION_AXIS_META[a.axis].emoji} {a.newAvg != null ? formatScore(a.newAvg) : "–"}
-                  {(a.prevCount ?? 0) > 0 && ` · ant ${a.prevAvg != null ? formatScore(a.prevAvg) : "–"}`}
-                  {a.reviewPassed !== null && ` · rev ${a.reviewScore != null ? formatScore(a.reviewScore) : "–"}`}
-                </span>
+                <div key={a.axis} className="exam-axis">
+                  <span>
+                    {GRADUATION_AXIS_META[a.axis].emoji} {GRADUATION_AXIS_META[a.axis].label}
+                  </span>
+                  <strong style={{ color: main ? tone(main) : "var(--text-secondary)" }}>{main?.value != null ? formatScore(main.value) : "–"}</strong>
+                  {parts.length > 1 && (
+                    <span style={{ fontSize: 10 }}>
+                      {parts
+                        .slice(1)
+                        .map((p) => `${p.label} ${p.value != null ? formatScore(p.value) : "–"}`)
+                        .join(" · ")}
+                    </span>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -368,32 +486,11 @@ function SaveStateLabel({ state }: { state: "idle" | "pending" | "saving" | "sav
   if (state === "idle") return null;
   const [text, color] =
     state === "error"
-      ? ["Erro ao gravar", "var(--danger)"]
+      ? ["erro ao gravar", "var(--danger)"]
       : state === "saved"
-        ? ["Gravado", "var(--success)"]
-        : ["A gravar…", "var(--text-secondary)"];
-  return <span style={{ fontWeight: 400, color }}> · {text}</span>;
-}
-
-function SectionTitle({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div style={{ margin: "var(--space-5) 0 var(--space-3)" }}>
-      <h2 style={{ margin: 0, fontSize: "var(--text-base)", fontWeight: 700 }}>{title}</h2>
-      <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>{subtitle}</p>
-    </div>
-  );
-}
-
-function AxisBlock({ axis, children }: { axis: GraduationAxis; children: React.ReactNode }) {
-  const meta = GRADUATION_AXIS_META[axis];
-  return (
-    <section className="card" style={{ padding: "var(--space-3)", marginBottom: "var(--space-3)" }} aria-label={meta.label}>
-      <p style={{ margin: "0 0 4px", fontSize: "var(--text-sm)", fontWeight: 700 }}>
-        <span aria-hidden>{meta.emoji}</span> {meta.label}
-      </p>
-      {children}
-    </section>
-  );
+        ? ["gravado ✓", "var(--success)"]
+        : ["a gravar…", "var(--text-secondary)"];
+  return <span style={{ color }}> · {text}</span>;
 }
 
 function EntryRow({
@@ -414,38 +511,26 @@ function EntryRow({
   const below = score != null && score < passMin;
 
   return (
-    <div style={{ padding: "10px 0", borderTop: "1px solid var(--border)" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: 600, lineHeight: 1.35 }}>
-            {entry.isCritical && <Star size={13} aria-label="Item fundamental" style={{ display: "inline", marginRight: 4, marginTop: -2, color: "var(--warning)", fill: "var(--warning)" }} />}
-            {entry.label}
-          </p>
-          {entry.description && <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>{entry.description}</p>}
-        </div>
-        <button
-          type="button"
-          onClick={() => setCommentOpen((o) => !o)}
-          aria-label="Comentário"
-          aria-expanded={commentOpen}
-          style={{
-            width: 36,
-            height: 36,
-            flexShrink: 0,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "none",
-            background: "transparent",
-            borderRadius: "var(--radius-sm)",
-            cursor: "pointer",
-            color: state?.comment ? "var(--primary)" : "var(--text-secondary)",
-          }}
-        >
-          <MessageSquareText size={16} />
-        </button>
+    <div
+      id={`entry-${entry.key}`}
+      className="exam-entry"
+      style={{
+        borderColor:
+          score == null
+            ? "var(--border)"
+            : below
+              ? "color-mix(in srgb, var(--danger) 50%, transparent)"
+              : "color-mix(in srgb, var(--success) 35%, transparent)",
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: 600, lineHeight: 1.35 }}>
+          {entry.isCritical && <Star size={13} aria-label="Item fundamental" style={{ display: "inline", marginRight: 4, marginTop: -2, color: "var(--warning)", fill: "var(--warning)" }} />}
+          {entry.label}
+        </p>
+        {entry.description && <p style={{ margin: "2px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)", lineHeight: 1.45 }}>{entry.description}</p>}
       </div>
-      <div role="radiogroup" aria-label={`Nota para ${entry.label}`} style={{ display: "grid", gridTemplateColumns: `repeat(${EXAM_SCORE_MAX}, 1fr)`, gap: 6, marginTop: 8 }}>
+      <div className="exam-scores" role="radiogroup" aria-label={`Nota para ${entry.label}`}>
         {Array.from({ length: EXAM_SCORE_MAX }, (_, i) => i + 1).map((n) => {
           const active = score === n;
           const tone = n < passMin ? "var(--danger)" : "var(--success)";
@@ -462,7 +547,7 @@ function EntryRow({
                 minHeight: 44,
                 borderRadius: "var(--radius-md)",
                 border: `1px solid ${active ? tone : "var(--border)"}`,
-                background: active ? `color-mix(in srgb, ${tone} 22%, transparent)` : "var(--bg)",
+                background: active ? `color-mix(in srgb, ${tone} 28%, transparent)` : "var(--bg)",
                 color: active ? "var(--text-primary)" : "var(--text-secondary)",
                 fontSize: "var(--text-base)",
                 fontWeight: 700,
@@ -473,10 +558,33 @@ function EntryRow({
             </button>
           );
         })}
+        <button
+          type="button"
+          onClick={() => setCommentOpen((o) => !o)}
+          aria-label="Comentário"
+          aria-expanded={commentOpen}
+          title="Comentário"
+          style={{
+            minHeight: 44,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: `1px solid ${state?.comment ? "var(--primary)" : "var(--border)"}`,
+            background: "var(--bg)",
+            borderRadius: "var(--radius-md)",
+            cursor: "pointer",
+            color: state?.comment ? "var(--primary)" : "var(--text-secondary)",
+          }}
+        >
+          <MessageSquareText size={16} />
+        </button>
       </div>
-      <p style={{ margin: "4px 0 0", minHeight: 16, fontSize: "var(--text-xs)", color: below ? "var(--danger)" : "var(--text-secondary)" }}>
-        {score != null ? `${SCORE_LABELS[score]}${below && entry.isCritical ? " — abaixo do mínimo num item fundamental" : ""}` : ""}
-      </p>
+      {score != null && (
+        <p style={{ gridColumn: "1 / -1", margin: 0, fontSize: "var(--text-xs)", color: below ? "var(--danger)" : "var(--text-secondary)" }}>
+          {score} · {SCORE_LABELS[score]}
+          {below && ` — abaixo do mínimo ${formatScore(passMin)}${entry.isCritical ? " num item fundamental" : ""}`}
+        </p>
+      )}
       {commentOpen && (
         <textarea
           className="input"
@@ -485,7 +593,7 @@ function EntryRow({
           onBlur={(e) => onComment(entry.key, e.target.value)}
           placeholder="Comentário para o aluno (opcional)"
           aria-label={`Comentário sobre ${entry.label}`}
-          style={{ marginTop: 6, fontSize: "var(--text-sm)", resize: "vertical" }}
+          style={{ gridColumn: "1 / -1", fontSize: "var(--text-sm)", resize: "vertical" }}
         />
       )}
     </div>
@@ -495,4 +603,3 @@ function EntryRow({
 function formatScore(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ",");
 }
-
