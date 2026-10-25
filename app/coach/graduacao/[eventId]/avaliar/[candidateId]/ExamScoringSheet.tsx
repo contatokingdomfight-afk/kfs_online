@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ChevronDown, MessageSquareText, Star } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp, MessageSquareText, Star } from "lucide-react";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { computeExamResult, EXAM_SCORE_MAX, type ExamSheet, type ExamSheetEntry } from "@/lib/graduation/exam";
 import { GRADUATION_AXES, GRADUATION_AXIS_META } from "@/lib/graduation/template";
@@ -116,6 +116,26 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
   const active = sections.find((s) => s.id === activeId) ?? sections[0];
   const passMin = evaluated.passMin;
   const topRef = useRef<HTMLDivElement>(null);
+
+  // Barra de baixo: minimizada (só contagem e botões) ou maximizada (com as médias por eixo).
+  // A escolha fica guardada neste dispositivo.
+  const [barOpen, setBarOpen] = useState(false);
+  useEffect(() => {
+    try {
+      setBarOpen(window.localStorage.getItem("exam-sheet-bar-open") === "1");
+    } catch {
+      /* sem armazenamento: fica minimizada */
+    }
+  }, []);
+  const toggleBar = () =>
+    setBarOpen((open) => {
+      try {
+        window.localStorage.setItem("exam-sheet-bar-open", open ? "0" : "1");
+      } catch {
+        /* ignora */
+      }
+      return !open;
+    });
 
   const flush = useCallback(async (): Promise<boolean> => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -402,8 +422,8 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
       )}
 
       <div className="sticky-action-bar" style={{ marginTop: "var(--space-5)" }}>
-        <div className="card" style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.35)", padding: "var(--space-3)" }}>
-          <div style={{ height: 6, borderRadius: 99, background: "var(--border)", overflow: "hidden", marginBottom: 8 }} aria-hidden>
+        <div className="card" style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.35)", padding: barOpen ? "var(--space-3)" : "8px 10px" }}>
+          <div style={{ height: 5, borderRadius: 99, background: "var(--border)", overflow: "hidden", marginBottom: 8 }} aria-hidden>
             <div
               style={{
                 height: "100%",
@@ -414,12 +434,12 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
               }}
             />
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
-            <span style={{ flex: "1 1 140px", minWidth: 0, fontSize: "var(--text-sm)", fontWeight: 700 }} role="status" aria-live="polite">
-              {currentLevel && `${currentLevel.targetGrade.name}: `}
-              {myResult.scoredCount} de {myResult.totalCount} avaliados
-              <span style={{ display: "block", fontSize: "var(--text-xs)", fontWeight: 400, color: "var(--text-secondary)" }}>
-                {missingCount > 0 ? `faltam ${missingCount}` : "tudo avaliado"}
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: barOpen || placement?.nextGradeName ? "wrap" : "nowrap" }}>
+            <span style={{ flex: "1 1 auto", minWidth: 0, fontSize: "var(--text-sm)", fontWeight: 700 }} role="status" aria-live="polite">
+              {currentLevel && barOpen && `${currentLevel.targetGrade.name}: `}
+              {barOpen ? `${myResult.scoredCount} de ${myResult.totalCount} avaliados` : `${myResult.scoredCount}/${myResult.totalCount}`}
+              <span style={{ display: "block", fontSize: "var(--text-xs)", fontWeight: 400, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {barOpen ? (missingCount > 0 ? `faltam ${missingCount}` : "tudo avaliado") : missingCount > 0 ? "avaliados" : "completo"}
                 <SaveStateLabel state={saveState} />
               </span>
             </span>
@@ -447,7 +467,30 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
             <button type="button" className="btn btn-primary" onClick={() => void goToResult()} disabled={saveState === "error"}>
               {placement ? "Terminar" : "Resultado"}
             </button>
+            <button
+              type="button"
+              onClick={toggleBar}
+              aria-expanded={barOpen}
+              aria-label={barOpen ? "Minimizar a barra" : "Mostrar as médias por eixo"}
+              title={barOpen ? "Minimizar" : "Mostrar médias"}
+              style={{
+                width: 36,
+                height: 36,
+                flexShrink: 0,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 10,
+                border: "1px solid var(--border)",
+                background: "var(--bg)",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+              }}
+            >
+              {barOpen ? <ChevronDown size={18} aria-hidden /> : <ChevronUp size={18} aria-hidden />}
+            </button>
           </div>
+          {barOpen && (
           <div className="exam-axes">
             {myResult.axes.map((a) => {
               const parts = [
@@ -476,6 +519,7 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
               );
             })}
           </div>
+          )}
         </div>
       </div>
     </div>

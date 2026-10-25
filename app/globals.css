@@ -1933,12 +1933,13 @@ html:has([data-dashboard]) body::-webkit-scrollbar {
   }
 }
 
-/* Barra de ação fixa no fundo (ex.: «Convocar», folha de avaliação): no telemóvel/tablet fica por cima
-   do menu inferior da app (MobileAppBottomNav ≈ 64px + safe-area); no desktop, junto ao fundo. */
+/* Barra de ação fixa no fundo (ex.: «Convocar», folha de avaliação). O sticky respeita o padding do
+   <main>, que no telemóvel já reserva o espaço do menu inferior (shell-main--bottom-tabs): basta um
+   pequeno afastamento. No desktop, junto ao fundo. */
 .sticky-action-bar {
   position: sticky;
   z-index: 20;
-  bottom: calc(64px + max(10px, env(safe-area-inset-bottom, 0px)) + 8px);
+  bottom: 8px;
 }
 @media (min-width: 1024px) {
   .sticky-action-bar {
