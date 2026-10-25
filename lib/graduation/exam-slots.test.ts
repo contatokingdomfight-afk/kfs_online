@@ -18,9 +18,9 @@ describe("cutoffs", () => {
     expect(canSelfChange("2026-11-08T10:00:00Z", now)).toBe(true);
     expect(canSelfChange("2026-11-08T09:59:00Z", now)).toBe(false);
   });
-  it("allows new bookings until 24h before the slot", () => {
-    expect(canSelfBook("2026-11-07T10:00:00Z", now)).toBe(true);
-    expect(canSelfBook("2026-11-07T09:00:00Z", now)).toBe(false);
+  it("allows new bookings until 2h before the slot", () => {
+    expect(canSelfBook("2026-11-06T12:00:00Z", now)).toBe(true);
+    expect(canSelfBook("2026-11-06T11:59:00Z", now)).toBe(false);
   });
 });
 

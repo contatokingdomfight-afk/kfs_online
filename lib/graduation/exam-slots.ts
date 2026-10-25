@@ -5,8 +5,8 @@
 
 /** O aluno pode desmarcar/trocar até este número de horas antes do seu horário. */
 export const SELF_CHANGE_CUTOFF_HOURS = 48;
-/** As marcações novas fecham este número de horas antes do horário (lista fechada na véspera). */
-export const SELF_BOOKING_CUTOFF_HOURS = 24;
+/** As marcações novas fecham este número de horas antes do horário (dá para marcar no próprio dia). */
+export const SELF_BOOKING_CUTOFF_HOURS = 2;
 
 const HOUR_MS = 3_600_000;
 

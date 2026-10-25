@@ -112,7 +112,7 @@ export function NewExamForm({ modalities }: { modalities: { code: string; name: 
             <input type="checkbox" name="selfBooking" checked={selfBooking} onChange={(e) => setSelfBooking(e.target.checked)} />
             <span>
               <strong>Marcação pelo aluno</strong>
-              <span style={hint}>Os alunos aptos escolhem o horário na app (desmarcam até 48 h antes; marcações fecham 24 h antes).</span>
+              <span style={hint}>Os alunos aptos escolhem o horário na app (desmarcam até 48 h antes; marcações fecham 2 h antes).</span>
             </span>
           </label>
           {selfBooking && (

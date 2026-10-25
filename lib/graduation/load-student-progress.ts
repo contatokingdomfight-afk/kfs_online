@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadGraduationTemplate } from "./load-template";
 import { revealDueResults } from "./reveal";
+import { buildExamSlots, canSelfBook, type ExamSlotConfig } from "./exam-slots";
 import { selectGraduationModalities } from "./modality-selection";
 import { averageEvaluationScores, computeStudentProgress, type CumulativeGradeItems, type ManualReadiness, type StudentProgress } from "./progress";
 import type { GraduationGradeDraft, GraduationItemDraft } from "./template";
@@ -143,10 +144,10 @@ export async function loadStudentGraduations(
       .from("GraduationExamCandidate")
       .select("id, eventId, gradeId, status, decidedAt, slotStartsAt, bookedByStudent, mode, placementAwardedGradeId, revealedAt")
       .eq("studentId", studentId),
-    // Dias de exame com marcação pelo aluno ainda por acontecer.
+    // Dias de exame com marcação pelo aluno ainda por acontecer (filtrados abaixo: só com horários ainda marcáveis).
     supabase
       .from("GraduationExamEvent")
-      .select("modalityCode")
+      .select("modalityCode, scheduledAt, endsAt, slotMinutes, slotCapacity")
       .in("modalityCode", codes)
       .eq("status", "SCHEDULED")
       .eq("selfBooking", true)
@@ -237,7 +238,9 @@ export async function loadStudentGraduations(
               isPlacement: convocationRow.mode === "PLACEMENT",
             }
           : null,
-      openAgendaCount: (openAgendas ?? []).filter((e) => e.modalityCode === code).length,
+      openAgendaCount: (openAgendas ?? []).filter(
+        (e) => e.modalityCode === code && buildExamSlots(e as ExamSlotConfig).some((slot) => canSelfBook(slot, now))
+      ).length,
       examTarget: (() => {
         // Salto de grau: a convocatória ativa é para um grau acima do próximo — o conteúdo do exame é o desse grau.
         if (!convocationRow || convocationRow.mode === "PLACEMENT" || !nextGrade) return null;

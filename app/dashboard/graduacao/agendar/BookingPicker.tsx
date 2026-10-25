@@ -13,7 +13,7 @@ export type BookingEvent = {
   slotMinutes: number;
   location: string | null;
   notes: string | null;
-  /** free = vagas livres (sem contar a do próprio aluno); open = ainda aceita marcações (24 h). */
+  /** free = vagas livres (sem contar a do próprio aluno); open = ainda aceita marcações (até 2 h antes). */
   slots: { iso: string; free: number; open: boolean }[];
 };
 
@@ -258,7 +258,7 @@ export function BookingPicker({
                   Manter o horário atual
                 </button>
               )}
-              <p className="m-0 mt-2 text-center text-xs text-text-secondary">Podes trocar ou desmarcar até 48 h antes. As marcações fecham 24 h antes.</p>
+              <p className="m-0 mt-2 text-center text-xs text-text-secondary">Podes trocar ou desmarcar até 48 h antes. As marcações fecham 2 h antes.</p>
               {error && (
                 <p role="alert" className="m-0 mt-2 text-sm text-danger">
                   {error}
