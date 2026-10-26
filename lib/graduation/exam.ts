@@ -153,6 +153,11 @@ export type ExamResult = {
   examinerCount: number;
   isComplete: boolean;
   passed: boolean;
+  /**
+   * Aprovado pelo avaliador apesar de não cumprir o critério (só com a avaliação completa).
+   * Justificação interna: o aluno não a vê.
+   */
+  override?: { reason: string };
 };
 
 const round1 = (n: number) => Math.round(n * 10) / 10;

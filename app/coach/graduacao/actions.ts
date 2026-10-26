@@ -309,7 +309,9 @@ export async function saveExamScores(
 export async function decideCandidate(
   candidateId: string,
   decision: "PASSED" | "FAILED" | "ABSENT",
-  feedback: string
+  feedback: string,
+  /** Justificação para aprovar sem cumprir o critério do sistema. */
+  override?: string
 ): Promise<ActionResult> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
@@ -321,7 +323,12 @@ export async function decideCandidate(
   if (data.candidate.status !== "CONVOKED") return { error: "Este aluno já tem resultado." };
   if (data.placement && decision !== "ABSENT") return { error: "Num nivelamento, o grau é decidido pelo admin no resultado." };
   const result = computeExamResult(data.sheet, data.allScores.map(toScoreInput));
-  if (decision === "PASSED" && !result.passed) return { error: "O aluno não cumpre o critério de aprovação." };
+  // Aprovar sem cumprir o critério: só com a avaliação completa e uma justificação (registo interno).
+  const overrideReason = decision === "PASSED" && !result.passed ? (override ?? "").trim().slice(0, 1000) : "";
+  if (decision === "PASSED" && !result.passed) {
+    if (!result.isComplete) return { error: "Completa a avaliação (todos os itens com nota) antes de aprovar." };
+    if (overrideReason.length < 10) return { error: "O aluno não cumpre o critério: escreve a justificação para aprovar mesmo assim." };
+  }
   if (decision === "FAILED" && result.scoredCount === 0) return { error: "Avalia o aluno antes de o reprovar (ou marca falta)." };
 
   // A decisão fica guardada; os graus só são atribuídos na revelação (data do dia de exame).
@@ -338,7 +345,7 @@ export async function decideCandidate(
     .update({
       status: decision,
       feedback: feedback.trim() || null,
-      result: decision === "ABSENT" ? null : result,
+      result: decision === "ABSENT" ? null : overrideReason ? { ...result, override: { reason: overrideReason } } : result,
       decidedAt: new Date().toISOString(),
       decidedByUserId: auth.userId,
       pendingGrades: pendingGrades.length ? pendingGrades : null,

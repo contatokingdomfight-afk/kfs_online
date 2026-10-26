@@ -203,6 +203,7 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
                         <>Para {c.gradeName}</>
                       )}
                       {c.skipReason && <span style={{ color: "var(--warning)", fontWeight: 700 }}> · ⬆ salto de grau — «{c.skipReason}»</span>}
+                      {c.result?.override && <span style={{ color: "var(--warning)", fontWeight: 700 }}> · aprovado com justificação</span>}
                       {!decided && total > 0 && ` · as tuas notas: ${c.myScoredCount}/${total}`}
                       {!decided && c.result && c.result.examinerCount > 1 && ` · ${c.result.examinerCount} avaliadores`}
                       {!decided && c.mode !== "PLACEMENT" && c.result?.isComplete && (c.result.passed ? " · cumpre o critério" : " · não cumpre o critério")}

@@ -140,6 +140,19 @@ export default async function ResultadoCandidatoPage({ params }: { params: Promi
         </div>
       )}
 
+      {decided && candidate.storedResult?.override && (
+        <div
+          className="card"
+          style={{ marginBottom: "var(--space-4)", borderColor: "color-mix(in srgb, var(--warning) 45%, transparent)", background: "color-mix(in srgb, var(--warning) 6%, var(--bg-secondary))" }}
+        >
+          <p style={{ margin: 0, fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--warning)", textTransform: "uppercase", letterSpacing: 0.6 }}>
+            Aprovado sem cumprir o critério do sistema
+          </p>
+          <p style={{ margin: "6px 0 0", fontSize: "var(--text-sm)", whiteSpace: "pre-line" }}>{candidate.storedResult.override.reason}</p>
+          <p style={{ margin: "6px 0 0", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>Justificação interna — o aluno não a vê.</p>
+        </div>
+      )}
+
       {decided && candidate.feedback && (
         <div className="card" style={{ marginBottom: "var(--space-4)" }}>
           <p style={{ margin: 0, fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: 0.6 }}>Feedback</p>
@@ -167,7 +180,14 @@ export default async function ResultadoCandidatoPage({ params }: { params: Promi
       )}
 
       {!placement && !decided && event.status === "SCHEDULED" && (
-        <DecisionForm candidateId={candidateId} eventId={eventId} canPass={result.passed} hasScores={result.scoredCount > 0} gradeName={sheet.targetGrade.name} />
+        <DecisionForm
+          candidateId={candidateId}
+          eventId={eventId}
+          canPass={result.passed}
+          isComplete={result.isComplete}
+          hasScores={result.scoredCount > 0}
+          gradeName={sheet.targetGrade.name}
+        />
       )}
     </div>
   );
