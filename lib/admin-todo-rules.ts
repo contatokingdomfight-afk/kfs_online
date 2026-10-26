@@ -30,7 +30,7 @@ export const DUE_SOON_DAYS = 3;
 export const NO_PLAN_WINDOW_DAYS = 60;
 
 /** Dias sem treinar a partir dos quais o aluno conta como «em risco de sair». */
-export const RISK_DAYS = 14;
+export const RISK_DAYS = 7;
 /** Avaliações físicas que vencem até este nº de dias (ou já venceram) entram no alerta. */
 export const PHYSICAL_DUE_WITHIN_DAYS = 30;
 /** Performance (AthleteEvaluation): alunos a treinar sem avaliação há este nº de dias ou mais. */

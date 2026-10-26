@@ -325,7 +325,7 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .sort((a, b) => b.urgency - a.urgency);
   const ordersTotal = orderRows.reduce((acc, o) => (encomendas.some((e) => e.orderId === o.id) ? acc + o.totalAmount : acc), 0);
 
-  // --- Em risco de sair: ativos com plano sem treinar há 14+ dias ---
+  // --- Em risco de sair: ativos com plano sem treinar há 7+ dias ---
   const lastTraining = new Map<string, string>();
   const recentCount = new Map<string, number>();
   const datesByStudent = new Map<string, string[]>();
@@ -810,8 +810,8 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     },
     risco: {
       kind: "risco", tone: "red", title: "Em risco de sair", items: risco,
-      summary: risco.length ? "Sem treinar há mais de 14 dias, com plano ativo" : "",
-      info: "Alunos ativos com plano cujo último treino confirmado foi há 14 dias ou mais (ou que nunca treinaram). Ao marcar «Feito», só volta se o aluno treinar e deixar outra vez.",
+      summary: risco.length ? "Sem treinar há mais de 7 dias, com plano ativo" : "",
+      info: "Alunos ativos com plano cujo último treino confirmado foi há 7 dias ou mais (ou que nunca treinaram). Ao marcar «Feito», só volta se o aluno treinar e deixar outra vez.",
       columns: ["Aluno", "Modalidade", "Último treino", "Antes treinava", "Plano", ""],
     },
     carga: {

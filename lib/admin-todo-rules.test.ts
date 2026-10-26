@@ -4,12 +4,12 @@ import { birthdaySoon, churnRisk, isTuitionOverdue, noPlanLead, physicalDue, tod
 const today = "2026-10-11"; // domingo
 
 describe("churnRisk", () => {
-  it("em risco a partir de 14 dias sem treinar", () => {
-    expect(churnRisk({ today, lastTraining: "2026-09-28", createdAt: "2026-01-01" })).toBeNull();
-    expect(churnRisk({ today, lastTraining: "2026-09-27", createdAt: "2026-01-01" })).toEqual({ daysSince: 14, neverTrained: false });
+  it("em risco a partir de 7 dias sem treinar", () => {
+    expect(churnRisk({ today, lastTraining: "2026-10-05", createdAt: "2026-01-01" })).toBeNull();
+    expect(churnRisk({ today, lastTraining: "2026-10-04", createdAt: "2026-01-01" })).toEqual({ daysSince: 7, neverTrained: false });
   });
 
-  it("sem treinos: só conta se a conta tiver mais de 14 dias", () => {
+  it("sem treinos: só conta se a conta tiver mais de 7 dias", () => {
     expect(churnRisk({ today, lastTraining: null, createdAt: "2026-10-05T10:00:00Z" })).toBeNull();
     expect(churnRisk({ today, lastTraining: null, createdAt: "2026-09-01T10:00:00Z" })).toEqual({ daysSince: 40, neverTrained: true });
   });
