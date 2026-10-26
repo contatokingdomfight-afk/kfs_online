@@ -3,10 +3,10 @@ import { requirePlan } from "@/lib/require-plan";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { loadStudentGraduations } from "@/lib/graduation/load-student-progress";
-import { buildExamSlots, canSelfBook, canSelfChange, countBySlot, selfChangeDeadline, slotKey } from "@/lib/graduation/exam-slots";
+import { loadBookingEvents } from "@/lib/graduation/load-booking-events";
 import { formatExamDate } from "@/components/graduation/ExamStatusChip";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
-import { BookingPicker, type BookingEvent, type MyBooking } from "./BookingPicker";
+import { BookingPicker } from "./BookingPicker";
 
 export const dynamic = "force-dynamic";
 
@@ -44,57 +44,8 @@ export default async function AgendarExamePage({ searchParams }: { searchParams:
   const next = graduation.examTarget?.grade ?? progress.next!;
   const now = new Date();
 
-  const { data: eventRows } = await admin
-    .from("GraduationExamEvent")
-    .select("id, title, scheduledAt, endsAt, slotMinutes, slotCapacity, location, notes")
-    .eq("modalityCode", graduation.modalityCode)
-    .eq("status", "SCHEDULED")
-    .eq("selfBooking", true)
-    .gt("endsAt", now.toISOString())
-    .order("scheduledAt", { ascending: true })
-    .limit(12);
-  const eventIds = (eventRows ?? []).map((e) => e.id as string);
-  const { data: candidateRows } = eventIds.length
-    ? await admin.from("GraduationExamCandidate").select("id, eventId, studentId, status, slotStartsAt, bookedByStudent").in("eventId", eventIds)
-    : { data: [] as { id: string; eventId: string; studentId: string; status: string; slotStartsAt: string | null; bookedByStudent: boolean }[] };
-  const candidates = candidateRows ?? [];
-  const mine = candidates.find((c) => c.studentId === studentId && c.status === "CONVOKED") ?? null;
-
-  const events: BookingEvent[] = (eventRows ?? []).map((e) => {
-    const counts = countBySlot(candidates.filter((c) => c.eventId === e.id && c.studentId !== studentId));
-    const capacity = (e.slotCapacity as number | null) ?? 0;
-    return {
-      id: e.id as string,
-      title: e.title as string,
-      scheduledAt: e.scheduledAt as string,
-      endsAt: e.endsAt as string,
-      slotMinutes: (e.slotMinutes as number | null) ?? 0,
-      location: (e.location as string | null) ?? null,
-      notes: (e.notes as string | null) ?? null,
-      slots: buildExamSlots({
-        scheduledAt: e.scheduledAt as string,
-        endsAt: e.endsAt as string | null,
-        slotMinutes: e.slotMinutes as number | null,
-        slotCapacity: capacity,
-      }).map((iso) => ({ iso, free: Math.max(0, capacity - (counts.get(slotKey(iso)) ?? 0)), open: canSelfBook(iso, now) })),
-    };
-  });
-
-  const myBooking: MyBooking | null = mine
-    ? (() => {
-        const ev = events.find((e) => e.id === mine.eventId)!;
-        const startsAt = mine.slotStartsAt ?? ev.scheduledAt;
-        return {
-          candidateId: mine.id,
-          eventId: mine.eventId,
-          slotStartsAt: mine.slotStartsAt,
-          bookedByStudent: Boolean(mine.bookedByStudent),
-          // Sem horário (convocado pelo coach): pode escolher; com horário: só até 48 h antes.
-          canChange: !mine.slotStartsAt || canSelfChange(startsAt, now),
-          deadline: selfChangeDeadline(startsAt).toISOString(),
-        };
-      })()
-    : null;
+  const { events, myBooking } = await loadBookingEvents(admin, graduation.modalityCode, studentId, now);
+  const mine = myBooking;
 
   // Convocado para um exame sem marcação pela app (o coach trata do horário).
   const fixedConvocation = !mine && graduation.convocation ? graduation.convocation : null;

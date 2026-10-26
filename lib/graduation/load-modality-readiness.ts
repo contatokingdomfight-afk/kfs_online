@@ -16,7 +16,7 @@ export type ModalityStudentReadiness = {
   /** Requisitos manuais do próximo grau ainda por validar. */
   pendingRequirements: { id: string; label: string }[];
   /** Convocatória ativa (evento agendado) desta modalidade, se existir. */
-  activeConvocation: { eventId: string; title: string; scheduledAt: string } | null;
+  activeConvocation: { eventId: string; title: string; scheduledAt: string; slotStartsAt: string | null } | null;
 };
 
 export type ModalityReadiness = {
@@ -121,7 +121,7 @@ export async function loadModalityReadiness(
     inChunks(
       ids,
       async (chunk) =>
-        (await supabase.from("GraduationExamCandidate").select("studentId, gradeId, status, decidedAt, eventId, mode, revealedAt").in("studentId", chunk)).data ?? []
+        (await supabase.from("GraduationExamCandidate").select("studentId, gradeId, status, decidedAt, eventId, mode, revealedAt, slotStartsAt").in("studentId", chunk)).data ?? []
     ),
   ]);
 
@@ -201,7 +201,9 @@ export async function loadModalityReadiness(
       name: names.get(s.userId) || "Sem nome",
       isPrimary: s.primaryModality === modalityCode || (s.primaryModality != null && compositeCodes.has(s.primaryModality)),
       pendingRequirements: (next?.requirements ?? []).filter((r) => !fulfilledSet.has(r.id)),
-      activeConvocation: activeEvent ? { eventId: activeEvent.id, title: activeEvent.title, scheduledAt: activeEvent.scheduledAt } : null,
+      activeConvocation: activeEvent
+        ? { eventId: activeEvent.id, title: activeEvent.title, scheduledAt: activeEvent.scheduledAt, slotStartsAt: (active?.slotStartsAt as string | null) ?? null }
+        : null,
       progress: computeStudentProgress({
         grades: template.grades,
         monthlyMinAttendances: template.monthlyMinAttendances,

@@ -416,7 +416,7 @@ export async function setCandidateTargetGrade(candidateId: string, gradeId: stri
   return { success: true };
 }
 
-/** Admin: prontidão manual (status null = volta a automático). */
+/** Admin ou coach: prontidão manual (status null = volta a automático). */
 export async function setManualReadiness(input: {
   studentId: string;
   modalityCode: string;
@@ -424,7 +424,7 @@ export async function setManualReadiness(input: {
   reason: string;
   validUntil: string;
 }): Promise<ActionResult> {
-  const auth = await graduationAdminActionAuth();
+  const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };

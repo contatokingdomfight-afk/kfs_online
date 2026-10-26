@@ -5,12 +5,15 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { requireGraduationExamPage } from "@/lib/graduation/exam-auth";
 import { ExamStatusChip, formatExamDate } from "@/components/graduation/ExamStatusChip";
+import { AptosTab } from "./AptosTab";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Exames de graduação | Coach" };
 
-export default async function CoachGraduacaoPage() {
+export default async function CoachGraduacaoPage({ searchParams }: { searchParams: Promise<{ tab?: string; m?: string; f?: string }> }) {
   await requireGraduationExamPage();
+  const { tab: tabParam, m: modalityParam, f: filterParam } = await searchParams;
+  const tab = tabParam === "aptos" ? "aptos" : "exames";
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
@@ -96,6 +99,39 @@ export default async function CoachGraduacaoPage() {
         Cria um exame, convoca os alunos aptos e avalia-os no telemóvel. O grau só é atribuído quando confirmas a aprovação.
       </p>
 
+      <nav aria-label="Secções" style={{ display: "flex", gap: 4, margin: "var(--space-4) 0 var(--space-3)", borderBottom: "1px solid var(--border)" }}>
+        {[
+          { key: "exames", label: "Exames", href: "/coach/graduacao" },
+          { key: "aptos", label: "Alunos aptos", href: "/coach/graduacao?tab=aptos" },
+        ].map((t) => (
+          <Link
+            key={t.key}
+            href={t.href}
+            aria-current={tab === t.key ? "page" : undefined}
+            style={{
+              padding: "10px 14px",
+              fontSize: "var(--text-sm)",
+              fontWeight: 600,
+              textDecoration: "none",
+              marginBottom: -1,
+              color: tab === t.key ? "var(--text-primary)" : "var(--text-secondary)",
+              borderBottom: `2px solid ${tab === t.key ? "var(--primary)" : "transparent"}`,
+            }}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </nav>
+
+      {tab === "aptos" ? (
+        <AptosTab
+          supabase={supabase}
+          modalities={(modalities ?? []).map((m) => ({ code: m.code as string, name: m.name as string }))}
+          modalityParam={modalityParam}
+          filterParam={filterParam}
+        />
+      ) : (
+        <>
       <h2 style={sectionTitle}>Próximos exames</h2>
       {upcoming.length === 0 ? (
         <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>Nenhum exame agendado.</p>
@@ -107,6 +143,8 @@ export default async function CoachGraduacaoPage() {
         <>
           <h2 style={sectionTitle}>Anteriores</h2>
           <ul style={listStyle}>{past.map(renderEvent)}</ul>
+        </>
+      )}
         </>
       )}
     </div>

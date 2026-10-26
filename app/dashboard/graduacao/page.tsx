@@ -5,6 +5,8 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { loadStudentGraduations } from "@/lib/graduation/load-student-progress";
 import { StudentGraduationView } from "@/components/graduation/StudentGraduationView";
 import { ModalitySummaryCard } from "@/components/graduation/ModalitySummaryCard";
+import { loadBookingEvents } from "@/lib/graduation/load-booking-events";
+import { BookingPicker } from "./agendar/BookingPicker";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,12 @@ export default async function MinhaGraduacaoPage({ searchParams }: { searchParam
 
   const { m } = await searchParams;
   const selected = graduations.find((g) => g.modalityCode === m) ?? graduations[0] ?? null;
+
+  // Apto e sem exame marcado/convocatória: mostra já os dias de exame abertos para marcar.
+  const canPickExamDate =
+    !!selected && !!admin && !!studentId && selected.progress.isReadyForExam && selected.openAgendaCount > 0 && !selected.convocation && !selected.awaitingResult;
+  const booking = canPickExamDate ? await loadBookingEvents(admin!, selected!.modalityCode, studentId!) : null;
+  const examGrade = selected ? (selected.examTarget?.grade ?? selected.progress.next) : null;
 
   // Sem graduação para mostrar: diz qual é a modalidade do aluno que ainda não tem graduação.
   let pendingModalityName: string | null = null;
@@ -47,6 +55,16 @@ export default async function MinhaGraduacaoPage({ searchParams }: { searchParam
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {selected && booking && booking.events.length > 0 && examGrade && (
+        <section aria-labelledby="escolher-exame" className="mt-4">
+          <h2 id="escolher-exame" className="m-0 text-lg font-bold text-text-primary">
+            Já podes fazer exame de {selected.modalityName}
+          </h2>
+          <p className="m-0 mt-1 text-sm text-text-secondary">Escolhe o dia e o horário. Este aviso desaparece quando marcares.</p>
+          <BookingPicker events={booking.events} myBooking={booking.myBooking} canBook gradeName={examGrade.name} />
         </section>
       )}
 
