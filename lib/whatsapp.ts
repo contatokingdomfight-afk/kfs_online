@@ -1,3 +1,5 @@
+import { KINGDOM_WEEK_MONTHLY_PRICE_EUR } from "@/lib/drop-in-sessions-pricing";
+
 /**
  * Normaliza um telefone (com ou sem indicativo) para o formato usado pelo wa.me
  * (dígitos apenas, com indicativo de país). Assume Portugal (+351) quando o
@@ -110,7 +112,7 @@ export function buildDueSoonMessage(studentFirstName: string, dueLabel: string):
 export function buildWeekLimitMessage(studentFirstName: string, used: number, limit: number): string {
   const name = studentFirstName.trim() || "tudo bem";
   if (used >= limit) {
-    return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Já usaste as ${limit} aulas do teu plano Kingdom Week deste mês. Se quiseres continuar a treinar, podes juntar um pacote de aulas extra — é só responder por aqui e tratamos disso. O plano renova no início do próximo mês. 🥋`;
+    return `Olá ${name}! 👋\n\nAqui é da Kingdom Fight School. Já usaste as ${limit} aulas do teu plano Kingdom Week deste mês. Se quiseres continuar a treinar, precisas efetuar o pagamento de ${KINGDOM_WEEK_MONTHLY_PRICE_EUR} euros novamente ou pagar por aulas avulsas. 🥋`;
   }
   const left = limit - used;
   return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Estás na ${used}.ª aula do mês do teu plano Kingdom Week e ${left === 1 ? "ainda tens 1 aula" : `ainda tens ${left} aulas`} até ao fim do mês (${limit} no total). Se quiseres treinar mais, podemos juntar aulas extra — é só responder por aqui. Bons treinos! 🥋`;
