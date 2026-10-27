@@ -14,6 +14,8 @@
     "start": "next start",
     "lint": "next lint",
     "verificar": "node scripts/verificar.mjs",
+    "limpar:deploys": "node scripts/vercel-limpar-deploys.mjs --apagar",
+    "limpar:deploys:ver": "node scripts/vercel-limpar-deploys.mjs",
     "testar:lembrete": "node scripts/testar-lembrete-pos-aula.mjs",
     "weo:clientes": "node scripts/faturacao/weo-clientes.mjs",
     "weo:faturas": "node scripts/faturacao/weo-faturas.mjs",
