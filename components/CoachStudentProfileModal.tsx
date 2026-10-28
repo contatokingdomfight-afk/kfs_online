@@ -176,6 +176,12 @@ export function CoachStudentProfileModal(props: Props) {
   initialScoresByModalityRef.current = initialScoresByModality;
 
   const [state, formAction] = useActionState(saveCoachStudentEvaluation, null);
+  const [errorDialog, setErrorDialog] = useState<string | null>(null);
+
+  useEffect(() => {
+    const err = (state as { error?: string } | null)?.error;
+    if (err) setErrorDialog(err);
+  }, [state]);
   const [portalReady, setPortalReady] = useState(false);
 
   useEffect(() => {
@@ -673,9 +679,6 @@ export function CoachStudentProfileModal(props: Props) {
                   <textarea name="note" className="input rounded-lg min-h-[56px] resize-y text-base" placeholder="Observações sobre esta avaliação..." rows={2} />
                 </label>
 
-                {state && (state as { error?: string }).error && (
-                  <p className="m-0 text-sm text-[var(--danger)]">{(state as { error: string }).error}</p>
-                )}
                 {state && (state as { success?: boolean }).success && (
                   <p className="m-0 text-sm text-[var(--success)]">Avaliação guardada com sucesso.</p>
                 )}
@@ -694,6 +697,9 @@ export function CoachStudentProfileModal(props: Props) {
     </div>
     {openAnchorAxis && (
       <ScoreAnchorModal axisId={openAnchorAxis} onClose={() => setOpenAnchorAxis(null)} />
+    )}
+    {errorDialog && (
+      <EvaluationErrorModal message={errorDialog} onClose={() => setErrorDialog(null)} />
     )}
     </>
   );
@@ -850,6 +856,39 @@ function ScoreAnchorModal({ axisId, onClose }: { axisId: GeneralPerformanceAxisI
             </li>
           ))}
         </ul>
+      </div>
+    </div>
+  );
+}
+
+function EvaluationErrorModal({ message, onClose }: { message: string; onClose: () => void }) {
+  return (
+    <div
+      role="alertdialog"
+      aria-modal={true}
+      aria-labelledby="evaluation-error-modal-title"
+      aria-describedby="evaluation-error-modal-message"
+      className="fixed inset-0 flex items-center justify-center bg-black/50 p-4"
+      style={{ zIndex: EVALUATION_MODAL_Z + 100 }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="card w-full max-w-[380px] rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-5 shadow-xl">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-6 w-6 shrink-0 text-[var(--danger)]" aria-hidden />
+          <div className="flex flex-col gap-1">
+            <h3 id="evaluation-error-modal-title" className="m-0 text-base font-semibold text-[var(--text-primary)]">
+              Não foi possível guardar
+            </h3>
+            <p id="evaluation-error-modal-message" className="m-0 text-sm text-[var(--text-secondary)]">
+              {message}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button type="button" onClick={onClose} className="btn btn-primary min-h-11 rounded-lg px-5 font-medium" autoFocus>
+            OK
+          </button>
+        </div>
       </div>
     </div>
   );
