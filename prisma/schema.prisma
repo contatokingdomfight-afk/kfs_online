@@ -409,7 +409,7 @@ model Payment {
   referenceYear   String?       // "YYYY" (INSURANCE)
   stripeInvoiceId String?       @unique
   createdAt       DateTime      @default(now())
-  /// Escola onde foi pago (fica na escola antiga se o aluno mudar).
+  /// Escola onde foi pago (fica na escola antiga se o aluno mudar). NOT NULL na BD; opcional aqui porque o trigger fill_school_id a preenche.
   schoolId        String?
 }
 
