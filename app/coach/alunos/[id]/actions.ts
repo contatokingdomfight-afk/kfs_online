@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -39,6 +40,7 @@ export async function saveStandaloneEvaluation(
   }
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const modality = (formData.get("modality") as string)?.trim();
   const scoresJson = (formData.get("scoresJson") as string)?.trim() || null;
   const note = (formData.get("note") as string)?.trim() || null;

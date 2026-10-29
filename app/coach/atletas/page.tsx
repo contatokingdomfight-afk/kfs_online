@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -16,9 +17,9 @@ export default async function CoachAtletasPage() {
   const userReadClient = getAdminClientOrNull().client ?? supabase;
 
   /** A lista mostra só alunos marcados como "atleta de competição" — não todo mundo com perfil de avaliação. */
-  const { data: flaggedStudents } = await userReadClient
+  const { data: flaggedStudents } = await filterSchools(userReadClient
     .from("Student")
-    .select("id, userId, schoolId")
+    .select("id, userId, schoolId"), scopedSchoolIds(await getSchoolScope()))
     .eq("competitionAthlete", true);
   let flagged = flaggedStudents ?? [];
   if (coachId) {

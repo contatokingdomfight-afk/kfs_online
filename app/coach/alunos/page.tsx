@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { AlunoProfileLink } from "@/components/AlunoProfileLink";
 import { getCachedModalityRefs } from "@/lib/cached-reference-data";
@@ -33,7 +34,7 @@ export default async function CoachAlunosPage({ searchParams }: { searchParams: 
 
   const [{ data: schools }, { data: studentsData }, { data: plansData }, modalitiesForFilter] = await Promise.all([
     supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
-    supabase.from("Student").select("id, userId, status, primaryModality, schoolId, planId, createdAt").order("createdAt", { ascending: false }),
+    filterSchools(supabase.from("Student").select("id, userId, status, primaryModality, schoolId, planId, createdAt"), scopedSchoolIds(await getSchoolScope())).order("createdAt", { ascending: false }),
     supabase.from("Plan").select("id, name").eq("isActive", true).order("name", { ascending: true }),
     getCachedModalityRefs(supabase),
   ]);

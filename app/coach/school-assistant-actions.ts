@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -48,6 +49,7 @@ async function assertCanManageAssistantForStudent(
 
 /** Promove aluno a treinador assistente na escola do aluno (COACH da escola ou ADMIN). */
 export async function promoteSchoolAssistantCoach(studentId: string): Promise<{ error?: string; success?: boolean }> {
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const trimmed = studentId?.trim();
   if (!trimmed) return { error: "Aluno em falta." };
 
@@ -102,6 +104,7 @@ export async function promoteSchoolAssistantCoach(studentId: string): Promise<{ 
 
 /** Revoga o papel de treinador assistente. */
 export async function revokeSchoolAssistantCoach(studentId: string): Promise<{ error?: string; success?: boolean }> {
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const trimmed = studentId?.trim();
   if (!trimmed) return { error: "Aluno em falta." };
 

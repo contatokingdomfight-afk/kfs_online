@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -49,11 +50,11 @@ export default async function CoachAgendaPage({ searchParams }: { searchParams: 
   }
 
   // 1. Definições de aula (sem filtrar por `date` no SQL — recorrentes têm `date` null)
-  let allLessonsQuery = supabase
+  let allLessonsQuery = filterSchools(supabase
     .from("Lesson")
     .select(
       "id, modality, date, weekday, startTime, endTime, coachId, schoolId, isOneOff, isOpenClass, athletesOnly, locationId, capacity, planningNotes"
-    )
+    ), scopedSchoolIds(await getSchoolScope()))
     .order("startTime", { ascending: true });
 
   if (coachId && coachSchoolIds.length === 0) {

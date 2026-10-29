@@ -1,3 +1,4 @@
+import { schoolAccessErrorForRows } from "@/lib/school-scope";
 import { NextResponse } from "next/server";
 import { requireAdminForRoute } from "@/lib/supabase/route-handler";
 import { performUpdateLesson } from "@/lib/admin/update-lesson";
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
   }
 
   const lessonId = typeof body.lessonId === "string" ? body.lessonId.trim() : "";
+  { const schoolErr = lessonId ? await schoolAccessErrorForRows("Lesson", [lessonId]) : null; if (schoolErr) return NextResponse.json({ error: schoolErr }, { status: 403 }); }
   const modality = typeof body.modality === "string" ? body.modality.trim() : "";
   const date = typeof body.date === "string" ? body.date.trim() : "";
   const startTime = typeof body.startTime === "string" ? body.startTime.trim() : "";

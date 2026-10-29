@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForRows, schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError, adminPermissionErrorOrSchoolAssistant } from "@/lib/permissions/assert";
@@ -108,6 +109,7 @@ export async function setAttendanceStatus(
   attendanceId: string,
   status: "CONFIRMED" | "ABSENT"
 ): Promise<{ error?: string }> {
+  { const schoolErr = await attendanceSchoolError(attendanceId); if (schoolErr) return { error: schoolErr }; }
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Sessão inválida." };
 
@@ -175,6 +177,8 @@ export async function coachCheckInStudent(
   studentId: string,
   options?: { crossModality?: boolean }
 ): Promise<{ error?: string }> {
+  { const schoolErr = await schoolAccessErrorForRows("Lesson", lessonId ? [lessonId] : []); if (schoolErr) return { error: schoolErr }; }
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Sessão inválida." };
 
@@ -273,7 +277,9 @@ export async function coachCheckInStudentFromForm(
   formData: FormData
 ): Promise<{ error?: string } | null> {
   const lessonId = (formData.get("lessonId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("Lesson", lessonId ? [lessonId] : []); if (schoolErr) return { error: schoolErr }; }
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const occurrenceDate = (formData.get("occurrenceDate") as string)?.trim().slice(0, 10) ?? "";
   const crossModality = formData.get("crossModality") === "true";
   if (!lessonId || !studentId) return { error: "Dados inválidos." };
@@ -302,7 +308,9 @@ export async function saveEvaluationFromLesson(
   if (dbUser.role === "COACH" && !currentCoachId) return { error: "Perfil de coach não encontrado." };
 
   const lessonId = (formData.get("lessonId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("Lesson", lessonId ? [lessonId] : []); if (schoolErr) return { error: schoolErr }; }
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const modality = (formData.get("modality") as string)?.trim();
   const scoresJson = (formData.get("scoresJson") as string)?.trim() || null;
   const note = (formData.get("note") as string)?.trim() || null;
@@ -414,6 +422,7 @@ export async function setCoachRpeFromForm(
   formData: FormData
 ): Promise<{ error?: string; updated?: number }> {
   const lessonId = String(formData.get("lessonId") ?? "").trim();
+  { const schoolErr = await schoolAccessErrorForRows("Lesson", lessonId ? [lessonId] : []); if (schoolErr) return { error: schoolErr }; }
   const occurrenceDate = String(formData.get("occurrenceDate") ?? "").trim().slice(0, 10);
   const rpe = Number(formData.get("rpe"));
   const attendanceIds = formData
@@ -462,4 +471,12 @@ export async function setCoachRpeFromForm(
   revalidatePath("/coach/aula");
   revalidatePath("/coach/carga");
   return { updated: (coachRows ?? []).length };
+}
+
+/** Multi-escola: a presença pertence à escola da aula. */
+async function attendanceSchoolError(attendanceId: string): Promise<string | null> {
+  const admin = getAdminClientOrNull().client;
+  if (!admin || !attendanceId) return null;
+  const { data } = await admin.from("Attendance").select("lessonId").eq("id", attendanceId).maybeSingle();
+  return data?.lessonId ? schoolAccessErrorForRows("Lesson", [data.lessonId as string]) : null;
 }

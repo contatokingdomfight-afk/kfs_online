@@ -1,3 +1,4 @@
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { NextResponse } from "next/server";
 import { requireAdminForRoute } from "@/lib/supabase/route-handler";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -18,6 +19,8 @@ export async function POST(request: Request) {
   if (!auth.adminOk) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
+  // Loja das escolas desligada por agora: só o Admin Geral.
+  if (!isNetworkScope(await getSchoolScope())) return NextResponse.json({ error: "Só o Admin Geral." }, { status: 403 });
 
   const formData = await request.formData();
   const file = formData.get("file");

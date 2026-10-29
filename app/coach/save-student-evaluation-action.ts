@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForRows } from "@/lib/school-scope";
 import { saveEvaluationFromLesson } from "@/app/coach/aula/actions";
 import { saveStandaloneEvaluation } from "@/app/coach/alunos/[id]/actions";
 
@@ -15,6 +16,7 @@ export async function saveCoachStudentEvaluation(
 ): Promise<SaveCoachStudentEvaluationResult> {
   const raw = formData.get("lessonId");
   const lessonId = typeof raw === "string" ? raw.trim() : "";
+  { const schoolErr = await schoolAccessErrorForRows("Lesson", lessonId ? [lessonId] : []); if (schoolErr) return { error: schoolErr }; }
   if (lessonId) {
     return saveEvaluationFromLesson(prev, formData);
   }

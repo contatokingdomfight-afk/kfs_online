@@ -16,9 +16,24 @@ export const SELECTED_SCHOOL_COOKIE = "pm_school";
 /** Escopo de escolas do utilizador atual (cache por pedido). Ver `SchoolScope`. */
 export const getSchoolScope = cache(async function getSchoolScope(): Promise<SchoolScope> {
   const u = await getCurrentDbUser();
-  if (!u || (u.role !== "ADMIN" && u.role !== "COACH")) return { kind: "none" };
+  if (!u) return { kind: "none" };
 
   const admin = getAdminClientOrNull().client;
+  if (u.role !== "ADMIN" && u.role !== "COACH") {
+    // Treinador assistente (aluno com SchoolAssistantCoach ativo): só a escola onde ajuda.
+    if (!admin) return { kind: "none" };
+    const { data: student } = await admin.from("Student").select("id").eq("userId", u.id).maybeSingle();
+    if (!student) return { kind: "none" };
+    const { data: assistant } = await admin
+      .from("SchoolAssistantCoach")
+      .select("schoolId")
+      .eq("studentId", student.id)
+      .is("revokedAt", null)
+      .maybeSingle();
+    if (!assistant) return { kind: "none" };
+    return schoolScopeFrom([assistant.schoolId as string], await getCachedSchools(admin), null);
+  }
+
   // Sem service role não dá para ler as ligações: mantém o comportamento antigo (admin vê tudo).
   if (!admin) {
     return u.role === "ADMIN" ? { kind: "network", schools: [], selectedSchoolId: null } : { kind: "none" };

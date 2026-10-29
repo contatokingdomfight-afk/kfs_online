@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, ArrowDown, Check, CircleAlert, Minus } from "lucide-react";
@@ -118,9 +119,9 @@ export default async function CoachCargaPage({ searchParams }: { searchParams: S
     return lessons.has(turma);
   };
 
-  const { data: studentRows } = await supabase
+  const { data: studentRows } = await filterSchools(supabase
     .from("Student")
-    .select("id, userId, status")
+    .select("id, userId, status"), scopedSchoolIds(await getSchoolScope()))
     .in("id", [...lessonCountByStudent.keys()].slice(0, 2000));
   const candidates = ((studentRows ?? []) as { id: string; userId: string; status: string }[]).filter(
     (s) => s.status !== "INATIVO" && inScope(s.id)

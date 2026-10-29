@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
@@ -30,9 +31,9 @@ export default async function CoachCoberturaAvaliacoesPage({
   const params = await searchParams;
   const selectedModality = params.modality?.trim() || null;
 
-  const { data: studentsData } = await supabase
+  const { data: studentsData } = await filterSchools(supabase
     .from("Student")
-    .select("id, userId, schoolId, createdAt")
+    .select("id, userId, schoolId, createdAt"), scopedSchoolIds(await getSchoolScope()))
     .eq("status", "ATIVO");
   let students = studentsData ?? [];
 

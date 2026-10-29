@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
@@ -41,11 +42,11 @@ export default async function CoachAulaQrPage({ searchParams }: Props) {
 
   let lessonsRaw =
     (
-      await supabase
+      await filterSchools(supabase
         .from("Lesson")
         .select(
           "id, modality, date, weekday, startTime, endTime, locationId, schoolId, isOneOff, coachId, isOpenClass, capacity, planningNotes"
-        )
+        ), scopedSchoolIds(await getSchoolScope()))
         .order("startTime", { ascending: true })
     ).data ?? [];
 

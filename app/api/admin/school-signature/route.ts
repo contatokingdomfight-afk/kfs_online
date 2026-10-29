@@ -1,3 +1,4 @@
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -11,6 +12,8 @@ export async function POST(request: Request) {
   if (!dbUser || dbUser.role !== "ADMIN") {
     return NextResponse.json({ error: "Sessão inválida ou sem permissão." }, { status: 401 });
   }
+  // Assinatura da entidade nos contratos: ainda única (da rede).
+  if (!isNetworkScope(await getSchoolScope())) return NextResponse.json({ error: "Só o Admin Geral." }, { status: 403 });
 
   const formData = await request.formData();
   const file = formData.get("file");

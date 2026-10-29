@@ -1,5 +1,7 @@
 "use server";
 
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
@@ -20,6 +22,7 @@ export async function updateAthlete(
   if (permErr) return { error: permErr };
 
   const athleteId = (formData.get("athleteId") as string)?.trim();
+  { const schoolErr = await athleteSchoolError(athleteId); if (schoolErr) return { error: schoolErr }; }
   const level = formData.get("level") as string;
   const mainCoachIdRaw = (formData.get("mainCoachId") as string)?.trim() || null;
   const validLevels = ["INICIANTE", "INTERMEDIARIO", "AVANCADO"];
@@ -118,6 +121,7 @@ export async function updateCommentVisibility(
 
   const commentId = (formData.get("commentId") as string)?.trim();
   const athleteId = (formData.get("athleteId") as string)?.trim();
+  { const schoolErr = await athleteSchoolError(athleteId); if (schoolErr) return { error: schoolErr }; }
   const visibilityRaw = (formData.get("visibility") as string)?.trim();
   if (!commentId || !athleteId || (visibilityRaw !== "PRIVATE" && visibilityRaw !== "SHARED")) {
     return { error: "Dados inválidos." };
@@ -177,6 +181,7 @@ export async function createEvaluation(
   if (dbUser.role === "COACH" && !coachId) return { error: "Perfil de coach não encontrado." };
 
   const athleteId = (formData.get("athleteId") as string)?.trim();
+  { const schoolErr = await athleteSchoolError(athleteId); if (schoolErr) return { error: schoolErr }; }
   const gas = parseInt(String(formData.get("gas")), 10);
   const technique = parseInt(String(formData.get("technique")), 10);
   const strength = parseInt(String(formData.get("strength")), 10);
@@ -222,4 +227,12 @@ export async function createEvaluation(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/notificacoes");
   return {};
+}
+
+/** Multi-escola: o atleta pertence à escola do aluno. */
+async function athleteSchoolError(athleteId: string | undefined): Promise<string | null> {
+  const admin = getAdminClientOrNull().client;
+  if (!admin || !athleteId) return null;
+  const { data } = await admin.from("Athlete").select("studentId").eq("id", athleteId).maybeSingle();
+  return data?.studentId ? schoolAccessErrorForStudent(data.studentId as string) : null;
 }

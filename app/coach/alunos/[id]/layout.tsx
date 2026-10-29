@@ -1,3 +1,4 @@
+import { getSchoolScope, canAccessSchool } from "@/lib/school-scope";
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
@@ -30,9 +31,12 @@ export default async function CoachAlunoLayout({ children, params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality")
+    .select("id, userId, status, planId, primaryModality, schoolId")
     .eq("id", studentId)
     .single();
+
+  // Multi-escola: aluno de outra escola.
+  if (student && !canAccessSchool(await getSchoolScope(), student.schoolId as string)) redirect("/coach/alunos");
 
   if (!student) {
     return (

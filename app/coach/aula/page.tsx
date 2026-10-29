@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { QrCode } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -42,11 +43,11 @@ export default async function CoachAulaPage({
   const selectedLessonId = params.lesson ?? null;
   const dateParam = params.date?.trim().slice(0, 10) ?? null;
 
-  let lessonsRaw = (await supabase
+  let lessonsRaw = (await filterSchools(supabase
     .from("Lesson")
     .select(
       "id, modality, date, weekday, startTime, endTime, locationId, schoolId, isOneOff, coachId, isOpenClass, athletesOnly, capacity, planningNotes"
-    )
+    ), scopedSchoolIds(await getSchoolScope()))
     .order("startTime", { ascending: true })).data ?? [];
 
   if (schoolAssistant) {

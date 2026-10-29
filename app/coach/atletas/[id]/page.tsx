@@ -1,3 +1,4 @@
+import { getSchoolScope, canAccessSchool } from "@/lib/school-scope";
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
@@ -65,7 +66,8 @@ export default async function CoachAtletaPage({ params }: Props) {
     );
   }
 
-  const { data: student } = await supabase.from("Student").select("id, userId").eq("id", athlete.studentId).single();
+  const { data: student } = await supabase.from("Student").select("id, userId, schoolId").eq("id", athlete.studentId).single();
+  if (student && !canAccessSchool(await getSchoolScope(), student.schoolId as string)) redirect("/coach/atletas");
   const { data: user } = student
     ? await supabase.from("User").select("id, name, email").eq("id", student.userId).single()
     : { data: null };

@@ -1,3 +1,4 @@
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
   if (!studentId) {
     return NextResponse.json({ error: "Aluno em falta." }, { status: 400 });
   }
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return NextResponse.json({ error: schoolErr }, { status: 403 }); }
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {

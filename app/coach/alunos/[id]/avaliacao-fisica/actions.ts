@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -99,6 +100,7 @@ export async function savePhysicalAssessment(
   if (dbUser.role === "COACH" && !coachId) return { error: "Perfil de coach não encontrado." };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!studentId) return { error: "Aluno não identificado." };
 
   const supabase = await createClient();
