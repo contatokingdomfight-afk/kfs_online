@@ -1,3 +1,4 @@
+import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AcceptTrialButton } from "@/app/admin/experimentais/AcceptTrialButton";
@@ -179,7 +180,7 @@ export default async function AdminATratarPage({ searchParams }: { searchParams:
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
   const params = await searchParams;
-  const schoolId = params.school?.trim() || null;
+  const schoolId = resolveSchoolParam(await getSchoolScope(), params.school);
 
   const [groups, { data: history }] = await Promise.all([
     loadAdminTodo(supabase, schoolId),

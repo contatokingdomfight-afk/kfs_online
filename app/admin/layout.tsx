@@ -11,6 +11,8 @@ import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import { AdminChatWidgetGate } from "@/components/admin-chat/AdminChatWidgetGate";
 import { CoachNotificationBell } from "@/components/CoachNotificationBell";
+import { getSchoolScope } from "@/lib/school-scope";
+import { SchoolPicker, SchoolBadge } from "@/components/admin/SchoolPicker";
 
 export default async function AdminLayout({
   children,
@@ -21,7 +23,9 @@ export default async function AdminLayout({
   if (!dbUser) redirect("/sign-in");
   if (dbUser.role !== "ADMIN") redirect("/dashboard");
 
-  const access = await getCachedResolvedAdminAccess();
+  const [access, scope] = await Promise.all([getCachedResolvedAdminAccess(), getSchoolScope()]);
+  // Diretor técnico sem escola atribuída não tem o que gerir.
+  if (scope.kind === "none") redirect("/dashboard");
   const kfsPath = await getKfsPathnameFromRequest();
   if (access.kind === "granted" && kfsPath && !canAccessAdminPathname(access, kfsPath)) {
     redirect("/admin");
@@ -48,6 +52,11 @@ export default async function AdminLayout({
         }}
         headerExtra={
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            {scope.schools.length > 1 ? (
+              <SchoolPicker schools={scope.schools} selectedSchoolId={scope.selectedSchoolId} allowAll={scope.kind === "network"} />
+            ) : scope.kind === "school" ? (
+              <SchoolBadge name={scope.schools[0].name} />
+            ) : null}
             <CoachNotificationBell locale={locale as "pt" | "en"} />
             <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
           </div>

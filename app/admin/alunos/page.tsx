@@ -1,3 +1,4 @@
+import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Search } from "lucide-react";
@@ -54,7 +55,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   const params = await searchParams;
   const filterStatus = params.status ?? "all";
   const filterModality = params.modality ?? "all";
-  const filterSchool = params.school ?? "all";
+  const filterSchool = resolveSchoolParam(await getSchoolScope(), params.school === "all" ? null : params.school) ?? "all";
   const filterPlan = params.plan ?? "all";
   const filterInsurance = params.insurance ?? "all";
   const view: ViewId = VIEWS.some((v) => v.id === params.vista) ? (params.vista as ViewId) : "all";

@@ -1,3 +1,4 @@
+import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -23,7 +24,7 @@ export default async function AdminMetricsDashboardPage({ searchParams }: { sear
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
   const params = await searchParams;
-  const schoolId = (params.school?.trim() || null) || null;
+  const schoolId = resolveSchoolParam(await getSchoolScope(), params.school);
   const periodParam = params.period?.trim();
   const period = periodParam && VALID_PERIOD.test(periodParam) ? periodParam : "30d";
   const modalityCode = params.modality?.trim() || null;

@@ -1,3 +1,4 @@
+import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -21,7 +22,7 @@ export default async function AdminTriboPage({ searchParams }: { searchParams: S
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const params = await searchParams;
-  const schoolId = params.school?.trim() || null;
+  const schoolId = resolveSchoolParam(await getSchoolScope(), params.school);
   const status = params.status?.trim() || "all";
 
   const result = getAdminClientOrNull();

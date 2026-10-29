@@ -1,3 +1,4 @@
+import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
@@ -22,7 +23,7 @@ export default async function AdminMetasPage({ searchParams }: { searchParams: S
 
   const params = await searchParams;
   const goals = await listAdminGoals({
-    schoolId: params.school ?? null,
+    schoolId: resolveSchoolParam(await getSchoolScope(), params.school),
     status: params.status ?? null,
   });
 

@@ -1,3 +1,4 @@
+import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -55,7 +56,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export default async function LojaAcademyDashboardPage({ searchParams }: { searchParams: Promise<{ vista?: string; school?: string }> }) {
   const sp = await searchParams;
   const vista: Vista = sp.vista === "academy" || sp.vista === "cursos" ? sp.vista : "loja";
-  const schoolId = sp.school?.trim() || null;
+  const schoolId = resolveSchoolParam(await getSchoolScope(), sp.school);
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;

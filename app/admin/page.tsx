@@ -1,3 +1,4 @@
+import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
 import Link from "next/link";
 import { Suspense } from "react";
 import { BarChart3, CalendarPlus, ChevronRight, Receipt, UserPlus, Wallet } from "lucide-react";
@@ -35,7 +36,7 @@ export default async function AdminHojePage({ searchParams }: { searchParams: Se
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
   const t = getTranslations(locale);
   const { school } = await searchParams;
-  const schoolId = school?.trim() || null;
+  const schoolId = resolveSchoolParam(await getSchoolScope(), school);
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;

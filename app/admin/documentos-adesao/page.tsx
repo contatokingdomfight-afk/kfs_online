@@ -1,3 +1,4 @@
+import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MessageCircle, PartyPopper, PenLine, Printer, Archive } from "lucide-react";
@@ -26,7 +27,7 @@ export default async function AdminDocumentosAdesaoPage({ searchParams }: { sear
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const params = await searchParams;
-  const schoolId = params.school?.trim() || null;
+  const schoolId = resolveSchoolParam(await getSchoolScope(), params.school);
   const view = params.view === "arquivo" ? "arquivo" : "pendentes";
 
   const result = getAdminClientOrNull();
