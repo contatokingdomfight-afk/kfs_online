@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
@@ -24,9 +25,11 @@ export default async function AdminIndicacoesPage() {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: credits } = await supabase
+  const schoolIds = scopedSchoolIds(await getSchoolScope());
+  const scopedStudentIds = schoolIds ? ((await supabase.from("Student").select("id").in("schoolId", schoolIds)).data ?? []).map((s) => s.id as string) : null;
+  const { data: credits } = await filterSchools(supabase
     .from("ReferralCredit")
-    .select("id, studentId, amount, reason, referredStudentId, consumedAt, created_at")
+    .select("id, studentId, amount, reason, referredStudentId, consumedAt, created_at"), scopedStudentIds, "studentId")
     .order("created_at", { ascending: false })
     .limit(300);
   const rows = credits ?? [];

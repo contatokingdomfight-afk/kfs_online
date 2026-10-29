@@ -1,3 +1,4 @@
+import { getSchoolScope, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -13,9 +14,10 @@ export default async function AdminFamiliasNovoPage() {
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
 
-  const { data: schools } = await result.client
+  const scope = await getSchoolScope();
+  const { data: schools } = await filterSchools(result.client
     .from("School")
-    .select("id, name")
+    .select("id, name"), scope.kind === "school" ? scope.schoolIds : null, "id")
     .eq("isActive", true)
     .order("name", { ascending: true });
 

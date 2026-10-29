@@ -1,5 +1,7 @@
 "use server";
 
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { getSchoolScope, isNetworkScope, schoolAccessErrorForRows } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -29,6 +31,7 @@ export async function createTrialClass(
   const modality = formData.get("modality") as string;
   const lessonDate = (formData.get("lessonDate") as string)?.trim();
   const lessonId = (formData.get("lessonId") as string)?.trim() || null;
+  { const schoolErr = lessonId ? await schoolAccessErrorForRows("Lesson", [lessonId]) : null; if (schoolErr) return { error: schoolErr }; }
 
   if (!name) return { error: "Nome é obrigatório." };
   if (!contact) return { error: "Contacto é obrigatório." };
@@ -68,6 +71,7 @@ export async function acceptTrialRequest(
   if (permErr) return { error: permErr };
 
   const trialId = (formData.get("trialId") as string)?.trim();
+  { const schoolErr = await trialSchoolError(trialId); if (schoolErr) return { error: schoolErr }; }
   if (!trialId) return { error: "Inscrição inválida." };
 
   const supabase = createAdminClient();
@@ -169,6 +173,7 @@ export async function convertTrialToStudent(
   if (permErr) return { error: permErr };
 
   const trialId = (formData.get("trialId") as string)?.trim();
+  { const schoolErr = await trialSchoolError(trialId); if (schoolErr) return { error: schoolErr }; }
   if (!trialId) return { error: "Inscrição inválida." };
 
   const supabase = createAdminClient();
@@ -269,4 +274,14 @@ export async function convertTrialToStudent(
     redirect(`/coach/aula?lesson=${encodeURIComponent(lid)}&date=${encodeURIComponent(d)}`);
   }
   redirect("/coach/experimentais");
+}
+
+/** Multi-escola: a aula experimental pertence à escola da aula marcada (sem aula = só o Admin Geral). */
+async function trialSchoolError(trialId: string | undefined): Promise<string | null> {
+  if (!trialId) return null;
+  const admin = getAdminClientOrNull().client;
+  if (!admin) return null;
+  const { data } = await admin.from("TrialClass").select("lessonId").eq("id", trialId).maybeSingle();
+  if (data?.lessonId) return schoolAccessErrorForRows("Lesson", [data.lessonId as string]);
+  return isNetworkScope(await getSchoolScope()) ? null : "Não autorizado: esta aula experimental não tem escola.";
 }

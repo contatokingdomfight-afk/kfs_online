@@ -1,3 +1,4 @@
+import { getSchoolScope, canAccessSchool } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -19,6 +20,7 @@ export default async function AdminFamiliaDetailPage({ params }: Props) {
 
   const detail = await getFamilyGroupDetail(result.client, id);
   if (!detail) notFound();
+  if (!canAccessSchool(await getSchoolScope(), detail.group.schoolId)) notFound();
 
   const [breakdown, referencePlanOptions] = await Promise.all([
     computeFamilyGroupMonthlyTuition(result.client, id),

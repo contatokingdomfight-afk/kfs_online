@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, scopedSchoolIds, filterSchools, canAccessSchool, schoolAccessErrorForRows, schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -36,7 +37,7 @@ export async function searchStudentsForFamily(query: string): Promise<
   const ids = await searchStudentIdsByQuery(supabase, q);
   if (ids.length === 0) return { results: [] };
 
-  const { data: students } = await supabase.from("Student").select("id, userId").in("id", ids);
+  const { data: students } = await filterSchools(supabase.from("Student").select("id, userId"), scopedSchoolIds(await getSchoolScope())).in("id", ids);
   const userIds = [...new Set((students ?? []).map((s) => s.userId))];
   const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
   const userById = new Map((users ?? []).map((u) => [u.id, u]));
@@ -62,7 +63,9 @@ export async function createFamilyGroup(
 
   const name = (formData.get("name") as string)?.trim() || null;
   const titularStudentId = (formData.get("titularStudentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(titularStudentId); if (schoolErr) return { error: schoolErr }; }
   const schoolId = (formData.get("schoolId") as string)?.trim();
+  if (schoolId && !canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Não autorizado: escola fora do teu acesso." };
   const discountPercent = parseFloat((formData.get("discountPercent") as string)?.trim() || "0");
   const titularReferencePlanId = (formData.get("titularReferencePlanId") as string)?.trim() || null;
 
@@ -98,7 +101,9 @@ export async function addFamilyMember(
   if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("FamilyGroup", groupId ? [groupId] : []); if (schoolErr) return { error: schoolErr }; }
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const referencePlanId = (formData.get("referencePlanId") as string)?.trim() || null;
   if (!groupId || !studentId) return { error: "Grupo e aluno são obrigatórios." };
 
@@ -159,7 +164,9 @@ export async function removeFamilyMember(
   if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("FamilyGroup", groupId ? [groupId] : []); if (schoolErr) return { error: schoolErr }; }
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!groupId || !studentId) return { error: "Dados inválidos." };
 
   const supabase = createAdminClient();
@@ -197,6 +204,7 @@ export async function updateFamilyGroupDiscount(
   if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("FamilyGroup", groupId ? [groupId] : []); if (schoolErr) return { error: schoolErr }; }
   const discountPercent = parseFloat((formData.get("discountPercent") as string)?.trim() || "");
   if (!groupId) return { error: "Grupo inválido." };
   if (Number.isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
@@ -224,7 +232,9 @@ export async function updateMemberReferencePlan(
   if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("FamilyGroup", groupId ? [groupId] : []); if (schoolErr) return { error: schoolErr }; }
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const referencePlanId = (formData.get("referencePlanId") as string)?.trim() || null;
   if (!groupId || !studentId) return { error: "Dados inválidos." };
 
@@ -249,6 +259,7 @@ export async function deactivateFamilyGroup(
   if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("FamilyGroup", groupId ? [groupId] : []); if (schoolErr) return { error: schoolErr }; }
   if (!groupId) return { error: "Grupo inválido." };
 
   const supabase = createAdminClient();
@@ -278,6 +289,7 @@ export async function deleteFamilyGroup(
   if (!(await assertAdmin("admin:alunos:write"))) return { error: "Não autorizado." };
 
   const groupId = (formData.get("groupId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("FamilyGroup", groupId ? [groupId] : []); if (schoolErr) return { error: schoolErr }; }
   if (!groupId) return { error: "Grupo inválido." };
 
   const supabase = createAdminClient();

@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, isNetworkScope, canAccessSchool, schoolAccessErrorForCoach } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -22,6 +23,7 @@ export async function createCoach(
   const name = (formData.get("name") as string)?.trim() || null;
   const specialties = (formData.get("specialties") as string)?.trim() || null;
   const schoolIds = formData.getAll("schoolIds").filter((v): v is string => typeof v === "string" && v.trim() !== "");
+  { const sc = await getSchoolScope(); if (sc.kind !== "network" && (schoolIds.length === 0 || !schoolIds.every((id) => canAccessSchool(sc, id)))) return { error: "Escolhe só escolas a que tens acesso." }; }
   const createStudentProfile = formData.get("createStudentProfile") === "true";
 
   if (!email) return { error: "Email é obrigatório." };
@@ -117,6 +119,7 @@ export async function updateCoach(_prev: UpdateCoachResult | null, formData: For
   if (permErr) return { error: permErr };
 
   const coachId = (formData.get("coachId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForCoach(coachId); if (schoolErr) return { error: schoolErr }; }
   if (!coachId) return { error: "ID do coach inválido." };
 
   const name = (formData.get("name") as string)?.trim() || null;
@@ -125,6 +128,7 @@ export async function updateCoach(_prev: UpdateCoachResult | null, formData: For
   const hourlyRateRaw = (formData.get("hourly_rate") as string)?.trim();
   const hourlyRate = hourlyRateRaw ? parseFloat(hourlyRateRaw) : null;
   const schoolIds = formData.getAll("schoolIds").filter((v): v is string => typeof v === "string" && v.trim() !== "");
+  { const sc = await getSchoolScope(); if (sc.kind !== "network" && (schoolIds.length === 0 || !schoolIds.every((id) => canAccessSchool(sc, id)))) return { error: "Escolhe só escolas a que tens acesso." }; }
 
   const supabase = createAdminClient();
 
@@ -174,6 +178,7 @@ export async function setCoachActive(
   if (permErr) return { error: permErr };
 
   const coachId = (formData.get("coachId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForCoach(coachId); if (schoolErr) return { error: schoolErr }; }
   const active = formData.get("active") === "true";
   if (!coachId) return { error: "ID do coach inválido." };
 
@@ -196,6 +201,7 @@ export async function deleteCoach(
   if (permErr) return { error: permErr };
 
   const coachId = (formData.get("coachId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForCoach(coachId); if (schoolErr) return { error: schoolErr }; }
   if (!coachId) return { error: "ID do coach inválido." };
 
   const supabase = createAdminClient();
@@ -228,8 +234,10 @@ export async function deleteCoachAccount(
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
   const permErr = await adminPermissionError("admin:coaches:write");
   if (permErr) return { error: permErr };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode fazer isto." };
 
   const coachId = (formData.get("coachId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForCoach(coachId); if (schoolErr) return { error: schoolErr }; }
   if (!coachId) return { error: "ID do coach inválido." };
 
   const supabase = createAdminClient();
@@ -374,6 +382,7 @@ export async function moderateCoachTestimonial(
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
   const permErr = await adminPermissionError("admin:coaches:write");
   if (permErr) return { error: permErr };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode fazer isto." };
 
   const testimonialId = (formData.get("testimonialId") as string)?.trim();
   const decision = formData.get("decision") as string;
@@ -409,6 +418,7 @@ export async function toggleCoursePermission(
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
   const permErr = await adminPermissionError("admin:coaches:write");
   if (permErr) return { error: permErr };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode fazer isto." };
 
   const studentId = (formData.get("studentId") as string)?.trim();
   const value = formData.get("value") === "true";

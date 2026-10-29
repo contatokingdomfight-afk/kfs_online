@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -16,9 +17,9 @@ export default async function AdminExperimentaisNovoPage() {
   const supabase = result.client;
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data: lessons } = await supabase
+  const { data: lessons } = await filterSchools(supabase
     .from("Lesson")
-    .select("id, modality, date, weekday, startTime, endTime, isOneOff, offerTrialBooking")
+    .select("id, modality, date, weekday, startTime, endTime, isOneOff, offerTrialBooking"), scopedSchoolIds(await getSchoolScope()))
     .eq("offerTrialBooking", true)
     .order("startTime", { ascending: true })
     .limit(200);

@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -42,9 +43,11 @@ export default async function AdminExperimentaisPage({ searchParams }: { searchP
   const supabase = result.client;
   const today = calendarDateLisbon(new Date());
 
-  const { data: trials } = await supabase
+  const schoolIds = scopedSchoolIds(await getSchoolScope());
+  const scopedLessonIds = schoolIds ? ((await supabase.from("Lesson").select("id").in("schoolId", schoolIds)).data ?? []).map((l) => l.id as string) : null;
+  const { data: trials } = await filterSchools(supabase
     .from("TrialClass")
-    .select("id, name, contact, modality, lessonDate, lessonId, convertedToStudent, acceptedAt, createdAt")
+    .select("id, name, contact, modality, lessonDate, lessonId, convertedToStudent, acceptedAt, createdAt"), scopedLessonIds, "lessonId")
     .order("createdAt", { ascending: false });
 
   const list = trials ?? [];

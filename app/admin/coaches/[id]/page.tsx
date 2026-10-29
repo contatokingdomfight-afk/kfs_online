@@ -1,3 +1,4 @@
+import { getSchoolScope, coachIdsInScope, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
@@ -14,10 +15,13 @@ export default async function AdminCoachEditarPage({ params }: Props) {
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const { id: coachId } = await params;
+  // Multi-escola: coach sem nenhuma escola do diretor.
+  { const ids = await coachIdsInScope(); if (ids && !ids.includes(coachId)) redirect("/admin/coaches"); }
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
+  const schoolScope = await getSchoolScope();
   const { data: coach } = await supabase.from("Coach").select("id, userId, specialties, studentId, hourly_rate, is_active").eq("id", coachId).single();
 
   if (!coach) {
@@ -37,7 +41,7 @@ export default async function AdminCoachEditarPage({ params }: Props) {
       ? supabase.from("Student").select("id, can_create_courses").eq("id", coach.studentId).single()
       : Promise.resolve({ data: null }),
     supabase.from("CoachSchool").select("schoolId").eq("coachId", coachId),
-    supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
+    filterSchools(supabase.from("School").select("id, name"), schoolScope.kind === "school" ? schoolScope.schoolIds : null, "id").eq("isActive", true).order("name", { ascending: true }),
   ]);
 
   const student = studentRes.data;

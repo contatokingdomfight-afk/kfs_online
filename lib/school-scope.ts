@@ -72,6 +72,33 @@ export async function schoolAccessErrorForRows(table: string, ids: string[]): Pr
 }
 
 /**
+ * Coaches: o diretor só gere coaches que dão aulas **apenas** nas suas escolas
+ * (um coach partilhado com outra escola fica para o Admin Geral).
+ */
+export async function schoolAccessErrorForCoach(coachId: string | null | undefined): Promise<string | null> {
+  const scope = await getSchoolScope();
+  if (scope.kind === "network" || !coachId) return null;
+  const admin = getAdminClientOrNull().client;
+  if (!admin) return NOT_YOUR_SCHOOL;
+  const { data } = await admin.from("CoachSchool").select("schoolId").eq("coachId", coachId);
+  const rows = (data ?? []) as { schoolId: string }[];
+  return rows.length > 0 && rows.every((r) => canAccessSchool(scope, r.schoolId))
+    ? null
+    : "Não autorizado: este coach também está noutra escola — fala com o Admin Geral.";
+}
+
+/** Ids dos coaches com pelo menos uma escola no escopo (null = sem filtro). */
+export async function coachIdsInScope(): Promise<string[] | null> {
+  const scope = await getSchoolScope();
+  if (scope.kind === "network") return null;
+  if (scope.kind === "none") return [];
+  const admin = getAdminClientOrNull().client;
+  if (!admin) return [];
+  const { data } = await admin.from("CoachSchool").select("coachId").in("schoolId", scope.schoolIds);
+  return [...new Set((data ?? []).map((r) => r.coachId as string))];
+}
+
+/**
  * Escola para um registo novo sem aluno (despesa, receita manual, depósito): a escola do seletor.
  * O Admin Geral em «Todas» com várias escolas tem de escolher uma primeiro.
  */

@@ -1,3 +1,4 @@
+import { coachIdsInScope, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -16,7 +17,7 @@ export default async function AdminCoachesPage() {
   const supabase = adminResult.client ?? (await createClient());
 
   const [{ data: coaches }, { count: pendingTestimonials }] = await Promise.all([
-    supabase.from("Coach").select("id, userId, specialties, createdAt, is_active").order("createdAt", { ascending: false }),
+    filterSchools(supabase.from("Coach").select("id, userId, specialties, createdAt, is_active"), await coachIdsInScope(), "id").order("createdAt", { ascending: false }),
     supabase.from("CoachTestimonial").select("id", { count: "exact", head: true }).eq("status", "PENDING"),
   ]);
 

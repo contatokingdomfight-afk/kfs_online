@@ -1,3 +1,4 @@
+import { getSchoolScope, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
@@ -37,9 +38,10 @@ export default async function AdminLeadsPage() {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: rows } = await supabase
+  const scope = await getSchoolScope();
+  const { data: rows } = await filterSchools(supabase
     .from("waitlist")
-    .select("id, name, email, phone, city, marketing_optin, source, created_at")
+    .select("id, name, email, phone, city, marketing_optin, source, created_at"), scope.kind === "school" ? scope.schoolIds : null)
     .order("created_at", { ascending: false });
 
   const list: Row[] = rows ?? [];

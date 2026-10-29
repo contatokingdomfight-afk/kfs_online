@@ -3,6 +3,7 @@
  * (soma dos planos de referência dos membros, com desconto % do grupo).
  */
 
+import { filterSchools } from "@/lib/school-scope-rules";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { KINGDOM_PLAN_FAMILIA_ID, isFamilyPlan } from "@/lib/kingdom-plans-constants";
@@ -408,10 +409,11 @@ export type FamilyGroupListItem = FamilyGroupRow & {
 };
 
 /** Lista grupos para admin. */
-export async function listFamilyGroups(supabase: SupabaseClient): Promise<FamilyGroupListItem[]> {
-  const { data: groups } = await supabase
+/** `schoolIds`: escopo multi-escola (null/omisso = todas). */
+export async function listFamilyGroups(supabase: SupabaseClient, schoolIds?: string[] | null): Promise<FamilyGroupListItem[]> {
+  const { data: groups } = await filterSchools(supabase
     .from("FamilyGroup")
-    .select("id, name, billingStudentId, planId, schoolId, isActive, discountPercent")
+    .select("id, name, billingStudentId, planId, schoolId, isActive, discountPercent"), schoolIds)
     .order("createdAt", { ascending: false });
 
   if (!groups?.length) return [];

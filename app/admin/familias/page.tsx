@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -15,7 +16,7 @@ export default async function AdminFamiliasPage() {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   await repairOrphanFamilyTitulars(result.client);
   await backfillFamilyGroupTuitions(result.client);
-  const groups = await listFamilyGroups(result.client);
+  const groups = await listFamilyGroups(result.client, scopedSchoolIds(await getSchoolScope()));
 
   return (
     <div style={{ maxWidth: "min(760px, 100%)" }}>

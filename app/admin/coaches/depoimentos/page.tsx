@@ -1,3 +1,4 @@
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import Link from "next/link";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -18,6 +19,8 @@ function Stars({ rating }: { rating: number }) {
 export default async function AdminCoachTestimonialsPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  // Depoimentos públicos dos coaches: moderados pela rede.
+  if (!isNetworkScope(await getSchoolScope())) redirect("/admin/coaches");
 
   const admin = getAdminClientOrNull();
   if (!admin.client) {
