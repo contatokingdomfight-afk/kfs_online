@@ -58,19 +58,13 @@ export function canAccessSchool(scope: SchoolScope, schoolId: string | null | un
  * Filtra uma consulta Supabase por escolas (`column` = coluna com o id da escola).
  * `schoolIds` null/undefined = sem filtro (Admin Geral em «Todas»); usado pelas funções de `lib/` que recebem o escopo.
  */
-export function filterSchools<Q extends { in: (column: string, values: string[]) => Q }>(
-  query: Q,
-  schoolIds: string[] | null | undefined,
-  column = "schoolId"
-): Q {
-  return schoolIds == null ? query : query.in(column, schoolIds);
+export function filterSchools<Q>(query: Q, schoolIds: string[] | null | undefined, column = "schoolId"): Q {
+  // Sem restrição genérica em `Q`: os tipos do Supabase são demasiado profundos para o TS inferir (TS2589).
+  if (schoolIds == null) return query;
+  return (query as unknown as { in: (column: string, values: string[]) => Q }).in(column, schoolIds);
 }
 
 /** Aplica o escopo do utilizador a uma consulta Supabase. */
-export function scopeQuery<Q extends { in: (column: string, values: string[]) => Q }>(
-  query: Q,
-  scope: SchoolScope,
-  column = "schoolId"
-): Q {
+export function scopeQuery<Q>(query: Q, scope: SchoolScope, column = "schoolId"): Q {
   return filterSchools(query, scopedSchoolIds(scope), column);
 }

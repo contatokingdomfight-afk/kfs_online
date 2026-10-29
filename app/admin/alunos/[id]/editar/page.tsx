@@ -30,10 +30,10 @@ export default async function AdminAlunoEditarDadosPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const scope = await getSchoolScope();
+  const schoolScope = await getSchoolScope();
   const { data: schools } = await filterSchools(supabase
     .from("School")
-    .select("id, name"), scope.kind === "school" ? scope.schoolIds : null, "id")
+    .select("id, name"), schoolScope.kind === "school" ? schoolScope.schoolIds : null, "id")
     .eq("isActive", true)
     .order("name", { ascending: true });
 
