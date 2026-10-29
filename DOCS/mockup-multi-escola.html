@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · Multi-escola PM Team</title>
+<style>
+  :root {
+    --bg: #0b0b0b; --bg-secondary: #141414; --bg-card: #1a1a1a;
+    --text-primary: #fff; --text-secondary: #a1a1aa;
+    --primary: #c1121f; --success: #22c55e; --warning: #facc15; --info: #60a5fa;
+    --border: #27272a; --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px;
+    --font: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 28px 16px 60px; }
+  .tag { display: inline-flex; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: rgba(193,18,31,.15); color: #ff6b73; text-transform: uppercase; letter-spacing: .5px; }
+  h1 { font-size: 22px; margin: 12px 0 6px; }
+  .lead { font-size: 13.5px; color: var(--text-secondary); max-width: 720px; line-height: 1.6; margin: 0; }
+  .switch { display: flex; gap: 8px; flex-wrap: wrap; margin: 22px 0; }
+  .switch button { font: 600 13px var(--font); padding: 9px 18px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; }
+  .switch button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .note { font-size: 13px; color: var(--text-secondary); background: var(--bg-secondary); border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 18px; line-height: 1.6; }
+  .note b { color: #fff; }
+  .pair { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 24px; align-items: start; }
+  @media (max-width: 1000px) { .pair { grid-template-columns: 1fr; justify-items: center; } .pair > .browser { width: 100%; } }
+  .label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+
+  /* desktop frame */
+  .browser { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg); }
+  .browser-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #3a3a3a; }
+  .url { margin-left: 10px; font-size: 12px; color: var(--text-secondary); background: #0f0f0f; padding: 4px 12px; border-radius: 6px; flex: 1; }
+  .app { display: grid; grid-template-columns: 200px 1fr; min-height: 560px; }
+  .side { background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 16px 10px; }
+  .brand { font-weight: 800; font-size: 15px; padding: 0 8px 14px; letter-spacing: .5px; }
+  .brand span { color: var(--primary); }
+  .nav a { display: block; font-size: 13px; color: var(--text-secondary); padding: 8px 10px; border-radius: 8px; text-decoration: none; }
+  .nav a.on { background: rgba(193,18,31,.15); color: #fff; }
+  .nav .sep { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #52525b; padding: 14px 10px 4px; }
+  .main { padding: 18px 22px; min-width: 0; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .topbar h2 { margin: 0; font-size: 19px; }
+  .sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 3px; }
+
+  /* school picker */
+  .picker { position: relative; }
+  .picker-btn { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: #fff; font: 600 13px var(--font); cursor: pointer; }
+  .picker-btn .sw { width: 10px; height: 10px; border-radius: 3px; }
+  .picker-menu { position: absolute; right: 0; top: calc(100% + 6px); width: 270px; background: #181818; border: 1px solid var(--border); border-radius: 12px; padding: 6px; z-index: 5; box-shadow: 0 16px 40px rgba(0,0,0,.5); display: none; }
+  .picker.open .picker-menu { display: block; }
+  .picker-menu button { display: flex; width: 100%; align-items: center; gap: 10px; background: none; border: 0; color: #fff; font: 13px var(--font); padding: 9px 10px; border-radius: 8px; cursor: pointer; text-align: left; }
+  .picker-menu button:hover, .picker-menu button.on { background: rgba(255,255,255,.06); }
+  .picker-menu small { color: var(--text-secondary); margin-left: auto; }
+  .picker-menu hr { border: 0; border-top: 1px solid var(--border); margin: 6px 0; }
+
+  .scope { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
+  .scope.global { background: rgba(96,165,250,.15); color: var(--info); }
+  .scope.local { background: rgba(34,197,94,.13); color: var(--success); }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .kpi .k { font-size: 11.5px; color: var(--text-secondary); }
+  .kpi .v { font-size: 20px; font-weight: 700; margin-top: 4px; }
+  .kpi .t { font-size: 11px; margin-top: 2px; color: var(--success); }
+  .kpi .t.down { color: #fb7185; }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+  .card h3 { margin: 0 0 10px; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--text-secondary); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 8px; border-bottom: 1px solid #1f1f22; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .bar { height: 6px; border-radius: 3px; background: #27272a; overflow: hidden; min-width: 60px; }
+  .bar i { display: block; height: 100%; background: var(--primary); }
+  .pill { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: #27272a; color: var(--text-secondary); white-space: nowrap; }
+  .pill.ok { background: rgba(34,197,94,.13); color: var(--success); }
+  .pill.warn { background: rgba(250,204,21,.13); color: var(--warning); }
+  .btn { font: 600 12.5px var(--font); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: #fff; cursor: pointer; }
+  .btn.pri { background: var(--primary); border-color: var(--primary); }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .lock { font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; align-items: center; background: #121212; border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: #2a2a2a; display: grid; place-items: center; font-size: 11px; font-weight: 700; flex: none; }
+  .toggle { width: 34px; height: 20px; border-radius: 10px; background: #3f3f46; position: relative; flex: none; cursor: pointer; }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: .15s; }
+  .toggle.on { background: var(--success); }
+  .toggle.on::after { left: 16px; }
+
+  /* phone frame */
+  .phone { width: 340px; max-width: 100%; border: 1px solid var(--border); border-radius: 36px; padding: 10px; background: #050505; }
+  .phone-inner { border-radius: 28px; overflow: hidden; background: var(--bg); height: 640px; display: flex; flex-direction: column; position: relative; }
+  .status { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; padding: 10px 20px 6px; }
+  .p-head { padding: 6px 16px 10px; border-bottom: 1px solid var(--border); }
+  .p-head h4 { margin: 4px 0 0; font-size: 17px; }
+  .p-body { flex: 1; overflow-y: auto; padding: 12px 14px; }
+  .p-tabbar { display: grid; grid-template-columns: repeat(4,1fr); border-top: 1px solid var(--border); background: var(--bg-secondary); }
+  .p-tabbar span { font-size: 10px; text-align: center; padding: 10px 0 14px; color: var(--text-secondary); }
+  .p-tabbar span.on { color: #fff; font-weight: 700; }
+  .p-tabbar span::before { content: ""; display: block; width: 18px; height: 18px; border-radius: 5px; background: #2a2a2a; margin: 0 auto 4px; }
+  .p-tabbar span.on::before { background: var(--primary); }
+  .sheet-row { display: flex; align-items: center; gap: 10px; padding: 11px 4px; border-bottom: 1px solid #1f1f22; font-size: 13.5px; }
+  .mini-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+
+  /* ranking swipe */
+  .seg { display: flex; background: var(--bg-card); border: 1px solid var(--border); border-radius: 999px; padding: 3px; margin: 10px 14px 0; position: relative; }
+  .seg button { flex: 1; background: none; border: 0; color: var(--text-secondary); font: 600 12.5px var(--font); padding: 7px; border-radius: 999px; cursor: pointer; position: relative; z-index: 1; }
+  .seg button.on { color: #fff; }
+  .seg .thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); background: var(--primary); border-radius: 999px; transition: transform .25s; }
+  .seg.g .thumb { transform: translateX(100%); }
+  .slider { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .slider::-webkit-scrollbar { display: none; }
+  .slide { flex: 0 0 100%; scroll-snap-align: start; overflow-y: auto; padding: 12px 14px; }
+  .hint { text-align: center; font-size: 11px; color: var(--text-secondary); padding: 6px 0 2px; }
+  .dots { display: flex; gap: 6px; justify-content: center; padding: 6px 0 2px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: #3f3f46; transition: .2s; }
+  .dots i.on { background: var(--primary); width: 16px; border-radius: 3px; }
+  .podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 6px; align-items: end; margin-bottom: 12px; }
+  .pod { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; padding: 10px 4px 8px; }
+  .pod .avatar { margin: 0 auto 6px; width: 34px; height: 34px; }
+  .pod.first { border-color: rgba(250,204,21,.5); padding-top: 16px; }
+  .pod .n { font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pod .x { font-size: 11px; color: var(--text-secondary); }
+  .pod .s { font-size: 10px; color: var(--info); margin-top: 2px; }
+  .rk { display: flex; align-items: center; gap: 10px; padding: 9px 6px; border-bottom: 1px solid #1f1f22; font-size: 13px; }
+  .rk .pos { width: 22px; color: var(--text-secondary); font-weight: 700; text-align: right; font-size: 12px; }
+  .rk .nm { flex: 1; min-width: 0; }
+  .rk .nm small { display: block; font-size: 10.5px; color: var(--text-secondary); }
+  .rk .xp { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 12.5px; }
+  .rk.me { background: rgba(193,18,31,.12); border-radius: 8px; border-bottom-color: transparent; }
+  .me-bar { margin: 0 14px 10px; background: rgba(193,18,31,.15); border: 1px solid rgba(193,18,31,.4); border-radius: 10px; padding: 8px 12px; font-size: 12px; display: flex; justify-content: space-between; }
+  .rank-desk { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* meios de pagamento */
+  .pm { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+  .pm-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; }
+  .pm-ico { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; font-size: 13px; font-weight: 800; flex: none; }
+  .pm-t { flex: 1; min-width: 0; }
+  .pm-t b { font-size: 13.5px; }
+  .pm-t div { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .pm-body { display: none; border-top: 1px solid var(--border); padding: 12px 14px; }
+  .pm.open .pm-body { display: block; }
+  .fld { margin-bottom: 10px; }
+  .fld label { display: block; font-size: 11.5px; color: var(--text-secondary); margin-bottom: 4px; }
+  .fld .in { background: #111; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; display: flex; justify-content: space-between; gap: 8px; }
+  .fld .in span { color: var(--text-secondary); font-size: 11.5px; }
+  .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .preview { background: #101010; border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .opt { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; font-size: 13px; }
+  .opt.sel { border-color: var(--primary); background: rgba(193,18,31,.08); }
+  .opt small { margin-left: auto; color: var(--text-secondary); font-size: 11px; }
+  .pm-layout { display: grid; grid-template-columns: minmax(0,1fr) 250px; gap: 14px; align-items: start; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="tag">Mockup · Multi-escola</span>
+  <h1>PM Team — perfis por escola, seletor e ranking</h1>
+  <p class="lead">Admin Geral vê e gere todas as escolas; o Diretor Técnico gere só a sua. Os relatórios de cada escola ficam fechados ao diretor, salvo partilha. O ranking abre na escola do aluno e desliza para o global. Dados fictícios.</p>
+
+  <div class="switch" id="switch">
+    <button class="active" data-s="s1">1 · Admin Geral — Relatório geral</button>
+    <button data-s="s2">2 · Admin Geral — Seletor de escola</button>
+    <button data-s="s3">3 · Diretor Técnico — Painel da escola</button>
+    <button data-s="s4">4 · Diretor — Partilhar relatórios</button>
+    <button data-s="s5">5 · Ranking escola → global</button>
+    <button data-s="s6">6 · Diretor — Meios de pagamento</button>
+  </div>
+
+  <!-- ============ 1. RELATÓRIO GERAL ============ -->
+  <section class="screen active" id="s1">
+    <div class="note"><b>Admin Geral</b> tem uma aba nova, <b>Relatório geral</b>: rede inteira consolidada e comparação lado a lado entre escolas. Só este perfil a vê. Clicar numa escola abre o painel dessa escola (igual ao que o diretor vê).</div>
+    <div class="pair">
+      <div>
+        <div class="label">Desktop</div>
+        <div class="browser">
+          <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.pmteam.pt/admin/relatorio-geral</span></div>
+          <div class="app">
+            <aside class="side">
+              <div class="brand">PM <span>TEAM</span></div>
+              <nav class="nav">
+                <div class="sep">Rede</div>
+                <a class="on">Relatório geral</a><a>Escolas</a><a>Diretores</a><a>Regras de XP (rede)</a><a>Graduação (rede)</a>
+                <div class="sep">Escola selecionada</div>
+                <a>A tratar hoje</a><a>Alunos</a><a>Turmas</a><a>Financeiro</a><a>Relatórios</a>
+              </nav>
+            </aside>
+            <main class="main">
+              <div class="topbar">
+                <div><h2>Relatório geral</h2><div class="sub">Outubro 2026 · 3 escolas ativas</div></div>
+                <div class="row"><span class="scope global">● Vista de rede</span><button class="btn">Exportar</button></div>
+              </div>
+              <div class="kpis">
+                <div class="kpi"><div class="k">Alunos ativos</div><div class="v">412</div><div class="t">▲ 6% vs set.</div></div>
+                <div class="kpi"><div class="k">Receita do mês</div><div class="v">€ 21 480</div><div class="t">▲ 4%</div></div>
+                <div class="kpi"><div class="k">Em atraso</div><div class="v">€ 1 920</div><div class="t down">▲ 2 alunos</div></div>
+                <div class="kpi"><div class="k">Presença média</div><div class="v">71%</div><div class="t">▲ 3 pp</div></div>
+              </div>
+              <div class="card">
+                <h3>Comparação por escola</h3>
+                <table>
+                  <thead><tr><th>Escola</th><th>Diretor técnico</th><th class="num">Ativos</th><th class="num">Receita</th><th>Presença</th><th class="num">Atraso</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td><b>PM Team Sintra</b></td><td>Rui Matos</td><td class="num">214</td><td class="num">€ 11 260</td><td><div class="bar"><i style="width:76%"></i></div></td><td class="num">€ 640</td><td><span class="pill ok">Em dia</span></td></tr>
+                    <tr><td><b>PM Team Lisboa</b></td><td>Ana Ferreira</td><td class="num">131</td><td class="num">€ 7 020</td><td><div class="bar"><i style="width:68%"></i></div></td><td class="num">€ 910</td><td><span class="pill warn">Atenção</span></td></tr>
+                    <tr><td><b>PM Team Cascais</b></td><td>Tiago Lopes</td><td class="num">67</td><td class="num">€ 3 200</td><td><div class="bar"><i style="width:63%"></i></div></td><td class="num">€ 370</td><td><span class="pill ok">Em dia</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="grid2">
+                <div class="card"><h3>Novos alunos (30 dias)</h3><table><tr><td>Sintra</td><td class="num">18</td></tr><tr><td>Lisboa</td><td class="num">11</td></tr><tr><td>Cascais</td><td class="num">9</td></tr></table></div>
+                <div class="card"><h3>Exames de graduação</h3><table><tr><td>Agendados</td><td class="num">24</td></tr><tr><td>Aprovados (mês)</td><td class="num">31</td></tr><tr><td>Taxa de aprovação</td><td class="num">86%</td></tr></table></div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="label">Telemóvel</div>
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+          <div class="p-head"><span class="scope global">● Vista de rede</span><h4>Relatório geral</h4></div>
+          <div class="p-body">
+            <div class="mini-kpis">
+              <div class="kpi"><div class="k">Ativos</div><div class="v">412</div><div class="t">▲ 6%</div></div>
+              <div class="kpi"><div class="k">Receita</div><div class="v">€21,5k</div><div class="t">▲ 4%</div></div>
+              <div class="kpi"><div class="k">Atraso</div><div class="v">€1,9k</div><div class="t down">▲ 2</div></div>
+              <div class="kpi"><div class="k">Presença</div><div class="v">71%</div><div class="t">▲ 3 pp</div></div>
+            </div>
+            <div class="label">Escolas</div>
+            <div class="card"><div class="row" style="justify-content:space-between"><b>Sintra</b><span class="pill ok">Em dia</span></div><div class="sub">214 ativos · € 11 260 · 76% presença</div></div>
+            <div class="card"><div class="row" style="justify-content:space-between"><b>Lisboa</b><span class="pill warn">Atenção</span></div><div class="sub">131 ativos · € 7 020 · 68% presença</div></div>
+            <div class="card"><div class="row" style="justify-content:space-between"><b>Cascais</b><span class="pill ok">Em dia</span></div><div class="sub">67 ativos · € 3 200 · 63% presença</div></div>
+          </div>
+          <div class="p-tabbar"><span class="on">Rede</span><span>Escolas</span><span>Hoje</span><span>Mais</span></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. SELETOR DE ESCOLA ============ -->
+  <section class="screen" id="s2">
+    <div class="note">O <b>seletor de escola</b> fica no topo de todo o backoffice do Admin Geral (substitui o filtro atual). A escola escolhida fica memorizada entre páginas. Em «Todas as escolas», as listas mostram uma coluna «Escola». <b>O diretor técnico não vê este seletor</b> — a escola dele é fixa. Clica no botão do seletor para abrir.</div>
+    <div class="pair">
+      <div>
+        <div class="label">Desktop</div>
+        <div class="browser">
+          <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.pmteam.pt/admin/alunos?escola=lisboa</span></div>
+          <div class="app">
+            <aside class="side">
+              <div class="brand">PM <span>TEAM</span></div>
+              <nav class="nav">
+                <div class="sep">Rede</div><a>Relatório geral</a><a>Escolas</a><a>Diretores</a>
+                <div class="sep">Escola selecionada</div><a>A tratar hoje</a><a class="on">Alunos</a><a>Turmas</a><a>Financeiro</a><a>Relatórios</a>
+              </nav>
+            </aside>
+            <main class="main">
+              <div class="topbar">
+                <div><h2>Alunos</h2><div class="sub" id="pickSub">PM Team Lisboa · 131 ativos</div></div>
+                <div class="picker open" id="picker">
+                  <button class="picker-btn" id="pickerBtn"><span class="sw" style="background:#60a5fa"></span><span id="pickLabel">PM Team Lisboa</span> ▾</button>
+                  <div class="picker-menu">
+                    <button data-p="Todas as escolas" data-c="#a1a1aa"><span class="sw" style="width:10px;height:10px;border-radius:3px;background:#a1a1aa"></span>Todas as escolas<small>412</small></button>
+                    <hr>
+                    <button data-p="PM Team Sintra" data-c="#c1121f"><span style="width:10px;height:10px;border-radius:3px;background:#c1121f"></span>PM Team Sintra<small>214</small></button>
+                    <button class="on" data-p="PM Team Lisboa" data-c="#60a5fa"><span style="width:10px;height:10px;border-radius:3px;background:#60a5fa"></span>PM Team Lisboa<small>131</small></button>
+                    <button data-p="PM Team Cascais" data-c="#22c55e"><span style="width:10px;height:10px;border-radius:3px;background:#22c55e"></span>PM Team Cascais<small>67</small></button>
+                    <hr>
+                    <button style="color:var(--text-secondary)">＋ Nova escola</button>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <table>
+                  <thead><tr><th>Nome</th><th>Plano</th><th>Modalidade</th><th>Estado</th></tr></thead>
+                  <tbody>
+                    <tr><td>Marta Silva</td><td>Ilimitado</td><td>Muay Thai</td><td><span class="pill ok">Ativo</span></td></tr>
+                    <tr><td>João Pereira</td><td>2x semana</td><td>Boxe</td><td><span class="pill warn">Em atraso</span></td></tr>
+                    <tr><td>Inês Costa</td><td>Ilimitado</td><td>Jiu-Jitsu</td><td><span class="pill ok">Ativo</span></td></tr>
+                    <tr><td>Pedro Alves</td><td>Kids</td><td>Kickboxing</td><td><span class="pill ok">Ativo</span></td></tr>
+                    <tr><td>Sofia Nunes</td><td>2x semana</td><td>MMA</td><td><span class="pill">Experimental</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="label">Telemóvel — folha de seleção</div>
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+          <div class="p-head"><button class="picker-btn" style="width:100%;justify-content:space-between"><span class="row"><span class="sw" style="background:#60a5fa"></span>PM Team Lisboa</span>▾</button></div>
+          <div class="p-body" style="opacity:.35"><div class="card">Alunos…</div><div class="card">Turmas…</div></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:#181818;border-top:1px solid var(--border);border-radius:20px 20px 0 0;padding:10px 16px 22px">
+            <div style="width:40px;height:4px;border-radius:2px;background:#3f3f46;margin:0 auto 12px"></div>
+            <div class="label">Escolher escola</div>
+            <div class="sheet-row"><span class="sw" style="width:10px;height:10px;border-radius:3px;background:#a1a1aa"></span>Todas as escolas<small style="margin-left:auto;color:var(--text-secondary)">412</small></div>
+            <div class="sheet-row"><span style="width:10px;height:10px;border-radius:3px;background:#c1121f"></span>PM Team Sintra<small style="margin-left:auto;color:var(--text-secondary)">214</small></div>
+            <div class="sheet-row" style="background:rgba(255,255,255,.05);border-radius:8px"><span style="width:10px;height:10px;border-radius:3px;background:#60a5fa"></span><b>PM Team Lisboa</b><small style="margin-left:auto;color:var(--success)">✓</small></div>
+            <div class="sheet-row"><span style="width:10px;height:10px;border-radius:3px;background:#22c55e"></span>PM Team Cascais<small style="margin-left:auto;color:var(--text-secondary)">67</small></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. DIRETOR TÉCNICO ============ -->
+  <section class="screen" id="s3">
+    <div class="note"><b>Diretor Técnico</b>: o mesmo backoffice que o admin tem hoje (A tratar hoje, Alunos, Turmas, Financeiro, Relatórios…), mas <b>só da sua escola</b>. Sem seletor, sem «Relatório geral», sem acesso a regras da rede (XP e programa de graduação são definidos pelo Admin Geral — a confirmar).</div>
+    <div class="pair">
+      <div>
+        <div class="label">Desktop</div>
+        <div class="browser">
+          <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.pmteam.pt/admin</span></div>
+          <div class="app">
+            <aside class="side">
+              <div class="brand">PM <span>TEAM</span></div>
+              <div style="padding:0 8px 10px"><span class="scope local">● PM Team Lisboa</span></div>
+              <nav class="nav">
+                <a class="on">A tratar hoje</a><a>Alunos</a><a>Professores</a><a>Turmas</a><a>Presenças</a><a>Graduação</a><a>Financeiro</a><a>Relatórios</a><a>Loja</a>
+                <div class="sep">Escola</div><a>Equipa e acessos</a><a>Configurações</a>
+              </nav>
+            </aside>
+            <main class="main">
+              <div class="topbar">
+                <div><h2>Bom dia, Ana</h2><div class="sub">Diretora técnica · PM Team Lisboa</div></div>
+                <span class="scope local">🔒 Só a tua escola</span>
+              </div>
+              <div class="kpis">
+                <div class="kpi"><div class="k">Alunos ativos</div><div class="v">131</div><div class="t">▲ 4%</div></div>
+                <div class="kpi"><div class="k">Receita do mês</div><div class="v">€ 7 020</div><div class="t">▲ 2%</div></div>
+                <div class="kpi"><div class="k">Em atraso</div><div class="v">€ 910</div><div class="t down">▲ 3 alunos</div></div>
+                <div class="kpi"><div class="k">Aulas hoje</div><div class="v">6</div><div class="t">2 professores</div></div>
+              </div>
+              <div class="card">
+                <h3>A tratar hoje</h3>
+                <div class="sheet-row"><span class="pill warn">Pagamento</span>3 mensalidades em atraso há mais de 7 dias</div>
+                <div class="sheet-row"><span class="pill">Experimental</span>2 aulas experimentais marcadas para hoje</div>
+                <div class="sheet-row"><span class="pill ok">Graduação</span>4 alunos aptos para exame</div>
+              </div>
+              <div class="lock">🔒 Dados das outras escolas da rede não estão acessíveis a este perfil.</div>
+            </main>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="label">Telemóvel</div>
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+          <div class="p-head"><span class="scope local">● PM Team Lisboa</span><h4>Bom dia, Ana</h4></div>
+          <div class="p-body">
+            <div class="mini-kpis">
+              <div class="kpi"><div class="k">Ativos</div><div class="v">131</div><div class="t">▲ 4%</div></div>
+              <div class="kpi"><div class="k">Atraso</div><div class="v">€910</div><div class="t down">▲ 3</div></div>
+            </div>
+            <div class="label">A tratar hoje</div>
+            <div class="card"><span class="pill warn">Pagamento</span><div class="sub" style="margin-top:6px">3 mensalidades em atraso</div></div>
+            <div class="card"><span class="pill">Experimental</span><div class="sub" style="margin-top:6px">2 aulas experimentais hoje</div></div>
+            <div class="card"><span class="pill ok">Graduação</span><div class="sub" style="margin-top:6px">4 alunos aptos para exame</div></div>
+          </div>
+          <div class="p-tabbar"><span class="on">Hoje</span><span>Alunos</span><span>Financeiro</span><span>Mais</span></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. PARTILHA DE RELATÓRIOS ============ -->
+  <section class="screen" id="s4">
+    <div class="note">Em <b>Equipa e acessos</b>, o diretor decide quem da sua escola vê os relatórios. Por omissão <b>ninguém além do diretor</b> (e do Admin Geral). A partilha é por área e pode ter data de fim. Clica nos interruptores.</div>
+    <div class="pair">
+      <div>
+        <div class="label">Desktop</div>
+        <div class="browser">
+          <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.pmteam.pt/admin/equipa</span></div>
+          <div class="app">
+            <aside class="side">
+              <div class="brand">PM <span>TEAM</span></div>
+              <div style="padding:0 8px 10px"><span class="scope local">● PM Team Lisboa</span></div>
+              <nav class="nav"><a>A tratar hoje</a><a>Alunos</a><a>Professores</a><a>Financeiro</a><a>Relatórios</a><div class="sep">Escola</div><a class="on">Equipa e acessos</a><a>Configurações</a></nav>
+            </aside>
+            <main class="main">
+              <div class="topbar">
+                <div><h2>Equipa e acessos</h2><div class="sub">Quem pode ver os relatórios da PM Team Lisboa</div></div>
+                <button class="btn pri">＋ Partilhar com alguém</button>
+              </div>
+              <div class="card">
+                <table>
+                  <thead><tr><th>Pessoa</th><th>Papel</th><th>Financeiro</th><th>Alunos e presenças</th><th>Desempenho</th><th>Até</th></tr></thead>
+                  <tbody>
+                    <tr><td><div class="row"><span class="avatar">AF</span>Ana Ferreira</div></td><td>Diretora técnica</td><td colspan="3"><span class="pill ok">Acesso total (dona)</span></td><td>—</td></tr>
+                    <tr><td><div class="row"><span class="avatar">MR</span>Miguel Rocha</div></td><td>Professor</td><td><span class="toggle"></span></td><td><span class="toggle on"></span></td><td><span class="toggle on"></span></td><td>Sem fim</td></tr>
+                    <tr><td><div class="row"><span class="avatar">CS</span>Carla Santos</div></td><td>Secretaria</td><td><span class="toggle on"></span></td><td><span class="toggle on"></span></td><td><span class="toggle"></span></td><td>31/12/2026</td></tr>
+                    <tr><td><div class="row"><span class="avatar">BD</span>Bruno Dias</div></td><td>Professor</td><td><span class="toggle"></span></td><td><span class="toggle"></span></td><td><span class="toggle"></span></td><td>—</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="lock">ℹ️ O Admin Geral vê sempre os relatórios de todas as escolas. Cada alteração fica registada (quem partilhou, quando).</div>
+            </main>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="label">Telemóvel</div>
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+          <div class="p-head"><span class="scope local">● PM Team Lisboa</span><h4>Acesso a relatórios</h4></div>
+          <div class="p-body">
+            <div class="card"><div class="row"><span class="avatar">MR</span><div><b>Miguel Rocha</b><div class="sub">Professor · sem fim</div></div></div>
+              <div class="sheet-row" style="justify-content:space-between">Financeiro<span class="toggle"></span></div>
+              <div class="sheet-row" style="justify-content:space-between">Alunos e presenças<span class="toggle on"></span></div>
+              <div class="sheet-row" style="justify-content:space-between;border:0">Desempenho<span class="toggle on"></span></div>
+            </div>
+            <div class="card"><div class="row"><span class="avatar">CS</span><div><b>Carla Santos</b><div class="sub">Secretaria · até 31/12/2026</div></div></div>
+              <div class="sheet-row" style="justify-content:space-between">Financeiro<span class="toggle on"></span></div>
+              <div class="sheet-row" style="justify-content:space-between">Alunos e presenças<span class="toggle on"></span></div>
+              <div class="sheet-row" style="justify-content:space-between;border:0">Desempenho<span class="toggle"></span></div>
+            </div>
+            <button class="btn pri" style="width:100%">＋ Partilhar com alguém</button>
+          </div>
+          <div class="p-tabbar"><span>Hoje</span><span>Alunos</span><span>Financeiro</span><span class="on">Mais</span></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. RANKING ============ -->
+  <section class="screen" id="s5">
+    <div class="note">O ranking <b>abre na escola do aluno</b>. No telemóvel, <b>desliza para a esquerda</b> (ou toca em «Global») para ver a competição de toda a rede, com o nome da escola em cada atleta. A barra «A tua posição» fica sempre visível. Experimenta deslizar no telemóvel.</div>
+    <div class="pair">
+      <div>
+        <div class="label">Desktop — as duas lado a lado</div>
+        <div class="browser">
+          <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.pmteam.pt/dashboard/rank</span></div>
+          <div class="main">
+            <div class="topbar"><div><h2>Ranking</h2><div class="sub">Outubro 2026 · XP do mês</div></div><div class="row"><span class="pill">Modalidade: Todas ▾</span><span class="pill">Mês ▾</span></div></div>
+            <div class="rank-desk">
+              <div class="card"><h3>🏠 PM Team Lisboa <span class="sub">· és 5.º de 131</span></h3><div id="deskSchool"></div></div>
+              <div class="card"><h3>🌍 Global <span class="sub">· és 23.º de 412</span></h3><div id="deskGlobal"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="label">Telemóvel — desliza ←→</div>
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+          <div class="p-head" style="border:0;padding-bottom:0"><h4>Ranking</h4></div>
+          <div class="seg" id="seg"><span class="thumb"></span><button class="on" data-i="0">🏠 Minha escola</button><button data-i="1">🌍 Global</button></div>
+          <div class="dots" id="dots"><i class="on"></i><i></i></div>
+          <div class="slider" id="slider">
+            <div class="slide" id="mSchool"></div>
+            <div class="slide" id="mGlobal"></div>
+          </div>
+          <div class="me-bar" id="meBar"><span>A tua posição · <b>5.º</b> na escola</span><b>1 240 XP</b></div>
+          <div class="p-tabbar"><span>Início</span><span>Treinos</span><span class="on">Ranking</span><span>Perfil</span></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6. MEIOS DE PAGAMENTO ============ -->
+  <section class="screen" id="s6">
+    <div class="note">Em <b>Configurações → Meios de pagamento</b>, o diretor liga e desliga como a <b>sua escola</b> recebe. Cada meio abre os seus campos (clica num cartão). As chaves ficam cifradas e, depois de gravadas, só se vê o fim (••••4821). À direita, a pré-visualização do que o aluno vê ao pagar. Escola nova começa só com IBAN e numerário.</div>
+    <div class="pair">
+      <div>
+        <div class="label">Desktop</div>
+        <div class="browser">
+          <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.pmteam.pt/admin/configuracoes/pagamentos</span></div>
+          <div class="app">
+            <aside class="side">
+              <div class="brand">PM <span>TEAM</span></div>
+              <div style="padding:0 8px 10px"><span class="scope local">● PM Team Lisboa</span></div>
+              <nav class="nav"><a>A tratar hoje</a><a>Alunos</a><a>Financeiro</a><a>Relatórios</a><div class="sep">Escola</div><a>Equipa e acessos</a><a class="on">Meios de pagamento</a><a>Dados da escola</a><a>Planos e preços</a></nav>
+            </aside>
+            <main class="main">
+              <div class="topbar">
+                <div><h2>Meios de pagamento</h2><div class="sub">Como os alunos da PM Team Lisboa pagam · 4 de 6 ativos</div></div>
+                <button class="btn pri">Guardar</button>
+              </div>
+              <div class="pm-layout">
+                <div id="pmList"></div>
+                <div>
+                  <div class="label">O que o aluno vê</div>
+                  <div class="preview">
+                    <div style="font-size:12px;color:var(--text-secondary)">Mensalidade de novembro</div>
+                    <div style="font-size:22px;font-weight:700;margin:2px 0 12px">€ 55,00</div>
+                    <div id="pmPreview"></div>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="label">Telemóvel</div>
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+          <div class="p-head"><span class="scope local">● PM Team Lisboa</span><h4>Meios de pagamento</h4></div>
+          <div class="p-body" id="pmListM"></div>
+          <div class="p-tabbar"><span>Hoje</span><span>Alunos</span><span>Financeiro</span><span class="on">Mais</span></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Separadores de ecrã
+  document.querySelectorAll('#switch button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#switch button').forEach(x => x.classList.toggle('active', x === b));
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === b.dataset.s));
+  });
+
+  // Seletor de escola
+  const picker = document.getElementById('picker');
+  document.getElementById('pickerBtn').onclick = () => picker.classList.toggle('open');
+  picker.querySelectorAll('.picker-menu button[data-p]').forEach(b => b.onclick = () => {
+    picker.querySelectorAll('.picker-menu button').forEach(x => x.classList.toggle('on', x === b));
+    document.getElementById('pickLabel').textContent = b.dataset.p;
+    picker.querySelector('.picker-btn .sw').style.background = b.dataset.c;
+    document.getElementById('pickSub').textContent = b.dataset.p + ' · ' + b.querySelector('small').textContent + ' ativos';
+    picker.classList.remove('open');
+  });
+
+  // Interruptores
+  document.querySelectorAll('.toggle').forEach(t => t.onclick = () => t.classList.toggle('on'));
+
+  // Ranking
+  const school = [
+    ['Inês Costa', 1610], ['Marta Silva', 1525], ['João Pereira', 1430], ['Pedro Alves', 1302],
+    ['Tu (Rafael)', 1240, 1], ['Sofia Nunes', 1188], ['Diogo Ramos', 1104], ['Beatriz Lima', 1050]
+  ];
+  const global = [
+    ['Gonçalo Reis', 2210, 0, 'Sintra'], ['Carolina Sá', 2145, 0, 'Sintra'], ['Henrique Pinto', 2010, 0, 'Cascais'],
+    ['Leonor Vaz', 1940, 0, 'Sintra'], ['Tomás Faria', 1872, 0, 'Lisboa'], ['Matilde Cruz', 1801, 0, 'Sintra'],
+    ['Inês Costa', 1610, 0, 'Lisboa'], ['…', null], ['Tu (Rafael)', 1240, 1, 'Lisboa', 23]
+  ];
+  const ini = n => n.replace('Tu (', '').replace(')', '').split(' ').map(p => p[0]).join('').slice(0, 2);
+  const fmt = x => x.toLocaleString('pt-PT') + ' XP';
+  function list(rows, withSchool, start = 0) {
+    return rows.map((r, i) => r[1] == null
+      ? '<div class="hint">· · ·</div>'
+      : `<div class="rk${r[2] ? ' me' : ''}"><span class="pos">${r[4] || i + 1 + start}</span><span class="avatar">${ini(r[0])}</span><span class="nm">${r[0]}${withSchool ? `<small>PM Team ${r[3]}</small>` : ''}</span><span class="xp">${fmt(r[1])}</span></div>`).join('');
+  }
+  function podium(rows, withSchool) {
+    const [a, b, c] = rows;
+    const p = (r, cls, medal) => `<div class="pod ${cls}"><div style="font-size:16px">${medal}</div><span class="avatar">${ini(r[0])}</span><div class="n">${r[0]}</div><div class="x">${fmt(r[1])}</div>${withSchool ? `<div class="s">${r[3]}</div>` : ''}</div>`;
+    return `<div class="podium">${p(b, '', '🥈')}${p(a, 'first', '🥇')}${p(c, '', '🥉')}</div>`;
+  }
+  document.getElementById('deskSchool').innerHTML = list(school, false);
+  document.getElementById('deskGlobal').innerHTML = list(global, true);
+  document.getElementById('mSchool').innerHTML = podium(school, false) + list(school.slice(3), false, 3) + '<div class="hint">Desliza para ver o ranking global →</div>';
+  document.getElementById('mGlobal').innerHTML = podium(global, true) + list(global.slice(3), true, 3);
+
+  const slider = document.getElementById('slider'), seg = document.getElementById('seg'), dots = document.querySelectorAll('#dots i'), meBar = document.getElementById('meBar');
+  function setIdx(i) {
+    seg.classList.toggle('g', i === 1);
+    seg.querySelectorAll('button').forEach((b, j) => b.classList.toggle('on', j === i));
+    dots.forEach((d, j) => d.classList.toggle('on', j === i));
+    meBar.innerHTML = i === 0 ? '<span>A tua posição · <b>5.º</b> na escola</span><b>1 240 XP</b>' : '<span>A tua posição · <b>23.º</b> na rede</span><b>1 240 XP</b>';
+  }
+  // Meios de pagamento
+  const fld = (l, v, s = '') => `<div class="fld"><label>${l}</label><div class="in">${v}${s ? `<span>${s}</span>` : ''}</div></div>`;
+  const methods = [
+    { id: 'iban', ico: 'IB', c: '#60a5fa', name: 'Transferência (IBAN)', desc: 'O aluno vê os dados e envia comprovativo', on: 1,
+      body: `<div class="fgrid">${fld('Titular', 'PM Team Lisboa, Lda.')}${fld('IBAN', 'PT50 0000 •••• •••• 4821')}</div>${fld('Referência a indicar', 'Nome do aluno + mês')}` },
+    { id: 'mbway', ico: 'MB', c: '#fb7185', name: 'MB Way', desc: 'Para o número da escola; a secretaria confirma', on: 1,
+      body: fld('Número MB Way', '+351 91• ••• 207') },
+    { id: 'cash', ico: '€', c: '#22c55e', name: 'Numerário / cartão na receção', desc: 'Registado manualmente pela secretaria', on: 1, body: '<div class="sub">Sem configuração.</div>' },
+    { id: 'revolut', ico: 'R', c: '#e4e4e7', name: 'Revolut', desc: 'Links de pagamento e pagamento automático mensal', on: 1, status: '<span class="pill ok">Ligado</span>',
+      body: `${fld('Conta Revolut Business', 'PM Team Lisboa', 'ligada a 12/11/2026')}<div class="row"><button class="btn">Desligar</button><span class="sub">Os pagamentos automáticos ativos continuam até serem cancelados.</span></div>` },
+    { id: 'mb', ico: 'MB', c: '#facc15', name: 'Referências Multibanco', desc: 'Via prestador (Eupago, ifthenpay…) · em breve', on: 0, status: '<span class="pill">Em breve</span>',
+      body: `${fld('Prestador', 'Escolher…')}${fld('Chave da API', '—', 'guardada cifrada')}` },
+    { id: 'fat', ico: 'FT', c: '#a78bfa', name: 'Faturação (WeoInvoice)', desc: 'Emite fatura com o NIF da escola', on: 0, status: '<span class="pill warn">Por configurar</span>',
+      body: `<div class="fgrid">${fld('NIF da escola', '5•• ••• •••')}${fld('Chave WeoInvoice', '—', 'guardada cifrada')}</div>` }
+  ];
+  function pmCard(m) {
+    return `<div class="pm${m.id === 'iban' ? ' open' : ''}" data-id="${m.id}"><div class="pm-head"><span class="pm-ico" style="background:${m.c}22;color:${m.c}">${m.ico}</span><div class="pm-t"><b>${m.name}</b><div>${m.desc}</div></div>${m.status || ''}<span class="toggle${m.on ? ' on' : ''}"></span></div><div class="pm-body">${m.body}</div></div>`;
+  }
+  function renderPreview() {
+    const map = { iban: 'Transferência bancária', mbway: 'MB Way', cash: 'Pagar na receção', revolut: 'Cartão / Apple Pay (Revolut)', mb: 'Referência Multibanco' };
+    const on = methods.filter(m => m.on && map[m.id]);
+    document.getElementById('pmPreview').innerHTML = on.length
+      ? on.map((m, i) => `<div class="opt${i === 0 ? ' sel' : ''}"><span class="pm-ico" style="width:26px;height:26px;font-size:10px;background:${m.c}22;color:${m.c}">${m.ico}</span>${map[m.id]}${m.id === 'revolut' ? '<small>imediato</small>' : ''}</div>`).join('')
+      : '<div class="sub">Nenhum meio ativo — os alunos não conseguem pagar.</div>';
+  }
+  ['pmList', 'pmListM'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = methods.map(pmCard).join('');
+    el.querySelectorAll('.pm').forEach(card => {
+      const m = methods.find(x => x.id === card.dataset.id);
+      card.querySelector('.pm-head').onclick = e => {
+        if (e.target.classList.contains('toggle')) {
+          m.on = !m.on;
+          document.querySelectorAll(`.pm[data-id="${m.id}"] .toggle`).forEach(t => t.classList.toggle('on', !!m.on));
+          renderPreview();
+        } else card.classList.toggle('open');
+      };
+    });
+  });
+  renderPreview();
+
+  slider.addEventListener('scroll', () => setIdx(Math.round(slider.scrollLeft / slider.clientWidth)));
+  seg.querySelectorAll('button').forEach(b => b.onclick = () => slider.scrollTo({ left: b.dataset.i * slider.clientWidth, behavior: 'smooth' }));
+</script>
+</body>
+</html>

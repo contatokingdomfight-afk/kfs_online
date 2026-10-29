@@ -98,6 +98,8 @@ model User {
   role       Role
   /// Se "true" e `role` = ADMIN, aplica `UserAdminPermission`; se "false", trata-se como acesso total ao backoffice (legado / super).
   adminUseGranularPermissions Boolean @default(false)
+  /// Admin Geral: vê e gere todas as escolas. ADMIN sem esta flag é Diretor Técnico (ver tabela SchoolDirector).
+  isNetworkAdmin Boolean @default(false)
   createdAt  DateTime @default(now())
 
   student              Student?
@@ -407,6 +409,8 @@ model Payment {
   referenceYear   String?       // "YYYY" (INSURANCE)
   stripeInvoiceId String?       @unique
   createdAt       DateTime      @default(now())
+  /// Escola onde foi pago (fica na escola antiga se o aluno mudar).
+  schoolId        String?
 }
 
 model InsuranceSettings {
@@ -416,6 +420,8 @@ model InsuranceSettings {
   policyReference String?
   waiverVersion   String   @default("1")
   updatedAt       DateTime @default(now())
+  /// Uma linha por escola (Fase 1 multi-escola).
+  schoolId    String?  @unique
 
   @@map("InsuranceSettings")
 }
@@ -472,6 +478,8 @@ model FinancialExpense {
   /// FIXA: custo recorrente previsível; VARIÁVEL: varia mês a mês.
   kind        FinancialExpenseKind @default(VARIABLE)
   createdAt   DateTime             @default(now())
+  /// Escola a que pertence (Fase 1 multi-escola; opcional até à Fase 2).
+  schoolId    String?
 
   @@map("FinancialExpense")
 }
@@ -483,6 +491,8 @@ model FinancialRevenue {
   description String
   occurredOn  DateTime @db.Date
   createdAt   DateTime @default(now())
+  /// Escola a que pertence (Fase 1 multi-escola; opcional até à Fase 2).
+  schoolId    String?
 
   @@map("FinancialRevenue")
 }
