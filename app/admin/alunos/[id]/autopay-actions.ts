@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
@@ -21,6 +22,7 @@ function refresh(studentId: string) {
 export async function setAutoPayBillingDayAction(formData: FormData): Promise<void> {
   if (!(await requireFinanceAdmin())) return;
   const payerId = String(formData.get("payerStudentId") ?? "");
+  if (await schoolAccessErrorForStudent(payerId)) return;
   const pageStudentId = String(formData.get("studentId") ?? payerId);
   const day = Number(formData.get("billingDay"));
   const supabase = createAdminClient();
@@ -35,6 +37,7 @@ export async function setAutoPayBillingDayAction(formData: FormData): Promise<vo
 export async function syncAutoPayAction(formData: FormData): Promise<void> {
   if (!(await requireFinanceAdmin())) return;
   const payerId = String(formData.get("payerStudentId") ?? "");
+  if (await schoolAccessErrorForStudent(payerId)) return;
   const pageStudentId = String(formData.get("studentId") ?? payerId);
   const supabase = createAdminClient();
   const row = await loadAutoPayForStudent(supabase, payerId);
@@ -45,6 +48,7 @@ export async function syncAutoPayAction(formData: FormData): Promise<void> {
 export async function cancelAutoPayAdminAction(formData: FormData): Promise<void> {
   if (!(await requireFinanceAdmin())) return;
   const payerId = String(formData.get("payerStudentId") ?? "");
+  if (await schoolAccessErrorForStudent(payerId)) return;
   const pageStudentId = String(formData.get("studentId") ?? payerId);
   const supabase = createAdminClient();
   const row = await loadAutoPayForStudent(supabase, payerId);

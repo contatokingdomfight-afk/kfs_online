@@ -1,4 +1,4 @@
-import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
+import { getSchoolScope, resolveSchoolParam, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Search } from "lucide-react";
@@ -55,7 +55,9 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   const params = await searchParams;
   const filterStatus = params.status ?? "all";
   const filterModality = params.modality ?? "all";
-  const filterSchool = resolveSchoolParam(await getSchoolScope(), params.school === "all" ? null : params.school) ?? "all";
+  const scope = await getSchoolScope();
+  const schoolIds = scopedSchoolIds(scope);
+  const filterSchool = resolveSchoolParam(scope, params.school === "all" ? null : params.school) ?? "all";
   const filterPlan = params.plan ?? "all";
   const filterInsurance = params.insurance ?? "all";
   const view: ViewId = VIEWS.some((v) => v.id === params.vista) ? (params.vista as ViewId) : "all";
@@ -67,14 +69,14 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   const supabase = result.client;
 
   const [{ data: schools }, { data: studentsData }, { data: plansData }, modalitiesForFilter, latePayments, recentAttendance] = await Promise.all([
-    supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
-    supabase.from("Student").select("id, userId, status, primaryModality, schoolId, planId, createdAt, registrationMode, syntheticLoginEmail, paymentCode").order("createdAt", { ascending: false }),
-    supabase.from("Plan").select("id, name").eq("isActive", true).order("name", { ascending: true }),
+    filterSchools(supabase.from("School").select("id, name"), scope.kind === "school" ? scope.schoolIds : null, "id").eq("isActive", true).order("name", { ascending: true }),
+    filterSchools(supabase.from("Student").select("id, userId, status, primaryModality, schoolId, planId, createdAt, registrationMode, syntheticLoginEmail, paymentCode"), schoolIds).order("createdAt", { ascending: false }),
+    filterSchools(supabase.from("Plan").select("id, name"), schoolIds).eq("isActive", true).order("name", { ascending: true }),
     getCachedModalityRefs(supabase),
     fetchAllPages<{ studentId: string; amount: number | string; paymentType: string; referenceMonth: string | null }>((from, to) =>
-      supabase
+      filterSchools(supabase
         .from("Payment")
-        .select("studentId, amount, paymentType, referenceMonth")
+        .select("studentId, amount, paymentType, referenceMonth"), schoolIds)
         .eq("status", "LATE")
         .in("paymentType", ["TUITION", "INSURANCE", "ENROLLMENT"])
         .order("id")

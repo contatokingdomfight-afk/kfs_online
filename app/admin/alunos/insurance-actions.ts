@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
@@ -31,6 +32,7 @@ export async function renewStudentInsurance(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!studentId) return { error: "Aluno inválido." };
 
   const supabase = createAdminClient();
@@ -52,6 +54,7 @@ export async function registerInsurancePayment(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const amountStr = (formData.get("amount") as string)?.trim();
   const referenceYear = (formData.get("referenceYear") as string)?.trim();
 
@@ -105,6 +108,7 @@ export async function updateStudentInsuranceCoverage(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const covered = formData.get("covered") === "on" || formData.get("covered") === "true";
   const startDate = parseYmd((formData.get("coverageStartDate") as string) ?? "");
   const endDate = parseYmd((formData.get("coverageEndDate") as string) ?? "");
@@ -155,6 +159,7 @@ export async function clearStudentInsuranceCoverage(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!studentId) return { error: "Aluno inválido." };
 
   const supabase = createAdminClient();

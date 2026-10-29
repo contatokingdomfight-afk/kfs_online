@@ -1,3 +1,4 @@
+import { getSchoolScope, filterSchools } from "@/lib/school-scope";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -29,9 +30,10 @@ export default async function AdminAlunoEditarDadosPage({ params }: Props) {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: schools } = await supabase
+  const scope = await getSchoolScope();
+  const { data: schools } = await filterSchools(supabase
     .from("School")
-    .select("id, name")
+    .select("id, name"), scope.kind === "school" ? scope.schoolIds : null, "id")
     .eq("isActive", true)
     .order("name", { ascending: true });
 

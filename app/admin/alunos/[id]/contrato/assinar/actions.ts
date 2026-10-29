@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -24,6 +25,7 @@ export async function adminSaveEnrollmentForm(
   if (permErr) return { error: permErr };
 
   const supabase = createAdminClient();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const result = await applyEnrollmentFormSubmission(supabase, studentId, formData);
   if (result.error) return result;
 
@@ -44,6 +46,7 @@ export async function adminSignAdesaoDocuments(
   if (permErr) return { error: permErr };
 
   const supabase = createAdminClient();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const result = await applyAdesaoSigning(supabase, studentId, formData);
   if (result.error) return result;
 

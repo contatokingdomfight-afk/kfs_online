@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -27,6 +28,7 @@ export async function adminStartLoyaltyAction(formData: FormData): Promise<void>
   const u = await requireFinanceAdmin();
   if (!u) return;
   const studentId = String(formData.get("studentId") ?? "");
+  if (await schoolAccessErrorForStudent(studentId)) return;
   const supabase = createAdminClient();
   const payer = await resolveAutoPayPayer(supabase, studentId);
   const res = await startLoyalty(supabase, { payerStudentId: payer.payerStudentId, familyGroupId: payer.familyGroupId, createdByUserId: u.id });
@@ -40,6 +42,7 @@ export async function adminEndLoyaltyAction(formData: FormData): Promise<void> {
   const u = await requireFinanceAdmin();
   if (!u) return;
   const studentId = String(formData.get("studentId") ?? "");
+  if (await schoolAccessErrorForStudent(studentId)) return;
   const chargePenalty = formData.get("charge") === "1";
   const supabase = createAdminClient();
   const payer = await resolveAutoPayPayer(supabase, studentId);
@@ -56,6 +59,7 @@ export async function adminCreatePaymentLinkAction(formData: FormData): Promise<
   const u = await requireFinanceAdmin();
   if (!u) return;
   const studentId = String(formData.get("studentId") ?? "");
+  if (await schoolAccessErrorForStudent(studentId)) return;
   const supabase = createAdminClient();
   const payer = await resolveAutoPayPayer(supabase, studentId);
   const payingId = payer.isFamilyMember ? studentId : payer.payerStudentId;

@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForStudent, getSchoolScope, canAccessSchool } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -110,6 +111,7 @@ export async function createStudent(
 
   if (!email) return { error: "Email é obrigatório." };
   if (!schoolId) return { error: "Escola é obrigatória." };
+  if (!canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Não autorizado: escola fora do teu acesso." };
 
   const supabase = createAdminClient();
 
@@ -169,6 +171,7 @@ export async function createStudentPresencial(
 
   if (!name || name.length < 2) return { error: "Indica o nome completo do aluno." };
   if (!schoolId) return { error: "Escola é obrigatória." };
+  if (!canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Não autorizado: escola fora do teu acesso." };
 
   if (isMinor) {
     if (!dateOfBirth) return { error: "Indica a data de nascimento do menor." };
@@ -249,11 +252,13 @@ export async function updateStudent(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!studentId) return { error: "ID do aluno inválido." };
 
   const name = (formData.get("name") as string)?.trim() || null;
   const status = formData.get("status") as string | null;
   const schoolId = (formData.get("schoolId") as string)?.trim() || null;
+  if (schoolId && !canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Não autorizado: escola fora do teu acesso." };
   const planId = (formData.get("planId") as string)?.trim() || null;
   const primaryModality = (formData.get("primaryModality") as string)?.trim() || null;
   const validStatuses = ["ATIVO", "INADIMPLENTE", "INATIVO", "EXPERIMENTAL"];
@@ -406,6 +411,7 @@ export async function updateStudentPersonalData(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!studentId) return { error: "ID do aluno inválido." };
 
   const supabase = createAdminClient();
@@ -492,6 +498,7 @@ export async function setStudentFullAccess(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!studentId) return { error: "ID do aluno inválido." };
 
   const supabase = createAdminClient();
@@ -585,6 +592,7 @@ export async function clearStudentPlanAccess(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!studentId) return { error: "ID do aluno inválido." };
 
   const supabase = createAdminClient();
@@ -653,6 +661,7 @@ export async function promoteStudentToRole(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const newRole = formData.get("newRole") as string | null;
   if (!studentId || (newRole !== "COACH" && newRole !== "ADMIN")) {
     return { error: "Parâmetros inválidos." };
@@ -751,6 +760,7 @@ export async function changeStudentLoginEmail(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const newEmail = (formData.get("newEmail") as string)?.trim().toLowerCase();
   if (!studentId) return { error: "Aluno inválido." };
   if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
@@ -808,6 +818,7 @@ export async function deleteStudent(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!studentId) return { error: "ID do aluno inválido." };
 
   const supabase = createAdminClient();

@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, canAccessSchool } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
@@ -51,6 +52,7 @@ export async function createDropInStudent(
 
   if (!name || name.length < 2) return { error: "Indica o nome do aluno." };
   if (!schoolId) return { error: "Escola é obrigatória." };
+  if (!canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Não autorizado: escola fora do teu acesso." };
   if (!phone || phone.length < 6) return { error: "Indica um telemóvel válido." };
   if (!emailInput) return { error: "Email é obrigatório." };
   if (!taxId || taxId.length < 9) return { error: "Indica um NIF válido." };

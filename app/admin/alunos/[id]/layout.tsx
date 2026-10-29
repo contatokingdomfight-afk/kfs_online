@@ -1,3 +1,4 @@
+import { getSchoolScope, canAccessSchool } from "@/lib/school-scope";
 import Link from "next/link";
 import { MessageCircle, Pencil, Wallet } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -39,9 +40,12 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality, paymentCode")
+    .select("id, userId, status, planId, primaryModality, paymentCode, schoolId")
     .eq("id", studentId)
     .single();
+
+  // Multi-escola: ficha de aluno de outra escola — sai antes de renderizar qualquer subpágina.
+  if (student && !canAccessSchool(await getSchoolScope(), student.schoolId as string)) redirect("/admin/alunos");
 
   if (!student) {
     return (

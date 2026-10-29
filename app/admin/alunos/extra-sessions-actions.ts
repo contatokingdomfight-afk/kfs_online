@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -23,6 +24,7 @@ export async function grantExtraSessions(
   if (!dbUser) return { error: "Não autorizado." };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const quantityStr = (formData.get("quantity") as string)?.trim();
   const amountStr = (formData.get("amount") as string)?.trim();
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim() || currentReferenceMonthLisbon(new Date());
