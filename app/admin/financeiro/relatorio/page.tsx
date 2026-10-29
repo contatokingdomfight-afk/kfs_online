@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds } from "@/lib/school-scope";
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
@@ -42,6 +43,7 @@ function revenueCategoryLabel(category: string): string {
 
 export default async function AdminFinanceiroRelatorioPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
+  const schoolIds = scopedSchoolIds(await getSchoolScope());
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const params = await searchParams;
@@ -53,8 +55,8 @@ export default async function AdminFinanceiroRelatorioPage({ searchParams }: { s
   const supabase = result.client;
 
   const [report, history] = await Promise.all([
-    getFinancialReportForMonth(supabase, referenceMonth),
-    getFinancialReportHistory(supabase, 6, referenceMonth),
+    getFinancialReportForMonth(supabase, referenceMonth, schoolIds),
+    getFinancialReportHistory(supabase, 6, referenceMonth, schoolIds),
   ]);
 
   const periodLabel = new Date(referenceMonth + "-15T12:00:00Z").toLocaleDateString("pt-PT", {

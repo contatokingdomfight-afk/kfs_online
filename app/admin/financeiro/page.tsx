@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds } from "@/lib/school-scope";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -20,6 +21,7 @@ const eur = (n: number) => n.toLocaleString("pt-PT", { style: "currency", curren
 /** Receber: o que falta cobrar (mensalidades do mês, atrasos, seguros e matrículas) com registo num toque. */
 export default async function AdminFinanceiroReceberPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
+  const schoolIds = scopedSchoolIds(await getSchoolScope());
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const params = await searchParams;
@@ -30,9 +32,9 @@ export default async function AdminFinanceiroReceberPage({ searchParams }: { sea
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const overview = await getFinanceiroOverview(supabase, referenceMonth);
+  const overview = await getFinanceiroOverview(supabase, referenceMonth, schoolIds);
 
-  const items = await loadPorReceberItems(supabase, referenceMonth);
+  const items = await loadPorReceberItems(supabase, referenceMonth, schoolIds);
 
   const toReceive = items.reduce((a, i) => a + i.amount, 0);
   const periodRaw = new Date(referenceMonth + "-15T12:00:00Z").toLocaleDateString("pt-PT", { month: "long", year: "numeric" });

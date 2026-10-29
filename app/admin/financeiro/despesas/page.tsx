@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds } from "@/lib/school-scope";
 import { redirect } from "next/navigation";
 import { formatInTimeZone } from "date-fns-tz";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -35,7 +36,7 @@ export default async function AdminFinanceiroDespesasPage({ searchParams }: { se
   const currentMonth = currentReferenceMonthLisbon(new Date());
   const [locale, overview] = await Promise.all([
     getLocaleFromCookies() as Promise<"pt" | "en">,
-    getFinanceiroOverview(supabase, currentMonth),
+    getFinanceiroOverview(supabase, currentMonth, scopedSchoolIds(await getSchoolScope())),
   ]);
   const t = getTranslations(locale);
   const todayYmd = formatInTimeZone(new Date(), LISBON_TZ, "yyyy-MM-dd");

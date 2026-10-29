@@ -1,3 +1,4 @@
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
@@ -13,6 +14,8 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function ComprasInscricoesPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  // Multi-escola: ainda só da rede (cursos, eventos e pagamentos a coaches).
+  if (!isNetworkScope(await getSchoolScope())) redirect("/admin/financeiro");
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;

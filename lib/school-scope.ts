@@ -47,3 +47,38 @@ export const getSchoolScope = cache(async function getSchoolScope(): Promise<Sch
 export async function assertSchoolAccess(schoolId: string | null | undefined): Promise<void> {
   if (!canAccessSchool(await getSchoolScope(), schoolId)) throw new AdminPermissionError();
 }
+
+const NOT_YOUR_SCHOOL = "Não autorizado: este registo é de outra escola.";
+
+/** Server actions que devolvem `{ error }`: erro se o aluno não for de uma escola do utilizador. */
+export async function schoolAccessErrorForStudent(studentId: string | null | undefined): Promise<string | null> {
+  const scope = await getSchoolScope();
+  if (scope.kind === "network" || !studentId) return null;
+  const admin = getAdminClientOrNull().client;
+  if (!admin) return NOT_YOUR_SCHOOL;
+  const { data } = await admin.from("Student").select("schoolId").eq("id", studentId).maybeSingle();
+  return canAccessSchool(scope, data?.schoolId as string | undefined) ? null : NOT_YOUR_SCHOOL;
+}
+
+/** Igual, para linhas de uma tabela com coluna `schoolId` (pagamentos, despesas, receitas…). */
+export async function schoolAccessErrorForRows(table: string, ids: string[]): Promise<string | null> {
+  const scope = await getSchoolScope();
+  if (scope.kind === "network" || ids.length === 0) return null;
+  const admin = getAdminClientOrNull().client;
+  if (!admin) return NOT_YOUR_SCHOOL;
+  const { data } = await admin.from(table).select("schoolId").in("id", ids);
+  const rows = (data ?? []) as { schoolId: string | null }[];
+  return rows.every((r) => canAccessSchool(scope, r.schoolId)) ? null : NOT_YOUR_SCHOOL;
+}
+
+/**
+ * Escola para um registo novo sem aluno (despesa, receita manual, depósito): a escola do seletor.
+ * O Admin Geral em «Todas» com várias escolas tem de escolher uma primeiro.
+ */
+export async function schoolIdForNewRecord(): Promise<{ schoolId: string | null; error?: string }> {
+  const scope = await getSchoolScope();
+  if (scope.kind === "none") return { schoolId: null, error: "Não autorizado." };
+  if (scope.selectedSchoolId) return { schoolId: scope.selectedSchoolId };
+  if (scope.schools.length > 1) return { schoolId: null, error: "Escolhe a escola no seletor do topo antes de registar." };
+  return { schoolId: scope.schools[0]?.id ?? null };
+}

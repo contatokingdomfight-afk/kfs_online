@@ -1,3 +1,4 @@
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -27,6 +28,8 @@ function currentYearMonth(): string {
 export default async function AdminFinanceiroCoachesPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  // Multi-escola: ainda só da rede (cursos, eventos e pagamentos a coaches).
+  if (!isNetworkScope(await getSchoolScope())) redirect("/admin/financeiro");
 
   const params = await searchParams;
   const selectedMonth = params.month ?? currentYearMonth();

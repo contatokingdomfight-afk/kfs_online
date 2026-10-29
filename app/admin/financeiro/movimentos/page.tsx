@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import { Suspense } from "react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
@@ -63,6 +64,7 @@ function formatMoneyN(n: number, locale: "pt" | "en") {
 /** Movimentos: indicadores de caixa, pagamentos, receitas por origem e depósitos de espécie. */
 export default async function AdminFinanceiroMovimentosPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
+  const schoolIds = scopedSchoolIds(await getSchoolScope());
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const params = await searchParams;
@@ -83,14 +85,14 @@ export default async function AdminFinanceiroMovimentosPage({ searchParams }: { 
 
   const [locale, overview, revenue, renewalsPending, paymentsResult] = await Promise.all([
     getLocaleFromCookies() as Promise<"pt" | "en">,
-    getFinanceiroOverview(supabase, referenceMonth),
-    getRevenueBreakdown(supabase, referenceMonth),
-    getRenewalsPending(supabase, referenceMonth),
-    supabase
+    getFinanceiroOverview(supabase, referenceMonth, schoolIds),
+    getRevenueBreakdown(supabase, referenceMonth, schoolIds),
+    getRenewalsPending(supabase, referenceMonth, { schoolIds }),
+    filterSchools(supabase
       .from("Payment")
       .select(
         "id, studentId, amount, status, referenceMonth, referenceYear, paymentType, familyGroupId, paymentMethod, createdAt"
-      )
+      ), schoolIds)
       .order("referenceMonth", { ascending: false })
       .order("createdAt", { ascending: false })
       .limit(200),

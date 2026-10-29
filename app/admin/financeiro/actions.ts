@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, scopedSchoolIds, isNetworkScope, schoolAccessErrorForStudent, schoolAccessErrorForRows, schoolIdForNewRecord } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -51,7 +52,12 @@ export async function searchStudentsForPayment(
 
   const supabase = createAdminClient();
 
-  const ids = await searchStudentIdsByQuery(supabase, q);
+  const schoolIds = scopedSchoolIds(await getSchoolScope());
+  let ids = await searchStudentIdsByQuery(supabase, q);
+  if (schoolIds && ids.length > 0) {
+    const { data: inScope } = await supabase.from("Student").select("id").in("id", ids).in("schoolId", schoolIds);
+    ids = (inScope ?? []).map((s) => s.id as string);
+  }
   const results = await loadStudentPaymentRows(supabase, ids, referenceMonth);
   results.sort((a, b) => (a.name || a.email || "").localeCompare(b.name || b.email || "", "pt"));
 
@@ -71,6 +77,7 @@ export async function createPayment(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const amountStr = (formData.get("amount") as string)?.trim();
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
   const status = formData.get("status") as string;
@@ -159,6 +166,7 @@ export async function quickReceivePayment(input: {
   const studentId = input.studentId?.trim();
   const referenceMonth = input.referenceMonth?.trim() ?? "";
   if (!studentId) return { error: "Aluno é obrigatório." };
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!/^\d{4}-\d{2}$/.test(referenceMonth)) return { error: "Mês de referência inválido." };
 
   const supabase = createAdminClient();
@@ -194,6 +202,7 @@ export async function voidLateTuition(
   const studentId = (formData.get("studentId") as string)?.trim();
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
   if (!studentId) return { error: "Aluno é obrigatório." };
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   if (!referenceMonth || !/^\d{4}-\d{2}$/.test(referenceMonth)) {
     return { error: "Mês de referência inválido." };
   }
@@ -240,7 +249,7 @@ export async function getRenewalsPendingAction(referenceMonth: string) {
   if (!dbUser || dbUser.role !== "ADMIN") return [];
   if (await adminPermissionError("admin:financeiro:read")) return [];
   const supabase = createAdminClient();
-  return getRenewalsPending(supabase, referenceMonth);
+  return getRenewalsPending(supabase, referenceMonth, { schoolIds: scopedSchoolIds(await getSchoolScope()) });
 }
 
 /** Gera mensalidades do mês (Payment LATE) para todos os alunos com plano que ainda não têm pagamento. */
@@ -251,6 +260,8 @@ export async function generateMonthlyPaymentsAction(
   if (!dbUser || dbUser.role !== "ADMIN") return { created: 0, skipped: 0, error: "Não autorizado." };
   const permErr = await adminPermissionError("admin:financeiro:write");
   if (permErr) return { created: 0, skipped: 0, error: permErr };
+  // Gera para todos os alunos da rede: só o Admin Geral.
+  if (!isNetworkScope(await getSchoolScope())) return { created: 0, skipped: 0, error: "Só o Admin Geral pode gerar as mensalidades da rede." };
   const supabase = createAdminClient();
   const result = await generateMonthlyPayments(supabase, referenceMonth, { force: true });
   revalidatePath("/admin/financeiro", "layout");
@@ -275,6 +286,7 @@ export async function dedupeDuplicatePaymentsAction(): Promise<void> {
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
   const permErr = await adminPermissionError("admin:financeiro:write");
   if (permErr) redirect("/dashboard");
+  if (!isNetworkScope(await getSchoolScope())) redirect("/admin/financeiro");
 
   const supabase = createAdminClient();
   const { data: rows, error } = await supabase
@@ -358,6 +370,7 @@ export async function deleteAdminPayment(formData: FormData) {
 
   const ids = parsePaymentIds(formData);
   if (ids.length === 0) return;
+  if (await schoolAccessErrorForRows("Payment", ids)) redirect("/dashboard");
 
   const supabase = createAdminClient();
   const { data: rows, error: fetchErr } = await supabase
@@ -425,6 +438,7 @@ export async function markPendingPaymentPaid(
   if (permErr) return { error: permErr };
 
   const paymentId = (formData.get("paymentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("Payment", paymentId ? [paymentId] : []); if (schoolErr) return { error: schoolErr }; }
   const amountStr = (formData.get("amount") as string)?.trim();
   if (!paymentId) return { error: "Pagamento inválido." };
   const amount = parseDecimalAmount(amountStr);
@@ -495,6 +509,7 @@ export async function registerFamilyMemberTuition(
   if (permErr) return { error: permErr };
 
   const memberStudentId = (formData.get("memberStudentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(memberStudentId); if (schoolErr) return { error: schoolErr }; }
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
   const amountStr = (formData.get("amount") as string)?.trim();
   if (!memberStudentId) return { error: "Aluno inválido." };
@@ -562,6 +577,7 @@ export async function updateAdminPayment(
   if (permErr) return { error: permErr };
 
   const id = (formData.get("id") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("Payment", id ? [id] : []); if (schoolErr) return { error: schoolErr }; }
   const amountStr = (formData.get("amount") as string)?.trim();
   const status = (formData.get("status") as string)?.trim();
   if (!id) return { error: "ID em falta." };
@@ -653,10 +669,13 @@ export async function createFinancialExpense(
   const parsedMethod = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
   if ("error" in parsedMethod) return { error: parsedMethod.error };
 
+  const newSchool = await schoolIdForNewRecord();
+  if (newSchool.error) return { error: newSchool.error };
   const supabase = createAdminClient();
   const id = crypto.randomUUID();
   const { error } = await supabase.from("FinancialExpense").insert({
     id,
+    schoolId: newSchool.schoolId,
     amount: amount.toFixed(2),
     description,
     occurredOn,
@@ -711,6 +730,9 @@ export async function createFinancialExpensesBatch(
     });
   }
 
+  const newSchool = await schoolIdForNewRecord();
+  if (newSchool.error) return { error: newSchool.error };
+  for (const r of rows) (r as { schoolId?: string | null }).schoolId = newSchool.schoolId;
   const supabase = createAdminClient();
   const { error } = await supabase.from("FinancialExpense").insert(rows);
   if (error) return { error: error.message };
@@ -728,6 +750,7 @@ export async function updateFinancialExpense(
   if (permErr) return { error: permErr };
 
   const id = (formData.get("id") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("FinancialExpense", id ? [id] : []); if (schoolErr) return { error: schoolErr }; }
   const amountStr = (formData.get("amount") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() ?? "";
   const occurredOn = parseDateOnly((formData.get("occurredOn") as string) ?? "");
@@ -770,6 +793,7 @@ export async function deleteFinancialExpense(formData: FormData) {
   if (permErr) redirect("/dashboard");
   const id = (formData.get("id") as string)?.trim();
   if (!id) return;
+  if (await schoolAccessErrorForRows("FinancialExpense", [id])) redirect("/dashboard");
   const supabase = createAdminClient();
   const { error } = await supabase.from("FinancialExpense").delete().eq("id", id);
   if (error) {
@@ -799,10 +823,13 @@ export async function createManualRevenue(
   const parsedMethod = parseFinancePaymentMethodRequired((formData.get("paymentMethod") as string) ?? "");
   if ("error" in parsedMethod) return { error: parsedMethod.error };
 
+  const newSchool = await schoolIdForNewRecord();
+  if (newSchool.error) return { error: newSchool.error };
   const supabase = createAdminClient();
   const id = crypto.randomUUID();
   const { error } = await supabase.from("FinancialRevenue").insert({
     id,
+    schoolId: newSchool.schoolId,
     amount: amount.toFixed(2),
     description,
     occurredOn,
@@ -820,6 +847,7 @@ export async function deleteManualRevenue(formData: FormData) {
   if (permErr) redirect("/dashboard");
   const id = (formData.get("id") as string)?.trim();
   if (!id) return;
+  if (await schoolAccessErrorForRows("FinancialRevenue", [id])) redirect("/dashboard");
   const supabase = createAdminClient();
   const { error } = await supabase.from("FinancialRevenue").delete().eq("id", id);
   if (error) {
@@ -841,6 +869,7 @@ export async function createAdvanceTuitionPayments(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const startMonth = (formData.get("startMonth") as string)?.trim();
   const monthsStr = (formData.get("months") as string)?.trim();
   const amountStr = (formData.get("amountPerMonth") as string)?.trim();
@@ -893,6 +922,7 @@ export async function createFirstPayment(
   if (permErr) return { error: permErr };
 
   const studentId = (formData.get("studentId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
   const referenceMonth = (formData.get("referenceMonth") as string)?.trim();
   const tuitionStr = (formData.get("tuitionAmount") as string)?.trim();
   const tuitionMonthsStr = (formData.get("tuitionMonths") as string)?.trim() || "1";
@@ -956,9 +986,12 @@ export async function createCashDeposit(
   if (Number.isNaN(amount) || amount <= 0) return { error: "Indica um valor positivo." };
   if (!occurredOn) return { error: "Data inválida (AAAA-MM-DD)." };
 
+  const newSchool = await schoolIdForNewRecord();
+  if (newSchool.error) return { error: newSchool.error };
   const supabase = createAdminClient();
   const { error } = await supabase.from("TreasuryMovement").insert({
     id: crypto.randomUUID(),
+    schoolId: newSchool.schoolId,
     kind: "CASH_DEPOSIT",
     amount: amount.toFixed(2),
     occurredOn,
@@ -983,6 +1016,7 @@ export async function deleteCashDeposit(formData: FormData) {
   if (permErr) redirect("/dashboard");
   const id = (formData.get("id") as string)?.trim();
   if (!id) return;
+  if (await schoolAccessErrorForRows("TreasuryMovement", [id])) redirect("/dashboard");
   const supabase = createAdminClient();
   const { error } = await supabase.from("TreasuryMovement").delete().eq("id", id).eq("kind", "CASH_DEPOSIT");
   if (error) {

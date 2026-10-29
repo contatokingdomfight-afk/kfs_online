@@ -1,3 +1,4 @@
+import { filterSchools } from "@/lib/school-scope-rules";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -71,7 +72,9 @@ export type FinanceiroOverview = {
 
 export async function getFinanceiroOverview(
   supabase: SupabaseClient,
-  referenceMonthOverride?: string
+  referenceMonthOverride?: string,
+  /** Escopo multi-escola: null/omisso = todas. */
+  schoolIds?: string[] | null
 ): Promise<FinanceiroOverview> {
   const referenceMonth =
     referenceMonthOverride && /^\d{4}-\d{2}$/.test(referenceMonthOverride)
@@ -102,9 +105,9 @@ export async function getFinanceiroOverview(
   let expenseRows: unknown[] | null = null;
   let expensesError: string | null = null;
 
-  const withKind = await supabase
+  const withKind = await filterSchools(supabase
     .from("FinancialExpense")
-    .select("id, amount, description, occurredOn, createdAt, kind, category, paymentMethod")
+    .select("id, amount, description, occurredOn, createdAt, kind, category, paymentMethod"), schoolIds)
     .order("occurredOn", { ascending: false })
     .order("createdAt", { ascending: false });
 
@@ -113,9 +116,9 @@ export async function getFinanceiroOverview(
     const colMissing =
       (/kind|category|paymentMethod/i.test(msg) && (/does not exist|column/i.test(msg) || /42703/.test(msg)));
     if (colMissing) {
-      const fallback = await supabase
+      const fallback = await filterSchools(supabase
         .from("FinancialExpense")
-        .select("id, amount, description, occurredOn, createdAt")
+        .select("id, amount, description, occurredOn, createdAt"), schoolIds)
         .order("occurredOn", { ascending: false })
         .order("createdAt", { ascending: false });
       if (fallback.error) {
@@ -173,7 +176,7 @@ export async function getFinanceiroOverview(
     }
   }
 
-  const { data: students, error: stErr } = await supabase.from("Student").select("id, planId, status");
+  const { data: students, error: stErr } = await filterSchools(supabase.from("Student").select("id, planId, status"), schoolIds);
   if (stErr) {
     return {
       ...base,
@@ -234,11 +237,11 @@ export async function getFinanceiroOverview(
     }
   }
 
-  const revenueBreakdown = await getRevenueBreakdown(supabase, referenceMonth);
+  const revenueBreakdown = await getRevenueBreakdown(supabase, referenceMonth, schoolIds);
   const revenueFromSources = revenueBreakdown.error ? 0 : revenueBreakdown.total;
   const revenueCurrentMonth = revenueFromSources + revenueOnboardingMonth;
   const overviewError = revenueBreakdown.error ?? null;
-  const treasury = await getTreasuryBalances(supabase, referenceMonth);
+  const treasury = await getTreasuryBalances(supabase, referenceMonth, schoolIds);
 
   return {
     referenceMonth,

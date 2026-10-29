@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight } from "lucide-react";
@@ -27,7 +28,7 @@ export default async function AdminFinanceiroMaisPage() {
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const referenceMonth = currentReferenceMonthLisbon(new Date());
-  const pending = await getRenewalsPending(result.client, referenceMonth);
+  const pending = await getRenewalsPending(result.client, referenceMonth, { schoolIds: scopedSchoolIds(await getSchoolScope()) });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

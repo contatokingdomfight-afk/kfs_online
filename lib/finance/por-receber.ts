@@ -1,3 +1,4 @@
+import { filterSchools } from "@/lib/school-scope-rules";
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRenewalsPending } from "@/lib/renewals";
@@ -39,13 +40,18 @@ type LateRow = {
 };
 
 /** O que falta cobrar: mensalidades do mês, atrasos, seguros, matrículas e encomendas da loja por pagar. */
-export async function loadPorReceberItems(supabase: SupabaseClient, referenceMonth: string): Promise<PorReceberItem[]> {
+/** `schoolIds`: escopo multi-escola (null/omisso = todas). */
+export async function loadPorReceberItems(
+  supabase: SupabaseClient,
+  referenceMonth: string,
+  schoolIds?: string[] | null
+): Promise<PorReceberItem[]> {
   const [renewals, lateRows, pendingOrders] = await Promise.all([
-    getRenewalsPending(supabase, referenceMonth),
+    getRenewalsPending(supabase, referenceMonth, { schoolIds }),
     fetchAllPages<LateRow>((from, to) =>
-      supabase
+      filterSchools(supabase
         .from("Payment")
-        .select("id, studentId, amount, paymentType, referenceMonth, referenceYear, familyGroupId")
+        .select("id, studentId, amount, paymentType, referenceMonth, referenceYear, familyGroupId"), schoolIds)
         .eq("status", "LATE")
         .is("stripeInvoiceId", null)
         .in("paymentType", ["TUITION", "INSURANCE", "ENROLLMENT", "LOYALTY_EXIT"])

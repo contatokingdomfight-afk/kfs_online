@@ -4,6 +4,7 @@
  * - Gerar registos de Payment (mensalidades) para o mês com status LATE.
  */
 
+import { filterSchools } from "@/lib/school-scope-rules";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   shouldGenerateLatePayments,
@@ -30,6 +31,8 @@ export type GetRenewalsPendingOptions = {
    * Para listagens (admin): omitir — mostra quem ainda não tem PAID (inclui quem já tem LATE).
    */
   forLateGeneration?: boolean;
+  /** Escopo multi-escola (listagens do admin): null/omisso = todas. */
+  schoolIds?: string[] | null;
 };
 
 /**
@@ -42,9 +45,9 @@ export async function getRenewalsPending(
 ): Promise<RenewalPending[]> {
   if (!/^\d{4}-\d{2}$/.test(referenceMonth)) return [];
 
-  const { data: students } = await supabase
+  const { data: students } = await filterSchools(supabase
     .from("Student")
-    .select("id, userId, planId, createdAt")
+    .select("id, userId, planId, createdAt"), options?.schoolIds)
     .not("planId", "is", null);
 
   if (!students?.length) return [];

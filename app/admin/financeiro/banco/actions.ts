@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, scopedSchoolIds, isNetworkScope } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
@@ -13,6 +14,8 @@ async function requireFinanceAdmin() {
   const user = await getCurrentDbUser();
   if (!user || user.role !== "ADMIN") return null;
   if (await adminPermissionError("admin:financeiro:write")) return null;
+  // Multi-escola: a ligação Revolut ainda é única (da rede) — só o Admin Geral.
+  if (!isNetworkScope(await getSchoolScope())) return null;
   return user;
 }
 
@@ -40,7 +43,7 @@ export async function confirmBankMatch(formData: FormData): Promise<void> {
   const row = tx as { id: string; matchStatus: string; payerName: string | null } | null;
   if (!row || row.matchStatus === "AUTO" || row.matchStatus === "CONFIRMED") return;
 
-  const items = await loadPorReceberItems(supabase, currentReferenceMonthLisbon(new Date()));
+  const items = await loadPorReceberItems(supabase, currentReferenceMonthLisbon(new Date()), scopedSchoolIds(await getSchoolScope()));
   const it = items.find((i) => i.key === itemKey);
   if (!it) return;
   const r = await applyReceivedItem(supabase, it, user.id);

@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -33,6 +34,7 @@ type LateTuition = { id: string; studentId: string; amount: number | string; ref
  */
 export default async function AdminFinanceiroMensalidadesPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
+  const schoolIds = scopedSchoolIds(await getSchoolScope());
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const params = await searchParams;
@@ -46,12 +48,12 @@ export default async function AdminFinanceiroMensalidadesPage({ searchParams }: 
   const supabase = result.client;
 
   const [thisPending, lastPending, lateTuition] = await Promise.all([
-    getRenewalsPending(supabase, month),
-    getRenewalsPending(supabase, lastMonth),
+    getRenewalsPending(supabase, month, { schoolIds }),
+    getRenewalsPending(supabase, lastMonth, { schoolIds }),
     fetchAllPages<LateTuition>((from, to) =>
-      supabase
+      filterSchools(supabase
         .from("Payment")
-        .select("id, studentId, amount, referenceMonth, familyGroupId")
+        .select("id, studentId, amount, referenceMonth, familyGroupId"), schoolIds)
         .eq("status", "LATE")
         .eq("paymentType", "TUITION")
         .is("stripeInvoiceId", null)
@@ -153,7 +155,7 @@ export default async function AdminFinanceiroMensalidadesPage({ searchParams }: 
   );
 
   // Pagamento automático (Subscrições Revolut): quantos pagadores e quantas cobranças falharam.
-  const { data: autoPayRows, error: autoPayErr } = await supabase.from("AutoPay").select("state, amount").in("state", ["ACTIVE", "OVERDUE"]);
+  const { data: autoPayRows, error: autoPayErr } = await filterSchools(supabase.from("AutoPay").select("state, amount"), schoolIds).in("state", ["ACTIVE", "OVERDUE"]);
   const autoActive = autoPayErr ? [] : ((autoPayRows ?? []) as { state: string; amount: number | string }[]).filter((r) => r.state === "ACTIVE");
   const autoOverdue = autoPayErr ? 0 : ((autoPayRows ?? []) as { state: string }[]).filter((r) => r.state === "OVERDUE").length;
   const autoMonthly = autoActive.reduce((t, r) => t + Number(r.amount), 0);

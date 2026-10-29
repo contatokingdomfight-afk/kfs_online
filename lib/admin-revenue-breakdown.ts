@@ -1,3 +1,4 @@
+import { filterSchools } from "@/lib/school-scope-rules";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -49,7 +50,9 @@ function monthDateBounds(yyyyMm: string): { start: string; end: string; startIso
  */
 export async function getRevenueBreakdown(
   supabase: SupabaseClient,
-  referenceMonth: string
+  referenceMonth: string,
+  /** Escopo multi-escola: null/omisso = todas. */
+  schoolIds?: string[] | null
 ): Promise<RevenueBreakdownResult> {
   const empty: RevenueBreakdownResult = {
     referenceMonth,
@@ -60,9 +63,9 @@ export async function getRevenueBreakdown(
   };
   const { start, end, startIso, endExclusiveIso } = monthDateBounds(referenceMonth);
 
-  const { data: payments, error: payErr } = await supabase
+  const { data: payments, error: payErr } = await filterSchools(supabase
     .from("Payment")
-    .select("id, studentId, amount, status, paymentType")
+    .select("id, studentId, amount, status, paymentType"), schoolIds)
     .eq("status", "PAID")
     .eq("referenceMonth", referenceMonth);
 
@@ -162,9 +165,9 @@ export async function getRevenueBreakdown(
     byEvent.set(row.eventId, (byEvent.get(row.eventId) ?? 0) + price);
   }
 
-  const { data: retailSales, error: retailErr } = await supabase
+  const { data: retailSales, error: retailErr } = await filterSchools(supabase
     .from("RetailSale")
-    .select("id, totalAmount, soldAt")
+    .select("id, totalAmount, soldAt"), schoolIds)
     .eq("status", "COMPLETED")
     .gte("soldAt", startIso)
     .lt("soldAt", endExclusiveIso);
@@ -180,9 +183,9 @@ export async function getRevenueBreakdown(
     merchandiseTotal += Number((s as { totalAmount: string | number }).totalAmount);
   }
 
-  const { data: manualRows, error: manErr } = await supabase
+  const { data: manualRows, error: manErr } = await filterSchools(supabase
     .from("FinancialRevenue")
-    .select("id, amount, description, occurredOn")
+    .select("id, amount, description, occurredOn"), schoolIds)
     .gte("occurredOn", start)
     .lte("occurredOn", end)
     .order("occurredOn", { ascending: false })

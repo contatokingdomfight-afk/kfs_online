@@ -1,3 +1,4 @@
+import { filterSchools } from "@/lib/school-scope-rules";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -68,7 +69,9 @@ function addRevenueMonth(
  */
 export async function getTreasuryBalances(
   supabase: SupabaseClient,
-  referenceMonth: string
+  referenceMonth: string,
+  /** Escopo multi-escola: null/omisso = todas. */
+  schoolIds?: string[] | null
 ): Promise<TreasuryBalanceSummary> {
   const empty: TreasuryBalanceSummary = {
     caixaBankTotal: 0,
@@ -89,22 +92,22 @@ export async function getTreasuryBalances(
   let cashDepositsInMonth = 0;
 
   const [tuitionRes, onboardingRes, manualRes, retailRes, expenseRes, depositRes] = await Promise.all([
-    supabase
+    filterSchools(supabase
       .from("Payment")
-      .select("amount, paymentMethod, referenceMonth, status, paymentType")
+      .select("amount, paymentMethod, referenceMonth, status, paymentType"), schoolIds)
       .eq("status", "PAID")
       .eq("paymentType", "TUITION"),
-    supabase
+    filterSchools(supabase
       .from("Payment")
-      .select("amount, paymentMethod, createdAt, status, paymentType")
+      .select("amount, paymentMethod, createdAt, status, paymentType"), schoolIds)
       .eq("status", "PAID")
       .in("paymentType", ["ENROLLMENT", "INSURANCE"]),
-    supabase.from("FinancialRevenue").select("amount, paymentMethod, occurredOn"),
-    supabase.from("RetailSale").select("totalAmount, paymentMethod, soldAt, status").eq("status", "COMPLETED"),
-    supabase.from("FinancialExpense").select("amount, paymentMethod, occurredOn"),
-    supabase
+    filterSchools(supabase.from("FinancialRevenue").select("amount, paymentMethod, occurredOn"), schoolIds),
+    filterSchools(supabase.from("RetailSale").select("totalAmount, paymentMethod, soldAt, status"), schoolIds).eq("status", "COMPLETED"),
+    filterSchools(supabase.from("FinancialExpense").select("amount, paymentMethod, occurredOn"), schoolIds),
+    filterSchools(supabase
       .from("TreasuryMovement")
-      .select("id, amount, occurredOn, description, createdAt, kind")
+      .select("id, amount, occurredOn, description, createdAt, kind"), schoolIds)
       .eq("kind", "CASH_DEPOSIT")
       .order("occurredOn", { ascending: false })
       .order("createdAt", { ascending: false })

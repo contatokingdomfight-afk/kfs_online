@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, isNetworkScope } from "@/lib/school-scope";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -41,6 +42,8 @@ const ERRORS: Record<string, string> = {
 export default async function AdminFinanceiroBancoPage({ searchParams }: { searchParams: Promise<{ erro?: string; ligado?: string }> }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  // Multi-escola: ainda só da rede (ligação Revolut única / cursos e eventos da rede).
+  if (!isNetworkScope(await getSchoolScope())) redirect("/admin/financeiro");
   const { erro, ligado } = await searchParams;
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -60,7 +63,7 @@ export default async function AdminFinanceiroBancoPage({ searchParams }: { searc
   const connection = conn as { connectedAt: string; lastSyncAt: string | null; lastSyncError: string | null } | null;
   const txs = (txRows ?? []) as Tx[];
   const pending = txs.filter((t) => t.matchStatus === "SUGGESTED" || t.matchStatus === "UNMATCHED");
-  const openItems = pending.length ? await loadPorReceberItems(supabase, currentReferenceMonthLisbon(new Date())) : [];
+  const openItems = pending.length ? await loadPorReceberItems(supabase, currentReferenceMonthLisbon(new Date()), scopedSchoolIds(await getSchoolScope())) : [];
   const thisMonthKey = currentReferenceMonthLisbon(new Date());
   const thisMonth = txs.filter((t) => t.occurredAt.slice(0, 7) === thisMonthKey);
 

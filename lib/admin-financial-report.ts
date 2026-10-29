@@ -1,3 +1,4 @@
+import { filterSchools } from "@/lib/school-scope-rules";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -62,12 +63,13 @@ function listRecentMonths(referenceMonth: string, count: number): string[] {
 
 async function sumOnboardingPayments(
   supabase: SupabaseClient,
-  referenceMonth: string
+  referenceMonth: string,
+  schoolIds?: string[] | null
 ): Promise<number> {
   const { start, endExclusiveIso } = monthDateBounds(referenceMonth);
-  const { data, error } = await supabase
+  const { data, error } = await filterSchools(supabase
     .from("Payment")
-    .select("amount")
+    .select("amount"), schoolIds)
     .eq("status", "PAID")
     .in("paymentType", ["ENROLLMENT", "INSURANCE"])
     .gte("createdAt", `${start}T00:00:00.000Z`)
@@ -78,7 +80,9 @@ async function sumOnboardingPayments(
 
 export async function getFinancialReportForMonth(
   supabase: SupabaseClient,
-  referenceMonth: string
+  referenceMonth: string,
+  /** Escopo multi-escola: null/omisso = todas. */
+  schoolIds?: string[] | null
 ): Promise<FinancialReportMonth> {
   const empty: FinancialReportMonth = {
     referenceMonth,
@@ -96,11 +100,11 @@ export async function getFinancialReportForMonth(
   const { start, end } = monthDateBounds(referenceMonth);
 
   const [revenue, onboarding, expenseResult] = await Promise.all([
-    getRevenueBreakdown(supabase, referenceMonth),
-    sumOnboardingPayments(supabase, referenceMonth),
-    supabase
+    getRevenueBreakdown(supabase, referenceMonth, schoolIds),
+    sumOnboardingPayments(supabase, referenceMonth, schoolIds),
+    filterSchools(supabase
       .from("FinancialExpense")
-      .select("id, amount, description, occurredOn, kind, category")
+      .select("id, amount, description, occurredOn, kind, category"), schoolIds)
       .gte("occurredOn", start)
       .lte("occurredOn", end)
       .order("occurredOn", { ascending: false }),
@@ -157,13 +161,14 @@ export async function getFinancialReportForMonth(
 export async function getFinancialReportHistory(
   supabase: SupabaseClient,
   monthsBack = 6,
-  referenceMonth?: string
+  referenceMonth?: string,
+  schoolIds?: string[] | null
 ): Promise<FinancialReportHistoryPoint[]> {
   const ref = referenceMonth ?? currentReferenceMonthLisbon(new Date());
   const months = listRecentMonths(ref, monthsBack);
   const points: FinancialReportHistoryPoint[] = [];
   for (const month of months) {
-    const report = await getFinancialReportForMonth(supabase, month);
+    const report = await getFinancialReportForMonth(supabase, month, schoolIds);
     points.push({
       month,
       revenue: report.revenueTotal,
