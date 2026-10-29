@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import { revealDueResults } from "@/lib/graduation/reveal";
 import Link from "next/link";
 import { CalendarDays, ChevronRight, MapPin, Plus, Users } from "lucide-react";
@@ -20,9 +21,9 @@ export default async function CoachGraduacaoPage({ searchParams }: { searchParam
   await revealDueResults(supabase);
 
   const [{ data: events }, { data: modalities }, { data: candidates }] = await Promise.all([
-    supabase
+    filterSchools(supabase
       .from("GraduationExamEvent")
-      .select("id, modalityCode, title, scheduledAt, location, status")
+      .select("id, modalityCode, title, scheduledAt, location, status"), scopedSchoolIds(await getSchoolScope()))
       .order("scheduledAt", { ascending: false })
       .limit(100),
     supabase.from("ModalityRef").select("code, name"),

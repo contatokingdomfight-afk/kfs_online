@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds } from "@/lib/school-scope";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -21,7 +22,7 @@ export default async function GraduacaoMigracaoPage({ params }: { params: Promis
   const modalityCode = decodeURIComponent((await params).modality);
   const [{ data: modality }, readiness] = await Promise.all([
     supabase.from("ModalityRef").select("code, name").eq("code", modalityCode).maybeSingle(),
-    loadModalityReadiness(supabase, modalityCode),
+    loadModalityReadiness(supabase, modalityCode, undefined, scopedSchoolIds(await getSchoolScope())),
   ]);
   if (!modality) notFound();
 

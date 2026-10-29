@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolAccessErrorForRows, schoolAccessErrorForStudent, schoolIdForNewRecord } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -71,10 +72,13 @@ export async function createExamEvent(_prev: ActionResult | null, formData: Form
   if (revealDate && (!/^\d{4}-\d{2}-\d{2}$/.test(revealDate) || !/^\d{2}:\d{2}$/.test(revealTime))) return { error: "Data de revelação inválida." };
   const resultsRevealAt = revealDate ? lisbonLocalToUtcIso(revealDate, revealTime) : null;
 
+  const newSchool = await schoolIdForNewRecord();
+  if (newSchool.error) return { error: newSchool.error };
   const { data: modality } = await supabase.from("ModalityRef").select("name").eq("code", modalityCode).maybeSingle();
   const { data: created, error } = await supabase
     .from("GraduationExamEvent")
     .insert({
+      schoolId: newSchool.schoolId,
       modalityCode,
       title: title || `Exame de graduação — ${modality?.name ?? modalityCode}`,
       scheduledAt,
@@ -107,7 +111,7 @@ function lisbonLocalToUtcIso(date: string, time: string): string {
 async function notifyReadyForBooking(supabase: NonNullable<ReturnType<typeof client>>, eventId: string): Promise<number> {
   const event = await loadExamEventRow(supabase, eventId);
   if (!event || event.status !== "SCHEDULED" || !event.selfBooking) return 0;
-  const readiness = await loadModalityReadiness(supabase, event.modalityCode);
+  const readiness = await loadModalityReadiness(supabase, event.modalityCode, undefined, event.schoolId ? [event.schoolId] : undefined);
   const targets = (readiness?.students ?? []).filter((s) => s.progress.isReadyForExam && s.progress.next && !s.activeConvocation);
   await Promise.all(
     targets.map((s) =>
@@ -126,6 +130,7 @@ async function notifyReadyForBooking(supabase: NonNullable<ReturnType<typeof cli
 export async function remindReadyStudents(eventId: string): Promise<ActionResult & { notified?: number }> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examEventSchoolError(eventId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
   const notified = await notifyReadyForBooking(supabase, eventId);
@@ -137,6 +142,7 @@ export async function remindReadyStudents(eventId: string): Promise<ActionResult
 export async function setCandidateSlot(candidateId: string, slotIso: string | null): Promise<ActionResult> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examCandidateSchoolError(candidateId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
 
@@ -165,6 +171,7 @@ export async function setCandidateSlot(candidateId: string, slotIso: string | nu
 export async function setExamEventStatus(eventId: string, status: "COMPLETED" | "CANCELLED" | "SCHEDULED"): Promise<ActionResult> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examEventSchoolError(eventId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
 
@@ -186,13 +193,14 @@ export async function setExamEventStatus(eventId: string, status: "COMPLETED" | 
 export async function convokeStudents(eventId: string, studentIds: string[]): Promise<ActionResult & { convoked?: number }> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examEventSchoolError(eventId)) ?? (await schoolAccessErrorForRows("Student", studentIds)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
 
   const event = await loadExamEventRow(supabase, eventId);
   if (!event || event.status !== "SCHEDULED") return { error: "Este exame já não aceita convocatórias." };
 
-  const readiness = await loadModalityReadiness(supabase, event.modalityCode);
+  const readiness = await loadModalityReadiness(supabase, event.modalityCode, undefined, event.schoolId ? [event.schoolId] : undefined);
   if (!readiness) return { error: "A modalidade não tem graduação configurada." };
   const byId = new Map(readiness.students.map((s) => [s.studentId, s]));
 
@@ -232,6 +240,7 @@ export async function convokeStudents(eventId: string, studentIds: string[]): Pr
 export async function removeCandidate(candidateId: string): Promise<ActionResult> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examCandidateSchoolError(candidateId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
 
@@ -247,6 +256,7 @@ export async function removeCandidate(candidateId: string): Promise<ActionResult
 export async function setRequirementFulfilled(studentId: string, requirementId: string, fulfilled: boolean, eventId?: string): Promise<ActionResult> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await schoolAccessErrorForStudent(studentId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
 
@@ -267,6 +277,7 @@ export async function saveExamScores(
 ): Promise<ActionResult> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examCandidateSchoolError(candidateId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
   if (changes.length === 0) return { success: true };
@@ -315,6 +326,7 @@ export async function decideCandidate(
 ): Promise<ActionResult> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examCandidateSchoolError(candidateId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
 
@@ -391,6 +403,7 @@ async function skippedGradesFor(supabase: AdminClient, studentId: string, modali
 export async function setCandidateTargetGrade(candidateId: string, gradeId: string, reason: string): Promise<ActionResult> {
   const auth = await graduationAdminActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examCandidateSchoolError(candidateId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
 
@@ -433,6 +446,7 @@ export async function setManualReadiness(input: {
 }): Promise<ActionResult> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await schoolAccessErrorForStudent(input.studentId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
   const { studentId, modalityCode, status } = input;
@@ -491,6 +505,7 @@ export async function setManualReadiness(input: {
 export async function setCandidatePlacement(candidateId: string, maxGradeId: string | null, note: string): Promise<ActionResult> {
   const auth = await graduationAdminActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examCandidateSchoolError(candidateId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
 
@@ -535,6 +550,7 @@ export async function setCandidatePlacement(candidateId: string, maxGradeId: str
 export async function advancePlacement(candidateId: string): Promise<ActionResult> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examCandidateSchoolError(candidateId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
 
@@ -566,6 +582,7 @@ export async function decidePlacement(
 ): Promise<ActionResult> {
   const auth = await graduationAdminActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examCandidateSchoolError(candidateId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
 
@@ -620,6 +637,7 @@ export async function decidePlacement(
 export async function setResultsRevealAt(eventId: string, date: string, time: string): Promise<ActionResult> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examEventSchoolError(eventId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
   let revealAt: string | null = null;
@@ -638,6 +656,7 @@ export async function setResultsRevealAt(eventId: string, date: string, time: st
 export async function revealResultsNow(eventId: string): Promise<ActionResult & { revealed?: number }> {
   const auth = await graduationExamActionAuth();
   if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examEventSchoolError(eventId)); if (schoolErr) return { error: schoolErr }; }
   const supabase = client();
   if (!supabase) return { error: "Configuração Supabase em falta." };
   const now = new Date();
@@ -646,4 +665,17 @@ export async function revealResultsNow(eventId: string): Promise<ActionResult & 
   const revealed = await revealDueResults(supabase, { eventId }, now);
   revalidatePath(`/coach/graduacao/${eventId}`);
   return { success: true, revealed };
+}
+
+/** Multi-escola: erro se o exame for de uma escola fora do alcance do utilizador. */
+async function examEventSchoolError(eventId: string): Promise<string | null> {
+  return eventId ? schoolAccessErrorForRows("GraduationExamEvent", [eventId]) : null;
+}
+
+/** Igual, a partir de um candidato (pelo exame a que pertence). */
+async function examCandidateSchoolError(candidateId: string): Promise<string | null> {
+  const supabase = client();
+  if (!supabase || !candidateId) return null;
+  const { data } = await supabase.from("GraduationExamCandidate").select("eventId").eq("id", candidateId).maybeSingle();
+  return data ? examEventSchoolError(data.eventId as string) : null;
 }

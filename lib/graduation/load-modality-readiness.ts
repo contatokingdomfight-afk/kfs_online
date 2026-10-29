@@ -1,3 +1,4 @@
+import { filterSchools } from "@/lib/school-scope-rules";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -31,7 +32,9 @@ export type ModalityReadiness = {
 export async function loadModalityReadiness(
   supabase: SupabaseClient,
   modalityCode: string,
-  now: Date = new Date()
+  now: Date = new Date(),
+  /** Escopo multi-escola: null/omisso = alunos de todas as escolas. */
+  schoolIds?: string[] | null
 ): Promise<ModalityReadiness | null> {
   const template = await loadGraduationTemplate(supabase, modalityCode);
   if (!template || template.grades.length === 0) return null;
@@ -46,7 +49,7 @@ export async function loadModalityReadiness(
 
   const [students, lessons, gradeRows] = await Promise.all([
     fetchAllPages<{ id: string; userId: string; primaryModality: string | null }>((from, to) =>
-      supabase.from("Student").select("id, userId, primaryModality").eq("status", "ATIVO").order("id").range(from, to)
+      filterSchools(supabase.from("Student").select("id, userId, primaryModality"), schoolIds).eq("status", "ATIVO").order("id").range(from, to)
     ),
     fetchAllPages<{ id: string }>((from, to) => supabase.from("Lesson").select("id").eq("modality", modalityCode).order("id").range(from, to)),
     fetchAllPages<{ studentId: string; gradeId: string; awardedAt: string; source: string }>((from, to) =>

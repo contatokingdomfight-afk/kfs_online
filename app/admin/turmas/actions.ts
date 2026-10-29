@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, canAccessSchool, schoolAccessErrorForRows } from "@/lib/school-scope";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -39,6 +40,7 @@ export async function createLesson(formData: FormData) {
   const coachIdsRaw = formData.getAll("coachIds");
   const coachIds = coachIdsRaw.map((x) => String(x).trim()).filter(Boolean);
   const schoolId = (formData.get("schoolId") as string)?.trim() || null;
+  if (!canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Não autorizado: escola fora do teu acesso." };
   const locationId = (formData.get("locationId") as string)?.trim() || null;
   const capacityStr = formData.get("capacity") as string | null;
   const planningNotes = (formData.get("planningNotes") as string) || null;
@@ -157,6 +159,7 @@ export async function updateLesson(
   if (permErr) return { error: permErr };
 
   const lessonId = (formData.get("lessonId") as string)?.trim();
+  { const schoolErr = await schoolAccessErrorForRows("Lesson", lessonId ? [lessonId] : []); if (schoolErr) return { error: schoolErr }; }
   const modality = (formData.get("modality") as string)?.trim();
   const date = (formData.get("date") as string)?.trim();
   const startTime = (formData.get("startTime") as string)?.trim();
@@ -227,5 +230,6 @@ export async function deleteLesson(lessonId: string, returnQuery?: string): Prom
   }
   const permErr = await adminPermissionError("admin:turmas:write");
   if (permErr) return { error: permErr };
+  { const schoolErr = await schoolAccessErrorForRows("Lesson", [lessonId]); if (schoolErr) return { error: schoolErr }; }
   return performDeleteLesson(lessonId, returnQuery);
 }

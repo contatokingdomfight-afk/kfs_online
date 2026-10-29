@@ -1,3 +1,4 @@
+import { getSchoolScope } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -12,7 +13,12 @@ export default async function AdminLocaisPage() {
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
-  const locations = await getCachedLocations(supabase);
+  const scope = await getSchoolScope();
+  // Multi-escola: o diretor só vê os locais das suas escolas.
+  const locations =
+    scope.kind === "school"
+      ? ((await supabase.from("Location").select("id, name").in("schoolId", scope.schoolIds).order("name")).data ?? [])
+      : await getCachedLocations(supabase);
 
   return (
     <div style={{ maxWidth: "min(500px, 100%)" }}>

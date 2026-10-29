@@ -1,3 +1,4 @@
+import { getSchoolScope, canAccessSchool } from "@/lib/school-scope";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -34,6 +35,9 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
     )
     .eq("id", lessonId)
     .single();
+
+  // Multi-escola: aula de outra escola.
+  if (lesson && !canAccessSchool(await getSchoolScope(), (lesson as { schoolId?: string }).schoolId)) redirect("/admin/turmas");
 
   if (!lesson) {
     const backHref = turmasReturnQuery ? `/admin/turmas?${turmasReturnQuery}` : "/admin/turmas";

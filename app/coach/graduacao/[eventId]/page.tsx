@@ -36,7 +36,7 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
   const { event, candidates } = detail;
   const isOpen = event.status === "SCHEDULED";
 
-  const readiness = isOpen ? await loadModalityReadiness(supabase, event.modalityCode) : null;
+  const readiness = isOpen ? await loadModalityReadiness(supabase, event.modalityCode, undefined, event.schoolId ? [event.schoolId] : undefined) : null;
   const convokedHere = new Set(candidates.map((c) => c.studentId));
   const options: ConvocationOption[] = (readiness?.students ?? [])
     .filter((s) => !convokedHere.has(s.studentId) && s.progress.next)

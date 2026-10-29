@@ -1,3 +1,4 @@
+import { getSchoolScope, resolveSchoolParam, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
@@ -33,7 +34,8 @@ export default async function AdminTurmasPage({
       : null;
   const weekEnd = weekMonday ? getWeekEndSunday(weekMonday) : null;
   const weekMondayForLink = weekMonday ?? getWeekStartMondayLisbon();
-  const schoolFilterParam = params.school?.trim() || null;
+  const scope = await getSchoolScope();
+  const schoolFilterParam = resolveSchoolParam(scope, params.school);
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
@@ -41,11 +43,11 @@ export default async function AdminTurmasPage({
   const adminResult = getAdminClientOrNull();
   const supabase = adminResult.client ?? (await createClient());
 
-  const { data: lessonsRaw, error: lessonsError } = await supabase
+  const { data: lessonsRaw, error: lessonsError } = await filterSchools(supabase
     .from("Lesson")
     .select(
       "id, modality, date, weekday, startTime, endTime, capacity, coachId, locationId, planningNotes, isOneOff, isOpenClass, athletesOnly, createdAt, schoolId"
-    )
+    ), scope.kind === "school" ? scope.schoolIds : null)
     .order("modality", { ascending: true })
     .order("startTime", { ascending: true });
 
@@ -132,7 +134,7 @@ export default async function AdminTurmasPage({
     getCachedLocations(supabase),
     getCachedModalityRefs(supabase),
   ]);
-  const { data: schools } = await supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true });
+  const { data: schools } = await filterSchools(supabase.from("School").select("id, name"), scope.kind === "school" ? scope.schoolIds : null, "id").eq("isActive", true).order("name", { ascending: true });
 
   const lessonsForView =
     schoolFilterParam && schools?.some((s) => s.id === schoolFilterParam)

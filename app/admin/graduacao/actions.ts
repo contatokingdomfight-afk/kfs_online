@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, isNetworkScope, schoolAccessErrorForRows, schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -36,6 +37,7 @@ function friendlyDbError(message: string): string {
 export async function saveGraduationTemplate(payload: unknown): Promise<SaveGraduationTemplateResult> {
   const auth = await authorize();
   if ("error" in auth) return { error: auth.error };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode alterar o programa de graduação da rede." };
 
   const normalized = normalizeTemplateDraft(payload);
   if (!normalized.ok) return { error: normalized.error };
@@ -67,6 +69,7 @@ export async function getGraduationStarterDraft(
 ): Promise<StarterDraftResult> {
   const auth = await authorize();
   if ("error" in auth) return { error: auth.error };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode alterar o programa de graduação da rede." };
 
   const result = getAdminClientOrNull();
   if (!result.client) return { error: "Configuração Supabase em falta." };
@@ -114,6 +117,7 @@ export async function applyInitialGrades(
   if (!result.client) return { error: "Configuração Supabase em falta." };
   const supabase = result.client;
   if (changes.length === 0) return { applied: 0 };
+  { const schoolErr = await schoolAccessErrorForRows("Student", changes.map((c) => c.studentId)); if (schoolErr) return { error: schoolErr }; }
   if (changes.length > 1000) return { error: "Demasiadas alterações de uma vez." };
 
   const template = await loadGraduationTemplate(supabase, modalityCode);
@@ -173,6 +177,7 @@ export async function applyInitialGrades(
 export async function setGraduationComponents(modalityCode: string, components: string[]): Promise<{ error?: string; success?: boolean }> {
   const auth = await authorize();
   if ("error" in auth) return { error: auth.error };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode alterar o programa de graduação da rede." };
   const result = getAdminClientOrNull();
   if (!result.client) return { error: "Configuração Supabase em falta." };
 
@@ -211,6 +216,7 @@ export async function setStudentGrade(input: {
 
   const { studentId, modalityCode, gradeId } = input;
   if (!studentId || !modalityCode) return { error: "Dados em falta." };
+  { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
 
   const { data: exam } = await supabase
     .from("StudentGrade")

@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -30,7 +31,7 @@ export default async function AdminGraduacaoAlunoPreviewPage({
   const [{ data: modality }, { data: template }, { data: students }] = await Promise.all([
     supabase.from("ModalityRef").select("code, name").eq("code", modalityCode).maybeSingle(),
     supabase.from("GraduationTemplate").select("isPublished").eq("modalityCode", modalityCode).maybeSingle(),
-    supabase.from("Student").select("id, userId, primaryModality").eq("status", "ATIVO"),
+    filterSchools(supabase.from("Student").select("id, userId, primaryModality"), scopedSchoolIds(await getSchoolScope())).eq("status", "ATIVO"),
   ]);
   if (!modality) notFound();
 

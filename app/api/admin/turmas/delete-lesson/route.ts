@@ -1,3 +1,4 @@
+import { schoolAccessErrorForRows } from "@/lib/school-scope";
 import { NextResponse } from "next/server";
 import { requireAdminForRoute } from "@/lib/supabase/route-handler";
 import { performCancelOccurrence, performDeleteLessonDefinition } from "@/lib/admin/delete-lesson";
@@ -25,6 +26,8 @@ export async function POST(request: Request) {
   if (!lessonId) {
     return NextResponse.json({ error: "lessonId em falta." }, { status: 400 });
   }
+  const schoolErr = await schoolAccessErrorForRows("Lesson", [lessonId]);
+  if (schoolErr) return NextResponse.json({ error: schoolErr }, { status: 403 });
 
   const returnQuery = typeof body.returnQuery === "string" ? body.returnQuery : undefined;
   const action = body.action === "cancelOccurrence" ? "cancelOccurrence" : "deleteDefinition";

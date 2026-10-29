@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -46,11 +47,11 @@ export default async function AdminPresencaPage({ searchParams }: { searchParams
   const prevStart = addDaysYmd(rangeStart, -WINDOW_DAYS);
   const nextStart = addDaysYmd(rangeStart, WINDOW_DAYS);
 
-  const { data: lessonsRaw } = await supabase
+  const { data: lessonsRaw } = await filterSchools(supabase
     .from("Lesson")
     .select(
       "id, modality, date, weekday, startTime, endTime, schoolId, isOneOff, coachId, isOpenClass, locationId, capacity, planningNotes"
-    )
+    ), scopedSchoolIds(await getSchoolScope()))
     .order("startTime", { ascending: true });
 
   const defs = rowsToLessonDefinitions(lessonsRaw ?? []);

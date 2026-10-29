@@ -1,3 +1,4 @@
+import { getSchoolScope, scopedSchoolIds } from "@/lib/school-scope";
 import Link from "next/link";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
@@ -47,7 +48,7 @@ export async function AptosTab({
   const filter: AptosFilter = FILTERS.some((f) => f.value === filterParam) ? (filterParam as AptosFilter) : "aptos";
   const href = (m: string, f: AptosFilter) => `/coach/graduacao?tab=aptos&m=${encodeURIComponent(m)}&f=${f}`;
 
-  const readiness = await loadModalityReadiness(supabase, selected.code);
+  const readiness = await loadModalityReadiness(supabase, selected.code, undefined, scopedSchoolIds(await getSchoolScope()));
   const rows: AptoRow[] = [];
   for (const s of readiness?.students ?? []) {
     const { progress } = s;

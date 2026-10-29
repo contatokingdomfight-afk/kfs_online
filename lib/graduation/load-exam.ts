@@ -61,6 +61,8 @@ export type ExamEventRow = {
   selfBooking: boolean;
   /** A partir de quando os resultados ficam visíveis aos alunos (null = escondidos). */
   resultsRevealAt: string | null;
+  /** Escola onde o exame acontece (multi-escola). */
+  schoolId: string | null;
 };
 
 export type ExamCandidateStatus = "CONVOKED" | "PASSED" | "FAILED" | "ABSENT";
@@ -96,7 +98,7 @@ type ScoreRow = ExamScoreRowView & { candidateId: string };
 export async function loadExamEventRow(supabase: SupabaseClient, eventId: string): Promise<ExamEventRow | null> {
   const { data: event } = await supabase
     .from("GraduationExamEvent")
-    .select("id, modalityCode, title, scheduledAt, location, notes, status, endsAt, slotMinutes, slotCapacity, selfBooking, resultsRevealAt")
+    .select("id, modalityCode, title, scheduledAt, location, notes, status, endsAt, slotMinutes, slotCapacity, selfBooking, resultsRevealAt, schoolId")
     .eq("id", eventId)
     .maybeSingle();
   if (!event) return null;
