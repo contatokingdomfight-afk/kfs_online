@@ -1,3 +1,4 @@
+import { getSchoolScope } from "@/lib/school-scope";
 import Link from "next/link";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
@@ -18,9 +19,12 @@ export default async function AdminEventosPage() {
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale);
 
+  const evScope = await getSchoolScope();
   const { data: events } = await supabase
     .from("Event")
     .select("id, name, description, type, event_date, start_date, end_date, price, max_participants, is_active")
+    // Multi-escola: o diretor vê os eventos da sua escola e os da rede (schoolId null).
+    .or(evScope.kind === "school" ? `schoolId.is.null,schoolId.in.(${evScope.schoolIds.join(",")})` : "id.not.is.null")
     .order("event_date", { ascending: false });
 
   const list: AdminEventListRow[] = (events ?? []).map((e) => ({

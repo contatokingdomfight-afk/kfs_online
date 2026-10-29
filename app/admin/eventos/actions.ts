@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, canAccessSchool } from "@/lib/school-scope";
 import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -71,7 +72,10 @@ export async function createEvent(
   if (maxParticipants != null && (isNaN(maxParticipants) || maxParticipants < 0)) return { error: "Lotação inválida." };
 
   const supabase = createAdminClient();
+  // Multi-escola: evento da escola selecionada; Admin Geral em «Todas» = evento da rede (schoolId null).
+  const evScope = await getSchoolScope();
   const { error } = await supabase.from("Event").insert({
+    schoolId: evScope.kind === "none" ? null : evScope.selectedSchoolId,
     name,
     description,
     type,
@@ -107,6 +111,7 @@ export async function updateEvent(
 
   const eventId = (formData.get("eventId") as string)?.trim();
   if (!eventId) return { error: "ID do evento inválido." };
+  { const schoolErr = await eventSchoolError(eventId, false); if (schoolErr) return { error: schoolErr }; }
 
   const name = (formData.get("name") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
@@ -186,6 +191,7 @@ export async function deleteEvent(eventId: string): Promise<{ error?: string }> 
   const permErr = await adminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
   if (!eventId?.trim()) return { error: "ID do evento inválido." };
+  { const schoolErr = await eventSchoolError(eventId.trim(), false); if (schoolErr) return { error: schoolErr }; }
 
   const supabase = createAdminClient();
   const { error } = await supabase.from("Event").delete().eq("id", eventId.trim());
@@ -207,6 +213,7 @@ export async function setRegistrationStatus(
   const supabase = createAdminClient();
   const rid = registrationId.trim();
   if (!rid) return { error: "ID inválido." };
+  { const schoolErr = await registrationSchoolError(rid); if (schoolErr) return { error: schoolErr }; }
 
   if (status === "CONFIRMED") {
     const { data: row, error: selErr } = await supabase
@@ -337,6 +344,7 @@ export async function redeemEventTicket(checkinToken: string, eventId: string): 
   const token = checkinToken.trim();
   const eid = eventId.trim();
   if (!eid) return { ok: false, error: "Evento inválido." };
+  { const schoolErr = await eventSchoolError(eid, true); if (schoolErr) return { ok: false, error: schoolErr }; }
   if (!/^[a-f0-9]{48}$/i.test(token)) return { ok: false, error: "Código de ingresso inválido." };
 
   const supabase = createAdminClient();
@@ -389,4 +397,22 @@ export async function redeemEventCheckinByRegistrationId(
   if (permErr) return { ok: false, error: permErr };
 
   return executeEventCheckin(supabase, reg as RegCheckinRow, eid);
+}
+
+/**
+ * Multi-escola: o diretor gere só os eventos da sua escola. Eventos da rede (schoolId null)
+ * ficam para o Admin Geral, exceto o check-in à porta (`allowNetwork`).
+ */
+async function eventSchoolError(eventId: string, allowNetwork: boolean): Promise<string | null> {
+  const scope = await getSchoolScope();
+  if (scope.kind === "network" || !eventId) return null;
+  const { data } = await createAdminClient().from("Event").select("schoolId").eq("id", eventId).maybeSingle();
+  if (!data) return null;
+  if (data.schoolId == null) return allowNetwork ? null : "Este evento é da rede — só o Admin Geral o pode gerir.";
+  return canAccessSchool(scope, data.schoolId as string) ? null : "Não autorizado: este evento é de outra escola.";
+}
+
+async function registrationSchoolError(registrationId: string): Promise<string | null> {
+  const { data } = await createAdminClient().from("EventRegistration").select("eventId").eq("id", registrationId).maybeSingle();
+  return data?.eventId ? eventSchoolError(data.eventId as string, false) : null;
 }

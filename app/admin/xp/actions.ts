@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
@@ -13,6 +14,7 @@ export async function saveXpRules(_prev: SaveXpRulesResult | null, formData: For
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
   const permErr = await adminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode alterar as regras de XP e missões da rede." };
 
   const parsed = parseXpRulesInput(Object.fromEntries(XP_RULE_SOURCES.map((s) => [s, formData.get(s)])));
   if (!parsed.ok) return { error: parsed.error };

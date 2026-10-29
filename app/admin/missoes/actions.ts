@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
@@ -23,6 +24,7 @@ export async function seedMissionsFromDoc(): Promise<SeedMissionsResult> {
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Sem permissão." };
   const permErr = await adminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode alterar as regras de XP e missões da rede." };
 
   let supabase;
   try {
@@ -81,6 +83,7 @@ export async function createMission(
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Sem permissão." };
   const permErr = await adminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode alterar as regras de XP e missões da rede." };
 
   const name = (formData.get("name") as string)?.trim();
   if (!name) return { error: "Nome da missão é obrigatório." };
@@ -124,6 +127,7 @@ export async function deleteMission(missionId: string): Promise<MissionResult> {
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Sem permissão." };
   const permErr = await adminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode alterar as regras de XP e missões da rede." };
   if (!missionId) return { error: "ID em falta." };
 
   let supabase;

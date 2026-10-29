@@ -1,5 +1,6 @@
 "use server";
 
+import { getSchoolScope, resolveSchoolParam, schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -103,6 +104,7 @@ export async function remindAdesaoAction(_prev: TodoActionState, formData: FormD
   if ("error" in ctx) return { error: ctx.error };
   const item = readItem(formData);
   if (!item?.studentId || item.kind !== "adesao") return { error: "Item inválido." };
+  { const schoolErr = await schoolAccessErrorForStudent(item.studentId); if (schoolErr) return { error: schoolErr }; }
   await remindAdesao(ctx.supabase, item.studentId);
   const err = await recordDone(ctx.supabase, ctx.dbUser.id, item, "lembrete");
   if (err) return { error: "Lembrete enviado, mas não foi possível marcar como feito." };
@@ -116,6 +118,7 @@ export async function requestPhysicalAssessmentAction(_prev: TodoActionState, fo
   if ("error" in ctx) return { error: ctx.error };
   const item = readItem(formData);
   if (!item?.studentId || item.kind !== "fisicas") return { error: "Item inválido." };
+  { const schoolErr = await schoolAccessErrorForStudent(item.studentId); if (schoolErr) return { error: schoolErr }; }
   const reqErr = await requestPhysical(ctx.supabase, item.studentId);
   if (reqErr) return { error: reqErr };
   const err = await recordDone(ctx.supabase, ctx.dbUser.id, item, "pedido");
@@ -133,7 +136,7 @@ export async function bulkTodoAction(_prev: TodoActionState, formData: FormData)
   if ("error" in ctx) return { error: ctx.error };
   const { supabase, dbUser } = ctx;
   const kind = String(formData.get("kind") ?? "") as AdminTodoKind;
-  const schoolId = String(formData.get("schoolId") ?? "").trim() || null;
+  const schoolId = resolveSchoolParam(await getSchoolScope(), String(formData.get("schoolId") ?? ""));
   if (kind !== "adesao" && kind !== "fisicas" && kind !== "carga") return { error: "Ação em lote indisponível para este alerta." };
 
   const group = (await loadAdminTodo(supabase, schoolId)).find((g) => g.kind === kind);
