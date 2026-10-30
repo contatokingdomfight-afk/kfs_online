@@ -11,7 +11,7 @@ import { GRADUATION_AXES, GRADUATION_AXIS_META } from "@/lib/graduation/template
 import { loadCandidateScoringContext, loadCandidateSheet, loadExamEventRow, toScoreInput } from "@/lib/graduation/load-exam";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
 import { createInAppNotification } from "@/lib/notifications/in-app";
-import { bookingErrorMessage, buildExamSlots } from "@/lib/graduation/exam-slots";
+import { bookingErrorMessage, buildExamSlots, slotKey } from "@/lib/graduation/exam-slots";
 import { isRevealDue, revealCandidate, revealDueResults, type PendingGrade } from "@/lib/graduation/reveal";
 
 export type ActionResult = { error?: string; success?: boolean };
@@ -236,6 +236,66 @@ export async function convokeStudents(eventId: string, studentIds: string[]): Pr
 
   revalidatePath(`/coach/graduacao/${eventId}`);
   return { success: true, convoked: rows.length };
+}
+
+/** Coach/admin: marca o exame de um aluno sem convocatória (aluno que não consegue marcar sozinho). */
+export async function bookExamForStudent(input: { studentId: string; eventId: string; slotIso: string | null }): Promise<ActionResult> {
+  const { studentId, eventId, slotIso } = input;
+  const auth = await graduationExamActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  { const schoolErr = (await examEventSchoolError(eventId)) ?? (await schoolAccessErrorForStudent(studentId)); if (schoolErr) return { error: schoolErr }; }
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+
+  const event = await loadExamEventRow(supabase, eventId);
+  if (!event || event.status !== "SCHEDULED") return { error: "Este exame já não aceita marcações." };
+
+  const slots = buildExamSlots(event);
+  const slot = slots.find((s) => slotIso && slotKey(s) === slotKey(slotIso)) ?? null;
+  if (slots.length > 0 && !slot) return { error: "Escolhe um horário." };
+  if (new Date(slot ?? event.scheduledAt).getTime() < Date.now()) return { error: "Esse horário já passou." };
+
+  const readiness = await loadModalityReadiness(supabase, event.modalityCode, undefined, event.schoolId ? [event.schoolId] : undefined);
+  const student = readiness?.students.find((s) => s.studentId === studentId);
+  if (!student?.progress.next) return { error: "Este aluno não tem exame disponível neste dia." };
+  if (student.activeConvocation) return { error: "Este aluno já tem um exame marcado." };
+
+  const { data: existing } = await supabase.from("GraduationExamCandidate").select("id").eq("eventId", eventId).eq("studentId", studentId).maybeSingle();
+  if (existing) return { error: "Este aluno já fez este exame." };
+
+  const gradeId = student.progress.next.id;
+  if (slot) {
+    const { error } = await supabase.rpc("book_graduation_exam_slot", {
+      p_event_id: eventId,
+      p_student_id: studentId,
+      p_grade_id: gradeId,
+      p_slot_starts_at: slot,
+      p_booked_by_student: false,
+      p_ignore_capacity: true,
+    });
+    if (error) return { error: bookingErrorMessage(error.message) };
+  } else {
+    // Exame sem horários: fica convocado para a hora do exame.
+    const { error } = await supabase.from("GraduationExamCandidate").insert({ eventId, studentId, gradeId });
+    if (error) {
+      console.error("bookExamForStudent:", error);
+      return { error: "Não foi possível marcar o exame." };
+    }
+  }
+
+  await createInAppNotification(supabase, {
+    studentId,
+    type: "GRADUATION",
+    title: `Exame marcado: ${student.progress.next.name}`,
+    body: `${event.title} · ${formatWhen(slot ?? event.scheduledAt)}${event.location ? ` · ${event.location}` : ""}. Revê os conteúdos na tua graduação.`,
+    href: "/dashboard/graduacao",
+  });
+
+  revalidatePath("/coach/graduacao");
+  revalidatePath(`/coach/graduacao/${eventId}`);
+  revalidatePath("/dashboard/graduacao");
+  revalidatePath("/dashboard/graduacao/agendar");
+  return { success: true };
 }
 
 export async function removeCandidate(candidateId: string): Promise<ActionResult> {

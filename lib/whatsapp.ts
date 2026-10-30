@@ -59,6 +59,12 @@ export function buildMissYouMessage(studentFirstName: string): string {
   return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Sentimos a tua falta nos treinos — está tudo bem? Se precisares de ajuda com horários ou com o plano, é só responder por aqui. Esperamos por ti no tatame! 🥋`;
 }
 
+/** Lembrete para um aluno apto marcar o exame de graduação na app (`gradeName`: ex. «Branco»). */
+export function buildExamBookingReminderMessage(studentFirstName: string, gradeName: string, bookingUrl: string): string {
+  const name = studentFirstName.trim() || "tudo bem";
+  return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Já estás apto para o exame de graduação (${gradeName}) — só falta marcares o teu dia e horário aqui: ${bookingUrl}. Qualquer dúvida, é só responder por aqui. 🥋`;
+}
+
 /** Mensagem de seguimento para quem fez aula experimental e ainda não se inscreveu. */
 export function buildTrialFollowUpMessage(name: string, modalityLabel: string, plansUrl: string): string {
   const firstName = name.trim().split(" ")[0] || name.trim() || "tudo bem";
