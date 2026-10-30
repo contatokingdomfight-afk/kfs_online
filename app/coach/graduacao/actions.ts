@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { graduationAdminActionAuth, graduationExamActionAuth } from "@/lib/graduation/exam-auth";
 import { loadGraduationTemplate } from "@/lib/graduation/load-template";
-import { computeExamResult, EXAM_SCORE_MAX, EXAM_SCORE_MIN, sheetEntries } from "@/lib/graduation/exam";
+import { averageScoresByKey, computeExamResult, EXAM_SCORE_MAX, EXAM_SCORE_MIN, sheetEntries, type ExamSheetEntry } from "@/lib/graduation/exam";
+import { GRADUATION_AXES, GRADUATION_AXIS_META } from "@/lib/graduation/template";
 import { loadCandidateScoringContext, loadCandidateSheet, loadExamEventRow, toScoreInput } from "@/lib/graduation/load-exam";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
 import { createInAppNotification } from "@/lib/notifications/in-app";
@@ -678,4 +679,74 @@ async function examCandidateSchoolError(candidateId: string): Promise<string | n
   if (!supabase || !candidateId) return null;
   const { data } = await supabase.from("GraduationExamCandidate").select("eventId").eq("id", candidateId).maybeSingle();
   return data ? examEventSchoolError(data.eventId as string) : null;
+}
+
+export type CandidateReport = {
+  name: string;
+  examFor: string;
+  status: "CONVOKED" | "PASSED" | "FAILED" | "ABSENT";
+  feedback: string | null;
+  /** Justificação de aprovação contra o critério (interna). */
+  overrideReason: string | null;
+  examiners: string[];
+  passMin: number;
+  axes: { label: string; avg: number | null; below: boolean }[];
+  sections: { title: string; items: { label: string; critical: boolean; avg: number | null; comments: string[] }[] }[];
+};
+
+/** Notas de um convocado para o modal do relatório (média dos avaliadores por item + comentários). */
+export async function loadCandidateReport(candidateId: string): Promise<{ error?: string; report?: CandidateReport }> {
+  const auth = await graduationExamActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  { const schoolErr = await examCandidateSchoolError(candidateId); if (schoolErr) return { error: schoolErr }; }
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+
+  const data = await loadCandidateSheet(supabase, candidateId, auth.userId);
+  if (!data) return { error: "Ficha não encontrada." };
+  const { sheet, candidate } = data;
+  const result = candidate.status === "CONVOKED" ? data.result : (candidate.storedResult ?? data.result);
+  const avg = averageScoresByKey(data.allScores.map(toScoreInput));
+  const comments = new Map<string, string[]>();
+  for (const s of data.allScores) {
+    if (!s.comment) continue;
+    const list = comments.get(s.scoreKey) ?? [];
+    list.push(s.comment);
+    comments.set(s.scoreKey, list);
+  }
+  const item = (e: ExamSheetEntry, label = e.label) => ({ label, critical: e.isCritical, avg: avg.get(e.key) ?? null, comments: comments.get(e.key) ?? [] });
+
+  const sections: CandidateReport["sections"] = [];
+  if (data.placement) {
+    for (const level of data.placement.levelSheets) {
+      sections.push({ title: `Nivelamento — ${level.targetGrade.name}`, items: level.newEntries.map((e) => item(e)) });
+    }
+  } else {
+    for (const axis of GRADUATION_AXES) {
+      const entries = sheet.newEntries.filter((e) => e.axis === axis);
+      if (entries.length) sections.push({ title: `${GRADUATION_AXIS_META[axis].label} — novo em ${sheet.targetGrade.name}`, items: entries.map((e) => item(e)) });
+    }
+    if (sheet.previousEntries.length) {
+      sections.push({ title: `Grau anterior — ${sheet.previousGradeName ?? ""}`, items: sheet.previousEntries.map((e) => item(e)) });
+    }
+    const review = [
+      ...sheet.reviewAxes.map((r) => item(r.entry, `Revisão ${GRADUATION_AXIS_META[r.entry.axis].label}`)),
+      ...sheet.reviewCriticalEntries.map((e) => item(e, `${e.label}${e.gradeName ? ` (${e.gradeName})` : ""}`)),
+    ];
+    if (review.length) sections.push({ title: "Revisão dos graus mais antigos", items: review });
+  }
+
+  return {
+    report: {
+      name: candidate.studentName,
+      examFor: data.placement ? "Nivelamento" : sheet.targetGrade.name,
+      status: candidate.status,
+      feedback: candidate.feedback,
+      overrideReason: result.override?.reason ?? null,
+      examiners: [...data.examinerNames.values()],
+      passMin: sheet.passMin,
+      axes: result.axes.map((a) => ({ label: GRADUATION_AXIS_META[a.axis].label, avg: a.newAvg, below: a.newPassed === false && a.newAvg != null })),
+      sections,
+    },
+  };
 }

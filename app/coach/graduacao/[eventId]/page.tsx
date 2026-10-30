@@ -12,6 +12,8 @@ import { ConvocationPanel, type ConvocationOption } from "./ConvocationPanel";
 import { EventActions, RemoveCandidateButton } from "./EventActions";
 import { CandidateSlotSelect, RemindReadyButton } from "./SlotControls";
 import { RevealControls } from "./RevealControls";
+import { ExamReport } from "./ExamReport";
+import { buildExamReportRows } from "./report-data";
 import { revealDueResults } from "@/lib/graduation/reveal";
 import { TargetGradeControl, type TargetGradeOption } from "./TargetGradeControl";
 import { buildExamSlots, countBySlot, slotKey } from "@/lib/graduation/exam-slots";
@@ -22,13 +24,20 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Lisbon" });
 }
 
-export default async function ExamEventPage({ params }: { params: Promise<{ eventId: string }> }) {
+export default async function ExamEventPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ separador?: string }>;
+}) {
   const { userId, role } = await requireGraduationExamPage();
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
   const { eventId } = await params;
+  const tab = (await searchParams).separador === "relatorio" ? "relatorio" : "gestao";
   // Revela os resultados cuja data já chegou antes de mostrar a página.
   await revealDueResults(supabase, { eventId });
   const detail = await loadExamEventDetail(supabase, eventId, userId);
@@ -36,7 +45,8 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
   const { event, candidates } = detail;
   const isOpen = event.status === "SCHEDULED";
 
-  const readiness = isOpen ? await loadModalityReadiness(supabase, event.modalityCode, undefined, event.schoolId ? [event.schoolId] : undefined) : null;
+  // O relatório não precisa da prontidão (cálculo pesado): só a gestão a carrega.
+  const readiness = isOpen && tab === "gestao" ? await loadModalityReadiness(supabase, event.modalityCode, undefined, event.schoolId ? [event.schoolId] : undefined) : null;
   const convokedHere = new Set(candidates.map((c) => c.studentId));
   const options: ConvocationOption[] = (readiness?.students ?? [])
     .filter((s) => !convokedHere.has(s.studentId) && s.progress.next)
@@ -85,8 +95,28 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
     (s) => s.progress.isReadyForExam && s.progress.next && !s.activeConvocation && !convokedHere.has(s.studentId)
   ).length;
 
+  const reportRows = tab === "relatorio" ? await buildExamReportRows(supabase, event.modalityCode, candidates, detail.template) : [];
+  const revealLabel = event.resultsRevealAt ? formatExamDate(event.resultsRevealAt) : null;
+  const tabLink = (id: "gestao" | "relatorio", label: string) => (
+    <Link
+      href={id === "relatorio" ? `/coach/graduacao/${event.id}?separador=relatorio` : `/coach/graduacao/${event.id}`}
+      aria-current={tab === id ? "page" : undefined}
+      style={{
+        padding: "10px 14px",
+        fontSize: "var(--text-sm)",
+        fontWeight: 600,
+        textDecoration: "none",
+        color: tab === id ? "var(--text-primary)" : "var(--text-secondary)",
+        borderBottom: `2px solid ${tab === id ? "var(--primary)" : "transparent"}`,
+        marginBottom: -1,
+      }}
+    >
+      {label}
+    </Link>
+  );
+
   return (
-    <div style={{ maxWidth: "min(760px, 100%)", paddingBottom: 96 }}>
+    <div style={{ maxWidth: tab === "relatorio" ? "min(980px, 100%)" : "min(760px, 100%)", paddingBottom: 96 }}>
       <Link href="/coach/graduacao" style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", fontWeight: 500, textDecoration: "none" }}>
         ← Exames de graduação
       </Link>
@@ -109,6 +139,16 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
         </p>
         {event.notes && <p style={{ margin: "8px 0 0", fontSize: "var(--text-sm)", whiteSpace: "pre-line" }}>{event.notes}</p>}
       </header>
+
+      <nav aria-label="Separadores do exame" style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--border)", margin: "0 0 var(--space-4)" }}>
+        {tabLink("gestao", "Gestão")}
+        {tabLink("relatorio", "Relatório")}
+      </nav>
+
+      {tab === "relatorio" ? (
+        <ExamReport eventId={event.id} rows={reportRows} revealLabel={revealLabel} />
+      ) : (
+      <>
 
       {slots.length > 0 && (
         <section className="card" style={{ marginBottom: "var(--space-5)" }} aria-labelledby="horarios">
@@ -248,6 +288,8 @@ export default async function ExamEventPage({ params }: { params: Promise<{ even
       {isOpen && <ConvocationPanel eventId={event.id} options={options} readinessHref={readinessHref} />}
 
       <EventActions eventId={event.id} status={event.status} pendingCount={pending} />
+      </>
+      )}
     </div>
   );
 }

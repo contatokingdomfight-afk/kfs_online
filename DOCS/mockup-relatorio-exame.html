@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Relatório do exame</title>
+<style>
+  :root { --bg:#0b0b0b; --bg2:#141414; --bg3:#1a1a1a; --tx:#fff; --tx2:#a1a1aa; --pr:#c1121f; --ok:#22c55e; --warn:#facc15; --bad:#e11d48; --bd:#27272a; --font:"Inter",system-ui,-apple-system,sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:var(--font); background:var(--bg); color:var(--tx); -webkit-font-smoothing:antialiased; }
+  .meta { max-width:1240px; margin:0 auto; padding:28px 16px 0; }
+  .badge { display:inline-flex; font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; background:rgba(193,18,31,.15); color:#ff6b73; text-transform:uppercase; letter-spacing:.5px; }
+  .meta h1 { font-size:22px; margin:12px 0 6px; } .meta li { font-size:13.5px; color:var(--tx2); line-height:1.6; } .meta ul { margin:8px 0 0; padding-left:18px; max-width:860px; }
+  .stage { max-width:1240px; margin:20px auto 60px; padding:0 16px; display:flex; gap:24px; align-items:flex-start; }
+  .col-label { font-size:11px; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; }
+  .desk-wrap { flex:1; min-width:0; } .phone-wrap { width:375px; flex-shrink:0; }
+  @media (max-width:1000px) { .stage { flex-direction:column; } .phone-wrap { width:100%; max-width:375px; } .desk-wrap { width:100%; } }
+  .browser { border:1px solid var(--bd); border-radius:16px; overflow:hidden; background:var(--bg); }
+  .bar { display:flex; align-items:center; gap:6px; padding:10px 14px; background:var(--bg2); border-bottom:1px solid var(--bd); }
+  .dot { width:10px; height:10px; border-radius:50%; background:#3a3a3a; }
+  .url { flex:1; font:12px Consolas,monospace; color:var(--tx2); background:var(--bg); border:1px solid var(--bd); border-radius:6px; padding:5px 12px; margin-left:8px; }
+  .vp { position:relative; height:740px; overflow-y:auto; }
+  .phone { border:10px solid #222; border-radius:36px; overflow:hidden; background:var(--bg); height:800px; display:flex; flex-direction:column; }
+  .phone .notch { height:26px; display:flex; justify-content:center; align-items:center; } .phone .notch span { width:90px; height:6px; border-radius:4px; background:#222; }
+  .phone .vp { flex:1; height:auto; }
+  .app { padding:16px 14px 30px; } .desk .app { padding:22px 28px 30px; max-width:900px; margin:0 auto; }
+  .crumb { font-size:12px; color:var(--tx2); }
+  h2 { font-size:19px; margin:6px 0 2px; } .muted { color:var(--tx2); font-size:12.5px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--bd); margin:14px 0 14px; }
+  .tab { font:600 13.5px var(--font); padding:10px 14px; border:0; background:none; color:var(--tx2); border-bottom:2px solid transparent; cursor:pointer; }
+  .tab.on { color:var(--tx); border-bottom-color:var(--pr); }
+  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+  .kpi { background:var(--bg2); border:1px solid var(--bd); border-radius:12px; padding:10px; }
+  .kpi b { display:block; font-size:20px; } .kpi span { font-size:11.5px; color:var(--tx2); }
+  .note { font-size:12px; color:var(--tx2); background:rgba(250,204,21,.06); border:1px solid rgba(250,204,21,.25); border-radius:10px; padding:9px 11px; margin-bottom:12px; }
+  .tools { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .input { flex:1; min-width:140px; padding:9px 11px; border-radius:9px; border:1px solid var(--bd); background:var(--bg); color:#fff; font:13px var(--font); }
+  .chip { font:600 12px var(--font); padding:7px 11px; border-radius:999px; border:1px solid var(--bd); background:var(--bg2); color:var(--tx2); cursor:pointer; }
+  .chip.on { color:var(--tx); border-color:var(--tx); }
+  table { width:100%; border-collapse:collapse; background:var(--bg2); border:1px solid var(--bd); border-radius:12px; overflow:hidden; font-size:13px; }
+  th, td { padding:10px; border-bottom:1px solid var(--bd); text-align:left; vertical-align:middle; }
+  th { font-size:11px; color:var(--tx2); text-transform:uppercase; letter-spacing:.4px; }
+  tr:last-child td { border-bottom:0; }
+  .name { color:var(--tx); font-weight:700; text-decoration:underline; text-decoration-color:var(--bd); text-underline-offset:3px; cursor:pointer; background:none; border:0; font:inherit; font-weight:700; padding:0; text-align:left; }
+  .belt { width:26px; height:9px; border-radius:2px; display:inline-block; vertical-align:middle; margin-right:5px; }
+  .pill { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+  .p-ok { background:rgba(34,197,94,.14); color:#4ade80; } .p-bad { background:rgba(225,29,72,.16); color:#fb7185; } .p-warn { background:rgba(250,204,21,.14); color:#fde047; } .p-grey { background:#222; color:var(--tx2); }
+  .lock { font-size:10.5px; color:var(--tx2); display:block; margin-top:3px; }
+  .new { font-size:10.5px; color:#4ade80; font-weight:700; }
+  .avg { font-weight:700; } .avg.bad { color:#fb7185; } .avg.ok { color:#4ade80; }
+  /* lista no telemóvel */
+  .rows { display:flex; flex-direction:column; gap:8px; }
+  .rowcard { background:var(--bg2); border:1px solid var(--bd); border-radius:12px; padding:11px 12px; display:grid; grid-template-columns:1fr auto; gap:4px 10px; }
+  .rowcard .sub { font-size:12px; color:var(--tx2); grid-column:1 / -1; }
+  .phone table { display:none; } .desk .rows { display:none; }
+  .phone .kpis { grid-template-columns:repeat(2,1fr); }
+  /* modal */
+  .ov { position:absolute; inset:0; background:rgba(0,0,0,.65); display:flex; align-items:flex-start; justify-content:center; padding:24px 14px; z-index:50; }
+  .phone .ov { align-items:flex-end; padding:0; }
+  .modal { width:min(620px,100%); max-height:100%; overflow:auto; background:var(--bg2); border:1px solid var(--bd); border-radius:16px; padding:16px; }
+  .phone .modal { border-radius:18px 18px 0 0; max-height:92%; }
+  .mh { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .x { width:34px; height:34px; border-radius:10px; border:1px solid var(--bd); background:var(--bg); color:var(--tx2); cursor:pointer; flex-shrink:0; }
+  .axes { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:12px 0; }
+  .phone .axes { grid-template-columns:repeat(2,1fr); }
+  .ax { background:var(--bg); border:1px solid var(--bd); border-radius:9px; padding:6px 8px; font-size:11px; color:var(--tx2); }
+  .ax b { display:block; font-size:16px; } .ax.bad b { color:#fb7185; } .ax.ok b { color:#4ade80; }
+  details { border:1px solid var(--bd); border-radius:10px; margin-bottom:8px; background:var(--bg); }
+  summary { cursor:pointer; padding:9px 11px; font-size:13px; font-weight:700; display:flex; justify-content:space-between; }
+  .it { display:flex; justify-content:space-between; gap:10px; padding:7px 11px; border-top:1px solid var(--bd); font-size:12.5px; }
+  .it em { display:block; font-style:normal; font-size:11.5px; color:var(--tx2); margin-top:2px; }
+  .sc { font-weight:800; min-width:28px; text-align:right; } .sc.bad { color:#fb7185; }
+  .fb { font-size:12.5px; background:var(--bg); border:1px solid var(--bd); border-radius:10px; padding:9px 11px; margin-top:10px; }
+  .fb.w { border-color:rgba(250,204,21,.35); background:rgba(250,204,21,.05); }
+  .btn { font:600 13px var(--font); padding:9px 14px; border-radius:10px; border:1px solid var(--bd); background:var(--bg3); color:#fff; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="meta">
+  <span class="badge">Mockup · Graduação</span>
+  <h1>Separador «Relatório» no dia de exame + notas do aluno em modal</h1>
+  <ul>
+    <li>Na página de cada dia de exame passam a existir dois separadores: <b>Gestão</b> (o que existe hoje) e <b>Relatório</b>.</li>
+    <li>Relatório: resumo (aprovados, reprovados, faltas, por decidir) e uma tabela com <b>aluno, horário, resultado, grau atual</b> (se aprovado, o novo grau) e médias por eixo. Filtros e procura.</li>
+    <li>Clicar no nome abre um <b>modal com as notas do exame</b>: médias por eixo, cada item com a nota (média dos avaliadores) e comentário, feedback e — se houver — a justificação de aprovação.</li>
+    <li>Resultados por revelar aparecem com 🔒 (o coach vê tudo; o aluno só na data). Botão «Exportar CSV» para levar para Excel.</li>
+  </ul>
+</div>
+<div class="stage">
+  <div class="desk-wrap"><div class="col-label">Desktop</div><div class="browser desk"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">kingdomfight.com/coach/graduacao/…?separador=relatorio</span></div><div class="vp" id="dvp"><div class="app" id="desk"></div></div></div></div>
+  <div class="phone-wrap"><div class="col-label">Telemóvel</div><div class="phone"><div class="notch"><span></span></div><div class="vp" id="pvp"><div class="app" id="phone"></div></div></div></div>
+</div>
+<script>
+const C = { branco:'#e5e7eb', bl:'linear-gradient(90deg,#e5e7eb 50%,#f97316 50%)', laranja:'#f97316', azul:'#38bdf8' };
+const rows = [
+  { n:'Daniel Kubis', h:'07:30', st:'PASSED', cur:['Branco/Laranja','bl'], nw:['Laranja','laranja'], av:[3.8,3.4,4.1,3.6] },
+  { n:'Ana Meneses', h:'07:30', st:'FAILED', cur:['Branco','branco'], av:[3.1,2.6,3.9,3.0] },
+  { n:'Bruno Zorzal', h:'08:00', st:'PASSED', cur:['Sem graduação',null], nw:['Branco','branco'], av:[4.2,3.9,4.5,4.0], ov:true },
+  { n:'Rita Gonçalves', h:'08:00', st:'ABSENT', cur:['Branco','branco'] },
+  { n:'Kelvyn Valdez', h:'08:30', st:'CONVOKED', cur:['Laranja','laranja'], av:[3.5,null,null,null], prog:'12/58' },
+  { n:'Marco Dativo', h:'08:30', st:'CONVOKED', cur:['Branco','branco'] },
+];
+const ST = { PASSED:['Aprovado','p-ok'], FAILED:['Reprovado','p-bad'], ABSENT:['Faltou','p-warn'], CONVOKED:['Por avaliar','p-grey'] };
+let filter = 'all', open = null;
+const belt = (k) => k ? `<span class="belt" style="background:${C[k]}"></span>` : '';
+const avg = (v) => v == null ? '<span class="muted">–</span>' : `<span class="avg ${v < 3 ? 'bad' : 'ok'}">${v.toFixed(1).replace('.', ',')}</span>`;
+function status(r) {
+  const [l, c] = ST[r.st];
+  const label = r.st === 'CONVOKED' && r.prog ? `Em avaliação · ${r.prog}` : l;
+  return `<span class="pill ${c}">${label}</span>${r.ov ? ' <span class="pill p-warn">com justificação</span>' : ''}${r.st !== 'CONVOKED' ? '<span class="lock">🔒 revela 01/12, 15:00</span>' : ''}`;
+}
+function grade(r) {
+  if (r.st === 'PASSED') return `${belt(r.nw[1])}<b>${r.nw[0]}</b> <span class="new">novo</span><span class="lock">antes: ${r.cur[0]}</span>`;
+  return `${belt(r.cur[1])}${r.cur[0]}`;
+}
+function render(root, phone) {
+  const list = rows.filter((r) => filter === 'all' || r.st === filter);
+  const cnt = (s) => rows.filter((r) => r.st === s).length;
+  root.innerHTML = `
+    <div class="crumb">← Exames de graduação</div>
+    <h2>Exame de graduação — Muay Thai</h2>
+    <div class="muted">Sábado, 7/11/2026 · 07:30–09:30</div>
+    <div class="tabs"><button class="tab">Gestão</button><button class="tab on">Relatório</button></div>
+    <div class="kpis">
+      <div class="kpi"><b style="color:#4ade80">${cnt('PASSED')}</b><span>Aprovados</span></div>
+      <div class="kpi"><b style="color:#fb7185">${cnt('FAILED')}</b><span>Reprovados</span></div>
+      <div class="kpi"><b style="color:#fde047">${cnt('ABSENT')}</b><span>Faltas</span></div>
+      <div class="kpi"><b>${cnt('CONVOKED')}</b><span>Por decidir</span></div>
+    </div>
+    <div class="note">🔒 Resultados escondidos dos alunos até terça, 1/12 às 15:00.</div>
+    <div class="tools">
+      <input class="input" placeholder="Procurar aluno">
+      ${[['all','Todos'],['PASSED','Aprovados'],['FAILED','Reprovados'],['ABSENT','Faltas'],['CONVOKED','Por decidir']].map(([k,l]) => `<button class="chip ${filter===k?'on':''}" data-f="${k}">${l}</button>`).join('')}
+      <button class="btn">⬇ Exportar CSV</button>
+    </div>
+    <table><thead><tr><th>Aluno</th><th>Horário</th><th>Resultado</th><th>Grau atual</th><th>Téc.</th><th>Tát.</th><th>Teó.</th><th>Fís.</th></tr></thead><tbody>
+      ${list.map((r) => `<tr><td><button class="name" data-open="${r.n}">${r.n}</button></td><td>${r.h}</td><td>${status(r)}</td><td>${grade(r)}</td>${(r.av ?? [null,null,null,null]).map(avg).map((x) => `<td>${x}</td>`).join('')}</tr>`).join('')}
+    </tbody></table>
+    <div class="rows">${list.map((r) => `<div class="rowcard"><button class="name" data-open="${r.n}">${r.n}</button><span>${ST[r.st] ? `<span class="pill ${ST[r.st][1]}">${r.st === 'CONVOKED' && r.prog ? 'Em avaliação' : ST[r.st][0]}</span>` : ''}</span><div class="sub">${r.h} · ${r.st === 'PASSED' ? `${r.cur[0]} → <b style="color:#fff">${r.nw[0]}</b>` : r.cur[0]}${r.av ? ` · médias ${r.av.map((v) => v == null ? '–' : v.toFixed(1).replace('.', ',')).join(' / ')}` : ''}</div></div>`).join('')}</div>
+    ${open ? modal(rows.find((r) => r.n === open)) : ''}`;
+}
+function modal(r) {
+  const items = { 'Técnico': [['Guarda alta e base', 4.0, ''], ['Jab–direto com retorno à guarda', 3.5, 'Retorno lento no direto'], ['Teep de defesa', 2.5, 'Perde a base ao chutar'], ['Joelhada no clinch', 4.0, '']], 'Tático': [['Gestão de distância', 3.0, ''], ['Trocas de ritmo', 2.0, 'Muito previsível']] };
+  return `<div class="ov" data-close="1"><div class="modal" data-stop="1">
+    <div class="mh"><div><h2 style="margin:0">${r.n}</h2><div class="muted">Exame para ${r.nw ? r.nw[0] : 'Laranja'} · ${r.h} · avaliadores: Coach Ricardo, Coach Ana</div></div><button class="x" data-close="1">✕</button></div>
+    <div style="margin-top:8px">${status(r)}</div>
+    <div class="axes">${['Técnico','Tático','Teórico','Físico'].map((a, i) => { const v = r.av?.[i]; return `<div class="ax ${v == null ? '' : v < 3 ? 'bad' : 'ok'}">${a}<b>${v == null ? '–' : v.toFixed(1).replace('.', ',')}</b></div>`; }).join('')}</div>
+    ${Object.entries(items).map(([ax, list], i) => `<details ${i === 0 ? 'open' : ''}><summary>${ax}<span class="muted">${list.length} itens</span></summary>${list.map(([l, s, c]) => `<div class="it"><span>${l}${c ? `<em>💬 ${c}</em>` : ''}</span><span class="sc ${s < 3 ? 'bad' : ''}">${s.toFixed(1).replace('.', ',')}</span></div>`).join('')}</details>`).join('')}
+    <details><summary>Revisão dos graus anteriores<span class="muted">4 notas</span></summary></details>
+    <div class="fb"><b>Feedback ao aluno</b><br><span class="muted">Boa base técnica; trabalhar a distância e as trocas de ritmo.</span></div>
+    ${r.ov ? '<div class="fb w"><b>Aprovado com justificação</b> (interno)<br><span class="muted">Tático abaixo do mínimo por nervosismo; nos treinos mostra o nível.</span></div>' : ''}
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end"><button class="btn">Abrir ficha completa</button></div>
+  </div></div>`;
+}
+function draw() { render(document.getElementById('desk'), false); render(document.getElementById('phone'), true); }
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-stop]') && !e.target.closest('[data-close].x')) { const o = e.target.closest('[data-open]'); if (!o) return; }
+  const f = e.target.closest('[data-f]'); if (f) { filter = f.dataset.f; draw(); return; }
+  const o = e.target.closest('[data-open]'); if (o) { open = o.dataset.open; draw(); return; }
+  if (e.target.closest('[data-close]')) { open = null; draw(); }
+});
+draw();
+</script>
+</body>
+</html>
