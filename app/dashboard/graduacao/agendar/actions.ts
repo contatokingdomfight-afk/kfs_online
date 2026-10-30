@@ -50,6 +50,9 @@ export async function bookExamSlot(eventId: string, slotIso: string): Promise<Bo
 
   const event = await loadExamEventRow(supabase, eventId);
   if (!event || event.status !== "SCHEDULED" || !event.selfBooking) return { error: "Este dia de exame não aceita marcações." };
+  // Multi-escola: só dias de exame da escola do aluno.
+  const { data: student } = await supabase.from("Student").select("schoolId").eq("id", studentId).maybeSingle();
+  if (!student?.schoolId || student.schoolId !== event.schoolId) return { error: "Este dia de exame não aceita marcações." };
   const slot = buildExamSlots(event).find((s) => slotKey(s) === slotKey(slotIso));
   if (!slot) return { error: "Horário inválido." };
   if (!canSelfBook(slot)) return { error: "As marcações para este horário já fecharam." };

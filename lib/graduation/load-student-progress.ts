@@ -80,7 +80,7 @@ export async function loadStudentGraduations(
   if (publishedCodes.size === 0) return [];
 
   const [{ data: student }, { data: gradeRows }, attendanceRows, { data: modalityRows }] = await Promise.all([
-    supabase.from("Student").select("primaryModality, planId").eq("id", studentId).maybeSingle(),
+    supabase.from("Student").select("primaryModality, planId, schoolId").eq("id", studentId).maybeSingle(),
     supabase
       .from("StudentGrade")
       .select("modalityCode, gradeId, awardedAt, source")
@@ -148,6 +148,7 @@ export async function loadStudentGraduations(
     supabase
       .from("GraduationExamEvent")
       .select("modalityCode, scheduledAt, endsAt, slotMinutes, slotCapacity")
+      .eq("schoolId", (student?.schoolId as string | null) ?? "")
       .in("modalityCode", codes)
       .eq("status", "SCHEDULED")
       .eq("selfBooking", true)

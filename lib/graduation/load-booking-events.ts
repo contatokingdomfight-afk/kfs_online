@@ -14,9 +14,14 @@ export async function loadBookingEvents(
   studentId: string,
   now: Date = new Date()
 ): Promise<{ events: BookingEvent[]; myBooking: MyBooking | null }> {
+  // Multi-escola: o aluno só vê os dias de exame da sua escola.
+  const { data: student } = await admin.from("Student").select("schoolId").eq("id", studentId).maybeSingle();
+  if (!student?.schoolId) return { events: [], myBooking: null };
+
   const { data: eventRows } = await admin
     .from("GraduationExamEvent")
     .select("id, title, scheduledAt, endsAt, slotMinutes, slotCapacity, location, notes")
+    .eq("schoolId", student.schoolId)
     .eq("modalityCode", modalityCode)
     .eq("status", "SCHEDULED")
     .eq("selfBooking", true)
