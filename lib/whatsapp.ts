@@ -124,6 +124,29 @@ export function buildChoosePlanMessage(studentFirstName: string, plansUrl: strin
   return `Olá ${name}! 👋 Vimos que criaste conta na Kingdom Fight School — bem-vindo! Já escolheste o teu plano? Vê aqui as opções: ${plansUrl}. Se tiveres dúvidas sobre horários ou modalidades, é só responder por aqui. 🥋`;
 }
 
+/** Despedida de quem foi inativado, antes de o remover do grupo de WhatsApp. */
+export function buildFarewellMessage(studentFirstName: string): string {
+  const name = studentFirstName.trim();
+  return [
+    `Olá${name ? ` ${name}` : ""}, como você está?`,
+    "Estamos passando para agradecer pelo tempo que esteve a treinar conosco e pela confiança em nosso trabalho. Ficamos honrados em poder ter caminhado junto de ti por esse tempo, e queremos que saiba que vais fazer falta nos treinos aqui na escola.",
+    "",
+    "O mais importante de tudo, procure manter-se sempre em algum esporte e cuidando de você.",
+    "",
+    "Conte sempre conosco para o que precisar e sempre que quiser aparecer na escola para fazer algum treino ou rever os colegas, fique a vontade para isso!",
+    "",
+    "Ahh, se quiseres enviar alguma mensagem de despedida no grupo do whatsapp também podes fazer!!!",
+    "",
+    "Sentiremos tua falta!",
+    "E você será sempre um Kingdom Fighter!",
+    "",
+    "",
+    "Kingdom Fight School",
+    "Mestres,",
+    "Ícaro Bueno e Oséias Beu",
+  ].join("\n");
+}
+
 /** Parabéns no dia de anos. */
 export function buildBirthdayMessage(studentFirstName: string): string {
   const name = studentFirstName.trim();

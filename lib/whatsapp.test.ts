@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPaymentOverdueMessage, buildWhatsAppUrl, normalizePhoneForWhatsApp } from "./whatsapp";
+import { buildFarewellMessage, buildPaymentOverdueMessage, buildWhatsAppUrl, normalizePhoneForWhatsApp } from "./whatsapp";
 
 describe("normalizePhoneForWhatsApp", () => {
   it("prefixes a 9-digit PT local number with 351", () => {
@@ -32,6 +32,18 @@ describe("buildWhatsAppUrl", () => {
 
   it("returns null when the phone has no digits", () => {
     expect(buildWhatsAppUrl("n/a", "Olá!")).toBeNull();
+  });
+});
+
+describe("buildFarewellMessage", () => {
+  it("começa pelo nome e termina com a assinatura dos mestres", () => {
+    const msg = buildFarewellMessage(" Ana ");
+    expect(msg.startsWith("Olá Ana, como você está?")).toBe(true);
+    expect(msg.endsWith("Ícaro Bueno e Oséias Beu")).toBe(true);
+  });
+
+  it("sem nome não deixa espaço a mais", () => {
+    expect(buildFarewellMessage("").startsWith("Olá, como você está?")).toBe(true);
   });
 });
 

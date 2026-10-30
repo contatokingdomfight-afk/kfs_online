@@ -11,6 +11,7 @@ import {
   buildChoosePlanMessage,
   buildDocumentsPendingMessage,
   buildDueSoonMessage,
+  buildFarewellMessage,
   buildFeesOverdueMessage,
   buildMissYouMessage,
   buildOrderPaymentMessage,
@@ -37,6 +38,7 @@ import {
   tuitionDueDate,
   tuitionDueSoon,
   daysBetween,
+  inactiveFarewell,
   physicalDue,
   todoDoneKey,
   TRIAL_CONFIRM_DAYS,
@@ -112,16 +114,17 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
   const today = calendarDateLisbon(new Date());
   const origin = getPublicOrigin();
 
-  let studentsQuery = supabase.from("Student").select("id, userId, schoolId, status, planId, createdAt, primaryModality");
+  let studentsQuery = supabase.from("Student").select("id, userId, schoolId, status, statusChangedAt, planId, createdAt, primaryModality");
   if (schoolId) studentsQuery = studentsQuery.eq("schoolId", schoolId);
   const [{ data: rawStudents }, adminUserIds, done] = await Promise.all([studentsQuery, fetchAdminUserIdSet(supabase), loadDoneKeys(supabase)]);
-  type S = { id: string; userId: string; schoolId: string; status: string; planId: string | null; createdAt: string; primaryModality: string | null };
+  type S = { id: string; userId: string; schoolId: string; status: string; statusChangedAt: string | null; planId: string | null; createdAt: string; primaryModality: string | null };
   const students = ((rawStudents ?? []) as S[]).filter((s) => !adminUserIds.has(s.userId));
   const withPlan = students.filter((s) => s.planId && (s.status === "ATIVO" || s.status === "INADIMPLENTE"));
   const active = withPlan.filter((s) => s.status === "ATIVO");
   const ids = withPlan.map((s) => s.id);
   const noPlan = students.filter((s) => !s.planId && s.status === "ATIVO" && noPlanLead(today, s.createdAt));
-  const profileIds = [...new Set([...students.filter((s) => s.status === "ATIVO" || s.status === "INADIMPLENTE").map((s) => s.id)])];
+  const inactive = students.filter((s) => s.status === "INATIVO" && inactiveFarewell(today, s.statusChangedAt));
+  const profileIds = [...new Set([...students.filter((s) => s.status === "ATIVO" || s.status === "INADIMPLENTE").map((s) => s.id), ...inactive.map((s) => s.id)])];
 
   const userIds = [...new Set(students.map((s) => s.userId))];
   const nameByUser = new Map<string, string>();
@@ -382,6 +385,29 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
       };
     })
     .filter((x): x is NonNullable<typeof x> => x !== null)
+    .filter(notDone)
+    .sort((a, b) => b.urgency - a.urgency);
+
+  // --- Alunos inativados: mensagem de despedida; só sai da lista quando for removido do grupo de WhatsApp ---
+  const inativos: AdminTodoItem[] = inactive
+    .map((s) => {
+      const { days } = inactiveFarewell(today, s.statusChangedAt)!;
+      const hasPhone = Boolean(phoneByStudent.get(s.id));
+      return {
+        kind: "inativos" as const,
+        key: todoDoneKey("inativos", { id: s.id, ref: String(s.statusChangedAt).slice(0, 10), today }),
+        studentId: s.id,
+        name: nameOf(s),
+        cells: [
+          { text: s.primaryModality ? MODALITY_LABELS[s.primaryModality] ?? s.primaryModality : "—" },
+          { text: days === 0 ? "hoje" : `há ${days} ${dayWord(days)}` },
+          { text: hasPhone ? "com telefone" : "sem telefone", tone: hasPhone ? undefined : ("amber" as const) },
+        ],
+        urgency: days,
+        whatsappUrl: wa(s.id, buildFarewellMessage(firstName(nameOf(s)))),
+        href: `/admin/alunos/${s.id}`,
+      };
+    })
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
 
@@ -813,6 +839,12 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
       summary: risco.length ? "Sem treinar há mais de 7 dias, com plano ativo" : "",
       info: "Alunos ativos com plano cujo último treino confirmado foi há 7 dias ou mais (ou que nunca treinaram). Ao marcar «Feito», só volta se o aluno treinar e deixar outra vez.",
       columns: ["Aluno", "Modalidade", "Último treino", "Antes treinava", "Plano", ""],
+    },
+    inativos: {
+      kind: "inativos", tone: "amber", title: "Alunos inativados", items: inativos,
+      summary: inativos.length ? "Enviar a despedida e remover do grupo de WhatsApp" : "",
+      info: "Alunos que passaram a inativos nos últimos 90 dias (à mão ou por 2+ meses em atraso). Envia a mensagem de despedida e, depois, remove-os do grupo de WhatsApp. Só marca «Removido do grupo» no fim: é isso que tira o aluno da lista.",
+      columns: ["Aluno", "Modalidade", "Inativado", "Contacto", ""],
     },
     carga: {
       kind: "carga", tone: "amber", title: "Carga de treino alta", items: carga,

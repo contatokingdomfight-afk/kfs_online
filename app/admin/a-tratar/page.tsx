@@ -14,7 +14,7 @@ import { TONE_COLOR, todoIcon } from "./todo-ui";
 
 export const dynamic = "force-dynamic";
 
-const ACTION_LABEL: Record<string, string> = { done: "feito", contactado: "contactado", lembrete: "lembrete enviado", pedido: "avaliação pedida", "parabéns": "parabéns enviados", "coaches avisados": "coaches avisados" };
+const ACTION_LABEL: Record<string, string> = { done: "feito", contactado: "contactado", lembrete: "lembrete enviado", pedido: "avaliação pedida", "parabéns": "parabéns enviados", "coaches avisados": "coaches avisados", removido: "removido do grupo" };
 const KIND_TITLE: Record<AdminTodoKind, string> = {
   pagamentos: "Pagamentos",
   seguros: "Seguro / matrícula",
@@ -25,6 +25,7 @@ const KIND_TITLE: Record<AdminTodoKind, string> = {
   exame: "Apto para exame",
   aniversarios: "Aniversário",
   risco: "Risco de sair",
+  inativos: "Aluno inativado",
   carga: "Carga alta",
   adesao: "Adesão",
   fisicas: "Avaliação física",
@@ -106,8 +107,8 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
       <TodoActionButton
         action="done"
         item={fields}
-        label={item.kind === "confirmar" ? "Confirmado" : "Feito"}
-        doneAction={item.kind === "confirmar" ? "confirmado" : item.kind === "risco" || item.kind === "experimentais" || item.kind === "semplano" || item.kind === "semana" ? "contactado" : item.kind === "aniversarios" ? "parabéns" : "done"}
+        label={item.kind === "confirmar" ? "Confirmado" : item.kind === "inativos" ? "Removido do grupo" : "Feito"}
+        doneAction={item.kind === "confirmar" ? "confirmado" : item.kind === "inativos" ? "removido" : item.kind === "risco" || item.kind === "experimentais" || item.kind === "semplano" || item.kind === "semana" ? "contactado" : item.kind === "aniversarios" ? "parabéns" : "done"}
       />
     </span>
   );

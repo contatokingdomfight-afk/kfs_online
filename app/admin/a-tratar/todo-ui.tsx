@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Activity, Cake, ClipboardCheck, CalendarClock, CreditCard, DoorOpen, FileText, Flame, Medal, ShieldAlert, ShoppingBag, Ticket, UserPlus, UserX, CalendarCheck } from "lucide-react";
+import { Activity, Cake, ClipboardCheck, CalendarClock, CreditCard, DoorOpen, FileText, Flame, Medal, ShieldAlert, ShoppingBag, Ticket, UserMinus, UserPlus, UserX, CalendarCheck } from "lucide-react";
 import type { AdminTodoTone } from "@/lib/admin-todo";
 import type { AdminTodoKind } from "@/lib/admin-todo-rules";
 
@@ -26,6 +26,8 @@ export function todoIcon(kind: AdminTodoKind, size = 20): ReactNode {
       return <Ticket size={size} aria-hidden />;
     case "risco":
       return <DoorOpen size={size} aria-hidden />;
+    case "inativos":
+      return <UserMinus size={size} aria-hidden />;
     case "semplano":
       return <UserX size={size} aria-hidden />;
     case "carga":

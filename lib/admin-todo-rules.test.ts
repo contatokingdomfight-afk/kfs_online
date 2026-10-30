@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { birthdaySoon, churnRisk, isTuitionOverdue, noPlanLead, physicalDue, todoDoneKey, trialToConvert, tuitionDueSoon, weekKey } from "@/lib/admin-todo-rules";
+import { birthdaySoon, churnRisk, inactiveFarewell, isTuitionOverdue, noPlanLead, physicalDue, todoDoneKey, trialToConvert, tuitionDueSoon, weekKey } from "@/lib/admin-todo-rules";
 
 const today = "2026-10-11"; // domingo
 
@@ -12,6 +12,18 @@ describe("churnRisk", () => {
   it("sem treinos: só conta se a conta tiver mais de 7 dias", () => {
     expect(churnRisk({ today, lastTraining: null, createdAt: "2026-10-05T10:00:00Z" })).toBeNull();
     expect(churnRisk({ today, lastTraining: null, createdAt: "2026-09-01T10:00:00Z" })).toEqual({ daysSince: 40, neverTrained: true });
+  });
+});
+
+describe("inactiveFarewell", () => {
+  it("entra até 90 dias depois de inativado", () => {
+    expect(inactiveFarewell("2026-10-30", "2026-10-30T09:00:00Z")).toEqual({ days: 0 });
+    expect(inactiveFarewell("2026-10-30", "2026-08-01T09:00:00Z")).toEqual({ days: 90 });
+  });
+
+  it("não entra sem data nem depois da janela", () => {
+    expect(inactiveFarewell("2026-10-30", null)).toBeNull();
+    expect(inactiveFarewell("2026-10-30", "2026-07-31T09:00:00Z")).toBeNull();
   });
 });
 

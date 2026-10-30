@@ -10,6 +10,7 @@ export type AdminTodoKind =
   | "vencer"
   | "semana"
   | "risco"
+  | "inativos"
   | "semplano"
   | "carga"
   | "adesao"
@@ -20,7 +21,7 @@ export type AdminTodoKind =
   | "experimentais"
   | "aniversarios";
 
-export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "semana", "risco", "semplano", "carga", "adesao", "fisicas", "performance", "exame", "confirmar", "experimentais", "aniversarios"];
+export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "semana", "risco", "inativos", "semplano", "carga", "adesao", "fisicas", "performance", "exame", "confirmar", "experimentais", "aniversarios"];
 
 /** Prazo da mensalidade: dia 8 do mês de referência (ver lib/lisbon-payment-dates.ts). */
 export const TUITION_DUE_DAY = 8;
@@ -31,6 +32,11 @@ export const NO_PLAN_WINDOW_DAYS = 60;
 
 /** Dias sem treinar a partir dos quais o aluno conta como «em risco de sair». */
 export const RISK_DAYS = 7;
+/**
+ * «Alunos inativados»: quem passou a INATIVO há no máximo N dias. Tem de ficar abaixo dos 120 dias
+ * de histórico de loadDoneKeys, senão um item «Feito» voltava à lista.
+ */
+export const INACTIVE_FAREWELL_DAYS = 90;
 /** Avaliações físicas que vencem até este nº de dias (ou já venceram) entram no alerta. */
 export const PHYSICAL_DUE_WITHIN_DAYS = 30;
 /** Performance (AthleteEvaluation): alunos a treinar sem avaliação há este nº de dias ou mais. */
@@ -70,6 +76,13 @@ export function churnRisk(params: { today: string; lastTraining: string | null; 
   }
   const age = daysBetween(createdAt.slice(0, 10), today);
   return age >= RISK_DAYS ? { daysSince: age, neverTrained: true } : null;
+}
+
+/** Despedida de inativado: mudou de estado há no máximo INACTIVE_FAREWELL_DAYS. Sem data (inativos antigos) não entra. */
+export function inactiveFarewell(today: string, statusChangedAt: string | null): { days: number } | null {
+  if (!statusChangedAt) return null;
+  const days = daysBetween(statusChangedAt.slice(0, 10), today);
+  return days >= 0 && days <= INACTIVE_FAREWELL_DAYS ? { days } : null;
 }
 
 /** Avaliação física a renovar: vence dentro de PHYSICAL_DUE_WITHIN_DAYS dias ou já venceu. */
