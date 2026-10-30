@@ -48,7 +48,7 @@ export function WeightEntryForm({ locale }: Pick<Props, "locale">) {
           min={30}
           max={250}
           required
-          style={{ padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+          className="input"
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -57,7 +57,7 @@ export function WeightEntryForm({ locale }: Pick<Props, "locale">) {
           name="notes"
           type="text"
           maxLength={300}
-          style={{ padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+          className="input"
         />
       </label>
       {state?.error && <p style={{ color: "var(--danger)", margin: 0 }}>{state.error}</p>}
@@ -95,7 +95,7 @@ export function WeightGoalsForm({ locale, currentGoalKg, currentGoalDate }: Prop
           max={250}
           defaultValue={currentGoalKg ?? ""}
           placeholder="—"
-          style={{ padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+          className="input"
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -104,7 +104,7 @@ export function WeightGoalsForm({ locale, currentGoalKg, currentGoalDate }: Prop
           name="weightGoalTargetDate"
           type="date"
           defaultValue={currentGoalDate ?? ""}
-          style={{ padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+          className="input"
         />
       </label>
       {state?.error && <p style={{ color: "var(--danger)", margin: 0 }}>{state.error}</p>}

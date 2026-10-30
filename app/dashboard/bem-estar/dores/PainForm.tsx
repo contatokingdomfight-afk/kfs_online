@@ -37,7 +37,7 @@ export function PainForm({ locale }: Props) {
         <select
           name="bodyRegion"
           required
-          style={{ padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+          className="input"
         >
           <option value="">{locale === "pt" ? "Escolher…" : "Choose…"}</option>
           {PAIN_REGIONS.map((r) => (
@@ -56,7 +56,7 @@ export function PainForm({ locale }: Props) {
           max={10}
           defaultValue={3}
           required
-          style={{ padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+          className="input"
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -65,7 +65,7 @@ export function PainForm({ locale }: Props) {
           name="notes"
           rows={2}
           maxLength={500}
-          style={{ padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+          className="input"
         />
       </label>
       {state?.error && <p style={{ color: "var(--danger)", margin: 0 }}>{state.error}</p>}

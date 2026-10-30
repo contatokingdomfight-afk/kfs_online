@@ -39,7 +39,7 @@ export function BenchmarkForm({ locale }: Props) {
         <select
           name="benchmarkKey"
           required
-          style={{ padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+          className="input"
         >
           <option value="">{locale === "pt" ? "Escolher…" : "Choose…"}</option>
           {BENCHMARK_PRESETS.map((p) => (
@@ -58,7 +58,7 @@ export function BenchmarkForm({ locale }: Props) {
           min={0}
           required
           placeholder={locale === "pt" ? "ex.: 42" : "e.g. 42"}
-          style={{ padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+          className="input"
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -67,7 +67,7 @@ export function BenchmarkForm({ locale }: Props) {
           name="notes"
           type="text"
           maxLength={300}
-          style={{ padding: "10px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}
+          className="input"
         />
       </label>
       {state?.error && <p style={{ color: "var(--danger)", margin: 0 }}>{state.error}</p>}
