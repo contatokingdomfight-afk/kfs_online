@@ -165,13 +165,7 @@ export function AptosList({ rows, exams }: { rows: AptoRow[]; exams: AptoExam[] 
                 ))}
               {row.whatsappHint && <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>WhatsApp: {row.whatsappHint.toLowerCase()}</span>}
             </div>
-            <div style={{ flex: "0 0 auto", display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
-              {row.whatsappUrl && (
-                <a href={row.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn" style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}>
-                  <MessageCircle size={15} aria-hidden />
-                  WhatsApp
-                </a>
-              )}
+            <div className="aptos-actions">
               {(row.state === "auto" || row.state === "manual") && !row.booking && (
                 <button type="button" className="btn btn-primary" onClick={() => openBooking(row)}>
                   Marcar exame
@@ -182,8 +176,14 @@ export function AptosList({ rows, exams }: { rows: AptoRow[]; exams: AptoExam[] 
                   Tornar apto
                 </button>
               )}
+              {row.whatsappUrl && (
+                <a href={row.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ gap: 6, textDecoration: "none" }}>
+                  <MessageCircle size={15} aria-hidden />
+                  WhatsApp
+                </a>
+              )}
               {(row.state === "manual" || row.state === "blocked") && (
-                <button type="button" className="btn" disabled={pending && busyId === row.studentId} onClick={() => remove(row)}>
+                <button type="button" className="btn btn-secondary" disabled={pending && busyId === row.studentId} onClick={() => remove(row)}>
                   {pending && busyId === row.studentId ? "A guardar…" : row.state === "manual" ? "Remover aptidão" : "Remover decisão"}
                 </button>
               )}
@@ -261,7 +261,7 @@ export function AptosList({ rows, exams }: { rows: AptoRow[]; exams: AptoExam[] 
               </p>
             )}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
-              <button type="button" className="btn" onClick={closeBooking} disabled={pending}>
+              <button type="button" className="btn btn-secondary" onClick={closeBooking} disabled={pending}>
                 Cancelar
               </button>
               <button type="button" className="btn btn-primary" onClick={confirmBooking} disabled={pending || !bookExam || (bookExam.slots.length > 0 && !slotIso)}>
@@ -318,7 +318,7 @@ export function AptosList({ rows, exams }: { rows: AptoRow[]; exams: AptoExam[] 
               </p>
             )}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
-              <button type="button" className="btn" onClick={close} disabled={pending}>
+              <button type="button" className="btn btn-secondary" onClick={close} disabled={pending}>
                 Cancelar
               </button>
               <button type="button" className="btn btn-primary" onClick={confirmReady} disabled={pending}>
