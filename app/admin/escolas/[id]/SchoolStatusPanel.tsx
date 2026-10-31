@@ -5,7 +5,7 @@ import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { hasPaymentMethod, type SchoolPaymentMethods, type SchoolStatus } from "@/lib/school-status";
 import { deactivateSchool, openSchool, saveSchoolPaymentMethods, type SchoolResult } from "../actions";
 
-export type PaymentFormValues = SchoolPaymentMethods & { ibanHolder: string | null; bicSwift: string | null };
+export type PaymentFormValues = SchoolPaymentMethods & { ibanHolder: string | null; ibanHolderAddress: string | null; bicSwift: string | null; revolutTag: string | null };
 
 function Feedback({ state }: { state: SchoolResult }) {
   if (state?.error) return <p style={{ color: "var(--danger)", fontSize: "var(--text-sm)", margin: 0 }}>{state.error}</p>;
@@ -94,13 +94,15 @@ export function SchoolStatusPanel({
 
       <form action={paymentAction} className="card" style={{ padding: "var(--space-4)", display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
         <h2 style={{ ...titleStyle, margin: 0 }}>Meios de pagamento</h2>
-        <p style={{ margin: 0, fontSize: "var(--text-xs)", lineHeight: 1.5, color: "var(--warning)", border: "1px solid var(--warning)", borderRadius: "var(--radius-md)", padding: "8px 10px" }}>
-          Por agora estes dados ficam só registados: os ecrãs de pagamento do aluno ainda mostram a conta atual da Sede.
+        <p style={{ margin: 0, fontSize: "var(--text-xs)", lineHeight: 1.5, color: "var(--text-secondary)" }}>
+          Os alunos desta escola veem e pagam para estes dados. O pagamento online (Revolut/Multibanco) por escola ainda não está disponível.
         </p>
         <input type="hidden" name="schoolId" value={schoolId} />
         <input name="ibanHolder" defaultValue={payment?.ibanHolder ?? ""} placeholder="Titular da conta" className="input" style={{ fontSize: "var(--text-sm)" }} />
+        <input name="ibanHolderAddress" defaultValue={payment?.ibanHolderAddress ?? ""} placeholder="Morada do titular" className="input" style={{ fontSize: "var(--text-sm)" }} />
         <input name="iban" defaultValue={payment?.iban ?? ""} placeholder="IBAN" className="input" style={{ fontSize: "var(--text-sm)" }} />
         <input name="bicSwift" defaultValue={payment?.bicSwift ?? ""} placeholder="BIC/SWIFT" className="input" style={{ fontSize: "var(--text-sm)" }} />
+        <input name="revolutTag" defaultValue={payment?.revolutTag ?? ""} placeholder="Revolut tag (ex.: @escola)" className="input" style={{ fontSize: "var(--text-sm)" }} />
         <input name="mbwayPhone" defaultValue={payment?.mbwayPhone ?? ""} placeholder="Telemóvel MB Way" inputMode="numeric" className="input" style={{ fontSize: "var(--text-sm)" }} />
         <button type="submit" className="btn btn-secondary" style={{ alignSelf: "flex-start", fontSize: "var(--text-sm)" }}>
           Guardar meios de pagamento

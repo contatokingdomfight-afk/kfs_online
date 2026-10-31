@@ -48,7 +48,7 @@ export default async function EscolaPage({
     supabase.from("SchoolDirector").select("createdAt, User(id, name, email, authUserId)").eq("schoolId", id).order("createdAt", { ascending: true }),
     supabase
       .from("SchoolPaymentSettings")
-      .select("ibanEnabled, iban, ibanHolder, bicSwift, mbwayEnabled, mbwayPhone, revolutEnabled, multibancoEnabled")
+      .select("ibanEnabled, iban, ibanHolder, ibanHolderAddress, bicSwift, revolutTag, mbwayEnabled, mbwayPhone, revolutEnabled, multibancoEnabled")
       .eq("schoolId", id)
       .maybeSingle(),
     supabase.from("CoachSchool").select("coachId").eq("schoolId", id),
