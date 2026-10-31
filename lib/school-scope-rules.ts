@@ -12,7 +12,7 @@ export type SchoolScope =
   | { kind: "network"; schools: CachedSchoolOption[]; selectedSchoolId: string | null }
   | { kind: "school"; schools: CachedSchoolOption[]; schoolIds: string[]; selectedSchoolId: string };
 
-/** Escopo de diretor/coach a partir das escolas ligadas; só conta escolas ativas. */
+/** Escopo de diretor/coach a partir das escolas ligadas; só conta as de `allSchools` (ativas e em preparação). */
 export function schoolScopeFrom(ids: string[], allSchools: CachedSchoolOption[], wanted: string | null): SchoolScope {
   const schools = allSchools.filter((s) => ids.includes(s.id));
   if (schools.length === 0) return { kind: "none" };

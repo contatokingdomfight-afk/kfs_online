@@ -4,7 +4,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { getCachedSchools } from "@/lib/cached-reference-data";
+import { getCachedBackofficeSchools, getCachedSchools } from "@/lib/cached-reference-data";
 import { AdminPermissionError } from "@/lib/permissions/assert";
 import { canAccessSchool, schoolScopeFrom, type SchoolScope } from "@/lib/school-scope-rules";
 
@@ -39,7 +39,7 @@ export const getSchoolScope = cache(async function getSchoolScope(): Promise<Sch
     return u.role === "ADMIN" ? { kind: "network", schools: [], selectedSchoolId: null } : { kind: "none" };
   }
 
-  const [allSchools, cookieStore] = await Promise.all([getCachedSchools(admin), cookies()]);
+  const [allSchools, cookieStore] = await Promise.all([getCachedBackofficeSchools(admin), cookies()]);
   const wanted = cookieStore.get(SELECTED_SCHOOL_COOKIE)?.value || null;
 
   if (u.role === "ADMIN") {

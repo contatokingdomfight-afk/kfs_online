@@ -11,6 +11,9 @@ export type CachedLocation = { id: string; name: string };
 export type CachedModalityRef = { code: string; name: string };
 export type CachedSchoolOption = { id: string; name: string };
 
+/** Invalidar com `revalidateTag` quando uma escola é criada, renomeada, aberta ou desativada. */
+export const SCHOOLS_CACHE_TAG = "schools";
+
 /**
  * Lista de escolas ativas (id, name). Cache 5 min; dados pouco voláteis.
  */
@@ -27,7 +30,31 @@ export async function getCachedSchools(
       return data ?? [];
     },
     ["schools-active"],
-    { revalidate: 300 }
+    { revalidate: 300, tags: [SCHOOLS_CACHE_TAG] }
+  )();
+  return rows as CachedSchoolOption[];
+}
+
+/**
+ * Escolas que o backoffice vê: ativas e em preparação (não aparecem aos alunos, mas o diretor já as prepara).
+ * Filtro para `.or(...)` — ver `lib/school-status.ts`.
+ */
+export const BACKOFFICE_SCHOOLS_FILTER = "isActive.eq.true,openedAt.is.null";
+
+export async function getCachedBackofficeSchools(
+  supabase: SupabaseClient
+): Promise<CachedSchoolOption[]> {
+  const rows = await unstable_cache(
+    async () => {
+      const { data } = await supabase
+        .from("School")
+        .select("id, name")
+        .or(BACKOFFICE_SCHOOLS_FILTER)
+        .order("name", { ascending: true });
+      return data ?? [];
+    },
+    ["schools-backoffice"],
+    { revalidate: 300, tags: [SCHOOLS_CACHE_TAG] }
   )();
   return rows as CachedSchoolOption[];
 }

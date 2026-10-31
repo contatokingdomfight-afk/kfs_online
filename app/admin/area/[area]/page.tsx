@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { getAdminDashboardStatsCached } from "@/lib/admin-dashboard-stats";
@@ -48,7 +49,7 @@ export default async function AdminAreaPage({ params }: { params: Promise<{ area
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
   const t = getTranslations(locale);
   const access = await getCachedResolvedAdminAccess();
-  const { areas, searchItems } = getAdminShellNav(t, access);
+  const { areas, searchItems } = getAdminShellNav(t, access, isNetworkScope(await getSchoolScope()));
   const area = areas.find((a) => a.id === areaId);
   if (!area || area.id === "hoje") notFound();
   const badges = await loadBadges(area.id);

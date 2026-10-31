@@ -224,8 +224,13 @@ export function adminSearchItems(areas: AdminNavArea[]): AdminSearchItem[] {
 }
 
 /** Tudo o que o shell do admin precisa, já filtrado pelas permissões. */
-export function getAdminShellNav(t: (key: MessageKey) => string, access: ResolvedAdminAccess | null) {
-  const areas = filterAdminNavAreas(getAdminNavAreas(t), access);
+/** Só para o Admin Geral: o diretor técnico também é `ADMIN`, mas não vê estas entradas. */
+const NETWORK_ONLY_HREFS = new Set(["/admin/escolas", "/admin/permissoes"]);
+
+export function getAdminShellNav(t: (key: MessageKey) => string, access: ResolvedAdminAccess | null, isNetworkAdmin: boolean) {
+  const areas = filterAdminNavAreas(getAdminNavAreas(t), access).map((a) =>
+    isNetworkAdmin ? a : { ...a, items: a.items.filter((i) => !NETWORK_ONLY_HREFS.has(i.href)) }
+  );
   return {
     areas,
     sidebarLinks: adminSidebarFromAreas(areas),

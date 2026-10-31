@@ -4,6 +4,7 @@ import { getCoachStudentId } from "@/lib/auth/get-coach-student-id";
 import { getViewAsFromCookies } from "@/lib/view-as-server";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import type { MobileAppBottomNavConfig } from "@/components/MobileAppBottomNav";
@@ -61,7 +62,7 @@ export default async function SistemaPontuacaoLayout({
         <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
       </div>
     );
-    const adminNav = getAdminShellNav(t, access);
+    const adminNav = getAdminShellNav(t, access, isNetworkScope(await getSchoolScope()));
     sidebarLinks = adminNav.sidebarLinks;
     mobileBottomNav = adminNav.mobileBottomNav;
     mainShellClass = "admin-main";

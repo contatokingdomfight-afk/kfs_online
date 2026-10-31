@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ALL_ADMIN_PERMISSION_SET } from "@/lib/permissions/constants";
 import { adminAccessAllows, resolveAdminPermissionsForUserId } from "@/lib/permissions/resolve";
 import { adminPermissionError } from "@/lib/permissions/assert";
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 
 export type UpdateUserAdminPermsResult = { error?: string; success?: boolean };
 
@@ -28,6 +29,7 @@ export async function updateUserAdminPermissions(
     return { error: "Não autorizado." };
   }
 
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode gerir administradores." };
   const targetId = (formData.get("userId") as string)?.trim();
   if (!targetId) return { error: "Utilizador inválido." };
 
@@ -96,6 +98,7 @@ export async function updateSchoolSignature(
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
   const permErr = await adminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode gerir administradores." };
 
   const targetId = (formData.get("userId") as string)?.trim();
   if (!targetId) return { error: "Utilizador inválido." };
@@ -192,6 +195,7 @@ export async function deleteAdmin(
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
 
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode gerir administradores." };
   const userId = (formData.get("userId") as string)?.trim();
   if (!userId) return { error: "ID de utilizador inválido." };
 

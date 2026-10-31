@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminPermissoesListPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  if (!isNetworkScope(await getSchoolScope())) redirect("/admin");
 
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
   const t = getTranslations(locale);

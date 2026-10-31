@@ -1,3 +1,4 @@
+import { BACKOFFICE_SCHOOLS_FILTER } from "@/lib/cached-reference-data";
 import { getSchoolScope, filterSchools } from "@/lib/school-scope";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -16,7 +17,7 @@ export async function GET() {
   const { data: schools, error } = await filterSchools(supabase
     .from("School")
     .select("id, name"), scope.kind === "school" ? scope.schoolIds : null, "id")
-    .eq("isActive", true)
+    .or(BACKOFFICE_SCHOOLS_FILTER)
     .order("name", { ascending: true });
 
   if (error) {

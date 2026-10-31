@@ -33,7 +33,7 @@ export default async function AdminLayout({
 
   const [theme, locale] = await Promise.all([getThemeFromCookies(), getLocaleFromCookies()]);
   const t = getTranslations(locale as "pt" | "en");
-  const { sidebarLinks: adminLinks, mobileBottomNav, searchItems } = getAdminShellNav(t, access);
+  const { sidebarLinks: adminLinks, mobileBottomNav, searchItems } = getAdminShellNav(t, access, scope.kind === "network");
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--bg)", color: "var(--text-primary)" }}>

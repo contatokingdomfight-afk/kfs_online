@@ -1,3 +1,4 @@
+import { BACKOFFICE_SCHOOLS_FILTER } from "@/lib/cached-reference-data";
 import { getSchoolScope, coachIdsInScope, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -41,7 +42,7 @@ export default async function AdminCoachEditarPage({ params }: Props) {
       ? supabase.from("Student").select("id, can_create_courses").eq("id", coach.studentId).single()
       : Promise.resolve({ data: null }),
     supabase.from("CoachSchool").select("schoolId").eq("coachId", coachId),
-    filterSchools(supabase.from("School").select("id, name"), schoolScope.kind === "school" ? schoolScope.schoolIds : null, "id").eq("isActive", true).order("name", { ascending: true }),
+    filterSchools(supabase.from("School").select("id, name"), schoolScope.kind === "school" ? schoolScope.schoolIds : null, "id").or(BACKOFFICE_SCHOOLS_FILTER).order("name", { ascending: true }),
   ]);
 
   const student = studentRes.data;

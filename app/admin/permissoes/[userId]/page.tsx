@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -18,6 +19,7 @@ export default async function AdminPermissoesUserPage(props: PageProps) {
   const { userId } = await props.params;
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  if (!isNetworkScope(await getSchoolScope())) redirect("/admin");
 
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
   const t = getTranslations(locale);

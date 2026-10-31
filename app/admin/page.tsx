@@ -1,4 +1,4 @@
-import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
+import { getSchoolScope, isNetworkScope, resolveSchoolParam } from "@/lib/school-scope";
 import Link from "next/link";
 import { Suspense } from "react";
 import { BarChart3, CalendarPlus, ChevronRight, Receipt, UserPlus, Wallet } from "lucide-react";
@@ -45,7 +45,7 @@ export default async function AdminHojePage({ searchParams }: { searchParams: Se
   const access = await getCachedResolvedAdminAccess();
   const full = !(isGranularRestrictedDashboard(access) && !hasAllV1AdminPermissions(access));
   const can = (href: string) => access.kind !== "granted" || canAccessAdminPathname(access, href);
-  const { searchItems } = getAdminShellNav(t, access);
+  const { searchItems } = getAdminShellNav(t, access, isNetworkScope(await getSchoolScope()));
 
   const [schools, todayTrials, stats] = await Promise.all([
     getCachedSchools(client),

@@ -1,3 +1,4 @@
+import { BACKOFFICE_SCHOOLS_FILTER } from "@/lib/cached-reference-data";
 import { getSchoolScope, resolveSchoolParam, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -134,7 +135,7 @@ export default async function AdminTurmasPage({
     getCachedLocations(supabase),
     getCachedModalityRefs(supabase),
   ]);
-  const { data: schools } = await filterSchools(supabase.from("School").select("id, name"), scope.kind === "school" ? scope.schoolIds : null, "id").eq("isActive", true).order("name", { ascending: true });
+  const { data: schools } = await filterSchools(supabase.from("School").select("id, name"), scope.kind === "school" ? scope.schoolIds : null, "id").or(BACKOFFICE_SCHOOLS_FILTER).order("name", { ascending: true });
 
   const lessonsForView =
     schoolFilterParam && schools?.some((s) => s.id === schoolFilterParam)
