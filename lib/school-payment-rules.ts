@@ -4,7 +4,7 @@
  * Regra de ouro: sem dados da escola não se mostra nada. Nunca se recorre aos dados de outra escola.
  */
 
-/** A Sede: dona da conta Revolut das variáveis de ambiente e da ligação bancária (`RevolutConnection` "default"). */
+/** A Sede: a sua conta Revolut está nas variáveis de ambiente e a ligação bancária é a `RevolutConnection` "default". */
 export const SEDE_SCHOOL_ID = "default-school-001";
 
 export type SchoolPaymentSettingsRow = {
@@ -26,7 +26,7 @@ export type SchoolPaymentInfo = {
   transfer: { iban: string | null; holder: string | null; holderAddress: string | null; bicSwift: string | null; revolutTag: string | null } | null;
   mbwayPhone: string | null;
   cash: boolean;
-  /** Pagamento online (cartão/Revolut). Só a Sede: as credenciais por escola (`SchoolPaymentSecret`) são uma fase própria. */
+  /** Pagamento online (cartão/Revolut), para a conta Revolut da própria escola. */
   onlineRevolut: boolean;
 };
 
@@ -36,6 +36,7 @@ function clean(value: string | null | undefined): string | null {
   return value?.trim() || null;
 }
 
+/** `merchantConfigured`: esta escola tem conta Revolut própria configurada. */
 export function schoolPaymentInfoFromRow(schoolId: string, row: SchoolPaymentSettingsRow | null | undefined, merchantConfigured: boolean): SchoolPaymentInfo {
   if (!row) return NO_SCHOOL_PAYMENT_INFO;
   const isSede = schoolId === SEDE_SCHOOL_ID;
@@ -49,7 +50,7 @@ export function schoolPaymentInfoFromRow(schoolId: string, row: SchoolPaymentSet
         : null,
     mbwayPhone: row.mbwayEnabled ? clean(row.mbwayPhone) : null,
     cash: row.cashEnabled,
-    onlineRevolut: isSede && row.revolutEnabled && merchantConfigured,
+    onlineRevolut: row.revolutEnabled && merchantConfigured,
   };
 }
 
@@ -74,7 +75,10 @@ export function enrollmentPaymentMethods(info: SchoolPaymentInfo, opts: { includ
 
 /** Identificação da escola nos documentos e cartões de pagamento. */
 export type SchoolIdentity = {
+  /** Denominação legal; sem ela, o nome da escola. */
   name: string;
+  /** Como os documentos designam a escola. */
+  displayName: string;
   tradeName: string | null;
   nipc: string | null;
   address: string | null;

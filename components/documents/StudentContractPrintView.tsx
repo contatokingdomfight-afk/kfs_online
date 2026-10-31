@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
-import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
 import { AutoPrintTrigger } from "@/components/documents/AutoPrintTrigger";
 import { PrintDocumentTitle } from "@/components/documents/PrintDocumentTitle";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
-import { getActiveSchoolSignatures } from "@/lib/school-signatures";
+import { loadMembershipDocumentView } from "@/lib/school-contract-party";
 import {
   buildMembershipPrintDocumentTitle,
   loadStudentPrintName,
@@ -37,7 +36,7 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
     supabase.from("Student").select("id, userId").eq("id", studentId).single(),
     supabase
       .from("StudentMembershipAgreement")
-      .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl, agreementVersion")
+      .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl, agreementVersion, contractParty")
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase.from("StudentEnrollmentForm").select("formCompleted").eq("studentId", studentId).maybeSingle(),
@@ -59,7 +58,8 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
     );
   }
 
-  const schoolSignatures = await getActiveSchoolSignatures();
+  const doc = await loadMembershipDocumentView("agreement", studentId, { signed: true, contractParty: agreement.contractParty });
+  const schoolSignatures = doc.signatures;
   const studentName = await loadStudentPrintName(supabase, studentId, agreement.signatureName);
   const printTitle = buildMembershipPrintDocumentTitle("contrato", studentName);
 
@@ -109,10 +109,10 @@ export async function StudentContractPrintView({ studentId, backHref }: Props) {
             />
           </div>
         ) : null}
-        <SchoolSignatureBlock signatures={schoolSignatures} />
+        <SchoolSignatureBlock signatures={schoolSignatures} title={`Pela ${doc.schoolName}`} />
         <div
           style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: schoolSignatures.length > 0 ? 20 : 0 }}
-          dangerouslySetInnerHTML={{ __html: MEMBERSHIP_AGREEMENT_BODY_PT }}
+          dangerouslySetInnerHTML={{ __html: doc.html ?? "" }}
         />
       </section>
 

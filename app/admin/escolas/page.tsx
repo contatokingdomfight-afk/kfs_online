@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
-import { missingToOpen, schoolStatus, type SchoolPaymentMethods, type SchoolStatus } from "@/lib/school-status";
+import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
+import { hasLegalData, missingToOpen, schoolStatus, type SchoolPaymentMethods, type SchoolStatus } from "@/lib/school-status";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { redirect } from "next/navigation";
@@ -9,7 +10,7 @@ import { SchoolStatusPill } from "./SchoolStatusPill";
 
 export const dynamic = "force-dynamic";
 
-type SchoolRow = { id: string; name: string; city: string | null; address: string | null; isActive: boolean; openedAt: string | null };
+type SchoolRow = { id: string; name: string; city: string | null; address: string | null; legalName: string | null; legalAddress: string | null; isActive: boolean; openedAt: string | null };
 
 export default async function AdminEscolasPage() {
   const dbUser = await getCurrentDbUser();
@@ -21,10 +22,10 @@ export default async function AdminEscolasPage() {
   const supabase = result.client;
 
   const [{ data: schoolRows }, { data: directors }, { data: coaches }, { data: settings }] = await Promise.all([
-    supabase.from("School").select("id, name, city, address, isActive, openedAt").order("name", { ascending: true }),
+    supabase.from("School").select("id, name, city, address, legalName, legalAddress, isActive, openedAt").order("name", { ascending: true }),
     supabase.from("SchoolDirector").select("schoolId, User(name, email)"),
     supabase.from("CoachSchool").select("schoolId"),
-    supabase.from("SchoolPaymentSettings").select("schoolId, ibanEnabled, iban, mbwayEnabled, mbwayPhone, revolutEnabled, multibancoEnabled"),
+    supabase.from("SchoolPaymentSettings").select("schoolId, nif, ibanEnabled, iban, mbwayEnabled, mbwayPhone, revolutEnabled, multibancoEnabled"),
   ]);
   const schools = (schoolRows ?? []) as SchoolRow[];
 
@@ -67,8 +68,9 @@ export default async function AdminEscolasPage() {
         {schools.map((school) => {
           const status = schoolStatus(school);
           const names = directorNames(school.id);
-          const schoolSettings = (settings ?? []).find((s) => s.schoolId === school.id) as SchoolPaymentMethods | undefined;
-          const missing = status === "ATIVA" ? [] : missingToOpen(names.length, schoolSettings);
+          const schoolSettings = (settings ?? []).find((s) => s.schoolId === school.id) as (SchoolPaymentMethods & { nif: string | null }) | undefined;
+          const legalDataReady = school.id === SEDE_SCHOOL_ID || hasLegalData({ ...school, nif: schoolSettings?.nif });
+          const missing = status === "ATIVA" ? [] : missingToOpen(names.length, schoolSettings, legalDataReady);
           return (
             <div
               key={school.id}

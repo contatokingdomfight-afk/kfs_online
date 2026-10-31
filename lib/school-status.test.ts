@@ -37,5 +37,6 @@ describe("missingToOpen", () => {
     expect(missingToOpen(0, null)).toEqual(["diretor", "meio de pagamento"]);
     expect(missingToOpen(1, null)).toEqual(["meio de pagamento"]);
     expect(missingToOpen(1, { ...NO_METHODS, revolutEnabled: true })).toEqual([]);
+    expect(missingToOpen(1, { ...NO_METHODS, revolutEnabled: true }, false)).toEqual(["dados legais"]);
   });
 });

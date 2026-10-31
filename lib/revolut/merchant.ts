@@ -2,7 +2,8 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 /**
  * Revolut Merchant API (pagamentos online e subscrições). Independente da Business API de leitura (lib/revolut/*).
- * Variáveis: REVOLUT_MERCHANT_SECRET_KEY, REVOLUT_MERCHANT_WEBHOOK_SECRET (+ as mesmas com sufixo _SANDBOX).
+ * Cada pedido recebe a conta da escola (lib/revolut/merchant-accounts.ts).
+ * Variáveis da conta da Sede: REVOLUT_MERCHANT_SECRET_KEY, REVOLUT_MERCHANT_WEBHOOK_SECRET (+ as mesmas com sufixo _SANDBOX).
  */
 const API_VERSION = "2026-08-17";
 
@@ -13,6 +14,11 @@ const pick = (name: string) => (SANDBOX ? process.env[`${name}_SANDBOX`] : proce
 const SECRET_KEY = pick("REVOLUT_MERCHANT_SECRET_KEY");
 const WEBHOOK_SECRET = pick("REVOLUT_MERCHANT_WEBHOOK_SECRET");
 const BASE_URL = SANDBOX ? "https://sandbox-merchant.revolut.com" : "https://merchant.revolut.com";
+
+export type MerchantAccount = { secretKey: string; webhookSecret: string };
+
+/** Conta da Sede, nas variáveis de ambiente. */
+export const sedeMerchantAccount: MerchantAccount | null = SECRET_KEY ? { secretKey: SECRET_KEY, webhookSecret: WEBHOOK_SECRET } : null;
 
 export const revolutMerchantConfigured = SECRET_KEY.length > 0;
 export const revolutMerchantWebhookConfigured = WEBHOOK_SECRET.length > 0;
@@ -45,11 +51,20 @@ export type MerchantOrder = {
   payments?: { id: string; state: string; payment_method?: MerchantPaymentMethod | null }[];
 };
 
-async function call<T>(path: string, init?: RequestInit): Promise<T> {
+export class MerchantApiError extends Error {
+  constructor(
+    readonly status: number,
+    body: string
+  ) {
+    super(`Revolut Merchant ${status}: ${body.slice(0, 300)}`);
+  }
+}
+
+async function call<T>(account: MerchantAccount, path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${SECRET_KEY}`,
+      Authorization: `Bearer ${account.secretKey}`,
       "Revolut-Api-Version": API_VERSION,
       "Content-Type": "application/json",
       Accept: "application/json",
@@ -57,7 +72,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
     },
     cache: "no-store",
   });
-  if (!res.ok) throw new Error(`Revolut Merchant ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  if (!res.ok) throw new MerchantApiError(res.status, await res.text());
   // Comandos de subscrição (cancel, change-plan, change-renewal-date) respondem 204 sem corpo.
   if (res.status === 204) return undefined as T;
   const text = await res.text();
@@ -65,8 +80,8 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 /** Cria uma ordem e devolve o link de checkout hospedado pela Revolut. `reference` = id da nossa encomenda. */
-export function createMerchantOrder(input: { amountEur: number; description: string; reference: string; redirectUrl: string; email?: string | null }) {
-  return call<MerchantOrder>("/api/orders", {
+export function createMerchantOrder(account: MerchantAccount, input: { amountEur: number; description: string; reference: string; redirectUrl: string; email?: string | null }) {
+  return call<MerchantOrder>(account, "/api/orders", {
     method: "POST",
     body: JSON.stringify({
       amount: Math.round(input.amountEur * 100),
@@ -79,8 +94,8 @@ export function createMerchantOrder(input: { amountEur: number; description: str
   });
 }
 
-export function getMerchantOrder(orderId: string) {
-  return call<MerchantOrder>(`/api/orders/${encodeURIComponent(orderId)}`);
+export function getMerchantOrder(account: MerchantAccount, orderId: string) {
+  return call<MerchantOrder>(account, `/api/orders/${encodeURIComponent(orderId)}`);
 }
 
 /** «Visa ••4242», «Revolut Pay», «Apple Pay»… a partir do último pagamento concluído da ordem. */
@@ -101,8 +116,8 @@ export function paymentMethodLabel(order: MerchantOrder): string | null {
 
 export type MerchantCustomer = { id: string; email?: string | null; full_name?: string | null };
 
-export function createMerchantCustomer(input: { fullName: string; email?: string | null }) {
-  return call<MerchantCustomer>("/api/customers", {
+export function createMerchantCustomer(account: MerchantAccount, input: { fullName: string; email?: string | null }) {
+  return call<MerchantCustomer>(account, "/api/customers", {
     method: "POST",
     body: JSON.stringify({ full_name: input.fullName, ...(input.email ? { email: input.email } : {}) }),
   });
@@ -111,8 +126,8 @@ export function createMerchantCustomer(input: { fullName: string; email?: string
 export type MerchantSubscriptionPlan = { id: string; variations: { id: string; phases: { cycle_duration: string; amount: number }[] }[] };
 
 /** Plano mensal com um único valor (uma variação, uma fase, sem fim). */
-export function createMonthlySubscriptionPlan(input: { name: string; amountCents: number }) {
-  return call<MerchantSubscriptionPlan>("/api/subscription-plans", {
+export function createMonthlySubscriptionPlan(account: MerchantAccount, input: { name: string; amountCents: number }) {
+  return call<MerchantSubscriptionPlan>(account, "/api/subscription-plans", {
     method: "POST",
     body: JSON.stringify({
       name: input.name,
@@ -134,8 +149,8 @@ export type MerchantSubscription = {
 };
 
 /** Fluxo «Hosted Payment Page»: a subscrição nasce pendente com uma ordem de adesão (1.ª cobrança + guarda o método). */
-export function createMerchantSubscription(input: { planVariationId: string; customerId: string; externalReference: string; redirectUrl: string; idempotencyKey: string }) {
-  return call<MerchantSubscription>("/api/subscriptions", {
+export function createMerchantSubscription(account: MerchantAccount, input: { planVariationId: string; customerId: string; externalReference: string; redirectUrl: string; idempotencyKey: string }) {
+  return call<MerchantSubscription>(account, "/api/subscriptions", {
     method: "POST",
     headers: { "Idempotency-Key": input.idempotencyKey },
     body: JSON.stringify({
@@ -147,8 +162,8 @@ export function createMerchantSubscription(input: { planVariationId: string; cus
   });
 }
 
-export function getMerchantSubscription(id: string) {
-  return call<MerchantSubscription>(`/api/subscriptions/${encodeURIComponent(id)}`);
+export function getMerchantSubscription(account: MerchantAccount, id: string) {
+  return call<MerchantSubscription>(account, `/api/subscriptions/${encodeURIComponent(id)}`);
 }
 
 export type MerchantSubscriptionCycle = {
@@ -161,40 +176,72 @@ export type MerchantSubscriptionCycle = {
   trial?: boolean;
 };
 
-export async function listMerchantSubscriptionCycles(id: string): Promise<MerchantSubscriptionCycle[]> {
-  const r = await call<{ cycles?: MerchantSubscriptionCycle[] } | undefined>(`/api/subscriptions/${encodeURIComponent(id)}/cycles?limit=100`);
+export async function listMerchantSubscriptionCycles(account: MerchantAccount, id: string): Promise<MerchantSubscriptionCycle[]> {
+  const r = await call<{ cycles?: MerchantSubscriptionCycle[] } | undefined>(account, `/api/subscriptions/${encodeURIComponent(id)}/cycles?limit=100`);
   return r?.cycles ?? [];
 }
 
 /** Muda a próxima data de cobrança (fim do ciclo atual). */
-export function changeMerchantSubscriptionRenewalDate(id: string, renewalDate: Date) {
-  return call<void>(`/api/subscriptions/${encodeURIComponent(id)}/change-renewal-date`, {
+export function changeMerchantSubscriptionRenewalDate(account: MerchantAccount, id: string, renewalDate: Date) {
+  return call<void>(account, `/api/subscriptions/${encodeURIComponent(id)}/change-renewal-date`, {
     method: "POST",
     body: JSON.stringify({ renewal_date: renewalDate.toISOString() }),
   });
 }
 
 /** Novo valor a partir do próximo ciclo. */
-export function changeMerchantSubscriptionPlan(id: string, planVariationId: string) {
-  return call<void>(`/api/subscriptions/${encodeURIComponent(id)}/change-plan`, {
+export function changeMerchantSubscriptionPlan(account: MerchantAccount, id: string, planVariationId: string) {
+  return call<void>(account, `/api/subscriptions/${encodeURIComponent(id)}/change-plan`, {
     method: "POST",
     body: JSON.stringify({ plan_variation_id: planVariationId, scheduled: "at_cycle_end" }),
   });
 }
 
-export function cancelMerchantSubscription(id: string) {
-  return call<void>(`/api/subscriptions/${encodeURIComponent(id)}/cancel`, { method: "POST" });
+export function cancelMerchantSubscription(account: MerchantAccount, id: string) {
+  return call<void>(account, `/api/subscriptions/${encodeURIComponent(id)}/cancel`, { method: "POST" });
+}
+
+// ---------- Webhook ----------
+
+// Loja e mensalidades (ORDER_COMPLETED) + pagamento automático (subscrições). Os mesmos de scripts/revolut-registar-webhook.mjs.
+const WEBHOOK_EVENTS = ["ORDER_COMPLETED", "SUBSCRIPTION_INITIATED", "SUBSCRIPTION_OVERDUE", "SUBSCRIPTION_CANCELLED", "SUBSCRIPTION_FINISHED"];
+
+type MerchantWebhook = { id: string; url: string; events?: string[]; signing_secret?: string };
+
+/** Regista o webhook nesta conta (ou completa o que já existe para o URL) e devolve o signing secret. Serve também para testar a chave. */
+export async function ensureMerchantWebhook(secretKey: string, url: string): Promise<string> {
+  const account: MerchantAccount = { secretKey, webhookSecret: "" };
+  // Conforme a versão da API, a listagem vem como lista ou dentro de um objeto.
+  const listed = await call<MerchantWebhook[] | { webhooks?: MerchantWebhook[]; data?: MerchantWebhook[]; items?: MerchantWebhook[] }>(account, "/api/webhooks");
+  const list = Array.isArray(listed) ? listed : (listed?.webhooks ?? listed?.data ?? listed?.items ?? []);
+  const found = list.find((w) => w.url === url);
+
+  let webhook: MerchantWebhook;
+  if (found) {
+    // O detalhe traz os eventos e o signing_secret (a listagem pode não os trazer).
+    webhook = await call<MerchantWebhook>(account, `/api/webhooks/${encodeURIComponent(found.id)}`);
+    if (WEBHOOK_EVENTS.some((e) => !(webhook.events ?? []).includes(e))) {
+      await call<unknown>(account, `/api/webhooks/${encodeURIComponent(found.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ url, events: [...new Set([...(webhook.events ?? []), ...WEBHOOK_EVENTS])] }),
+      });
+    }
+  } else {
+    webhook = await call<MerchantWebhook>(account, "/api/webhooks", { method: "POST", body: JSON.stringify({ url, events: WEBHOOK_EVENTS }) });
+  }
+  if (!webhook.signing_secret) throw new Error("Revolut Merchant: webhook sem signing secret");
+  return webhook.signing_secret;
 }
 
 /** Assinatura do webhook: `v1=` + HMAC-SHA256 de `v1.{timestamp}.{corpo}` (pode vir mais de uma, separadas por vírgula). */
-export function verifyMerchantWebhook(rawBody: string, signatureHeader: string | null, timestamp: string | null): boolean {
-  if (!WEBHOOK_SECRET || !signatureHeader || !timestamp) return false;
+export function verifyMerchantWebhook(account: MerchantAccount, rawBody: string, signatureHeader: string | null, timestamp: string | null): boolean {
+  if (!account.webhookSecret || !signatureHeader || !timestamp) return false;
   // As ordens enviam milissegundos; os exemplos das subscrições vêm em segundos.
   const ts = Number(timestamp);
   const ms = ts < 1e12 ? ts * 1000 : ts;
   const age = Math.abs(Date.now() - ms);
   if (!Number.isFinite(age) || age > 5 * 60 * 1000) return false;
-  const expected = createHmac("sha256", WEBHOOK_SECRET).update(`v1.${timestamp}.${rawBody}`).digest("hex");
+  const expected = createHmac("sha256", account.webhookSecret).update(`v1.${timestamp}.${rawBody}`).digest("hex");
   const expectedBuf = Buffer.from(`v1=${expected}`);
   return signatureHeader.split(",").some((s) => {
     const buf = Buffer.from(s.trim());

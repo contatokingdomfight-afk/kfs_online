@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentDbUserUncached } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { loadOrders, orderReference } from "@/lib/retail/orders";
-import { createMerchantOrder, revolutMerchantConfigured } from "@/lib/revolut/merchant";
+import { createMerchantOrder } from "@/lib/revolut/merchant";
+import { merchantBrandName, resolveMerchantAccount } from "@/lib/revolut/merchant-accounts";
 import { loadSchoolPaymentInfo, orderPaymentSchoolId } from "@/lib/school-payment-methods";
 
 /**
@@ -12,7 +13,6 @@ import { loadSchoolPaymentInfo, orderPaymentSchoolId } from "@/lib/school-paymen
 export async function POST(request: NextRequest) {
   const user = await getCurrentDbUserUncached();
   if (!user) return NextResponse.json({ error: "Entra na tua conta para continuar." }, { status: 401 });
-  if (!revolutMerchantConfigured) return NextResponse.json({ error: "Pagamento online não configurado." }, { status: 503 });
   const admin = getAdminClientOrNull().client;
   if (!admin) return NextResponse.json({ error: "Configuração do servidor em falta." }, { status: 500 });
 
@@ -29,15 +29,16 @@ export async function POST(request: NextRequest) {
   if (!mine) return NextResponse.json({ error: "Encomenda não encontrada." }, { status: 404 });
   if (order.status !== "PENDING_PAYMENT") return NextResponse.json({ error: "Esta encomenda já não está por pagar." }, { status: 400 });
   if (order.totalAmount <= 0) return NextResponse.json({ error: "Valor inválido." }, { status: 400 });
-  // A conta Revolut é a da Sede: uma encomenda de outra escola não pode ser paga por aqui.
-  const payment = await loadSchoolPaymentInfo(orderPaymentSchoolId(order.schoolId));
-  if (!payment.onlineRevolut) return NextResponse.json({ error: "Esta escola ainda não tem pagamento online." }, { status: 400 });
+  // A ordem é criada na conta Revolut da escola da encomenda.
+  const schoolId = orderPaymentSchoolId(order.schoolId);
+  const account = (await loadSchoolPaymentInfo(schoolId)).onlineRevolut ? await resolveMerchantAccount(admin, schoolId) : null;
+  if (!account) return NextResponse.json({ error: "Esta escola ainda não tem pagamento online." }, { status: 400 });
 
   try {
     const base = order.studentId ? "/dashboard/loja" : "/loja";
-    const mo = await createMerchantOrder({
+    const mo = await createMerchantOrder(account, {
       amountEur: order.totalAmount,
-      description: `Encomenda ${orderReference(order.number)} · Kingdom Fight School`,
+      description: `Encomenda ${orderReference(order.number)} · ${await merchantBrandName(admin, schoolId)}`,
       reference: order.id,
       redirectUrl: `${request.nextUrl.origin}${base}/encomendas/${order.id}?pago=1`,
       email: user.email,

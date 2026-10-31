@@ -2,7 +2,8 @@ import "server-only";
 
 import { cache } from "react";
 import { GYM_ENROLLMENT_INFO } from "@/lib/enrollment-form";
-import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
+import { schoolsWithMerchantAccount } from "@/lib/revolut/merchant-accounts";
+import { SEDE_DISPLAY_NAME } from "@/lib/school-name-text";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import {
   NO_SCHOOL_PAYMENT_INFO,
@@ -25,13 +26,13 @@ export async function loadSchoolsPaymentInfo(schoolIds: string[]): Promise<Map<s
   const ids = [...new Set(schoolIds)];
   const admin = getAdminClientOrNull().client;
   if (!admin || !ids.length) return out;
-  const { data, error } = await admin.from("SchoolPaymentSettings").select(SETTINGS_COLUMNS).in("schoolId", ids);
+  const [{ data, error }, withAccount] = await Promise.all([admin.from("SchoolPaymentSettings").select(SETTINGS_COLUMNS).in("schoolId", ids), schoolsWithMerchantAccount(admin, ids)]);
   if (error) {
     console.error("[school-payment-methods]", error.message);
     return out;
   }
   for (const row of (data ?? []) as unknown as (SchoolPaymentSettingsRow & { schoolId: string })[]) {
-    out.set(row.schoolId, schoolPaymentInfoFromRow(row.schoolId, row, revolutMerchantConfigured));
+    out.set(row.schoolId, schoolPaymentInfoFromRow(row.schoolId, row, withAccount.has(row.schoolId)));
   }
   return out;
 }
@@ -42,7 +43,7 @@ export const loadSchoolPaymentInfo = cache(async function loadSchoolPaymentInfo(
   return (await loadSchoolsPaymentInfo([schoolId])).get(schoolId) ?? NO_SCHOOL_PAYMENT_INFO;
 });
 
-const loadStudentSchoolId = cache(async function loadStudentSchoolId(studentId: string): Promise<string | null> {
+export const loadStudentSchoolId = cache(async function loadStudentSchoolId(studentId: string): Promise<string | null> {
   const admin = getAdminClientOrNull().client;
   if (!admin) return null;
   const { data } = await admin.from("Student").select("schoolId").eq("id", studentId).maybeSingle();
@@ -57,6 +58,7 @@ export async function loadStudentPaymentInfo(studentId: string | null | undefine
 
 const SEDE_IDENTITY: SchoolIdentity = {
   name: GYM_ENROLLMENT_INFO.name,
+  displayName: SEDE_DISPLAY_NAME,
   tradeName: GYM_ENROLLMENT_INFO.tradeName,
   nipc: GYM_ENROLLMENT_INFO.nipc,
   address: GYM_ENROLLMENT_INFO.address,
@@ -73,12 +75,20 @@ export async function loadStudentSchoolIdentity(studentId: string | null | undef
   const admin = getAdminClientOrNull().client;
   if (!admin) return null;
   const [{ data: school }, { data: settings }] = await Promise.all([
-    admin.from("School").select("name, address, phone, email").eq("id", schoolId).maybeSingle(),
+    admin.from("School").select("name, legalName, legalAddress, address, phone, email").eq("id", schoolId).maybeSingle(),
     admin.from("SchoolPaymentSettings").select("nif").eq("schoolId", schoolId).maybeSingle(),
   ]);
   if (!school) return null;
-  const s = school as { name: string; address: string | null; phone: string | null; email: string | null };
-  return { name: s.name, tradeName: null, nipc: (settings as { nif?: string | null } | null)?.nif ?? null, address: s.address, phone: s.phone, email: s.email };
+  const s = school as { name: string; legalName: string | null; legalAddress: string | null; address: string | null; phone: string | null; email: string | null };
+  return {
+    name: s.legalName?.trim() || s.name,
+    displayName: s.name,
+    tradeName: null,
+    nipc: (settings as { nif?: string | null } | null)?.nif ?? null,
+    address: s.legalAddress?.trim() || s.address,
+    phone: s.phone,
+    email: s.email,
+  };
 }
 
 export async function loadEnrollmentSchoolDetails(studentId: string | null | undefined): Promise<EnrollmentSchoolDetails> {

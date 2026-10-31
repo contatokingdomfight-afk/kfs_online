@@ -19,6 +19,7 @@ import {
   type PaymentMethodValue,
 } from "@/lib/enrollment-form";
 import { enrollmentPaymentMethods, type SchoolIdentity, type SchoolPaymentInfo } from "@/lib/school-payment-rules";
+import { withSchoolName } from "@/lib/school-name-text";
 import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
 
 type Props = {
@@ -447,7 +448,7 @@ export function ComprovativoForm({ prefill, paymentInfo, schoolIdentity, action 
       <div ref={stepRefs[3]} style={stepStyle(3)}>
         <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", display: "flex", flexDirection: "column", gap: 12 }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Proteção de dados e consentimentos</h2>
-          <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>{GDPR_CONSENT_INTRO}</p>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>{withSchoolName(GDPR_CONSENT_INTRO, schoolIdentity?.displayName)}</p>
           {ENROLLMENT_CONSENT_SECTIONS.map((item) => {
             const checked = consents[item.key];
             return (
@@ -464,7 +465,7 @@ export function ComprovativoForm({ prefill, paymentInfo, schoolIdentity, action 
                 />
                 <span>
                   <strong style={{ color: "var(--text-primary)" }}>{item.title}:</strong>{" "}
-                  {checked ? item.yes : item.no}
+                  {checked ? withSchoolName(item.yes, schoolIdentity?.displayName) : item.no}
                 </span>
               </label>
             );

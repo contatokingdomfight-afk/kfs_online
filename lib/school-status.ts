@@ -35,10 +35,16 @@ export function hasPaymentMethod(settings: SchoolPaymentMethods | null | undefin
   );
 }
 
+/** Sem isto o aluno não pode assinar: é o que identifica a escola no contrato. */
+export function hasLegalData(data: { legalName?: string | null; legalAddress?: string | null; nif?: string | null } | null | undefined): boolean {
+  return Boolean(data?.legalName?.trim() && data.legalAddress?.trim() && data.nif?.trim());
+}
+
 /** O que impede a abertura; vazio = pode abrir. */
-export function missingToOpen(directorCount: number, settings: SchoolPaymentMethods | null | undefined): string[] {
+export function missingToOpen(directorCount: number, settings: SchoolPaymentMethods | null | undefined, legalDataReady = true): string[] {
   const missing: string[] = [];
   if (directorCount === 0) missing.push("diretor");
   if (!hasPaymentMethod(settings)) missing.push("meio de pagamento");
+  if (!legalDataReady) missing.push("dados legais");
   return missing;
 }

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
 
 export type InsuranceSettingsRow = {
   id: string;
@@ -49,12 +50,18 @@ export async function getInsuranceSettings(
   };
 }
 
-/** Contrato de adesão assinado e em vigor para a versão actual. */
+/**
+ * Contrato de adesão assinado com a escola atual do aluno e em vigor para a versão actual.
+ * Sem `contractParty` foi assinado com a Sede (ver lib/contract-party.ts).
+ */
 export function isMembershipAgreementCurrent(
-  row: { agreementSigned?: boolean; agreementVersion?: string | null } | null | undefined,
-  currentVersion: string
+  row: { agreementSigned?: boolean; agreementVersion?: string | null; contractParty?: unknown } | null | undefined,
+  currentVersion: string,
+  studentSchoolId: string | null | undefined
 ): boolean {
   if (!row?.agreementSigned) return false;
+  const signedSchoolId = (row.contractParty as { schoolId?: string } | null | undefined)?.schoolId ?? SEDE_SCHOOL_ID;
+  if (studentSchoolId && signedSchoolId !== studentSchoolId) return false;
   const signedVersion = row.agreementVersion ?? "";
   if (!signedVersion || signedVersion === "legacy") return true;
   return signedVersion === currentVersion;

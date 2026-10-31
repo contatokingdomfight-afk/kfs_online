@@ -3,10 +3,14 @@
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { SCHOOLS_CACHE_TAG } from "@/lib/cached-reference-data";
 import { adminPermissionError } from "@/lib/permissions/assert";
+import { disconnectSchoolBank, saveSchoolBankCertificate } from "@/lib/revolut/bank-accounts";
+import { connectSchoolMerchantAccount, disconnectSchoolMerchantAccount } from "@/lib/revolut/merchant-accounts";
 import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
-import { missingToOpen, type SchoolPaymentMethods } from "@/lib/school-status";
+import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
+import { hasLegalData, missingToOpen, type SchoolPaymentMethods } from "@/lib/school-status";
 import { createAdminClient, getAdminClientOrNull } from "@/lib/supabase/admin";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export type SchoolResult = { success?: string; error?: string } | null;
@@ -80,6 +84,11 @@ export async function updateSchool(_prev: SchoolResult, formData: FormData): Pro
   const name = field(formData, "name");
   if (!id || !name) return { error: "ID e nome são obrigatórios." };
 
+  // A Sede não tem estes campos no formulário: o contrato dela é um texto fixo.
+  const hasLegalFields = formData.has("legalName");
+  const nif = field(formData, "nif").replace(/\s/g, "");
+  if (nif && !/^\d{9}$/.test(nif)) return { error: "O NIPC deve ter 9 dígitos." };
+
   const out = getAdminClientOrNull();
   if (!out.client) return { error: "Configuração admin ausente." };
 
@@ -91,10 +100,18 @@ export async function updateSchool(_prev: SchoolResult, formData: FormData): Pro
       city: field(formData, "city") || null,
       phone: field(formData, "phone") || null,
       email: field(formData, "email") || null,
+      ...(hasLegalFields ? { legalName: field(formData, "legalName") || null, legalAddress: field(formData, "legalAddress") || null } : {}),
       updatedAt: new Date().toISOString(),
     })
     .eq("id", id);
   if (error) return { error: error.message };
+
+  if (hasLegalFields) {
+    const { error: nifError } = await out.client
+      .from("SchoolPaymentSettings")
+      .upsert({ schoolId: id, nif: nif || null, updatedAt: new Date().toISOString() }, { onConflict: "schoolId" });
+    if (nifError) return { error: nifError.message };
+  }
 
   revalidateSchool(id);
   return { success: "Escola atualizada." };
@@ -113,13 +130,16 @@ export async function openSchool(_prev: SchoolResult, formData: FormData): Promi
   const supabase = out.client;
 
   const [{ data: school }, { count: directorCount }, { data: settings }] = await Promise.all([
-    supabase.from("School").select("id, openedAt").eq("id", id).maybeSingle(),
+    supabase.from("School").select("id, openedAt, legalName, legalAddress").eq("id", id).maybeSingle(),
     supabase.from("SchoolDirector").select("id", { count: "exact", head: true }).eq("schoolId", id),
-    supabase.from("SchoolPaymentSettings").select(PAYMENT_METHOD_COLUMNS).eq("schoolId", id).maybeSingle(),
+    supabase.from("SchoolPaymentSettings").select(`${PAYMENT_METHOD_COLUMNS}, nif`).eq("schoolId", id).maybeSingle(),
   ]);
   if (!school) return { error: "Escola não encontrada." };
 
-  const missing = missingToOpen(directorCount ?? 0, settings as SchoolPaymentMethods | null);
+  const nif = (settings as { nif?: string | null } | null)?.nif;
+  const legalDataReady =
+    id === SEDE_SCHOOL_ID || hasLegalData({ legalName: school.legalName as string | null, legalAddress: school.legalAddress as string | null, nif });
+  const missing = missingToOpen(directorCount ?? 0, settings as SchoolPaymentMethods | null, legalDataReady);
   if (missing.length > 0) return { error: `Falta: ${missing.join(", ")}.` };
 
   const now = new Date().toISOString();
@@ -382,4 +402,84 @@ export async function saveSchoolPaymentMethods(_prev: SchoolResult, formData: Fo
 
   revalidateSchoolTeam(schoolId);
   return { success: "Meios de pagamento guardados." };
+}
+
+/** Liga a conta Revolut da escola. A chave nunca volta ao browser nem aparece nos registos. */
+export async function connectSchoolRevolut(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
+  const denied = await networkAdminError();
+  if (denied) return { error: denied };
+  const actor = await getCurrentDbUser();
+
+  const schoolId = field(formData, "schoolId");
+  const secretKey = field(formData, "secretKey");
+  if (!schoolId || !secretKey) return { error: "Cola a chave secreta da Revolut." };
+
+  const out = getAdminClientOrNull();
+  if (!out.client) return { error: "Configuração admin ausente." };
+
+  const h = await headers();
+  const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("x-forwarded-host") ?? h.get("host") ?? ""}`;
+  const res = await connectSchoolMerchantAccount(out.client, { schoolId, secretKey, origin, actorUserId: actor?.id ?? null });
+  if (res.error) return { error: res.error };
+
+  revalidateSchoolTeam(schoolId);
+  return { success: "Conta Revolut ligada." };
+}
+
+export async function disconnectSchoolRevolut(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
+  const denied = await networkAdminError();
+  if (denied) return { error: denied };
+  const actor = await getCurrentDbUser();
+
+  const schoolId = field(formData, "schoolId");
+  if (!schoolId) return { error: "ID da escola é obrigatório." };
+
+  const out = getAdminClientOrNull();
+  if (!out.client) return { error: "Configuração admin ausente." };
+
+  const res = await disconnectSchoolMerchantAccount(out.client, schoolId, actor?.id ?? null);
+  if (res.error) return { error: res.error };
+
+  revalidateSchoolTeam(schoolId);
+  return { success: "Conta Revolut desligada." };
+}
+
+/** Guarda o certificado da Business API. Falta depois autorizar na Revolut (/api/revolut/connect). */
+export async function saveSchoolBankCert(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
+  const denied = await networkAdminError();
+  if (denied) return { error: denied };
+  const actor = await getCurrentDbUser();
+
+  const schoolId = field(formData, "schoolId");
+  const clientId = field(formData, "clientId");
+  const privateKey = field(formData, "privateKey");
+  if (!schoolId || !clientId || !privateKey) return { error: "Preenche o ClientID e a chave privada." };
+
+  const out = getAdminClientOrNull();
+  if (!out.client) return { error: "Configuração admin ausente." };
+
+  const h = await headers();
+  const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("x-forwarded-host") ?? h.get("host") ?? ""}`;
+  const res = await saveSchoolBankCertificate(out.client, { schoolId, clientId, privateKey, origin, actorUserId: actor?.id ?? null });
+  if (res.error) return { error: res.error };
+
+  revalidateSchoolTeam(schoolId);
+  return { success: "Certificado guardado. Falta autorizar na Revolut." };
+}
+
+export async function disconnectSchoolBankAction(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
+  const denied = await networkAdminError();
+  if (denied) return { error: denied };
+
+  const schoolId = field(formData, "schoolId");
+  if (!schoolId) return { error: "ID da escola é obrigatório." };
+
+  const out = getAdminClientOrNull();
+  if (!out.client) return { error: "Configuração admin ausente." };
+
+  const res = await disconnectSchoolBank(out.client, schoolId);
+  if (res.error) return { error: res.error };
+
+  revalidateSchoolTeam(schoolId);
+  return { success: "Confirmação de transferências desligada." };
 }

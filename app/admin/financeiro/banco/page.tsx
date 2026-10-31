@@ -1,9 +1,11 @@
-import { getSchoolScope, scopedSchoolIds, isNetworkScope } from "@/lib/school-scope";
+import { getSchoolScope, isNetworkScope, resolveSchoolParam } from "@/lib/school-scope";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
-import { getRevolutConfig } from "@/lib/revolut/client";
+import { loadBankConnection, resolveBankConfig } from "@/lib/revolut/bank-accounts";
+import { revolutMerchantEnv } from "@/lib/revolut/merchant";
+import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
 import { loadPorReceberItems } from "@/lib/finance/por-receber";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { itemLabel, type MatchSuggestion } from "@/lib/revolut/match";
@@ -31,7 +33,8 @@ const CHIP: Record<Tx["matchStatus"], { text: string; color: string; bg: string 
   IGNORED: { text: "Ignorado", color: "var(--text-secondary)", bg: "transparent" },
 };
 const ERRORS: Record<string, string> = {
-  config: "Faltam as variáveis REVOLUT_* na Vercel.",
+  config: "Esta escola ainda não tem o certificado da Revolut configurado.",
+  cifra: "Falta a chave de cifra dos pagamentos no servidor.",
   "sem-codigo": "A Revolut não devolveu o código de autorização.",
   estado: "A autorização expirou ou veio de outro pedido. Tenta outra vez.",
   "sem-token": "A Revolut não devolveu o token de acesso.",
@@ -39,31 +42,37 @@ const ERRORS: Record<string, string> = {
   troca: "A Revolut recusou a troca do código (certificado, ClientID ou domínio).",
 };
 
-export default async function AdminFinanceiroBancoPage({ searchParams }: { searchParams: Promise<{ erro?: string; ligado?: string }> }) {
+export default async function AdminFinanceiroBancoPage({ searchParams }: { searchParams: Promise<{ erro?: string; ligado?: string; school?: string }> }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
-  // Multi-escola: ainda só da rede (ligação Revolut única / cursos e eventos da rede).
-  if (!isNetworkScope(await getSchoolScope())) redirect("/admin/financeiro");
-  const { erro, ligado } = await searchParams;
+  const scope = await getSchoolScope();
+  if (scope.kind === "none") redirect("/admin/financeiro");
+  const { erro, ligado, school } = await searchParams;
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
-  const configured = Boolean(getRevolutConfig());
+  // As transferências são sempre da conta de uma escola; o Admin Geral em «Todas» vê a Sede.
+  const schoolId = resolveSchoolParam(scope, school) ?? SEDE_SCHOOL_ID;
+  const schoolName = scope.schools.find((s) => s.id === schoolId)?.name ?? null;
+  const networkAdmin = isNetworkScope(scope);
 
   const since = new Date(Date.now() - 60 * 86_400_000).toISOString();
-  const [{ data: conn }, { data: txRows }] = await Promise.all([
-    supabase.from("RevolutConnection").select("connectedAt, lastSyncAt, lastSyncError").eq("id", "default").maybeSingle(),
+  const [config, connection, { data: txRows }] = await Promise.all([
+    resolveBankConfig(supabase, schoolId),
+    loadBankConnection(supabase, schoolId),
     supabase
       .from("BankTransaction")
       .select("id, occurredAt, amount, payerName, reference, matchStatus, matchLabel, suggestions")
+      .eq("schoolId", schoolId)
+      .eq("environment", revolutMerchantEnv)
       .gte("occurredAt", since)
       .order("occurredAt", { ascending: false })
       .limit(300),
   ]);
-  const connection = conn as { connectedAt: string; lastSyncAt: string | null; lastSyncError: string | null } | null;
+  const configured = Boolean(config);
   const txs = (txRows ?? []) as Tx[];
   const pending = txs.filter((t) => t.matchStatus === "SUGGESTED" || t.matchStatus === "UNMATCHED");
-  const openItems = pending.length ? await loadPorReceberItems(supabase, currentReferenceMonthLisbon(new Date()), scopedSchoolIds(await getSchoolScope())) : [];
+  const openItems = pending.length ? await loadPorReceberItems(supabase, currentReferenceMonthLisbon(new Date()), [schoolId]) : [];
   const thisMonthKey = currentReferenceMonthLisbon(new Date());
   const thisMonth = txs.filter((t) => t.occurredAt.slice(0, 7) === thisMonthKey);
 
@@ -80,7 +89,7 @@ export default async function AdminFinanceiroBancoPage({ searchParams }: { searc
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <section className="card" style={{ padding: 16, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
         <div style={{ flex: "1 1 260px" }}>
-          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>Transferências Revolut</h2>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>Transferências Revolut{schoolName ? ` · ${schoolName}` : ""}</h2>
           <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
             {connection
               ? `Ligada desde ${fmt(connection.connectedAt)} · última leitura ${fmt(connection.lastSyncAt)}. A plataforma só lê movimentos.`
@@ -90,16 +99,25 @@ export default async function AdminFinanceiroBancoPage({ searchParams }: { searc
           {erro ? <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--danger)" }}>{ERRORS[erro] ?? "Erro ao ligar à Revolut."}</p> : null}
           {ligado ? <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--success)", fontWeight: 700 }}>Revolut ligada e primeira leitura feita.</p> : null}
         </div>
-        {!configured ? (
-          <span style={{ fontSize: 13, color: "var(--warning)" }}>Configura primeiro as variáveis REVOLUT_* na Vercel.</span>
-        ) : connection ? (
+        {connection && configured ? (
           <form action={syncRevolutNow}>
+            <input type="hidden" name="schoolId" value={schoolId} />
             <button type="submit" className="btn btn-primary" style={{ minHeight: 40 }}>
               Sincronizar agora
             </button>
           </form>
+        ) : !networkAdmin ? (
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>O Admin Geral liga a conta da escola.</span>
+        ) : !configured ? (
+          schoolId === SEDE_SCHOOL_ID ? (
+            <span style={{ fontSize: 13, color: "var(--warning)" }}>Configura primeiro as variáveis REVOLUT_* na Vercel.</span>
+          ) : (
+            <a href={`/admin/escolas/${schoolId}?tab=estado`} className="btn btn-secondary" style={{ minHeight: 40, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
+              Configurar na ficha da escola
+            </a>
+          )
         ) : (
-          <a href="/api/revolut/connect" className="btn btn-primary" style={{ minHeight: 40, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
+          <a href={`/api/revolut/connect?school=${encodeURIComponent(schoolId)}`} className="btn btn-primary" style={{ minHeight: 40, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
             Ligar à Revolut
           </a>
         )}
@@ -151,6 +169,7 @@ export default async function AdminFinanceiroBancoPage({ searchParams }: { searc
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                           {options.length ? (
                             <form action={confirmBankMatch} style={{ display: "flex", gap: 6 }}>
+                              <input type="hidden" name="schoolId" value={schoolId} />
                               <input type="hidden" name="txId" value={t.id} />
                               <select
                                 name="itemKey"
@@ -170,6 +189,7 @@ export default async function AdminFinanceiroBancoPage({ searchParams }: { searc
                             </form>
                           ) : null}
                           <form action={ignoreBankTransaction}>
+                            <input type="hidden" name="schoolId" value={schoolId} />
                             <input type="hidden" name="txId" value={t.id} />
                             <button type="submit" className="btn" style={{ minHeight: 34, fontSize: 12 }}>
                               Ignorar

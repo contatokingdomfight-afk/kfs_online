@@ -440,16 +440,16 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
   for (const part of chunks(ids, 200)) {
     const [{ data: waivers }, { data: agreements }, { data: forms }] = await Promise.all([
       supabase.from("StudentWaiver").select("studentId, waiverSigned").in("studentId", part),
-      supabase.from("StudentMembershipAgreement").select("studentId, agreementSigned, agreementVersion").in("studentId", part),
+      supabase.from("StudentMembershipAgreement").select("studentId, agreementSigned, agreementVersion, contractParty").in("studentId", part),
       supabase.from("StudentEnrollmentForm").select("studentId, formCompleted, formVersion").in("studentId", part),
     ]);
     const w = new Map(((waivers ?? []) as { studentId: string; waiverSigned: boolean }[]).map((r) => [r.studentId, Boolean(r.waiverSigned)]));
-    const a = new Map(((agreements ?? []) as { studentId: string; agreementSigned: boolean; agreementVersion: string | null }[]).map((r) => [r.studentId, r]));
+    const a = new Map(((agreements ?? []) as { studentId: string; agreementSigned: boolean; agreementVersion: string | null; contractParty: unknown }[]).map((r) => [r.studentId, r]));
     const f = new Map(((forms ?? []) as { studentId: string; formCompleted: boolean; formVersion: string | null }[]).map((r) => [r.studentId, r]));
     for (const id of part) {
       docs.set(id, {
         form: isEnrollmentFormCurrent(f.get(id) ?? null, settings.enrollmentFormVersion),
-        agreement: isMembershipAgreementCurrent(a.get(id) ?? null, settings.membershipAgreementVersion),
+        agreement: isMembershipAgreementCurrent(a.get(id) ?? null, settings.membershipAgreementVersion, withPlan.find((s) => s.id === id)?.schoolId),
         waiver: w.get(id) ?? false,
       });
     }

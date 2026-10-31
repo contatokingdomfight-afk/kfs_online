@@ -38,15 +38,16 @@ export const loadStudentAdminSummary = cache(async function loadStudentAdminSumm
 ): Promise<StudentAdminSummary> {
   const today = calendarDateLisbon(new Date());
   const since = addDaysYmd(today, -180);
-  const [{ data: plan }, { data: payments }, settings, { data: agreement }, { data: waiver }, { data: form }, { data: att }, family] = await Promise.all([
+  const [{ data: plan }, { data: payments }, settings, { data: agreement }, { data: waiver }, { data: form }, { data: att }, family, { data: studentSchool }] = await Promise.all([
     planId ? supabase.from("Plan").select("name").eq("id", planId).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("Payment").select("id, amount, status, paymentType, referenceMonth, referenceYear, createdAt").eq("studentId", studentId).order("createdAt", { ascending: false }).limit(60),
     getInsuranceSettings(supabase),
-    supabase.from("StudentMembershipAgreement").select("agreementSigned, agreementVersion").eq("studentId", studentId).maybeSingle(),
+    supabase.from("StudentMembershipAgreement").select("agreementSigned, agreementVersion, contractParty").eq("studentId", studentId).maybeSingle(),
     supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", studentId).maybeSingle(),
     supabase.from("StudentEnrollmentForm").select("formCompleted, formVersion").eq("studentId", studentId).maybeSingle(),
     supabase.from("Attendance").select("occurrenceDate").eq("studentId", studentId).eq("status", "CONFIRMED").gte("occurrenceDate", since).lte("occurrenceDate", today),
     getFamilyContext(supabase, studentId),
+    supabase.from("Student").select("schoolId").eq("id", studentId).maybeSingle(),
   ]);
   const isFamilyMember = Boolean(family && !family.isTitular);
 
@@ -99,7 +100,11 @@ export const loadStudentAdminSummary = cache(async function loadStudentAdminSumm
   // Documentos
   const missing = [
     !isEnrollmentFormCurrent(form as { formCompleted?: boolean; formVersion?: string | null } | null, settings.enrollmentFormVersion) && "ficha de inscrição",
-    !isMembershipAgreementCurrent(agreement as { agreementSigned?: boolean; agreementVersion?: string | null } | null, settings.membershipAgreementVersion) && "contrato",
+    !isMembershipAgreementCurrent(
+      agreement as { agreementSigned?: boolean; agreementVersion?: string | null; contractParty?: unknown } | null,
+      settings.membershipAgreementVersion,
+      (studentSchool as { schoolId?: string | null } | null)?.schoolId
+    ) && "contrato",
     !(waiver as { waiverSigned?: boolean } | null)?.waiverSigned && "termo",
   ].filter(Boolean) as string[];
   const documents = missing.length ? { tone: "amber" as const, detail: `falta ${missing.join(", ")}`, missing } : { tone: "green" as const, detail: "completos", missing };

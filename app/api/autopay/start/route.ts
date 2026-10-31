@@ -3,13 +3,11 @@ import { getCurrentDbUserUncached } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { startAutoPay } from "@/lib/autopay/service";
-import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
 
 /** Aluno ativa o pagamento automático: devolve a página segura da Revolut para a 1.ª cobrança. */
 export async function POST(request: NextRequest) {
   const [user, studentId] = await Promise.all([getCurrentDbUserUncached(), getCurrentStudentId()]);
   if (!user || !studentId) return NextResponse.json({ error: "Entra na tua conta para continuar." }, { status: 401 });
-  if (!revolutMerchantConfigured) return NextResponse.json({ error: "Pagamento automático indisponível de momento." }, { status: 503 });
   const admin = getAdminClientOrNull().client;
   if (!admin) return NextResponse.json({ error: "Configuração do servidor em falta." }, { status: 500 });
 

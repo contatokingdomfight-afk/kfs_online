@@ -18,6 +18,7 @@ import { ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER } from "@/lib/sports-insurance-
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
 import type { SchoolSignature } from "@/lib/school-signatures";
 import type { EnrollmentSchoolDetails } from "@/lib/school-payment-rules";
+import { withSchoolName } from "@/lib/school-name-text";
 
 type Props = {
   school: EnrollmentSchoolDetails;
@@ -142,6 +143,7 @@ export function EnrollmentFormDocumentView({
 
   const healthOr = (v: string | null | undefined) => (v?.trim() ? v.trim() : "Nenhuma");
   const identity = school.identity;
+  const named = (text: string) => withSchoolName(text, identity?.displayName);
   const transferIban = school.payment.transfer?.iban ?? null;
 
   return (
@@ -150,7 +152,7 @@ export function EnrollmentFormDocumentView({
         <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700, color: "var(--text-primary)" }}>
           Comprovativo de Adesão
         </h2>
-        <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>Kingdom Fight School</p>
+        <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>{identity?.displayName}</p>
       </header>
 
       <Section n={1} title="Identificação do Ginásio">
@@ -260,23 +262,23 @@ export function EnrollmentFormDocumentView({
       </Section>
 
       <Section n={11} title="Proteção de Dados">
-        <p style={{ ...bodyText, margin: "0 0 10px" }}>{GDPR_CONSENT_INTRO}</p>
+        <p style={{ ...bodyText, margin: "0 0 10px" }}>{named(GDPR_CONSENT_INTRO)}</p>
         <ul style={{ margin: "0 0 10px", paddingLeft: 20, ...bodyText }}>
           {ENROLLMENT_GDPR_PURPOSES.map((item) => (
             <li key={item} style={{ marginBottom: 4 }}>
-              {item}
+              {named(item)}
             </li>
           ))}
         </ul>
         <p style={{ ...bodyText, margin: "0 0 10px" }}>{ENROLLMENT_GDPR_RETENTION}</p>
-        <p style={{ ...bodyText, margin: "0 0 14px" }}>{ENROLLMENT_GDPR_RIGHTS}</p>
+        <p style={{ ...bodyText, margin: "0 0 14px" }}>{named(ENROLLMENT_GDPR_RIGHTS)}</p>
 
         <p style={{ ...bodyText, margin: "0 0 10px", fontWeight: 600, color: "var(--text-primary)" }}>11.2- Consentimento</p>
         {ENROLLMENT_CONSENT_SECTIONS.map((item) => (
           <ConsentPair
             key={item.key}
             title={item.title}
-            yes={item.yes}
+            yes={named(item.yes)}
             no={item.no}
             allowed={Boolean(form[item.key])}
           />
@@ -287,7 +289,7 @@ export function EnrollmentFormDocumentView({
       <section style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
         {FINAL_DECLARATIONS.map((text) => (
           <p key={text.slice(0, 40)} style={{ ...bodyText, margin: "0 0 10px" }}>
-            {text}
+            {named(text)}
           </p>
         ))}
 
@@ -339,7 +341,7 @@ export function EnrollmentFormDocumentView({
 
         <div style={{ marginTop: 24 }}>
           <p style={{ ...bodyText, margin: "0 0 8px", fontWeight: 600, color: "var(--text-primary)" }}>
-            A Kingdom Fight School
+            {named("A Kingdom Fight School")}
           </p>
           <SchoolSignatureBlock signatures={schoolSignatures ?? []} title="" />
           {!schoolSignatures?.length ? (

@@ -74,7 +74,7 @@ export async function adminCreatePaymentLinkAction(formData: FormData): Promise<
       createdByUserId: u.id,
       email: (user as { email?: string | null } | null)?.email ?? null,
       returnUrl: `${origin}/dashboard/financeiro?pago=1`,
-      description: "Pagamentos · Kingdom Fight School",
+      description: "Pagamentos",
     });
     if (res.error) console.error("[payment link admin]", res.error);
   } catch (e) {

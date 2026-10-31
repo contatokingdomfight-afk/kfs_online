@@ -3,12 +3,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
-import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
 import { AutoPrintTrigger } from "@/components/documents/AutoPrintTrigger";
 import { PrintDocumentTitle } from "@/components/documents/PrintDocumentTitle";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
-import { getActiveSchoolSignatures } from "@/lib/school-signatures";
+import { loadMembershipDocumentView } from "@/lib/school-contract-party";
 import {
   buildMembershipPrintDocumentTitle,
   loadStudentPrintName,
@@ -29,7 +28,7 @@ export default async function ImprimirContratoPage() {
   const settings = await getInsuranceSettings(supabase);
   const { data: agreement } = await supabase
     .from("StudentMembershipAgreement")
-    .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl, agreementVersion")
+    .select("agreementSigned, agreementSignedAt, signatureName, signatureImageUrl, agreementVersion, contractParty")
     .eq("studentId", studentId)
     .maybeSingle();
 
@@ -37,7 +36,8 @@ export default async function ImprimirContratoPage() {
     redirect("/dashboard/documentos-adesao");
   }
 
-  const schoolSignatures = await getActiveSchoolSignatures();
+  const doc = await loadMembershipDocumentView("agreement", studentId, { signed: true, contractParty: agreement.contractParty });
+  const schoolSignatures = doc.signatures;
   const studentName = await loadStudentPrintName(supabase, studentId, agreement.signatureName);
   const printTitle = buildMembershipPrintDocumentTitle("contrato", studentName);
 
@@ -85,10 +85,10 @@ export default async function ImprimirContratoPage() {
             />
           </div>
         ) : null}
-        <SchoolSignatureBlock signatures={schoolSignatures} />
+        <SchoolSignatureBlock signatures={schoolSignatures} title={`Pela ${doc.schoolName}`} />
         <div
           style={{ fontSize: 14, lineHeight: 1.6, color: "var(--text-secondary)", marginTop: schoolSignatures.length > 0 ? 20 : 0 }}
-          dangerouslySetInnerHTML={{ __html: MEMBERSHIP_AGREEMENT_BODY_PT }}
+          dangerouslySetInnerHTML={{ __html: doc.html ?? "" }}
         />
         {(agreement as { signatureImageUrl?: string | null }).signatureImageUrl ? (
           <div style={{ margin: "24px 0 0", paddingTop: 16, borderTop: "1px solid var(--border)" }}>
@@ -105,7 +105,7 @@ export default async function ImprimirContratoPage() {
                 Assinado por: {agreement.signatureName}
               </p>
             ) : null}
-            <SchoolSignatureBlock signatures={schoolSignatures} />
+            <SchoolSignatureBlock signatures={schoolSignatures} title={`Pela ${doc.schoolName}`} />
           </div>
         ) : null}
       </section>

@@ -1,6 +1,5 @@
 import { EnrollmentFormSummary } from "@/app/adesao/EnrollmentFormSummary";
-import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
-import { WAIVER_BODY_PT } from "@/lib/waiver-content";
+import type { MembershipDocumentView } from "@/lib/school-contract-party";
 import type { EnrollmentFormRow } from "@/lib/enrollment-form";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
 import { MembershipDocumentSection } from "@/components/membership/MembershipDocumentSection";
@@ -54,7 +53,10 @@ type Props = {
   enrollmentForm: EnrollmentFormRow | null;
   prefill: Prefill | null;
   hasPlan: boolean;
+  /** Assinaturas no comprovativo; o contrato e o termo trazem as suas. */
   schoolSignatures: SchoolSignature[];
+  agreementDoc: MembershipDocumentView;
+  waiverDoc: MembershipDocumentView;
   school: EnrollmentSchoolDetails;
   /** Rotas de impressão dedicadas — por omissão, dashboard do aluno. */
   printComprovativoHref?: string;
@@ -96,6 +98,8 @@ export function MembershipDocumentsReadView({
   prefill,
   hasPlan,
   schoolSignatures,
+  agreementDoc,
+  waiverDoc,
   school,
   printComprovativoHref ="/dashboard/documentos-adesao/imprimir/comprovativo",
   printContratoHref = "/dashboard/documentos-adesao/imprimir/contrato",
@@ -104,6 +108,7 @@ export function MembershipDocumentsReadView({
 }: Props) {
   const pt = locale === "pt";
   const allComplete = agreement.agreementSigned && waiver.waiverSigned && enrollment.formCompleted;
+  const missingLegalData = pt ? "Disponível quando os dados legais da escola estiverem preenchidos." : "Available once the school's legal details are filled in.";
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -215,17 +220,17 @@ export function MembershipDocumentsReadView({
           </div>
         ) : null}
         <SchoolSignatureBlock
-          signatures={schoolSignatures}
-          title={pt ? "Pela Kingdom Fight School" : "For Kingdom Fight School"}
+          signatures={agreementDoc.signatures}
+          title={pt ? `Pela ${agreementDoc.schoolName}` : `For ${agreementDoc.schoolName}`}
         />
         <div
           style={{
-            marginTop: schoolSignatures.length > 0 ? 16 : 0,
+            marginTop: agreementDoc.signatures.length > 0 ? 16 : 0,
             fontSize: 14,
             lineHeight: 1.6,
             color: "var(--text-secondary)",
           }}
-          dangerouslySetInnerHTML={{ __html: MEMBERSHIP_AGREEMENT_BODY_PT }}
+          dangerouslySetInnerHTML={{ __html: agreementDoc.html ?? missingLegalData }}
         />
       </MembershipDocumentSection>
 
@@ -271,17 +276,17 @@ export function MembershipDocumentsReadView({
           </div>
         ) : null}
         <SchoolSignatureBlock
-          signatures={schoolSignatures}
-          title={pt ? "Pela Kingdom Fight School" : "For Kingdom Fight School"}
+          signatures={waiverDoc.signatures}
+          title={pt ? `Pela ${waiverDoc.schoolName}` : `For ${waiverDoc.schoolName}`}
         />
         <div
           style={{
-            marginTop: waiver.waiverSigned && schoolSignatures.length > 0 ? 16 : 0,
+            marginTop: waiver.waiverSigned && waiverDoc.signatures.length > 0 ? 16 : 0,
             fontSize: 14,
             lineHeight: 1.6,
             color: "var(--text-secondary)",
           }}
-          dangerouslySetInnerHTML={{ __html: WAIVER_BODY_PT }}
+          dangerouslySetInnerHTML={{ __html: waiverDoc.html ?? missingLegalData }}
         />
       </MembershipDocumentSection>
     </div>

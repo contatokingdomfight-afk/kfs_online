@@ -4,13 +4,11 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { resolveAutoPayPayer } from "@/lib/autopay/service";
 import { createAdvanceTuitionCheckout, createTuitionCheckout } from "@/lib/tuition-checkout/service";
-import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
 
 /** Aluno paga mensalidades em atraso pela Revolut. O valor vem sempre dos pagamentos na base de dados. */
 export async function POST(request: NextRequest) {
   const [user, studentId] = await Promise.all([getCurrentDbUserUncached(), getCurrentStudentId()]);
   if (!user || !studentId) return NextResponse.json({ error: "Entra na tua conta para continuar." }, { status: 401 });
-  if (!revolutMerchantConfigured) return NextResponse.json({ error: "Pagamento online indisponível de momento." }, { status: 503 });
   const admin = getAdminClientOrNull().client;
   if (!admin) return NextResponse.json({ error: "Configuração do servidor em falta." }, { status: 500 });
 
@@ -40,7 +38,7 @@ export async function POST(request: NextRequest) {
       createdByUserId: user.id,
       email: user.email ?? null,
       returnUrl: `${request.nextUrl.origin}/dashboard/financeiro?pago=1`,
-      description: "Pagamentos · Kingdom Fight School",
+      description: "Pagamentos",
     });
     if (res.error || !res.url) return NextResponse.json({ error: res.error ?? "Não foi possível iniciar o pagamento." }, { status: 400 });
     return NextResponse.json({ url: res.url });

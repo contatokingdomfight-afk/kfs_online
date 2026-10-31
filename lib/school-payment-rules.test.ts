@@ -36,12 +36,14 @@ describe("schoolPaymentInfoFromRow", () => {
     expect(schoolPaymentInfoFromRow("escola-b", { ...EMPTY, mbwayEnabled: true, mbwayPhone: "912345678" }, true).mbwayPhone).toBe("912345678");
   });
 
-  it("Revolut online só na Sede, ligada e com a conta configurada", () => {
+  it("Revolut online só com o meio ligado e a conta da própria escola configurada", () => {
     const on = { ...EMPTY, revolutEnabled: true };
     expect(schoolPaymentInfoFromRow(SEDE_SCHOOL_ID, on, true).onlineRevolut).toBe(true);
     expect(schoolPaymentInfoFromRow(SEDE_SCHOOL_ID, on, false).onlineRevolut).toBe(false);
     expect(schoolPaymentInfoFromRow(SEDE_SCHOOL_ID, EMPTY, true).onlineRevolut).toBe(false);
-    expect(schoolPaymentInfoFromRow("escola-b", on, true).onlineRevolut).toBe(false);
+    expect(schoolPaymentInfoFromRow("escola-b", on, true).onlineRevolut).toBe(true);
+    expect(schoolPaymentInfoFromRow("escola-b", on, false).onlineRevolut).toBe(false);
+    expect(schoolPaymentInfoFromRow("escola-b", EMPTY, true).onlineRevolut).toBe(false);
   });
 });
 
@@ -54,8 +56,9 @@ describe("enrollmentPaymentMethods", () => {
   });
 
   it("outra escola só tem os seus meios", () => {
-    const info = schoolPaymentInfoFromRow("escola-b", { ...EMPTY, mbwayEnabled: true, mbwayPhone: "912345678", revolutEnabled: true }, true);
-    expect(enrollmentPaymentMethods(info, { includeOnline: true })).toEqual(["MBWAY"]);
+    const row = { ...EMPTY, mbwayEnabled: true, mbwayPhone: "912345678", revolutEnabled: true };
+    expect(enrollmentPaymentMethods(schoolPaymentInfoFromRow("escola-b", row, false), { includeOnline: true })).toEqual(["MBWAY"]);
+    expect(enrollmentPaymentMethods(schoolPaymentInfoFromRow("escola-b", row, true), { includeOnline: true })).toEqual(["REVOLUT", "MBWAY"]);
     expect(enrollmentPaymentMethods(NO_SCHOOL_PAYMENT_INFO, { includeOnline: true })).toEqual([]);
   });
 });

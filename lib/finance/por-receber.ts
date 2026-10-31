@@ -6,6 +6,7 @@ import { fetchAllPages, inChunks } from "@/lib/graduation/queries";
 import { monthLabelPt } from "@/lib/admin-student-ficha";
 import { loadOrders, orderReference } from "@/lib/retail/orders";
 import { studentPaymentReference } from "@/lib/revolut/match";
+import { orderPaymentSchoolId } from "@/lib/school-payment-rules";
 
 export type PorReceberItem = {
   key: string;
@@ -118,6 +119,7 @@ export async function loadPorReceberItems(
 
   // 3) Encomendas da loja por pagar (pré-encomendas).
   for (const o of pendingOrders) {
+    if (schoolIds && !schoolIds.includes(orderPaymentSchoolId(o.schoolId))) continue;
     const pieces = o.lines.reduce((a, l) => a + l.quantity, 0);
     const products = [...new Set(o.lines.map((l) => l.productName))].join(", ");
     items.push({

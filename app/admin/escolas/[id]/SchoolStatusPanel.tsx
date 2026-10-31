@@ -2,8 +2,12 @@
 
 import { useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
+import type { SchoolMerchantStatus } from "@/lib/revolut/merchant-accounts";
 import { hasPaymentMethod, type SchoolPaymentMethods, type SchoolStatus } from "@/lib/school-status";
 import { deactivateSchool, openSchool, saveSchoolPaymentMethods, type SchoolResult } from "../actions";
+import type { SchoolBankStatus } from "@/lib/revolut/bank-accounts";
+import { SchoolBankPanel } from "./SchoolBankPanel";
+import { SchoolRevolutPanel } from "./SchoolRevolutPanel";
 
 export type PaymentFormValues = SchoolPaymentMethods & { ibanHolder: string | null; ibanHolderAddress: string | null; bicSwift: string | null; revolutTag: string | null };
 
@@ -32,6 +36,9 @@ export function SchoolStatusPanel({
   directorCount,
   activeStudents,
   payment,
+  merchant,
+  bank,
+  legalDataReady,
 }: {
   schoolId: string;
   status: SchoolStatus;
@@ -39,6 +46,9 @@ export function SchoolStatusPanel({
   directorCount: number;
   activeStudents: number;
   payment: PaymentFormValues | null;
+  merchant: SchoolMerchantStatus;
+  bank: SchoolBankStatus;
+  legalDataReady: boolean;
 }) {
   const [openState, openAction] = useActionState(openSchool, null as SchoolResult);
   const [deactivateState, deactivateAction] = useActionState(deactivateSchool, null as SchoolResult);
@@ -52,6 +62,7 @@ export function SchoolStatusPanel({
         <ChecklistItem done title="Graduação e biblioteca da rede" hint="Herdadas automaticamente" />
         <ChecklistItem done={directorCount > 0} title="Diretor técnico" hint="Na tab Equipa" />
         <ChecklistItem done={hasPaymentMethod(payment)} title="Meio de pagamento" hint="IBAN, MB Way, Revolut ou Multibanco" />
+        <ChecklistItem done={legalDataReady} title="Dados legais para o contrato" hint="Denominação social, NIPC e sede, na tab Dados" />
 
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
           {status === "ATIVA" ? (
@@ -92,10 +103,13 @@ export function SchoolStatusPanel({
         </div>
       </div>
 
+      <SchoolRevolutPanel schoolId={schoolId} status={merchant} />
+      <SchoolBankPanel schoolId={schoolId} status={bank} />
+
       <form action={paymentAction} className="card" style={{ padding: "var(--space-4)", display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
         <h2 style={{ ...titleStyle, margin: 0 }}>Meios de pagamento</h2>
         <p style={{ margin: 0, fontSize: "var(--text-xs)", lineHeight: 1.5, color: "var(--text-secondary)" }}>
-          Os alunos desta escola veem e pagam para estes dados. O pagamento online (Revolut/Multibanco) por escola ainda não está disponível.
+          Os alunos desta escola veem e pagam para estes dados. O Multibanco por escola ainda não está disponível.
         </p>
         <input type="hidden" name="schoolId" value={schoolId} />
         <input name="ibanHolder" defaultValue={payment?.ibanHolder ?? ""} placeholder="Titular da conta" className="input" style={{ fontSize: "var(--text-sm)" }} />

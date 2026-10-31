@@ -79,7 +79,7 @@ export default async function AdminDocumentosAdesaoPage({ searchParams }: { sear
       supabase.from("User").select("id, name, email").in("id", userIds),
       supabase.from("StudentProfile").select("studentId, phone").in("studentId", studentIds),
       supabase.from("StudentWaiver").select("studentId, waiverSigned").in("studentId", studentIds),
-      supabase.from("StudentMembershipAgreement").select("studentId, agreementSigned, agreementVersion").in("studentId", studentIds),
+      supabase.from("StudentMembershipAgreement").select("studentId, agreementSigned, agreementVersion, contractParty").in("studentId", studentIds),
       supabase.from("StudentEnrollmentForm").select("studentId, formCompleted, formVersion").in("studentId", studentIds),
     ]);
 
@@ -89,7 +89,7 @@ export default async function AdminDocumentosAdesaoPage({ searchParams }: { sear
   const agreementMap = new Map(
     (agreements ?? []).map((a) => [
       a.studentId as string,
-      { agreementSigned: a.agreementSigned as boolean, agreementVersion: a.agreementVersion as string | null },
+      { agreementSigned: a.agreementSigned as boolean, agreementVersion: a.agreementVersion as string | null, contractParty: a.contractParty as unknown },
     ])
   );
   const formMap = new Map(
@@ -102,7 +102,7 @@ export default async function AdminDocumentosAdesaoPage({ searchParams }: { sear
   const allRows = list.map((s) => {
     const studentId = s.id as string;
     const waiverSigned = waiverMap.get(studentId) ?? false;
-    const agreementCurrent = isMembershipAgreementCurrent(agreementMap.get(studentId) ?? null, settings.membershipAgreementVersion);
+    const agreementCurrent = isMembershipAgreementCurrent(agreementMap.get(studentId) ?? null, settings.membershipAgreementVersion, s.schoolId as string);
     const formCurrent = isEnrollmentFormCurrent(formMap.get(studentId) ?? null, settings.enrollmentFormVersion);
     const user = userMap.get(s.userId as string);
     return {

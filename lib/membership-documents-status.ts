@@ -24,12 +24,12 @@ export async function getMembershipDocumentsStatus(
     getInsuranceSettings(supabase),
     supabase
       .from("StudentMembershipAgreement")
-      .select("agreementSigned, agreementVersion")
+      .select("agreementSigned, agreementVersion, contractParty")
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", studentId).maybeSingle(),
     supabase.from("StudentEnrollmentForm").select("formCompleted, formVersion").eq("studentId", studentId).maybeSingle(),
-    supabase.from("Student").select("physicalDocumentsFiledAt").eq("id", studentId).maybeSingle(),
+    supabase.from("Student").select("schoolId, physicalDocumentsFiledAt").eq("id", studentId).maybeSingle(),
   ]);
 
   if ((studentRow as { physicalDocumentsFiledAt?: string | null } | null)?.physicalDocumentsFiledAt) {
@@ -41,8 +41,9 @@ export async function getMembershipDocumentsStatus(
     settings.enrollmentFormVersion
   );
   const agreementCurrent = isMembershipAgreementCurrent(
-    agreement as { agreementSigned?: boolean; agreementVersion?: string | null } | null,
-    settings.membershipAgreementVersion
+    agreement as { agreementSigned?: boolean; agreementVersion?: string | null; contractParty?: unknown } | null,
+    settings.membershipAgreementVersion,
+    (studentRow as { schoolId?: string | null } | null)?.schoolId
   );
   const waiverSigned = Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned);
   const agreementAndWaiverDone = agreementCurrent && waiverSigned;

@@ -6,7 +6,7 @@ import { createSign } from "node:crypto";
  * Autenticação: JWT (client assertion) assinado com a chave privada do certificado carregado na Revolut,
  * troca do código de autorização por refresh token (não expira) e access tokens de 40 minutos.
  *
- * Variáveis de ambiente (Vercel):
+ * Cada escola tem o seu certificado (lib/revolut/bank-accounts.ts). Variáveis de ambiente (Vercel), só da Sede:
  * - REVOLUT_CLIENT_ID      — «ClientID» do certificado em Revolut Business → APIs → Business API
  * - REVOLUT_PRIVATE_KEY    — conteúdo de privatecert.pem (as quebras de linha podem vir como \n)
  * - REVOLUT_REDIRECT_URI   — ex.: https://www.kingdomfight.com/api/revolut/callback (igual ao configurado na Revolut)
@@ -15,19 +15,21 @@ import { createSign } from "node:crypto";
 
 export type RevolutConfig = { clientId: string; privateKey: string; redirectUri: string; apiBase: string; consentBase: string };
 
-export function getRevolutConfig(): RevolutConfig | null {
-  const clientId = process.env.REVOLUT_CLIENT_ID?.trim();
-  const privateKey = process.env.REVOLUT_PRIVATE_KEY?.replace(/\n/g, "\n").trim();
-  const redirectUri = process.env.REVOLUT_REDIRECT_URI?.trim();
-  if (!clientId || !privateKey || !redirectUri) return null;
-  const sandbox = process.env.REVOLUT_ENV?.trim().toLowerCase() === "sandbox";
+export function revolutConfigFrom(cert: { clientId: string; privateKey: string; redirectUri: string }, sandbox: boolean): RevolutConfig {
   return {
-    clientId,
-    privateKey,
-    redirectUri,
+    ...cert,
     apiBase: sandbox ? "https://sandbox-b2b.revolut.com/api/1.0" : "https://b2b.revolut.com/api/1.0",
     consentBase: sandbox ? "https://sandbox-business.revolut.com" : "https://business.revolut.com",
   };
+}
+
+/** Configuração da Sede. */
+export function getRevolutConfig(): RevolutConfig | null {
+  const clientId = process.env.REVOLUT_CLIENT_ID?.trim();
+  const privateKey = process.env.REVOLUT_PRIVATE_KEY?.replace(/\\n/g, "\n").trim();
+  const redirectUri = process.env.REVOLUT_REDIRECT_URI?.trim();
+  if (!clientId || !privateKey || !redirectUri) return null;
+  return revolutConfigFrom({ clientId, privateKey, redirectUri }, process.env.REVOLUT_ENV?.trim().toLowerCase() === "sandbox");
 }
 
 const b64url = (input: Buffer | string) =>

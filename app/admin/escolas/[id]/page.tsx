@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { loadSchoolBankStatus } from "@/lib/revolut/bank-accounts";
+import { loadSchoolMerchantStatus } from "@/lib/revolut/merchant-accounts";
 import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
-import { missingToOpen, schoolStatus, type SchoolPaymentMethods } from "@/lib/school-status";
+import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
+import { hasLegalData, missingToOpen, schoolStatus, type SchoolPaymentMethods } from "@/lib/school-status";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { SchoolDataForm } from "../SchoolDataForm";
 import { SchoolStatusPill } from "../SchoolStatusPill";
@@ -39,7 +43,7 @@ export default async function EscolaPage({
 
   const { data: school } = await supabase
     .from("School")
-    .select("id, name, city, address, phone, email, isActive, openedAt")
+    .select("id, name, city, address, phone, email, legalName, legalAddress, isActive, openedAt")
     .eq("id", id)
     .maybeSingle();
   if (!school) notFound();
@@ -48,7 +52,7 @@ export default async function EscolaPage({
     supabase.from("SchoolDirector").select("createdAt, User(id, name, email, authUserId)").eq("schoolId", id).order("createdAt", { ascending: true }),
     supabase
       .from("SchoolPaymentSettings")
-      .select("ibanEnabled, iban, ibanHolder, ibanHolderAddress, bicSwift, revolutTag, mbwayEnabled, mbwayPhone, revolutEnabled, multibancoEnabled")
+      .select("nif, ibanEnabled, iban, ibanHolder, ibanHolderAddress, bicSwift, revolutTag, mbwayEnabled, mbwayPhone, revolutEnabled, multibancoEnabled")
       .eq("schoolId", id)
       .maybeSingle(),
     supabase.from("CoachSchool").select("coachId").eq("schoolId", id),
@@ -95,8 +99,17 @@ export default async function EscolaPage({
   ];
 
   const status = schoolStatus(school as { isActive: boolean; openedAt: string | null });
-  const missing = missingToOpen(directors.length, settings as SchoolPaymentMethods | null);
+  const isSede = id === SEDE_SCHOOL_ID;
+  const legalName = school.legalName as string | null;
+  const legalAddress = school.legalAddress as string | null;
+  const nif = (settings as { nif?: string | null } | null)?.nif ?? null;
+  const legalDataReady = isSede || hasLegalData({ legalName, legalAddress, nif });
+  const missing = missingToOpen(directors.length, settings as SchoolPaymentMethods | null, legalDataReady);
   const payment = settings as PaymentFormValues | null;
+  const merchant = tab === "estado" ? await loadSchoolMerchantStatus(supabase, id) : null;
+  const h = await headers();
+  const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("x-forwarded-host") ?? h.get("host") ?? ""}`;
+  const bank = tab === "estado" ? await loadSchoolBankStatus(supabase, id, origin) : null;
 
   return (
     <div style={{ maxWidth: "min(760px, 100%)" }}>
@@ -160,10 +173,11 @@ export default async function EscolaPage({
             phone: school.phone as string | null,
             email: school.email as string | null,
           }}
+          legal={isSede ? undefined : { legalName, legalAddress, nif }}
         />
       )}
 
-      {tab === "estado" && (
+      {tab === "estado" && merchant && bank && (
         <SchoolStatusPanel
           schoolId={id}
           status={status}
@@ -171,6 +185,9 @@ export default async function EscolaPage({
           directorCount={directors.length}
           activeStudents={activeStudents ?? 0}
           payment={payment}
+          legalDataReady={legalDataReady}
+          merchant={merchant}
+          bank={bank}
         />
       )}
     </div>

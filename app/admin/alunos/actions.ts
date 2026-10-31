@@ -15,6 +15,7 @@ import {
   ensureFamilyGroupAsTitular,
   getFamilyContext,
 } from "@/lib/family-group";
+import { cancelAutoPayOnSchoolChange } from "@/lib/autopay/service";
 import { stripe } from "@/lib/stripe/server";
 import { createConfirmedAuthUser, generateInitialPassword } from "@/lib/admin-create-auth-user";
 import {
@@ -365,6 +366,11 @@ export async function updateStudent(
       : { data: [] as { code: string }[] };
     const valid = new Set((validRefs ?? []).map((r) => r.code));
     updates.extraModalities = picked.filter((c) => valid.has(c) && c !== newPrimaryModality);
+  }
+
+  if (schoolId && schoolId !== (student as { schoolId?: string | null }).schoolId) {
+    const cancelled = await cancelAutoPayOnSchoolChange(supabase, studentId, schoolId);
+    if (cancelled.error) return { error: `Não foi possível mudar de escola. ${cancelled.error}` };
   }
 
   const { error: studentError } = await supabase.from("Student").update(updates).eq("id", studentId);

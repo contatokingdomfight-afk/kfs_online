@@ -4,6 +4,8 @@ import { getDefaultOnboardingSchoolId } from "@/lib/onboarding-default-school";
 import { loadOrders } from "@/lib/retail/orders";
 import { markRetailOrderPaid } from "@/lib/retail/mark-paid";
 import { getMerchantOrder, revolutMerchantEnv, verifyMerchantWebhook, webhookSecretFingerprint } from "@/lib/revolut/merchant";
+import { resolveMerchantAccount } from "@/lib/revolut/merchant-accounts";
+import { orderPaymentSchoolId, SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
 import { loadAutoPayBy, syncAutoPaySafe } from "@/lib/autopay/service";
 import { CHECKOUT_REFERENCE_PREFIX, markTuitionCheckoutPaid } from "@/lib/tuition-checkout/service";
 
@@ -12,6 +14,10 @@ import { CHECKOUT_REFERENCE_PREFIX, markTuitionCheckoutPaid } from "@/lib/tuitio
  * (não confiamos só no corpo) e marca a encomenda como paga.
  * Também trata o pagamento automático da mensalidade: eventos SUBSCRIPTION_* e as ordens de cada
  * cobrança mensal (sem referência de encomenda) sincronizam a subscrição do aluno.
+ *
+ * Cada escola tem o seu webhook (`?school=<id>`, registado ao ligar a conta); sem parâmetro é a Sede.
+ * A assinatura prova só a conta: quem controla a conta de uma escola pode criar ordens com qualquer referência,
+ * por isso cada encomenda, checkout ou subscrição tem de ser da escola que assinou.
  */
 /** Diagnóstico da configuração (sem segredos): ambiente, se o segredo existe e a impressão digital dele. */
 export async function GET() {
@@ -20,7 +26,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const raw = await request.text();
-  if (!verifyMerchantWebhook(raw, request.headers.get("revolut-signature"), request.headers.get("revolut-request-timestamp"))) {
+  const admin = getAdminClientOrNull().client;
+  if (!admin) return NextResponse.json({ error: "Server config missing" }, { status: 500 });
+
+  const accountSchoolId = request.nextUrl.searchParams.get("school") || SEDE_SCHOOL_ID;
+  const account = await resolveMerchantAccount(admin, accountSchoolId);
+  if (!account || !verifyMerchantWebhook(account, raw, request.headers.get("revolut-signature"), request.headers.get("revolut-request-timestamp"))) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
@@ -30,12 +41,10 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Bad payload" }, { status: 400 });
   }
-  const admin = getAdminClientOrNull().client;
-  if (!admin) return NextResponse.json({ error: "Server config missing" }, { status: 500 });
 
   // Pagamento automático: o evento só diz «mudou»; o estado real vem da Revolut (syncAutoPay).
   if (event.event?.startsWith("SUBSCRIPTION_") && event.subscription_id) {
-    for (const row of await loadAutoPayBy(admin, "revolutSubscriptionId", event.subscription_id)) await syncAutoPaySafe(admin, row);
+    for (const row of await loadAutoPayBy(admin, "revolutSubscriptionId", event.subscription_id, accountSchoolId)) await syncAutoPaySafe(admin, row);
     return NextResponse.json({ ok: true });
   }
 
@@ -43,18 +52,21 @@ export async function POST(request: NextRequest) {
   if (event.event !== "ORDER_COMPLETED" || !event.order_id) return NextResponse.json({ ok: true });
 
   try {
-    const mo = await getMerchantOrder(event.order_id);
+    const mo = await getMerchantOrder(account, event.order_id);
     // Reembolsos também geram ORDER_COMPLETED: só ordens de pagamento concluídas.
     if (mo.state !== "completed" || (mo.type && mo.type !== "payment")) return NextResponse.json({ ok: true });
     const orderId = mo.merchant_order_data?.reference;
     // Mensalidades em atraso pagas online (aluno ou link enviado pelo admin).
     if (orderId?.startsWith(CHECKOUT_REFERENCE_PREFIX)) {
-      const ok = await markTuitionCheckoutPaid(admin, orderId.slice(CHECKOUT_REFERENCE_PREFIX.length), mo);
+      const ok = await markTuitionCheckoutPaid(admin, orderId.slice(CHECKOUT_REFERENCE_PREFIX.length), mo, accountSchoolId);
       return ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: "Could not mark tuition paid" }, { status: 500 });
     }
     if (!orderId) {
       // Sem referência de encomenda: adesão ou cobrança mensal de um pagamento automático.
-      const rows = [...(await loadAutoPayBy(admin, "setupOrderId", mo.id)), ...(mo.customer?.id ? await loadAutoPayBy(admin, "revolutCustomerId", mo.customer.id) : [])];
+      const rows = [
+        ...(await loadAutoPayBy(admin, "setupOrderId", mo.id, accountSchoolId)),
+        ...(mo.customer?.id ? await loadAutoPayBy(admin, "revolutCustomerId", mo.customer.id, accountSchoolId) : []),
+      ];
       const seen = new Set<string>();
       for (const row of rows) {
         if (seen.has(row.id)) continue;
@@ -66,6 +78,10 @@ export async function POST(request: NextRequest) {
 
     const [order] = await loadOrders(admin, { ids: [orderId] });
     if (!order || order.status !== "PENDING_PAYMENT") return NextResponse.json({ ok: true });
+    if (orderPaymentSchoolId(order.schoolId) !== accountSchoolId) {
+      console.error("[revolut merchant-webhook] ordem de outra conta", { orderId, accountSchoolId });
+      return NextResponse.json({ ok: true });
+    }
     if (mo.currency !== "EUR" || mo.amount !== Math.round(order.totalAmount * 100)) {
       console.error("[revolut merchant-webhook] valor não corresponde", { orderId, paid: mo.amount, expected: order.totalAmount });
       return NextResponse.json({ ok: true });

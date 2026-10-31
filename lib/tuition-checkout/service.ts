@@ -9,7 +9,8 @@ import { resolveFamilyGroupTitularSuggestedAmount, resolvePlanMonthlyTuition } f
 import { individualLoyaltyDiscount } from "@/lib/loyalty/service";
 import { renewStudentInsuranceCoverage } from "@/lib/renew-student-insurance-coverage";
 import { grantReferralRewardIfEligible } from "@/lib/referral-rewards";
-import { loadStudentPaymentInfo } from "@/lib/school-payment-methods";
+import { merchantBrandName, resolveMerchantAccount } from "@/lib/revolut/merchant-accounts";
+import { loadSchoolPaymentInfo, loadStudentSchoolId } from "@/lib/school-payment-methods";
 
 /**
  * Pagar mensalidades em atraso pela Revolut (página segura, como na loja):
@@ -69,19 +70,22 @@ async function openCheckout(
   input: { payerStudentId: string; ids: string[]; amount: number; createdByUserId: string | null; email: string | null; returnUrl: string; description: string }
 ): Promise<CheckoutResult> {
   const { ids, amount } = input;
-  // A conta Revolut é a da Sede: uma ordem de outra escola levaria o dinheiro para a conta errada.
-  if (!(await loadStudentPaymentInfo(input.payerStudentId)).onlineRevolut) return { error: "A tua escola ainda não tem pagamento online." };
+  // A ordem é criada na conta Revolut da escola de quem paga.
+  const schoolId = await loadStudentSchoolId(input.payerStudentId);
+  const account = schoolId && (await loadSchoolPaymentInfo(schoolId)).onlineRevolut ? await resolveMerchantAccount(supabase, schoolId) : null;
+  if (!schoolId || !account) return { error: "A tua escola ainda não tem pagamento online." };
   // Mesmo conjunto ainda por pagar: reaproveita o link (evita várias ordens abertas para o mesmo).
   const { data: open } = await supabase
     .from("PaymentCheckout")
-    .select("id, paymentIds, amount, checkoutUrl, environment, createdAt")
+    .select("id, schoolId, paymentIds, amount, checkoutUrl, environment, createdAt")
     .eq("studentId", input.payerStudentId)
     .eq("state", "PENDING")
     .order("createdAt", { ascending: false })
     .limit(5);
-  const reuse = ((open ?? []) as { paymentIds: string[]; amount: number | string; checkoutUrl: string | null; environment: string; createdAt: string }[]).find(
+  const reuse = ((open ?? []) as { schoolId: string; paymentIds: string[]; amount: number | string; checkoutUrl: string | null; environment: string; createdAt: string }[]).find(
     (c) =>
       c.checkoutUrl &&
+      c.schoolId === schoolId &&
       c.environment === revolutMerchantEnv &&
       Number(c.amount) === amount &&
       [...c.paymentIds].sort().join(",") === ids.join(",") &&
@@ -92,6 +96,7 @@ async function openCheckout(
   const id = crypto.randomUUID();
   const { error } = await supabase.from("PaymentCheckout").insert({
     id,
+    schoolId,
     studentId: input.payerStudentId,
     paymentIds: ids,
     amount,
@@ -100,9 +105,9 @@ async function openCheckout(
   });
   if (error) return { error: "Não foi possível preparar o pagamento." };
 
-  const order = await createMerchantOrder({
+  const order = await createMerchantOrder(account, {
     amountEur: amount,
-    description: input.description,
+    description: `${input.description} · ${await merchantBrandName(supabase, schoolId)}`,
     reference: `${CHECKOUT_REFERENCE_PREFIX}${id}`,
     redirectUrl: input.returnUrl,
     email: input.email,
@@ -146,15 +151,20 @@ export async function createAdvanceTuitionCheckout(
   const month = await nextAdvanceMonth(supabase, input.payerStudentId);
   const amount = await advanceMonthAmount(supabase, input.payerStudentId, input.familyGroupId, month);
   if (!(amount > 0)) return { error: "Não tens um plano com mensalidade. Fala com a secretaria." };
-  const res = await openCheckout(supabase, { ...input, ids: [`${ADVANCE_PREFIX}${month}`], amount, description: `Mensalidade ${month} · Kingdom Fight School` });
+  const res = await openCheckout(supabase, { ...input, ids: [`${ADVANCE_PREFIX}${month}`], amount, description: `Mensalidade ${month}` });
   return { ...res, month };
 }
 
-/** Webhook: ordem concluída com referência `pc:` → marca os pagamentos como pagos (idempotente). */
-export async function markTuitionCheckoutPaid(supabase: SupabaseClient, checkoutId: string, order: MerchantOrder): Promise<boolean> {
-  const { data } = await supabase.from("PaymentCheckout").select("id, studentId, paymentIds, amount, state, createdByUserId").eq("id", checkoutId).maybeSingle();
-  const c = data as { id: string; studentId: string; paymentIds: string[]; amount: number | string; state: string; createdByUserId: string | null } | null;
+/** Webhook: ordem concluída com referência `pc:` → marca os pagamentos como pagos (idempotente). `accountSchoolId` = escola dona da conta que assinou o aviso. */
+export async function markTuitionCheckoutPaid(supabase: SupabaseClient, checkoutId: string, order: MerchantOrder, accountSchoolId: string): Promise<boolean> {
+  const { data } = await supabase.from("PaymentCheckout").select("id, schoolId, studentId, paymentIds, amount, state, createdByUserId").eq("id", checkoutId).maybeSingle();
+  const c = data as { id: string; schoolId: string; studentId: string; paymentIds: string[]; amount: number | string; state: string; createdByUserId: string | null } | null;
   if (!c || c.state === "PAID") return true;
+  // Uma ordem criada na conta de outra escola, com a nossa referência, não paga nada aqui.
+  if (c.schoolId !== accountSchoolId) {
+    console.error("[tuition-checkout] ordem de outra conta", { checkoutId, accountSchoolId });
+    return true;
+  }
   if (order.currency !== "EUR" || order.amount !== Math.round(Number(c.amount) * 100)) {
     console.error("[tuition-checkout] valor não corresponde", { checkoutId, paid: order.amount, expected: c.amount });
     return true;

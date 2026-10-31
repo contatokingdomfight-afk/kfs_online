@@ -78,6 +78,9 @@ model School {
   isActive    Boolean  @default(true)
   /// Quando a escola abriu; null = em preparação (ver lib/school-status.ts).
   openedAt    DateTime?
+  /// Entidade contratante nos documentos de adesão (a Sede usa o texto fixo).
+  legalName    String?
+  legalAddress String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
 
@@ -440,6 +443,9 @@ model StudentWaiver {
   signatureIp    String?
   guardianName   String?
   isMinor        Boolean   @default(false)
+  /// Dados da escola no momento da assinatura; null = texto original da Sede.
+  contractParty    Json?
+  signatureHistory Json     @default("[]")
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @default(now())
 

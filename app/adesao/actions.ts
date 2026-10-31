@@ -4,15 +4,15 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
+import { signatureHistoryWith } from "@/lib/contract-party";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
+import { loadStudentContractParty } from "@/lib/school-contract-party";
 import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import { isEnrollmentFormCurrent } from "@/lib/enrollment-form";
 import { invalidateStudentGateCache } from "@/lib/student-gate-cache";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
 import { resolveAutoPayPayer } from "@/lib/autopay/service";
 import { createTuitionCheckout } from "@/lib/tuition-checkout/service";
 
@@ -22,8 +22,9 @@ export type SignAdesaoDocumentsResult = { error?: string; planId?: string | null
  * Núcleo da assinatura (Termo de Responsabilidade + Condições Gerais), independente de
  * quem submete — o próprio aluno em `/adesao`, ou o admin em
  * `/admin/alunos/[id]/contrato/assinar` (ex.: sócios Kids sem acesso próprio à plataforma,
- * com o encarregado de educação presente). `supabase` já vem com o cliente certo para o
- * chamador (sessão do aluno vs. admin service-role).
+ * com o encarregado de educação presente). `supabase` é sempre o cliente admin (service role):
+ * a RLS não deixa o aluno escrever nestas tabelas com a sua sessão, e por isso o chamador tem de
+ * garantir que `studentId` é o certo.
  */
 export async function applyAdesaoSigning(
   supabase: SupabaseClient,
@@ -44,6 +45,9 @@ export async function applyAdesaoSigning(
   }
 
   const settings = await getInsuranceSettings(supabase);
+
+  const { party: contractParty, blocked } = await loadStudentContractParty(studentId);
+  if (blocked) return { error: "Os dados legais da escola ainda não estão preenchidos. Fala com a tua escola." };
 
   const { data: student } = await supabase
     .from("Student")
@@ -84,6 +88,12 @@ export async function applyAdesaoSigning(
 
   const signedAtIso = new Date().toISOString();
 
+  const { data: existingWaiver } = await supabase
+    .from("StudentWaiver")
+    .select("*")
+    .eq("studentId", studentId)
+    .maybeSingle();
+
   const waiverRow = {
     studentId,
     waiverSigned: true,
@@ -94,14 +104,10 @@ export async function applyAdesaoSigning(
     signatureIp,
     guardianName: isMinor ? guardianName : null,
     isMinor,
+    contractParty,
+    signatureHistory: signatureHistoryWith(existingWaiver),
     updatedAt: signedAtIso,
   };
-
-  const { data: existingWaiver } = await supabase
-    .from("StudentWaiver")
-    .select("id")
-    .eq("studentId", studentId)
-    .maybeSingle();
 
   if (existingWaiver?.id) {
     const { error } = await supabase.from("StudentWaiver").update(waiverRow).eq("studentId", studentId);
@@ -110,6 +116,12 @@ export async function applyAdesaoSigning(
     const { error } = await supabase.from("StudentWaiver").insert({ id: crypto.randomUUID(), ...waiverRow });
     if (error) return { error: error.message };
   }
+
+  const { data: existingAgreement } = await supabase
+    .from("StudentMembershipAgreement")
+    .select("*")
+    .eq("studentId", studentId)
+    .maybeSingle();
 
   const agreementRow = {
     studentId,
@@ -122,14 +134,10 @@ export async function applyAdesaoSigning(
     signatureIp,
     guardianName: isMinor ? guardianName : null,
     isMinor,
+    contractParty,
+    signatureHistory: signatureHistoryWith(existingAgreement),
     updatedAt: signedAtIso,
   };
-
-  const { data: existingAgreement } = await supabase
-    .from("StudentMembershipAgreement")
-    .select("id")
-    .eq("studentId", studentId)
-    .maybeSingle();
 
   if (existingAgreement?.id) {
     const { error } = await supabase.from("StudentMembershipAgreement").update(agreementRow).eq("studentId", studentId);
@@ -156,7 +164,8 @@ export async function signAdesaoDocuments(
   const studentId = await getCurrentStudentId();
   if (!studentId) return { error: "Sessão inválida. Faz login como aluno." };
 
-  const supabase = await createClient();
+  const supabase = getAdminClientOrNull().client;
+  if (!supabase) return { error: "Não foi possível guardar a assinatura. Tenta novamente ou fala com a tua escola." };
   const result = await applyAdesaoSigning(supabase, studentId, formData);
   if (result.error) return result;
 
@@ -177,7 +186,6 @@ export async function signAdesaoDocuments(
 
 /** Link Revolut para os pagamentos da adesão, quando o aluno escolheu «Pagamento online». Null = segue o fluxo normal. */
 async function adesaoRevolutCheckoutUrl(studentId: string): Promise<string | null> {
-  if (!revolutMerchantConfigured) return null;
   const admin = getAdminClientOrNull().client;
   if (!admin) return null;
   try {
@@ -192,7 +200,7 @@ async function adesaoRevolutCheckoutUrl(studentId: string): Promise<string | nul
       createdByUserId: dbUser?.id ?? null,
       email: dbUser?.email ?? null,
       returnUrl: `${origin}/dashboard/financeiro?pago=1&adesao=1`,
-      description: "Adesão · Kingdom Fight School",
+      description: "Adesão",
     });
     return res.url ?? null;
   } catch (e) {

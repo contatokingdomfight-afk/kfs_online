@@ -329,7 +329,7 @@ export async function middleware(request: NextRequest) {
      */
     const { data: dbUser, error: dbUserError } = await supabase
       .from("User")
-      .select("id, role, Student!Student_userId_fkey(id, planId, adminGrantedFullAccess, physicalDocumentsFiledAt, syntheticLoginEmail)")
+      .select("id, role, Student!Student_userId_fkey(id, schoolId, planId, adminGrantedFullAccess, physicalDocumentsFiledAt, syntheticLoginEmail)")
       .eq("authUserId", user.id)
       .maybeSingle();
 
@@ -371,7 +371,7 @@ export async function middleware(request: NextRequest) {
 
     const studentRows = (dbUser as { Student?: unknown }).Student;
     const student = (Array.isArray(studentRows) ? studentRows[0] : studentRows) as
-      | { id: string; planId: string | null; adminGrantedFullAccess: boolean; physicalDocumentsFiledAt?: string | null; syntheticLoginEmail?: boolean | null }
+      | { id: string; schoolId?: string | null; planId: string | null; adminGrantedFullAccess: boolean; physicalDocumentsFiledAt?: string | null; syntheticLoginEmail?: boolean | null }
       | null
       | undefined;
 
@@ -416,7 +416,7 @@ export async function middleware(request: NextRequest) {
           supabase.from("StudentWaiver").select("waiverSigned").eq("studentId", student.id).maybeSingle(),
           supabase
             .from("StudentMembershipAgreement")
-            .select("agreementSigned, agreementVersion, agreementSignedAt")
+            .select("agreementSigned, agreementVersion, agreementSignedAt, contractParty")
             .eq("studentId", student.id)
             .maybeSingle(),
           supabase
@@ -437,8 +437,9 @@ export async function middleware(request: NextRequest) {
       if (onboardingDone) {
         const { mod, settings } = insuranceResult;
         const agreementCurrent = mod.isMembershipAgreementCurrent(
-          agreement as { agreementSigned?: boolean; agreementVersion?: string | null } | null,
-          settings.membershipAgreementVersion
+          agreement as { agreementSigned?: boolean; agreementVersion?: string | null; contractParty?: unknown } | null,
+          settings.membershipAgreementVersion,
+          student.schoolId
         );
         const formCurrent = isEnrollmentFormCurrentLite(
           enrollmentForm as { formCompleted?: boolean; formVersion?: string | null } | null,

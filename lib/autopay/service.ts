@@ -19,9 +19,11 @@ import {
   listMerchantSubscriptionCycles,
   paymentMethodLabel,
   revolutMerchantEnv,
+  type MerchantAccount,
   type MerchantOrder,
 } from "@/lib/revolut/merchant";
-import { loadStudentPaymentInfo } from "@/lib/school-payment-methods";
+import { merchantBrandName, resolveMerchantAccount } from "@/lib/revolut/merchant-accounts";
+import { loadSchoolPaymentInfo, loadStudentSchoolId } from "@/lib/school-payment-methods";
 import { billingDayFrom, chargeInstant, nextChargeAfter, sameLisbonDay } from "./billing-day";
 
 /**
@@ -31,12 +33,14 @@ import { billingDayFrom, chargeInstant, nextChargeAfter, sameLisbonDay } from ".
  *   nunca atribuem a mesma cobrança a meses diferentes).
  * - Sem eventos de renovação na Revolut: o estado vem de `syncAutoPay` (webhook de ordem/subscrição,
  *   regresso do aluno e cron diário).
+ * - A subscrição vive na conta Revolut de `AutoPay.schoolId` (a escola onde foi ativada), não na escola atual do aluno.
  */
 
 export type AutoPayState = "PENDING" | "ACTIVE" | "OVERDUE" | "CANCELLED";
 
 export type AutoPayRow = {
   id: string;
+  schoolId: string;
   studentId: string;
   familyGroupId: string | null;
   environment: string;
@@ -57,7 +61,7 @@ export type AutoPayRow = {
 };
 
 const COLUMNS =
-  'id, studentId, familyGroupId, environment, state, amount, billingDay, firstReferenceMonth, revolutCustomerId, revolutSubscriptionId, revolutPlanVariationId, setupOrderId, paymentMethodLabel, nextChargeAt, lastReminderFor, activatedAt, cancelledAt, lastSyncedAt';
+  'id, schoolId, studentId, familyGroupId, environment, state, amount, billingDay, firstReferenceMonth, revolutCustomerId, revolutSubscriptionId, revolutPlanVariationId, setupOrderId, paymentMethodLabel, nextChargeAt, lastReminderFor, activatedAt, cancelledAt, lastSyncedAt';
 
 function normalize(r: Record<string, unknown>): AutoPayRow {
   return { ...(r as AutoPayRow), amount: Number(r.amount ?? 0), billingDay: r.billingDay == null ? null : Number(r.billingDay) };
@@ -69,8 +73,9 @@ export async function loadAutoPayForStudent(supabase: SupabaseClient, studentId:
   return normalize(data as Record<string, unknown>);
 }
 
-export async function loadAutoPayBy(supabase: SupabaseClient, field: "revolutSubscriptionId" | "setupOrderId" | "revolutCustomerId", value: string): Promise<AutoPayRow[]> {
-  const { data } = await supabase.from("AutoPay").select(COLUMNS).eq(field, value);
+/** `schoolId` = escola dona da conta que assinou o aviso: os ids da Revolut só valem dentro dessa conta. */
+export async function loadAutoPayBy(supabase: SupabaseClient, field: "revolutSubscriptionId" | "setupOrderId" | "revolutCustomerId", value: string, schoolId: string): Promise<AutoPayRow[]> {
+  const { data } = await supabase.from("AutoPay").select(COLUMNS).eq(field, value).eq("schoolId", schoolId);
   return ((data ?? []) as Record<string, unknown>[]).map(normalize);
 }
 
@@ -103,25 +108,26 @@ export async function expectedMonthlyAmount(supabase: SupabaseClient, payerStude
   return Math.max(0, base - discount);
 }
 
-/** Plano Revolut para um valor mensal (um por valor e ambiente; criado na primeira vez). */
-async function ensurePricePlanVariation(supabase: SupabaseClient, amount: number): Promise<string> {
+/** Plano Revolut para um valor mensal (um por escola, valor e ambiente; criado na primeira vez). */
+async function ensurePricePlanVariation(supabase: SupabaseClient, account: MerchantAccount, schoolId: string, amount: number): Promise<string> {
   const amountCents = Math.round(amount * 100);
   const { data: existing } = await supabase
     .from("RevolutPricePlan")
     .select("variationId")
+    .eq("schoolId", schoolId)
     .eq("environment", revolutMerchantEnv)
     .eq("amountCents", amountCents)
     .maybeSingle();
   if (existing) return (existing as { variationId: string }).variationId;
 
   const label = (amountCents / 100).toFixed(2).replace(".", ",");
-  const plan = await createMonthlySubscriptionPlan({ name: `Mensalidade Kingdom Fight School · ${label} €`, amountCents });
+  const plan = await createMonthlySubscriptionPlan(account, { name: `Mensalidade ${await merchantBrandName(supabase, schoolId)} · ${label} €`, amountCents });
   const variationId = plan.variations?.[0]?.id;
   if (!variationId) throw new Error("Plano Revolut sem variação");
-  const { error } = await supabase.from("RevolutPricePlan").insert({ id: crypto.randomUUID(), environment: revolutMerchantEnv, amountCents, planId: plan.id, variationId });
+  const { error } = await supabase.from("RevolutPricePlan").insert({ id: crypto.randomUUID(), schoolId, environment: revolutMerchantEnv, amountCents, planId: plan.id, variationId });
   if (error) {
     // Corrida com outro pedido para o mesmo valor: usa o que ficou guardado.
-    const { data: again } = await supabase.from("RevolutPricePlan").select("variationId").eq("environment", revolutMerchantEnv).eq("amountCents", amountCents).maybeSingle();
+    const { data: again } = await supabase.from("RevolutPricePlan").select("variationId").eq("schoolId", schoolId).eq("environment", revolutMerchantEnv).eq("amountCents", amountCents).maybeSingle();
     if (again) return (again as { variationId: string }).variationId;
     throw new Error(error.message);
   }
@@ -155,6 +161,13 @@ export async function firstMonthToPay(supabase: SupabaseClient, payerStudentId: 
   return month;
 }
 
+/** Conta onde esta subscrição vive. Lança erro se a escola tiver perdido a conta: nunca se tenta noutra. */
+async function autoPayAccount(supabase: SupabaseClient, row: AutoPayRow): Promise<MerchantAccount> {
+  const account = await resolveMerchantAccount(supabase, row.schoolId);
+  if (!account) throw new Error(`Escola ${row.schoolId} sem conta Revolut`);
+  return account;
+}
+
 export type StartAutoPayResult = { url?: string; error?: string };
 
 /** Aluno clica «Ativar»: cria cliente + subscrição na Revolut e devolve a página de pagamento da adesão. */
@@ -162,10 +175,12 @@ export async function startAutoPay(
   supabase: SupabaseClient,
   input: { studentId: string; fullName: string; email: string | null; returnUrl: string }
 ): Promise<StartAutoPayResult> {
-  // A conta Revolut é a da Sede: uma subscrição de outra escola levaria o dinheiro para a conta errada.
-  if (!(await loadStudentPaymentInfo(input.studentId)).onlineRevolut) return { error: "A tua escola ainda não tem pagamento automático." };
   const payer = await resolveAutoPayPayer(supabase, input.studentId);
   if (payer.isFamilyMember) return { error: "O pagamento automático do teu grupo familiar é ativado pelo titular do grupo." };
+  // A subscrição é criada na conta Revolut da escola de quem paga.
+  const schoolId = await loadStudentSchoolId(payer.payerStudentId);
+  const account = schoolId && (await loadSchoolPaymentInfo(schoolId)).onlineRevolut ? await resolveMerchantAccount(supabase, schoolId) : null;
+  if (!schoolId || !account) return { error: "A tua escola ainda não tem pagamento automático." };
   const amount = await expectedMonthlyAmount(supabase, payer.payerStudentId, payer.familyGroupId);
   if (!(amount > 0)) return { error: "Não tens um plano com mensalidade. Fala com a secretaria." };
   // A Revolut exige email no cliente da subscrição.
@@ -176,18 +191,18 @@ export async function startAutoPay(
   // Adesão anterior por concluir ou cobrança falhada: começa de novo (a subscrição antiga é cancelada).
   if (existing?.revolutSubscriptionId && existing.environment === revolutMerchantEnv && existing.state !== "CANCELLED") {
     try {
-      await cancelMerchantSubscription(existing.revolutSubscriptionId);
+      await cancelMerchantSubscription(await autoPayAccount(supabase, existing), existing.revolutSubscriptionId);
     } catch (e) {
       console.error("[autopay] cancelar subscrição anterior", e);
     }
   }
 
   const customerId =
-    existing?.revolutCustomerId && existing.environment === revolutMerchantEnv
+    existing?.revolutCustomerId && existing.environment === revolutMerchantEnv && existing.schoolId === schoolId
       ? existing.revolutCustomerId
-      : (await createMerchantCustomer({ fullName: input.fullName, email: input.email })).id;
-  const variationId = await ensurePricePlanVariation(supabase, amount);
-  const sub = await createMerchantSubscription({
+      : (await createMerchantCustomer(account, { fullName: input.fullName, email: input.email })).id;
+  const variationId = await ensurePricePlanVariation(supabase, account, schoolId, amount);
+  const sub = await createMerchantSubscription(account, {
     planVariationId: variationId,
     customerId,
     externalReference: payer.payerStudentId,
@@ -195,13 +210,14 @@ export async function startAutoPay(
     idempotencyKey: crypto.randomUUID(),
   });
   if (!sub.setup_order_id) return { error: "A Revolut não devolveu a página de pagamento. Tenta outra vez." };
-  const setupOrder = await getMerchantOrder(sub.setup_order_id);
+  const setupOrder = await getMerchantOrder(account, sub.setup_order_id);
   if (!setupOrder.checkout_url) return { error: "A Revolut não devolveu a página de pagamento. Tenta outra vez." };
 
   // Se o automático anterior falhou, a nova adesão continua a partir do mês que ficou por pagar.
   const firstReferenceMonth = await firstMonthToPay(supabase, payer.payerStudentId);
   const now = new Date().toISOString();
   const row = {
+    schoolId,
     studentId: payer.payerStudentId,
     familyGroupId: payer.familyGroupId,
     environment: revolutMerchantEnv,
@@ -280,8 +296,9 @@ async function recordCharge(supabase: SupabaseClient, row: AutoPayRow, order: Me
 /** Lê a subscrição na Revolut e atualiza o estado, as mensalidades pagas, o dia e a próxima cobrança. */
 export async function syncAutoPay(supabase: SupabaseClient, row: AutoPayRow): Promise<AutoPayRow> {
   if (!row.revolutSubscriptionId || row.environment !== revolutMerchantEnv) return row;
-  const sub = await getMerchantSubscription(row.revolutSubscriptionId);
-  const cycles = await listMerchantSubscriptionCycles(row.revolutSubscriptionId);
+  const account = await autoPayAccount(supabase, row);
+  const sub = await getMerchantSubscription(account, row.revolutSubscriptionId);
+  const cycles = await listMerchantSubscriptionCycles(account, row.revolutSubscriptionId);
 
   // Ordens de cada ciclo (a adesão é o ciclo 1, mesmo que a Revolut ainda não a mostre como ciclo).
   const byOrder = new Map<string, number>();
@@ -296,7 +313,7 @@ export async function syncAutoPay(supabase: SupabaseClient, row: AutoPayRow): Pr
   let latestLabel: string | null = row.paymentMethodLabel;
   for (const [orderId, number] of [...byOrder.entries()].sort((a, b) => a[1] - b[1])) {
     if (done.has(orderId) && latestLabel) continue;
-    const order = await getMerchantOrder(orderId);
+    const order = await getMerchantOrder(account, orderId);
     if (order.state !== "completed") continue;
     if (number === 1 && order.created_at) firstChargeAt = new Date(order.created_at);
     latestLabel = paymentMethodLabel(order) ?? latestLabel;
@@ -325,7 +342,7 @@ export async function syncAutoPay(supabase: SupabaseClient, row: AutoPayRow): Pr
     const desired = nextChargeAfter(billingDay, new Date(active.start_date));
     if (!sameLisbonDay(desired, next) && desired.getTime() > Date.now()) {
       try {
-        await changeMerchantSubscriptionRenewalDate(row.revolutSubscriptionId, desired);
+        await changeMerchantSubscriptionRenewalDate(account, row.revolutSubscriptionId, desired);
         next = desired;
       } catch (e) {
         console.error("[autopay] corrigir data de cobrança", e);
@@ -339,8 +356,8 @@ export async function syncAutoPay(supabase: SupabaseClient, row: AutoPayRow): Pr
     const expected = await expectedMonthlyAmount(supabase, row.studentId, row.familyGroupId);
     if (expected > 0 && Math.round(expected * 100) !== Math.round(row.amount * 100)) {
       try {
-        const variationId = await ensurePricePlanVariation(supabase, expected);
-        await changeMerchantSubscriptionPlan(row.revolutSubscriptionId, variationId);
+        const variationId = await ensurePricePlanVariation(supabase, account, row.schoolId, expected);
+        await changeMerchantSubscriptionPlan(account, row.revolutSubscriptionId, variationId);
         patch.amount = expected;
         patch.revolutPlanVariationId = variationId;
       } catch (e) {
@@ -387,7 +404,7 @@ export async function syncAutoPay(supabase: SupabaseClient, row: AutoPayRow): Pr
 export async function cancelAutoPay(supabase: SupabaseClient, row: AutoPayRow): Promise<{ error?: string }> {
   if (row.revolutSubscriptionId && row.environment === revolutMerchantEnv && row.state !== "CANCELLED") {
     try {
-      await cancelMerchantSubscription(row.revolutSubscriptionId);
+      await cancelMerchantSubscription(await autoPayAccount(supabase, row), row.revolutSubscriptionId);
     } catch (e) {
       console.error("[autopay] cancelar", e);
       return { error: "Não foi possível cancelar na Revolut. Tenta outra vez." };
@@ -395,6 +412,22 @@ export async function cancelAutoPay(supabase: SupabaseClient, row: AutoPayRow): 
   }
   const now = new Date().toISOString();
   await supabase.from("AutoPay").update({ state: "CANCELLED", cancelledAt: now, nextChargeAt: null, updatedAt: now }).eq("id", row.id);
+  return {};
+}
+
+/** O aluno vai mudar de escola: a subscrição na conta da escola antiga não pode continuar a cobrar. */
+export async function cancelAutoPayOnSchoolChange(supabase: SupabaseClient, studentId: string, newSchoolId: string): Promise<{ error?: string }> {
+  const row = await loadAutoPayForStudent(supabase, studentId);
+  if (!row || row.state === "CANCELLED" || row.schoolId === newSchoolId) return {};
+  const res = await cancelAutoPay(supabase, row);
+  if (res.error) return res;
+  await createInAppNotification(supabase, {
+    studentId,
+    type: "GENERAL",
+    title: "Pagamento automático cancelado",
+    body: "Mudaste de escola. Se a nova escola tiver pagamento automático, podes ativá-lo aqui.",
+    href: "/dashboard/financeiro",
+  });
   return {};
 }
 
@@ -409,7 +442,7 @@ export async function setAutoPayBillingDay(supabase: SupabaseClient, row: AutoPa
     const sameMonth = planned ? chargeInstant(billingDay, py, pm) : null;
     const next = sameMonth && sameMonth.getTime() > Date.now() ? sameMonth : nextChargeAfter(billingDay);
     try {
-      await changeMerchantSubscriptionRenewalDate(row.revolutSubscriptionId, next);
+      await changeMerchantSubscriptionRenewalDate(await autoPayAccount(supabase, row), row.revolutSubscriptionId, next);
       patch.nextChargeAt = next.toISOString();
       patch.lastReminderFor = null;
     } catch (e) {

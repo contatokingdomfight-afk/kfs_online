@@ -7,6 +7,8 @@ import { getInsuranceSettings, isMembershipAgreementCurrent } from "@/lib/insura
 import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import { isEnrollmentFormCurrent, loadEnrollmentFormPrefill } from "@/lib/enrollment-form";
 import { loadStudentPaymentInfo, loadStudentSchoolIdentity } from "@/lib/school-payment-methods";
+import { loadStudentContractParty } from "@/lib/school-contract-party";
+import { membershipAgreementHtml, waiverHtml } from "@/lib/contract-party";
 import { ComprovativoForm } from "@/app/adesao/ComprovativoForm";
 import { AdesaoSigningForm } from "@/app/adesao/AdesaoSigningForm";
 import { AdesaoStepIndicator } from "@/app/adesao/AdesaoStepIndicator";
@@ -37,10 +39,10 @@ export default async function AdminAssinarAdesaoPage({ params, searchParams }: P
   const settings = await getInsuranceSettings(supabase);
 
   const [{ data: student }, { data: agreement }, { data: enrollmentForm }, { data: waiver }] = await Promise.all([
-    supabase.from("Student").select("userId").eq("id", studentId).maybeSingle(),
+    supabase.from("Student").select("userId, schoolId").eq("id", studentId).maybeSingle(),
     supabase
       .from("StudentMembershipAgreement")
-      .select("agreementSigned, agreementVersion")
+      .select("agreementSigned, agreementVersion, contractParty")
       .eq("studentId", studentId)
       .maybeSingle(),
     supabase.from("StudentEnrollmentForm").select("formCompleted, formVersion").eq("studentId", studentId).maybeSingle(),
@@ -49,7 +51,7 @@ export default async function AdminAssinarAdesaoPage({ params, searchParams }: P
 
   if (!student) redirect("/admin/documentos-adesao");
 
-  const agreementCurrent = isMembershipAgreementCurrent(agreement, settings.membershipAgreementVersion);
+  const agreementCurrent = isMembershipAgreementCurrent(agreement, settings.membershipAgreementVersion, (student as { schoolId?: string | null }).schoolId);
   const formCurrent = isEnrollmentFormCurrent(enrollmentForm, settings.enrollmentFormVersion);
   const waiverSigned = Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned);
 
@@ -80,7 +82,7 @@ export default async function AdminAssinarAdesaoPage({ params, searchParams }: P
 
   if (step === 2 && !formCurrent) redirect(`/admin/alunos/${studentId}/contrato/assinar?passo=1`);
 
-  const [paymentInfo, schoolIdentity] = await Promise.all([loadStudentPaymentInfo(studentId), loadStudentSchoolIdentity(studentId)]);
+  const [paymentInfo, schoolIdentity, contract] = await Promise.all([loadStudentPaymentInfo(studentId), loadStudentSchoolIdentity(studentId), loadStudentContractParty(studentId)]);
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)", marginInline: "auto" }}>
@@ -104,11 +106,18 @@ export default async function AdminAssinarAdesaoPage({ params, searchParams }: P
 
       {step === 1 && prefill ? (
         <ComprovativoForm prefill={prefill} paymentInfo={paymentInfo} schoolIdentity={schoolIdentity} action={adminSaveEnrollmentForm.bind(null, studentId)} />
+      ) : contract.blocked ? (
+        <p className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", margin: 0, fontSize: 14, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+          O contrato ainda não está disponível: faltam os dados legais desta escola (denominação social, NIPC e sede), em Escolas → Dados.
+        </p>
       ) : prefill ? (
         <AdesaoSigningForm
           isMinor={isMinor}
           planName={prefill.planName}
           modalityLabel={prefill.modalityLabel}
+          schoolName={contract.name}
+          waiverHtml={waiverHtml(contract.party)}
+          agreementHtml={membershipAgreementHtml(contract.party)}
           action={adminSignAdesaoDocuments.bind(null, studentId)}
           signatureUploadUrl="/api/admin/adesao/signature"
           studentId={studentId}

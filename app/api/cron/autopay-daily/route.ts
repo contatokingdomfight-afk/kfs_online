@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { authorizeCronRequest } from "@/lib/cron/authorize-cron";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadAutoPayToSync, remindUpcomingCharge, syncAutoPaySafe } from "@/lib/autopay/service";
-import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
 
 /**
  * Cron diário do pagamento automático (Subscrições Revolut):
@@ -12,7 +11,6 @@ import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
  */
 export async function GET(request: NextRequest) {
   if (!authorizeCronRequest(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!revolutMerchantConfigured) return NextResponse.json({ ok: true, skipped: "revolut not configured" });
 
   const supabase = createAdminClient();
   const rows = await loadAutoPayToSync(supabase);

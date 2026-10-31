@@ -4,8 +4,7 @@ import { useEffect, useRef, useState, useActionState } from "react";
 import Link from "next/link";
 import { signAdesaoDocuments, type SignAdesaoDocumentsResult } from "./actions";
 import { FINAL_DECLARATIONS } from "@/lib/enrollment-form";
-import { MEMBERSHIP_AGREEMENT_BODY_PT } from "@/lib/membership-agreement-content";
-import { WAIVER_BODY_PT } from "@/lib/waiver-content";
+import { withSchoolName } from "@/lib/school-name-text";
 import { SignaturePad, type SignaturePadHandle } from "@/components/SignaturePad";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 
@@ -13,6 +12,10 @@ type Props = {
   isMinor: boolean;
   planName: string;
   modalityLabel: string | null;
+  /** Textos já com os dados da escola do aluno (ver lib/contract-party.ts). */
+  schoolName: string | null;
+  waiverHtml: string;
+  agreementHtml: string;
   /** Acção a chamar ao assinar; por omissão a do próprio aluno (sessão). O admin passa uma
    * variante ligada ao `studentId` alvo (ver app/admin/alunos/[id]/contrato/assinar). */
   action?: (
@@ -32,6 +35,9 @@ export function AdesaoSigningForm({
   isMinor,
   planName,
   modalityLabel,
+  schoolName,
+  waiverHtml,
+  agreementHtml,
   action = signAdesaoDocuments,
   signatureUploadUrl = "/api/adesao/signature",
   studentId,
@@ -123,7 +129,7 @@ export function AdesaoSigningForm({
           lineHeight: 1.6,
           color: "var(--text-secondary)",
         }}
-        dangerouslySetInnerHTML={{ __html: WAIVER_BODY_PT }}
+        dangerouslySetInnerHTML={{ __html: waiverHtml }}
       />
 
       <div
@@ -136,7 +142,7 @@ export function AdesaoSigningForm({
           lineHeight: 1.6,
           color: "var(--text-secondary)",
         }}
-        dangerouslySetInnerHTML={{ __html: MEMBERSHIP_AGREEMENT_BODY_PT }}
+        dangerouslySetInnerHTML={{ __html: agreementHtml }}
       />
 
       <div className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>
@@ -144,7 +150,7 @@ export function AdesaoSigningForm({
         <ul style={{ margin: 0, paddingLeft: 18 }}>
           {FINAL_DECLARATIONS.map((line) => (
             <li key={line} style={{ marginBottom: 8 }}>
-              {line}
+              {withSchoolName(line, schoolName)}
             </li>
           ))}
         </ul>
@@ -173,8 +179,10 @@ export function AdesaoSigningForm({
       <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, cursor: "pointer" }}>
         <input type="checkbox" name="accepted" style={{ marginTop: 4 }} />
         <span>
-          Li e compreendo o Termo de Responsabilidade e Isenção e as Condições Gerais de Adesão, e assino
-          digitalmente ambos os documentos como sócio da Kingdom Fight School.
+          {withSchoolName(
+            "Li e compreendo o Termo de Responsabilidade e Isenção e as Condições Gerais de Adesão, e assino digitalmente ambos os documentos como sócio da Kingdom Fight School.",
+            schoolName
+          )}
         </span>
       </label>
 

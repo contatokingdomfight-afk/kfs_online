@@ -1,32 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentDbUserUncached } from "@/lib/auth/get-current-user";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { exchangeAuthorizationCode, getRevolutConfig } from "@/lib/revolut/client";
+import { paymentSecretsConfigured } from "@/lib/payment-secrets";
+import { resolveBankConfig, saveBankConnection } from "@/lib/revolut/bank-accounts";
+import { exchangeAuthorizationCode } from "@/lib/revolut/client";
+import { revolutMerchantEnv } from "@/lib/revolut/merchant";
 import { syncRevolutTransactions } from "@/lib/revolut/reconcile";
+import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-/** Volta da Revolut com o código de autorização: guarda o refresh token (só servidor) e faz a 1.ª sincronização. */
+/** Volta da Revolut com o código de autorização: guarda o refresh token cifrado (só servidor) e faz a 1.ª sincronização. */
 export async function GET(request: NextRequest) {
-  const back = (q: string) => NextResponse.redirect(new URL(`/admin/financeiro/banco?${q}`, request.url));
   const user = await getCurrentDbUserUncached();
   if (!user || user.role !== "ADMIN") return NextResponse.redirect(new URL("/sign-in", request.url));
-  const cfg = getRevolutConfig();
-  if (!cfg) return back("erro=config");
+  if (!isNetworkScope(await getSchoolScope())) return NextResponse.redirect(new URL("/admin/financeiro/banco", request.url));
+
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const expected = request.cookies.get("revolut_oauth_state")?.value;
+  // A escola vem no estado, por isso o estado tem de bater sempre certo com o cookie.
+  if (!state || state !== expected) return NextResponse.redirect(new URL("/admin/financeiro/banco?erro=estado", request.url));
+  const schoolId = state.slice(state.indexOf(".") + 1);
+  const back = (q: string) => NextResponse.redirect(new URL(`/admin/financeiro/banco?school=${encodeURIComponent(schoolId)}&${q}`, request.url));
+
   if (!code) return back("erro=sem-codigo");
-  if (expected && state && expected !== state) return back("erro=estado");
+  if (!paymentSecretsConfigured(revolutMerchantEnv)) return back("erro=cifra");
+  const supabase = createAdminClient();
+  const cfg = await resolveBankConfig(supabase, schoolId);
+  if (!cfg) return back("erro=config");
 
   try {
     const tokens = await exchangeAuthorizationCode(cfg, code);
     if (!tokens.refresh_token) return back("erro=sem-token");
-    const supabase = createAdminClient();
-    const { error } = await supabase.from("RevolutConnection").upsert(
-      { id: "default", refreshToken: tokens.refresh_token, connectedByUserId: user.id, connectedAt: new Date().toISOString(), lastSyncError: null },
-      { onConflict: "id" }
-    );
-    if (error) return back("erro=gravar");
-    await syncRevolutTransactions(supabase);
+    const saved = await saveBankConnection(supabase, { schoolId, refreshToken: tokens.refresh_token, actorUserId: user.id });
+    if (saved.error) return back("erro=gravar");
+    await syncRevolutTransactions(supabase, schoolId);
     const res = back("ligado=1");
     res.cookies.set("revolut_oauth_state", "", { path: "/", maxAge: 0 });
     return res;

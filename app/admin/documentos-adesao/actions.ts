@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { signatureHistoryWith } from "@/lib/contract-party";
 import { adminPermissionError } from "@/lib/permissions/assert";
+import { loadStudentContractParty } from "@/lib/school-contract-party";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import { invalidateStudentGateCache } from "@/lib/student-gate-cache";
@@ -40,9 +42,17 @@ export async function markAdesaoDocumentsOnPaper(studentId: string): Promise<Mar
     todayYmd
   );
 
+  const { party: contractParty, blocked } = await loadStudentContractParty(studentId);
+  if (blocked) return { error: "Preenche primeiro os dados legais da escola deste aluno." };
+
   const signedAtIso = new Date().toISOString();
   const signatureName = `Contrato físico (registo manual por ${dbUser.name ?? dbUser.email})`;
 
+  const { data: existingWaiver } = await supabase
+    .from("StudentWaiver")
+    .select("*")
+    .eq("studentId", studentId)
+    .maybeSingle();
   const waiverRow = {
     studentId,
     waiverSigned: true,
@@ -50,13 +60,10 @@ export async function markAdesaoDocumentsOnPaper(studentId: string): Promise<Mar
     waiverVersion: "legacy",
     signatureName,
     isMinor,
+    contractParty,
+    signatureHistory: signatureHistoryWith(existingWaiver),
     updatedAt: signedAtIso,
   };
-  const { data: existingWaiver } = await supabase
-    .from("StudentWaiver")
-    .select("id")
-    .eq("studentId", studentId)
-    .maybeSingle();
   if (existingWaiver?.id) {
     const { error } = await supabase.from("StudentWaiver").update(waiverRow).eq("studentId", studentId);
     if (error) return { error: error.message };
@@ -65,6 +72,11 @@ export async function markAdesaoDocumentsOnPaper(studentId: string): Promise<Mar
     if (error) return { error: error.message };
   }
 
+  const { data: existingAgreement } = await supabase
+    .from("StudentMembershipAgreement")
+    .select("*")
+    .eq("studentId", studentId)
+    .maybeSingle();
   const agreementRow = {
     studentId,
     agreementSigned: true,
@@ -73,13 +85,10 @@ export async function markAdesaoDocumentsOnPaper(studentId: string): Promise<Mar
     planId,
     signatureName,
     isMinor,
+    contractParty,
+    signatureHistory: signatureHistoryWith(existingAgreement),
     updatedAt: signedAtIso,
   };
-  const { data: existingAgreement } = await supabase
-    .from("StudentMembershipAgreement")
-    .select("id")
-    .eq("studentId", studentId)
-    .maybeSingle();
   if (existingAgreement?.id) {
     const { error } = await supabase.from("StudentMembershipAgreement").update(agreementRow).eq("studentId", studentId);
     if (error) return { error: error.message };
