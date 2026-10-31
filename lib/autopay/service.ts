@@ -21,6 +21,7 @@ import {
   revolutMerchantEnv,
   type MerchantOrder,
 } from "@/lib/revolut/merchant";
+import { loadStudentPaymentInfo } from "@/lib/school-payment-methods";
 import { billingDayFrom, chargeInstant, nextChargeAfter, sameLisbonDay } from "./billing-day";
 
 /**
@@ -161,6 +162,8 @@ export async function startAutoPay(
   supabase: SupabaseClient,
   input: { studentId: string; fullName: string; email: string | null; returnUrl: string }
 ): Promise<StartAutoPayResult> {
+  // A conta Revolut é a da Sede: uma subscrição de outra escola levaria o dinheiro para a conta errada.
+  if (!(await loadStudentPaymentInfo(input.studentId)).onlineRevolut) return { error: "A tua escola ainda não tem pagamento automático." };
   const payer = await resolveAutoPayPayer(supabase, input.studentId);
   if (payer.isFamilyMember) return { error: "O pagamento automático do teu grupo familiar é ativado pelo titular do grupo." };
   const amount = await expectedMonthlyAmount(supabase, payer.payerStudentId, payer.familyGroupId);

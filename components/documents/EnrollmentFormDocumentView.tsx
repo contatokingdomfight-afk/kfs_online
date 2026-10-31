@@ -8,8 +8,6 @@ import {
   ENROLLMENT_MODALITY_CHECKBOXES,
   FINAL_DECLARATIONS,
   GDPR_CONSENT_INTRO,
-  GYM_ENROLLMENT_INFO,
-  SCHOOL_TRANSFER_IBAN,
   enrollmentModalityChecked,
   enrollmentPaymentMethodLabel,
   type EnrollmentFormRow,
@@ -19,8 +17,10 @@ import { InsuranceCoverageBlock } from "@/components/membership/InsuranceCoverag
 import { ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER } from "@/lib/sports-insurance-coverage";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
 import type { SchoolSignature } from "@/lib/school-signatures";
+import type { EnrollmentSchoolDetails } from "@/lib/school-payment-rules";
 
 type Props = {
+  school: EnrollmentSchoolDetails;
   form: EnrollmentFormRow;
   fullName: string;
   email: string;
@@ -111,6 +111,7 @@ function formatGymPhone(phone: string): string {
 }
 
 export function EnrollmentFormDocumentView({
+  school,
   form,
   fullName,
   email,
@@ -140,6 +141,8 @@ export function EnrollmentFormDocumentView({
         : enrollmentPaymentMethodLabel(paymentMethod);
 
   const healthOr = (v: string | null | undefined) => (v?.trim() ? v.trim() : "Nenhuma");
+  const identity = school.identity;
+  const transferIban = school.payment.transfer?.iban ?? null;
 
   return (
     <article className="enrollment-form-document" style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-secondary)" }}>
@@ -151,14 +154,18 @@ export function EnrollmentFormDocumentView({
       </header>
 
       <Section n={1} title="Identificação do Ginásio">
-        <p style={bodyText}>
-          <strong style={{ color: "var(--text-primary)" }}>Denominação:</strong> {GYM_ENROLLMENT_INFO.name} também conhecida
-          por Kingdom Fight School
-        </p>
-        <p style={{ ...bodyText, marginTop: 6 }}>NIPC: {GYM_ENROLLMENT_INFO.nipc}</p>
-        <p style={{ ...bodyText, marginTop: 6 }}>Sede: {GYM_ENROLLMENT_INFO.address}</p>
-        <p style={{ ...bodyText, marginTop: 6 }}>Telefone: {formatGymPhone(GYM_ENROLLMENT_INFO.phone)}</p>
-        <p style={{ ...bodyText, marginTop: 6 }}>E-mail: {GYM_ENROLLMENT_INFO.email}</p>
+        {identity ? (
+          <>
+            <p style={bodyText}>
+              <strong style={{ color: "var(--text-primary)" }}>Denominação:</strong> {identity.name}
+              {identity.tradeName ? " também conhecida por Kingdom Fight School" : ""}
+            </p>
+            {identity.nipc ? <p style={{ ...bodyText, marginTop: 6 }}>NIPC: {identity.nipc}</p> : null}
+            {identity.address ? <p style={{ ...bodyText, marginTop: 6 }}>Sede: {identity.address}</p> : null}
+            {identity.phone ? <p style={{ ...bodyText, marginTop: 6 }}>Telefone: {formatGymPhone(identity.phone)}</p> : null}
+            {identity.email ? <p style={{ ...bodyText, marginTop: 6 }}>E-mail: {identity.email}</p> : null}
+          </>
+        ) : null}
       </Section>
 
       <Section n={2} title="Identificação do(a) Sócio">
@@ -220,8 +227,11 @@ export function EnrollmentFormDocumentView({
         {(isDebitDirect || form.debitIban) && form.debitIban ? (
           <FieldLine label="IBAN (débito direto)" value={form.debitIban} />
         ) : null}
-        {paymentMethod === "TRANSFER" || paymentMethod === "DEBIT_DIRECT" ? (
-          <FieldLine label="IBAN (transferência)" value={SCHOOL_TRANSFER_IBAN} />
+        {(paymentMethod === "TRANSFER" || paymentMethod === "DEBIT_DIRECT") && transferIban ? (
+          <FieldLine label="IBAN (transferência)" value={transferIban} />
+        ) : null}
+        {paymentMethod === "MBWAY" && school.payment.mbwayPhone ? (
+          <FieldLine label="MB Way" value={school.payment.mbwayPhone} />
         ) : null}
       </Section>
 

@@ -6,6 +6,7 @@ import { EnrollmentFormSummary } from "@/app/adesao/EnrollmentFormSummary";
 import { PrintDocumentButton } from "@/components/documents/PrintDocumentButton";
 import { AutoPrintTrigger } from "@/components/documents/AutoPrintTrigger";
 import { PrintDocumentTitle } from "@/components/documents/PrintDocumentTitle";
+import { loadEnrollmentSchoolDetails } from "@/lib/school-payment-methods";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
 import { buildMembershipPrintDocumentTitle } from "@/lib/print-document-title";
 
@@ -47,7 +48,7 @@ export async function StudentEnrollmentPrintView({ studentId, backHref }: Props)
     );
   }
 
-  const schoolSignatures = await getActiveSchoolSignatures();
+  const [schoolSignatures, school] = await Promise.all([getActiveSchoolSignatures(), loadEnrollmentSchoolDetails(studentId)]);
 
   const userId = (student as { userId?: string } | null)?.userId;
   const prefill = userId ? await loadEnrollmentFormPrefill(supabase, studentId, userId) : null;
@@ -77,6 +78,7 @@ export async function StudentEnrollmentPrintView({ studentId, backHref }: Props)
         <PrintDocumentButton label="Imprimir comprovativo" />
       </div>
       <EnrollmentFormSummary
+        school={school}
         form={enrollmentForm as EnrollmentFormRow}
         fullName={prefill.fullName}
         email={prefill.email}

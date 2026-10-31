@@ -9,6 +9,7 @@ import { resolveFamilyGroupTitularSuggestedAmount, resolvePlanMonthlyTuition } f
 import { individualLoyaltyDiscount } from "@/lib/loyalty/service";
 import { renewStudentInsuranceCoverage } from "@/lib/renew-student-insurance-coverage";
 import { grantReferralRewardIfEligible } from "@/lib/referral-rewards";
+import { loadStudentPaymentInfo } from "@/lib/school-payment-methods";
 
 /**
  * Pagar mensalidades em atraso pela Revolut (página segura, como na loja):
@@ -68,6 +69,8 @@ async function openCheckout(
   input: { payerStudentId: string; ids: string[]; amount: number; createdByUserId: string | null; email: string | null; returnUrl: string; description: string }
 ): Promise<CheckoutResult> {
   const { ids, amount } = input;
+  // A conta Revolut é a da Sede: uma ordem de outra escola levaria o dinheiro para a conta errada.
+  if (!(await loadStudentPaymentInfo(input.payerStudentId)).onlineRevolut) return { error: "A tua escola ainda não tem pagamento online." };
   // Mesmo conjunto ainda por pagar: reaproveita o link (evita várias ordens abertas para o mesmo).
   const { data: open } = await supabase
     .from("PaymentCheckout")

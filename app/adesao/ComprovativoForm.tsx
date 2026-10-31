@@ -10,27 +10,29 @@ import { ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER } from "@/lib/sports-insurance-
 import { CopyTextButton } from "@/components/ui/CopyTextButton";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import {
-  GYM_ENROLLMENT_INFO,
   GDPR_CONSENT_INTRO,
   ENROLLMENT_CONSENT_SECTIONS,
   ENROLLMENT_CONSENT_FOOTNOTE,
+  MONTHLY_DUE_DAY_NOTE,
   PAYMENT_METHOD_OPTIONS,
-  SCHOOL_TRANSFER_IBAN,
-  SCHOOL_PAYMENT_DETAILS,
   type EnrollmentFormPrefill,
   type PaymentMethodValue,
 } from "@/lib/enrollment-form";
+import { enrollmentPaymentMethods, type SchoolIdentity, type SchoolPaymentInfo } from "@/lib/school-payment-rules";
 import { formatDecimalAmountInput } from "@/lib/parse-decimal-amount";
 
 type Props = {
   prefill: EnrollmentFormPrefill;
+  /** Meios e identificação da escola do aluno. */
+  paymentInfo: SchoolPaymentInfo;
+  schoolIdentity: SchoolIdentity | null;
   /** Acção a chamar ao submeter; por omissão a do próprio aluno (sessão). O admin passa uma
    * variante ligada ao `studentId` alvo (ver app/admin/alunos/[id]/contrato/assinar). */
   action?: (
     prevState: SaveEnrollmentFormResult | null,
     formData: FormData
   ) => Promise<SaveEnrollmentFormResult>;
-  /** Mostra «Pagamento online (Revolut)» (só na adesão do próprio aluno, com a Revolut configurada). */
+  /** Mostra «Pagamento online (Revolut)», se a escola o tiver (só na adesão do próprio aluno). */
   revolutAvailable?: boolean;
 };
 
@@ -81,34 +83,26 @@ function StepProgress({ step }: { step: number }) {
   );
 }
 
-export function ComprovativoForm({ prefill, action = saveEnrollmentForm, revolutAvailable = false }: Props) {
+export function ComprovativoForm({ prefill, paymentInfo, schoolIdentity, action = saveEnrollmentForm, revolutAvailable = false }: Props) {
   const [state, formAction] = useActionState(action, null as SaveEnrollmentFormResult | null);
   const e = prefill.existing;
-  const initialPayment: PaymentMethodValue =
-    e.paymentMethod === "CASH" || e.paymentMethod === "TRANSFER"
-      ? e.paymentMethod
-      : e.paymentMethod === "REVOLUT" && revolutAvailable
-        ? "REVOLUT"
-        : e.paymentMethod === "DEBIT_DIRECT"
-          ? "TRANSFER"
-          : revolutAvailable
-            ? "REVOLUT"
-            : "CASH";
   // Revolut primeiro (recomendado) quando disponível; o admin a preencher pelo aluno não a vê.
-  const methodOptions = [
-    ...(revolutAvailable ? PAYMENT_METHOD_OPTIONS.filter((o) => o.value === "REVOLUT") : []),
-    ...PAYMENT_METHOD_OPTIONS.filter((o) => o.value !== "REVOLUT"),
-  ];
+  const availableMethods = enrollmentPaymentMethods(paymentInfo, { includeOnline: revolutAvailable });
+  const wantedMethod = e.paymentMethod === "DEBIT_DIRECT" ? "TRANSFER" : e.paymentMethod;
+  const initialPayment: PaymentMethodValue | null = availableMethods.find((m) => m === wantedMethod) ?? availableMethods[0] ?? null;
+  const methodOptions = availableMethods.flatMap((m) => PAYMENT_METHOD_OPTIONS.filter((o) => o.value === m));
+  const transfer = paymentInfo.transfer;
   const METHOD_HINT: Record<string, string> = {
     REVOLUT: "Cartão, Apple Pay, Google Pay ou conta Revolut. Pagas ao concluir a adesão e fica confirmado na hora — sem comprovativo.",
     TRANSFER: "IBAN e comprovativo (confirmado pela secretaria).",
+    MBWAY: "Envias para o número da escola e juntas o comprovativo (confirmado pela secretaria).",
     CASH: "Pagas na secretaria, no primeiro treino.",
   };
   const totalToday =
     (prefill.showEnrollment ? prefill.enrollmentAmount : 0) +
     prefill.monthlyAmount +
     (prefill.showInsurance && !ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER ? Number(prefill.insuranceAmount) || 0 : 0);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodValue>(initialPayment);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodValue | null>(initialPayment);
   const [consents, setConsents] = useState({
     consentPhoto: e.consentPhoto ?? true,
     consentVideo: e.consentVideo ?? true,
@@ -135,6 +129,8 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm, revolut
       invalid.reportValidity();
       return;
     }
+    // Escola sem meios: fica neste passo, com o aviso visível (o servidor também recusa).
+    if (step === 1 && !paymentMethod) return;
     setStep((s) => Math.min(s + 1, LAST_STEP));
     scrollToTop();
   };
@@ -229,15 +225,17 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm, revolut
 
       {/* Passo 2 — Plano e pagamento */}
       <div ref={stepRefs[1]} style={stepStyle(1)}>
-        <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", fontSize: 14, lineHeight: 1.55 }}>
-          <h2 style={{ margin: "0 0 10px", fontSize: 16, fontWeight: 600 }}>Identificação do ginásio</h2>
-          <p style={{ margin: "0 0 4px" }}><strong>{GYM_ENROLLMENT_INFO.name}</strong></p>
-          <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>{GYM_ENROLLMENT_INFO.tradeName}</p>
-          <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>NIPC: {GYM_ENROLLMENT_INFO.nipc}</p>
-          <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>{GYM_ENROLLMENT_INFO.address}</p>
-          <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>{GYM_ENROLLMENT_INFO.phone}</p>
-          <p style={{ margin: 0, color: "var(--text-secondary)" }}>{GYM_ENROLLMENT_INFO.email}</p>
-        </section>
+        {schoolIdentity ? (
+          <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", fontSize: 14, lineHeight: 1.55 }}>
+            <h2 style={{ margin: "0 0 10px", fontSize: 16, fontWeight: 600 }}>Identificação do ginásio</h2>
+            <p style={{ margin: "0 0 4px" }}><strong>{schoolIdentity.name}</strong></p>
+            {schoolIdentity.tradeName ? <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>{schoolIdentity.tradeName}</p> : null}
+            {schoolIdentity.nipc ? <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>NIPC: {schoolIdentity.nipc}</p> : null}
+            {schoolIdentity.address ? <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>{schoolIdentity.address}</p> : null}
+            {schoolIdentity.phone ? <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>{schoolIdentity.phone}</p> : null}
+            {schoolIdentity.email ? <p style={{ margin: 0, color: "var(--text-secondary)" }}>{schoolIdentity.email}</p> : null}
+          </section>
+        ) : null}
 
         <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", fontSize: 14, lineHeight: 1.55 }}>
           <h2 style={{ margin: "0 0 10px", fontSize: 16, fontWeight: 600 }}>Plano e modalidade</h2>
@@ -264,6 +262,11 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm, revolut
 
         <section className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", display: "flex", flexDirection: "column", gap: 14 }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Forma de pagamento</h2>
+          {methodOptions.length === 0 ? (
+            <p role="alert" style={{ margin: 0, fontSize: 14, color: "var(--danger)", lineHeight: 1.5 }}>
+              A tua escola ainda não indicou como receber pagamentos. Fala com a escola para concluíres a adesão.
+            </p>
+          ) : null}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {methodOptions.map((opt) => {
               const on = paymentMethod === opt.value;
@@ -295,7 +298,28 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm, revolut
               );
             })}
           </div>
-          {paymentMethod === "TRANSFER" ? (
+          {paymentMethod === "MBWAY" && paymentInfo.mbwayPhone ? (
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--border)",
+                background: "var(--bg-secondary)",
+                fontSize: 14,
+              }}
+            >
+              <p style={{ margin: "0 0 8px", fontWeight: 600 }}>Número MB Way da escola</p>
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+                <code style={{ fontSize: 15, fontWeight: 600 }}>{paymentInfo.mbwayPhone}</code>
+                <CopyTextButton text={paymentInfo.mbwayPhone} label="Copiar número" />
+              </div>
+              <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 6 }}>
+                <Calendar size={13} aria-hidden style={{ flexShrink: 0, marginTop: 1 }} />
+                As mensalidades seguintes devem ser pagas {MONTHLY_DUE_DAY_NOTE}.
+              </p>
+            </div>
+          ) : null}
+          {paymentMethod === "TRANSFER" && transfer ? (
             <div
               style={{
                 padding: "12px 14px",
@@ -309,34 +333,44 @@ export function ComprovativoForm({ prefill, action = saveEnrollmentForm, revolut
                 <Landmark size={16} aria-hidden />
                 Dados para transferência
               </p>
-              <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>
-                Destinatário: <strong style={{ color: "var(--text-primary)" }}>{SCHOOL_PAYMENT_DETAILS.recipientName}</strong>
-              </p>
-              <p style={{ margin: "0 0 10px", fontSize: 12, color: "var(--text-secondary)" }}>
-                {SCHOOL_PAYMENT_DETAILS.recipientAddress}
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
-                <code style={{ fontSize: 15, fontWeight: 600, wordBreak: "break-all" }}>{SCHOOL_TRANSFER_IBAN}</code>
-                <CopyTextButton text={SCHOOL_TRANSFER_IBAN} label="Copiar IBAN" />
-              </div>
-              <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
-                BIC/SWIFT: <strong style={{ color: "var(--text-primary)" }}>{SCHOOL_PAYMENT_DETAILS.bicSwift}</strong>
-              </p>
-              <p style={{ margin: "10px 0 0", fontSize: 13 }}>
-                Revolut:{" "}
-                <strong style={{ color: "var(--text-primary)" }}>{SCHOOL_PAYMENT_DETAILS.revolutTag}</strong>
-              </p>
+              {transfer.holder ? (
+                <p style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>
+                  Destinatário: <strong style={{ color: "var(--text-primary)" }}>{transfer.holder}</strong>
+                </p>
+              ) : null}
+              {transfer.holderAddress ? (
+                <p style={{ margin: "0 0 10px", fontSize: 12, color: "var(--text-secondary)" }}>
+                  {transfer.holderAddress}
+                </p>
+              ) : null}
+              {transfer.iban ? (
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+                  <code style={{ fontSize: 15, fontWeight: 600, wordBreak: "break-all" }}>{transfer.iban}</code>
+                  <CopyTextButton text={transfer.iban} label="Copiar IBAN" />
+                </div>
+              ) : null}
+              {transfer.bicSwift ? (
+                <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
+                  BIC/SWIFT: <strong style={{ color: "var(--text-primary)" }}>{transfer.bicSwift}</strong>
+                </p>
+              ) : null}
+              {transfer.revolutTag ? (
+                <p style={{ margin: "10px 0 0", fontSize: 13 }}>
+                  Revolut:{" "}
+                  <strong style={{ color: "var(--text-primary)" }}>{transfer.revolutTag}</strong>
+                </p>
+              ) : null}
               <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 6 }}>
                 <Calendar size={13} aria-hidden style={{ flexShrink: 0, marginTop: 1 }} />
-                As mensalidades seguintes devem ser pagas {SCHOOL_PAYMENT_DETAILS.monthlyDueDayNote}.
+                As mensalidades seguintes devem ser pagas {MONTHLY_DUE_DAY_NOTE}.
               </p>
             </div>
           ) : null}
 
-          <div style={{ display: paymentMethod === "REVOLUT" ? "none" : undefined }}>
+          <div style={{ display: paymentMethod === "REVOLUT" || !paymentMethod ? "none" : undefined }}>
             <label htmlFor="paymentProof" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, fontSize: 14, fontWeight: 500 }}>
               <CreditCard size={15} aria-hidden />
-              Comprovativo de pagamento {paymentMethod === "TRANSFER" ? "" : "(opcional)"}
+              Comprovativo de pagamento {paymentMethod === "TRANSFER" || paymentMethod === "MBWAY" ? "" : "(opcional)"}
             </label>
             <input
               id="paymentProof"

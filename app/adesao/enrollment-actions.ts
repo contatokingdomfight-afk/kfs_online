@@ -13,6 +13,7 @@ import {
   MAX_PAYMENT_PROOF_BYTES,
   type PaymentMethodValue,
 } from "@/lib/enrollment-form";
+import { enrollmentPaymentMethods, loadStudentPaymentInfo } from "@/lib/school-payment-methods";
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
 import { ENROLLMENT_INSURANCE_MANUAL_PLACEHOLDER } from "@/lib/sports-insurance-coverage";
 
@@ -83,7 +84,11 @@ export async function applyEnrollmentFormSubmission(
   if (!emergencyContactPhone || emergencyContactPhone.length < 9) {
     return { error: "Indica o telefone do contacto de emergência." };
   }
-  if (paymentMethod !== "CASH" && paymentMethod !== "TRANSFER" && paymentMethod !== "REVOLUT") {
+  const schoolMethods: string[] = enrollmentPaymentMethods(await loadStudentPaymentInfo(studentId), { includeOnline: true });
+  if (schoolMethods.length === 0) {
+    return { error: "A escola ainda não indicou como receber pagamentos. Fala com a escola para concluir a adesão." };
+  }
+  if (!schoolMethods.includes(paymentMethod)) {
     return { error: "Escolhe a forma de pagamento." };
   }
 

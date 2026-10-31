@@ -1,5 +1,5 @@
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
+import { loadStudentPaymentInfo } from "@/lib/school-payment-methods";
 import { expectedMonthlyAmount, resolveAutoPayPayer } from "@/lib/autopay/service";
 import { LOYALTY_MONTHS, loadActiveLoyalty, payerLoyaltyMonthlyDiscount } from "@/lib/loyalty/service";
 import { advanceMonthAmount, latePaymentLabel, listLatePayments, nextAdvanceMonth } from "@/lib/tuition-checkout/service";
@@ -160,7 +160,7 @@ export async function StudentLoyaltySection({ studentId }: { studentId: string }
 /** Mensalidades em atraso com «Pagar com Revolut». */
 export async function StudentLatePaymentsSection({ studentId, justPaid }: { studentId: string; justPaid: boolean }) {
   const admin = getAdminClientOrNull().client;
-  if (!admin || !revolutMerchantConfigured) return null;
+  if (!admin || !(await loadStudentPaymentInfo(studentId)).onlineRevolut) return null;
   const payer = await resolveAutoPayPayer(admin, studentId);
   // Membro de um grupo: só as taxas dele (inscrição/seguro); a mensalidade é do titular.
   const late = await listLatePayments(admin, payer.isFamilyMember ? studentId : payer.payerStudentId);

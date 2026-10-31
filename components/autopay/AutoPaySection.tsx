@@ -1,5 +1,5 @@
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
+import { loadStudentPaymentInfo } from "@/lib/school-payment-methods";
 import { expectedMonthlyAmount, firstMonthToPay, loadAutoPayForStudent, resolveAutoPayPayer, syncAutoPaySafe } from "@/lib/autopay/service";
 import { billingDayLabel } from "@/lib/autopay/billing-day";
 import { AutoPayActivateButton, AutoPayCancelButton } from "./AutoPayButtons";
@@ -53,7 +53,7 @@ function Facts({ items }: { items: [string, string][] }) {
 /** Cartão «Pagamento automático» em Plano e pagamentos (estados: por ativar, a confirmar, ativo, falhou). */
 export async function AutoPaySection({ studentId, justReturned }: { studentId: string; justReturned: boolean }) {
   const admin = getAdminClientOrNull().client;
-  if (!admin || !revolutMerchantConfigured) return null;
+  if (!admin || !(await loadStudentPaymentInfo(studentId)).onlineRevolut) return null;
 
   const payer = await resolveAutoPayPayer(admin, studentId);
   let row = await loadAutoPayForStudent(admin, payer.payerStudentId);

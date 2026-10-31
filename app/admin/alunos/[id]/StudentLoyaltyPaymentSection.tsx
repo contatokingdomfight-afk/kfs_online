@@ -3,7 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveAutoPayPayer } from "@/lib/autopay/service";
 import { LOYALTY_MONTHS, loadActiveLoyalty, loyaltyExitPenalty, payerLoyaltyMonthlyDiscount } from "@/lib/loyalty/service";
 import { latePaymentLabel, listLatePayments } from "@/lib/tuition-checkout/service";
-import { revolutMerchantConfigured, revolutMerchantEnv } from "@/lib/revolut/merchant";
+import { revolutMerchantEnv } from "@/lib/revolut/merchant";
+import { loadStudentPaymentInfo } from "@/lib/school-payment-methods";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 import { CopyTextButton } from "@/components/ui/CopyTextButton";
@@ -25,7 +26,8 @@ export async function StudentLoyaltyPaymentSection({ supabase, studentId, phone,
   const payer = await resolveAutoPayPayer(supabase, studentId);
   // Membro de um grupo: a fidelização e a mensalidade estão no titular; aqui só as taxas dele (inscrição/seguro).
   const payingId = payer.isFamilyMember ? studentId : payer.payerStudentId;
-  const [discount, commitment, late] = await Promise.all([
+  const [{ onlineRevolut }, discount, commitment, late] = await Promise.all([
+    loadStudentPaymentInfo(payingId),
     payer.isFamilyMember ? Promise.resolve(0) : payerLoyaltyMonthlyDiscount(supabase, payer.payerStudentId, payer.familyGroupId),
     payer.isFamilyMember ? Promise.resolve(null) : loadActiveLoyalty(supabase, payer.payerStudentId),
     listLatePayments(supabase, payingId),
@@ -104,7 +106,7 @@ export async function StudentLoyaltyPaymentSection({ supabase, studentId, phone,
         </section>
       )}
 
-      {revolutMerchantConfigured && late.length > 0 && (
+      {onlineRevolut && late.length > 0 && (
         <section style={{ marginTop: 18 }}>
           <h2 style={sectionTitle}>Em atraso · {euro(lateTotal)}</h2>
           <div style={{ ...row, flexDirection: "column", alignItems: "stretch", gap: 10 }}>

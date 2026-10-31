@@ -8,6 +8,7 @@ import { StudentOnboardingFeesNotice } from "@/components/StudentOnboardingFeesN
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
 import { SchoolPaymentPendingModal } from "./SchoolPaymentPendingModal";
 import { SchoolTransferPaymentCard } from "@/components/payments/SchoolTransferPaymentCard";
+import { loadEnrollmentSchoolDetails } from "@/lib/school-payment-methods";
 import { studentPaymentReference } from "@/lib/revolut/match";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getFamilyContext } from "@/lib/family-context";
@@ -168,6 +169,9 @@ export default async function DashboardFinanceiroPage({
     ? await (getAdminClientOrNull().client ?? supabase).from("Student").select("paymentCode").eq("id", studentId).maybeSingle()
     : { data: null };
   const paymentReference = studentPaymentReference((codeRow as { paymentCode?: number | null } | null)?.paymentCode ?? null);
+  const school = await loadEnrollmentSchoolDetails(studentId);
+  // Títulos de sempre quando a escola tem os dois meios; senão, um título que não promete o que ela não tem.
+  const transferAndCash = Boolean(school.payment.transfer && school.payment.cash);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -245,17 +249,23 @@ export default async function DashboardFinanceiroPage({
       {/* Pagamento automático (Subscrições Revolut) */}
       {studentId ? <AutoPaySection studentId={studentId} justReturned={sp.autopay === "1"} /> : null}
       {/* Pagamento por transferência / espécie */}
-      <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
-        <h2 className="text-base font-bold text-text-primary">
-          {locale === "en" ? "Pay by transfer or cash" : "Pagamento por transferência ou espécie"}
-        </h2>
-        <p className="text-sm text-text-secondary">
-          {locale === "en"
-            ? "Prefer to pay each month yourself? Pay at the school office or by bank transfer using the details below."
-            : "Preferes pagar tu todos os meses? Paga na secretaria ou por transferência bancária com os dados abaixo."}
-        </p>
-        <SchoolTransferPaymentCard locale={locale === "en" ? "en" : "pt"} paymentReference={paymentReference} />
-      </section>
+      {studentId ? (
+        <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
+          <h2 className="text-base font-bold text-text-primary">
+            {transferAndCash
+              ? locale === "en" ? "Pay by transfer or cash" : "Pagamento por transferência ou espécie"
+              : locale === "en" ? "How to pay your school" : "Como pagar à tua escola"}
+          </h2>
+          {transferAndCash ? (
+            <p className="text-sm text-text-secondary">
+              {locale === "en"
+                ? "Prefer to pay each month yourself? Pay at the school office or by bank transfer using the details below."
+                : "Preferes pagar tu todos os meses? Paga na secretaria ou por transferência bancária com os dados abaixo."}
+            </p>
+          ) : null}
+          <SchoolTransferPaymentCard school={school} locale={locale === "en" ? "en" : "pt"} paymentReference={paymentReference} />
+        </section>
+      ) : null}
       {/* Forma de pagamento e comprovante (informação) */}
       <section className="rounded-2xl bg-bg-secondary border border-border p-4 sm:p-5 shadow-md space-y-4">
         <h2 className="text-base font-bold text-text-primary">{t("paymentProofLabel")}</h2>

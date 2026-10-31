@@ -8,7 +8,7 @@ import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import { isEnrollmentFormCurrent, loadEnrollmentFormPrefill } from "@/lib/enrollment-form";
 import { AdesaoSigningForm } from "./AdesaoSigningForm";
 import { ComprovativoForm } from "./ComprovativoForm";
-import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
+import { loadStudentPaymentInfo, loadStudentSchoolIdentity } from "@/lib/school-payment-methods";
 import { AdesaoStepIndicator } from "./AdesaoStepIndicator";
 
 type Props = {
@@ -74,6 +74,8 @@ export default async function AdesaoPage({ searchParams }: Props) {
 
   if (step === 2 && !formCurrent) redirect("/adesao?passo=1");
 
+  const [paymentInfo, schoolIdentity] = await Promise.all([loadStudentPaymentInfo(studentId), loadStudentSchoolIdentity(studentId)]);
+
   return (
     <main className="min-h-screen flex flex-col items-center p-6 bg-bg" style={{ color: "var(--text-primary)" }}>
       <div className="container-mobile" style={{ width: "100%" }}>
@@ -89,7 +91,7 @@ export default async function AdesaoPage({ searchParams }: Props) {
         <AdesaoStepIndicator step={step} />
 
         {step === 1 && prefill ? (
-          <ComprovativoForm prefill={prefill} revolutAvailable={revolutMerchantConfigured} />
+          <ComprovativoForm prefill={prefill} paymentInfo={paymentInfo} schoolIdentity={schoolIdentity} revolutAvailable />
         ) : prefill ? (
           <AdesaoSigningForm isMinor={isMinor} planName={prefill.planName} modalityLabel={prefill.modalityLabel} />
         ) : null}

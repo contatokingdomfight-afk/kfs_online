@@ -6,6 +6,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getInsuranceSettings, isMembershipAgreementCurrent } from "@/lib/insurance-settings";
 import { isMinorFromDateOfBirth } from "@/lib/waiver-content";
 import { isEnrollmentFormCurrent, loadEnrollmentFormPrefill } from "@/lib/enrollment-form";
+import { loadStudentPaymentInfo, loadStudentSchoolIdentity } from "@/lib/school-payment-methods";
 import { ComprovativoForm } from "@/app/adesao/ComprovativoForm";
 import { AdesaoSigningForm } from "@/app/adesao/AdesaoSigningForm";
 import { AdesaoStepIndicator } from "@/app/adesao/AdesaoStepIndicator";
@@ -79,6 +80,8 @@ export default async function AdminAssinarAdesaoPage({ params, searchParams }: P
 
   if (step === 2 && !formCurrent) redirect(`/admin/alunos/${studentId}/contrato/assinar?passo=1`);
 
+  const [paymentInfo, schoolIdentity] = await Promise.all([loadStudentPaymentInfo(studentId), loadStudentSchoolIdentity(studentId)]);
+
   return (
     <div style={{ maxWidth: "min(720px, 100%)", marginInline: "auto" }}>
       <div style={{ marginBottom: 16 }}>
@@ -100,7 +103,7 @@ export default async function AdminAssinarAdesaoPage({ params, searchParams }: P
       <AdesaoStepIndicator step={step} />
 
       {step === 1 && prefill ? (
-        <ComprovativoForm prefill={prefill} action={adminSaveEnrollmentForm.bind(null, studentId)} />
+        <ComprovativoForm prefill={prefill} paymentInfo={paymentInfo} schoolIdentity={schoolIdentity} action={adminSaveEnrollmentForm.bind(null, studentId)} />
       ) : prefill ? (
         <AdesaoSigningForm
           isMinor={isMinor}

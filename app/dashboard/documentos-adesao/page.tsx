@@ -6,6 +6,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
 import { loadEnrollmentFormPrefill, type EnrollmentFormRow } from "@/lib/enrollment-form";
 import { MembershipDocumentsReadView } from "@/components/membership/MembershipDocumentsReadView";
+import { loadEnrollmentSchoolDetails } from "@/lib/school-payment-methods";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
@@ -37,7 +38,7 @@ export default async function DocumentosAdesaoPage() {
   const userId = (student as { userId?: string } | null)?.userId;
   const planId = (student as { planId?: string | null } | null)?.planId ?? null;
   const prefill = userId ? await loadEnrollmentFormPrefill(supabase, studentId, userId) : null;
-  const schoolSignatures = await getActiveSchoolSignatures();
+  const [schoolSignatures, school] = await Promise.all([getActiveSchoolSignatures(), loadEnrollmentSchoolDetails(studentId)]);
 
   const fmtDate = (v: string | null | undefined) =>
     v ? new Date(v).toLocaleDateString(locale === "en" ? "en-GB" : "pt-PT", { day: "numeric", month: "short", year: "numeric" }) : null;
@@ -121,6 +122,7 @@ export default async function DocumentosAdesaoPage() {
       ) : null}
 
       <MembershipDocumentsReadView
+        school={school}
         locale={locale}
         hasPlan={Boolean(planId)}
         agreement={{

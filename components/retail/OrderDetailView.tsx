@@ -4,14 +4,13 @@ import { ArrowLeft, Bell, CheckCircle2, Circle, Clock, Landmark, Store } from "l
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { SCHOOL_PAYMENT_DETAILS } from "@/lib/enrollment-form";
+import { hasAnySchoolPaymentMethod, loadSchoolPaymentInfo, orderPaymentSchoolId } from "@/lib/school-payment-methods";
 import { CopyTextButton } from "@/components/ui/CopyTextButton";
 import { lineLabel, loadOrders, ORDER_FLOW, ORDER_STATUS_LABEL_PT, orderReference, type OrderStatus } from "@/lib/retail/orders";
 import { cancelMyOrder } from "@/app/dashboard/loja/actions";
 import { ProofUploadForm } from "@/app/dashboard/loja/encomendas/[id]/ProofUploadForm";
 import { ClearSavedCart } from "@/components/retail/ClearSavedCart";
 import { PayOnlineButton } from "@/components/retail/PayOnlineButton";
-import { revolutMerchantConfigured } from "@/lib/revolut/merchant";
 
 function euro(n: number): string {
   return `${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2).replace(".", ",")} €`;
@@ -48,7 +47,9 @@ export async function OrderDetailView({ id, nova, pago, basePath }: { id: string
   const { data: owner } = await admin.from("RetailOrder").select("createdByUserId").eq("id", id).maybeSingle();
   const mine = (studentId != null && order.studentId === studentId) || (dbUser != null && (owner as { createdByUserId: string | null } | null)?.createdByUserId === dbUser.id);
   if (!mine) notFound();
-  const canPayOnline = mine && dbUser != null;
+  const payment = await loadSchoolPaymentInfo(orderPaymentSchoolId(order.schoolId));
+  const { transfer, mbwayPhone } = payment;
+  const canPayOnline = mine && dbUser != null && payment.onlineRevolut;
 
   const ref = orderReference(order.number);
   const cancelled = order.status === "CANCELLED";
@@ -143,29 +144,45 @@ export async function OrderDetailView({ id, nova, pago, basePath }: { id: string
               Se acabaste de pagar online, a confirmação chega em instantes. Atualiza a página daqui a pouco.
             </p>
           )}
-          {revolutMerchantConfigured && canPayOnline && (
+          {!hasAnySchoolPaymentMethod(payment) && (
+            <p role="alert" style={{ margin: 0, fontSize: 14, color: "var(--danger)", lineHeight: 1.45 }}>
+              A escola ainda não indicou como receber pagamentos. Fala com a escola para pagares esta encomenda.
+            </p>
+          )}
+          {canPayOnline && (
             <>
               <PayOnlineButton orderId={order.id} />
               <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", textAlign: "center" }}>ou paga por transferência / na secretaria:</p>
             </>
           )}
-          <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 14, fontWeight: 700 }}>
-            <Landmark size={18} aria-hidden style={{ color: "var(--primary)" }} />
-            Transferência ou Revolut
-          </div>
-          <CopyRow label="IBAN" value={SCHOOL_PAYMENT_DETAILS.iban} />
-          <CopyRow label="Titular" value={SCHOOL_PAYMENT_DETAILS.recipientName} />
-          <CopyRow label="BIC / SWIFT" value={SCHOOL_PAYMENT_DETAILS.bicSwift} />
-          <CopyRow label="Revolut" value={SCHOOL_PAYMENT_DETAILS.revolutTag} />
-          <CopyRow label="Valor" value={order.totalAmount.toFixed(2).replace(".", ",")} />
-          <CopyRow label="Descritivo / referência (importante)" value={ref} />
-          <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.45 }}>
-            Põe a referência <strong style={{ color: "var(--text-primary)" }}>{ref}</strong> no descritivo para sabermos a que encomenda pertence.
-          </p>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 14, fontWeight: 700, marginTop: 4 }}>
-            <Store size={18} aria-hidden style={{ color: "var(--primary)" }} />
-            Ou paga na secretaria (dinheiro ou MBWay)
-          </div>
+          {transfer && (
+            <>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 14, fontWeight: 700 }}>
+                <Landmark size={18} aria-hidden style={{ color: "var(--primary)" }} />
+                {transfer.iban && transfer.revolutTag ? "Transferência ou Revolut" : transfer.iban ? "Transferência" : "Revolut"}
+              </div>
+              {transfer.iban && <CopyRow label="IBAN" value={transfer.iban} />}
+              {transfer.holder && <CopyRow label="Titular" value={transfer.holder} />}
+              {transfer.bicSwift && <CopyRow label="BIC / SWIFT" value={transfer.bicSwift} />}
+              {transfer.revolutTag && <CopyRow label="Revolut" value={transfer.revolutTag} />}
+            </>
+          )}
+          {mbwayPhone && <CopyRow label="MB Way" value={mbwayPhone} />}
+          {(transfer || mbwayPhone) && (
+            <>
+              <CopyRow label="Valor" value={order.totalAmount.toFixed(2).replace(".", ",")} />
+              <CopyRow label="Descritivo / referência (importante)" value={ref} />
+              <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.45 }}>
+                Põe a referência <strong style={{ color: "var(--text-primary)" }}>{ref}</strong> no descritivo para sabermos a que encomenda pertence.
+              </p>
+            </>
+          )}
+          {payment.cash && (
+            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 14, fontWeight: 700, marginTop: 4 }}>
+              <Store size={18} aria-hidden style={{ color: "var(--primary)" }} />
+              {payment.isSede ? "Ou paga na secretaria (dinheiro ou MBWay)" : "Ou paga na secretaria (dinheiro)"}
+            </div>
+          )}
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
             <ProofUploadForm orderId={order.id} current={order.proofFileName} />
           </div>

@@ -1,8 +1,10 @@
 import { EnrollmentFormDocumentView } from "@/components/documents/EnrollmentFormDocumentView";
 import type { EnrollmentFormRow } from "@/lib/enrollment-form";
 import type { SchoolSignature } from "@/lib/school-signatures";
+import type { EnrollmentSchoolDetails } from "@/lib/school-payment-rules";
 
 type Props = {
+  school: EnrollmentSchoolDetails;
   form: EnrollmentFormRow;
   fullName: string;
   email: string;
@@ -27,6 +29,7 @@ type Props = {
 export function EnrollmentFormSummary(props: Props) {
   return (
     <EnrollmentFormDocumentView
+      school={props.school}
       form={props.form}
       fullName={props.fullName}
       email={props.email}

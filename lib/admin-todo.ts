@@ -23,7 +23,7 @@ import {
 } from "@/lib/whatsapp";
 import { computeTrainingLoad } from "@/lib/training-load";
 import { loadTrainingSessions } from "@/lib/training-load.server";
-import { SCHOOL_PAYMENT_DETAILS } from "@/lib/enrollment-form";
+import { NO_SCHOOL_PAYMENT_INFO, loadSchoolsPaymentInfo, orderPaymentSchoolId } from "@/lib/school-payment-methods";
 import { lineLabel, loadOrders, orderReference } from "@/lib/retail/orders";
 import { KINGDOM_WEEK_MONTHLY_CAP } from "@/lib/drop-in-sessions-pricing";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
@@ -291,6 +291,7 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
       orderCustomer.set(r.id, { name: uName.get(r.userId) ?? "—", phone: phoneOf.get(r.id) ?? null });
     }
   }
+  const orderPayment = await loadSchoolsPaymentInfo(orderRows.map((o) => orderPaymentSchoolId(o.schoolId)));
   const encomendas: AdminTodoItem[] = orderRows
     .map((o) => {
       const c = o.studentId ? orderCustomer.get(o.studentId) : null;
@@ -304,9 +305,7 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
         descriptor: [...new Set(o.lines.map((l) => l.productName))].join(", "),
         total,
         items,
-        iban: SCHOOL_PAYMENT_DETAILS.iban,
-        recipient: SCHOOL_PAYMENT_DETAILS.recipientName,
-        revolut: SCHOOL_PAYMENT_DETAILS.revolutTag,
+        payment: orderPayment.get(orderPaymentSchoolId(o.schoolId)) ?? NO_SCHOOL_PAYMENT_INFO,
       });
       return {
         kind: "encomendas" as const,

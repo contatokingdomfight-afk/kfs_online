@@ -5,6 +5,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getInsuranceSettings, isMembershipAgreementCurrent } from "@/lib/insurance-settings";
 import { isEnrollmentFormCurrent, loadEnrollmentFormPrefill, type EnrollmentFormRow } from "@/lib/enrollment-form";
 import { MembershipDocumentsReadView } from "@/components/membership/MembershipDocumentsReadView";
+import { loadEnrollmentSchoolDetails } from "@/lib/school-payment-methods";
 import { getActiveSchoolSignatures } from "@/lib/school-signatures";
 import { PhysicalDocumentsFiledStatus } from "@/components/documents/PhysicalDocumentsFiledStatus";
 
@@ -65,7 +66,7 @@ export async function StaffStudentMembershipDocumentsView({
     (filedStatus as { physicalDocumentsFiledByUserId?: string | null } | null)?.physicalDocumentsFiledByUserId ?? null;
 
   const prefill = userId ? await loadEnrollmentFormPrefill(supabase, studentId, userId) : null;
-  const schoolSignatures = await getActiveSchoolSignatures();
+  const [schoolSignatures, school] = await Promise.all([getActiveSchoolSignatures(), loadEnrollmentSchoolDetails(studentId)]);
 
   let filedByName: string | null = null;
   if (physicalDocumentsFiledByUserId) {
@@ -104,6 +105,7 @@ export async function StaffStudentMembershipDocumentsView({
         </div>
       ) : null}
       <MembershipDocumentsReadView
+      school={school}
       locale={locale}
       showIncompleteBanner={false}
       printComprovativoHref={printComprovativoHref}

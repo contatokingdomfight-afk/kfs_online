@@ -13,19 +13,8 @@ export const GYM_ENROLLMENT_INFO = {
   email: "contatokingdomfight@gmail.com",
 } as const;
 
-/** IBAN da empresa para transferências bancárias. */
-export const SCHOOL_TRANSFER_IBAN = "LT383250045228499203";
-
-/** Dados adicionais de pagamento — transferência/Revolut, mostrados junto ao IBAN. */
-export const SCHOOL_PAYMENT_DETAILS = {
-  recipientName: "Epicentro de Honra",
-  recipientAddress: "Rua Viana da Mota, 18, 2765-562 São Pedro do Estoril, Portugal",
-  iban: SCHOOL_TRANSFER_IBAN,
-  bicSwift: "REVOLT21",
-  revolutTag: "@kingdom_01",
-  /** Dia útil limite para pagamento da mensalidade de cada mês. */
-  monthlyDueDayNote: "até ao terceiro dia útil de cada mês",
-} as const;
+/** Dia útil limite para pagamento da mensalidade de cada mês. */
+export const MONTHLY_DUE_DAY_NOTE = "até ao terceiro dia útil de cada mês";
 
 export const MAX_PAYMENT_PROOF_BYTES = 8 * 1024 * 1024;
 export const ALLOWED_PAYMENT_PROOF_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
@@ -33,6 +22,7 @@ export const ALLOWED_PAYMENT_PROOF_TYPES = new Set(["image/jpeg", "image/png", "
 export const PAYMENT_METHOD_OPTIONS = [
   { value: "CASH", label: "Dinheiro em espécie" },
   { value: "TRANSFER", label: "Transferência bancária" },
+  { value: "MBWAY", label: "MB Way" },
   /** Pago ao concluir a adesão, na página segura da Revolut (confirmado sozinho, sem comprovativo). */
   { value: "REVOLUT", label: "Pagamento online (Revolut)" },
 ] as const;

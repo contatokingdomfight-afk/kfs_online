@@ -1,4 +1,5 @@
 import { KINGDOM_WEEK_MONTHLY_PRICE_EUR } from "@/lib/drop-in-sessions-pricing";
+import type { SchoolPaymentInfo } from "@/lib/school-payment-rules";
 
 /**
  * Normaliza um telefone (com ou sem indicativo) para o formato usado pelo wa.me
@@ -80,9 +81,16 @@ export function buildFeesOverdueMessage(studentFirstName: string, whatLabel: str
 /** Encomenda da loja por pagar: dados para transferência e referência. */
 export function buildOrderPaymentMessage(
   name: string,
-  p: { reference: string; total: string; items: string; iban: string; recipient: string; revolut: string; descriptor?: string }
+  p: { reference: string; total: string; items: string; payment: SchoolPaymentInfo; descriptor?: string }
 ): string {
   const first = name.trim().split(" ")[0] || "tudo bem";
+  const { transfer, mbwayPhone, cash } = p.payment;
+  const methods = [
+    ...(transfer?.iban ? [`• Transferência IBAN ${transfer.iban}${transfer.holder ? ` (${transfer.holder})` : ""}`] : []),
+    ...(transfer?.revolutTag ? [`• Revolut ${transfer.revolutTag}`] : []),
+    ...(mbwayPhone ? [`• MB Way ${mbwayPhone}`] : []),
+    ...(cash ? ["• Numerário na secretaria"] : []),
+  ];
   return [
     `Olá ${first}! 👋`,
     "",
@@ -90,13 +98,9 @@ export function buildOrderPaymentMessage(
     p.items,
     `Total: ${p.total}`,
     "",
-    "Para confirmá-la, podes pagar por:",
-    `• Transferência IBAN ${p.iban} (${p.recipient})`,
-    `• Revolut ${p.revolut}`,
-    `• Numerário na secretaria`,
+    ...(methods.length ? ["Para confirmá-la, podes pagar por:", ...methods] : ["Para confirmá-la, fala connosco sobre o pagamento."]),
     "",
-    `Usa «${p.descriptor?.trim() || p.reference}» no descritivo.`,
-    "",
+    ...(transfer || mbwayPhone ? [`Usa «${p.descriptor?.trim() || p.reference}» no descritivo.`, ""] : []),
     "Obrigado!",
     "Qualquer dúvida, estamos à disposição. 👊",
   ].join("\n");

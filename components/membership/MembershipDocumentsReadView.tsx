@@ -5,6 +5,7 @@ import type { EnrollmentFormRow } from "@/lib/enrollment-form";
 import { SchoolSignatureBlock } from "@/components/documents/SchoolSignatureBlock";
 import { MembershipDocumentSection } from "@/components/membership/MembershipDocumentSection";
 import type { SchoolSignature } from "@/lib/school-signatures";
+import type { EnrollmentSchoolDetails } from "@/lib/school-payment-rules";
 import Link from "next/link";
 
 type AgreementInfo = {
@@ -54,6 +55,7 @@ type Props = {
   prefill: Prefill | null;
   hasPlan: boolean;
   schoolSignatures: SchoolSignature[];
+  school: EnrollmentSchoolDetails;
   /** Rotas de impressão dedicadas — por omissão, dashboard do aluno. */
   printComprovativoHref?: string;
   printContratoHref?: string;
@@ -94,7 +96,8 @@ export function MembershipDocumentsReadView({
   prefill,
   hasPlan,
   schoolSignatures,
-  printComprovativoHref = "/dashboard/documentos-adesao/imprimir/comprovativo",
+  school,
+  printComprovativoHref ="/dashboard/documentos-adesao/imprimir/comprovativo",
   printContratoHref = "/dashboard/documentos-adesao/imprimir/contrato",
   printTermoHref,
   showIncompleteBanner = true,
@@ -143,6 +146,7 @@ export function MembershipDocumentsReadView({
       >
         {enrollmentForm && prefill ? (
           <EnrollmentFormSummary
+            school={school}
             form={enrollmentForm}
             fullName={prefill.fullName}
             email={prefill.email}

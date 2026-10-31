@@ -3,6 +3,7 @@ import { getCurrentDbUserUncached } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { loadOrders, orderReference } from "@/lib/retail/orders";
 import { createMerchantOrder, revolutMerchantConfigured } from "@/lib/revolut/merchant";
+import { loadSchoolPaymentInfo, orderPaymentSchoolId } from "@/lib/school-payment-methods";
 
 /**
  * Pagamento online de uma encomenda da loja (checkout hospedado da Revolut).
@@ -28,6 +29,9 @@ export async function POST(request: NextRequest) {
   if (!mine) return NextResponse.json({ error: "Encomenda não encontrada." }, { status: 404 });
   if (order.status !== "PENDING_PAYMENT") return NextResponse.json({ error: "Esta encomenda já não está por pagar." }, { status: 400 });
   if (order.totalAmount <= 0) return NextResponse.json({ error: "Valor inválido." }, { status: 400 });
+  // A conta Revolut é a da Sede: uma encomenda de outra escola não pode ser paga por aqui.
+  const payment = await loadSchoolPaymentInfo(orderPaymentSchoolId(order.schoolId));
+  if (!payment.onlineRevolut) return NextResponse.json({ error: "Esta escola ainda não tem pagamento online." }, { status: 400 });
 
   try {
     const base = order.studentId ? "/dashboard/loja" : "/loja";

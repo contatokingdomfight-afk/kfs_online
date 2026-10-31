@@ -5,7 +5,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { FINANCE_PAYMENT_METHODS } from "@/lib/finance-payment-method";
-import { SCHOOL_PAYMENT_DETAILS } from "@/lib/enrollment-form";
+import { NO_SCHOOL_PAYMENT_INFO, loadSchoolsPaymentInfo, orderPaymentSchoolId, type SchoolPaymentInfo } from "@/lib/school-payment-methods";
 import { buildOrderPaymentMessage, buildOrderReadyMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import {
   lineLabel,
@@ -118,7 +118,7 @@ function OrderChips({ o, proofHref }: { o: RetailOrder; proofHref?: string }) {
   return chips.length ? <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{chips}</div> : null;
 }
 
-function OrderActions({ o, c }: { o: RetailOrder; c: Customer }) {
+function OrderActions({ o, c, payment }: { o: RetailOrder; c: Customer; payment: SchoolPaymentInfo }) {
   const items = o.lines.map((l) => `${l.quantity}× ${l.productName} ${lineLabel(l)}`).join(", ");
   const waPay = c.phone
     ? buildWhatsAppUrl(
@@ -128,9 +128,7 @@ function OrderActions({ o, c }: { o: RetailOrder; c: Customer }) {
           descriptor: [...new Set(o.lines.map((l) => l.productName))].join(", "),
           total: euro(o.totalAmount),
           items,
-          iban: SCHOOL_PAYMENT_DETAILS.iban,
-          recipient: SCHOOL_PAYMENT_DETAILS.recipientName,
-          revolut: SCHOOL_PAYMENT_DETAILS.revolutTag,
+          payment,
         })
       )
     : null;
@@ -204,6 +202,7 @@ export default async function AdminEncomendasPage({ searchParams }: { searchPara
   const filter = FILTERS.some((x) => x.key === f) ? (f as string) : "";
 
   const [orders, preorderProducts, promotions] = await Promise.all([loadOrders(supabase, { limit: 500 }), loadPreorderProducts(supabase), loadActivePromotions(supabase)]);
+  const orderPayment = await loadSchoolsPaymentInfo(orders.map((o) => orderPaymentSchoolId(o.schoolId)));
   const byStatus = (s: OrderStatus) => orders.filter((o) => o.status === s);
   const sum = (list: RetailOrder[]) => list.reduce((t, o) => t + o.totalAmount, 0);
   const paid = byStatus("PAID");
@@ -442,7 +441,7 @@ export default async function AdminEncomendasPage({ searchParams }: { searchPara
                 </div>
                 <div className="enc-right">
                   <div style={{ fontSize: 20, fontWeight: 800 }}>{euro(o.totalAmount)}</div>
-                  <OrderActions o={o} c={c} />
+                  <OrderActions o={o} c={c} payment={orderPayment.get(orderPaymentSchoolId(o.schoolId)) ?? NO_SCHOOL_PAYMENT_INFO} />
                 </div>
               </li>
             );
