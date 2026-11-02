@@ -1,7 +1,6 @@
 "use server";
 
 import { schoolAccessErrorForStudent } from "@/lib/school-scope";
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
@@ -10,6 +9,7 @@ import { resolveAutoPayPayer } from "@/lib/autopay/service";
 import { endLoyalty, loadActiveLoyalty, startLoyalty } from "@/lib/loyalty/service";
 import { refreshFamilyTitularPendingTuition } from "@/lib/family-tuition";
 import { createTuitionCheckout } from "@/lib/tuition-checkout/service";
+import { getPublicOrigin } from "@/lib/site-public-url";
 
 async function requireFinanceAdmin() {
   const u = await getCurrentDbUser();
@@ -66,8 +66,7 @@ export async function adminCreatePaymentLinkAction(formData: FormData): Promise<
   const { data: st } = await supabase.from("Student").select("userId").eq("id", payingId).maybeSingle();
   const userId = (st as { userId?: string } | null)?.userId;
   const { data: user } = userId ? await supabase.from("User").select("email").eq("id", userId).maybeSingle() : { data: null };
-  const h = await headers();
-  const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host") ?? "www.kingdomfight.com"}`;
+  const origin = getPublicOrigin();
   try {
     const res = await createTuitionCheckout(supabase, {
       payerStudentId: payingId,

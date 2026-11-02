@@ -15,6 +15,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { resolveAutoPayPayer } from "@/lib/autopay/service";
 import { createTuitionCheckout } from "@/lib/tuition-checkout/service";
+import { getPublicOrigin } from "@/lib/site-public-url";
 
 export type SignAdesaoDocumentsResult = { error?: string; planId?: string | null };
 
@@ -193,8 +194,7 @@ async function adesaoRevolutCheckoutUrl(studentId: string): Promise<string | nul
     if ((form as { paymentMethod?: string | null } | null)?.paymentMethod !== "REVOLUT") return null;
     const payer = await resolveAutoPayPayer(admin, studentId);
     const dbUser = await getCurrentDbUser();
-    const h = await headers();
-    const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host") ?? "www.kingdomfight.com"}`;
+    const origin = getPublicOrigin();
     const res = await createTuitionCheckout(admin, {
       payerStudentId: payer.isFamilyMember ? studentId : payer.payerStudentId,
       createdByUserId: dbUser?.id ?? null,
