@@ -105,7 +105,14 @@ async function openCheckout(
   });
   if (error) return { error: "Não foi possível preparar o pagamento." };
 
+  // Nome do aluno pagador, para a Revolut mostrar «Nome» em vez da referência interna.
+  const { data: payerRow } = await supabase.from("Student").select("userId").eq("id", input.payerStudentId).maybeSingle();
+  const payerUserId = (payerRow as { userId?: string | null } | null)?.userId;
+  const { data: payerUser } = payerUserId ? await supabase.from("User").select("name").eq("id", payerUserId).maybeSingle() : { data: null };
+  const fullName = (payerUser as { name?: string | null } | null)?.name ?? null;
+
   const order = await createMerchantOrder(account, {
+    fullName,
     amountEur: amount,
     description: `${input.description} · ${await merchantBrandName(supabase, schoolId)}`,
     reference: `${CHECKOUT_REFERENCE_PREFIX}${id}`,

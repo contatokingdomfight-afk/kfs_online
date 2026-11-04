@@ -36,7 +36,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const base = order.studentId ? "/dashboard/loja" : "/loja";
+    const { data: payer } = await admin.from("User").select("name").eq("id", user.id).maybeSingle();
     const mo = await createMerchantOrder(account, {
+      fullName: (payer as { name?: string | null } | null)?.name ?? null,
       amountEur: order.totalAmount,
       description: `Encomenda ${orderReference(order.number)} · ${await merchantBrandName(admin, schoolId)}`,
       reference: order.id,

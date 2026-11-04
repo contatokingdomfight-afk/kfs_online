@@ -80,7 +80,8 @@ async function call<T>(account: MerchantAccount, path: string, init?: RequestIni
 }
 
 /** Cria uma ordem e devolve o link de checkout hospedado pela Revolut. `reference` = id da nossa encomenda. */
-export function createMerchantOrder(account: MerchantAccount, input: { amountEur: number; description: string; reference: string; redirectUrl: string; email?: string | null }) {
+export function createMerchantOrder(account: MerchantAccount, input: { amountEur: number; description: string; reference: string; redirectUrl: string; email?: string | null; fullName?: string | null }) {
+  const customer = { ...(input.email ? { email: input.email } : {}), ...(input.fullName ? { full_name: input.fullName } : {}) };
   return call<MerchantOrder>(account, "/api/orders", {
     method: "POST",
     body: JSON.stringify({
@@ -89,7 +90,7 @@ export function createMerchantOrder(account: MerchantAccount, input: { amountEur
       description: input.description,
       redirect_url: input.redirectUrl,
       merchant_order_data: { reference: input.reference },
-      ...(input.email ? { customer: { email: input.email } } : {}),
+      ...(Object.keys(customer).length ? { customer } : {}),
     }),
   });
 }
