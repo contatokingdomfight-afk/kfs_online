@@ -43,7 +43,7 @@ export type StudentModalityGraduation = {
    * Nivelamento com grau máximo escolhido pelo coach: conteúdo de todos os graus a avaliar (do próximo até ao máximo)
    * e a revisão dos graus anteriores. O nome do grau máximo não é exposto ao aluno, só o conteúdo.
    */
-  placementTarget: { levels: CumulativeGradeItems[]; reviewGrades: CumulativeGradeItems[] } | null;
+  placementTarget: { maxGrade: GraduationGradeDraft; levels: CumulativeGradeItems[]; reviewGrades: CumulativeGradeItems[] } | null;
   awaitingResult: { title: string; scheduledAt: string; gradeName: string; gradeColors: string[]; revealAt: string | null; isPlacement: boolean } | null;
   /** Exames já decididos, do mais recente para o mais antigo. */
   examHistory: StudentExamHistoryEntry[];
@@ -270,6 +270,7 @@ export async function loadStudentGraduations(
         if (maxIndex < startIndex) return null;
         const toLevel = (g: GraduationGradeDraft): CumulativeGradeItems => ({ gradeId: g.id, gradeName: g.name, colors: g.colors, items: g.items });
         return {
+          maxGrade: template.grades[maxIndex],
           levels: template.grades.slice(startIndex, maxIndex + 1).map(toLevel),
           reviewGrades: template.grades.slice(0, startIndex).map(toLevel).reverse(),
         };

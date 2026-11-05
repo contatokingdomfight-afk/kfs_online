@@ -65,6 +65,37 @@ function Stat({ value, label, hint }: { value: string; label: string; hint?: str
 
 function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
   const { progress } = graduation;
+  // Nivelamento: mostra o grau que o coach indicou como possível (os requisitos do próximo grau não se aplicam).
+  if (graduation.placementTarget) {
+    const max = graduation.placementTarget.maxGrade;
+    return (
+      <section className={card} aria-labelledby="proximo-grau">
+        <p className={eyebrow} id="proximo-grau">
+          O teu exame — nivelamento
+        </p>
+        <p className="mb-0 mt-2 text-sm text-text-secondary">O coach acredita que já podes estar até este grau:</p>
+        <div className="mt-3 flex items-center gap-4">
+          <BeltSwatch colors={max.colors} width={88} height={22} />
+          <div className="min-w-0">
+            <p className="m-0 break-words text-xl font-bold text-text-primary [overflow-wrap:anywhere]">{max.name}</p>
+            {(max.subtitle || max.motto) && (
+              <p className="m-0 mt-0.5 text-sm text-text-secondary">{[max.subtitle, max.motto && `“${max.motto}”`].filter(Boolean).join(" · ")}</p>
+            )}
+          </div>
+        </div>
+        {max.objective && <p className="mb-0 mt-3 text-sm leading-relaxed text-text-primary">{max.objective}</p>}
+        <div
+          className="mt-4 rounded-xl border p-3"
+          style={{ borderColor: "color-mix(in srgb, var(--primary) 40%, transparent)", background: "color-mix(in srgb, var(--primary) 8%, transparent)" }}
+        >
+          <p className="m-0 text-sm font-bold text-text-primary">Vais ser avaliado para confirmar o teu grau.</p>
+          <p className="m-0 mt-0.5 text-sm text-text-secondary">
+            Se ainda não estiveres pronto para {max.name}, ficas com o último grau em que fores aprovado. A decisão final é sempre do coach.
+          </p>
+        </div>
+      </section>
+    );
+  }
   // Salto de grau marcado: mostra o grau-alvo do exame (os requisitos do próximo grau não se aplicam).
   const skipTarget = graduation.examTarget?.grade ?? null;
   const next = skipTarget ?? progress.next!;
