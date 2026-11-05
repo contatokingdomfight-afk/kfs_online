@@ -69,6 +69,7 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
   if (graduation.placementTarget) {
     const max = graduation.placementTarget.maxGrade;
     return (
+      <>
       <section className={card} aria-labelledby="proximo-grau">
         <p className={eyebrow} id="proximo-grau">
           O teu exame — nivelamento
@@ -94,6 +95,8 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
           </p>
         </div>
       </section>
+      <ExamContent graduation={graduation} />
+      </>
     );
   }
   // Salto de grau marcado: mostra o grau-alvo do exame (os requisitos do próximo grau não se aplicam).
