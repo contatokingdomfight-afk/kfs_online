@@ -39,6 +39,11 @@ export type StudentModalityGraduation = {
   /** Exame já feito com o resultado ainda escondido (até revealAt; null = sem data definida). */
   /** Salto de grau: exame convocado para um grau acima do próximo (conteúdo a mostrar ao aluno). */
   examTarget: { grade: GraduationGradeDraft; newItems: GraduationItemDraft[]; reviewGrades: CumulativeGradeItems[] } | null;
+  /**
+   * Nivelamento com grau máximo escolhido pelo coach: conteúdo de todos os graus a avaliar (do próximo até ao máximo)
+   * e a revisão dos graus anteriores. O nome do grau máximo não é exposto ao aluno, só o conteúdo.
+   */
+  placementTarget: { levels: CumulativeGradeItems[]; reviewGrades: CumulativeGradeItems[] } | null;
   awaitingResult: { title: string; scheduledAt: string; gradeName: string; gradeColors: string[]; revealAt: string | null; isPlacement: boolean } | null;
   /** Exames já decididos, do mais recente para o mais antigo. */
   examHistory: StudentExamHistoryEntry[];
@@ -142,7 +147,7 @@ export async function loadStudentGraduations(
     supabase.from("StudentGraduationRequirement").select("requirementId").eq("studentId", studentId),
     supabase
       .from("GraduationExamCandidate")
-      .select("id, eventId, gradeId, status, decidedAt, slotStartsAt, bookedByStudent, mode, placementAwardedGradeId, revealedAt")
+      .select("id, eventId, gradeId, status, decidedAt, slotStartsAt, bookedByStudent, mode, placementAwardedGradeId, placementMaxGradeId, revealedAt")
       .eq("studentId", studentId),
     // Dias de exame com marcação pelo aluno ainda por acontecer (filtrados abaixo: só com horários ainda marcáveis).
     supabase
@@ -255,6 +260,18 @@ export async function loadStudentGraduations(
             .slice(0, targetIndex)
             .map((g) => ({ gradeId: g.id, gradeName: g.name, colors: g.colors, items: g.items }))
             .reverse(),
+        };
+      })(),
+      placementTarget: (() => {
+        // Nivelamento: o aluno vê o conteúdo de todos os graus que podem ser avaliados, até ao máximo escolhido pelo coach.
+        if (!convocationRow || convocationRow.mode !== "PLACEMENT" || !convocationRow.placementMaxGradeId || !nextGrade) return null;
+        const maxIndex = template.grades.findIndex((g) => g.id === convocationRow.placementMaxGradeId);
+        const startIndex = currentGradeIndex + 1;
+        if (maxIndex < startIndex) return null;
+        const toLevel = (g: GraduationGradeDraft): CumulativeGradeItems => ({ gradeId: g.id, gradeName: g.name, colors: g.colors, items: g.items });
+        return {
+          levels: template.grades.slice(startIndex, maxIndex + 1).map(toLevel),
+          reviewGrades: template.grades.slice(0, startIndex).map(toLevel).reverse(),
         };
       })(),
       awaitingResult: awaitingRow && awaitingRow.event

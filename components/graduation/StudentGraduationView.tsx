@@ -259,7 +259,60 @@ function ProgressBar({ value, label, thin }: { value: number; label: string; thi
   );
 }
 
+function PlacementContent({ target }: { target: NonNullable<StudentModalityGraduation["placementTarget"]> }) {
+  const all = [...target.levels, ...target.reviewGrades];
+  const hasCritical = all.some((g) => g.items.some((i) => i.isCritical));
+  const renderGrade = (g: (typeof all)[number], open: boolean, subtitle: string) => (
+    <details key={g.gradeId} className="group rounded-xl border border-border bg-bg" open={open}>
+      <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+        <BeltSwatch colors={g.colors} width={36} height={10} />
+        <span className="min-w-0 flex-1">
+          <span className="block break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">{g.gradeName}</span>
+          <span className="block text-xs text-text-secondary">{subtitle}</span>
+        </span>
+        <span className="text-xs text-text-secondary">{g.items.length} itens</span>
+        <ChevronRight size={16} aria-hidden className="shrink-0 text-text-secondary transition-transform group-open:rotate-90" />
+      </summary>
+      <div className="flex flex-col gap-3 border-t border-border px-3 pb-3 pt-3">
+        {g.items.length === 0 ? (
+          <p className="m-0 text-sm text-text-secondary">A academia ainda não definiu os conteúdos deste grau.</p>
+        ) : (
+          groupItemsByAxis(g.items).map((ag) => <AxisGroup key={ag.axis} axis={ag.axis} items={ag.items} compact />)
+        )}
+      </div>
+    </details>
+  );
+
+  return (
+    <section className={card} aria-labelledby="conteudo-exame">
+      <p className={eyebrow} id="conteudo-exame">
+        O que pode ser avaliado
+      </p>
+      <p className="mb-0 mt-2 text-sm leading-relaxed text-text-secondary">
+        O coach avalia-te grau a grau, do mais baixo para o mais alto, e <strong className="text-text-primary">pára no primeiro grau em que ainda não estás
+        pronto</strong>. Ficas com o último grau em que fores aprovado. A decisão final é sempre do coach.
+        {hasCritical && (
+          <>
+            {" "}
+            Os itens com <Star size={12} aria-label="estrela" className="inline -mt-0.5 fill-warning text-warning" /> são fundamentais e
+            precisam de ser dominados individualmente.
+          </>
+        )}
+      </p>
+      <p className="mb-0 mt-4 text-sm font-semibold text-text-primary">Graus a avaliar</p>
+      <div className="mt-2 flex flex-col gap-2">{target.levels.map((g, i) => renderGrade(g, i === 0, `${i + 1}.º grau a avaliar`))}</div>
+      {target.reviewGrades.length > 0 && (
+        <>
+          <p className="mb-0 mt-5 text-sm font-semibold text-text-primary">Revisão dos graus anteriores</p>
+          <div className="mt-2 flex flex-col gap-2">{target.reviewGrades.map((g) => renderGrade(g, false, "Já tens este grau"))}</div>
+        </>
+      )}
+    </section>
+  );
+}
+
 function ExamContent({ graduation }: { graduation: StudentModalityGraduation }) {
+  if (graduation.placementTarget) return <PlacementContent target={graduation.placementTarget} />;
   // Salto de grau: o conteúdo é o do grau-alvo do exame marcado, não o do próximo grau.
   const target = graduation.examTarget;
   const next = target?.grade ?? graduation.progress.next!;
@@ -442,7 +495,11 @@ function ConvocationBanner({
           </span>
         )}
       </p>
-      <p className="m-0 mt-2 text-sm text-text-primary">Revê abaixo tudo o que vai ser avaliado. Boa preparação!</p>
+      <p className="m-0 mt-2 text-sm text-text-primary">
+        {convocation.isPlacement
+          ? "Vais ser avaliado para definir o teu grau de entrada. Revê abaixo o que pode ser avaliado. Boa preparação!"
+          : "Revê abaixo tudo o que vai ser avaliado. Boa preparação!"}
+      </p>
       {convocation.selfBooking && (
         <Link
           href={`/dashboard/graduacao/agendar?m=${encodeURIComponent(modalityCode)}`}
