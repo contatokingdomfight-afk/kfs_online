@@ -48,6 +48,10 @@ export function TargetGradeControl({
 
   const save = () => {
     setError(null);
+    if (target === PLACEMENT && !maxGrade) {
+      setError("Escolhe até que grau avaliar.");
+      return;
+    }
     start(async () => {
       const r =
         target === PLACEMENT ? await setCandidatePlacement(candidateId, maxGrade || null, note) : await setCandidateTargetGrade(candidateId, target, reason);
@@ -126,10 +130,12 @@ export function TargetGradeControl({
             atribuir. Os requisitos (presenças, tempo, cursos) não se aplicam.
           </p>
           <label htmlFor={`max-${candidateId}`} style={{ display: "block", margin: "8px 0 6px", fontSize: "var(--text-xs)", fontWeight: 600 }}>
-            Até que grau avaliar, no máximo <span style={{ fontWeight: 400 }}>(opcional)</span>
+            Até que grau avaliar, no máximo <span style={{ fontWeight: 400 }}>(obrigatório; o aluno vê o conteúdo até este grau)</span>
           </label>
           <select id={`max-${candidateId}`} className="input" value={maxGrade} onChange={(e) => setMaxGrade(e.target.value)}>
-            <option value="">Sem limite</option>
+            <option value="" disabled>
+              Escolhe o grau
+            </option>
             {options.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.name}

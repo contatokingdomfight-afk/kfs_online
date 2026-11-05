@@ -584,8 +584,9 @@ export async function setCandidatePlacement(candidateId: string, maxGradeId: str
   const startIndex = (await currentGradeIndex(supabase, c.studentId, event.modalityCode, ids)) + 1;
   const start = template.grades[startIndex];
   if (!start) return { error: "O aluno já tem o grau máximo." };
-  const maxIndex = maxGradeId ? ids.indexOf(maxGradeId) : -1;
-  if (maxGradeId && maxIndex < startIndex) return { error: "O grau máximo tem de ser igual ou acima do primeiro grau avaliado." };
+  if (!maxGradeId) return { error: "Escolhe até que grau avaliar." };
+  const maxIndex = ids.indexOf(maxGradeId);
+  if (maxIndex < startIndex) return { error: "O grau máximo tem de ser igual ou acima do primeiro grau avaliado." };
 
   const { error } = await supabase
     .from("GraduationExamCandidate")
