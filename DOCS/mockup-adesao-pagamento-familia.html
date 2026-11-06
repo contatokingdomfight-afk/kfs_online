@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Adesão, pagamento e família</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--card:#18181b;--text:#fff;--muted:#a1a1aa;--primary:#c1121f;--border:#27272a;--ok:#22c55e;--warn:#f59e0b}
+  *{box-sizing:border-box}
+  body{margin:0;background:#050505;color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:24px}
+  h1{font-size:22px;margin:0 0 4px} .lead{color:var(--muted);margin:0 0 28px;max-width:900px}
+  section.screen{margin-bottom:56px}
+  section.screen>h2{font-size:17px;margin:0 0 4px} section.screen>p{color:var(--muted);margin:0 0 16px;max-width:900px}
+  .pair{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+  .frame{border:1px solid var(--border);border-radius:14px;background:var(--bg);overflow:hidden}
+  .frame .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 14px;border-bottom:1px solid var(--border);background:var(--bg2)}
+  .desk{width:880px;max-width:100%} .mob{width:375px;max-width:100%}
+  .pad{padding:20px} .mob .pad{padding:14px}
+  .title{font-size:20px;font-weight:700;margin:2px 0 6px} .sub{color:var(--muted);margin:0 0 16px}
+  .steps{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+  .steps span{flex:1;min-width:0;font-size:11px;text-align:center;color:var(--muted);padding-top:6px;border-top:3px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .steps span.done{border-color:var(--ok);color:var(--text)} .steps span.on{border-color:var(--primary);color:var(--text);font-weight:600}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+  .card h3{margin:0 0 10px;font-size:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px} .mob .grid2{grid-template-columns:1fr}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  .field div{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+  .btn{display:inline-block;border:1px solid var(--border);background:var(--bg2);color:var(--text);border-radius:8px;padding:8px 14px;font-size:13px}
+  .btn.p{background:var(--primary);border-color:var(--primary);font-weight:600}
+  .btn.full{display:block;text-align:center;width:100%}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-top:1px dashed var(--border)}
+  .row:first-of-type{border-top:0} .row.tot{border-top:1px solid var(--border);font-weight:700;font-size:15px}
+  .info{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.35);color:#fde68a;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+  .okbox{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.35);color:#bbf7d0;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+  .meth{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .meth span{flex:1;min-width:90px;text-align:center;border:1px solid var(--border);border-radius:8px;padding:9px 6px;font-size:13px;color:var(--muted)}
+  .meth span.on{border-color:var(--primary);color:var(--text);background:rgba(193,18,31,.12)}
+  code{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:3px 7px;font-size:13px}
+  .chk{width:16px;height:16px;border:1.5px solid var(--muted);border-radius:4px;display:inline-block;vertical-align:middle;flex:none}
+  .chk.on{background:var(--ok);border-color:var(--ok)}
+  .st{font-size:12px;border-radius:6px;padding:2px 8px;white-space:nowrap}
+  .st.ok{background:rgba(34,197,94,.15);color:var(--ok)} .st.wait{background:rgba(245,158,11,.15);color:var(--warn)}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:8px 10px;border-top:1px solid var(--border)} th{color:var(--muted);font-weight:500;font-size:12px;border-top:0}
+  td.n,th.n{text-align:right;white-space:nowrap}
+  s{color:var(--muted)} .new{color:var(--ok);font-weight:700} .zero{color:var(--muted);font-weight:700}
+  .muted{color:var(--muted)} .sm{font-size:12px}
+  .mcard{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px}
+  .note{background:#1c1917;border:1px solid #44403c;border-radius:10px;padding:12px 14px;color:#e7e5e4;max-width:880px;margin-top:14px;font-size:13px}
+  .note b{color:#fff} .note ul{margin:6px 0 0;padding-left:18px}
+  .flow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;max-width:1300px}
+  .flow div{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;flex:1;min-width:150px}
+  .flow div b{display:block;margin-bottom:2px} .flow div.hl{border-color:var(--primary)}
+</style>
+</head>
+<body>
+<h1>Adesão, pagamento e grupo familiar</h1>
+<p class="lead">Proposta: o aluno escolhe o plano (os termos precisam dele), mas só vê os dados de pagamento da escola depois de ter tudo assinado. Os grupos familiares são criados pelo admin quando todos tiverem a adesão completa. Nessa altura, a mensalidade dos membros passa a 0 € e a do titular sobe.</p>
+
+<div class="flow">
+  <div><b>1. Registo</b><span class="muted">conta + email</span></div>
+  <div><b>2. Perfil</b><span class="muted">onboarding</span></div>
+  <div><b>3. Plano</b><span class="muted">escolhe; ainda sem dados de pagamento</span></div>
+  <div><b>4. Ficha</b><span class="muted">dados pessoais e saúde</span></div>
+  <div><b>5. Termos</b><span class="muted">adesão + compromisso</span></div>
+  <div class="hl"><b>6. Pagamento</b><span class="muted">NOVO: só aqui aparecem o IBAN, o MB Way e a Revolut</span></div>
+</div>
+
+<!-- ECRÃ 1 -->
+<section class="screen">
+  <h2>Ecrã 1: Ficha de adesão sem a parte do pagamento</h2>
+  <p>O passo 1 da adesão deixa de pedir a forma de pagamento e de mostrar o IBAN e o MB Way. Fica só a ficha.</p>
+  <div class="pair">
+    <div class="frame desk"><div class="lbl">Desktop · /adesao?passo=1</div><div class="pad">
+      <div class="steps"><span class="done">Perfil</span><span class="done">Plano</span><span class="on">Ficha</span><span>Termos</span><span>Pagamento</span></div>
+      <div class="title">Ficha de inscrição</div>
+      <p class="sub">Plano escolhido: <b>Adultos · 2x/semana — 55 €/mês</b> <span class="muted">· <u>alterar</u></span></p>
+      <div class="card"><h3>Dados pessoais</h3>
+        <div class="grid2">
+          <div class="field"><label>Nome completo</label><div>Ana Silva</div></div>
+          <div class="field"><label>Data de nascimento</label><div>12/03/1988</div></div>
+          <div class="field"><label>NIF</label><div>2•• ••• •••</div></div>
+          <div class="field"><label>Telemóvel</label><div>9•• ••• •••</div></div>
+        </div>
+      </div>
+      <div class="card"><h3>Saúde e contacto de emergência</h3>
+        <div class="grid2">
+          <div class="field"><label>Problemas de saúde / lesões</label><div class="muted">Nenhum</div></div>
+          <div class="field"><label>Contacto de emergência</label><div>João Silva · 9•• ••• •••</div></div>
+        </div>
+      </div>
+      <div style="text-align:right"><span class="btn p">Continuar para os termos →</span></div>
+    </div></div>
+
+    <div class="frame mob"><div class="lbl">Telemóvel</div><div class="pad">
+      <div class="steps"><span class="done">Perfil</span><span class="done">Plano</span><span class="on">Ficha</span><span>Termos</span><span>Pagar</span></div>
+      <div class="title">Ficha de inscrição</div>
+      <p class="sub sm">Plano: <b>Adultos · 2x/semana — 55 €/mês</b> · <u>alterar</u></p>
+      <div class="card"><h3>Dados pessoais</h3>
+        <div class="grid2">
+          <div class="field"><label>Nome completo</label><div>Ana Silva</div></div>
+          <div class="field"><label>Data de nascimento</label><div>12/03/1988</div></div>
+          <div class="field"><label>NIF</label><div>2•• ••• •••</div></div>
+        </div>
+      </div>
+      <div class="card"><h3>Saúde e emergência</h3><div class="field"><label>Lesões</label><div class="muted">Nenhum</div></div></div>
+      <span class="btn p full">Continuar para os termos →</span>
+    </div></div>
+  </div>
+</section>
+
+<!-- ECRÃ 2 -->
+<section class="screen">
+  <h2>Ecrã 2: Adesão concluída, agora o pagamento</h2>
+  <p>Aparece logo depois da última assinatura. Mostra o que há a pagar e os dados da escola. Inclui uma opção para quem vai entrar num grupo familiar: o pagamento fica em espera e a secretaria recebe um aviso.</p>
+  <div class="pair">
+    <div class="frame desk"><div class="lbl">Desktop · /adesao/pagamento</div><div class="pad">
+      <div class="steps"><span class="done">Perfil</span><span class="done">Plano</span><span class="done">Ficha</span><span class="done">Termos</span><span class="on">Pagamento</span></div>
+      <div class="okbox">✅ Adesão completa. Não falta nenhum documento.</div>
+      <div class="title">Pagamento da inscrição</div>
+      <div class="grid2">
+        <div class="card"><h3>O que pagas agora</h3>
+          <div class="row"><span>Inscrição</span><b>25,00 €</b></div>
+          <div class="row"><span>Seguro anual</span><b>20,00 €</b></div>
+          <div class="row"><span>1.ª mensalidade · novembro</span><b>55,00 €</b></div>
+          <div class="row tot"><span>Total</span><span>100,00 €</span></div>
+        </div>
+        <div class="card"><h3>Como queres pagar?</h3>
+          <div class="meth"><span class="on">Transferência</span><span>MB Way</span><span>Online (Revolut)</span></div>
+          <div class="row"><span class="muted">IBAN</span><span><code>PT50 0000 0000 0000 0000 0000 0</code> <span class="btn" style="padding:3px 8px">Copiar</span></span></div>
+          <div class="row"><span class="muted">Titular</span><span>Kingdom Fight School</span></div>
+          <div class="row"><span class="muted">Descritivo</span><code>KFS ANA SILVA</code></div>
+          <div style="margin-top:10px"><span class="btn p">Enviar comprovativo</span> <span class="btn">Pago na secretaria</span></div>
+        </div>
+      </div>
+      <div class="card" style="display:flex;gap:10px;align-items:flex-start">
+        <span class="chk"></span>
+        <div><b>Faço parte de um grupo familiar</b><div class="muted sm">A mensalidade passa a ser paga pelo titular da família. Avisamos a secretaria e a mensalidade fica em espera até o grupo estar criado. A inscrição e o seguro continuam a ser teus.</div></div>
+      </div>
+    </div></div>
+
+    <div class="frame mob"><div class="lbl">Telemóvel</div><div class="pad">
+      <div class="steps"><span class="done">Perfil</span><span class="done">Plano</span><span class="done">Ficha</span><span class="done">Termos</span><span class="on">Pagar</span></div>
+      <div class="okbox">✅ Adesão completa.</div>
+      <div class="card"><h3>O que pagas agora</h3>
+        <div class="row"><span>Inscrição</span><b>25,00 €</b></div>
+        <div class="row"><span>Seguro anual</span><b>20,00 €</b></div>
+        <div class="row"><span>Mensalidade nov.</span><b>55,00 €</b></div>
+        <div class="row tot"><span>Total</span><span>100,00 €</span></div>
+      </div>
+      <div class="meth"><span class="on">Transf.</span><span>MB Way</span><span>Online</span></div>
+      <div class="card">
+        <div class="muted sm">IBAN</div><code style="display:block;margin:4px 0 8px">PT50 0000 0000 0000 0000 0000 0</code>
+        <span class="btn" style="padding:4px 10px">Copiar IBAN</span>
+      </div>
+      <span class="btn p full" style="margin-bottom:8px">Enviar comprovativo</span>
+      <div class="card" style="display:flex;gap:10px"><span class="chk"></span><div><b>Faço parte de um grupo familiar</b><div class="muted sm">A mensalidade fica em espera até a secretaria criar o grupo.</div></div></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ECRÃ 3 -->
+<section class="screen">
+  <h2>Ecrã 3: Admin cria o grupo familiar</h2>
+  <p>O admin escolhe o titular e os membros. Só aparecem alunos com a adesão completa, e quem marcou «grupo familiar» aparece primeiro. O plano de referência de cada um vem preenchido com o plano que escolheu. Antes de confirmar, o admin vê como ficam as mensalidades.</p>
+  <div class="pair">
+    <div class="frame desk"><div class="lbl">Desktop · /admin/familias/novo</div><div class="pad">
+      <div class="title">Novo grupo familiar</div>
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="field"><label>Nome do grupo</label><div>Família Silva</div></div>
+        <div class="field"><label>Desconto do grupo</label><div>10 %</div></div>
+      </div>
+      <div class="card"><h3>Membros <span class="muted sm" style="font-weight:400">· pedido de família: Pedro e Maria</span></h3>
+        <table>
+          <tr><th>Aluno</th><th>Papel</th><th>Adesão</th><th>Plano de referência</th><th class="n">Mensalidade agora</th><th class="n">Depois</th></tr>
+          <tr><td>Ana Silva</td><td><b>Titular</b></td><td><span class="st ok">Completa</span></td><td>Adultos 2x · 55 €</td><td class="n"><s>55,00 €</s></td><td class="n new">130,50 €</td></tr>
+          <tr><td>Pedro Silva</td><td>Membro</td><td><span class="st ok">Completa</span></td><td>Kids · 45 €</td><td class="n"><s>45,00 €</s></td><td class="n zero">0,00 €</td></tr>
+          <tr><td>Maria Silva</td><td>Membro</td><td><span class="st ok">Completa</span></td><td>Kids · 45 €</td><td class="n"><s>45,00 €</s></td><td class="n zero">0,00 €</td></tr>
+          <tr><td colspan="6"><span class="btn">+ Adicionar membro</span></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="row"><span class="muted">Soma dos planos</span><span>145,00 €</span></div>
+        <div class="row"><span class="muted">Desconto do grupo (10 %)</span><span>−14,50 €</span></div>
+        <div class="row tot"><span>Mensalidade do titular (Ana)</span><span>130,50 €/mês</span></div>
+        <div class="muted sm" style="margin-top:6px">A inscrição e o seguro continuam a ser cobrados a cada membro. Mensalidades já pagas não são alteradas.</div>
+      </div>
+      <div style="text-align:right"><span class="btn">Cancelar</span> <span class="btn p">Criar grupo</span></div>
+    </div></div>
+
+    <div class="frame mob"><div class="lbl">Telemóvel</div><div class="pad">
+      <div class="title">Novo grupo familiar</div>
+      <div class="field" style="margin-bottom:8px"><label>Nome</label><div>Família Silva</div></div>
+      <div class="field" style="margin-bottom:12px"><label>Desconto</label><div>10 %</div></div>
+      <div class="mcard"><div class="row"><b>Ana Silva · Titular</b><span class="st ok">Completa</span></div><div class="row"><span class="muted sm">Adultos 2x</span><span><s>55,00</s> → <span class="new">130,50 €</span></span></div></div>
+      <div class="mcard"><div class="row"><b>Pedro Silva</b><span class="st ok">Completa</span></div><div class="row"><span class="muted sm">Kids</span><span><s>45,00</s> → <span class="zero">0,00 €</span></span></div></div>
+      <div class="mcard"><div class="row"><b>Maria Silva</b><span class="st ok">Completa</span></div><div class="row"><span class="muted sm">Kids</span><span><s>45,00</s> → <span class="zero">0,00 €</span></span></div></div>
+      <span class="btn full" style="margin-bottom:10px">+ Adicionar membro</span>
+      <div class="card"><div class="row tot"><span>Titular paga</span><span>130,50 €/mês</span></div><div class="muted sm">145,00 € − 10 %</div></div>
+      <span class="btn p full">Criar grupo</span>
+    </div></div>
+  </div>
+</section>
+
+<!-- ECRÃ 4 -->
+<section class="screen">
+  <h2>Ecrã 4: O que cada um vê no Financeiro</h2>
+  <p>O titular vê a mensalidade da família com o detalhe por membro. O membro vê que a mensalidade é paga pelo titular e não recebe os dados para a pagar.</p>
+  <div class="pair">
+    <div class="frame desk"><div class="lbl">Desktop · Titular · /dashboard/financeiro</div><div class="pad">
+      <div class="title">Financeiro</div>
+      <div class="card"><h3>Mensalidade familiar · novembro <span class="st wait">Por pagar</span></h3>
+        <div class="row"><span>Ana Silva (tu) · Adultos 2x</span><span>55,00 €</span></div>
+        <div class="row"><span>Pedro Silva · Kids</span><span>45,00 €</span></div>
+        <div class="row"><span>Maria Silva · Kids</span><span>45,00 €</span></div>
+        <div class="row"><span class="muted">Desconto família (10 %)</span><span>−14,50 €</span></div>
+        <div class="row tot"><span>Total</span><span>130,50 €</span></div>
+        <div style="margin-top:10px"><span class="btn p">Pagar</span> <span class="btn">Ver dados de pagamento</span></div>
+      </div>
+    </div></div>
+
+    <div class="frame mob"><div class="lbl">Telemóvel · Membro (Pedro)</div><div class="pad">
+      <div class="title">Financeiro</div>
+      <div class="okbox">👨‍👩‍👧 A tua mensalidade é paga pela <b>Ana Silva</b> (Família Silva).</div>
+      <div class="card"><h3>Novembro</h3>
+        <div class="row"><span>Mensalidade</span><span class="zero">0,00 €</span></div>
+        <div class="row"><span class="muted">Estado</span><span class="st wait">A aguardar o titular</span></div>
+      </div>
+      <div class="card"><h3>Inscrição</h3>
+        <div class="row"><span>Inscrição + seguro</span><span class="st ok">Pago</span></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<div class="note">
+  <b>O que muda no código (resumo)</b>
+  <ul>
+    <li>A forma de pagamento sai do passo 1 da adesão e passa para um ecrã novo depois da assinatura (<code>/adesao/pagamento</code>).</li>
+    <li>O gate do middleware só deixa ver os dados de pagamento quando <code>documentsSigned</code> for verdadeiro.</li>
+    <li>O link Revolut da adesão é gerado nesse ecrã final e não ao submeter a ficha.</li>
+    <li>A caixa «grupo familiar» guarda um pedido, que aparece em «A tratar hoje» no admin, e esconde os dados de pagamento da mensalidade.</li>
+    <li>Ao criar o grupo, o plano de referência vem preenchido com o plano que o aluno escolheu. O resto (membros a 0 €, titular com a soma menos o desconto) já existe.</li>
+  </ul>
+</div>
+</body>
+</html>

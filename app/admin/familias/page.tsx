@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { listFamilyGroups, repairOrphanFamilyTitulars, backfillFamilyGroupTuitions } from "@/lib/family-group";
+import { listFamilyGroups, listFamilyGroupRequests, repairOrphanFamilyTitulars, backfillFamilyGroupTuitions } from "@/lib/family-group";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,11 @@ export default async function AdminFamiliasPage() {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   await repairOrphanFamilyTitulars(result.client);
   await backfillFamilyGroupTuitions(result.client);
-  const groups = await listFamilyGroups(result.client, scopedSchoolIds(await getSchoolScope()));
+  const schoolIds = scopedSchoolIds(await getSchoolScope());
+  const [groups, requests] = await Promise.all([
+    listFamilyGroups(result.client, schoolIds),
+    listFamilyGroupRequests(result.client, schoolIds),
+  ]);
 
   return (
     <div style={{ maxWidth: "min(760px, 100%)" }}>
@@ -43,6 +47,29 @@ export default async function AdminFamiliasPage() {
         quota de referência). A mensalidade combinada é cobrada no titular. Matrícula e seguro continuam
         individuais por membro.
       </p>
+
+      {requests.length > 0 ? (
+        <section className="card" style={{ padding: 14, marginBottom: 20, border: "1px solid color-mix(in srgb, var(--warning, #f59e0b) 45%, var(--border))" }}>
+          <h2 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 600 }}>Pedidos de grupo familiar ({requests.length})</h2>
+          <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--text-secondary)" }}>
+            Marcaram «Faço parte de um grupo familiar» no fim da adesão. A mensalidade deles fica em espera até os juntares a um grupo.
+          </p>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+            {requests.map((r) => (
+              <li key={r.studentId} style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", fontSize: 14 }}>
+                <Link href={`/admin/alunos/${r.studentId}`} style={{ color: "inherit", fontWeight: 500 }}>
+                  {r.name}
+                </Link>
+                {r.requestedAt ? (
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                    {new Date(r.requestedAt).toLocaleDateString("pt-PT", { timeZone: "Europe/Lisbon" })}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {groups.length === 0 ? (
         <p style={{ color: "var(--text-secondary)" }}>Ainda não há grupos familiares.</p>

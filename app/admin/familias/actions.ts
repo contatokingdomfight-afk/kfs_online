@@ -13,6 +13,8 @@ import {
   getFamilyContext,
   ensureFamilyGroupAsTitular,
   deactivateFamilyGroupAndRebill,
+  clearFamilyGroupRequest,
+  currentIndividualPlanId,
 } from "@/lib/family-group";
 import { refreshFamilyTitularPendingTuition } from "@/lib/family-tuition";
 
@@ -67,7 +69,7 @@ export async function createFamilyGroup(
   const schoolId = (formData.get("schoolId") as string)?.trim();
   if (schoolId && !canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Não autorizado: escola fora do teu acesso." };
   const discountPercent = parseFloat((formData.get("discountPercent") as string)?.trim() || "0");
-  const titularReferencePlanId = (formData.get("titularReferencePlanId") as string)?.trim() || null;
+  const titularReferencePlanIdInput = (formData.get("titularReferencePlanId") as string)?.trim() || null;
 
   if (!titularStudentId) return { error: "Titular é obrigatório." };
   if (!schoolId) return { error: "Escola é obrigatória." };
@@ -76,6 +78,8 @@ export async function createFamilyGroup(
   }
 
   const supabase = createAdminClient();
+  // Sem plano de referência indicado: usa o plano que o aluno escolheu na adesão.
+  const titularReferencePlanId = titularReferencePlanIdInput ?? (await currentIndividualPlanId(supabase, titularStudentId));
 
   const ensured = await ensureFamilyGroupAsTitular(supabase, titularStudentId, {
     name,
@@ -88,6 +92,7 @@ export async function createFamilyGroup(
 
   const planResult = await assignFamilyPlanToStudent(supabase, titularStudentId, "TITULAR");
   if (planResult.error) return { error: planResult.error };
+  await clearFamilyGroupRequest(supabase, titularStudentId);
 
   revalidatePath("/admin/familias");
   revalidatePath(`/admin/alunos/${titularStudentId}`);
@@ -104,10 +109,12 @@ export async function addFamilyMember(
   { const schoolErr = await schoolAccessErrorForRows("FamilyGroup", groupId ? [groupId] : []); if (schoolErr) return { error: schoolErr }; }
   const studentId = (formData.get("studentId") as string)?.trim();
   { const schoolErr = await schoolAccessErrorForStudent(studentId); if (schoolErr) return { error: schoolErr }; }
-  const referencePlanId = (formData.get("referencePlanId") as string)?.trim() || null;
+  const referencePlanIdInput = (formData.get("referencePlanId") as string)?.trim() || null;
   if (!groupId || !studentId) return { error: "Grupo e aluno são obrigatórios." };
 
   const supabase = createAdminClient();
+  // Sem plano de referência indicado: usa o plano que o aluno escolheu na adesão.
+  const referencePlanId = referencePlanIdInput ?? (await currentIndividualPlanId(supabase, studentId));
 
   const { data: group } = await supabase
     .from("FamilyGroup")
@@ -150,6 +157,7 @@ export async function addFamilyMember(
   }
 
   await refreshFamilyTitularPendingTuition(supabase, groupId);
+  await clearFamilyGroupRequest(supabase, studentId);
 
   revalidatePath("/admin/familias");
   revalidatePath(`/admin/familias/${groupId}`);

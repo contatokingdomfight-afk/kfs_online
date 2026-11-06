@@ -11,6 +11,7 @@ import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { getFamilyContext, type FamilyGroupRole, type FamilyGroupRow, type FamilyContext } from "@/lib/family-context";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
+import { resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
 
 export { getFamilyContext };
 export type { FamilyGroupRole, FamilyGroupRow, FamilyContext };
@@ -322,6 +323,34 @@ export async function assignFamilyPlanToStudent(
   const pending = await ensureOnboardingPendingPayments(supabase, studentId, KINGDOM_PLAN_FAMILIA_ID);
 
   if (pending.error) return { error: pending.error };
+
+  // Mensalidades LATE do mês corrente/futuras que já existiam (geradas antes da mudança de plano)
+  // ficavam como cobrança individual: titular → passa ao valor do grupo; membro → deixa de ser cobrado.
+  const ctx = await getFamilyContext(supabase, studentId);
+  if (ctx) {
+    const currentMonth = currentReferenceMonthLisbon(new Date());
+    if (ctx.isTitular) {
+      const amount = await resolveFamilyGroupTitularSuggestedAmount(supabase, ctx.group.id);
+      const { error } = await supabase
+        .from("Payment")
+        .update({ amount, familyGroupId: ctx.group.id })
+        .eq("studentId", studentId)
+        .eq("paymentType", "TUITION")
+        .eq("status", "LATE")
+        .gte("referenceMonth", currentMonth);
+      if (error) return { error: error.message };
+    } else {
+      const { error } = await supabase
+        .from("Payment")
+        .delete()
+        .eq("studentId", studentId)
+        .eq("paymentType", "TUITION")
+        .eq("status", "LATE")
+        .gte("referenceMonth", currentMonth);
+      if (error) return { error: error.message };
+      await syncStudentPaymentStatus(supabase, studentId);
+    }
+  }
   return {};
 }
 
@@ -616,4 +645,49 @@ export async function getFamilyHubForStudent(
       isSelf: r.studentId === studentId,
     })),
   };
+}
+
+export type FamilyGroupRequest = { studentId: string; name: string; requestedAt: string | null };
+
+/**
+ * Alunos que marcaram «Faço parte de um grupo familiar» no fim da adesão e ainda não estão num
+ * grupo. Coluna nova (migração 20261106120000): sem ela devolve lista vazia.
+ */
+export async function listFamilyGroupRequests(supabase: SupabaseClient, schoolIds?: string[] | null): Promise<FamilyGroupRequest[]> {
+  const { data: rows, error } = await supabase
+    .from("StudentEnrollmentForm")
+    .select("studentId, familyGroupRequestedAt")
+    .eq("familyGroupRequested", true)
+    .order("familyGroupRequestedAt", { ascending: true })
+    .limit(100);
+  if (error || !rows?.length) return [];
+  const ids = (rows as { studentId: string }[]).map((r) => r.studentId);
+  const [{ data: members }, { data: students }] = await Promise.all([
+    supabase.from("FamilyGroupMember").select("studentId").in("studentId", ids),
+    filterSchools(supabase.from("Student").select("id, userId"), schoolIds ?? null).in("id", ids),
+  ]);
+  const inGroup = new Set(((members ?? []) as { studentId: string }[]).map((m) => m.studentId));
+  const studentRows = ((students ?? []) as { id: string; userId: string | null }[]).filter((s) => !inGroup.has(s.id));
+  const userIds = [...new Set(studentRows.map((s) => s.userId).filter(Boolean))] as string[];
+  const { data: users } = userIds.length ? await supabase.from("User").select("id, name, email").in("id", userIds) : { data: [] };
+  const userById = new Map(((users ?? []) as { id: string; name: string | null; email: string | null }[]).map((u) => [u.id, u]));
+  const byId = new Map(studentRows.map((s) => [s.id, s]));
+  return (rows as { studentId: string; familyGroupRequestedAt: string | null }[])
+    .filter((r) => byId.has(r.studentId))
+    .map((r) => {
+      const u = userById.get(byId.get(r.studentId)!.userId ?? "");
+      return { studentId: r.studentId, name: u?.name?.trim() || u?.email || "—", requestedAt: r.familyGroupRequestedAt };
+    });
+}
+
+/** Limpa o pedido de grupo familiar (quando o aluno entra num grupo). Ignora a falta da coluna. */
+export async function clearFamilyGroupRequest(supabase: SupabaseClient, studentId: string): Promise<void> {
+  await supabase.from("StudentEnrollmentForm").update({ familyGroupRequested: false }).eq("studentId", studentId);
+}
+
+/** Plano individual actual do aluno (para plano de referência por omissão); null se já for o plano família. */
+export async function currentIndividualPlanId(supabase: SupabaseClient, studentId: string): Promise<string | null> {
+  const { data } = await supabase.from("Student").select("planId").eq("id", studentId).maybeSingle();
+  const planId = (data as { planId?: string | null } | null)?.planId ?? null;
+  return planId && !isFamilyPlan(planId) ? planId : null;
 }

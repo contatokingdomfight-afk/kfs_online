@@ -105,7 +105,7 @@ export default async function AdminAssinarAdesaoPage({ params, searchParams }: P
       <AdesaoStepIndicator step={step} />
 
       {step === 1 && prefill ? (
-        <ComprovativoForm prefill={prefill} paymentInfo={paymentInfo} schoolIdentity={schoolIdentity} action={adminSaveEnrollmentForm.bind(null, studentId)} />
+        <ComprovativoForm prefill={prefill} paymentInfo={paymentInfo} schoolIdentity={schoolIdentity} action={adminSaveEnrollmentForm.bind(null, studentId)} showPayment />
       ) : contract.blocked ? (
         <p className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", margin: 0, fontSize: 14, lineHeight: 1.5, color: "var(--text-secondary)" }}>
           O contrato ainda não está disponível: faltam os dados legais desta escola (denominação social, NIPC e sede), em Escolas → Dados.

@@ -24,6 +24,51 @@ function checkboxOn(formData: FormData, name: string): boolean {
   return v === "on" || v === "true";
 }
 
+/** Erro (texto) se a forma de pagamento não for uma das da escola do aluno; null se for válida. */
+export async function validateEnrollmentPaymentMethod(studentId: string, paymentMethod: string): Promise<string | null> {
+  const schoolMethods: string[] = enrollmentPaymentMethods(await loadStudentPaymentInfo(studentId), { includeOnline: true });
+  if (schoolMethods.length === 0) {
+    return "A escola ainda não indicou como receber pagamentos. Fala com a escola para concluir a adesão.";
+  }
+  if (!schoolMethods.includes(paymentMethod)) return "Escolhe a forma de pagamento.";
+  return null;
+}
+
+type ExistingProof = {
+  paymentProofPath?: string | null;
+  paymentProofFileName?: string | null;
+  paymentProofUploadedAt?: string | null;
+};
+
+/** Comprovativo (opcional): envia o ficheiro `paymentProof`, se vier; senão mantém o que já estava. */
+export async function uploadPaymentProof(
+  studentId: string,
+  formData: FormData,
+  existing: ExistingProof | null
+): Promise<{ error: string } | { paymentProofPath: string | null; paymentProofFileName: string | null; paymentProofUploadedAt: string | null }> {
+  const kept = {
+    paymentProofPath: existing?.paymentProofPath ?? null,
+    paymentProofFileName: existing?.paymentProofFileName ?? null,
+    paymentProofUploadedAt: existing?.paymentProofUploadedAt ?? null,
+  };
+  const proofFile = formData.get("paymentProof");
+  if (!(proofFile instanceof File) || proofFile.size === 0) return kept;
+  if (!ALLOWED_PAYMENT_PROOF_TYPES.has(proofFile.type)) {
+    return { error: "Comprovativo em formato não suportado. Usa JPEG, PNG, WebP ou PDF." };
+  }
+  if (proofFile.size > MAX_PAYMENT_PROOF_BYTES) {
+    return { error: "Comprovativo demasiado grande (máx. 8 MB)." };
+  }
+  const admin = createAdminClient();
+  const ext = proofFile.name.split(".").pop()?.toLowerCase() || "bin";
+  const path = `${studentId}/${Date.now()}.${ext}`;
+  const { error: upErr } = await admin.storage
+    .from("payment-proofs")
+    .upload(path, proofFile, { upsert: true, contentType: proofFile.type });
+  if (upErr) return { error: `Erro ao enviar o comprovativo: ${upErr.message}` };
+  return { paymentProofPath: path, paymentProofFileName: proofFile.name, paymentProofUploadedAt: new Date().toISOString() };
+}
+
 /**
  * Núcleo da gravação do comprovativo, independente de quem o preenche (o próprio aluno
  * em `/adesao`, ou o admin em `/admin/alunos/[id]/contrato/assinar` — ex.: sócios Kids
@@ -84,12 +129,11 @@ export async function applyEnrollmentFormSubmission(
   if (!emergencyContactPhone || emergencyContactPhone.length < 9) {
     return { error: "Indica o telefone do contacto de emergência." };
   }
-  const schoolMethods: string[] = enrollmentPaymentMethods(await loadStudentPaymentInfo(studentId), { includeOnline: true });
-  if (schoolMethods.length === 0) {
-    return { error: "A escola ainda não indicou como receber pagamentos. Fala com a escola para concluir a adesão." };
-  }
-  if (!schoolMethods.includes(paymentMethod)) {
-    return { error: "Escolhe a forma de pagamento." };
+  // O aluno escolhe a forma de pagamento só depois de assinar (/adesao/pagamento); o admin
+  // continua a indicá-la aqui. Sem o campo no formulário, mantém-se a que já estava gravada.
+  if (paymentMethod) {
+    const methodErr = await validateEnrollmentPaymentMethod(studentId, paymentMethod);
+    if (methodErr) return { error: methodErr };
   }
 
   const fees = await getStudentOnboardingFeesState(supabase, studentId);
@@ -99,37 +143,13 @@ export async function applyEnrollmentFormSubmission(
 
   const { data: existing } = await supabase
     .from("StudentEnrollmentForm")
-    .select("id, paymentProofPath, paymentProofFileName, paymentProofUploadedAt")
+    .select("id, paymentMethod, paymentProofPath, paymentProofFileName, paymentProofUploadedAt")
     .eq("studentId", studentId)
     .maybeSingle();
 
-  // Comprovativo de pagamento (opcional): mantém o ficheiro já enviado se não vier um novo neste submit.
-  let paymentProofPath = (existing as { paymentProofPath?: string | null } | null)?.paymentProofPath ?? null;
-  let paymentProofFileName = (existing as { paymentProofFileName?: string | null } | null)?.paymentProofFileName ?? null;
-  let paymentProofUploadedAt =
-    (existing as { paymentProofUploadedAt?: string | null } | null)?.paymentProofUploadedAt ?? null;
-
-  const proofFile = formData.get("paymentProof");
-  if (proofFile instanceof File && proofFile.size > 0) {
-    if (!ALLOWED_PAYMENT_PROOF_TYPES.has(proofFile.type)) {
-      return { error: "Comprovativo em formato não suportado. Usa JPEG, PNG, WebP ou PDF." };
-    }
-    if (proofFile.size > MAX_PAYMENT_PROOF_BYTES) {
-      return { error: "Comprovativo demasiado grande (máx. 8 MB)." };
-    }
-    const admin = createAdminClient();
-    const ext = proofFile.name.split(".").pop()?.toLowerCase() || "bin";
-    const path = `${studentId}/${Date.now()}.${ext}`;
-    const { error: upErr } = await admin.storage
-      .from("payment-proofs")
-      .upload(path, proofFile, { upsert: true, contentType: proofFile.type });
-    if (upErr) {
-      return { error: `Erro ao enviar o comprovativo: ${upErr.message}` };
-    }
-    paymentProofPath = path;
-    paymentProofFileName = proofFile.name;
-    paymentProofUploadedAt = new Date().toISOString();
-  }
+  const proof = await uploadPaymentProof(studentId, formData, existing as ExistingProof | null);
+  if ("error" in proof) return { error: proof.error };
+  const { paymentProofPath, paymentProofFileName, paymentProofUploadedAt } = proof;
 
   const row = {
     studentId,
@@ -144,7 +164,7 @@ export async function applyEnrollmentFormSubmission(
     emergencyContactName,
     emergencyContactRelationship,
     emergencyContactPhone,
-    paymentMethod,
+    paymentMethod: paymentMethod || ((existing as { paymentMethod?: string | null } | null)?.paymentMethod ?? null),
     debitIban: null,
     paymentProofPath,
     paymentProofFileName,

@@ -1,13 +1,14 @@
 "use client";
 
 type Props = {
-  step: 1 | 2;
+  step: 1 | 2 | 3;
 };
 
 export function AdesaoStepIndicator({ step }: Props) {
   const items = [
     { n: 1, label: "Comprovativo" },
     { n: 2, label: "Condições e assinatura" },
+    { n: 3, label: "Pagamento" },
   ] as const;
 
   return (
