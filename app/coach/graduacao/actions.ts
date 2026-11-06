@@ -811,3 +811,26 @@ export async function loadCandidateReport(candidateId: string): Promise<{ error?
     },
   };
 }
+
+/** Separador «Aprovados»: marca (ou desmarca) a graduação como entregue ao aluno. */
+export async function setBeltDelivered(candidateId: string, delivered: boolean): Promise<ActionResult> {
+  const auth = await graduationExamActionAuth();
+  if ("error" in auth) return { error: auth.error };
+  { const schoolErr = await examCandidateSchoolError(candidateId); if (schoolErr) return { error: schoolErr }; }
+  const supabase = client();
+  if (!supabase) return { error: "Configuração Supabase em falta." };
+
+  const { data, error } = await supabase
+    .from("GraduationExamCandidate")
+    .update({ beltDeliveredAt: delivered ? new Date().toISOString() : null, beltDeliveredByUserId: delivered ? auth.userId : null })
+    .eq("id", candidateId)
+    .eq("status", "PASSED")
+    .select("eventId")
+    .maybeSingle();
+  if (error || !data) {
+    if (error) console.error("setBeltDelivered:", error);
+    return { error: "Não foi possível guardar." };
+  }
+  revalidatePath(`/coach/graduacao/${data.eventId}`);
+  return { success: true };
+}

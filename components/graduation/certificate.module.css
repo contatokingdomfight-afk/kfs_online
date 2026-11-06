@@ -1,0 +1,257 @@
+/* Certificado de graduação (A4 horizontal). Tudo escala com a largura (container query units):
+   o desenho fica igual em qualquer ecrã, no PNG partilhado e no PDF. */
+
+.wrap {
+  container-type: inline-size;
+  width: 100%;
+}
+
+.cert {
+  --s2: #a8a9ad;
+  --red: #c1121f;
+  position: relative;
+  aspect-ratio: 297 / 210;
+  overflow: hidden;
+  border-radius: 4px;
+  font-size: 1.31cqw;
+  color: #fff;
+  background: radial-gradient(ellipse at 50% 38%, #1e1e22 0%, #0d0d0f 55%, #050505 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3.6% 9% 7.5%;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.fr,
+.fr2 {
+  position: absolute;
+  pointer-events: none;
+}
+.fr {
+  inset: 2.6%;
+  border: 1px solid rgba(168, 169, 173, 0.55);
+  clip-path: polygon(4% 0, 96% 0, 100% 6%, 100% 94%, 96% 100%, 4% 100%, 0 94%, 0 6%);
+}
+.fr2 {
+  inset: 3.6%;
+  border: 1.5px solid var(--red);
+  clip-path: polygon(3.6% 0, 96.4% 0, 100% 5.4%, 100% 94.6%, 96.4% 100%, 3.6% 100%, 0 94.6%, 0 5.4%);
+}
+.wm {
+  position: absolute;
+  right: -6%;
+  top: 12%;
+  width: 46%;
+  opacity: 0.05;
+  filter: grayscale(1) brightness(3);
+  pointer-events: none;
+}
+.oct {
+  position: absolute;
+  width: 30%;
+  aspect-ratio: 1;
+  opacity: 0.07;
+  border: 1px solid #fff;
+  clip-path: polygon(29% 0, 71% 0, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0 71%, 0 29%);
+  pointer-events: none;
+}
+.octA { left: -12%; bottom: -14%; }
+.octB { right: -10%; top: -16%; }
+
+.silver {
+  background: linear-gradient(180deg, #fff 0%, #d4d4d8 55%, #8a8b90 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hd {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 3%;
+  margin-top: auto;
+}
+.hemb {
+  width: 12.5%;
+  flex: none;
+  filter: drop-shadow(0 0 0.9em rgba(193, 18, 31, 0.35));
+}
+.hbrand {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.kf {
+  font-weight: 900;
+  font-size: 5.8em;
+  line-height: 0.95;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+  text-align: center;
+}
+.sch {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  font-weight: 900;
+  font-size: 2.3em;
+  letter-spacing: 0.55em;
+  line-height: 1;
+  margin-top: 0.3em;
+}
+.sch::before,
+.sch::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background: var(--red);
+}
+.sch span {
+  margin-right: -0.55em;
+}
+.nif {
+  font-size: 0.62em;
+  letter-spacing: 0.2em;
+  color: #71717a;
+  margin-top: 0.5em;
+}
+
+.ttl {
+  position: relative;
+  font-weight: 900;
+  font-size: 3.4em;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  margin: 4.5% 0 0.6%;
+  white-space: nowrap;
+}
+.mod {
+  font-size: 0.72em;
+  letter-spacing: 0.35em;
+  font-weight: 600;
+  color: var(--red);
+  text-transform: uppercase;
+}
+.certTxt {
+  font-size: 0.9em;
+  color: #a1a1aa;
+  margin-top: 3%;
+}
+.name {
+  font-weight: 800;
+  font-size: 3.5em;
+  line-height: 1.1;
+  margin-top: 0.6%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nline {
+  width: 38%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+  margin: 1.4% 0 2%;
+  flex: none;
+}
+.grade {
+  font-size: 0.95em;
+  color: #d4d4d8;
+}
+.gname {
+  font-weight: 800;
+  font-size: 1.5em;
+  letter-spacing: 0.08em;
+  margin-top: 0.5%;
+  text-transform: uppercase;
+}
+.rib {
+  display: flex;
+  flex: none;
+  width: 84%;
+  height: 1.9em;
+  margin: 1.8% 0 0;
+  clip-path: polygon(2% 0, 98% 0, 100% 50%, 98% 100%, 2% 100%, 0 50%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+}
+.rib i {
+  flex: 1;
+}
+
+.foot {
+  position: relative;
+  margin-top: auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 12em 1fr;
+  align-items: end;
+  gap: 4em;
+}
+.sig {
+  font-size: 0.62em;
+  color: #a1a1aa;
+  letter-spacing: 0.04em;
+  min-width: 0;
+}
+.sigImg {
+  display: block;
+  height: 4.6em;
+  max-width: 100%;
+  margin: 0 auto -0.4em;
+  object-fit: contain;
+  filter: invert(1) grayscale(1) brightness(1.4);
+  mix-blend-mode: screen;
+}
+.ln {
+  border-top: 1px solid rgba(168, 169, 173, 0.6);
+  padding-top: 0.5em;
+  margin-top: 0.3em;
+}
+.ln b {
+  color: #fff;
+  font-weight: 700;
+  display: block;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.seal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35em;
+}
+.sealO {
+  width: 4.6em;
+  aspect-ratio: 1;
+  background: var(--red);
+  display: grid;
+  place-items: center;
+  clip-path: polygon(29% 0, 71% 0, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0 71%, 0 29%);
+}
+.qr {
+  width: 90%;
+  aspect-ratio: 1;
+  background: #fff;
+  padding: 9%;
+  clip-path: polygon(29% 0, 71% 0, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0 71%, 0 29%);
+  display: grid;
+  place-items: center;
+}
+.qr svg {
+  width: 82%;
+  height: 82%;
+  display: block;
+}
+.seal small {
+  font-size: 0.55em;
+  letter-spacing: 0.18em;
+  color: var(--s2);
+  white-space: nowrap;
+}

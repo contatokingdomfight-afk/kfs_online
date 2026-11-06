@@ -4,7 +4,7 @@ import { CalendarDays, ChevronRight, MapPin } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { requireGraduationExamPage } from "@/lib/graduation/exam-auth";
-import { loadExamEventDetail } from "@/lib/graduation/load-exam";
+import { loadExamEventDetail, type ExamCandidateRow } from "@/lib/graduation/load-exam";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { ExamStatusChip, formatExamDate } from "@/components/graduation/ExamStatusChip";
@@ -13,6 +13,7 @@ import { EventActions, RemoveCandidateButton } from "./EventActions";
 import { CandidateSlotSelect, RemindReadyButton } from "./SlotControls";
 import { RevealControls } from "./RevealControls";
 import { ExamReport } from "./ExamReport";
+import { ApprovedPanel, type ApprovedRow } from "./ApprovedPanel";
 import { buildExamReportRows } from "./report-data";
 import { revealDueResults } from "@/lib/graduation/reveal";
 import { TargetGradeControl, type TargetGradeOption } from "./TargetGradeControl";
@@ -37,7 +38,8 @@ export default async function ExamEventPage({
   const supabase = result.client;
 
   const { eventId } = await params;
-  const tab = (await searchParams).separador === "relatorio" ? "relatorio" : "gestao";
+  const sep = (await searchParams).separador;
+  const tab: "gestao" | "relatorio" | "aprovados" = sep === "relatorio" || sep === "aprovados" ? sep : "gestao";
   // Revela os resultados cuja data já chegou antes de mostrar a página.
   await revealDueResults(supabase, { eventId });
   const detail = await loadExamEventDetail(supabase, eventId, userId);
@@ -97,9 +99,11 @@ export default async function ExamEventPage({
 
   const reportRows = tab === "relatorio" ? await buildExamReportRows(supabase, event.modalityCode, candidates, detail.template) : [];
   const revealLabel = event.resultsRevealAt ? formatExamDate(event.resultsRevealAt) : null;
-  const tabLink = (id: "gestao" | "relatorio", label: string) => (
+  const approvedRows: ApprovedRow[] = tab === "aprovados" ? await buildApprovedRows(supabase, eventId, candidates, detail.template?.grades ?? []) : [];
+  const approvedCount = candidates.filter((c) => c.status === "PASSED").length;
+  const tabLink = (id: "gestao" | "relatorio" | "aprovados", label: string) => (
     <Link
-      href={id === "relatorio" ? `/coach/graduacao/${event.id}?separador=relatorio` : `/coach/graduacao/${event.id}`}
+      href={id === "gestao" ? `/coach/graduacao/${event.id}` : `/coach/graduacao/${event.id}?separador=${id}`}
       aria-current={tab === id ? "page" : undefined}
       style={{
         padding: "10px 14px",
@@ -143,9 +147,12 @@ export default async function ExamEventPage({
       <nav aria-label="Separadores do exame" style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--border)", margin: "0 0 var(--space-4)" }}>
         {tabLink("gestao", "Gestão")}
         {tabLink("relatorio", "Relatório")}
+        {tabLink("aprovados", approvedCount ? `Aprovados (${approvedCount})` : "Aprovados")}
       </nav>
 
-      {tab === "relatorio" ? (
+      {tab === "aprovados" ? (
+        <ApprovedPanel rows={approvedRows} revealLabel={revealLabel} />
+      ) : tab === "relatorio" ? (
         <ExamReport eventId={event.id} rows={reportRows} revealLabel={revealLabel} />
       ) : (
       <>
@@ -292,4 +299,42 @@ export default async function ExamEventPage({
       )}
     </div>
   );
+}
+
+type GradeLite = { id: string; name: string; colors: string[] };
+
+/** Separador «Aprovados»: aprovados com o novo grau (o atribuído no nivelamento), o grau anterior e a entrega. */
+async function buildApprovedRows(
+  supabase: NonNullable<ReturnType<typeof getAdminClientOrNull>["client"]>,
+  eventId: string,
+  candidates: ExamCandidateRow[],
+  grades: GradeLite[]
+): Promise<ApprovedRow[]> {
+  const passed = candidates.filter((c) => c.status === "PASSED");
+  if (passed.length === 0) return [];
+  const { data } = await supabase
+    .from("GraduationExamCandidate")
+    .select("id, placementAwardedGradeId, beltDeliveredAt")
+    .eq("eventId", eventId)
+    .eq("status", "PASSED");
+  const extra = new Map((data ?? []).map((r) => [r.id as string, r as { placementAwardedGradeId: string | null; beltDeliveredAt: string | null }]));
+  const order = new Map(grades.map((g, i) => [g.id, i]));
+  return passed.map((c) => {
+    const x = extra.get(c.id);
+    const gradeId = x?.placementAwardedGradeId ?? c.gradeId;
+    const idx = order.get(gradeId) ?? -1;
+    const grade = idx >= 0 ? grades[idx] : null;
+    return {
+      id: c.id,
+      studentName: c.studentName,
+      gradeId,
+      gradeName: grade?.name ?? c.gradeName,
+      gradeColors: grade?.colors ?? c.gradeColors,
+      gradeOrder: idx,
+      previousGradeName: c.mode === "PLACEMENT" || c.skipReason ? null : idx > 0 ? grades[idx - 1].name : null,
+      note: c.mode === "PLACEMENT" ? "nivelamento" : c.skipReason ? "salto de grau" : null,
+      revealed: c.revealed,
+      delivered: Boolean(x?.beltDeliveredAt),
+    };
+  });
 }

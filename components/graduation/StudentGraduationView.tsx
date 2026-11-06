@@ -559,7 +559,10 @@ function ExamHistory({ entries }: { entries: StudentExamHistoryEntry[] }) {
               <BeltSwatch colors={e.gradeColors} width={36} height={10} />
               <span className="min-w-0 flex-1">
                 <span className="block break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">{e.gradeName}</span>
-                <span className="block text-xs text-text-secondary">{formatExamDate(e.scheduledAt, false)}</span>
+                <span className="block text-xs text-text-secondary">
+                  {formatExamDate(e.scheduledAt, false)}
+                  {e.status === "PASSED" && " · 🏅 Certificado"}
+                </span>
               </span>
               {e.isPlacement && e.status !== "ABSENT" ? (
                 <span className="whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold text-primary" style={{ background: "color-mix(in srgb, var(--primary) 14%, transparent)" }}>
