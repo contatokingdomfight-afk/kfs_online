@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Printer } from "lucide-react";
+import { Award, Printer } from "lucide-react";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { setBeltDelivered } from "../actions";
 
@@ -21,7 +21,7 @@ export type ApprovedRow = {
 
 type Filter = "all" | "todo" | "done";
 
-export function ApprovedPanel({ rows, revealLabel }: { rows: ApprovedRow[]; revealLabel: string | null }) {
+export function ApprovedPanel({ eventId, rows, revealLabel }: { eventId: string; rows: ApprovedRow[]; revealLabel: string | null }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [delivered, setDelivered] = useState(() => new Map(rows.map((r) => [r.id, r.delivered])));
   const [error, setError] = useState<string | null>(null);
@@ -142,15 +142,18 @@ export function ApprovedPanel({ rows, revealLabel }: { rows: ApprovedRow[]; reve
                       <div style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
                         {[r.previousGradeName ? `Antes: ${r.previousGradeName}` : r.note ? null : "Primeiro grau", r.note].filter(Boolean).join(" · ")}
                         {" · "}
-                        {r.revealed ? (
-                          <Link href={`/certificado/${r.id}`} target="_blank" style={{ color: "inherit" }}>
-                            certificado emitido
-                          </Link>
-                        ) : (
-                          "certificado na revelação"
-                        )}
+                        {r.revealed ? "certificado emitido" : "certificado na revelação"}
                       </div>
                     </div>
+                    {r.revealed && (
+                      <Link
+                        href={`/coach/graduacao/${eventId}/certificado/${r.id}`}
+                        className="btn btn-secondary"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", textDecoration: "none" }}
+                      >
+                        <Award size={16} aria-hidden /> Certificado
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={() => toggle(r.id)}

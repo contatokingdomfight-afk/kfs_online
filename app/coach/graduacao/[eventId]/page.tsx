@@ -151,7 +151,7 @@ export default async function ExamEventPage({
       </nav>
 
       {tab === "aprovados" ? (
-        <ApprovedPanel rows={approvedRows} revealLabel={revealLabel} />
+        <ApprovedPanel eventId={event.id} rows={approvedRows} revealLabel={revealLabel} />
       ) : tab === "relatorio" ? (
         <ExamReport eventId={event.id} rows={reportRows} revealLabel={revealLabel} />
       ) : (
