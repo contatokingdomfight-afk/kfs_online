@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Award, ChevronRight, Lock } from "lucide-react";
+import { Award, ChevronRight, HeartHandshake, Lock } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { revealDueResults } from "@/lib/graduation/reveal";
 import { loadStudentGraduations } from "@/lib/graduation/load-student-progress";
@@ -8,9 +8,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 const TZ = "Europe/Lisbon";
 
-type HomeExamItem = { key: string; href: string; title: string; detail: string; tone: "primary" | "warning" | "success" };
+type HomeExamItem = { key: string; href: string; title: string; detail: string; tone: "primary" | "warning" | "success" | "calm" };
 
-const TONE: Record<HomeExamItem["tone"], string> = { primary: "var(--primary)", warning: "var(--warning)", success: "var(--success)" };
+const TONE: Record<HomeExamItem["tone"], string> = {
+  primary: "var(--primary)",
+  warning: "var(--warning)",
+  success: "var(--success)",
+  calm: "var(--text-secondary)",
+};
+
+/** Dias em que o resultado revelado aparece no topo da home. */
+const RESULT_DAYS = 7;
 
 function when(iso: string, withTime = true): string {
   return new Date(iso).toLocaleString("pt-PT", {
@@ -84,6 +92,8 @@ export async function HomeExamStatus({ studentId }: { studentId: string }) {
   });
   // Sem convocatória: está apto e há dias abertos? (Só calcula os requisitos quando há uma agenda aberta.)
   if (items.length === 0) items.push(...(await bookableItems(admin, studentId)));
+  // Resultados revelados nos últimos 7 dias: certificado (aprovado) ou mensagem de incentivo.
+  items.push(...(await revealedItems(admin, studentId)));
   if (items.length === 0) return null;
 
   return (
@@ -105,6 +115,8 @@ export async function HomeExamStatus({ studentId }: { studentId: string }) {
         >
           {it.tone === "warning" ? (
             <Lock size={22} aria-hidden style={{ flexShrink: 0, color: TONE.warning }} />
+          ) : it.tone === "calm" ? (
+            <HeartHandshake size={22} aria-hidden style={{ flexShrink: 0, color: "var(--primary)" }} />
           ) : (
             <Award size={22} aria-hidden style={{ flexShrink: 0, color: TONE[it.tone] }} />
           )}
@@ -119,6 +131,48 @@ export async function HomeExamStatus({ studentId }: { studentId: string }) {
       ))}
     </section>
   );
+}
+
+/** Exames com resultado revelado há menos de 7 dias (depois disso o aluno vê-os em Graduação). */
+async function revealedItems(admin: SupabaseClient, studentId: string): Promise<HomeExamItem[]> {
+  const since = new Date(Date.now() - RESULT_DAYS * 86_400_000).toISOString();
+  const { data: rows } = await admin
+    .from("GraduationExamCandidate")
+    .select("id, gradeId, placementAwardedGradeId, status, mode, revealedAt")
+    .eq("studentId", studentId)
+    .in("status", ["PASSED", "FAILED"])
+    .gte("revealedAt", since)
+    .order("revealedAt", { ascending: false })
+    .limit(5);
+  const list = rows ?? [];
+  if (list.length === 0) return [];
+  const gradeIds = [...new Set(list.flatMap((c) => [c.gradeId, c.placementAwardedGradeId].filter(Boolean) as string[]))];
+  const { data: grades } = await admin.from("GraduationGrade").select("id, name").in("id", gradeIds);
+  const gradeName = new Map((grades ?? []).map((g) => [g.id as string, g.name as string]));
+
+  return list.map((c): HomeExamItem => {
+    const placement = c.mode === "PLACEMENT";
+    const gradeId = ((placement ? c.placementAwardedGradeId : null) ?? c.gradeId) as string;
+    const grade = gradeName.get(gradeId) ?? "novo grau";
+    if (c.status === "PASSED") {
+      return {
+        key: `res-${c.id}`,
+        href: `/dashboard/graduacao/exame/${c.id}#certificado`,
+        title: placement ? `Nivelamento concluído — ${grade}` : `Parabéns! Foste aprovado — ${grade}`,
+        detail: "Vê e partilha o teu certificado de graduação",
+        tone: "success",
+      };
+    }
+    return {
+      key: `res-${c.id}`,
+      href: `/dashboard/graduacao/exame/${c.id}`,
+      title: placement ? "Nivelamento concluído" : "Desta vez não foi — faz parte do caminho",
+      detail: placement
+        ? "Manténs o teu grau atual. Vê o feedback do coach para o próximo passo"
+        : "Vê o feedback do coach e o que treinar. Podes repetir daqui a 2 meses",
+      tone: "calm",
+    };
+  });
 }
 
 /**

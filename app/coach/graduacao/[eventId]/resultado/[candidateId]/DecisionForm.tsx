@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { decideCandidate } from "../../../actions";
+import { ConfirmSummary } from "./ConfirmSummary";
 
 /** Mínimo de caracteres da justificação para aprovar sem cumprir o critério. */
 const OVERRIDE_MIN = 10;
@@ -31,21 +33,20 @@ export function DecisionForm({
   const [pending, start] = useTransition();
   const canOverride = !canPass && isComplete;
 
-  const decide = (decision: "PASSED" | "FAILED" | "ABSENT", withOverride = false) => {
-    const text =
-      decision === "PASSED"
-        ? withOverride
-          ? `Aprovar ${gradeName} apesar de não cumprir o critério? A justificação fica registada e o aluno é notificado.`
-          : `Aprovar e atribuir o grau ${gradeName}? O aluno é notificado.`
-        : decision === "FAILED"
-          ? "Reprovar? O aluno é notificado e pode repetir daqui a 2 meses."
-          : "Marcar falta? O aluno pode ser convocado para outro exame.";
-    if (!window.confirm(text)) return;
+  const [ask, setAsk] = useState<null | { decision: "PASSED" | "FAILED" | "ABSENT"; withOverride: boolean }>(null);
+
+  const decide = (decision: "PASSED" | "FAILED" | "ABSENT", withOverride = false) => setAsk({ decision, withOverride });
+
+  const run = () => {
+    if (!ask) return;
+    const { decision, withOverride } = ask;
     setError(null);
     start(async () => {
       const res = await decideCandidate(candidateId, decision, feedback, withOverride ? override : undefined);
-      if (res.error) setError(res.error);
-      else {
+      if (res.error) {
+        setAsk(null);
+        setError(res.error);
+      } else {
         router.push(`/coach/graduacao/${eventId}`);
         router.refresh();
       }
@@ -143,6 +144,35 @@ export function DecisionForm({
             : "Completa a avaliação (todos os itens com nota) para poder decidir a aprovação."}
         </p>
       )}
+      <ConfirmModal
+        open={ask !== null}
+        onClose={() => !pending && setAsk(null)}
+        onConfirm={run}
+        loading={pending}
+        variant={ask?.decision === "PASSED" ? "success" : ask?.decision === "FAILED" ? "danger" : "primary"}
+        title={ask?.decision === "PASSED" ? "Aprovar aluno" : ask?.decision === "FAILED" ? "Reprovar aluno" : "Marcar falta"}
+        confirmLabel={ask?.decision === "PASSED" ? `Aprovar — ${gradeName}` : ask?.decision === "FAILED" ? "Reprovar" : "Marcar falta"}
+        cancelLabel="Voltar"
+      >
+        {ask?.decision === "ABSENT" ? (
+          <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+            O aluno fica como ausente neste exame e pode ser convocado para outro.
+          </p>
+        ) : ask ? (
+          <ConfirmSummary
+            headline={ask.decision === "PASSED" ? gradeName : `Não aprovado — ${gradeName}`}
+            tone={ask.decision === "PASSED" ? "success" : "danger"}
+            lines={[
+              ask.decision === "PASSED"
+                ? "O grau é atribuído e os requisitos do próximo contam a partir de hoje."
+                : "Pode repetir o exame daqui a 2 meses.",
+              ask.withOverride && "Aprovado sem cumprir o critério — a justificação fica registada.",
+              feedback.trim() ? "O feedback é enviado ao aluno." : "Sem feedback para o aluno.",
+              "O aluno recebe uma notificação.",
+            ]}
+          />
+        ) : null}
+      </ConfirmModal>
       {error && (
         <p role="alert" style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--danger)" }}>
           {error}

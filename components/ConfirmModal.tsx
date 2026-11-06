@@ -10,8 +10,10 @@ type Props = {
   message?: string;
   confirmLabel: string;
   cancelLabel: string;
-  variant?: "danger" | "primary";
+  variant?: "danger" | "primary" | "success";
   loading?: boolean;
+  /** Conteúdo extra (resumo do que vai acontecer), entre a mensagem e os botões. */
+  children?: React.ReactNode;
 };
 
 export function ConfirmModal(props: Props) {
@@ -25,6 +27,7 @@ export function ConfirmModal(props: Props) {
     cancelLabel,
     variant = "danger",
     loading = false,
+    children,
   } = props;
 
   useEffect(() => {
@@ -75,7 +78,8 @@ export function ConfirmModal(props: Props) {
         {message && (
           <p style={{ margin: 0, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)", lineHeight: 1.5 }}>{message}</p>
         )}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
+        {children}
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "flex-end", marginTop: 8 }}>
           <button type="button" onClick={onClose} disabled={loading} className="btn btn-secondary" style={{ minHeight: 44 }}>
             {cancelLabel}
           </button>
@@ -83,8 +87,9 @@ export function ConfirmModal(props: Props) {
             type="button"
             onClick={onConfirm}
             disabled={loading}
+            autoFocus
             className={variant === "danger" ? "btn btn-danger" : "btn btn-primary"}
-            style={{ minHeight: 44 }}
+            style={{ minHeight: 44, ...(variant === "success" ? { background: "var(--success)", borderColor: "var(--success)" } : {}) }}
           >
             {loading ? "A processar…" : confirmLabel}
           </button>

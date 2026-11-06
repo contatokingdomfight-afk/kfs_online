@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { decideCandidate, decidePlacement } from "../../../actions";
+import { ConfirmSummary } from "./ConfirmSummary";
 
 export type PlacementGradeOption = { id: string; name: string; colors: string[] };
 
@@ -39,25 +41,22 @@ export function PlacementDecisionForm({
     router.refresh();
   };
 
-  const confirm = () => {
-    if (!window.confirm(awardName ? `Atribuir o grau ${awardName}? O aluno é notificado.` : "Terminar sem grau novo? O aluno é notificado.")) return;
+  const [ask, setAsk] = useState<null | "award" | "absent">(null);
+  const awardOpt = options.find((o) => o.id === award) ?? null;
+
+  const run = (fn: () => Promise<{ error?: string | null }>) => {
     setError(null);
     start(async () => {
-      const r = await decidePlacement(candidateId, award || null, feedback, note);
-      if (r.error) setError(r.error);
-      else done();
+      const r = await fn();
+      if (r.error) {
+        setAsk(null);
+        setError(r.error);
+      } else done();
     });
   };
 
-  const absent = () => {
-    if (!window.confirm("Marcar falta? O aluno pode ser convocado para outro exame.")) return;
-    setError(null);
-    start(async () => {
-      const r = await decideCandidate(candidateId, "ABSENT", "");
-      if (r.error) setError(r.error);
-      else done();
-    });
-  };
+  const confirm = () => run(() => decidePlacement(candidateId, award || null, feedback, note));
+  const absent = () => run(() => decideCandidate(candidateId, "ABSENT", ""));
 
   const option = (id: string, label: React.ReactNode, tag: string | null, tagColor: string) => {
     const on = award === id;
@@ -140,13 +139,45 @@ export function PlacementDecisionForm({
           : "Fica sem grau novo. Não conta como reprovação (sem intervalo de 2 meses)."}
       </p>
       <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-        <button type="button" className="btn btn-primary" disabled={pending || !hasScores} onClick={confirm}>
+        <button type="button" className="btn btn-primary" disabled={pending || !hasScores || (differs && !note.trim())} onClick={() => setAsk("award")}>
           {pending ? "A gravar…" : "Confirmar resultado"}
         </button>
-        <button type="button" className="btn btn-secondary" disabled={pending} onClick={absent}>
+        <button type="button" className="btn btn-secondary" disabled={pending} onClick={() => setAsk("absent")}>
           Faltou
         </button>
       </div>
+      <ConfirmModal
+        open={ask === "award"}
+        onClose={() => !pending && setAsk(null)}
+        onConfirm={confirm}
+        loading={pending}
+        variant={awardOpt ? "success" : "primary"}
+        title={awardOpt ? "Atribuir grau" : "Terminar sem grau novo"}
+        confirmLabel={awardOpt ? `Atribuir ${awardOpt.name}` : "Confirmar"}
+        cancelLabel="Voltar"
+      >
+        <ConfirmSummary
+          belt={awardOpt ? <BeltSwatch colors={awardOpt.colors} width={44} height={14} /> : null}
+          headline={awardOpt ? awardOpt.name : "Sem grau novo"}
+          lines={[
+            awardOpt ? "Os requisitos do próximo grau contam a partir de hoje." : "Não conta como reprovação.",
+            differs ? "Diferente da proposta — o motivo fica registado." : null,
+            feedback.trim() ? "O feedback é enviado ao aluno." : "Sem feedback para o aluno.",
+            "O aluno recebe uma notificação.",
+          ]}
+        />
+      </ConfirmModal>
+      <ConfirmModal
+        open={ask === "absent"}
+        onClose={() => !pending && setAsk(null)}
+        onConfirm={absent}
+        loading={pending}
+        variant="primary"
+        title="Marcar falta"
+        message="O aluno fica como ausente neste exame e pode ser convocado para outro."
+        confirmLabel="Marcar falta"
+        cancelLabel="Voltar"
+      />
       {error && (
         <p role="alert" style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--danger)" }}>
           {error}
