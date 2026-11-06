@@ -6,11 +6,11 @@
 
 import { FLUENT_GLOVE_COLOR, FLUENT_GLOVE_FLAT } from "./glove-svg-source";
 
-/** Modalidades cujo grau se mostra como luva (Boxe; Kickboxing não). */
+/** Modalidades cujo grau se mostra como luva (Boxe e Boxing Kids; Kickboxing não). */
 export function isGloveModality(code: string | null | undefined): boolean {
   if (!code) return false;
   const c = code.toUpperCase();
-  return c.includes("BOX") && !c.includes("KICK");
+  return c === "BKIDS" || (c.includes("BOX") && !c.includes("KICK"));
 }
 
 const HEX = /^#[0-9a-f]{6}$/i;

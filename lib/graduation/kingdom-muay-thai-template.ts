@@ -5,11 +5,13 @@
  */
 
 import type { GraduationAxis, GraduationTemplateDraft } from "./template";
+import { KINGDOM_BOXING_GRADES } from "./kingdom-boxing-template";
+import { isGloveModality } from "./glove-svg";
 
 /** Texto simples, ou [rótulo, descrição] quando o documento detalha sub-itens. */
 type SeedItem = string | [string, string];
 
-type SeedGrade = {
+export type SeedGrade = {
   name: string;
   subtitle: string;
   motto: string;
@@ -614,7 +616,7 @@ export const KINGDOM_MUAY_THAI_GRADES: SeedGrade[] = [
 
 const AXIS_ORDER: GraduationAxis[] = ["TECNICO", "TATICO", "TEORICO", "FISICO"];
 
-/** Constrói um draft do template Kingdom para uma modalidade (ids novos a cada chamada). */
+/** Constrói um draft do template Kingdom para uma modalidade (ids novos a cada chamada). Boxe usa a matriz de Boxe. */
 export function buildKingdomTemplateDraft(
   modalityCode: string,
   name: string,
@@ -625,7 +627,7 @@ export function buildKingdomTemplateDraft(
     name,
     isPublished: false,
     monthlyMinAttendances: 4,
-    grades: KINGDOM_MUAY_THAI_GRADES.map((g) => ({
+    grades: (isGloveModality(modalityCode) ? KINGDOM_BOXING_GRADES : KINGDOM_MUAY_THAI_GRADES).map((g) => ({
       id: newId(),
       name: g.name,
       subtitle: g.subtitle,
