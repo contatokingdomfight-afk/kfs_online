@@ -175,9 +175,42 @@ export async function listFamilyReferencePlanOptions(
     }));
 }
 
+export type FamilyMemberPaidCredit = { studentId: string; referenceMonth: string; amount: number };
+
+/**
+ * Mensalidades que membros (não titulares) já pagaram a título individual — antes de entrarem no
+ * grupo — a partir de `fromMonth`. Esse valor é abatido na mensalidade do titular do mesmo mês, para
+ * a família não pagar duas vezes (sem reembolsos).
+ */
+export async function listFamilyMemberPaidCredits(
+  supabase: SupabaseClient,
+  groupId: string,
+  fromMonth: string
+): Promise<FamilyMemberPaidCredit[]> {
+  const { data: members } = await supabase
+    .from("FamilyGroupMember")
+    .select("studentId")
+    .eq("familyGroupId", groupId)
+    .eq("role", "MEMBER");
+  const ids = ((members ?? []) as { studentId: string }[]).map((m) => m.studentId);
+  if (!ids.length) return [];
+  const { data: paid } = await supabase
+    .from("Payment")
+    .select("studentId, referenceMonth, amount")
+    .in("studentId", ids)
+    .eq("paymentType", "TUITION")
+    .eq("status", "PAID")
+    .is("familyGroupId", null)
+    .gte("referenceMonth", fromMonth);
+  return ((paid ?? []) as { studentId: string; referenceMonth: string | null; amount: number | string }[])
+    .filter((p) => p.referenceMonth && Number(p.amount) > 0)
+    .map((p) => ({ studentId: p.studentId, referenceMonth: p.referenceMonth!, amount: Number(p.amount) }));
+}
+
 /**
  * Recalcula e actualiza (só) a(s) mensalidade(s) LATE pendente(s)/futuras do titular
- * com o valor actual da fórmula. Nunca toca em linhas PAID (histórico intacto).
+ * com o valor actual da fórmula, menos o que os membros já pagaram sozinhos nesse mês.
+ * Nunca toca em linhas PAID (histórico intacto).
  */
 export async function refreshFamilyTitularPendingTuition(
   supabase: SupabaseClient,
@@ -193,15 +226,26 @@ export async function refreshFamilyTitularPendingTuition(
   const amount = await resolveFamilyGroupTitularSuggestedAmount(supabase, groupId);
   const currentMonth = currentReferenceMonthLisbon(new Date());
 
-  const { data: rows, error } = await supabase
-    .from("Payment")
-    .update({ amount })
-    .eq("studentId", group.billingStudentId)
-    .eq("paymentType", "TUITION")
-    .eq("status", "LATE")
-    .gte("referenceMonth", currentMonth)
-    .select("id");
-
+  const [{ data: rows, error }, credits] = await Promise.all([
+    supabase
+      .from("Payment")
+      .select("id, referenceMonth")
+      .eq("studentId", group.billingStudentId)
+      .eq("paymentType", "TUITION")
+      .eq("status", "LATE")
+      .gte("referenceMonth", currentMonth),
+    listFamilyMemberPaidCredits(supabase, groupId, currentMonth),
+  ]);
   if (error) return { error: error.message, updated: false };
+
+  const creditByMonth = new Map<string, number>();
+  for (const c of credits) creditByMonth.set(c.referenceMonth, (creditByMonth.get(c.referenceMonth) ?? 0) + c.amount);
+
+  for (const r of (rows ?? []) as { id: string; referenceMonth: string | null }[]) {
+    const credit = r.referenceMonth ? creditByMonth.get(r.referenceMonth) ?? 0 : 0;
+    const value = Math.max(0, Math.round((amount - credit) * 100) / 100);
+    const { error: upErr } = await supabase.from("Payment").update({ amount: value }).eq("id", r.id);
+    if (upErr) return { error: upErr.message, updated: false };
+  }
   return { updated: (rows?.length ?? 0) > 0 };
 }

@@ -25,7 +25,12 @@ const PAYABLE_TYPES = ["TUITION", "LOYALTY_EXIT", "ENROLLMENT", "INSURANCE"] as 
 
 export type LatePayment = { id: string; paymentType: string; referenceMonth: string | null; amount: number };
 
-export async function listLatePayments(supabase: SupabaseClient, payerStudentId: string): Promise<LatePayment[]> {
+/** `keepFamilyPending`: inclui a mensalidade mesmo com pedido de grupo familiar pendente (ecrã /adesao/pagamento). */
+export async function listLatePayments(
+  supabase: SupabaseClient,
+  payerStudentId: string,
+  opts?: { keepFamilyPending?: boolean }
+): Promise<LatePayment[]> {
   const { data } = await supabase
     .from("Payment")
     .select("id, paymentType, referenceMonth, amount")
@@ -33,9 +38,26 @@ export async function listLatePayments(supabase: SupabaseClient, payerStudentId:
     .eq("status", "LATE")
     .in("paymentType", [...PAYABLE_TYPES])
     .order("referenceMonth", { ascending: true });
-  return ((data ?? []) as { id: string; paymentType: string; referenceMonth: string | null; amount: number | string }[])
+  const rows = ((data ?? []) as { id: string; paymentType: string; referenceMonth: string | null; amount: number | string }[])
     .map((p) => ({ ...p, amount: Number(p.amount) }))
     .filter((p) => p.amount > 0);
+  // Pediu grupo familiar e ainda não está num: a mensalidade espera pelo grupo (vai para o titular).
+  if (!opts?.keepFamilyPending && rows.some((p) => p.paymentType === "TUITION") && (await hasPendingFamilyGroupRequest(supabase, payerStudentId))) {
+    return rows.filter((p) => p.paymentType !== "TUITION");
+  }
+  return rows;
+}
+
+/** Marcou «Faço parte de um grupo familiar» na adesão e ainda não pertence a nenhum grupo. */
+export async function hasPendingFamilyGroupRequest(supabase: SupabaseClient, studentId: string): Promise<boolean> {
+  const { data: form, error } = await supabase
+    .from("StudentEnrollmentForm")
+    .select("familyGroupRequested")
+    .eq("studentId", studentId)
+    .maybeSingle();
+  if (error || !(form as { familyGroupRequested?: boolean } | null)?.familyGroupRequested) return false;
+  const { data: member } = await supabase.from("FamilyGroupMember").select("id").eq("studentId", studentId).maybeSingle();
+  return !member;
 }
 
 export function latePaymentLabel(p: LatePayment): string {

@@ -9,6 +9,7 @@ import { getFamilyContext } from "@/lib/family-context";
 import { resolveAutoPayPayer } from "@/lib/autopay/service";
 import { createTuitionCheckout, listLatePayments } from "@/lib/tuition-checkout/service";
 import { getPublicOrigin } from "@/lib/site-public-url";
+import { invalidateStudentGateCache } from "@/lib/student-gate-cache";
 import { uploadPaymentProof, validateEnrollmentPaymentMethod } from "../enrollment-actions";
 
 export type SaveAdesaoPaymentResult = { error?: string };
@@ -29,7 +30,7 @@ export async function saveAdesaoPayment(
   const familyCtx = await getFamilyContext(admin, studentId);
   const familyRequested = !familyCtx && (formData.get("familyGroupRequested") === "on");
 
-  const late = await listLatePayments(admin, studentId);
+  const late = await listLatePayments(admin, studentId, { keepFamilyPending: true });
   // Membro (ou pedido de família): a mensalidade não é paga por ele.
   const payable = familyRequested || familyCtx?.role === "MEMBER" ? late.filter((p) => p.paymentType !== "TUITION") : late;
 
@@ -52,7 +53,9 @@ export async function saveAdesaoPayment(
   const now = new Date().toISOString();
   const { error } = await admin
     .from("StudentEnrollmentForm")
-    .update({ paymentMethod: paymentMethod || (existing as { paymentMethod?: string | null }).paymentMethod || null, ...proof, updatedAt: now })
+    // Nunca fica vazio: é o que diz ao middleware que este passo foi concluído
+    // (sem nada a pagar já — só a mensalidade, paga pelo titular — fica «FAMILY»).
+    .update({ paymentMethod: paymentMethod || (existing as { paymentMethod?: string | null }).paymentMethod || "FAMILY", ...proof, updatedAt: now })
     .eq("studentId", studentId);
   if (error) return { error: error.message };
 
@@ -65,6 +68,7 @@ export async function saveAdesaoPayment(
     if (famErr) console.warn("[adesao pagamento] familyGroupRequested:", famErr.message);
   }
 
+  await invalidateStudentGateCache(studentId);
   revalidatePath("/dashboard/financeiro");
   revalidatePath("/admin/familias");
 

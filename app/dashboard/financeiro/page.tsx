@@ -19,6 +19,7 @@ import { getPlanAccess } from "@/lib/plan-access";
 import { getMonthlyCheckInLimit } from "@/lib/monthly-checkin-limit";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
+import { hasPendingFamilyGroupRequest } from "@/lib/tuition-checkout/service";
 import { PlanSummaryCard, type PlanSummary } from "./PlanSummaryCard";
 import { AutoPaySection } from "@/components/autopay/AutoPaySection";
 import { StudentLatePaymentsSection, StudentLoyaltySection, StudentLoyaltyShortcut } from "@/components/payments/StudentLoyaltyAndLate";
@@ -56,6 +57,7 @@ export default async function DashboardFinanceiroPage({
   let awaitingSchoolPayment = false;
   let pendingIndividualFees = false;
   let familyRole: "TITULAR" | "MEMBER" | null = null;
+  let familyRequestPending = false;
   const autoPaidIds = new Set<string>();
   let onboardingFees = null;
   let planSummary: PlanSummary | null = null;
@@ -91,6 +93,7 @@ export default async function DashboardFinanceiroPage({
       }
     }
 
+    if (!familyRole) familyRequestPending = await hasPendingFamilyGroupRequest(getAdminClientOrNull().client ?? supabase, studentId);
     onboardingFees = await getStudentOnboardingFeesState(supabase, studentId);
     await syncPendingInsuranceAmounts(supabase, { studentId });
 
@@ -203,6 +206,17 @@ export default async function DashboardFinanceiroPage({
           className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-text-primary"
         >
           {t("schoolPaymentGateBanner")}
+        </div>
+      )}
+
+      {familyRequestPending && (
+        <div
+          role="status"
+          className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 text-sm text-text-primary"
+        >
+          {locale === "en"
+            ? "Your monthly fee is waiting for your family group: once the school creates it, the account holder pays it. Enrolment and insurance are still yours."
+            : "A tua mensalidade está a aguardar o grupo familiar: quando a secretaria o criar, passa a ser paga pelo titular. A inscrição e o seguro continuam a ser teus."}
         </div>
       )}
 

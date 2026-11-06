@@ -393,7 +393,7 @@ export async function middleware(request: NextRequest) {
       response.cookies.set(STUDENT_GATE_REFRESH_COOKIE, "", { path: "/", maxAge: 0 });
     }
 
-    let gate = edgeCacheGet<{ onboardingDone: boolean; documentsSigned: boolean; hasAccess: boolean }>(gateCacheKey);
+    let gate = edgeCacheGet<{ onboardingDone: boolean; documentsSigned: boolean; hasAccess: boolean; paymentStepPending?: boolean }>(gateCacheKey);
 
     if (!gate) {
       /** Precisa de InsuranceSettings mesmo sem plano (para validar versão do comprovativo/contrato
@@ -422,7 +422,7 @@ export async function middleware(request: NextRequest) {
             .maybeSingle(),
           supabase
             .from("StudentEnrollmentForm")
-            .select("formCompleted, formVersion")
+            .select("formCompleted, formVersion, paymentMethod")
             .eq("studentId", student.id)
             .maybeSingle(),
           insuranceSettingsPromise,
@@ -463,11 +463,20 @@ export async function middleware(request: NextRequest) {
         }
       }
 
-      gate = { onboardingDone, documentsSigned, hasAccess };
+      // Assinou tudo mas saiu do último passo da adesão (/adesao/pagamento) sem o concluir: a ficha
+      // do aluno já não grava a forma de pagamento, só esse passo. Papel arquivado pelo admin fica de fora.
+      const paymentStepPending =
+        Boolean(student.planId) &&
+        documentsSigned &&
+        !hasAccess &&
+        !student.physicalDocumentsFiledAt &&
+        !(enrollmentForm as { paymentMethod?: string | null } | null)?.paymentMethod;
+
+      gate = { onboardingDone, documentsSigned, hasAccess, paymentStepPending };
       edgeCacheSet(gateCacheKey, gate, STUDENT_GATE_CACHE_TTL_MS);
     }
 
-    const { onboardingDone, documentsSigned, hasAccess } = gate;
+    const { onboardingDone, documentsSigned, hasAccess, paymentStepPending } = gate;
 
     if (!onboardingDone && !isOnboardingPath(pathname) && !isPublicBrowserPath(pathname)) {
       const url = request.nextUrl.clone();
@@ -514,6 +523,26 @@ export async function middleware(request: NextRequest) {
 
       const adminFree = Boolean((student as { adminGrantedFullAccess?: boolean }).adminGrantedFullAccess);
       if (!adminFree) {
+        if (!hasAccess && paymentStepPending) {
+          // Voltou sem concluir o pagamento da adesão: retoma em /adesao/pagamento. O Financeiro e o
+          // perfil continuam abertos (é para lá que /adesao/pagamento manda quando não há nada a pagar).
+          if (
+            isStudentAllowedWithoutPlan(pathname) ||
+            pathname === "/dashboard/financeiro" ||
+            pathname.startsWith("/dashboard/financeiro/") ||
+            pathname === "/dashboard/perfil" ||
+            pathname.startsWith("/dashboard/perfil/")
+          ) {
+            return response;
+          }
+          if (pathname.startsWith("/api/")) {
+            return NextResponse.json({ error: "Conclui o pagamento da adesão para continuar." }, { status: 403 });
+          }
+          const url = request.nextUrl.clone();
+          url.pathname = "/adesao/pagamento";
+          url.search = "";
+          return redirectPreservingCookies(response, url);
+        }
         if (!hasAccess) {
           // Rotas de onboarding/adesão/escolher-plano e a área de pagamento não podem
           // ser bloqueadas pelo gate; caso contrário o check de documentos assinados

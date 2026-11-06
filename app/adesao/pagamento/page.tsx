@@ -34,8 +34,9 @@ export default async function AdesaoPagamentoPage() {
     Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned);
   if (!signed) redirect("/adesao");
 
-  const late = await listLatePayments(admin, studentId);
-  if (late.length === 0) redirect("/dashboard");
+  const late = await listLatePayments(admin, studentId, { keepFamilyPending: true });
+  // Financeiro (e não /dashboard): sem acesso, o middleware mandaria /dashboard de volta para aqui.
+  if (late.length === 0) redirect("/dashboard/financeiro");
 
   const familyCtx = await getFamilyContext(admin, studentId);
   let familyPayerName: string | null = null;
