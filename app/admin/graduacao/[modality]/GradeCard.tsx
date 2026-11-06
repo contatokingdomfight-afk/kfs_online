@@ -639,7 +639,7 @@ function PrerequisitesSection({ grade, accumulatedMonths, onChange }: SectionPro
           id={`pass-${grade.id}`}
           label="Nota mínima para aprovar"
           value={grade.passMinAxisAvg}
-          onChange={(v) => onChange({ passMinAxisAvg: v ?? 3 })}
+          onChange={(v) => onChange({ passMinAxisAvg: v ?? 2.5 })}
           min={1}
           max={5}
           step={0.5}

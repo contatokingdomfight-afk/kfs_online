@@ -182,7 +182,7 @@ export function normalizeTemplateDraft(input: unknown): NormalizeResult {
       // Avaliações de performance dos treinadores: escala 1–10 (radar). Exame: 1–5.
       minPerformanceAvg: scoreOrNull(g.minPerformanceAvg, 10),
       physicalAssessmentMaxAgeMonths: intOrNull(g.physicalAssessmentMaxAgeMonths, 1, 60),
-      passMinAxisAvg: scoreOrNull(g.passMinAxisAvg) ?? 3,
+      passMinAxisAvg: scoreOrNull(g.passMinAxisAvg) ?? 2.5,
       items,
       courses,
       requirements,

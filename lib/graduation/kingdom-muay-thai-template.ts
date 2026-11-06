@@ -637,7 +637,7 @@ export function buildKingdomTemplateDraft(
       minAttendances: null,
       minPerformanceAvg: null,
       physicalAssessmentMaxAgeMonths: 6,
-      passMinAxisAvg: 3,
+      passMinAxisAvg: 2.5,
       items: AXIS_ORDER.flatMap((axis) =>
         g.axes[axis].map((item) => {
           const [label, description] = typeof item === "string" ? [item, null] : item;

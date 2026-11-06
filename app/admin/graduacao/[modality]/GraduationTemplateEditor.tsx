@@ -49,7 +49,7 @@ export function emptyGrade(): GraduationGradeDraft {
     minAttendances: null,
     minPerformanceAvg: null,
     physicalAssessmentMaxAgeMonths: 6,
-    passMinAxisAvg: 3,
+    passMinAxisAvg: 2.5,
     items: [],
     courses: [],
     requirements: [],
