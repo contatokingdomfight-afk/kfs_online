@@ -27,7 +27,7 @@ export function ModalitySummaryCard({ graduation, active }: { graduation: Studen
     >
       <p className="m-0 text-xs font-bold uppercase tracking-wider text-text-secondary">{graduation.modalityName}</p>
       <div className="mt-2 flex items-center gap-2">
-        <BeltSwatch colors={current?.colors ?? []} width={40} height={12} />
+        <BeltSwatch colors={current?.colors ?? []} width={40} height={12} modality={graduation.modalityCode} />
         <span className="min-w-0 truncate text-base font-bold text-text-primary">{current?.name ?? "Sem graduação"}</span>
       </div>
       <p className={`m-0 mt-2 text-xs ${isReadyForExam ? "font-bold text-success" : "text-text-secondary"}`}>{status}</p>

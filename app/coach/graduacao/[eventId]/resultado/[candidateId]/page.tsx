@@ -47,7 +47,7 @@ export default async function ResultadoCandidatoPage({ params }: { params: Promi
             <strong style={{ color: "var(--primary)" }}>🧭 Nivelamento</strong>
           ) : (
             <>
-              Exame para <BeltSwatch colors={sheet.targetGrade.colors} width={32} height={10} />
+              Exame para <BeltSwatch colors={sheet.targetGrade.colors} width={32} height={10} modality={event.modalityCode} />
               <strong style={{ color: "var(--text-primary)" }}>{sheet.targetGrade.name}</strong>
             </>
           )}
@@ -78,7 +78,7 @@ export default async function ResultadoCandidatoPage({ params }: { params: Promi
               const color = !r.isComplete ? "var(--text-secondary)" : r.passed ? "var(--success)" : "var(--danger)";
               return (
                 <li key={l.gradeId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)", fontSize: "var(--text-sm)", flexWrap: "wrap" }}>
-                  <BeltSwatch colors={l.colors} width={28} height={10} />
+                  <BeltSwatch colors={l.colors} width={28} height={10} modality={event.modalityCode} />
                   <strong style={{ flex: "1 1 120px" }}>{l.gradeName}</strong>
                   <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color }}>{label}</span>
                   <span style={{ flexBasis: "100%", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
@@ -171,6 +171,7 @@ export default async function ResultadoCandidatoPage({ params }: { params: Promi
           options={placement.result.levels.map((l) => ({ id: l.gradeId, name: l.gradeName, colors: l.colors }))}
           proposedId={proposed?.id ?? null}
           hasScores={result.scoredCount > 0}
+          modalityCode={event.modalityCode}
         />
       )}
       {placement && !decided && event.status === "SCHEDULED" && role !== "ADMIN" && (

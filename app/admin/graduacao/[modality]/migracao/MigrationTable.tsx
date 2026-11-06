@@ -80,7 +80,7 @@ export function MigrationTable({ modalityCode, grades, rows }: { modalityCode: s
                   )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <BeltSwatch colors={value >= 0 ? grades[value]?.colors ?? [] : []} width={36} height={12} />
+                  <BeltSwatch colors={value >= 0 ? grades[value]?.colors ?? [] : []} width={36} height={12} modality={modalityCode} />
                   <select
                     className="input"
                     value={value}

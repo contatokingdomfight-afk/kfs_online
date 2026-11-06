@@ -29,6 +29,8 @@ type Props = {
   initialScores: ScoreState;
   /** Nivelamento: ficha de cada grau avaliado (o último é o atual). */
   placement?: { levelSheets: ExamSheet[]; nextGradeName: string | null } | null;
+  /** Boxe mostra luvas em vez de faixas. */
+  modalityCode?: string;
 };
 
 /** Um separador da folha: um eixo dos itens novos, o grau anterior ou a revisão. */
@@ -86,7 +88,7 @@ function buildSections(sheet: ExamSheet, placement: Props["placement"]): Section
   return sections;
 }
 
-export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, initialScores, placement = null }: Props) {
+export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, initialScores, placement = null, modalityCode }: Props) {
   const [scores, setScores] = useState<ScoreState>(initialScores);
   const [error, setError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "pending" | "saving" | "saved" | "error">("idle");
@@ -279,7 +281,7 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
                       color: current ? "var(--text-primary)" : "var(--success)",
                     }}
                   >
-                    {!current && "✓"} <BeltSwatch colors={l.targetGrade.colors} width={20} height={8} /> {l.targetGrade.name}
+                    {!current && "✓"} <BeltSwatch colors={l.targetGrade.colors} width={20} height={8} modality={modalityCode} /> {l.targetGrade.name}
                     {current && " · a avaliar"}
                   </li>
                 );
@@ -293,7 +295,7 @@ export function ExamScoringSheet({ eventId, candidateId, studentName, sheet, ini
           </>
         ) : (
           <p style={{ margin: "6px 0 0", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
-            Exame para <BeltSwatch colors={grade.colors} width={32} height={10} /> <strong style={{ color: "var(--text-primary)" }}>{grade.name}</strong>
+            Exame para <BeltSwatch colors={grade.colors} width={32} height={10} modality={modalityCode} /> <strong style={{ color: "var(--text-primary)" }}>{grade.name}</strong>
             <span>· mínimo {formatScore(sheet.passMin)} por eixo</span>
           </p>
         )}

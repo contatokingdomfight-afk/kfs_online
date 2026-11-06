@@ -31,11 +31,13 @@ export function ConvocationPanel({
   eventId,
   options,
   readinessHref,
+  modalityCode,
 }: {
   eventId: string;
   options: ConvocationOption[];
   /** Admin: base do link para a prontidão manual do aluno (acrescenta-se o studentId). */
   readinessHref: string | null;
+  modalityCode?: string;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(
@@ -123,8 +125,8 @@ export function ConvocationPanel({
               )}
             </span>
             <span style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
-              <BeltSwatch colors={o.currentColors} width={22} height={8} />
-              {o.currentName ?? "Sem graduação"} → <BeltSwatch colors={o.nextColors} width={22} height={8} />
+              <BeltSwatch colors={o.currentColors} width={22} height={8} modality={modalityCode} />
+              {o.currentName ?? "Sem graduação"} → <BeltSwatch colors={o.nextColors} width={22} height={8} modality={modalityCode} />
               <strong style={{ color: "var(--text-primary)" }}>{o.nextName}</strong>
             </span>
             {o.manual && (
@@ -279,7 +281,7 @@ export function ConvocationPanel({
                   key={o.studentId}
                   style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "1px solid var(--border)", fontSize: "var(--text-sm)" }}
                 >
-                  <BeltSwatch colors={o.nextColors} width={24} height={9} />
+                  <BeltSwatch colors={o.nextColors} width={24} height={9} modality={modalityCode} />
                   <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     <strong>{o.name}</strong> <span style={{ color: "var(--text-secondary)" }}>→ {o.nextName}</span>
                   </span>

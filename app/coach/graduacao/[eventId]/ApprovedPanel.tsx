@@ -21,7 +21,7 @@ export type ApprovedRow = {
 
 type Filter = "all" | "todo" | "done";
 
-export function ApprovedPanel({ eventId, rows, revealLabel }: { eventId: string; rows: ApprovedRow[]; revealLabel: string | null }) {
+export function ApprovedPanel({ eventId, rows, revealLabel, modalityCode }: { eventId: string; rows: ApprovedRow[]; revealLabel: string | null; modalityCode?: string }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [delivered, setDelivered] = useState(() => new Map(rows.map((r) => [r.id, r.delivered])));
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +102,7 @@ export function ApprovedPanel({ eventId, rows, revealLabel }: { eventId: string;
           const todo = g.rows.filter((r) => !delivered.get(r.id)).length;
           return (
             <div key={g.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderTop: "1px dashed var(--border)" }}>
-              <BeltSwatch colors={g.colors} width={56} height={12} />
+              <BeltSwatch colors={g.colors} width={56} height={12} modality={modalityCode} />
               <span style={{ flex: 1, fontSize: "var(--text-sm)" }}>{g.name}</span>
               <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>{todo === 0 ? "tudo entregue" : `${todo} por entregar`}</span>
               <b style={{ fontSize: 16, minWidth: 32, textAlign: "right" }}>×{g.rows.length}</b>
@@ -128,7 +128,7 @@ export function ApprovedPanel({ eventId, rows, revealLabel }: { eventId: string;
         return (
           <section key={g.name} style={{ marginBottom: 16 }}>
             <h3 style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 0 8px", fontSize: "var(--text-sm)", fontWeight: 700 }}>
-              <BeltSwatch colors={g.colors} width={40} height={10} />
+              <BeltSwatch colors={g.colors} width={40} height={10} modality={modalityCode} />
               {g.name}
               <span style={{ fontWeight: 400, color: "var(--text-secondary)" }}>· {g.rows.length}</span>
             </h3>

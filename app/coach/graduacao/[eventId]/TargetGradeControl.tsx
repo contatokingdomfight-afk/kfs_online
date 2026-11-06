@@ -17,6 +17,7 @@ export function TargetGradeControl({
   currentReason,
   options,
   placement,
+  modalityCode,
 }: {
   candidateId: string;
   studentName: string;
@@ -26,6 +27,7 @@ export function TargetGradeControl({
   options: TargetGradeOption[];
   /** Nivelamento já definido (null = exame normal). */
   placement: { maxGradeId: string | null; note: string | null } | null;
+  modalityCode?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -114,7 +116,7 @@ export function TargetGradeControl({
                 textAlign: "left",
               }}
             >
-              <BeltSwatch colors={o.colors} width={28} height={10} />
+              <BeltSwatch colors={o.colors} width={28} height={10} modality={modalityCode} />
               <span style={{ flex: 1 }}>{o.name}</span>
               <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: i === 0 ? "var(--success)" : "var(--warning)" }}>
                 {i === 0 ? "Próximo" : `Salta ${i}`}

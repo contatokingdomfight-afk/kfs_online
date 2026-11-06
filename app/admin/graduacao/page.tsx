@@ -73,7 +73,7 @@ export default async function AdminGraduacaoPage() {
                 {m.gradeColors.length > 0 && (
                   <div style={{ display: "flex", gap: 3, marginTop: 10, flexWrap: "wrap" }} aria-hidden>
                     {m.gradeColors.map((colors, i) => (
-                      <BeltSwatch key={i} colors={colors} width={28} height={8} />
+                      <BeltSwatch key={i} colors={colors} width={28} height={8} modality={m.code as string} />
                     ))}
                   </div>
                 )}

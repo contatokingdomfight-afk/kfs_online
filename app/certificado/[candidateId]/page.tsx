@@ -23,7 +23,7 @@ export default async function VerificarCertificadoPage({ params }: { params: Pro
     [
       "Grau",
       <span key="g" className="inline-flex items-center gap-2">
-        <BeltSwatch colors={cert.gradeColors} width={32} height={10} /> {cert.gradeName} · {cert.modalityName}
+        <BeltSwatch colors={cert.gradeColors} width={32} height={10} modality={cert.modalityCode} /> {cert.gradeName} · {cert.modalityName}
       </span>,
     ],
     ["Data", formatCertificateDate(cert.issuedAt)],

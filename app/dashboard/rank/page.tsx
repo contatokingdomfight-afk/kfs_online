@@ -165,7 +165,7 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
       valueHint: modality ? undefined : `${nf(row.xp)} XP`,
       belt: (
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          {grade && <BeltSwatch colors={grade.colors} width={22} height={8} />}
+          {grade && <BeltSwatch colors={grade.colors} width={22} height={8} modality={grade.modalityCode} />}
           {beltLabel}
         </span>
       ),

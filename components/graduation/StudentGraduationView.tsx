@@ -21,7 +21,7 @@ export function StudentGraduationView({ graduation }: { graduation: StudentModal
           Grau atual · {modalityName}
         </p>
         <div className="mt-3 flex items-center gap-4">
-          <BeltSwatch colors={current?.colors ?? []} width={88} height={22} />
+          <BeltSwatch colors={current?.colors ?? []} width={88} height={22} modality={graduation.modalityCode} />
           <div className="min-w-0">
             <p className="m-0 break-words text-xl font-bold text-text-primary [overflow-wrap:anywhere]">{current ? current.name : "Sem graduação"}</p>
             <p className="m-0 mt-0.5 break-words text-sm text-text-secondary">
@@ -44,11 +44,11 @@ export function StudentGraduationView({ graduation }: { graduation: StudentModal
       </section>
 
       {graduation.convocation && <ConvocationBanner convocation={graduation.convocation} modalityCode={graduation.modalityCode} />}
-      {graduation.awaitingResult && <AwaitingResultBanner awaiting={graduation.awaitingResult} />}
+      {graduation.awaitingResult && <AwaitingResultBanner awaiting={graduation.awaitingResult} modalityCode={graduation.modalityCode} />}
 
       {next ? <NextGrade graduation={graduation} /> : <TopGrade />}
 
-      {graduation.examHistory.length > 0 && <ExamHistory entries={graduation.examHistory} />}
+      {graduation.examHistory.length > 0 && <ExamHistory entries={graduation.examHistory} modalityCode={graduation.modalityCode} />}
     </div>
   );
 }
@@ -76,7 +76,7 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
         </p>
         <p className="mb-0 mt-2 text-sm text-text-secondary">O coach acredita que já podes estar até este grau:</p>
         <div className="mt-3 flex items-center gap-4">
-          <BeltSwatch colors={max.colors} width={88} height={22} />
+          <BeltSwatch colors={max.colors} width={88} height={22} modality={graduation.modalityCode} />
           <div className="min-w-0">
             <p className="m-0 break-words text-xl font-bold text-text-primary [overflow-wrap:anywhere]">{max.name}</p>
             {(max.subtitle || max.motto) && (
@@ -113,7 +113,7 @@ function NextGrade({ graduation }: { graduation: StudentModalityGraduation }) {
           {skipTarget ? "O teu exame — salto de grau" : "Próximo grau"}
         </p>
         <div className="mt-3 flex items-center gap-4">
-          <BeltSwatch colors={next.colors} width={88} height={22} />
+          <BeltSwatch colors={next.colors} width={88} height={22} modality={graduation.modalityCode} />
           <div className="min-w-0">
             <p className="m-0 break-words text-xl font-bold text-text-primary [overflow-wrap:anywhere]">{next.name}</p>
             {(next.subtitle || next.motto) && (
@@ -293,13 +293,13 @@ function ProgressBar({ value, label, thin }: { value: number; label: string; thi
   );
 }
 
-function PlacementContent({ target }: { target: NonNullable<StudentModalityGraduation["placementTarget"]> }) {
+function PlacementContent({ target, modalityCode }: { target: NonNullable<StudentModalityGraduation["placementTarget"]>; modalityCode: string }) {
   const all = [...target.levels, ...target.reviewGrades];
   const hasCritical = all.some((g) => g.items.some((i) => i.isCritical));
   const renderGrade = (g: (typeof all)[number], open: boolean, subtitle: string) => (
     <details key={g.gradeId} className="group rounded-xl border border-border bg-bg" open={open}>
       <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
-        <BeltSwatch colors={g.colors} width={36} height={10} />
+        <BeltSwatch colors={g.colors} width={36} height={10} modality={modalityCode} />
         <span className="min-w-0 flex-1">
           <span className="block break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">{g.gradeName}</span>
           <span className="block text-xs text-text-secondary">{subtitle}</span>
@@ -346,7 +346,7 @@ function PlacementContent({ target }: { target: NonNullable<StudentModalityGradu
 }
 
 function ExamContent({ graduation }: { graduation: StudentModalityGraduation }) {
-  if (graduation.placementTarget) return <PlacementContent target={graduation.placementTarget} />;
+  if (graduation.placementTarget) return <PlacementContent target={graduation.placementTarget} modalityCode={graduation.modalityCode} />;
   // Salto de grau: o conteúdo é o do grau-alvo do exame marcado, não o do próximo grau.
   const target = graduation.examTarget;
   const next = target?.grade ?? graduation.progress.next!;
@@ -401,7 +401,7 @@ function ExamContent({ graduation }: { graduation: StudentModalityGraduation }) 
               // O grau imediatamente anterior (o primeiro da lista) é avaliado item a item; os mais antigos por eixo.
               <details key={g.gradeId} className="group rounded-xl border border-border bg-bg" open={i === 0}>
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
-                  <BeltSwatch colors={g.colors} width={36} height={10} />
+                  <BeltSwatch colors={g.colors} width={36} height={10} modality={graduation.modalityCode} />
                   <span className="min-w-0 flex-1">
                     <span className="block break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">{g.gradeName}</span>
                     <span className="block text-xs text-text-secondary">
@@ -466,7 +466,7 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function AwaitingResultBanner({ awaiting }: { awaiting: NonNullable<StudentModalityGraduation["awaitingResult"]> }) {
+function AwaitingResultBanner({ awaiting, modalityCode }: { awaiting: NonNullable<StudentModalityGraduation["awaitingResult"]>; modalityCode: string }) {
   return (
     <section
       className="mt-4 rounded-2xl border p-4 sm:p-5"
@@ -481,7 +481,7 @@ function AwaitingResultBanner({ awaiting }: { awaiting: NonNullable<StudentModal
           "Exame de nivelamento"
         ) : (
           <>
-            Exame para <BeltSwatch colors={awaiting.gradeColors} width={36} height={11} /> {awaiting.gradeName}
+            Exame para <BeltSwatch colors={awaiting.gradeColors} width={36} height={11} modality={modalityCode} /> {awaiting.gradeName}
           </>
         )}
       </p>
@@ -546,7 +546,7 @@ function ConvocationBanner({
   );
 }
 
-function ExamHistory({ entries }: { entries: StudentExamHistoryEntry[] }) {
+function ExamHistory({ entries, modalityCode }: { entries: StudentExamHistoryEntry[]; modalityCode: string }) {
   return (
     <section className={card} aria-labelledby="historico-exames">
       <p className={eyebrow} id="historico-exames">
@@ -556,7 +556,7 @@ function ExamHistory({ entries }: { entries: StudentExamHistoryEntry[] }) {
         {entries.map((e) => {
           const content = (
             <>
-              <BeltSwatch colors={e.gradeColors} width={36} height={10} />
+              <BeltSwatch colors={e.gradeColors} width={36} height={10} modality={modalityCode} />
               <span className="min-w-0 flex-1">
                 <span className="block break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">{e.gradeName}</span>
                 <span className="block text-xs text-text-secondary">

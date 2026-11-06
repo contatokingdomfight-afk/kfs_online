@@ -142,7 +142,7 @@ export default async function EvolucaoPage() {
                   {graduation.modalityName}
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 800 }}>
-                  <BeltSwatch colors={graduation.currentColors} width={32} height={12} />
+                  <BeltSwatch colors={graduation.currentColors} width={32} height={12} modality={graduation.modalityCode} />
                   {graduation.currentName ?? (pt ? "Sem graduação" : "No grade yet")}
                   {graduation.nextName ? ` → ${graduation.nextName}` : ""}
                 </span>

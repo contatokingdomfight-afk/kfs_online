@@ -17,6 +17,7 @@ export type CertificateData = {
   studentName: string;
   studentNif: string | null;
   schoolNif: string | null;
+  modalityCode: string;
   modalityName: string;
   gradeName: string;
   gradeColors: string[];
@@ -68,7 +69,7 @@ type CandidateRow = {
 };
 
 /** Dados públicos mínimos (página de verificação): sem NIF nem assinaturas. */
-export type PublicCertificate = Pick<CertificateData, "number" | "studentName" | "modalityName" | "gradeName" | "gradeColors" | "issuedAt">;
+export type PublicCertificate = Pick<CertificateData, "number" | "studentName" | "modalityCode" | "modalityName" | "gradeName" | "gradeColors" | "issuedAt">;
 
 async function loadBase(supabase: SupabaseClient, candidateId: string) {
   const { data } = await supabase
@@ -97,6 +98,7 @@ async function loadBase(supabase: SupabaseClient, candidateId: string) {
     pub: {
       number: formatCertificateNumber(event.modalityCode as string, c.revealedAt, c.certificateNumber),
       studentName: ((user as { name?: string | null } | null)?.name ?? "").trim() || "Aluno",
+      modalityCode: event.modalityCode as string,
       modalityName: (modality?.name as string | undefined) ?? (event.modalityCode as string),
       gradeName: grade.name as string,
       gradeColors: ((grade.colors as string[] | null) ?? []).filter(Boolean),

@@ -62,7 +62,7 @@ export default async function AgendarExamePage({ searchParams }: { searchParams:
       <section className={card} aria-label="Próximo grau">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <BeltSwatch colors={next.colors} width={44} height={14} />
+            <BeltSwatch colors={next.colors} width={44} height={14} modality={graduation.modalityCode} />
             <div className="min-w-0">
               <p className="m-0 break-words font-bold text-text-primary">
                 {graduation.convocation?.isPlacement ? "Exame de nivelamento" : `Exame para ${next.name}`}

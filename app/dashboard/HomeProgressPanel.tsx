@@ -170,7 +170,7 @@ export function HomeProgressPanel({
       {hasPerformanceTracking && graduation && (
         <Link href="/dashboard/graduacao" style={{ ...card, padding: 14, display: "flex", flexDirection: "column", gap: 10, textDecoration: "none", color: "inherit" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <BeltSwatch colors={graduation.currentColors} width={34} height={12} />
+            <BeltSwatch colors={graduation.currentColors} width={34} height={12} modality={graduation.modalityCode} />
             <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 700 }}>
               {graduation.nextName
                 ? `${pt ? "Rumo a" : "Towards"} ${graduation.nextName}`

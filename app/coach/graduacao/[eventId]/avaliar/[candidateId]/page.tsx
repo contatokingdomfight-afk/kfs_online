@@ -31,6 +31,7 @@ export default async function AvaliarCandidatoPage({ params }: { params: Promise
         studentName={data.candidate.studentName}
         sheet={data.sheet}
         initialScores={data.myScores}
+        modalityCode={data.event.modalityCode}
         placement={
           data.placement
             ? {

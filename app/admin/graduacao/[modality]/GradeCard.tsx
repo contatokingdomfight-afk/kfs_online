@@ -44,6 +44,8 @@ type Props = {
   onDuplicate: () => void;
   onRemove: () => void;
   courses: CourseOption[];
+  /** Boxe mostra luvas em vez de faixas. */
+  modalityCode?: string;
 };
 
 const sectionTitle: React.CSSProperties = {
@@ -87,6 +89,7 @@ export function GradeCard({
   onDuplicate,
   onRemove,
   courses,
+  modalityCode,
 }: Props) {
   const counts = GRADUATION_AXES.map((a) => grade.items.filter((i) => i.axis === a).length);
   const requiredCourses = grade.courses.filter((c) => c.isRequired).length;
@@ -134,7 +137,7 @@ export function GradeCard({
           </span>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <BeltSwatch colors={grade.colors} width={48} height={12} />
+              <BeltSwatch colors={grade.colors} width={48} height={12} modality={modalityCode} />
               <strong style={{ fontSize: "var(--text-base)" }}>{grade.name || <em style={{ color: "var(--text-secondary)" }}>Sem nome</em>}</strong>
               {grade.motto && <span style={{ fontSize: "var(--text-sm)", fontStyle: "italic", color: "var(--text-secondary)" }}>“{grade.motto}”</span>}
             </span>
@@ -176,7 +179,7 @@ export function GradeCard({
             </button>
           </div>
 
-          <IdentitySection grade={grade} onChange={onChange} />
+          <IdentitySection grade={grade} onChange={onChange} modalityCode={modalityCode} />
           <KnowledgeSection grade={grade} onChange={onChange} />
           <PrerequisitesSection grade={grade} accumulatedMonths={accumulatedMonths} onChange={onChange} />
           <CoursesSection grade={grade} courses={courses} onChange={onChange} />
@@ -208,7 +211,7 @@ function Chip({ children, muted, title }: { children: React.ReactNode; muted?: b
 
 type SectionProps = { grade: GraduationGradeDraft; onChange: (patch: Partial<GraduationGradeDraft>) => void };
 
-function IdentitySection({ grade, onChange }: SectionProps) {
+function IdentitySection({ grade, onChange, modalityCode }: SectionProps & { modalityCode?: string }) {
   const setText = (key: "name" | "subtitle" | "motto" | "objective" | "notes") => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     onChange({ [key]: key === "name" ? e.target.value : e.target.value || null });
 
@@ -251,7 +254,7 @@ function IdentitySection({ grade, onChange }: SectionProps) {
       </div>
       <div style={{ marginTop: "var(--space-3)" }}>
         <span style={fieldLabel}>Cores da faixa (até {MAX_COLORS_PER_GRADE})</span>
-        <ColorEditor colors={grade.colors} onChange={(colors) => onChange({ colors })} />
+        <ColorEditor colors={grade.colors} onChange={(colors) => onChange({ colors })} modalityCode={modalityCode} />
       </div>
       <details style={{ marginTop: "var(--space-3)" }} open={Boolean(grade.notes)}>
         <summary style={{ cursor: "pointer", fontSize: "var(--text-xs)", fontWeight: 600, color: "var(--text-secondary)" }}>Notas para o aluno (opcional)</summary>
@@ -269,12 +272,12 @@ function IdentitySection({ grade, onChange }: SectionProps) {
   );
 }
 
-function ColorEditor({ colors, onChange }: { colors: string[]; onChange: (colors: string[]) => void }) {
+function ColorEditor({ colors, onChange, modalityCode }: { colors: string[]; onChange: (colors: string[]) => void; modalityCode?: string }) {
   const full = colors.length >= MAX_COLORS_PER_GRADE;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
-        <BeltSwatch colors={colors} width={120} height={18} />
+        <BeltSwatch colors={colors} width={120} height={18} modality={modalityCode} />
         {colors.map((c, i) => (
           <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 2, padding: "2px 4px 2px 2px", border: "1px solid var(--border)", borderRadius: 999 }}>
             <input

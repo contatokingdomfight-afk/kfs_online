@@ -151,9 +151,9 @@ export default async function ExamEventPage({
       </nav>
 
       {tab === "aprovados" ? (
-        <ApprovedPanel eventId={event.id} rows={approvedRows} revealLabel={revealLabel} />
+        <ApprovedPanel eventId={event.id} rows={approvedRows} revealLabel={revealLabel} modalityCode={event.modalityCode} />
       ) : tab === "relatorio" ? (
-        <ExamReport eventId={event.id} rows={reportRows} revealLabel={revealLabel} />
+        <ExamReport eventId={event.id} rows={reportRows} revealLabel={revealLabel} modalityCode={event.modalityCode} />
       ) : (
       <>
 
@@ -219,7 +219,7 @@ export default async function ExamEventPage({
               const total = c.result?.totalCount ?? 0;
               return (
                 <li key={c.id} className="card" style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap", padding: "var(--space-3) var(--space-4)" }}>
-                  <BeltSwatch colors={c.gradeColors} width={40} height={12} title={c.gradeName} />
+                  <BeltSwatch colors={c.gradeColors} width={40} height={12} title={c.gradeName} modality={event.modalityCode} />
                   <div style={{ flex: "1 1 180px", minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       {slots.length > 0 && c.slotStartsAt && (
@@ -283,6 +283,7 @@ export default async function ExamEventPage({
                       currentReason={c.skipReason}
                       options={targetOptionsFor(c.studentId)}
                       placement={c.mode === "PLACEMENT" ? { maxGradeId: c.placementMaxGradeId, note: c.placementNote } : null}
+                      modalityCode={event.modalityCode}
                     />
                   )}
                 </li>
@@ -292,7 +293,7 @@ export default async function ExamEventPage({
         )}
       </section>
 
-      {isOpen && <ConvocationPanel eventId={event.id} options={options} readinessHref={readinessHref} />}
+      {isOpen && <ConvocationPanel eventId={event.id} options={options} readinessHref={readinessHref} modalityCode={event.modalityCode} />}
 
       <EventActions eventId={event.id} status={event.status} pendingCount={pending} />
       </>

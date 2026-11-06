@@ -16,6 +16,7 @@ export function PlacementDecisionForm({
   options,
   proposedId,
   hasScores,
+  modalityCode,
 }: {
   candidateId: string;
   eventId: string;
@@ -24,6 +25,7 @@ export function PlacementDecisionForm({
   /** null = proposta sem grau novo. */
   proposedId: string | null;
   hasScores: boolean;
+  modalityCode?: string;
 }) {
   const router = useRouter();
   const NONE = "";
@@ -95,7 +97,7 @@ export function PlacementDecisionForm({
           option(
             o.id,
             <>
-              <BeltSwatch colors={o.colors} width={28} height={10} /> {o.name}
+              <BeltSwatch colors={o.colors} width={28} height={10} modality={modalityCode} /> {o.name}
             </>,
             o.id === proposedId ? "Proposta" : proposedPos >= 0 ? (i > proposedPos ? "Acima da proposta" : null) : "Acima da proposta",
             o.id === proposedId ? "var(--success)" : "var(--warning)"
@@ -157,7 +159,7 @@ export function PlacementDecisionForm({
         cancelLabel="Voltar"
       >
         <ConfirmSummary
-          belt={awardOpt ? <BeltSwatch colors={awardOpt.colors} width={44} height={14} /> : null}
+          belt={awardOpt ? <BeltSwatch colors={awardOpt.colors} width={44} height={14} modality={modalityCode} /> : null}
           headline={awardOpt ? awardOpt.name : "Sem grau novo"}
           lines={[
             awardOpt ? "Os requisitos do próximo grau contam a partir de hoje." : "Não conta como reprovação.",

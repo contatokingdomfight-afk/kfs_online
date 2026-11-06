@@ -76,7 +76,7 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
         {!isPlacement && <ExamStatusChip status={candidate.status} />}
       </div>
       <p className="m-0 mt-1 flex items-center gap-2 text-sm text-text-secondary">
-        <BeltSwatch colors={(grade?.colors as string[] | null) ?? []} width={32} height={10} />
+        <BeltSwatch colors={(grade?.colors as string[] | null) ?? []} width={32} height={10} modality={event?.modalityCode} />
         {event?.title} · {event ? formatExamDate(event.scheduledAt, false) : ""}
       </p>
 

@@ -52,17 +52,17 @@ function statusLabel(r: ExamReportRow): string {
   return STATUS[r.status].label;
 }
 
-function GradeCell({ grade, muted }: { grade: ReportGrade | null; muted?: boolean }) {
+function GradeCell({ grade, muted, modalityCode }: { grade: ReportGrade | null; muted?: boolean; modalityCode?: string }) {
   if (!grade) return <span style={{ color: "var(--text-secondary)" }}>Sem graduação</span>;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: muted ? "var(--text-secondary)" : undefined }}>
-      <BeltSwatch colors={grade.colors} width={24} height={8} /> {grade.name}
+      <BeltSwatch colors={grade.colors} width={24} height={8} modality={modalityCode} /> {grade.name}
     </span>
   );
 }
 
 /** Relatório do dia de exame: resultado, grau atual (novo se aprovado) e médias; notas do aluno em modal. */
-export function ExamReport({ eventId, rows, revealLabel }: { eventId: string; rows: ExamReportRow[]; revealLabel: string | null }) {
+export function ExamReport({ eventId, rows, revealLabel, modalityCode }: { eventId: string; rows: ExamReportRow[]; revealLabel: string | null; modalityCode?: string }) {
   const [filter, setFilter] = useState<Filter>("ALL");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -194,13 +194,13 @@ export function ExamReport({ eventId, rows, revealLabel }: { eventId: string; ro
                       {r.newGrade ? (
                         <>
                           <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 700 }}>
-                            <BeltSwatch colors={r.newGrade.colors} width={24} height={8} /> {r.newGrade.name}
+                            <BeltSwatch colors={r.newGrade.colors} width={24} height={8} modality={modalityCode} /> {r.newGrade.name}
                             <span style={{ fontSize: 11, color: "var(--success)" }}>novo</span>
                           </span>
                           <span style={{ display: "block", fontSize: 11, color: "var(--text-secondary)" }}>antes: {r.currentGrade?.name ?? "sem graduação"}</span>
                         </>
                       ) : (
-                        <GradeCell grade={r.currentGrade} />
+                        <GradeCell grade={r.currentGrade} modalityCode={modalityCode} />
                       )}
                     </td>
                     {axisLabels.map((label, i) => {

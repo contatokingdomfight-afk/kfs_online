@@ -147,7 +147,7 @@ export function AptosList({ rows, exams }: { rows: AptoRow[]; exams: AptoExam[] 
             <div style={{ flex: "1 1 200px", minWidth: 0 }}>
               <strong style={{ fontSize: "var(--text-sm)", display: "block", overflowWrap: "anywhere" }}>{row.name}</strong>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 4, fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
-                <BeltSwatch colors={row.nextColors} width={28} height={8} /> {row.nextName}
+                <BeltSwatch colors={row.nextColors} width={28} height={8} modality={row.modalityCode} /> {row.nextName}
               </span>
             </div>
             <div style={{ flex: "1 1 180px", display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start", minWidth: 0 }}>

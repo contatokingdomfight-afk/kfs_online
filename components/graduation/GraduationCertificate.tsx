@@ -1,5 +1,6 @@
 import type { CertificateData } from "@/lib/graduation/certificate";
 import { formatCertificateDate } from "@/lib/graduation/certificate";
+import { gloveSvg, isGloveModality } from "@/lib/graduation/glove-svg";
 import s from "./certificate.module.css";
 
 const EMBLEM = "/brand/kfs-emblem.svg";
@@ -53,13 +54,18 @@ export function GraduationCertificate({ data, id, variant = "dark" }: { data: Ce
         <div className={s.nline} />
         <div className={s.grade}>concluiu com aprovação o exame de graduação e obteve o grau</div>
         <div className={s.gname}>{data.gradeName.replace(/\s*\/\s*/g, " / ")}</div>
-        <span className={s.rib}>
-          <span className={s.ribIn}>
-            {colors.map((c, i) => (
-              <i key={i} style={{ background: c }} />
-            ))}
+        {isGloveModality(data.modalityCode) ? (
+          // Boxe: luva do grau em vez da fita (SVG gerado de constantes + cores #rrggbb validadas).
+          <span className={s.glove} dangerouslySetInnerHTML={{ __html: gloveSvg(colors, { size: 96, style: "3d", idSeed: `cert${data.candidateId}`, title: data.gradeName }) }} />
+        ) : (
+          <span className={s.rib}>
+            <span className={s.ribIn}>
+              {colors.map((c, i) => (
+                <i key={i} style={{ background: c }} />
+              ))}
+            </span>
           </span>
-        </span>
+        )}
 
         <div className={s.foot}>
           <Signature sig={data.signatures[0]} />

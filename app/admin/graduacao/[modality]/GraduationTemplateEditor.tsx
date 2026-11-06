@@ -273,6 +273,7 @@ export function GraduationTemplateEditor({
         {draft.grades.map((grade, index) => (
           <GradeCard
             key={grade.id}
+            modalityCode={modalityCode}
             grade={grade}
             index={index}
             total={draft.grades.length}

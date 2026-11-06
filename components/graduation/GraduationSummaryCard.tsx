@@ -2,6 +2,7 @@ import type { StudentModalityGraduation } from "@/lib/graduation/load-student-pr
 
 /** Dados simples (serializáveis) para o cartão — pode ser passado a componentes cliente. */
 export type GraduationSummary = {
+  modalityCode: string;
   modalityName: string;
   currentName: string | null;
   currentColors: string[];
@@ -15,6 +16,7 @@ export type GraduationSummary = {
 export function toGraduationSummary(g: StudentModalityGraduation): GraduationSummary {
   const { current, next } = g.progress;
   return {
+    modalityCode: g.modalityCode,
     modalityName: g.modalityName,
     currentName: current?.name ?? null,
     currentColors: current?.colors ?? [],

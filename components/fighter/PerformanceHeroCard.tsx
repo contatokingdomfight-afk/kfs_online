@@ -130,7 +130,7 @@ function GraduationHeroBlock({ graduation, primaryModalityLabel }: { graduation:
     <>
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-2 text-sm font-semibold text-text-primary border border-border rounded-lg px-2 py-1">
-          <BeltSwatch colors={graduation.currentColors} width={28} height={10} />
+          <BeltSwatch colors={graduation.currentColors} width={28} height={10} modality={graduation.modalityCode} />
           {graduation.currentName ?? "Sem graduação"}
         </span>
         <span className="text-xs text-text-secondary border border-border rounded-lg px-2 py-1">{graduation.modalityName ?? primaryModalityLabel}</span>
