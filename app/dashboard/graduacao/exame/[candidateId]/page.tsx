@@ -11,7 +11,7 @@ import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 import { ExamResultBreakdown, type ExamScoreRowView } from "@/components/graduation/ExamResultBreakdown";
 import { ExamStatusChip, formatExamDate } from "@/components/graduation/ExamStatusChip";
 import { GraduationCertificate } from "@/components/graduation/GraduationCertificate";
-import { CertificateActions } from "@/components/graduation/CertificateActions";
+import { CertificateSwitcher } from "@/components/graduation/CertificateSwitcher";
 import { loadCertificate } from "@/lib/graduation/certificate";
 
 export const dynamic = "force-dynamic";
@@ -120,15 +120,13 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
           <h2 id="certificado" className="m-0 mb-3 text-base font-bold text-text-primary">
             🏅 O teu certificado
           </h2>
-          <GraduationCertificate data={certificate} id="certificado-graduacao" />
-          <div className="mt-3">
-            <CertificateActions
-              targetId="certificado-graduacao"
-              fileName={`certificado-${certificate.gradeName.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}`}
-              shareText={`Novo grau na Kingdom Fight School: ${certificate.gradeName} (${certificate.modalityName}) 🥊`}
-              verifyUrl={certificate.verifyUrl}
-            />
-          </div>
+          <CertificateSwitcher
+            dark={<GraduationCertificate data={certificate} />}
+            light={<GraduationCertificate data={certificate} variant="light" />}
+            fileName={`certificado-${certificate.gradeName.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}`}
+            shareText={`Novo grau na Kingdom Fight School: ${certificate.gradeName} (${certificate.modalityName}) 🥊`}
+            verifyUrl={certificate.verifyUrl}
+          />
         </section>
       )}
 

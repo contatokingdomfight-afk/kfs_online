@@ -15,12 +15,12 @@ const PRINT_CSS = `@media print {
 }`;
 
 /** Certificado de graduação (A4 horizontal, escala com a largura do contentor). */
-export function GraduationCertificate({ data, id }: { data: CertificateData; id?: string }) {
+export function GraduationCertificate({ data, id, variant = "dark" }: { data: CertificateData; id?: string; variant?: "dark" | "light" }) {
   const colors = data.gradeColors.length ? data.gradeColors : ["#a8a9ad"];
   return (
     <div className={`${s.wrap} kfs-cert-print`} id={id}>
       <style>{PRINT_CSS}</style>
-      <div className={s.cert} data-certificate>
+      <div className={variant === "light" ? `${s.cert} ${s.light}` : s.cert} data-certificate>
         <span className={`${s.oct} ${s.octA}`} />
         <span className={`${s.oct} ${s.octB}`} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -54,9 +54,11 @@ export function GraduationCertificate({ data, id }: { data: CertificateData; id?
         <div className={s.grade}>concluiu com aprovação o exame de graduação e obteve o grau</div>
         <div className={s.gname}>{data.gradeName.replace(/\s*\/\s*/g, " / ")}</div>
         <span className={s.rib}>
-          {colors.map((c, i) => (
-            <i key={i} style={{ background: c }} />
-          ))}
+          <span className={s.ribIn}>
+            {colors.map((c, i) => (
+              <i key={i} style={{ background: c }} />
+            ))}
+          </span>
         </span>
 
         <div className={s.foot}>
