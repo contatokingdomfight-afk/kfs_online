@@ -7,15 +7,20 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ALLOWED_PAYMENT_PROOF_TYPES, MAX_PAYMENT_PROOF_BYTES } from "@/lib/enrollment-form";
 import { createRetailOrder, type OrderLineInput } from "@/lib/retail/orders";
-import { findActiveCoupon } from "@/lib/retail/discounts.server";
+import { checkStoreCoupon } from "@/lib/retail/discounts.server";
 import type { CouponRule } from "@/lib/retail/discounts";
 
 export type OrderActionResult = { error?: string; success?: boolean };
 
 /** Verifica um cupão antes de enviar (só pré-visualização; o servidor volta a validar ao criar). */
 export async function checkCoupon(raw: string): Promise<{ coupon?: CouponRule; error?: string }> {
-  const coupon = await findActiveCoupon(createAdminClient(), raw);
-  return coupon ? { coupon } : { error: "Cupão inválido ou já não está ativo." };
+  const supabase = createAdminClient();
+  const [studentId, dbUser] = await Promise.all([getCurrentStudentId(), getCurrentDbUser()]);
+  const { data: student } = studentId ? await supabase.from("Student").select("schoolId").eq("id", studentId).maybeSingle() : { data: null };
+  return checkStoreCoupon(supabase, raw, {
+    schoolId: (student as { schoolId?: string | null } | null)?.schoolId ?? null,
+    personKey: studentId ?? (dbUser ? `user:${dbUser.id}` : null),
+  });
 }
 
 function parseLines(raw: FormDataEntryValue | null): OrderLineInput[] {

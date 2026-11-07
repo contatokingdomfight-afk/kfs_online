@@ -5,9 +5,10 @@ import { CheckCircle2, Users } from "lucide-react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { PaymentMethodFields } from "../PaymentMethodFields";
 import type { SchoolPaymentInfo } from "@/lib/school-payment-rules";
+import { CouponBox, type CouponBoxApplied } from "@/components/payments/CouponBox";
 import { saveAdesaoPayment, type SaveAdesaoPaymentResult } from "./actions";
 
-export type AdesaoPaymentLine = { id: string; label: string; amount: number; isTuition: boolean };
+export type AdesaoPaymentLine = { id: string; label: string; amount: number; isTuition: boolean; /** Valor antes do cupão. */ originalAmount?: number };
 
 type Props = {
   lines: AdesaoPaymentLine[];
@@ -20,6 +21,7 @@ type Props = {
   /** Mostra a caixa «Faço parte de um grupo familiar» (só quem ainda não está num grupo). */
   canRequestFamily: boolean;
   familyRequested: boolean;
+  appliedCoupons: CouponBoxApplied[];
 };
 
 const eur = (n: number) => `${n.toFixed(2).replace(".", ",")} €`;
@@ -33,6 +35,7 @@ export function AdesaoPaymentForm({
   familyPayerName,
   canRequestFamily,
   familyRequested: initialFamily,
+  appliedCoupons,
 }: Props) {
   const [state, formAction] = useActionState(saveAdesaoPayment, null as SaveAdesaoPaymentResult | null);
   const [family, setFamily] = useState(initialFamily);
@@ -67,7 +70,12 @@ export function AdesaoPaymentForm({
               {byFamily ? (
                 <span style={{ color: "var(--text-secondary)" }}>Paga pelo titular</span>
               ) : (
-                <strong>{eur(l.amount)}</strong>
+                <strong>
+                  {l.originalAmount != null && l.originalAmount > l.amount ? (
+                    <s style={{ color: "var(--text-secondary)", fontWeight: 400, marginRight: 6 }}>{eur(l.originalAmount)}</s>
+                  ) : null}
+                  {eur(l.amount)}
+                </strong>
               )}
             </div>
           );
@@ -82,6 +90,8 @@ export function AdesaoPaymentForm({
           </p>
         ) : null}
       </section>
+
+      <CouponBox applied={appliedCoupons} />
 
       {canRequestFamily ? (
         <label className="card" style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", fontSize: 14 }}>

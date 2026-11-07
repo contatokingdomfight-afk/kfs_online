@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { couponLabel } from "@/lib/retail/discounts";
-import { CouponForm, PromotionForm } from "./PromoForms";
+import { PromotionForm } from "./PromoForms";
 import { updateDiscount } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -46,9 +45,8 @@ export default async function PromocoesPage() {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const [{ data: promos }, { data: coupons }, { data: products }, { data: usedRows }] = await Promise.all([
+  const [{ data: promos }, { data: products }, { data: usedRows }] = await Promise.all([
     supabase.from("RetailPromotion").select("id, name, productId, minQuantity, percentOff, isActive").order("createdAt", { ascending: false }),
-    supabase.from("RetailCoupon").select("id, code, kind, value, isActive").order("createdAt", { ascending: false }),
     supabase.from("Product").select("id, name").eq("isActive", true).order("name"),
     supabase.from("RetailOrder").select("couponCode, promotionId, discountAmount").neq("status", "CANCELLED").gt("discountAmount", 0),
   ]);
@@ -64,7 +62,7 @@ export default async function PromocoesPage() {
         <Link href="/admin/loja" style={{ color: "var(--text-secondary)", fontSize: 14, textDecoration: "none" }}>
           ← Loja
         </Link>
-        <h1 style={{ margin: "8px 0 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 700 }}>Promoções e cupões</h1>
+        <h1 style={{ margin: "8px 0 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 700 }}>Promoções</h1>
         <p style={{ margin: "6px 0 0", color: "var(--text-secondary)", fontSize: 14 }}>
           Valem nas encomendas da loja. Se houver promoção e cupão ao mesmo tempo, aplica-se só o desconto maior.
         </p>
@@ -96,30 +94,12 @@ export default async function PromocoesPage() {
         <PromotionForm products={(products ?? []) as { id: string; name: string }[]} />
       </section>
 
-      <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>Cupões</h2>
-        {(coupons ?? []).length === 0 ? (
-          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>Ainda sem cupões.</p>
-        ) : (
-          ((coupons ?? []) as { id: string; code: string; kind: "PERCENT" | "FIXED"; value: number | string; isActive: boolean }[]).map((c) => {
-            const u = uses((r) => r.couponCode === c.code);
-            return (
-              <div key={c.id} className="card" style={{ padding: 14, display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                    <strong style={{ fontFamily: "monospace", fontSize: 15 }}>{c.code}</strong>
-                    <span style={pill(c.isActive)}>{c.isActive ? "Ativo" : "Desligado"}</span>
-                  </div>
-                  <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>
-                    −{couponLabel({ code: c.code, kind: c.kind, value: Number(c.value) })} · usado {u.n}× (−{u.total.toFixed(0)} €)
-                  </div>
-                </div>
-                <Toggle table="coupon" id={c.id} active={c.isActive} />
-              </div>
-            );
-          })
-        )}
-        <CouponForm />
+      <section className="card" style={{ padding: 14, display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>Cupões</h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>Os cupões (loja, adesão e mensalidades) estão agora no Financeiro.</p>
+        </div>
+        <Link href="/admin/financeiro/cupoes" className="btn btn-secondary">Abrir Cupões →</Link>
       </section>
     </div>
   );

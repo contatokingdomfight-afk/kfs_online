@@ -5,7 +5,7 @@
  */
 
 export type PromotionRule = { id: string; name: string; productId: string | null; minQuantity: number; percentOff: number };
-export type CouponRule = { code: string; kind: "PERCENT" | "FIXED"; value: number };
+export type CouponRule = { id?: string; code: string; kind: "PERCENT" | "FIXED"; value: number };
 export type DiscountLine = { productId: string; quantity: number; lineTotal: number };
 
 export type DiscountResult = {

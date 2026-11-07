@@ -14,6 +14,8 @@ const LEGACY_LABELS_PT: Record<string, string> = {
   MB: "Multibanco (legado)",
   OTHER: "Outro (legado)",
   DEBIT_DIRECT: "Débito direto (legado)",
+  /** Pagamento coberto a 100% por um cupão de desconto (valor 0 €). */
+  COUPON: "Cupão de desconto",
 };
 
 export function isFinancePaymentMethod(v: string): v is FinancePaymentMethod {

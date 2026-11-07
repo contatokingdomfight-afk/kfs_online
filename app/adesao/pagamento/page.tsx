@@ -8,7 +8,9 @@ import { latePaymentLabel, listLatePayments } from "@/lib/tuition-checkout/servi
 import { loadStudentPaymentInfo } from "@/lib/school-payment-methods";
 import { studentPaymentReference } from "@/lib/revolut/match";
 import { AdesaoStepIndicator } from "../AdesaoStepIndicator";
-import { AdesaoPaymentForm } from "./AdesaoPaymentForm";
+import { AdesaoPaymentForm, type AdesaoPaymentLine } from "./AdesaoPaymentForm";
+import { listAppliedPaymentCoupons } from "@/lib/coupons/service";
+import { COUPON_TARGET_LABEL } from "@/lib/coupons/rules";
 
 /** Último passo da adesão: só aqui o aluno vê os dados de pagamento da escola (com tudo assinado). */
 export default async function AdesaoPagamentoPage() {
@@ -34,9 +36,33 @@ export default async function AdesaoPagamentoPage() {
     Boolean((waiver as { waiverSigned?: boolean } | null)?.waiverSigned);
   if (!signed) redirect("/adesao");
 
-  const late = await listLatePayments(admin, studentId, { keepFamilyPending: true });
+  const [late, applied] = await Promise.all([
+    listLatePayments(admin, studentId, { keepFamilyPending: true }),
+    listAppliedPaymentCoupons(admin, studentId),
+  ]);
+  // Pagamentos que o cupão cobriu a 100% (já não estão em atraso, mas mostram-se a 0 €).
+  const lateIds = new Set(late.map((p) => p.id));
+  const couponItems = applied.flatMap((a) => a.items.map((i) => ({ ...i, code: a.code })));
+  const covered = couponItems.filter((i) => i.covered && !lateIds.has(i.paymentId));
   // Financeiro (e não /dashboard): sem acesso, o middleware mandaria /dashboard de volta para aqui.
-  if (late.length === 0) redirect("/dashboard/financeiro");
+  if (late.length === 0 && covered.length === 0) redirect("/dashboard/financeiro");
+  const discountByPayment = new Map(couponItems.map((i) => [i.paymentId, i]));
+  const lines: AdesaoPaymentLine[] = [
+    ...covered.map((i) => ({
+      id: i.paymentId,
+      label: i.target === "INSURANCE" ? "Seguro desportivo" : COUPON_TARGET_LABEL[i.target],
+      amount: 0,
+      originalAmount: i.originalAmount,
+      isTuition: i.target === "TUITION",
+    })),
+    ...late.map((p) => ({
+      id: p.id,
+      label: latePaymentLabel(p),
+      amount: p.amount,
+      originalAmount: discountByPayment.get(p.id)?.originalAmount,
+      isTuition: p.paymentType === "TUITION",
+    })),
+  ];
 
   const familyCtx = await getFamilyContext(admin, studentId);
   let familyPayerName: string | null = null;
@@ -67,7 +93,8 @@ export default async function AdesaoPagamentoPage() {
         </p>
         <AdesaoStepIndicator step={3} />
         <AdesaoPaymentForm
-          lines={late.map((p) => ({ id: p.id, label: latePaymentLabel(p), amount: p.amount, isTuition: p.paymentType === "TUITION" }))}
+          lines={lines}
+          appliedCoupons={applied.map((a) => ({ couponId: a.couponId, code: a.code, discount: a.discount }))}
           paymentInfo={paymentInfo}
           paymentReference={studentPaymentReference((student as { paymentCode?: number | null } | null)?.paymentCode ?? null)}
           initialMethod={f?.paymentMethod ?? null}

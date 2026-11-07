@@ -7,6 +7,7 @@ import { getTranslations } from "@/lib/i18n";
 import { StudentOnboardingFeesNotice } from "@/components/StudentOnboardingFeesNotice";
 import { getStudentOnboardingFeesState } from "@/lib/student-onboarding-fees";
 import { SchoolPaymentPendingModal } from "./SchoolPaymentPendingModal";
+import { StudentCouponSection } from "@/components/payments/StudentCouponSection";
 import { SchoolTransferPaymentCard } from "@/components/payments/SchoolTransferPaymentCard";
 import { loadEnrollmentSchoolDetails } from "@/lib/school-payment-methods";
 import { studentPaymentReference } from "@/lib/revolut/match";
@@ -257,6 +258,7 @@ export default async function DashboardFinanceiroPage({
       )}
 
       {/* Pagamentos em atraso → pagar já com Revolut */}
+      {studentId ? <StudentCouponSection studentId={studentId} /> : null}
       {studentId ? <StudentLatePaymentsSection studentId={studentId} justPaid={sp.pago === "1"} /> : null}
       {/* Fidelização (6 meses com desconto) */}
       {studentId ? <StudentLoyaltySection studentId={studentId} /> : null}

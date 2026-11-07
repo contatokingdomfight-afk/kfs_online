@@ -1,7 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { imageForColor, parseProductImages, type ProductImage } from "@/lib/retail/product-images";
 import { computeDiscount } from "@/lib/retail/discounts";
-import { findActiveCoupon, loadActivePromotions } from "@/lib/retail/discounts.server";
+import { checkStoreCoupon, loadActivePromotions } from "@/lib/retail/discounts.server";
+import { recordStoreRedemption } from "@/lib/coupons/service";
+import type { CouponRule } from "@/lib/retail/discounts";
 
 /** Encomendas da loja (pré-encomenda). Ver supabase/migrations/20261012140000_retail_orders.sql. */
 export const ORDER_STATUSES = ["PENDING_PAYMENT", "PAID", "ORDERED", "READY", "DELIVERED", "CANCELLED"] as const;
@@ -223,8 +225,14 @@ export async function createRetailOrder(
     };
   });
   // Desconto recalculado aqui (nunca confiar no valor do browser): o melhor entre promoção e cupão.
-  const coupon = input.couponCode?.trim() ? await findActiveCoupon(supabase, input.couponCode) : null;
-  if (input.couponCode?.trim() && !coupon) return { error: "Cupão inválido ou já não está ativo." };
+  // Quem usa o cupão (conta para o limite de pessoas): o aluno, senão a conta da loja pública.
+  const personKey = input.studentId ?? (input.createdByUserId ? `user:${input.createdByUserId}` : null);
+  let coupon: CouponRule | null = null;
+  if (input.couponCode?.trim()) {
+    const c = await checkStoreCoupon(supabase, input.couponCode, { schoolId: input.schoolId, personKey });
+    if (!c.coupon) return { error: c.error ?? "Cupão inválido ou já não está ativo." };
+    coupon = c.coupon;
+  }
   const promotions = await loadActivePromotions(supabase);
   const d = computeDiscount(
     lineRows.map((l) => ({ productId: variantInfo.get(l.variantId)!.productId, quantity: l.quantity, lineTotal: Number(l.lineTotal) })),
@@ -258,6 +266,17 @@ export async function createRetailOrder(
   if (lErr) {
     await supabase.from("RetailOrder").delete().eq("id", id);
     return { error: lErr.message };
+  }
+  if (d.source === "coupon" && coupon?.id) {
+    await recordStoreRedemption(supabase, {
+      couponId: coupon.id,
+      schoolId: input.schoolId,
+      personKey: personKey ?? `order:${id}`,
+      studentId: input.studentId ?? null,
+      orderId: id,
+      subtotal: d.subtotal,
+      discount: d.discount,
+    });
   }
   return { id, number: Number((created as { number: number | string }).number) };
 }

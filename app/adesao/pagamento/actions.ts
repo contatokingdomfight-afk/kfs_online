@@ -54,8 +54,13 @@ export async function saveAdesaoPayment(
   const { error } = await admin
     .from("StudentEnrollmentForm")
     // Nunca fica vazio: é o que diz ao middleware que este passo foi concluído
-    // (sem nada a pagar já — só a mensalidade, paga pelo titular — fica «FAMILY»).
-    .update({ paymentMethod: paymentMethod || (existing as { paymentMethod?: string | null }).paymentMethod || "FAMILY", ...proof, updatedAt: now })
+    // (sem nada a pagar já — só a mensalidade, paga pelo titular — fica «FAMILY»; tudo coberto por cupão, «COUPON»).
+    .update({
+      paymentMethod:
+        paymentMethod || (existing as { paymentMethod?: string | null }).paymentMethod || (familyRequested || familyCtx ? "FAMILY" : "COUPON"),
+      ...proof,
+      updatedAt: now,
+    })
     .eq("studentId", studentId);
   if (error) return { error: error.message };
 
