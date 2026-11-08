@@ -13,6 +13,7 @@ import { AdminChatWidgetGate } from "@/components/admin-chat/AdminChatWidgetGate
 import { CoachNotificationBell } from "@/components/CoachNotificationBell";
 import { getSchoolScope } from "@/lib/school-scope";
 import { SchoolPicker, SchoolBadge } from "@/components/admin/SchoolPicker";
+import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function AdminLayout({
   children,
@@ -24,8 +25,22 @@ export default async function AdminLayout({
   if (dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const [access, scope] = await Promise.all([getCachedResolvedAdminAccess(), getSchoolScope()]);
-  // Diretor técnico sem escola atribuída não tem o que gerir.
-  if (scope.kind === "none") redirect("/dashboard");
+  // Diretor sem escola atribuída não tem o que gerir. Não redirecionar para /dashboard:
+  // o layout do dashboard devolve o ADMIN para /admin → loop infinito de redirects.
+  if (scope.kind === "none") {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, backgroundColor: "var(--bg)", color: "var(--text-primary)" }}>
+        <div style={{ maxWidth: 420, textAlign: "center", display: "flex", flexDirection: "column", gap: 16, alignItems: "center" }}>
+          <h1 style={{ fontSize: 20, margin: 0 }}>Sem escola atribuída</h1>
+          <p style={{ margin: 0, color: "var(--text-secondary)" }}>
+            A tua conta é de administrador, mas ainda não tem nenhuma escola associada. Pede ao Admin Geral para te
+            atribuir uma escola (ou acesso a toda a rede).
+          </p>
+          <LogoutButton label="Sair" variant="button" />
+        </div>
+      </div>
+    );
+  }
   const kfsPath = await getKfsPathnameFromRequest();
   if (access.kind === "granted" && kfsPath && !canAccessAdminPathname(access, kfsPath)) {
     redirect("/admin");
