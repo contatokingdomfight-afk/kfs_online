@@ -9,6 +9,7 @@ import { isShopNextPath, SHOP_ONLY_METADATA_KEY } from "@/lib/auth/shop-only";
 import { buildAuthCallbackUrl } from "@/lib/auth/oauth-callback-url";
 import { openOAuthAuthorizeUrl } from "@/lib/capacitor-open-oauth";
 import { translateAuthErrorMessage } from "@/lib/auth/auth-error-messages";
+import { isSuspiciousName } from "@/lib/auth/suspicious-name";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -54,6 +55,14 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
     setError(null);
     if (!acceptedTerms) {
       setError(t("signUpTermsRequired"));
+      return;
+    }
+    if (isSuspiciousName(name)) {
+      setError(
+        initialLocale === "en"
+          ? "Please enter your real name (first and last name)."
+          : "Introduz o teu nome real (nome e apelido)."
+      );
       return;
     }
     setLoading(true);

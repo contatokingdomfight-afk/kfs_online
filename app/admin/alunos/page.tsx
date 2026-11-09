@@ -1,3 +1,4 @@
+import { isSuspiciousName } from "@/lib/auth/suspicious-name";
 import { getSchoolScope, resolveSchoolParam, scopedSchoolIds, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
 import type { CSSProperties } from "react";
@@ -127,6 +128,11 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
   ]);
 
   const userById = new Map(usersData.map((u) => [u.id, u]));
+  // Contas de bots (nome aleatório, sem plano) ficam fora da lista.
+  filtered = filtered.filter((s) => {
+    if ((s as { planId?: string | null }).planId) return true;
+    return !isSuspiciousName(userById.get(s.userId)?.name ?? "");
+  });
   const profileByStudentId = new Map(profilesData.map((p) => [p.studentId, p]));
   const insuranceByStudentId = new Map(insuranceData.map((r) => [r.studentId, r]));
   const insuranceStatusOf = (studentId: string) => {
