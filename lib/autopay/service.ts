@@ -198,15 +198,20 @@ export async function startAutoPay(
     }
   }
 
+  // Nº do aluno no cliente e na subscrição, para o identificar no painel da Revolut (a descrição
+  // de cada cobrança vem do plano de preço, partilhado por todos os alunos com o mesmo valor).
+  const { data: codeRow } = await supabase.from("Student").select("paymentCode").eq("id", payer.payerStudentId).maybeSingle();
+  const code = (codeRow as { paymentCode?: number | null } | null)?.paymentCode ?? null;
+  const customerName = input.fullName && code != null ? `${input.fullName} · Aluno #${code}` : input.fullName;
   const customerId =
     existing?.revolutCustomerId && existing.environment === revolutMerchantEnv && existing.schoolId === schoolId
       ? existing.revolutCustomerId
-      : (await createMerchantCustomer(account, { fullName: input.fullName, email: input.email })).id;
+      : (await createMerchantCustomer(account, { fullName: customerName, email: input.email })).id;
   const variationId = await ensurePricePlanVariation(supabase, account, schoolId, amount);
   const sub = await createMerchantSubscription(account, {
     planVariationId: variationId,
     customerId,
-    externalReference: payer.payerStudentId,
+    externalReference: code != null ? `Aluno #${code} · ${payer.payerStudentId}` : payer.payerStudentId,
     redirectUrl: input.returnUrl,
     idempotencyKey: crypto.randomUUID(),
   });

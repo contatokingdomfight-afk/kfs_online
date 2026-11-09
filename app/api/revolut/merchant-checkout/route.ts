@@ -3,6 +3,7 @@ import { getCurrentDbUserUncached } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { loadOrders, orderReference } from "@/lib/retail/orders";
 import { createMerchantOrder } from "@/lib/revolut/merchant";
+import { storeOrderDescription } from "@/lib/revolut/order-description";
 import { merchantBrandName, resolveMerchantAccount } from "@/lib/revolut/merchant-accounts";
 import { loadSchoolPaymentInfo, orderPaymentSchoolId } from "@/lib/school-payment-methods";
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
   if (!order) return NextResponse.json({ error: "Encomenda não encontrada." }, { status: 404 });
   // Dona da encomenda: quem a criou ou a conta do aluno a que pertence.
   const { data: owner } = await admin.from("RetailOrder").select("createdByUserId").eq("id", orderId).maybeSingle();
-  const { data: stu } = order.studentId ? await admin.from("Student").select("userId").eq("id", order.studentId).maybeSingle() : { data: null };
+  const { data: stu } = order.studentId ? await admin.from("Student").select("userId, paymentCode").eq("id", order.studentId).maybeSingle() : { data: null };
   const mine = (owner as { createdByUserId: string | null } | null)?.createdByUserId === user.id || (stu as { userId: string | null } | null)?.userId === user.id;
   if (!mine) return NextResponse.json({ error: "Encomenda não encontrada." }, { status: 404 });
   if (order.status !== "PENDING_PAYMENT") return NextResponse.json({ error: "Esta encomenda já não está por pagar." }, { status: 400 });
@@ -40,7 +41,15 @@ export async function POST(request: NextRequest) {
     const mo = await createMerchantOrder(account, {
       fullName: (payer as { name?: string | null } | null)?.name ?? null,
       amountEur: order.totalAmount,
-      description: `Encomenda ${orderReference(order.number)} · ${await merchantBrandName(admin, schoolId)}`,
+      description: storeOrderDescription({
+        reference: orderReference(order.number),
+        brand: await merchantBrandName(admin, schoolId),
+        studentCode: (stu as { paymentCode?: number | null } | null)?.paymentCode ?? null,
+        lines: order.lines.map((l) => {
+          const variant = [l.size, l.fit].filter(Boolean).join(", ");
+          return { label: variant ? `${l.productName} (${variant})` : l.productName, quantity: l.quantity };
+        }),
+      }),
       reference: order.id,
       redirectUrl: `${request.nextUrl.origin}${base}/encomendas/${order.id}?pago=1`,
       email: user.email,

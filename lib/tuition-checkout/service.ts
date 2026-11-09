@@ -11,6 +11,7 @@ import { renewStudentInsuranceCoverage } from "@/lib/renew-student-insurance-cov
 import { grantReferralRewardIfEligible } from "@/lib/referral-rewards";
 import { merchantBrandName, resolveMerchantAccount } from "@/lib/revolut/merchant-accounts";
 import { loadSchoolPaymentInfo, loadStudentSchoolId } from "@/lib/school-payment-methods";
+import { paymentsOrderDescription, type DescriptionItem } from "@/lib/revolut/order-description";
 
 /**
  * Pagar mensalidades em atraso pela Revolut (página segura, como na loja):
@@ -128,15 +129,31 @@ async function openCheckout(
   if (error) return { error: "Não foi possível preparar o pagamento." };
 
   // Nome do aluno pagador, para a Revolut mostrar «Nome» em vez da referência interna.
-  const { data: payerRow } = await supabase.from("Student").select("userId").eq("id", input.payerStudentId).maybeSingle();
+  const { data: payerRow } = await supabase.from("Student").select("userId, paymentCode").eq("id", input.payerStudentId).maybeSingle();
   const payerUserId = (payerRow as { userId?: string | null } | null)?.userId;
+  const studentCode = (payerRow as { paymentCode?: number | null } | null)?.paymentCode ?? null;
   const { data: payerUser } = payerUserId ? await supabase.from("User").select("name").eq("id", payerUserId).maybeSingle() : { data: null };
   const fullName = (payerUser as { name?: string | null } | null)?.name ?? null;
+
+  // Descrição com os itens e o nº do aluno (ver lib/revolut/order-description.ts).
+  const realIds = ids.filter((x) => !x.startsWith(ADVANCE_PREFIX));
+  const { data: payRows } = realIds.length
+    ? await supabase.from("Payment").select("paymentType, referenceMonth, amount").in("id", realIds)
+    : { data: [] };
+  const items: DescriptionItem[] = [
+    ...((payRows ?? []) as { paymentType: string; referenceMonth: string | null; amount: number | string }[]).map((p) => ({
+      paymentType: p.paymentType,
+      referenceMonth: p.referenceMonth ? String(p.referenceMonth).slice(0, 7) : null,
+      amount: Number(p.amount) || 0,
+    })),
+    ...ids.filter((x) => x.startsWith(ADVANCE_PREFIX)).map((x) => ({ paymentType: "TUITION", referenceMonth: x.slice(ADVANCE_PREFIX.length), amount })),
+  ].sort((a, b) => (a.paymentType === "TUITION" ? 1 : 0) - (b.paymentType === "TUITION" ? 1 : 0) || String(a.referenceMonth).localeCompare(String(b.referenceMonth)));
+  const description = paymentsOrderDescription({ kind: input.description, brand: await merchantBrandName(supabase, schoolId), studentCode, items });
 
   const order = await createMerchantOrder(account, {
     fullName,
     amountEur: amount,
-    description: `${input.description} · ${await merchantBrandName(supabase, schoolId)}`,
+    description,
     reference: `${CHECKOUT_REFERENCE_PREFIX}${id}`,
     redirectUrl: input.returnUrl,
     email: input.email,
