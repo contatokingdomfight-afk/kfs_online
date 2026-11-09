@@ -153,7 +153,6 @@ export async function getAdminDashboardStats(
   }
 
   let activeStudents = 0;
-  const activeStudentIds: string[] = [];
   /**
    * Receita mensal prevista: preço de tabela de cada aluno ativo. No plano família a
    * mensalidade é combinada (um só pagamento no titular, com desconto do grupo) — por
@@ -165,7 +164,6 @@ export async function getAdminDashboardStats(
     const st = s as { id: string; planId?: string | null; status?: string };
     if (st.planId && st.status === "ATIVO") {
       activeStudents++;
-      activeStudentIds.push(st.id);
       if (!isFamilyPlan(st.planId)) {
         projectedMonthlyRevenue += planPriceById[st.planId] ?? 0;
       }
@@ -180,18 +178,23 @@ export async function getAdminDashboardStats(
     if (!("error" in result)) projectedMonthlyRevenue += result.finalMonthlyAmount;
   }
 
+  // Inadimplência: entre quem tem plano e está ATIVO ou INADIMPLENTE (quem não paga passa a
+  // INADIMPLENTE, por isso contar só ATIVOS dava quase sempre 0%).
+  const payingStudentIds = (students as { id: string; planId?: string | null; status?: string }[])
+    .filter((s) => s.planId && (s.status === "ATIVO" || s.status === "INADIMPLENTE"))
+    .map((s) => s.id);
   let lateStudentsCount = 0;
-  if (activeStudentIds.length > 0) {
+  for (let i = 0; i < payingStudentIds.length; i += 200) {
     const { data: latePayments } = await supabase
       .from("Payment")
       .select("studentId")
       .eq("status", "LATE")
       .eq("paymentType", "TUITION")
-      .in("studentId", activeStudentIds);
-    lateStudentsCount = new Set((latePayments ?? []).map((p) => (p as { studentId: string }).studentId)).size;
+      .in("studentId", payingStudentIds.slice(i, i + 200));
+    lateStudentsCount += new Set((latePayments ?? []).map((p) => (p as { studentId: string }).studentId)).size;
   }
   const delinquencyRate = {
-    percent: activeStudents > 0 ? (lateStudentsCount / activeStudents) * 100 : 0,
+    percent: payingStudentIds.length > 0 ? (lateStudentsCount / payingStudentIds.length) * 100 : 0,
     lateStudentsCount,
   };
 
@@ -209,6 +212,24 @@ export async function getAdminDashboardStats(
       .in("studentId", scopedStudentIds.slice(i, i + 200));
     for (const p of (paid ?? []) as { amount: number | string }[]) receivedThisMonth += Number(p.amount) || 0;
   }
+
+  // Previsto = recebido + mensalidades do mês ainda por pagar (valores reais, com descontos e
+  // famílias), de alunos não inativos. Antes era o preço de tabela só dos ATIVOS — quem não
+  // pagava passava a INADIMPLENTE e saía da conta, e o «falta receber» ficava muito abaixo.
+  const notInactiveIds = (students as { id: string; status?: string }[]).filter((s) => s.status !== "INATIVO").map((s) => s.id);
+  let outstandingThisMonth = 0;
+  for (let i = 0; i < notInactiveIds.length; i += 200) {
+    const { data: open } = await supabase
+      .from("Payment")
+      .select("amount")
+      .eq("status", "LATE")
+      .eq("paymentType", "TUITION")
+      .eq("referenceMonth", currentMonth)
+      .in("studentId", notInactiveIds.slice(i, i + 200));
+    for (const p of (open ?? []) as { amount: number | string }[]) outstandingThisMonth += Number(p.amount) || 0;
+  }
+  // Até as mensalidades do mês serem geradas (dia 1), mantém a estimativa pelo preço dos planos.
+  if (receivedThisMonth + outstandingThisMonth > 0) projectedMonthlyRevenue = receivedThisMonth + outstandingThisMonth;
 
   return {
     schools: schools.map((s) => ({ id: s.id, name: s.name })),
