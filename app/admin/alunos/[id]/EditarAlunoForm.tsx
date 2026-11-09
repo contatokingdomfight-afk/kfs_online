@@ -374,6 +374,9 @@ export function EditarAlunoForm({
       />
 
       <form
+        // O React repõe o formulário após cada submissão com os valores da montagem;
+        // sem key, os <select> voltavam ao plano/estado antigo e uma 2.ª gravação reescrevia-os.
+        key={[initialName, initialStatus, initialSchoolId, initialPlanId, initialPrimaryModality, initialExtraModalities.join(",")].join("|")}
         action={formAction}
         className="card"
         style={{
