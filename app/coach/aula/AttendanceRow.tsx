@@ -77,6 +77,8 @@ export function AttendanceRow({
 
   const label = studentName || studentEmail;
   const initial = (studentName?.trim()?.[0] || studentEmail?.trim()?.[0] || "?").toUpperCase();
+  // Selo de carga só quando há base: «Sem base ainda» repetido em todos só ocupava espaço (o resumo no topo conta-os).
+  const showLoad = Boolean(trainingLoad && trainingLoad.zone !== "insufficient");
   const effectiveStatus = status ?? "NONE";
   const statusClass =
     effectiveStatus === "CONFIRMED"
@@ -170,27 +172,25 @@ export function AttendanceRow({
             )}
           </div>
           {studentName && <span className="coach-attendance-email">{studentEmail}</span>}
-          {trainingLoad && (
-            <div style={{ marginTop: 4 }}>
-              <span
-                className="coach-load-pill"
-                style={{ color: ZONE_COLORS[trainingLoad.zone], borderColor: ZONE_COLORS[trainingLoad.zone] }}
-                title={`Carga de treino (rácio agudo/crónico). ${trainingLoad.trained7d} treino(s) nos últimos 7 dias.`}
-              >
-                <span className="coach-load-dot" style={{ background: ZONE_COLORS[trainingLoad.zone] }} aria-hidden />
-                {zoneLabel(trainingLoad.zone, true)}
-                {trainingLoad.ratio != null && ` · ${trainingLoad.ratio.toFixed(1).replace(".", ",")}`}
-              </span>
-            </div>
-          )}
-          {(zoneShort || rpe != null || coachCanSetRpe) && (
-            <div className="coach-attendance-wellness" aria-label="Bem-estar e RPE">
+          {(zoneShort || rpe != null || coachCanSetRpe || showLoad) && (
+            <div className="coach-attendance-wellness" aria-label="Carga, bem-estar e RPE">
+              {showLoad && trainingLoad && (
+                <span
+                  className="coach-load-pill"
+                  style={{ color: ZONE_COLORS[trainingLoad.zone], borderColor: ZONE_COLORS[trainingLoad.zone] }}
+                  title={`Carga de treino (rácio agudo/crónico). ${trainingLoad.trained7d} treino(s) nos últimos 7 dias.`}
+                >
+                  <span className="coach-load-dot" style={{ background: ZONE_COLORS[trainingLoad.zone] }} aria-hidden />
+                  {zoneLabel(trainingLoad.zone, true).replace("Carga ", "")}
+                  {trainingLoad.ratio != null && ` ${trainingLoad.ratio.toFixed(1).replace(".", ",")}`}
+                </span>
+              )}
               {zoneShort && (
                 <span className={`coach-wellness-zone-pill ${zoneClass}`} title={preLessonWellness?.tooltip}>
                   {zoneShort}
                 </span>
               )}
-              <span className="coach-attendance-rpe">
+              {(zoneShort || rpe != null || coachCanSetRpe) && (<span className="coach-attendance-rpe">
                 RPE:{" "}
                 {rpe != null ? (
                   <>
@@ -213,7 +213,7 @@ export function AttendanceRow({
                 ) : (
                   "—"
                 )}
-              </span>
+              </span>)}
               {coachCanSetRpe && attendanceId ? (
                 <form action={rpeAction} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                   <FormLoadingModal message="A guardar a nota de esforço…" />
@@ -246,7 +246,7 @@ export function AttendanceRow({
         </div>
         <div className="coach-attendance-actions">
           {canEvaluate ? (
-            <button type="button" onClick={() => setModalOpen(true)} className="btn btn-secondary">
+            <button type="button" onClick={() => setModalOpen(true)} className="btn btn-secondary" style={{ width: "100%", flex: "1 1 100%" }}>
               Avaliar
             </button>
           ) : null}
@@ -254,7 +254,7 @@ export function AttendanceRow({
             <form action={statusAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
               <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
               <button type="submit" name="status" value="CONFIRMED" className="btn btn-success">
-                Marcar Presença Manual
+                Marcar presença
               </button>
               <button type="submit" name="status" value="ABSENT" className="btn btn-danger">
                 Marcar Ausente
