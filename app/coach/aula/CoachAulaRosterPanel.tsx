@@ -6,6 +6,7 @@ import type { CoachLessonStudentRow } from "@/lib/coach-lesson-eligible-students
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AttendanceRow } from "./AttendanceRow";
 import { CoachClassRpeBulk } from "./CoachClassRpeBulk";
+import { CoachClassLoadSummary } from "./CoachClassLoadSummary";
 
 type RosterFilter = "all" | "no_rsvp" | "pending";
 
@@ -67,20 +68,9 @@ export function CoachAulaRosterPanel({
     </button>
   );
 
-  // Alunos da aula (presentes ou que marcaram «Vou») com carga alta/atenção.
-  const loadWarnings = students.filter(
-    (s) => (s.status === "CONFIRMED" || s.status === "PENDING") && (s.trainingLoad?.zone === "high" || s.trainingLoad?.zone === "caution")
-  );
-
   return (
     <div>
-      {loadWarnings.length > 0 && (
-        <div className="coach-load-alert" role="status">
-          ⚠️ <strong>{loadWarnings.length} {loadWarnings.length === 1 ? "aluno com carga alta ou em atenção" : "alunos com carga alta ou em atenção"}</strong>
-          {" — considera reduzir a intensidade: "}
-          {loadWarnings.map((s) => s.name ?? s.email).join(", ")}.
-        </div>
-      )}
+      <CoachClassLoadSummary students={students} />
       <div
         style={{
           display: "flex",
