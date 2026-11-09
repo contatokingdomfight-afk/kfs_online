@@ -39,7 +39,8 @@ function countActiveStudents(
 ): number {
   let n = 0;
   for (const s of students ?? []) {
-    if (s.planId && s.status === "ATIVO") n++;
+    // Inadimplentes (mensalidade em atraso) continuam a ser alunos ativos.
+    if (s.planId && (s.status === "ATIVO" || s.status === "INADIMPLENTE")) n++;
   }
   return n;
 }

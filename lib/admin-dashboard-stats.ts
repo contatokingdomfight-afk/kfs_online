@@ -162,7 +162,8 @@ export async function getAdminDashboardStats(
   let projectedMonthlyRevenue = 0;
   for (const s of students) {
     const st = s as { id: string; planId?: string | null; status?: string };
-    if (st.planId && st.status === "ATIVO") {
+    // Ativo = tem plano e está ATIVO ou INADIMPLENTE (mensalidade em atraso continua a ser aluno).
+    if (st.planId && (st.status === "ATIVO" || st.status === "INADIMPLENTE")) {
       activeStudents++;
       if (!isFamilyPlan(st.planId)) {
         projectedMonthlyRevenue += planPriceById[st.planId] ?? 0;
