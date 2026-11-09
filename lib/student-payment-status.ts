@@ -78,7 +78,11 @@ async function studentInPaymentProgram(supabase: SupabaseClient, studentId: stri
 /** Atualiza Student.status para um aluno com base nos pagamentos. */
 export async function syncStudentPaymentStatus(
   supabase: SupabaseClient,
-  studentId: string
+  studentId: string,
+  options?: {
+    /** Chamado após receber um pagamento: só neste caso um INATIVO pode voltar automaticamente a ATIVO/INADIMPLENTE. */
+    paymentReceived?: boolean;
+  }
 ): Promise<{ updated: boolean; status: string | null }> {
   const { data: st } = await supabase
     .from("Student")
@@ -89,6 +93,9 @@ export async function syncStudentPaymentStatus(
   const row = st as StudentRow | null;
   if (!row) return { updated: false, status: null };
   if (row.status === "EXPERIMENTAL") return { updated: false, status: row.status };
+  // INATIVO (baixa manual ou 2+ meses em atraso) é fixo: o cron e a geração de
+  // mensalidades nunca o reescrevem. Só sai com pagamento recebido ou alteração do admin.
+  if (row.status === "INATIVO" && !options?.paymentReceived) return { updated: false, status: row.status };
 
   // Membro de família não tem Payment próprio — o histórico de atraso é irrelevante
   // para ele; o status só reflete o que a cascata do titular (payment-grace.ts) já

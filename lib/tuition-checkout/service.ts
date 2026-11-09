@@ -254,6 +254,6 @@ export async function markTuitionCheckoutPaid(supabase: SupabaseClient, checkout
     }
   }
   await supabase.from("PaymentCheckout").update({ state: "PAID", paidAt: new Date().toISOString() }).eq("id", c.id);
-  await syncStudentPaymentStatus(supabase, c.studentId);
+  await syncStudentPaymentStatus(supabase, c.studentId, { paymentReceived: true });
   return true;
 }

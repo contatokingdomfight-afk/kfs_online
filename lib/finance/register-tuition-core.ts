@@ -67,6 +67,6 @@ export async function registerTuitionPaymentCore(
     await clearGraceOnPaidPayment(supabase, studentId);
   }
 
-  await syncStudentPaymentStatus(supabase, studentId);
+  await syncStudentPaymentStatus(supabase, studentId, { paymentReceived: status !== "LATE" });
   return {};
 }

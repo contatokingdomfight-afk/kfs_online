@@ -48,7 +48,9 @@ export async function getRenewalsPending(
   const { data: students } = await filterSchools(supabase
     .from("Student")
     .select("id, userId, planId, createdAt"), options?.schoolIds)
-    .not("planId", "is", null);
+    .not("planId", "is", null)
+    // Alunos inativos não geram mensalidade (nem aparecem como a renovar).
+    .neq("status", "INATIVO");
 
   if (!students?.length) return [];
 

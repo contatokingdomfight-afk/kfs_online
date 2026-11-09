@@ -63,7 +63,7 @@ export async function applyReceivedItem(supabase: SupabaseClient, it: PorReceber
       .eq("status", "LATE");
     if (error) return { error: error.message };
     await clearGraceOnPaidPayment(supabase, it.studentId);
-    await syncStudentPaymentStatus(supabase, it.studentId);
+    await syncStudentPaymentStatus(supabase, it.studentId, { paymentReceived: true });
   } else {
     if (!it.referenceMonth) return { error: "Mês em falta." };
     const core = await registerTuitionPaymentCore(supabase, {
