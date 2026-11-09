@@ -130,3 +130,6 @@ export async function loadOpenPause(supabase: SupabaseClient, studentId: string)
   if (error) return null;
   return (data as TuitionPause | null) ?? null;
 }
+
+/** «A tratar → Pausas»: mensagem de acompanhamento a cada N dias de pausa. */
+export const PAUSE_FOLLOW_UP_DAYS = 15;

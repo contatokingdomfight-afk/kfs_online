@@ -112,6 +112,12 @@ export function buildOrderReadyMessage(name: string, reference: string): string 
   return `Olá ${first}! 👋 A tua encomenda ${reference} já chegou e está pronta a levantar na secretaria da Kingdom Fight School. Até já! 🥋`;
 }
 
+/** Acompanhamento de quem está em pausa (baixa médica), de 15 em 15 dias. */
+export function buildPauseCheckInMessage(studentFirstName: string): string {
+  const name = studentFirstName.trim() || "tudo bem";
+  return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Passámos só para saber como estás e como vai a recuperação. 💪 Quando tiveres alta médica, avisa-nos — estamos à tua espera para voltares aos treinos. Força! 🥊`;
+}
+
 /** Lembrete simpático antes do prazo da mensalidade (dia de pagamento do aluno). */
 export function buildDueSoonMessage(studentFirstName: string, dueLabel: string): string {
   const name = studentFirstName.trim() || "tudo bem";

@@ -5,13 +5,13 @@ import {
   previousReferenceMonthLisbon,
 } from "@/lib/lisbon-payment-dates";
 import { suspendStudentsPastGrace, startGraceForOverdueTuition } from "@/lib/payment-grace";
-import { resumeDuePauses } from "@/lib/tuition-pause.server";
+import { resumeDuePauses, resumePausesOnCheckIn } from "@/lib/tuition-pause.server";
 import { generateMonthlyPayments } from "@/lib/renewals";
 import { syncAllStudentPaymentStatuses } from "@/lib/student-payment-status";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Cron: (0) retoma pausas com regresso previsto; (1) gera mensalidades por pagar (mês corrente e anterior);
+ * Cron: (0) retoma pausas (primeiro check-in depois do início, ou regresso previsto); (1) gera mensalidades por pagar (mês corrente e anterior);
  * (1b) começa a tolerância de quem passou o dia de pagamento;
  * (2) suspende alunos sem PAID após o fim do prazo (dia de pagamento + 15 dias corridos) em Lisboa.
  * Coloca planId a null, guarda o plano em suspendedPlanId e cancela subscrição Stripe se existir.
@@ -27,7 +27,10 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
   const now = new Date();
-  const pauses = await resumeDuePauses(supabase);
+  // Pausas: termina as de quem voltou a treinar e as que chegaram ao regresso previsto.
+  const byCheckIn = await resumePausesOnCheckIn(supabase);
+  const byDate = await resumeDuePauses(supabase);
+  const pauses = { byCheckIn: byCheckIn.resumed, byDate: byDate.resumed };
   const months = [previousReferenceMonthLisbon(now), currentReferenceMonthLisbon(now)];
   const generated: {
     referenceMonth: string;

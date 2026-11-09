@@ -11,6 +11,7 @@ import {
   buildChoosePlanMessage,
   buildDocumentsPendingMessage,
   buildDueSoonMessage,
+  buildPauseCheckInMessage,
   buildFarewellMessage,
   buildFeesOverdueMessage,
   buildMissYouMessage,
@@ -28,7 +29,7 @@ import { lineLabel, loadOrders, orderReference } from "@/lib/retail/orders";
 import { KINGDOM_WEEK_MONTHLY_CAP } from "@/lib/drop-in-sessions-pricing";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
 import { normalizeDueDay } from "@/lib/lisbon-payment-dates";
-import { loadPausesByStudent, isPauseActiveOn } from "@/lib/tuition-pause";
+import { loadPausesByStudent, isPauseActiveOn, PAUSE_FOLLOW_UP_DAYS } from "@/lib/tuition-pause";
 import {
   ADMIN_TODO_ORDER,
   addDaysYmd,
@@ -794,27 +795,31 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
 
-  // --- Pausas (atestado médico): regressos de hoje e pausas sem data há mais de 3 meses ---
+  // --- Pausas (atestado médico): regressos recentes (data ou 1.º check-in) e acompanhamento
+  //     de 15 em 15 dias por WhatsApp enquanto a pausa dura (cada «Feito» vale para 15 dias) ---
   const pausas: AdminTodoItem[] = [];
   for (const s of students) {
     for (const p of pausesByStudent.get(s.id) ?? []) {
-      const returnedToday = p.endDate === today;
-      const longOpen = !p.endDate && !p.expectedEndDate && daysBetween(p.startDate, today) >= 90;
-      if (!returnedToday && !longOpen) continue;
+      const since = daysBetween(p.startDate, today);
+      const returnedRecently = Boolean(p.endDate && p.endDate <= today && daysBetween(p.endDate, today) <= 3);
+      const followUp = isPauseActiveOn(p, today) && since >= PAUSE_FOLLOW_UP_DAYS;
+      if (!returnedRecently && !followUp) continue;
+      const cycle = Math.floor(since / PAUSE_FOLLOW_UP_DAYS);
+      const sinceLabel = since >= 60 ? `há ${Math.floor(since / 30)} meses` : `há ${since} dias`;
       pausas.push({
         kind: "pausas" as const,
-        key: todoDoneKey("pausas", { id: s.id, ref: p.id, today }),
+        key: todoDoneKey("pausas", { id: s.id, ref: returnedRecently ? `${p.id}:fim` : `${p.id}:${cycle}`, today }),
         studentId: s.id,
         name: nameOf(s),
         cells: [
           { text: shortDate(p.startDate) },
-          { text: p.endDate ? shortDate(p.endDate) : p.expectedEndDate ? shortDate(p.expectedEndDate) : "sem data" },
-          returnedToday
-            ? { text: "Regressou hoje", tone: "amber" as const }
-            : { text: `Há ${Math.floor(daysBetween(p.startDate, today) / 30)} meses`, tone: "amber" as const },
+          { text: p.endDate ? shortDate(p.endDate) : p.expectedEndDate ? `prev. ${shortDate(p.expectedEndDate)}` : "sem data" },
+          returnedRecently
+            ? { text: `Regressou a ${shortDate(p.endDate!)}`, tone: "green" as const }
+            : { text: `Em pausa ${sinceLabel}`, tone: since >= 90 && !p.expectedEndDate ? ("amber" as const) : undefined },
         ],
-        urgency: returnedToday ? 1000 : daysBetween(p.startDate, today),
-        whatsappUrl: null,
+        urgency: returnedRecently ? 1000 : since,
+        whatsappUrl: returnedRecently ? null : wa(s.id, buildPauseCheckInMessage(firstName(nameOf(s)))),
         href: `/admin/alunos/${s.id}`,
       });
     }
@@ -851,8 +856,8 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     },
     pausas: {
       kind: "pausas", tone: "blue", title: "Pausas", items: pausas,
-      summary: pausas.length ? "Regressos de pausa e pausas longas" : "",
-      info: "Alunos em pausa de mensalidade (ex.: atestado médico): quem regressou hoje (a cobrança volta no dia de pagamento) e pausas sem data há mais de 3 meses.",
+      summary: pausas.length ? "Acompanhar quem está de baixa (de 15 em 15 dias) e regressos" : "",
+      info: "Alunos em pausa de mensalidade (ex.: atestado médico). A cada 15 dias de pausa aparecem para uma mensagem de acompanhamento por WhatsApp; «Feito» esconde até aos 15 dias seguintes. Também mostra quem regressou nos últimos 3 dias (pela data prevista ou pelo primeiro check-in) — a cobrança volta no dia de pagamento.",
       columns: ["Aluno", "Desde", "Regresso", "Situação", ""],
     },
     semana: {

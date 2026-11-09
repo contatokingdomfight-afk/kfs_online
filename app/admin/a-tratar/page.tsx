@@ -109,7 +109,7 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
         action="done"
         item={fields}
         label={item.kind === "confirmar" ? "Confirmado" : item.kind === "inativos" ? "Removido do grupo" : "Feito"}
-        doneAction={item.kind === "confirmar" ? "confirmado" : item.kind === "inativos" ? "removido" : item.kind === "risco" || item.kind === "experimentais" || item.kind === "semplano" || item.kind === "semana" ? "contactado" : item.kind === "aniversarios" ? "parabéns" : "done"}
+        doneAction={item.kind === "confirmar" ? "confirmado" : item.kind === "inativos" ? "removido" : item.kind === "risco" || item.kind === "experimentais" || item.kind === "semplano" || item.kind === "semana" || item.kind === "pausas" ? "contactado" : item.kind === "aniversarios" ? "parabéns" : "done"}
       />
     </span>
   );
@@ -118,7 +118,7 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
 /** Ação em lote do alerta (no cabeçalho). */
 function BulkControl({ g, schoolId }: { g: AdminTodoGroup; schoolId: string | null }) {
   if (g.items.length === 0) return null;
-  if (g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "encomendas" || g.kind === "vencer" || g.kind === "semana" || g.kind === "risco" || g.kind === "semplano" || g.kind === "confirmar" || g.kind === "experimentais" || g.kind === "aniversarios") {
+  if (g.kind === "pagamentos" || g.kind === "seguros" || g.kind === "encomendas" || g.kind === "vencer" || g.kind === "semana" || g.kind === "risco" || g.kind === "semplano" || g.kind === "confirmar" || g.kind === "experimentais" || g.kind === "aniversarios" || g.kind === "pausas") {
     const withPhone = g.items.filter((it) => it.whatsappUrl);
     const missing = g.items.length - withPhone.length;
     return (

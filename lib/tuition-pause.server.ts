@@ -149,3 +149,31 @@ export async function resumeDuePauses(supabase: SupabaseClient): Promise<{ resum
   }
   return { resumed };
 }
+
+/**
+ * Cron diário: termina as pausas de quem voltou a treinar (presença confirmada depois do
+ * início da pausa). O regresso conta a partir da data desse primeiro treino.
+ */
+export async function resumePausesOnCheckIn(supabase: SupabaseClient): Promise<{ resumed: number }> {
+  const { data, error } = await supabase.from("StudentTuitionPause").select("studentId, startDate").is("endDate", null);
+  if (error) return { resumed: 0 };
+  const today = todayYmdLisbon();
+  let resumed = 0;
+  for (const p of (data ?? []) as { studentId: string; startDate: string }[]) {
+    if (p.startDate >= today) continue;
+    const { data: att } = await supabase
+      .from("Attendance")
+      .select("occurrenceDate")
+      .eq("studentId", p.studentId)
+      .eq("status", "CONFIRMED")
+      .gt("occurrenceDate", p.startDate)
+      .lte("occurrenceDate", today)
+      .order("occurrenceDate", { ascending: true })
+      .limit(1);
+    const first = (att ?? [])[0] as { occurrenceDate: string } | undefined;
+    if (!first?.occurrenceDate) continue;
+    const r = await resumeStudentTuition(supabase, p.studentId, String(first.occurrenceDate).slice(0, 10));
+    if (!r.error) resumed++;
+  }
+  return { resumed };
+}
