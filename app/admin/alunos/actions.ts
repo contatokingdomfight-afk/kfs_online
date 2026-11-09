@@ -7,6 +7,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
+import { repriceOpenTuitionOnPlanChange } from "@/lib/renewals";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
 import { resolveEffectiveAccessPlan } from "@/lib/family-effective-plan";
 import { KINGDOM_PLAN_FAMILIA_ID, isFamilyPlan } from "@/lib/kingdom-plans-constants";
@@ -382,6 +383,10 @@ export async function updateStudent(
   } else if (effectivePlanId && !previousPlanId) {
     const pending = await ensureOnboardingPendingPayments(supabase, studentId, effectivePlanId);
     if (pending.error) return { error: pending.error };
+  } else if (planChanged && !onFamilyPlan) {
+    // Mensalidades em aberto (mês corrente em diante) passam ao preço do novo plano.
+    const repriced = await repriceOpenTuitionOnPlanChange(supabase, studentId, previousPlanId, effectivePlanId);
+    if (repriced.error) return { error: `Plano gravado, mas não foi possível atualizar a mensalidade. ${repriced.error}` };
   }
 
   if (name !== undefined) {

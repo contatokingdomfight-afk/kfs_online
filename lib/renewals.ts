@@ -8,11 +8,12 @@ import { filterSchools } from "@/lib/school-scope-rules";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   shouldGenerateLatePayments,
+  currentReferenceMonthLisbon,
 } from "@/lib/lisbon-payment-dates";
 import { startGracePeriodOnLatePayment } from "@/lib/payment-grace";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { resolvePlanMonthlyTuition, resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
-import { loadActiveLoyaltyIndex, loadPlanLoyaltyDiscounts, loyaltyCoversMonth } from "@/lib/loyalty/service";
+import { loadActiveLoyaltyIndex, loadPlanLoyaltyDiscounts, loyaltyCoversMonth, individualLoyaltyDiscount } from "@/lib/loyalty/service";
 import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
 
 export type RenewalPending = {
@@ -231,4 +232,49 @@ async function applyUnconsumedReferralCredits(
       .in("id", consumedIds);
   }
   return remaining;
+}
+
+/**
+ * Ao mudar o plano de um aluno individual, ajusta as mensalidades ainda em aberto (LATE)
+ * do mês corrente em diante à diferença de preço entre planos (mantém créditos de
+ * indicação/descontos já aplicados). Meses anteriores ficam com o valor do plano antigo.
+ */
+export async function repriceOpenTuitionOnPlanChange(
+  supabase: SupabaseClient,
+  studentId: string,
+  oldPlanId: string | null,
+  newPlanId: string | null,
+  now: Date = new Date()
+): Promise<{ updated: number; error?: string }> {
+  if (!oldPlanId || !newPlanId || oldPlanId === newPlanId) return { updated: 0 };
+
+  const { data: open } = await supabase
+    .from("Payment")
+    .select("id, amount, referenceMonth")
+    .eq("studentId", studentId)
+    .eq("status", "LATE")
+    .eq("paymentType", "TUITION")
+    .is("familyGroupId", null)
+    .gte("referenceMonth", currentReferenceMonthLisbon(now));
+  if (!open?.length) return { updated: 0 };
+
+  const { data: plans } = await supabase.from("Plan").select("id, priceMonthly").in("id", [oldPlanId, newPlanId]);
+  const priceOf = new Map((plans ?? []).map((p) => [p.id as string, resolvePlanMonthlyTuition(p.id as string, Number(p.priceMonthly ?? 0))]));
+  if (!priceOf.has(oldPlanId) || !priceOf.has(newPlanId)) return { updated: 0 };
+
+  let updated = 0;
+  for (const p of open as { id: string; amount: number | string; referenceMonth: string }[]) {
+    const [oldDisc, newDisc] = await Promise.all([
+      individualLoyaltyDiscount(supabase, studentId, oldPlanId, p.referenceMonth),
+      individualLoyaltyDiscount(supabase, studentId, newPlanId, p.referenceMonth),
+    ]);
+    const oldExpected = Math.max(0, priceOf.get(oldPlanId)! - oldDisc);
+    const newExpected = Math.max(0, priceOf.get(newPlanId)! - newDisc);
+    const amount = Math.max(0, Number(p.amount) + newExpected - oldExpected);
+    if (amount === Number(p.amount)) continue;
+    const { error } = await supabase.from("Payment").update({ amount: amount.toFixed(2) }).eq("id", p.id).eq("status", "LATE");
+    if (error) return { updated, error: error.message };
+    updated++;
+  }
+  return { updated };
 }
