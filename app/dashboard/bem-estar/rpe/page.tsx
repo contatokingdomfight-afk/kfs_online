@@ -8,6 +8,7 @@ import { getTranslations } from "@/lib/i18n";
 import { getPlanAccess } from "@/lib/plan-access";
 import { RpeQuickForm } from "./RpeQuickForm";
 import { lessonMinutes } from "@/lib/training-load";
+import { TrainingLoadExplainer } from "@/components/training-load/TrainingLoadExplainer";
 
 export const metadata = {
   title: "RPE pós-treino | KFS",
@@ -65,7 +66,8 @@ export default async function RpePage() {
       <h1 style={{ fontSize: "clamp(22px, 5.5vw, 28px)", marginBottom: 8, color: "var(--text-primary)" }}>
         {pageTitle}
       </h1>
-      <p style={{ color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.5 }}>{pageIntro}</p>
+      <p style={{ color: "var(--text-secondary)", marginBottom: 16, lineHeight: 1.5 }}>{pageIntro}</p>
+      <TrainingLoadExplainer pt={loc === "pt"} />
 
       {att.length === 0 ? (
         <div

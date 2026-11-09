@@ -64,28 +64,41 @@ export function RpeQuickForm({
           {occurrenceDate}
         </span>
       </div>
-      <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{pt ? "Esforço (RPE)" : "Effort (RPE)"}</span>
-        <select
-          name="rpe"
-          required
-          value={rpe}
-          onChange={(e) => setRpe(Number(e.target.value))}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "var(--radius-md)",
-            border: "1px solid var(--border)",
-            background: "var(--bg-elevated)",
-            color: "var(--text-primary)",
-          }}
-        >
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
-      </label>
+        <input type="hidden" name="rpe" value={rpe} />
+        {/* Botões 1–10 em vez de <select>: o menu nativo ficava branco sobre branco no tema escuro. */}
+        <span role="radiogroup" aria-label={pt ? "Esforço de 1 a 10" : "Effort from 1 to 10"} style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
+            const on = n === rpe;
+            const tone = n <= 3 ? "#4ade80" : n <= 6 ? "#fbbf24" : n <= 8 ? "#fb923c" : "#f87171";
+            return (
+              <button
+                key={n}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => setRpe(n)}
+                style={{
+                  width: 32,
+                  height: 34,
+                  borderRadius: 8,
+                  border: `1px solid ${on ? tone : "var(--border)"}`,
+                  background: on ? tone : "var(--bg-elevated)",
+                  color: on ? "#111" : "var(--text-primary)",
+                  font: "inherit",
+                  fontSize: 14,
+                  fontWeight: on ? 800 : 600,
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                {n}
+              </button>
+            );
+          })}
+        </span>
+      </div>
       <label style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 140px" }}>
         <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{weightLabel}</span>
         <input

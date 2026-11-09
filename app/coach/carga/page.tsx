@@ -22,6 +22,7 @@ import {
   type TrainingLoadZone,
 } from "@/lib/training-load";
 import { loadTrainingSessions, loadWellnessSnapshots } from "@/lib/training-load.server";
+import { TrainingLoadExplainer } from "@/components/training-load/TrainingLoadExplainer";
 
 export const dynamic = "force-dynamic";
 
@@ -226,6 +227,7 @@ export default async function CoachCargaPage({ searchParams }: { searchParams: S
           </button>
         </form>
       </header>
+      <TrainingLoadExplainer pt={pt} />
 
       {/* Contagem por zona (clicar filtra) */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
