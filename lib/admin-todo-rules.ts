@@ -8,6 +8,7 @@ export type AdminTodoKind =
   | "seguros"
   | "encomendas"
   | "vencer"
+  | "pausas"
   | "semana"
   | "risco"
   | "inativos"
@@ -21,10 +22,10 @@ export type AdminTodoKind =
   | "experimentais"
   | "aniversarios";
 
-export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "semana", "risco", "inativos", "semplano", "carga", "adesao", "fisicas", "performance", "exame", "confirmar", "experimentais", "aniversarios"];
+export const ADMIN_TODO_ORDER: AdminTodoKind[] = ["pagamentos", "seguros", "encomendas", "vencer", "pausas", "semana", "risco", "inativos", "semplano", "carga", "adesao", "fisicas", "performance", "exame", "confirmar", "experimentais", "aniversarios"];
 
-/** Prazo da mensalidade: dia 8 do mês de referência (ver lib/lisbon-payment-dates.ts). */
-export const TUITION_DUE_DAY = 8;
+/** Dia de pagamento por omissão (Student.paymentDueDay; ver lib/lisbon-payment-dates.ts). */
+export const TUITION_DUE_DAY = 5;
 /** «A vencer»: mensalidades do mês por pagar nos últimos N dias antes do prazo. */
 export const DUE_SOON_DAYS = 3;
 /** «Registados sem plano»: contas criadas há pelo menos 1 dia e no máximo N dias. */
@@ -100,18 +101,18 @@ export function trialToConvert(today: string, lessonDate: string | null, convert
 }
 
 /** Data-limite (YYYY-MM-DD) da mensalidade de um mês de referência (YYYY-MM). */
-export function tuitionDueDate(referenceMonth: string): string {
-  return `${referenceMonth.slice(0, 7)}-${String(TUITION_DUE_DAY).padStart(2, "0")}`;
+export function tuitionDueDate(referenceMonth: string, dueDay: number = TUITION_DUE_DAY): string {
+  return `${referenceMonth.slice(0, 7)}-${String(dueDay).padStart(2, "0")}`;
 }
 
-/** Em atraso só depois do prazo (antes do dia 8 a mensalidade do mês ainda não venceu). */
-export function isTuitionOverdue(today: string, referenceMonth: string): boolean {
-  return today > tuitionDueDate(referenceMonth);
+/** Em atraso só depois do dia de pagamento do aluno (por omissão dia 5). */
+export function isTuitionOverdue(today: string, referenceMonth: string, dueDay: number = TUITION_DUE_DAY): boolean {
+  return today > tuitionDueDate(referenceMonth, dueDay);
 }
 
 /** A vencer: ainda dentro do prazo e a no máximo DUE_SOON_DAYS dias dele. */
-export function tuitionDueSoon(today: string, referenceMonth: string): { daysLeft: number } | null {
-  const daysLeft = daysBetween(today, tuitionDueDate(referenceMonth));
+export function tuitionDueSoon(today: string, referenceMonth: string, dueDay: number = TUITION_DUE_DAY): { daysLeft: number } | null {
+  const daysLeft = daysBetween(today, tuitionDueDate(referenceMonth, dueDay));
   return daysLeft >= 0 && daysLeft <= DUE_SOON_DAYS ? { daysLeft } : null;
 }
 

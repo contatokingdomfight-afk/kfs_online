@@ -8,7 +8,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
-import { shouldGenerateLatePayments } from "@/lib/lisbon-payment-dates";
+import { isPastDueDay, normalizeDueDay, todayYmdLisbon } from "@/lib/lisbon-payment-dates";
+import { loadOpenPause, isPauseActiveOn } from "@/lib/tuition-pause";
 import { getFamilyContext } from "@/lib/family-context";
 
 export type AutoStudentStatus = "ATIVO" | "INADIMPLENTE" | "INATIVO";
@@ -45,7 +46,7 @@ export function deriveStudentStatusFromPayments(input: {
 async function loadLateMonthCount(supabase: SupabaseClient, studentId: string): Promise<number> {
   const { data: student } = await supabase
     .from("Student")
-    .select("createdAt")
+    .select("createdAt, paymentDueDay")
     .eq("id", studentId)
     .maybeSingle();
   const tuitionStartMonth = student
@@ -59,10 +60,11 @@ async function loadLateMonthCount(supabase: SupabaseClient, studentId: string): 
     .eq("status", "LATE")
     .eq("paymentType", "TUITION");
   const now = new Date();
+  const dueDay = normalizeDueDay((student as { paymentDueDay?: number } | null)?.paymentDueDay);
   const months = (latePayments ?? [])
     .map((p) => String((p as { referenceMonth: string }).referenceMonth))
     .filter((m) => !tuitionStartMonth || !isTuitionMonthBeforeEnrollment(m, tuitionStartMonth))
-    .filter((m) => shouldGenerateLatePayments(now, m));
+    .filter((m) => isPastDueDay(now, m, dueDay));
   return new Set(months).size;
 }
 
@@ -96,6 +98,9 @@ export async function syncStudentPaymentStatus(
   // INATIVO (baixa manual ou 2+ meses em atraso) é fixo: o cron e a geração de
   // mensalidades nunca o reescrevem. Só sai com pagamento recebido ou alteração do admin.
   if (row.status === "INATIVO" && !options?.paymentReceived) return { updated: false, status: row.status };
+  // Em pausa (ex.: atestado médico): nunca fica inadimplente; o estado só muda à mão ou no regresso.
+  const openPause = await loadOpenPause(supabase, studentId);
+  if (openPause && isPauseActiveOn(openPause, todayYmdLisbon())) return { updated: false, status: row.status };
 
   // Membro de família não tem Payment próprio — o histórico de atraso é irrelevante
   // para ele; o status só reflete o que a cascata do titular (payment-grace.ts) já

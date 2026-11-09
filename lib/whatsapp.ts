@@ -112,7 +112,7 @@ export function buildOrderReadyMessage(name: string, reference: string): string 
   return `Olá ${first}! 👋 A tua encomenda ${reference} já chegou e está pronta a levantar na secretaria da Kingdom Fight School. Até já! 🥋`;
 }
 
-/** Lembrete simpático antes do prazo da mensalidade (dia 8). */
+/** Lembrete simpático antes do prazo da mensalidade (dia de pagamento do aluno). */
 export function buildDueSoonMessage(studentFirstName: string, dueLabel: string): string {
   const name = studentFirstName.trim() || "tudo bem";
   return `Olá ${name}! 👋 Aqui é da Kingdom Fight School. Só para lembrar que a mensalidade deste mês vence ${dueLabel}. Se já pagaste, ignora esta mensagem. Obrigado! 🥋`;

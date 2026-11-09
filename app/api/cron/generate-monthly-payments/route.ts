@@ -10,7 +10,7 @@ import { generateMonthlyPayments } from "@/lib/renewals";
 /**
  * Cron: gera mensalidades (Payment LATE) para o mês de referência.
  * Sem ?month= corre mês anterior + corrente (Lisboa).
- * Sem ?force=1, só gera após o fim do dia 8 em Lisboa (ou mês já ultrapassado) —
+ * Gera a partir do dia 1 do mês (o atraso conta-se pelo dia de pagamento de cada aluno) —
  * usado assim pelo cron diário `payment-suspension` como rede de segurança.
  * Com ?force=1 gera já (usado pelo cron do dia 1, mesma flag do botão manual em
  * Financeiro → Renovações). Idempotente: nunca duplica quem já tem Payment no mês.

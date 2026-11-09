@@ -56,16 +56,22 @@ describe("todoDoneKey", () => {
 });
 
 describe("mensalidades", () => {
-  it("só fica em atraso depois do dia 8", () => {
-    expect(isTuitionOverdue("2026-10-08", "2026-10")).toBe(false);
-    expect(isTuitionOverdue("2026-10-09", "2026-10")).toBe(true);
+  it("só fica em atraso depois do dia de pagamento (omissão: dia 5)", () => {
+    expect(isTuitionOverdue("2026-10-05", "2026-10")).toBe(false);
+    expect(isTuitionOverdue("2026-10-06", "2026-10")).toBe(true);
     expect(isTuitionOverdue("2026-10-02", "2026-09")).toBe(true);
   });
+  it("respeita o dia de pagamento do aluno", () => {
+    expect(isTuitionOverdue("2026-10-10", "2026-10", 15)).toBe(false);
+    expect(isTuitionOverdue("2026-10-16", "2026-10", 15)).toBe(true);
+    expect(isTuitionOverdue("2026-10-02", "2026-10", 1)).toBe(true);
+  });
   it("a vencer nos 3 dias antes do prazo", () => {
-    expect(tuitionDueSoon("2026-10-04", "2026-10")).toBeNull();
-    expect(tuitionDueSoon("2026-10-05", "2026-10")).toEqual({ daysLeft: 3 });
-    expect(tuitionDueSoon("2026-10-08", "2026-10")).toEqual({ daysLeft: 0 });
-    expect(tuitionDueSoon("2026-10-09", "2026-10")).toBeNull();
+    expect(tuitionDueSoon("2026-10-01", "2026-10")).toBeNull();
+    expect(tuitionDueSoon("2026-10-02", "2026-10")).toEqual({ daysLeft: 3 });
+    expect(tuitionDueSoon("2026-10-05", "2026-10")).toEqual({ daysLeft: 0 });
+    expect(tuitionDueSoon("2026-10-06", "2026-10")).toBeNull();
+    expect(tuitionDueSoon("2026-10-12", "2026-10", 15)).toEqual({ daysLeft: 3 });
   });
 });
 

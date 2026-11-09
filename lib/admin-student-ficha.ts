@@ -5,6 +5,7 @@ import { getInsuranceSettings, isMembershipAgreementCurrent } from "@/lib/insura
 import { isEnrollmentFormCurrent } from "@/lib/enrollment-form";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { addDaysYmd, daysBetween, isTuitionOverdue, RISK_DAYS } from "@/lib/admin-todo-rules";
+import { normalizeDueDay } from "@/lib/lisbon-payment-dates";
 import { getFamilyContext } from "@/lib/family-context";
 
 export type SummaryTone = "red" | "amber" | "green" | "neutral";
@@ -28,7 +29,7 @@ const eur = (n: number) => `${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2).replace(
 
 /**
  * Resumo da ficha do aluno no admin: mensalidade, seguro/matrícula, documentos e treino — os mesmos
- * critérios do «A tratar hoje» (mensalidade só em atraso depois do dia 8). Em cache por pedido
+ * critérios do «A tratar hoje» (mensalidade só em atraso depois do dia de pagamento). Em cache por pedido
  * (layout e página da ficha usam-no).
  */
 export const loadStudentAdminSummary = cache(async function loadStudentAdminSummary(
@@ -47,20 +48,21 @@ export const loadStudentAdminSummary = cache(async function loadStudentAdminSumm
     supabase.from("StudentEnrollmentForm").select("formCompleted, formVersion").eq("studentId", studentId).maybeSingle(),
     supabase.from("Attendance").select("occurrenceDate").eq("studentId", studentId).eq("status", "CONFIRMED").gte("occurrenceDate", since).lte("occurrenceDate", today),
     getFamilyContext(supabase, studentId),
-    supabase.from("Student").select("schoolId").eq("id", studentId).maybeSingle(),
+    supabase.from("Student").select("schoolId, paymentDueDay").eq("id", studentId).maybeSingle(),
   ]);
   const isFamilyMember = Boolean(family && !family.isTitular);
 
   type P = { id: string; amount: number | string; status: string; paymentType: string; referenceMonth: string | null; referenceYear: string | number | null; createdAt: string };
   const rows = (payments ?? []) as P[];
 
-  // Mensalidade
+  // Mensalidade (em atraso só depois do dia de pagamento do aluno)
+  const dueDay = normalizeDueDay((studentSchool as { paymentDueDay?: number } | null)?.paymentDueDay);
   let lateTotal = 0;
   const lateMonths: string[] = [];
   let dueSoon = false;
   for (const p of rows.filter((r) => r.paymentType === "TUITION" && r.status === "LATE")) {
     const ref = p.referenceMonth ? String(p.referenceMonth).slice(0, 7) : null;
-    if (ref && !isTuitionOverdue(today, ref)) {
+    if (ref && !isTuitionOverdue(today, ref, dueDay)) {
       dueSoon = true;
       continue;
     }
@@ -75,7 +77,7 @@ export const loadStudentAdminSummary = cache(async function loadStudentAdminSumm
       : lateTotal > 0
         ? { tone: "red", title: "Mensalidade", detail: `${eur(lateTotal)} em atraso${lateMonths[0] ? ` · desde ${monthLabelPt(lateMonths[0])}` : ""}`, lateTotal, lateMonths, dueSoon }
         : dueSoon
-          ? { tone: "amber", title: "Mensalidade", detail: "deste mês por pagar (prazo dia 8)", lateTotal: 0, lateMonths: [], dueSoon: true }
+          ? { tone: "amber", title: "Mensalidade", detail: `deste mês por pagar (prazo dia ${dueDay})`, lateTotal: 0, lateMonths: [], dueSoon: true }
           : { tone: "green", title: "Mensalidade", detail: "em dia", lateTotal: 0, lateMonths: [], dueSoon: false };
 
   // Seguro e matrícula

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Dia de pagamento, pausa e carga</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--bg3:#1c1c1f;--tx:#fff;--tx2:#a1a1aa;--pr:#c1121f;--bd:#27272a;--ok:#4ade80;--warn:#fbbf24;--blue:#60a5fa;--red:#f87171;--grey:#a1a1aa;--font:"Inter",system-ui,sans-serif}
+  *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:#050505;color:var(--tx)}
+  .wrap{max-width:1240px;margin:0 auto;padding:24px 16px 60px}
+  .badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(193,18,31,.15);color:#ff6b73;text-transform:uppercase}
+  h1{font-size:22px;margin:12px 0 6px}h2.sec{font-size:17px;margin:40px 0 4px}
+  .lead{font-size:13.5px;color:var(--tx2);line-height:1.6;margin:0 0 16px;max-width:820px}
+  .pair{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+  .lbl{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px}
+  .desk{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:18px}
+  .phone{background:var(--bg);border:8px solid #222;border-radius:30px;padding:16px 12px;min-height:560px}
+  .card{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px}
+  .card h3{margin:0 0 10px;font-size:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .f label{display:block;font-size:12px;color:var(--tx2);margin-bottom:4px}
+  .in{background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:9px 10px;font-size:13.5px;color:#fff}
+  .hint{font-size:11.5px;color:var(--tx2);margin-top:4px;line-height:1.45}
+  .b{display:inline-block;border:1px solid var(--bd);background:transparent;color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;white-space:nowrap}
+  .b.p{background:var(--pr);border-color:var(--pr);font-weight:700}.b.ok{background:#16a34a;border-color:#16a34a;font-weight:700}
+  .chip{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+  .c-pause{background:rgba(96,165,250,.15);color:var(--blue)}.c-late{background:rgba(248,113,113,.15);color:var(--red)}.c-due{background:rgba(251,191,36,.15);color:var(--warn)}
+  .pausebox{border:1px solid rgba(96,165,250,.4);background:rgba(96,165,250,.06);border-radius:10px;padding:12px}
+  .row{display:grid;grid-template-columns:1.3fr .8fr .9fr 1fr auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--bd);font-size:13px}
+  .row.hd{color:var(--tx2);font-size:11px;text-transform:uppercase;border-top:0;padding-top:0}
+  .name{font-weight:700}.mut{color:var(--tx2);font-size:12px}
+  .mrow{padding:10px 0;border-top:1px solid var(--bd);font-size:13px}.mrow:first-of-type{border-top:0}
+  .mrow .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .hist{font-size:12px;color:var(--tx2);line-height:1.7}
+  .att{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--bd)}
+  .av{width:34px;height:34px;border-radius:17px;background:#2a2a2e;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+  .att .info{flex:1;min-width:0}.att .nm{font-weight:700;font-size:13.5px}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .load{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid}
+  .load i{width:7px;height:7px;border-radius:4px;display:inline-block}
+  .z-high{color:var(--red);border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.08)}.z-high i{background:var(--red)}
+  .z-caution{color:var(--warn);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08)}.z-caution i{background:var(--warn)}
+  .z-ideal{color:var(--ok);border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.08)}.z-ideal i{background:var(--ok)}
+  .z-low{color:var(--blue);border-color:rgba(96,165,250,.4);background:rgba(96,165,250,.08)}.z-low i{background:var(--blue)}
+  .z-ins{color:var(--grey);border-color:rgba(161,161,170,.35);background:rgba(161,161,170,.06)}.z-ins i{background:var(--grey)}
+  .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px}
+  .st-ok{background:rgba(74,222,128,.15);color:var(--ok)}.st-pen{background:rgba(251,191,36,.12);color:var(--warn)}
+  .alert{border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.07);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-bottom:8px}
+  .note{font-size:12.5px;color:var(--tx2);line-height:1.65;margin-top:12px;max-width:900px}.note b{color:#fff}
+  @media(max-width:900px){.pair{grid-template-columns:1fr}.row{grid-template-columns:1fr 1fr}.row.hd{display:none}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">Mockup</span>
+  <h1>Dia de pagamento · Pausa por atestado · Carga de treino nas presenças</h1>
+  <p class="lead">Três alterações. Em cada uma: desktop à esquerda, telemóvel à direita. Dados fictícios.</p>
+
+  <!-- 1. FICHA DO ALUNO -->
+  <h2 class="sec">1 · Ficha do aluno (admin) → novo cartão «Mensalidade»</h2>
+  <p class="lead">Fica por baixo do plano. O dia de pagamento vem a 5 em todos os alunos. A pausa abre um pequeno formulário no mesmo cartão.</p>
+  <div class="pair">
+    <div>
+      <p class="lbl">Desktop</p>
+      <div class="desk">
+        <div class="card">
+          <h3>Mensalidade</h3>
+          <div class="grid2">
+            <div class="f"><label>Dia de pagamento</label><div class="in">5 &nbsp;▾</div><div class="hint">Mensalidade gerada no dia 1; só fica em atraso depois do dia 5. Suspensão ao dia 20 (15 dias de tolerância).</div></div>
+            <div class="f"><label>Situação</label><div class="in"><span class="chip c-pause">Em pausa</span> &nbsp;desde 3 nov.</div><div class="hint">Pagamento automático Revolut: próxima cobrança adiada para 5 jan.</div></div>
+          </div>
+          <div class="pausebox" style="margin-top:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+              <div><b style="font-size:13.5px">Pausa por atestado médico</b><div class="hint">3 nov. → regresso previsto 15 dez. · atestado.pdf · Fidelização congelada (fim passa de mar. para mai.)</div></div>
+              <div style="display:flex;gap:8px"><span class="b">Editar</span><span class="b ok">Retomar agora</span></div>
+            </div>
+          </div>
+          <div class="hint" style="margin-top:12px">Histórico de pausas: mar. 2026 → abr. 2026 (atestado médico)</div>
+        </div>
+        <div class="card">
+          <h3>Pausar mensalidades <span class="mut">(formulário que abre ao clicar em «Pausar»)</span></h3>
+          <div class="grid2">
+            <div class="f"><label>Início</label><div class="in">03/11/2026</div></div>
+            <div class="f"><label>Regresso previsto (opcional)</label><div class="in">15/12/2026</div></div>
+            <div class="f"><label>Motivo</label><div class="in">Atestado médico ▾</div></div>
+            <div class="f"><label>Atestado (opcional)</label><div class="in" style="color:var(--tx2)">📎 Anexar ficheiro</div></div>
+          </div>
+          <div class="hint" style="margin-top:10px">Começa antes do dia de pagamento (5) → novembro <b style="color:#fff">não é cobrado</b> e a mensalidade em aberto é anulada. Regressa a 15 dez. (até dia 15) → dezembro é cobrado por inteiro.</div>
+          <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end"><span class="b">Cancelar</span><span class="b p">Pausar</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="lbl">Telemóvel</p>
+      <div class="phone">
+        <div class="card">
+          <h3>Mensalidade</h3>
+          <div class="f"><label>Dia de pagamento</label><div class="in">5 ▾</div><div class="hint">Em atraso só depois do dia 5.</div></div>
+          <div class="pausebox" style="margin-top:12px">
+            <span class="chip c-pause">Em pausa</span>
+            <div style="font-size:13px;margin-top:6px"><b>Atestado médico</b></div>
+            <div class="hint">3 nov. → 15 dez. · atestado.pdf<br>Revolut adiada para 5 jan.<br>Fidelização até mai.</div>
+            <div style="display:flex;gap:8px;margin-top:10px"><span class="b">Editar</span><span class="b ok">Retomar</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Pausar mensalidades</h3>
+          <div class="f"><label>Início</label><div class="in">03/11/2026</div></div>
+          <div class="f" style="margin-top:8px"><label>Regresso previsto</label><div class="in">15/12/2026</div></div>
+          <div class="f" style="margin-top:8px"><label>Motivo</label><div class="in">Atestado médico ▾</div></div>
+          <div class="hint" style="margin-top:8px">Novembro não é cobrado.</div>
+          <div style="margin-top:10px"><span class="b p" style="display:block;text-align:center">Pausar</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. A TRATAR -->
+  <h2 class="sec">2 · Admin → «A tratar hoje»</h2>
+  <p class="lead">Mensalidades só aparecem depois do dia de pagamento de cada aluno. Alunos em pausa nunca aparecem como devedores — só um aviso quando a pausa acaba ou dura mais de 3 meses.</p>
+  <div class="pair">
+    <div>
+      <p class="lbl">Desktop</p>
+      <div class="desk">
+        <div class="card">
+          <h3>Mensalidades em atraso <span class="mut">· 3</span></h3>
+          <div class="row hd"><span>Aluno</span><span>Valor</span><span>Dia de pagamento</span><span>Situação</span><span></span></div>
+          <div class="row"><span class="name">Rodrigo Silva</span><span>55 €</span><span>dia 5</span><span><span class="chip c-late">4 dias em atraso</span></span><span><span class="b">Registar</span></span></div>
+          <div class="row"><span class="name">Ana Costa</span><span>25 €</span><span>dia 5</span><span><span class="chip c-late">4 dias · suspende a 20</span></span><span><span class="b">Registar</span></span></div>
+          <div class="row"><span class="name">Tiago Lopes</span><span>40 €</span><span>dia 1</span><span><span class="chip c-late">8 dias em atraso</span></span><span><span class="b">Registar</span></span></div>
+          <div class="hint" style="margin-top:8px">Não aparecem: 2 alunos com dia de pagamento 15 (ainda no prazo) e 1 aluno em pausa.</div>
+        </div>
+        <div class="card">
+          <h3>Pausas <span class="mut">· 2</span></h3>
+          <div class="row"><span class="name">Marta Reis</span><span class="mut">desde 3 nov.</span><span class="mut">regresso hoje</span><span><span class="chip c-due">Regresso hoje</span></span><span><span class="b ok">Retomar</span></span></div>
+          <div class="row"><span class="name">João Neves</span><span class="mut">desde 2 ago.</span><span class="mut">sem data</span><span><span class="chip c-due">Há 3 meses</span></span><span><span class="b">Ver ficha</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="lbl">Telemóvel</p>
+      <div class="phone">
+        <div class="card">
+          <h3>Mensalidades em atraso · 3</h3>
+          <div class="mrow"><div class="top"><span class="name">Rodrigo Silva</span><span>55 €</span></div><div class="top" style="margin-top:6px"><span class="chip c-late">4 dias · dia 5</span><span class="b">Registar</span></div></div>
+          <div class="mrow"><div class="top"><span class="name">Ana Costa</span><span>25 €</span></div><div class="top" style="margin-top:6px"><span class="chip c-late">suspende a 20</span><span class="b">Registar</span></div></div>
+          <div class="mrow"><div class="top"><span class="name">Tiago Lopes</span><span>40 €</span></div><div class="top" style="margin-top:6px"><span class="chip c-late">8 dias · dia 1</span><span class="b">Registar</span></div></div>
+        </div>
+        <div class="card">
+          <h3>Pausas · 2</h3>
+          <div class="mrow"><div class="top"><span class="name">Marta Reis</span><span class="chip c-due">Regresso hoje</span></div><div style="margin-top:6px"><span class="b ok">Retomar</span></div></div>
+          <div class="mrow"><div class="top"><span class="name">João Neves</span><span class="chip c-due">Há 3 meses</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. PRESENÇAS -->
+  <h2 class="sec">3 · Coach → Aula → lista de presenças com carga de treino</h2>
+  <p class="lead">Cada aluno mostra a zona da carga (relação agudo/crónico das últimas semanas), com as cores que já existem na página «Carga». No topo, um alerta se algum aluno estiver em carga alta. Tocar no selo abre o detalhe da carga do aluno.</p>
+  <div class="pair">
+    <div>
+      <p class="lbl">Desktop</p>
+      <div class="desk">
+        <div class="card">
+          <h3>Muay Thai · hoje 19:00 <span class="mut">· 5 alunos</span></h3>
+          <div class="alert">⚠️ <b>2 alunos com carga alta ou em atenção</b> — considera reduzir a intensidade: Pedro Martins, Inês Rocha.</div>
+          <div class="att"><div class="av">PM</div><div class="info"><div class="nm">Pedro Martins</div><div class="tags"><span class="load z-high"><i></i>Carga alta · 1,7</span><span class="mut">5 treinos em 7 dias</span></div></div><span class="st st-ok">Presente</span></div>
+          <div class="att"><div class="av">IR</div><div class="info"><div class="nm">Inês Rocha</div><div class="tags"><span class="load z-caution"><i></i>Atenção · 1,4</span><span class="mut">4 treinos em 7 dias</span></div></div><span class="st st-ok">Presente</span></div>
+          <div class="att"><div class="av">LS</div><div class="info"><div class="nm">Luís Santos</div><div class="tags"><span class="load z-ideal"><i></i>Carga ideal · 1,1</span></div></div><span class="st st-pen">Por confirmar</span></div>
+          <div class="att"><div class="av">CA</div><div class="info"><div class="nm">Clara Alves</div><div class="tags"><span class="load z-low"><i></i>Carga baixa · 0,6</span><span class="mut">voltou de pausa</span></div></div><span class="st st-pen">Por confirmar</span></div>
+          <div class="att"><div class="av">BF</div><div class="info"><div class="nm">Bruno Faria</div><div class="tags"><span class="load z-ins"><i></i>Sem base ainda</span></div></div><span class="st st-ok">Presente</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="lbl">Telemóvel</p>
+      <div class="phone">
+        <div class="card">
+          <h3>Muay Thai · 19:00</h3>
+          <div class="alert">⚠️ 2 alunos com carga alta/atenção</div>
+          <div class="att"><div class="av">PM</div><div class="info"><div class="nm">Pedro Martins</div><div class="tags"><span class="load z-high"><i></i>Alta · 1,7</span></div></div><span class="st st-ok">✓</span></div>
+          <div class="att"><div class="av">IR</div><div class="info"><div class="nm">Inês Rocha</div><div class="tags"><span class="load z-caution"><i></i>Atenção · 1,4</span></div></div><span class="st st-ok">✓</span></div>
+          <div class="att"><div class="av">LS</div><div class="info"><div class="nm">Luís Santos</div><div class="tags"><span class="load z-ideal"><i></i>Ideal · 1,1</span></div></div><span class="st st-pen">?</span></div>
+          <div class="att"><div class="av">CA</div><div class="info"><div class="nm">Clara Alves</div><div class="tags"><span class="load z-low"><i></i>Baixa · 0,6</span></div></div><span class="st st-pen">?</span></div>
+          <div class="att"><div class="av">BF</div><div class="info"><div class="nm">Bruno Faria</div><div class="tags"><span class="load z-ins"><i></i>Sem base</span></div></div><span class="st st-ok">✓</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note"><b>Regras resumidas:</b> dia de pagamento 1–28 (todos a 5); mensalidade gerada no dia 1 como «por pagar», em atraso só após o dia do aluno; suspensão 15 dias depois. Pausa: começa antes do dia de pagamento → mês não cobrado; regresso até dia 15 → mês cobrado, depois → só o seguinte; acesso à app mantém-se; fidelização congela; Revolut adia a cobrança (e passa a acompanhar mudanças de plano). Carga: zona calculada como na página «Carga» do coach; o número é a relação agudo/crónico.</p>
+</div>
+</body>
+</html>

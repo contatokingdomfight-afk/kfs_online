@@ -16,6 +16,7 @@ import { computeInsuranceStatus, INSURANCE_STATUS_LABEL } from "@/lib/insurance-
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { addDaysYmd, daysBetween, isTuitionOverdue, RISK_DAYS } from "@/lib/admin-todo-rules";
+import { loadPausesByStudent, isPauseActiveOn } from "@/lib/tuition-pause";
 import { fetchAllPages, inChunks } from "@/lib/graduation/queries";
 
 const INSURANCE_FILTER_LABEL: Record<string, string> = {
@@ -151,14 +152,17 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
     );
   };
 
-  // Pagamentos em atraso (mesmos critérios do «A tratar hoje»: mensalidade só em atraso depois do dia 8).
+  // Pagamentos em atraso (mesmos critérios do «A tratar hoje»: mensalidade só em atraso depois do dia de pagamento).
+  // Pausas de mensalidade em curso (selo «Em pausa»; sem atraso).
+  const pausesByStudent = await loadPausesByStudent(supabase, filtered.map((s) => s.id));
+  const pausedIds = new Set([...pausesByStudent.entries()].filter(([, ps]) => ps.some((p) => isPauseActiveOn(p, todayYmd))).map(([id]) => id));
   const tuitionLateBy = new Map<string, number>();
   const feesLateBy = new Map<string, number>();
   for (const p of latePayments) {
     const amount = Number(p.amount) || 0;
     if (p.paymentType === "TUITION") {
       const ref = p.referenceMonth ? String(p.referenceMonth).slice(0, 7) : null;
-      if (ref && !isTuitionOverdue(todayYmd, ref)) continue;
+      if (pausedIds.has(p.studentId) || (ref && !isTuitionOverdue(todayYmd, ref))) continue;
       tuitionLateBy.set(p.studentId, (tuitionLateBy.get(p.studentId) ?? 0) + amount);
     } else {
       feesLateBy.set(p.studentId, (feesLateBy.get(p.studentId) ?? 0) + amount);
@@ -490,6 +494,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
                       {u?.name || "—"}
                     </span>
                     <span style={pill("var(--bg)", "var(--text-secondary)")}>{STATUS_LABEL[s.status] ?? s.status}</span>
+                    {pausedIds.has(s.id) && <span style={pill("rgba(96,165,250,.15)", "#60a5fa")}>Em pausa</span>}
                     {primMod && (
                       <span style={pill("var(--surface)", "var(--text-primary)")}>
                         {modalitiesForFilter.find((x) => x.code === primMod)?.name ?? primMod}

@@ -131,7 +131,7 @@ export default async function AdminFinanceiroMensalidadesPage({ searchParams }: 
     const first = it.name.split(/\s+/)[0] ?? "";
     const overdue = it.referenceMonth ? isTuitionOverdue(today, it.referenceMonth) : true;
     it.reminderUrl = it.phone
-      ? buildWhatsAppUrl(it.phone, overdue ? buildPaymentOverdueMessage(first) : buildDueSoonMessage(first, "no dia 8"))
+      ? buildWhatsAppUrl(it.phone, overdue ? buildPaymentOverdueMessage(first) : buildDueSoonMessage(first, "no dia de pagamento"))
       : null;
   }
   const order = { month: 0, older: 1, fees: 2, orders: 3 } as const;
@@ -142,7 +142,7 @@ export default async function AdminFinanceiroMensalidadesPage({ searchParams }: 
   const lastRows = sum("older");
   const oldRows = sum("fees");
   const total = (rows: PorReceberItem[]) => rows.reduce((a, r) => a + r.amount, 0);
-  const thisDueNote = isTuitionOverdue(today, month) ? "prazo (dia 8) já passou" : "prazo até dia 8";
+  const thisDueNote = isTuitionOverdue(today, month) ? "prazo (dia 5) já passou" : "prazo até dia 5 (ou o dia de cada aluno)";
 
   const kpi = (label: string, rows: PorReceberItem[], note?: string, danger?: boolean) => (
     <div className="card" style={{ padding: 14, background: "var(--bg)" }}>

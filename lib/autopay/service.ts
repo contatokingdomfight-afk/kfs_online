@@ -3,7 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getFamilyContext } from "@/lib/family-group";
 import { resolveFamilyGroupTitularSuggestedAmount, resolvePlanMonthlyTuition } from "@/lib/family-tuition";
 import { registerTuitionPaymentCore } from "@/lib/finance/register-tuition-core";
-import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
+import { currentReferenceMonthLisbon, todayYmdLisbon } from "@/lib/lisbon-payment-dates";
+import { loadOpenPause, isPauseActiveOn } from "@/lib/tuition-pause";
 import { addMonthsToReferenceMonth } from "@/lib/reference-month";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { individualLoyaltyDiscount } from "@/lib/loyalty/service";
@@ -338,7 +339,12 @@ export async function syncAutoPay(supabase: SupabaseClient, row: AutoPayRow): Pr
   // Próxima cobrança = fim do ciclo ativo; corrige-a se não coincidir com o dia de cobrança (meses curtos, mudança do admin).
   const active = cycles.find((c) => c.state === "active") ?? cycles.find((c) => c.id === sub.current_cycle_id);
   let next = active?.end_date ? new Date(active.end_date) : null;
-  if (state === "ACTIVE" && billingDay && next && active?.start_date) {
+  // Em pausa (ex.: atestado médico) a data foi adiada de propósito: não a «corrige».
+  const pausedNow = await (async () => {
+    const p = await loadOpenPause(supabase, row.studentId);
+    return Boolean(p && isPauseActiveOn(p, todayYmdLisbon()));
+  })();
+  if (state === "ACTIVE" && billingDay && next && active?.start_date && !pausedNow) {
     const desired = nextChargeAfter(billingDay, new Date(active.start_date));
     if (!sameLisbonDay(desired, next) && desired.getTime() > Date.now()) {
       try {
@@ -479,4 +485,32 @@ export function syncAutoPaySafe(supabase: SupabaseClient, row: AutoPayRow): Prom
     console.error("[autopay] sync", row.id, e);
     return row;
   });
+}
+
+/**
+ * Pausa/retoma da mensalidade: muda a próxima cobrança automática do aluno.
+ * `month` = primeiro mês a cobrar (YYYY-MM), ou null = pausa sem data (adiada 12 meses).
+ */
+export async function deferAutoPayCharge(supabase: SupabaseClient, studentId: string, month: string | null, dueDay: number): Promise<{ error?: string }> {
+  const row = await loadAutoPayForStudent(supabase, studentId);
+  if (!row || row.state !== "ACTIVE" || !row.revolutSubscriptionId || row.environment !== revolutMerchantEnv) return {};
+  const day = row.billingDay ?? dueDay;
+  let target: Date;
+  if (month) {
+    const [y, m] = month.split("-").map(Number);
+    target = chargeInstant(day, y, m);
+  } else {
+    const [y, m] = addMonthsToReferenceMonth(currentReferenceMonthLisbon(new Date()), 12).split("-").map(Number);
+    target = chargeInstant(day, y, m);
+  }
+  // A Revolut só aceita datas futuras: se o dia já passou, cobra amanhã.
+  if (target.getTime() < Date.now() + 3_600_000) target = new Date(Date.now() + 86_400_000);
+  try {
+    await changeMerchantSubscriptionRenewalDate(await autoPayAccount(supabase, row), row.revolutSubscriptionId, target);
+  } catch (e) {
+    console.error("[autopay] adiar cobrança (pausa)", e);
+    return { error: "A Revolut não aceitou a nova data de cobrança." };
+  }
+  await supabase.from("AutoPay").update({ nextChargeAt: target.toISOString(), lastReminderFor: null, updatedAt: new Date().toISOString() }).eq("id", row.id);
+  return {};
 }

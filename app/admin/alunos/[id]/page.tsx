@@ -23,6 +23,7 @@ import Link from "next/link";
 import { StudentGradeAssign } from "./StudentGradeAssign";
 import { StudentAutoPaySection } from "./StudentAutoPaySection";
 import { StudentLoyaltyPaymentSection } from "./StudentLoyaltyPaymentSection";
+import { StudentTuitionSection } from "./StudentTuitionSection";
 import { CheckCircle2, ChevronRight, Dumbbell, FileText, Settings2, Shield, Wallet } from "lucide-react";
 import { loadStudentAdminSummary } from "@/lib/admin-student-ficha";
 import { buildMissYouMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -223,6 +224,7 @@ export default async function AdminAlunoOverviewPage({ params }: Props) {
 
       <StudentLoyaltyPaymentSection supabase={supabase} studentId={studentId} phone={studentProfile?.phone ?? null} firstName={firstName} sectionTitle={sectionTitle} row={row} />
       <StudentAutoPaySection supabase={supabase} studentId={studentId} sectionTitle={sectionTitle} row={row} />
+      <StudentTuitionSection supabase={supabase} studentId={studentId} sectionTitle={sectionTitle} />
 
       <StudentGradeAssign supabase={supabase} studentId={studentId} />
 

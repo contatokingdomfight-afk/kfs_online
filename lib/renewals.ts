@@ -9,12 +9,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   shouldGenerateLatePayments,
   currentReferenceMonthLisbon,
+  normalizeDueDay,
 } from "@/lib/lisbon-payment-dates";
 import { startGracePeriodOnLatePayment } from "@/lib/payment-grace";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { resolvePlanMonthlyTuition, resolveFamilyGroupTitularSuggestedAmount } from "@/lib/family-tuition";
 import { loadActiveLoyaltyIndex, loadPlanLoyaltyDiscounts, loyaltyCoversMonth, individualLoyaltyDiscount } from "@/lib/loyalty/service";
 import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
+import { loadPausesByStudent, monthExemptByPauses } from "@/lib/tuition-pause";
 
 export type RenewalPending = {
   studentId: string;
@@ -48,7 +50,7 @@ export async function getRenewalsPending(
 
   const { data: students } = await filterSchools(supabase
     .from("Student")
-    .select("id, userId, planId, createdAt"), options?.schoolIds)
+    .select("id, userId, planId, createdAt, paymentDueDay"), options?.schoolIds)
     .not("planId", "is", null)
     // Alunos inativos não geram mensalidade (nem aparecem como a renovar).
     .neq("status", "INATIVO");
@@ -93,12 +95,16 @@ export async function getRenewalsPending(
       .filter((f) => activeGroupIds.has(f.familyGroupId))
       .map((f) => [f.studentId, f as { studentId: string; role: string; familyGroupId: string }])
   );
+  // Pausas (ex.: atestado médico): meses isentos não geram mensalidade nem aparecem a renovar.
+  const pausesByStudent = await loadPausesByStudent(supabase, candidateIds);
 
   const withPlan = students.filter((s) => {
     if (!s.planId || !planById.has(s.planId)) return false;
     const startMonth = tuitionStartMonthFromCreatedAt((s as { createdAt: string }).createdAt);
     if (isTuitionMonthBeforeEnrollment(referenceMonth, startMonth)) return false;
     if (paidStudentIds.has(s.id)) return false;
+    const pauses = pausesByStudent.get(s.id);
+    if (pauses && monthExemptByPauses(pauses, referenceMonth, normalizeDueDay((s as { paymentDueDay?: number }).paymentDueDay))) return false;
     if (options?.forLateGeneration && anyPaymentStudentIds.has(s.id)) return false;
     // Membros de família não têm cobrança individual — só o titular é cobrado.
     if (familyByStudent.get(s.id)?.role === "MEMBER") return false;
@@ -145,7 +151,7 @@ export type GenerateMonthlyPaymentsResult = {
 };
 
 export type GenerateMonthlyPaymentsOptions = {
-  /** Se true, ignora a regra do dia 8 (ex.: ação de admin). */
+  /** Se true, gera mesmo antes do início do mês de referência (ex.: ação de admin). */
   force?: boolean;
   /** Instante de referência (cron / testes). */
   now?: Date;
@@ -154,7 +160,7 @@ export type GenerateMonthlyPaymentsOptions = {
 /**
  * Cria um registo de Payment (status LATE) para cada aluno com plano
  * sem PAID no mês de referência. Valor = plan.price_monthly.
- * Por defeito só corre após o fim do dia 8 em Lisboa (ou mês já ultrapassado).
+ * Por defeito gera a partir do dia 1 do mês; o atraso conta-se pelo dia de pagamento de cada aluno.
  */
 export async function generateMonthlyPayments(
   supabase: SupabaseClient,

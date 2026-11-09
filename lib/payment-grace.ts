@@ -1,10 +1,11 @@
 /**
- * Atraso: após o fim do dia 8 do mês em Lisboa sem PAID (registo LATE).
- * Prazo para regularizar: 15 dias corridos após o dia 8; depois suspende o plano.
+ * Atraso: após o fim do dia de pagamento do aluno (Student.paymentDueDay, omissão 5) sem PAID.
+ * Prazo para regularizar: 15 dias corridos após o dia de pagamento; depois suspende o plano.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { endOfGracePeriodLisbon, LISBON_TZ } from "@/lib/lisbon-payment-dates";
+import { endOfGracePeriodLisbon, isPastDueDay, normalizeDueDay, todayYmdLisbon, currentReferenceMonthLisbon, previousReferenceMonthLisbon, LISBON_TZ } from "@/lib/lisbon-payment-dates";
+import { loadOpenPause, loadPausesByStudent, isPauseActiveOn } from "@/lib/tuition-pause";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { stripe } from "@/lib/stripe/server";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
@@ -18,6 +19,7 @@ type StudentGraceRow = {
   paymentSuspendedAt: string | null;
   suspendedPlanId: string | null;
   stripeSubscriptionId?: string | null;
+  paymentDueDay?: number | null;
 };
 
 export async function startGracePeriodOnLatePayment(
@@ -27,12 +29,19 @@ export async function startGracePeriodOnLatePayment(
 ): Promise<void> {
   const { data: st } = await supabase
     .from("Student")
-    .select("planId, paymentGraceEndsAt, paymentGraceReferenceMonth, paymentSuspendedAt")
+    .select("planId, paymentGraceEndsAt, paymentGraceReferenceMonth, paymentSuspendedAt, paymentDueDay")
     .eq("id", studentId)
     .maybeSingle();
 
   const row = st as StudentGraceRow | null;
   if (!row?.planId || row.paymentSuspendedAt) return;
+
+  // Ainda dentro do prazo (dia de pagamento do aluno): não há atraso nem aviso — o cron diário trata depois.
+  const dueDay = normalizeDueDay(row.paymentDueDay);
+  if (!isPastDueDay(new Date(), referenceMonth, dueDay)) return;
+  // Em pausa (ex.: atestado médico): sem atraso.
+  const pause = await loadOpenPause(supabase, studentId);
+  if (pause && isPauseActiveOn(pause, todayYmdLisbon())) return;
 
   const now = new Date();
   if (
@@ -43,7 +52,7 @@ export async function startGracePeriodOnLatePayment(
     return;
   }
 
-  const endsAt = endOfGracePeriodLisbon(referenceMonth);
+  const endsAt = endOfGracePeriodLisbon(referenceMonth, dueDay);
   await supabase
     .from("Student")
     .update({
@@ -63,7 +72,7 @@ export async function startGracePeriodOnLatePayment(
     studentId,
     type: "PAYMENT_OVERDUE",
     title: "Pagamento em atraso",
-    body: `A mensalidade (${referenceMonth}) está em atraso (após o dia 8). Regulariza até ${deadlineLabel}, para evitar bloqueio de acesso.`,
+    body: `A mensalidade (${referenceMonth}) está em atraso (prazo: dia ${dueDay}). Regulariza até ${deadlineLabel}, para evitar bloqueio de acesso.`,
     href: "/dashboard/financeiro",
   });
 
@@ -128,7 +137,7 @@ export async function clearGraceOnPaidPayment(supabase: SupabaseClient, studentI
   }
 }
 
-/** Suspende alunos com plano cujo prazo (15 dias corridos após o dia 8) já passou. */
+
 /** Pagadores com pagamento automático ativo + membros dos respetivos grupos familiares. */
 async function studentsWithActiveAutoPay(supabase: SupabaseClient): Promise<Set<string>> {
   const { data, error } = await supabase.from("AutoPay").select("studentId, familyGroupId").eq("state", "ACTIVE");
@@ -161,12 +170,16 @@ export async function suspendStudentsPastGrace(
   // Pagamento automático ativo: a mensalidade é cobrada no dia de cobrança do aluno (pode ser depois do prazo),
   // por isso não suspende o pagador nem os membros do grupo familiar dele.
   const autoPayExempt = await studentsWithActiveAutoPay(supabase);
-  const list = ((rows ?? []) as {
+  const list0 = ((rows ?? []) as {
     id: string;
     planId: string;
     stripeSubscriptionId: string | null;
     paymentGraceEndsAt: string;
   }[]).filter((r) => !autoPayExempt.has(r.id));
+  // Em pausa (ex.: atestado médico): nunca suspende.
+  const today = todayYmdLisbon();
+  const pausesByStudent = await loadPausesByStudent(supabase, list0.map((r) => r.id));
+  const list = list0.filter((r) => !(pausesByStudent.get(r.id) ?? []).some((p) => isPauseActiveOn(p, today)));
 
   const BATCH = 15;
   for (let i = 0; i < list.length; i += BATCH) {
@@ -218,4 +231,41 @@ export async function suspendStudentsPastGrace(
   }
 
   return { suspended, errors };
+}
+
+/**
+ * Cron diário: começa a tolerância (e avisa o aluno) para mensalidades por pagar cujo
+ * dia de pagamento do aluno já passou — a geração (dia 1) já não o faz antes do prazo.
+ */
+export async function startGraceForOverdueTuition(supabase: SupabaseClient): Promise<{ started: number }> {
+  const now = new Date();
+  const months = [previousReferenceMonthLisbon(now), currentReferenceMonthLisbon(now)];
+  const { data } = await supabase
+    .from("Payment")
+    .select("studentId, referenceMonth")
+    .eq("status", "LATE")
+    .eq("paymentType", "TUITION")
+    .in("referenceMonth", months);
+  const latestByStudent = new Map<string, string>();
+  for (const p of (data ?? []) as { studentId: string; referenceMonth: string }[]) {
+    const cur = latestByStudent.get(p.studentId);
+    if (!cur || p.referenceMonth < cur) latestByStudent.set(p.studentId, p.referenceMonth);
+  }
+  if (latestByStudent.size === 0) return { started: 0 };
+  const ids = [...latestByStudent.keys()];
+  const { data: rows } = await supabase
+    .from("Student")
+    .select("id, paymentGraceReferenceMonth, paymentGraceEndsAt, paymentDueDay")
+    .in("id", ids)
+    .not("planId", "is", null)
+    .is("paymentSuspendedAt", null);
+  let started = 0;
+  for (const r of (rows ?? []) as { id: string; paymentGraceReferenceMonth: string | null; paymentGraceEndsAt: string | null; paymentDueDay: number | null }[]) {
+    const month = latestByStudent.get(r.id)!;
+    if (r.paymentGraceEndsAt) continue; // já em tolerância
+    if (!isPastDueDay(now, month, normalizeDueDay(r.paymentDueDay))) continue;
+    await startGracePeriodOnLatePayment(supabase, r.id, month);
+    started++;
+  }
+  return { started };
 }

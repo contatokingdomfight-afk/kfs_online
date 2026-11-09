@@ -27,6 +27,8 @@ import { NO_SCHOOL_PAYMENT_INFO, loadSchoolsPaymentInfo, orderPaymentSchoolId } 
 import { lineLabel, loadOrders, orderReference } from "@/lib/retail/orders";
 import { KINGDOM_WEEK_MONTHLY_CAP } from "@/lib/drop-in-sessions-pricing";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
+import { normalizeDueDay } from "@/lib/lisbon-payment-dates";
+import { loadPausesByStudent, isPauseActiveOn } from "@/lib/tuition-pause";
 import {
   ADMIN_TODO_ORDER,
   addDaysYmd,
@@ -37,6 +39,7 @@ import {
   PERFORMANCE_STALE_DAYS,
   tuitionDueDate,
   tuitionDueSoon,
+  TUITION_DUE_DAY,
   daysBetween,
   inactiveFarewell,
   physicalDue,
@@ -114,10 +117,10 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
   const today = calendarDateLisbon(new Date());
   const origin = getPublicOrigin();
 
-  let studentsQuery = supabase.from("Student").select("id, userId, schoolId, status, statusChangedAt, planId, createdAt, primaryModality");
+  let studentsQuery = supabase.from("Student").select("id, userId, schoolId, status, statusChangedAt, planId, createdAt, primaryModality, paymentDueDay");
   if (schoolId) studentsQuery = studentsQuery.eq("schoolId", schoolId);
   const [{ data: rawStudents }, adminUserIds, done] = await Promise.all([studentsQuery, fetchAdminUserIdSet(supabase), loadDoneKeys(supabase)]);
-  type S = { id: string; userId: string; schoolId: string; status: string; statusChangedAt: string | null; planId: string | null; createdAt: string; primaryModality: string | null };
+  type S = { id: string; userId: string; schoolId: string; status: string; statusChangedAt: string | null; planId: string | null; createdAt: string; primaryModality: string | null; paymentDueDay?: number | null };
   const students = ((rawStudents ?? []) as S[]).filter((s) => !adminUserIds.has(s.userId));
   const withPlan = students.filter((s) => s.planId && (s.status === "ATIVO" || s.status === "INADIMPLENTE"));
   const active = withPlan.filter((s) => s.status === "ATIVO");
@@ -157,18 +160,25 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     }
   }
 
+  // Dia de pagamento de cada aluno e pausas (atestado médico: nem atraso nem «a vencer»).
+  const dueDayOf = new Map(students.map((s) => [s.id, normalizeDueDay(s.paymentDueDay)]));
+  const pausesByStudent = await loadPausesByStudent(supabase, students.map((s) => s.id));
+  const pausedNow = new Set([...pausesByStudent.entries()].filter(([, ps]) => ps.some((p) => isPauseActiveOn(p, today))).map(([id]) => id));
+
   // --- Pagamentos em atraso (mensalidades, como a inadimplência do painel) ---
   const late = new Map<string, { total: number; months: string[] }>();
-  const dueSoon = new Map<string, { total: number; ref: string; daysLeft: number }>();
+  const dueSoon = new Map<string, { total: number; ref: string; daysLeft: number; dueDay: number }>();
   for (const part of chunks(ids, 200)) {
     const { data } = await supabase.from("Payment").select("studentId, amount, referenceMonth").eq("status", "LATE").eq("paymentType", "TUITION").in("studentId", part);
     for (const p of (data ?? []) as { studentId: string; amount: number | string; referenceMonth: string | null }[]) {
       const ref = p.referenceMonth ? String(p.referenceMonth).slice(0, 7) : null;
-      // A mensalidade é criada no dia 1 mas só vence no dia 8: antes disso não está em atraso.
-      if (ref && !isTuitionOverdue(today, ref)) {
-        const soon = tuitionDueSoon(today, ref);
+      if (pausedNow.has(p.studentId)) continue;
+      const dueDay = dueDayOf.get(p.studentId) ?? TUITION_DUE_DAY;
+      // A mensalidade é criada no dia 1 mas só vence no dia de pagamento do aluno: antes disso não está em atraso.
+      if (ref && !isTuitionOverdue(today, ref, dueDay)) {
+        const soon = tuitionDueSoon(today, ref, dueDay);
         if (soon) {
-          const d = dueSoon.get(p.studentId) ?? { total: 0, ref, daysLeft: soon.daysLeft };
+          const d = dueSoon.get(p.studentId) ?? { total: 0, ref, daysLeft: soon.daysLeft, dueDay };
           d.total += Number(p.amount) || 0;
           dueSoon.set(p.studentId, d);
         }
@@ -649,12 +659,12 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
 
-  // --- Mensalidades a vencer (nos 3 dias antes do dia 8) ---
+  // --- Mensalidades a vencer (nos 3 dias antes do dia de pagamento de cada aluno) ---
   const vencer: AdminTodoItem[] = withPlan
     .filter((s) => dueSoon.has(s.id))
     .map((s) => {
       const d = dueSoon.get(s.id)!;
-      const dueLabel = d.daysLeft === 0 ? "hoje" : d.daysLeft === 1 ? "amanhã" : `a ${shortDate(tuitionDueDate(d.ref))}`;
+      const dueLabel = d.daysLeft === 0 ? "hoje" : d.daysLeft === 1 ? "amanhã" : `a ${shortDate(tuitionDueDate(d.ref, d.dueDay))}`;
       return {
         kind: "vencer" as const,
         key: todoDoneKey("vencer", { id: s.id, ref: d.ref, today }),
@@ -784,6 +794,36 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
 
+  // --- Pausas (atestado médico): regressos de hoje e pausas sem data há mais de 3 meses ---
+  const pausas: AdminTodoItem[] = [];
+  for (const s of students) {
+    for (const p of pausesByStudent.get(s.id) ?? []) {
+      const returnedToday = p.endDate === today;
+      const longOpen = !p.endDate && !p.expectedEndDate && daysBetween(p.startDate, today) >= 90;
+      if (!returnedToday && !longOpen) continue;
+      pausas.push({
+        kind: "pausas" as const,
+        key: todoDoneKey("pausas", { id: s.id, ref: p.id, today }),
+        studentId: s.id,
+        name: nameOf(s),
+        cells: [
+          { text: shortDate(p.startDate) },
+          { text: p.endDate ? shortDate(p.endDate) : p.expectedEndDate ? shortDate(p.expectedEndDate) : "sem data" },
+          returnedToday
+            ? { text: "Regressou hoje", tone: "amber" as const }
+            : { text: `Há ${Math.floor(daysBetween(p.startDate, today) / 30)} meses`, tone: "amber" as const },
+        ],
+        urgency: returnedToday ? 1000 : daysBetween(p.startDate, today),
+        whatsappUrl: null,
+        href: `/admin/alunos/${s.id}`,
+      });
+    }
+  }
+  pausas.sort((a, b) => b.urgency - a.urgency);
+  const pausasVisible = pausas.filter(notDone);
+  pausas.length = 0;
+  pausas.push(...pausasVisible);
+
   const groups: Record<AdminTodoKind, AdminTodoGroup> = {
     pagamentos: {
       kind: "pagamentos", tone: "red", title: "Pagamentos em atraso", items: pagamentos,
@@ -805,9 +845,15 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     },
     vencer: {
       kind: "vencer", tone: "amber", title: "Mensalidades a vencer", items: vencer,
-      summary: vencer.length ? "Vencem nos próximos 3 dias (prazo: dia 8)" : "",
-      info: "Mensalidades do mês ainda por pagar a 3 dias ou menos do prazo (dia 8). Um lembrete antes evita atrasos.",
+      summary: vencer.length ? "Vencem nos próximos 3 dias (prazo: dia de pagamento de cada aluno)" : "",
+      info: "Mensalidades do mês ainda por pagar a 3 dias ou menos do dia de pagamento do aluno. Um lembrete antes evita atrasos.",
       columns: ["Aluno", "Plano", "Valor", "Prazo", ""],
+    },
+    pausas: {
+      kind: "pausas", tone: "blue", title: "Pausas", items: pausas,
+      summary: pausas.length ? "Regressos de pausa e pausas longas" : "",
+      info: "Alunos em pausa de mensalidade (ex.: atestado médico): quem regressou hoje (a cobrança volta no dia de pagamento) e pausas sem data há mais de 3 meses.",
+      columns: ["Aluno", "Desde", "Regresso", "Situação", ""],
     },
     semana: {
       kind: "semana", tone: "amber", title: "Kingdom Week no limite", items: semana,
