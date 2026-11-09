@@ -25,6 +25,9 @@ import { CoachAulaRosterPanel } from "./CoachAulaRosterPanel";
 import { CoachAulaCrossModalityCheckIn } from "./CoachAulaCrossModalityCheckIn";
 import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach";
 import { loadCoachLessonRoster, loadCrossModalityCandidates } from "@/lib/coach-lesson-eligible-students";
+import { loadTrainingSessions } from "@/lib/training-load.server";
+import { computeTrainingLoad } from "@/lib/training-load";
+import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 
 export default async function CoachAulaPage({
   searchParams,
@@ -121,6 +124,13 @@ export default async function CoachAulaPage({
       athletesOnly: Boolean(selectedLesson.athletesOnly),
     });
     rosterStudents = roster.students;
+    // Carga de treino de cada aluno (mesmo cálculo da página «Carga»).
+    const loadToday = calendarDateLisbon(new Date());
+    const sessionsByStudent = await loadTrainingSessions(adminSupabase, rosterStudents.map((s) => s.studentId), loadToday);
+    rosterStudents = rosterStudents.map((s) => {
+      const load = computeTrainingLoad(sessionsByStudent.get(s.studentId) ?? [], loadToday);
+      return { ...s, trainingLoad: { zone: load.zone, ratio: load.ratio, trained7d: load.days.filter((d) => d.trained).length } };
+    });
     crossModalityCandidates = await loadCrossModalityCandidates(
       adminSupabase,
       selectedLesson.schoolId,

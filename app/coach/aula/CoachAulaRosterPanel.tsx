@@ -67,8 +67,20 @@ export function CoachAulaRosterPanel({
     </button>
   );
 
+  // Alunos da aula (presentes ou que marcaram «Vou») com carga alta/atenção.
+  const loadWarnings = students.filter(
+    (s) => (s.status === "CONFIRMED" || s.status === "PENDING") && (s.trainingLoad?.zone === "high" || s.trainingLoad?.zone === "caution")
+  );
+
   return (
     <div>
+      {loadWarnings.length > 0 && (
+        <div className="coach-load-alert" role="status">
+          ⚠️ <strong>{loadWarnings.length} {loadWarnings.length === 1 ? "aluno com carga alta ou em atenção" : "alunos com carga alta ou em atenção"}</strong>
+          {" — considera reduzir a intensidade: "}
+          {loadWarnings.map((s) => s.name ?? s.email).join(", ")}.
+        </div>
+      )}
       <div
         style={{
           display: "flex",
@@ -140,6 +152,7 @@ export function CoachAulaRosterPanel({
               evaluatedInThisLesson={s.evaluatedInThisLesson}
               lastEvalScoresByModality={s.lastEvalScoresByModality}
               preLessonWellness={s.preLessonWellness}
+              trainingLoad={s.trainingLoad ?? null}
               rpe={s.rpe}
               rpeRecordedAt={s.rpeRecordedAt}
               rpeSource={s.rpeSource}

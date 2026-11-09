@@ -26,6 +26,8 @@ export type CoachLessonStudentRow = {
   evaluatedInThisLesson: boolean;
   lastEvalScoresByModality?: Record<string, Record<string, number>>;
   preLessonWellness: { zone: CoachLessonWellnessZone; tooltip: string } | null;
+  /** Zona de carga de treino (rácio agudo/crónico), preenchida pela página da aula. */
+  trainingLoad?: { zone: "low" | "ideal" | "caution" | "high" | "insufficient"; ratio: number | null; trained7d: number } | null;
   rpe: number | null;
   rpeRecordedAt: string | null;
   /** Quem deu a nota: STUDENT (o aluno) ou COACH (estimativa na aula). */

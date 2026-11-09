@@ -2124,3 +2124,32 @@ html:has([data-dashboard]) body::-webkit-scrollbar {
     margin: auto;
   }
 }
+
+/* Carga de treino na lista de presenças do coach */
+.coach-load-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px;
+  border: 1px solid;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: transparent;
+}
+.coach-load-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.coach-load-alert {
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}

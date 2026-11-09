@@ -1,5 +1,6 @@
 "use client";
 
+import { ZONE_COLORS, zoneLabel, type TrainingLoadZone } from "@/lib/training-load";
 import { useState, useCallback, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { setAttendanceStatusFromForm, coachCheckInStudentFromForm, setCoachRpeFromForm } from "./actions";
@@ -25,6 +26,7 @@ type Props = {
   lastEvalScoresByModality?: Record<string, Record<string, number>>;
   profile: StudentProfileForModal;
   preLessonWellness: { zone: WellnessZone; tooltip: string } | null;
+  trainingLoad?: { zone: TrainingLoadZone; ratio: number | null; trained7d: number } | null;
   rpe: number | null;
   rpeRecordedAt: string | null;
   rpeSource?: "STUDENT" | "COACH" | null;
@@ -52,6 +54,7 @@ export function AttendanceRow({
   lastEvalScoresByModality,
   profile,
   preLessonWellness,
+  trainingLoad = null,
   rpe,
   rpeRecordedAt,
   rpeSource = null,
@@ -167,6 +170,19 @@ export function AttendanceRow({
             )}
           </div>
           {studentName && <span className="coach-attendance-email">{studentEmail}</span>}
+          {trainingLoad && (
+            <div style={{ marginTop: 4 }}>
+              <span
+                className="coach-load-pill"
+                style={{ color: ZONE_COLORS[trainingLoad.zone], borderColor: ZONE_COLORS[trainingLoad.zone] }}
+                title={`Carga de treino (rácio agudo/crónico). ${trainingLoad.trained7d} treino(s) nos últimos 7 dias.`}
+              >
+                <span className="coach-load-dot" style={{ background: ZONE_COLORS[trainingLoad.zone] }} aria-hidden />
+                {zoneLabel(trainingLoad.zone, true)}
+                {trainingLoad.ratio != null && ` · ${trainingLoad.ratio.toFixed(1).replace(".", ",")}`}
+              </span>
+            </div>
+          )}
           {(zoneShort || rpe != null || coachCanSetRpe) && (
             <div className="coach-attendance-wellness" aria-label="Bem-estar e RPE">
               {zoneShort && (
