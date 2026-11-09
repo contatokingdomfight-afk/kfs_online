@@ -233,8 +233,11 @@ const decodeAttr = (v) =>
 /** Campos de um formulário HTML (inputs, radios marcados, textareas, selects), pela ordem em que aparecem. */
 function lerCamposForm(html) {
   const campos = [];
-  for (const m of html.matchAll(/<(input|textarea|select)\b([^>]*)>([\s\S]*?<\/(?:textarea|select)>)?/gi)) {
-    const [, tag, attrs, resto = ""] = m;
+  // O fecho só pertence a textarea/select: um <input> não pode «engolir» os campos até ao próximo </select>.
+  for (const m of html.matchAll(/<(input)\b([^>]*)>|<(textarea|select)\b([^>]*)>([\s\S]*?<\/\3>)/gi)) {
+    const tag = m[1] ?? m[3];
+    const attrs = m[2] ?? m[4];
+    const resto = m[5] ?? "";
     const nome = attrs.match(/\bname="([^"]*)"/)?.[1];
     if (!nome) continue;
     const tipo = (attrs.match(/\btype="([^"]*)"/)?.[1] ?? "text").toLowerCase();
