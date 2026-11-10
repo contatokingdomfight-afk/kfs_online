@@ -80,14 +80,6 @@ export function AttendanceRow({
   // Selo de carga só quando há base: «Sem base ainda» repetido em todos só ocupava espaço (o resumo no topo conta-os).
   const showLoad = Boolean(trainingLoad && trainingLoad.zone !== "insufficient");
   const effectiveStatus = status ?? "NONE";
-  const statusClass =
-    effectiveStatus === "CONFIRMED"
-      ? "coach-attendance-status--confirmed"
-      : effectiveStatus === "ABSENT"
-        ? "coach-attendance-status--absent"
-        : effectiveStatus === "PENDING"
-          ? "coach-attendance-status--pending"
-          : "coach-attendance-status--pending";
   const statusLabel =
     effectiveStatus === "CONFIRMED"
       ? checkedInAt
@@ -99,23 +91,6 @@ export function AttendanceRow({
           ? "Falta"
           : "Sem pré-confirmação";
 
-  const zoneClass =
-    preLessonWellness?.zone === "GREEN"
-      ? "coach-wellness-zone-pill--green"
-      : preLessonWellness?.zone === "YELLOW"
-        ? "coach-wellness-zone-pill--yellow"
-        : preLessonWellness?.zone === "RED"
-          ? "coach-wellness-zone-pill--red"
-          : "";
-  const zoneShort =
-    preLessonWellness?.zone === "GREEN"
-      ? "Pré: Verde"
-      : preLessonWellness?.zone === "YELLOW"
-        ? "Pré: Amarelo"
-        : preLessonWellness?.zone === "RED"
-          ? "Pré: Vermelho"
-          : null;
-
   const handleEvaluationSuccess = useCallback(() => {
     setModalOpen(false);
     setShowSuccessConfirm(true);
@@ -126,109 +101,122 @@ export function AttendanceRow({
 
   const formError = statusState?.error ?? checkInState?.error ?? rpeState?.error;
 
+  // Cartão v2 (DOCS/mockup-presencas-cartao-v2.html): estado curto ao lado do nome, uma fila de
+  // etiquetas iguais (carga, pré, RPE, avisos), sem email, botões arrumados em grelha.
+  const stateKey = effectiveStatus === "CONFIRMED" ? "here" : effectiveStatus === "PENDING" ? "going" : effectiveStatus === "ABSENT" ? "absent" : "none";
+  const shortStatus =
+    effectiveStatus === "CONFIRMED" ? "Presente" : effectiveStatus === "PENDING" ? "Vou" : effectiveStatus === "ABSENT" ? "Faltou" : "Sem resposta";
+  const checkInTime = checkedInAt ? new Date(checkedInAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }) : null;
+  const preColor =
+    preLessonWellness?.zone === "GREEN" ? "#4ade80" : preLessonWellness?.zone === "YELLOW" ? "#facc15" : preLessonWellness?.zone === "RED" ? "#f87171" : undefined;
+  const preText =
+    preLessonWellness?.zone === "GREEN" ? "Pré: verde" : preLessonWellness?.zone === "YELLOW" ? "Pré: amarelo" : preLessonWellness?.zone === "RED" ? "Pré: vermelho" : null;
+
   return (
     <>
-      <li className="coach-attendance-row">
-        <div className="coach-attendance-avatar" aria-hidden>
-          {initial}
+      <li className={`coach-att-card coach-att-card--${stateKey}`}>
+        <div className="coach-att-head">
+          <div className="coach-attendance-avatar" aria-hidden>
+            {initial}
+          </div>
+          <div className="coach-att-name" title={studentEmail}>
+            {label}
+          </div>
+          <span className={`coach-att-state coach-att-state--${stateKey}`} title={statusLabel}>
+            {shortStatus}
+            {effectiveStatus === "CONFIRMED" && checkInTime ? ` · ${checkInTime}` : ""}
+          </span>
         </div>
-        <div className="coach-attendance-info">
-          <div className="coach-attendance-head">
-            <span className="coach-attendance-name">{label}</span>
-            {evaluatedInThisLesson && (
-              <span className="coach-attendance-tag coach-attendance-tag--evaluated" title="Já avaliado nesta aula">
-                Avaliado
-              </span>
-            )}
-            {isCrossModality && (
+
+        {(showLoad || preText || rpe != null || feesDue || monthlyLimit || evaluatedInThisLesson || isCrossModality) && (
+          <div className="coach-att-meta" aria-label="Carga, bem-estar, RPE e avisos">
+            {showLoad && trainingLoad && (
               <span
-                className="coach-attendance-tag coach-attendance-tag--cross-modality"
-                title="Check-in avulso: aluno de outra modalidade/plano"
+                className="coach-att-chip"
+                style={{ color: ZONE_COLORS[trainingLoad.zone] }}
+                title={`Carga de treino (rácio agudo/crónico). ${trainingLoad.trained7d} treino(s) nos últimos 7 dias.`}
               >
-                Avulso
+                <span className="coach-load-dot" style={{ background: ZONE_COLORS[trainingLoad.zone] }} aria-hidden />
+                {zoneLabel(trainingLoad.zone, true)}
+                {trainingLoad.ratio != null && ` ${trainingLoad.ratio.toFixed(1).replace(".", ",")}`}
               </span>
             )}
-            <span className={`coach-attendance-status ${statusClass}`}>{statusLabel}</span>
+            {preText && (
+              <span className="coach-att-chip" style={{ color: preColor }} title={preLessonWellness?.tooltip}>
+                {preText}
+              </span>
+            )}
+            {rpe != null && (
+              <span className="coach-att-chip" title={rpeSource === "COACH" ? "Nota de esforço dada pelo professor" : "Nota de esforço do aluno"}>
+                RPE <strong style={{ color: "var(--text-primary)" }}>{rpe}</strong>
+                {rpeSource === "COACH" ? " (coach)" : ""}
+                {rpeSource === "STUDENT" && coachRpe != null && coachRpe !== rpe ? ` · tu: ${coachRpe}` : ""}
+              </span>
+            )}
             {feesDue && (
-              <span
-                className="coach-attendance-tag"
-                title="Lembra o aluno de regularizar na secretaria. Não bloqueia o check-in."
-                style={{ backgroundColor: "rgba(250,204,21,0.16)", border: "1px solid var(--warning)", color: "var(--text-primary)", fontWeight: 700 }}
-              >
+              <span className="coach-att-chip coach-att-chip--warn" title="Lembra o aluno de regularizar na secretaria. Não bloqueia o check-in.">
                 🛡️ {feesDue}
               </span>
             )}
             {monthlyLimit && (
               <span
-                className="coach-attendance-tag"
+                className={`coach-att-chip${monthlyLimit.remaining > 0 ? "" : " coach-att-chip--danger"}`}
                 title={`${monthlyLimit.used} de ${monthlyLimit.limit} aulas usadas este mês`}
-                style={{
-                  backgroundColor: monthlyLimit.remaining > 0 ? "var(--bg-secondary)" : "var(--danger)",
-                  color: monthlyLimit.remaining > 0 ? "var(--text-secondary)" : "#fff",
-                }}
               >
                 {monthlyLimit.remaining > 0 ? `Restam ${monthlyLimit.remaining} este mês` : "Limite mensal atingido"}
               </span>
             )}
+            {evaluatedInThisLesson && (
+              <span className="coach-att-chip" style={{ color: "#4ade80" }} title="Já avaliado nesta aula">
+                ✓ Avaliado
+              </span>
+            )}
+            {isCrossModality && (
+              <span className="coach-att-chip" title="Check-in avulso: aluno de outra modalidade/plano">
+                Avulso
+              </span>
+            )}
           </div>
-          {studentName && <span className="coach-attendance-email">{studentEmail}</span>}
-          {(zoneShort || rpe != null || coachCanSetRpe || showLoad) && (
-            <div className="coach-attendance-wellness" aria-label="Carga, bem-estar e RPE">
-              {showLoad && trainingLoad && (
-                <span
-                  className="coach-load-pill"
-                  style={{ color: ZONE_COLORS[trainingLoad.zone], borderColor: ZONE_COLORS[trainingLoad.zone] }}
-                  title={`Carga de treino (rácio agudo/crónico). ${trainingLoad.trained7d} treino(s) nos últimos 7 dias.`}
-                >
-                  <span className="coach-load-dot" style={{ background: ZONE_COLORS[trainingLoad.zone] }} aria-hidden />
-                  {zoneLabel(trainingLoad.zone, true).replace("Carga ", "")}
-                  {trainingLoad.ratio != null && ` ${trainingLoad.ratio.toFixed(1).replace(".", ",")}`}
-                </span>
-              )}
-              {zoneShort && (
-                <span className={`coach-wellness-zone-pill ${zoneClass}`} title={preLessonWellness?.tooltip}>
-                  {zoneShort}
-                </span>
-              )}
-              {(zoneShort || rpe != null || coachCanSetRpe) && (<span className="coach-attendance-rpe">
-                RPE:{" "}
-                {rpe != null ? (
-                  <>
-                    <strong>{rpe}</strong>
-                    <span className="coach-attendance-rpe-time"> ({rpeSource === "COACH" ? "coach" : "aluno"})</span>
-                    {rpeSource === "STUDENT" && coachRpe != null && coachRpe !== rpe ? (
-                      <span className="coach-attendance-rpe-time" title="Nota que deste a este aluno nesta aula" style={{ fontWeight: 700 }}>
-                        {" "}
-                        · tu: {coachRpe}
-                      </span>
-                    ) : null}
-                    {rpeRecordedAt && rpeSource !== "COACH" ? (
-                      <span className="coach-attendance-rpe-time">
-                        {" "}
-                        (registado às{" "}
-                        {new Date(rpeRecordedAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })})
-                      </span>
-                    ) : null}
-                  </>
-                ) : (
-                  "—"
-                )}
-              </span>)}
-              {coachCanSetRpe && attendanceId ? (
-                <form action={rpeAction} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        )}
+
+        <div className="coach-att-actions">
+          {canEvaluate ? (
+            <button type="button" onClick={() => setModalOpen(true)} className="btn btn-secondary coach-att-btn coach-att-btn--eval">
+              Avaliar
+            </button>
+          ) : null}
+          {effectiveStatus === "PENDING" && attendanceId ? (
+            <form action={statusAction} className="coach-att-pair">
+              <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
+              <button type="submit" name="status" value="CONFIRMED" className="btn btn-success coach-att-btn">
+                Presente
+              </button>
+              <button type="submit" name="status" value="ABSENT" className="btn coach-att-btn coach-att-btn--absent">
+                Faltou
+              </button>
+            </form>
+          ) : null}
+          {(effectiveStatus === "NONE" || effectiveStatus === "ABSENT") && (
+            <form action={checkInAction} className="coach-att-pair coach-att-pair--single">
+              <input type="hidden" name="lessonId" value={lessonId} readOnly />
+              <input type="hidden" name="occurrenceDate" value={occurrenceDate} readOnly />
+              <input type="hidden" name="studentId" value={studentId} readOnly />
+              <button type="submit" className="btn btn-success coach-att-btn">
+                Marcar presença
+              </button>
+            </form>
+          )}
+          {effectiveStatus === "CONFIRMED" && attendanceId ? (
+            <div className="coach-att-pair">
+              {coachCanSetRpe ? (
+                <form action={rpeAction} className="coach-att-rpe">
                   <FormLoadingModal message="A guardar a nota de esforço…" />
                   <input type="hidden" name="lessonId" value={lessonId} readOnly />
                   <input type="hidden" name="occurrenceDate" value={occurrenceDate} readOnly />
                   <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
-                  <select
-                    name="rpe"
-                    defaultValue={coachRpeValue ?? ""}
-                    aria-label={`Esforço de ${label}`}
-                    className="input"
-                    style={{ width: 70, minHeight: 32, padding: "2px 6px", fontSize: 13 }}
-                  >
+                  <select name="rpe" defaultValue={coachRpeValue ?? ""} aria-label={`Esforço de ${label}`} className="input">
                     <option value="" disabled>
-                      1–10
+                      RPE
                     </option>
                     {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                       <option key={n} value={n}>
@@ -236,53 +224,23 @@ export function AttendanceRow({
                       </option>
                     ))}
                   </select>
-                  <button type="submit" className="btn btn-secondary" style={{ minHeight: 32, padding: "2px 10px", fontSize: 13 }}>
+                  <button type="submit" className="btn btn-secondary coach-att-btn">
                     {coachRpeValue == null ? "Dar" : "Alterar"}
                   </button>
                 </form>
-              ) : null}
+              ) : (
+                <span />
+              )}
+              <form action={statusAction}>
+                <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
+                <button type="submit" name="status" value="ABSENT" className="btn coach-att-btn coach-att-btn--absent" style={{ width: "100%" }} title="Reverter para ausente">
+                  Desfazer
+                </button>
+              </form>
             </div>
-          )}
-        </div>
-        <div className="coach-attendance-actions">
-          {canEvaluate ? (
-            <button type="button" onClick={() => setModalOpen(true)} className="btn btn-secondary" style={{ width: "100%", flex: "1 1 100%" }}>
-              Avaliar
-            </button>
-          ) : null}
-          {effectiveStatus === "PENDING" && attendanceId ? (
-            <form action={statusAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-              <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
-              <button type="submit" name="status" value="CONFIRMED" className="btn btn-success">
-                Marcar presença
-              </button>
-              <button type="submit" name="status" value="ABSENT" className="btn btn-danger">
-                Marcar Ausente
-              </button>
-            </form>
-          ) : null}
-          {(effectiveStatus === "NONE" || effectiveStatus === "ABSENT") && (
-            <form action={checkInAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-              <input type="hidden" name="lessonId" value={lessonId} readOnly />
-              <input type="hidden" name="occurrenceDate" value={occurrenceDate} readOnly />
-              <input type="hidden" name="studentId" value={studentId} readOnly />
-              <button type="submit" className="btn btn-success">
-                Marcar presença
-              </button>
-            </form>
-          )}
-          {effectiveStatus === "CONFIRMED" && attendanceId ? (
-            <form action={statusAction} style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-              <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
-              <button type="submit" name="status" value="ABSENT" className="btn btn-danger">
-                Reverter para Ausente
-              </button>
-            </form>
           ) : null}
         </div>
-        {formError && (
-          <span style={{ width: "100%", fontSize: "var(--text-sm)", color: "var(--danger)" }}>{formError}</span>
-        )}
+        {formError && <span className="coach-att-error">{formError}</span>}
       </li>
       {modalOpen && canEvaluate && (
         <CoachStudentProfileModal
