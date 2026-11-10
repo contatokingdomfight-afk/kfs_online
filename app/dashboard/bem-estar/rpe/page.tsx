@@ -9,6 +9,7 @@ import { getPlanAccess } from "@/lib/plan-access";
 import { RpeQuickForm } from "./RpeQuickForm";
 import { lessonMinutes } from "@/lib/training-load";
 import { TrainingLoadExplainer } from "@/components/training-load/TrainingLoadExplainer";
+import { RpeScaleExplainer } from "@/components/training-load/RpeScaleExplainer";
 
 export const metadata = {
   title: "RPE pós-treino | KFS",
@@ -23,7 +24,8 @@ function ymdDaysAgo(days: number): string {
   return `${y}-${m}-${day}`;
 }
 
-export default async function RpePage() {
+export default async function RpePage({ searchParams }: { searchParams?: Promise<{ info?: string }> }) {
+  const showRpeInfo = (await searchParams)?.info === "1";
   const studentId = await getCurrentStudentId();
   if (!studentId) redirect("/sign-in");
 
@@ -67,6 +69,7 @@ export default async function RpePage() {
         {pageTitle}
       </h1>
       <p style={{ color: "var(--text-secondary)", marginBottom: 16, lineHeight: 1.5 }}>{pageIntro}</p>
+      <RpeScaleExplainer pt={loc === "pt"} defaultOpen={showRpeInfo} />
       <TrainingLoadExplainer pt={loc === "pt"} />
 
       {att.length === 0 ? (

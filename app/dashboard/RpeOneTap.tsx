@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { submitRpeAction, type RpeFormState } from "./bem-estar/actions";
@@ -83,7 +84,10 @@ export function RpeOneTap({ attendanceId, subtitle, minutes, xpReward, locale }:
         <span>{pt ? "Máximo" : "Max"}</span>
       </div>
       <span style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
-        {pt ? RPE_PERSONAL_HINT.pt : RPE_PERSONAL_HINT.en} {pt ? "Esforço percebido (RPE), de 1 a 10." : "Perceived effort (RPE), 1 to 10."}
+        {pt ? RPE_PERSONAL_HINT.pt : RPE_PERSONAL_HINT.en} {pt ? "Esforço percebido (RPE), de 1 a 10." : "Perceived effort (RPE), 1 to 10."}{" "}
+        <Link href="/dashboard/bem-estar/rpe?info=1#o-que-e-rpe" style={{ color: "var(--text-primary)", fontWeight: 700, textDecoration: "underline", whiteSpace: "nowrap" }}>
+          {pt ? "O que é isto?" : "What is this?"}
+        </Link>
       </span>
       {state?.error ? <span style={{ fontSize: 13, color: "var(--danger)" }}>{state.error}</span> : null}
     </form>
