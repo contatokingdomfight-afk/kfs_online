@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/seo/public-metadata";
 import Link from "next/link";
 import { Dumbbell, Package, Shirt, ShoppingBag, Tag } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -10,11 +11,11 @@ import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "Loja | Kingdom Fight School",
   description: "Equipamento, vestuário e acessórios da Kingdom Fight School. Encomenda online e levanta na escola, em Sintra.",
-  alternates: { canonical: "/loja" },
-};
+  path: "/loja",
+});
 
 const CATEGORY_STYLE: Record<ProductCategory, { bg: string; fg: string }> = {
   EQUIPAMENTO: { bg: "linear-gradient(135deg, #2a1215 0%, #7f1d1d 100%)", fg: "#fca5a5" },

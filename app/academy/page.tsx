@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/seo/public-metadata";
 import Link from "next/link";
 import { Brain, Gauge, Swords } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -10,11 +11,11 @@ import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "Kingdom Academy | Kingdom Fight School",
   description: "Cursos online de Muay Thai, Boxe, Jiu-Jitsu, MMA e preparação física pelos professores da Kingdom Fight School.",
-  alternates: { canonical: "/academy" },
-};
+  path: "/academy",
+});
 
 const CATEGORY_LABEL: Record<string, string> = { TECHNIQUE: "Técnica", MINDSET: "Mentalidade", PERFORMANCE: "Performance" };
 const COVER: Record<string, string> = {

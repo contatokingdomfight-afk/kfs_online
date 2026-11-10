@@ -14,6 +14,7 @@ import { PwaLaunchSplash } from "@/components/PwaLaunchSplash";
 import { CookieBanner } from "@/components/CookieBanner";
 import { MetaPixelScript } from "@/components/MetaPixelScript";
 import { BRAND_BG, BRAND_ICON_BG } from "@/lib/brand";
+import { getPublicOrigin } from "@/lib/site-public-url";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,8 +23,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getPublicOrigin()),
   title: "Kingdom Fight School",
-  description: "Plataforma de gestão e ensino da Kingdom Fight School",
+  description:
+    "Escola de artes marciais em Algueirão-Mem Martins, Sintra: Muay Thai, Boxe e Kickboxing para adultos e crianças. Marca a tua aula experimental.",
+  openGraph: {
+    siteName: "Kingdom Fight School",
+    locale: "pt_PT",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
   applicationName: "Kingdom Fight School",
   manifest: "/manifest.webmanifest",
   appleWebApp: {

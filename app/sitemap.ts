@@ -3,6 +3,18 @@ import { getPublicOrigin } from "@/lib/site-public-url";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { MODALIDADES_DYNAMIC_SLUGS, MODALIDADE_LANDING_SLUGS, getModalidadeContent } from "@/lib/modalidades-content";
 
+async function getShopProductRoutes(origin: string, now: Date): Promise<MetadataRoute.Sitemap> {
+  const admin = getAdminClientOrNull();
+  if (!admin.client) return [];
+  const { data: products } = await admin.client.from("Product").select("id").eq("isActive", true);
+  return (products ?? []).map((p) => ({
+    url: `${origin}/loja/${p.id as string}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.5,
+  }));
+}
+
 async function getPublicCoachRoutes(origin: string, now: Date): Promise<MetadataRoute.Sitemap> {
   const admin = getAdminClientOrNull();
   if (!admin.client) return [];
@@ -48,7 +60,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  const coachRoutes = await getPublicCoachRoutes(origin, now);
+  const [coachRoutes, productRoutes] = await Promise.all([getPublicCoachRoutes(origin, now), getShopProductRoutes(origin, now)]);
 
-  return [...staticRoutes, ...landingRoutes, ...modalidadeDynamicRoutes, ...coachRoutes];
+  return [...staticRoutes, ...landingRoutes, ...modalidadeDynamicRoutes, ...coachRoutes, ...productRoutes];
 }

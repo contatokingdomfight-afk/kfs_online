@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { publicPageMetadata } from "@/lib/seo/public-metadata";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
@@ -16,6 +18,13 @@ import { loadPublicPlans } from "@/lib/public-plans";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { MetaPixelTrackEvent } from "@/components/MetaPixelTrackEvent";
+
+export const metadata: Metadata = publicPageMetadata({
+  title: "Aula experimental | Kingdom Fight School",
+  description:
+    "Marca a tua aula experimental de Muay Thai, Boxe ou Kickboxing na Kingdom Fight School, em Algueirão-Mem Martins, Sintra. Escolhe o dia e a hora online.",
+  path: "/aula-experimental",
+});
 
 type SearchParams = Promise<{ sucesso?: string; data?: string; hora?: string; ref?: string; plano?: string; planoNome?: string }>;
 

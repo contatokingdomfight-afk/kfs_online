@@ -11,6 +11,8 @@ import { LojaHeader } from "@/components/loja/LojaHeader";
 import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 import { checkCoupon } from "@/app/dashboard/loja/actions";
 import { createShopOrder } from "../actions";
+import { publicPageMetadata } from "@/lib/seo/public-metadata";
+import { ProductJsonLd } from "@/components/seo/ProductJsonLd";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +23,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const admin = getAdminClientOrNull().client;
   const [p] = admin ? await loadShopProducts(admin, { productId }) : [];
   return p
-    ? { title: `${p.name} | Loja Kingdom`, description: p.description ?? undefined, alternates: { canonical: `/loja/${productId}` } }
+    ? publicPageMetadata({
+        title: `${p.name} | Loja Kingdom`,
+        description: p.description || `${p.name} na loja da Kingdom Fight School. Encomenda online e levanta na escola, em Sintra.`,
+        path: `/loja/${productId}`,
+        image: p.imageUrl,
+      })
     : { title: "Loja | Kingdom Fight School" };
 }
 
@@ -95,6 +102,7 @@ export default async function LojaProdutoPage({ params }: Props) {
         )}
       </div>
       <PublicSiteFooter />
+      <ProductJsonLd product={product} path={here} />
     </main>
   );
 }
