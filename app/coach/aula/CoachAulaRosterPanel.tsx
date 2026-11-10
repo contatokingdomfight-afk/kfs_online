@@ -150,6 +150,7 @@ export function CoachAulaRosterPanel({
               monthlyLimit={s.monthlyLimit}
               isCrossModality={s.isCrossModality}
               feesDue={s.feesDue}
+              tuitionLate={s.tuitionLate ?? false}
               profile={{
                 name: s.name,
                 email: s.email,

@@ -2202,3 +2202,4 @@ html:has([data-dashboard]) body::-webkit-scrollbar {
   .coach-att-rpe .input { width: 72px; flex: none; min-height: 38px; }
   .coach-att-error { grid-column: 1 / -1; }
 }
+.coach-att-chip--late { color: #fca5a5; background: rgba(248, 113, 113, 0.12); }

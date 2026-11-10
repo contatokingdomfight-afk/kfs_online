@@ -43,6 +43,8 @@ export type CoachLessonStudentRow = {
   isCrossModality: boolean;
   /** Seguro e/ou matrícula em atraso (ex.: «Seguro por pagar») — só aviso, não bloqueia. */
   feesDue: string | null;
+  /** Mensalidade em atraso (aluno INADIMPLENTE) — só aviso, não bloqueia a presença. */
+  tuitionLate?: boolean;
 };
 
 export type CoachLessonContext = {
@@ -519,6 +521,7 @@ export async function loadCoachLessonRoster(
       monthlyLimit: monthlyLimitByStudent.get(s.id) ?? null,
       isCrossModality: Boolean(att?.isCrossModality),
       feesDue: feesDueLabel(s.id),
+      tuitionLate: s.status === "INADIMPLENTE",
     };
   });
 

@@ -198,7 +198,8 @@ export async function assertStudentEligibleForCoachLessonCheckIn(
   }
 
   const row = student as StudentRow;
-  if (row.status !== "ATIVO") return { error: "Só alunos ativos podem ser marcados presentes." };
+  // Inadimplentes (mensalidade em atraso) podem ser marcados presentes pelo coach — o cartão mostra o aviso.
+  if (row.status !== "ATIVO" && row.status !== "INADIMPLENTE") return { error: "Só alunos ativos podem ser marcados presentes." };
 
   const plan = await loadStudentPlanForCoachCheckIn(supabase, row);
   const lessonCtx = {

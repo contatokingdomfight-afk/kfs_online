@@ -37,6 +37,7 @@ type Props = {
   isCrossModality?: boolean;
   /** Seguro e/ou matrícula em atraso — aviso para o coach lembrar o aluno. */
   feesDue?: string | null;
+  tuitionLate?: boolean;
 };
 
 export function AttendanceRow({
@@ -63,6 +64,7 @@ export function AttendanceRow({
   monthlyLimit,
   isCrossModality = false,
   feesDue = null,
+  tuitionLate = false,
 }: Props) {
   const router = useRouter();
   const [statusState, statusAction] = useActionState(setAttendanceStatusFromForm, null as { error?: string } | null);
@@ -128,7 +130,7 @@ export function AttendanceRow({
           </span>
         </div>
 
-        {(showLoad || preText || rpe != null || feesDue || monthlyLimit || evaluatedInThisLesson || isCrossModality) && (
+        {(showLoad || preText || rpe != null || tuitionLate || feesDue || monthlyLimit || evaluatedInThisLesson || isCrossModality) && (
           <div className="coach-att-meta" aria-label="Carga, bem-estar, RPE e avisos">
             {showLoad && trainingLoad && (
               <span
@@ -151,6 +153,11 @@ export function AttendanceRow({
                 RPE <strong style={{ color: "var(--text-primary)" }}>{rpe}</strong>
                 {rpeSource === "COACH" ? " (coach)" : ""}
                 {rpeSource === "STUDENT" && coachRpe != null && coachRpe !== rpe ? ` · tu: ${coachRpe}` : ""}
+              </span>
+            )}
+            {tuitionLate && (
+              <span className="coach-att-chip coach-att-chip--late" title="Mensalidade em atraso. Podes marcar a presença; lembra o aluno de regularizar na secretaria.">
+                💶 Mensalidade em atraso
               </span>
             )}
             {feesDue && (
