@@ -20,6 +20,7 @@ import {
   assertStudentMonthlyCheckInAllowed,
 } from "@/lib/drop-in-check-in-access";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { coachLateCheckInDateError } from "@/lib/coach-late-check-in";
 
 async function assertMonthlyCheckInLimitNotExceeded(
   supabase: SupabaseClient,
@@ -184,6 +185,8 @@ export async function coachCheckInStudent(
 
   const occ = occurrenceDate.slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(occ)) return { error: "Data da aula inválida." };
+  const lateErr = coachLateCheckInDateError(occ);
+  if (lateErr) return { error: lateErr };
 
   const supabase = await createClient();
   const access = await assertCoachCanManageLesson(supabase, dbUser, lessonId);

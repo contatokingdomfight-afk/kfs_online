@@ -14,7 +14,9 @@ import {
   expandLessonsForDateRange,
   fetchLessonCancellations,
   rowsToLessonDefinitions,
+  ymdAddDays,
 } from "@/lib/lesson-occurrences";
+import { COACH_LATE_CHECK_IN_DAYS } from "@/lib/coach-late-check-in";
 import { loadEvaluationConfigForModality } from "@/lib/load-evaluation-config";
 import { getCachedLocations } from "@/lib/cached-reference-data";
 import type { Locale } from "@/lib/i18n";
@@ -60,7 +62,11 @@ export default async function CoachAulaPage({
   const lessonIdsAll = (lessonsRaw ?? []).map((l) => (l as { id: string }).id);
   const cancellations = await fetchLessonCancellations(supabase, lessonIdsAll);
   const lessonsAsDefs = rowsToLessonDefinitions(lessonsRaw ?? []);
-  const lessons = expandLessonsForDateRange(lessonsAsDefs, cancellations, today, endOfWeek);
+  // Inclui as aulas dos últimos 2 dias para o coach poder marcar presenças esquecidas.
+  const pastStart = ymdAddDays(today, -COACH_LATE_CHECK_IN_DAYS);
+  const lessons = expandLessonsForDateRange(lessonsAsDefs, cancellations, pastStart, endOfWeek);
+  const upcomingLessons = lessons.filter((l) => l.occurrenceDate >= today);
+  const pastLessons = lessons.filter((l) => l.occurrenceDate < today).reverse();
 
   const locationIds = [...new Set(lessons.map((l) => l.locationId).filter(Boolean))] as string[];
   const allLocations = await getCachedLocations(supabase);
@@ -186,24 +192,38 @@ export default async function CoachAulaPage({
               <p style={{ margin: "0 0 12px 0", fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-secondary)" }}>
                 Clica numa aula para ver e gerir a lista de presenças.
               </p>
-              <ul className="coach-aula-lesson-list" role="list">
-                {lessons.map((l) => {
-                  const locName = l.locationId ? locationById.get(l.locationId) : null;
-                  return (
-                    <li key={l.occurrenceKey}>
-                      <Link
-                        href={`/coach/aula?lesson=${l.id}&date=${encodeURIComponent(l.occurrenceDate)}`}
-                        className="coach-aula-lesson-link"
-                      >
-                        <span className="coach-aula-lesson-modality">{MODALITY_LABELS[l.modality ?? ""] ?? l.modality ?? ""}</span>
-                        <span className="coach-aula-lesson-meta">
-                          {locName ? `${locName} · ` : ""}{formatLessonDate(l.occurrenceDate)} · {l.startTime}–{l.endTime}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+              {[
+                { key: "upcoming", title: null as string | null, items: upcomingLessons },
+                { key: "past", title: "Aulas anteriores (presenças esquecidas)", items: pastLessons },
+              ]
+                .filter((g) => g.items.length > 0)
+                .map((g) => (
+                  <div key={g.key}>
+                    {g.title ? (
+                      <p style={{ margin: "20px 0 8px 0", fontSize: "clamp(13px, 3.3vw, 15px)", fontWeight: 600, color: "var(--text-secondary)" }}>
+                        {g.title}
+                      </p>
+                    ) : null}
+                    <ul className="coach-aula-lesson-list" role="list">
+                      {g.items.map((l) => {
+                        const locName = l.locationId ? locationById.get(l.locationId) : null;
+                        return (
+                          <li key={l.occurrenceKey}>
+                            <Link
+                              href={`/coach/aula?lesson=${l.id}&date=${encodeURIComponent(l.occurrenceDate)}`}
+                              className="coach-aula-lesson-link"
+                            >
+                              <span className="coach-aula-lesson-modality">{MODALITY_LABELS[l.modality ?? ""] ?? l.modality ?? ""}</span>
+                              <span className="coach-aula-lesson-meta">
+                                {locName ? `${locName} · ` : ""}{formatLessonDate(l.occurrenceDate)} · {l.startTime}–{l.endTime}
+                              </span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))}
             </section>
           ) : (
             <section className="coach-aula-presences" aria-labelledby="lista-presencas-heading">
