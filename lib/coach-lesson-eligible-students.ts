@@ -7,6 +7,9 @@ import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
 
 const MODALITIES_LIST = ["MUAY_THAI", "BOXING", "KICKBOXING", "MMA"] as const;
 
+/** Quem pode aparecer na lista de check-in: ativos e inadimplentes (mensalidade em atraso continua a treinar). */
+const CHECK_IN_STATUSES = new Set(["ATIVO", "INADIMPLENTE"]);
+
 export type CoachLessonWellnessZone = "GREEN" | "YELLOW" | "RED";
 
 export type CoachLessonStudentRow = {
@@ -122,7 +125,7 @@ export function isStudentEligibleForCoachLesson(
   plan: PlanRow | undefined,
   lesson: Pick<CoachLessonContext, "modality" | "isOpenClass" | "athletesOnly">
 ): boolean {
-  if (student.status !== "ATIVO") return false;
+  if (!CHECK_IN_STATUSES.has(student.status)) return false;
   if (lesson.athletesOnly && !student.competitionAthlete) return false;
   const access = buildPlanAccessInput(student, plan);
   return isLessonParticipationAllowedByPlan(
@@ -139,7 +142,7 @@ export function isStudentEligibleForDropInLesson(
   student: StudentRow,
   lesson: Pick<CoachLessonContext, "modality" | "isOpenClass" | "athletesOnly">
 ): boolean {
-  if (student.status !== "ATIVO") return false;
+  if (!CHECK_IN_STATUSES.has(student.status)) return false;
   if (lesson.athletesOnly && !student.competitionAthlete) return false;
   if (lesson.isOpenClass) return true;
   if (!student.primaryModality) return false;
@@ -160,7 +163,7 @@ export function isStudentEligibleForCrossModalityCheckIn(
   plan: PlanRow | undefined,
   lesson: Pick<CoachLessonContext, "athletesOnly">
 ): boolean {
-  if (student.status !== "ATIVO") return false;
+  if (!CHECK_IN_STATUSES.has(student.status)) return false;
   if (lesson.athletesOnly && !student.competitionAthlete) return false;
   const access = buildPlanAccessInput(student, plan);
   return access.hasPlan && access.hasCheckIn;
@@ -199,7 +202,7 @@ export async function loadCoachLessonRoster(
       .from("Student")
       .select("id, userId, planId, primaryModality, status, competitionAthlete, extraModalities")
       .eq("schoolId", schoolId)
-      .eq("status", "ATIVO"),
+      .in("status", [...CHECK_IN_STATUSES]),
     supabase
       .from("Attendance")
       .select("id, studentId, status, checkedInAt, rpe, rpeRecordedAt, rpeSource, coachRpe, isCrossModality")
@@ -541,7 +544,7 @@ export async function assertStudentEligibleForCoachLesson(
   }
 
   const row = student as StudentRow;
-  if (row.status !== "ATIVO") return { error: "Só alunos ativos podem ser marcados presentes." };
+  if (!CHECK_IN_STATUSES.has(row.status)) return { error: "Só alunos ativos (ou com a mensalidade em atraso) podem ser marcados presentes." };
 
   let plan: PlanRow | undefined;
   if (row.planId) {
@@ -587,7 +590,7 @@ export async function assertStudentEligibleForCrossModalityCheckIn(
   }
 
   const row = student as StudentRow;
-  if (row.status !== "ATIVO") return { error: "Só alunos ativos podem ser marcados presentes." };
+  if (!CHECK_IN_STATUSES.has(row.status)) return { error: "Só alunos ativos (ou com a mensalidade em atraso) podem ser marcados presentes." };
 
   let plan: PlanRow | undefined;
   if (row.planId) {
@@ -635,7 +638,7 @@ export async function loadCrossModalityCandidates(
     .from("Student")
     .select("id, userId, primaryModality")
     .eq("schoolId", schoolId)
-    .eq("status", "ATIVO");
+    .in("status", [...CHECK_IN_STATUSES]);
 
   const excludeSet = new Set(excludeStudentIds);
   const candidates = (schoolStudents ?? []).filter((s) => !excludeSet.has(s.id));

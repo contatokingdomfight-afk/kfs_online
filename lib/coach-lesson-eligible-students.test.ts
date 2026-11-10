@@ -83,14 +83,24 @@ describe("isStudentEligibleForCoachLesson", () => {
     ).toBe(true);
   });
 
-  it("exclui aluno INADIMPLENTE", () => {
+  it("exclui aluno INATIVO", () => {
+    expect(
+      isStudentEligibleForCoachLesson(
+        { ...muayStudent, status: "INATIVO" },
+        presencialIPlan,
+        { modality: "MUAY_THAI", isOpenClass: false }
+      )
+    ).toBe(false);
+  });
+
+  it("inclui aluno INADIMPLENTE (mensalidade em atraso continua a treinar)", () => {
     expect(
       isStudentEligibleForCoachLesson(
         { ...muayStudent, status: "INADIMPLENTE" },
         presencialIPlan,
         { modality: "MUAY_THAI", isOpenClass: false }
       )
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("exclui aluno sem plano", () => {
@@ -118,10 +128,10 @@ describe("isStudentEligibleForCrossModalityCheckIn (check-in avulso)", () => {
     expect(isStudentEligibleForCrossModalityCheckIn(muayStudent, presencialIPlan, {})).toBe(true);
   });
 
-  it("exclui aluno INADIMPLENTE", () => {
+  it("inclui aluno INADIMPLENTE (mensalidade em atraso continua a treinar)", () => {
     expect(
       isStudentEligibleForCrossModalityCheckIn({ ...muayStudent, status: "INADIMPLENTE" }, presencialIPlan, {})
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("exclui aluno sem plano", () => {

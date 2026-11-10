@@ -2188,11 +2188,15 @@ html:has([data-dashboard]) body::-webkit-scrollbar {
 .coach-att-rpe .coach-att-btn { width: auto; flex: none; padding: 0 12px; }
 .coach-att-error { font-size: var(--text-sm); color: var(--danger); }
 
-/* Computador: uma linha por aluno (nome · etiquetas · ações à direita). */
+/* Computador: em cima nome + estado (esquerda) e botões (direita); por baixo as etiquetas a toda
+   a largura. A lista é mais estreita do que o ecrã, por isso 3 colunas apertavam o nome e os
+   botões tapavam as etiquetas. */
 @media (min-width: 900px) {
-  .coach-att-card { grid-template-columns: minmax(220px, 1.2fr) minmax(0, 1.4fr) auto; align-items: center; gap: 14px; }
-  .coach-att-meta { padding-left: 0; }
-  .coach-att-actions { grid-column: 3; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  .coach-att-card { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px; row-gap: 8px; }
+  .coach-att-head { grid-column: 1; grid-row: 1; }
+  .coach-att-name { overflow-wrap: normal; word-break: normal; }
+  .coach-att-meta { grid-column: 1 / -1; grid-row: 2; padding-left: 46px; }
+  .coach-att-actions { grid-column: 2; grid-row: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
   .coach-att-pair { display: flex; gap: 8px; }
   .coach-att-btn { width: auto; min-height: 38px; font-size: 13px; padding: 0 14px; }
   .coach-att-rpe .input { width: 72px; flex: none; min-height: 38px; }
