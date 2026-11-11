@@ -7,6 +7,7 @@ import { monthLabelPt } from "@/lib/admin-student-ficha";
 import { loadOrders, orderReference } from "@/lib/retail/orders";
 import { studentPaymentReference } from "@/lib/revolut/match";
 import { orderPaymentSchoolId } from "@/lib/school-payment-rules";
+import { isPastDueDay, normalizeDueDay } from "@/lib/lisbon-payment-dates";
 
 export type PorReceberItem = {
   key: string;
@@ -28,6 +29,10 @@ export type PorReceberItem = {
   paymentRef?: string | null;
   /** Link de WhatsApp com lembrete de pagamento (opcional). */
   reminderUrl?: string | null;
+  /** Mensalidades: data limite (YYYY-MM-DD) pelo dia de pagamento do aluno. */
+  dueDate?: string | null;
+  /** Mensalidades: já passou a data limite. */
+  overdue?: boolean;
 };
 
 type LateRow = {
@@ -141,7 +146,7 @@ export async function loadPorReceberItems(
   // Nomes e telefones
   const studentIds = [...new Set(items.map((i) => i.studentId).filter(Boolean))];
   const [students, profiles] = await Promise.all([
-    inChunks(studentIds, async (ids) => (await supabase.from("Student").select("id, userId, status, paymentCode").in("id", ids)).data ?? []),
+    inChunks(studentIds, async (ids) => (await supabase.from("Student").select("id, userId, status, paymentCode, paymentDueDay").in("id", ids)).data ?? []),
     inChunks(studentIds, async (ids) => (await supabase.from("StudentProfile").select("studentId, phone").in("studentId", ids)).data ?? []),
   ]);
   const userIds = [...new Set(students.map((s) => s.userId))];
@@ -152,6 +157,8 @@ export async function loadPorReceberItems(
   // Atrasos antigos, seguros e matrículas: só alunos ativos/inadimplentes (como no «A tratar hoje»).
   const codeOf = new Map(students.map((s) => [s.id, (s as { paymentCode?: number | null }).paymentCode ?? null]));
   const statusOf = new Map(students.map((s) => [s.id, (s as { status?: string }).status ?? ""]));
+  const dueDayOf = new Map(students.map((s) => [s.id, normalizeDueDay((s as { paymentDueDay?: number | null }).paymentDueDay)]));
+  const now = new Date();
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     if (it.kind !== "ORDER" && it.paymentId && !(it.group === "month" && it.referenceMonth === referenceMonth) && !["ATIVO", "INADIMPLENTE"].includes(statusOf.get(it.studentId) ?? "")) {
@@ -163,6 +170,11 @@ export async function loadPorReceberItems(
     if (!it.name) it.name = u?.name || u?.email || "—";
     it.phone = phoneOf.get(it.studentId) ?? it.phone ?? null;
     it.paymentRef = studentPaymentReference(codeOf.get(it.studentId) ?? null);
+    if (it.kind === "TUITION" && it.referenceMonth && /^\d{4}-\d{2}$/.test(it.referenceMonth)) {
+      const day = dueDayOf.get(it.studentId) ?? normalizeDueDay(null);
+      it.dueDate = `${it.referenceMonth}-${String(day).padStart(2, "0")}`;
+      it.overdue = isPastDueDay(now, it.referenceMonth, day);
+    }
   }
   const order = { month: 0, older: 1, fees: 2, orders: 3 } as const;
   items.sort((a, b) => order[a.group] - order[b.group] || a.name.localeCompare(b.name, "pt", { sensitivity: "base" }));

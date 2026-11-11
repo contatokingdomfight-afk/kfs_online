@@ -181,6 +181,12 @@ function PendingRow({ item, onDone }: { item: PorReceberItem; onDone: (amount: n
           {item.what}
           {item.detail ? ` · ${item.detail}` : ""}
         </div>
+        {item.dueDate ? (
+          <div style={{ fontSize: 12, fontWeight: 600, color: item.overdue ? "var(--danger)" : "var(--text-secondary)" }}>
+            {item.overdue ? "Em atraso desde " : "Pagar até "}
+            {item.dueDate.slice(8, 10)}/{item.dueDate.slice(5, 7)}
+          </div>
+        ) : null}
       </div>
       {custom ? (
         <input
