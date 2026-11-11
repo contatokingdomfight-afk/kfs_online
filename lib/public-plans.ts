@@ -57,4 +57,5 @@ export async function loadPublicPlans(): Promise<PublicPlan[]> {
 export function revalidatePublicPlans() {
   revalidateTag(CACHE_TAG);
   revalidatePath("/");
+  revalidatePath("/en");
 }

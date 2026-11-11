@@ -125,5 +125,6 @@ export function filterScheduleByModality(
 export function revalidatePublicWeeklySchedule() {
   revalidateTag("public-weekly-schedule");
   revalidatePath("/");
+  revalidatePath("/en");
   revalidatePath("/aula-experimental");
 }

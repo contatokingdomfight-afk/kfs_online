@@ -18,6 +18,7 @@ const INSURANCE_SETTINGS_CACHE_TTL_MS = 5 * 60_000;
 /** Inclui `/auth/update-password`: link do email de reset traz `?code=`; tem de ser público antes da sessão existir. */
 const publicPaths = [
   "/",
+  "/en",
   "/sign-in",
   "/sign-up",
   "/aula-experimental",
@@ -200,6 +201,13 @@ export async function middleware(request: NextRequest) {
     const dest = request.nextUrl.clone();
     dest.pathname = "/auth/callback";
     return NextResponse.redirect(dest);
+  }
+
+  /** Home estática: a versão inglesa vive em /en; o visitante continua a ver «/». */
+  if (pathname === "/" && request.cookies.get("kfs-locale")?.value === "en") {
+    const dest = request.nextUrl.clone();
+    dest.pathname = "/en";
+    return NextResponse.rewrite(dest);
   }
 
   /**

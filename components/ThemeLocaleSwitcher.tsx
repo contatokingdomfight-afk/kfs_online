@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Settings } from "lucide-react";
 import {
@@ -8,6 +8,7 @@ import {
   setLocaleCookieValue,
   type Theme,
   type Locale,
+  LOCALE_CHANGE_EVENT,
 } from "@/lib/theme-locale";
 
 const label: Record<Locale, { theme: string; light: string; dark: string; lang: string; pt: string; en: string }> = {
@@ -39,17 +40,25 @@ export function ThemeLocaleSwitcher({
   variant?: "fixed" | "inline";
 }) {
   const router = useRouter();
-  const t = label[initialLocale];
+  const [currentTheme, setCurrentTheme] = useState<Theme>(initialTheme);
+  const [currentLocale, setCurrentLocale] = useState<Locale>(initialLocale);
+  useEffect(() => setCurrentTheme(initialTheme), [initialTheme]);
+  useEffect(() => setCurrentLocale(initialLocale), [initialLocale]);
+  const t = label[currentLocale];
   const [isExpanded, setIsExpanded] = useState(false);
 
   function setTheme(theme: Theme) {
     document.cookie = setThemeCookieValue(theme);
     document.documentElement.setAttribute("data-theme", theme);
+    setCurrentTheme(theme);
     router.refresh();
   }
 
   function setLocale(locale: Locale) {
     document.cookie = setLocaleCookieValue(locale);
+    document.documentElement.setAttribute("lang", locale);
+    setCurrentLocale(locale);
+    window.dispatchEvent(new Event(LOCALE_CHANGE_EVENT));
     router.refresh();
   }
 
@@ -152,17 +161,17 @@ export function ThemeLocaleSwitcher({
         <div style={{ display: "flex", gap: 6 }}>
           <button
             type="button"
-            style={initialTheme === "dark" ? btnActive : btn}
+            style={currentTheme === "dark" ? btnActive : btn}
             onClick={() => setTheme("dark")}
-            aria-pressed={initialTheme === "dark"}
+            aria-pressed={currentTheme === "dark"}
           >
             {t.dark}
           </button>
           <button
             type="button"
-            style={initialTheme === "light" ? btnActive : btn}
+            style={currentTheme === "light" ? btnActive : btn}
             onClick={() => setTheme("light")}
-            aria-pressed={initialTheme === "light"}
+            aria-pressed={currentTheme === "light"}
           >
             {t.light}
           </button>
@@ -174,17 +183,17 @@ export function ThemeLocaleSwitcher({
         <div style={{ display: "flex", gap: 6 }}>
           <button
             type="button"
-            style={initialLocale === "pt" ? btnActive : btn}
+            style={currentLocale === "pt" ? btnActive : btn}
             onClick={() => setLocale("pt")}
-            aria-pressed={initialLocale === "pt"}
+            aria-pressed={currentLocale === "pt"}
           >
             {t.pt}
           </button>
           <button
             type="button"
-            style={initialLocale === "en" ? btnActive : btn}
+            style={currentLocale === "en" ? btnActive : btn}
             onClick={() => setLocale("en")}
-            aria-pressed={initialLocale === "en"}
+            aria-pressed={currentLocale === "en"}
           >
             {t.en}
           </button>

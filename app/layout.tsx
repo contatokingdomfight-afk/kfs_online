@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
+import { THEME_LOCALE_BOOT_SCRIPT } from "@/lib/theme-locale";
 import { ThemeLocaleSwitcherFixedOnlyOnPublic } from "@/components/ThemeLocaleSwitcherFixedOnlyOnPublic";
 import { VercelMetrics } from "@/components/VercelMetrics";
 import { PwaDisplayMode } from "@/components/PwaDisplayMode";
@@ -60,18 +60,19 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({
+/**
+ * Sem leitura de cookies aqui: senão TODAS as páginas ficam dinâmicas (a home «/» chegou a ser ~75 % do CPU da Vercel).
+ * Tema e língua são aplicados no browser por THEME_LOCALE_BOOT_SCRIPT, antes do 1.º paint.
+ */
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const theme = await getThemeFromCookies();
-  const locale = await getLocaleFromCookies();
-  const appLocale = locale === "en" ? "en" : "pt";
-
   return (
-    <html lang={locale} data-theme={theme} suppressHydrationWarning>
+    <html lang="pt" data-theme="dark" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_LOCALE_BOOT_SCRIPT }} />
         <meta name="theme-color" content={BRAND_ICON_BG} media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -84,13 +85,13 @@ export default async function RootLayout({
       </head>
       <body className={`${inter.variable} font-sans`}>
         <PwaLaunchSplash />
-        <PwaInstallProvider locale={appLocale}>
+        <PwaInstallProvider>
           <AuthSessionKeepAlive />
           <CapacitorNativeBridge />
           <PwaDisplayMode />
           <PwaServiceWorkerRegister />
           <PwaInstallHint />
-          <ThemeLocaleSwitcherFixedOnlyOnPublic initialTheme={theme} initialLocale={locale} />
+          <ThemeLocaleSwitcherFixedOnlyOnPublic />
           {children}
           <CookieBanner />
           <MetaPixelScript />

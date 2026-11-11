@@ -59,4 +59,5 @@ export async function loadPublicTribePhotos(): Promise<PublicTribePhoto[]> {
 export function revalidatePublicTribePhotos() {
   revalidateTag("public-tribe-photos");
   revalidatePath("/");
+  revalidatePath("/en");
 }

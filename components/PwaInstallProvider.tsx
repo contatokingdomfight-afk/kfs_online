@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { usePathname } from "next/navigation";
-import type { Locale } from "@/lib/theme-locale";
+import { LOCALE_CHANGE_EVENT, readThemeLocaleFromDocument, type Locale } from "@/lib/theme-locale";
 import { shouldCapturePwaInstallPrompt } from "@/lib/pwa-install-ui";
 import {
   migrateLegacyPwaDismiss,
@@ -44,8 +44,19 @@ export function usePwaInstall() {
   return ctx;
 }
 
-export function PwaInstallProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
+export function PwaInstallProvider({ locale: localeProp, children }: { locale?: Locale; children: ReactNode }) {
   const pathname = usePathname();
+  const [locale, setLocaleState] = useState<Locale>(localeProp ?? "pt");
+  useEffect(() => {
+    if (localeProp) {
+      setLocaleState(localeProp);
+      return;
+    }
+    const sync = () => setLocaleState(readThemeLocaleFromDocument().locale);
+    sync();
+    window.addEventListener(LOCALE_CHANGE_EVENT, sync);
+    return () => window.removeEventListener(LOCALE_CHANGE_EVENT, sync);
+  }, [localeProp]);
   const [deferredPrompt, setDeferredPrompt] = useState<InstallPromptEvent | null>(null);
   const [preferSidebar, setPreferSidebar] = useState(false);
   const [storageReady, setStorageReady] = useState(false);

@@ -3,25 +3,20 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeLocaleSwitcher } from "@/components/ThemeLocaleSwitcher";
-import type { Theme, Locale } from "@/lib/theme-locale";
+import { readThemeLocaleFromDocument, type Theme, type Locale } from "@/lib/theme-locale";
 
 /**
  * Evita hidratação #418: pathname no 1.º paint do cliente pode não coincidir com o SSR.
  * Até montar no cliente, não renderizar (servidor e cliente = null).
+ * Tema/língua vêm dos cookies no browser: o layout raiz não lê cookies, para a home poder ser estática.
  * Rotas de app (incl. check-in autenticado): sem botão flutuante de tema.
  */
-export function ThemeLocaleSwitcherFixedOnlyOnPublic({
-  initialTheme,
-  initialLocale,
-}: {
-  initialTheme: Theme;
-  initialLocale: Locale;
-}) {
+export function ThemeLocaleSwitcherFixedOnlyOnPublic() {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [prefs, setPrefs] = useState<{ theme: Theme; locale: Locale } | null>(null);
+  useEffect(() => setPrefs(readThemeLocaleFromDocument()), []);
 
-  if (!mounted) {
+  if (!prefs) {
     return null;
   }
 
@@ -31,11 +26,5 @@ export function ThemeLocaleSwitcherFixedOnlyOnPublic({
     pathname?.startsWith("/coach") ||
     pathname?.startsWith("/check-in");
   if (isAppRoute) return null;
-  return (
-    <ThemeLocaleSwitcher
-      initialTheme={initialTheme}
-      initialLocale={initialLocale}
-      variant="fixed"
-    />
-  );
+  return <ThemeLocaleSwitcher initialTheme={prefs.theme} initialLocale={prefs.locale} variant="fixed" />;
 }
