@@ -1,6 +1,6 @@
 # Backlog — Contas de DEV que não aparecem em produção
 
-Estado em **22 out. 2026**: por fazer.
+Estado em **22 out. 2026**: por fazer. **Reverificado em 2026-11-10: continua por fazer.** Não há `isTester` nem nenhum filtro de contas de teste no código.
 
 ## Objetivo
 Ter contas de teste ("testers") para o ambiente de DEV/Preview que **nunca aparecem em PRD** (listas, rankings, relatórios, financeiro, encomendas).

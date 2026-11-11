@@ -1,6 +1,8 @@
 # Backlog — Pagamentos online e confirmação automática (Revolut)
 
-Estado em **20 out. 2026**: pausado. A Revolut não está a colaborar (Business API só no plano de 30 €/mês; conta de comerciante em análise). Tudo o que ficou feito está inativo e sem custos.
+Estado em **10 nov. 2026** (verificado no código): o **pagamento online (Merchant API) está feito e em produção** (ponto B). A **Business API** (confirmação automática das transferências, ponto A) continua por ativar. Do ponto C falta pouco.
+
+> As secções «Situação atual» e «O que já está feito» abaixo descrevem o estado a 20 out. e ficaram desatualizadas no que toca ao Merchant.
 
 ## Situação atual (o que se mantém)
 
@@ -33,8 +35,10 @@ Certificado de teste criado em `C:\Users\Oseia\Documents\kfs_revolut_cert\` (**f
 
 Alternativas sem plano pago: importar o extrato CSV da Revolut (não era necessário para já); agregador Open Banking (disponibilidade por confirmar).
 
-### B. Botão «Pagar com Revolut» (Merchant API)
-**Bloqueio:** pedido da conta de comerciante «em análise». Ainda sem chaves de API.
+### B. Botão «Pagar com Revolut» (Merchant API) — ✅ FEITO
+Feito e no ar: loja (`6ebf767`), Subscrições / pagamento automático (`de1107d`), adesão, inscrição e seguro (`ea28d5a`), atrasos e fidelização (`574f023`), pagar adiantado (`1f34def`), uma conta por escola (`8a66922`). Sandbox/produção escolhidos pelo `VERCEL_ENV` (`8e0defa`). Código: `app/api/revolut/merchant-checkout`, `merchant-webhook`, `lib/revolut/merchant-accounts.ts`.
+
+Notas originais (histórico):
 1. Quando aprovada: gerar chaves em **modo de teste (Sandbox)** no painel Revolut → API → API de comerciante.
 2. Construir o checkout nas mensalidades e na loja (mesmo padrão do Stripe da Academy), com webhook que marca como pago.
 3. Métodos que a página de preços indica: cartão Visa/Mastercard e carteiras digitais, Revolut Pay, Pay by Bank. **Débito direto não aparece**; confirmar com a Revolut.
@@ -43,9 +47,9 @@ Alternativas sem plano pago: importar o extrato CSV da Revolut (não era necess�
 Custos indicados pela Revolut (a confirmar na conta): cartões europeus pessoais, Revolut Pay e Pay by Bank 1% + 0,20 € (Pay by Bank limitado a 5 €); cartões empresariais/internacionais 2,8% + 0,20 €. Numa mensalidade de 55 € ≈ 0,75 €; recebimento no dia seguinte.
 
 ### C. Pequenas melhorias possíveis
-- Esconder o separador «Revolut» enquanto não estiver configurado.
-- **«Caixa» de numerário** no Financeiro: dinheiro recebido ainda por depositar e registo de cada depósito.
-- Mensagem de WhatsApp de lembrete já com a referência `KFS-…`.
+- ❌ Esconder o separador «Revolut» (`/admin/financeiro/banco`) enquanto não estiver configurado. Hoje aparece sempre (`FinanceiroTabs.tsx`).
+- ✅ **«Caixa» de numerário** no Financeiro: feito (`CashDepositForm`, `CashDepositRecentList`).
+- ❌ Mensagem de WhatsApp de lembrete já com a referência `KFS-…`. A referência aparece no ecrã do aluno no admin, com botão para copiar, mas não vai na mensagem (`lib/whatsapp.ts`).
 
 ## Decisões já tomadas
 - Só **leitura** na Business API (scope `READ`): a plataforma nunca faz pagamentos nem transferências.
