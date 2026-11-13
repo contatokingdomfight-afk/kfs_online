@@ -94,7 +94,9 @@ export async function loadModalityReadiness(
       s.primaryModality === modalityCode ||
       (s.primaryModality != null && compositeCodes.has(s.primaryModality)) ||
       attendanceByStudent.has(s.id) ||
-      latestGrade.has(s.id)
+      latestGrade.has(s.id) ||
+      // Decisão manual (ex.: aluno vindo de outro ginásio, plano com todas as modalidades sem presenças ainda).
+      manualByStudent.has(s.id)
   );
   const ids = relevant.map((s) => s.id);
   if (ids.length === 0) return { template, students: [] };
