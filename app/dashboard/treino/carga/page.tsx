@@ -9,6 +9,7 @@ import { getPlanAccess } from "@/lib/plan-access";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { computeTrainingLoad, ZONE_COLORS, ZONE_LIMITS, zoneLabel, type TrainingLoadZone } from "@/lib/training-load";
 import { loadTrainingSessions } from "@/lib/training-load.server";
+import { TrainingLoadExplainer } from "@/components/training-load/TrainingLoadExplainer";
 
 export const dynamic = "force-dynamic";
 
@@ -146,6 +147,8 @@ export default async function CargaPage() {
           </div>
         ))}
       </div>
+
+      <TrainingLoadExplainer pt={pt} margin="0" />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
         {/* Últimos 7 dias */}
