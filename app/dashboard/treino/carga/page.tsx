@@ -148,7 +148,7 @@ export default async function CargaPage() {
         ))}
       </div>
 
-      <TrainingLoadExplainer pt={pt} margin="0" />
+      <TrainingLoadExplainer pt={pt} margin="0" defaultOpen />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
         {/* Últimos 7 dias */}

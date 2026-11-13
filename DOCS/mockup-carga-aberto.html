@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup · Explicação da carga</title>
+<style>
+  :root{--bg:#0b0b0d;--bg2:#141417;--bg3:#1b1b1f;--border:#2a2a30;--t1:#f4f4f5;--t2:#a1a1aa;--red:#dc2626;
+    --low:#60a5fa;--ideal:#4ade80;--caution:#fbbf24;--high:#f87171;--na:#3f3f46}
+  *{box-sizing:border-box}
+  body{margin:0;background:#050506;color:var(--t1);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:24px 16px}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--t2);margin:0 0 20px;max-width:900px}
+  .views{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+  .label{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--t2);margin:0 0 8px}
+  .desk{width:820px;max-width:100%}
+  .phone{width:375px;max-width:100%}
+  .frame{background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:18px;overflow:hidden}
+  .phone .frame{border-radius:28px;padding:14px}
+  .pagetitle{font-size:20px;font-weight:900;margin:0 0 12px}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin:0 0 14px}
+  .ratio{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .ratio b{font-size:30px}
+  .pill{font-size:12px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--ideal);color:#111}
+  .muted{color:var(--t2);font-size:13px}
+  details{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+  summary{cursor:pointer;font-weight:800;font-size:15px}
+  .steps{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .step{flex:1 1 200px;border:1px solid var(--border);border-radius:12px;background:var(--bg);padding:12px 14px;display:grid;gap:4px}
+  .step .tt{font-weight:800}
+  .step .tx{font-size:13px;color:var(--t2)}
+  .step .ex{font-size:12.5px;color:var(--t2);font-style:italic}
+  .new{outline:2px dashed #eab308;outline-offset:3px}
+  .tag{display:inline-block;font-size:10.5px;font-weight:800;background:#eab308;color:#111;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle;font-style:normal}
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px}
+  .day{border-radius:8px;background:var(--bg3);border:1px solid var(--border);text-align:center;padding:6px 2px;font-size:11px;color:var(--t2)}
+  .day b{display:block;font-size:13px;color:var(--t1)}
+  .day.on{border-color:var(--ideal)}
+  .day.today{box-shadow:inset 0 0 0 1px var(--t1)}
+  .formula{margin-top:14px;font-weight:700}
+  .formula span{font-weight:400;color:var(--t2)}
+  .bar{display:flex;height:30px;border-radius:8px;overflow:hidden;position:relative}
+  .bar div{display:flex;align-items:center;justify-content:center;color:#111;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden}
+  .wrap{position:relative;padding-top:26px;margin-top:10px}
+  .marker{position:absolute;top:-17px;font-size:11.5px;color:var(--t1);font-weight:700;white-space:nowrap;transform:translateX(-50%)}
+  .needle{position:absolute;top:20px;bottom:-5px;width:3px;margin-left:-1.5px;background:var(--t1);border-radius:2px;box-shadow:0 0 0 1px #000;z-index:2}
+  .needle::after{content:"";position:absolute;left:50%;bottom:-3px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--t1);box-shadow:0 0 0 1px #000}
+  .frame{container-type:inline-size}
+  .legend{display:none;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:12px;color:var(--t2)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  @container (max-width:520px){
+    .bar{height:16px}
+    .bar div{font-size:0}
+    .legend{display:flex}
+  }
+  .ticks{position:relative;height:16px;margin-top:4px;font-size:11.5px;color:var(--t2)}
+  .ticks span{position:absolute;transform:translateX(-50%)}
+  ul{margin:12px 0 0;padding-left:18px;font-size:13px;color:var(--t2)}
+  li{margin:2px 0}
+  .new{outline:none}
+  details.new{outline:2px dashed #eab308;outline-offset:3px}
+  .tag{display:none}
+  .notes{max-width:900px;margin-top:24px;color:var(--t2);font-size:13px}
+  .notes b{color:var(--t1)}
+</style>
+</head>
+<body>
+<h1>Mockup: quadro aberto em Treino → Carga</h1>
+<p class="sub">A página <b>Treino → Carga</b> do aluno, como está hoje, mas com o quadro «Como é calculada a carga de treino?» <b>já aberto</b> ao entrar (marcado a amarelo tracejado). O aluno pode fechá-lo tocando no título. Na página do RPE e na do coach continua fechado.</p>
+
+<div class="views">
+  <div class="desk"><p class="label">Computador</p><div class="frame" id="d"></div></div>
+  <div class="phone"><p class="label">Telemóvel</p><div class="frame" id="m"></div></div>
+</div>
+
+<div class="notes">
+  <p><b>A ter em conta:</b></p>
+  <ul>
+    <li>Aberto, o quadro ocupa bastante espaço. No telemóvel, os gráficos «Últimos 7 dias» e «Tendência» ficam mais abaixo e é preciso fazer scroll para os ver.</li>
+    <li>Alternativa: pôr o quadro aberto <b>no fim da página</b>, depois dos gráficos. Assim o aluno vê primeiro os seus números e a explicação fica logo a seguir.</li>
+  </ul>
+</div>
+
+<template id="tpl">
+  <div class="muted" style="font-weight:600">Treino</div>
+  <p class="pagetitle">Carga de treino</p>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center"><span class="pill">Carga ideal</span><span class="muted">Últimos 7 dias</span></div>
+    <div class="ratio" style="margin-top:10px"><b style="font-size:44px;color:var(--ideal)">1,05</b><span style="font-weight:700">× o teu normal</span></div>
+    <div style="display:flex;height:12px;border-radius:6px;overflow:hidden;margin-top:10px">
+      <div style="width:40%;background:var(--low)"></div><div style="width:25%;background:var(--ideal)"></div><div style="width:10%;background:var(--caution)"></div><div style="flex:1;background:var(--high)"></div>
+    </div>
+    <div class="muted" style="margin-top:10px">Estás a treinar como de costume. Continua assim.</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+    <div class="card" style="margin:0"><b style="font-size:20px">1 320</b><div class="muted">esta semana</div></div>
+    <div class="card" style="margin:0"><b style="font-size:20px">1 255</b><div class="muted">o teu normal</div></div>
+    <div class="card" style="margin:0"><b style="font-size:20px">3</b><div class="muted">treinos</div></div>
+  </div>
+  <details open class="new">
+    <summary>Como é calculada a carga de treino?</summary>
+    <div class="steps">
+      <div class="step">
+        <span class="tt">1 · Carga de cada treino</span>
+        <span class="tx">Esforço que deste (RPE 1–10) × minutos da aula</span>
+        <span class="ex">ex.: esforço 7 numa aula de 60 min = 420</span>
+      </div>
+      <div class="step new">
+        <span class="tt">2 · Esta semana <em class="tag">NOVO</em></span>
+        <span class="tx">Soma de tudo o que treinaste <b style="color:var(--t1)">de hoje até 6 dias atrás</b>. Dias sem treino contam 0.</span>
+        <div class="week">
+          <div class="day on">Sex<b>420</b></div>
+          <div class="day">Sáb<b>0</b></div>
+          <div class="day">Dom<b>0</b></div>
+          <div class="day on">Seg<b>360</b></div>
+          <div class="day">Ter<b>0</b></div>
+          <div class="day on">Qua<b>480</b></div>
+          <div class="day today">Hoje<b>0</b></div>
+        </div>
+        <span class="ex">ex.: 3 treinos = 1 260</span>
+      </div>
+      <div class="step new">
+        <span class="tt">3 · Semana normal <em class="tag">NOVO</em></span>
+        <span class="tx">Quanto costumas treinar numa semana normal (média das últimas 4 semanas, antes desta).</span>
+        <span class="ex">ex.: 1 150</span>
+      </div>
+    </div>
+    <div class="formula new">Rácio = esta semana ÷ semana normal <span>· ex.: 1 260 ÷ 1 150 = 1,10</span></div>
+    <div class="wrap">
+      <div class="bar">
+        <div style="width:40%;background:var(--low)">Baixa</div>
+        <div style="width:25%;background:var(--ideal)">Ideal</div>
+        <div style="width:10%;background:var(--caution)">Atenção</div>
+        <div style="width:25%;background:var(--high)">Alta</div>
+      </div>
+      <div class="marker" style="left:55%;top:2px">exemplo 1,10</div>
+      <div class="needle" style="left:55%"></div>
+    </div>
+    <div class="ticks"><span style="left:40%">0,8</span><span style="left:65%">1,3</span><span style="left:75%">1,5</span></div>
+    <div class="legend">
+      <span><i style="background:var(--low)"></i>Baixa · até 0,8</span>
+      <span><i style="background:var(--ideal)"></i>Ideal · 0,8–1,3</span>
+      <span><i style="background:var(--caution)"></i>Atenção · 1,3–1,5</span>
+      <span><i style="background:var(--high)"></i>Alta · acima de 1,5</span>
+    </div>
+    <ul>
+      <li>O número compara-te contigo próprio. Entre 0,8 e 1,3 estás a treinar como de costume.</li>
+      <li class="new">Acima de 1,5 é uma subida brusca: por exemplo, uma semana de 2 300 quando a tua semana normal é 1 150 dá 2,0 (mais risco de lesão e cansaço).</li>
+      <li>Treinos sem nota de esforço contam 0. Regista o RPE depois de cada aula.</li>
+      <li>Precisas de 14 dias de histórico e 3 treinos com nota antes de aparecer o rácio («sem base ainda»).</li>
+    </ul>
+  </details>
+  <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px">
+    <div class="card" style="flex:1 1 280px;margin:0;height:150px"><b>Últimos 7 dias</b><div class="muted">(gráfico, como hoje)</div></div>
+    <div class="card" style="flex:1 1 280px;margin:0;height:150px"><b>Tendência</b><div class="muted">(gráfico, como hoje)</div></div>
+  </div>
+</template>
+<script>
+  const t=document.getElementById('tpl');
+  for(const id of ['d','m']) document.getElementById(id).appendChild(t.content.cloneNode(true));
+</script>
+</body>
+</html>
