@@ -368,7 +368,9 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     lastTraining.set(id, last);
     recentCount.set(id, dates.filter((d) => daysBetween(d, last) <= 56).length);
   }
+  // Quem está em pausa (atestado médico) não conta: já é acompanhado no quadro «Pausas».
   const risco: AdminTodoItem[] = active
+    .filter((s) => !pausedNow.has(s.id))
     .map((s) => {
       const last = lastTraining.get(s.id) ?? null;
       const r = churnRisk({ today, lastTraining: last, createdAt: s.createdAt });
@@ -504,6 +506,7 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     for (const r of (reqs ?? []) as { studentId: string }[]) pendingRequest.add(r.studentId);
   }
   const fisicas: AdminTodoItem[] = active
+    .filter((s) => !pausedNow.has(s.id)) // em pausa (atestado): não faz avaliação
     .map((s) => {
       const last = latestAssessment.get(s.id);
       const due = last ? physicalDue(today, last.nextDueAt) : null;
@@ -745,7 +748,8 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .sort((a, b) => b.urgency - a.urgency);
 
   // --- Aptos para exame (modalidades com graduação publicada, sem convocatória ativa) ---
-  const inScope = new Set(active.map((s) => s.id));
+  // Em pausa (atestado) fica de fora: não vai ser convocado enquanto estiver de baixa.
+  const inScope = new Set(active.filter((s) => !pausedNow.has(s.id)).map((s) => s.id));
   const { data: publishedTemplates } = await supabase.from("GraduationTemplate").select("modalityCode").eq("isPublished", true);
   const exame: AdminTodoItem[] = [];
   for (const t of (publishedTemplates ?? []) as { modalityCode: string }[]) {
