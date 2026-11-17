@@ -1,7 +1,19 @@
-import { getLocaleFromCookies } from "@/lib/theme-locale-server";
+import { Suspense } from "react";
 import { SignInForm } from "./SignInForm";
+import SignInLoading from "./loading";
 
-export default async function SignInPage() {
-  const locale = await getLocaleFromCookies();
-  return <SignInForm initialLocale={locale as "pt" | "en"} />;
+/**
+ * Página estática (sem cookies no servidor) para não gastar CPU na Vercel em cada visita.
+ * A língua é lida no browser pelo SignInForm.
+ */
+export function generateStaticParams() {
+  return [{ "sign-in": [] }];
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInLoading />}>
+      <SignInForm />
+    </Suspense>
+  );
 }

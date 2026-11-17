@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { readThemeLocaleFromDocument } from "@/lib/theme-locale";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -14,7 +15,12 @@ import { getTranslations } from "@/lib/i18n";
 import { BRAND_LOGO_SVG } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n";
 
-export function SignInForm({ initialLocale }: { initialLocale: Locale }) {
+export function SignInForm() {
+  // Língua lida no browser (cookie) para a página poder ser estática.
+  const [initialLocale, setInitialLocale] = useState<Locale>("pt");
+  useEffect(() => {
+    setInitialLocale(readThemeLocaleFromDocument().locale);
+  }, []);
   const t = getTranslations(initialLocale);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
