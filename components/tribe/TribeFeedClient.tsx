@@ -16,6 +16,7 @@ import {
 import type { TribeVisibility } from "@/app/dashboard/tribo/actions";
 import { shrinkImage } from "@/lib/images/shrink-image";
 import { TRIBE_IMAGE_MIMES, TRIBE_MAX_MEDIA_BYTES, TRIBE_MAX_MEDIA_FILES } from "@/lib/tribe/constants";
+import { optimizedImageSrc } from "@/lib/optimized-image";
 
 type CommentRow = {
   id: string;
@@ -250,7 +251,7 @@ function PostCard({
         >
           {post.author.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- URLs dinâmicas Supabase Storage
-            <img src={post.author.avatarUrl} alt="" width={44} height={44} loading="lazy" className="object-cover w-full h-full" />
+            <img src={optimizedImageSrc(post.author.avatarUrl, 96)} alt="" width={44} height={44} loading="lazy" className="object-cover w-full h-full" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ color: "var(--primary)" }}>
               {(post.author.name ?? "?").slice(0, 1).toUpperCase()}
@@ -299,7 +300,7 @@ function PostCard({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={m.id}
-                src={m.publicUrl}
+                src={optimizedImageSrc(m.publicUrl, 828)}
                 alt=""
                 className="w-full max-h-80 object-cover rounded-lg bg-black/20"
                 loading="lazy"

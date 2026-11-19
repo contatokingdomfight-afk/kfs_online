@@ -9,6 +9,7 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS_PT, type ProductCategory } from "@/lib/retail/constants";
 import { parseProductImages } from "@/lib/retail/product-images";
 import { loadOrders, orderReference, ORDER_STATUS_LABEL_EN, ORDER_STATUS_LABEL_PT, type RetailOrder } from "@/lib/retail/orders";
+import { optimizedImageSrc } from "@/lib/optimized-image";
 
 export const dynamic = "force-dynamic";
 
@@ -230,7 +231,7 @@ export default async function LojaPage({ searchParams }: Props) {
                 <div style={{ position: "relative", height: p.imageUrl ? 200 : 130, background: p.imageUrl ? "#fff" : CATEGORY_STYLE[p.category].bg, color: CATEGORY_STYLE[p.category].fg, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {p.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element -- foto do bucket público, já reduzida no envio
-                    <img src={p.imageUrl} alt={p.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    <img src={optimizedImageSrc(p.imageUrl, 640)} alt={p.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   ) : (
                     <CategoryIcon category={p.category} size={46} />
                   )}

@@ -2,6 +2,7 @@
 
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import type { PublicTribePhoto } from "@/lib/public-tribe-photos";
+import { optimizedImageSrc } from "@/lib/optimized-image";
 
 type Content = {
   tribeGalleryEyebrow: string;
@@ -73,7 +74,7 @@ export function TribePhotoMarquee({ content, photos }: { content: Content; photo
                 <div
                   className="kfs-glitch-card"
                   data-active={isActive ? "true" : undefined}
-                  style={{ "--kfs-img": `url("${photo.url}")` } as CSSProperties}
+                  style={{ "--kfs-img": `url("${optimizedImageSrc(photo.url, 640)}")` } as CSSProperties}
                   onPointerEnter={(ev) => {
                     if (ev.pointerType !== "mouse") return;
                     clearRelease();
@@ -107,7 +108,7 @@ export function TribePhotoMarquee({ content, photos }: { content: Content; photo
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={photo.url}
+                    src={optimizedImageSrc(photo.url, 640)}
                     alt={isDuplicate ? "" : "Treino na Kingdom Fight School"}
                     loading="lazy"
                     decoding="async"

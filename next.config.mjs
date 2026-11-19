@@ -13,6 +13,11 @@ const nextConfig = {
       bodySizeLimit: "15mb",
     },
   },
+  /** Fotos do Storage do Supabase via /_next/image (lib/optimized-image.ts): poupa egress do Supabase. */
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" }],
+    minimumCacheTTL: 2592000,
+  },
   async redirects() {
     return [
       { source: "/julgamento", destination: "/arbitragem", permanent: true },

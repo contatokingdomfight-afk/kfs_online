@@ -8,6 +8,7 @@ import { PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS_PT, type ProductCategory } 
 import { euro, loadShopProducts, type ShopProduct } from "@/lib/retail/public-shop";
 import { LojaHeader } from "@/components/loja/LojaHeader";
 import { PublicSiteFooter } from "@/components/PublicSiteFooter";
+import { optimizedImageSrc } from "@/lib/optimized-image";
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +109,7 @@ export default async function LojaPublicaPage({ searchParams }: { searchParams: 
                     >
                       {p.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element -- foto do bucket público, já reduzida no envio
-                        <img src={p.imageUrl} alt={p.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        <img src={optimizedImageSrc(p.imageUrl, 640)} alt={p.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       ) : (
                         <CategoryIcon category={p.category} size={46} />
                       )}

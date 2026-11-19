@@ -26,6 +26,7 @@ import { getActiveSchoolAssistantForUserId } from "@/lib/school-assistant-coach"
 import { ThemeLocaleSwitcher } from "@/components/ThemeLocaleSwitcher";
 import { LogoutButton } from "@/components/LogoutButton";
 import { SidebarPwaInstall } from "@/components/SidebarPwaInstall";
+import { optimizedImageSrc } from "@/lib/optimized-image";
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +109,7 @@ export default async function ContaPage() {
       <Link href="/dashboard/perfil" style={{ ...card, padding: 16, display: "flex", alignItems: "center", gap: 14, textDecoration: "none", color: "inherit" }}>
         {avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- avatar do Supabase Storage
-          <img src={avatarUrl} alt="" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--primary)", flexShrink: 0 }} />
+          <img src={optimizedImageSrc(avatarUrl, 128)} alt="" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid var(--primary)", flexShrink: 0 }} />
         ) : (
           <span aria-hidden style={{ width: 64, height: 64, flexShrink: 0, borderRadius: "50%", border: "3px solid var(--primary)", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800 }}>
             {initialsOf(name)}

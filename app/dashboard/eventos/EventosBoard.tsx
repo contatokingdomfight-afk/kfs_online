@@ -9,6 +9,7 @@ import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-st
 import { EventCalendar, eventTouchesDay, type EventCalendarRow } from "@/components/events/EventCalendar";
 import { EventIngressoCard } from "./EventIngressoCard";
 import { InscreverMeButton } from "./InscreverMeButton";
+import { optimizedImageSrc } from "@/lib/optimized-image";
 
 function eventTypeLabel(type: string, t: ReturnType<typeof getTranslations>): string {
   if (type === "CAMP") return t("eventsTypeCamp");
@@ -340,7 +341,7 @@ export function EventosBoard({
                     }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={banner} alt="" style={{ width: "100%", height: 170, objectFit: "cover", display: "block", pointerEvents: "none" }} />
+                    <img src={optimizedImageSrc(banner, 828)} alt="" style={{ width: "100%", height: 170, objectFit: "cover", display: "block", pointerEvents: "none" }} />
                     {coverOverlay}
                   </button>
                 ) : (

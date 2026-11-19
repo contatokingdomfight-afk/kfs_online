@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Heart, MessageCircle } from "lucide-react";
 import { getTribeStudentWriteContext } from "@/lib/tribe/student-context";
 import { loadTribeFeed } from "@/lib/tribe/feed";
+import { optimizedImageSrc } from "@/lib/optimized-image";
 
 function initialsOf(name: string | null): string {
   return (
@@ -54,10 +55,10 @@ export async function HomeTribePreview({ locale }: { locale: "pt" | "en" }) {
             >
               {photo ? (
                 // eslint-disable-next-line @next/next/no-img-element -- foto do Supabase Storage
-                <img src={photo} alt="" loading="lazy" style={{ width: 64, height: 64, flexShrink: 0, borderRadius: 12, objectFit: "cover" }} />
+                <img src={optimizedImageSrc(photo, 128)} alt="" loading="lazy" style={{ width: 64, height: 64, flexShrink: 0, borderRadius: 12, objectFit: "cover" }} />
               ) : p.author.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- avatar do Supabase Storage
-                <img src={p.author.avatarUrl} alt="" loading="lazy" style={{ width: 48, height: 48, flexShrink: 0, borderRadius: "50%", objectFit: "cover" }} />
+                <img src={optimizedImageSrc(p.author.avatarUrl, 96)} alt="" loading="lazy" style={{ width: 48, height: 48, flexShrink: 0, borderRadius: "50%", objectFit: "cover" }} />
               ) : (
                 <span
                   aria-hidden
