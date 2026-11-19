@@ -6,13 +6,13 @@ export function rpeTone(n: number): string {
 }
 
 /** Bloco recolhível «O que é o RPE?»: nome por extenso + escala completa 1–10 com cores. */
-export function RpeScaleExplainer({ pt = true, defaultOpen = false }: { pt?: boolean; defaultOpen?: boolean }) {
+export function RpeScaleExplainer({ pt = true, defaultOpen = false, margin = "0 0 10px" }: { pt?: boolean; defaultOpen?: boolean; margin?: string }) {
   const t = (a: string, b: string) => (pt ? a : b);
   return (
     <details
       id="o-que-e-rpe"
       open={defaultOpen}
-      style={{ border: "1px solid var(--border)", borderRadius: 14, background: "var(--bg-secondary)", padding: "12px 14px", margin: "0 0 10px" }}
+      style={{ border: "1px solid var(--border)", borderRadius: 14, background: "var(--bg-secondary)", padding: "12px 14px", margin }}
     >
       <summary style={{ cursor: "pointer", fontWeight: 800, fontSize: 15, color: "var(--text-primary)" }}>
         {t("O que é o RPE?", "What is RPE?")}
