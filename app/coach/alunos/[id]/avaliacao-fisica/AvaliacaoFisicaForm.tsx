@@ -10,6 +10,8 @@ import { PhysicalAssessmentVitalSignsHints } from "@/components/physical-assessm
 import type { VitalSignsSafety } from "@/lib/physical-assessment-vital-signs";
 import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { SignaturePad, type SignaturePadHandle } from "@/components/SignaturePad";
+import { INJURY_TYPES } from "@/lib/body-map/marks";
+import { PAIN_REGIONS } from "@/lib/pain-regions";
 
 const AUTOSAVE_INTERVAL_MS = 60_000;
 
@@ -416,6 +418,46 @@ export function AvaliacaoFisicaForm({
           <label className="flex items-center gap-2 text-sm">
             <input type="radio" name="hasInjuries" value="true" defaultChecked={fd.hasInjuries === true} /> Sim
           </label>
+        </div>
+        <div className="mt-3 max-w-3xl">
+          <p className="text-xs text-text-secondary mb-2">
+            Se sim, indica onde foi (fratura, distensão, entorse…). Aparece no mapa corporal do aluno. Opcional.
+          </p>
+          {[0, 1, 2, 3].map((i) => {
+            const inj = fd.injuries?.[i];
+            return (
+              <div key={i} className="mb-2 grid grid-cols-2 items-center gap-2 md:grid-cols-[1.2fr_1.2fr_90px_auto]">
+                <select name={`injuryRegion_${i}`} defaultValue={inj?.region ?? ""} className="input" aria-label={`Lesão ${i + 1}: zona`}>
+                  <option value="">Zona…</option>
+                  {PAIN_REGIONS.filter((r) => r.key !== "OTHER").map((r) => (
+                    <option key={r.key} value={r.key}>
+                      {r.labelPt}
+                    </option>
+                  ))}
+                </select>
+                <select name={`injuryType_${i}`} defaultValue={inj?.type ?? ""} className="input" aria-label={`Lesão ${i + 1}: tipo`}>
+                  <option value="">Tipo…</option>
+                  {INJURY_TYPES.map((t) => (
+                    <option key={t.key} value={t.key}>
+                      {t.pt}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  name={`injuryYear_${i}`}
+                  defaultValue={inj?.year ?? ""}
+                  className="input"
+                  placeholder="Ano"
+                  inputMode="numeric"
+                  maxLength={4}
+                  aria-label={`Lesão ${i + 1}: ano`}
+                />
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" name={`injuryRecovered_${i}`} value="true" defaultChecked={inj?.recovered === true} /> Recuperada
+                </label>
+              </div>
+            );
+          })}
         </div>
       </fieldset>
 

@@ -9,6 +9,7 @@ import {
   CLEARANCE_OPTIONS,
 } from "@/lib/physical-assessment-types";
 import { AnatomicalBodyMap } from "@/components/physical-assessment/AnatomicalBodyMap";
+import type { PainReportInput, StudentInjuryInput } from "@/lib/body-map/marks";
 import {
   anatomicalBodyMapHasAnyRegionData,
   anatomicalBodyMapOverall,
@@ -72,6 +73,10 @@ type Props = {
   /** Preenchidos só quando esta ficha (já entregue) foi reaberta e corrigida depois da entrega original. */
   editedAt?: string | null;
   editedByName?: string | null;
+  /** Dores recentes (Bem-estar › Dores) a marcar no mapa corporal, junto com as lesões da ficha. */
+  bodyMapPains?: readonly PainReportInput[];
+  /** Lesões anteriores declaradas pelo aluno. */
+  bodyMapInjuries?: readonly StudentInjuryInput[];
 };
 
 /**
@@ -89,6 +94,8 @@ export function PhysicalAssessmentReadOnlyView({
   profileBodyMetrics = null,
   editedAt = null,
   editedByName = null,
+  bodyMapPains,
+  bodyMapInjuries,
 }: Props) {
   const L = locale === "pt";
   const objectives =
@@ -241,6 +248,8 @@ export function PhysicalAssessmentReadOnlyView({
               className="mb-4"
               neutralReference={!hasIllustrativeAnthropometry(d)}
               profileBodyMetrics={profileBodyMetrics}
+              pains={bodyMapPains}
+              studentInjuries={bodyMapInjuries}
             />
           ) : null}
           {d.heightCm != null || d.weightKg != null ? (

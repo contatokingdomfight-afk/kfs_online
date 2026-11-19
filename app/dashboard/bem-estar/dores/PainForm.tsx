@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitPainAction, type SimpleFormState } from "../actions";
 import { PAIN_REGIONS } from "@/lib/pain-regions";
+import { BODY_SIDES } from "@/lib/body-map/marks";
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -43,6 +44,17 @@ export function PainForm({ locale }: Props) {
           {PAIN_REGIONS.map((r) => (
             <option key={r.key} value={r.key}>
               {locale === "pt" ? r.labelPt : r.labelEn}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontWeight: 600 }}>{locale === "pt" ? "Lado (opcional)" : "Side (optional)"}</span>
+        <select name="side" defaultValue="" className="input">
+          <option value="">{locale === "pt" ? "Não sei / não se aplica" : "Not sure / not applicable"}</option>
+          {BODY_SIDES.map((s) => (
+            <option key={s.key} value={s.key}>
+              {locale === "pt" ? s.pt : s.en}
             </option>
           ))}
         </select>

@@ -1,7 +1,10 @@
 "use client";
 
-import { useCallback, useId, useMemo, useState } from "react";
-import { ANATOMICAL_BACK_SVG_INNER, ANATOMICAL_FRONT_SVG_INNER } from "@/components/physical-assessment/generated/anatomical-svg-inners";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { ClassicBodyFigure } from "@/components/physical-assessment/ClassicBodyFigure";
+import { SilhouetteBodyFigure } from "@/components/physical-assessment/SilhouetteBodyFigure";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import {
   type AnatomicalBodyMapRegionId,
@@ -10,60 +13,29 @@ import {
   anatomicalBodyMapRegionLabels,
   buildAnatomicalBodyMapRegions,
 } from "@/lib/anatomical-body-map-from-form";
-import { computeAnatomicalIllustrationTransform } from "@/lib/anatomical-body-illustration-transform";
-import {
-  hasIllustrativeAnthropometry,
-  normalizePhysicalFormDataJson,
-  type ProfileBodyMetrics,
-} from "@/lib/illustrative-body-silhouette";
+import { buildBodyMarks, marksForRegion, type PainReportInput, type StudentInjuryInput } from "@/lib/body-map/marks";
+import { bodyDefinition, bodyMeasuresFromForm, type BodyMeasures } from "@/lib/body-map/measures";
+import { regionStatuses } from "@/lib/body-map/status";
+import { normalizePhysicalFormDataJson, type ProfileBodyMetrics } from "@/lib/illustrative-body-silhouette";
 
 type ViewSide = "front" | "back";
+type BodyStyle = "muscle" | "silhouette" | "anatomical";
 
-/** Realces suaves na cabeça (vista frontal) — por cima da ilustração, por baixo dos hotspots. */
-function AnatomicalFrontFaceOverlay({ idBase }: { idBase: string }) {
-  const g = `${idBase}-glow`;
-  const f = `${idBase}-forehead`;
-  const l = `${idBase}-cheek-l`;
-  const r = `${idBase}-cheek-r`;
-  return (
-    <g className="pointer-events-none" aria-hidden>
-      <defs>
-        <radialGradient id={g} cx="50%" cy="38%" r="58%">
-          <stop offset="0%" stopColor="#e8d2c4" stopOpacity="0.55" />
-          <stop offset="42%" stopColor="#cfa589" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#1a1512" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={f} cx="50%" cy="28%" r="45%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
-          <stop offset="70%" stopColor="#ffffff" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={l} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff8f4" stopOpacity="0.2" />
-          <stop offset="100%" stopColor="#fff8f4" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={r} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff8f4" stopOpacity="0.2" />
-          <stop offset="100%" stopColor="#fff8f4" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <ellipse cx="100" cy="31" rx="20" ry="25" fill={`url(#${g})`} style={{ mixBlendMode: "soft-light" }} />
-      <ellipse cx="100" cy="23" rx="12" ry="10" fill={`url(#${f})`} style={{ mixBlendMode: "overlay", opacity: 0.75 }} />
-      <ellipse cx="90" cy="33" rx="7" ry="5.5" fill={`url(#${l})`} style={{ mixBlendMode: "soft-light", opacity: 0.9 }} />
-      <ellipse cx="110" cy="33" rx="7" ry="5.5" fill={`url(#${r})`} style={{ mixBlendMode: "soft-light", opacity: 0.9 }} />
-    </g>
-  );
-}
+/** A «Visão muscular» é sempre a primeira vista que o aluno vê ao abrir o mapa. */
+const BODY_STYLES: BodyStyle[] = ["muscle", "silhouette", "anatomical"];
+/** Distância horizontal mínima (px) para um arrasto contar como «passar à vista seguinte». */
+const SWIPE_MIN_PX = 48;
+const NO_MEASURES: BodyMeasures = {};
+const EMPTY_PAINS: readonly PainReportInput[] = [];
+const EMPTY_INJURIES: readonly StudentInjuryInput[] = [];
 
-const FRONT_REGIONS: AnatomicalBodyMapRegionId[] = [
-  "head",
-  "neck",
-  "chest",
-  "abdomen",
-  "leftArm",
-  "rightArm",
-  "leftLeg",
-  "rightLeg",
-];
+/** «Visão muscular»: carregada só quando é mostrada (os dados dos músculos são pesados). */
+const MuscleBodyFigure = dynamic(() => import("@/components/physical-assessment/MuscleBodyFigure"), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse rounded-lg bg-white/5" aria-hidden />,
+});
+
+const FRONT_REGIONS: AnatomicalBodyMapRegionId[] = ["head", "neck", "chest", "abdomen", "leftArm", "rightArm", "leftLeg", "rightLeg"];
 
 const BACK_REGIONS: AnatomicalBodyMapRegionId[] = [
   "head",
@@ -77,218 +49,6 @@ const BACK_REGIONS: AnatomicalBodyMapRegionId[] = [
   "rightLeg",
 ];
 
-const hitShapeClass = [
-  "cursor-pointer fill-transparent stroke-transparent [stroke-width:1.2] transition-[fill,stroke] duration-150",
-  "hover:fill-[rgba(29,158,117,0.28)] hover:stroke-[#0F6E56]",
-  "focus:outline-none focus-visible:stroke-[#0F6E56] focus-visible:fill-[rgba(29,158,117,0.2)]",
-  "[&:focus-visible]:outline [&:focus-visible]:outline-2 [&:focus-visible]:outline-primary/50 [&:focus-visible]:outline-offset-2",
-].join(" ");
-
-function Hotspot({
-  region,
-  active,
-  d,
-  onPick,
-  onHover,
-  labels,
-}: {
-  region: AnatomicalBodyMapRegionId;
-  active: boolean;
-  d: string;
-  onPick: (r: AnatomicalBodyMapRegionId) => void;
-  onHover: (r: AnatomicalBodyMapRegionId | null) => void;
-  labels: Record<AnatomicalBodyMapRegionId, string>;
-}) {
-  return (
-    <path
-      data-region={region}
-      d={d}
-      role="button"
-      tabIndex={0}
-      aria-label={labels[region]}
-      className={[hitShapeClass, active ? "fill-[rgba(29,158,117,0.32)] stroke-[#0F6E56]" : ""].join(" ")}
-      onMouseEnter={() => onHover(region)}
-      onMouseLeave={() => onHover(null)}
-      onFocus={() => onHover(region)}
-      onBlur={() => onHover(null)}
-      onClick={() => onPick(region)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onPick(region);
-        }
-      }}
-    />
-  );
-}
-
-function HotspotEllipse({
-  region,
-  active,
-  cx,
-  cy,
-  rx,
-  ry,
-  onPick,
-  onHover,
-  labels,
-}: {
-  region: AnatomicalBodyMapRegionId;
-  active: boolean;
-  cx: number;
-  cy: number;
-  rx: number;
-  ry: number;
-  onPick: (r: AnatomicalBodyMapRegionId) => void;
-  onHover: (r: AnatomicalBodyMapRegionId | null) => void;
-  labels: Record<AnatomicalBodyMapRegionId, string>;
-}) {
-  return (
-    <ellipse
-      data-region={region}
-      cx={cx}
-      cy={cy}
-      rx={rx}
-      ry={ry}
-      role="button"
-      tabIndex={0}
-      aria-label={labels[region]}
-      className={[hitShapeClass, active ? "fill-[rgba(29,158,117,0.32)] stroke-[#0F6E56]" : ""].join(" ")}
-      onMouseEnter={() => onHover(region)}
-      onMouseLeave={() => onHover(null)}
-      onFocus={() => onHover(region)}
-      onBlur={() => onHover(null)}
-      onClick={() => onPick(region)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onPick(region);
-        }
-      }}
-    />
-  );
-}
-
-function HotspotsFront(props: {
-  onPick: (r: AnatomicalBodyMapRegionId) => void;
-  onHover: (r: AnatomicalBodyMapRegionId | null) => void;
-  active: AnatomicalBodyMapRegionId | null;
-  labels: Record<AnatomicalBodyMapRegionId, string>;
-}) {
-  const { onPick, onHover, active, labels } = props;
-  return (
-    <>
-      <HotspotEllipse region="head" active={active === "head"} cx={100} cy={24} rx={15} ry={20} onPick={onPick} onHover={onHover} labels={labels} />
-      <Hotspot region="neck" active={active === "neck"} d="M92,46 L108,46 L110,62 L90,62 Z" onPick={onPick} onHover={onHover} labels={labels} />
-      <Hotspot
-        region="chest"
-        active={active === "chest"}
-        d="M76,64 Q80,62 88,62 L112,62 Q120,62 124,64 L126,112 Q120,116 100,116 Q80,116 74,112 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-      <Hotspot region="abdomen" active={active === "abdomen"} d="M80,116 L120,116 L122,168 Q110,172 100,172 Q90,172 78,168 Z" onPick={onPick} onHover={onHover} labels={labels} />
-      <Hotspot
-        region="leftArm"
-        active={active === "leftArm"}
-        d="M72,68 L78,68 Q72,90 66,118 L58,160 Q54,185 50,200 L42,200 Q40,178 44,150 L52,108 Q58,82 72,68 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-      <Hotspot
-        region="rightArm"
-        active={active === "rightArm"}
-        d="M128,68 L122,68 Q128,90 134,118 L142,160 Q146,185 150,200 L158,200 Q160,178 156,150 L148,108 Q142,82 128,68 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-      <Hotspot
-        region="leftLeg"
-        active={active === "leftLeg"}
-        d="M80,172 Q90,176 100,176 L100,260 L96,330 L91,360 L80,358 L76,320 L72,260 Q72,210 76,190 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-      <Hotspot
-        region="rightLeg"
-        active={active === "rightLeg"}
-        d="M100,176 Q110,176 120,172 L124,190 Q128,210 128,260 L124,320 L120,358 L109,360 L104,330 L100,260 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-    </>
-  );
-}
-
-function HotspotsBack(props: {
-  onPick: (r: AnatomicalBodyMapRegionId) => void;
-  onHover: (r: AnatomicalBodyMapRegionId | null) => void;
-  active: AnatomicalBodyMapRegionId | null;
-  labels: Record<AnatomicalBodyMapRegionId, string>;
-}) {
-  const { onPick, onHover, active, labels } = props;
-  return (
-    <>
-      <HotspotEllipse region="head" active={active === "head"} cx={101} cy={32} rx={15} ry={22} onPick={onPick} onHover={onHover} labels={labels} />
-      <Hotspot
-        region="trapezius"
-        active={active === "trapezius"}
-        d="M74,58 Q88,54 101,54 Q114,54 128,58 L130,88 L101,92 L72,88 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-      <Hotspot region="upperBack" active={active === "upperBack"} d="M72,88 L130,88 L132,146 L70,146 Z" onPick={onPick} onHover={onHover} labels={labels} />
-      <Hotspot region="lowerBack" active={active === "lowerBack"} d="M74,146 L128,146 L128,188 L74,188 Z" onPick={onPick} onHover={onHover} labels={labels} />
-      <Hotspot
-        region="leftArm"
-        active={active === "leftArm"}
-        d="M70,72 L78,72 Q72,95 66,125 L58,165 Q54,190 50,205 L42,205 Q40,180 44,155 L52,115 Q58,88 70,72 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-      <Hotspot
-        region="rightArm"
-        active={active === "rightArm"}
-        d="M130,72 L122,72 Q128,95 134,125 L142,165 Q146,190 150,205 L158,205 Q160,180 156,155 L148,115 Q142,88 130,72 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-      <Hotspot
-        region="glutes"
-        active={active === "glutes"}
-        d="M76,188 L126,188 Q130,208 128,230 L101,234 L74,230 Q72,208 76,188 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-      <Hotspot
-        region="leftLeg"
-        active={active === "leftLeg"}
-        d="M76,230 Q88,234 101,234 L100,310 L96,358 L80,360 L74,320 L70,265 Q70,242 76,230 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-      <Hotspot
-        region="rightLeg"
-        active={active === "rightLeg"}
-        d="M101,234 Q114,234 126,230 Q132,242 132,265 L128,320 L121,360 L106,358 L100,310 Z"
-        onPick={onPick}
-        onHover={onHover}
-        labels={labels}
-      />
-    </>
-  );
-}
-
 export type AnatomicalBodyMapVariant = "full" | "compact";
 
 type Props = {
@@ -299,11 +59,22 @@ type Props = {
   className?: string;
   variant?: AnatomicalBodyMapVariant;
   /**
-   * Força escala «neutra» (só perfil altura/peso quando existir).
-   * Quando `true`, ignora antropometria fina para o `transform` da ilustração.
+   * Força o corpo de referência (sem deformar pelas medidas da ficha).
+   * Útil quando as medidas não são fiáveis ou se quer comparar com o corpo base.
    */
   neutralReference?: boolean;
   profileBodyMetrics?: ProfileBodyMetrics | null;
+  /** Dores recentes do aluno (Bem-estar › Dores); juntam-se às lesões da ficha. */
+  pains?: readonly PainReportInput[];
+  /** Lesões anteriores que o aluno declarou (Bem-estar › Dores e lesões); juntam-se às da ficha. */
+  studentInjuries?: readonly StudentInjuryInput[];
+  /**
+   * Aluno ainda sem avaliação física: só a Visão muscular com o corpo de referência, as dores/lesões que já
+   * conhecemos e altura/peso do perfil. Ao tocar numa zona convida a fazer a avaliação física.
+   */
+  generic?: boolean;
+  /** Para onde leva o convite «fazer avaliação física» (modo genérico). */
+  scheduleHref?: string;
 };
 
 export function AnatomicalBodyMap({
@@ -314,72 +85,123 @@ export function AnatomicalBodyMap({
   variant = "full",
   neutralReference = false,
   profileBodyMetrics = null,
+  pains = EMPTY_PAINS,
+  studentInjuries = EMPTY_INJURIES,
+  generic = false,
+  scheduleHref = "/dashboard/ficha-fisica",
 }: Props) {
   const [view, setView] = useState<ViewSide>("front");
+  const [styleChoice, setStyleChoice] = useState<BodyStyle>("muscle");
   const [pinned, setPinned] = useState<AnatomicalBodyMapRegionId | null>(null);
   const [hover, setHover] = useState<AnatomicalBodyMapRegionId | null>(null);
-  const faceOverlayIdBase = `abm-face-${useId().replace(/\W/g, "")}`;
 
-  const fd = useMemo((): Partial<PhysicalAssessmentFormData> => normalizePhysicalFormDataJson(formData) ?? {}, [formData]);
+  const bodyStyle: BodyStyle = generic ? "muscle" : styleChoice;
+
+  /** Passa à vista seguinte (+1) ou anterior (−1), em ciclo. */
+  const stepStyle = useCallback(
+    (delta: 1 | -1) => {
+      const i = BODY_STYLES.indexOf(styleChoice);
+      setStyleChoice(BODY_STYLES[(i + delta + BODY_STYLES.length) % BODY_STYLES.length]);
+    },
+    [styleChoice]
+  );
+
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swiped = useRef(false);
+
+  const fd = useMemo((): Partial<PhysicalAssessmentFormData> => (generic ? {} : (normalizePhysicalFormDataJson(formData) ?? {})), [formData, generic]);
 
   const labels = useMemo(() => anatomicalBodyMapRegionLabels(locale), [locale]);
   const regions = useMemo(() => buildAnatomicalBodyMapRegions(fd, locale), [fd, locale]);
-  const overall = useMemo(
-    () => anatomicalBodyMapOverall(fd, locale, profileBodyMetrics),
-    [fd, locale, profileBodyMetrics]
-  );
+  const statuses = useMemo(() => regionStatuses(regions), [regions]);
+  const overall = useMemo(() => anatomicalBodyMapOverall(fd, locale, profileBodyMetrics), [fd, locale, profileBodyMetrics]);
   const hasRegionData = useMemo(() => anatomicalBodyMapHasAnyRegionData(regions), [regions]);
+  const marks = useMemo(() => buildBodyMarks({ pains, injuries: fd.injuries, studentInjuries, locale }), [pains, fd.injuries, studentInjuries, locale]);
 
-  const useNeutralTransform = neutralReference || !hasIllustrativeAnthropometry(fd);
-  const illustrationStyle = useMemo(
-    () => computeAnatomicalIllustrationTransform({ formData: fd, profile: profileBodyMetrics, neutralReference: useNeutralTransform }),
-    [fd, profileBodyMetrics, useNeutralTransform]
-  );
+  const { sex, measures: formMeasures } = useMemo(() => bodyMeasuresFromForm(fd), [fd]);
+  const measures = generic || neutralReference ? NO_MEASURES : formMeasures;
+  const definition = useMemo(() => bodyDefinition(fd.bodyFatPct, sex), [fd.bodyFatPct, sex]);
 
   const L = locale === "pt";
   const compact = variant === "compact";
   const ui = L
     ? {
         title: "Mapa corporal",
-        subtitle: compact
-          ? "Ilustração ajustada às tuas medidas (aproximada). Toca nas zonas."
-          : "Vista ilustrativa das medidas por região; a figura escala de forma aproximada com os dados da ficha (não é imagem clínica nem do teu corpo). Clica ou passa o rato nas zonas.",
+        subtitle: generic
+          ? "Corpo de referência: ainda não tens avaliação física. Aqui vês o que já sabemos de ti — dores recentes, altura e peso. Toca nas zonas."
+          : compact
+            ? "Figura ajustada às tuas medidas (aproximada). Toca nas zonas."
+            : "Vista ilustrativa das medidas por região; a figura ajusta-se de forma aproximada aos dados da ficha (não é imagem clínica nem do teu corpo). Clica ou passa o rato nas zonas.",
         front: "Frontal",
         back: "Dorsal",
         viewGroup: "Vista do mapa corporal",
+        styleGroup: "Estilo da figura",
+        silhouette: "Silhueta",
+        muscle: "Visão muscular",
+        anatomical: "Anatómica",
+        prevStyle: "Vista anterior",
+        nextStyle: "Vista seguinte",
+        swipeHint: "Desliza para o lado para mudar de vista",
         panelEyebrow: "Região",
         panelEmpty: "Escolhe uma zona no esquema para ver os dados registados.",
         noData: "Sem dados por região nesta ficha (preenche antropometria ou observações de postura/mobilidade).",
         summary: "Resumo",
         stageFrontAria: "Mapa corporal — vista frontal, zonas clicáveis",
         stageBackAria: "Mapa corporal — vista dorsal, zonas clicáveis",
+        legendOk: "Com dados",
+        legendWarn: "A vigiar",
+        legendNone: "Sem dados",
+        legendPain: "Dor recente",
+        legendInjury: "Lesão anterior",
+        credit: "Visão muscular: react-native-body-highlighter (MIT).",
+        genericNote: "Ainda não temos medidas nem avaliação desta zona. Faz uma avaliação física para teres mais informações.",
+        genericCta: "Como agendar a avaliação física",
       }
     : {
         title: "Body map",
-        subtitle: compact
-          ? "Illustration scaled to your measures (approximate). Tap a zone."
-          : "Illustrative measures by region; the figure scales approximately from your assessment (not clinical imaging or your body). Click or hover the zones.",
+        subtitle: generic
+          ? "Reference body: you don't have a physical assessment yet. Here is what we already know — recent pain, height and weight. Tap the zones."
+          : compact
+            ? "Figure scaled to your measures (approximate). Tap a zone."
+            : "Illustrative measures by region; the figure adjusts approximately to your assessment (not clinical imaging or your body). Click or hover the zones.",
         front: "Front",
         back: "Back",
         viewGroup: "Body map view",
+        styleGroup: "Figure style",
+        silhouette: "Silhouette",
+        muscle: "Muscle view",
+        anatomical: "Anatomical",
+        prevStyle: "Previous view",
+        nextStyle: "Next view",
+        swipeHint: "Swipe sideways to change view",
         panelEyebrow: "Region",
         panelEmpty: "Select an area on the figure to see recorded data.",
         noData: "No per-region data on this form (add anthropometry or posture/mobility notes).",
         summary: "Summary",
         stageFrontAria: "Body map — front view, clickable zones",
         stageBackAria: "Body map — back view, clickable zones",
+        legendOk: "Has data",
+        legendWarn: "To watch",
+        legendNone: "No data",
+        legendPain: "Recent pain",
+        legendInjury: "Past injury",
+        credit: "Muscle view: react-native-body-highlighter (MIT).",
+        genericNote: "We don't have measurements or an assessment for this area yet. Book a physical assessment to get more information.",
+        genericCta: "How to schedule your physical assessment",
       };
 
   const activeRegion = pinned ?? hover;
   const allowed = view === "front" ? FRONT_REGIONS : BACK_REGIONS;
   const activeAllowed = activeRegion && allowed.includes(activeRegion) ? activeRegion : null;
-  const panelRows = activeAllowed ? regions[activeAllowed] : [];
+  const panelRows = activeAllowed ? [...regions[activeAllowed], ...marksForRegion(marks, activeAllowed).map((m) => m.row)] : [];
+  const hasPain = marks.some((m) => m.kind === "pain");
+  const hasInjury = marks.some((m) => m.kind === "injury");
 
   const onPick = useCallback((r: AnatomicalBodyMapRegionId) => {
     setPinned((prev) => (prev === r ? null : r));
   }, []);
 
-  const showMap = hasRegionData || overall.weight != null || overall.height != null || overall.bmi != null;
+  const showMap = generic || hasRegionData || overall.weight != null || overall.height != null || overall.bmi != null;
   if (!showMap) {
     return (
       <div className={["rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 text-sm text-[var(--text-secondary)]", className ?? ""].join(" ")}>
@@ -391,6 +213,45 @@ export function AnatomicalBodyMap({
 
   const outerPad = compact ? "p-3 space-y-3" : "p-4 space-y-4";
   const stageMax = compact ? "max-w-[240px]" : "max-w-[280px]";
+  const classic = bodyStyle === "anatomical";
+  const stageRatio = classic ? "aspect-[200/369]" : bodyStyle === "muscle" ? "aspect-[224/400]" : "aspect-[200/400]";
+  const styleLabels: Record<BodyStyle, string> = { muscle: ui.muscle, silhouette: ui.silhouette, anatomical: ui.anatomical };
+  const ariaLabel = view === "front" ? ui.stageFrontAria : ui.stageBackAria;
+  const figureProps = { view, sex, measures, status: statuses, active: activeAllowed, onPick, onHover: setHover, labels, ariaLabel, marks };
+
+  const segmented = (
+    items: Array<{ key: string; label: string; on: boolean; onClick: () => void }>,
+    groupLabel: string,
+    spaced?: boolean
+  ) => (
+    <div
+      className={["flex rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-0.5", spaced ? "mb-2" : "mb-3"].join(" ")}
+      role="group"
+      aria-label={groupLabel}
+    >
+      {items.map((it) => (
+        <button
+          key={it.key}
+          type="button"
+          aria-pressed={it.on}
+          onClick={it.onClick}
+          className={[
+            "flex-1 rounded-md px-2 py-2 text-xs font-medium transition-colors",
+            it.on ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+          ].join(" ")}
+        >
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const dot = (color: string, label: string) => (
+    <li className="inline-flex items-center gap-1.5">
+      <span className="inline-block h-2 w-2 rounded-full" style={{ background: color }} />
+      {label}
+    </li>
+  );
 
   return (
     <div className={["rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]", outerPad, className].filter(Boolean).join(" ")}>
@@ -398,13 +259,13 @@ export function AnatomicalBodyMap({
         <div>
           <p className="m-0 text-base font-semibold text-[var(--text-primary)]">{ui.title}</p>
           <p className="m-0 mt-1 text-xs text-[var(--text-secondary)] leading-relaxed">{ui.subtitle}</p>
-          {assessedAtLabel?.trim() ? (
+          {!generic && assessedAtLabel?.trim() ? (
             <p className="m-0 mt-1 text-[11px] text-[var(--text-secondary)]">
               {L ? "Dados da avaliação:" : "Assessment data:"} {assessedAtLabel.trim()}
             </p>
           ) : null}
         </div>
-      ) : assessedAtLabel?.trim() ? (
+      ) : !generic && assessedAtLabel?.trim() ? (
         <p className="m-0 text-[11px] text-[var(--text-secondary)]">
           {L ? "Avaliação:" : "Assessment:"} {assessedAtLabel.trim()}
         </p>
@@ -414,60 +275,140 @@ export function AnatomicalBodyMap({
 
       <div className={compact ? "grid gap-3 grid-cols-1" : "grid gap-4 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start"}>
         <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] p-3">
-          <div className="mb-3 flex rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-0.5" role="group" aria-label={ui.viewGroup}>
-            {(["front", "back"] as const).map((v) => {
-              const on = view === v;
-              return (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => {
-                    setView(v);
-                    setPinned(null);
-                    setHover(null);
-                  }}
-                  className={[
-                    "flex-1 rounded-md px-2 py-2 text-xs font-medium transition-colors",
-                    on ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-                  ].join(" ")}
-                >
-                  {v === "front" ? ui.front : ui.back}
-                </button>
-              );
-            })}
+          {generic
+            ? null
+            : segmented(
+                BODY_STYLES.map((s) => ({ key: s, label: styleLabels[s], on: bodyStyle === s, onClick: () => setStyleChoice(s) })),
+                ui.styleGroup,
+                true
+              )}
+          {segmented(
+            (["front", "back"] as const).map((v) => ({
+              key: v,
+              label: v === "front" ? ui.front : ui.back,
+              on: view === v,
+              onClick: () => {
+                setView(v);
+                setPinned(null);
+                setHover(null);
+              },
+            })),
+            ui.viewGroup
+          )}
+
+          <div className={["relative mx-auto w-full", stageMax].join(" ")}>
+            <div
+              className={["relative w-full select-none", classic ? "" : "rounded-xl border border-[var(--border)] p-1.5", stageRatio].join(" ")}
+              style={{
+                touchAction: generic ? undefined : "pan-y",
+                ...(classic ? {} : { background: "radial-gradient(ellipse at 50% 40%, #1d222c 0%, #11141a 72%)" }),
+              }}
+              onPointerDown={(e) => {
+                if (generic) return;
+                swipeStart.current = { x: e.clientX, y: e.clientY };
+                swiped.current = false;
+              }}
+              onPointerUp={(e) => {
+                const s = swipeStart.current;
+                swipeStart.current = null;
+                if (!s) return;
+                const dx = e.clientX - s.x;
+                const dy = e.clientY - s.y;
+                if (Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                  swiped.current = true;
+                  stepStyle(dx < 0 ? 1 : -1);
+                }
+              }}
+              onPointerCancel={() => {
+                swipeStart.current = null;
+              }}
+              onClickCapture={(e) => {
+                if (swiped.current) {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  swiped.current = false;
+                }
+              }}
+            >
+              {bodyStyle === "silhouette" ? (
+                <SilhouetteBodyFigure {...figureProps} definition={definition} />
+              ) : bodyStyle === "muscle" ? (
+                <MuscleBodyFigure {...figureProps} />
+              ) : (
+                <ClassicBodyFigure
+                  view={view}
+                  formData={fd}
+                  profileBodyMetrics={profileBodyMetrics}
+                  neutralReference={neutralReference}
+                  active={activeAllowed}
+                  onPick={onPick}
+                  onHover={setHover}
+                  labels={labels}
+                  ariaLabel={ariaLabel}
+                  marks={marks}
+                />
+              )}
+            </div>
+            {generic
+              ? null
+              : (["prev", "next"] as const).map((dir) => (
+                  <button
+                    key={dir}
+                    type="button"
+                    aria-label={dir === "prev" ? ui.prevStyle : ui.nextStyle}
+                    onClick={() => stepStyle(dir === "prev" ? -1 : 1)}
+                    className={[
+                      "absolute top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full",
+                      "border border-white/15 bg-black/45 text-lg leading-none text-white transition-colors hover:bg-black/65",
+                      dir === "prev" ? "left-1" : "right-1",
+                    ].join(" ")}
+                  >
+                    {dir === "prev" ? "‹" : "›"}
+                  </button>
+                ))}
           </div>
 
-          <div className={["relative mx-auto w-full aspect-[200/369]", stageMax].join(" ")}>
-            <svg
-              className="absolute inset-0 h-full w-full transition-transform duration-300 ease-out"
-              style={illustrationStyle}
-              viewBox="0 0 200 369"
-              preserveAspectRatio="xMidYMid meet"
-              role="img"
-              aria-label={view === "front" ? ui.stageFrontAria : ui.stageBackAria}
-            >
-              <g
-                className="pointer-events-none [filter:sepia(0.09)_hue-rotate(-5deg)_saturate(0.86)_contrast(0.9)_brightness(1.05)]"
-                dangerouslySetInnerHTML={{
-                  __html: view === "front" ? ANATOMICAL_FRONT_SVG_INNER : ANATOMICAL_BACK_SVG_INNER,
-                }}
-              />
-              {view === "front" ? <AnatomicalFrontFaceOverlay idBase={faceOverlayIdBase} /> : null}
-              {view === "front" ? (
-                <HotspotsFront onPick={onPick} onHover={setHover} active={activeAllowed} labels={labels} />
-              ) : (
-                <HotspotsBack onPick={onPick} onHover={setHover} active={activeAllowed} labels={labels} />
-              )}
-            </svg>
-          </div>
+          {generic ? null : (
+            <>
+              <div className="mt-2 flex items-center justify-center gap-2" role="group" aria-label={ui.styleGroup}>
+                {BODY_STYLES.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    aria-label={styleLabels[s]}
+                    aria-pressed={bodyStyle === s}
+                    onClick={() => setStyleChoice(s)}
+                    className={[
+                      "h-2 rounded-full transition-all",
+                      bodyStyle === s ? "w-5 bg-[var(--text-primary)]" : "w-2 bg-[var(--text-secondary)] opacity-40 hover:opacity-70",
+                    ].join(" ")}
+                  />
+                ))}
+              </div>
+              <p className="m-0 mt-1 text-center text-[11px] text-[var(--text-secondary)]">
+                {styleLabels[bodyStyle]} · {ui.swipeHint}
+              </p>
+            </>
+          )}
+
+          <ul className="m-0 mt-3 flex list-none flex-wrap justify-center gap-x-4 gap-y-1 p-0 text-[11px] text-[var(--text-secondary)]">
+            {classic || generic ? null : (
+              <>
+                {dot("#1D9E75", ui.legendOk)}
+                {dot("#E0A33A", ui.legendWarn)}
+                {dot("#5b6170", ui.legendNone)}
+              </>
+            )}
+            {hasPain ? dot("#ef4444", ui.legendPain) : null}
+            {hasInjury ? dot("#8b5cf6", ui.legendInjury) : null}
+          </ul>
+          {bodyStyle === "muscle" ? <p className="m-0 mt-2 text-center text-[10px] text-[var(--text-secondary)] opacity-70">{ui.credit}</p> : null}
         </div>
 
         <div className="space-y-3 min-w-0">
           <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] p-4">
             <p className="m-0 text-xs text-[var(--text-secondary)]">{ui.panelEyebrow}</p>
-            <p className="m-0 mt-0.5 text-base font-semibold text-[var(--text-primary)]">
-              {activeAllowed ? labels[activeAllowed] : ui.panelEmpty}
-            </p>
+            <p className="m-0 mt-0.5 text-base font-semibold text-[var(--text-primary)]">{activeAllowed ? labels[activeAllowed] : ui.panelEmpty}</p>
             {panelRows.length > 0 ? (
               <ul className="mt-3 list-none space-y-2 p-0 m-0">
                 {panelRows.map((row, i) => (
@@ -477,8 +418,16 @@ export function AnatomicalBodyMap({
                   </li>
                 ))}
               </ul>
-            ) : activeAllowed ? (
+            ) : activeAllowed && !generic ? (
               <p className="m-0 mt-2 text-sm text-[var(--text-secondary)]">—</p>
+            ) : null}
+            {generic && activeAllowed ? (
+              <div className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-3">
+                <p className="m-0 text-xs leading-relaxed text-[var(--text-secondary)]">{ui.genericNote}</p>
+                <Link href={scheduleHref} className="btn btn-primary mt-3 block w-full px-4 py-2 text-center text-sm no-underline">
+                  {ui.genericCta}
+                </Link>
+              </div>
             ) : null}
           </div>
 

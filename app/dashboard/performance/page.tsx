@@ -171,7 +171,8 @@ export default async function DashboardPerformancePage() {
   let physicalKpiAssessedAt: string | null = null;
   let physicalEvolutionRows: PhysicalEvolutionRow[] = [];
   if (studentId) {
-    const [achievementContext, physRes, profileRes] = await Promise.all([
+    const painSince = new Date(Date.now() - 14 * 86_400_000).toISOString();
+    const [achievementContext, physRes, profileRes, painRes, injuryRes] = await Promise.all([
       getAchievementUnlockContext(supabase, studentId),
       supabase
         .from("StudentPhysicalAssessment")
@@ -180,6 +181,19 @@ export default async function DashboardPerformancePage() {
         .eq("status", "SUBMITTED")
         .order("assessedAt", { ascending: true }),
       supabase.from("StudentProfile").select("heightCm, weightKg").eq("studentId", studentId).maybeSingle(),
+      supabase
+        .from("PainSelfReport")
+        .select("bodyRegion, intensity, reportedAt, side")
+        .eq("studentId", studentId)
+        .gte("reportedAt", painSince)
+        .order("reportedAt", { ascending: false })
+        .limit(30),
+      supabase
+        .from("StudentInjury")
+        .select("bodyRegion, side, injuryType, occurredYear, recovered")
+        .eq("studentId", studentId)
+        .order("createdAt", { ascending: false })
+        .limit(30),
     ]);
 
     profileAchievements = getAchievementsWithStatus(achievementContext);
@@ -206,6 +220,13 @@ export default async function DashboardPerformancePage() {
       profileBodyMetrics,
       locale: locale as "pt" | "en",
       inviteScheduleHref: "/dashboard/ficha-fisica",
+      pains: ((painRes.data ?? []) as Array<{ bodyRegion: string; intensity: number; reportedAt: string; side: string | null }>).map((p) => ({
+        bodyRegion: String(p.bodyRegion),
+        intensity: Number(p.intensity),
+        reportedAt: String(p.reportedAt),
+        side: p.side,
+      })),
+      injuries: (injuryRes.data ?? []) as Array<{ bodyRegion: string; side: string | null; injuryType: string; occurredYear: number | null; recovered: boolean }>,
     });
     const today = new Date().toISOString().slice(0, 10);
     physicalAssessmentDue =

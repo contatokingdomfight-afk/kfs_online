@@ -142,6 +142,19 @@ export async function savePhysicalAssessment(
     if (age != null) bodyFatPct = computeBodyFatPct(refSex, age, skin);
   }
 
+  /** Lesões anteriores (até 4 linhas) — aparecem no mapa corporal do aluno. */
+  const injuries: NonNullable<PhysicalAssessmentFormData["injuries"]> = [];
+  for (let i = 0; i < 4; i++) {
+    const region = (formData.get(`injuryRegion_${i}`) as string | null)?.trim();
+    if (!region) continue;
+    injuries.push({
+      region,
+      type: (formData.get(`injuryType_${i}`) as string | null)?.trim() || undefined,
+      year: (formData.get(`injuryYear_${i}`) as string | null)?.trim() || undefined,
+      recovered: formData.get(`injuryRecovered_${i}`) === "true",
+    });
+  }
+
   const formDataJson: PhysicalAssessmentFormData = {
     skinChestMm: skin.chest,
     skinAbdomenMm: skin.abdomen,
@@ -156,7 +169,8 @@ export async function savePhysicalAssessment(
     medicalConditionsOther: (formData.get("medicalConditionsOther") as string)?.trim() || undefined,
     usesMedication: formData.get("usesMedication") === "true",
     medicationDetail: (formData.get("medicationDetail") as string)?.trim() || undefined,
-    hasInjuries: formData.get("hasInjuries") === "true",
+    hasInjuries: formData.get("hasInjuries") === "true" || injuries.length > 0,
+    injuries: injuries.length > 0 ? injuries : undefined,
     parqChestPain: formData.get("parqChestPain") === "true",
     parqFainted: formData.get("parqFainted") === "true",
     parqBoneJoint: formData.get("parqBoneJoint") === "true",

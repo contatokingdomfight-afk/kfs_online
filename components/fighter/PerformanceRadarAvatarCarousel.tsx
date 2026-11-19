@@ -65,7 +65,20 @@ export function PhysicalAssessmentBodyMapPanel({
         <p className="m-0 mb-0 w-full text-xs text-[var(--text-secondary)]">{L.slideBodyCaption}</p>
       ) : null}
       {invite ? (
-        <BodyMapSkeletonInvite locale={locale} scheduleHref={payload.inviteScheduleHref} className="w-full" />
+        <div className="flex w-full flex-col gap-2">
+          <AnatomicalBodyMap
+            generic
+            formData={{}}
+            locale={locale}
+            variant="compact"
+            pains={payload.pains}
+            studentInjuries={payload.injuries}
+            scheduleHref={payload.inviteScheduleHref}
+            profileBodyMetrics={profileBodyMetrics}
+            className="w-full border-0 bg-transparent p-0"
+          />
+          <BodyMapSkeletonInvite locale={locale} scheduleHref={payload.inviteScheduleHref} className="w-full" />
+        </div>
       ) : (
         <AnatomicalBodyMap
           formData={formForMap}
@@ -74,6 +87,8 @@ export function PhysicalAssessmentBodyMapPanel({
           variant="compact"
           neutralReference={neutralReference}
           profileBodyMetrics={profileBodyMetrics}
+          pains={payload.pains}
+          studentInjuries={payload.injuries}
           className="w-full border-0 bg-transparent p-0"
         />
       )}

@@ -6,6 +6,7 @@ import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
+import { AnatomicalBodyMap } from "@/components/physical-assessment/AnatomicalBodyMap";
 import { BodyMapSkeletonInvite } from "@/components/physical-assessment/BodyMapSkeletonInvite";
 import { PhysicalAssessmentReadOnlyView } from "@/components/physical-assessment/PhysicalAssessmentReadOnlyView";
 import { RequestPhysicalAssessmentPanel } from "@/components/physical-assessment/RequestPhysicalAssessmentPanel";
@@ -22,7 +23,8 @@ export default async function DashboardFichaFisicaPage() {
   const locale = await getLocaleFromCookies();
   const t = getTranslations(locale as "pt" | "en");
 
-  const [{ data: physRows }, { data: student }, { data: profile }, { data: pendingRequestRow }] = await Promise.all([
+  const painSince = new Date(Date.now() - 14 * 86_400_000).toISOString();
+  const [{ data: physRows }, { data: student }, { data: profile }, { data: pendingRequestRow }, { data: painRows }, { data: injuryRows }] = await Promise.all([
     supabase
       .from("StudentPhysicalAssessment")
       .select("assessedAt, nextDueAt, clearance, formData, coachId, editedAt, editedByUserId")
@@ -38,7 +40,27 @@ export default async function DashboardFichaFisicaPage() {
       .eq("status", "PENDING")
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("PainSelfReport")
+      .select("bodyRegion, intensity, reportedAt, side")
+      .eq("studentId", studentId)
+      .gte("reportedAt", painSince)
+      .order("reportedAt", { ascending: false })
+      .limit(30),
+    supabase
+      .from("StudentInjury")
+      .select("bodyRegion, side, injuryType, occurredYear, recovered")
+      .eq("studentId", studentId)
+      .order("createdAt", { ascending: false })
+      .limit(30),
   ]);
+  const bodyMapInjuries = (injuryRows ?? []) as Array<{ bodyRegion: string; side: string | null; injuryType: string; occurredYear: number | null; recovered: boolean }>;
+  const bodyMapPains = ((painRows ?? []) as Array<{ bodyRegion: string; intensity: number; reportedAt: string; side: string | null }>).map((p) => ({
+    bodyRegion: String(p.bodyRegion),
+    intensity: Number(p.intensity),
+    reportedAt: String(p.reportedAt),
+    side: p.side,
+  }));
 
   const hasPendingPhysicalRequest = Boolean(pendingRequestRow?.id);
 
@@ -83,11 +105,21 @@ export default async function DashboardFichaFisicaPage() {
             </p>
           </header>
           <aside className="lg:col-span-5 lg:col-start-1 lg:row-span-3 lg:row-start-1">
-            <BodyMapSkeletonInvite
-              locale={locale as "pt" | "en"}
-              scheduleHref="/dashboard/perfil"
-              className="mx-auto max-w-md shadow-sm lg:sticky lg:top-6 lg:mx-0 lg:max-w-none lg:self-start lg:py-6"
-            />
+            <div className="mx-auto flex max-w-md flex-col gap-3 lg:sticky lg:top-6 lg:mx-0 lg:max-w-none lg:self-start">
+              <AnatomicalBodyMap
+                generic
+                formData={{}}
+                locale={locale as "pt" | "en"}
+                pains={bodyMapPains}
+                studentInjuries={bodyMapInjuries}
+                scheduleHref="/dashboard/perfil"
+                profileBodyMetrics={{
+                  heightCm: profile?.heightCm != null ? Number(profile.heightCm) : null,
+                  weightKg: profile?.weightKg != null ? Number(profile.weightKg) : null,
+                }}
+              />
+              <BodyMapSkeletonInvite locale={locale as "pt" | "en"} scheduleHref="/dashboard/perfil" className="shadow-sm" />
+            </div>
           </aside>
           <div className="lg:col-span-7 lg:col-start-6 lg:row-start-2">
             <RequestPhysicalAssessmentPanel locale={locale as "pt" | "en"} initialPending={hasPendingPhysicalRequest} />
@@ -132,6 +164,8 @@ export default async function DashboardFichaFisicaPage() {
         }}
         editedAt={row.editedAt ? String(row.editedAt) : null}
         editedByName={editedByName}
+        bodyMapPains={bodyMapPains}
+        bodyMapInjuries={bodyMapInjuries}
       />
       {profile?.heightCm != null || profile?.weightKg != null ? (
         <p className="mx-auto mt-4 max-w-2xl px-0 text-xs text-[var(--text-secondary)] sm:px-1">{t("fichaFisicaProfileHint")}</p>

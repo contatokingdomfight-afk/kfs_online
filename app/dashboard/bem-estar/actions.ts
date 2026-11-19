@@ -92,6 +92,8 @@ export async function submitPainAction(_prev: SimpleFormState, formData: FormDat
   const bodyRegion = String(formData.get("bodyRegion") ?? "").trim();
   const intensity = Number(formData.get("intensity"));
   const notes = String(formData.get("notes") ?? "").trim().slice(0, 500);
+  const sideRaw = String(formData.get("side") ?? "").trim();
+  const side = sideRaw === "LEFT" || sideRaw === "RIGHT" || sideRaw === "BOTH" ? sideRaw : null;
 
   if (!bodyRegion) return { error: "Escolhe uma zona." };
   if (!Number.isFinite(intensity) || intensity < 1 || intensity > 10) {
@@ -103,6 +105,7 @@ export async function submitPainAction(_prev: SimpleFormState, formData: FormDat
     id: crypto.randomUUID(),
     studentId,
     bodyRegion,
+    side,
     intensity,
     notes: notes || null,
     reportedAt: ymdDaysAgo(0),
@@ -110,6 +113,59 @@ export async function submitPainAction(_prev: SimpleFormState, formData: FormDat
   if (error) return { error: error.message };
   revalidatePath("/dashboard/bem-estar/dores");
   return {};
+}
+
+const INJURY_TYPE_KEYS = ["FRACTURE", "MUSCLE_STRAIN", "SPRAIN", "LIGAMENT", "OTHER"];
+
+/** O aluno declara uma lesão anterior (aparece no mapa corporal). */
+export async function submitInjuryAction(_prev: SimpleFormState, formData: FormData): Promise<SimpleFormState> {
+  const studentId = await getCurrentStudentId();
+  if (!studentId) return { error: "Sessão inválida." };
+
+  const bodyRegion = String(formData.get("bodyRegion") ?? "").trim();
+  const injuryType = String(formData.get("injuryType") ?? "").trim();
+  const sideRaw = String(formData.get("side") ?? "").trim();
+  const side = sideRaw === "LEFT" || sideRaw === "RIGHT" || sideRaw === "BOTH" ? sideRaw : null;
+  const yearRaw = String(formData.get("occurredYear") ?? "").trim();
+  const occurredYear = yearRaw ? Number(yearRaw) : null;
+  const recovered = formData.get("recovered") === "true";
+  const notes = String(formData.get("notes") ?? "").trim().slice(0, 300);
+
+  if (!bodyRegion || bodyRegion === "OTHER") return { error: "Escolhe a zona da lesão." };
+  if (!INJURY_TYPE_KEYS.includes(injuryType)) return { error: "Escolhe o tipo de lesão." };
+  if (occurredYear != null && (!Number.isInteger(occurredYear) || occurredYear < 1950 || occurredYear > new Date().getFullYear())) {
+    return { error: "Ano inválido." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("StudentInjury").insert({
+    id: crypto.randomUUID(),
+    studentId,
+    bodyRegion,
+    side,
+    injuryType,
+    occurredYear,
+    recovered,
+    notes: notes || null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard/bem-estar/dores");
+  revalidatePath("/dashboard/ficha-fisica");
+  revalidatePath("/dashboard/performance");
+  return {};
+}
+
+/** O aluno apaga uma lesão que declarou. */
+export async function deleteInjuryAction(formData: FormData): Promise<void> {
+  const studentId = await getCurrentStudentId();
+  if (!studentId) return;
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase.from("StudentInjury").delete().eq("id", id).eq("studentId", studentId);
+  revalidatePath("/dashboard/bem-estar/dores");
+  revalidatePath("/dashboard/ficha-fisica");
+  revalidatePath("/dashboard/performance");
 }
 
 export async function submitBenchmarkAction(_prev: SimpleFormState, formData: FormData): Promise<SimpleFormState> {

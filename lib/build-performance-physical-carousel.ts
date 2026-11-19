@@ -1,3 +1,4 @@
+import type { PainReportInput, StudentInjuryInput } from "@/lib/body-map/marks";
 import type { PerformanceAvatarCarouselLabels } from "@/components/fighter/PerformanceRadarAvatarCarousel";
 import {
   hasIllustrativeAnthropometry,
@@ -19,6 +20,10 @@ export type PhysicalAvatarCarouselPayload = {
   invitePhysicalAssessment: boolean;
   /** Destino do botão «agendar / renovar» no convite. */
   inviteScheduleHref: string;
+  /** Dores recentes do aluno (últimos 14 dias) a marcar no mapa corporal. */
+  pains?: readonly PainReportInput[];
+  /** Lesões anteriores declaradas pelo aluno. */
+  injuries?: readonly StudentInjuryInput[];
   locale: "pt" | "en";
 };
 
@@ -27,6 +32,8 @@ export type BuildPhysicalAvatarCarouselOptions = {
   hasPhysicalAssessmentFromPlatform?: boolean;
   profileBodyMetrics?: ProfileBodyMetrics | null;
   inviteScheduleHref?: string;
+  pains?: readonly PainReportInput[];
+  injuries?: readonly StudentInjuryInput[];
   locale?: "pt" | "en";
 };
 
@@ -107,6 +114,8 @@ export function buildPhysicalAvatarCarouselForStudentView(
     profileBodyMetrics: options?.profileBodyMetrics ?? null,
     invitePhysicalAssessment,
     inviteScheduleHref,
+    pains: options?.pains,
+    injuries: options?.injuries,
     locale: locale as "pt" | "en",
     labels: {
       sectionTitle: t("perfCarouselSectionTitle"),
