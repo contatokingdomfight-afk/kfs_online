@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LESSON_FOCUS, LESSON_FOCUS_MAX, LESSON_FOCUS_META, lessonFocusLabel, type LessonFocus } from "@/lib/rpe-labels";
 import { setLessonFocusAction } from "./actions";
 
@@ -8,22 +8,31 @@ import { setLessonFocusAction } from "./actions";
 export function CoachLessonFocusPicker({ lessonId, occurrenceDate, initial }: { lessonId: string; occurrenceDate: string; initial: LessonFocus[] }) {
   const [focus, setFocus] = useState<LessonFocus[]>(initial);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [pending, start] = useTransition();
+  // Marca na hora; grava 400 ms depois do último toque (vários toques seguidos = um só pedido).
+  const saved = useRef<LessonFocus[]>(initial);
+  const timer = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (timer.current) window.clearTimeout(timer.current);
+  }, []);
+
+  const save = async (next: LessonFocus[]) => {
+    const res = await setLessonFocusAction({ lessonId, occurrenceDate, focus: next });
+    if (res.error) {
+      setFocus(saved.current);
+      setMsg({ ok: false, text: res.error });
+      return;
+    }
+    saved.current = next;
+    setMsg({ ok: true, text: next.length ? `✓ Guardado · os alunos veem «${lessonFocusLabel(next, true)}»` : "Sem foco marcado" });
+  };
 
   const toggle = (f: LessonFocus) => {
-    const prev = focus;
     let next = focus.includes(f) ? focus.filter((x) => x !== f) : [...focus, f];
     if (next.length > LESSON_FOCUS_MAX) next = next.slice(next.length - LESSON_FOCUS_MAX);
     setFocus(next);
-    start(async () => {
-      const res = await setLessonFocusAction({ lessonId, occurrenceDate, focus: next });
-      if (res.error) {
-        setFocus(prev);
-        setMsg({ ok: false, text: res.error });
-      } else {
-        setMsg({ ok: true, text: next.length ? `✓ Guardado · os alunos veem «${lessonFocusLabel(next, true)}»` : "Sem foco marcado" });
-      }
-    });
+    setMsg(null);
+    if (timer.current) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => void save(next), 400);
   };
 
   return (
@@ -41,7 +50,6 @@ export function CoachLessonFocusPicker({ lessonId, occurrenceDate, initial }: { 
               key={f}
               type="button"
               aria-pressed={on}
-              disabled={pending}
               onClick={() => toggle(f)}
               style={{
                 minHeight: 52,
@@ -52,7 +60,7 @@ export function CoachLessonFocusPicker({ lessonId, occurrenceDate, initial }: { 
                 font: "inherit",
                 fontSize: 13,
                 fontWeight: 800,
-                cursor: pending ? "wait" : "pointer",
+                cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",

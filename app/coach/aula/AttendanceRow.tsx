@@ -1,7 +1,7 @@
 "use client";
 
 import { ZONE_COLORS, zoneLabel, type TrainingLoadZone } from "@/lib/training-load";
-import { useState, useCallback, useActionState, useRef, useTransition } from "react";
+import { useState, useCallback, useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { setAttendanceStatusFromForm, coachCheckInStudentFromForm, setCoachRpeFromForm } from "./actions";
 import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
@@ -80,7 +80,9 @@ export function AttendanceRow({
   const [rpeOpen, setRpeOpen] = useState(false);
   const [draftRpe, setDraftRpe] = useState<number | null>(coachRpeValue);
   const [savedTick, setSavedTick] = useState(false);
-  const [rpePending, startRpe] = useTransition();
+  // Valor mostrado no quadrado: muda na hora; a página atualiza-se em segundo plano depois de gravar.
+  const [shownCoachRpe, setShownCoachRpe] = useState<number | null>(coachRpeValue);
+  useEffect(() => setShownCoachRpe(coachRpeValue), [coachRpeValue]);
   const beforeEdit = useRef<number | null>(coachRpeValue);
   const closeTimer = useRef<number | null>(null);
 
@@ -90,11 +92,15 @@ export function AttendanceRow({
     fd.set("lessonId", lessonId);
     fd.set("occurrenceDate", occurrenceDate);
     fd.append("attendanceId", attendanceId);
+    fd.set("quiet", "1");
     if (value == null) fd.set("clear", "1");
     else fd.set("rpe", String(value));
-    startRpe(async () => {
-      const res = await setCoachRpeFromForm(null, fd);
+    const before = shownCoachRpe;
+    setShownCoachRpe(value);
+    void setCoachRpeFromForm(null, fd).then((res) => {
       setRpeError(res?.error ?? null);
+      if (res?.error) setShownCoachRpe(before);
+      else router.refresh();
     });
   };
   const commitRpe = (v: number) => {
@@ -118,8 +124,8 @@ export function AttendanceRow({
       setRpeOpen(false);
       return;
     }
-    beforeEdit.current = coachRpeValue;
-    setDraftRpe(coachRpeValue);
+    beforeEdit.current = shownCoachRpe;
+    setDraftRpe(shownCoachRpe);
     setSavedTick(false);
     setRpeOpen(true);
   };
@@ -272,9 +278,9 @@ export function AttendanceRow({
                   onClick={openRpe}
                   style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1, fontWeight: 900 }}
                 >
-                  <span style={{ fontSize: 16 }}>{coachRpeValue != null ? formatRpe(coachRpeValue) : "–"}</span>
+                  <span style={{ fontSize: 16 }}>{shownCoachRpe != null ? formatRpe(shownCoachRpe) : "–"}</span>
                   <small style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)" }}>
-                    {coachRpeValue != null ? "a tua nota" : "dar nota"}
+                    {shownCoachRpe != null ? "a tua nota" : "dar nota"}
                   </small>
                 </button>
               ) : (
@@ -297,10 +303,9 @@ export function AttendanceRow({
               onCommit={commitRpe}
               ariaLabel={`Cansaço de ${label}`}
               emptyText="Larga para guardar"
-              disabled={rpePending && !savedTick}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, minHeight: 16 }}>
-              <span style={{ color: "var(--success)", visibility: savedTick ? "visible" : "hidden" }}>{rpePending ? "A guardar…" : "✓ Guardado"}</span>
+              <span style={{ color: "var(--success)", visibility: savedTick ? "visible" : "hidden" }}>✓ Guardado</span>
               {savedTick ? (
                 <button type="button" onClick={undoRpe} style={{ background: "none", border: 0, padding: 0, color: "var(--text-secondary)", textDecoration: "underline", font: "inherit", cursor: "pointer" }}>
                   Desfazer

@@ -435,6 +435,8 @@ export async function setCoachRpeFromForm(
     .filter(Boolean);
   if (!lessonId || !/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate) || attendanceIds.length === 0) return { error: "Dados inválidos." };
   const clear = formData.get("clear") === "1";
+  // «quiet»: nota de um aluno na linha — o ecrã já mostra o valor; o cliente atualiza a página em segundo plano.
+  const quiet = formData.get("quiet") === "1";
   if (rpe == null && !clear) return { error: "Escolhe uma nota de 1 a 10." };
 
   const dbUser = await getCurrentDbUser();
@@ -461,7 +463,7 @@ export async function setCoachRpeFromForm(
       .eq("occurrenceDate", occurrenceDate)
       .eq("rpeSource", "COACH");
     if (e1 || e2) return { error: (e1 ?? e2)!.message };
-    revalidatePath("/coach/aula");
+    if (!quiet) revalidatePath("/coach/aula");
     return { updated: ids.length };
   }
 
@@ -493,8 +495,10 @@ export async function setCoachRpeFromForm(
     return { error: error.message };
   }
 
-  revalidatePath("/coach/aula");
-  revalidatePath("/coach/carga");
+  if (!quiet) {
+    revalidatePath("/coach/aula");
+    revalidatePath("/coach/carga");
+  }
   return { updated: (coachRows ?? []).length };
 }
 
@@ -535,7 +539,5 @@ export async function setLessonFocusAction(input: {
     console.error("setLessonFocusAction error:", error);
     return { error: error.message };
   }
-  revalidatePath("/coach/aula");
-  revalidatePath("/coach/carga");
   return {};
 }
