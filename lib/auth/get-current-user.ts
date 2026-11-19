@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { syncUser } from "@/lib/auth/sync-user";
+import { getAuthUser } from "@/lib/auth/get-auth-user";
 
 /**
  * Obtém o utilizador atual (Supabase) e devolve o User da nossa BD já sincronizado.
@@ -13,8 +14,7 @@ import { syncUser } from "@/lib/auth/sync-user";
  */
 export const getCurrentDbUser = cache(async function getCurrentDbUser() {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user ?? null;
+  const user = await getAuthUser(supabase);
   if (!user) return null;
   try {
     const { user: dbUser } = await syncUser(user);
@@ -42,8 +42,7 @@ export const getCurrentDbUser = cache(async function getCurrentDbUser() {
  */
 export async function getCurrentDbUserUncached() {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user ?? null;
+  const user = await getAuthUser(supabase);
   if (!user) return null;
   try {
     const { user: dbUser } = await syncUser(user);
