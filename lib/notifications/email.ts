@@ -380,6 +380,47 @@ export async function sendInsuranceExpiryAlertToAdmin(lines: string[]): Promise<
   }
 }
 
+/** Aviso ao admin quando a Revolut regista um reembolso: o KFS não reverte nada sozinho, o admin acerta o estado. */
+export async function sendRefundAlertToAdmin(info: {
+  orderId: string;
+  amountCents: number;
+  currency: string;
+  reference?: string | null;
+}): Promise<{ error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const adminEmail = resolveAdminAlertEmail(process.env.FINANCIAL_ALERT_ADMIN_EMAIL);
+  if (!apiKey || !adminEmail) {
+    console.warn("Reembolso detetado mas sem RESEND_API_KEY/email de admin; aviso não enviado.", info.orderId);
+    return {};
+  }
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+    const amount = `${(info.amountCents / 100).toFixed(2)} ${info.currency}`;
+    const ref = info.reference ? info.reference.replace(/</g, "&lt;") : "sem referência (adesão ou cobrança automática)";
+    const inner = `
+      <p style="margin:0 0 16px;">A Revolut registou um <strong>reembolso de ${amount}</strong>.</p>
+      <ul style="margin:0;padding-left:20px;">
+        <li style="margin:0 0 8px;">Ordem Revolut: ${info.orderId.replace(/</g, "&lt;")}</li>
+        <li style="margin:0 0 8px;">Referência: ${ref}</li>
+      </ul>
+      <p style="margin:16px 0 0;font-size:14px;color:#71717a;">O KFS não altera nada automaticamente: confirma o estado da mensalidade ou encomenda correspondente.</p>
+    `.trim();
+    const text = `Reembolso de ${amount} registado na Revolut.\nOrdem: ${info.orderId}\nReferência: ${info.reference ?? "—"}\n\nO KFS não altera nada automaticamente: confirma o estado da mensalidade ou encomenda.\n\n— Kingdom Fight School`;
+    const { error } = await resend.emails.send({
+      from: getFrom(),
+      to: [adminEmail],
+      subject: `Reembolso registado (${amount}) – Kingdom Fight School`,
+      text,
+      html: wrapTransactionalEmail(inner),
+    });
+    if (error) return { error: String(error.message ?? error) };
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao enviar email." };
+  }
+}
+
 /** Resumo financeiro semanal ao admin (cron `financial-weekly-alert`): receitas/despesas/saldo do mês + inadimplência. */
 export async function sendFinancialWeeklyAlertToAdmin(
   lines: string[],

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getDefaultOnboardingSchoolId } from "@/lib/onboarding-default-school";
+import { sendRefundAlertToAdmin } from "@/lib/notifications/email";
 import { loadOrders } from "@/lib/retail/orders";
 import { markRetailOrderPaid } from "@/lib/retail/mark-paid";
 import { getMerchantOrder, revolutMerchantEnv, verifyMerchantWebhook, webhookSecretFingerprint } from "@/lib/revolut/merchant";
@@ -53,7 +54,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const mo = await getMerchantOrder(account, event.order_id);
-    // Reembolsos também geram ORDER_COMPLETED: só ordens de pagamento concluídas.
+    // Reembolsos também geram ORDER_COMPLETED: só avisamos o admin, nada é revertido automaticamente.
+    if (mo.state === "completed" && mo.type === "refund") {
+      await sendRefundAlertToAdmin({ orderId: mo.id, amountCents: mo.amount, currency: mo.currency, reference: mo.merchant_order_data?.reference });
+      return NextResponse.json({ ok: true });
+    }
+    // Só ordens de pagamento concluídas.
     if (mo.state !== "completed" || (mo.type && mo.type !== "payment")) return NextResponse.json({ ok: true });
     const orderId = mo.merchant_order_data?.reference;
     // Mensalidades em atraso pagas online (aluno ou link enviado pelo admin).
