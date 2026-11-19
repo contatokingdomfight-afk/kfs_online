@@ -184,7 +184,7 @@ export default async function CargaPage() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 8, textAlign: "center", fontSize: 11, color: "var(--text-secondary)" }}>
             {s.days.map((d) => (
-              <span key={d.date}>{d.rpe != null ? `RPE ${d.rpe}` : d.trained ? "?" : "—"}</span>
+              <span key={d.date}>{d.rpe != null ? String(d.rpe).replace(".", ",") : d.trained ? "?" : "—"}</span>
             ))}
           </div>
         </section>

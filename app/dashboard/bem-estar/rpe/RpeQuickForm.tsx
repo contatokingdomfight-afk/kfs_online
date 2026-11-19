@@ -4,12 +4,13 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitRpeAction, type RpeFormState } from "../actions";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
-import { RPE_LOAD_HINT, rpeDescription } from "@/lib/rpe-labels";
+import { RPE_LOAD_HINT, RPE_QUESTION, formatRpe } from "@/lib/rpe-labels";
+import { RpeSlider, rpeScale } from "@/components/training-load/RpeSlider";
 
-function SaveButton({ label }: { label: string }) {
+function SaveButton({ label, disabled }: { label: string; disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn btn-primary" style={{ fontSize: "clamp(13px, 3.2vw, 15px)" }} disabled={pending}>
+    <button type="submit" className="btn btn-primary" style={{ fontSize: "clamp(13px, 3.2vw, 15px)" }} disabled={pending || disabled}>
       {pending ? "…" : label}
     </button>
   );
@@ -42,7 +43,7 @@ export function RpeQuickForm({
   weightOptionalHint,
 }: Props) {
   const [state, action] = useActionState(submitRpeAction, null as RpeFormState);
-  const [rpe, setRpe] = useState(5);
+  const [rpe, setRpe] = useState<number | null>(null);
 
   return (
     <form
@@ -64,40 +65,17 @@ export function RpeQuickForm({
           {occurrenceDate}
         </span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{pt ? "Esforço (RPE)" : "Effort (RPE)"}</span>
-        <input type="hidden" name="rpe" value={rpe} />
-        {/* Botões 1–10 em vez de <select>: o menu nativo ficava branco sobre branco no tema escuro. */}
-        <span role="radiogroup" aria-label={pt ? "Esforço de 1 a 10" : "Effort from 1 to 10"} style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
-            const on = n === rpe;
-            const tone = n <= 3 ? "#4ade80" : n <= 6 ? "#fbbf24" : n <= 8 ? "#fb923c" : "#f87171";
-            return (
-              <button
-                key={n}
-                type="button"
-                role="radio"
-                aria-checked={on}
-                onClick={() => setRpe(n)}
-                style={{
-                  width: 32,
-                  height: 34,
-                  borderRadius: 8,
-                  border: `1px solid ${on ? tone : "var(--border)"}`,
-                  background: on ? tone : "var(--bg-elevated)",
-                  color: on ? "#111" : "var(--text-primary)",
-                  font: "inherit",
-                  fontSize: 14,
-                  fontWeight: on ? 800 : 600,
-                  cursor: "pointer",
-                  padding: 0,
-                }}
-              >
-                {n}
-              </button>
-            );
-          })}
-        </span>
+      <div style={{ flex: "1 1 100%", display: "grid", gap: 4 }}>
+        <span style={{ fontSize: 13, fontWeight: 800, color: "var(--text-primary)" }}>{pt ? RPE_QUESTION.pt : RPE_QUESTION.en}</span>
+        <RpeSlider
+          name="rpe"
+          value={rpe}
+          onChange={setRpe}
+          pt={pt}
+          ariaLabel={pt ? RPE_QUESTION.pt : RPE_QUESTION.en}
+          emptyText={pt ? "Corpo e cabeça" : "Body and mind"}
+          scale={rpeScale(pt)}
+        />
       </div>
       <label style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 140px" }}>
         <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>{weightLabel}</span>
@@ -120,15 +98,13 @@ export function RpeQuickForm({
         />
       </label>
       <span style={{ fontSize: "clamp(13px, 3.2vw, 15px)", color: "var(--text-secondary)" }}>
-        {loadLabel}: <b style={{ color: "var(--text-primary)" }}>{rpe} × {minutes} = {rpe * minutes}</b>
-      </span>
-      <span style={{ width: "100%", fontSize: 13, color: "var(--text-primary)", fontWeight: 600 }}>
-        {rpe} · {rpeDescription(rpe, pt)}
+        {loadLabel}:{" "}
+        <b style={{ color: "var(--text-primary)" }}>{rpe == null ? "—" : `${formatRpe(rpe, pt)} × ${minutes} = ${Math.round(rpe * minutes)}`}</b>
       </span>
       <span style={{ width: "100%", fontSize: 12, color: "var(--text-secondary)" }}>
         {pt ? RPE_LOAD_HINT.pt : RPE_LOAD_HINT.en}
       </span>
-      <SaveButton label={saveLabel} />
+      <SaveButton label={saveLabel} disabled={rpe == null} />
       <span id={`weight-hint-${attendanceId}`} style={{ width: "100%", fontSize: 12, color: "var(--text-secondary)" }}>
         {weightOptionalHint}
       </span>

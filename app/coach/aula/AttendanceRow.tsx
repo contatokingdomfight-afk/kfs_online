@@ -1,13 +1,14 @@
 "use client";
 
 import { ZONE_COLORS, zoneLabel, type TrainingLoadZone } from "@/lib/training-load";
-import { useState, useCallback, useActionState } from "react";
+import { useState, useCallback, useActionState, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setAttendanceStatusFromForm, coachCheckInStudentFromForm, setCoachRpeFromForm } from "./actions";
 import { CoachStudentProfileModal, type StudentProfileForModal } from "@/components/CoachStudentProfileModalDynamic";
 import { SuccessConfirmModal } from "@/components/SuccessConfirmModalDynamic";
-import { FormLoadingModal } from "@/components/FormLoadingModal";
 import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
+import { RpeSlider } from "@/components/training-load/RpeSlider";
+import { formatRpe } from "@/lib/rpe-labels";
 
 type WellnessZone = "GREEN" | "YELLOW" | "RED";
 
@@ -69,12 +70,59 @@ export function AttendanceRow({
   const router = useRouter();
   const [statusState, statusAction] = useActionState(setAttendanceStatusFromForm, null as { error?: string } | null);
   const [checkInState, checkInAction] = useActionState(coachCheckInStudentFromForm, null as { error?: string } | null);
-  const [rpeState, rpeAction] = useActionState(setCoachRpeFromForm, null as { error?: string; updated?: number } | null);
+  const [rpeError, setRpeError] = useState<string | null>(null);
   // O coach pode dar/acertar o esforço de quem esteve presente, desde que não tenha sido o aluno a dá-lo.
   // O professor pode dar a sua nota mesmo depois de o aluno responder: fica guardada à parte (a do aluno é a que conta).
   const coachCanSetRpe = status === "CONFIRMED" && Boolean(attendanceId);
   const coachRpeValue = coachRpe ?? (rpeSource === "COACH" ? rpe : null);
   const [modalOpen, setModalOpen] = useState(false);
+  // Nota por aluno: toca no quadrado → slider; ao largar grava sozinho, com «Desfazer» uns segundos.
+  const [rpeOpen, setRpeOpen] = useState(false);
+  const [draftRpe, setDraftRpe] = useState<number | null>(coachRpeValue);
+  const [savedTick, setSavedTick] = useState(false);
+  const [rpePending, startRpe] = useTransition();
+  const beforeEdit = useRef<number | null>(coachRpeValue);
+  const closeTimer = useRef<number | null>(null);
+
+  const saveCoachRpe = (value: number | null) => {
+    if (!attendanceId) return;
+    const fd = new FormData();
+    fd.set("lessonId", lessonId);
+    fd.set("occurrenceDate", occurrenceDate);
+    fd.append("attendanceId", attendanceId);
+    if (value == null) fd.set("clear", "1");
+    else fd.set("rpe", String(value));
+    startRpe(async () => {
+      const res = await setCoachRpeFromForm(null, fd);
+      setRpeError(res?.error ?? null);
+    });
+  };
+  const commitRpe = (v: number) => {
+    saveCoachRpe(v);
+    setSavedTick(true);
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => {
+      setRpeOpen(false);
+      setSavedTick(false);
+    }, 2500);
+  };
+  const undoRpe = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    setDraftRpe(beforeEdit.current);
+    saveCoachRpe(beforeEdit.current);
+    setRpeOpen(false);
+    setSavedTick(false);
+  };
+  const openRpe = () => {
+    if (rpeOpen) {
+      setRpeOpen(false);
+      return;
+    }
+    beforeEdit.current = coachRpeValue;
+    setDraftRpe(coachRpeValue);
+    setSavedTick(false);
+    setRpeOpen(true);
+  };
   const [showSuccessConfirm, setShowSuccessConfirm] = useState(false);
 
   const label = studentName || studentEmail;
@@ -101,7 +149,7 @@ export function AttendanceRow({
     }, 0);
   }, [router]);
 
-  const formError = statusState?.error ?? checkInState?.error ?? rpeState?.error;
+  const formError = statusState?.error ?? checkInState?.error ?? rpeError;
 
   // Cartão v2 (DOCS/mockup-presencas-cartao-v2.html): estado curto ao lado do nome, uma fila de
   // etiquetas iguais (carga, pré, RPE, avisos), sem email, botões arrumados em grelha.
@@ -150,9 +198,9 @@ export function AttendanceRow({
             )}
             {rpe != null && (
               <span className="coach-att-chip" title={rpeSource === "COACH" ? "Nota de esforço dada pelo professor" : "Nota de esforço do aluno"}>
-                RPE <strong style={{ color: "var(--text-primary)" }}>{rpe}</strong>
+                Cansaço <strong style={{ color: "var(--text-primary)" }}>{formatRpe(rpe)}</strong>
                 {rpeSource === "COACH" ? " (coach)" : ""}
-                {rpeSource === "STUDENT" && coachRpe != null && coachRpe !== rpe ? ` · tu: ${coachRpe}` : ""}
+                {rpeSource === "STUDENT" && coachRpe != null && coachRpe !== rpe ? ` · tu: ${formatRpe(coachRpe)}` : ""}
               </span>
             )}
             {tuitionLate && (
@@ -216,25 +264,19 @@ export function AttendanceRow({
           {effectiveStatus === "CONFIRMED" && attendanceId ? (
             <div className="coach-att-pair">
               {coachCanSetRpe ? (
-                <form action={rpeAction} className="coach-att-rpe">
-                  <FormLoadingModal message="A guardar a nota de esforço…" />
-                  <input type="hidden" name="lessonId" value={lessonId} readOnly />
-                  <input type="hidden" name="occurrenceDate" value={occurrenceDate} readOnly />
-                  <input type="hidden" name="attendanceId" value={attendanceId} readOnly />
-                  <select name="rpe" defaultValue={coachRpeValue ?? ""} aria-label={`Esforço de ${label}`} className="input">
-                    <option value="" disabled>
-                      RPE
-                    </option>
-                    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                  <button type="submit" className="btn btn-secondary coach-att-btn">
-                    {coachRpeValue == null ? "Dar" : "Alterar"}
-                  </button>
-                </form>
+                <button
+                  type="button"
+                  className="btn btn-secondary coach-att-btn"
+                  aria-expanded={rpeOpen}
+                  aria-label={`Nota de cansaço de ${label}`}
+                  onClick={openRpe}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1, fontWeight: 900 }}
+                >
+                  <span style={{ fontSize: 16 }}>{coachRpeValue != null ? formatRpe(coachRpeValue) : "–"}</span>
+                  <small style={{ fontSize: 10, fontWeight: 600, color: "var(--text-secondary)" }}>
+                    {coachRpeValue != null ? "a tua nota" : "dar nota"}
+                  </small>
+                </button>
               ) : (
                 <span />
               )}
@@ -247,6 +289,26 @@ export function AttendanceRow({
             </div>
           ) : null}
         </div>
+        {rpeOpen && coachCanSetRpe ? (
+          <div style={{ display: "grid", gap: 6, paddingTop: 8 }}>
+            <RpeSlider
+              value={draftRpe}
+              onChange={setDraftRpe}
+              onCommit={commitRpe}
+              ariaLabel={`Cansaço de ${label}`}
+              emptyText="Larga para guardar"
+              disabled={rpePending && !savedTick}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, minHeight: 16 }}>
+              <span style={{ color: "var(--success)", visibility: savedTick ? "visible" : "hidden" }}>{rpePending ? "A guardar…" : "✓ Guardado"}</span>
+              {savedTick ? (
+                <button type="button" onClick={undoRpe} style={{ background: "none", border: 0, padding: 0, color: "var(--text-secondary)", textDecoration: "underline", font: "inherit", cursor: "pointer" }}>
+                  Desfazer
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
         {formError && <span className="coach-att-error">{formError}</span>}
       </li>
       {modalOpen && canEvaluate && (

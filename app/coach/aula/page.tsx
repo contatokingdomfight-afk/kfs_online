@@ -30,6 +30,8 @@ import { loadCoachLessonRoster, loadCrossModalityCandidates } from "@/lib/coach-
 import { loadTrainingSessions } from "@/lib/training-load.server";
 import { computeTrainingLoad } from "@/lib/training-load";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
+import { getLessonFocus } from "@/lib/lesson-focus.server";
+import type { LessonFocus } from "@/lib/rpe-labels";
 
 export default async function CoachAulaPage({
   searchParams,
@@ -89,6 +91,7 @@ export default async function CoachAulaPage({
   const timerLocale = (locale === "en" ? "en" : "pt") as Locale;
 
   let rosterStudents: Awaited<ReturnType<typeof loadCoachLessonRoster>>["students"] = [];
+  let lessonFocus: LessonFocus[] = [];
   let crossModalityCandidates: Awaited<ReturnType<typeof loadCrossModalityCandidates>> = [];
 
   let evaluationConfig: Awaited<ReturnType<typeof loadEvaluationConfigForModality>> = null;
@@ -133,6 +136,7 @@ export default async function CoachAulaPage({
     // Carga de treino de cada aluno (mesmo cálculo da página «Carga»).
     const loadToday = calendarDateLisbon(new Date());
     const sessionsByStudent = await loadTrainingSessions(adminSupabase, rosterStudents.map((s) => s.studentId), loadToday);
+    lessonFocus = await getLessonFocus(lessonId, occurrenceYmd, adminSupabase);
     rosterStudents = rosterStudents.map((s) => {
       const load = computeTrainingLoad(sessionsByStudent.get(s.studentId) ?? [], loadToday);
       return { ...s, trainingLoad: { zone: load.zone, ratio: load.ratio, trained7d: load.days.filter((d) => d.trained).length } };
@@ -483,6 +487,7 @@ export default async function CoachAulaPage({
 
               <CoachAulaRosterPanel
                 students={rosterStudents}
+                focus={lessonFocus}
                 lessonId={selectedLesson.id}
                 occurrenceDate={selectedLesson.occurrenceDate}
                 modality={selectedLesson.modality ?? ""}

@@ -1,29 +1,29 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Gauge } from "lucide-react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
+import { RpeSlider, rpeScale } from "@/components/training-load/RpeSlider";
 import { setCoachRpeFromForm } from "./actions";
 
-function RpeButton({ n }: { n: number }) {
+function ApplyButton({ n, disabled }: { n: number; disabled: boolean }) {
   const { pending } = useFormStatus();
+  const off = disabled || pending;
   return (
     <button
       type="submit"
-      name="rpe"
-      value={n}
-      disabled={pending}
-      className="btn btn-secondary"
-      style={{ minWidth: 44, minHeight: 40, padding: "6px 0", fontWeight: 800 }}
+      disabled={off}
+      className={off ? "btn btn-secondary" : "btn btn-primary"}
+      style={{ minHeight: 48, fontWeight: 800 }}
     >
-      {n}
+      Aplicar a {n} {n === 1 ? "aluno" : "alunos"}
     </button>
   );
 }
 
 /**
- * «Esforço da aula»: o coach dá uma nota de esforço (1–10) a todos os presentes que ainda não
+ * «Cansaço da turma»: o coach dá uma nota (1–10, meios pontos) a todos os presentes que ainda não
  * a deram. Os alunos podem depois dar a sua (substitui esta e dá-lhes XP).
  */
 export function CoachClassRpeBulk({
@@ -36,13 +36,14 @@ export function CoachClassRpeBulk({
   attendanceIds: string[];
 }) {
   const [state, action] = useActionState(setCoachRpeFromForm, null as { error?: string; updated?: number } | null);
+  const [rpe, setRpe] = useState<number | null>(null);
 
   return (
     <form
       action={action}
       style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14, marginBottom: 16, borderRadius: 14, border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
     >
-      <FormLoadingModal message="A guardar a nota de esforço…" />
+      <FormLoadingModal message="A guardar a nota…" />
       <input type="hidden" name="lessonId" value={lessonId} />
       <input type="hidden" name="occurrenceDate" value={occurrenceDate} />
       {attendanceIds.map((id) => (
@@ -53,17 +54,14 @@ export function CoachClassRpeBulk({
           <Gauge size={20} />
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ display: "block", fontSize: 15, fontWeight: 800, color: "var(--text-primary)" }}>Esforço da aula</span>
+          <span style={{ display: "block", fontSize: 15, fontWeight: 800, color: "var(--text-primary)" }}>Cansaço da turma</span>
           <span style={{ display: "block", fontSize: 13, color: "var(--text-secondary)" }}>
-            {attendanceIds.length} {attendanceIds.length === 1 ? "presente sem nota" : "presentes sem nota"} · quão dura foi a aula (1–10)?
+            {attendanceIds.length} {attendanceIds.length === 1 ? "presente sem nota" : "presentes sem nota"} · quão cansados saíram (corpo e cabeça)?
           </span>
         </span>
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-          <RpeButton key={n} n={n} />
-        ))}
-      </div>
+      <RpeSlider name="rpe" value={rpe} onChange={setRpe} ariaLabel="Cansaço da turma" emptyText="Escolhe de 1 a 10" scale={rpeScale(true, true)} />
+      <ApplyButton n={attendanceIds.length} disabled={rpe == null} />
       {state?.error ? <span style={{ fontSize: 13, color: "var(--danger)" }}>{state.error}</span> : null}
       {state && !state.error && state.updated != null ? (
         <span role="status" style={{ fontSize: 13, color: "var(--success)" }}>

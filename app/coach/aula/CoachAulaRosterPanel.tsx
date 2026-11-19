@@ -7,6 +7,8 @@ import type { ModalityEvaluationConfigPayload } from "@/lib/evaluation-config";
 import { AttendanceRow } from "./AttendanceRow";
 import { CoachClassRpeBulk } from "./CoachClassRpeBulk";
 import { CoachClassLoadSummary } from "./CoachClassLoadSummary";
+import { CoachLessonFocusPicker } from "./CoachLessonFocusPicker";
+import type { LessonFocus } from "@/lib/rpe-labels";
 
 type RosterFilter = "all" | "no_rsvp" | "pending";
 
@@ -17,6 +19,7 @@ type Props = {
   modality: string;
   evaluationConfig: ModalityEvaluationConfigPayload | null;
   canEvaluate: boolean;
+  focus?: LessonFocus[];
 };
 
 export function CoachAulaRosterPanel({
@@ -26,6 +29,7 @@ export function CoachAulaRosterPanel({
   modality,
   evaluationConfig,
   canEvaluate,
+  focus = [],
 }: Props) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<RosterFilter>("all");
@@ -91,6 +95,8 @@ export function CoachAulaRosterPanel({
         <span>·</span>
         <span>{counts.noRsvp} sem pré-confirmação</span>
       </div>
+
+      <CoachLessonFocusPicker lessonId={lessonId} occurrenceDate={occurrenceDate} initial={focus} />
 
       {unratedAttendanceIds.length > 0 ? (
         <CoachClassRpeBulk lessonId={lessonId} occurrenceDate={occurrenceDate} attendanceIds={unratedAttendanceIds} />

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { BENCHMARK_PRESETS } from "@/lib/benchmark-presets";
+import { parseRpe } from "@/lib/rpe-labels";
 
 function ymdDaysAgo(days: number): string {
   const d = new Date();
@@ -18,12 +19,12 @@ export type RpeFormState = { error?: string } | null;
 
 export async function submitRpeAction(_prev: RpeFormState, formData: FormData): Promise<RpeFormState> {
   const attendanceId = String(formData.get("attendanceId") ?? "").trim();
-  const rpe = Number(formData.get("rpe"));
+  const rpe = parseRpe(formData.get("rpe"));
   const rawWeight = formData.get("postWeightKg");
   const postWeightKg =
     rawWeight === "" || rawWeight == null ? null : Number(rawWeight);
-  if (!attendanceId || !Number.isFinite(rpe) || rpe < 1 || rpe > 10) {
-    return { error: "RPE inválido (1–10)." };
+  if (!attendanceId || rpe == null) {
+    return { error: "Escolhe uma nota de 1 a 10." };
   }
   if (postWeightKg != null && (!Number.isFinite(postWeightKg) || postWeightKg < 30 || postWeightKg > 250)) {
     return { error: "Peso pós-treino inválido (30–250 kg)." };

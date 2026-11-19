@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Cansaço do treino e foco da aula</title>
+<style>
+  :root{--bg:#0b0b0b;--bg2:#141414;--tx:#fff;--tx2:#a1a1aa;--pri:#c1121f;--bd:#27272a;--ok:#4ade80;--mind:#a78bfa}
+  *{box-sizing:border-box}
+  body{margin:0;background:#050505;color:var(--tx);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:24px 16px}
+  h1{font-size:20px;margin:0 0 4px}
+  h3{font-size:16px;margin:36px 0 4px}
+  .lead{color:var(--tx2);margin:0 0 18px;font-size:14px;max-width:900px}
+  .stage{display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start}
+  .frame{background:var(--bg);border:1px solid var(--bd);border-radius:20px;padding:20px}
+  .frame h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--tx2);margin:0 0 14px}
+  .desktop{width:640px;max-width:100%}
+  .phone{width:375px;max-width:100%;border-radius:36px;padding:18px 14px;border-width:8px;border-color:#222}
+  .notes{flex:1;min-width:260px;max-width:420px;font-size:14px;color:var(--tx2);margin:0;padding-left:18px}
+  .notes b{color:var(--tx)} .notes li{margin-bottom:8px}
+
+  .card{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:18px;border:1px solid var(--bd);background:var(--bg2)}
+  .head{display:flex;align-items:flex-start;gap:8px}
+  .head .t{flex:1} .head strong{display:block;font-size:16px} .head small{display:block;color:var(--tx2);font-size:13px;margin-top:2px}
+  .xp{padding:3px 9px;border-radius:999px;background:var(--pri);color:#fff;font-size:12px;font-weight:800}
+  .focus-tag{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;background:rgba(167,139,250,.15);color:var(--mind)}
+  .q{font-size:13px;font-weight:800;display:flex;justify-content:space-between;align-items:baseline}
+  .q em{font-style:normal;color:var(--tx2);font-weight:600;font-size:12px}
+  .readout{display:flex;align-items:baseline;gap:10px;min-height:38px}
+  .readout .n{font-size:30px;font-weight:900;line-height:1}
+  .readout .d{font-size:13px;font-weight:700}
+  .readout.empty .n,.readout.empty .d{color:var(--tx2);font-weight:600}
+  .rpe{position:relative;height:48px;touch-action:none;cursor:pointer;user-select:none;outline:none}
+  .track{position:absolute;left:0;right:0;top:50%;height:12px;margin-top:-6px;border-radius:6px;opacity:.35;transition:opacity .2s}
+  .rpe.body .track{background:linear-gradient(90deg,#4ade80,#a3e635 30%,#fbbf24 55%,#f97316 75%,#ef4444)}
+  .rpe.mind .track{background:linear-gradient(90deg,#ddd6fe,#a78bfa 50%,#6d28d9)}
+  .rpe.set .track{opacity:1}
+  .thumb{position:absolute;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:#fff;border:4px solid var(--c,#fff);
+    box-shadow:0 2px 10px rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;font-weight:900;color:#111;font-size:14px}
+  .rpe.set .thumb{display:flex}
+  .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;pointer-events:none;text-shadow:0 1px 3px #000}
+  .rpe.set .hint{display:none}
+  .scale{display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--tx2)}
+  .sep{height:1px;background:var(--bd);margin:2px 0}
+  .save{min-height:48px;border:0;border-radius:12px;background:var(--pri);color:#fff;font:inherit;font-weight:800;font-size:15px;cursor:pointer}
+  .save:disabled{background:var(--bd);color:var(--tx2);cursor:not-allowed}
+  .foot{font-size:12px;color:var(--tx2)}
+
+  /* coach: foco da aula */
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .seg button{min-height:52px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+  .seg button span{font-size:18px}
+  .seg button[aria-pressed=true]{background:var(--pri);border-color:var(--pri);color:#fff}
+  .srow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--bd)}
+  .srow:last-child{border-bottom:0}
+  .srow .t b{display:block;font-size:14px} .srow .t small{color:var(--tx2);font-size:12px}
+  .srow .inline{grid-column:1/-1;display:grid;gap:6px}
+.srow{cursor:pointer}
+  .srow.off .t,.srow.off .chips{opacity:.55}
+  .srow{grid-template-columns:1fr auto!important;cursor:default!important}
+  .srow .acts{grid-column:1/2;display:flex;gap:6px;flex-wrap:wrap}
+  .srow .rpe-chip{grid-column:2;grid-row:1/3;align-self:center;cursor:pointer;color:var(--tx);font:inherit;font-weight:900;font-size:16px;display:flex;flex-direction:column;line-height:1.1;padding:8px 10px}
+  .srow .rpe-chip small{font-size:10px;font-weight:600;color:var(--tx2)}
+  .st{font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--tx2);margin-left:4px}
+  .st.ok{background:rgba(74,222,128,.15);color:#4ade80}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px}
+  .chips .c{font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;border:1px solid var(--bd);color:var(--tx2)}
+  .chips .late{color:#f87171;border-color:rgba(248,113,113,.4)}
+  .chips .warn{color:#fbbf24;border-color:rgba(251,191,36,.4)}
+  .mini-btn.ok{background:#16a34a;border-color:#16a34a;color:#fff}
+  .chip{min-width:44px;text-align:center;padding:6px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--bd);font-weight:900}
+  .chip.empty{color:var(--tx2)}
+  .saved{font-size:12px;color:var(--ok);font-weight:700;display:flex;justify-content:space-between}
+  .saved a{color:var(--tx2);cursor:pointer;text-decoration:underline}
+  .mini-btn{border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:10px;padding:8px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+  .ok-line{font-size:12px;color:var(--ok);font-weight:700;min-height:16px}
+
+  /* coach: carga */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--tx2);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:6px 6px;border-bottom:1px solid var(--bd)}
+  td{padding:10px 6px;border-bottom:1px solid var(--bd);vertical-align:middle}
+  .zone{font-weight:800}
+  .bar{height:8px;border-radius:4px;background:var(--bd);overflow:hidden;width:90px}
+  .bar i{display:block;height:100%}
+  .mini{display:flex;align-items:center;gap:6px}
+  .weekfocus{display:flex;gap:4px;flex-wrap:wrap}
+  .rows{display:flex;flex-direction:column;gap:10px}
+  .mrow{padding:12px;border-radius:14px;border:1px solid var(--bd);background:var(--bg2);display:grid;gap:8px}
+  .mrow .top{display:flex;justify-content:space-between;align-items:baseline}
+  .mrow .lbl{font-size:11px;color:var(--tx2);font-weight:700;width:58px}
+  .mrow .bar{flex:1;width:auto}
+  .why{font-size:12px;color:var(--tx2);background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.25);border-radius:10px;padding:8px 10px}
+</style>
+</head>
+<body>
+<h1>Cansaço do treino (corpo + cabeça) + foco da aula</h1>
+<p class="lead">Uma só pergunta ao aluno: «Quão cansado saíste do treino?», a contar o físico e o mental (o session-RPE original). O coach marca o foco da aula, e isso explica de onde veio o cansaço.</p>
+
+<h3>1 · Aluno: fim do treino</h3>
+<div class="stage">
+  <div class="frame desktop"><h2>Desktop · Home</h2><div class="m-student"></div></div>
+  <div class="frame phone"><h2>Telemóvel · Home</h2><div class="m-student"></div></div>
+  <ul class="notes">
+    <li><b>Uma pergunta, um slider</b>, meios pontos (0,5). Conta para a carga e o XP como hoje.</li>
+    <li>A legenda diz explicitamente <b>corpo e cabeça</b>, e as descrições cobrem os dois («Intenso: corpo ou cabeça bem cansados»).</li>
+    <li>Mostra o <b>foco que o coach marcou</b> («Aula tática»), o que lembra o aluno de contar também o cansaço mental.</li>
+    <li>Sem coluna nova na base de dados: usa o <code>rpe</code> (passa a decimal).</li>
+  </ul>
+</div>
+
+<h3>2 · Coach › Aula: foco + nota da turma + nota por aluno</h3>
+<div class="stage">
+  <div class="frame desktop"><h2>Desktop · Coach › Aula</h2><div class="m-focus"></div></div>
+  <div class="frame phone"><h2>Telemóvel · Coach › Aula</h2><div class="m-focus"></div></div>
+  <ul class="notes">
+    <li><b>Foco:</b> Técnica, Tática, Sparring ou Físico, <b>até 2</b> (ex.: Técnica + Sparring). Vale para a aula desse dia e grava ao tocar.</li>
+    <li><b>Cansaço da turma:</b> o mesmo slider do aluno, aplicado aos presentes sem nota (substitui os 10 botões de hoje).</li>
+    <li><b>Linha do aluno igual à de hoje</b> (estado, carga, pré-aula, mensalidade em atraso, seguro, limite de aulas, avaliado, Avaliar/Ausente). Só o select de RPE passa a ser o quadrado à direita.</li>
+    <li><b>Por aluno:</b> toca no quadrado da nota, arrasta, larga: grava sozinho, com «Desfazer» durante uns segundos (substitui o select).</li>
+    <li>Se o aluno der a sua nota, fica a dele (e ganha XP), como hoje.</li>
+    <li><b>Só presentes</b> (presença confirmada): quem não veio aparece a cinzento, sem slider. O «Aplicar» também só conta os presentes sem nota.</li>
+  </ul>
+</div>
+
+<h3>3 · Coach: página Carga</h3>
+<div class="stage">
+  <div class="frame desktop"><h2>Desktop · Coach › Carga</h2>
+    <table>
+      <thead><tr><th>Aluno</th><th>Rácio</th><th>Cansaço médio (7 d)</th><th>Foco da semana</th></tr></thead>
+      <tbody>
+        <tr><td><b>Ana Meneses</b><br><small style="color:var(--tx2)">Muay Thai · Seg 08:30</small></td>
+          <td><span class="zone" style="color:#4ade80">1,25</span></td>
+          <td><div class="mini"><div class="bar"><i style="width:75%;background:#f97316"></i></div>7,5</div></td>
+          <td><div class="weekfocus"><span class="focus-tag">🧠 Tática ×2</span><span class="focus-tag" style="background:rgba(255,255,255,.06);color:var(--tx2)">🥊 Técnica</span></div></td></tr>
+        <tr><td><b>Gelson Mendes</b><br><small style="color:var(--tx2)">Muay Thai · Seg 08:30</small></td>
+          <td><span class="zone" style="color:#fbbf24">1,42</span></td>
+          <td><div class="mini"><div class="bar"><i style="width:80%;background:#f97316"></i></div>8,0</div></td>
+          <td><div class="weekfocus"><span class="focus-tag" style="background:rgba(239,68,68,.15);color:#f87171">⚔️ Sparring ×2</span></div></td></tr>
+      </tbody>
+    </table>
+    <p class="why" style="margin:12px 0 0">🧠 <b>Ana:</b> cansaço alto (7,5) numa semana com 2 aulas táticas: provavelmente cansaço mental, não sobrecarga física.</p>
+  </div>
+  <div class="frame phone"><h2>Telemóvel · Coach › Carga</h2>
+    <div class="rows">
+      <div class="mrow">
+        <div class="top"><b>Ana Meneses</b><span class="zone" style="color:#4ade80">1,25 · Ideal</span></div>
+        <div class="mini"><span class="lbl">Cansaço</span><div class="bar"><i style="width:75%;background:#f97316"></i></div><b>7,5</b></div>
+        <div class="weekfocus"><span class="focus-tag">🧠 Tática ×2</span><span class="focus-tag" style="background:rgba(255,255,255,.06);color:var(--tx2)">🥊 Técnica</span></div>
+        <p class="why" style="margin:0">Cansaço alto em semana tática: provavelmente mental.</p>
+      </div>
+      <div class="mrow">
+        <div class="top"><b>Gelson Mendes</b><span class="zone" style="color:#fbbf24">1,42 · Atenção</span></div>
+        <div class="mini"><span class="lbl">Cansaço</span><div class="bar"><i style="width:80%;background:#f97316"></i></div><b>8,0</b></div>
+        <div class="weekfocus"><span class="focus-tag" style="background:rgba(239,68,68,.15);color:#f87171">⚔️ Sparring ×2</span></div>
+      </div>
+    </div>
+  </div>
+  <ul class="notes">
+    <li>Colunas novas: <b>cansaço médio</b> dos últimos 7 dias e as etiquetas de <b>foco</b> das aulas que o aluno fez.</li>
+    <li>Nota automática quando o cansaço é alto (≥ 7) e a maioria das aulas da semana foi tática: explica casos como o da Ana.</li>
+    <li>O rácio pode subir em semanas táticas pesadas; o foco ao lado mostra porquê.</li>
+    <li>Dados fictícios / ilustrativos.</li>
+  </ul>
+</div>
+
+<template id="tpl-student">
+  <div class="card">
+    <div class="head"><span class="t"><strong>Como foi o treino?</strong><small>Muay Thai · hoje 08:30 · 90 min · <span class="focus-tag">🧠 Aula tática</span></small></span><span class="xp">+5 XP</span></div>
+    <div class="q">Quão cansado saíste do treino? <em>corpo e cabeça</em></div>
+    <div class="readout empty" data-r="body"><span class="n">–</span><span class="d">Esforço físico, concentração, decisões</span></div>
+    <div class="rpe body" tabindex="0" role="slider" aria-label="Cansaço do treino"><div class="track"></div><div class="hint">Toca ou arrasta</div><div class="thumb"></div></div>
+    <div class="scale"><span>Saí fresco</span><span>Bem cansado</span><span>Esgotado</span></div>
+    <button class="save" disabled>Guardar</button>
+    <span class="foot">Como te sentes tu, não a dureza da aula em geral. Conta o físico e o mental.</span>
+  </div>
+</template>
+
+<template id="tpl-focus">
+  <div class="card">
+    <div class="head"><span class="t"><strong>Foco da aula de hoje</strong><small>Muay Thai · Qua 18/11 · 08:30 · até 2</small></span></div>
+    <div class="seg">
+      <button aria-pressed="false"><span>🥊</span>Técnica</button>
+      <button aria-pressed="true"><span>🧠</span>Tática</button>
+      <button aria-pressed="false"><span>⚔️</span>Sparring</button>
+      <button aria-pressed="false"><span>🏃</span>Físico</button>
+    </div>
+    <div class="ok-line">✓ Guardado · os alunos veem «Aula tática»</div>
+    <div class="sep"></div>
+    <div class="q">Cansaço da turma <em>4 presentes sem nota</em></div>
+    <div class="readout empty" data-r="body"><span class="n">–</span><span class="d">Quão cansados saíram (corpo e cabeça)?</span></div>
+    <div class="rpe body" tabindex="0" role="slider" aria-label="Cansaço da turma"><div class="track"></div><div class="hint">Toca ou arrasta</div><div class="thumb"></div></div>
+    <div class="scale"><span>Saíram frescos</span><span>Bem cansados</span><span>Esgotados</span></div>
+    <button class="save" disabled>Aplicar a 4 alunos</button>
+    <span class="foot">Se o aluno der a sua própria nota, fica a dele (e ganha XP).</span>
+  </div>
+  <div class="card" style="margin-top:12px;gap:0;padding:6px 14px">
+    <div class="srow"><span class="t"><b>Ana Meneses <span class="st ok">Presente</span></b>
+      <span class="chips"><span class="c" style="color:#4ade80">Carga 1,25</span><span class="c">😴 7 h</span><span class="c" style="color:#4ade80">✓ Avaliada</span></span></span>
+      <span class="acts"><button class="mini-btn">Avaliar</button><button class="mini-btn">Ausente</button></span>
+      <button class="chip rpe-chip" title="Nota da aluna">7,5<small>aluna</small></button></div>
+    <div class="srow"><span class="t"><b>Gelson Mendes <span class="st ok">Presente</span></b>
+      <span class="chips"><span class="c" style="color:#fbbf24">Carga 1,42</span><span class="c late">Mensalidade em atraso</span></span></span>
+      <span class="acts"><button class="mini-btn">Avaliar</button><button class="mini-btn">Ausente</button></span>
+      <button class="chip rpe-chip empty" title="Sem nota">–<small>dar</small></button></div>
+    <div class="srow"><span class="t"><b>Ana Sofia Costa <span class="st ok">Presente</span></b>
+      <span class="chips"><span class="c" style="color:#a1a1aa">Sem base</span><span class="c warn">Seguro por pagar</span><span class="c">8/8 aulas</span></span></span>
+      <span class="acts"><button class="mini-btn">Avaliar</button><button class="mini-btn">Ausente</button></span>
+      <button class="chip rpe-chip" title="Nota do coach">6<small>coach</small></button></div>
+    <div class="srow off"><span class="t"><b>Rui Tavares <span class="st">Não veio</span></b>
+      <span class="chips"><span class="c late">Mensalidade em atraso</span></span></span>
+      <span class="acts"><button class="mini-btn ok">Marcar presença</button></span>
+      <span class="chip empty" style="visibility:hidden">·</span></div>
+  </div>
+</template>
+
+<script>
+const descBody=n=>n<=2?"Muito leve — saí fresco":n<=4?"Leve — pouco cansado":n<=6?"Moderado — cansado, mas bem":n<=8?"Intenso — corpo ou cabeça bem cansados":n===9?"Muito intenso — quase no limite":"Esgotado — física ou mentalmente";
+const descMind=n=>n<=2?"Em piloto automático":n<=4?"Pouca coisa nova":n<=6?"Concentrado":n<=8?"Muitas decisões — cabeça cansada":n===9?"Muito exigente":"Esgotado mentalmente";
+const colBody=n=>["#4ade80","#4ade80","#a3e635","#a3e635","#facc15","#fbbf24","#f97316","#f97316","#ef4444","#dc2626"][n-1];
+const colMind=n=>n<=3?"#ddd6fe":n<=7?"#a78bfa":"#7c3aed";
+const fmt=n=>String(n).replace(".",",");
+const PAD=24;
+function wire(m,save,onSet){
+  m.querySelectorAll(".rpe").forEach(r=>{
+    const kind=r.classList.contains("mind")?"mind":"body";
+    const ro=m.querySelector(`.readout[data-r=${kind}]`),th=r.querySelector(".thumb");
+    const col=kind==="mind"?colMind:colBody,desc=kind==="mind"?descMind:descBody;
+    let v=null,drag=false;
+    const set=n=>{v=Math.max(1,Math.min(10,Math.round(n*2)/2));const k=Math.round(v);r.classList.add("set");ro.classList.remove("empty");
+      th.style.left=(PAD+(r.clientWidth-PAD*2)*(v-1)/9)+"px";th.textContent=fmt(v);th.style.setProperty("--c",col(k));
+      ro.querySelector(".n").textContent=fmt(v);ro.querySelector(".n").style.color=col(k);ro.querySelector(".d").textContent=desc(k);ro.querySelector(".d").style.color=col(k);
+      if(kind==="body"&&save)save.disabled=false;if(onSet)onSet(v);};
+    const fromX=x=>{const b=r.getBoundingClientRect();set((x-b.left-PAD)/(b.width-PAD*2)*9+1);};
+    r.addEventListener("pointerdown",e=>{drag=true;r.setPointerCapture(e.pointerId);fromX(e.clientX);});
+    r.addEventListener("pointermove",e=>{if(drag)fromX(e.clientX);});
+    r.addEventListener("pointerup",()=>drag=false);
+    r.addEventListener("keydown",e=>{if(e.key==="ArrowRight"){set((v??0.5)+0.5);e.preventDefault();}if(e.key==="ArrowLeft"){set((v??1.5)-0.5);e.preventDefault();}});
+    addEventListener("resize",()=>{if(v)set(v);});
+  });
+}
+document.querySelectorAll(".m-student").forEach(m=>{
+  m.appendChild(document.getElementById("tpl-student").content.cloneNode(true));
+  const save=m.querySelector(".save");wire(m,save);
+  save.addEventListener("click",()=>{save.textContent="Guardado ✓";save.disabled=true;});
+});
+document.querySelectorAll(".m-focus").forEach(m=>{
+  m.appendChild(document.getElementById("tpl-focus").content.cloneNode(true));
+  const btns=[...m.querySelectorAll(".seg button")],ok=m.querySelector(".ok-line");
+  let order=["Tática"];
+  const name=b=>b.textContent.trim().replace(/^\S+\s*/,"");
+  btns.forEach(b=>b.addEventListener("click",()=>{const n=name(b);
+    if(order.includes(n))order=order.filter(x=>x!==n);else{order.push(n);if(order.length>2)order.shift();}
+    btns.forEach(x=>x.setAttribute("aria-pressed",order.includes(name(x))));
+    ok.textContent=order.length?`✓ Guardado · os alunos veem «Aula ${order.join(" + ").toLowerCase()}»`:"Sem foco marcado";}));
+  const card=m.querySelector(".card"),save=card.querySelector(".save");wire(card,save);
+  save.addEventListener("click",()=>{save.textContent="Aplicado a 4 alunos ✓";save.disabled=true;});
+  m.querySelectorAll(".srow .rpe-chip").forEach(chipBtn=>chipBtn.addEventListener("click",e=>{const row=chipBtn.closest(".srow");
+    if(row.querySelector(".inline"))return;
+    m.querySelectorAll(".srow .inline").forEach(x=>x.remove());
+    const chip=chipBtn,prev=[chip.innerHTML,chip.className];
+    const box=document.createElement("div");box.className="inline";
+    box.innerHTML=`<div class="readout empty" data-r="body"><span class="n">–</span><span class="d">Larga para guardar</span></div>
+      <div class="rpe body" tabindex="0" role="slider" aria-label="Cansaço do aluno"><div class="track"></div><div class="hint">Toca ou arrasta</div><div class="thumb"></div></div>
+      <div class="saved" style="visibility:hidden"><span>✓ Guardado</span><a>Desfazer</a></div>`;
+    box.addEventListener("click",ev=>ev.stopPropagation());
+    row.appendChild(box);
+    let val=null,timer=null;wire(box,null,v=>val=v);
+    const sv=box.querySelector(".saved"),r=box.querySelector(".rpe");
+    const commit=()=>{if(val==null)return;chip.innerHTML=String(val).replace(".",",")+"<small>coach</small>";chip.className="chip rpe-chip";
+      sv.style.visibility="visible";clearTimeout(timer);timer=setTimeout(()=>box.remove(),2500);};
+    r.addEventListener("pointerup",commit);r.addEventListener("keyup",commit);
+    sv.querySelector("a").addEventListener("click",()=>{clearTimeout(timer);[chip.innerHTML,chip.className]=prev;box.remove();});
+  }));
+});
+</script>
+</body>
+</html>

@@ -144,7 +144,7 @@ export async function CoachStudentWellbeingSection({ studentId }: Props) {
                     color: "var(--text-secondary)",
                   }}
                 >
-                  <strong style={{ color: "var(--text-primary)" }}>RPE {r.rpe}</strong>
+                  <strong style={{ color: "var(--text-primary)" }}>Cansaço {String(r.rpe).replace(".", ",")}</strong>
                   {mod ? ` · ${MODALITY_LABELS[mod] ?? mod}` : ""} · {dateStr}
                 </li>
               );

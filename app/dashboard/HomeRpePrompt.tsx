@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { calendarDateLisbon, minutesSinceMidnightLisbon } from "@/lib/lesson-check-in-window";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { addDays, lessonMinutes } from "@/lib/training-load";
+import { getLessonFocus } from "@/lib/lesson-focus.server";
+import { lessonFocusLabel } from "@/lib/rpe-labels";
 import { RpeOneTap } from "./RpeOneTap";
 
 const toMin = (s: string | null | undefined) => {
@@ -56,5 +58,8 @@ export async function HomeRpePrompt({ studentId, locale }: { studentId: string; 
   const when = isToday ? (pt ? "hoje" : "today") : pt ? "ontem" : "yesterday";
   const title = `${MODALITY_LABELS[candidate.l.modality] ?? candidate.l.modality} · ${when} ${(candidate.l.startTime ?? "").slice(0, 5)} · ${minutes} min`;
 
-  return <RpeOneTap attendanceId={candidate.a.id} subtitle={title} minutes={minutes} xpReward={xpReward} locale={locale} />;
+  const focus = await getLessonFocus(candidate.l.id, String(candidate.a.occurrenceDate).slice(0, 10));
+  const focusLabel = focus.length ? lessonFocusLabel(focus, pt) : null;
+
+  return <RpeOneTap attendanceId={candidate.a.id} subtitle={title} focusLabel={focusLabel} minutes={minutes} xpReward={xpReward} locale={locale} />;
 }

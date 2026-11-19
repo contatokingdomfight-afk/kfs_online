@@ -12,6 +12,8 @@ import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { getLessonIdsForCoach } from "@/lib/coach-lesson-ids";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { PAIN_REGIONS } from "@/lib/pain-regions";
+import { focusKey, loadLessonFocus } from "@/lib/lesson-focus.server";
+import { LESSON_FOCUS_META, formatRpe, type LessonFocus } from "@/lib/rpe-labels";
 import {
   addDays,
   computeTrainingLoad,
@@ -78,12 +80,12 @@ export default async function CoachCargaPage({ searchParams }: { searchParams: S
   const zoneFilter = (ZONES as string[]).includes(params.zona ?? "") || params.zona === "insufficient" ? (params.zona as TrainingLoadZone) : null;
 
   // Quem treinou nas últimas 8 semanas (e em que aulas).
-  type AttRow = { studentId: string; lessonId: string };
+  type AttRow = { studentId: string; lessonId: string; occurrenceDate: string };
   const attRows: AttRow[] = [];
   for (let offset = 0; ; offset += 1000) {
     const { data } = await supabase
       .from("Attendance")
-      .select("studentId, lessonId")
+      .select("studentId, lessonId, occurrenceDate")
       .eq("status", "CONFIRMED")
       .gte("occurrenceDate", addDays(today, -56))
       .lte("occurrenceDate", today)
@@ -138,10 +140,23 @@ export default async function CoachCargaPage({ searchParams }: { searchParams: S
   const students = candidates.filter((s) => !adminUserIds.has(s.userId));
   const studentIds = students.map((s) => s.id);
 
-  const [sessionsByStudent, wellness] = await Promise.all([
+  const weekStart = addDays(today, -6);
+  const [sessionsByStudent, wellness, focusByLessonDay] = await Promise.all([
     loadTrainingSessions(supabase, studentIds, today),
     loadWellnessSnapshots(supabase, studentIds, today),
+    loadLessonFocus(allLessonIds, weekStart, today, supabase),
   ]);
+  // Foco das aulas que cada aluno fez nos últimos 7 dias (contagem por foco).
+  const focusWeekByStudent = new Map<string, Map<LessonFocus, number>>();
+  for (const a of attRows) {
+    const d = String(a.occurrenceDate).slice(0, 10);
+    if (d < weekStart) continue;
+    for (const f of focusByLessonDay.get(focusKey(a.lessonId, d)) ?? []) {
+      const m = focusWeekByStudent.get(a.studentId) ?? new Map<LessonFocus, number>();
+      m.set(f, (m.get(f) ?? 0) + 1);
+      focusWeekByStudent.set(a.studentId, m);
+    }
+  }
 
   type Row = {
     id: string;
@@ -173,6 +188,12 @@ export default async function CoachCargaPage({ searchParams }: { searchParams: S
   const visible = zoneFilter ? rows.filter((r) => r.load.zone === zoneFilter) : rows;
   const selected = rows.find((r) => r.id === params.aluno) ?? null;
   const selectedWellness = selected ? wellness.get(selected.id) : null;
+  const selectedFocus = selected ? [...(focusWeekByStudent.get(selected.id) ?? new Map<LessonFocus, number>()).entries()].sort((a, b) => b[1] - a[1]) : [];
+  const focusSessions = selectedFocus.reduce((t, [, n]) => t + n, 0);
+  const tacticsWeek = (selectedFocus.find(([f]) => f === "TACTICS")?.[1] ?? 0) >= Math.max(1, focusSessions / 2);
+  // Cansaço alto sem rácio alto numa semana sobretudo tática: provavelmente cansaço mental.
+  const mentalHint =
+    selected && selected.avgRpe != null && selected.avgRpe >= 7 && tacticsWeek && selected.load.zone !== "high" && selected.load.zone !== "caution";
 
   const qs = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams();
@@ -263,7 +284,7 @@ export default async function CoachCargaPage({ searchParams }: { searchParams: S
                 <span>Semana</span>
                 <span>Normal</span>
                 <span>Rácio</span>
-                <span>RPE</span>
+                <span>Cansaço</span>
                 <span>Dor</span>
               </div>
               {visible.length === 0 ? (
@@ -308,7 +329,7 @@ export default async function CoachCargaPage({ searchParams }: { searchParams: S
                           {r.load.ratio != null ? ratioText(r.load.ratio) : "—"}
                         </span>
                       </span>
-                      <span style={{ fontSize: 14 }}>{r.avgRpe != null ? String(r.avgRpe).replace(".", ",") : "—"}</span>
+                      <span style={{ fontSize: 14 }}>{r.avgRpe != null ? formatRpe(r.avgRpe, pt) : "—"}</span>
                       <span style={{ fontSize: 13, fontWeight: r.pain ? 700 : 400, color: r.pain ? "var(--warning)" : "var(--text-secondary)" }}>{r.pain ?? "—"}</span>
                     </Link>
                   );
@@ -368,6 +389,14 @@ export default async function CoachCargaPage({ searchParams }: { searchParams: S
                   {selectedWellness?.pains.length ? selectedWellness.pains.map((p) => `${painLabel(p.region)} ${p.intensity}/10`).join(", ") : "—"}
                 </b>
               </span>
+              <span style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ color: "var(--text-secondary)" }}>Foco das aulas (7 dias)</span>
+                <b style={{ textAlign: "right" }}>
+                  {selectedFocus.length
+                    ? selectedFocus.map(([f, n]) => `${LESSON_FOCUS_META[f].icon} ${LESSON_FOCUS_META[f].pt}${n > 1 ? ` ×${n}` : ""}`).join(" · ")
+                    : "—"}
+                </b>
+              </span>
               {selected.load.unrated7d > 0 ? (
                 <span style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
                   <span style={{ color: "var(--text-secondary)" }}>Treinos sem nota (7 dias)</span>
@@ -375,6 +404,11 @@ export default async function CoachCargaPage({ searchParams }: { searchParams: S
                 </span>
               ) : null}
             </div>
+            {mentalHint ? (
+              <div style={{ borderRadius: 14, border: "1px solid rgba(167,139,250,.35)", background: "rgba(167,139,250,.08)", padding: 12, fontSize: 13, lineHeight: 1.45 }}>
+                🧠 Cansaço alto ({formatRpe(selected.avgRpe!, pt)}) numa semana sobretudo tática: provavelmente cansaço mental, não sobrecarga física.
+              </div>
+            ) : null}
             <div style={{ borderRadius: 14, border: `1px solid ${ZONE_COLORS[selected.load.zone]}`, padding: 12 }}>
               <span style={{ display: "block", fontSize: 13, fontWeight: 800 }}>Sugestão</span>
               <span style={{ display: "block", fontSize: 13, lineHeight: 1.45, marginTop: 4 }}>{suggestion(selected.load.zone)}</span>

@@ -14,6 +14,7 @@ import {
   assertStudentEligibleForCrossModalityCheckIn,
 } from "@/lib/coach-lesson-eligible-students";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { LESSON_FOCUS_MAX, isLessonFocus, parseRpe } from "@/lib/rpe-labels";
 import { assertEvaluationNotRateLimited } from "@/lib/evaluation-rate-limit";
 import {
   assertStudentEligibleForCoachLessonCheckIn,
@@ -427,13 +428,14 @@ export async function setCoachRpeFromForm(
   const lessonId = String(formData.get("lessonId") ?? "").trim();
   { const schoolErr = await schoolAccessErrorForRows("Lesson", lessonId ? [lessonId] : []); if (schoolErr) return { error: schoolErr }; }
   const occurrenceDate = String(formData.get("occurrenceDate") ?? "").trim().slice(0, 10);
-  const rpe = Number(formData.get("rpe"));
+  const rpe = parseRpe(formData.get("rpe"));
   const attendanceIds = formData
     .getAll("attendanceId")
     .map((v) => String(v).trim())
     .filter(Boolean);
   if (!lessonId || !/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate) || attendanceIds.length === 0) return { error: "Dados inválidos." };
-  if (!Number.isInteger(rpe) || rpe < 1 || rpe > 10) return { error: "Escolhe um esforço de 1 a 10." };
+  const clear = formData.get("clear") === "1";
+  if (rpe == null && !clear) return { error: "Escolhe uma nota de 1 a 10." };
 
   const dbUser = await getCurrentDbUser();
   if (!dbUser) return { error: "Sessão inválida." };
@@ -442,6 +444,26 @@ export async function setCoachRpeFromForm(
   if (access.error) return { error: access.error };
 
   const ids = attendanceIds.slice(0, 200);
+
+  // «Desfazer» de uma nota do coach que antes não existia: apaga-a (a do aluno nunca é tocada).
+  if (clear) {
+    const { error: e1 } = await supabase
+      .from("Attendance")
+      .update({ coachRpe: null })
+      .in("id", ids)
+      .eq("lessonId", lessonId)
+      .eq("occurrenceDate", occurrenceDate);
+    const { error: e2 } = await supabase
+      .from("Attendance")
+      .update({ rpe: null, rpeRecordedAt: null, rpeSource: null })
+      .in("id", ids)
+      .eq("lessonId", lessonId)
+      .eq("occurrenceDate", occurrenceDate)
+      .eq("rpeSource", "COACH");
+    if (e1 || e2) return { error: (e1 ?? e2)!.message };
+    revalidatePath("/coach/aula");
+    return { updated: ids.length };
+  }
 
   // 1) A nota do professor fica sempre guardada à parte (permite compará-la com a do aluno).
   const { data: coachRows, error: coachErr } = await supabase
@@ -482,4 +504,38 @@ async function attendanceSchoolError(attendanceId: string): Promise<string | nul
   if (!admin || !attendanceId) return null;
   const { data } = await admin.from("Attendance").select("lessonId").eq("id", attendanceId).maybeSingle();
   return data?.lessonId ? schoolAccessErrorForRows("Lesson", [data.lessonId as string]) : null;
+}
+
+/** Foco da aula num dia (até 2: Técnica, Tática, Sparring, Físico). Lista vazia apaga. */
+export async function setLessonFocusAction(input: {
+  lessonId: string;
+  occurrenceDate: string;
+  focus: string[];
+}): Promise<{ error?: string }> {
+  const lessonId = String(input.lessonId ?? "").trim();
+  const occurrenceDate = String(input.occurrenceDate ?? "").trim().slice(0, 10);
+  const focus = [...new Set((input.focus ?? []).filter(isLessonFocus))].slice(0, LESSON_FOCUS_MAX);
+  if (!lessonId || !/^\d{4}-\d{2}-\d{2}$/.test(occurrenceDate)) return { error: "Dados inválidos." };
+  { const schoolErr = await schoolAccessErrorForRows("Lesson", [lessonId]); if (schoolErr) return { error: schoolErr }; }
+
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser) return { error: "Sessão inválida." };
+  const supabase = await createClient();
+  const access = await assertCoachCanManageLesson(supabase, dbUser, lessonId);
+  if (access.error) return { error: access.error };
+
+  const admin = getAdminClientOrNull().client;
+  if (!admin) return { error: "Configuração do servidor em falta." };
+  const { error } = focus.length
+    ? await admin
+        .from("LessonOccurrenceFocus")
+        .upsert({ lessonId, occurrenceDate, focus, setByUserId: dbUser.id, updatedAt: new Date().toISOString() }, { onConflict: "lessonId,occurrenceDate" })
+    : await admin.from("LessonOccurrenceFocus").delete().eq("lessonId", lessonId).eq("occurrenceDate", occurrenceDate);
+  if (error) {
+    console.error("setLessonFocusAction error:", error);
+    return { error: error.message };
+  }
+  revalidatePath("/coach/aula");
+  revalidatePath("/coach/carga");
+  return {};
 }
