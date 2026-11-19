@@ -55,7 +55,7 @@ export function PhysicalAssessmentBodyMapPanel({
   return (
     <div
       className={[
-        "mx-auto flex max-w-[min(360px,94vw)] flex-col items-center gap-2 pt-1",
+        "mx-auto flex w-full max-w-[min(460px,100%)] flex-col items-center gap-2 pt-1",
         className ?? "",
       ]
         .filter(Boolean)

@@ -214,8 +214,8 @@ export function AnatomicalBodyMap({
     );
   }
 
-  const outerPad = compact ? "p-3 space-y-3" : "p-4 space-y-4";
-  const stageMax = compact ? "max-w-[240px]" : "max-w-[280px]";
+  const outerPad = compact ? "p-1 space-y-3" : "p-4 space-y-4";
+  const stageMax = compact ? "max-w-[360px]" : "max-w-[380px]";
   const classic = bodyStyle === "anatomical";
   const stageRatio = classic ? "aspect-[200/369]" : bodyStyle === "muscle" ? "aspect-[224/400]" : "aspect-[200/400]";
   const styleLabels: Record<BodyStyle, string> = { muscle: ui.muscle, silhouette: ui.silhouette, anatomical: ui.anatomical };
@@ -277,8 +277,8 @@ export function AnatomicalBodyMap({
         </div>
       ) : null}
 
-      <div className={compact ? "grid gap-3 grid-cols-1" : "grid gap-4 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start"}>
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] p-3">
+      <div className={compact ? "grid gap-3 grid-cols-1" : "grid gap-4 lg:grid-cols-[minmax(0,400px)_1fr] lg:items-start"}>
+        <div className="min-w-0">
           {generic
             ? null
             : segmented(
@@ -304,7 +304,7 @@ export function AnatomicalBodyMap({
 
           <div className={["relative mx-auto w-full", stageMax].join(" ")}>
             <div
-              className={["relative w-full select-none", classic ? "" : "rounded-xl border border-[var(--border)] p-1.5", stageRatio].join(" ")}
+              className={["relative w-full select-none", classic ? "" : "rounded-xl border border-[var(--border)] p-0.5", stageRatio].join(" ")}
               style={{
                 touchAction: "pan-y",
                 ...(classic ? {} : { background: "radial-gradient(ellipse at 50% 40%, #1d222c 0%, #11141a 72%)" }),
