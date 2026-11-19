@@ -5,6 +5,8 @@ import { addDays, lessonMinutes } from "@/lib/training-load";
 import { getLessonFocus } from "@/lib/lesson-focus.server";
 import { lessonFocusLabel } from "@/lib/rpe-labels";
 import { RpeOneTap } from "./RpeOneTap";
+import { bodyMeasuresFromForm } from "@/lib/body-map/measures";
+import { normalizePhysicalFormDataJson } from "@/lib/illustrative-body-silhouette";
 
 const toMin = (s: string | null | undefined) => {
   const m = /^(\d{1,2}):(\d{2})/.exec(s ?? "");
@@ -52,7 +54,19 @@ export async function HomeRpePrompt({ studentId, locale }: { studentId: string; 
   if (!candidate || !candidate.l) return null;
 
   const minutes = lessonMinutes(candidate.l.startTime, candidate.l.endTime);
-  const { data: rule } = await supabase.from("XpRule").select("xp").eq("source", "EFFORT_RATING").maybeSingle();
+  const [{ data: rule }, { data: lastPhys }] = await Promise.all([
+    supabase.from("XpRule").select("xp").eq("source", "EFFORT_RATING").maybeSingle(),
+    // Sexo da figura do «Onde dói?» (ficha física mais recente; sem ficha → figura masculina).
+    supabase
+      .from("StudentPhysicalAssessment")
+      .select("formData")
+      .eq("studentId", studentId)
+      .eq("status", "SUBMITTED")
+      .order("assessedAt", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  const sex = bodyMeasuresFromForm(normalizePhysicalFormDataJson((lastPhys as { formData?: unknown } | null)?.formData) ?? {}).sex;
   const xpReward = (rule as { xp?: number } | null)?.xp ?? 5;
   const isToday = String(candidate.a.occurrenceDate).slice(0, 10) === today;
   const when = isToday ? (pt ? "hoje" : "today") : pt ? "ontem" : "yesterday";
@@ -61,5 +75,5 @@ export async function HomeRpePrompt({ studentId, locale }: { studentId: string; 
   const focus = await getLessonFocus(candidate.l.id, String(candidate.a.occurrenceDate).slice(0, 10));
   const focusLabel = focus.length ? lessonFocusLabel(focus, pt) : null;
 
-  return <RpeOneTap attendanceId={candidate.a.id} subtitle={title} focusLabel={focusLabel} minutes={minutes} xpReward={xpReward} locale={locale} />;
+  return <RpeOneTap attendanceId={candidate.a.id} subtitle={title} focusLabel={focusLabel} minutes={minutes} xpReward={xpReward} locale={locale} sex={sex} />;
 }

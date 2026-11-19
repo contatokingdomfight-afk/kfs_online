@@ -258,3 +258,29 @@ export function buildBodyMarks(args: {
 
   return out;
 }
+
+/** Músculo tocado na Visão muscular → zona de dor (para registar a dor a tocar no corpo). */
+export const PAIN_KEY_BY_SLUG: Readonly<Record<string, BodyMarkKey>> = {
+  neck: "NECK",
+  trapezius: "TRAPEZIUS",
+  deltoids: "SHOULDER",
+  chest: "CHEST",
+  "upper-back": "UPPER_BACK",
+  "lower-back": "LOWER_BACK",
+  abs: "ABDOMEN",
+  obliques: "ABDOMEN",
+  biceps: "BICEPS",
+  triceps: "TRICEPS",
+  forearm: "FOREARM",
+  hands: "WRIST",
+  gluteal: "GLUTES",
+  adductors: "GROIN",
+  abductors: "HIPS",
+  quadriceps: "QUADRICEPS",
+  hamstring: "HAMSTRING",
+  knees: "KNEE",
+  tibialis: "SHIN",
+  calves: "CALF",
+  ankles: "ANKLE",
+  feet: "FOOT",
+};

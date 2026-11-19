@@ -1,13 +1,16 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useCallback, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { RpeSlider, rpeScale } from "@/components/training-load/RpeSlider";
 import { submitRpeAction, type RpeFormState } from "./bem-estar/actions";
 import { RPE_PERSONAL_HINT, RPE_QUESTION } from "@/lib/rpe-labels";
+import { PainPickerModal, type RegisteredPain } from "@/components/training-load/PainPickerModal";
+import { painRegionLabel } from "@/lib/body-map/marks";
+import type { BodySex } from "@/lib/body-map/measures";
 
 type Props = {
   attendanceId: string;
@@ -17,6 +20,8 @@ type Props = {
   minutes: number;
   xpReward: number;
   locale: "pt" | "en";
+  /** Figura do «Onde dói?» (masculina/feminina), a partir da ficha física. */
+  sex?: BodySex;
 };
 
 function SaveButton({ disabled, pt }: { disabled: boolean; pt: boolean }) {
@@ -44,7 +49,7 @@ function SaveButton({ disabled, pt }: { disabled: boolean; pt: boolean }) {
 }
 
 /** «Quão cansado saíste do treino?»: slider 1–10 em meios pontos + Guardar. */
-export function RpeOneTap({ attendanceId, subtitle, focusLabel, minutes, xpReward, locale }: Props) {
+export function RpeOneTap({ attendanceId, subtitle, focusLabel, minutes, xpReward, locale, sex = "m" }: Props) {
   const pt = locale !== "en";
   const [rpe, setRpe] = useState<number | null>(null);
   const [state, action] = useActionState(async (prev: RpeFormState, fd: FormData) => {
@@ -52,15 +57,71 @@ export function RpeOneTap({ attendanceId, subtitle, focusLabel, minutes, xpRewar
     return res ?? {};
   }, null as RpeFormState);
   const saved = state !== null && !state.error && rpe != null;
+  const [pains, setPains] = useState<RegisteredPain[]>([]);
+  const [painDone, setPainDone] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const closePicker = useCallback(() => setPickerOpen(false), []);
 
   if (saved) {
+    const answerBtn: React.CSSProperties = {
+      flex: 1,
+      minHeight: 46,
+      borderRadius: 12,
+      border: "1px solid var(--border)",
+      background: "var(--bg-primary)",
+      color: "var(--text-primary)",
+      font: "inherit",
+      fontSize: 14,
+      fontWeight: 700,
+      cursor: "pointer",
+    };
     return (
-      <div role="status" style={{ display: "flex", alignItems: "center", gap: 12, padding: 14, borderRadius: 18, border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
-        <CheckCircle2 size={22} color="var(--success)" aria-hidden />
-        <span style={{ fontSize: 14, fontWeight: 700 }}>
-          {pt ? `Guardado · carga ${Math.round(rpe * minutes)}` : `Saved · load ${Math.round(rpe * minutes)}`}
-          {xpReward > 0 ? <span style={{ marginLeft: 8, color: "var(--primary)" }}>+{xpReward} XP</span> : null}
-        </span>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 14, borderRadius: 18, border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
+        <div role="status" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <CheckCircle2 size={22} color="var(--success)" aria-hidden />
+          <span style={{ fontSize: 14, fontWeight: 700 }}>
+            {pt ? `Guardado · carga ${Math.round(rpe * minutes)}` : `Saved · load ${Math.round(rpe * minutes)}`}
+            {xpReward > 0 ? <span style={{ marginLeft: 8, color: "var(--primary)" }}>+{xpReward} XP</span> : null}
+          </span>
+        </div>
+        {pains.map((p, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, fontWeight: 600 }}>
+            <AlertCircle size={22} color="#ef4444" aria-hidden />
+            <span>
+              {pt ? "Dor" : "Pain"} · {painRegionLabel(p.key, locale)}
+              {p.side ? ` (${p.side === "LEFT" ? (pt ? "esquerdo" : "left") : pt ? "direito" : "right"})` : ""} · {p.intensity}/10
+            </span>
+          </div>
+        ))}
+        {!painDone ? (
+          <>
+            <div style={{ height: 1, background: "var(--border)" }} />
+            <span style={{ fontSize: 15, fontWeight: 800 }}>
+              {pains.length ? (pt ? "Mais alguma dor?" : "Any other pain?") : pt ? "Ficaste com alguma dor?" : "Any pain after training?"}
+            </span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" style={answerBtn} onClick={() => setPainDone(true)}>
+                {pains.length ? (pt ? "Não, é tudo" : "No, that's all") : pt ? "Não, tudo bem" : "No, all good"}
+              </button>
+              <button type="button" style={answerBtn} onClick={() => setPickerOpen(true)}>
+                {pt ? "Sim" : "Yes"}
+              </button>
+            </div>
+          </>
+        ) : pains.length === 0 ? (
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{pt ? "Ótimo — bom descanso! 💪" : "Great — rest well! 💪"}</span>
+        ) : null}
+        <PainPickerModal
+          open={pickerOpen}
+          sex={sex}
+          locale={locale}
+          previous={pains}
+          onClose={closePicker}
+          onSaved={(p) => {
+            setPains((prev) => [...prev, p]);
+            setPickerOpen(false);
+          }}
+        />
       </div>
     );
   }
