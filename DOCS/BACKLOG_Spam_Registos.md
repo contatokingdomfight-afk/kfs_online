@@ -11,3 +11,11 @@ Contexto (2026-11-04): bots criam contas com nomes aleatórios (ex.: «cMwoPrHwf
 - ✅ **Confirmação de e-mail obrigatória** no Supabase: confirmado ligado em 2026-11-18 (Auth → Sign In / Providers → «Confirm email»).
 - O filtro de nome corre só no browser: um bot que chame a API do Supabase diretamente contorna-o. O captcha resolve isto.
 - Opcional: apagar de vez (auth + User + Student) contas vazias antigas — hoje só ficam ocultas.
+
+## Ligar o captcha (passos por fazer, por esta ordem)
+O código está em `main` (d2562ed) e está **inativo** enquanto não houver a chave.
+- [ ] Cloudflare → Turnstile → criar um widget para os domínios da app. Dá uma *site key* (pública) e uma *secret key*.
+- [ ] Vercel (Production): definir `NEXT_PUBLIC_TURNSTILE_SITE_KEY` e fazer deploy.
+- [ ] **Só depois do deploy:** Supabase → Authentication → Attack Protection → ligar CAPTCHA → Turnstile → colar a *secret key*. Se se ligar antes, o login deixa de funcionar até sair o deploy.
+- [ ] Testar registo, login, «reenviar confirmação», recuperar palavra-passe e mudar palavra-passe no perfil; testar também na app instalada (Capacitor) e no iPhone.
+- [ ] Se algo falhar: desligar o captcha no Supabase (reverte de imediato; o código continua a funcionar sem ele).
