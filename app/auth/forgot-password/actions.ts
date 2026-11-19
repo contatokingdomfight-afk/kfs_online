@@ -50,7 +50,10 @@ export async function requestPasswordReset(
   const redirectTo = `${siteUrl}/auth/update-password`;
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo,
+    ...((formData.get("captchaToken") as string) ? { captchaToken: formData.get("captchaToken") as string } : {}),
+  });
 
   if (error) {
     console.error("[forgot-password] resetPasswordForEmail:", error.message, "| redirectTo:", redirectTo);

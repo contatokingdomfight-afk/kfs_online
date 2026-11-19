@@ -11,6 +11,7 @@ import { buildAuthCallbackUrl } from "@/lib/auth/oauth-callback-url";
 import { openOAuthAuthorizeUrl } from "@/lib/capacitor-open-oauth";
 import { isEmailNotConfirmedError } from "@/lib/auth/email-confirmation";
 import { translateAuthErrorMessage } from "@/lib/auth/auth-error-messages";
+import { TurnstileWidget, captchaOptions, turnstileEnabled } from "@/components/TurnstileWidget";
 import { getTranslations } from "@/lib/i18n";
 import { BRAND_LOGO_SVG } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n";
@@ -36,6 +37,8 @@ export function SignInForm() {
   const accountDeleted = searchParams.get("deleted") === "1";
   const [showResendVerification, setShowResendVerification] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
 
   const overlayOpen = savePhase !== "idle" || googleLoading;
   const overlayMessage = googleLoading
@@ -54,8 +57,10 @@ export function SignInForm() {
     const { error: err } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: captchaOptions(captchaToken),
     });
     if (err) {
+      setCaptchaReset((n) => n + 1);
       setSavePhase("idle");
       if (isEmailNotConfirmedError(err.message)) {
         setShowResendVerification(true);
@@ -103,7 +108,8 @@ export function SignInForm() {
     if (!email.trim()) return;
     setResendMessage(null);
     const supabase = createClient();
-    const { error: err } = await supabase.auth.resend({ type: "signup", email: email.trim() });
+    const { error: err } = await supabase.auth.resend({ type: "signup", email: email.trim(), options: captchaOptions(captchaToken) });
+    setCaptchaReset((n) => n + 1);
     if (err) {
       setResendMessage(translateAuthErrorMessage(err.message, initialLocale));
       return;
@@ -224,7 +230,8 @@ export function SignInForm() {
               {resendMessage}
             </p>
           )}
-          <button type="submit" disabled={overlayOpen} className="btn btn-primary w-full">
+          <TurnstileWidget onToken={setCaptchaToken} resetKey={captchaReset} locale={initialLocale} />
+          <button type="submit" disabled={overlayOpen || (turnstileEnabled && !captchaToken)} className="btn btn-primary w-full">
             {t("signIn")}
           </button>
         </form>

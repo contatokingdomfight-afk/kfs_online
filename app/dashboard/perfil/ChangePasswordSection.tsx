@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { TurnstileWidget, captchaOptions, turnstileEnabled } from "@/components/TurnstileWidget";
 import { getTranslations } from "@/lib/i18n";
 
 type Props = {
@@ -18,6 +19,8 @@ export function ChangePasswordSection({ email, locale }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
 
   useEffect(() => {
     const supabase = createClient();
@@ -49,7 +52,8 @@ export function ChangePasswordSection({ email, locale }: Props) {
 
     setLoading(true);
     const supabase = createClient();
-    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password: currentPassword });
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password: currentPassword, options: captchaOptions(captchaToken) });
+    setCaptchaReset((n) => n + 1);
     if (signInErr) {
       setLoading(false);
       setError(t("changePasswordWrongCurrent"));
@@ -87,7 +91,8 @@ export function ChangePasswordSection({ email, locale }: Props) {
         </label>
         {error && <p style={{ margin: 0, fontSize: 14, color: "var(--danger)" }}>{error}</p>}
         {success && <p style={{ margin: 0, fontSize: 14, color: "var(--success)" }}>{t("changePasswordSuccess")}</p>}
-        <button type="submit" className="btn btn-primary" disabled={loading} style={{ alignSelf: "flex-start" }}>
+        <TurnstileWidget onToken={setCaptchaToken} resetKey={captchaReset} locale={locale} />
+        <button type="submit" className="btn btn-primary" disabled={loading || (turnstileEnabled && !captchaToken)} style={{ alignSelf: "flex-start" }}>
           {loading ? t("loading") : t("changePasswordSubmit")}
         </button>
       </form>

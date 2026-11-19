@@ -79,11 +79,12 @@ export function AuthSessionKeepAlive() {
           const {
             data: { session },
           } = await supabase.auth.getSession();
+          // JWT ainda válido: nada a recuperar. Antes fazia-se aqui um `getUser()` (pedido a /auth/v1/user)
+          // a cada regresso ao ecrã, em pares (visibilitychange + pageshow + focus + segundo passe),
+          // o que enchia os logs do Supabase sem benefício: o middleware já valida a sessão em cada pedido.
           if (shouldRefreshAccessJwt(session)) {
             const { error } = await supabase.auth.refreshSession();
             if (error) await supabase.auth.getUser();
-          } else {
-            await supabase.auth.getUser();
           }
         } catch {
           try {

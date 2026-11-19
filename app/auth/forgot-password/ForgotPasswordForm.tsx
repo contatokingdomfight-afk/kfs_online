@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { TurnstileWidget, turnstileEnabled } from "@/components/TurnstileWidget";
 import Link from "next/link";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
@@ -9,6 +10,12 @@ import { requestPasswordReset, type RequestPasswordResetState } from "./actions"
 export function ForgotPasswordForm({ initialLocale }: { initialLocale: Locale }) {
   const t = getTranslations(initialLocale);
   const [state, formAction, pending] = useActionState(requestPasswordReset, null as RequestPasswordResetState | null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  // O token só vale uma vez: depois de cada tentativa falhada pede-se um novo.
+  useEffect(() => {
+    if (state?.error) setCaptchaReset((n) => n + 1);
+  }, [state]);
 
   if (state?.success) {
     return (
@@ -48,7 +55,9 @@ export function ForgotPasswordForm({ initialLocale }: { initialLocale: Locale })
               {state.error}
             </p>
           )}
-          <button type="submit" disabled={pending} className="btn btn-primary w-full">
+          <input type="hidden" name="captchaToken" value={captchaToken ?? ""} />
+          <TurnstileWidget onToken={setCaptchaToken} resetKey={captchaReset} locale={initialLocale} />
+          <button type="submit" disabled={pending || (turnstileEnabled && !captchaToken)} className="btn btn-primary w-full">
             {pending ? t("loading") : t("forgotPasswordSubmit")}
           </button>
         </form>

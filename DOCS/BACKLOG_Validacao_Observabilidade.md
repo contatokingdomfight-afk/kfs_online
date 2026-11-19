@@ -23,7 +23,8 @@ Pontos já corrigidos cujo efeito ainda tem de ser confirmado em produção, e c
 ## 2. Supabase — Log Ingestion (104 %)
 
 - 1,04 GB de 1 GB. Segundo o painel, só começa a ser cobrado no início de 2027. Vigiar.
-- Uma fonte possível: o `AuthSessionKeepAlive` chama `/auth/v1/user` a cada minuto e **aos pares** num iPhone. Ver se o componente está montado duas vezes.
+- ✅ 2026-11-19: o `AuthSessionKeepAlive` só está montado uma vez (`app/layout.tsx`); o que duplicava pedidos era o `getUser()` feito a cada regresso ao ecrã (visibilitychange + pageshow + focus + segundo passe). Removido quando o JWT ainda é válido. Falta confirmar no painel que o Log Ingestion baixa no ciclo seguinte; o resto vem do middleware (um `getUser` por pedido).
+- (Hipótese original) Uma fonte possível: o `AuthSessionKeepAlive` chama `/auth/v1/user` a cada minuto e **aos pares** num iPhone. Ver se o componente está montado duas vezes.
 
 ## 3. Vercel Hobby — Fluid Active CPU
 

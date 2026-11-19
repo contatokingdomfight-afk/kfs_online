@@ -10,6 +10,7 @@ import { buildAuthCallbackUrl } from "@/lib/auth/oauth-callback-url";
 import { openOAuthAuthorizeUrl } from "@/lib/capacitor-open-oauth";
 import { translateAuthErrorMessage } from "@/lib/auth/auth-error-messages";
 import { isSuspiciousName } from "@/lib/auth/suspicious-name";
+import { TurnstileWidget, captchaOptions, turnstileEnabled } from "@/components/TurnstileWidget";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -24,6 +25,8 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
   const [rememberDevice, setRememberDevice] = useState(true);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
   const router = useRouter();
 
   async function handleGoogleSignIn() {
@@ -74,6 +77,7 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
       email,
       password,
       options: {
+        ...captchaOptions(captchaToken),
         data: { full_name: name.trim() || undefined, ...(isShopNextPath(initialNext) ? { [SHOP_ONLY_METADATA_KEY]: true } : {}) },
         // Vai parar a `{{ .RedirectTo }}` no template de confirmação — ver app/auth/confirm/route.ts
         // (não usa /auth/callback aqui de propósito: PKCE exige o code-verifier no mesmo browser que
@@ -83,6 +87,7 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
     });
     setLoading(false);
     if (err) {
+      setCaptchaReset((n) => n + 1);
       setError(translateAuthErrorMessage(err.message, initialLocale));
       return;
     }
@@ -189,7 +194,8 @@ export function SignUpForm({ initialLocale, initialNext }: { initialLocale: Loca
               .
             </span>
           </label>
-          <button type="submit" disabled={loading || !acceptedTerms} className="btn btn-primary w-full">
+          <TurnstileWidget onToken={setCaptchaToken} resetKey={captchaReset} locale={initialLocale} />
+          <button type="submit" disabled={loading || !acceptedTerms || (turnstileEnabled && !captchaToken)} className="btn btn-primary w-full">
             {loading ? t("creatingAccount") : t("signUp")}
           </button>
         </form>

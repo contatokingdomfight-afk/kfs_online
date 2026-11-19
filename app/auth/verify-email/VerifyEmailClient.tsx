@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { TurnstileWidget, captchaOptions, turnstileEnabled } from "@/components/TurnstileWidget";
 import { getTranslations } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -13,6 +14,8 @@ export function VerifyEmailClient({ email, locale }: Props) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
 
   async function handleResend() {
     if (!email) return;
@@ -20,7 +23,8 @@ export function VerifyEmailClient({ email, locale }: Props) {
     setError(null);
     setMessage(null);
     const supabase = createClient();
-    const { error: err } = await supabase.auth.resend({ type: "signup", email });
+    const { error: err } = await supabase.auth.resend({ type: "signup", email, options: captchaOptions(captchaToken) });
+    setCaptchaReset((n) => n + 1);
     setLoading(false);
     if (err) {
       setError(err.message);
@@ -48,10 +52,13 @@ export function VerifyEmailClient({ email, locale }: Props) {
             {error}
           </p>
         )}
+        <div className="mb-4">
+          <TurnstileWidget onToken={setCaptchaToken} resetKey={captchaReset} locale={locale} />
+        </div>
         <button
           type="button"
           onClick={handleResend}
-          disabled={loading || !email}
+          disabled={loading || !email || (turnstileEnabled && !captchaToken)}
           className="btn btn-primary w-full mb-4"
         >
           {loading ? t("loading") : t("verifyEmailResend")}
