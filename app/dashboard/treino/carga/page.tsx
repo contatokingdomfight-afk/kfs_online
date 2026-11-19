@@ -10,6 +10,7 @@ import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { computeTrainingLoad, ZONE_COLORS, ZONE_LIMITS, zoneLabel, type TrainingLoadZone } from "@/lib/training-load";
 import { loadTrainingSessions } from "@/lib/training-load.server";
 import { TrainingLoadExplainer } from "@/components/training-load/TrainingLoadExplainer";
+import { RpeScaleExplainer } from "@/components/training-load/RpeScaleExplainer";
 
 export const dynamic = "force-dynamic";
 
@@ -275,6 +276,8 @@ export default async function CargaPage() {
           ))}
         </div>
       </section>
+
+      <RpeScaleExplainer pt={pt} />
     </div>
   );
 }

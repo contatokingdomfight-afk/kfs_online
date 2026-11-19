@@ -388,7 +388,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <OpenClassesCarouselShell
           itemCount={primaryNextRows.length}
           sectionTitle={t("dashboardNextLessonTitle")}
-          swipeHint={t("dashboardNextLessonCarouselHint")}
+          swipeHint=""
           ariaLabelPrev={t("dashboardCarouselPrev")}
           ariaLabelNext={t("dashboardCarouselNext")}
         >

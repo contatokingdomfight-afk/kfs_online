@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { ClassicBodyFigure } from "@/components/physical-assessment/ClassicBodyFigure";
 import { SilhouetteBodyFigure } from "@/components/physical-assessment/SilhouetteBodyFigure";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import type { PhysicalAssessmentFormData } from "@/lib/physical-assessment-types";
 import {
   type AnatomicalBodyMapRegionId,
@@ -97,14 +98,12 @@ export function AnatomicalBodyMap({
 
   const bodyStyle: BodyStyle = generic ? "muscle" : styleChoice;
 
-  /** Passa à vista seguinte (+1) ou anterior (−1), em ciclo. */
-  const stepStyle = useCallback(
-    (delta: 1 | -1) => {
-      const i = BODY_STYLES.indexOf(styleChoice);
-      setStyleChoice(BODY_STYLES[(i + delta + BODY_STYLES.length) % BODY_STYLES.length]);
-    },
-    [styleChoice]
-  );
+  /** Alterna entre frontal e dorsal (arrastar para o lado, setas e pontos). */
+  const flipView = useCallback(() => {
+    setView((v) => (v === "front" ? "back" : "front"));
+    setPinned(null);
+    setHover(null);
+  }, []);
 
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
@@ -139,9 +138,10 @@ export function AnatomicalBodyMap({
         silhouette: "Silhueta",
         muscle: "Visão muscular",
         anatomical: "Anatómica",
-        prevStyle: "Vista anterior",
-        nextStyle: "Vista seguinte",
-        swipeHint: "Desliza para o lado para mudar de vista",
+        seeBack: "Ver dorsal",
+        seeFront: "Ver frontal",
+        swipeToBack: "Desliza para o lado para ver as costas",
+        swipeToFront: "Desliza para o lado para ver a frente",
         panelEyebrow: "Região",
         panelEmpty: "Escolhe uma zona no esquema para ver os dados registados.",
         noData: "Sem dados por região nesta ficha (preenche antropometria ou observações de postura/mobilidade).",
@@ -171,9 +171,10 @@ export function AnatomicalBodyMap({
         silhouette: "Silhouette",
         muscle: "Muscle view",
         anatomical: "Anatomical",
-        prevStyle: "Previous view",
-        nextStyle: "Next view",
-        swipeHint: "Swipe sideways to change view",
+        seeBack: "Show back",
+        seeFront: "Show front",
+        swipeToBack: "Swipe sideways to see the back",
+        swipeToFront: "Swipe sideways to see the front",
         panelEyebrow: "Region",
         panelEmpty: "Select an area on the figure to see recorded data.",
         noData: "No per-region data on this form (add anthropometry or posture/mobility notes).",
@@ -201,6 +202,8 @@ export function AnatomicalBodyMap({
     setPinned((prev) => (prev === r ? null : r));
   }, []);
 
+  const compactTip = [ui.subtitle, !generic && assessedAtLabel?.trim() ? `${L ? "Avaliação:" : "Assessment:"} ${assessedAtLabel.trim()}` : ""].filter(Boolean).join(" ");
+
   const showMap = generic || hasRegionData || overall.weight != null || overall.height != null || overall.bmi != null;
   if (!showMap) {
     return (
@@ -222,10 +225,11 @@ export function AnatomicalBodyMap({
   const segmented = (
     items: Array<{ key: string; label: string; on: boolean; onClick: () => void }>,
     groupLabel: string,
-    spaced?: boolean
+    spaced?: boolean,
+    desktopOnly?: boolean
   ) => (
     <div
-      className={["flex rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-0.5", spaced ? "mb-2" : "mb-3"].join(" ")}
+      className={[desktopOnly ? "hidden lg:flex" : "flex", "rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-0.5", spaced ? "mb-2" : "mb-3"].join(" ")}
       role="group"
       aria-label={groupLabel}
     >
@@ -265,13 +269,13 @@ export function AnatomicalBodyMap({
             </p>
           ) : null}
         </div>
-      ) : !generic && assessedAtLabel?.trim() ? (
-        <p className="m-0 text-[11px] text-[var(--text-secondary)]">
-          {L ? "Avaliação:" : "Assessment:"} {assessedAtLabel.trim()}
-        </p>
       ) : null}
 
-      {compact ? <p className="m-0 text-[11px] text-[var(--text-secondary)] leading-relaxed">{ui.subtitle}</p> : null}
+      {compact ? (
+        <div className="flex justify-end">
+          <InlineInfoTip detail={compactTip} ariaLabel={ui.title} />
+        </div>
+      ) : null}
 
       <div className={compact ? "grid gap-3 grid-cols-1" : "grid gap-4 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start"}>
         <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] p-3">
@@ -293,18 +297,19 @@ export function AnatomicalBodyMap({
                 setHover(null);
               },
             })),
-            ui.viewGroup
+            ui.viewGroup,
+            false,
+            true
           )}
 
           <div className={["relative mx-auto w-full", stageMax].join(" ")}>
             <div
               className={["relative w-full select-none", classic ? "" : "rounded-xl border border-[var(--border)] p-1.5", stageRatio].join(" ")}
               style={{
-                touchAction: generic ? undefined : "pan-y",
+                touchAction: "pan-y",
                 ...(classic ? {} : { background: "radial-gradient(ellipse at 50% 40%, #1d222c 0%, #11141a 72%)" }),
               }}
               onPointerDown={(e) => {
-                if (generic) return;
                 swipeStart.current = { x: e.clientX, y: e.clientY };
                 swiped.current = false;
               }}
@@ -316,7 +321,7 @@ export function AnatomicalBodyMap({
                 const dy = e.clientY - s.y;
                 if (Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
                   swiped.current = true;
-                  stepStyle(dx < 0 ? 1 : -1);
+                  flipView();
                 }
               }}
               onPointerCancel={() => {
@@ -349,14 +354,12 @@ export function AnatomicalBodyMap({
                 />
               )}
             </div>
-            {generic
-              ? null
-              : (["prev", "next"] as const).map((dir) => (
+            {(["prev", "next"] as const).map((dir) => (
                   <button
                     key={dir}
                     type="button"
-                    aria-label={dir === "prev" ? ui.prevStyle : ui.nextStyle}
-                    onClick={() => stepStyle(dir === "prev" ? -1 : 1)}
+                    aria-label={view === "front" ? ui.seeBack : ui.seeFront}
+                    onClick={flipView}
                     className={[
                       "absolute top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full",
                       "border border-white/15 bg-black/45 text-lg leading-none text-white transition-colors hover:bg-black/65",
@@ -368,28 +371,24 @@ export function AnatomicalBodyMap({
                 ))}
           </div>
 
-          {generic ? null : (
-            <>
-              <div className="mt-2 flex items-center justify-center gap-2" role="group" aria-label={ui.styleGroup}>
-                {BODY_STYLES.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    aria-label={styleLabels[s]}
-                    aria-pressed={bodyStyle === s}
-                    onClick={() => setStyleChoice(s)}
-                    className={[
-                      "h-2 rounded-full transition-all",
-                      bodyStyle === s ? "w-5 bg-[var(--text-primary)]" : "w-2 bg-[var(--text-secondary)] opacity-40 hover:opacity-70",
-                    ].join(" ")}
-                  />
-                ))}
-              </div>
-              <p className="m-0 mt-1 text-center text-[11px] text-[var(--text-secondary)]">
-                {styleLabels[bodyStyle]} · {ui.swipeHint}
-              </p>
-            </>
-          )}
+          <div className="mt-2 flex items-center justify-center gap-2" role="group" aria-label={ui.viewGroup}>
+            {(["front", "back"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                aria-label={v === "front" ? ui.front : ui.back}
+                aria-pressed={view === v}
+                onClick={() => {
+                  if (view !== v) flipView();
+                }}
+                className={[
+                  "h-2 rounded-full transition-all",
+                  view === v ? "w-5 bg-[var(--text-primary)]" : "w-2 bg-[var(--text-secondary)] opacity-40 hover:opacity-70",
+                ].join(" ")}
+              />
+            ))}
+          </div>
+          <p className="m-0 mt-1 text-center text-[11px] text-[var(--text-secondary)]">{view === "front" ? ui.swipeToBack : ui.swipeToFront}</p>
 
           <ul className="m-0 mt-3 flex list-none flex-wrap justify-center gap-x-4 gap-y-1 p-0 text-[11px] text-[var(--text-secondary)]">
             {classic || generic ? null : (

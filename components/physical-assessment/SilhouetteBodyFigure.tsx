@@ -100,7 +100,7 @@ export function SilhouetteBodyFigure({ view, sex, measures, definition, status, 
         })}
 
         {model.zones.map((z) => {
-          const ms = regionMarkStyle(marks, z.region);
+          const ms = regionMarkStyle(marks, z.region, view);
           if (!ms) return null;
           return (
             <g

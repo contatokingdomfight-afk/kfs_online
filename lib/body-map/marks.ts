@@ -50,17 +50,36 @@ export const BODY_SIDES = [
   { key: "BOTH", pt: "Ambos os lados", en: "Both sides" },
 ] as const;
 
-type Target = { regions: AnatomicalBodyMapRegionId[]; slugs: string[]; limb?: "Leg" | "Arm" };
+type MapView = "front" | "back";
+type Target = { regions: AnatomicalBodyMapRegionId[]; slugs: string[]; limb?: "Leg" | "Arm"; /** Só se vê nestas vistas (omitido = ambas). */ views?: MapView[] };
+
+const LEGS: AnatomicalBodyMapRegionId[] = ["leftLeg", "rightLeg"];
+const ARMS: AnatomicalBodyMapRegionId[] = ["leftArm", "rightArm"];
 
 /** Onde cada zona de dor/lesão se desenha (regiões do mapa + músculos exatos da Visão muscular). */
 const TARGETS: Record<BodyMarkKey, Target> = {
-  KNEE: { regions: ["leftLeg", "rightLeg"], slugs: ["knees"], limb: "Leg" },
-  ANKLE: { regions: ["leftLeg", "rightLeg"], slugs: ["ankles", "feet"], limb: "Leg" },
-  SHOULDER: { regions: ["leftArm", "rightArm"], slugs: ["deltoids"], limb: "Arm" },
-  WRIST: { regions: ["leftArm", "rightArm"], slugs: ["hands"], limb: "Arm" },
-  LOWER_BACK: { regions: ["lowerBack"], slugs: ["lower-back"] },
   NECK: { regions: ["neck", "trapezius"], slugs: ["neck", "trapezius"] },
+  SHOULDER: { regions: ARMS, slugs: ["deltoids"], limb: "Arm" },
+  TRAPEZIUS: { regions: ["neck", "trapezius"], slugs: ["trapezius"] },
+  CHEST: { regions: ["chest"], slugs: ["chest"], views: ["front"] },
+  UPPER_BACK: { regions: ["upperBack"], slugs: ["upper-back"], views: ["back"] },
+  LOWER_BACK: { regions: ["lowerBack"], slugs: ["lower-back"], views: ["back"] },
+  ABDOMEN: { regions: ["abdomen"], slugs: ["abs", "obliques"], views: ["front"] },
+  BICEPS: { regions: ARMS, slugs: ["biceps"], limb: "Arm", views: ["front"] },
+  TRICEPS: { regions: ARMS, slugs: ["triceps"], limb: "Arm", views: ["back"] },
+  ELBOW: { regions: ARMS, slugs: ["forearm"], limb: "Arm" },
+  FOREARM: { regions: ARMS, slugs: ["forearm"], limb: "Arm" },
+  WRIST: { regions: ARMS, slugs: ["hands"], limb: "Arm" },
   HIPS: { regions: ["abdomen", "glutes"], slugs: ["gluteal"] },
+  GLUTES: { regions: ["glutes"], slugs: ["gluteal"], views: ["back"] },
+  GROIN: { regions: LEGS, slugs: ["adductors"], limb: "Leg" },
+  QUADRICEPS: { regions: LEGS, slugs: ["quadriceps"], limb: "Leg", views: ["front"] },
+  HAMSTRING: { regions: LEGS, slugs: ["hamstring"], limb: "Leg", views: ["back"] },
+  KNEE: { regions: LEGS, slugs: ["knees"], limb: "Leg" },
+  SHIN: { regions: LEGS, slugs: ["tibialis"], limb: "Leg", views: ["front"] },
+  CALF: { regions: LEGS, slugs: ["calves"], limb: "Leg" },
+  ANKLE: { regions: LEGS, slugs: ["ankles", "feet"], limb: "Leg" },
+  FOOT: { regions: LEGS, slugs: ["feet"], limb: "Leg" },
   OTHER: { regions: [], slugs: [] },
 };
 
@@ -70,15 +89,16 @@ const INJURY_COLOR = "#8b5cf6";
 export type RegionMarkStyle = { color: string; opacity: number; dashed: boolean; hasPain: boolean; hasInjury: boolean };
 
 /** Regiões onde a marca se desenha (um só lado quando o aluno o indicou). */
-function targetRegions(m: BodyMark): AnatomicalBodyMapRegionId[] {
+function targetRegions(m: BodyMark, view?: MapView): AnatomicalBodyMapRegionId[] {
   const t = TARGETS[m.key];
+  if (view && t.views && !t.views.includes(view)) return [];
   if (!t.limb || !m.side || m.side === "BOTH") return t.regions;
   const id = `${m.side === "LEFT" ? "left" : "right"}${t.limb}` as AnatomicalBodyMapRegionId;
   return [id];
 }
 
-export function marksForRegion(marks: readonly BodyMark[], region: AnatomicalBodyMapRegionId): BodyMark[] {
-  return marks.filter((m) => targetRegions(m).includes(region));
+export function marksForRegion(marks: readonly BodyMark[], region: AnatomicalBodyMapRegionId, view?: MapView): BodyMark[] {
+  return marks.filter((m) => targetRegions(m, view).includes(region));
 }
 
 /** A marca acende este músculo (slug) da Visão muscular? */
@@ -88,8 +108,8 @@ export function markCoversPath(m: BodyMark, region: AnatomicalBodyMapRegionId | 
 }
 
 /** Estilo agregado de uma região (dor = vermelho; só lesão = violeta tracejado). */
-export function regionMarkStyle(marks: readonly BodyMark[], region: AnatomicalBodyMapRegionId): RegionMarkStyle | null {
-  const ms = marksForRegion(marks, region);
+export function regionMarkStyle(marks: readonly BodyMark[], region: AnatomicalBodyMapRegionId, view?: MapView): RegionMarkStyle | null {
+  const ms = marksForRegion(marks, region, view);
   if (ms.length === 0) return null;
   const pains = ms.filter((m) => m.kind === "pain");
   const injuries = ms.filter((m) => m.kind === "injury");
@@ -120,6 +140,19 @@ function keyFromText(region: string | undefined | null): BodyMarkKey | null {
   const direct = PAIN_REGIONS.find((r) => r.key === raw.toUpperCase());
   if (direct) return direct.key;
   const s = raw.toLowerCase();
+  if (/isquio|hamstring|posterior da coxa/.test(s)) return "HAMSTRING";
+  if (/quadr[ií]ceps|frente da coxa/.test(s)) return "QUADRICEPS";
+  if (/gl[uú]teo|glute/.test(s)) return "GLUTES";
+  if (/g[eé]meo|panturrilha|calf/.test(s)) return "CALF";
+  if (/canela|shin/.test(s)) return "SHIN";
+  if (/b[ií]ceps|biceps/.test(s)) return "BICEPS";
+  if (/tr[ií]ceps|triceps/.test(s)) return "TRICEPS";
+  if (/antebra|forearm/.test(s)) return "FOREARM";
+  if (/cotovelo|elbow/.test(s)) return "ELBOW";
+  if (/virilha|adutor|groin/.test(s)) return "GROIN";
+  if (/peito|peitoral|chest/.test(s)) return "CHEST";
+  if (/abd[oó]men|costela|rib/.test(s)) return "ABDOMEN";
+  if (/trap[eé]zio|trapezius/.test(s)) return "TRAPEZIUS";
   if (/joelh|knee/.test(s)) return "KNEE";
   if (/tornoz|ankle|\bp[eé]s?\b/.test(s)) return "ANKLE";
   if (/ombr|shoulder|clav/.test(s)) return "SHOULDER";

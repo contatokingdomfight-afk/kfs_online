@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { InlineInfoTip } from "@/components/ui/InlineInfoTip";
 import { CheckCircle2, AlertTriangle, ArrowDown, ArrowUp, Stethoscope, Moon, BedDouble, Droplet, Wind, Battery, type LucideIcon } from "lucide-react";
 import type { CheckInWellnessAggregates } from "@/lib/check-in-wellness-aggregates";
 
@@ -230,8 +231,8 @@ export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
           <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-text-primary">
             <Stethoscope size={20} aria-hidden />
             {copy.title}
+            <InlineInfoTip detail={copy.intro} ariaLabel={copy.title} />
           </h2>
-          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-text-secondary">{copy.intro}</p>
         </div>
         <span className="inline-flex shrink-0 items-center rounded-full border border-border bg-bg px-3 py-1.5 text-xs font-medium text-text-secondary">
           {copy.sample}
@@ -300,10 +301,7 @@ export function CheckInWellnessSection({ data, copy, bodyMappingSlot }: Props) {
 
       {hasZones && (
         <div className="mt-6 rounded-2xl border border-border bg-transparent p-4 sm:p-5">
-          <h3 className="text-sm font-semibold text-text-primary">{copy.zonesTitle}</h3>
-          <p className="mb-3 mt-1 text-xs text-text-secondary">
-            {copy.zoneGreen} · {copy.zoneYellow} · {copy.zoneRed}
-          </p>
+          <h3 className="mb-3 text-sm font-semibold text-text-primary">{copy.zonesTitle}</h3>
           <div className="flex h-4 overflow-hidden rounded-full border border-border" role="img" aria-label={copy.zonesTitle}>
             {zoneShare.green > 0 && (
               <div

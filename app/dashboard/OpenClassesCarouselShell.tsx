@@ -129,7 +129,7 @@ export function OpenClassesCarouselShell({
         >
           {children}
         </div>
-        {itemCount > 1 && (
+        {itemCount > 1 && swipeHint.trim() !== "" && (
           <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--text-secondary)" }}>
             {swipeHint}
           </p>

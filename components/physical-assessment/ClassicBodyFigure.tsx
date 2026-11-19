@@ -153,7 +153,7 @@ function HotspotsFront(props: {
   labels: Record<AnatomicalBodyMapRegionId, string>;
 }) {
   const { onPick, onHover, active, labels, marks } = props;
-  const mk = (r: AnatomicalBodyMapRegionId) => regionMarkStyle(marks, r);
+  const mk = (r: AnatomicalBodyMapRegionId) => regionMarkStyle(marks, r, "front");
   return (
     <>
       <HotspotEllipse mark={mk("head")} region="head" active={active === "head"} cx={100} cy={24} rx={15} ry={20} onPick={onPick} onHover={onHover} labels={labels} />
@@ -211,7 +211,7 @@ function HotspotsBack(props: {
   labels: Record<AnatomicalBodyMapRegionId, string>;
 }) {
   const { onPick, onHover, active, labels, marks } = props;
-  const mk = (r: AnatomicalBodyMapRegionId) => regionMarkStyle(marks, r);
+  const mk = (r: AnatomicalBodyMapRegionId) => regionMarkStyle(marks, r, "back");
   return (
     <>
       <HotspotEllipse mark={mk("head")} region="head" active={active === "head"} cx={101} cy={32} rx={15} ry={22} onPick={onPick} onHover={onHover} labels={labels} />

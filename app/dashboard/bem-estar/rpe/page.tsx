@@ -58,17 +58,13 @@ export default async function RpePage({ searchParams }: { searchParams?: Promise
   );
 
   const pageTitle = loc === "pt" ? "Esforço percebido (RPE)" : "Perceived effort (RPE)";
-  const pageIntro =
-    loc === "pt"
-      ? "RPE é o esforço percebido: quão pesado foi o treino para ti, de 1 (muito leve) a 10 (máximo) — não a dureza da aula em geral. Usa as aulas recentes abaixo."
-      : "RPE is perceived effort: how hard the session felt for you, from 1 (very light) to 10 (maximum) — not how hard the class was in general. Use the recent classes below.";
+
 
   return (
     <>
-      <h1 style={{ fontSize: "clamp(22px, 5.5vw, 28px)", marginBottom: 8, color: "var(--text-primary)" }}>
+      <h1 style={{ fontSize: "clamp(22px, 5.5vw, 28px)", marginBottom: 16, color: "var(--text-primary)" }}>
         {pageTitle}
       </h1>
-      <p style={{ color: "var(--text-secondary)", marginBottom: 16, lineHeight: 1.5 }}>{pageIntro}</p>
       <RpeScaleExplainer pt={loc === "pt"} defaultOpen={showRpeInfo} />
       <TrainingLoadExplainer pt={loc === "pt"} />
 

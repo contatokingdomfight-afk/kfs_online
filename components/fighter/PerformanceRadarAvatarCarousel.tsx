@@ -61,9 +61,6 @@ export function PhysicalAssessmentBodyMapPanel({
         .filter(Boolean)
         .join(" ")}
     >
-      {L.slideBodyCaption.trim() ? (
-        <p className="m-0 mb-0 w-full text-xs text-[var(--text-secondary)]">{L.slideBodyCaption}</p>
-      ) : null}
       {invite ? (
         <div className="flex w-full flex-col gap-2">
           <AnatomicalBodyMap
