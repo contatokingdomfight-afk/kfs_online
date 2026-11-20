@@ -12,7 +12,7 @@ const C = {
   laranja: "#F97316",
   azulCeleste: "#38BDF8",
   roxo: "#7C3AED",
-  verdeLimao: "#84CC16",
+  verde: "#16A34A",
   preto: "#111111",
   prata: "#A8A9AD",
   vermelho: "#DC2626",
@@ -280,11 +280,11 @@ export const KINGDOM_BOXING_GRADES: SeedGrade[] = [
     },
   },
   {
-    name: "Roxo/Verde Limão",
+    name: "Roxo/Verde",
     subtitle: "Inovação e Dinamismo",
     motto: "Eu crio.",
     objective: "Alta performance, explosão e preparação competitiva.",
-    colors: [C.roxo, C.verdeLimao],
+    colors: [C.roxo, C.verde],
     minMonths: 8,
     requirements: ["Fazer curso intra-corpus de treinador"],
     axes: {
@@ -314,13 +314,13 @@ export const KINGDOM_BOXING_GRADES: SeedGrade[] = [
     },
   },
   {
-    name: "Verde Limão/Preto",
+    name: "Verde/Preto",
     subtitle: "Força Vital Lapidada",
     motto: "Eu lidero.",
     objective: "Preparação para maestria, mentoria e liderança técnica no boxe.",
     notes:
       "No físico, o foco deixa de ser apenas o próprio desempenho: o aluno deve compreender e conseguir prescrever cada capacidade física.",
-    colors: [C.verdeLimao, C.preto],
+    colors: [C.verde, C.preto],
     minMonths: 12,
     requirements: ["Ter feito estágio conosco"],
     axes: {
