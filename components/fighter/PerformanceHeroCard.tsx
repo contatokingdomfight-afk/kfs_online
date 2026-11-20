@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
+import { GradeName } from "@/components/graduation/GradeName";
 import type { GraduationSummary } from "@/components/graduation/GraduationSummaryCard";
 
 type Props = {
@@ -129,9 +130,9 @@ function GraduationHeroBlock({ graduation, primaryModalityLabel }: { graduation:
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 text-sm font-semibold text-text-primary border border-border rounded-lg px-2 py-1">
+        <span className="inline-flex max-w-full items-center gap-2 text-sm font-semibold text-text-primary border border-border rounded-lg px-2 py-1">
           <BeltSwatch colors={graduation.currentColors} width={28} height={10} modality={graduation.modalityCode} />
-          {graduation.currentName ?? "Sem graduação"}
+          <span className="min-w-0">{graduation.currentName ? <GradeName name={graduation.currentName} /> : "Sem graduação"}</span>
         </span>
         <span className="text-xs text-text-secondary border border-border rounded-lg px-2 py-1">{graduation.modalityName ?? primaryModalityLabel}</span>
       </div>

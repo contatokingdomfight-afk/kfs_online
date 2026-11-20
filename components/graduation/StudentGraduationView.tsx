@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, CalendarDays, Check, ChevronRight, Circle, Crown, MapPin, Lock, PartyPopper, Star } from "lucide-react";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
+import { GradeName } from "@/components/graduation/GradeName";
 import { GRADUATION_AXIS_META, type GraduationItemDraft } from "@/lib/graduation/template";
 import { groupItemsByAxis, type ProgressCheck } from "@/lib/graduation/progress";
 import type { StudentExamHistoryEntry, StudentModalityGraduation } from "@/lib/graduation/load-student-progress";
@@ -23,7 +24,7 @@ export function StudentGraduationView({ graduation }: { graduation: StudentModal
         <div className="mt-3 flex items-center gap-4">
           <BeltSwatch colors={current?.colors ?? []} width={88} height={22} modality={graduation.modalityCode} />
           <div className="min-w-0">
-            <p className="m-0 break-words text-xl font-bold text-text-primary [overflow-wrap:anywhere]">{current ? current.name : "Sem graduação"}</p>
+            <p className="m-0 break-words text-xl font-bold text-text-primary [overflow-wrap:anywhere]">{current ? <GradeName name={current.name} /> : "Sem graduação"}</p>
             <p className="m-0 mt-0.5 break-words text-sm text-text-secondary">
               {current
                 ? [current.motto && `“${current.motto}”`, graduation.lastAwardedAt && `desde ${formatDate(graduation.lastAwardedAt)}`]

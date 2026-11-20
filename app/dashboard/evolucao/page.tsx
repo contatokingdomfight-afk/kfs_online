@@ -25,6 +25,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { loadStudentGraduations } from "@/lib/graduation/load-student-progress";
 import { toGraduationSummary } from "@/components/graduation/GraduationSummaryCard";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
+import { GradeName } from "@/components/graduation/GradeName";
 
 export const dynamic = "force-dynamic";
 
@@ -143,8 +144,15 @@ export default async function EvolucaoPage() {
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 800 }}>
                   <BeltSwatch colors={graduation.currentColors} width={32} height={12} modality={graduation.modalityCode} />
-                  {graduation.currentName ?? (pt ? "Sem graduação" : "No grade yet")}
-                  {graduation.nextName ? ` → ${graduation.nextName}` : ""}
+                  <span style={{ minWidth: 0 }}>
+                    {graduation.currentName ? <GradeName name={graduation.currentName} /> : pt ? "Sem graduação" : "No grade yet"}
+                    {graduation.nextName ? (
+                      <>
+                        {" → "}
+                        <GradeName name={graduation.nextName} />
+                      </>
+                    ) : null}
+                  </span>
                 </span>
                 <span style={{ fontSize: 13, color: graduation.isReadyForExam ? "var(--success)" : "var(--text-secondary)", fontWeight: graduation.isReadyForExam ? 700 : 400 }}>
                   {graduation.isReadyForExam
