@@ -7,14 +7,15 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { requireGraduationExamPage } from "@/lib/graduation/exam-auth";
 import { ExamStatusChip, formatExamDate } from "@/components/graduation/ExamStatusChip";
 import { AptosTab } from "./AptosTab";
+import { CertificadosTab } from "./CertificadosTab";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Exames de graduação | Coach" };
 
-export default async function CoachGraduacaoPage({ searchParams }: { searchParams: Promise<{ tab?: string; m?: string; f?: string }> }) {
+export default async function CoachGraduacaoPage({ searchParams }: { searchParams: Promise<{ tab?: string; m?: string; f?: string; q?: string }> }) {
   await requireGraduationExamPage();
-  const { tab: tabParam, m: modalityParam, f: filterParam } = await searchParams;
-  const tab = tabParam === "aptos" ? "aptos" : "exames";
+  const { tab: tabParam, m: modalityParam, f: filterParam, q: queryParam } = await searchParams;
+  const tab = tabParam === "aptos" || tabParam === "certificados" ? tabParam : "exames";
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
@@ -104,6 +105,7 @@ export default async function CoachGraduacaoPage({ searchParams }: { searchParam
         {[
           { key: "exames", label: "Exames", href: "/coach/graduacao" },
           { key: "aptos", label: "Alunos aptos", href: "/coach/graduacao?tab=aptos" },
+          { key: "certificados", label: "Certificados", href: "/coach/graduacao?tab=certificados" },
         ].map((t) => (
           <Link
             key={t.key}
@@ -130,6 +132,13 @@ export default async function CoachGraduacaoPage({ searchParams }: { searchParam
           modalities={(modalities ?? []).map((m) => ({ code: m.code as string, name: m.name as string }))}
           modalityParam={modalityParam}
           filterParam={filterParam}
+        />
+      ) : tab === "certificados" ? (
+        <CertificadosTab
+          supabase={supabase}
+          modalities={(modalities ?? []).map((m) => ({ code: m.code as string, name: m.name as string }))}
+          modalityParam={modalityParam}
+          query={queryParam}
         />
       ) : (
         <>

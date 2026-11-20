@@ -47,11 +47,17 @@ export async function loadModalityReadiness(
     (manualRows ?? []).map((r) => [r.studentId as string, { status: r.status, reason: r.reason, validUntil: r.validUntil ?? null }])
   );
 
+  // Modalidades compostas que usam os graus desta (ex.: Muay Thai KIDS → Muay Thai): os seus alunos contam,
+  // e as aulas e avaliações dessas modalidades contam como desta.
+  const { data: composites } = await supabase.from("ModalityRef").select("code").contains("graduationModalities", [modalityCode]);
+  const compositeCodes = new Set((composites ?? []).map((c) => c.code as string));
+  const countedModalities = [modalityCode, ...compositeCodes];
+
   const [students, lessons, gradeRows] = await Promise.all([
     fetchAllPages<{ id: string; userId: string; primaryModality: string | null }>((from, to) =>
       filterSchools(supabase.from("Student").select("id, userId, primaryModality"), schoolIds).eq("status", "ATIVO").order("id").range(from, to)
     ),
-    fetchAllPages<{ id: string }>((from, to) => supabase.from("Lesson").select("id").eq("modality", modalityCode).order("id").range(from, to)),
+    fetchAllPages<{ id: string }>((from, to) => supabase.from("Lesson").select("id").in("modality", countedModalities).order("id").range(from, to)),
     fetchAllPages<{ studentId: string; gradeId: string; awardedAt: string; source: string }>((from, to) =>
       supabase
         .from("StudentGrade")
@@ -86,9 +92,6 @@ export async function loadModalityReadiness(
   const latestGrade = new Map<string, { gradeId: string; awardedAt: string; source: string }>();
   for (const g of gradeRows) if (!latestGrade.has(g.studentId)) latestGrade.set(g.studentId, g);
 
-  // Modalidades compostas (ex.: MMA) cujos graus incluem esta modalidade: os seus alunos também contam.
-  const { data: composites } = await supabase.from("ModalityRef").select("code").contains("graduationModalities", [modalityCode]);
-  const compositeCodes = new Set((composites ?? []).map((c) => c.code as string));
   const relevant = students.filter(
     (s) =>
       s.primaryModality === modalityCode ||
@@ -137,7 +140,7 @@ export async function loadModalityReadiness(
         .from("AthleteEvaluation")
         .select("athleteId, scores")
         .in("athleteId", chunk)
-        .eq("modality", modalityCode)
+        .in("modality", countedModalities)
         .order("created_at", { ascending: false })
         .range(from, to)
     )

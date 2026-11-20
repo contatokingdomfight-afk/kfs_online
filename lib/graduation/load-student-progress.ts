@@ -132,6 +132,13 @@ export async function loadStudentGraduations(
       });
   if (codes.length === 0) return [];
 
+  // Modalidade base → ela própria + compostas que usam os seus graus (ex.: Muay Thai ← Muay Thai KIDS):
+  // as aulas e avaliações das compostas contam para a graduação da base.
+  const countedFor = (code: string) => [
+    code,
+    ...(modalityRows ?? []).filter((m) => ((m.graduationModalities as string[] | null) ?? []).includes(code)).map((m) => m.code as string),
+  ];
+
   const [templatesFull, { data: athlete }, { data: physical }, { data: completions }, { data: fulfilled }, { data: candidates }, { data: openAgendas }, { data: manualRows }] =
     await Promise.all([
     Promise.all(codes.map((code) => loadGraduationTemplate(supabase, code))),
@@ -178,7 +185,7 @@ export async function loadStudentGraduations(
           .from("AthleteEvaluation")
           .select("scores")
           .eq("athleteId", athlete.id)
-          .eq("modality", code)
+          .in("modality", countedFor(code))
           .order("created_at", { ascending: false })
           .limit(PERFORMANCE_LAST_N);
         evaluationsByModality.set(code, (data ?? []) as { scores: Record<string, unknown> | null }[]);
@@ -299,7 +306,7 @@ export async function loadStudentGraduations(
         currentGradeIndex,
         lastAwardedAt,
         currentGradeSource: (latest?.source as "EXAM" | "MIGRATION" | "MANUAL" | undefined) ?? null,
-        attendanceDates: attendanceByModality.get(code) ?? [],
+        attendanceDates: countedFor(code).flatMap((c) => attendanceByModality.get(c) ?? []),
         performanceAvg: averageEvaluationScores(evaluations),
         performanceEvaluationCount: evaluations.length,
         lastPhysicalAssessmentAt: lastPhysical,

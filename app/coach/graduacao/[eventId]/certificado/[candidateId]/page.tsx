@@ -4,6 +4,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { requireGraduationExamPage } from "@/lib/graduation/exam-auth";
 import { loadCertificate } from "@/lib/graduation/certificate";
+import { canAccessSchool, getSchoolScope } from "@/lib/school-scope";
 import { GraduationCertificate } from "@/components/graduation/GraduationCertificate";
 import { CertificateSwitcher } from "@/components/graduation/CertificateSwitcher";
 
@@ -22,18 +23,26 @@ export default async function CertificadoAlunoStaffPage({ params }: { params: Pr
     .eq("id", candidateId)
     .maybeSingle();
   if (!candidate || candidate.eventId !== eventId) notFound();
+  // Coach/diretor: só certificados de exames das suas escolas.
+  const { data: event } = await supabase.client.from("GraduationExamEvent").select("schoolId").eq("id", eventId).maybeSingle();
+  if (!event || !canAccessSchool(await getSchoolScope(), event.schoolId as string)) notFound();
   // Só existe depois da revelação (aprovado + número de certificado).
   const certificate = await loadCertificate(supabase.client, candidateId);
   if (!certificate) notFound();
 
   return (
     <div style={{ maxWidth: "min(720px, 100%)", paddingBottom: 96 }}>
-      <Link
-        href={`/coach/graduacao/${eventId}?separador=aprovados`}
-        style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", fontWeight: 500, textDecoration: "none" }}
-      >
-        ← Aprovados
-      </Link>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+        <Link
+          href={`/coach/graduacao/${eventId}?separador=aprovados`}
+          style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", fontWeight: 500, textDecoration: "none" }}
+        >
+          ← Aprovados deste exame
+        </Link>
+        <Link href="/coach/graduacao?tab=certificados" style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", fontWeight: 500, textDecoration: "none" }}>
+          Todos os certificados
+        </Link>
+      </div>
       <header style={{ margin: "var(--space-4) 0" }}>
         <h1 style={{ margin: 0, fontSize: "var(--text-xl)", fontWeight: 700 }}>{certificate.studentName}</h1>
         <p style={{ margin: "6px 0 0", fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
