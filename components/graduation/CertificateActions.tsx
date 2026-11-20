@@ -93,7 +93,7 @@ export function CertificateActions({ targetId, fileName, shareText }: Props) {
         </p>
       )}
       <p className="m-0 text-xs text-text-secondary">
-        Partilha no Instagram, WhatsApp e outras apps. No PDF, escolhe «Guardar como PDF». A imagem não mostra o teu NIF.
+        Partilha no Instagram, WhatsApp e outras apps. No PDF, escolhe «Guardar como PDF». A imagem mostra só o NIF da escola, não o teu.
       </p>
     </div>
   );
