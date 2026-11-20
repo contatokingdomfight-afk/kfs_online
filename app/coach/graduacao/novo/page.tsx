@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { requireGraduationExamPage } from "@/lib/graduation/exam-auth";
+import { getSchoolScope } from "@/lib/school-scope";
 import { NewExamForm } from "./NewExamForm";
 
 export const dynamic = "force-dynamic";
@@ -11,10 +12,14 @@ export default async function NovoExamePage() {
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
 
-  const [{ data: templates }, { data: modalities }] = await Promise.all([
+  const [{ data: templates }, { data: modalities }, scope] = await Promise.all([
     result.client.from("GraduationTemplate").select("modalityCode, isPublished"),
     result.client.from("ModalityRef").select("code, name").order("sortOrder", { ascending: true }),
+    getSchoolScope(),
   ]);
+  // Admin Geral em «Todas as escolas»: a área do coach não tem seletor no topo, por isso escolhe-se aqui.
+  const schoolChoices =
+    scope.kind === "network" && !scope.selectedSchoolId && scope.schools.length > 1 ? scope.schools.map((s) => ({ id: s.id, name: s.name })) : null;
   const options = (modalities ?? [])
     .map((m) => ({ code: m.code, name: m.name, template: (templates ?? []).find((t) => t.modalityCode === m.code) }))
     .filter((m) => m.template)
@@ -31,7 +36,7 @@ export default async function NovoExamePage() {
           Nenhuma modalidade tem graduação configurada. Configura-a em Admin → Graduação.
         </p>
       ) : (
-        <NewExamForm modalities={options} />
+        <NewExamForm modalities={options} schools={schoolChoices} />
       )}
     </div>
   );

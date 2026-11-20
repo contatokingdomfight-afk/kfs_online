@@ -22,7 +22,14 @@ function Submit() {
   );
 }
 
-export function NewExamForm({ modalities }: { modalities: { code: string; name: string; isPublished: boolean }[] }) {
+export function NewExamForm({
+  modalities,
+  schools,
+}: {
+  modalities: { code: string; name: string; isPublished: boolean }[];
+  /** Só para o Admin Geral em «Todas as escolas»: escolher a escola do exame. */
+  schools?: { id: string; name: string }[] | null;
+}) {
   const [state, action] = useActionState(createExamEvent, null);
   const defaultModality = modalities.find((m) => m.isPublished)?.code ?? modalities[0]?.code;
   const [withSlots, setWithSlots] = useState(true);
@@ -35,6 +42,23 @@ export function NewExamForm({ modalities }: { modalities: { code: string; name: 
 
   return (
     <form action={action} className="card" style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+      {schools && schools.length > 0 && (
+        <div>
+          <label style={label} htmlFor="schoolId">
+            Escola
+          </label>
+          <select id="schoolId" name="schoolId" className="input" defaultValue="" required>
+            <option value="" disabled>
+              Escolhe a escola…
+            </option>
+            {schools.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div>
         <label style={label} htmlFor="modalityCode">
           Modalidade

@@ -1,6 +1,6 @@
 "use server";
 
-import { schoolAccessErrorForRows, schoolAccessErrorForStudent, schoolIdForNewRecord } from "@/lib/school-scope";
+import { canAccessSchool, getSchoolScope, schoolAccessErrorForRows, schoolAccessErrorForStudent, schoolIdForNewRecord } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -73,13 +73,24 @@ export async function createExamEvent(_prev: ActionResult | null, formData: Form
   if (revealDate && (!/^\d{4}-\d{2}-\d{2}$/.test(revealDate) || !/^\d{2}:\d{2}$/.test(revealTime))) return { error: "Data de revelação inválida." };
   const resultsRevealAt = revealDate ? lisbonLocalToUtcIso(revealDate, revealTime) : null;
 
-  const newSchool = await schoolIdForNewRecord();
-  if (newSchool.error) return { error: newSchool.error };
+  // Escola escolhida no formulário (Admin Geral em «Todas»); senão, a do seletor/única escola.
+  const formSchoolId = String(formData.get("schoolId") ?? "").trim();
+  let schoolId: string | null;
+  if (formSchoolId) {
+    const scope = await getSchoolScope();
+    const known = scope.kind !== "none" && scope.schools.some((s) => s.id === formSchoolId);
+    if (!known || !canAccessSchool(scope, formSchoolId)) return { error: "Escola inválida." };
+    schoolId = formSchoolId;
+  } else {
+    const newSchool = await schoolIdForNewRecord();
+    if (newSchool.error) return { error: newSchool.error };
+    schoolId = newSchool.schoolId;
+  }
   const { data: modality } = await supabase.from("ModalityRef").select("name").eq("code", modalityCode).maybeSingle();
   const { data: created, error } = await supabase
     .from("GraduationExamEvent")
     .insert({
-      schoolId: newSchool.schoolId,
+      schoolId,
       modalityCode,
       title: title || `Exame de graduação — ${modality?.name ?? modalityCode}`,
       scheduledAt,
