@@ -1,4 +1,6 @@
-import { DEMO_SCHOOL_ID } from "@/lib/demo";
+/** Id da escola demo (isolada das escolas reais). */
+const DEMO_SCHOOL_ID = "demo-school";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   expandLessonsForDateRange,
