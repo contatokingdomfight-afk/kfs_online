@@ -7,6 +7,7 @@ import { disconnectSchoolBank, saveSchoolBankCertificate } from "@/lib/revolut/b
 import { connectSchoolMerchantAccount, disconnectSchoolMerchantAccount } from "@/lib/revolut/merchant-accounts";
 import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
+import { syncPendingInsuranceAmounts } from "@/lib/sync-pending-insurance-amount";
 import { hasLegalData, missingToOpen, type SchoolPaymentMethods } from "@/lib/school-status";
 import { createAdminClient, getAdminClientOrNull } from "@/lib/supabase/admin";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -379,12 +380,27 @@ export async function saveSchoolPaymentMethods(_prev: SchoolResult, formData: Fo
   if (iban && !/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban)) return { error: "O IBAN não parece válido." };
   if (mbwayPhone && !/^9\d{8}$/.test(mbwayPhone)) return { error: "O número MB Way deve ter 9 dígitos e começar por 9." };
 
+  // Taxas próprias: vazio = valor da rede (null).
+  const feeField = (name: string): number | null | "invalid" => {
+    const raw = field(formData, name).replace(",", ".");
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 && n <= 10000 ? Math.round(n * 100) / 100 : "invalid";
+  };
+  const enrollmentAmount = feeField("enrollmentAmount");
+  const insuranceAnnualAmount = feeField("insuranceAnnualAmount");
+  if (enrollmentAmount === "invalid" || insuranceAnnualAmount === "invalid") {
+    return { error: "As taxas têm de ser um valor em euros (0 ou mais)." };
+  }
+
   const out = getAdminClientOrNull();
   if (!out.client) return { error: "Configuração admin ausente." };
 
   const { error } = await out.client.from("SchoolPaymentSettings").upsert(
     {
       schoolId,
+      enrollmentAmount,
+      insuranceAnnualAmount,
       ibanEnabled: Boolean(iban),
       iban: iban || null,
       ibanHolder: field(formData, "ibanHolder") || null,
@@ -399,6 +415,10 @@ export async function saveSchoolPaymentMethods(_prev: SchoolResult, formData: Fo
     { onConflict: "schoolId" }
   );
   if (error) return { error: error.message };
+
+  // Seguros em atraso dos alunos desta escola passam para o valor novo (como em Configurações).
+  const { data: schoolStudents } = await out.client.from("Student").select("id").eq("schoolId", schoolId);
+  await syncPendingInsuranceAmounts(out.client, { studentIds: ((schoolStudents ?? []) as { id: string }[]).map((s) => s.id) });
 
   revalidateSchoolTeam(schoolId);
   return { success: "Meios de pagamento guardados." };

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getInsuranceSettings } from "@/lib/insurance-settings";
+import { getFeeSettingsForStudent } from "@/lib/school-fees";
 
 export type StudentOnboardingFeesState = {
   enrollmentAmount: number;
@@ -19,7 +19,7 @@ export async function getStudentOnboardingFeesState(
   referenceYear?: string
 ): Promise<StudentOnboardingFeesState> {
   const year = referenceYear ?? new Date().getFullYear().toString();
-  const settings = await getInsuranceSettings(supabase);
+  const settings = await getFeeSettingsForStudent(supabase, studentId);
 
   const [{ data: student }, { data: enrollmentPay }, { data: insurancePay }] = await Promise.all([
     supabase.from("Student").select("enrollmentFeeWaived, insuranceFeeWaived").eq("id", studentId).maybeSingle(),

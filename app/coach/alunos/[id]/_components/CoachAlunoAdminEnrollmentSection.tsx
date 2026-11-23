@@ -3,7 +3,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { AdminAlunoQuickActions, EditarAlunoForm } from "@/app/admin/alunos/[id]/EditarAlunoForm";
 import { StudentInsuranceSection } from "@/app/admin/alunos/[id]/StudentInsuranceSection";
-import { getInsuranceSettings } from "@/lib/insurance-settings";
+import { getFeeSettingsForStudent } from "@/lib/school-fees";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
@@ -67,7 +67,7 @@ export async function CoachAlunoAdminEnrollmentSection({ studentId }: Props) {
       .select("covered, coverageStartDate, coverageEndDate, policyReference, notes")
       .eq("studentId", studentId)
       .maybeSingle(),
-    getInsuranceSettings(supabase),
+    getFeeSettingsForStudent(supabase, studentId),
   ]);
 
   const paymentProofPath = (enrollmentRow as { paymentProofPath?: string | null } | null)?.paymentProofPath ?? null;

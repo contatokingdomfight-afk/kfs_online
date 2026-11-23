@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FinancePaymentMethod } from "@/lib/finance-payment-method";
-import { getInsuranceSettings } from "@/lib/insurance-settings";
+import { getFeeSettingsForStudent } from "@/lib/school-fees";
 import { upsertTuitionPayment } from "@/lib/payment-tuition-upsert";
 import { renewStudentInsuranceCoverage } from "@/lib/renew-student-insurance-coverage";
 import { hasPendingOnboardingPayments } from "@/lib/ensure-onboarding-pending-payments";
@@ -173,7 +173,7 @@ export async function createFirstPaymentBundle(
     return { error: "Este aluno já não tem pagamentos de inscrição pendentes." };
   }
 
-  const settings = await getInsuranceSettings(supabase);
+  const settings = await getFeeSettingsForStudent(supabase, studentId);
 
   if (includeInsurance && fees.showInsurance && settings.annualAmount <= 0) {
     return { error: "Valor do seguro não configurado em Configurações." };

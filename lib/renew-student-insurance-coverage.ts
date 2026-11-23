@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getInsuranceSettings } from "@/lib/insurance-settings";
+import { getFeeSettingsForStudent } from "@/lib/school-fees";
 
 function addYearsYmd(ymd: string, years: number): string {
   const y = parseInt(ymd.slice(0, 4), 10) + years;
@@ -12,7 +12,7 @@ export async function renewStudentInsuranceCoverage(
   studentId: string,
   renewedByUserId: string
 ): Promise<{ error?: string }> {
-  const settings = await getInsuranceSettings(supabase);
+  const settings = await getFeeSettingsForStudent(supabase, studentId);
   const today = new Date().toISOString().slice(0, 10);
 
   const { data: existing } = await supabase

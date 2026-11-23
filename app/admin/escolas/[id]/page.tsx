@@ -14,6 +14,7 @@ import { SchoolStatusPill } from "../SchoolStatusPill";
 import { DirectorsPanel, type DirectorRow } from "./DirectorsPanel";
 import { SchoolStatusPanel, type PaymentFormValues } from "./SchoolStatusPanel";
 import { CopyTextButton } from "@/components/ui/CopyTextButton";
+import { getInsuranceSettings } from "@/lib/insurance-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -106,7 +107,18 @@ export default async function EscolaPage({
   const nif = (settings as { nif?: string | null } | null)?.nif ?? null;
   const legalDataReady = isSede || hasLegalData({ legalName, legalAddress, nif });
   const missing = missingToOpen(directors.length, settings as SchoolPaymentMethods | null, legalDataReady);
-  const payment = settings as PaymentFormValues | null;
+  // Taxas à parte: se a migração das colunas ainda não estiver aplicada, a consulta falha sozinha e o resto da página segue.
+  const [{ data: feeRow }, networkSettings] =
+    tab === "estado"
+      ? await Promise.all([
+          supabase.from("SchoolPaymentSettings").select("enrollmentAmount, insuranceAnnualAmount").eq("schoolId", id).maybeSingle(),
+          getInsuranceSettings(supabase),
+        ])
+      : [{ data: null }, null];
+  const payment = settings
+    ? ({ ...(settings as PaymentFormValues), ...((feeRow as Partial<PaymentFormValues> | null) ?? {}) } as PaymentFormValues)
+    : null;
+  const networkFees = { enrollment: networkSettings?.enrollmentAmount ?? 0, insurance: networkSettings?.annualAmount ?? 0 };
   const merchant = tab === "estado" ? await loadSchoolMerchantStatus(supabase, id) : null;
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("x-forwarded-host") ?? h.get("host") ?? ""}`;
@@ -186,6 +198,7 @@ export default async function EscolaPage({
           directorCount={directors.length}
           activeStudents={activeStudents ?? 0}
           payment={payment}
+          networkFees={networkFees}
           legalDataReady={legalDataReady}
           merchant={merchant}
           bank={bank}

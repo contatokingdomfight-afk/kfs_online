@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { AdminAlunoQuickActions } from "../EditarAlunoForm";
 import { StudentInsuranceSection } from "../StudentInsuranceSection";
 import { StudentDropInSessionsPanel } from "@/components/students/StudentDropInSessionsPanel";
-import { getInsuranceSettings } from "@/lib/insurance-settings";
+import { getFeeSettingsForStudent } from "@/lib/school-fees";
 import { formatInTimeZone } from "date-fns-tz";
 import { LISBON_TZ } from "@/lib/lisbon-payment-dates";
 
@@ -54,7 +54,7 @@ export default async function AdminAlunoPlanoSeguroPage({ params }: Props) {
         .select("covered, coverageStartDate, coverageEndDate, policyReference, notes")
         .eq("studentId", studentId)
         .maybeSingle(),
-      getInsuranceSettings(supabase),
+      getFeeSettingsForStudent(supabase, studentId),
     ]);
 
   const paymentProofPath = (enrollmentRow as { paymentProofPath?: string | null } | null)?.paymentProofPath ?? null;

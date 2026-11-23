@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { currentReferenceMonthLisbon } from "@/lib/lisbon-payment-dates";
-import { getInsuranceSettings } from "@/lib/insurance-settings";
+import { getFeeSettingsForStudent } from "@/lib/school-fees";
 import { upsertTuitionPayment } from "@/lib/payment-tuition-upsert";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { getFamilyContext } from "@/lib/family-context";
@@ -89,7 +89,7 @@ export async function ensureOnboardingPendingPayments(
 
   const [{ data: plan }, settings, { data: student }] = await Promise.all([
     supabase.from("Plan").select("priceMonthly").eq("id", planId).eq("isActive", true).maybeSingle(),
-    getInsuranceSettings(supabase),
+    getFeeSettingsForStudent(supabase, studentId),
     supabase.from("Student").select("enrollmentFeeWaived, insuranceFeeWaived, adminGrantedFullAccess").eq("id", studentId).maybeSingle(),
   ]);
 

@@ -50,6 +50,19 @@ export async function getInsuranceSettings(
   };
 }
 
+export type SchoolFeeOverrides = { enrollmentAmount?: number | string | null; insuranceAnnualAmount?: number | string | null };
+
+/** Regra pura (testável): override da escola quando existe, senão o valor da rede. */
+export function applySchoolFeeOverrides(settings: InsuranceSettingsRow, school: SchoolFeeOverrides | null): InsuranceSettingsRow {
+  const pick = (v: number | string | null | undefined, fallback: number) =>
+    v === null || v === undefined || v === "" || Number.isNaN(Number(v)) ? fallback : Number(v);
+  return {
+    ...settings,
+    enrollmentAmount: pick(school?.enrollmentAmount, settings.enrollmentAmount),
+    annualAmount: pick(school?.insuranceAnnualAmount, settings.annualAmount),
+  };
+}
+
 /**
  * Contrato de adesão assinado com a escola atual do aluno e em vigor para a versão actual.
  * Sem `contractParty` foi assinado com a Sede (ver lib/contract-party.ts).

@@ -9,7 +9,15 @@ import type { SchoolBankStatus } from "@/lib/revolut/bank-accounts";
 import { SchoolBankPanel } from "./SchoolBankPanel";
 import { SchoolRevolutPanel } from "./SchoolRevolutPanel";
 
-export type PaymentFormValues = SchoolPaymentMethods & { ibanHolder: string | null; ibanHolderAddress: string | null; bicSwift: string | null; revolutTag: string | null };
+export type PaymentFormValues = SchoolPaymentMethods & {
+  ibanHolder: string | null;
+  ibanHolderAddress: string | null;
+  bicSwift: string | null;
+  revolutTag: string | null;
+  /** Taxas próprias da escola; null = valor da rede. */
+  enrollmentAmount?: number | string | null;
+  insuranceAnnualAmount?: number | string | null;
+};
 
 function Feedback({ state }: { state: SchoolResult }) {
   if (state?.error) return <p style={{ color: "var(--danger)", fontSize: "var(--text-sm)", margin: 0 }}>{state.error}</p>;
@@ -39,7 +47,10 @@ export function SchoolStatusPanel({
   merchant,
   bank,
   legalDataReady,
+  networkFees,
 }: {
+  /** Valores da rede (Configurações), mostrados como sugestão quando a escola não tem os seus. */
+  networkFees: { enrollment: number; insurance: number };
   schoolId: string;
   status: SchoolStatus;
   missing: string[];
@@ -118,6 +129,42 @@ export function SchoolStatusPanel({
         <input name="bicSwift" defaultValue={payment?.bicSwift ?? ""} placeholder="BIC/SWIFT" className="input" style={{ fontSize: "var(--text-sm)" }} />
         <input name="revolutTag" defaultValue={payment?.revolutTag ?? ""} placeholder="Revolut tag (ex.: @escola)" className="input" style={{ fontSize: "var(--text-sm)" }} />
         <input name="mbwayPhone" defaultValue={payment?.mbwayPhone ?? ""} placeholder="Telemóvel MB Way" inputMode="numeric" className="input" style={{ fontSize: "var(--text-sm)" }} />
+
+        <h3 style={{ margin: "var(--space-2) 0 0", fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-primary)" }}>Taxas desta escola</h3>
+        <p style={{ margin: 0, fontSize: "var(--text-xs)", lineHeight: 1.5, color: "var(--text-secondary)" }}>
+          Vazio = valor da rede (Configurações). Vale para as novas cobranças; os seguros em atraso passam para o valor novo.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "var(--space-2)" }}>
+          <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
+            Matrícula (€)
+            <input
+              name="enrollmentAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              defaultValue={payment?.enrollmentAmount ?? ""}
+              placeholder={`Rede: ${networkFees.enrollment.toFixed(2)}`}
+              className="input"
+              style={{ fontSize: "var(--text-sm)" }}
+            />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
+            Seguro anual (€)
+            <input
+              name="insuranceAnnualAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              defaultValue={payment?.insuranceAnnualAmount ?? ""}
+              placeholder={`Rede: ${networkFees.insurance.toFixed(2)}`}
+              className="input"
+              style={{ fontSize: "var(--text-sm)" }}
+            />
+          </label>
+        </div>
+
         <button type="submit" className="btn btn-secondary" style={{ alignSelf: "flex-start", fontSize: "var(--text-sm)" }}>
           Guardar meios de pagamento
         </button>
