@@ -92,6 +92,19 @@ export default async function CoachHomePage() {
     rangeEnd
   );
   const lessonsList = expandedRange.filter((l) => l.occurrenceDate === today);
+
+  // Coach com várias escolas: mostrar o nome da escola à frente da modalidade.
+  const schoolIdsInSchedule = [...new Set(expandedRange.map((l) => l.schoolId).filter(Boolean))];
+  const schoolNameById = new Map<string, string>();
+  if (schoolIdsInSchedule.length > 1) {
+    const { data: schoolRows } = await userReadClient.from("School").select("id, name").in("id", schoolIdsInSchedule);
+    for (const r of schoolRows ?? []) schoolNameById.set(r.id as string, (r.name as string) ?? "");
+  }
+  const lessonSchoolById = new Map(lessonsList.map((l) => [l.id, l.schoolId]));
+  const schoolPrefix = (lessonId: string) => {
+    const name = schoolNameById.get(lessonSchoolById.get(lessonId) ?? "");
+    return name ? `${name} · ` : "";
+  };
   const { last: lastOcc, next: nextOcc } = pickLastAndNextOccurrence(expandedRange, now);
   const lastPresenceHref = lastOcc ? coachPresenceUrl(lastOcc.lessonId, lastOcc.occurrenceDate) : null;
   const nextPresenceHref = nextOcc ? coachPresenceUrl(nextOcc.lessonId, nextOcc.occurrenceDate) : null;
@@ -375,7 +388,7 @@ export default async function CoachHomePage() {
         {focusLesson ? (
           <>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 800 }}>{modalityLabels[focusLesson.modality] ?? focusLesson.modality}</div>
+              <div style={{ fontSize: 22, fontWeight: 800 }}>{schoolPrefix(focusLesson.id)}{modalityLabels[focusLesson.modality] ?? focusLesson.modality}</div>
               <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>
                 {focusLesson.startTime.slice(0, 5)}–{focusLesson.endTime.slice(0, 5)}
               </div>
@@ -437,7 +450,7 @@ export default async function CoachHomePage() {
             return (
               <Link key={l.occurrenceKey ?? `${l.id}-${l.occurrenceDate}`} href={coachPresenceUrl(l.id, l.occurrenceDate)} style={{ ...rowStyle, opacity: ended ? 0.75 : 1 }}>
                 <strong style={{ minWidth: 46 }}>{l.startTime.slice(0, 5)}</strong>
-                <span style={{ flex: 1, minWidth: 0 }}>{modalityLabels[l.modality ?? ""] ?? l.modality}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>{schoolPrefix(l.id)}{modalityLabels[l.modality ?? ""] ?? l.modality}</span>
                 <span style={{ fontSize: 13, color: ended ? "#22c55e" : "var(--text-secondary)" }}>
                   {ended ? `${present} ${pt ? "presentes" : "present"}` : `${going} ${pt ? (going === 1 ? "vai" : "vão") : "going"}`}
                 </span>
