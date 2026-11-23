@@ -1,3 +1,4 @@
+import { DEMO_SCHOOL_ID } from "@/lib/demo";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   expandLessonsForDateRange,
@@ -49,11 +50,20 @@ export async function loadCoachScheduleBundle(
   if (coachId && coachSchoolIds.length === 0) {
     allLessonsQuery = allLessonsQuery.eq("id", "00000000-0000-0000-0000-000000000000");
   } else if (coachSchoolIds.length > 1) {
-    allLessonsQuery = allLessonsQuery.in("schoolId", coachSchoolIds);
+    // A escola demo é isolada: nunca se mistura com as escolas reais.
+    allLessonsQuery = allLessonsQuery.in(
+      "schoolId",
+      coachSchoolIds.filter((id) => id !== DEMO_SCHOOL_ID).length > 0
+        ? coachSchoolIds.filter((id) => id !== DEMO_SCHOOL_ID)
+        : coachSchoolIds
+    );
   } else if (coachSchoolIds.length === 1) {
     allLessonsQuery = allLessonsQuery.eq("schoolId", coachSchoolIds[0]!);
   } else if (effectiveSchoolId) {
     allLessonsQuery = allLessonsQuery.eq("schoolId", effectiveSchoolId);
+  } else {
+    // Admin sem escola: todas as reais, sem as aulas-cópia da escola demo.
+    allLessonsQuery = allLessonsQuery.neq("schoolId", DEMO_SCHOOL_ID);
   }
 
   const { data: allLessonsRaw } = await allLessonsQuery;
