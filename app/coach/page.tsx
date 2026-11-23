@@ -4,6 +4,8 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
 import { getCurrentSchoolId } from "@/lib/auth/get-current-school";
+import { getSchoolScope } from "@/lib/school-scope";
+import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { coachPresenceUrl, pickLastAndNextOccurrence } from "@/lib/coach-presence-shortcuts";
@@ -201,19 +203,27 @@ export default async function CoachHomePage() {
     .eq("modality", mainModality);
   const theme = weekThemes?.[0] ?? null;
 
-  const { data: trials } = await supabase
-    .from("TrialClass")
-    .select("id, name, modality, lessonDate, lessonId")
-    .eq("convertedToStudent", false)
-    .gte("lessonDate", today)
-    .order("lessonDate", { ascending: true });
+  // Inscrições sem aula não têm escola (TrialClass não tem schoolId): só a equipa da Sede, onde chegam
+  // as inscrições do site, e o Admin Geral as veem. Antes, o diretor de outra escola via nomes e contactos.
+  const scope = await getSchoolScope();
+  const seesUnassignedTrials =
+    scope.kind === "network" || (scope.kind === "school" && scope.schoolIds.includes(SEDE_SCHOOL_ID));
+  const { data: trials } = seesUnassignedTrials
+    ? await supabase
+        .from("TrialClass")
+        .select("id, name, modality, lessonDate, lessonId")
+        .eq("convertedToStudent", false)
+        .is("lessonId", null)
+        .gte("lessonDate", today)
+        .order("lessonDate", { ascending: true })
+    : { data: [] as { id: string; name: string; modality: string; lessonDate: string; lessonId: string | null }[] };
 
   const coachLessonIds = coachId ? await getLessonIdsForCoach(supabase, coachId) : new Set<string>();
   const todayTrials = !isSchoolAssistantHome
     ? coachId
       ? await getTodayTrialClassesForCoach(supabase, coachId, coachLessonIds)
       : dbUser?.role === "ADMIN"
-        ? await getTodayTrialClassesForAdmin(supabase, schoolId)
+        ? await getTodayTrialClassesForAdmin(supabase, scope.kind === "network" ? schoolId ?? scope.selectedSchoolId : scope.kind === "school" ? scope.selectedSchoolId : "__none__")
         : []
     : [];
 

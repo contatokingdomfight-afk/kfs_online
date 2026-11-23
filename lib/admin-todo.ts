@@ -29,6 +29,7 @@ import { lineLabel, loadOrders, orderReference } from "@/lib/retail/orders";
 import { KINGDOM_WEEK_MONTHLY_CAP } from "@/lib/drop-in-sessions-pricing";
 import { loadModalityReadiness } from "@/lib/graduation/load-modality-readiness";
 import { normalizeDueDay } from "@/lib/lisbon-payment-dates";
+import { filterSchools } from "@/lib/school-scope-rules";
 import { loadPausesByStudent, isPauseActiveOn, PAUSE_FOLLOW_UP_DAYS } from "@/lib/tuition-pause";
 import {
   ADMIN_TODO_ORDER,
@@ -585,12 +586,22 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .filter(notDone)
     .sort((a, b) => b.urgency - a.urgency);
 
+  // TrialClass não tem schoolId: a escola vem da aula (lessonId). Com escola escolhida, só as
+  // inscrições em aulas dessa escola (igual a /admin/experimentais); sem isto o diretor via as das outras.
+  const trialLessonScope = schoolId
+    ? ((await supabase.from("Lesson").select("id").eq("schoolId", schoolId)).data ?? []).map((l) => l.id as string)
+    : null;
+
   // --- Experimentais por confirmar (hoje e próximos dias) ---
-  const { data: upcomingTrials } = await supabase
-    .from("TrialClass")
-    .select("id, name, contact, modality, lessonDate, lessonId, acceptedAt, convertedToStudent")
-    .gte("lessonDate", today)
-    .lte("lessonDate", addDaysYmd(today, TRIAL_CONFIRM_DAYS));
+  const { data: upcomingTrials } = await filterSchools(
+    supabase
+      .from("TrialClass")
+      .select("id, name, contact, modality, lessonDate, lessonId, acceptedAt, convertedToStudent")
+      .gte("lessonDate", today)
+      .lte("lessonDate", addDaysYmd(today, TRIAL_CONFIRM_DAYS)),
+    trialLessonScope,
+    "lessonId"
+  );
   const upcoming = ((upcomingTrials ?? []) as { id: string; name: string; contact: string | null; modality: string | null; lessonDate: string | null; lessonId: string | null; acceptedAt: string | null; convertedToStudent: boolean | null }[]).filter(
     (t) => !t.convertedToStudent && t.lessonDate
   );
@@ -634,11 +645,15 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
     .sort((a, b) => b.urgency - a.urgency);
 
   // --- Experimentais por converter ---
-  const { data: trials } = await supabase
-    .from("TrialClass")
-    .select("id, name, contact, modality, lessonDate, convertedToStudent")
-    .gte("lessonDate", addDaysYmd(today, -14))
-    .lte("lessonDate", today);
+  const { data: trials } = await filterSchools(
+    supabase
+      .from("TrialClass")
+      .select("id, name, contact, modality, lessonDate, convertedToStudent")
+      .gte("lessonDate", addDaysYmd(today, -14))
+      .lte("lessonDate", today),
+    trialLessonScope,
+    "lessonId"
+  );
   const experimentais: AdminTodoItem[] = ((trials ?? []) as { id: string; name: string; contact: string | null; modality: string | null; lessonDate: string | null; convertedToStudent: boolean | null }[])
     .map((t) => {
       const r = trialToConvert(today, t.lessonDate, Boolean(t.convertedToStudent));

@@ -1,3 +1,4 @@
+import { requireStoreAccess } from "@/lib/retail/store-access";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Search } from "lucide-react";
@@ -35,6 +36,7 @@ function dayLabel(key: string): string {
 export default async function AdminLojaVendasPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  await requireStoreAccess();
 
   const params = await searchParams;
   const result = getAdminClientOrNull();

@@ -1,3 +1,4 @@
+import { requireStoreAccess } from "@/lib/retail/store-access";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -18,6 +19,7 @@ const ORIGIN_NAMES: Record<SaleOrigin, string> = { COUNTER: "Balcão", ORDER_MAN
 export default async function AdminLojaPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  await requireStoreAccess();
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;

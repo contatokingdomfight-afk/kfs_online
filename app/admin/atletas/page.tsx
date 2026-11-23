@@ -4,6 +4,7 @@ import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
 import { redirect } from "next/navigation";
+import { getSchoolScope, scopeQuery } from "@/lib/school-scope";
 
 const LEVEL_LABEL: Record<string, string> = {
   INICIANTE: "Iniciante",
@@ -25,10 +26,11 @@ export default async function AdminAtletasPage({ searchParams }: { searchParams:
   const supabase = result.client;
 
   /** A lista mostra só alunos marcados como "atleta de competição" — não todo mundo com perfil de avaliação. */
-  const { data: flaggedStudents } = await supabase
-    .from("Student")
-    .select("id, userId")
-    .eq("competitionAthlete", true);
+  // Diretor: só os atletas da(s) sua(s) escola(s); Admin Geral segue o seletor de escola.
+  const { data: flaggedStudents } = await scopeQuery(
+    supabase.from("Student").select("id, userId").eq("competitionAthlete", true),
+    await getSchoolScope()
+  );
   const flagged = flaggedStudents ?? [];
   const studentIds = flagged.map((s) => s.id);
 

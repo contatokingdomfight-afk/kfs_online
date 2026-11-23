@@ -3,6 +3,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { filterSchools, getSchoolScope } from "@/lib/school-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +21,13 @@ export default async function AdminPlanosPage() {
   // Sessão do admin + RLS em Plan (allow_authenticated): mesmo projeto que o login (evita lista vazia
   // quando SUPABASE_SERVICE_ROLE_KEY / URL na Vercel não coincidem com o projeto onde estão os dados).
   const supabase = await createClient();
-  const { data: plans, error: plansError } = await supabase
-    .from("Plan")
-    .select("id, name, description, priceMonthly, includesDigitalAccess, modalityScope, isActive, schoolId")
-    .order("name", { ascending: true });
+  const scope = await getSchoolScope();
+  const { data: plans, error: plansError } = await filterSchools(
+    supabase
+      .from("Plan")
+      .select("id, name, description, priceMonthly, includesDigitalAccess, modalityScope, isActive, schoolId"),
+    scope.kind === "network" ? null : scope.kind === "school" ? scope.schoolIds : []
+  ).order("name", { ascending: true });
 
   if (plansError) {
     console.error("AdminPlanosPage Plan select:", plansError);

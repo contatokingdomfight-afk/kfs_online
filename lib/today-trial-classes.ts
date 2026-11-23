@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
 import { getCoachSchoolIds } from "@/lib/coach-schools";
+import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
 
 export type TodayTrialClass = {
   id: string;
@@ -126,17 +127,12 @@ export async function getTodayTrialClassesForAdmin(
 
   if (schoolId) {
     const lessonIds = [...new Set(filtered.map((t) => t.lessonId).filter(Boolean))] as string[];
-    if (lessonIds.length > 0) {
-      const { data: lessons } = await supabase
-        .from("Lesson")
-        .select("id")
-        .eq("schoolId", schoolId)
-        .in("id", lessonIds);
-      const validLessonIds = new Set((lessons ?? []).map((l) => l.id));
-      filtered = filtered.filter((t) => !t.lessonId || validLessonIds.has(t.lessonId));
-    } else {
-      filtered = [];
-    }
+    const { data: lessons } = lessonIds.length
+      ? await supabase.from("Lesson").select("id").eq("schoolId", schoolId).in("id", lessonIds)
+      : { data: [] as { id: string }[] };
+    const validLessonIds = new Set((lessons ?? []).map((l) => l.id));
+    // Sem aula não há escola: essas inscrições (do site) ficam só para a Sede.
+    filtered = filtered.filter((t) => (t.lessonId ? validLessonIds.has(t.lessonId) : schoolId === SEDE_SCHOOL_ID));
   }
 
   return (await enrichWithLessonTimes(supabase, filtered)).sort(sortTrials);

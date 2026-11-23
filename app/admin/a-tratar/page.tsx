@@ -1,4 +1,4 @@
-import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
+import { filterSchools, getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AcceptTrialButton } from "@/app/admin/experimentais/AcceptTrialButton";
@@ -182,11 +182,25 @@ export default async function AdminATratarPage({ searchParams }: { searchParams:
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
   const params = await searchParams;
-  const schoolId = resolveSchoolParam(await getSchoolScope(), params.school);
+  const scope = await getSchoolScope();
+  const schoolId = resolveSchoolParam(scope, params.school);
 
+  // AdminTodoDone não tem escola: o diretor só vê o que os diretores da(s) sua(s) escola(s) fizeram.
+  const historyDoneBy =
+    scope.kind === "network"
+      ? null
+      : scope.kind === "school"
+        ? ((await supabase.from("SchoolDirector").select("userId").in("schoolId", scope.schoolIds)).data ?? []).map((d) => d.userId as string)
+        : [];
   const [groups, { data: history }] = await Promise.all([
     loadAdminTodo(supabase, schoolId),
-    supabase.from("AdminTodoDone").select("kind, label, action, doneAt").order("doneAt", { ascending: false }).limit(12),
+    filterSchools(
+      supabase.from("AdminTodoDone").select("kind, label, action, doneAt"),
+      historyDoneBy,
+      "doneByUserId"
+    )
+      .order("doneAt", { ascending: false })
+      .limit(12),
   ]);
   const requested = ADMIN_TODO_ORDER.includes(params.tipo as AdminTodoKind) ? (params.tipo as AdminTodoKind) : null;
   const current = groups.find((g) => g.kind === requested) ?? groups.find((g) => g.items.length > 0) ?? groups[0];

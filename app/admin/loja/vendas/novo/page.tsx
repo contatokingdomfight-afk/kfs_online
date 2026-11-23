@@ -1,3 +1,4 @@
+import { requireStoreAccess } from "@/lib/retail/store-access";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminLojaVendaNovoPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  await requireStoreAccess();
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;

@@ -107,20 +107,32 @@ export default async function AdminTurmasPage({
 
   const { data: coaches } = await supabase.from("Coach").select("id, userId").then(async (r) => {
     if (!r.data?.length) return { data: [] as { id: string; name: string; schoolIds: string[] }[] };
-    const userIds = r.data.map((c) => c.userId);
-    const coachIds = r.data.map((c) => c.id);
-    const [{ data: users }, { data: coachSchools }] = await Promise.all([
-      supabase.from("User").select("id, name, email").in("id", userIds),
-      supabase.from("CoachSchool").select("coachId, schoolId").in("coachId", coachIds),
-    ]);
+    const { data: coachSchools } = await supabase
+      .from("CoachSchool")
+      .select("coachId, schoolId")
+      .in("coachId", r.data.map((c) => c.id));
     const schoolIdsByCoach = new Map<string, string[]>();
     for (const row of coachSchools ?? []) {
       const list = schoolIdsByCoach.get(row.coachId) ?? [];
       list.push(row.schoolId);
       schoolIdsByCoach.set(row.coachId, list);
     }
+    // Diretor: só os coaches da sua escola (CoachSchool) ou já ligados às aulas dela, não a lista da rede inteira.
+    const lessonCoachIds = new Set<string>([
+      ...(lessonsRaw ?? []).map((l) => l.coachId as string | null).filter((x): x is string => Boolean(x)),
+      ...(lessonCoachRows ?? []).map((row) => row.coachId),
+    ]);
+    const visible = r.data.filter(
+      (c) =>
+        scope.kind !== "school" ||
+        lessonCoachIds.has(c.id) ||
+        (schoolIdsByCoach.get(c.id) ?? []).some((id) => scope.schoolIds.includes(id))
+    );
+    const { data: users } = visible.length
+      ? await supabase.from("User").select("id, name, email").in("id", visible.map((c) => c.userId))
+      : { data: [] as { id: string; name: string | null; email: string | null }[] };
     return {
-      data: (r.data || []).map((c) => {
+      data: visible.map((c) => {
         const u = users?.find((u) => u.id === c.userId);
         return {
           id: c.id,

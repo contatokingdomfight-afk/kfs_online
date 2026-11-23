@@ -1,3 +1,4 @@
+import { requireStoreAccess } from "@/lib/retail/store-access";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CheckCircle2, Clock, MessageCircle, Paperclip, Search } from "lucide-react";
@@ -193,6 +194,7 @@ function OrderActions({ o, c, payment }: { o: RetailOrder; c: Customer; payment:
 export default async function AdminEncomendasPage({ searchParams }: { searchParams: Promise<{ estado?: string; q?: string; f?: string; nova?: string }> }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  await requireStoreAccess();
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;

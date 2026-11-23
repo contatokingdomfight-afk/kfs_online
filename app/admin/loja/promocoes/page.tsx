@@ -1,3 +1,4 @@
+import { requireStoreAccess } from "@/lib/retail/store-access";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -41,6 +42,7 @@ const pill = (on: boolean): React.CSSProperties => ({ fontSize: 11, fontWeight: 
 export default async function PromocoesPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
+  await requireStoreAccess();
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;

@@ -6,6 +6,15 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePublicPlans } from "@/lib/public-plans";
 import { adminPermissionError } from "@/lib/permissions/assert";
+import { canAccessSchool, getSchoolScope, isNetworkScope } from "@/lib/school-scope";
+
+/** Diretor só mexe nos planos da sua escola; planos sem escola (da rede) ficam para o Admin Geral. */
+async function planSchoolError(planId: string): Promise<string | null> {
+  const scope = await getSchoolScope();
+  if (isNetworkScope(scope)) return null;
+  const { data: plan } = await createAdminClient().from("Plan").select("schoolId").eq("id", planId).maybeSingle();
+  return plan && canAccessSchool(scope, plan.schoolId as string | null) ? null : "Este plano não é da tua escola.";
+}
 
 const MODALITY_SCOPES = ["NONE", "SINGLE", "ALL"] as const;
 
@@ -40,6 +49,7 @@ export async function createPlan(
 
   if (!name) return { error: "Nome do plano é obrigatório." };
   if (!schoolId) return { error: "Escola é obrigatória." };
+  if (!canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Só podes criar planos na tua escola." };
   const price = priceStr ? parseFloat(priceStr) : 0;
   if (isNaN(price) || price < 0) return { error: "Preço mensal deve ser um número ≥ 0." };
   if (!MODALITY_SCOPES.includes(modalityScope as (typeof MODALITY_SCOPES)[number])) {
@@ -101,6 +111,8 @@ export async function updatePlan(
 
   const planId = (formData.get("planId") as string)?.trim();
   if (!planId) return { error: "ID do plano inválido." };
+  const scopeErr = await planSchoolError(planId);
+  if (scopeErr) return { error: scopeErr };
 
   const name = (formData.get("name") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
@@ -180,6 +192,8 @@ export async function updatePlanPrice(
   const stripePriceId = (formData.get("stripePriceId") as string)?.trim();
   if (!planPriceId || !stripePriceId) return { error: "ID e Stripe Price ID são obrigatórios." };
   if (!stripePriceId.startsWith("price_")) return { error: "Stripe Price ID deve começar por price_" };
+  // Stripe é da conta da rede: só o Admin Geral mexe.
+  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode alterar o Stripe." };
 
   const supabase = createAdminClient();
   const { data: planPrice } = await supabase
