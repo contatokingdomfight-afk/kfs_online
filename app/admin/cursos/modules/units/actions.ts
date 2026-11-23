@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { adminPermissionError } from "@/lib/permissions/assert";
+import { networkAdminPermissionError } from "@/lib/permissions/network-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertCourseUnitActor } from "@/lib/auth/course-unit-authorization";
 
@@ -26,7 +26,7 @@ export async function createUnit(
   if (!moduleId || !courseId) return { error: "Módulo e curso são obrigatórios." };
   const actor = await assertCourseUnitActor(dbUser, courseId, moduleId);
   if (!actor.ok) return { error: actor.error };
-  const permErr = await adminPermissionError("admin:cursos:write");
+  const permErr = await networkAdminPermissionError("admin:cursos:write");
   if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim();
@@ -84,7 +84,7 @@ export async function updateUnit(
   if (!unitId || !moduleId || !courseId) return { error: "Dados inválidos." };
   const actor = await assertCourseUnitActor(dbUser, courseId, moduleId);
   if (!actor.ok) return { error: actor.error };
-  const permErr = await adminPermissionError("admin:cursos:write");
+  const permErr = await networkAdminPermissionError("admin:cursos:write");
   if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim();
@@ -131,7 +131,7 @@ export async function updateUnit(
 export async function deleteUnit(unitId: string, courseId: string): Promise<{ error?: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:cursos:write");
+  const permErr = await networkAdminPermissionError("admin:cursos:write");
   if (permErr) return { error: permErr };
   if (!unitId?.trim() || !courseId?.trim()) return { error: "ID inválido." };
 

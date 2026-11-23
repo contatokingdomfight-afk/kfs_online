@@ -2,7 +2,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
-import { getDefaultOnboardingSchoolId, sortSchoolsForOnboarding } from "@/lib/onboarding-default-school";
+import { cookies } from "next/headers";
+import { getDefaultOnboardingSchoolId, sortSchoolsForOnboarding, SIGNUP_SCHOOL_COOKIE } from "@/lib/onboarding-default-school";
+
+/** Escola Demo (só leitura): nunca aparece como escolha. Igual a DEMO_SCHOOL_ID em lib/demo.ts (não versionado). */
+const DEMO_SCHOOL_ID = "demo-school";
 import { OnboardingWizard } from "./OnboardingWizard";
 
 export default async function OnboardingPage() {
@@ -17,8 +21,11 @@ export default async function OnboardingPage() {
     .eq("isActive", true)
     .order("createdAt", { ascending: true });
 
-  const schoolsSorted = sortSchoolsForOnboarding(schools ?? []);
-  const defaultSchoolId = getDefaultOnboardingSchoolId(schoolsSorted);
+  const schoolsSorted = sortSchoolsForOnboarding((schools ?? []).filter((s) => s.id !== DEMO_SCHOOL_ID));
+  // Veio pelo link de inscrição de uma escola: essa fica escolhida.
+  const fromLink = (await cookies()).get(SIGNUP_SCHOOL_COOKIE)?.value;
+  const defaultSchoolId =
+    fromLink && schoolsSorted.some((s) => s.id === fromLink) ? fromLink : getDefaultOnboardingSchoolId(schoolsSorted);
 
   return (
     <main

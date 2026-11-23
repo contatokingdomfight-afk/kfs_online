@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
+import { schoolAccessErrorForStudent } from "@/lib/school-scope";
 import { signatureHistoryWith } from "@/lib/contract-party";
 import { adminPermissionError } from "@/lib/permissions/assert";
 import { loadStudentContractParty } from "@/lib/school-contract-party";
@@ -24,6 +25,8 @@ export async function markAdesaoDocumentsOnPaper(studentId: string): Promise<Mar
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
   const permErr = await adminPermissionError("admin:alunos:write");
   if (permErr) return { error: permErr };
+  const schoolErr = await schoolAccessErrorForStudent(studentId);
+  if (schoolErr) return { error: schoolErr };
 
   const supabase = createAdminClient();
 
@@ -145,6 +148,8 @@ export async function markDocumentsPhysicallyFiled(studentId: string): Promise<M
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
   const permErr = await adminPermissionError("admin:alunos:write");
   if (permErr) return { error: permErr };
+  const schoolErr = await schoolAccessErrorForStudent(studentId);
+  if (schoolErr) return { error: schoolErr };
 
   const supabase = createAdminClient();
   const { error } = await supabase
@@ -165,6 +170,8 @@ export async function unmarkDocumentsPhysicallyFiled(studentId: string): Promise
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
   const permErr = await adminPermissionError("admin:alunos:write");
   if (permErr) return { error: permErr };
+  const schoolErr = await schoolAccessErrorForStudent(studentId);
+  if (schoolErr) return { error: schoolErr };
 
   const supabase = createAdminClient();
   const { error } = await supabase

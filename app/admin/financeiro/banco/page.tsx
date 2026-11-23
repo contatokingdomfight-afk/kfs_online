@@ -1,4 +1,4 @@
-import { getSchoolScope, isNetworkScope, resolveSchoolParam } from "@/lib/school-scope";
+import { getSchoolScope, hasNoSchool, isNetworkScope, resolveSchoolParam } from "@/lib/school-scope";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -46,7 +46,7 @@ export default async function AdminFinanceiroBancoPage({ searchParams }: { searc
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
   const scope = await getSchoolScope();
-  if (scope.kind === "none") redirect("/admin/financeiro");
+  if (hasNoSchool(scope)) redirect("/admin/financeiro");
   const { erro, ligado, school } = await searchParams;
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;

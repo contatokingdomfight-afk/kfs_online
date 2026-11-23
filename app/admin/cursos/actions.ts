@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { adminPermissionError } from "@/lib/permissions/assert";
+import { networkAdminPermissionError } from "@/lib/permissions/network-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const CATEGORIES = ["TECHNIQUE", "MINDSET", "PERFORMANCE"] as const;
@@ -16,7 +16,7 @@ export async function createCourse(
 ): Promise<CourseFormResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:cursos:write");
+  const permErr = await networkAdminPermissionError("admin:cursos:write");
   if (permErr) return { error: permErr };
 
   const name = (formData.get("name") as string)?.trim();
@@ -72,7 +72,7 @@ export async function updateCourse(
 ): Promise<CourseFormResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:cursos:write");
+  const permErr = await networkAdminPermissionError("admin:cursos:write");
   if (permErr) return { error: permErr };
 
   const courseId = (formData.get("courseId") as string)?.trim();
@@ -128,7 +128,7 @@ export async function updateCourse(
 export async function deleteCourse(courseId: string): Promise<{ error?: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:cursos:write");
+  const permErr = await networkAdminPermissionError("admin:cursos:write");
   if (permErr) return { error: permErr };
   if (!courseId?.trim()) return { error: "ID do curso inválido." };
 

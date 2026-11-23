@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { adminPermissionError } from "@/lib/permissions/assert";
+import { networkAdminPermissionError } from "@/lib/permissions/network-only";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { parseConfig } from "@/lib/evaluation-config";
 import { randomUUID } from "crypto";
@@ -22,7 +22,7 @@ export async function saveModalityEvaluationConfig(
 ): Promise<SaveEvaluationConfigResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:sistema:write");
+  const permErr = await networkAdminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
 
   const modality = (formData.get("modality") as string)?.trim();
@@ -68,7 +68,7 @@ export type CriterionResult = { error?: string; success?: boolean };
 export async function createComponent(_prev: ComponentResult | null, formData: FormData): Promise<ComponentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:sistema:write");
+  const permErr = await networkAdminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
   const modality = (formData.get("modality") as string)?.trim();
   const name = (formData.get("name") as string)?.trim();
@@ -125,7 +125,7 @@ async function getOrCreateComponentForDimension(
 export async function updateComponent(_prev: ComponentResult | null, formData: FormData): Promise<ComponentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:sistema:write");
+  const permErr = await networkAdminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
   const id = (formData.get("componentId") as string)?.trim();
   const name = (formData.get("name") as string)?.trim();
@@ -151,7 +151,7 @@ export async function updateComponent(_prev: ComponentResult | null, formData: F
 export async function deleteComponent(_prev: ComponentResult | null, formData: FormData): Promise<ComponentResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:sistema:write");
+  const permErr = await networkAdminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
   const id = (formData.get("componentId") as string)?.trim();
   if (!id) return { error: "ID do componente é obrigatório." };
@@ -176,7 +176,7 @@ export async function deleteComponent(_prev: ComponentResult | null, formData: F
 export async function createCriterion(_prev: CriterionResult | null, formData: FormData): Promise<CriterionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:sistema:write");
+  const permErr = await networkAdminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
   let componentId = (formData.get("componentId") as string)?.trim() || null;
   const modality = (formData.get("modality") as string)?.trim() || null;
@@ -237,7 +237,7 @@ export async function createCriterion(_prev: CriterionResult | null, formData: F
 export async function updateCriterion(_prev: CriterionResult | null, formData: FormData): Promise<CriterionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:sistema:write");
+  const permErr = await networkAdminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
   const id = (formData.get("criterionId") as string)?.trim();
   const label = (formData.get("label") as string)?.trim();
@@ -264,7 +264,7 @@ export async function updateCriterion(_prev: CriterionResult | null, formData: F
 export async function deleteCriterion(_prev: CriterionResult | null, formData: FormData): Promise<CriterionResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:sistema:write");
+  const permErr = await networkAdminPermissionError("admin:sistema:write");
   if (permErr) return { error: permErr };
   const id = (formData.get("criterionId") as string)?.trim();
   if (!id) return { error: "ID do critério é obrigatório." };

@@ -9,8 +9,11 @@ import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
  * O diretor de outra escola não entra: vendas e encomendas têm nomes de clientes da Sede.
  * Chamar em cada página (não num layout: layout e página são renderizados em paralelo).
  */
-export async function requireStoreAccess(): Promise<void> {
+export async function storeAccessAllowed(): Promise<boolean> {
   const scope = await getSchoolScope();
-  const allowed = scope.kind === "network" || (scope.kind === "school" && scope.schoolIds.includes(SEDE_SCHOOL_ID));
-  if (!allowed) redirect("/admin");
+  return scope.kind === "network" || (scope.kind === "school" && scope.schoolIds.includes(SEDE_SCHOOL_ID));
+}
+
+export async function requireStoreAccess(): Promise<void> {
+  if (!(await storeAccessAllowed())) redirect("/admin");
 }

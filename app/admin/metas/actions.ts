@@ -6,6 +6,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
 import type { AdminPermissionCode } from "@/lib/permissions/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canAccessSchool, getSchoolScope, schoolAccessErrorForRows } from "@/lib/school-scope";
 import {
   deriveGoalStatusAfterProgress,
   parseGoalMetricInput,
@@ -57,6 +58,10 @@ export async function listAdminGoals(filters?: {
       "id, title, description, metricType, targetValue, currentValue, startDate, targetEndDate, schoolId, status, createdByUserId, createdAt, updatedAt"
     )
     .order("targetEndDate", { ascending: true });
+
+  // Diretor: só as metas da(s) sua(s) escola(s); as metas globais da rede são do Admin Geral.
+  const scope = await getSchoolScope();
+  if (scope.kind !== "network") query = query.in("schoolId", scope.kind === "school" ? scope.schoolIds : []);
 
   const schoolFilter = filters?.schoolId;
   if (schoolFilter === "global") {
@@ -116,6 +121,7 @@ export async function getAdminGoalDetail(goalId: string): Promise<{
   if (!goal) return { goal: null, entries: [] };
 
   const row = goal as AdminBusinessGoalRow;
+  if (!canAccessSchool(await getSchoolScope(), row.schoolId)) return { goal: null, entries: [] };
   let schoolName: string | null = null;
   if (row.schoolId) {
     const { data: school } = await supabase.from("School").select("name").eq("id", row.schoolId).maybeSingle();
@@ -194,6 +200,7 @@ export async function createGoal(_prev: GoalActionResult | null, formData: FormD
 
   if (!title) return { error: "Título é obrigatório." };
   if (!metricType) return { error: "Tipo de meta inválido." };
+  if (!canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Só podes ter metas da tua escola." };
 
   const targetValue = parseGoalMetricInput(targetRaw, metricType);
   if (targetValue == null || targetValue <= 0) return { error: "Valor alvo deve ser maior que zero." };
@@ -230,6 +237,8 @@ export async function updateGoal(_prev: GoalActionResult | null, formData: FormD
 
   const goalId = (formData.get("goalId") as string)?.trim();
   if (!goalId) return { error: "Meta inválida." };
+  const goalScopeErr = await schoolAccessErrorForRows("AdminBusinessGoal", [goalId]);
+  if (goalScopeErr) return { error: goalScopeErr };
 
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
@@ -241,6 +250,7 @@ export async function updateGoal(_prev: GoalActionResult | null, formData: FormD
 
   if (!title) return { error: "Título é obrigatório." };
   if (!metricType) return { error: "Tipo de meta inválido." };
+  if (!canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Só podes ter metas da tua escola." };
 
   const targetValue = parseGoalMetricInput(targetRaw, metricType);
   if (targetValue == null || targetValue <= 0) return { error: "Valor alvo deve ser maior que zero." };
@@ -291,6 +301,8 @@ export async function cancelGoal(_prev: GoalActionResult | null, formData: FormD
 
   const goalId = (formData.get("goalId") as string)?.trim();
   if (!goalId) return { error: "Meta inválida." };
+  const goalScopeErr = await schoolAccessErrorForRows("AdminBusinessGoal", [goalId]);
+  if (goalScopeErr) return { error: goalScopeErr };
 
   const supabase = createAdminClient();
   const { error } = await supabase
@@ -311,6 +323,8 @@ export async function completeGoal(_prev: GoalActionResult | null, formData: For
 
   const goalId = (formData.get("goalId") as string)?.trim();
   if (!goalId) return { error: "Meta inválida." };
+  const goalScopeErr = await schoolAccessErrorForRows("AdminBusinessGoal", [goalId]);
+  if (goalScopeErr) return { error: goalScopeErr };
 
   const supabase = createAdminClient();
   const { error } = await supabase
@@ -335,6 +349,8 @@ export async function addGoalEntry(_prev: GoalActionResult | null, formData: For
   const recordedAt = (formData.get("recordedAt") as string)?.trim();
 
   if (!goalId) return { error: "Meta inválida." };
+  const goalScopeErr = await schoolAccessErrorForRows("AdminBusinessGoal", [goalId]);
+  if (goalScopeErr) return { error: goalScopeErr };
   if (!recordedAt) return { error: "Data do lançamento é obrigatória." };
 
   const supabase = createAdminClient();
@@ -380,7 +396,9 @@ export async function deleteGoalEntry(_prev: GoalActionResult | null, formData: 
   if (!entryId || !goalId) return { error: "Lançamento inválido." };
 
   const supabase = createAdminClient();
-  const { error } = await supabase.from("AdminGoalEntry").delete().eq("id", entryId);
+  const entryScopeErr = await schoolAccessErrorForRows("AdminBusinessGoal", [goalId]);
+  if (entryScopeErr) return { error: entryScopeErr };
+  const { error } = await supabase.from("AdminGoalEntry").delete().eq("id", entryId).eq("goalId", goalId);
   if (error) return { error: error.message };
 
   await syncGoalCurrentValue(supabase, goalId);

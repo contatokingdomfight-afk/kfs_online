@@ -13,6 +13,7 @@ import { SchoolDataForm } from "../SchoolDataForm";
 import { SchoolStatusPill } from "../SchoolStatusPill";
 import { DirectorsPanel, type DirectorRow } from "./DirectorsPanel";
 import { SchoolStatusPanel, type PaymentFormValues } from "./SchoolStatusPanel";
+import { CopyTextButton } from "@/components/ui/CopyTextButton";
 
 export const dynamic = "force-dynamic";
 
@@ -189,6 +190,17 @@ export default async function EscolaPage({
           merchant={merchant}
           bank={bank}
         />
+      )}
+
+      {tab === "estado" && status === "ATIVA" && (
+        <section className="card" style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Link de inscrição</h2>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
+            Quem se regista por este link fica com esta escola já escolhida.
+          </p>
+          <code style={{ fontSize: 13, overflowWrap: "anywhere" }}>{`${origin}/sign-up/escola/${id}`}</code>
+          <CopyTextButton text={`${origin}/sign-up/escola/${id}`} label="Copiar link" copiedLabel="Copiado" />
+        </section>
       )}
     </div>
   );

@@ -47,8 +47,7 @@ export async function selectPlanPayAtSchool(
 
   if (!plan || isPlanExcludedFromSelfService(plan.id, plan.name)) return { error: "Plano indisponível." };
 
-  const allowedSchools = new Set([student.schoolId, "default-school-001"]);
-  if (!allowedSchools.has(plan.schoolId)) {
+  if (plan.schoolId !== student.schoolId) {
     return { error: "Este plano não está disponível para a tua escola." };
   }
 

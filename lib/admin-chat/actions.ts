@@ -3,6 +3,7 @@
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
+import { filterSchools, getSchoolScope, scopedSchoolIds } from "@/lib/school-scope";
 
 export type ChatStudentSearchResult = { error: string } | { results: Array<{ studentId: string; name: string; email: string }> };
 
@@ -18,7 +19,11 @@ export async function searchStudentsForChat(query: string): Promise<ChatStudentS
   const ids = await searchStudentIdsByQuery(supabase, q);
   if (ids.length === 0) return { results: [] };
 
-  const { data: students } = await supabase.from("Student").select("id, userId").in("id", ids);
+  // Diretor: só alunos da(s) sua(s) escola(s).
+  const { data: students } = await filterSchools(
+    supabase.from("Student").select("id, userId"),
+    scopedSchoolIds(await getSchoolScope())
+  ).in("id", ids);
   const userIds = [...new Set((students ?? []).map((s) => s.userId))];
   const { data: users } = await supabase.from("User").select("id, name, email").in("id", userIds);
   const userById = new Map((users ?? []).map((u) => [u.id, u]));

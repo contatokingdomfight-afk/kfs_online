@@ -41,21 +41,22 @@ export default async function EscolherPlanoPage({ searchParams }: Props) {
     onboardingFees = await getStudentOnboardingFeesState(supabase, studentId);
   }
 
-  // Catálogo partilhado: planos da escola do aluno + planos em default-school-001 (seed / rede).
-  // Só filtrar por .eq(schoolId) escondia todos os planos quando o aluno não estava na mesma escola que o registo do plano.
+  // Multi-escola: cada escola tem os seus planos e preços (o pagamento vai para a conta dela),
+  // por isso o aluno só vê os da sua escola. Antes juntava sempre os da Sede.
   let plansQuery = supabase
     .from("Plan")
     .select("id, name, description, priceMonthly, includesDigitalAccess, includes_performance_tracking, includes_check_in, modalityScope, includes_exclusive_benefits, stripePriceId")
     .eq("isActive", true);
+  let lessonsQuery = supabase.from("Lesson").select("modality, weekday").eq("isOneOff", false).not("weekday", "is", null);
   if (schoolId) {
-    const schoolIds = Array.from(new Set([schoolId, "default-school-001"]));
-    plansQuery = plansQuery.in("schoolId", schoolIds);
+    plansQuery = plansQuery.eq("schoolId", schoolId);
+    lessonsQuery = lessonsQuery.eq("schoolId", schoolId);
   }
 
   const [plansRes, modalityRefs, { data: weeklyLessons }] = await Promise.all([
     plansQuery.order("priceMonthly", { ascending: true }),
     getCachedModalityRefs(supabase),
-    supabase.from("Lesson").select("modality, weekday").eq("isOneOff", false).not("weekday", "is", null),
+    lessonsQuery,
   ]);
   // Só modalidades com aulas na agenda semanal. MMA fica de fora: hoje é só o treino de competição de sábado.
   const scheduled = new Set(

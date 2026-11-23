@@ -4,6 +4,9 @@
  */
 export const DEFAULT_ONBOARDING_SCHOOL_NAME = "Sede presencial";
 
+/** Cookie posto pelo link de inscrição da escola (/sign-up/escola/[id]); pré-seleciona a escola no onboarding. */
+export const SIGNUP_SCHOOL_COOKIE = "kfs_signup_school";
+
 function norm(name: string): string {
   return name.trim().toLowerCase();
 }

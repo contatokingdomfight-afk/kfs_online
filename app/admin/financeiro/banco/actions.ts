@@ -1,6 +1,6 @@
 "use server";
 
-import { getSchoolScope, resolveSchoolParam } from "@/lib/school-scope";
+import { getSchoolScope, hasNoSchool, resolveSchoolParam } from "@/lib/school-scope";
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
@@ -17,7 +17,7 @@ async function requireFinanceAdmin(formData: FormData) {
   if (!user || user.role !== "ADMIN") return null;
   if (await adminPermissionError("admin:financeiro:write")) return null;
   const scope = await getSchoolScope();
-  if (scope.kind === "none") return null;
+  if (hasNoSchool(scope)) return null;
   // O Admin Geral em «Todas» vê a Sede: as transferências são sempre da conta de uma escola.
   return { user, schoolId: resolveSchoolParam(scope, String(formData.get("schoolId") ?? "")) ?? SEDE_SCHOOL_ID };
 }

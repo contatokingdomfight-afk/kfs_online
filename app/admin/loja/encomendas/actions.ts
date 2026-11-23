@@ -1,5 +1,7 @@
 "use server";
 
+import { storeAccessAllowed } from "@/lib/retail/store-access";
+
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
@@ -16,6 +18,7 @@ async function requireStoreAdmin() {
   const u = await getCurrentDbUser();
   if (!u || u.role !== "ADMIN") return null;
   if (await adminPermissionError("admin:financeiro:write")) return null;
+  if (!(await storeAccessAllowed())) return null;
   return u;
 }
 

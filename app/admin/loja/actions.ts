@@ -1,5 +1,7 @@
 "use server";
 
+import { storeAccessAllowed } from "@/lib/retail/store-access";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -19,6 +21,7 @@ async function requireAdmin(code: AdminPermissionCode) {
   const u = await getCurrentDbUser();
   if (!u || u.role !== "ADMIN") return null;
   if (await adminPermissionError(code)) return null;
+  if (!(await storeAccessAllowed())) return null;
   return u;
 }
 

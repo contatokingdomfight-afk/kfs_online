@@ -11,7 +11,7 @@ import { ViewAsSwitcher } from "@/components/ViewAsSwitcher";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import { AdminChatWidgetGate } from "@/components/admin-chat/AdminChatWidgetGate";
 import { CoachNotificationBell } from "@/components/CoachNotificationBell";
-import { getSchoolScope } from "@/lib/school-scope";
+import { getSchoolScope, hasNoSchool } from "@/lib/school-scope";
 import { SchoolPicker, SchoolBadge } from "@/components/admin/SchoolPicker";
 import { LogoutButton } from "@/components/LogoutButton";
 
@@ -27,7 +27,7 @@ export default async function AdminLayout({
   const [access, scope] = await Promise.all([getCachedResolvedAdminAccess(), getSchoolScope()]);
   // Diretor sem escola atribuída não tem o que gerir. Não redirecionar para /dashboard:
   // o layout do dashboard devolve o ADMIN para /admin → loop infinito de redirects.
-  if (scope.kind === "none") {
+  if (hasNoSchool(scope)) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, backgroundColor: "var(--bg)", color: "var(--text-primary)" }}>
         <div style={{ maxWidth: 420, textAlign: "center", display: "flex", flexDirection: "column", gap: 16, alignItems: "center" }}>

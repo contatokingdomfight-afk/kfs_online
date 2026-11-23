@@ -4,7 +4,12 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
-import { getCachedBackofficeSchools, getCachedSchools } from "@/lib/cached-reference-data";
+import {
+  BACKOFFICE_SCHOOLS_FILTER,
+  getCachedBackofficeSchools,
+  getCachedSchools,
+  type CachedSchoolOption,
+} from "@/lib/cached-reference-data";
 import { AdminPermissionError } from "@/lib/permissions/assert";
 import { canAccessSchool, schoolScopeFrom, type SchoolScope } from "@/lib/school-scope-rules";
 
@@ -49,14 +54,45 @@ export const getSchoolScope = cache(async function getSchoolScope(): Promise<Sch
       return { kind: "network", schools: allSchools, selectedSchoolId };
     }
     const { data: links } = await admin.from("SchoolDirector").select("schoolId").eq("userId", u.id);
-    return schoolScopeFrom((links ?? []).map((l) => l.schoolId as string), allSchools, wanted);
+    return staffScope((links ?? []).map((l) => l.schoolId as string), allSchools, wanted, admin);
   }
 
   const { data: coach } = await admin.from("Coach").select("id").eq("userId", u.id).maybeSingle();
-  if (!coach) return { kind: "none" };
+  if (!coach) return LOCKED_SCOPE;
   const { data: links } = await admin.from("CoachSchool").select("schoolId").eq("coachId", coach.id);
-  return schoolScopeFrom((links ?? []).map((l) => l.schoolId as string), allSchools, wanted);
+  return staffScope((links ?? []).map((l) => l.schoolId as string), allSchools, wanted, admin);
 });
+
+/**
+ * Diretor/coach sem escola válida (escola desativada, ligação removida): não vê nada.
+ * Nunca devolver `none` a staff — várias páginas tratam `resolveSchoolParam(none) === null` como «todas as escolas».
+ * A escola fictícia faz `.eq/.in("schoolId", …)` devolver vazio e `canAccessSchool` dar falso.
+ */
+const LOCKED_SCHOOL_ID = "__sem-escola__";
+const LOCKED_SCOPE: SchoolScope = { kind: "school", schools: [], schoolIds: [], selectedSchoolId: LOCKED_SCHOOL_ID };
+
+/**
+ * Staff sem escola válida (ver LOCKED_SCOPE), ou sem sessão: não tem nada para gerir.
+ * Type guard para o TS estreitar o `else` como fazia `scope.kind === "none"` (o ramo verdadeiro só sai/redireciona).
+ */
+export function hasNoSchool(scope: SchoolScope): scope is Extract<SchoolScope, { kind: "none" }> {
+  return scope.kind === "none" || (scope.kind === "school" && scope.selectedSchoolId === LOCKED_SCHOOL_ID);
+}
+
+async function staffScope(
+  ids: string[],
+  cached: CachedSchoolOption[],
+  wanted: string | null,
+  admin: NonNullable<ReturnType<typeof getAdminClientOrNull>["client"]>
+): Promise<SchoolScope> {
+  let scope = schoolScopeFrom(ids, cached, wanted);
+  // Escola criada/aberta há menos de 5 min pode ainda não estar na cache: confirma na BD.
+  if (scope.kind === "none" && ids.length > 0) {
+    const { data } = await admin.from("School").select("id, name").in("id", ids).or(BACKOFFICE_SCHOOLS_FILTER);
+    scope = schoolScopeFrom(ids, (data ?? []) as CachedSchoolOption[], wanted);
+  }
+  return scope.kind === "none" ? LOCKED_SCOPE : scope;
+}
 
 /** Server actions: falha se o registo for de uma escola fora do alcance do utilizador. */
 export async function assertSchoolAccess(schoolId: string | null | undefined): Promise<void> {

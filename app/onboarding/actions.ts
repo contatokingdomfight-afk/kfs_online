@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { invalidateStudentGateCache } from "@/lib/student-gate-cache";
 
@@ -38,8 +39,18 @@ export async function completeOnboarding(formData: FormData): Promise<CompleteOn
   const supabase = await createClient();
 
   if (schoolId) {
-    const { error: studentError } = await supabase.from("Student").update({ schoolId }).eq("id", studentId);
-    if (studentError) return { error: studentError.message };
+    // Só escolas abertas (não a Demo) e só antes de ter plano: depois disso a mudança é do admin.
+    // Service role: o RLS de Student não deixa o aluno mudar a escola e falhava em silêncio (0 linhas, sem erro).
+    const admin = createAdminClient();
+    const [{ data: school }, { data: student }] = await Promise.all([
+      admin.from("School").select("id").eq("id", schoolId).eq("isActive", true).neq("id", "demo-school").maybeSingle(),
+      admin.from("Student").select("schoolId, planId").eq("id", studentId).maybeSingle(),
+    ]);
+    if (!school) return { error: "Escola indisponível." };
+    if (student && !student.planId && student.schoolId !== schoolId) {
+      const { error: studentError } = await admin.from("Student").update({ schoolId }).eq("id", studentId);
+      if (studentError) return { error: studentError.message };
+    }
   }
 
   const { data: existing } = await supabase

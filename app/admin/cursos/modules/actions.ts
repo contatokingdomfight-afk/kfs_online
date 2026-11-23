@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { adminPermissionError } from "@/lib/permissions/assert";
+import { networkAdminPermissionError } from "@/lib/permissions/network-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type ModuleFormResult = { error?: string };
@@ -13,7 +13,7 @@ export async function createModule(
 ): Promise<ModuleFormResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:cursos:write");
+  const permErr = await networkAdminPermissionError("admin:cursos:write");
   if (permErr) return { error: permErr };
 
   const courseId = (formData.get("courseId") as string)?.trim();
@@ -56,7 +56,7 @@ export async function updateModule(
 ): Promise<ModuleFormResult> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:cursos:write");
+  const permErr = await networkAdminPermissionError("admin:cursos:write");
   if (permErr) return { error: permErr };
 
   const moduleId = (formData.get("moduleId") as string)?.trim();
@@ -87,7 +87,7 @@ export async function updateModule(
 export async function deleteModule(moduleId: string, courseId: string): Promise<{ error?: string }> {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
-  const permErr = await adminPermissionError("admin:cursos:write");
+  const permErr = await networkAdminPermissionError("admin:cursos:write");
   if (permErr) return { error: permErr };
   if (!moduleId?.trim() || !courseId?.trim()) return { error: "ID inválido." };
 

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
+import { getSchoolScope, schoolAccessErrorForStudent, scopedSchoolIds } from "@/lib/school-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { searchStudentIdsByQuery } from "@/lib/admin-search-students";
 import { loadStudentSummaryRows, type StudentSummaryRow } from "@/lib/admin-student-summary";
@@ -27,7 +28,13 @@ export async function searchStudentsForNewAthlete(query: string): Promise<Search
   }
 
   const supabase = createAdminClient();
-  const ids = await searchStudentIdsByQuery(supabase, q);
+  let ids = await searchStudentIdsByQuery(supabase, q);
+  // Diretor: só alunos da(s) sua(s) escola(s).
+  const schoolIds = scopedSchoolIds(await getSchoolScope());
+  if (schoolIds && ids.length > 0) {
+    const { data: inScope } = await supabase.from("Student").select("id").in("id", ids).in("schoolId", schoolIds);
+    ids = (inScope ?? []).map((s) => s.id as string);
+  }
   if (ids.length === 0) return { results: [] };
 
   const { data: existingAthletes } = await supabase.from("Athlete").select("studentId").in("studentId", ids);
@@ -53,6 +60,8 @@ export async function createAthlete(
   const level = (formData.get("level") as string) || "INICIANTE";
   const validLevels = ["INICIANTE", "INTERMEDIARIO", "AVANCADO"];
   if (!studentId) return { error: "Aluno é obrigatório." };
+  const schoolErr = await schoolAccessErrorForStudent(studentId);
+  if (schoolErr) return { error: schoolErr };
   if (!validLevels.includes(level)) return { error: "Nível inválido." };
 
   const supabase = createAdminClient();
