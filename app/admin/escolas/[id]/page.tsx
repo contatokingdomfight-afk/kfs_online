@@ -129,6 +129,7 @@ export default async function EscolaPage({
   const schoolSlug = (school as { slug?: string | null }).slug ?? null;
   // Link que o site da escola usa: com nome quando existe, senão com o código da escola.
   const signupLink = `${origin}/sign-up/escola/${schoolSlug ?? id}`;
+  const trialLink = `${origin}/aula-experimental?escola=${schoolSlug ?? id}`;
 
   return (
     <div style={{ maxWidth: "min(760px, 100%)" }}>
@@ -216,12 +217,18 @@ export default async function EscolaPage({
 
       {tab === "estado" && status === "ATIVA" && (
         <section className="card" style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Link de inscrição</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Links para o site da escola</h2>
           <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
             Quem se regista por este link fica com esta escola já escolhida.
           </p>
           <code style={{ fontSize: 13, overflowWrap: "anywhere" }}>{signupLink}</code>
           <CopyTextButton text={signupLink} label="Copiar link" copiedLabel="Copiado" />
+          <h3 style={{ fontSize: 14, fontWeight: 700, margin: "8px 0 0" }}>Aula experimental</h3>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
+            Mostra só os horários desta escola; a confirmação por WhatsApp vai para o telefone da escola (separador Dados).
+          </p>
+          <code style={{ fontSize: 13, overflowWrap: "anywhere" }}>{trialLink}</code>
+          <CopyTextButton text={trialLink} label="Copiar link" copiedLabel="Copiado" />
           {!schoolSlug && (
             <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>
               Para um link com nome (ex.: …/sign-up/escola/kfs-lisboa), preenche o «Link de inscrição» no separador Dados.

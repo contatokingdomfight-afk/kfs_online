@@ -96,6 +96,7 @@ export function FormularioExperimental({
   referrerStudentId,
   interestedPlanName,
   schoolPhone,
+  schoolPhones,
 }: {
   locale: Locale;
   schools: { id: string; name: string }[];
@@ -107,6 +108,8 @@ export function FormularioExperimental({
   /** Plano clicado na home (`?plano=<id>`), já resolvido para o nome público. */
   interestedPlanName?: string | null;
   schoolPhone: string;
+  /** Telefone de cada escola (WhatsApp quando não há horários); sem valor usa `schoolPhone`. */
+  schoolPhones?: Record<string, string>;
 }) {
   const t = getTranslations(locale);
   const en = locale === "en";
@@ -164,7 +167,7 @@ export function FormularioExperimental({
 
   const whatsappHelp = (
     <a
-      href={buildNoSlotsWhatsAppUrl(schoolPhone, locale, current?.label)}
+      href={buildNoSlotsWhatsAppUrl(schoolPhones?.[schoolId] || schoolPhone, locale, current?.label)}
       target="_blank"
       rel="noopener noreferrer"
       style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, color: "var(--text-secondary)", textDecoration: "none" }}
@@ -312,7 +315,7 @@ export function FormularioExperimental({
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 16, borderRadius: 14, background: "var(--bg-secondary)", fontSize: 15, color: "var(--text-secondary)" }}>
               <span>{t("trialFormNoSlots")}</span>
               <a
-                href={buildNoSlotsWhatsAppUrl(schoolPhone, locale)}
+                href={buildNoSlotsWhatsAppUrl(schoolPhones?.[schoolId] || schoolPhone, locale)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-primary"

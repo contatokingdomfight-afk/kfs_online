@@ -14,6 +14,7 @@ import {
 import { FormularioExperimental } from "./FormularioExperimental";
 import { getDefaultOnboardingSchoolId, sortSchoolsForOnboarding } from "@/lib/onboarding-default-school";
 import { SCHOOL_PUBLIC_CONTACT } from "@/lib/school-contact";
+import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
 import { loadPublicPlans } from "@/lib/public-plans";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
@@ -26,7 +27,7 @@ export const metadata: Metadata = publicPageMetadata({
   path: "/aula-experimental",
 });
 
-type SearchParams = Promise<{ sucesso?: string; data?: string; hora?: string; ref?: string; plano?: string; planoNome?: string }>;
+type SearchParams = Promise<{ sucesso?: string; data?: string; hora?: string; ref?: string; plano?: string; planoNome?: string; escola?: string }>;
 
 function ymdToPtDate(ymd: string): string {
   const [y, m, d] = ymd.split("-");
@@ -56,7 +57,6 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
   const t = getTranslations(locale);
   const sucesso = params.sucesso === "1";
-  const whatsappUrl = buildTrialWhatsAppUrl(SCHOOL_PUBLIC_CONTACT.phone, params.data, params.hora, params.planoNome);
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} backHref="/" backLabel="← Voltar à página inicial" />;
@@ -76,7 +76,7 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
 
   const [modalities, schoolsRes, lessonsRes, publicPlans] = await Promise.all([
     getCachedModalityRefs(supabase),
-    supabase.from("School").select("id, name").eq("isActive", true).order("name", { ascending: true }),
+    supabase.from("School").select("id, name, slug, phone").eq("isActive", true).neq("id", "demo-school").order("name", { ascending: true }),
     supabase
       .from("Lesson")
       .select(
@@ -90,8 +90,21 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
     ? (publicPlans.find((p) => p.id === params.plano)?.name ?? null)
     : null;
 
-  const schools = sortSchoolsForOnboarding(schoolsRes.data ?? []);
-  const defaultSchoolId = getDefaultOnboardingSchoolId(schools);
+  type PublicSchool = { id: string; name: string | null; slug: string | null; phone: string | null };
+  const allSchools = sortSchoolsForOnboarding((schoolsRes.data ?? []) as PublicSchool[]);
+  // Link do site de cada escola: /aula-experimental?escola=<nome curto ou id> → só essa escola, já escolhida.
+  const wanted = params.escola?.trim().toLowerCase() || null;
+  const linkedSchool = wanted ? allSchools.find((s) => s.slug === wanted || s.id === params.escola?.trim()) ?? null : null;
+  const schools = linkedSchool ? [linkedSchool] : allSchools;
+  const defaultSchoolId = linkedSchool?.id ?? getDefaultOnboardingSchoolId(schools);
+  /**
+   * WhatsApp de confirmação: o telefone da escola onde marcou. A Sede (e escolas sem telefone) usa o
+   * contacto público de sempre — o School.phone da Sede não é o número do WhatsApp.
+   */
+  const phoneOf = (s: PublicSchool | null | undefined) =>
+    s && s.id !== SEDE_SCHOOL_ID && (s.phone?.replace(/\D/g, "").length ?? 0) >= 9 ? (s.phone as string) : SCHOOL_PUBLIC_CONTACT.phone;
+  const schoolPhones = Object.fromEntries(schools.map((s) => [s.id, phoneOf(s)]));
+  const whatsappUrl = buildTrialWhatsAppUrl(phoneOf(linkedSchool), params.data, params.hora, params.planoNome);
   const lessonsRaw = lessonsRes.data ?? [];
   const schoolIds = new Set(schools.map((s) => s.id));
   const lessonsForActiveSchools = lessonsRaw.filter((row) => {
@@ -193,6 +206,7 @@ export default async function AulaExperimentalPage({ searchParams }: { searchPar
           referrerStudentId={referrerStudentId}
           interestedPlanName={interestedPlanName}
           schoolPhone={SCHOOL_PUBLIC_CONTACT.phone}
+          schoolPhones={schoolPhones}
         />
       </div>
     </main>

@@ -96,7 +96,7 @@ export async function submitTrialRequest(
   if (isSpam) {
     console.warn("[aula-experimental] pedido bloqueado como spam", { honeypot: Boolean(honeypot), elapsedMs });
     const startTime = (lesson as { startTime?: string | null }).startTime ?? "";
-    redirect(`/aula-experimental?${new URLSearchParams({ sucesso: "1", data: occurrenceYmd, hora: startTime }).toString()}`);
+    redirect(`/aula-experimental?${new URLSearchParams({ sucesso: "1", data: occurrenceYmd, hora: startTime, escola: schoolId }).toString()}`);
   }
 
   let validReferrerId: string | null = null;
@@ -123,7 +123,8 @@ export async function submitTrialRequest(
 
   revalidatePath("/aula-experimental");
   const startTime = (lesson as { startTime?: string | null }).startTime ?? "";
-  const params = new URLSearchParams({ sucesso: "1", data: occurrenceYmd, hora: startTime });
+  // A escola segue para o ecrã de sucesso: o WhatsApp de confirmação vai para o telefone dela.
+  const params = new URLSearchParams({ sucesso: "1", data: occurrenceYmd, hora: startTime, escola: schoolId });
   if (interestedPlan) params.set("planoNome", interestedPlan);
   redirect(`/aula-experimental?${params.toString()}`);
 }
