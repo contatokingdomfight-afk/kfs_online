@@ -1,3 +1,4 @@
+import { STORE_ENABLED } from "@/lib/retail/store-flag";
 import Link from "next/link";
 
 const LABELS = {
@@ -29,9 +30,11 @@ export function PublicQuickNav({ locale }: { locale: "pt" | "en" }) {
       <Link href="/academy" className={linkClass}>
         {t.academy}
       </Link>
-      <Link href="/loja" className={linkClass}>
-        {t.shop}
-      </Link>
+      {STORE_ENABLED && (
+        <Link href="/loja" className={linkClass}>
+          {t.shop}
+        </Link>
+      )}
       <Link href="/#faq" className={linkClass}>
         {t.faq}
       </Link>

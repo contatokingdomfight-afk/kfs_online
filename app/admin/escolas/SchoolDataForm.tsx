@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { FormLoadingModal } from "@/components/FormLoadingModal";
 import { createSchool, updateSchool, type SchoolResult } from "./actions";
 
-type SchoolData = { id: string; name: string; city: string | null; address: string | null; phone: string | null; email: string | null };
+type SchoolData = { id: string; name: string; city: string | null; address: string | null; phone: string | null; email: string | null; slug?: string | null };
 
 type SchoolLegalData = { legalName: string | null; legalAddress: string | null; nif: string | null };
 
@@ -17,6 +17,22 @@ export function SchoolDataForm({ school, legal }: { school?: SchoolData; legal?:
     <form action={action} className="card" style={{ padding: "var(--space-4)", display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
       {school && <input type="hidden" name="schoolId" value={school.id} />}
       <input name="name" defaultValue={school?.name} placeholder="Nome da escola *" required className="input" style={inputStyle} />
+      {school && (
+        <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
+          Link de inscrição (nome curto, ex.: kfs-lisboa)
+          <input
+            name="slug"
+            defaultValue={school.slug ?? ""}
+            placeholder="kfs-lisboa"
+            pattern="[a-z0-9]+(-[a-z0-9]+)*"
+            minLength={3}
+            maxLength={40}
+            autoCapitalize="none"
+            className="input"
+            style={inputStyle}
+          />
+        </label>
+      )}
       <input name="city" defaultValue={school?.city ?? ""} placeholder="Cidade" className="input" style={inputStyle} />
       <input name="address" defaultValue={school?.address ?? ""} placeholder="Morada completa" className="input" style={inputStyle} />
       <input name="phone" defaultValue={school?.phone ?? ""} placeholder="Telefone" className="input" style={inputStyle} />

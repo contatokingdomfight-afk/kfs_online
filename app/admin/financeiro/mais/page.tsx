@@ -1,3 +1,4 @@
+import { STORE_ENABLED } from "@/lib/retail/store-flag";
 import { getSchoolScope, scopedSchoolIds } from "@/lib/school-scope";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -17,8 +18,8 @@ const LINKS = [
   { href: "/admin/financeiro/antecipado", label: "Pagamento antecipado", hint: "Vários meses pagos de uma vez" },
   { href: "/admin/financeiro/compras", label: "Compras e inscrições", hint: "Cursos, eventos e outras compras" },
   { href: "/admin/financeiro/coaches", label: "Pagamentos a coaches", hint: "Aulas dadas e valores a pagar" },
-  { href: "/admin/loja", label: "Loja presencial", hint: "Vendas, encomendas e stock" },
-] as const;
+  ...(STORE_ENABLED ? [{ href: "/admin/loja", label: "Loja presencial", hint: "Vendas, encomendas e stock" }] : []),
+];
 
 /** Mais: ferramentas do financeiro usadas com menos frequência. */
 export default async function AdminFinanceiroMaisPage() {

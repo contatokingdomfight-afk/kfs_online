@@ -1,5 +1,6 @@
 "use server";
 
+import { STORE_CLOSED_MESSAGE, STORE_ENABLED } from "@/lib/retail/store-flag";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
@@ -14,6 +15,7 @@ export type OrderActionResult = { error?: string; success?: boolean };
 
 /** Verifica um cupão antes de enviar (só pré-visualização; o servidor volta a validar ao criar). */
 export async function checkCoupon(raw: string): Promise<{ coupon?: CouponRule; error?: string }> {
+  if (!STORE_ENABLED) return { error: STORE_CLOSED_MESSAGE };
   const supabase = createAdminClient();
   const [studentId, dbUser] = await Promise.all([getCurrentStudentId(), getCurrentDbUser()]);
   const { data: student } = studentId ? await supabase.from("Student").select("schoolId").eq("id", studentId).maybeSingle() : { data: null };
@@ -38,6 +40,7 @@ function parseLines(raw: FormDataEntryValue | null): OrderLineInput[] {
 
 /** O aluno envia a encomenda (fica «Por pagar») e vai para a página dela, com os dados de pagamento. */
 export async function createMyOrder(_prev: OrderActionResult | null, formData: FormData): Promise<OrderActionResult> {
+  if (!STORE_ENABLED) return { error: STORE_CLOSED_MESSAGE };
   const studentId = await getCurrentStudentId();
   if (!studentId) return { error: "Sessão expirada. Entra outra vez." };
   const supabase = createAdminClient();

@@ -48,7 +48,10 @@ export function SchoolStatusPanel({
   bank,
   legalDataReady,
   networkFees,
+  canChangeStatus = true,
 }: {
+  /** Abrir/desativar a escola é só do Admin Geral; o diretor vê o estado mas não muda. */
+  canChangeStatus?: boolean;
   /** Valores da rede (Configurações), mostrados como sugestão quando a escola não tem os seus. */
   networkFees: { enrollment: number; insurance: number };
   schoolId: string;
@@ -76,7 +79,11 @@ export function SchoolStatusPanel({
         <ChecklistItem done={legalDataReady} title="Dados legais para o contrato" hint="Denominação social, NIPC e sede, na tab Dados" />
 
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
-          {status === "ATIVA" ? (
+          {!canChangeStatus ? (
+            <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
+              Abrir ou desativar a escola é feito pelo Admin Geral.
+            </p>
+          ) : status === "ATIVA" ? (
             <form
               action={deactivateAction}
               onSubmit={(e) => {

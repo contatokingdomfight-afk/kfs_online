@@ -15,7 +15,11 @@ type SchoolRow = { id: string; name: string; city: string | null; address: strin
 export default async function AdminEscolasPage() {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
-  if (!isNetworkScope(await getSchoolScope())) redirect("/admin");
+  const scope = await getSchoolScope();
+  // Diretor: vai direto à ficha da sua escola (a escolhida no seletor, se tiver várias).
+  if (!isNetworkScope(scope)) {
+    redirect(scope.kind === "school" && scope.schools.length > 0 ? `/admin/escolas/${scope.selectedSchoolId}?tab=estado` : "/admin");
+  }
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;

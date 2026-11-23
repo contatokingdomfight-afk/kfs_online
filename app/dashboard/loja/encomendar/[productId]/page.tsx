@@ -1,3 +1,4 @@
+import { STORE_ENABLED } from "@/lib/retail/store-flag";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Shirt } from "lucide-react";
@@ -12,6 +13,7 @@ import { loadActivePromotions } from "@/lib/retail/discounts.server";
 export const dynamic = "force-dynamic";
 
 export default async function EncomendarPage({ params }: { params: Promise<{ productId: string }> }) {
+  if (!STORE_ENABLED) notFound(); // Loja oculta na rede (lib/retail/store-flag.ts).
   await requirePlan();
   const { productId } = await params;
   const admin = getAdminClientOrNull().client;

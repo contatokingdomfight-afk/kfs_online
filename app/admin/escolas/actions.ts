@@ -5,7 +5,7 @@ import { SCHOOLS_CACHE_TAG } from "@/lib/cached-reference-data";
 import { adminPermissionError } from "@/lib/permissions/assert";
 import { disconnectSchoolBank, saveSchoolBankCertificate } from "@/lib/revolut/bank-accounts";
 import { connectSchoolMerchantAccount, disconnectSchoolMerchantAccount } from "@/lib/revolut/merchant-accounts";
-import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
+import { canAccessSchool, getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
 import { syncPendingInsuranceAmounts } from "@/lib/sync-pending-insurance-amount";
 import { hasLegalData, missingToOpen, type SchoolPaymentMethods } from "@/lib/school-status";
@@ -32,6 +32,19 @@ async function networkAdminError(): Promise<string | null> {
   if (!dbUser || dbUser.role !== "ADMIN") return "Não autorizado.";
   if (!isNetworkScope(await getSchoolScope())) return "Só o Admin Geral pode gerir as escolas da rede.";
   return adminPermissionError("admin:escolas:write");
+}
+
+/**
+ * Ficha de uma escola (dados, pagamentos, taxas, link, Revolut, banco): o Admin Geral em qualquer escola,
+ * o diretor só nas suas (com permissão de financeiro). Criar/abrir/desativar e gerir diretores continua só da rede.
+ */
+async function schoolManagerError(schoolId: string): Promise<string | null> {
+  const scope = await getSchoolScope();
+  if (isNetworkScope(scope)) return networkAdminError();
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return "Não autorizado.";
+  if (!schoolId || !canAccessSchool(scope, schoolId)) return "Só podes gerir a tua escola.";
+  return adminPermissionError("admin:financeiro:write");
 }
 
 function field(formData: FormData, name: string): string {
@@ -78,7 +91,7 @@ export async function createSchool(_prev: SchoolResult, formData: FormData): Pro
 }
 
 export async function updateSchool(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
-  const denied = await networkAdminError();
+  const denied = await schoolManagerError(field(formData, "schoolId"));
   if (denied) return { error: denied };
 
   const id = field(formData, "schoolId");
@@ -90,12 +103,19 @@ export async function updateSchool(_prev: SchoolResult, formData: FormData): Pro
   const nif = field(formData, "nif").replace(/\s/g, "");
   if (nif && !/^\d{9}$/.test(nif)) return { error: "O NIPC deve ter 9 dígitos." };
 
+  // Link de inscrição com nome: minúsculas, números e hífenes (vazio = só o link com o código).
+  const hasSlug = formData.has("slug");
+  const slug = field(formData, "slug").toLowerCase();
+  if (slug && !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) return { error: "O link só pode ter letras minúsculas, números e hífenes (ex.: kfs-lisboa)." };
+  if (slug && (slug.length < 3 || slug.length > 40)) return { error: "O link deve ter entre 3 e 40 caracteres." };
+
   const out = getAdminClientOrNull();
   if (!out.client) return { error: "Configuração admin ausente." };
 
   const { error } = await out.client
     .from("School")
     .update({
+      ...(hasSlug ? { slug: slug || null } : {}),
       name,
       address: field(formData, "address") || null,
       city: field(formData, "city") || null,
@@ -105,7 +125,7 @@ export async function updateSchool(_prev: SchoolResult, formData: FormData): Pro
       updatedAt: new Date().toISOString(),
     })
     .eq("id", id);
-  if (error) return { error: error.message };
+  if (error) return { error: error.code === "23505" ? "Esse link já está a ser usado por outra escola." : error.message };
 
   if (hasLegalFields) {
     const { error: nifError } = await out.client
@@ -368,7 +388,7 @@ export async function removeDirector(_prev: SchoolResult, formData: FormData): P
 }
 
 export async function saveSchoolPaymentMethods(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
-  const denied = await networkAdminError();
+  const denied = await schoolManagerError(field(formData, "schoolId"));
   if (denied) return { error: denied };
   const actor = await getCurrentDbUser();
 
@@ -426,7 +446,7 @@ export async function saveSchoolPaymentMethods(_prev: SchoolResult, formData: Fo
 
 /** Liga a conta Revolut da escola. A chave nunca volta ao browser nem aparece nos registos. */
 export async function connectSchoolRevolut(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
-  const denied = await networkAdminError();
+  const denied = await schoolManagerError(field(formData, "schoolId"));
   if (denied) return { error: denied };
   const actor = await getCurrentDbUser();
 
@@ -447,7 +467,7 @@ export async function connectSchoolRevolut(_prev: SchoolResult, formData: FormDa
 }
 
 export async function disconnectSchoolRevolut(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
-  const denied = await networkAdminError();
+  const denied = await schoolManagerError(field(formData, "schoolId"));
   if (denied) return { error: denied };
   const actor = await getCurrentDbUser();
 
@@ -466,7 +486,7 @@ export async function disconnectSchoolRevolut(_prev: SchoolResult, formData: For
 
 /** Guarda o certificado da Business API. Falta depois autorizar na Revolut (/api/revolut/connect). */
 export async function saveSchoolBankCert(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
-  const denied = await networkAdminError();
+  const denied = await schoolManagerError(field(formData, "schoolId"));
   if (denied) return { error: denied };
   const actor = await getCurrentDbUser();
 
@@ -488,7 +508,7 @@ export async function saveSchoolBankCert(_prev: SchoolResult, formData: FormData
 }
 
 export async function disconnectSchoolBankAction(_prev: SchoolResult, formData: FormData): Promise<SchoolResult> {
-  const denied = await networkAdminError();
+  const denied = await schoolManagerError(field(formData, "schoolId"));
   if (denied) return { error: denied };
 
   const schoolId = field(formData, "schoolId");

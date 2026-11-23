@@ -1,3 +1,5 @@
+import { STORE_ENABLED } from "@/lib/retail/store-flag";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { publicPageMetadata } from "@/lib/seo/public-metadata";
 import Link from "next/link";
@@ -33,6 +35,7 @@ function CategoryIcon({ category, size }: { category: ProductCategory; size: num
 }
 
 export default async function LojaPublicaPage({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
+  if (!STORE_ENABLED) notFound(); // Loja oculta na rede (lib/retail/store-flag.ts).
   const { cat } = await searchParams;
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();

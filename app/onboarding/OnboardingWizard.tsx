@@ -34,6 +34,8 @@ export function OnboardingWizard({ userName, schools, defaultSchoolId, locale }:
   const [loading, setLoading] = useState(false);
 
   const name = userName?.trim() || t("onboardingWelcomeNameFallback");
+  // Multi-escola: boas-vindas com o nome da escola escolhida (a do link de inscrição ou a pré-selecionada), não a marca fixa.
+  const schoolName = schools.find((s) => s.id === schoolId)?.name?.trim() || null;
 
   function toggleGoal(id: string) {
     setGoals((prev) => (prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]));
@@ -104,8 +106,8 @@ export function OnboardingWizard({ userName, schools, defaultSchoolId, locale }:
             }}
           >
             {locale === "pt"
-              ? `Bem-vindo à Kingdom Fight School, ${name}! Vamos preparar o seu perfil de guerreiro em poucos segundos.`
-              : `Welcome to Kingdom Fight School, ${name}! Let's set up your warrior profile in a few seconds.`}
+              ? `Bem-vindo${schoolName ? ` à ${schoolName}` : ""}, ${name}! Vamos preparar o seu perfil de guerreiro em poucos segundos.`
+              : `Welcome${schoolName ? ` to ${schoolName}` : ""}, ${name}! Let's set up your warrior profile in a few seconds.`}
           </h1>
           <button
             type="button"

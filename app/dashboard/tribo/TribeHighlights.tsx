@@ -1,3 +1,4 @@
+import { STORE_ENABLED } from "@/lib/retail/store-flag";
 import Link from "next/link";
 import { CalendarDays, ChevronRight, Gift, ShoppingBag, Users } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -128,11 +129,14 @@ export async function TribeHighlights({
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: hasExclusiveBenefits ? "repeat(2, minmax(0, 1fr))" : "repeat(1, minmax(0, 1fr))", gap: 8 }}>
-        <Link href="/dashboard/loja" style={{ ...card, padding: 12, display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
-          <ShoppingBag size={20} color="var(--primary)" aria-hidden />
-          <span style={{ fontSize: 14, fontWeight: 700 }}>{pt ? "Loja" : "Store"}</span>
-        </Link>
+      {(STORE_ENABLED || hasExclusiveBenefits) && (
+      <div style={{ display: "grid", gridTemplateColumns: STORE_ENABLED && hasExclusiveBenefits ? "repeat(2, minmax(0, 1fr))" : "repeat(1, minmax(0, 1fr))", gap: 8 }}>
+        {STORE_ENABLED && (
+          <Link href="/dashboard/loja" style={{ ...card, padding: 12, display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
+            <ShoppingBag size={20} color="var(--primary)" aria-hidden />
+            <span style={{ fontSize: 14, fontWeight: 700 }}>{pt ? "Loja" : "Store"}</span>
+          </Link>
+        )}
         {hasExclusiveBenefits && (
           <Link href="/dashboard/beneficios" style={{ ...card, padding: 12, display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
             <Gift size={20} color="#facc15" aria-hidden />
@@ -140,6 +144,7 @@ export async function TribeHighlights({
           </Link>
         )}
       </div>
+      )}
 
       {events.length === 0 && (
         <Link href="/dashboard/eventos" style={{ ...card, padding: 12, display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>

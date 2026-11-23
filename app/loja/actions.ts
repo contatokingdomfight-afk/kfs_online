@@ -1,5 +1,6 @@
 "use server";
 
+import { STORE_CLOSED_MESSAGE, STORE_ENABLED } from "@/lib/retail/store-flag";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
@@ -52,6 +53,7 @@ function parseLines(raw: FormDataEntryValue | null): OrderLineInput[] {
 
 /** Encomenda da loja pública: qualquer conta com cadastro completo. Fica «Por pagar» (IBAN/secretaria). */
 export async function createShopOrder(_prev: ShopActionResult | null, formData: FormData): Promise<ShopActionResult> {
+  if (!STORE_ENABLED) return { error: STORE_CLOSED_MESSAGE };
   const user = await getCurrentDbUser();
   if (!user) return { error: "Sessão expirada. Entra outra vez." };
   const admin = createAdminClient();

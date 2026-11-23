@@ -1,3 +1,4 @@
+import { STORE_ENABLED } from "@/lib/retail/store-flag";
 import "server-only";
 
 import {
@@ -225,11 +226,22 @@ export function adminSearchItems(areas: AdminNavArea[]): AdminSearchItem[] {
 
 /** Tudo o que o shell do admin precisa, já filtrado pelas permissões. */
 /** Só para o Admin Geral: o diretor técnico também é `ADMIN`, mas não vê estas entradas. */
-const NETWORK_ONLY_HREFS = new Set(["/admin/escolas", "/admin/permissoes"]);
+const NETWORK_ONLY_HREFS = new Set(["/admin/permissoes"]);
 
 export function getAdminShellNav(t: (key: MessageKey) => string, access: ResolvedAdminAccess | null, isNetworkAdmin: boolean) {
-  const areas = filterAdminNavAreas(getAdminNavAreas(t), access).map((a) =>
-    isNetworkAdmin ? a : { ...a, items: a.items.filter((i) => !NETWORK_ONLY_HREFS.has(i.href)) }
+  const areas = filterAdminNavAreas(getAdminNavAreas(t), access)
+    // Loja oculta em toda a rede (lib/retail/store-flag.ts); encomendas em curso seguem pelo «A tratar».
+    .map((a) => (STORE_ENABLED ? a : { ...a, items: a.items.filter((i) => !i.href.startsWith("/admin/loja")) }))
+    .map((a) =>
+    isNetworkAdmin
+      ? a
+      : {
+          ...a,
+          // Diretor: «Escolas» abre a ficha da sua escola (pagamentos, taxas, link de inscrição).
+          items: a.items
+            .filter((i) => !NETWORK_ONLY_HREFS.has(i.href))
+            .map((i) => (i.href === "/admin/escolas" ? { ...i, label: "A minha escola" } : i)),
+        }
   );
   return {
     areas,

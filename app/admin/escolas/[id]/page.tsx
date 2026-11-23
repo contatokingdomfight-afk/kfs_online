@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { loadSchoolBankStatus } from "@/lib/revolut/bank-accounts";
 import { loadSchoolMerchantStatus } from "@/lib/revolut/merchant-accounts";
-import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
+import { canAccessSchool, getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
 import { hasLegalData, missingToOpen, schoolStatus, type SchoolPaymentMethods } from "@/lib/school-status";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -33,11 +33,14 @@ export default async function EscolaPage({
 }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
-  if (!isNetworkScope(await getSchoolScope())) redirect("/admin");
-
   const { id } = await params;
+  const scope = await getSchoolScope();
+  // Admin Geral: qualquer escola. Diretor: só a(s) sua(s), sem gerir diretores nem abrir/desativar.
+  const isNetwork = isNetworkScope(scope);
+  if (!canAccessSchool(scope, id)) redirect("/admin");
+
   const { tab: tabParam } = await searchParams;
-  const tab = TABS.some((t) => t.id === tabParam) ? tabParam : "equipa";
+  const tab = TABS.some((t) => t.id === tabParam) ? tabParam : isNetwork ? "equipa" : "estado";
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
@@ -45,7 +48,7 @@ export default async function EscolaPage({
 
   const { data: school } = await supabase
     .from("School")
-    .select("id, name, city, address, phone, email, legalName, legalAddress, isActive, openedAt")
+    .select("id, name, city, address, phone, email, legalName, legalAddress, isActive, openedAt, slug")
     .eq("id", id)
     .maybeSingle();
   if (!school) notFound();
@@ -123,12 +126,15 @@ export default async function EscolaPage({
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("x-forwarded-host") ?? h.get("host") ?? ""}`;
   const bank = tab === "estado" ? await loadSchoolBankStatus(supabase, id, origin) : null;
+  const schoolSlug = (school as { slug?: string | null }).slug ?? null;
+  // Link que o site da escola usa: com nome quando existe, senão com o código da escola.
+  const signupLink = `${origin}/sign-up/escola/${schoolSlug ?? id}`;
 
   return (
     <div style={{ maxWidth: "min(760px, 100%)" }}>
       <div style={{ marginBottom: "var(--space-5)" }}>
-        <Link href="/admin/escolas" style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", fontWeight: 500, textDecoration: "none" }}>
-          ← Escolas
+        <Link href={isNetwork ? "/admin/escolas" : "/admin"} style={{ color: "var(--text-secondary)", fontSize: "var(--text-sm)", fontWeight: 500, textDecoration: "none" }}>
+          {isNetwork ? "← Escolas" : "← Painel"}
         </Link>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: 4 }}>
@@ -159,7 +165,8 @@ export default async function EscolaPage({
 
       {tab === "equipa" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-          <DirectorsPanel schoolId={id} schoolName={school.name as string} directors={directors} />
+          {/* Nomear/remover diretores é só do Admin Geral. */}
+          {isNetwork && <DirectorsPanel schoolId={id} schoolName={school.name as string} directors={directors} />}
           <div className="card" style={{ padding: "var(--space-4)" }}>
             <h2 style={{ margin: "0 0 var(--space-3) 0", fontSize: "var(--text-base)", fontWeight: 600, color: "var(--text-primary)" }}>Coaches e assistentes</h2>
             {team.length === 0 ? (
@@ -185,6 +192,7 @@ export default async function EscolaPage({
             address: school.address as string | null,
             phone: school.phone as string | null,
             email: school.email as string | null,
+            slug: (school as { slug?: string | null }).slug ?? null,
           }}
           legal={isSede ? undefined : { legalName, legalAddress, nif }}
         />
@@ -192,6 +200,7 @@ export default async function EscolaPage({
 
       {tab === "estado" && merchant && bank && (
         <SchoolStatusPanel
+          canChangeStatus={isNetwork}
           schoolId={id}
           status={status}
           missing={missing}
@@ -211,8 +220,13 @@ export default async function EscolaPage({
           <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
             Quem se regista por este link fica com esta escola já escolhida.
           </p>
-          <code style={{ fontSize: 13, overflowWrap: "anywhere" }}>{`${origin}/sign-up/escola/${id}`}</code>
-          <CopyTextButton text={`${origin}/sign-up/escola/${id}`} label="Copiar link" copiedLabel="Copiado" />
+          <code style={{ fontSize: 13, overflowWrap: "anywhere" }}>{signupLink}</code>
+          <CopyTextButton text={signupLink} label="Copiar link" copiedLabel="Copiado" />
+          {!schoolSlug && (
+            <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>
+              Para um link com nome (ex.: …/sign-up/escola/kfs-lisboa), preenche o «Link de inscrição» no separador Dados.
+            </p>
+          )}
         </section>
       )}
     </div>

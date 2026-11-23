@@ -1,3 +1,4 @@
+import { STORE_ENABLED } from "@/lib/retail/store-flag";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -36,6 +37,7 @@ const note: React.CSSProperties = { margin: 0, padding: "10px 12px", borderRadiu
 const ctaStyle: React.CSSProperties = { minHeight: 46, display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, textDecoration: "none" };
 
 export default async function LojaProdutoPage({ params }: Props) {
+  if (!STORE_ENABLED) notFound(); // Loja oculta na rede (lib/retail/store-flag.ts).
   const { productId } = await params;
   const admin = getAdminClientOrNull().client;
   if (!admin) notFound();

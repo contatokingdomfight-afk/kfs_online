@@ -1,3 +1,5 @@
+import { STORE_ENABLED } from "@/lib/retail/store-flag";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Dumbbell, Package, Shirt, ShoppingBag, Store, Tag } from "lucide-react";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -55,6 +57,7 @@ type ShopProduct = {
 type Props = { searchParams: Promise<{ cat?: string }> };
 
 export default async function LojaPage({ searchParams }: Props) {
+  if (!STORE_ENABLED) notFound(); // Loja oculta na rede (lib/retail/store-flag.ts).
   await requirePlan();
   const { cat } = await searchParams;
   const locale = (await getLocaleFromCookies()) as "pt" | "en";
