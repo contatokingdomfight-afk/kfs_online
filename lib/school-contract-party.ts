@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { membershipAgreementHtml, parseContractParty, waiverHtml, type ContractParty } from "@/lib/contract-party";
+import { membershipAgreementHtml, parseContractParty, SEDE_LEGAL, waiverHtml, type ContractParty } from "@/lib/contract-party";
 import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
 import { SEDE_DISPLAY_NAME } from "@/lib/school-name-text";
 import { getActiveSchoolSignatures, type SchoolSignature } from "@/lib/school-signatures";
@@ -19,17 +19,35 @@ export const loadStudentContractParty = cache(async function loadStudentContract
   const { data: student } = await admin.from("Student").select("schoolId").eq("id", studentId).maybeSingle();
   const schoolId = (student as { schoolId?: string | null } | null)?.schoolId ?? null;
   if (!schoolId) return blocked;
-  if (schoolId === SEDE_SCHOOL_ID) return { schoolId, name: SEDE_DISPLAY_NAME, party: null, blocked: false };
-
   const [{ data: school }, { data: settings }, signatures] = await Promise.all([
     admin.from("School").select("name, legalName, legalAddress").eq("id", schoolId).maybeSingle(),
     admin.from("SchoolPaymentSettings").select("nif").eq("schoolId", schoolId).maybeSingle(),
     getActiveSchoolSignatures(schoolId),
   ]);
-  if (!school) return { ...blocked, schoolId };
+  if (!school) {
+    // Sem leitura da escola, a Sede assina com o texto original (nunca outra escola com o texto da Sede).
+    return schoolId === SEDE_SCHOOL_ID ? { schoolId, name: SEDE_DISPLAY_NAME, party: null, blocked: false } : { ...blocked, schoolId };
+  }
 
   const s = school as { name: string; legalName: string | null; legalAddress: string | null };
   const nif = (settings as { nif?: string | null } | null)?.nif ?? null;
+  // Sede (PM Team Sintra desde 2026-11-25): documentos novos com o nome atual da escola e a entidade
+  // EPICENTRO DE HONRA. Os já assinados guardaram party null e continuam com o texto original.
+  if (schoolId === SEDE_SCHOOL_ID) {
+    return {
+      schoolId,
+      name: s.name,
+      party: {
+        schoolId,
+        name: s.name,
+        legalName: s.legalName?.trim() || SEDE_LEGAL.legalName,
+        nif: nif?.trim() || SEDE_LEGAL.nif,
+        legalAddress: s.legalAddress?.trim() || SEDE_LEGAL.legalAddress,
+        signatures,
+      },
+      blocked: false,
+    };
+  }
   if (!hasLegalData({ legalName: s.legalName, legalAddress: s.legalAddress, nif })) return { ...blocked, schoolId, name: s.name };
 
   return {

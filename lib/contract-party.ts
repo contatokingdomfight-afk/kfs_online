@@ -16,8 +16,14 @@ export type ContractParty = {
   signatures: SchoolSignature[];
 };
 
-const SEDE_LEGAL_IDENTIFICATION =
-  "EPICENTRO DE HONRA - LDA, pessoa coletiva n.º 519296850, com sede em Praceta Laura Alves 8, 2725-206 Algueirão-Mem Martins";
+/** Entidade legal da Sede (PM Team Sintra), usada quando a escola não tem os dados legais preenchidos. */
+export const SEDE_LEGAL = {
+  legalName: "EPICENTRO DE HONRA - LDA",
+  nif: "519296850",
+  legalAddress: "Praceta Laura Alves 8, 2725-206 Algueirão-Mem Martins",
+} as const;
+
+const SEDE_LEGAL_IDENTIFICATION = `${SEDE_LEGAL.legalName}, pessoa coletiva n.º ${SEDE_LEGAL.nif}, com sede em ${SEDE_LEGAL.legalAddress}`;
 
 export function parseContractParty(value: unknown): ContractParty | null {
   const v = value as Partial<ContractParty> | null | undefined;

@@ -4,7 +4,7 @@ import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { SEDE_SCHOOL_ID } from "@/lib/school-payment-rules";
-import { SEDE_DISPLAY_NAME } from "@/lib/school-name-text";
+import { SEDE_LEGAL } from "@/lib/contract-party";
 import { hasLegalData } from "@/lib/school-status";
 import {
   COACH_CONTRACT_VERSION,
@@ -12,13 +12,6 @@ import {
   type CoachContractFields,
   type CoachScheduleRow,
 } from "@/lib/coach-contract";
-
-/** Entidade da Sede (igual ao texto fixo dos contratos dos alunos em lib/contract-party.ts). */
-const SEDE_LEGAL = {
-  legalName: "EPICENTRO DE HONRA - LDA",
-  nif: "519296850",
-  legalAddress: "Praceta Laura Alves 8, 2725-206 Algueirão-Mem Martins",
-};
 
 export type CoachPrivateDataRow = {
   legalName: string;
@@ -85,13 +78,21 @@ export type SchoolLegalIdentity = { name: string; legalName: string; nif: string
 
 /** Dados legais da escola para o contrato; null = a escola ainda não os preencheu (não se pode assinar). */
 export async function loadSchoolLegalIdentity(db: SupabaseClient, schoolId: string): Promise<SchoolLegalIdentity | null> {
-  if (schoolId === SEDE_SCHOOL_ID) return { name: SEDE_DISPLAY_NAME, ...SEDE_LEGAL };
   const [{ data: school }, { data: settings }] = await Promise.all([
     db.from("School").select("name, legalName, legalAddress").eq("id", schoolId).maybeSingle(),
     db.from("SchoolPaymentSettings").select("nif").eq("schoolId", schoolId).maybeSingle(),
   ]);
   const s = school as { name: string; legalName: string | null; legalAddress: string | null } | null;
   const nif = (settings as { nif?: string | null } | null)?.nif ?? null;
+  // Sede (PM Team Sintra): nome atual da escola; entidade EPICENTRO DE HONRA se não houver dados legais.
+  if (schoolId === SEDE_SCHOOL_ID) {
+    return {
+      name: s?.name ?? "PM Team Sintra",
+      legalName: s?.legalName?.trim() || SEDE_LEGAL.legalName,
+      nif: nif?.trim() || SEDE_LEGAL.nif,
+      legalAddress: s?.legalAddress?.trim() || SEDE_LEGAL.legalAddress,
+    };
+  }
   if (!s || !hasLegalData({ legalName: s.legalName, legalAddress: s.legalAddress, nif })) return null;
   return { name: s.name, legalName: s.legalName!.trim(), nif: nif!.trim(), legalAddress: s.legalAddress!.trim() };
 }
