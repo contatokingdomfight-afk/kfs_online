@@ -1,5 +1,6 @@
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
+import { DEMO_SCHOOL_ID } from "@/lib/demo";
 import {
   isFamilyPlan,
   isPlanExcludedFromSelfService,
@@ -26,6 +27,8 @@ async function fetchPublicPlans(): Promise<PublicPlan[]> {
     .from("Plan")
     .select("id, name, description, priceMonthly")
     .eq("isActive", true)
+    // Planos da Escola Demo (dados fictícios) nunca aparecem no site.
+    .neq("schoolId", DEMO_SCHOOL_ID)
     .order("priceMonthly", { ascending: true });
 
   if (error) {
@@ -47,7 +50,7 @@ async function fetchPublicPlans(): Promise<PublicPlan[]> {
 
 /** Planos activos para a homepage e outras páginas públicas. */
 export async function loadPublicPlans(): Promise<PublicPlan[]> {
-  return unstable_cache(fetchPublicPlans, ["public-plans-v1"], {
+  return unstable_cache(fetchPublicPlans, ["public-plans-v2"], {
     revalidate: 3600,
     tags: [CACHE_TAG],
   })();

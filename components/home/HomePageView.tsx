@@ -8,7 +8,6 @@ import { ArbitrationSection } from "@/components/home/ArbitrationSection";
 import { Plans } from "@/components/home/Plans";
 import { Founders } from "@/components/home/Founders";
 import { YouTubeShortsSection } from "@/components/home/YouTubeShortsSection";
-import { LogoSymbolismSection } from "@/components/home/LogoSymbolismSection";
 import { WeeklyScheduleSection } from "@/components/home/WeeklyScheduleSection";
 import { TribePhotoMarquee } from "@/components/home/TribePhotoMarquee";
 import { WhyChoose } from "@/components/home/WhyChoose";
@@ -78,7 +77,7 @@ export async function HomePageView({ locale }: { locale: "pt" | "en" }) {
       <FAQSection content={content} />
       <About content={content} />
       <Founders content={content} />
-      <LogoSymbolismSection content={content} />
+      {/* Simbolismo do emblema antigo (KFS): escondido desde o rebrand PM Team (2026-11-25). */}
       <ArbitrationSection content={content} />
       <CTASection content={content} />
       <Footer content={content} locale={locale} />
