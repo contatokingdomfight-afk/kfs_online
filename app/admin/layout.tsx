@@ -66,14 +66,14 @@ export default async function AdminLayout({
           ariaLabel: t("headerProfileAria"),
         }}
         headerExtra={
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             {scope.schools.length > 1 ? (
               <SchoolPicker schools={scope.schools} selectedSchoolId={scope.selectedSchoolId} allowAll={scope.kind === "network"} />
             ) : scope.kind === "school" ? (
               <SchoolBadge name={scope.schools[0].name} />
             ) : null}
             <CoachNotificationBell locale={locale as "pt" | "en"} />
-            <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
+            <span className="hidden md:inline" style={{ fontSize: 12, color: "var(--text-secondary)" }}>Admin</span>
           </div>
         }
         headerExtrasDesktopOnly={<ViewAsSwitcher />}

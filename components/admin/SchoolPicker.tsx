@@ -31,7 +31,9 @@ export function SchoolPicker({ schools, selectedSchoolId, allowAll }: Props) {
       onChange={handleChange}
       disabled={pending}
       style={{
-        maxWidth: 220,
+        maxWidth: "min(220px, 36vw)",
+        minWidth: 0,
+        textOverflow: "ellipsis",
         padding: "6px 10px",
         borderRadius: 8,
         border: "1px solid var(--border)",
