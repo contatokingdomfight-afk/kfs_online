@@ -5,7 +5,7 @@ import { RoundTimerClient } from "@/components/coach/round-timer/RoundTimerClien
 import type { Locale } from "@/lib/i18n";
 
 export const metadata: Metadata = {
-  title: "Free Boxing & Muay Thai Round Timer | Kingdom Fight School",
+  title: "Free Boxing & Muay Thai Round Timer | PM Team",
   description:
     "Free online round timer for boxing, Muay Thai, kickboxing and HIIT. Custom rounds, rest and warning sounds. Works on phone and desktop, no sign-up.",
   keywords: [
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Free Boxing & Muay Thai Round Timer",
     description:
-      "Custom rounds, rest and warning sounds. Works on phone and desktop, no sign-up. By Kingdom Fight School.",
+      "Custom rounds, rest and warning sounds. Works on phone and desktop, no sign-up. By PM Team.",
     type: "website",
   },
 };

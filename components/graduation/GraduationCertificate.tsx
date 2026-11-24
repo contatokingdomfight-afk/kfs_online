@@ -31,7 +31,7 @@ export function GraduationCertificate({ data, id, variant = "dark" }: { data: Ce
 
         <div className={s.hd}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className={s.hemb} src={EMBLEM} alt="Kingdom Fight School" />
+          <img className={s.hemb} src={EMBLEM} alt="PM Team" />
           <div className={s.hbrand}>
             <div className={`${s.kf} ${s.silver}`}>KINGDOM FIGHT</div>
             <div className={`${s.sch} ${s.silver}`}>

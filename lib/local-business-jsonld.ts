@@ -11,7 +11,7 @@ export function getLocalBusinessJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "SportsActivityLocation",
-    name: "Kingdom Fight School",
+    name: "PM Team",
     legalName: GYM_ENROLLMENT_INFO.name,
     url: getPublicOrigin(),
     telephone: GYM_ENROLLMENT_INFO.phone,

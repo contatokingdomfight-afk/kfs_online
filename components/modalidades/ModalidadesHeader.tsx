@@ -12,7 +12,7 @@ export function ModalidadesHeader({ hubLabel, breadcrumbLabel, locale = "pt" }: 
     <header className="border-b border-[var(--border)] bg-[var(--bg)]">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/" className="text-sm font-semibold text-[var(--primary)] transition-opacity hover:opacity-80">
-          ← Kingdom Fight School
+          ← PM Team
         </Link>
         <span className="text-[var(--text-secondary)]" aria-hidden>
           /

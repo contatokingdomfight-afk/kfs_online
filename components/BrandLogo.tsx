@@ -33,7 +33,7 @@ export function BrandLogo({
   href,
   className,
   priority = false,
-  ariaLabel = "Kingdom Fight School",
+  ariaLabel = "PM Team",
 }: Props) {
   const isHeader = variant === "header";
   const src = isHeader ? BRAND_LOGO_EMBLEM : BRAND_LOGO;

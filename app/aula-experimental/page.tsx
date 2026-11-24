@@ -21,9 +21,9 @@ import { getTranslations } from "@/lib/i18n";
 import { MetaPixelTrackEvent } from "@/components/MetaPixelTrackEvent";
 
 export const metadata: Metadata = publicPageMetadata({
-  title: "Aula experimental | Kingdom Fight School",
+  title: "Aula experimental | PM Team",
   description:
-    "Marca a tua aula experimental de Muay Thai, Boxe ou Kickboxing na Kingdom Fight School, em Algueirão-Mem Martins, Sintra. Escolhe o dia e a hora online.",
+    "Marca a tua aula experimental de Muay Thai, Boxe ou Kickboxing na PM Team, em Algueirão-Mem Martins, Sintra. Escolhe o dia e a hora online.",
   path: "/aula-experimental",
 });
 

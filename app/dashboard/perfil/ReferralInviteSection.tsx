@@ -15,8 +15,8 @@ export function ReferralInviteSection({ referralLink, invitedCount, convertedCou
   const [copied, setCopied] = useState(false);
 
   const shareText = L
-    ? "Vem experimentar comigo na Kingdom Fight School — aula experimental grátis!"
-    : "Come try a class with me at Kingdom Fight School — free trial class!";
+    ? "Vem experimentar comigo na PM Team — aula experimental grátis!"
+    : "Come try a class with me at PM Team — free trial class!";
 
   const handleShare = async () => {
     if (typeof navigator !== "undefined" && navigator.share) {

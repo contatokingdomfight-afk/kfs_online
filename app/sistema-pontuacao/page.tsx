@@ -5,8 +5,8 @@ import { PilaresAccordion } from "./PilaresAccordion";
 import { NiveisXPSection } from "./NiveisXPSection";
 
 export const metadata: Metadata = {
-  title: "Sistema de pontuação | Kingdom Fight School",
-  description: "Como funciona a avaliação, os 5 pilares, os níveis e o XP na plataforma Kingdom Fight School.",
+  title: "Sistema de pontuação | PM Team",
+  description: "Como funciona a avaliação, os 5 pilares, os níveis e o XP na plataforma PM Team.",
 };
 
 export default async function SistemaPontuacaoPage() {

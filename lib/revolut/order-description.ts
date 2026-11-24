@@ -1,7 +1,7 @@
 /**
  * Descrição das ordens Revolut (aparece no extrato e no painel da Revolut):
- * - só mensalidades: «Mensalidade nov. 2026 · Kingdom Fight School · Aluno #155»
- * - com outros itens: «Adesão Kingdom Fight School · Aluno #155 — Inscrição 30 € + Seguro 35 € + Mensalidade nov. 2026 55 €»
+ * - só mensalidades: «Mensalidade nov. 2026 · PM Team · Aluno #155»
+ * - com outros itens: «Adesão PM Team · Aluno #155 — Inscrição 30 € + Seguro 35 € + Mensalidade nov. 2026 55 €»
  * - loja: «Loja KFS-0012 · Aluno #155 — T-shirt (M) ×1, Luvas ×1»
  */
 

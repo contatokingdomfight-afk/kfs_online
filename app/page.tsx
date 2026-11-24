@@ -10,7 +10,7 @@ export const dynamic = "force-static";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Kingdom Fight School | Treine com Propósito. Lute com Disciplina.",
+  title: "PM Team | Treine com Propósito. Lute com Disciplina.",
   description:
     "Escola de artes marciais com base em valores cristãos, em Algueirão-Mem Martins, Sintra. Muay Thai, Boxe, Kickboxing. Metodologia estruturada, treinadores experientes.",
   keywords: [
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     "escola de luta",
   ],
   openGraph: {
-    title: "Kingdom Fight School | Treine com Propósito. Lute com Disciplina.",
+    title: "PM Team | Treine com Propósito. Lute com Disciplina.",
     description:
       "Escola de artes marciais com base em valores cristãos. Metodologia estruturada, treinadores experientes.",
     type: "website",

@@ -79,7 +79,7 @@ export default async function AdminAlunoLayout({ children, params }: Props) {
             ? buildFeesOverdueMessage(firstName, summary.fees.detail.replace(/ ·.*/, "").replace(/^seguro/, "o seguro desportivo").replace(/^matrícula/, "a matrícula").replace(" por pagar", "") + ` (${summary.fees.lateTotal.toFixed(0)} €)`)
             : summary.documents.missing.length
               ? buildDocumentsPendingMessage(firstName, `${getPublicOrigin()}/adesao`)
-              : `Olá ${firstName}! 👋 Aqui é da Kingdom Fight School.`
+              : `Olá ${firstName}! 👋 Aqui é da PM Team.`
       )
     : null;
   const modality = (student as { primaryModality?: string | null }).primaryModality;

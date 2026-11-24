@@ -15,8 +15,8 @@ import { optimizedImageSrc } from "@/lib/optimized-image";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = publicPageMetadata({
-  title: "Loja | Kingdom Fight School",
-  description: "Equipamento, vestuário e acessórios da Kingdom Fight School. Encomenda online e levanta na escola, em Sintra.",
+  title: "Loja | PM Team",
+  description: "Equipamento, vestuário e acessórios da PM Team. Encomenda online e levanta na escola, em Sintra.",
   path: "/loja",
 });
 
@@ -50,7 +50,7 @@ export default async function LojaPublicaPage({ searchParams }: { searchParams: 
       <LojaHeader loggedIn={Boolean(auth.user)} />
       <section style={{ padding: "36px 16px", background: "linear-gradient(135deg, #2a1215 0%, var(--bg) 70%)", borderBottom: "1px solid var(--border)" }}>
         <div style={{ maxWidth: 1072, margin: "0 auto" }}>
-          <h1 style={{ margin: 0, fontSize: "clamp(24px, 6vw, 34px)", fontWeight: 800 }}>Loja Kingdom Fight School</h1>
+          <h1 style={{ margin: 0, fontSize: "clamp(24px, 6vw, 34px)", fontWeight: 800 }}>Loja PM Team</h1>
           <p style={{ margin: "8px 0 0", fontSize: 15, color: "var(--text-secondary)", maxWidth: 520 }}>
             Equipamento, vestuário e acessórios. Encomenda online, paga por transferência ou na secretaria e levanta na escola, em Sintra.
           </p>

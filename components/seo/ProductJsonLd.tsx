@@ -10,7 +10,7 @@ export function ProductJsonLd({ product, path }: { product: ShopProduct; path: s
     : product.preorder
       ? "https://schema.org/PreOrder"
       : "https://schema.org/OutOfStock";
-  const seller = { "@type": "Organization", name: "Kingdom Fight School", url: origin };
+  const seller = { "@type": "Organization", name: "PM Team", url: origin };
   const offers =
     product.minPrice === product.maxPrice
       ? { "@type": "Offer", url, priceCurrency: "EUR", price: product.minPrice.toFixed(2), availability, seller }
@@ -29,7 +29,7 @@ export function ProductJsonLd({ product, path }: { product: ShopProduct; path: s
     name: product.name,
     ...(product.description ? { description: product.description } : {}),
     ...(product.imageUrl ? { image: [product.imageUrl] } : {}),
-    brand: { "@type": "Brand", name: "Kingdom Fight School" },
+    brand: { "@type": "Brand", name: "PM Team" },
     offers,
   };
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\u003c") }} />;

@@ -109,7 +109,7 @@ export function TribePhotoMarquee({ content, photos }: { content: Content; photo
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={optimizedImageSrc(photo.url, 640)}
-                    alt={isDuplicate ? "" : "Treino na Kingdom Fight School"}
+                    alt={isDuplicate ? "" : "Treino na PM Team"}
                     loading="lazy"
                     decoding="async"
                     draggable={false}

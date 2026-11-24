@@ -4,8 +4,8 @@ import { LegalPageShell, LegalSection } from "@/components/legal/LegalPageShell"
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidade | Kingdom Fight School",
-  description: "Política de privacidade e proteção de dados (RGPD) da Kingdom Fight School.",
+  title: "Política de Privacidade | PM Team",
+  description: "Política de privacidade e proteção de dados (RGPD) da PM Team.",
 };
 
 export default async function PrivacidadePage() {
@@ -16,7 +16,7 @@ export default async function PrivacidadePage() {
       <LegalPageShell title="Privacy Policy" updatedAt="June 28, 2026" locale="en">
         <LegalSection title="Data controller">
           <p>
-            <strong>Kingdom Fight School</strong> — contact for privacy questions and exercising your rights:{" "}
+            <strong>PM Team</strong> — contact for privacy questions and exercising your rights:{" "}
             <a href="mailto:contato@kingdomfight.com" style={{ color: "var(--primary)" }}>
               contato@kingdomfight.com
             </a>
@@ -100,7 +100,7 @@ export default async function PrivacidadePage() {
     <LegalPageShell title="Política de Privacidade" updatedAt="28 de junho de 2026" locale="pt">
       <LegalSection title="Responsável pelo tratamento">
         <p>
-          <strong>Kingdom Fight School</strong> — contacto para questões de privacidade e exercício de direitos:{" "}
+          <strong>PM Team</strong> — contacto para questões de privacidade e exercício de direitos:{" "}
           <a href="mailto:contato@kingdomfight.com" style={{ color: "var(--primary)" }}>
             contato@kingdomfight.com
           </a>

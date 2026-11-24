@@ -6,7 +6,7 @@ import { formatCertificateDate, loadPublicCertificate } from "@/lib/graduation/c
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Verificação de certificado · Kingdom Fight School", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Verificação de certificado · PM Team", robots: { index: false, follow: false } };
 
 const UUID = /^[0-9a-f-]{20,40}$/i;
 
@@ -41,7 +41,7 @@ export default async function VerificarCertificadoPage({ params }: { params: Pro
         <BadgeCheck size={26} aria-hidden className="shrink-0 text-success" />
         <div>
           <p className="m-0 font-bold text-text-primary">Certificado válido</p>
-          <p className="m-0 text-sm text-text-secondary">Emitido pela Kingdom Fight School</p>
+          <p className="m-0 text-sm text-text-secondary">Emitido pela PM Team</p>
         </div>
       </div>
       <dl className="m-0 mt-4 rounded-2xl border border-border bg-bg-secondary p-4">

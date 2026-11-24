@@ -33,7 +33,7 @@ export function Footer({ content, locale = "pt" }: { content: Content; locale?: 
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <span className="text-lg font-bold text-[var(--text-primary)]">
-              Kingdom Fight School
+              PM Team
             </span>
             <div className="mt-4 flex gap-4">
               <a

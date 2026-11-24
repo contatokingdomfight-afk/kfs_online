@@ -26,11 +26,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return p
     ? publicPageMetadata({
         title: `${p.name} | Loja Kingdom`,
-        description: p.description || `${p.name} na loja da Kingdom Fight School. Encomenda online e levanta na escola, em Sintra.`,
+        description: p.description || `${p.name} na loja da PM Team. Encomenda online e levanta na escola, em Sintra.`,
         path: `/loja/${productId}`,
         image: p.imageUrl,
       })
-    : { title: "Loja | Kingdom Fight School" };
+    : { title: "Loja | PM Team" };
 }
 
 const note: React.CSSProperties = { margin: 0, padding: "10px 12px", borderRadius: 10, fontSize: 13, lineHeight: 1.45 };

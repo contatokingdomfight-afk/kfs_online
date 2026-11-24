@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: t("tribePublicTitle"), description: t("tribePublicSubtitle") };
   }
   const vis = post.visibility as string;
-  const title = vis === "ALL_SCHOOLS" ? `${t("tribeTitle")} · Kingdom Fight School` : t("tribePublicTitle");
+  const title = vis === "ALL_SCHOOLS" ? `${t("tribeTitle")} · PM Team` : t("tribePublicTitle");
   const description =
     vis === "ALL_SCHOOLS"
       ? String(post.body ?? "").slice(0, 155) || t("tribePublicGlobalPost")
@@ -102,7 +102,7 @@ export default async function TribePublicPostPage({ params }: Props) {
         }}
       >
         <p className="text-xs uppercase tracking-wide mb-2" style={{ color: "var(--primary)" }}>
-          Kingdom Fight School
+          PM Team
         </p>
         <h1 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
           {t("tribePublicTitle")}

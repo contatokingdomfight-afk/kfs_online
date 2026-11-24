@@ -10,7 +10,7 @@ type Props = { params: Promise<{ coachId: string }> };
 const COPY = {
   pt: {
     fallbackTitle: "Perfil de Treinador",
-    fallbackDescription: "Conhece os treinadores da Kingdom Fight School.",
+    fallbackDescription: "Conhece os treinadores da PM Team.",
     unavailable: "Este perfil não está disponível.",
     backHome: "Início",
     trialCta: "Marcar aula experimental",
@@ -26,7 +26,7 @@ const COPY = {
   },
   en: {
     fallbackTitle: "Coach Profile",
-    fallbackDescription: "Meet the Kingdom Fight School coaches.",
+    fallbackDescription: "Meet the PM Team coaches.",
     unavailable: "This profile is not available.",
     backHome: "Home",
     trialCta: "Book a trial class",
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (admin.client) {
     const result = await getCoachPublicProfileData(admin.client, coachId);
     if (result.ok) {
-      title = `${result.data.name} · Kingdom Fight School`;
+      title = `${result.data.name} · PM Team`;
       description = result.data.bio?.slice(0, 160) || copy.fallbackDescription;
     }
   }

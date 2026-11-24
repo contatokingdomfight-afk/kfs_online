@@ -8,7 +8,7 @@ import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Passe Kingdom Academy | Kingdom Fight School",
+  title: "Passe Kingdom Academy | PM Team",
   description: "Subscreve o Passe e vê todos os cursos incluídos. Cancela quando quiseres.",
   alternates: { canonical: "/academy/planos" },
 };

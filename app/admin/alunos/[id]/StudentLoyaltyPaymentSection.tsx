@@ -47,7 +47,7 @@ export async function StudentLoyaltyPaymentSection({ supabase, studentId, phone,
   const lateTotal = late.reduce((t, p) => t + p.amount, 0);
   const waUrl =
     link?.checkoutUrl && phone
-      ? buildWhatsAppUrl(phone, `Olá ${firstName}! Aqui está o link para pagares ${euro(Number(link.amount))} na Kingdom Fight School (cartão, Apple Pay ou Revolut): ${link.checkoutUrl}\nFica pago na hora, não precisas de enviar comprovativo. Obrigado! 🥊`)
+      ? buildWhatsAppUrl(phone, `Olá ${firstName}! Aqui está o link para pagares ${euro(Number(link.amount))} na PM Team (cartão, Apple Pay ou Revolut): ${link.checkoutUrl}\nFica pago na hora, não precisas de enviar comprovativo. Obrigado! 🥊`)
       : null;
 
   return (

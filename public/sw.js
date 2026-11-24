@@ -4,7 +4,7 @@
 const SW_VERSION = "kfs-brand-v18";
 
 self.addEventListener("push", (event) => {
-  let data = { title: "Kingdom Fight School", body: "", url: "/dashboard/notificacoes" };
+  let data = { title: "PM Team", body: "", url: "/dashboard/notificacoes" };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch {

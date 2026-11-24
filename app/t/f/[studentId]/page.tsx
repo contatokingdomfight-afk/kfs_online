@@ -59,7 +59,7 @@ export default async function FighterCardPublicPage({ params }: Props) {
         }}
       >
         <p className="text-xs uppercase tracking-wide mb-2" style={{ color: "var(--primary)" }}>
-          Kingdom Fight School
+          PM Team
         </p>
         <h1 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
           {t("fighterCardPublicTitle")}

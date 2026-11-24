@@ -68,7 +68,7 @@ export async function schoolsWithMerchantAccount(supabase: SupabaseClient, schoo
 
 /** Nome que o aluno vê na página de pagamento e no extrato. */
 export async function merchantBrandName(supabase: SupabaseClient, schoolId: string): Promise<string> {
-  if (schoolId === SEDE_SCHOOL_ID) return "Kingdom Fight School";
+  if (schoolId === SEDE_SCHOOL_ID) return "PM Team";
   const { data } = await supabase.from("School").select("name").eq("id", schoolId).maybeSingle();
   return (data as { name?: string } | null)?.name ?? "PM Team";
 }

@@ -12,8 +12,8 @@ import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = publicPageMetadata({
-  title: "Kingdom Academy | Kingdom Fight School",
-  description: "Cursos online de Muay Thai, Boxe, Jiu-Jitsu, MMA e preparação física pelos professores da Kingdom Fight School.",
+  title: "Kingdom Academy | PM Team",
+  description: "Cursos online de Muay Thai, Boxe, Jiu-Jitsu, MMA e preparação física pelos professores da PM Team.",
   path: "/academy",
 });
 

@@ -66,11 +66,11 @@ export function AutoPayActivateButton({ label, planName, amountLabel, firstCharg
         ))}
       </dl>
       <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-        Vais para uma página segura da Revolut. A Revolut guarda o teu cartão — a Kingdom Fight School nunca o vê. Avisamos-te 3 dias antes de cada cobrança e podes cancelar aqui quando quiseres.
+        Vais para uma página segura da Revolut. A Revolut guarda o teu cartão — a PM Team nunca o vê. Avisamos-te 3 dias antes de cada cobrança e podes cancelar aqui quando quiseres.
       </p>
       <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14, cursor: "pointer" }}>
         <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} style={{ width: 18, height: 18, marginTop: 2, accentColor: "var(--primary)" }} />
-        <span>Autorizo a Kingdom Fight School a cobrar {amountLabel} por mês até cancelar.</span>
+        <span>Autorizo a PM Team a cobrar {amountLabel} por mês até cancelar.</span>
       </label>
       {error ? (
         <p role="alert" style={{ margin: 0, fontSize: 13, color: "var(--danger)" }}>

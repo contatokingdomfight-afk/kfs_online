@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const SITE_NAME = "Kingdom Fight School";
+export const SITE_NAME = "PM Team";
 
 /**
  * Metadados de uma página pública: título, descrição, canónico e pré-visualização

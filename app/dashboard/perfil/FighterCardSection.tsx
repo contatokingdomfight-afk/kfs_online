@@ -21,8 +21,8 @@ export function FighterCardSection({ studentId, initialEnabled, eligibleAge, car
   const [sharing, setSharing] = useState(false);
 
   const shareText = L
-    ? "Vê a minha evolução na Kingdom Fight School 🥋"
-    : "Check out my progress at Kingdom Fight School 🥋";
+    ? "Vê a minha evolução na PM Team 🥋"
+    : "Check out my progress at PM Team 🥋";
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${cardUrl}`)}`;
 
   async function toggle() {

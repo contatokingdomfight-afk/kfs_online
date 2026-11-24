@@ -101,9 +101,9 @@ const modalidadesContentData: Record<
 > = {
   pt: {
     hub: {
-      metaTitle: "Modalidades | Artes Marciais em Sintra | Kingdom Fight School",
+      metaTitle: "Modalidades | Artes Marciais em Sintra | PM Team",
       metaDescription:
-        "Conheça as modalidades da Kingdom Fight School, em Algueirão-Mem Martins, Sintra: Muay Thai, Boxe, Kickboxing, Jiu-Jitsu, MMA e Kids. Aulas estruturadas por nível, treinadores experientes.",
+        "Conheça as modalidades da PM Team, em Algueirão-Mem Martins, Sintra: Muay Thai, Boxe, Kickboxing, Jiu-Jitsu, MMA e Kids. Aulas estruturadas por nível, treinadores experientes.",
       metaKeywords: [
         "modalidades",
         "Muay Thai Sintra",
@@ -130,9 +130,9 @@ const modalidadesContentData: Record<
         icon: Swords,
         name: "Muay Thai",
         tagline: "A arte das oito armas",
-        metaTitle: "Muay Thai em Sintra | Kingdom Fight School",
+        metaTitle: "Muay Thai em Sintra | PM Team",
         metaDescription:
-          "Treine Muay Thai em Sintra, em Algueirão-Mem Martins, na Kingdom Fight School. Aulas para iniciantes, praticantes e atletas. Experimente uma aula.",
+          "Treine Muay Thai em Sintra, em Algueirão-Mem Martins, na PM Team. Aulas para iniciantes, praticantes e atletas. Experimente uma aula.",
         metaKeywords: [
           "Muay Thai Sintra",
           "Muay Thai Algueirão-Mem Martins",
@@ -140,14 +140,14 @@ const modalidadesContentData: Record<
           "academia de Muay Thai Sintra",
           "boxe tailandês",
           "artes marciais Sintra",
-          "Kingdom Fight School",
+          "PM Team",
         ],
         heroTitle: "Muay Thai",
         heroSubtitle:
           "Conhecida como a \"arte das oito armas\", o Muay Thai combina socos, cotovelos, joelhos e chutes num dos sistemas de combate mais completos e eficazes que existem.",
         introTitle: "Muay Thai em Algueirão-Mem Martins",
         introText:
-          "A Kingdom Fight School fica em Algueirão-Mem Martins, Sintra, e é lá que damos as nossas aulas de Muay Thai. Originário da Tailândia, o Muay Thai é uma arte marcial de combate em pé (striking) que trabalha todo o corpo como arma. Ao contrário de modalidades que usam apenas as mãos ou apenas os pés, aqui treina-se o corpo inteiro: punhos, cotovelos, joelhos, canelas e o clinch. Nas nossas aulas, a técnica vem sempre primeiro — trabalhamos postura, deslocamento e cada arma de forma isolada antes de as combinar em sequências reais, sempre com acompanhamento próximo do treinador e progressão adaptada ao seu nível.",
+          "A PM Team fica em Algueirão-Mem Martins, Sintra, e é lá que damos as nossas aulas de Muay Thai. Originário da Tailândia, o Muay Thai é uma arte marcial de combate em pé (striking) que trabalha todo o corpo como arma. Ao contrário de modalidades que usam apenas as mãos ou apenas os pés, aqui treina-se o corpo inteiro: punhos, cotovelos, joelhos, canelas e o clinch. Nas nossas aulas, a técnica vem sempre primeiro — trabalhamos postura, deslocamento e cada arma de forma isolada antes de as combinar em sequências reais, sempre com acompanhamento próximo do treinador e progressão adaptada ao seu nível.",
         benefitsTitle: "Porquê treinar Muay Thai",
         benefits: [
           {
@@ -194,7 +194,7 @@ const modalidadesContentData: Record<
           },
           {
             q: "Onde ficam as aulas de Muay Thai em Sintra?",
-            a: "Na Kingdom Fight School, em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
+            a: "Na PM Team, em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
           },
           {
             q: "Posso fazer uma aula experimental de Muay Thai?",
@@ -217,23 +217,23 @@ const modalidadesContentData: Record<
         icon: Zap,
         name: "Boxe",
         tagline: "A arte nobre",
-        metaTitle: "Boxe em Sintra | Kingdom Fight School",
+        metaTitle: "Boxe em Sintra | PM Team",
         metaDescription:
-          "Treine Boxe em Sintra, em Algueirão-Mem Martins, na Kingdom Fight School. Fundamentos técnicos, jogo de pés e um dos treinos de cardio mais completos que existem. Experimente uma aula.",
+          "Treine Boxe em Sintra, em Algueirão-Mem Martins, na PM Team. Fundamentos técnicos, jogo de pés e um dos treinos de cardio mais completos que existem. Experimente uma aula.",
         metaKeywords: [
           "Boxe Sintra",
           "Boxe Algueirão-Mem Martins",
           "aulas de Boxe Sintra",
           "boxing Sintra",
           "artes marciais Sintra",
-          "Kingdom Fight School",
+          "PM Team",
         ],
         heroTitle: "Boxe",
         heroSubtitle:
           "Conhecido como \"a arte nobre\", o Boxe é a base técnica de qualquer lutador: trabalho de punhos, jogo de pés e um dos treinos cardiovasculares mais exigentes que existem.",
         introTitle: "Boxe em Algueirão-Mem Martins",
         introText:
-          "A Kingdom Fight School fica em Algueirão-Mem Martins, Sintra, e é lá que damos as nossas aulas de Boxe. O Boxe é uma modalidade de combate focada exclusivamente no trabalho de punhos — jab, cross, hook e uppercut — combinado com footwork, esquiva e controlo de distância. É frequentemente a base técnica de outras artes marciais de striking, precisamente por exigir precisão, timing e disciplina acima de força bruta. Nas nossas aulas, trabalhamos a técnica isoladamente (saco, aparelhos, sombra) antes de aplicar em combinações e sparring controlado, sempre com progressão adaptada ao nível de cada aluno.",
+          "A PM Team fica em Algueirão-Mem Martins, Sintra, e é lá que damos as nossas aulas de Boxe. O Boxe é uma modalidade de combate focada exclusivamente no trabalho de punhos — jab, cross, hook e uppercut — combinado com footwork, esquiva e controlo de distância. É frequentemente a base técnica de outras artes marciais de striking, precisamente por exigir precisão, timing e disciplina acima de força bruta. Nas nossas aulas, trabalhamos a técnica isoladamente (saco, aparelhos, sombra) antes de aplicar em combinações e sparring controlado, sempre com progressão adaptada ao nível de cada aluno.",
         benefitsTitle: "Porquê treinar Boxe",
         benefits: [
           {
@@ -280,7 +280,7 @@ const modalidadesContentData: Record<
           },
           {
             q: "Onde ficam as aulas de Boxe em Sintra?",
-            a: "Na Kingdom Fight School, em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
+            a: "Na PM Team, em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
           },
           {
             q: "Posso fazer uma aula experimental de Boxe?",
@@ -303,22 +303,22 @@ const modalidadesContentData: Record<
         icon: Flame,
         name: "Kickboxing",
         tagline: "Socos e chutes em alta intensidade",
-        metaTitle: "Kickboxing em Sintra | Kingdom Fight School",
+        metaTitle: "Kickboxing em Sintra | PM Team",
         metaDescription:
-          "Kickboxing na Kingdom Fight School, em Algueirão-Mem Martins, Sintra: combine Boxe e Muay Thai para uma base completa de socos e chutes. Fale connosco.",
+          "Kickboxing na PM Team, em Algueirão-Mem Martins, Sintra: combine Boxe e Muay Thai para uma base completa de socos e chutes. Fale connosco.",
         metaKeywords: [
           "Kickboxing Sintra",
           "Kickboxing Algueirão-Mem Martins",
           "aulas de Kickboxing Sintra",
           "artes marciais Sintra",
-          "Kingdom Fight School",
+          "PM Team",
         ],
         heroTitle: "Kickboxing",
         heroSubtitle:
           "O Kickboxing combina socos e chutes num treino intenso e directo. Na Kingdom Fight, a base do Kickboxing é coberta combinando as aulas de Boxe e Muay Thai.",
         introTitle: "Como funciona o Kickboxing na Kingdom Fight",
         introText:
-          "A Kingdom Fight School fica em Algueirão-Mem Martins, Sintra. Não temos, para já, uma turma dedicada de Kickboxing — e preferimos dizer isso com clareza em vez de prometer algo que não existe. O que oferecemos é a combinação das nossas aulas de Boxe (a base de socos) e Muay Thai (que acrescenta os chutes, além de cotovelos, joelhos e clinch), que cobre grande parte da técnica do Kickboxing. Se houver procura suficiente para uma turma dedicada, fale connosco — é esse tipo de interesse que nos ajuda a decidir abrir novas turmas.",
+          "A PM Team fica em Algueirão-Mem Martins, Sintra. Não temos, para já, uma turma dedicada de Kickboxing — e preferimos dizer isso com clareza em vez de prometer algo que não existe. O que oferecemos é a combinação das nossas aulas de Boxe (a base de socos) e Muay Thai (que acrescenta os chutes, além de cotovelos, joelhos e clinch), que cobre grande parte da técnica do Kickboxing. Se houver procura suficiente para uma turma dedicada, fale connosco — é esse tipo de interesse que nos ajuda a decidir abrir novas turmas.",
         benefitsTitle: "Como chegar ao Kickboxing na Kingdom Fight",
         benefits: [
           {
@@ -360,7 +360,7 @@ const modalidadesContentData: Record<
             a: "Sim — a aula experimental é gratuita e sem compromisso. Marque através do botão nesta página.",
           },
           {
-            q: "Onde fica a Kingdom Fight School?",
+            q: "Onde fica a PM Team?",
             a: "Em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
           },
           {
@@ -382,22 +382,22 @@ const modalidadesContentData: Record<
         icon: Move,
         name: "Jiu-Jitsu",
         tagline: "A arte suave",
-        metaTitle: "Jiu-Jitsu em Sintra | Kingdom Fight School",
+        metaTitle: "Jiu-Jitsu em Sintra | PM Team",
         metaDescription:
-          "Treine Jiu-Jitsu em Sintra, em Algueirão-Mem Martins, na Kingdom Fight School. Técnica e alavancagem sobre força bruta — o xadrez físico das artes marciais. Experimente uma aula.",
+          "Treine Jiu-Jitsu em Sintra, em Algueirão-Mem Martins, na PM Team. Técnica e alavancagem sobre força bruta — o xadrez físico das artes marciais. Experimente uma aula.",
         metaKeywords: [
           "Jiu-Jitsu Sintra",
           "Jiu-Jitsu Algueirão-Mem Martins",
           "BJJ Sintra",
           "artes marciais Sintra",
-          "Kingdom Fight School",
+          "PM Team",
         ],
         heroTitle: "Jiu-Jitsu",
         heroSubtitle:
           "Conhecido como \"a arte suave\", o Jiu-Jitsu prova que técnica e alavancagem podem sobrepor-se à força bruta — o verdadeiro xadrez físico das artes marciais.",
         introTitle: "Jiu-Jitsu em Algueirão-Mem Martins",
         introText:
-          "A Kingdom Fight School fica em Algueirão-Mem Martins, Sintra, e é lá que damos as nossas aulas de Jiu-Jitsu. O Jiu-Jitsu é uma arte marcial focada no combate no solo — quedas, passagem de guarda, controlo posicional e finalizações (chaves e estrangulamentos). O princípio central é que tamanho e força não decidem o combate: com alavancagem, timing e técnica correta, é possível controlar e submeter um adversário maior. Nas nossas aulas trabalhamos progressão por posições, desde os fundamentos (guarda, mount, passagem) até finalizações, com drilling técnico e sparring controlado (rolling) adaptado ao nível de cada aluno.",
+          "A PM Team fica em Algueirão-Mem Martins, Sintra, e é lá que damos as nossas aulas de Jiu-Jitsu. O Jiu-Jitsu é uma arte marcial focada no combate no solo — quedas, passagem de guarda, controlo posicional e finalizações (chaves e estrangulamentos). O princípio central é que tamanho e força não decidem o combate: com alavancagem, timing e técnica correta, é possível controlar e submeter um adversário maior. Nas nossas aulas trabalhamos progressão por posições, desde os fundamentos (guarda, mount, passagem) até finalizações, com drilling técnico e sparring controlado (rolling) adaptado ao nível de cada aluno.",
         benefitsTitle: "Porquê treinar Jiu-Jitsu",
         benefits: [
           {
@@ -444,7 +444,7 @@ const modalidadesContentData: Record<
           },
           {
             q: "Onde ficam as aulas de Jiu-Jitsu em Sintra?",
-            a: "Na Kingdom Fight School, em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
+            a: "Na PM Team, em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
           },
           {
             q: "Posso fazer uma aula experimental de Jiu-Jitsu?",
@@ -462,29 +462,29 @@ const modalidadesContentData: Record<
         scheduleModalityCodes: ["BJJ"],
         showFounders: false,
         teamNote:
-          "As aulas de Jiu-Jitsu são conduzidas pela equipa técnica da Kingdom Fight School, com acompanhamento próximo e progressão por posições adaptada a cada aluno.",
+          "As aulas de Jiu-Jitsu são conduzidas pela equipa técnica da PM Team, com acompanhamento próximo e progressão por posições adaptada a cada aluno.",
       },
       mma: {
         slug: "mma",
         icon: Octagon,
         name: "MMA",
         tagline: "Striking e chão, numa só arte",
-        metaTitle: "MMA em Sintra | Kingdom Fight School",
+        metaTitle: "MMA em Sintra | PM Team",
         metaDescription:
-          "MMA na Kingdom Fight School, em Algueirão-Mem Martins, Sintra: treino de competição e cross-training combinando Muay Thai e Jiu-Jitsu. Experimente uma aula.",
+          "MMA na PM Team, em Algueirão-Mem Martins, Sintra: treino de competição e cross-training combinando Muay Thai e Jiu-Jitsu. Experimente uma aula.",
         metaKeywords: [
           "MMA Sintra",
           "MMA Algueirão-Mem Martins",
           "treino de MMA Sintra",
           "artes marciais mistas",
-          "Kingdom Fight School",
+          "PM Team",
         ],
         heroTitle: "MMA",
         heroSubtitle:
           "O MMA (Artes Marciais Mistas) combina striking e combate no solo. Na Kingdom Fight, o caminho para o MMA passa pelo treino de competição e pelo cross-training entre Muay Thai e Jiu-Jitsu.",
         introTitle: "Como funciona o MMA na Kingdom Fight",
         introText:
-          "A Kingdom Fight School fica em Algueirão-Mem Martins, Sintra. Não temos, para já, um currículo fechado e autónomo de MMA — e preferimos dizer isso com clareza em vez de prometer algo que não existe. O que existe hoje é um treino de competição aos sábados, aberto a quem quer juntar as peças de striking e grappling, e a possibilidade de combinar as aulas de Muay Thai e Jiu-Jitsu da escola para construir uma base sólida e real de MMA — exatamente como fazem muitos lutadores, que treinam cada disciplina em separado antes de as juntar no octógono.",
+          "A PM Team fica em Algueirão-Mem Martins, Sintra. Não temos, para já, um currículo fechado e autónomo de MMA — e preferimos dizer isso com clareza em vez de prometer algo que não existe. O que existe hoje é um treino de competição aos sábados, aberto a quem quer juntar as peças de striking e grappling, e a possibilidade de combinar as aulas de Muay Thai e Jiu-Jitsu da escola para construir uma base sólida e real de MMA — exatamente como fazem muitos lutadores, que treinam cada disciplina em separado antes de as juntar no octógono.",
         benefitsTitle: "Porquê este caminho para o MMA",
         benefits: [
           {
@@ -527,7 +527,7 @@ const modalidadesContentData: Record<
           },
           {
             q: "Onde fica o treino de competição em Sintra?",
-            a: "Na Kingdom Fight School, em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
+            a: "Na PM Team, em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
           },
           {
             q: "Quanto custa treinar na Kingdom Fight?",
@@ -541,14 +541,14 @@ const modalidadesContentData: Record<
         scheduleModalityCodes: ["MMA"],
         showFounders: false,
         teamNote:
-          "O treino de competição e o cross-training para MMA são acompanhados pela equipa técnica da Kingdom Fight School, combinando a experiência em Muay Thai e Jiu-Jitsu da escola.",
+          "O treino de competição e o cross-training para MMA são acompanhados pela equipa técnica da PM Team, combinando a experiência em Muay Thai e Jiu-Jitsu da escola.",
       },
       kids: {
         slug: "kids",
         icon: Baby,
         name: "Kids",
         tagline: "Disciplina, confiança e diversão desde cedo",
-        metaTitle: "Kids — Artes Marciais para Crianças em Sintra | Kingdom Fight School",
+        metaTitle: "Kids — Artes Marciais para Crianças em Sintra | PM Team",
         metaDescription:
           "Aulas de artes marciais para crianças em Sintra, em Algueirão-Mem Martins. Disciplina, confiança, coordenação motora e respeito, num ambiente seguro e divertido.",
         metaKeywords: [
@@ -556,7 +556,7 @@ const modalidadesContentData: Record<
           "artes marciais para crianças",
           "Muay Thai crianças",
           "desporto de combate infantil",
-          "Kingdom Fight School",
+          "PM Team",
           "Sintra",
           "Algueirão-Mem Martins",
         ],
@@ -618,9 +618,9 @@ const modalidadesContentData: Record<
   },
   en: {
     hub: {
-      metaTitle: "Martial Arts Programs in Sintra | Kingdom Fight School",
+      metaTitle: "Martial Arts Programs in Sintra | PM Team",
       metaDescription:
-        "Discover Kingdom Fight School's programs, in Algueirão-Mem Martins, Sintra: Muay Thai, Boxing, Kickboxing, Jiu-Jitsu, MMA and Kids. Level-based classes, experienced coaches.",
+        "Discover PM Team's programs, in Algueirão-Mem Martins, Sintra: Muay Thai, Boxing, Kickboxing, Jiu-Jitsu, MMA and Kids. Level-based classes, experienced coaches.",
       metaKeywords: [
         "martial arts programs",
         "Muay Thai Sintra",
@@ -646,9 +646,9 @@ const modalidadesContentData: Record<
         icon: Swords,
         name: "Muay Thai",
         tagline: "The art of eight limbs",
-        metaTitle: "Muay Thai in Sintra | Kingdom Fight School",
+        metaTitle: "Muay Thai in Sintra | PM Team",
         metaDescription:
-          "Train Muay Thai in Sintra, in Algueirão-Mem Martins, at Kingdom Fight School. Classes for beginners, practitioners and athletes. Try a class.",
+          "Train Muay Thai in Sintra, in Algueirão-Mem Martins, at PM Team. Classes for beginners, practitioners and athletes. Try a class.",
         metaKeywords: [
           "Muay Thai Sintra",
           "Muay Thai Algueirão-Mem Martins",
@@ -656,14 +656,14 @@ const modalidadesContentData: Record<
           "Muay Thai gym Sintra",
           "Thai boxing",
           "martial arts Sintra",
-          "Kingdom Fight School",
+          "PM Team",
         ],
         heroTitle: "Muay Thai",
         heroSubtitle:
           "Known as the \"art of eight limbs\", Muay Thai combines punches, elbows, knees and kicks into one of the most complete and effective combat systems in existence.",
         introTitle: "Muay Thai in Algueirão-Mem Martins",
         introText:
-          "Kingdom Fight School is based in Algueirão-Mem Martins, Sintra, and that's where we teach our Muay Thai classes. Originating in Thailand, Muay Thai is a striking martial art that trains the whole body as a weapon. Unlike disciplines that rely on hands or feet alone, here you train fists, elbows, knees, shins and the clinch. In our classes, technique always comes first — we work on stance, footwork and each weapon individually before combining them into real sequences, always with close coaching and progression adapted to your level.",
+          "PM Team is based in Algueirão-Mem Martins, Sintra, and that's where we teach our Muay Thai classes. Originating in Thailand, Muay Thai is a striking martial art that trains the whole body as a weapon. Unlike disciplines that rely on hands or feet alone, here you train fists, elbows, knees, shins and the clinch. In our classes, technique always comes first — we work on stance, footwork and each weapon individually before combining them into real sequences, always with close coaching and progression adapted to your level.",
         benefitsTitle: "Why train Muay Thai",
         benefits: [
           {
@@ -710,7 +710,7 @@ const modalidadesContentData: Record<
           },
           {
             q: "Where are the Muay Thai classes in Sintra?",
-            a: "At Kingdom Fight School, in Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
+            a: "At PM Team, in Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
           },
           {
             q: "Can I book a Muay Thai trial class?",
@@ -733,22 +733,22 @@ const modalidadesContentData: Record<
         icon: Zap,
         name: "Boxing",
         tagline: "The sweet science",
-        metaTitle: "Boxing in Sintra | Kingdom Fight School",
+        metaTitle: "Boxing in Sintra | PM Team",
         metaDescription:
-          "Train Boxing in Sintra, in Algueirão-Mem Martins, at Kingdom Fight School. Technical fundamentals, footwork and one of the most complete cardio workouts there is. Try a class.",
+          "Train Boxing in Sintra, in Algueirão-Mem Martins, at PM Team. Technical fundamentals, footwork and one of the most complete cardio workouts there is. Try a class.",
         metaKeywords: [
           "Boxing Sintra",
           "Boxing Algueirão-Mem Martins",
           "Boxing classes Sintra",
           "martial arts Sintra",
-          "Kingdom Fight School",
+          "PM Team",
         ],
         heroTitle: "Boxing",
         heroSubtitle:
           "Known as \"the sweet science\", Boxing is the technical foundation of any fighter: punching mechanics, footwork and one of the most demanding cardiovascular workouts there is.",
         introTitle: "Boxing in Algueirão-Mem Martins",
         introText:
-          "Kingdom Fight School is based in Algueirão-Mem Martins, Sintra, and that's where we teach our Boxing classes. Boxing is a combat discipline focused exclusively on punching — jab, cross, hook and uppercut — combined with footwork, head movement and distance control. It's often the technical base of other striking martial arts, precisely because it demands precision, timing and discipline over raw power. In our classes, we work technique in isolation (bag, pads, shadow boxing) before applying it in combinations and controlled sparring, always with progression adapted to each student's level.",
+          "PM Team is based in Algueirão-Mem Martins, Sintra, and that's where we teach our Boxing classes. Boxing is a combat discipline focused exclusively on punching — jab, cross, hook and uppercut — combined with footwork, head movement and distance control. It's often the technical base of other striking martial arts, precisely because it demands precision, timing and discipline over raw power. In our classes, we work technique in isolation (bag, pads, shadow boxing) before applying it in combinations and controlled sparring, always with progression adapted to each student's level.",
         benefitsTitle: "Why train Boxing",
         benefits: [
           {
@@ -795,7 +795,7 @@ const modalidadesContentData: Record<
           },
           {
             q: "Where are the Boxing classes in Sintra?",
-            a: "At Kingdom Fight School, in Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
+            a: "At PM Team, in Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
           },
           {
             q: "Can I book a Boxing trial class?",
@@ -818,22 +818,22 @@ const modalidadesContentData: Record<
         icon: Flame,
         name: "Kickboxing",
         tagline: "High-intensity punches and kicks",
-        metaTitle: "Kickboxing in Sintra | Kingdom Fight School",
+        metaTitle: "Kickboxing in Sintra | PM Team",
         metaDescription:
-          "Kickboxing at Kingdom Fight School, in Algueirão-Mem Martins, Sintra: combine Boxing and Muay Thai for a complete punch-and-kick base. Get in touch.",
+          "Kickboxing at PM Team, in Algueirão-Mem Martins, Sintra: combine Boxing and Muay Thai for a complete punch-and-kick base. Get in touch.",
         metaKeywords: [
           "Kickboxing Sintra",
           "Kickboxing Algueirão-Mem Martins",
           "Kickboxing classes Sintra",
           "martial arts Sintra",
-          "Kingdom Fight School",
+          "PM Team",
         ],
         heroTitle: "Kickboxing",
         heroSubtitle:
           "Kickboxing combines punches and kicks into an intense, direct workout. At Kingdom Fight, the Kickboxing base is covered by combining our Boxing and Muay Thai classes.",
         introTitle: "How Kickboxing works at Kingdom Fight",
         introText:
-          "Kingdom Fight School is based in Algueirão-Mem Martins, Sintra. We don't yet have a dedicated Kickboxing class — and we'd rather say that clearly than promise something that doesn't exist. What we offer is a combination of our Boxing classes (the punching base) and Muay Thai (which adds the kicks, plus elbows, knees and clinch), covering much of Kickboxing's technique. If there's enough demand for a dedicated class, let us know — that kind of interest is exactly what helps us decide to open new classes.",
+          "PM Team is based in Algueirão-Mem Martins, Sintra. We don't yet have a dedicated Kickboxing class — and we'd rather say that clearly than promise something that doesn't exist. What we offer is a combination of our Boxing classes (the punching base) and Muay Thai (which adds the kicks, plus elbows, knees and clinch), covering much of Kickboxing's technique. If there's enough demand for a dedicated class, let us know — that kind of interest is exactly what helps us decide to open new classes.",
         benefitsTitle: "How to get to Kickboxing at Kingdom Fight",
         benefits: [
           {
@@ -875,7 +875,7 @@ const modalidadesContentData: Record<
             a: "Yes — the trial class is free and with no commitment. Book it using the button on this page.",
           },
           {
-            q: "Where is Kingdom Fight School?",
+            q: "Where is PM Team?",
             a: "In Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
           },
           {
@@ -897,22 +897,22 @@ const modalidadesContentData: Record<
         icon: Move,
         name: "Jiu-Jitsu",
         tagline: "The gentle art",
-        metaTitle: "Jiu-Jitsu in Sintra | Kingdom Fight School",
+        metaTitle: "Jiu-Jitsu in Sintra | PM Team",
         metaDescription:
-          "Train Jiu-Jitsu in Sintra, in Algueirão-Mem Martins, at Kingdom Fight School. Technique and leverage over raw strength — the physical chess of martial arts. Try a class.",
+          "Train Jiu-Jitsu in Sintra, in Algueirão-Mem Martins, at PM Team. Technique and leverage over raw strength — the physical chess of martial arts. Try a class.",
         metaKeywords: [
           "Jiu-Jitsu Sintra",
           "Jiu-Jitsu Algueirão-Mem Martins",
           "BJJ Sintra",
           "martial arts Sintra",
-          "Kingdom Fight School",
+          "PM Team",
         ],
         heroTitle: "Jiu-Jitsu",
         heroSubtitle:
           "Known as \"the gentle art\", Jiu-Jitsu proves that technique and leverage can overcome raw strength — the true physical chess of martial arts.",
         introTitle: "Jiu-Jitsu in Algueirão-Mem Martins",
         introText:
-          "Kingdom Fight School is based in Algueirão-Mem Martins, Sintra, and that's where we teach our Jiu-Jitsu classes. Jiu-Jitsu is a martial art focused on ground combat — takedowns, guard passing, positional control and submissions (joint locks and chokes). Its central principle is that size and strength don't decide a fight: with leverage, timing and correct technique, you can control and submit a larger opponent. In our classes we work position by position, from the fundamentals (guard, mount, passing) through to submissions, with technical drilling and controlled sparring (rolling) adapted to each student's level.",
+          "PM Team is based in Algueirão-Mem Martins, Sintra, and that's where we teach our Jiu-Jitsu classes. Jiu-Jitsu is a martial art focused on ground combat — takedowns, guard passing, positional control and submissions (joint locks and chokes). Its central principle is that size and strength don't decide a fight: with leverage, timing and correct technique, you can control and submit a larger opponent. In our classes we work position by position, from the fundamentals (guard, mount, passing) through to submissions, with technical drilling and controlled sparring (rolling) adapted to each student's level.",
         benefitsTitle: "Why train Jiu-Jitsu",
         benefits: [
           {
@@ -959,7 +959,7 @@ const modalidadesContentData: Record<
           },
           {
             q: "Where are the Jiu-Jitsu classes in Sintra?",
-            a: "At Kingdom Fight School, in Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
+            a: "At PM Team, in Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
           },
           {
             q: "Can I book a Jiu-Jitsu trial class?",
@@ -977,29 +977,29 @@ const modalidadesContentData: Record<
         scheduleModalityCodes: ["BJJ"],
         showFounders: false,
         teamNote:
-          "Jiu-Jitsu classes are taught by Kingdom Fight School's coaching team, with close supervision and position-by-position progression adapted to each student.",
+          "Jiu-Jitsu classes are taught by PM Team's coaching team, with close supervision and position-by-position progression adapted to each student.",
       },
       mma: {
         slug: "mma",
         icon: Octagon,
         name: "MMA",
         tagline: "Striking and ground, one art",
-        metaTitle: "MMA in Sintra | Kingdom Fight School",
+        metaTitle: "MMA in Sintra | PM Team",
         metaDescription:
-          "MMA at Kingdom Fight School, in Algueirão-Mem Martins, Sintra: competition training and cross-training combining Muay Thai and Jiu-Jitsu. Try a class.",
+          "MMA at PM Team, in Algueirão-Mem Martins, Sintra: competition training and cross-training combining Muay Thai and Jiu-Jitsu. Try a class.",
         metaKeywords: [
           "MMA Sintra",
           "MMA Algueirão-Mem Martins",
           "MMA training Sintra",
           "mixed martial arts",
-          "Kingdom Fight School",
+          "PM Team",
         ],
         heroTitle: "MMA",
         heroSubtitle:
           "MMA (Mixed Martial Arts) combines striking and ground combat. At Kingdom Fight, the path into MMA is through competition training and cross-training between Muay Thai and Jiu-Jitsu.",
         introTitle: "How MMA works at Kingdom Fight",
         introText:
-          "Kingdom Fight School is based in Algueirão-Mem Martins, Sintra. We don't yet have a closed, standalone MMA curriculum — and we'd rather say that clearly than promise something that doesn't exist. What exists today is a Saturday competition-training session, open to anyone wanting to put striking and grappling together, plus the option to combine our Muay Thai and Jiu-Jitsu classes to build a real, solid MMA base — exactly how many fighters train, working each discipline separately before bringing them together in the cage.",
+          "PM Team is based in Algueirão-Mem Martins, Sintra. We don't yet have a closed, standalone MMA curriculum — and we'd rather say that clearly than promise something that doesn't exist. What exists today is a Saturday competition-training session, open to anyone wanting to put striking and grappling together, plus the option to combine our Muay Thai and Jiu-Jitsu classes to build a real, solid MMA base — exactly how many fighters train, working each discipline separately before bringing them together in the cage.",
         benefitsTitle: "Why this path into MMA",
         benefits: [
           {
@@ -1042,7 +1042,7 @@ const modalidadesContentData: Record<
           },
           {
             q: "Where is the competition training in Sintra?",
-            a: "At Kingdom Fight School, in Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
+            a: "At PM Team, in Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
           },
           {
             q: "How much does it cost to train at Kingdom Fight?",
@@ -1056,14 +1056,14 @@ const modalidadesContentData: Record<
         scheduleModalityCodes: ["MMA"],
         showFounders: false,
         teamNote:
-          "MMA competition training and cross-training are led by Kingdom Fight School's coaching team, combining the school's Muay Thai and Jiu-Jitsu experience.",
+          "MMA competition training and cross-training are led by PM Team's coaching team, combining the school's Muay Thai and Jiu-Jitsu experience.",
       },
       kids: {
         slug: "kids",
         icon: Baby,
         name: "Kids",
         tagline: "Discipline, confidence and fun from an early age",
-        metaTitle: "Kids — Martial Arts for Children in Sintra | Kingdom Fight School",
+        metaTitle: "Kids — Martial Arts for Children in Sintra | PM Team",
         metaDescription:
           "Martial arts classes for children in Sintra, in Algueirão-Mem Martins. Discipline, confidence, motor coordination and respect, in a safe and fun environment.",
         metaKeywords: [
@@ -1071,7 +1071,7 @@ const modalidadesContentData: Record<
           "martial arts for kids",
           "Muay Thai for children",
           "kids combat sports",
-          "Kingdom Fight School",
+          "PM Team",
           "Sintra",
           "Algueirão-Mem Martins",
         ],

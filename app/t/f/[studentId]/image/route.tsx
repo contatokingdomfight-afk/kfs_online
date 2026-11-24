@@ -50,7 +50,7 @@ function fallbackImage() {
       }}
     >
       <div style={{ display: "flex", fontSize: 40, fontWeight: 800, color: "#c1121f", letterSpacing: 3 }}>
-        KINGDOM FIGHT SCHOOL
+        PM TEAM
       </div>
       <div style={{ display: "flex", fontSize: 28, color: "#c9c9c9", marginTop: 24 }}>
         Este Fighter Card não está disponível.

@@ -24,20 +24,20 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL(getPublicOrigin()),
-  title: "Kingdom Fight School",
+  title: "PM Team",
   description:
     "Escola de artes marciais em Algueirão-Mem Martins, Sintra: Muay Thai, Boxe e Kickboxing para adultos e crianças. Marca a tua aula experimental.",
   openGraph: {
-    siteName: "Kingdom Fight School",
+    siteName: "PM Team",
     locale: "pt_PT",
     type: "website",
   },
   twitter: { card: "summary_large_image" },
-  applicationName: "Kingdom Fight School",
+  applicationName: "PM Team",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "Kingdom Fight School",
+    title: "PM Team",
     statusBarStyle: "black-translucent",
   },
   icons: {

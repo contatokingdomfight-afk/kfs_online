@@ -4,8 +4,8 @@ import { LegalPageShell, LegalSection } from "@/components/legal/LegalPageShell"
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 
 export const metadata: Metadata = {
-  title: "Termos de Serviço | Kingdom Fight School",
-  description: "Termos de utilização da plataforma Kingdom Fight School.",
+  title: "Termos de Serviço | PM Team",
+  description: "Termos de utilização da plataforma PM Team.",
 };
 
 export default async function TermosPage() {
@@ -16,7 +16,7 @@ export default async function TermosPage() {
       <LegalPageShell title="Terms of Service" updatedAt="June 28, 2026" locale="en">
         <LegalSection title="1. Service description">
           <p>
-            Kingdom Fight School provides a digital school-management and student-experience platform (class
+            PM Team provides a digital school-management and student-experience platform (class
             check-in, library, events, payments, physical assessment and communication), for students, coaches and
             the martial arts school&apos;s administration.
           </p>
@@ -48,7 +48,7 @@ export default async function TermosPage() {
         </LegalSection>
         <LegalSection title="5. Intellectual property">
           <p>
-            Platform content (text, videos, brand, training materials) is the property of Kingdom Fight School or
+            Platform content (text, videos, brand, training materials) is the property of PM Team or
             the respective rights holders. Reproduction or distribution without authorization is not permitted.
           </p>
         </LegalSection>
@@ -80,7 +80,7 @@ export default async function TermosPage() {
     <LegalPageShell title="Termos de Serviço" updatedAt="28 de junho de 2026" locale="pt">
       <LegalSection title="1. Descrição do serviço">
         <p>
-          A Kingdom Fight School disponibiliza uma plataforma digital de gestão escolar e experiência do aluno
+          A PM Team disponibiliza uma plataforma digital de gestão escolar e experiência do aluno
           (check-in em aulas, biblioteca, eventos, pagamentos, avaliação física e comunicação), destinada a alunos,
           treinadores e administração da escola de artes marciais.
         </p>
@@ -126,7 +126,7 @@ export default async function TermosPage() {
       <LegalSection title="7. Lei aplicável">
         <p>
           Estes termos regem-se pela lei portuguesa. Para litígios, é competente o foro da comarca da sede da
-          Kingdom Fight School, sem prejuízo dos direitos legais do consumidor.
+          PM Team, sem prejuízo dos direitos legais do consumidor.
         </p>
       </LegalSection>
       <p style={{ marginTop: 8, fontSize: 14 }}>

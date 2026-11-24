@@ -27,7 +27,7 @@ const BRAND_PRIMARY = "#c1121f";
 function getFrom(): string {
   const from = process.env.RESEND_FROM_EMAIL;
   if (from) return from;
-  return "Kingdom Fight School <onboarding@resend.dev>";
+  return "PM Team <onboarding@resend.dev>";
 }
 
 /**
@@ -39,7 +39,7 @@ function wrapTransactionalEmail(innerHtml: string): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kingdom Fight School</title>
+  <title>PM Team</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f4f4f5;padding:24px 16px;">
@@ -48,7 +48,7 @@ function wrapTransactionalEmail(innerHtml: string): string {
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
           <tr>
             <td style="background-color:${BRAND_PRIMARY};padding:20px 24px;text-align:center;">
-              <span style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:0.02em;">Kingdom Fight School</span>
+              <span style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:0.02em;">PM Team</span>
             </td>
           </tr>
           <tr>
@@ -59,7 +59,7 @@ function wrapTransactionalEmail(innerHtml: string): string {
           <tr>
             <td style="padding:0 24px 24px;border-top:1px solid #e4e4e7;">
               <p style="margin:16px 0 0;color:#71717a;font-size:12px;line-height:1.5;text-align:center;">
-                Este email foi enviado pela plataforma Kingdom Fight School.<br>
+                Este email foi enviado pela plataforma PM Team.<br>
                 Se não esperavas esta mensagem, podes ignorá-la com segurança.
               </p>
             </td>
@@ -108,12 +108,12 @@ export async function sendCheckInConfirmation(
         </p>
         <p style="margin:20px 0 0;">Até lá!</p>
     `.trim();
-    const text = `${greeting},\n\nA tua presença na aula de ${modLabel} foi confirmada.\n${dateFormatted}, ${lesson.startTime} – ${lesson.endTime}.\n\nAté lá!\n\n— Kingdom Fight School`;
+    const text = `${greeting},\n\nA tua presença na aula de ${modLabel} foi confirmada.\n${dateFormatted}, ${lesson.startTime} – ${lesson.endTime}.\n\nAté lá!\n\n— PM Team`;
 
     const { error } = await resend.emails.send({
       from: getFrom(),
       to: [to],
-      subject: "Presença confirmada – Kingdom Fight School",
+      subject: "Presença confirmada – PM Team",
       text,
       html: wrapTransactionalEmail(inner),
     });
@@ -174,12 +174,12 @@ export async function sendLessonReminder(
         return `• ${label} – ${formatDateForEmail(l.date)}, ${l.startTime} – ${l.endTime}`;
       })
       .join("\n");
-    const text = `${greeting},\n\nLembrete das aulas de amanhã:\n\n${textLines}\n\nAté lá!\n\n— Kingdom Fight School`;
+    const text = `${greeting},\n\nLembrete das aulas de amanhã:\n\n${textLines}\n\nAté lá!\n\n— PM Team`;
 
     const { error } = await resend.emails.send({
       from: getFrom(),
       to: [to],
-      subject: "Lembrete: aulas de amanhã – Kingdom Fight School",
+      subject: "Lembrete: aulas de amanhã – PM Team",
       text,
       html: wrapTransactionalEmail(inner),
     });
@@ -273,7 +273,7 @@ export async function sendTrialAcceptanceConfirmation(
       "",
       "Até já no tatame!",
       "",
-      "— Kingdom Fight School",
+      "— PM Team",
     ]
       .filter((line) => line !== null)
       .join("\n");
@@ -281,7 +281,7 @@ export async function sendTrialAcceptanceConfirmation(
     const { error } = await resend.emails.send({
       from: getFrom(),
       to: [to],
-      subject: "Aula experimental confirmada – Kingdom Fight School",
+      subject: "Aula experimental confirmada – PM Team",
       text: textParts,
       html: wrapTransactionalEmail(inner),
     });
@@ -320,12 +320,12 @@ export async function sendReengagementEmail(
         <p style="margin:0 0 16px;">Que tal marcar a próxima aula e voltar ao tatame?</p>
         <p style="margin:20px 0 0;">Até já!</p>
     `.trim();
-    const text = `${greeting},\n\nJá não te vemos nos treinos há uns dias. Sentimos a tua falta!\n\nQue tal marcar a próxima aula e voltar ao tatame?\n\nAté já!\n\n— Kingdom Fight School`;
+    const text = `${greeting},\n\nJá não te vemos nos treinos há uns dias. Sentimos a tua falta!\n\nQue tal marcar a próxima aula e voltar ao tatame?\n\nAté já!\n\n— PM Team`;
 
     const { error } = await resend.emails.send({
       from: getFrom(),
       to: [to],
-      subject: "Sentimos a tua falta – Kingdom Fight School",
+      subject: "Sentimos a tua falta – PM Team",
       text,
       html: wrapTransactionalEmail(inner),
     });
@@ -376,12 +376,12 @@ export async function sendInsuranceExpiryAlertToAdmin(lines: string[]): Promise<
       <ul style="margin:0;padding-left:20px;">${listHtml}</ul>
       <p style="margin:16px 0 0;font-size:14px;color:#71717a;">Renova em Admin → Alunos → perfil do aluno → Seguro.</p>
     `.trim();
-    const text = `Seguros a renovar:\n\n${lines.join("\n")}\n\n— Kingdom Fight School`;
+    const text = `Seguros a renovar:\n\n${lines.join("\n")}\n\n— PM Team`;
 
     const { error } = await resend.emails.send({
       from: getFrom(),
       to: [adminEmail],
-      subject: `Seguros a renovar (${lines.length}) – Kingdom Fight School`,
+      subject: `Seguros a renovar (${lines.length}) – PM Team`,
       text,
       html: wrapTransactionalEmail(inner),
     });
@@ -418,11 +418,11 @@ export async function sendRefundAlertToAdmin(info: {
       </ul>
       <p style="margin:16px 0 0;font-size:14px;color:#71717a;">O KFS não altera nada automaticamente: confirma o estado da mensalidade ou encomenda correspondente.</p>
     `.trim();
-    const text = `Reembolso de ${amount} registado na Revolut.\nOrdem: ${info.orderId}\nReferência: ${info.reference ?? "—"}\n\nO KFS não altera nada automaticamente: confirma o estado da mensalidade ou encomenda.\n\n— Kingdom Fight School`;
+    const text = `Reembolso de ${amount} registado na Revolut.\nOrdem: ${info.orderId}\nReferência: ${info.reference ?? "—"}\n\nO KFS não altera nada automaticamente: confirma o estado da mensalidade ou encomenda.\n\n— PM Team`;
     const { error } = await resend.emails.send({
       from: getFrom(),
       to: [adminEmail],
-      subject: `Reembolso registado (${amount}) – Kingdom Fight School`,
+      subject: `Reembolso registado (${amount}) – PM Team`,
       text,
       html: wrapTransactionalEmail(inner),
     });
@@ -459,12 +459,12 @@ export async function sendFinancialWeeklyAlertToAdmin(
       <ul style="margin:0;padding-left:20px;">${listHtml}</ul>
       <p style="margin:16px 0 0;font-size:14px;color:#71717a;">Detalhe completo em Admin → Financeiro → Relatório.</p>
     `.trim();
-    const text = `Resumo financeiro (${referenceMonth}):\n\n${lines.join("\n")}\n\n— Kingdom Fight School`;
+    const text = `Resumo financeiro (${referenceMonth}):\n\n${lines.join("\n")}\n\n— PM Team`;
 
     const { error } = await resend.emails.send({
       from: getFrom(),
       to: [adminEmail],
-      subject: `Resumo financeiro ${referenceMonth} – Kingdom Fight School`,
+      subject: `Resumo financeiro ${referenceMonth} – PM Team`,
       text,
       html: wrapTransactionalEmail(inner),
     });

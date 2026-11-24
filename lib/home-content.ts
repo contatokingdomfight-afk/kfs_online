@@ -87,7 +87,7 @@ export const homeContent = {
     symbolismSubtitle:
       "Explora cada elemento do nosso logótipo — passa o rato, foca com o teclado ou toca para ler o significado.",
     symbolismHint: "Escolhe um elemento à esquerda ou à direita (ou sobre o logótipo) para ver a explicação.",
-    symbolismLogoAlt: "Emblema Kingdom Fight School com octógono, coroa e lutador — áreas interactivas",
+    symbolismLogoAlt: "Emblema PM Team com octógono, coroa e lutador — áreas interactivas",
     symbolismOctagonTitle: "O octógono",
     symbolismOctagonBody:
       "Representa a arena da realidade: o ambiente de provação, proteção e foco onde o guerreiro se forja.",
@@ -118,7 +118,7 @@ export const homeContent = {
     why5: "Evolução real",
     why5Desc: "Métricas e acompanhamento do seu progresso.",
 
-    // Testimonials — avaliações reais do Google (perfil "Kingdom Fight School" no Google Maps)
+    // Testimonials — avaliações reais do Google (perfil "PM Team" no Google Maps)
     testimonialsTitle: "O que dizem os nossos alunos",
     testimonials: [
       {
@@ -239,10 +239,10 @@ export const homeContent = {
     footerAddressLabel: "Morada",
     footerPhoneLabel: "Telefone",
     footerDirections: "Como chegar",
-    footerRights: "© Kingdom Fight School. Todos os direitos reservados.",
+    footerRights: "© PM Team. Todos os direitos reservados.",
 
     // Secção de localização nas páginas de modalidade
-    modalidadeLocationTitle: "Onde fica a Kingdom Fight School",
+    modalidadeLocationTitle: "Onde fica a PM Team",
 
     // Arbitragem (homepage)
     arbitrationTitle: "Arbitragem na Kingdom",
@@ -331,7 +331,7 @@ export const homeContent = {
     symbolismSubtitle:
       "Explore each part of our logo — hover, focus with the keyboard, or tap to read the meaning.",
     symbolismHint: "Pick an element on the left or right (or on the logo) to see the explanation.",
-    symbolismLogoAlt: "Kingdom Fight School emblem with octagon, crown and fighter — interactive areas",
+    symbolismLogoAlt: "PM Team emblem with octagon, crown and fighter — interactive areas",
     symbolismOctagonTitle: "The octagon",
     symbolismOctagonBody:
       "It represents the arena of reality: the place of trial, protection and focus where the warrior is forged.",
@@ -475,10 +475,10 @@ export const homeContent = {
     footerAddressLabel: "Address",
     footerPhoneLabel: "Phone",
     footerDirections: "Get directions",
-    footerRights: "© Kingdom Fight School. All rights reserved.",
+    footerRights: "© PM Team. All rights reserved.",
 
     // Location section on modality pages
-    modalidadeLocationTitle: "Where to find Kingdom Fight School",
+    modalidadeLocationTitle: "Where to find PM Team",
 
     arbitrationTitle: "Arbitration at Kingdom",
     arbitrationSubtitle: "From training to event day",

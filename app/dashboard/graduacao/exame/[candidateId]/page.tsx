@@ -124,7 +124,7 @@ export default async function MeuExamePage({ params }: { params: Promise<{ candi
             dark={<GraduationCertificate data={certificate} />}
             light={<GraduationCertificate data={certificate} variant="light" />}
             fileName={`certificado-${certificate.gradeName.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}`}
-            shareText={`Novo grau na Kingdom Fight School: ${certificate.gradeName} (${certificate.modalityName}) 🥊`}
+            shareText={`Novo grau na PM Team: ${certificate.gradeName} (${certificate.modalityName}) 🥊`}
             verifyUrl={certificate.verifyUrl}
           />
         </section>

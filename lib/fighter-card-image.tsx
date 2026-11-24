@@ -107,7 +107,7 @@ export function buildFighterCardElement(data: FighterCardData, ctaHost: string) 
             color: BRAND_PRIMARY,
           }}
         >
-          KINGDOM FIGHT SCHOOL
+          PM TEAM
         </div>
       </div>
 

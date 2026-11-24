@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const res = await startAutoPay(admin, {
       studentId,
-      fullName: user.name?.trim() || user.email || "Aluno Kingdom Fight School",
+      fullName: user.name?.trim() || user.email || "Aluno PM Team",
       email: user.email ?? null,
       returnUrl: `${request.nextUrl.origin}/dashboard/financeiro?autopay=1`,
     });

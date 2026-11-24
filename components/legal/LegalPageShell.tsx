@@ -21,7 +21,7 @@ export async function LegalPageShell({ title, children, updatedAt, locale = "pt"
       >
         <div style={{ padding: "16px clamp(16px, 4vw, 24px) 0" }}>
           <Link href="/" style={{ color: "var(--primary)", textDecoration: "none", fontWeight: 600, fontSize: 15 }}>
-            ← Kingdom Fight School
+            ← PM Team
           </Link>
         </div>
         <PublicQuickNav locale={locale} />

@@ -6,13 +6,13 @@ import { YouTubeIframe } from "@/components/YouTubeIframe";
 import { youtubeEmbedSrc } from "@/lib/youtube-embed";
 
 export const metadata: Metadata = {
-  title: "Lista de Espera | Kingdom Fight School",
+  title: "Lista de Espera | PM Team",
   description:
-    "Entre para a lista de espera da Kingdom Fight School em Oeiras e Cascais e seja avisado antes da abertura oficial.",
+    "Entre para a lista de espera da PM Team em Oeiras e Cascais e seja avisado antes da abertura oficial.",
   openGraph: {
-    title: "Lista de Espera | Kingdom Fight School",
+    title: "Lista de Espera | PM Team",
     description:
-      "Entre para a lista de espera da Kingdom Fight School em Oeiras e Cascais e seja avisado antes da abertura oficial.",
+      "Entre para a lista de espera da PM Team em Oeiras e Cascais e seja avisado antes da abertura oficial.",
     type: "website",
   },
 };
