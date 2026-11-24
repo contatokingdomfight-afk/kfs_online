@@ -239,7 +239,7 @@ export function PlanForm({
           step={1}
         />
         <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>
-          Ex.: Kingdom Week = 5. O check-in é bloqueado ao atingir o limite no mês; a secretaria pode conceder aulas extra na ficha do aluno.
+          Ex.: Pack 5 Aulas = 5. O check-in é bloqueado ao atingir o limite no mês; a secretaria pode conceder aulas extra na ficha do aluno.
         </span>
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>

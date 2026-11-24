@@ -89,7 +89,7 @@ export default async function DashboardFinanceiroPage({
         familyRole = familyCtx.role;
         if (familyCtx.isTitular) {
           const amount = await resolveFamilyGroupTitularSuggestedAmount(supabase, familyCtx.group.id);
-          plan = { name: planRow?.name ?? "Kingdom Família", price_monthly: amount };
+          plan = { name: planRow?.name ?? "Plano Família", price_monthly: amount };
         }
       }
     }

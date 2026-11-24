@@ -880,9 +880,9 @@ export async function loadAdminTodo(supabase: SupabaseClient, schoolId: string |
       columns: ["Aluno", "Desde", "Regresso", "Situação", ""],
     },
     semana: {
-      kind: "semana", tone: "amber", title: "Kingdom Week no limite", items: semana,
+      kind: "semana", tone: "amber", title: "Pack 5 Aulas no limite", items: semana,
       summary: semana.length ? "Na última aula do mês (ou já esgotaram)" : "",
-      info: "Alunos do plano Kingdom Week (5 aulas/mês) que já fizeram a 4.ª aula do mês ou esgotaram o limite. Avisa por WhatsApp e, se quiserem treinar mais, concede aulas extra na ficha. Volta a aparecer se fizerem mais uma aula.",
+      info: "Alunos do plano Pack 5 Aulas (5 aulas/mês) que já fizeram a 4.ª aula do mês ou esgotaram o limite. Avisa por WhatsApp e, se quiserem treinar mais, concede aulas extra na ficha. Volta a aparecer se fizerem mais uma aula.",
       columns: ["Aluno", "Aulas", "Estado", "Mês", ""],
     },
     semplano: {

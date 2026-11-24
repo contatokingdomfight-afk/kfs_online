@@ -128,10 +128,10 @@ export function buildDueSoonMessage(studentFirstName: string, dueLabel: string):
 export function buildWeekLimitMessage(studentFirstName: string, used: number, limit: number): string {
   const name = studentFirstName.trim() || "tudo bem";
   if (used >= limit) {
-    return `Olá ${name}! 👋\n\nAqui é da PM Team. Já usaste as ${limit} aulas do teu plano Kingdom Week deste mês. Se quiseres continuar a treinar, precisas efetuar o pagamento de ${KINGDOM_WEEK_MONTHLY_PRICE_EUR} euros novamente ou pagar por aulas avulsas. 🥋`;
+    return `Olá ${name}! 👋\n\nAqui é da PM Team. Já usaste as ${limit} aulas do teu plano Pack 5 Aulas deste mês. Se quiseres continuar a treinar, precisas efetuar o pagamento de ${KINGDOM_WEEK_MONTHLY_PRICE_EUR} euros novamente ou pagar por aulas avulsas. 🥋`;
   }
   const left = limit - used;
-  return `Olá ${name}! 👋 Aqui é da PM Team. Estás na ${used}.ª aula do mês do teu plano Kingdom Week e ${left === 1 ? "ainda tens 1 aula" : `ainda tens ${left} aulas`} até ao fim do mês (${limit} no total). Se quiseres treinar mais, podemos juntar aulas extra — é só responder por aqui. Bons treinos! 🥋`;
+  return `Olá ${name}! 👋 Aqui é da PM Team. Estás na ${used}.ª aula do mês do teu plano Pack 5 Aulas e ${left === 1 ? "ainda tens 1 aula" : `ainda tens ${left} aulas`} até ao fim do mês (${limit} no total). Se quiseres treinar mais, podemos juntar aulas extra — é só responder por aqui. Bons treinos! 🥋`;
 }
 
 /** Para quem criou conta mas ainda não escolheu plano. */
@@ -154,7 +154,7 @@ export function buildFarewellMessage(studentFirstName: string): string {
     "Ahh, se quiseres enviar alguma mensagem de despedida no grupo do whatsapp também podes fazer!!!",
     "",
     "Sentiremos tua falta!",
-    "E você será sempre um Kingdom Fighter!",
+    "E você será sempre um lutador PM Team!",
     "",
     "",
     "PM Team",

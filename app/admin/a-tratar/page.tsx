@@ -21,7 +21,7 @@ const KIND_TITLE: Record<AdminTodoKind, string> = {
   encomendas: "Encomenda",
   vencer: "Mensalidade a vencer",
   pausas: "Pausa",
-  semana: "Kingdom Week",
+  semana: "Pack 5 Aulas",
   semplano: "Sem plano",
   exame: "Apto para exame",
   aniversarios: "Aniversário",

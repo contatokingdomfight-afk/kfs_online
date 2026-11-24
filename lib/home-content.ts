@@ -193,7 +193,7 @@ export const homeContent = {
       },
       {
         q: "Tem aula para crianças?",
-        a: "Sim, o plano Kingdom Kids é dedicado às crianças, com metodologia própria para a idade.",
+        a: "Sim, o plano Kids é dedicado às crianças, com metodologia própria para a idade.",
       },
     ],
 
@@ -434,7 +434,7 @@ export const homeContent = {
       },
       {
         q: "Do you have classes for kids?",
-        a: "Yes, the Kingdom Kids plan is dedicated to children, with an age-appropriate methodology.",
+        a: "Yes, the Kids plan is dedicated to children, with an age-appropriate methodology.",
       },
     ],
 

@@ -234,7 +234,7 @@ export default async function CoachFinanceiroPage({ searchParams }: { searchPara
               Preço de tabela ÷ 1,23 = valor sem IVA
               <br />1 modalidade → 40% · 2 modalidades → 35% por cada uma que dás
               <br />todas as modalidades → 80% ÷ professores da escola
-              <br />Kingdom Week → 10,00 € fixos
+              <br />Pack 5 Aulas → 10,00 € fixos
             </div>
             <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "var(--text-secondary)" }}>
               Conta só quem pagou neste mês, sempre pelo preço de tabela: fidelização, pack família e cupões são descontos da escola e
