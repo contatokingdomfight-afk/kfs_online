@@ -7,6 +7,8 @@ import { getViewAsFromCookies } from "@/lib/view-as-server";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { ViewAsBanner } from "@/components/ViewAsBanner";
+import { DemoModeBanner } from "@/components/DemoModeBanner";
+import { isDemoEmail } from "@/lib/demo";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import { NotificationBell } from "@/components/NotificationBell";
 import { StudentOnboardingGate } from "@/components/onboarding/StudentOnboardingGate";
@@ -130,7 +132,13 @@ export default async function DashboardLayout({
           ariaLabel: t("headerProfileAria"),
         }}
         headerExtra={<NotificationBell locale={locale as "pt" | "en"} />}
-        viewAsBanner={dbUser.role === "ADMIN" && viewAs === "aluno" ? <ViewAsBanner viewAs="aluno" /> : undefined}
+        viewAsBanner={
+          isDemoEmail(dbUser.email) ? (
+            <DemoModeBanner role="aluno" />
+          ) : dbUser.role === "ADMIN" && viewAs === "aluno" ? (
+            <ViewAsBanner viewAs="aluno" />
+          ) : undefined
+        }
         mainClassName="dashboard-main"
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
         mobileBottomNav={mobileBottomNav}

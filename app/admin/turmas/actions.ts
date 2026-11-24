@@ -1,5 +1,6 @@
 "use server";
 
+import { schoolModalityCodes } from "@/lib/school-modalities";
 import { getSchoolScope, canAccessSchool, schoolAccessErrorForRows } from "@/lib/school-scope";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -58,6 +59,9 @@ export async function createLesson(formData: FormData) {
   }
   if (!schoolId) {
     return { error: "Seleciona uma escola para a aula." };
+  }
+  if (!(await schoolModalityCodes(supabase, schoolId)).has(modality)) {
+    return { error: "Esta modalidade não está ligada nesta escola (A minha escola → Configuração)." };
   }
 
   for (const cid of coachIds) {
@@ -180,8 +184,16 @@ export async function updateLesson(
   if (coachIds.length === 0) return { error: "Seleciona pelo menos um professor." };
 
   const supabase = getSupabaseForAdminWrite() ?? (await createClient());
-  const { data: existingLesson } = await supabase.from("Lesson").select("isOneOff").eq("id", lessonId).maybeSingle();
+  const { data: existingLesson } = await supabase.from("Lesson").select("isOneOff, schoolId, modality").eq("id", lessonId).maybeSingle();
   const isOneOffLesson = Boolean((existingLesson as { isOneOff?: boolean } | null)?.isOneOff);
+  const lessonSchoolId = (existingLesson as { schoolId?: string | null } | null)?.schoolId ?? null;
+  if (
+    lessonSchoolId &&
+    modality !== (existingLesson as { modality?: string } | null)?.modality &&
+    !(await schoolModalityCodes(supabase, lessonSchoolId)).has(modality)
+  ) {
+    return { error: "Esta modalidade não está ligada nesta escola (A minha escola → Configuração)." };
+  }
 
   if (isOneOffLesson && !date) {
     return { error: "Preencha a data da aula única." };

@@ -5,6 +5,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { AdicionarModalidadeForm } from "./AdicionarModalidadeForm";
 import { DeleteModalityButton } from "./DeleteModalityButton";
+import { ModalityProposalButtons } from "./ModalityProposalButtons";
 
 export default async function AdminModalidadesPage() {
   const dbUser = await getCurrentDbUser();
@@ -14,12 +15,17 @@ export default async function AdminModalidadesPage() {
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
   const supabase = result.client;
 
-  const { data: modalities } = await supabase
-    .from("ModalityRef")
-    .select("id, code, name, sortOrder")
-    .order("sortOrder", { ascending: true });
+  const [{ data: modalities }, { data: schools }] = await Promise.all([
+    supabase.from("ModalityRef").select("id, code, name, sortOrder, schoolId, networkProposalAt").order("sortOrder", { ascending: true }),
+    supabase.from("School").select("id, name"),
+  ]);
 
-  const list = modalities ?? [];
+  // Rede = sem escola; as próprias de cada escola aparecem à parte (propostas primeiro).
+  const list = (modalities ?? []).filter((m) => !m.schoolId);
+  const schoolName = new Map((schools ?? []).map((s) => [s.id as string, s.name as string]));
+  const schoolOwn = (modalities ?? [])
+    .filter((m) => m.schoolId)
+    .sort((a, b) => Number(!!b.networkProposalAt) - Number(!!a.networkProposalAt) || String(a.name).localeCompare(String(b.name), "pt"));
 
   return (
     <div style={{ maxWidth: "min(560px, 100%)" }}>
@@ -82,6 +88,31 @@ export default async function AdminModalidadesPage() {
       </ul>
 
       <AdicionarModalidadeForm />
+
+      {schoolOwn.length > 0 && (
+        <section style={{ marginTop: "clamp(24px, 6vw, 32px)" }}>
+          <h2 style={{ margin: "0 0 6px 0", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+            Modalidades próprias das escolas
+          </h2>
+          <p style={{ margin: "0 0 12px 0", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+            Criadas pelos diretores; só essa escola as vê e contam só no ranking da escola. Ao passar para a rede, as outras escolas podem ligá-las.
+          </p>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+            {schoolOwn.map((m) => (
+              <li key={m.id} className="card" style={{ padding: 14, display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{m.name}</span>
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                    {schoolName.get(m.schoolId as string) ?? "Escola"}
+                    {m.networkProposalAt ? " · proposta para a rede" : ""}
+                  </span>
+                </div>
+                {m.networkProposalAt && <ModalityProposalButtons code={m.code} />}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div
         className="card"

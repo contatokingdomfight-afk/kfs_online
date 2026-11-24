@@ -1,6 +1,6 @@
 # Backlog — Contas de DEV que não aparecem em produção
 
-Estado em **22 out. 2026**: por fazer. **Reverificado em 2026-11-10: continua por fazer.** Não há `isTester` nem nenhum filtro de contas de teste no código.
+Estado em **18 nov. 2026**: resolvido com a **Escola Demo** (`demo-school`, ver `lib/demo.ts`). Contas de teste devem ter o `Student` na Escola Demo (`node scripts/demo/seed-escola-demo.mjs` tem `--mover-testers`); o Admin Geral em «Todas» não a conta. O tester oficial não tem `Student`, por isso já não aparece nas listas.
 
 ## Objetivo
 Ter contas de teste ("testers") para o ambiente de DEV/Preview que **nunca aparecem em PRD** (listas, rankings, relatórios, financeiro, encomendas).

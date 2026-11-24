@@ -5,6 +5,8 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { BeltSwatch } from "@/components/graduation/BeltSwatch";
+import { getSchoolScope, scopedSchoolIds } from "@/lib/school-scope";
+import { modalitiesForSchools } from "@/lib/school-modalities-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +17,20 @@ export default async function AdminGraduacaoPage() {
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
 
-  const [{ data: modalities }, { data: templates }, { data: grades }] = await Promise.all([
-    result.client.from("ModalityRef").select("code, name, graduationModalities").order("sortOrder", { ascending: true }),
+  const [{ data: allModalities }, { data: templates }, { data: grades }, scope] = await Promise.all([
+    result.client.from("ModalityRef").select("code, name, graduationModalities, schoolId").order("sortOrder", { ascending: true }),
     result.client.from("GraduationTemplate").select("id, modalityCode, isPublished"),
     result.client.from("GraduationGrade").select("templateId, colors, minMonths, sortOrder").order("sortOrder", { ascending: true }),
+    getSchoolScope(),
   ]);
+  // Diretor: modalidades da rede + as próprias das suas escolas (as de outras escolas não aparecem).
+  const modalities = modalitiesForSchools(
+    (allModalities ?? []) as { code: string; name: string; schoolId: string | null; graduationModalities: string[] | null }[],
+    scopedSchoolIds(scope)
+  );
 
-  const nameOf = new Map((modalities ?? []).map((m) => [m.code as string, m.name as string]));
-  const rows = (modalities ?? []).map((m) => {
+  const nameOf = new Map(modalities.map((m) => [m.code as string, m.name as string]));
+  const rows = modalities.map((m) => {
     const template = (templates ?? []).find((t) => t.modalityCode === m.code) ?? null;
     const templateGrades = template ? (grades ?? []).filter((g) => g.templateId === template.id) : [];
     return {

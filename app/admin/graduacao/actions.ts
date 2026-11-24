@@ -8,6 +8,7 @@ import { adminPermissionError } from "@/lib/permissions/assert";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { buildKingdomTemplateDraft } from "@/lib/graduation/kingdom-muay-thai-template";
 import { loadGraduationTemplate } from "@/lib/graduation/load-template";
+import { modalityEditError } from "@/lib/school-modalities";
 import { normalizeTemplateDraft, type GraduationTemplateDraft } from "@/lib/graduation/template";
 
 export type SaveGraduationTemplateResult = { error?: string; success?: boolean };
@@ -37,13 +38,14 @@ function friendlyDbError(message: string): string {
 export async function saveGraduationTemplate(payload: unknown): Promise<SaveGraduationTemplateResult> {
   const auth = await authorize();
   if ("error" in auth) return { error: auth.error };
-  if (!isNetworkScope(await getSchoolScope())) return { error: "Só o Admin Geral pode alterar o programa de graduação da rede." };
-
   const normalized = normalizeTemplateDraft(payload);
   if (!normalized.ok) return { error: normalized.error };
 
   const result = getAdminClientOrNull();
   if (!result.client) return { error: "Configuração Supabase em falta." };
+  // Graus da rede → só o Admin Geral; modalidade própria de uma escola → também o diretor dessa escola.
+  const editErr = await modalityEditError(result.client, normalized.draft.modalityCode);
+  if (editErr) return { error: editErr };
 
   const { error } = await result.client.rpc("save_graduation_template", {
     p_payload: normalized.draft,

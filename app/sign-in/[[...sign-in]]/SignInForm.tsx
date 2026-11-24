@@ -211,7 +211,8 @@ export function SignInForm() {
                   (initialLocale === "en"
                     ? "This confirmation link already expired or was used. If you already confirmed your account, just log in below."
                     : "Este link de confirmação já expirou ou foi usado. Se já confirmaste a conta, faz login abaixo.")) ||
-                (urlError === "missing_token" && (initialLocale === "en" ? "Invalid confirmation link." : "Link de confirmação inválido."))}
+                (urlError === "missing_token" && (initialLocale === "en" ? "Invalid confirmation link." : "Link de confirmação inválido.")) ||
+                (urlError === "demo_unavailable" && (initialLocale === "en" ? "The demo is unavailable right now." : "A demonstração não está disponível agora."))}
             </p>
           )}
           {showResendVerification && (
@@ -253,6 +254,20 @@ export function SignInForm() {
             {t("signUp")}
           </Link>
         </p>
+        <div className="mt-6" style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+          <p className="text-mobile-sm text-center mb-3" style={{ color: "var(--text-secondary)", margin: "0 0 12px" }}>
+            {initialLocale === "en" ? "Or explore without an account" : "Ou explora sem conta"}
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {/* <a> e não <Link>: a rota gera um link de sessão e não deve ser pré-carregada. */}
+            <a href="/demo/entrar?como=aluno" className="btn btn-secondary w-full" rel="nofollow">
+              {initialLocale === "en" ? "View as student" : "Ver como aluno"}
+            </a>
+            <a href="/demo/entrar?como=professor" className="btn btn-secondary w-full" rel="nofollow">
+              {initialLocale === "en" ? "View as coach" : "Ver como professor"}
+            </a>
+          </div>
+        </div>
       </div>
     </main>
   );

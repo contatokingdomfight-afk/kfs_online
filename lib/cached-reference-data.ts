@@ -8,11 +8,14 @@ function supabaseForReliableRead(fallback: SupabaseClient): SupabaseClient {
 }
 
 export type CachedLocation = { id: string; name: string };
-export type CachedModalityRef = { code: string; name: string };
+/** schoolId: null = modalidade da rede; preenchido = própria dessa escola (filtrar nos seletores). */
+export type CachedModalityRef = { code: string; name: string; schoolId: string | null };
 export type CachedSchoolOption = { id: string; name: string };
 
 /** Invalidar com `revalidateTag` quando uma escola é criada, renomeada, aberta ou desativada. */
 export const SCHOOLS_CACHE_TAG = "schools";
+/** Invalidar com `revalidateTag` quando uma modalidade é criada, editada, apagada ou passa para a rede. */
+export const MODALITIES_CACHE_TAG = "modalities";
 
 /**
  * Lista de escolas ativas (id, name). Cache 5 min; dados pouco voláteis.
@@ -117,7 +120,8 @@ export async function getLocationsForSchool(
 }
 
 /**
- * Lista de modalidades (code, name). Cache 5 min; dados pouco voláteis.
+ * Lista de modalidades (code, name, schoolId) — da rede e próprias das escolas. Cache 5 min; dados pouco voláteis.
+ * Invalidar com revalidateTag(MODALITIES_CACHE_TAG) ao criar/editar/apagar modalidades.
  */
 export async function getCachedModalityRefs(
   supabase: SupabaseClient
@@ -126,12 +130,12 @@ export async function getCachedModalityRefs(
     async () => {
       const { data } = await supabase
         .from("ModalityRef")
-        .select("code, name")
+        .select("code, name, schoolId")
         .order("sortOrder", { ascending: true });
       return data ?? [];
     },
-    ["modality-refs-all"],
-    { revalidate: 300 }
+    ["modality-refs-all-v2"],
+    { revalidate: 300, tags: [MODALITIES_CACHE_TAG] }
   )();
   return rows as CachedModalityRef[];
 }

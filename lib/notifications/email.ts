@@ -4,6 +4,18 @@
  */
 
 import { MODALITY_LABELS } from "@/lib/lesson-utils";
+import { isDemoEmail } from "@/lib/demo";
+/** Contas demo (só leitura) nunca recebem emails: o envio é ignorado em silêncio. */
+function withoutDemoRecipients<T extends { emails: { send: (...args: any[]) => Promise<any> } }>(resend: T): T {
+  const send = resend.emails.send.bind(resend.emails);
+  resend.emails.send = ((payload: { to?: string | string[] }, ...rest: unknown[]) => {
+    const to = Array.isArray(payload?.to) ? payload.to : [payload?.to];
+    if (to.some((e) => isDemoEmail(e))) return Promise.resolve({ data: null, error: null });
+    return send(payload, ...rest);
+  }) as T["emails"]["send"];
+  return resend;
+}
+
 
 function modalityLabel(code: string): string {
   return MODALITY_LABELS[code] ?? code;
@@ -83,7 +95,7 @@ export async function sendCheckInConfirmation(
 
   try {
     const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
+    const resend = withoutDemoRecipients(new Resend(apiKey));
     const modLabel = modalityLabel(lesson.modality);
     const dateFormatted = formatDateForEmail(lesson.date);
     const greeting = studentName ? `Olá ${studentName}` : "Olá";
@@ -135,7 +147,7 @@ export async function sendLessonReminder(
 
   try {
     const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
+    const resend = withoutDemoRecipients(new Resend(apiKey));
 
     const listItems = lessons
       .map((l) => {
@@ -227,7 +239,7 @@ export async function sendTrialAcceptanceConfirmation(
 
   try {
     const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
+    const resend = withoutDemoRecipients(new Resend(apiKey));
     const modLabel = modalityLabel(trial.modality);
     const dateFormatted = formatDateForEmail(trial.date);
     const greeting = studentName ? `Olá ${studentName}` : "Olá";
@@ -300,7 +312,7 @@ export async function sendReengagementEmail(
 
   try {
     const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
+    const resend = withoutDemoRecipients(new Resend(apiKey));
     const greeting = studentName ? `Olá ${studentName}` : "Olá";
     const inner = `
         <p style="margin:0 0 16px;">${greeting},</p>
@@ -357,7 +369,7 @@ export async function sendInsuranceExpiryAlertToAdmin(lines: string[]): Promise<
 
   try {
     const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
+    const resend = withoutDemoRecipients(new Resend(apiKey));
     const listHtml = lines.map((l) => `<li style="margin:0 0 8px;">${l.replace(/</g, "&lt;")}</li>`).join("");
     const inner = `
       <p style="margin:0 0 16px;">Seguros individuais que precisam de renovação:</p>
@@ -395,7 +407,7 @@ export async function sendRefundAlertToAdmin(info: {
   }
   try {
     const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
+    const resend = withoutDemoRecipients(new Resend(apiKey));
     const amount = `${(info.amountCents / 100).toFixed(2)} ${info.currency}`;
     const ref = info.reference ? info.reference.replace(/</g, "&lt;") : "sem referência (adesão ou cobrança automática)";
     const inner = `
@@ -440,7 +452,7 @@ export async function sendFinancialWeeklyAlertToAdmin(
 
   try {
     const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
+    const resend = withoutDemoRecipients(new Resend(apiKey));
     const listHtml = lines.map((l) => `<li style="margin:0 0 8px;">${l.replace(/</g, "&lt;")}</li>`).join("");
     const inner = `
       <p style="margin:0 0 16px;">Resumo financeiro do mês (${referenceMonth}):</p>

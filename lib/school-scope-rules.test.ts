@@ -44,6 +44,12 @@ describe("isolamento entre escolas", () => {
     expect(resolveSchoolParam({ kind: "none" }, "a")).toBeNull();
   });
 
+  it("Admin Geral em «Todas» não conta a Escola Demo, mas pode escolhê-la", () => {
+    const withDemo: SchoolScope = { kind: "network", schools: [...SCHOOLS, { id: "demo-school", name: "Escola Demo" }], selectedSchoolId: null };
+    expect(scopedSchoolIds(withDemo)).toEqual(["a", "b", "c"]);
+    expect(scopedSchoolIds({ ...withDemo, selectedSchoolId: "demo-school" })).toEqual(["demo-school"]);
+  });
+
   it("Admin Geral vê tudo ou a escola escolhida", () => {
     expect(scopedSchoolIds(network())).toBeNull();
     expect(scopedSchoolIds(network("b"))).toEqual(["b"]);

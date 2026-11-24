@@ -1,3 +1,4 @@
+import { DEMO_SCHOOL_ID } from "@/lib/demo";
 import type { CachedSchoolOption } from "@/lib/cached-reference-data";
 
 /**
@@ -31,7 +32,12 @@ export function isNetworkScope(scope: SchoolScope): scope is Extract<SchoolScope
  */
 export function scopedSchoolIds(scope: SchoolScope): string[] | null {
   if (scope.kind === "none") return [];
-  return scope.selectedSchoolId ? [scope.selectedSchoolId] : null;
+  if (scope.selectedSchoolId) return [scope.selectedSchoolId];
+  // Admin Geral em «Todas»: todas menos a Escola Demo (dados fictícios não entram nos números).
+  if (scope.kind === "network" && scope.schools.some((s) => s.id === DEMO_SCHOOL_ID)) {
+    return scope.schools.filter((s) => s.id !== DEMO_SCHOOL_ID).map((s) => s.id);
+  }
+  return null;
 }
 
 /**

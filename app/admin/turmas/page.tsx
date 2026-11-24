@@ -1,5 +1,7 @@
 import { BACKOFFICE_SCHOOLS_FILTER } from "@/lib/cached-reference-data";
-import { getSchoolScope, resolveSchoolParam, filterSchools } from "@/lib/school-scope";
+import { getSchoolScope, resolveSchoolParam, filterSchools, scopedSchoolIds } from "@/lib/school-scope";
+import { loadModalityOffering, offeredModalities } from "@/lib/school-modalities";
+import { modalitiesForSchools } from "@/lib/school-modalities-rules";
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
@@ -147,6 +149,10 @@ export default async function AdminTurmasPage({
     getCachedLocations(supabase),
     getCachedModalityRefs(supabase),
   ]);
+  // Seletor de modalidade ao criar aula: com uma escola escolhida, só as que essa escola oferece; senão rede + próprias das escolas do acesso.
+  const createModalities = schoolFilterParam
+    ? offeredModalities(await loadModalityOffering(supabase, schoolFilterParam), schoolFilterParam)
+    : modalitiesForSchools(modalities ?? [], scopedSchoolIds(scope));
   const { data: schools } = await filterSchools(supabase.from("School").select("id, name"), scope.kind === "school" ? scope.schoolIds : null, "id").or(BACKOFFICE_SCHOOLS_FILTER).order("name", { ascending: true });
 
   const lessonsForView =
@@ -193,7 +199,7 @@ export default async function AdminTurmasPage({
         </h2>
         <CreateLessonForm
           coaches={(coaches ?? []) as { id: string; name: string; schoolIds: string[] }[]}
-          modalities={modalities ?? []}
+          modalities={createModalities}
           schools={schools ?? []}
         />
       </section>

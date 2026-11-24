@@ -20,6 +20,7 @@ import { loadPausesByStudent, isPauseActiveOn } from "@/lib/tuition-pause";
 import { fetchAllPages, inChunks } from "@/lib/graduation/queries";
 
 const INSURANCE_FILTER_LABEL: Record<string, string> = {
+  paid: "Seguro pago",
   expired: "Seguro expirado",
   expiring: "A expirar",
   none: "Sem cobertura",
@@ -179,7 +180,13 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
     return last ? daysBetween(last, todayYmd) : null;
   };
 
-  if (filterInsurance !== "all") {
+  if (filterInsurance === "paid") {
+    const paidRows = await inChunks(filtered.map((s) => s.id), async (ids) =>
+      (await supabase.from("Payment").select("studentId").eq("paymentType", "INSURANCE").eq("status", "PAID").in("studentId", ids)).data ?? []
+    );
+    const paidIds = new Set(paidRows.map((r) => r.studentId));
+    filtered = filtered.filter((s) => paidIds.has(s.id));
+  } else if (filterInsurance !== "all") {
     filtered = filtered.filter((s) => {
       const st = insuranceStatusOf(s.id);
       if (filterInsurance === "expired") return st === "expired";
@@ -402,7 +409,7 @@ export default async function AdminAlunosPage({ searchParams }: { searchParams: 
             Cobertura do seguro
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {(["all", "expired", "expiring", "none"] as const).map((key) => {
+            {(["all", "paid", "expired", "expiring", "none"] as const).map((key) => {
               const active = filterInsurance === key;
               return (
                 <Link

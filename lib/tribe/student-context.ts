@@ -3,6 +3,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getEffectiveDashboardStudentId } from "@/lib/auth/effective-dashboard-student-id";
 import { getViewAsFromCookies } from "@/lib/view-as-server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { DEMO_SCHOOL_ID } from "@/lib/demo";
 
 export type TribeStudentContext = {
   supabase: SupabaseClient;
@@ -60,6 +61,8 @@ export async function getTribeStudentWriteContext(): Promise<{ ok: true; ctx: Tr
 
 /** Leitura do feed com as mesmas regras de visibilidade (usa admin + filtro explícito). */
 export function tribePostVisibleForSchool(row: { visibility: string; schoolId: string }, viewerSchoolId: string): boolean {
+  // A Escola Demo é estanque: os visitantes da demo não veem posts reais e vice-versa.
+  if ((row.schoolId === DEMO_SCHOOL_ID) !== (viewerSchoolId === DEMO_SCHOOL_ID)) return false;
   if (row.visibility === "ALL_SCHOOLS") return true;
   return row.schoolId === viewerSchoolId;
 }

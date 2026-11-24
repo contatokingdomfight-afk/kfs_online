@@ -4,6 +4,7 @@ import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { loadGraduationTemplate } from "@/lib/graduation/load-template";
+import { canAccessSchool, getSchoolScope } from "@/lib/school-scope";
 import { GraduationTemplateEditor, type CourseOption } from "./GraduationTemplateEditor";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ export default async function AdminGraduacaoModalityPage({ params }: { params: P
   const modalityCode = decodeURIComponent(rawModality);
 
   const [{ data: modalities }, { data: courseRows }, { data: templates }, template] = await Promise.all([
-    result.client.from("ModalityRef").select("code, name, graduationModalities").order("sortOrder", { ascending: true }),
+    result.client.from("ModalityRef").select("code, name, graduationModalities, schoolId").order("sortOrder", { ascending: true }),
     result.client.from("Course").select("id, name, modality, is_active").order("name", { ascending: true }),
     result.client.from("GraduationTemplate").select("modalityCode, isPublished"),
     loadGraduationTemplate(result.client, modalityCode),
@@ -27,6 +28,8 @@ export default async function AdminGraduacaoModalityPage({ params }: { params: P
 
   const modality = (modalities ?? []).find((m) => m.code === modalityCode);
   if (!modality) notFound();
+  // Modalidade própria de outra escola: o diretor não a vê.
+  if (modality.schoolId && !canAccessSchool(await getSchoolScope(), modality.schoolId as string)) notFound();
 
   const modalityNames = new Map((modalities ?? []).map((m) => [m.code, m.name]));
   const courses: CourseOption[] = (courseRows ?? [])

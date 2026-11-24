@@ -2,7 +2,7 @@ import { filterSchools } from "@/lib/school-scope-rules";
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { loadGraduationTemplate } from "./load-template";
+import { loadGraduationTemplate, withSchoolOverrides } from "./load-template";
 import { averageEvaluationScores, computeStudentProgress, type ManualReadiness, type StudentProgress } from "./progress";
 import { fetchAllPages, inChunks } from "./queries";
 import type { GraduationTemplateDraft } from "./template";
@@ -54,8 +54,8 @@ export async function loadModalityReadiness(
   const countedModalities = [modalityCode, ...compositeCodes];
 
   const [students, lessons, gradeRows] = await Promise.all([
-    fetchAllPages<{ id: string; userId: string; primaryModality: string | null }>((from, to) =>
-      filterSchools(supabase.from("Student").select("id, userId, primaryModality"), schoolIds).eq("status", "ATIVO").order("id").range(from, to)
+    fetchAllPages<{ id: string; userId: string; primaryModality: string | null; schoolId: string | null }>((from, to) =>
+      filterSchools(supabase.from("Student").select("id, userId, primaryModality, schoolId"), schoolIds).eq("status", "ATIVO").order("id").range(from, to)
     ),
     fetchAllPages<{ id: string }>((from, to) => supabase.from("Lesson").select("id").in("modality", countedModalities).order("id").range(from, to)),
     fetchAllPages<{ studentId: string; gradeId: string; awardedAt: string; source: string }>((from, to) =>
@@ -186,10 +186,17 @@ export async function loadModalityReadiness(
     : { data: [] as { id: string; name: string }[] };
   const courseNames = new Map((courses ?? []).map((c) => [c.id, c.name]));
 
+  // Requisitos ajustados pela escola de cada aluno (tempo/presenças/nota mínima).
+  const schoolTemplates = new Map<string, GraduationTemplateDraft>();
+  for (const sid of new Set(relevant.map((s) => s.schoolId).filter((x): x is string => !!x))) {
+    schoolTemplates.set(sid, (await withSchoolOverrides(supabase, template, sid)) ?? template);
+  }
+
   const result: ModalityStudentReadiness[] = relevant.map((s) => {
+    const studentTemplate = (s.schoolId && schoolTemplates.get(s.schoolId)) || template;
     const latest = latestGrade.get(s.id) ?? null;
-    const currentGradeIndex = latest ? template.grades.findIndex((g) => g.id === latest.gradeId) : -1;
-    const next = template.grades[currentGradeIndex + 1] ?? null;
+    const currentGradeIndex = latest ? studentTemplate.grades.findIndex((g) => g.id === latest.gradeId) : -1;
+    const next = studentTemplate.grades[currentGradeIndex + 1] ?? null;
     const athleteId = athleteByStudent.get(s.id);
     const evals = athleteId ? evalsByAthlete.get(athleteId) ?? [] : [];
     const studentCandidates = candidates.filter((c) => c.studentId === s.id && eventById.get(c.eventId)?.modalityCode === modalityCode);
@@ -213,7 +220,7 @@ export async function loadModalityReadiness(
         ? { eventId: activeEvent.id, title: activeEvent.title, scheduledAt: activeEvent.scheduledAt, slotStartsAt: (active?.slotStartsAt as string | null) ?? null }
         : null,
       progress: computeStudentProgress({
-        grades: template.grades,
+        grades: studentTemplate.grades,
         monthlyMinAttendances: template.monthlyMinAttendances,
         currentGradeIndex,
         lastAwardedAt: latest ? new Date(latest.awardedAt) : null,

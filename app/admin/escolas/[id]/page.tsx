@@ -15,6 +15,8 @@ import { DirectorsPanel, type DirectorRow } from "./DirectorsPanel";
 import { SchoolStatusPanel, type PaymentFormValues } from "./SchoolStatusPanel";
 import { CopyTextButton } from "@/components/ui/CopyTextButton";
 import { getInsuranceSettings } from "@/lib/insurance-settings";
+import { loadGraduationTemplate } from "@/lib/graduation/load-template";
+import { SchoolConfigPanel, type ConfigGraduation, type ConfigNetworkModality, type ConfigOwnModality } from "./SchoolConfigPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,7 @@ const TABS = [
   { id: "equipa", label: "Equipa" },
   { id: "dados", label: "Dados" },
   { id: "estado", label: "Estado" },
+  { id: "configuracao", label: "Configuração" },
 ] as const;
 
 export default async function EscolaPage({
@@ -122,6 +125,7 @@ export default async function EscolaPage({
     ? ({ ...(settings as PaymentFormValues), ...((feeRow as Partial<PaymentFormValues> | null) ?? {}) } as PaymentFormValues)
     : null;
   const networkFees = { enrollment: networkSettings?.enrollmentAmount ?? 0, insurance: networkSettings?.annualAmount ?? 0 };
+  const config = tab === "configuracao" ? await loadSchoolConfig(supabase, id) : null;
   const merchant = tab === "estado" ? await loadSchoolMerchantStatus(supabase, id) : null;
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("x-forwarded-host") ?? h.get("host") ?? ""}`;
@@ -215,6 +219,10 @@ export default async function EscolaPage({
         />
       )}
 
+      {tab === "configuracao" && config && (
+        <SchoolConfigPanel schoolId={id} network={config.network} own={config.own} graduations={config.graduations} />
+      )}
+
       {tab === "estado" && status === "ATIVA" && (
         <section className="card" style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Links para o site da escola</h2>
@@ -238,4 +246,69 @@ export default async function EscolaPage({
       )}
     </div>
   );
+}
+
+/** Dados do separador «Configuração» (fase 1: modalidades e graduação). */
+async function loadSchoolConfig(
+  supabase: NonNullable<ReturnType<typeof getAdminClientOrNull>["client"]>,
+  schoolId: string
+): Promise<{ network: ConfigNetworkModality[]; own: ConfigOwnModality[]; graduations: ConfigGraduation[] }> {
+  const [{ data: refs }, { data: disabled }, { data: lessons }, { data: templates }, { data: overrides }] = await Promise.all([
+    supabase.from("ModalityRef").select("code, name, schoolId, networkProposalAt").order("sortOrder", { ascending: true }),
+    supabase.from("SchoolModalityDisabled").select("modalityCode").eq("schoolId", schoolId),
+    supabase.from("Lesson").select("modality").eq("schoolId", schoolId).eq("isOneOff", false),
+    supabase.from("GraduationTemplate").select("id, modalityCode, isPublished"),
+    supabase.from("SchoolGraduationGradeOverride").select("gradeId, minMonths, minAttendances, minPerformanceAvg").eq("schoolId", schoolId),
+  ]);
+  const off = new Set((disabled ?? []).map((d) => d.modalityCode as string));
+  const lessonsBy = new Map<string, number>();
+  for (const l of lessons ?? []) lessonsBy.set(l.modality as string, (lessonsBy.get(l.modality as string) ?? 0) + 1);
+
+  const ownRefs = (refs ?? []).filter((r) => r.schoolId === schoolId);
+  const ownTemplateIds = (templates ?? []).filter((t) => ownRefs.some((r) => r.code === t.modalityCode)).map((t) => t.id as string);
+  const { data: ownGrades } = ownTemplateIds.length
+    ? await supabase.from("GraduationGrade").select("templateId").in("templateId", ownTemplateIds)
+    : { data: [] as { templateId: string }[] };
+
+  const network: ConfigNetworkModality[] = (refs ?? [])
+    .filter((r) => !r.schoolId)
+    .map((r) => ({ code: r.code as string, name: r.name as string, enabled: !off.has(r.code as string), lessons: lessonsBy.get(r.code as string) ?? 0 }));
+  const own: ConfigOwnModality[] = ownRefs.map((r) => {
+    const t = (templates ?? []).find((x) => x.modalityCode === r.code);
+    return {
+      code: r.code as string,
+      name: r.name as string,
+      proposed: !!r.networkProposalAt,
+      lessons: lessonsBy.get(r.code as string) ?? 0,
+      gradeCount: t ? (ownGrades ?? []).filter((g) => g.templateId === t.id).length : 0,
+    };
+  });
+
+  // Ajustes da graduação: modalidades da rede ligadas nesta escola com graduação publicada.
+  const ovBy = new Map((overrides ?? []).map((o) => [o.gradeId as string, o]));
+  const published = new Set((templates ?? []).filter((t) => t.isPublished).map((t) => t.modalityCode as string));
+  const graduations: ConfigGraduation[] = [];
+  for (const m of network.filter((n) => n.enabled && published.has(n.code))) {
+    const tpl = await loadGraduationTemplate(supabase, m.code);
+    if (!tpl || tpl.grades.length === 0) continue;
+    graduations.push({
+      code: m.code,
+      name: m.name,
+      grades: tpl.grades.map((g) => {
+        const o = ovBy.get(g.id);
+        return {
+          id: g.id,
+          name: g.name,
+          colors: g.colors,
+          net: { minMonths: g.minMonths, minAttendances: g.minAttendances, minPerformanceAvg: g.minPerformanceAvg },
+          school: {
+            minMonths: (o?.minMonths as number | null) ?? null,
+            minAttendances: (o?.minAttendances as number | null) ?? null,
+            minPerformanceAvg: o?.minPerformanceAvg == null ? null : Number(o.minPerformanceAvg),
+          },
+        };
+      }),
+    });
+  }
+  return { network, own, graduations };
 }

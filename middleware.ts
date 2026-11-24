@@ -9,6 +9,7 @@ import {
 import { edgeCacheDelete, edgeCacheGet, edgeCacheSet } from "@/lib/edge-ttl-cache";
 import { isShopOnlyAllowedApi, isShopOnlyUser } from "@/lib/auth/shop-only";
 import { STUDENT_GATE_REFRESH_COOKIE, studentGateCacheKey } from "@/lib/student-gate-cache";
+import { DEMO_READONLY_MESSAGE, isDemoAllowedWrite, isDemoEmail } from "@/lib/demo";
 
 /** TTL do cache do "gate" do aluno (onboarding/termo/contrato/pagamento) — ver DOCS do plano de custo. */
 const STUDENT_GATE_CACHE_TTL_MS = 10_000;
@@ -26,6 +27,7 @@ const publicPaths = [
   "/timer",
   "/arbitragem",
   "/julgamento",
+  "/demo",
   "/auth/callback",
   "/auth/confirm",
   "/auth/forgot-password",
@@ -293,6 +295,20 @@ export async function middleware(request: NextRequest) {
       ({ data: userData, error: userError } = await supabase.auth.getUser());
     }
     const user = userData?.user ?? null;
+
+    // Contas demo (só leitura): nenhuma escrita chega aos handlers/server actions.
+    if (
+      user &&
+      request.method !== "GET" &&
+      request.method !== "HEAD" &&
+      isDemoEmail(user.email) &&
+      !isDemoAllowedWrite(pathname)
+    ) {
+      return NextResponse.json(
+        { error: DEMO_READONLY_MESSAGE, demo: true },
+        { status: 403, headers: { "x-kfs-demo": "readonly" } }
+      );
+    }
 
     if (isPublicApiPath(pathname)) {
       return response;

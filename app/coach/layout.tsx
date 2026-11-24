@@ -6,6 +6,8 @@ import { getViewAsFromCookies } from "@/lib/view-as-server";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
 import { ViewAsBanner } from "@/components/ViewAsBanner";
+import { DemoModeBanner } from "@/components/DemoModeBanner";
+import { isDemoEmail } from "@/lib/demo";
 import { ResponsiveShell } from "@/components/ResponsiveShell";
 import { CoachNotificationBell } from "@/components/CoachNotificationBell";
 import { getKfsPathnameFromRequest } from "@/lib/server/kfs-pathname";
@@ -80,7 +82,13 @@ export default async function CoachLayout({
             </span>
           </>
         }
-        viewAsBanner={showViewAsBanner ? <ViewAsBanner viewAs="coach" /> : undefined}
+        viewAsBanner={
+          isDemoEmail(dbUser.email) ? (
+            <DemoModeBanner role="professor" />
+          ) : showViewAsBanner ? (
+            <ViewAsBanner viewAs="coach" />
+          ) : undefined
+        }
         logoutLabel={locale === "pt" ? "Sair" : "Logout"}
         mainClassName="coach-main"
         mobileBottomNav={mobileBottomNav}

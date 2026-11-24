@@ -17,6 +17,7 @@ import { resolvePlanMonthlyTuition, resolveFamilyGroupTitularSuggestedAmount } f
 import { loadActiveLoyaltyIndex, loadPlanLoyaltyDiscounts, loyaltyCoversMonth, individualLoyaltyDiscount } from "@/lib/loyalty/service";
 import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "@/lib/student-tuition-start";
 import { loadPausesByStudent, monthExemptByPauses } from "@/lib/tuition-pause";
+import { DEMO_SCHOOL_ID } from "@/lib/demo";
 
 export type RenewalPending = {
   studentId: string;
@@ -53,7 +54,9 @@ export async function getRenewalsPending(
     .select("id, userId, planId, createdAt, paymentDueDay"), options?.schoolIds)
     .not("planId", "is", null)
     // Alunos inativos não geram mensalidade (nem aparecem como a renovar).
-    .neq("status", "INATIVO");
+    .neq("status", "INATIVO")
+    // Escola Demo: dados fictícios, nunca geram mensalidades.
+    .neq("schoolId", DEMO_SCHOOL_ID);
 
   if (!students?.length) return [];
 

@@ -1,6 +1,7 @@
 import type { TribeStudentContext } from "@/lib/tribe/student-context";
 import { tribePostVisibleForSchool } from "@/lib/tribe/student-context";
 import { rewriteSupabaseLegacyStoragePublicUrl } from "@/lib/supabase/rewrite-storage-public-url";
+import { DEMO_SCHOOL_ID } from "@/lib/demo";
 
 export type TribeFeedAuthor = { id: string; name: string | null; avatarUrl: string | null };
 export type TribeFeedMedia = { id: string; publicUrl: string; mimeType: string; sortOrder: number };
@@ -25,10 +26,13 @@ function rewriteMediaUrl(url: string): string {
 export async function loadTribeFeed(ctx: TribeStudentContext, limit = 30): Promise<TribeFeedPost[]> {
   const { supabase, schoolId, userId } = ctx;
 
-  const { data: rawPosts, error } = await supabase
+  let postsQuery = supabase
     .from("TribePost")
     .select("id, schoolId, authorUserId, body, visibility, status, createdAt")
-    .eq("status", "ACTIVE")
+    .eq("status", "ACTIVE");
+  // Escola Demo: só os seus posts (e os posts reais nunca entram no limite da demo).
+  postsQuery = schoolId === DEMO_SCHOOL_ID ? postsQuery.eq("schoolId", DEMO_SCHOOL_ID) : postsQuery.neq("schoolId", DEMO_SCHOOL_ID);
+  const { data: rawPosts, error } = await postsQuery
     .order("createdAt", { ascending: false })
     .limit(80);
 

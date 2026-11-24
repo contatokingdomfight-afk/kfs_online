@@ -8,6 +8,7 @@ import { formatLessonDate, weekdayLabelMon1 } from "@/lib/lesson-utils";
 import { EditarAulaForm } from "./EditarAulaForm";
 import { CancelarAulaButton } from "./CancelarAulaButton";
 import { getCachedModalityRefs, getLocationsForSchool } from "@/lib/cached-reference-data";
+import { schoolModalityCodes } from "@/lib/school-modalities";
 import { buildTurmasListQuery } from "@/lib/turmas-list-query";
 
 type Props = {
@@ -96,8 +97,11 @@ export default async function AdminTurmaEditarPage({ params, searchParams }: Pro
     }
   }
 
-  const modalityOptions = await getCachedModalityRefs(supabase);
-  const modalityName = modalityOptions.find((m) => m.code === lesson.modality)?.name ?? lesson.modality;
+  const allModalities = await getCachedModalityRefs(supabase);
+  const modalityName = allModalities.find((m) => m.code === lesson.modality)?.name ?? lesson.modality;
+  // Só as modalidades que a escola da aula oferece (mantém a atual, mesmo que entretanto desligada).
+  const offered = schoolId ? await schoolModalityCodes(supabase, schoolId) : null;
+  const modalityOptions = offered ? allModalities.filter((m) => offered.has(m.code) || m.code === lesson.modality) : allModalities;
 
   const isOneOff = Boolean((lesson as { isOneOff?: boolean }).isOneOff);
   const wd = (lesson as { weekday?: number | null }).weekday;

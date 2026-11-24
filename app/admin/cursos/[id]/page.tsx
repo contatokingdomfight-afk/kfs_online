@@ -200,7 +200,7 @@ export default async function AdminCursosEditarPage({ params }: Props) {
             price: course.price,
             available_for_purchase: course.available_for_purchase,
           }}
-          modalities={modalities ?? []}
+          modalities={(modalities ?? []).filter((m) => !m.schoolId)}
         />
       </div>
 

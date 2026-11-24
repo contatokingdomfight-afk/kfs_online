@@ -141,7 +141,7 @@ export async function loadStudentGraduations(
 
   const [templatesFull, { data: athlete }, { data: physical }, { data: completions }, { data: fulfilled }, { data: candidates }, { data: openAgendas }, { data: manualRows }] =
     await Promise.all([
-    Promise.all(codes.map((code) => loadGraduationTemplate(supabase, code))),
+    Promise.all(codes.map((code) => loadGraduationTemplate(supabase, code, { schoolId: (student?.schoolId as string | null) ?? null }))),
     supabase.from("Athlete").select("id").eq("studentId", studentId).maybeSingle(),
     supabase
       .from("StudentPhysicalAssessment")

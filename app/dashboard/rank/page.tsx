@@ -26,6 +26,7 @@ import { RankBoard, type RankBoardEntry } from "./RankBoard";
 import { loadRankAvatars, loadRankNicknames } from "@/lib/leaderboard-nicknames";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { loadWeekStartRanks, rankDelta, rankDeltaLabel } from "@/lib/rank-snapshot";
+import { DEMO_SCHOOL_ID } from "@/lib/demo";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,9 @@ export default async function DashboardRankPage({ searchParams }: PageProps) {
     .eq("isActive", true)
     .order("name");
 
-  const schools = (schoolsData ?? []).map((s) => ({
+  // Demo: só a Escola Demo (os visitantes nunca veem alunos reais); as escolas reais não a mostram.
+  const isDemoViewer = mySchoolId === DEMO_SCHOOL_ID;
+  const schools = (isDemoViewer ? [{ id: DEMO_SCHOOL_ID, name: "Escola Demo" }] : schoolsData ?? []).map((s) => ({
     id: String(s.id),
     name: String(s.name ?? s.id),
   }));

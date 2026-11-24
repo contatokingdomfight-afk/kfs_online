@@ -10,7 +10,8 @@ export default async function AdminCursosNovoPage() {
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
 
   const supabase = await createClient();
-  const modalities = await getCachedModalityRefs(supabase);
+  // Cursos da rede: só modalidades da rede.
+  const modalities = (await getCachedModalityRefs(supabase)).filter((m) => !m.schoolId);
 
   return (
     <div style={{ maxWidth: "min(520px, 100%)" }}>
