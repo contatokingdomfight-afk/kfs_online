@@ -11,6 +11,7 @@ import { tuitionStartMonthFromCreatedAt, isTuitionMonthBeforeEnrollment } from "
 import { isPastDueDay, normalizeDueDay, todayYmdLisbon } from "@/lib/lisbon-payment-dates";
 import { loadOpenPause, isPauseActiveOn } from "@/lib/tuition-pause";
 import { getFamilyContext } from "@/lib/family-context";
+import { DEMO_SCHOOL_ID } from "@/lib/demo";
 
 export type AutoStudentStatus = "ATIVO" | "INADIMPLENTE" | "INATIVO";
 
@@ -88,12 +89,14 @@ export async function syncStudentPaymentStatus(
 ): Promise<{ updated: boolean; status: string | null }> {
   const { data: st } = await supabase
     .from("Student")
-    .select("id, status, planId, suspendedPlanId, paymentSuspendedAt, adminGrantedFullAccess")
+    .select("id, status, planId, suspendedPlanId, paymentSuspendedAt, adminGrantedFullAccess, schoolId")
     .eq("id", studentId)
     .maybeSingle();
 
-  const row = st as StudentRow | null;
+  const row = st as (StudentRow & { schoolId?: string | null }) | null;
   if (!row) return { updated: false, status: null };
+  // Escola Demo: dados fictícios, o estado nunca muda com pagamentos.
+  if (row.schoolId === DEMO_SCHOOL_ID) return { updated: false, status: row.status };
   if (row.status === "EXPERIMENTAL") return { updated: false, status: row.status };
   // INATIVO (baixa manual ou 2+ meses em atraso) é fixo: o cron e a geração de
   // mensalidades nunca o reescrevem. Só sai com pagamento recebido ou alteração do admin.

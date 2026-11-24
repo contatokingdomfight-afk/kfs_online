@@ -10,6 +10,7 @@ import { createInAppNotification } from "@/lib/notifications/in-app";
 import { stripe } from "@/lib/stripe/server";
 import { syncStudentPaymentStatus } from "@/lib/student-payment-status";
 import { getFamilyContext } from "@/lib/family-context";
+import { DEMO_SCHOOL_ID } from "@/lib/demo";
 import { syncFamilyMembersOnTitularPayment, syncFamilyMembersOnTitularSuspension } from "@/lib/family-group";
 
 type StudentGraceRow = {
@@ -162,7 +163,9 @@ export async function suspendStudentsPastGrace(
     .not("planId", "is", null)
     .not("paymentGraceEndsAt", "is", null)
     .lt("paymentGraceEndsAt", nowIso)
-    .is("paymentSuspendedAt", null);
+    .is("paymentSuspendedAt", null)
+    // Escola Demo: dados fictícios, nunca é suspensa.
+    .neq("schoolId", DEMO_SCHOOL_ID);
 
   const errors: string[] = [];
   let suspended = 0;
@@ -258,7 +261,8 @@ export async function startGraceForOverdueTuition(supabase: SupabaseClient): Pro
     .select("id, paymentGraceReferenceMonth, paymentGraceEndsAt, paymentDueDay")
     .in("id", ids)
     .not("planId", "is", null)
-    .is("paymentSuspendedAt", null);
+    .is("paymentSuspendedAt", null)
+    .neq("schoolId", DEMO_SCHOOL_ID);
   let started = 0;
   for (const r of (rows ?? []) as { id: string; paymentGraceReferenceMonth: string | null; paymentGraceEndsAt: string | null; paymentDueDay: number | null }[]) {
     const month = latestByStudent.get(r.id)!;
