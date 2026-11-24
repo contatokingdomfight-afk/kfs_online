@@ -55,7 +55,7 @@ export function HomeHeader({
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur-md">
       <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:pr-[max(72px,env(safe-area-inset-right))]">
-        <Link href="/" aria-label="Kingdom Fight School" className="flex shrink-0 items-center gap-2.5">
+        <Link href="/" aria-label="PM Team" className="flex shrink-0 items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático, sem otimização */}
           <img
             src={BRAND_EMBLEM_HEADER}
@@ -65,10 +65,7 @@ export function HomeHeader({
             height={BRAND_EMBLEM_HEADER_HEIGHT}
             style={{ height: "clamp(40px, 10vw, 48px)", width: "auto", display: "block" }}
           />
-          {/* translateY: centra a sigla com o octógono (a coroa sobe o centro da caixa do emblema). */}
-          <span className="text-xl font-bold text-[var(--text-primary)]" style={{ transform: "translateY(0.25em)" }}>
-            KFS
-          </span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">PM Team</span>
         </Link>
 
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label={navAriaLabel}>

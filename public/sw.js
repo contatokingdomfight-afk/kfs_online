@@ -1,7 +1,7 @@
 /**
  * Service worker PWA — pass-through de rede; bump `SW_VERSION` para forçar atualização.
  */
-const SW_VERSION = "kfs-brand-v17";
+const SW_VERSION = "kfs-brand-v18";
 
 self.addEventListener("push", (event) => {
   let data = { title: "Kingdom Fight School", body: "", url: "/dashboard/notificacoes" };
@@ -13,8 +13,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "/icons/kfs-emblem-192.png?v=3",
-      badge: "/icons/kfs-emblem-192.png?v=3",
+      icon: "/icons/kfs-emblem-192.png?v=4",
+      badge: "/icons/kfs-emblem-192.png?v=4",
       data: { url: data.url },
     })
   );

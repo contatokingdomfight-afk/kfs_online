@@ -117,7 +117,7 @@ export default async function ComoSouAvaliadoLayout({
         sidebarLinks={sidebarLinks}
         initialTheme={theme}
         initialLocale={locale}
-        headerTitle="KFS"
+        headerTitle="PM Team"
         headerExtra={headerExtra}
         headerExtrasDesktopOnly={dbUser.role === "ADMIN" ? <ViewAsSwitcher /> : undefined}
         mobileBottomNavSheetLead={dbUser.role === "ADMIN" ? <ViewAsSwitcher /> : undefined}

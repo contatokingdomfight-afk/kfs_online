@@ -58,7 +58,7 @@ export default async function AdminLayout({
         sidebarLead={<AdminNavSearch items={searchItems} compact />}
         initialTheme={theme}
         initialLocale={locale}
-        headerTitle="KFS"
+        headerTitle="PM Team"
         headerAvatar={{
           href: "/admin/configuracoes",
           imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,

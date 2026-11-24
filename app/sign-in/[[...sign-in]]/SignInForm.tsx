@@ -13,7 +13,7 @@ import { isEmailNotConfirmedError } from "@/lib/auth/email-confirmation";
 import { translateAuthErrorMessage } from "@/lib/auth/auth-error-messages";
 import { TurnstileWidget, captchaOptions, turnstileEnabled } from "@/components/TurnstileWidget";
 import { getTranslations } from "@/lib/i18n";
-import { BRAND_LOGO_SVG } from "@/lib/brand";
+import { BRAND_LOGO_PNG } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n";
 
 export function SignInForm() {
@@ -122,13 +122,13 @@ export function SignInForm() {
       <LoadingOverlay open={overlayOpen} message={overlayMessage} showSpinner={overlayShowSpinner} />
 
       <div className="container-mobile">
-        <Link href="/" aria-label="Kingdom Fight School" className="mx-auto mb-6 block" style={{ width: "min(46vw, 180px)" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático */}
+        <Link href="/" aria-label="PM Team" className="mx-auto mb-6 block" style={{ width: "min(46vw, 180px)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- logo estático */}
           <img
-            src={BRAND_LOGO_SVG}
-            alt="Kingdom Fight School"
-            width={780}
-            height={878}
+            src={BRAND_LOGO_PNG}
+            alt="PM Team"
+            width={1024}
+            height={1024}
             style={{ width: "100%", height: "auto", display: "block" }}
           />
         </Link>

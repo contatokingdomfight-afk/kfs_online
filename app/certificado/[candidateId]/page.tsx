@@ -33,7 +33,7 @@ export default async function VerificarCertificadoPage({ params }: { params: Pro
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[440px] flex-col justify-center px-4 py-10">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/kfs-emblem.svg" alt="Kingdom Fight School" className="mx-auto mb-4 h-20 w-auto" />
+      <img src="/brand/pm-team-emblem.png" alt="PM Team" className="mx-auto mb-4 h-20 w-auto" />
       <div
         className="flex items-center gap-3 rounded-xl border p-3"
         style={{ borderColor: "color-mix(in srgb, var(--success) 45%, transparent)", background: "color-mix(in srgb, var(--success) 10%, transparent)" }}

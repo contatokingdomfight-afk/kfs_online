@@ -76,7 +76,7 @@ export default async function CoachLayout({
         sidebarLinks={coachLinks}
         initialTheme={theme}
         initialLocale={locale}
-        headerTitle="KFS"
+        headerTitle="PM Team"
         headerAvatar={{
           href: "/coach/configuracoes",
           imageUrl: (dbUser as { avatarUrl?: string | null }).avatarUrl ?? null,

@@ -29,10 +29,13 @@ export const BRAND_LOGO_HEIGHT = 630;
 export const BRAND_EMBLEM_WIDTH = 1024;
 export const BRAND_EMBLEM_HEIGHT = 1024;
 
-/** Emblema vetorial (coroa + octógono, sem letras), fundo transparente — cabeçalhos da app e do site. */
-export const BRAND_EMBLEM_HEADER = "/brand/kfs-emblem.svg";
-export const BRAND_EMBLEM_HEADER_WIDTH = 506;
-export const BRAND_EMBLEM_HEADER_HEIGHT = 656;
+/** Emblema PM Team (2026-11-25), fundo transparente — cabeçalhos da app e do site. Fonte: public/brand/pm-team-logo.png. */
+export const BRAND_EMBLEM_HEADER = "/brand/pm-team-emblem.png";
+export const BRAND_EMBLEM_HEADER_WIDTH = 256;
+export const BRAND_EMBLEM_HEADER_HEIGHT = 256;
 
-/** Logótipo vetorial completo (emblema + KINGDOM FIGHT SCHOOL), fundo transparente. */
+/** Logo PM Team 1024×1024, fundo transparente (ecrã de entrada). */
+export const BRAND_LOGO_PNG = "/brand/pm-team-logo.png";
+
+/** Logótipo vetorial completo antigo (emblema + KINGDOM FIGHT SCHOOL), fundo transparente. */
 export const BRAND_LOGO_SVG = "/brand/kfs-logo.svg";

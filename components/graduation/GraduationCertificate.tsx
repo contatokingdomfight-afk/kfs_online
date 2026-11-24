@@ -3,7 +3,7 @@ import { formatCertificateDate } from "@/lib/graduation/certificate";
 import { gloveSvg, isGloveModality } from "@/lib/graduation/glove-svg";
 import s from "./certificate.module.css";
 
-const EMBLEM = "/brand/kfs-emblem.svg";
+const EMBLEM = "/brand/pm-team-emblem.png";
 
 /** Impressão: só o certificado, A4 horizontal, sem margens (CSS global — os módulos não aceitam html/body). */
 const PRINT_CSS = `@media print {
