@@ -5,7 +5,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { redirect } from "next/navigation";
 import { EditarAlunoForm } from "../EditarAlunoForm";
 import { DeleteStudentButton } from "../DeleteStudentButton";
-import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
+import { planRequiresPrimaryModality, planRequiresSecondaryModality } from "@/lib/plan-primary-modality";
 import { EditarDadosPessoaisSection } from "@/components/students/EditarDadosPessoaisSection";
 import { getFamilyContext } from "@/lib/family-group";
 import { computeFamilyGroupMonthlyTuition, type FamilyPricingBreakdown } from "@/lib/family-tuition";
@@ -39,7 +39,7 @@ export default async function AdminAlunoEditarDadosPage({ params }: Props) {
 
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, status, planId, primaryModality, schoolId, extraModalities")
+    .select("id, userId, status, planId, primaryModality, secondaryModality, schoolId, extraModalities")
     .eq("id", studentId)
     .single();
 
@@ -101,6 +101,10 @@ export default async function AdminAlunoEditarDadosPage({ params }: Props) {
   const requiresPrimaryModality = planRequiresPrimaryModality(scope, accessPlan?.id, accessPlan?.name);
   const rawPrimary = (student as { primaryModality?: string | null }).primaryModality ?? null;
   const initialPrimaryModality = requiresPrimaryModality ? rawPrimary ?? "" : "";
+  const requiresSecondaryModality = planRequiresSecondaryModality(scope);
+  const initialSecondaryModality = requiresSecondaryModality
+    ? (student as { secondaryModality?: string | null }).secondaryModality ?? ""
+    : "";
   const modalityOptionsForForm = requiresPrimaryModality
     ? (modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code }))
     : [
@@ -160,6 +164,8 @@ export default async function AdminAlunoEditarDadosPage({ params }: Props) {
             allModalities={(modalityRows ?? []).map((r) => ({ code: r.code, name: r.name ?? r.code }))}
             initialExtraModalities={(student as { extraModalities?: string[] | null }).extraModalities ?? []}
             requiresPrimaryModality={requiresPrimaryModality}
+            requiresSecondaryModality={requiresSecondaryModality}
+            initialSecondaryModality={initialSecondaryModality}
             isFamilyPlanMember={Boolean(familyCtx)}
             referencePlanName={accessPlan?.name ?? myFamilyShare?.referencePlanName ?? null}
             statusLabels={STATUS_LABEL}

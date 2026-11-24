@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentCoachId } from "@/lib/auth/get-current-coach";
+import { getCurrentCoachOnboarding } from "@/lib/coach-onboarding";
 import { getCoachStudentId } from "@/lib/auth/get-coach-student-id";
 import { getViewAsFromCookies } from "@/lib/view-as-server";
 import { getThemeFromCookies, getLocaleFromCookies } from "@/lib/theme-locale-server";
@@ -32,9 +33,17 @@ export default async function CoachLayout({
 
   if (dbUser.role !== "COACH" && dbUser.role !== "ADMIN" && !isSchoolAssistant) redirect("/dashboard");
 
+  let showCoachAdesaoNotice = false;
   if (dbUser.role === "COACH") {
     const coachId = await getCurrentCoachId();
     if (!coachId) redirect("/dashboard?message=coach-access-revoked");
+    // Professor que entrou pelo pedido de acesso: só usa a área do coach depois de assinar o contrato.
+    // Professores antigos (criados pelo admin) veem só um aviso, para não ficarem bloqueados de repente.
+    const onboarding = await getCurrentCoachOnboarding(dbUser.id);
+    if (onboarding && !onboarding.complete) {
+      if (onboarding.approvedViaRequest) redirect("/professor/adesao");
+      showCoachAdesaoNotice = true;
+    }
   }
 
   const [viewAs, theme, locale, coachStudentId, access, kfsPath] = await Promise.all([
@@ -93,6 +102,19 @@ export default async function CoachLayout({
         mainClassName="coach-main"
         mobileBottomNav={mobileBottomNav}
       >
+        {showCoachAdesaoNotice && (
+          <div
+            className="card"
+            style={{ padding: "12px 14px", marginBottom: 16, borderLeft: "3px solid var(--primary)", display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}
+          >
+            <span style={{ flex: "1 1 240px", fontSize: 14 }}>
+              Falta preencheres os teus dados e assinares o contrato de professor.
+            </span>
+            <a href="/professor/adesao" className="btn btn-primary" style={{ textDecoration: "none" }}>
+              Assinar agora
+            </a>
+          </div>
+        )}
         {children}
       </ResponsiveShell>
     </div>

@@ -71,6 +71,8 @@ type StudentRow = {
   userId: string;
   planId: string | null;
   primaryModality: string | null;
+  /** Plano de 2 modalidades (DUAL): a 2.ª modalidade escolhida. */
+  secondaryModality?: string | null;
   status: string;
   competitionAthlete?: boolean;
   /** Modalidades extra (ex.: KIDS que também treina nos adultos). */
@@ -107,6 +109,9 @@ function buildPlanAccessInput(
     allowedModalities = [];
   } else if (modalityScope === "SINGLE" && primaryModality) {
     allowedModalities = [primaryModality];
+  } else if (modalityScope === "DUAL" && primaryModality) {
+    const secondary = student.secondaryModality ?? null;
+    allowedModalities = secondary && secondary !== primaryModality ? [primaryModality, secondary] : [primaryModality];
   } else {
     allowedModalities = [...MODALITIES_LIST];
   }
@@ -202,7 +207,7 @@ export async function loadCoachLessonRoster(
   const [{ data: schoolStudents }, { data: attList }] = await Promise.all([
     supabase
       .from("Student")
-      .select("id, userId, planId, primaryModality, status, competitionAthlete, extraModalities")
+      .select("id, userId, planId, primaryModality, secondaryModality, status, competitionAthlete, extraModalities")
       .eq("schoolId", schoolId)
       .in("status", [...CHECK_IN_STATUSES]),
     supabase
@@ -537,7 +542,7 @@ export async function assertStudentEligibleForCoachLesson(
 ): Promise<{ error?: string; student?: StudentRow; plan?: PlanRow }> {
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, planId, primaryModality, status, schoolId, competitionAthlete, extraModalities")
+    .select("id, userId, planId, primaryModality, secondaryModality, status, schoolId, competitionAthlete, extraModalities")
     .eq("id", studentId)
     .maybeSingle();
 
@@ -583,7 +588,7 @@ export async function assertStudentEligibleForCrossModalityCheckIn(
 ): Promise<{ error?: string; student?: StudentRow; plan?: PlanRow }> {
   const { data: student } = await supabase
     .from("Student")
-    .select("id, userId, planId, primaryModality, status, schoolId, competitionAthlete, extraModalities")
+    .select("id, userId, planId, primaryModality, secondaryModality, status, schoolId, competitionAthlete, extraModalities")
     .eq("id", studentId)
     .maybeSingle();
 

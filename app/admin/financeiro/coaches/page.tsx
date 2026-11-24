@@ -1,315 +1,154 @@
-import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
+import { redirect } from "next/navigation";
+import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { AdminConfigMissing } from "@/components/AdminConfigMissing";
-import { getCurrentDbUser } from "@/lib/auth/get-current-user";
-import { redirect } from "next/navigation";
+import { getSchoolScope, hasNoSchool, scopedSchoolIds } from "@/lib/school-scope";
+import { DEMO_SCHOOL_ID } from "@/lib/demo";
+import { loadSchoolCoachMonth } from "@/lib/coach-revenue.server";
+import { CoachPayoutRow, type CoachPayoutRowView } from "./CoachPayoutRow";
+
+export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{ month?: string }>;
 
-function getMonthRange(yearMonth: string): { start: string; end: string; label: string } {
-  const [year, month] = yearMonth.split("-").map(Number);
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 0);
-  const label = start.toLocaleDateString("pt-PT", { month: "long", year: "numeric" });
-  return {
-    start: start.toISOString().split("T")[0],
-    end: end.toISOString().split("T")[0],
-    label: label.charAt(0).toUpperCase() + label.slice(1),
-  };
+const eur = (n: number) => `${n.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+
+function ym(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function currentYearMonth(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+function monthLabel(month: string, style: "long" | "short" = "long"): string {
+  const [y, m] = month.split("-").map(Number);
+  const s = new Date(y, m - 1, 1).toLocaleDateString("pt-PT", { month: style, year: "numeric" });
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export default async function AdminFinanceiroCoachesPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function AdminCoachPayoutsPage({ searchParams }: { searchParams: SearchParams }) {
   const dbUser = await getCurrentDbUser();
   if (!dbUser || dbUser.role !== "ADMIN") redirect("/dashboard");
-  // Multi-escola: ainda só da rede (cursos, eventos e pagamentos a coaches).
-  if (!isNetworkScope(await getSchoolScope())) redirect("/admin/financeiro");
-
-  const params = await searchParams;
-  const selectedMonth = params.month ?? currentYearMonth();
-  const { start, end, label } = getMonthRange(selectedMonth);
+  const scope = await getSchoolScope();
+  if (hasNoSchool(scope)) redirect("/admin");
 
   const result = getAdminClientOrNull();
   if (!result.client) return <AdminConfigMissing errorType={result.error} />;
-  const supabase = result.client;
+  const db = result.client;
 
-  // Buscar todos os coaches com hourly_rate
-  const { data: coaches } = await supabase
-    .from("Coach")
-    .select("id, userId, specialties, studentId, hourly_rate")
-    .order("createdAt", { ascending: true });
-
-  if (!coaches || coaches.length === 0) {
-    return (
-      <div style={{ maxWidth: "min(700px, 100%)" }}>
-        <div style={{ marginBottom: "clamp(20px, 5vw, 24px)" }}>
-          <Link href="/admin/financeiro" style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)", textDecoration: "none", fontWeight: 500 }}>
-            ← Voltar
-          </Link>
-        </div>
-        <h1 style={{ margin: "0 0 16px 0", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Pagamentos a Coaches
-        </h1>
-        <p style={{ color: "var(--text-secondary)" }}>Nenhum coach registado.</p>
-      </div>
-    );
-  }
-
-  const coachIds = coaches.map((c) => c.id);
-  const coachUserIds = coaches.map((c) => c.userId);
-  const coachStudentIds = coaches.filter((c) => c.studentId).map((c) => c.studentId as string);
-
-  // Buscar aulas do mês para todos os coaches
-  const { data: lessons } = await supabase
-    .from("Lesson")
-    .select("id, coachId, date")
-    .in("coachId", coachIds)
-    .gte("date", start)
-    .lte("date", end);
-
-  // Agrupar aulas por coach
-  const lessonsByCoach = new Map<string, number>();
-  for (const lesson of lessons ?? []) {
-    lessonsByCoach.set(lesson.coachId, (lessonsByCoach.get(lesson.coachId) ?? 0) + 1);
-  }
-
-  // Buscar compras de cursos no mês (via CourseCreator)
-  const { data: coursePurchases } = await supabase
-    .from("CoursePurchase")
-    .select("id, courseId, amount, status, createdAt")
-    .gte("createdAt", `${start}T00:00:00`)
-    .lte("createdAt", `${end}T23:59:59`);
-
-  const purchasedCourseIds = [...new Set((coursePurchases ?? []).map((p) => p.courseId))];
-
-  let courseCreators: { course_id: string; student_id: string; revenue_pct: number }[] = [];
-  if (purchasedCourseIds.length > 0) {
-    const { data: ccs } = await supabase
-      .from("CourseCreator")
-      .select("course_id, student_id, revenue_pct")
-      .in("course_id", purchasedCourseIds)
-      .in("student_id", coachStudentIds.length > 0 ? coachStudentIds : ["__none__"]);
-    courseCreators = ccs ?? [];
-  }
-
-  // Calcular receita de cursos por student_id do coach
-  const courseRevenueByStudentId = new Map<string, number>();
-  for (const cc of courseCreators) {
-    for (const purchase of (coursePurchases ?? []).filter((p) => p.courseId === cc.course_id)) {
-      const amount = Number(purchase.amount ?? 0);
-      const earned = (amount * cc.revenue_pct) / 100;
-      courseRevenueByStudentId.set(cc.student_id, (courseRevenueByStudentId.get(cc.student_id) ?? 0) + earned);
-    }
-  }
-
-  // Buscar nomes dos coaches
-  const { data: coachUsers } = await supabase.from("User").select("id, name, email").in("id", coachUserIds);
-  const userById = new Map((coachUsers ?? []).map((u) => [u.id, u]));
-
-  // Meses disponíveis para navegar (últimos 12)
-  const monthOptions: string[] = [];
   const now = new Date();
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    monthOptions.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-  }
+  const current = ym(now);
+  const lastClosed = ym(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  const params = await searchParams;
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(params.month ?? "") ? params.month! : lastClosed;
+  const monthOptions = Array.from({ length: 12 }, (_, i) => ym(new Date(now.getFullYear(), now.getMonth() - i, 1)));
 
-  const grandTotal = coaches.reduce((sum, coach) => {
-    const user = userById.get(coach.userId);
-    if (!user) return sum;
-    const lessonCount = lessonsByCoach.get(coach.id) ?? 0;
-    const hourlyRate = Number(coach.hourly_rate ?? 0);
-    const lessonPay = lessonCount * hourlyRate;
-    const coursePay = coach.studentId ? (courseRevenueByStudentId.get(coach.studentId) ?? 0) : 0;
-    return sum + lessonPay + coursePay;
-  }, 0);
+  const scoped = scopedSchoolIds(scope);
+  const schoolIds = (scoped ?? scope.schools.map((s) => s.id)).filter((id) => id !== DEMO_SCHOOL_ID);
+  const schoolName = new Map(scope.schools.map((s) => [s.id, s.name ?? s.id]));
+
+  const [summaries, { data: payouts }, { data: refs }] = await Promise.all([
+    Promise.all(schoolIds.map(async (id) => ({ schoolId: id, byCoach: await loadSchoolCoachMonth(db, id, month) }))),
+    schoolIds.length
+      ? db.from("CoachPayout").select("coachId, schoolId, amount, status, paidAt, paidByUserId").eq("referenceMonth", month).in("schoolId", schoolIds)
+      : Promise.resolve({ data: [] as { coachId: string; schoolId: string; amount: number; status: string; paidAt: string | null; paidByUserId: string | null }[] }),
+    db.from("ModalityRef").select("code, name"),
+  ]);
+
+  const coachIds = [...new Set(summaries.flatMap((s) => [...s.byCoach.keys()]))];
+  const [{ data: coaches }, { data: mods }] = await Promise.all([
+    coachIds.length ? db.from("Coach").select("id, userId").in("id", coachIds) : Promise.resolve({ data: [] as { id: string; userId: string }[] }),
+    coachIds.length
+      ? db.from("CoachModality").select("coachId, schoolId, modalityCode").in("coachId", coachIds)
+      : Promise.resolve({ data: [] as { coachId: string; schoolId: string; modalityCode: string }[] }),
+  ]);
+  const payerIds = (payouts ?? []).map((p) => p.paidByUserId).filter(Boolean) as string[];
+  const userIds = [...new Set([...(coaches ?? []).map((c) => c.userId as string), ...payerIds])];
+  const { data: users } = userIds.length ? await db.from("User").select("id, name, email").in("id", userIds) : { data: [] as { id: string; name: string | null; email: string }[] };
+  const userName = new Map((users ?? []).map((u) => [u.id as string, ((u.name as string | null)?.trim() || (u.email as string)) ?? "—"]));
+  const coachUser = new Map((coaches ?? []).map((c) => [c.id as string, c.userId as string]));
+  const modName = new Map((refs ?? []).map((r) => [r.code as string, r.name as string]));
+  const payoutKey = (coachId: string, schoolId: string) => `${coachId}|${schoolId}`;
+  const payoutBy = new Map((payouts ?? []).map((p) => [payoutKey(p.coachId as string, p.schoolId as string), p]));
+
+  const sections = summaries.map(({ schoolId, byCoach }) => {
+    const rows: CoachPayoutRowView[] = [...byCoach.values()].map((s) => {
+      const p = payoutBy.get(payoutKey(s.coachId, schoolId));
+      const isPaid = p?.status === "PAID";
+      return {
+        coachId: s.coachId,
+        schoolId,
+        month,
+        name: userName.get(coachUser.get(s.coachId) ?? "") ?? "—",
+        modalities: (mods ?? [])
+          .filter((m) => m.coachId === s.coachId && m.schoolId === schoolId)
+          .map((m) => modName.get(m.modalityCode as string) ?? m.modalityCode)
+          .join(", "),
+        studentCount: s.studentCount,
+        received: s.received,
+        forecast: s.forecast,
+        canMark: month < current,
+        paid: isPaid ? { at: p!.paidAt as string, by: userName.get(p!.paidByUserId as string) ?? "—", amount: Number(p!.amount) } : null,
+      };
+    });
+    rows.sort((a, b) => Number(Boolean(a.paid)) - Number(Boolean(b.paid)) || b.received - a.received);
+    const toPay = rows.filter((r) => !r.paid).reduce((a, r) => a + r.received, 0);
+    return { schoolId, name: schoolName.get(schoolId) ?? schoolId, rows, toPay };
+  });
 
   return (
-    <div style={{ maxWidth: "min(750px, 100%)" }}>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: "clamp(12px, 3vw, 16px)",
-          marginBottom: "clamp(20px, 5vw, 24px)",
-        }}
-      >
-        <Link
-          href="/admin/financeiro"
-          style={{ color: "var(--text-secondary)", fontSize: "clamp(15px, 3.8vw, 17px)", textDecoration: "none", fontWeight: 500 }}
-        >
-          ← Voltar
-        </Link>
-        <h1 style={{ margin: 0, fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          Pagamentos a Coaches
-        </h1>
+    <div style={{ maxWidth: "min(860px, 100%)" }}>
+      <h1 style={{ margin: "0 0 4px", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 600 }}>A pagar a professores · {monthLabel(month)}</h1>
+      <p style={{ margin: "0 0 14px", fontSize: 13.5, color: "var(--text-secondary)" }}>
+        {month < current
+          ? "Mês fechado · pagamento até dia 10 do mês seguinte, contra recibo verde."
+          : "Mês a decorrer · os valores ainda podem mudar; só se marca o pagamento depois de o mês fechar."}
+      </p>
+
+      <div style={{ marginBottom: 16, display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
+        {monthOptions.map((m) => (
+          <Link
+            key={m}
+            href={`/admin/financeiro/coaches?month=${m}`}
+            className="btn"
+            style={{
+              textDecoration: "none",
+              fontSize: 13,
+              padding: "4px 10px",
+              whiteSpace: "nowrap",
+              backgroundColor: m === month ? "var(--primary)" : "var(--bg-secondary)",
+              color: m === month ? "#fff" : "var(--text-primary)",
+            }}
+          >
+            {monthLabel(m, "short")}
+          </Link>
+        ))}
       </div>
 
-      {/* Seletor de mês */}
-      <div style={{ marginBottom: "clamp(16px, 4vw, 20px)", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>Mês:</span>
-        {monthOptions.map((m) => {
-          const [y, mo] = m.split("-").map(Number);
-          const d = new Date(y, mo - 1, 1);
-          const lbl = d.toLocaleDateString("pt-PT", { month: "short", year: "numeric" });
-          return (
-            <Link
-              key={m}
-              href={`/admin/financeiro/coaches?month=${m}`}
-              className="btn"
-              style={{
-                textDecoration: "none",
-                fontSize: 13,
-                padding: "4px 10px",
-                backgroundColor: m === selectedMonth ? "var(--primary)" : "var(--bg-secondary)",
-                color: m === selectedMonth ? "#fff" : "var(--text-primary)",
-              }}
-            >
-              {lbl}
-            </Link>
-          );
-        })}
-      </div>
+      {sections.map((s) => (
+        <section key={s.schoolId} className="card" style={{ padding: "clamp(14px, 3.5vw, 18px)", marginBottom: 14 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{s.name}</h2>
+            <span style={{ fontSize: 13.5, color: "var(--text-secondary)" }}>
+              Por pagar: <strong style={{ color: "var(--text-primary)" }}>{eur(s.toPay)}</strong>
+            </span>
+          </div>
+          {s.rows.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
+              Sem professores com modalidades registadas nesta escola. As modalidades de cada professor definem-se ao aprovar o pedido de acesso.
+            </p>
+          ) : (
+            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {s.rows.map((r) => (
+                <CoachPayoutRow key={r.coachId} row={r} />
+              ))}
+            </ul>
+          )}
+        </section>
+      ))}
 
-      {/* Cabeçalho do mês */}
-      <div
-        style={{
-          padding: "clamp(14px, 3.5vw, 16px)",
-          background: "var(--surface)",
-          borderRadius: "var(--radius-md)",
-          borderLeft: "3px solid var(--primary)",
-          marginBottom: "clamp(16px, 4vw, 20px)",
-          display: "flex",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 8,
-        }}
-      >
-        <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--text-primary)" }}>
-          {label}
-        </span>
-        <span style={{ fontSize: "clamp(15px, 3.8vw, 17px)", fontWeight: 600, color: "var(--primary)" }}>
-          Total a pagar: €{grandTotal.toFixed(2)}
-        </span>
-      </div>
-
-      {/* Lista de coaches */}
-      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 16px)" }}>
-        {coaches.map((coach) => {
-          const user = userById.get(coach.userId);
-          if (!user) return null;
-
-          const lessonCount = lessonsByCoach.get(coach.id) ?? 0;
-          const hourlyRate = Number(coach.hourly_rate ?? 0);
-          const lessonPay = lessonCount * hourlyRate;
-          const coursePay = coach.studentId ? (courseRevenueByStudentId.get(coach.studentId) ?? 0) : 0;
-          const total = lessonPay + coursePay;
-
-          return (
-            <li key={coach.id} className="card" style={{ padding: "clamp(16px, 4vw, 20px)" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                <div>
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: "clamp(15px, 3.8vw, 17px)", color: "var(--text-primary)" }}>
-                    {user.name || user.email}
-                  </p>
-                  {coach.specialties && (
-                    <p style={{ margin: "2px 0 0 0", fontSize: 13, color: "var(--text-secondary)" }}>{coach.specialties}</p>
-                  )}
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <p style={{ margin: 0, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 700, color: "var(--primary)" }}>
-                    €{total.toFixed(2)}
-                  </p>
-                  <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--text-secondary)" }}>total a pagar</p>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  marginTop: 12,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                  gap: 8,
-                }}
-              >
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    background: "var(--surface)",
-                    borderRadius: "var(--radius-md)",
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>Aulas lecionadas</p>
-                  <p style={{ margin: "2px 0 0 0", fontWeight: 600, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
-                    {lessonCount}
-                  </p>
-                </div>
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    background: "var(--surface)",
-                    borderRadius: "var(--radius-md)",
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>
-                    Valor/hora
-                  </p>
-                  <p style={{ margin: "2px 0 0 0", fontWeight: 600, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
-                    {hourlyRate > 0 ? `€${hourlyRate.toFixed(2)}` : <span style={{ color: "var(--text-secondary)", fontWeight: 400, fontSize: 13 }}>não definido</span>}
-                  </p>
-                </div>
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    background: "var(--surface)",
-                    borderRadius: "var(--radius-md)",
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>Pagamento aulas</p>
-                  <p style={{ margin: "2px 0 0 0", fontWeight: 600, fontSize: "clamp(14px, 3.5vw, 16px)", color: "var(--text-primary)" }}>
-                    €{lessonPay.toFixed(2)}
-                  </p>
-                </div>
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    background: "var(--surface)",
-                    borderRadius: "var(--radius-md)",
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>Receita cursos</p>
-                  <p style={{ margin: "2px 0 0 0", fontWeight: 600, fontSize: "clamp(14px, 3.5vw, 16px)", color: coursePay > 0 ? "var(--success)" : "var(--text-primary)" }}>
-                    €{coursePay.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-
-              {hourlyRate === 0 && lessonCount > 0 && (
-                <p style={{ margin: "10px 0 0 0", fontSize: 13, color: "var(--warning, var(--primary))", fontStyle: "italic", display: "flex", alignItems: "flex-start", gap: 6 }}>
-                  <AlertTriangle size={13} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
-                  Define o valor/hora neste coach para calcular automaticamente o pagamento por aulas.
-                </p>
-              )}
-
-              <div style={{ marginTop: 10 }}>
-                <Link
-                  href={`/admin/coaches/${coach.id}`}
-                  style={{ fontSize: 13, color: "var(--primary)", textDecoration: "underline" }}
-                >
-                  Editar coach →
-                </Link>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      <p style={{ fontSize: 12.5, color: "var(--text-secondary)" }}>
+        Valores calculados pelas regras do contrato (preço de tabela sem IVA). Ao marcar como pago, o valor e o detalhe ficam guardados e o professor vê o
+        pagamento no seu financeiro.
+      </p>
     </div>
   );
 }

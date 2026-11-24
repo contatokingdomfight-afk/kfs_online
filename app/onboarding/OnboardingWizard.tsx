@@ -117,6 +117,9 @@ export function OnboardingWizard({ userName, schools, defaultSchoolId, locale }:
           >
             {t("onboardingWizardStart")}
           </button>
+          <a href="/onboarding/professor" style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+            {locale === "pt" ? "Sou professor numa escola Kingdom →" : "I'm a coach at a Kingdom school →"}
+          </a>
         </>
       )}
 

@@ -57,7 +57,7 @@ export async function getPlanAccess(
 
   const { data: student } = await supabase
     .from("Student")
-    .select("planId, primaryModality, digitalLibraryAddon, extraModalities")
+    .select("planId, primaryModality, secondaryModality, digitalLibraryAddon, extraModalities")
     .eq("id", studentId)
     .single();
 
@@ -105,6 +105,10 @@ export async function getPlanAccess(
     allowedModalities = [];
   } else if (modalityScope === "SINGLE" && primaryModality) {
     allowedModalities = [primaryModality];
+  } else if (modalityScope === "DUAL" && primaryModality) {
+    // Plano de 2 modalidades: a principal + a 2.ª escolhida (Student.secondaryModality).
+    const secondary = (student as { secondaryModality?: string | null }).secondaryModality ?? null;
+    allowedModalities = secondary && secondary !== primaryModality ? [primaryModality, secondary] : [primaryModality];
   } else {
     allowedModalities = [...MODALITIES_LIST];
   }

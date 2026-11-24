@@ -7,6 +7,9 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe/server";
+import { loadModalityOffering, offeredModalities } from "@/lib/school-modalities";
+import { canDecideCoachRequest, normalizeCoachModalityCodes } from "@/lib/coach-access-request";
+import { sendCoachAccessDecision } from "@/lib/notifications/email";
 
 export type CreateCoachResult = { error?: string };
 
@@ -430,4 +433,161 @@ export async function toggleCoursePermission(
 
   revalidatePath("/admin/coaches");
   return {};
+}
+
+// ─── Pedidos de acesso como professor (registo via Google) ───────────────────────────────────────
+
+export type CoachRequestDecisionResult = { error?: string; ok?: boolean };
+
+async function loadDecidableCoachRequest(requestId: string) {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." } as const;
+  const permErr = await adminPermissionError("admin:coaches:write");
+  if (permErr) return { error: permErr } as const;
+  if (!requestId) return { error: "Pedido inválido." } as const;
+
+  const supabase = createAdminClient();
+  const { data: req } = await supabase
+    .from("CoachAccessRequest")
+    .select("id, userId, schoolId, status")
+    .eq("id", requestId)
+    .maybeSingle();
+  if (!req) return { error: "Pedido não encontrado." } as const;
+  if (!canDecideCoachRequest(req.status as string)) return { error: "Este pedido já foi decidido." } as const;
+  // Diretor Técnico só decide pedidos da sua escola; o Admin Geral decide todos.
+  if (!canAccessSchool(await getSchoolScope(), req.schoolId as string)) return { error: "Este pedido é de outra escola." } as const;
+
+  const [{ data: user }, { data: school }] = await Promise.all([
+    supabase.from("User").select("id, role, name, email").eq("id", req.userId).maybeSingle(),
+    supabase.from("School").select("name").eq("id", req.schoolId).maybeSingle(),
+  ]);
+  if (!user) return { error: "A conta deste pedido já não existe." } as const;
+  return { supabase, dbUser, req, user, schoolName: (school?.name as string) ?? "" } as const;
+}
+
+export async function approveCoachAccessRequest(
+  _prev: CoachRequestDecisionResult | null,
+  formData: FormData
+): Promise<CoachRequestDecisionResult> {
+  const ctx = await loadDecidableCoachRequest(String(formData.get("requestId") ?? ""));
+  if ("error" in ctx) return { error: ctx.error };
+  const { supabase, dbUser, req, user, schoolName } = ctx;
+  if (user.role === "ADMIN") return { error: "Esta conta já é de administração." };
+
+  const schoolId = req.schoolId as string;
+  const offering = offeredModalities(await loadModalityOffering(supabase, schoolId), schoolId);
+  const mods = normalizeCoachModalityCodes(formData.getAll("modalityCodes"), new Set(offering.map((m) => m.code)));
+  if (mods.error) return { error: mods.error };
+  const nameByCode = new Map(offering.map((m) => [m.code, m.name]));
+
+  // Perfil de coach: reaproveita se já existir (ex.: professor antigo reativado).
+  const { data: existing } = await supabase.from("Coach").select("id, specialties").eq("userId", user.id).maybeSingle();
+  let coachId = existing?.id as string | undefined;
+  if (!coachId) {
+    const { data: student } = await supabase.from("Student").select("id").eq("userId", user.id).maybeSingle();
+    coachId = crypto.randomUUID();
+    const { error } = await supabase.from("Coach").insert({
+      id: coachId,
+      userId: user.id,
+      studentId: (student?.id as string | undefined) ?? null,
+      specialties: mods.codes.map((c) => nameByCode.get(c) ?? c).join(", "),
+    });
+    if (error) return { error: "Não foi possível criar o perfil de professor." };
+  } else {
+    await supabase.from("Coach").update({ is_active: true }).eq("id", coachId);
+  }
+
+  const { error: csErr } = await supabase
+    .from("CoachSchool")
+    .upsert({ coachId, schoolId }, { onConflict: "coachId,schoolId", ignoreDuplicates: true });
+  if (csErr) return { error: "Não foi possível ligar o professor à escola." };
+
+  const { error: modErr } = await supabase.from("CoachModality").upsert(
+    mods.codes.map((modalityCode) => ({ coachId, schoolId, modalityCode, createdByUserId: dbUser.id })),
+    { onConflict: "coachId,schoolId,modalityCode", ignoreDuplicates: true }
+  );
+  if (modErr) return { error: "Não foi possível guardar as modalidades do professor." };
+
+  if (user.role !== "COACH") {
+    const { error: roleErr } = await supabase.from("User").update({ role: "COACH" }).eq("id", user.id);
+    if (roleErr) return { error: "Não foi possível dar acesso de professor à conta." };
+  }
+
+  await supabase
+    .from("CoachAccessRequest")
+    .update({ status: "APPROVED", modalityCodes: mods.codes, decidedByUserId: dbUser.id, decidedAt: new Date().toISOString() })
+    .eq("id", req.id)
+    .eq("status", "PENDING");
+
+  await sendCoachAccessDecision({
+    to: user.email as string,
+    coachName: (user.name as string) || (user.email as string),
+    schoolName,
+    approved: true,
+  }).catch(() => ({}));
+
+  revalidatePath("/admin/coaches");
+  return { ok: true };
+}
+
+export async function rejectCoachAccessRequest(
+  _prev: CoachRequestDecisionResult | null,
+  formData: FormData
+): Promise<CoachRequestDecisionResult> {
+  const ctx = await loadDecidableCoachRequest(String(formData.get("requestId") ?? ""));
+  if ("error" in ctx) return { error: ctx.error };
+  const { supabase, dbUser, req, user, schoolName } = ctx;
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300) || null;
+
+  const { error } = await supabase
+    .from("CoachAccessRequest")
+    .update({ status: "REJECTED", rejectionReason: reason, decidedByUserId: dbUser.id, decidedAt: new Date().toISOString() })
+    .eq("id", req.id)
+    .eq("status", "PENDING");
+  if (error) return { error: "Não foi possível recusar o pedido." };
+
+  await sendCoachAccessDecision({
+    to: user.email as string,
+    coachName: (user.name as string) || (user.email as string),
+    schoolName,
+    approved: false,
+    reason,
+  }).catch(() => ({}));
+
+  revalidatePath("/admin/coaches");
+  return { ok: true };
+}
+
+/** Modalidades que o professor dá numa escola (base da remuneração). Substitui as anteriores dessa escola. */
+export async function setCoachSchoolModalities(
+  _prev: CoachRequestDecisionResult | null,
+  formData: FormData
+): Promise<CoachRequestDecisionResult> {
+  const dbUser = await getCurrentDbUser();
+  if (!dbUser || dbUser.role !== "ADMIN") return { error: "Não autorizado." };
+  const permErr = await adminPermissionError("admin:coaches:write");
+  if (permErr) return { error: permErr };
+  const coachId = String(formData.get("coachId") ?? "");
+  const schoolId = String(formData.get("schoolId") ?? "");
+  if (!coachId || !schoolId) return { error: "Pedido inválido." };
+  if (!canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Esta escola não é tua." };
+
+  const supabase = createAdminClient();
+  const { data: link } = await supabase.from("CoachSchool").select("coachId").eq("coachId", coachId).eq("schoolId", schoolId).maybeSingle();
+  if (!link) return { error: "O coach não dá aulas nesta escola." };
+
+  const offered = new Set(offeredModalities(await loadModalityOffering(supabase, schoolId), schoolId).map((m) => m.code));
+  const codes = [...new Set(formData.getAll("modalityCodes").map(String).filter((c) => offered.has(c)))];
+
+  const { error: delErr } = await supabase.from("CoachModality").delete().eq("coachId", coachId).eq("schoolId", schoolId);
+  if (delErr) return { error: "Não foi possível guardar." };
+  if (codes.length > 0) {
+    const { error } = await supabase
+      .from("CoachModality")
+      .insert(codes.map((modalityCode) => ({ coachId, schoolId, modalityCode, createdByUserId: dbUser.id })));
+    if (error) return { error: "Não foi possível guardar." };
+  }
+  revalidatePath(`/admin/coaches/${coachId}`);
+  revalidatePath("/admin/financeiro/coaches");
+  return { ok: true };
 }

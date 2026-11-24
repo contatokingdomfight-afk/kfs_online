@@ -321,6 +321,9 @@ type Props = {
   planOptions: PlanOption[];
   modalityOptions: ModalityOption[];
   requiresPrimaryModality?: boolean;
+  /** Plano de 2 modalidades: mostra o campo da 2.ª modalidade. */
+  requiresSecondaryModality?: boolean;
+  initialSecondaryModality?: string;
   isFamilyPlanMember?: boolean;
   referencePlanName?: string | null;
   statusLabels: Record<string, string>;
@@ -341,6 +344,8 @@ export function EditarAlunoForm({
   planOptions,
   modalityOptions,
   requiresPrimaryModality = false,
+  requiresSecondaryModality = false,
+  initialSecondaryModality = "",
   isFamilyPlanMember = false,
   referencePlanName = null,
   statusLabels,
@@ -376,7 +381,7 @@ export function EditarAlunoForm({
       <form
         // O React repõe o formulário após cada submissão com os valores da montagem;
         // sem key, os <select> voltavam ao plano/estado antigo e uma 2.ª gravação reescrevia-os.
-        key={[initialName, initialStatus, initialSchoolId, initialPlanId, initialPrimaryModality, initialExtraModalities.join(",")].join("|")}
+        key={[initialName, initialStatus, initialSchoolId, initialPlanId, initialPrimaryModality, initialSecondaryModality, initialExtraModalities.join(",")].join("|")}
         action={formAction}
         className="card"
         style={{
@@ -469,6 +474,26 @@ export function EditarAlunoForm({
           ))}
         </select>
       </label>
+      {requiresSecondaryModality && (
+        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500, color: "var(--text-primary)" }}>2.ª modalidade *</span>
+          <span style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 2 }}>
+            Plano de 2 modalidades: a segunda modalidade que o aluno treina (conta para o professor dessa modalidade).
+          </span>
+          <select name="secondaryModality" className="input" defaultValue={initialSecondaryModality || ""} required>
+            <option value="" disabled>
+              — Selecionar modalidade —
+            </option>
+            {modalityOptions
+              .filter((m) => m.code)
+              .map((m) => (
+                <option key={m.code} value={m.code}>
+                  {m.name}
+                </option>
+              ))}
+          </select>
+        </label>
+      )}
       {allModalities.length > 0 && (
         <fieldset style={{ border: 0, padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
           <input type="hidden" name="extraModalitiesSent" value="1" />

@@ -6,7 +6,7 @@ import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getCurrentStudentId } from "@/lib/auth/get-current-student";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
-import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
+import { planRequiresPrimaryModality, planRequiresSecondaryModality } from "@/lib/plan-primary-modality";
 import { isPlanExcludedFromSelfService } from "@/lib/kingdom-plans-constants";
 
 export type SelectPlanPayAtSchoolResult = { error?: string };
@@ -22,6 +22,7 @@ export async function selectPlanPayAtSchool(
 
   const planId = (formData.get("planId") as string)?.trim();
   const primaryModality = (formData.get("primaryModality") as string)?.trim() || null;
+  const secondaryModality = (formData.get("secondaryModality") as string)?.trim() || null;
 
   if (!planId) return { error: "Plano inválido." };
 
@@ -59,12 +60,20 @@ export async function selectPlanPayAtSchool(
   } else {
     effectiveModality = null;
   }
+  // Plano de 2 modalidades: a 2.ª é obrigatória e diferente da principal.
+  let effectiveSecondary: string | null = null;
+  if (planRequiresSecondaryModality(scope)) {
+    if (!secondaryModality) return { error: "Escolhe a 2.ª modalidade incluída no plano." };
+    if (secondaryModality === effectiveModality) return { error: "Escolhe duas modalidades diferentes." };
+    effectiveSecondary = secondaryModality;
+  }
 
   const { error: updateErr } = await supabase
     .from("Student")
     .update({
       planId,
       primaryModality: effectiveModality,
+      secondaryModality: effectiveSecondary,
       adminGrantedFullAccess: false,
     })
     .eq("id", studentId);

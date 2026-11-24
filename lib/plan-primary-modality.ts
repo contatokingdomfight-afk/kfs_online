@@ -18,5 +18,11 @@ export function planRequiresPrimaryModality(
   planName?: string | null
 ): boolean {
   if (planId === KINGDOM_PLAN_PRESENCIAL_I_ID) return true;
-  return effectiveModalityScope(modalityScope, planId, planName) === "SINGLE";
+  const scope = effectiveModalityScope(modalityScope, planId, planName);
+  return scope === "SINGLE" || scope === "DUAL";
+}
+
+/** Plano de 2 modalidades (`DUAL`): além da principal, o aluno escolhe uma 2.ª (Student.secondaryModality). */
+export function planRequiresSecondaryModality(modalityScope: string | null | undefined): boolean {
+  return modalityScope === "DUAL";
 }

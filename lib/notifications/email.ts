@@ -474,3 +474,88 @@ export async function sendFinancialWeeklyAlertToAdmin(
     return { error: e instanceof Error ? e.message : "Erro ao enviar email." };
   }
 }
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function appBaseUrl(): string {
+  return (process.env.NEXT_PUBLIC_APP_URL || "https://kingdomfight.com").replace(/\/$/, "");
+}
+
+/** Novo pedido de acesso como professor: avisa os diretores técnicos da escola (e o Admin Geral, se não houver). */
+export async function sendCoachAccessRequestToDirectors(info: {
+  to: string[];
+  coachName: string;
+  coachEmail: string;
+  schoolName: string;
+  modalities: string[];
+}): Promise<{ error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = [...new Set(info.to.filter(Boolean))];
+  if (!apiKey || to.length === 0) return {};
+  try {
+    const { Resend } = await import("resend");
+    const resend = withoutDemoRecipients(new Resend(apiKey));
+    const mods = info.modalities.map(modalityLabel).join(", ");
+    const link = `${appBaseUrl()}/admin/coaches`;
+    const inner = `
+      <p style="margin:0 0 16px;"><strong>${escapeHtml(info.coachName)}</strong> (${escapeHtml(info.coachEmail)}) pediu acesso como professor na <strong>${escapeHtml(info.schoolName)}</strong>.</p>
+      <p style="margin:0 0 16px;">Modalidades: ${escapeHtml(mods)}</p>
+      <p style="margin:0;"><a href="${link}" style="color:${BRAND_PRIMARY};font-weight:600;">Ver o pedido em Admin › Coaches</a></p>
+    `.trim();
+    const { error } = await resend.emails.send({
+      from: getFrom(),
+      to,
+      subject: `Novo pedido de professor: ${info.coachName}`,
+      text: `${info.coachName} (${info.coachEmail}) pediu acesso como professor na ${info.schoolName}.\nModalidades: ${mods}\n\n${link}`,
+      html: wrapTransactionalEmail(inner),
+    });
+    if (error) return { error: String(error.message ?? error) };
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao enviar email." };
+  }
+}
+
+/** Resposta ao professor: pedido aprovado (próximo passo: contrato) ou recusado. */
+export async function sendCoachAccessDecision(info: {
+  to: string;
+  coachName: string;
+  schoolName: string;
+  approved: boolean;
+  reason?: string | null;
+}): Promise<{ error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || !info.to) return {};
+  try {
+    const { Resend } = await import("resend");
+    const resend = withoutDemoRecipients(new Resend(apiKey));
+    const link = `${appBaseUrl()}/coach`;
+    const inner = info.approved
+      ? `
+      <p style="margin:0 0 16px;">Olá ${escapeHtml(info.coachName)},</p>
+      <p style="margin:0 0 16px;">O teu acesso como professor na <strong>${escapeHtml(info.schoolName)}</strong> foi aprovado.</p>
+      <p style="margin:0;"><a href="${link}" style="color:${BRAND_PRIMARY};font-weight:600;">Entrar na plataforma</a></p>
+    `.trim()
+      : `
+      <p style="margin:0 0 16px;">Olá ${escapeHtml(info.coachName)},</p>
+      <p style="margin:0 0 16px;">O teu pedido de acesso como professor na <strong>${escapeHtml(info.schoolName)}</strong> não foi aprovado.</p>
+      ${info.reason ? `<p style="margin:0 0 16px;">Motivo: ${escapeHtml(info.reason)}</p>` : ""}
+      <p style="margin:0;">Se achas que é um engano, fala com o Diretor Técnico da escola.</p>
+    `.trim();
+    const { error } = await resend.emails.send({
+      from: getFrom(),
+      to: [info.to],
+      subject: info.approved ? "Acesso de professor aprovado" : "Pedido de professor não aprovado",
+      text: info.approved
+        ? `O teu acesso como professor na ${info.schoolName} foi aprovado. ${link}`
+        : `O teu pedido de acesso como professor na ${info.schoolName} não foi aprovado.${info.reason ? ` Motivo: ${info.reason}` : ""}`,
+      html: wrapTransactionalEmail(inner),
+    });
+    if (error) return { error: String(error.message ?? error) };
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro ao enviar email." };
+  }
+}

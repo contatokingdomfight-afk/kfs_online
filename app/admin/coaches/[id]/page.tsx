@@ -1,3 +1,5 @@
+import { CoachModalitiesEditor, type CoachSchoolModalities } from "./CoachModalitiesEditor";
+import { loadModalityOffering, offeredModalities } from "@/lib/school-modalities";
 import { BACKOFFICE_SCHOOLS_FILTER } from "@/lib/cached-reference-data";
 import { getSchoolScope, coachIdsInScope, filterSchools } from "@/lib/school-scope";
 import Link from "next/link";
@@ -48,6 +50,18 @@ export default async function AdminCoachEditarPage({ params }: Props) {
   const student = studentRes.data;
   const initialSchoolIds = (coachSchoolsRes.data ?? []).map((r) => r.schoolId);
   const schoolsList = schoolsRes.data ?? [];
+
+  // Modalidades por escola (remuneração): só as escolas do coach que este admin pode gerir.
+  const editableSchools = schoolsList.filter((s) => initialSchoolIds.includes(s.id));
+  const { data: coachMods } = await supabase.from("CoachModality").select("schoolId, modalityCode").eq("coachId", coachId);
+  const modalitySchools: CoachSchoolModalities[] = await Promise.all(
+    editableSchools.map(async (s) => ({
+      schoolId: s.id as string,
+      schoolName: (s.name as string) ?? s.id,
+      offered: offeredModalities(await loadModalityOffering(supabase, s.id as string), s.id as string).map((m) => ({ code: m.code, name: m.name })),
+      selected: (coachMods ?? []).filter((m) => m.schoolId === s.id).map((m) => m.modalityCode as string),
+    }))
+  );
 
   return (
     <div style={{ maxWidth: "min(420px, 100%)" }}>
@@ -104,6 +118,8 @@ export default async function AdminCoachEditarPage({ params }: Props) {
         schools={schoolsList}
         initialSchoolIds={initialSchoolIds}
       />
+
+      <CoachModalitiesEditor coachId={coachId} schools={modalitySchools} />
 
       <div style={{ marginTop: "clamp(32px, 8vw, 40px)" }}>
         <DeleteCoachButton coachId={coachId} coachName={user?.name ?? user?.email ?? "este coach"} />

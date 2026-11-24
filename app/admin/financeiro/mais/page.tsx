@@ -17,7 +17,7 @@ const LINKS = [
   { href: "/admin/financeiro/primeiro-pagamento", label: "Primeiro pagamento", hint: "Matrícula, seguro e 1.ª mensalidade de um aluno novo" },
   { href: "/admin/financeiro/antecipado", label: "Pagamento antecipado", hint: "Vários meses pagos de uma vez" },
   { href: "/admin/financeiro/compras", label: "Compras e inscrições", hint: "Cursos, eventos e outras compras" },
-  { href: "/admin/financeiro/coaches", label: "Pagamentos a coaches", hint: "Aulas dadas e valores a pagar" },
+  { href: "/admin/financeiro/coaches", label: "Pagamentos a coaches", hint: "Parte dos professores nas mensalidades" },
   ...(STORE_ENABLED ? [{ href: "/admin/loja", label: "Loja presencial", hint: "Vendas, encomendas e stock" }] : []),
 ];
 

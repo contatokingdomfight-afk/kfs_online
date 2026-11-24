@@ -1,4 +1,7 @@
-import { coachIdsInScope, filterSchools } from "@/lib/school-scope";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { coachIdsInScope, filterSchools, getSchoolScope, scopeQuery } from "@/lib/school-scope";
+import { loadModalityOffering, offeredModalities } from "@/lib/school-modalities";
+import { CoachRequestCard, type CoachRequestView } from "./CoachRequestCard";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
@@ -16,10 +19,16 @@ export default async function AdminCoachesPage() {
   const adminResult = getAdminClientOrNull();
   const supabase = adminResult.client ?? (await createClient());
 
-  const [{ data: coaches }, { count: pendingTestimonials }] = await Promise.all([
+  const [{ data: coaches }, { count: pendingTestimonials }, { data: requestRows }] = await Promise.all([
     filterSchools(supabase.from("Coach").select("id, userId, specialties, createdAt, is_active"), await coachIdsInScope(), "id").order("createdAt", { ascending: false }),
     supabase.from("CoachTestimonial").select("id", { count: "exact", head: true }).eq("status", "PENDING"),
+    // Pedidos de professor (registo via Google): o diretor só vê os da sua escola.
+    scopeQuery(
+      supabase.from("CoachAccessRequest").select("id, userId, schoolId, modalityCodes, phone, createdAt").eq("status", "PENDING"),
+      await getSchoolScope()
+    ).order("createdAt", { ascending: true }),
   ]);
+  const requests = await buildCoachRequestViews(supabase, requestRows ?? []);
 
   const list = coaches ?? [];
   const userIds = list.map((c) => c.userId);
@@ -84,6 +93,19 @@ export default async function AdminCoachesPage() {
           Novo coach
         </Link>
       </div>
+
+      {requests.length > 0 && (
+        <section style={{ marginBottom: "clamp(20px, 5vw, 28px)" }}>
+          <h2 style={{ margin: "0 0 10px", fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "var(--text-primary)" }}>
+            Pedidos pendentes ({requests.length})
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "clamp(10px, 2.5vw, 12px)" }}>
+            {requests.map((r) => (
+              <CoachRequestCard key={r.id} request={r} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {list.length === 0 ? (
         <div>
@@ -171,4 +193,38 @@ export default async function AdminCoachesPage() {
       )}
     </div>
   );
+}
+
+type RequestRow = { id: string; userId: string; schoolId: string; modalityCodes: string[] | null; phone: string | null; createdAt: string };
+
+/** Junta nome/email do utilizador, nome da escola e as modalidades que a escola oferece (para o diretor ajustar). */
+async function buildCoachRequestViews(
+  supabase: SupabaseClient,
+  rows: RequestRow[]
+): Promise<CoachRequestView[]> {
+  if (rows.length === 0) return [];
+  const schoolIds = [...new Set(rows.map((r) => r.schoolId))];
+  const [{ data: users }, { data: schools }, offerings] = await Promise.all([
+    supabase.from("User").select("id, name, email").in("id", [...new Set(rows.map((r) => r.userId))]),
+    supabase.from("School").select("id, name").in("id", schoolIds),
+    Promise.all(
+      schoolIds.map(async (id) => [id, offeredModalities(await loadModalityOffering(supabase, id), id)] as const)
+    ),
+  ]);
+  const userById = new Map((users ?? []).map((u) => [u.id as string, u]));
+  const schoolName = new Map((schools ?? []).map((s) => [s.id as string, s.name as string]));
+  const modsBySchool = new Map(offerings);
+  return rows.map((r) => {
+    const u = userById.get(r.userId);
+    return {
+      id: r.id,
+      name: (u?.name as string) || (u?.email as string) || "—",
+      email: (u?.email as string) ?? "—",
+      phone: r.phone,
+      schoolName: schoolName.get(r.schoolId) ?? r.schoolId,
+      createdAt: r.createdAt,
+      requestedCodes: r.modalityCodes ?? [],
+      modalities: (modsBySchool.get(r.schoolId) ?? []).map((m) => ({ code: m.code, name: m.name })),
+    };
+  });
 }

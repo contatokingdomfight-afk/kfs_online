@@ -8,7 +8,7 @@ import { adminPermissionError } from "@/lib/permissions/assert";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureOnboardingPendingPayments } from "@/lib/ensure-onboarding-pending-payments";
 import { repriceOpenTuitionOnPlanChange } from "@/lib/renewals";
-import { planRequiresPrimaryModality } from "@/lib/plan-primary-modality";
+import { planRequiresPrimaryModality, planRequiresSecondaryModality } from "@/lib/plan-primary-modality";
 import { resolveEffectiveAccessPlan } from "@/lib/family-effective-plan";
 import { KINGDOM_PLAN_FAMILIA_ID, isFamilyPlan } from "@/lib/kingdom-plans-constants";
 import {
@@ -263,6 +263,7 @@ export async function updateStudent(
   if (schoolId && !canAccessSchool(await getSchoolScope(), schoolId)) return { error: "Não autorizado: escola fora do teu acesso." };
   const planId = (formData.get("planId") as string)?.trim() || null;
   const primaryModality = (formData.get("primaryModality") as string)?.trim() || null;
+  const secondaryModalityRaw = (formData.get("secondaryModality") as string)?.trim() || null;
   const validStatuses = ["ATIVO", "INADIMPLENTE", "INATIVO", "EXPERIMENTAL"];
   const newStatus = status && validStatuses.includes(status) ? status : undefined;
   let newPrimaryModality = !primaryModality || primaryModality === "" ? null : primaryModality;
@@ -307,6 +308,13 @@ export async function updateStudent(
   } else if (!newPrimaryModality) {
     return { error: "Escolhe a modalidade principal deste aluno." };
   }
+  // Plano de 2 modalidades: a 2.ª é obrigatória e diferente da principal; noutros planos fica vazia.
+  let newSecondaryModality: string | null = null;
+  if (planRequiresSecondaryModality(accessPlan?.modalityScope)) {
+    if (!secondaryModalityRaw) return { error: "Escolhe a 2.ª modalidade deste aluno (plano de 2 modalidades)." };
+    if (secondaryModalityRaw === newPrimaryModality) return { error: "A 2.ª modalidade tem de ser diferente da principal." };
+    newSecondaryModality = secondaryModalityRaw;
+  }
 
   const previousPlanId = (student as { planId?: string | null }).planId ?? null;
   const planChanged = previousPlanId !== effectivePlanId;
@@ -349,6 +357,7 @@ export async function updateStudent(
     schoolId?: string;
     planId?: string | null;
     primaryModality?: string | null;
+    secondaryModality?: string | null;
     adminGrantedFullAccess?: boolean;
     extraModalities?: string[];
   } = {};
@@ -359,6 +368,7 @@ export async function updateStudent(
   if (schoolId) updates.schoolId = schoolId;
   updates.planId = effectivePlanId;
   updates.primaryModality = newPrimaryModality;
+  updates.secondaryModality = newSecondaryModality;
   if (planChanged) updates.adminGrantedFullAccess = false;
   if (formData.get("extraModalitiesSent")) {
     const picked = [...new Set(formData.getAll("extraModalities").map((v) => String(v).trim()).filter(Boolean))];

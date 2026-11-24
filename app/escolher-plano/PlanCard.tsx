@@ -5,6 +5,7 @@ import { PlanSchoolPaymentModal, type PlanSchoolPaymentFees } from "@/components
 import { selectPlanPayAtSchool, type SelectPlanPayAtSchoolResult } from "./actions";
 import {
   effectiveModalityScope,
+  planRequiresSecondaryModality,
   planRequiresPrimaryModality,
 } from "@/lib/plan-primary-modality";
 
@@ -62,11 +63,13 @@ export function PlanCard({
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction] = useActionState(selectPlanPayAtSchool, null as SelectPlanPayAtSchoolResult | null);
   const [primaryModality, setPrimaryModality] = useState(modalityOptions[0]?.code ?? "");
+  const [secondaryModality, setSecondaryModality] = useState(modalityOptions[1]?.code ?? "");
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const isEn = locale === "en";
   const modalityScope = effectiveModalityScope(plan.modality_scope, plan.id, plan.name);
   const needsModality = planRequiresPrimaryModality(plan.modality_scope, plan.id, plan.name);
+  const needsSecondModality = planRequiresSecondaryModality(plan.modality_scope);
 
   const cardFees: PlanSchoolPaymentFees = {
     tuition: plan.price_monthly,
@@ -82,6 +85,7 @@ export function PlanCard({
   if (plan.includes_performance_tracking) benefits.push(isEn ? "Performance tracking" : "Acompanhamento de performance");
   if (modalityScope === "ALL") benefits.push(isEn ? "All modalities" : "Todas as modalidades");
   else if (modalityScope === "SINGLE") benefits.push(isEn ? "One modality" : "Uma modalidade");
+  else if (modalityScope === "DUAL") benefits.push(isEn ? "Two modalities" : "Duas modalidades");
   if (plan.includes_exclusive_benefits) benefits.push(isEn ? "Exclusive benefits" : "Benefícios exclusivos");
 
   function confirmPlan() {
@@ -93,8 +97,10 @@ export function PlanCard({
     if (state?.error) setSubmitting(false);
   }, [state?.error]);
 
-  const selectedModalityLabel =
-    modalityOptions.find((m) => m.code === primaryModality)?.name ?? primaryModality;
+  const nameOf = (code: string) => modalityOptions.find((m) => m.code === code)?.name ?? code;
+  const selectedModalityLabel = needsSecondModality
+    ? `${nameOf(primaryModality)} + ${nameOf(secondaryModality)}`
+    : nameOf(primaryModality);
 
   return (
     <>
@@ -155,7 +161,12 @@ export function PlanCard({
                 <select
                   name="primaryModality"
                   value={primaryModality}
-                  onChange={(e) => setPrimaryModality(e.target.value)}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setPrimaryModality(next);
+                    // A 2.ª modalidade nunca pode ficar igual à principal.
+                    if (next === secondaryModality) setSecondaryModality(modalityOptions.find((m) => m.code !== next)?.code ?? "");
+                  }}
                   className="input"
                   required
                 >
@@ -164,6 +175,26 @@ export function PlanCard({
                       {m.name}
                     </option>
                   ))}
+                </select>
+              </label>
+            )}
+            {needsSecondModality && modalityOptions.length > 1 && (
+              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 14 }}>
+                <span style={{ fontWeight: 500 }}>{isEn ? "Second modality" : "2.ª modalidade"}</span>
+                <select
+                  name="secondaryModality"
+                  value={secondaryModality}
+                  onChange={(e) => setSecondaryModality(e.target.value)}
+                  className="input"
+                  required
+                >
+                  {modalityOptions
+                    .filter((m) => m.code !== primaryModality)
+                    .map((m) => (
+                      <option key={m.code} value={m.code}>
+                        {m.name}
+                      </option>
+                    ))}
                 </select>
               </label>
             )}

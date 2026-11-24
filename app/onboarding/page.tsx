@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getCurrentDbUser } from "@/lib/auth/get-current-user";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { cookies } from "next/headers";
@@ -12,6 +13,18 @@ import { OnboardingWizard } from "./OnboardingWizard";
 export default async function OnboardingPage() {
   const [dbUser, locale] = await Promise.all([getCurrentDbUser(), getLocaleFromCookies()]);
   if (!dbUser) redirect("/sign-in");
+
+  // Professor com pedido de acesso à espera: a página dele é a do pedido, não a do aluno.
+  const admin = getAdminClientOrNull().client;
+  if (admin) {
+    const { data: pendingCoachRequest } = await admin
+      .from("CoachAccessRequest")
+      .select("id")
+      .eq("userId", dbUser.id)
+      .eq("status", "PENDING")
+      .maybeSingle();
+    if (pendingCoachRequest) redirect("/onboarding/professor");
+  }
 
   const supabase = await createClient();
 
