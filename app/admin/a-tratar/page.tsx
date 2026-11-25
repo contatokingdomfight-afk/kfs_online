@@ -210,11 +210,11 @@ export default async function AdminATratarPage({ searchParams }: { searchParams:
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18, minWidth: 0, paddingBottom: 96 }}>
       <header style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Link href="/admin/dashboard" aria-label="Voltar ao painel" style={{ width: 40, height: 40, borderRadius: 20, border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-primary)" }}>
+        <Link href="/admin" aria-label="Voltar ao início" style={{ width: 40, height: 40, borderRadius: 20, border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-primary)" }}>
           <ChevronLeft size={20} aria-hidden />
         </Link>
         <div>
-          <span style={{ display: "block", fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>Painel</span>
+          <span style={{ display: "block", fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>Hoje</span>
           <h1 style={{ margin: 0, fontSize: "clamp(22px, 5vw, 26px)", fontWeight: 800 }}>A tratar hoje</h1>
         </div>
       </header>
