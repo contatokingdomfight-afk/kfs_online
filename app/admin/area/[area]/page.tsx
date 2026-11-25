@@ -4,9 +4,9 @@ import { ChevronRight } from "lucide-react";
 import { getAdminClientOrNull } from "@/lib/supabase/admin";
 import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { getTranslations } from "@/lib/i18n";
-import { getSchoolScope, isNetworkScope } from "@/lib/school-scope";
+import { getSchoolScope, isNetworkScope, resolveSchoolParam } from "@/lib/school-scope";
 import { getCachedResolvedAdminAccess } from "@/lib/permissions/get-cached-resolved";
-import { calendarDateLisbon } from "@/lib/lesson-check-in-window";
+import { getTodayTrialClassesForAdmin } from "@/lib/today-trial-classes";
 import { getAdminDashboardStatsCached } from "@/lib/admin-dashboard-stats";
 import { getAdminShellNav, type AdminAreaId } from "@/lib/admin-nav-areas";
 import { AdminNavSearch } from "@/components/admin/AdminNavSearch";
@@ -28,14 +28,14 @@ async function loadBadges(area: AdminAreaId): Promise<Record<string, string>> {
   if (!client) return {};
   const out: Record<string, string> = {};
   if (area === "alunos") {
-    const today = calendarDateLisbon(new Date());
-    // Mesma contagem de «Hoje» (sem contas de admin).
-    const [{ activeStudents: active }, { count: trials }] = await Promise.all([
-      getAdminDashboardStatsCached(client, null),
-      client.from("TrialClass").select("id", { count: "exact", head: true }).eq("lessonDate", today).eq("convertedToStudent", false),
+    // Mesmas contagens de «Hoje», só da escola escolhida no seletor do topo.
+    const schoolId = resolveSchoolParam(await getSchoolScope(), null);
+    const [{ activeStudents: active }, trials] = await Promise.all([
+      getAdminDashboardStatsCached(client, schoolId),
+      getTodayTrialClassesForAdmin(client, schoolId),
     ]);
     if (active) out["/admin/alunos"] = `${active} ativos`;
-    if (trials) out["/admin/experimentais"] = `${trials} hoje`;
+    if (trials.length) out["/admin/experimentais"] = `${trials.length} hoje`;
   }
   if (area === "dinheiro") {
     const { count } = await client.from("RetailOrder").select("id", { count: "exact", head: true }).eq("status", "PENDING_PAYMENT");

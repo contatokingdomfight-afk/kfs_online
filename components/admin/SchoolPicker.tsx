@@ -20,6 +20,8 @@ export function SchoolPicker({ schools, selectedSchoolId, allowAll }: Props) {
     const value = e.target.value;
     startTransition(async () => {
       await setSelectedSchool(value);
+      // Volta sempre ao início: a página aberta pode mostrar dados (ou uma ficha) de outra escola.
+      router.push("/admin");
       router.refresh();
     });
   }
