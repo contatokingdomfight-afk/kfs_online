@@ -6,8 +6,8 @@ export const BRAND_PRIMARY_SHADOW = "#4A060A";
 /** PNG com alpha real (gerado por `npm run process:brand-logo`). */
 export const BRAND_LOGO = "/brand/kfs-logotipo-transparent.png";
 
-/** Ícone/splash 1024×1024 (Canva, fundo transparente) — alinhado ao ícone da PWA. */
-export const BRAND_APP_ICON = "/brand/kfs-app-icon.png";
+/** Ícone/splash 1024×1024 PM Team. Nome novo de propósito: o otimizador de imagens da Vercel guarda 30 dias por URL e servia o logo antigo. */
+export const BRAND_APP_ICON = "/brand/pm-team-logo.png";
 export const BRAND_APP_ICON_SIZE = 1024;
 
 /** Fundo dos ícones PWA e splash de arranque (preto puro). */

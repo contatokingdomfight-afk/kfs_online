@@ -118,11 +118,11 @@ export function SignInForm() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-bg">
+    <main className="min-h-[100dvh] flex flex-col items-center justify-center px-6 py-4 bg-bg">
       <LoadingOverlay open={overlayOpen} message={overlayMessage} showSpinner={overlayShowSpinner} />
 
       <div className="container-mobile">
-        <Link href="/" aria-label="PM Team" className="mx-auto mb-6 block" style={{ width: "min(46vw, 180px)" }}>
+        <Link href="/" aria-label="PM Team" className="mx-auto mb-3 block" style={{ width: "min(34vw, 140px, 17dvh)" }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- logo estático */}
           <img
             src={BRAND_LOGO_PNG}
@@ -132,7 +132,7 @@ export function SignInForm() {
             style={{ width: "100%", height: "auto", display: "block" }}
           />
         </Link>
-        <h1 className="text-mobile-lg font-semibold text-center mb-6" style={{ color: "var(--text-primary)" }}>
+        <h1 className="text-mobile-lg font-semibold text-center mb-4" style={{ color: "var(--text-primary)" }}>
           {t("signIn")}
         </h1>
         {accountDeleted && (
@@ -144,16 +144,16 @@ export function SignInForm() {
           type="button"
           onClick={handleGoogleSignIn}
           disabled={googleLoading}
-          className="btn btn-secondary w-full flex items-center justify-center gap-2 mb-4"
+          className="btn btn-secondary w-full flex items-center justify-center gap-2 mb-2"
           aria-label={t("signInWithGoogle")}
         >
           <GoogleIcon />
           {googleLoading ? (initialLocale === "en" ? "Redirecting…" : "A redirecionar…") : t("signInWithGoogle")}
         </button>
-        <span className="block text-center text-mobile-sm mb-4" style={{ color: "var(--text-secondary)" }}>
+        <span className="block text-center text-mobile-sm mb-2" style={{ color: "var(--text-secondary)" }}>
           {initialLocale === "en" ? "or" : "ou"}
         </span>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input
             type="email"
             placeholder={t("email")}
@@ -236,7 +236,7 @@ export function SignInForm() {
             {t("signIn")}
           </button>
         </form>
-        <label className="mt-4 flex cursor-pointer items-center gap-3 text-left">
+        <label className="mt-3 flex cursor-pointer items-center gap-3 text-left">
           <input
             type="checkbox"
             checked={rememberDevice}
@@ -248,13 +248,13 @@ export function SignInForm() {
             {t("rememberDevice")}
           </span>
         </label>
-        <p className="text-mobile-base text-center mt-6" style={{ color: "var(--text-secondary)" }}>
+        <p className="text-mobile-base text-center mt-4" style={{ color: "var(--text-secondary)" }}>
           {t("noAccountYet")}{" "}
           <Link href="/sign-up" className="font-semibold" style={{ color: "var(--primary)" }}>
             {t("signUp")}
           </Link>
         </p>
-        <div className="mt-6" style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+        <div className="mt-4" style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
           <p className="text-mobile-sm text-center mb-3" style={{ color: "var(--text-secondary)", margin: "0 0 12px" }}>
             {initialLocale === "en" ? "Or explore without an account" : "Ou explora sem conta"}
           </p>
