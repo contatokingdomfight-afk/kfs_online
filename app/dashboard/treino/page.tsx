@@ -30,7 +30,7 @@ import { loadTrainingSessions } from "@/lib/training-load.server";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Treino | KFS",
+  title: "Treino | PM Team",
 };
 
 function ymdDaysAgo(days: number): string {

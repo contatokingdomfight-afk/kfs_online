@@ -54,7 +54,7 @@ export function AdminGoalForm({ schools, goal }: Props) {
       <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <span style={{ fontWeight: 500 }}>Âmbito</span>
         <select name="schoolId" className="input" defaultValue={goal?.schoolId ?? "global"}>
-          <option value="global">Global (toda a Kingdom Fight)</option>
+          <option value="global">Global (toda a PM Team)</option>
           {schools.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}

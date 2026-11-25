@@ -115,7 +115,7 @@ export function EditarCoachForm({
                 Autorizado a criar cursos
               </span>
               <p style={{ margin: "2px 0 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
-                Este coach poderá publicar cursos na plataforma. A receita será dividida: 65% para o coach, 35% para a KFS.
+                Este coach poderá publicar cursos na plataforma. A receita será dividida: 65% para o coach, 35% para a PM Team.
               </p>
             </div>
           </label>

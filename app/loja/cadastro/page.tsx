@@ -8,7 +8,7 @@ import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 import { CadastroForm } from "./CadastroForm";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Cadastro | Loja Kingdom", robots: { index: false } };
+export const metadata: Metadata = { title: "Cadastro | Loja PM Team", robots: { index: false } };
 
 export default async function LojaCadastroPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;

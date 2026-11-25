@@ -9,7 +9,7 @@ import { PAIN_REGIONS } from "@/lib/pain-regions";
 import { BODY_SIDES, INJURY_TYPES } from "@/lib/body-map/marks";
 
 export const metadata = {
-  title: "Dores | KFS",
+  title: "Dores | PM Team",
 };
 
 export default async function DoresPage() {

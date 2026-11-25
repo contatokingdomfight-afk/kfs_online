@@ -416,9 +416,9 @@ export async function sendRefundAlertToAdmin(info: {
         <li style="margin:0 0 8px;">Ordem Revolut: ${info.orderId.replace(/</g, "&lt;")}</li>
         <li style="margin:0 0 8px;">Referência: ${ref}</li>
       </ul>
-      <p style="margin:16px 0 0;font-size:14px;color:#71717a;">O KFS não altera nada automaticamente: confirma o estado da mensalidade ou encomenda correspondente.</p>
+      <p style="margin:16px 0 0;font-size:14px;color:#71717a;">A plataforma não altera nada automaticamente: confirma o estado da mensalidade ou encomenda correspondente.</p>
     `.trim();
-    const text = `Reembolso de ${amount} registado na Revolut.\nOrdem: ${info.orderId}\nReferência: ${info.reference ?? "—"}\n\nO KFS não altera nada automaticamente: confirma o estado da mensalidade ou encomenda.\n\n— PM Team`;
+    const text = `Reembolso de ${amount} registado na Revolut.\nOrdem: ${info.orderId}\nReferência: ${info.reference ?? "—"}\n\nA plataforma não altera nada automaticamente: confirma o estado da mensalidade ou encomenda.\n\n— PM Team`;
     const { error } = await resend.emails.send({
       from: getFrom(),
       to: [adminEmail],

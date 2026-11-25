@@ -39,7 +39,7 @@ export const homeContent = {
     statsModalities: "Muay Thai, Boxe e mais",
 
     // About
-    aboutTitle: "Sobre a Kingdom Fight",
+    aboutTitle: "Sobre a PM Team",
     missionTitle: "Missão",
     missionText: "Formar campeões dentro e fora do tatame, transformando vidas através da disciplina das artes marciais. Integramos tecnologia e ensino técnico de elite para criar lutadores e cidadãos de alta performance.",
     visionTitle: "Visão",
@@ -80,7 +80,7 @@ export const homeContent = {
     familyPlanNote: "Cada pessoa com o plano de referência que fizer sentido, e o desconto ajustado à tua situação. Fala connosco para simular o valor.",
 
     // YouTube Shorts
-    youtubeShortsTitle: "KFS em ação",
+    youtubeShortsTitle: "PM Team em ação",
     youtubeShortsSubtitle: "Alguns momentos do nosso dia a dia no tatame.",
 
     symbolismTitle: "O significado do símbolo",
@@ -99,7 +99,7 @@ export const homeContent = {
       "Prata e vermelho transmitem solidez, disciplina, resiliência e durabilidade, com um ar moderno e sofisticado — corpo e mente forjados nos treinos, como metais.",
     symbolismCrownTitle: "A coroa",
     symbolismCrownBody:
-      "Representa soberania e nobreza, e a mentalidade de campeão — o «Reino» em Kingdom Fight.",
+      "Representa soberania e nobreza, e a mentalidade de campeão de quem treina para vencer.",
     symbolismBloodTitle: "Vermelho sangue",
     symbolismBloodBody:
       "Nas pontas da coroa e no nome «Kingdom», representa energia, paixão e agressividade controlada, e a vitalidade para o combate.",
@@ -108,7 +108,7 @@ export const homeContent = {
       "«E quando olharem, mesmo que não entendam, vão receber no espírito a profecia de que é pelo sangue do Cordeiro que podemos reinar com o Senhor — e nEle somos mais do que vencedores.»",
 
     // Why choose
-    whyTitle: "Por que a Kingdom Fight",
+    whyTitle: "Porquê a PM Team",
     why1: "Treinadores experientes",
     why1Desc: "Mestres certificados, anos de tatame.",
     why2: "Método estruturado",
@@ -213,8 +213,8 @@ export const homeContent = {
 
     // Founders
     foundersTitle: "Os Fundadores",
-    foundersSubtitle: "Conheça quem criou a Kingdom Fight",
-    foundersVideoTitle: "A história da KFS",
+    foundersSubtitle: "Conheça quem criou a PM Team",
+    foundersVideoTitle: "A história da PM Team",
     foundersVideoUrl: "https://www.youtube.com/embed/eQWUG9Q61c4?start=3",
     founder1Name: "Oséias Beu",
     founder1Role: "Co-fundador",
@@ -287,7 +287,7 @@ export const homeContent = {
     statsMethodLabel: "methodology",
     statsModalities: "Muay Thai, Boxing and more",
 
-    aboutTitle: "About Kingdom Fight",
+    aboutTitle: "About PM Team",
     missionTitle: "Mission",
     missionText: "To train champions inside and outside the ring, transforming lives through the discipline of martial arts. We integrate technology and elite technical training to create fighters and high-performance citizens.",
     visionTitle: "Vision",
@@ -324,7 +324,7 @@ export const homeContent = {
     familyPlanHighlight: "Up to 20% off for the whole family",
     familyPlanNote: "Each person matched to the plan that fits them, with the discount tailored to your situation. Talk to us to work out your price.",
 
-    youtubeShortsTitle: "KFS in action",
+    youtubeShortsTitle: "PM Team in action",
     youtubeShortsSubtitle: "Some moments from our day on the mat.",
 
     symbolismTitle: "What the symbol means",
@@ -343,7 +343,7 @@ export const homeContent = {
       "Silver and red convey solidity, discipline, resilience and durability, with a modern, sophisticated feel — body and mind forged in training like metal.",
     symbolismCrownTitle: "The crown",
     symbolismCrownBody:
-      "It stands for sovereignty and nobility, and the champion mindset — the «Kingdom» in Kingdom Fight.",
+      "It stands for sovereignty and nobility, and the champion mindset of those who train to win.",
     symbolismBloodTitle: "Blood red",
     symbolismBloodBody:
       "On the crown tips and in the word «Kingdom», it represents energy, passion and controlled aggression — vitality for combat.",
@@ -351,7 +351,7 @@ export const homeContent = {
     symbolismProphecyBody:
       "«When they look, even if they do not understand, they will receive in spirit the prophecy that it is by the Lamb’s blood that we can reign with the Lord — and in Him we are more than conquerors.»",
 
-    whyTitle: "Why Kingdom Fight",
+    whyTitle: "Why PM Team",
     why1: "Experienced trainers",
     why1Desc: "Certified masters, years on the mat.",
     why2: "Structured method",
@@ -450,8 +450,8 @@ export const homeContent = {
     instagramUrl: "https://www.instagram.com/kingdomfightschool",
 
     foundersTitle: "The Founders",
-    foundersSubtitle: "Meet the people who created Kingdom Fight",
-    foundersVideoTitle: "The KFS story",
+    foundersSubtitle: "Meet the people who created PM Team",
+    foundersVideoTitle: "The PM Team story",
     foundersVideoUrl: "https://www.youtube.com/embed/eQWUG9Q61c4?start=3",
     founder1Name: "Oséias Beu",
     founder1Role: "Co-founder",

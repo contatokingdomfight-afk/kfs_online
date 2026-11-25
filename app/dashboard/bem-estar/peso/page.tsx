@@ -5,7 +5,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { WeightEntryForm, WeightGoalsForm } from "./WeightForms";
 
 export const metadata = {
-  title: "Peso | KFS",
+  title: "Peso | PM Team",
 };
 
 export default async function PesoPage() {

@@ -244,7 +244,7 @@ export function WeeklyScheduleSection({
     <section id="horarios" className="border-t border-[var(--border)] py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--primary)]">Kingdom Fight</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--primary)]">PM Team</p>
           <h2 className="mt-2 text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">{content.scheduleTitle}</h2>
         </div>
 

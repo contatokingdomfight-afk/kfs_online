@@ -6,7 +6,7 @@ import { BenchmarkForm } from "./BenchmarkForm";
 import { BENCHMARK_PRESETS } from "@/lib/benchmark-presets";
 
 export const metadata = {
-  title: "Benchmarks | KFS",
+  title: "Benchmarks | PM Team",
 };
 
 export default async function BenchmarksPage() {

@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const [p] = admin ? await loadShopProducts(admin, { productId }) : [];
   return p
     ? publicPageMetadata({
-        title: `${p.name} | Loja Kingdom`,
+        title: `${p.name} | Loja PM Team`,
         description: p.description || `${p.name} na loja da PM Team. Encomenda online e levanta na escola, em Sintra.`,
         path: `/loja/${productId}`,
         image: p.imageUrl,

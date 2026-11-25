@@ -113,7 +113,7 @@ const modalidadesContentData: Record<
         "MMA Sintra",
         "Kids",
         "artes marciais Sintra",
-        "Kingdom Fight",
+        "PM Team",
         "Algueirão-Mem Martins",
       ],
       heroTitle: "As nossas modalidades",
@@ -201,7 +201,7 @@ const modalidadesContentData: Record<
             a: "Sim — a aula experimental é gratuita e sem compromisso. Marque através do botão nesta página.",
           },
           {
-            q: "Quanto custa treinar Muay Thai na Kingdom Fight?",
+            q: "Quanto custa treinar Muay Thai na PM Team?",
             a: "Os preços dos nossos planos estão listados nesta página. Fale connosco se tiver dúvidas sobre qual se adapta melhor a si.",
           },
         ],
@@ -287,7 +287,7 @@ const modalidadesContentData: Record<
             a: "Sim — a aula experimental é gratuita e sem compromisso. Marque através do botão nesta página.",
           },
           {
-            q: "Quanto custa treinar Boxe na Kingdom Fight?",
+            q: "Quanto custa treinar Boxe na PM Team?",
             a: "Os preços dos nossos planos estão listados nesta página. Fale connosco se tiver dúvidas sobre qual se adapta melhor a si.",
           },
         ],
@@ -315,11 +315,11 @@ const modalidadesContentData: Record<
         ],
         heroTitle: "Kickboxing",
         heroSubtitle:
-          "O Kickboxing combina socos e chutes num treino intenso e directo. Na Kingdom Fight, a base do Kickboxing é coberta combinando as aulas de Boxe e Muay Thai.",
-        introTitle: "Como funciona o Kickboxing na Kingdom Fight",
+          "O Kickboxing combina socos e chutes num treino intenso e directo. Na PM Team, a base do Kickboxing é coberta combinando as aulas de Boxe e Muay Thai.",
+        introTitle: "Como funciona o Kickboxing na PM Team",
         introText:
           "A PM Team fica em Algueirão-Mem Martins, Sintra. Não temos, para já, uma turma dedicada de Kickboxing — e preferimos dizer isso com clareza em vez de prometer algo que não existe. O que oferecemos é a combinação das nossas aulas de Boxe (a base de socos) e Muay Thai (que acrescenta os chutes, além de cotovelos, joelhos e clinch), que cobre grande parte da técnica do Kickboxing. Se houver procura suficiente para uma turma dedicada, fale connosco — é esse tipo de interesse que nos ajuda a decidir abrir novas turmas.",
-        benefitsTitle: "Como chegar ao Kickboxing na Kingdom Fight",
+        benefitsTitle: "Como chegar ao Kickboxing na PM Team",
         benefits: [
           {
             icon: Zap,
@@ -344,7 +344,7 @@ const modalidadesContentData: Record<
         ],
         forWhomTitle: "Para quem é",
         forWhomText:
-          "Para quem procura especificamente o estilo de combate do Kickboxing — socos e chutes, sem clinch. Hoje, o caminho para lá chegar na Kingdom Fight é combinar Boxe e Muay Thai; fale connosco para percebermos o melhor ponto de partida para si.",
+          "Para quem procura especificamente o estilo de combate do Kickboxing — socos e chutes, sem clinch. Hoje, o caminho para lá chegar na PM Team é combinar Boxe e Muay Thai; fale connosco para percebermos o melhor ponto de partida para si.",
         faqTitle: "Perguntas frequentes sobre Kickboxing",
         faqItems: [
           {
@@ -364,18 +364,18 @@ const modalidadesContentData: Record<
             a: "Em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
           },
           {
-            q: "Quanto custa treinar na Kingdom Fight?",
+            q: "Quanto custa treinar na PM Team?",
             a: "Os preços dos nossos planos estão listados nesta página. Fale connosco se tiver dúvidas sobre qual se adapta melhor a si.",
           },
         ],
-        ctaHeadline: "Interessado em Kickboxing na Kingdom Fight?",
+        ctaHeadline: "Interessado em Kickboxing na PM Team?",
         ctaSub: "Fale connosco ou experimente uma aula de Boxe ou Muay Thai — sem compromisso.",
         ctaButton: "Aula Experimental",
         path: "/kickboxing-sintra",
         scheduleModalityCodes: ["KICKBOXING"],
         showFounders: false,
         teamNote:
-          "O caminho para o Kickboxing na Kingdom Fight passa pela equipa técnica de Boxe e Muay Thai, que já cobre grande parte dessa base técnica.",
+          "O caminho para o Kickboxing na PM Team passa pela equipa técnica de Boxe e Muay Thai, que já cobre grande parte dessa base técnica.",
       },
       "jiu-jitsu": {
         slug: "jiu-jitsu",
@@ -451,7 +451,7 @@ const modalidadesContentData: Record<
             a: "Sim — a aula experimental é gratuita e sem compromisso. Marque através do botão nesta página.",
           },
           {
-            q: "Quanto custa treinar Jiu-Jitsu na Kingdom Fight?",
+            q: "Quanto custa treinar Jiu-Jitsu na PM Team?",
             a: "Os preços dos nossos planos estão listados nesta página. Fale connosco se tiver dúvidas sobre qual se adapta melhor a si.",
           },
         ],
@@ -481,8 +481,8 @@ const modalidadesContentData: Record<
         ],
         heroTitle: "MMA",
         heroSubtitle:
-          "O MMA (Artes Marciais Mistas) combina striking e combate no solo. Na Kingdom Fight, o caminho para o MMA passa pelo treino de competição e pelo cross-training entre Muay Thai e Jiu-Jitsu.",
-        introTitle: "Como funciona o MMA na Kingdom Fight",
+          "O MMA (Artes Marciais Mistas) combina striking e combate no solo. Na PM Team, o caminho para o MMA passa pelo treino de competição e pelo cross-training entre Muay Thai e Jiu-Jitsu.",
+        introTitle: "Como funciona o MMA na PM Team",
         introText:
           "A PM Team fica em Algueirão-Mem Martins, Sintra. Não temos, para já, um currículo fechado e autónomo de MMA — e preferimos dizer isso com clareza em vez de prometer algo que não existe. O que existe hoje é um treino de competição aos sábados, aberto a quem quer juntar as peças de striking e grappling, e a possibilidade de combinar as aulas de Muay Thai e Jiu-Jitsu da escola para construir uma base sólida e real de MMA — exatamente como fazem muitos lutadores, que treinam cada disciplina em separado antes de as juntar no octógono.",
         benefitsTitle: "Porquê este caminho para o MMA",
@@ -510,7 +510,7 @@ const modalidadesContentData: Record<
         ],
         forWhomTitle: "Para quem é",
         forWhomText:
-          "Para quem já pratica (ou quer começar a praticar) Muay Thai e/ou Jiu-Jitsu na Kingdom Fight e quer juntar as duas bases rumo ao MMA, com o treino de competição de sábado como ponto de encontro.",
+          "Para quem já pratica (ou quer começar a praticar) Muay Thai e/ou Jiu-Jitsu na PM Team e quer juntar as duas bases rumo ao MMA, com o treino de competição de sábado como ponto de encontro.",
         faqTitle: "Perguntas frequentes sobre MMA",
         faqItems: [
           {
@@ -530,7 +530,7 @@ const modalidadesContentData: Record<
             a: "Na PM Team, em Algueirão-Mem Martins, Sintra. Veja a morada e o horário completo nesta página.",
           },
           {
-            q: "Quanto custa treinar na Kingdom Fight?",
+            q: "Quanto custa treinar na PM Team?",
             a: "Os preços dos nossos planos estão listados nesta página. Fale connosco se tiver dúvidas sobre qual se adapta melhor a si.",
           },
         ],
@@ -629,7 +629,7 @@ const modalidadesContentData: Record<
         "Jiu-Jitsu Sintra",
         "MMA Sintra",
         "Kids",
-        "Kingdom Fight",
+        "PM Team",
         "Algueirão-Mem Martins",
       ],
       heroTitle: "Our martial arts programs",
@@ -717,7 +717,7 @@ const modalidadesContentData: Record<
             a: "Yes — the trial class is free and with no commitment. Book it using the button on this page.",
           },
           {
-            q: "How much does it cost to train Muay Thai at Kingdom Fight?",
+            q: "How much does it cost to train Muay Thai at PM Team?",
             a: "Our plan prices are listed on this page. Get in touch if you have questions about which one fits you best.",
           },
         ],
@@ -802,7 +802,7 @@ const modalidadesContentData: Record<
             a: "Yes — the trial class is free and with no commitment. Book it using the button on this page.",
           },
           {
-            q: "How much does it cost to train Boxing at Kingdom Fight?",
+            q: "How much does it cost to train Boxing at PM Team?",
             a: "Our plan prices are listed on this page. Get in touch if you have questions about which one fits you best.",
           },
         ],
@@ -830,11 +830,11 @@ const modalidadesContentData: Record<
         ],
         heroTitle: "Kickboxing",
         heroSubtitle:
-          "Kickboxing combines punches and kicks into an intense, direct workout. At Kingdom Fight, the Kickboxing base is covered by combining our Boxing and Muay Thai classes.",
-        introTitle: "How Kickboxing works at Kingdom Fight",
+          "Kickboxing combines punches and kicks into an intense, direct workout. At PM Team, the Kickboxing base is covered by combining our Boxing and Muay Thai classes.",
+        introTitle: "How Kickboxing works at PM Team",
         introText:
           "PM Team is based in Algueirão-Mem Martins, Sintra. We don't yet have a dedicated Kickboxing class — and we'd rather say that clearly than promise something that doesn't exist. What we offer is a combination of our Boxing classes (the punching base) and Muay Thai (which adds the kicks, plus elbows, knees and clinch), covering much of Kickboxing's technique. If there's enough demand for a dedicated class, let us know — that kind of interest is exactly what helps us decide to open new classes.",
-        benefitsTitle: "How to get to Kickboxing at Kingdom Fight",
+        benefitsTitle: "How to get to Kickboxing at PM Team",
         benefits: [
           {
             icon: Zap,
@@ -859,7 +859,7 @@ const modalidadesContentData: Record<
         ],
         forWhomTitle: "Who it's for",
         forWhomText:
-          "For anyone specifically looking for Kickboxing's style of combat — punches and kicks, no clinch. Today, the way to get there at Kingdom Fight is by combining Boxing and Muay Thai; get in touch so we can suggest the best starting point for you.",
+          "For anyone specifically looking for Kickboxing's style of combat — punches and kicks, no clinch. Today, the way to get there at PM Team is by combining Boxing and Muay Thai; get in touch so we can suggest the best starting point for you.",
         faqTitle: "Frequently asked questions about Kickboxing",
         faqItems: [
           {
@@ -879,18 +879,18 @@ const modalidadesContentData: Record<
             a: "In Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
           },
           {
-            q: "How much does it cost to train at Kingdom Fight?",
+            q: "How much does it cost to train at PM Team?",
             a: "Our plan prices are listed on this page. Get in touch if you have questions about which one fits you best.",
           },
         ],
-        ctaHeadline: "Interested in Kickboxing at Kingdom Fight?",
+        ctaHeadline: "Interested in Kickboxing at PM Team?",
         ctaSub: "Get in touch or try a Boxing or Muay Thai class — no commitment.",
         ctaButton: "Free Trial Class",
         path: "/kickboxing-sintra",
         scheduleModalityCodes: ["KICKBOXING"],
         showFounders: false,
         teamNote:
-          "The path to Kickboxing at Kingdom Fight goes through the Boxing and Muay Thai coaching team, which already covers much of that technical base.",
+          "The path to Kickboxing at PM Team goes through the Boxing and Muay Thai coaching team, which already covers much of that technical base.",
       },
       "jiu-jitsu": {
         slug: "jiu-jitsu",
@@ -966,7 +966,7 @@ const modalidadesContentData: Record<
             a: "Yes — the trial class is free and with no commitment. Book it using the button on this page.",
           },
           {
-            q: "How much does it cost to train Jiu-Jitsu at Kingdom Fight?",
+            q: "How much does it cost to train Jiu-Jitsu at PM Team?",
             a: "Our plan prices are listed on this page. Get in touch if you have questions about which one fits you best.",
           },
         ],
@@ -996,8 +996,8 @@ const modalidadesContentData: Record<
         ],
         heroTitle: "MMA",
         heroSubtitle:
-          "MMA (Mixed Martial Arts) combines striking and ground combat. At Kingdom Fight, the path into MMA is through competition training and cross-training between Muay Thai and Jiu-Jitsu.",
-        introTitle: "How MMA works at Kingdom Fight",
+          "MMA (Mixed Martial Arts) combines striking and ground combat. At PM Team, the path into MMA is through competition training and cross-training between Muay Thai and Jiu-Jitsu.",
+        introTitle: "How MMA works at PM Team",
         introText:
           "PM Team is based in Algueirão-Mem Martins, Sintra. We don't yet have a closed, standalone MMA curriculum — and we'd rather say that clearly than promise something that doesn't exist. What exists today is a Saturday competition-training session, open to anyone wanting to put striking and grappling together, plus the option to combine our Muay Thai and Jiu-Jitsu classes to build a real, solid MMA base — exactly how many fighters train, working each discipline separately before bringing them together in the cage.",
         benefitsTitle: "Why this path into MMA",
@@ -1025,7 +1025,7 @@ const modalidadesContentData: Record<
         ],
         forWhomTitle: "Who it's for",
         forWhomText:
-          "For those who already train (or want to start training) Muay Thai and/or Jiu-Jitsu at Kingdom Fight and want to combine both bases toward MMA, with the Saturday competition training as the meeting point.",
+          "For those who already train (or want to start training) Muay Thai and/or Jiu-Jitsu at PM Team and want to combine both bases toward MMA, with the Saturday competition training as the meeting point.",
         faqTitle: "Frequently asked questions about MMA",
         faqItems: [
           {
@@ -1045,7 +1045,7 @@ const modalidadesContentData: Record<
             a: "At PM Team, in Algueirão-Mem Martins, Sintra. See the address and full schedule on this page.",
           },
           {
-            q: "How much does it cost to train at Kingdom Fight?",
+            q: "How much does it cost to train at PM Team?",
             a: "Our plan prices are listed on this page. Get in touch if you have questions about which one fits you best.",
           },
         ],

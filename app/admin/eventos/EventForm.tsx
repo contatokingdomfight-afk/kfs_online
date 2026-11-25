@@ -69,7 +69,7 @@ export function EventForm({
           name="name"
           defaultValue={initialName}
           className="input"
-          placeholder="Ex.: Kingdom Fight Camp Intermédio"
+          placeholder="Ex.: PM Team Camp Intermédio"
           required
         />
       </label>

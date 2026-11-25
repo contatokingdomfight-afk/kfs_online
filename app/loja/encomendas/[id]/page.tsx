@@ -6,7 +6,7 @@ import { LojaHeader } from "@/components/loja/LojaHeader";
 import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Encomenda | Loja Kingdom", robots: { index: false } };
+export const metadata: Metadata = { title: "Encomenda | Loja PM Team", robots: { index: false } };
 
 export default async function LojaEncomendaPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ nova?: string; pago?: string }> }) {
   const [{ id }, { nova, pago }] = await Promise.all([params, searchParams]);

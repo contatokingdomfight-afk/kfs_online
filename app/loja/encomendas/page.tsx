@@ -11,7 +11,7 @@ import { LojaHeader } from "@/components/loja/LojaHeader";
 import { PublicSiteFooter } from "@/components/PublicSiteFooter";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "As minhas encomendas | Loja Kingdom", robots: { index: false } };
+export const metadata: Metadata = { title: "As minhas encomendas | Loja PM Team", robots: { index: false } };
 
 export default async function LojaMinhasEncomendasPage() {
   const user = await getCurrentDbUser();

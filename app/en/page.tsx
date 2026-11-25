@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     "Muay Thai Sintra",
     "Boxe Sintra",
     "Kickboxing Sintra",
-    "Kingdom Fight",
+    "PM Team",
     "Algueirão-Mem Martins",
     "escola de luta",
   ],

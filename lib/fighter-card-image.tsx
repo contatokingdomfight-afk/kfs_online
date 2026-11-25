@@ -93,7 +93,7 @@ export function buildFighterCardElement(data: FighterCardData, ctaHost: string) 
           whiteSpace: "nowrap",
         }}
       >
-        KINGDOM FIGHT
+        PM TEAM
       </div>
 
       {/* Cabeçalho / marca */}

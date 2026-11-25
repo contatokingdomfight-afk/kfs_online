@@ -2,7 +2,7 @@ import { getLocaleFromCookies } from "@/lib/theme-locale-server";
 import { BemEstarTabs } from "./BemEstarTabs";
 
 export const metadata = {
-  title: "Bem-estar e treino | KFS",
+  title: "Bem-estar e treino | PM Team",
 };
 
 export default async function BemEstarLayout({ children }: { children: React.ReactNode }) {

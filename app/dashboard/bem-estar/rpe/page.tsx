@@ -12,7 +12,7 @@ import { TrainingLoadExplainer } from "@/components/training-load/TrainingLoadEx
 import { RpeScaleExplainer } from "@/components/training-load/RpeScaleExplainer";
 
 export const metadata = {
-  title: "RPE pós-treino | KFS",
+  title: "RPE pós-treino | PM Team",
 };
 
 function ymdDaysAgo(days: number): string {
