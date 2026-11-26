@@ -90,7 +90,8 @@ function ItemActions({ item }: { item: AdminTodoItem }) {
     );
   if (item.kind === "performance" && item.href)
     primary = (
-      <Link href={item.href} style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg)", display: "inline-flex", alignItems: "center", fontSize: 13, fontWeight: 800, textDecoration: "none", color: "var(--text-primary)" }}>
+      // Abre logo o formulário de avaliação de performance (deep-link ?avaliar=1 do AvaliarAlunoButton).
+      <Link href={item.studentId ? `/admin/alunos/${item.studentId}/performance?avaliar=1` : item.href} style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg)", display: "inline-flex", alignItems: "center", fontSize: 13, fontWeight: 800, textDecoration: "none", color: "var(--text-primary)" }}>
         Avaliar
       </Link>
     );
